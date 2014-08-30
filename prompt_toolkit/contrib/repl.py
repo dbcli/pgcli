@@ -505,31 +505,30 @@ class PythonCommandLine(CommandLine):
             return
         self.get_signatures_thread_running = True
 
-        class GetSignatureThread(threading.Thread):
-            def run(t):
-                script = code_obj._get_jedi_script()
+        def run():
+            script = code_obj._get_jedi_script()
 
-                # Show signatures in help text.
-                if script:
-                    try:
-                        signatures = script.call_signatures()
-                    except ValueError:
-                        # e.g. in case of an invalid \x escape.
-                        signatures = []
-                else:
+            # Show signatures in help text.
+            if script:
+                try:
+                    signatures = script.call_signatures()
+                except ValueError:
+                    # e.g. in case of an invalid \x escape.
                     signatures = []
+            else:
+                signatures = []
 
-                self.get_signatures_thread_running = False
+            self.get_signatures_thread_running = False
 
-                # Set signatures and redraw if the text didn't change in the
-                # meantime. Otherwise request new signatures.
-                if self._line.text == code_obj.text:
-                    self._line.signatures = signatures
-                    self.request_redraw()
-                else:
-                    self.on_input_timeout(self._line.create_code_obj())
+            # Set signatures and redraw if the text didn't change in the
+            # meantime. Otherwise request new signatures.
+            if self._line.text == code_obj.text:
+                self._line.signatures = signatures
+                self.request_redraw()
+            else:
+                self.on_input_timeout(self._line.create_code_obj())
 
-        GetSignatureThread().start()
+        self.run_in_executor(run)
 
     def start_repl(self):
         """
