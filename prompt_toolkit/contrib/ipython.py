@@ -17,7 +17,7 @@ from IPython.terminal.embed import InteractiveShellEmbed as _InteractiveShellEmb
 from IPython.terminal.ipapp import load_default_config
 
 from pygments.token import Token
-from pygments.lexers import PythonLexer, BashLexer
+from pygments.lexers import PythonLexer, BashLexer, TextLexer
 
 
 class IPythonPrompt(PythonPrompt):
@@ -35,6 +35,8 @@ class IPythonCode(PythonCode):
     def lexer_cls(self):
         if self.text.lstrip().startswith('!'):
             return BashLexer
+        elif self.text.rstrip().endswith('?'):
+            return TextLexer
         else:
             return PythonLexer
 
@@ -45,6 +47,11 @@ class IPythonCode(PythonCode):
 
         # Accept shell input
         if self.text.lstrip().startswith('!'):
+            return
+
+        # Accept text ending with '?' or '??'
+        # (IPython object inspection.)
+        if self.text.rstrip().endswith('?'):
             return
 
         # Only other, validate as valid Python code.
