@@ -23,5 +23,6 @@ setup(
         ],
         scripts = [
             'bin/ptpython',
+            'bin/ptipython',
         ]
 )

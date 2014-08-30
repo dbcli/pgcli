@@ -124,8 +124,6 @@ class CommandLine(object):
         Render the command line again. (Not thread safe!)
         (From other threads, or if unsure, use `request_redraw`.)
         """
-        assert self.enable_concurency
-
         self._renderer.render(self._line.get_render_context())
 
     def run_in_executor(self, callback):

@@ -78,6 +78,16 @@ terminal, you have to check the "Use option as meta key" checkbox in your
 terminal settings.)
 
 
+You love IPython?
+*****************
+
+Run ``ptipython`` (prompt_toolkit - IPython), to get a nice interactive shell
+with all the power that IPython has to offer, like magic functions and shell
+integration.
+
+.. image :: docs/images/ipython-integration.png
+
+
 Using as a library
 ------------------
 

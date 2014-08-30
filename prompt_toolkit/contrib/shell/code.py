@@ -38,7 +38,7 @@ class ShellCode(Code):
         return parts, last_part_token
 
 
-    def get_completions(self, recursive=False):
+    def get_completions(self):
         parts, last_part_token = self._get_lex_result(only_before_cursor=True)
 
         def wrap_completion(c):

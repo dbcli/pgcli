@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+"""
+Run IPython with the `prompt_toolkit` input shell.
+"""
+from prompt_toolkit.contrib.ipython import embed
+
+def _run_ipython():
+    embed()
+
+if __name__ == '__main__':
+    _run_ipython()

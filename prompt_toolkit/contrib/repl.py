@@ -29,7 +29,6 @@ import jedi
 import os
 import re
 import traceback
-import threading
 
 
 __all__ = ('PythonCommandLine', 'embed')
@@ -445,7 +444,7 @@ class PythonCode(Code):
             # ValueError('`column` parameter is not in a valid range.')
             return None
 
-    def get_completions(self, recursive=False):
+    def get_completions(self):
         """ Ask jedi to complete. """
         script = self._get_jedi_script()
 
@@ -472,6 +471,16 @@ class PythonCommandLine(CommandLine):
         else:
             return PythonEmacsInputStreamHandler
 
+    def prompt_cls(self, line, code):
+        # The `PythonPrompt` class needs a reference back in order to show the
+        # input method.
+        return PythonPrompt(line, code, self)
+
+    def code_cls(self, document):
+        # The `PythonCode` needs a reference back to this class in order to do
+        # autocompletion on the globals/locals.
+        return PythonCode(document, self.globals, self.locals)
+
     def __init__(self, globals=None, locals=None, vi_mode=False, stdin=None, stdout=None, history_filename=None, style_cls=PythonStyle):
         self.globals = globals or {}
         self.globals.update({ k: getattr(__builtins__, k) for k in dir(__builtins__) })
@@ -484,14 +493,6 @@ class PythonCommandLine(CommandLine):
 
         #: Incremeting integer counting the current statement.
         self.current_statement_index = 1
-
-        # The `PythonCode` needs a reference back to this class in order to do
-        # autocompletion on the globals/locals.
-        self.code_cls = lambda document: PythonCode(document, self.globals, self.locals)
-
-        # The `PythonPrompt` class needs a reference back in order to show the
-        # input method.
-        self.prompt_cls = lambda line, code: PythonPrompt(line, code, self)
 
         super(PythonCommandLine, self).__init__(stdin=stdin, stdout=stdout)
 

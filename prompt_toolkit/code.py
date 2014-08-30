@@ -46,12 +46,12 @@ class CodeBase(object):
     def complete(self):
         """ return one `Completion` instance or None. """
         # If there is one completion, return that.
-        completions = list(self.get_completions(True))
+        completions = list(self.get_completions())
 
         # Return the common prefix.
         return _commonprefix([ c.suffix for c in completions ])
 
-    def get_completions(self, recursive=False):
+    def get_completions(self):
         """ Yield `Completion` instances. """
         if False:
             yield
