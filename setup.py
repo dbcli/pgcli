@@ -9,7 +9,7 @@ setup(
         license='LICENSE.txt',
         url='https://github.com/jonathanslenders/python-prompt-toolkit',
 
-        description='',
+        description='Library for building powerful interactive command lines in Python',
         long_description='',
         packages=find_packages('.'),
         install_requires = [
