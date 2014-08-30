@@ -7,7 +7,10 @@ Utility for creating a Python repl.
     embed(globals(), locals(), vi_mode=False)
 
 """
-from __future__ import print_function
+# Warning: don't import `print_function` from __future__, otherwise we will
+#          also get the print_function inside `eval` on Python 2.7.
+
+from __future__ import unicode_literals
 
 from pygments import highlight
 from pygments.formatters.terminal256  import Terminal256Formatter
@@ -568,21 +571,26 @@ class PythonCommandLine(CommandLine):
             try:
                 result = eval(line, self.globals, self.locals)
                 self.locals['_'] = self.locals['_%i' % self.current_statement_index] = result
+
                 if result is not None:
-                    print('Out[%i]: %r' % (self.current_statement_index, result))
+                    self.stdout.write('Out[%i]: %r\n' % (self.current_statement_index, result))
+
             # If not a valid `eval` expression, run using `exec` instead.
             except SyntaxError:
                 exec_(line, self.globals, self.locals)
 
-            print()
+            self.stdout.write('\n')
+            self.stdout.flush()
 
     def _handle_exception(self, e):
         tb = traceback.format_exc()
-        print(highlight(tb, PythonTracebackLexer(), Terminal256Formatter()))
-        print(e)
+        self.stdout.write(highlight(tb, PythonTracebackLexer(), Terminal256Formatter()))
+        self.stdout.write(e)
+        self.stdout.flush()
 
     def _handle_keyboard_interrupt(self, e):
-        print('\rKeyboardInterrupt')
+        self.stdout.write('\rKeyboardInterrupt')
+        self.stdout.flush()
 
 
 def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_colors=False):
