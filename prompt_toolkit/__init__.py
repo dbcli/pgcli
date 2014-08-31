@@ -53,6 +53,11 @@ class CommandLine(object):
     """
     Wrapper around all the other classes, tying everything together.
     """
+    # All the factories below have to be callables that return instances of the
+    # respective classes. They can be as simple as the class itself, but they
+    # can also be instance methods that pass some additional parameters to the
+    # class.
+
     #: The `Line` class which implements the text manipulation.
     line_factory = Line
 
