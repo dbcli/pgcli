@@ -982,6 +982,10 @@ class Line(object):
 
         for e in editors:
             if e:
-                if os.path.exists(e):
+                try:
                     subprocess.call([e, filename])
                     return
+
+                except OSError:
+                    # Executable does not exist, try the next one.
+                    pass
