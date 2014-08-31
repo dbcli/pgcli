@@ -2,16 +2,21 @@
 """
 ptpython: Interactive Python shell.
 Usage:
-    ptpython [ --vi ] [( --history FILENAME )] [ --no-colors ]
+    ptpython [ --vi ] [ --history=<filename> ] [ --no-colors ]
+             [ --autocompletion=<type> ]
     ptpython -h | --help
 
 Options:
-    --vi               : Use Vi keybindings instead of Emacs bindings.
+    --vi                    : Use Vi keybindings instead of Emacs bindings.
+    --history=<filename>    : Path to history file.
+    --autocompletion=<type> : Type of autocompletion. This can be 'popup-menu'
+                              or 'horizontal-menu'.
 """
 import docopt
 import os
 
 from prompt_toolkit.contrib.repl import embed
+from prompt_toolkit.contrib.python_input import AutoCompletionStyle
 
 def _run_repl():
     a = docopt.docopt(__doc__)
@@ -22,14 +27,26 @@ def _run_repl():
     # Create globals/locals dict.
     globals_, locals_ = {}, {}
 
-    if a['FILENAME']:
-        history_filename = os.path.expanduser(a['FILENAME'])
+    # Log history
+    if a['--history']:
+        history_filename = os.path.expanduser(a['--history'])
     else:
         history_filename = os.path.expanduser('~/.ptpython_history')
 
+    # Autocompletion type
+    if a['--autocompletion'] in (
+                        AutoCompletionStyle.POPUP_MENU,
+                        AutoCompletionStyle.HORIZONTAL_MENU,
+                        AutoCompletionStyle.TRADITIONAL,
+                        AutoCompletionStyle.EXTENDED_POPUP_MENU
+                    ):
+        autocompletion_style = a['--autocompletion']
+    else:
+        autocompletion_style = AutoCompletionStyle.POPUP_MENU
 
     # Run interactive shell.
-    embed(globals_, locals_, vi_mode=vi_mode, history_filename=history_filename, no_colors=no_colors)
+    embed(globals_, locals_, vi_mode=vi_mode, history_filename=history_filename,
+                    no_colors=no_colors, autocompletion_style=autocompletion_style)
 
 if __name__ == '__main__':
     _run_repl()

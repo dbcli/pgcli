@@ -67,8 +67,9 @@ class ExampleStyle(Style):
 
 class ExampleCommandLine(CommandLine):
     code_factory = OurGitCode
-    style_factory = ExampleStyle
     prompt_factory = ShellPrompt
+
+    style = ExampleStyle
 
 
 if __name__ == '__main__':

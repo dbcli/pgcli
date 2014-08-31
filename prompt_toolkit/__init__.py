@@ -95,18 +95,16 @@ class CommandLine(object):
         self.stdin = stdin or sys.stdin
         self.stdout = stdout or sys.stdout
 
-        # In case of Python2, sys.stdin.read() returns bytes instead of unicode
-        # characters. By wrapping it in getreader('utf-8'), we make sure to
-        # read valid unicode characters.
-        if not six.PY3:
-            self.stdin = codecs.getreader('utf-8')(sys.stdin)
-
         self._line = self.line_factory(
-                        code_factory=self.code_factory, prompt_factory=self.prompt_factory,
-                        history_factory=self.history_factory)
+                                code_factory=self.code_factory,
+                                history_factory=self.history_factory)
+
         self._inputstream_handler = self.inputstream_handler_factory(self._line)
 
-        self._renderer = self.renderer_factory(self.stdout, style=self.style)
+        self._renderer = self.renderer_factory(
+                                prompt_factory=self.prompt_factory,
+                                stdout=self.stdout,
+                                style=self.style)
 
         # Pipe for inter thread communication.
         self._redraw_pipe = None
@@ -217,6 +215,7 @@ class CommandLine(object):
             def reset_line():
                 # Reset line
                 self._line.reset(initial_value=initial_value)
+                self._renderer.reset()
             reset_line()
 
             # Trigger read_start.

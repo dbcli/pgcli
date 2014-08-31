@@ -225,6 +225,13 @@ class InputStreamHandler(object):
         """
         Autocomplete.
         """
+        self.do_traditional_complete()
+
+    def do_traditional_complete(self):
+        """
+        Traditional tab-completion, where the first tab completes the common
+        suffix and the second tab lists all the completions.
+        """
         if self._second_tab:
             self._line.list_completions()
             self._second_tab = False

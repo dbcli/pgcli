@@ -18,8 +18,7 @@ from pygments.lexers import PythonTracebackLexer
 
 from prompt_toolkit import AbortAction
 from prompt_toolkit.line import Exit
-from prompt_toolkit.contrib.python_input import PythonCommandLine
-from prompt_toolkit.contrib.python_input import PythonStyle
+from prompt_toolkit.contrib.python_input import PythonCommandLine, PythonStyle, AutoCompletionStyle
 
 from six import exec_
 
@@ -82,7 +81,7 @@ class PythonRepl(PythonCommandLine):
     def _handle_exception(self, e):
         tb = traceback.format_exc()
         self.stdout.write(highlight(tb, PythonTracebackLexer(), Terminal256Formatter()))
-        self.stdout.write(e)
+        self.stdout.write('%s' % e)
         self.stdout.flush()
 
     def _handle_keyboard_interrupt(self, e):
@@ -90,7 +89,7 @@ class PythonRepl(PythonCommandLine):
         self.stdout.flush()
 
 
-def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_colors=False):
+def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_colors=False, autocompletion_style=AutoCompletionStyle.POPUP_MENU):
     """
     Call this to embed  Python shell at the current point in your program.
     It's similar to `IPython.embed` and `bpython.embed`. ::
@@ -101,5 +100,6 @@ def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_co
     :param vi_mode: Boolean. Use Vi instead of Emacs key bindings.
     """
     cli = PythonRepl(globals, locals, vi_mode=vi_mode, history_filename=history_filename,
-            style=(None if no_colors else PythonStyle))
+            style=(None if no_colors else PythonStyle),
+            autocompletion_style=autocompletion_style)
     cli.start_repl()

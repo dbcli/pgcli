@@ -202,13 +202,13 @@ class PdbOrPythonprompt(object):
     Create a prompt class that proxies around `PdbPrompt` if the input is valid
     PDB shell input, otherwise proxies around `PythonPrompt`.
     """
-    def __init__(self, line, code):
-        self._pdb_prompt = PdbPrompt(line, code)
-        self._python_prompt = PythonPrompt(line, code)
-        self._code = code
+    def __init__(self, render_context):
+        self._pdb_prompt = PdbPrompt(render_context)
+        self._python_prompt = PythonPrompt(render_context)
+        self._render_context = render_context
 
     def __getattr__(self, name):
-        if self._code.is_pdb_statement:
+        if self._render_context.code_obj.is_pdb_statement:
             return getattr(self._pdb_prompt, name)
         else:
             return getattr(self._python_prompt, name)

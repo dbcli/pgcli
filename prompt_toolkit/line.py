@@ -13,6 +13,8 @@ from .prompt import Prompt
 from .render_context import RenderContext
 from .history import History
 
+from pygments.token import Token
+
 import os
 import tempfile
 import subprocess
@@ -134,6 +136,10 @@ class _IncrementalSearchState(object):
         self.original_working_index = original_working_index
         self.original_cursor_position = original_cursor_position
 
+        #: From this character index, we didn't found any more matches.
+        #: This flag is updated every time we search for a new string.
+        self.no_match_from_index = None
+
 
 class Line(object):
     """
@@ -143,7 +149,6 @@ class Line(object):
     state.
 
     :attr code_factory: :class:`~prompt_toolkit.code.CodeBase` class.
-    :attr prompt_factory: :class:`~prompt_toolkit.prompt.PromptBase` class.
     :attr history: :class:`~prompt_toolkit.history.History` instance.
     """
     #: Boolean to indicate whether we should consider this line a multiline input.
@@ -151,9 +156,8 @@ class Line(object):
     #: (Instead of accepting the input.)
     is_multiline = False
 
-    def __init__(self, code_factory=Code, prompt_factory=Prompt, history_factory=History):
+    def __init__(self, code_factory=Code, history_factory=History):
         self.code_factory = code_factory
-        self.prompt_factory = prompt_factory
 
         #: The command line history.
         self._history = history_factory()
@@ -307,7 +311,7 @@ class Line(object):
         # TODO: this can be cached as long self.text does not change.
         return Document(self.text, self.cursor_position)
 
-    def set_arg_prompt(self, arg):
+    def set_arg_prompt(self, arg): # XXX: Just make a property of this???
         """
         Called from the `InputStreamHandler` to set a "(arg: x)"-like prompt.
         (Both in Vi and Emacs-mode we have a way to repeat line operations.
@@ -424,11 +428,16 @@ class Line(object):
     @_to_mode(LineMode.NORMAL, LineMode.INCREMENTAL_SEARCH)
     def delete_character_before_cursor(self, count=1): # TODO: unittest return type
         """ Delete character before cursor, return deleted character. """
-        assert count > 0
+        assert count >= 0
         deleted = ''
 
         if self.mode == LineMode.INCREMENTAL_SEARCH:
             self.isearch_state.isearch_text = self.isearch_state.isearch_text[:-count]
+
+            # When the `no_match_from_index` is after the character that we deleted. Remove this mark.
+            if (self.isearch_state.no_match_from_index is not None and
+                    self.isearch_state.no_match_from_index >= len(self.isearch_state.isearch_text)):
+                self.isearch_state.no_match_from_index = None
         else:
             if self.cursor_position > 0:
                 deleted = self.text[self.cursor_position - count:self.cursor_position]
@@ -688,25 +697,23 @@ class Line(object):
             code = self.code_factory(self.document)
 
             if self.document.has_match_at_current_position(self.isearch_state.isearch_text):
-                highlight_regions = [
-                        (self.document.translate_index_to_position(self.cursor_position),
-                        self.document.translate_index_to_position(self.cursor_position + len(self.isearch_state.isearch_text))) ]
+                highlighted_characters = { x: Token.IncrementalSearchMatch for x in
+                        range(self.cursor_position, self.cursor_position + len(self.isearch_state.isearch_text)) }
             else:
-                highlight_regions = [ ]
+                highlighted_characters = { }
 
         else:
             code = self.create_code_obj()
-            highlight_regions = [ ]
+            highlighted_characters = { }
 
         # Complete state
-        prompt = self.prompt_factory(self, code)
         if self.mode == LineMode.COMPLETE and not _abort and not _accept:
             complete_state = self.complete_state
         else:
             complete_state = None
 
         # Create prompt instance.
-        return RenderContext(prompt, code, highlight_regions=highlight_regions,
+        return RenderContext(self, code, highlighted_characters=highlighted_characters,
                         complete_state=complete_state,
                         abort=_abort, accept=_accept,
                         validation_error=self.validation_error)
@@ -762,7 +769,11 @@ class Line(object):
             self.isearch_state.isearch_text += data
 
             if not self.document.has_match_at_current_position(self.isearch_state.isearch_text):
-                self.search_next(self.isearch_state.isearch_direction)
+                found = self.search_next(self.isearch_state.isearch_direction)
+
+                # When this suffix is not found, remember that in `no_match_from_index`.
+                if not found and self.isearch_state.no_match_from_index is None:
+                    self.isearch_state.no_match_from_index = len(self.isearch_state.isearch_text) - 1
         else:
             # In insert/text mode.
             if overwrite:
@@ -897,9 +908,14 @@ class Line(object):
 
     @_to_mode(LineMode.NORMAL, LineMode.INCREMENTAL_SEARCH)
     def search_next(self, direction):
+        """
+        Search for the next string.
+        :returns: (bool) True if something was found.
+        """
         if not (self.mode == LineMode.INCREMENTAL_SEARCH and self.isearch_state.isearch_text):
             return
 
+        found = False
         self.isearch_state.isearch_direction = direction
 
         isearch_text = self.isearch_state.isearch_text
@@ -910,6 +926,7 @@ class Line(object):
 
             if new_index is not None:
                 self.cursor_position += new_index
+                found = True
             else:
                 # No match, go back in the history.
                 for i in range(self._working_index - 1, -1, -1):
@@ -918,6 +935,8 @@ class Line(object):
                     if new_index is not None:
                         self._working_index = i
                         self.cursor_position = len(self._working_lines[i]) + new_index
+                        self.isearch_state.no_match_from_index = None
+                        found = True
                         break
         else:
             # Try find at the current input.
@@ -925,6 +944,7 @@ class Line(object):
 
             if new_index is not None:
                 self.cursor_position += new_index
+                found = True
             else:
                 # No match, go forward in the history.
                 for i in range(self._working_index + 1, len(self._working_lines)):
@@ -933,7 +953,14 @@ class Line(object):
                     if new_index is not None:
                         self._working_index = i
                         self.cursor_position = new_index
+                        self.isearch_state.no_match_from_index = None
+                        found = True
                         break
+                else:
+                    # If no break: we didn't found a match.
+                    found = False
+
+        return found
 
     def exit_isearch(self, restore_original_line=False):
         """

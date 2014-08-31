@@ -85,8 +85,8 @@ class IPythonCommandLine(PythonCommandLine):
         super(IPythonCommandLine, self).__init__(*a, **kw)
         self._ipython_shell = ipython_shell
 
-    def prompt_factory(self, line, code):
-        return IPythonPrompt(line, code, self)
+    def prompt_factory(self, render_context):
+        return IPythonPrompt(render_context, self)
 
     def code_factory(self, document):
         return IPythonCode(document, self.globals, self.locals, self._ipython_shell.magics_manager)

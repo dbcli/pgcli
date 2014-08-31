@@ -16,7 +16,7 @@ def get_input(message, raise_exception_on_abort=False, multiline=False):
     This returns `None` when Ctrl-D was pressed.
     """
     class CustomPrompt(Prompt):
-        default_prompt_text = message
+        prompt_text = message
 
 
     class CustomLine(Line):

@@ -14,7 +14,7 @@ class HtmlCode(Code):
 
 
 class HtmlPrompt(Prompt):
-    default_prompt_text = 'Enter HTML: '
+    prompt_text = 'Enter HTML: '
 
 
 class HtmlCommandLine(CommandLine):

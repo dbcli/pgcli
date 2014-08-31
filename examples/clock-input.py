@@ -11,10 +11,13 @@ import time
 
 
 class ClockPrompt(Prompt):
-    def get_default_prompt(self):
+    @property
+    def tokens_before_input(self):
         now = datetime.datetime.now()
-        yield (Token.Prompt, '%s:%s:%s' % (now.hour, now.minute, now.second))
-        yield (Token.Prompt, ' Enter something: ')
+        return [
+            (Token.Prompt, '%s:%s:%s' % (now.hour, now.minute, now.second)),
+            (Token.Prompt, ' Enter something: ')
+        ]
 
 
 class ClockCommandLine(CommandLine):

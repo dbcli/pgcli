@@ -19,28 +19,51 @@ from prompt_toolkit.enums import LineMode
 from prompt_toolkit.history import FileHistory, History
 from prompt_toolkit.inputstream_handler import ViInputStreamHandler, EmacsInputStreamHandler, ViMode
 from prompt_toolkit.line import Line
-from prompt_toolkit.prompt import Prompt
+from prompt_toolkit.prompt import Prompt, TokenList, BracketsMismatchProcessor, PopupCompletionMenu, HorizontalCompletionMenu
 
 import jedi
 import re
+import sys
 
 
-__all__ = ('PythonCommandLine', )
+__all__ = (
+    'PythonCommandLine',
+    'AutoCompletionStyle',
+)
+
+
+class AutoCompletionStyle:
+    #: tab/double-tab completion
+    TRADITIONAL = 'traditional'
+
+    #: Pop-up
+    POPUP_MENU = 'popup-menu'
+
+    #: Horizontal list
+    HORIZONTAL_MENU = 'horizontal-menu'
+
+    #:Pop-up menu that also displays the references to the Python modules.
+    EXTENDED_POPUP_MENU = 'extended-horizontal-menu'
 
 
 class PythonStyle(Style):
     background_color = None
     styles = {
         Keyword:                       '#ee00ee',
-        Operator:                      '#aa6666',
+        Operator:                      '#ff6666 bold',
         Number:                        '#ff0000',
         Name:                          '#008800',
-        Token.Literal.String:          '#440000',
+        Name.Namespace:                '#008800 underline',
+        Name.Decorator:                '#aa22ff',
+
+        Token.Literal.String:          '#ba4444 bold',
 
         Error:                         '#000000 bg:#ff8888',
         Comment:                       '#0000dd',
         Token.Bash:                    '#333333',
         Token.IPython:                 '#660066',
+
+        Token.IncrementalSearchMatch:  '#ffffff bg:#222222',
 
         # Signature highlighting.
         Token.Signature:               '#888888',
@@ -48,24 +71,33 @@ class PythonStyle(Style):
         Token.Signature.CurrentName:   'bold underline #888888',
 
         # Highlighting for the reverse-search prompt.
-        Token.Prompt:                  'bold #004400',
+        Token.Prompt:                  'bold #008800',
         Token.Prompt.ISearch.Bracket:  'bold #440000',
         Token.Prompt.ISearch:          '#550000',
         Token.Prompt.ISearch.Backtick: 'bold #550033',
         Token.Prompt.ISearch.Text:     'bold',
+        Token.Prompt.ISearch.TextNoMatch: 'bg:#aa4444 #ffffff',
+
         Token.Prompt.SecondLinePrefix: 'bold #888888',
+        Token.Prompt.LineNumber:       '#bbbbbb',# #ffffff',
         Token.Prompt.ArgText:          'bold',
 
         Token.Toolbar:                 'bg:#222222 #aaaaaa',
         Token.Toolbar.Off:             'bg:#222222 #888888',
         Token.Toolbar.On:              'bg:#222222 #ffffff',
         Token.Toolbar.Mode:            'bg:#222222 #ffffaa',
+        Token.Toolbar.PythonVersion:   'bg:#222222 #ffffff bold',
 
         # Completion menu
         Token.CompletionMenu.CurrentCompletion: 'bg:#dddddd #000000',
-        Token.CompletionMenu.Completion:        'bg:#888888 #ffff88',
+        Token.CompletionMenu.Completion:        'bg:#888888 #ffffbb',
         Token.CompletionMenu.ProgressButton:    'bg:#000000',
         Token.CompletionMenu.ProgressBar:       'bg:#aaaaaa',
+
+        Token.WildMenu.Completion:              'bg:#dddddd #000000',
+        Token.WildMenu.CurrentCompletion:       'bg:#888888 #ffffbb',
+        Token.WildMenu:                         'bg:#dddddd',
+        Token.WildMenu.Arrow:                   'bg:#dddddd #888888',
 
         # Grayed
         Token.Aborted:                 '#aaaaaa',
@@ -74,39 +106,23 @@ class PythonStyle(Style):
     }
 
 
-class _PythonInputStreamHandlerMixin(object):
+class _PythonInputStreamHandlerMixin(object): # XXX: Don't use Mixins for this. There are better solutions.
     """
     Extensions to the input stream handler for custom 'enter' behaviour.
     """
     def F6(self):
-        """ Enable/Disable paste mode. """
+        """
+        Enable/Disable paste mode.
+        """
         self._line.paste_mode = not self._line.paste_mode
         if self._line.paste_mode:
             self._line.is_multiline = True
 
     def F7(self):
+        """
+        Enable/Disable multiline mode.
+        """
         self._line.is_multiline = not self._line.is_multiline
-
-    def _auto_enable_multiline(self):
-        """
-        (Temporarily) enable multiline when pressing enter.
-        When:
-        - We press [enter] after a color or backslash (line continuation).
-        - After unclosed brackets.
-        """
-        def is_empty_or_space(s):
-            return s == '' or s.isspace()
-        cursor_at_the_end = self._line.document.cursor_at_the_end
-
-        # If we just typed a colon, or still have open brackets, always insert a real newline.
-        if cursor_at_the_end and (self._line._colon_before_cursor() or
-                                  self._line._has_unclosed_brackets()):
-            self._line.is_multiline = True
-
-        # If the character before the cursor is a backslash (line continuation
-        # char), insert a new line.
-        elif cursor_at_the_end and (self._line.document.text_before_cursor[-1:] == '\\'):
-            self._line.is_multiline = True
 
     def tab(self):
         # When the 'tab' key is pressed with only whitespace character before the
@@ -124,6 +140,28 @@ class _PythonInputStreamHandlerMixin(object):
     def enter(self):
         self._auto_enable_multiline()
         super(_PythonInputStreamHandlerMixin, self).enter()
+
+    def _auto_enable_multiline(self):
+        """
+        (Temporarily) enable multiline when pressing enter.
+        When:
+        - We press [enter] after a color or backslash (line continuation).
+        - After unclosed brackets.
+        """
+        def is_empty_or_space(s):
+            return s == '' or s.isspace()
+        cursor_at_the_end = self._line.document.cursor_at_the_end
+
+        # If we just typed a colon, or still have open brackets, always insert a real newline.
+        if cursor_at_the_end and (self._line._colon_before_cursor() or
+                                  self._line._has_unclosed_brackets() or
+                                  self._line._starting_with_at()):
+            self._line.is_multiline = True
+
+        # If the character before the cursor is a backslash (line continuation
+        # char), insert a new line.
+        elif cursor_at_the_end and (self._line.document.text_before_cursor[-1:] == '\\'):
+            self._line.is_multiline = True
 
 
 class PythonViInputStreamHandler(_PythonInputStreamHandlerMixin, ViInputStreamHandler):
@@ -157,6 +195,10 @@ class PythonLine(Line):
 
     def _colon_before_cursor(self):
         return self.document.text_before_cursor[-1:] == ':'
+
+    def _starting_with_at(self):
+        """ True when the line starts with a decorator. """
+        return self.text.startswith('@')
 
     def _has_unclosed_brackets(self):
         """ Starting at the end of the string. If we find an opening bracket
@@ -245,25 +287,24 @@ class PythonLine(Line):
 
 
 class PythonPrompt(Prompt):
-    def __init__(self, line, code, pythonline):
-        super(PythonPrompt, self).__init__(line, code)
+    input_processors = [ BracketsMismatchProcessor() ]
+
+    def __init__(self, render_context, pythonline):
+        super(PythonPrompt, self).__init__(render_context)
         self._pythonline = pythonline
 
     @property
-    def _prefix(self):
-        return (Token.Prompt, 'In [%s]' % self._pythonline.current_statement_index)
+    def tokens_before_input(self):
+        return [(Token.Prompt, 'In [%s]: ' % self._pythonline.current_statement_index)]
 
-    def get_default_prompt(self):
-        yield self._prefix
-        yield (Token.Prompt, ': ')
+    @property
+    def completion_menu(self):
+        style = self._pythonline.autocompletion_style
 
-    def get_isearch_prompt(self):
-        yield self._prefix
-        yield (Token.Prompt, ': ')
-
-    def get_arg_prompt(self):
-        yield self._prefix
-        yield (Token.Prompt, ': ')
+        if style == AutoCompletionStyle.POPUP_MENU:
+            return PopupCompletionMenu()
+        elif style == AutoCompletionStyle.HORIZONTAL_MENU:
+            return HorizontalCompletionMenu()
 
     def get_help_tokens(self):
         """
@@ -273,15 +314,14 @@ class PythonPrompt(Prompt):
         result.append((Token, '\n'))
 
         if self.line.mode == LineMode.INCREMENTAL_SEARCH:
-            result.extend(list(super(PythonPrompt, self).get_isearch_prompt()))
+            result.extend(self.isearch_prompt)
         elif self.line._arg_prompt_text:
-            result.extend(list(super(PythonPrompt, self).get_arg_prompt()))
+            result.extend(self.arg_prompt)
         elif self.line.validation_error:
             result.extend(self._get_error_tokens())
         else:
             result.extend(self._get_signature_tokens())
 
-        result.extend(self._get_toolbar_tokens())
         return result
 
     def _get_signature_tokens(self):
@@ -306,6 +346,11 @@ class PythonPrompt(Prompt):
             result.pop() # Pop last comma
             append((Signature.Operator, ')'))
 
+        append((Signature, ' \n'))
+                            # Note the space before the newline.
+                            # This is to make sure that this line gets at least
+                            # some content in the screen, so that we don't put
+                            # the toolbar here already.
         return result
 
     def _get_error_tokens(self):
@@ -318,63 +363,94 @@ class PythonPrompt(Prompt):
         else:
             return []
 
-    def _get_toolbar_tokens(self):
-        result = []
-        append = result.append
-        TB = Token.Toolbar
+    def create_left_input_margin(self, screen, row):
+        prompt_width = len(TokenList(self.tokens_before_input))
 
-        append((Token, '\n  '))
-        append((TB, '  '))
+        text = '%i. ' % (row + 1)
+        text = ' ' * (prompt_width - len(text)) + text
 
-        # Mode
-        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
-            append((TB.Mode, '(SEARCH)'))
-            append((TB, '  '))
-        elif self._pythonline.vi_mode:
-            mode = self._pythonline._inputstream_handler._vi_mode
-            if mode == ViMode.NAVIGATION:
-                append((TB.Mode, '(NAV)'))
-                append((TB, '     '))
-            elif mode == ViMode.INSERT:
-                append((TB.Mode, '(INSERT)'))
-                append((TB, '  '))
-            elif mode == ViMode.REPLACE:
-                append((TB.Mode, '(REPLACE)'))
-                append((TB, ' '))
+        screen.write_highlighted([
+            (Token.Prompt.LineNumber, text)
+        ])
 
-            if self._pythonline._inputstream_handler.is_recording_macro:
-                append((TB.Mode, 'recording'))
-                append((TB, ' '))
+    def write_after_input(self, screen):
+        screen.write_highlighted(list(self.get_help_tokens()))
 
-        else:
-            append((TB.Mode, '(emacs)'))
+    def write_to_screen(self, screen, last_screen_height):
+        super(PythonPrompt, self).write_to_screen(screen, last_screen_height)
+        self.write_toolbar(screen, last_screen_height)
+
+    def write_toolbar(self, screen, last_screen_height):
+        if not (self.render_context.accept or self.render_context.abort):
+            # Draw the menu at the bottom position.
+            screen._y = max(screen.current_height, last_screen_height - 1)
+
+            result = TokenList()
+            append = result.append
+            TB = Token.Toolbar
+
             append((TB, ' '))
 
-        # Position in history.
-        result.append((TB, '%i/%i ' % (self.line._working_index + 1, len(self.line._working_lines))))
+            # Mode
+            if self.line.mode == LineMode.INCREMENTAL_SEARCH:
+                append((TB.Mode, '(SEARCH)'))
+                append((TB, '  '))
+            elif self._pythonline.vi_mode:
+                mode = self._pythonline._inputstream_handler._vi_mode
+                if mode == ViMode.NAVIGATION:
+                    append((TB.Mode, '(NAV)'))
+                    append((TB, '     '))
+                elif mode == ViMode.INSERT:
+                    append((TB.Mode, '(INSERT)'))
+                    append((TB, '  '))
+                elif mode == ViMode.REPLACE:
+                    append((TB.Mode, '(REPLACE)'))
+                    append((TB, ' '))
 
-        # Shortcuts.
-        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
-            append((TB, '[Ctrl-G] Cancel search'))
-        else:
-            if self.line.paste_mode:
-                append((TB.On, '[F6] Paste mode (on)  '))
+                if self._pythonline._inputstream_handler.is_recording_macro:
+                    append((TB.Mode, 'recording'))
+                    append((TB, ' '))
+
             else:
-                append((TB.Off, '[F6] Paste mode (off) '))
+                append((TB.Mode, '(emacs)'))
+                append((TB, ' '))
 
-            if self.line.is_multiline:
-                append((TB.On, '[F7] Multiline (on)  '))
+            # Position in history.
+            append((TB, '%i/%i ' % (self.line._working_index + 1, len(self.line._working_lines))))
+
+            # Shortcuts.
+            if self.line.mode == LineMode.INCREMENTAL_SEARCH:
+                append((TB, '[Ctrl-G] Cancel search'))
             else:
-                append((TB.Off, '[F7] Multiline (off) '))
+                if self.line.paste_mode:
+                    append((TB.On, '[F6] Paste mode (on)  '))
+                else:
+                    append((TB.Off, '[F6] Paste mode (off) '))
 
-            if self.line.is_multiline:
-                append((TB, '[Meta+Enter] Execute'))
+                if self.line.is_multiline:
+                    append((TB.On, '[F7] Multiline (on)'))
+                else:
+                    append((TB.Off, '[F7] Multiline (off)'))
+
+                if self.line.is_multiline:
+                    append((TB, ' [Meta+Enter] Execute'))
+
+                # Python version
+                version = sys.version_info
+                append((TB, ' - '))
+                append((TB.PythonVersion, 'Python %i.%i.%i' % (version.major, version.minor, version.micro)))
+
+            # Adjust toolbar width.
+            if len(result) > screen.columns:
+                # Trim toolbar
+                result = result[:screen.columns - 3]
+                result.append((TB, ' > '))
             else:
-                append((TB, '                    '))
+                # Extend toolbar until the page width.
+                result.append((TB, ' ' * (screen.columns - len(result))))
 
-        append((TB, '  '))
-
-        return result
+            screen.write_highlighted([(Token, '\n')])
+            screen.write_highlighted(result)
 
 
 class PythonCode(Code):
@@ -390,37 +466,10 @@ class PythonCode(Code):
         try:
             compile(self.text, '<input>', 'exec')
         except SyntaxError as e:
-            raise ValidationError(e.lineno - 1, e.offset - 1, 'Syntax Error')
-
-    def _get_tokens(self):
-        """ Overwrite parent function, to change token types of non-matching
-        brackets to Token.Error for highlighting. """
-        result = super(PythonCode, self)._get_tokens()
-
-        stack = [] # Pointers to the result array
-
-        for index, (token, text) in enumerate(result):
-            top = result[stack[-1]][1] if stack else ''
-
-            if text in '({[]})':
-                if text in '({[':
-                    # Put open bracket on the stack
-                    stack.append(index)
-
-                elif (text == ')' and top == '(' or
-                      text == '}' and top == '{' or
-                      text == ']' and top == '['):
-                    # Match found
-                    stack.pop()
-                else:
-                    # No match for closing bracket.
-                    result[index] = (Token.Error, text)
-
-        # Highlight unclosed tags that are still on the stack.
-        for index in stack:
-            result[index] = (Token.Error, result[index][1])
-
-        return result
+            # Note, the 'or 1' for offset is required because Python 2.7
+            # gives `None` as offset in case of '4=4' as input. (Looks like
+            # fixed in Python 3.)
+            raise ValidationError(e.lineno - 1, (e.offset or 1) - 1, 'Syntax Error')
 
     def _get_jedi_script(self):
         try:
@@ -444,6 +493,7 @@ class PythonCode(Code):
 
         if script:
             for c in script.completions():
+                #yield Completion('%s %s|%s' % (c.name, c.module_name, c.full_name), c.complete)
                 yield Completion(c.name, c.complete)
 
 
@@ -451,6 +501,24 @@ class PythonCommandLine(CommandLine):
     line_factory = PythonLine
 
     enable_concurency = True
+
+    def __init__(self, globals=None, locals=None, vi_mode=False, stdin=None, stdout=None, history_filename=None,
+                    style=PythonStyle, autocompletion_style=AutoCompletionStyle.POPUP_MENU):
+
+        self.globals = globals or {}
+        self.globals.update({k: getattr(__builtins__, k) for k in dir(__builtins__)})
+        self.locals = locals or {}
+        self.history_filename = history_filename
+        self.style = style
+        self.autocompletion_style = autocompletion_style
+
+        self.vi_mode = vi_mode
+        self.get_signatures_thread_running = False
+
+        #: Incremeting integer counting the current statement.
+        self.current_statement_index = 1
+
+        super(PythonCommandLine, self).__init__(stdin=stdin, stdout=stdout)
 
     def history_factory(self):
         if self.history_filename:
@@ -465,30 +533,15 @@ class PythonCommandLine(CommandLine):
         else:
             return PythonEmacsInputStreamHandler
 
-    def prompt_factory(self, line, code):
+    def prompt_factory(self, render_context):
         # The `PythonPrompt` class needs a reference back in order to show the
         # input method.
-        return PythonPrompt(line, code, self)
+        return PythonPrompt(render_context, self)
 
     def code_factory(self, document):
         # The `PythonCode` needs a reference back to this class in order to do
         # autocompletion on the globals/locals.
         return PythonCode(document, self.globals, self.locals)
-
-    def __init__(self, globals=None, locals=None, vi_mode=False, stdin=None, stdout=None, history_filename=None, style=PythonStyle):
-        self.globals = globals or {}
-        self.globals.update({ k: getattr(__builtins__, k) for k in dir(__builtins__) })
-        self.locals = locals or {}
-        self.history_filename = history_filename
-        self.style = style
-
-        self.vi_mode = vi_mode
-        self.get_signatures_thread_running = False
-
-        #: Incremeting integer counting the current statement.
-        self.current_statement_index = 1
-
-        super(PythonCommandLine, self).__init__(stdin=stdin, stdout=stdout)
 
     def on_input_timeout(self, code_obj):
         """
@@ -509,6 +562,10 @@ class PythonCommandLine(CommandLine):
                     signatures = script.call_signatures()
                 except ValueError:
                     # e.g. in case of an invalid \x escape.
+                    signatures = []
+                except Exception:
+                    # Sometimes we still get an exception (TypeError), because
+                    # of probably bugs in jedi. We can silence them.
                     signatures = []
             else:
                 signatures = []
