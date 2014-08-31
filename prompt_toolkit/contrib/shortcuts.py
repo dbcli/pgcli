@@ -24,9 +24,9 @@ def get_input(message, raise_exception_on_abort=False, multiline=False):
 
 
     class CLI(CommandLine):
-        prompt_cls = CustomPrompt
-        inputstream_handler_cls = EmacsInputStreamHandler
-        line_cls = CustomLine
+        prompt_factory = CustomPrompt
+        inputstream_handler_factory = EmacsInputStreamHandler
+        line_factory = CustomLine
 
 
     cli = CLI()

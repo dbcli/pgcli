@@ -53,33 +53,31 @@ class CommandLine(object):
     """
     Wrapper around all the other classes, tying everything together.
     """
-            # TODO: rename `_cls` suffixes to `_factory`
-
     #: The `Line` class which implements the text manipulation.
-    line_cls = Line
+    line_factory = Line
 
     #: A `Code` class which implements the interpretation of the input string.
     #: It tokenizes/parses the input text.
-    code_cls = Code
+    code_factory = Code
 
     #: `Prompt` class for the layout of the prompt. (and the help text.)
-    prompt_cls = Prompt
+    prompt_factory = Prompt
 
     #: `InputStream` class for the parser of the input
     #: (Normally, you don't override this one.)
-    inputstream_cls = InputStream
+    inputstream_factory = InputStream
 
     #: `InputStreamHandler` class for the keybindings.
-    inputstream_handler_cls = InputStreamHandler
+    inputstream_handler_factory = InputStreamHandler
 
     #: `Renderer` class.
-    renderer_cls = Renderer
-
-    #: `pygments.style.Style` class for the syntax highlighting.
-    style_cls = DefaultStyle
+    renderer_factory = Renderer
 
     #: `History` class.
-    history_cls = History
+    history_factory = History
+
+    #: `pygments.style.Style` class for the syntax highlighting.
+    style = DefaultStyle
 
     #: Boolean to indicate whether we will have other threads communicating
     #: with the input event loop.
@@ -98,12 +96,12 @@ class CommandLine(object):
         if not six.PY3:
             self.stdin = codecs.getreader('utf-8')(sys.stdin)
 
-        self._line = self.line_cls(
-                        code_cls=self.code_cls, prompt_cls=self.prompt_cls,
-                        history_cls=self.history_cls)
-        self._inputstream_handler = self.inputstream_handler_cls(self._line)
+        self._line = self.line_factory(
+                        code_factory=self.code_factory, prompt_factory=self.prompt_factory,
+                        history_factory=self.history_factory)
+        self._inputstream_handler = self.inputstream_handler_factory(self._line)
 
-        self._renderer = self.renderer_cls(self.stdout, style=self.style_cls)
+        self._renderer = self.renderer_factory(self.stdout, style=self.style)
 
         # Pipe for inter thread communication.
         self._redraw_pipe = None
@@ -209,7 +207,7 @@ class CommandLine(object):
                 # Make the read-end of this pipe non blocking.
                 fcntl.fcntl(self._redraw_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
 
-            stream = self.inputstream_cls(self._inputstream_handler, stdout=self.stdout)
+            stream = self.inputstream_factory(self._inputstream_handler, stdout=self.stdout)
 
             def reset_line():
                 # Reset line

@@ -142,8 +142,8 @@ class Line(object):
     also implements the history, undo stack, reverse search and the completion
     state.
 
-    :attr code_cls: :class:`~prompt_toolkit.code.CodeBase` class.
-    :attr prompt_cls: :class:`~prompt_toolkit.prompt.PromptBase` class.
+    :attr code_factory: :class:`~prompt_toolkit.code.CodeBase` class.
+    :attr prompt_factory: :class:`~prompt_toolkit.prompt.PromptBase` class.
     :attr history: :class:`~prompt_toolkit.history.History` instance.
     """
     #: Boolean to indicate whether we should consider this line a multiline input.
@@ -151,12 +151,12 @@ class Line(object):
     #: (Instead of accepting the input.)
     is_multiline = False
 
-    def __init__(self, code_cls=Code, prompt_cls=Prompt, history_cls=History):
-        self.code_cls = code_cls
-        self.prompt_cls = prompt_cls
+    def __init__(self, code_factory=Code, prompt_factory=Prompt, history_factory=History):
+        self.code_factory = code_factory
+        self.prompt_factory = prompt_factory
 
         #: The command line history.
-        self._history = history_cls()
+        self._history = history_factory()
 
         self._clipboard = ClipboardData()
 
@@ -583,7 +583,7 @@ class Line(object):
         """
         Create `Code` instance from the current input.
         """
-        return self.code_cls(self.document)
+        return self.code_factory(self.document)
 
     @_to_mode(LineMode.NORMAL)
     def list_completions(self):
@@ -685,7 +685,7 @@ class Line(object):
         """
         if self.mode == LineMode.INCREMENTAL_SEARCH:
             # In case of reverse search, render reverse search prompt.
-            code = self.code_cls(self.document)
+            code = self.code_factory(self.document)
 
             if self.document.has_match_at_current_position(self.isearch_state.isearch_text):
                 highlight_regions = [
@@ -699,7 +699,7 @@ class Line(object):
             highlight_regions = [ ]
 
         # Complete state
-        prompt = self.prompt_cls(self, code)
+        prompt = self.prompt_factory(self, code)
         if self.mode == LineMode.COMPLETE and not _abort and not _accept:
             complete_state = self.complete_state
         else:

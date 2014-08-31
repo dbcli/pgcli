@@ -16,7 +16,7 @@ from prompt_toolkit.contrib.shell.rules import Any, Sequence, Literal, Variable,
 from prompt_toolkit.line import Exit
 from prompt_toolkit.prompt import Prompt
 
-from prompt_toolkit.contrib.repl import PythonCode
+from prompt_toolkit.contrib.python_input import PythonCode
 
 
 class PdbCode(ShellCode):
@@ -237,15 +237,15 @@ class PdbStyle(Style):
 
 
 class PdbCommandLine(CommandLine):
-    code_cls = PythonOrPdbCode
-    prompt_cls = PdbOrPythonprompt
+    code_factory = PythonOrPdbCode
+    prompt_factory = PdbOrPythonprompt
 
 #    # <<
-#    code_cls = PdbCode
-#    prompt_cls = PdbPrompt
+#    code_factory = PdbCode
+#    prompt_factory = PdbPrompt
 #    # >>
 
-    style_cls = PdbStyle
+    style = PdbStyle
 
 
 if __name__ == '__main__':

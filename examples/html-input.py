@@ -10,7 +10,7 @@ from prompt_toolkit.prompt import Prompt
 
 
 class HtmlCode(Code):
-    lexer_cls = HtmlLexer
+    lexer = HtmlLexer
 
 
 class HtmlPrompt(Prompt):
@@ -18,8 +18,8 @@ class HtmlPrompt(Prompt):
 
 
 class HtmlCommandLine(CommandLine):
-    code_cls = HtmlCode
-    prompt_cls = HtmlPrompt
+    code_factory = HtmlCode
+    prompt_factory = HtmlPrompt
 
 
 

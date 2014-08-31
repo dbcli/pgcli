@@ -101,5 +101,5 @@ def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_co
     :param vi_mode: Boolean. Use Vi instead of Emacs key bindings.
     """
     cli = PythonRepl(globals, locals, vi_mode=vi_mode, history_filename=history_filename,
-            style_cls=(None if no_colors else PythonStyle))
+            style=(None if no_colors else PythonStyle))
     cli.start_repl()

@@ -73,7 +73,7 @@ class Code(CodeBase):
     :attr document: :class:`~prompt_toolkit.line.Document`
     """
     #: The pygments Lexer class to use.
-    lexer_cls = None
+    lexer = None
 
     def __init__(self, document):
         super(Code, self).__init__(document)
@@ -82,8 +82,8 @@ class Code(CodeBase):
     @property
     def _lexer(self):
         """ Return lexer instance. """
-        if self.lexer_cls:
-            return self.lexer_cls(
+        if self.lexer:
+            return self.lexer(
                     stripnl=False,
                     stripall=False,
                     ensurenl=False)

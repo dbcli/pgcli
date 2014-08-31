@@ -18,7 +18,7 @@ class ClockPrompt(Prompt):
 
 
 class ClockCommandLine(CommandLine):
-    prompt_cls = ClockPrompt
+    prompt_factory = ClockPrompt
     enable_concurency = True
 
     def on_read_input_start(self):

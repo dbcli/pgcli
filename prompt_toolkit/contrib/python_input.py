@@ -378,7 +378,7 @@ class PythonPrompt(Prompt):
 
 
 class PythonCode(Code):
-    lexer_cls = PythonLexer
+    lexer = PythonLexer
 
     def __init__(self, document, globals, locals):
         self._globals = globals
@@ -448,39 +448,39 @@ class PythonCode(Code):
 
 
 class PythonCommandLine(CommandLine):
-    line_cls = PythonLine
+    line_factory = PythonLine
 
     enable_concurency = True
 
-    def history_cls(self):
+    def history_factory(self):
         if self.history_filename:
             return FileHistory(self.history_filename)
         else:
             return History()
 
     @property
-    def inputstream_handler_cls(self):
+    def inputstream_handler_factory(self):
         if self.vi_mode:
             return PythonViInputStreamHandler
         else:
             return PythonEmacsInputStreamHandler
 
-    def prompt_cls(self, line, code):
+    def prompt_factory(self, line, code):
         # The `PythonPrompt` class needs a reference back in order to show the
         # input method.
         return PythonPrompt(line, code, self)
 
-    def code_cls(self, document):
+    def code_factory(self, document):
         # The `PythonCode` needs a reference back to this class in order to do
         # autocompletion on the globals/locals.
         return PythonCode(document, self.globals, self.locals)
 
-    def __init__(self, globals=None, locals=None, vi_mode=False, stdin=None, stdout=None, history_filename=None, style_cls=PythonStyle):
+    def __init__(self, globals=None, locals=None, vi_mode=False, stdin=None, stdout=None, history_filename=None, style=PythonStyle):
         self.globals = globals or {}
         self.globals.update({ k: getattr(__builtins__, k) for k in dir(__builtins__) })
         self.locals = locals or {}
         self.history_filename = history_filename
-        self.style_cls = style_cls
+        self.style = style
 
         self.vi_mode = vi_mode
         self.get_signatures_thread_running = False

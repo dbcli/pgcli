@@ -32,7 +32,7 @@ class IPythonCode(PythonCode):
         self._magics_manager = magics_manager
 
     @property
-    def lexer_cls(self):
+    def lexer_factory(self):
         if self.text.lstrip().startswith('!'):
             return BashLexer
         elif self.text.rstrip().endswith('?'):
@@ -85,10 +85,10 @@ class IPythonCommandLine(PythonCommandLine):
         super(IPythonCommandLine, self).__init__(*a, **kw)
         self._ipython_shell = ipython_shell
 
-    def prompt_cls(self, line, code):
+    def prompt_factory(self, line, code):
         return IPythonPrompt(line, code, self)
 
-    def code_cls(self, document):
+    def code_factory(self, document):
         return IPythonCode(document, self.globals, self.locals, self._ipython_shell.magics_manager)
 
 
