@@ -26,7 +26,7 @@ import threading
 from .code import Code
 from .inputstream import InputStream
 from .inputstream_handler import InputStreamHandler
-from .line import Line, Exit, ReturnInput, Abort
+from .line import Line, Exit, ClearScreen, ReturnInput, Abort, ListCompletions
 from .prompt import Prompt
 from .renderer import Renderer
 from .utils import raw_mode, call_on_sigwinch
@@ -58,7 +58,7 @@ class CommandLine(object):
     #: The `Line` class which implements the text manipulation.
     line_cls = Line
 
-    #: A `Code` class which implements the interpretation of the text input.
+    #: A `Code` class which implements the interpretation of the input string.
     #: It tokenizes/parses the input text.
     code_cls = Code
 
@@ -98,11 +98,12 @@ class CommandLine(object):
         if not six.PY3:
             self.stdin = codecs.getreader('utf-8')(sys.stdin)
 
-        self._renderer = self.renderer_cls(self.stdout, style=self.style_cls)
-        self._line = self.line_cls(renderer=self._renderer,
+        self._line = self.line_cls(
                         code_cls=self.code_cls, prompt_cls=self.prompt_cls,
                         history_cls=self.history_cls)
         self._inputstream_handler = self.inputstream_handler_cls(self._line)
+
+        self._renderer = self.renderer_cls(self.stdout, style=self.style_cls)
 
         # Pipe for inter thread communication.
         self._redraw_pipe = None
@@ -208,10 +209,6 @@ class CommandLine(object):
                 # Make the read-end of this pipe non blocking.
                 fcntl.fcntl(self._redraw_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
 
-            # TODO: create renderer here. (We want a new rendere instance for each input.)
-            #       `_line` should not need the renderer instance...
-            #       (use exceptions there to print completion pagers.)
-
             stream = self.inputstream_cls(self._inputstream_handler, stdout=self.stdout)
 
             def reset_line():
@@ -239,6 +236,12 @@ class CommandLine(object):
                                 # Feed one character at a time. Feeding can cause the
                                 # `Line` object to raise Exit/Abort/ReturnInput
                                 stream.feed(c)
+
+                            except ClearScreen:
+                                self._renderer.clear()
+
+                            except ListCompletions as e:
+                                self._renderer.render_completions(e.completions)
 
                             except Exit as e:
                                 # Handle exit.
@@ -268,10 +271,7 @@ class CommandLine(object):
                                 self._renderer.render(input.render_context)
                                 return input.document
 
-                        # TODO: completions should be 'rendered' as well through an exception.
-
                         # Now render the current prompt to the output.
-                        # TODO: unless `select` tells us that there's another character to feed.
                         self._redraw()
 
         finally:

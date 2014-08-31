@@ -24,6 +24,7 @@ __all__ = (
         'Exit',
         'ReturnInput',
         'Abort',
+        'ClearScreen',
 )
 
 class Exit(Exception):
@@ -40,6 +41,16 @@ class ReturnInput(Exception):
 class Abort(Exception):
     def __init__(self, render_context):
         self.render_context = render_context
+
+
+class ClearScreen(Exception):
+    pass
+
+
+class ListCompletions(Exception):
+    def __init__(self, render_context, completions):
+        self.render_context = render_context
+        self.completions = completions
 
 
 class ClipboardDataType(object):
@@ -140,8 +151,7 @@ class Line(object):
     #: (Instead of accepting the input.)
     is_multiline = False
 
-    def __init__(self, renderer=None, code_cls=Code, prompt_cls=Prompt, history_cls=History):
-        self.renderer = renderer
+    def __init__(self, code_cls=Code, prompt_cls=Prompt, history_cls=History):
         self.code_cls = code_cls
         self.prompt_cls = prompt_cls
 
@@ -169,7 +179,7 @@ class Line(object):
         self.isearch_state = None
 
         # State of complete browser
-        self.complete_state = None
+        self.complete_state = None # For interactive completion through Ctrl-N/Ctrl-P.
 
         # Undo stack
         self._undo_stack = [] # Stack of (text, cursor_position)
@@ -582,8 +592,8 @@ class Line(object):
         """
         results = list(self.create_code_obj().get_completions())
 
-        if results and self.renderer:
-            self.renderer.render_completions(results)
+        if results:
+            raise ListCompletions(self.get_render_context(), results)
 
     @_to_mode(LineMode.NORMAL)
     def complete(self): # TODO: rename to complete_common
@@ -939,10 +949,9 @@ class Line(object):
     @_to_mode(LineMode.NORMAL)
     def clear(self):
         """
-        Clear renderer screen, usually as a result of Ctrl-L.
+        Clear screen, usually as a result of Ctrl-L.
         """
-        if self.renderer:
-            self.renderer.clear()
+        raise ClearScreen()
 
     @_to_mode(LineMode.NORMAL)
     def open_in_editor(self):
