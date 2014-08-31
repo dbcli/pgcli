@@ -222,6 +222,9 @@ class Document(object):
         if index >= 0:
             return index - len(before_cursor)
 
+    def get_word_before_cursor(self):
+        return self.text_before_cursor[self.find_start_of_previous_word():]
+
     def find_start_of_previous_word(self):
         """
         Return an index relative to the cursor position pointing to the start
