@@ -1,11 +1,30 @@
 #!/usr/bin/env python
 """
-Run IPython with the `prompt_toolkit` input shell.
+ptipython: IPython interactive shell with the `prompt_toolkit` front-end.
+Usage:
+    ptpython [ --vi ] [( --history FILENAME )] [ --no-colors ]
+    ptpython -h | --help
+
+Options:
+    --vi               : Use Vi keybindings instead of Emacs bindings.
 """
+import docopt
+import os
+
+
 from prompt_toolkit.contrib.ipython import embed
 
 def _run_ipython():
-    embed()
+    a = docopt.docopt(__doc__)
+
+    vi_mode = bool(a['--vi'])
+
+    if a['FILENAME']:
+        history_filename = os.path.expanduser(a['FILENAME'])
+    else:
+        history_filename = os.path.expanduser('~/.ptpython_history')
+
+    embed(vi_mode=vi_mode, history_filename=history_filename)
 
 if __name__ == '__main__':
     _run_ipython()
