@@ -10,7 +10,7 @@ offer.
 """
 from prompt_toolkit import AbortAction
 from prompt_toolkit.code import Completion
-from prompt_toolkit.contrib.python_input import PythonCommandLine, PythonPrompt, PythonCommandLine, PythonCode
+from prompt_toolkit.contrib.python_input import PythonCommandLine, PythonPrompt, PythonCommandLine, PythonCode, AutoCompletionStyle
 from prompt_toolkit.line import Exit
 
 from IPython.terminal.embed import InteractiveShellEmbed as _InteractiveShellEmbed
@@ -100,10 +100,12 @@ class InteractiveShellEmbed(_InteractiveShellEmbed):
     def __init__(self, *a, **kw):
         vi_mode = kw.pop('vi_mode', False)
         history_filename = kw.pop('history_filename', None)
+        autocompletion_style = kw.pop('autocompletion_style', AutoCompletionStyle.POPUP_MENU)
 
         super(InteractiveShellEmbed, self).__init__(*a, **kw)
 
-        self._cli = IPythonCommandLine(self, vi_mode=vi_mode, history_filename=history_filename)
+        self._cli = IPythonCommandLine(self, vi_mode=vi_mode,
+                        history_filename=history_filename, autocompletion_style=autocompletion_style)
 
     def raw_input(self, prompt=''):
         print('')

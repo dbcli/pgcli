@@ -18,6 +18,7 @@ import os
 from prompt_toolkit.contrib.repl import embed
 from prompt_toolkit.contrib.python_input import AutoCompletionStyle
 
+
 def _run_repl():
     a = docopt.docopt(__doc__)
 
