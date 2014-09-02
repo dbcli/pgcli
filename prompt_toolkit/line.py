@@ -692,19 +692,19 @@ class Line(object):
         """
         Return a `RenderContext` object, to pass the current state to the renderer.
         """
+        highlighted_characters = { }
+        code = self.create_code_obj()
+
         if self.mode == LineMode.INCREMENTAL_SEARCH:
-            # In case of reverse search, render reverse search prompt.
-            code = self.code_factory(self.document)
+            # In case of reverse search, highlight all matches.
+            for index in self.document.find_all(self.isearch_state.isearch_text):
+                if index == self.cursor_position:
+                    token = Token.IncrementalSearchMatch.Current
+                else:
+                    token = Token.IncrementalSearchMatch
 
-            if self.document.has_match_at_current_position(self.isearch_state.isearch_text):
-                highlighted_characters = { x: Token.IncrementalSearchMatch for x in
-                        range(self.cursor_position, self.cursor_position + len(self.isearch_state.isearch_text)) }
-            else:
-                highlighted_characters = { }
-
-        else:
-            code = self.create_code_obj()
-            highlighted_characters = { }
+                highlighted_characters.update({
+                        x: token for x in range(index, index + len(self.isearch_state.isearch_text)) })
 
         # Complete state
         if self.mode == LineMode.COMPLETE and not _abort and not _accept:
@@ -767,6 +767,7 @@ class Line(object):
         """
         if self.mode == LineMode.INCREMENTAL_SEARCH:
             self.isearch_state.isearch_text += data
+
 
             if not self.document.has_match_at_current_position(self.isearch_state.isearch_text):
                 found = self.search_next(self.isearch_state.isearch_direction)

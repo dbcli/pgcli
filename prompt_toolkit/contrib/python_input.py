@@ -66,7 +66,8 @@ class PythonStyle(Style):
         Token.Bash:                    '#333333',
         Token.IPython:                 '#660066',
 
-        Token.IncrementalSearchMatch:  '#ffffff bg:#222222',
+        Token.IncrementalSearchMatch:         '#ffffff bg:#4444aa',
+        Token.IncrementalSearchMatch.Current: '#ffffff bg:#44aa44',
 
         # Signature highlighting.
         Token.Signature:               '#888888',

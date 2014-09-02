@@ -207,6 +207,13 @@ class Document(object):
                 index += 1
             return index
 
+    def find_all(self, sub):
+        """
+        Find all occurances of the substring. Return a list of absolute
+        positions in the document.
+        """
+        return [a.start() for a in re.finditer(re.escape(sub), self.text)]
+
     def find_backwards(self, sub, in_current_line=False):
         """
         Find `text` before the cursor, return position relative to the cursor
