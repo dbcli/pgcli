@@ -75,11 +75,9 @@ class PythonStyle(Style):
         Token.Signature.CurrentName:   'bold underline #888888',
 
         # Highlighting for the reverse-search prompt.
-        Token.Prompt:                  'bold #008800',
-        Token.Prompt.ISearch.Bracket:  'bold #440000',
-        Token.Prompt.ISearch:          '#550000',
-        Token.Prompt.ISearch.Backtick: 'bold #550033',
-        Token.Prompt.ISearch.Text:     'bold',
+        Token.Prompt:                     'bold #008800',
+        Token.Prompt.ISearch:             'bold noinherit',
+        Token.Prompt.ISearch.Text:        'bold',
         Token.Prompt.ISearch.TextNoMatch: 'bg:#aa4444 #ffffff',
 
         Token.Prompt.SecondLinePrefix: 'bold #888888',

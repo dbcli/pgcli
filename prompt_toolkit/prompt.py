@@ -245,12 +245,7 @@ class ISearchComposer(object):
         else:
             text = 'i-search'
 
-        return [
-            (Token.Prompt.ISearch.Bracket, '('),
-            (Token.Prompt.ISearch, text),
-            (Token.Prompt.ISearch.Bracket, ')'),
-            (Token.Prompt.ISearch.Backtick, '`'),
-        ]
+        return [(Token.Prompt.ISearch, '(%s)`' % text)]
 
     @property
     def text(self):
@@ -267,10 +262,7 @@ class ISearchComposer(object):
 
     @property
     def after(self):
-        return [
-            (Token.Prompt.ISearch.Backtick, '`'),
-            (Token.Prompt.ISearch.Backtick, ': ')
-        ]
+        return [(Token.Prompt.ISearch, '`: ')]
 
     def get_tokens(self):
         return self.before + self.text + self.after
