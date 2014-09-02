@@ -169,12 +169,7 @@ class CommandLine(object):
             r, w, x = _select([self.stdin, self._redraw_pipe[0]], [], [], timeout)
 
             if self.stdin in r:
-                # Read the input and return it.
-                # Note: the following works better than wrapping `self.stdin` like
-                #       `codecs.getreader('utf-8')(stdin)` and doing `read(1)`.
-                #       Somehow that causes some latency when the escape
-                #       character is pressed.
-                return os.read(self.stdin.fileno(), 1024).decode('utf-8')
+                return self._read_from_stdin()
 
             # If we receive something on our redraw pipe, render again.
             elif self._redraw_pipe[0] in r:
@@ -187,6 +182,15 @@ class CommandLine(object):
                 self.on_input_timeout(self._line.create_code_obj())
                 timeout = None
 
+    def _read_from_stdin(self):
+        """
+        Read the input and return it.
+        """
+        # Note: the following works better than wrapping `self.stdin` like
+        #       `codecs.getreader('utf-8')(stdin)` and doing `read(1)`.
+        #       Somehow that causes some latency when the escape
+        #       character is pressed. (Especially on combination with the `select`.
+        return os.read(self.stdin.fileno(), 1024).decode('utf-8')
 
     def read_input(self, initial_value='', on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
         """
@@ -229,7 +233,7 @@ class CommandLine(object):
                         if self.enable_concurency:
                             c = self._get_char_loop()
                         else:
-                            c = self.stdin.read(1)
+                            c = self._read_from_stdin()
 
                         # If we got a character, feed it to the input stream. If we
                         # got none, it means we got a repaint request.
