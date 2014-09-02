@@ -37,8 +37,8 @@ def _run_repl():
     if a['--autocompletion'] in (
                         AutoCompletionStyle.POPUP_MENU,
                         AutoCompletionStyle.HORIZONTAL_MENU,
-                        AutoCompletionStyle.TRADITIONAL,
-                        AutoCompletionStyle.EXTENDED_POPUP_MENU
+                        AutoCompletionStyle.EXTENDED_POPUP_MENU,
+                        AutoCompletionStyle.NONE
                     ):
         autocompletion_style = a['--autocompletion']
     else:

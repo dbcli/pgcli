@@ -114,6 +114,12 @@ class PopupCompletionMenu(object):
     """
     Helper for drawing the complete menu to the screen.
     """
+    current_completion_token = Token.CompletionMenu.CurrentCompletion
+    completion_token = Token.CompletionMenu.Completion
+
+    progress_button_token = Token.CompletionMenu.ProgressButton
+    progress_bar_token = Token.CompletionMenu.ProgressBar
+
     def __init__(self, max_height=5):
         self.max_height = max_height
 
@@ -130,7 +136,7 @@ class PopupCompletionMenu(object):
         x = max(0, x - 1) # XXX: Don't draw it in the right margin!!!...
 
         # Calculate width of completions menu.
-        menu_width = max(len(c.display) for c in complete_state.current_completions)
+        menu_width = self.get_menu_width(complete_state)
 
         # Decide which slice of completions to show.
         if len(completions) > self.max_height and (index or 0) > self.max_height / 2:
@@ -152,22 +158,32 @@ class PopupCompletionMenu(object):
 
         # Write completions to screen.
         for i, c in enumerate(completions[slice_from:slice_to]):
-            if i + slice_from == index:
-                token = Token.CompletionMenu.CurrentCompletion
-            else:
-                token = Token.CompletionMenu.Completion
+            is_current_completion = (i + slice_from == index)
 
             if is_scroll_button(i):
-                button = (Token.CompletionMenu.ProgressButton, ' ')
+                button_token = self.progress_button_token
             else:
-                button = (Token.CompletionMenu.ProgressBar, ' ')
+                button_token = self.progress_bar_token
 
-            screen.write_highlighted_at_pos(y+i, x, [
-                        (Token, ' '),
-                        (token, ' %%-%is ' % menu_width % c.display),
-                        button,
-                        (Token, ' '),
-                        ], z_index=10)
+            tokens = [(Token, ' ')] + \
+                     self.get_menu_item_tokens(c, is_current_completion, menu_width) + \
+                     [(button_token, ' '), (Token, ' ')]
+
+            screen.write_highlighted_at_pos(y+i, x, tokens, z_index=10)
+
+    def get_menu_width(self, complete_state):
+        """
+        Calculate the menu width. This is passed to `get_menu_item_tokens`.
+        """
+        return max(len(c.display) for c in complete_state.current_completions)
+
+    def get_menu_item_tokens(self, completion, is_current_completion, menu_width):
+        if is_current_completion:
+            token = self.current_completion_token
+        else:
+            token = self.completion_token
+
+        return [(token, ' %%-%is ' % menu_width % completion.display)]
 
 
 class PasswordProcessor(object):
