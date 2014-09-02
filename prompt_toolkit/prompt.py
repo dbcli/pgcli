@@ -11,6 +11,8 @@ __all__ = (
     'PopupCompletionMenu',
     'Prompt',
     'TokenList',
+    'PasswordProcessor',
+    'BracketsMismatchProcessor',
 )
 
 class TokenList(object):

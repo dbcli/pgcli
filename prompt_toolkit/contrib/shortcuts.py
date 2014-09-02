@@ -4,12 +4,12 @@ Useful shortcuts.
 from __future__ import unicode_literals
 
 from .. import CommandLine, AbortAction
-from ..prompt import Prompt
+from ..prompt import Prompt, PasswordProcessor
 from ..inputstream_handler import EmacsInputStreamHandler
 from ..line import Line
 
 
-def get_input(message, raise_exception_on_abort=False, multiline=False):
+def get_input(message, raise_exception_on_abort=False, multiline=False, is_password=False):
     """
     Replacement for `raw_input`.
     Ask for input, return the answer.
@@ -17,7 +17,7 @@ def get_input(message, raise_exception_on_abort=False, multiline=False):
     """
     class CustomPrompt(Prompt):
         prompt_text = message
-
+        input_processors = ([PasswordProcessor()] if is_password else [])
 
     class CustomLine(Line):
         is_multiline = multiline
