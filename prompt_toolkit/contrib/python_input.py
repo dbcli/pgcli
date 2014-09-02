@@ -181,6 +181,8 @@ class PythonLine(Line):
     """
     Custom `Line` class with some helper functions.
     """
+    tempfile_suffix = '.py'
+
     def reset(self, *a, **kw):
         super(PythonLine, self).reset(*a, **kw)
 

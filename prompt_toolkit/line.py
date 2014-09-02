@@ -156,6 +156,9 @@ class Line(object):
     #: (Instead of accepting the input.)
     is_multiline = False
 
+    #: Suffix to be appended to the tempfile for the 'open in editor' function.
+    tempfile_suffix = ''
+
     def __init__(self, code_factory=Code, history_factory=History):
         self.code_factory = code_factory
 
@@ -985,7 +988,7 @@ class Line(object):
     def open_in_editor(self):
         """ Open code in editor. """
         # Write to temporary file
-        descriptor, filename = tempfile.mkstemp()
+        descriptor, filename = tempfile.mkstemp(self.tempfile_suffix)
         os.write(descriptor, self.text.encode('utf-8'))
         os.close(descriptor)
 
