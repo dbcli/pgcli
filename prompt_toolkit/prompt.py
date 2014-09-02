@@ -234,9 +234,51 @@ class BracketsMismatchProcessor(object):
         return tokens
 
 
+class ISearchComposer(object):
+    def __init__(self, isearch_state):
+        self.isearch_state = isearch_state
+
+    @property
+    def before(self):
+        if self.isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
+            text = 'reverse-i-search'
+        else:
+            text = 'i-search'
+
+        return [
+            (Token.Prompt.ISearch.Bracket, '('),
+            (Token.Prompt.ISearch, text),
+            (Token.Prompt.ISearch.Bracket, ')'),
+            (Token.Prompt.ISearch.Backtick, '`'),
+        ]
+
+    @property
+    def text(self):
+        index = self.isearch_state.no_match_from_index
+        text = self.isearch_state.isearch_text
+
+        if index is None:
+            return [(Token.Prompt.ISearch.Text, text)]
+        else:
+            return [
+                    (Token.Prompt.ISearch.Text, text[:index]),
+                    (Token.Prompt.ISearch.TextNoMatch, text[index:])
+            ]
+
+    @property
+    def after(self):
+        return [
+            (Token.Prompt.ISearch.Backtick, '`'),
+            (Token.Prompt.ISearch.Backtick, ': ')
+        ]
+
+    def get_tokens(self):
+        return self.before + self.text + self.after
+
+
 class Prompt(object):
     """
-    Minimal base class for a valid prompt.
+    Base class for a valid prompt.
 
     :attr render_context: :class:`~prompt_toolkit.render_context.RenderContext` instance.
     """
@@ -250,6 +292,9 @@ class Prompt(object):
     #: (This can be used for displaying password input as '*' or for
     #: highlighting mismatches of brackets in case of Python input.)
     input_processors = []
+
+    #: Class responsible for the composition of the i-search tokens.
+    isearch_composer = ISearchComposer
 
     def __init__(self, render_context): # Wrap line/code in render_context
         self.render_context = render_context
@@ -289,32 +334,9 @@ class Prompt(object):
     @property
     def isearch_prompt(self):
         """
-        Yield the tokens for the prompt when we go in reverse-i-search mode.
+        Tokens for the prompt when we go in reverse-i-search mode.
         """
-        def tokens():
-            yield (Token.Prompt.ISearch.Bracket, '(')
-
-            if self.line.isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
-                yield (Token.Prompt.ISearch, 'reverse-i-search')
-            else:
-                yield (Token.Prompt.ISearch, 'i-search')
-
-            yield (Token.Prompt.ISearch.Bracket, ')')
-
-            yield (Token.Prompt.ISearch.Backtick, '`')
-
-            index = self.line.isearch_state.no_match_from_index
-            text = self.line.isearch_state.isearch_text
-
-            if index is None:
-                yield (Token.Prompt.ISearch.Text, text)
-            else:
-                yield (Token.Prompt.ISearch.Text, text[:index])
-                yield (Token.Prompt.ISearch.TextNoMatch, text[index:])
-
-            yield (Token.Prompt.ISearch.Backtick, '`')
-            yield (Token.Prompt.ISearch.Backtick, ': ')
-        return list(tokens())
+        return self.isearch_composer(self.line.isearch_state).get_tokens()
 
     @property
     def tokens_after_input(self):
