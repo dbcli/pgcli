@@ -37,7 +37,7 @@ class InputStreamHandler(object):
         #: The name of the last previous public function call.
         self._last_call = None
 
-        self.__arg_count = None
+        self._arg_count = None
 
     @property
     def _arg_count(self):

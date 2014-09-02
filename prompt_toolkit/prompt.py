@@ -257,7 +257,7 @@ class ISearchComposer(object):
         else:
             return [
                     (Token.Prompt.ISearch.Text, text[:index]),
-                    (Token.Prompt.ISearch.TextNoMatch, text[index:])
+                    (Token.Prompt.ISearch.Text.NoMatch, text[index:])
             ]
 
     @property
@@ -319,7 +319,7 @@ class Prompt(object):
         """
         return [
             (Token.Prompt.Arg, '(arg: '),
-            (Token.Prompt.ArgText, str(self.line._arg_prompt_text)),
+            (Token.Prompt.Arg.Text, str(self.line._arg_prompt_text)),
             (Token.Prompt.Arg, ') '),
         ]
 

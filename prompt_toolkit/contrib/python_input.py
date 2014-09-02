@@ -76,13 +76,14 @@ class PythonStyle(Style):
 
         # Highlighting for the reverse-search prompt.
         Token.Prompt:                     'bold #008800',
-        Token.Prompt.ISearch:             'bold noinherit',
+        Token.Prompt.ISearch:             'noinherit',
         Token.Prompt.ISearch.Text:        'bold',
-        Token.Prompt.ISearch.TextNoMatch: 'bg:#aa4444 #ffffff',
+        Token.Prompt.ISearch.Text.NoMatch: 'bg:#aa4444 #ffffff',
 
         Token.Prompt.SecondLinePrefix: 'bold #888888',
         Token.Prompt.LineNumber:       '#bbbbbb',# #ffffff',
-        Token.Prompt.ArgText:          'bold',
+        Token.Prompt.Arg:              'noinherit',
+        Token.Prompt.Arg.Text:          'bold',
 
         Token.Toolbar:                 'bg:#222222 #aaaaaa',
         Token.Toolbar.Off:             'bg:#222222 #888888',
