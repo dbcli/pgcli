@@ -32,7 +32,7 @@ class IPythonCode(PythonCode):
         self._magics_manager = magics_manager
 
     @property
-    def lexer_factory(self):
+    def lexer(self):
         if self.text.lstrip().startswith('!'):
             return BashLexer
         elif self.text.rstrip().endswith('?'):
