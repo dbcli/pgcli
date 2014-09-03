@@ -14,14 +14,14 @@ Author: Jonathan Slenders
 """
 from __future__ import unicode_literals
 
-import codecs
 import fcntl
 import os
 import select
-import six
 import sys
 import errno
 import threading
+
+from codecs import getincrementaldecoder
 
 from .code import Code
 from .inputstream import InputStream
@@ -91,6 +91,8 @@ class CommandLine(object):
     #: When to call the `on_input_timeout` callback.
     input_timeout = .5
 
+    stdin_decoder_cls = getincrementaldecoder('utf-8')
+
     def __init__(self, stdin=None, stdout=None):
         self.stdin = stdin or sys.stdin
         self.stdout = stdout or sys.stdout
@@ -111,6 +113,11 @@ class CommandLine(object):
 
         #: Currently reading input.
         self.is_reading_input = False
+
+        # Create incremental decoder for decoding stdin.
+        # We can not just do `os.read(stdin.fileno(), 1024).decode('utf-8')`, because
+        # it could be that we are in the middle of a utf-8 byte sequence.
+        self._stdin_decoder = self.stdin_decoder_cls()
 
     def request_redraw(self):
         """
@@ -190,7 +197,17 @@ class CommandLine(object):
         #       `codecs.getreader('utf-8')(stdin)` and doing `read(1)`.
         #       Somehow that causes some latency when the escape
         #       character is pressed. (Especially on combination with the `select`.
-        return os.read(self.stdin.fileno(), 1024).decode('utf-8')
+        bytes = os.read(self.stdin.fileno(), 1024)
+
+        try:
+            return self._stdin_decoder.decode(bytes)
+        except UnicodeDecodeError:
+            # When it's not possible to decode this bytes, reset the decoder.
+            # The only occurence of this that I had was when using iTerm2 on OS
+            # X, with "Option as Meta" checked (You should choose "Option as
+            # +Esc".)
+            self._stdin_decoder = self.stdin_decoder_cls()
+            return ''
 
     def read_input(self, initial_value='', on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
         """
