@@ -62,7 +62,9 @@ class InputStream(object):
         '\x1b[C': 'arrow_right',
         '\x1b[D': 'arrow_left',
         '\x1b[H': 'home',
+        '\x1bOH': 'home',
         '\x1b[F': 'end',
+        '\x1bOF': 'end',
         '\x1b[3~': 'delete',
         '\x1b[1~': 'home', # tmux
         '\x1b[4~': 'end', # tmux
