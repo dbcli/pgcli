@@ -85,10 +85,10 @@ class InputStreamHandler(object):
         return not (current_method == 'insert_char' and self._last_call == 'insert_char')
 
     def home(self):
-        self._line.home()
+        self._line.cursor_position += self._line.document.home_position
 
     def end(self):
-        self._line.end()
+        self._line.cursor_position += self._line.document.end_position
 
     # CTRL keys.
 
@@ -539,7 +539,7 @@ class ViInputStreamHandler(InputStreamHandler):
         # an empty line.)
         if (
                 self._vi_mode == ViMode.NAVIGATION and
-                self._line.document.cursor_at_the_end_of_line and
+                self._line.document.is_cursor_at_the_end_of_line and
                 len(self._line.document.current_line) > 0):
             self._line.cursor_position -= 1
 
@@ -617,14 +617,7 @@ class ViInputStreamHandler(InputStreamHandler):
             self._vi_mode = ViMode.INSERT
             line.cursor_to_end_of_line()
 
-        @handle('b') # Move one word or token left.
-        @handle('B') # Move one non-blank word left ((# TODO: difference between 'b' and 'B')
-        def _(arg):
-            for i in range(arg):
-                line.cursor_word_back()
-
-        @handle('C')
-        @handle('c$')
+        @handle('C') # Same as 'c$' (which is implemented elsewhere.)
         def _(arg):
             # Change to end of line.
             data = ClipboardData(line.delete_until_end_of_line())
@@ -644,12 +637,234 @@ class ViInputStreamHandler(InputStreamHandler):
             line.delete_until_end_of_line()
             self._vi_mode = ViMode.INSERT
 
-        @handle('cw')
-        @handle('ce')
+        class CursorRegion(object):
+            """ Return struct for functions wrapped in ``change_delete_move_yank_handler``. """
+            def __init__(self, start, end=0):
+                self.start = start
+                self.end = end
+
+            def get_sorted(self):
+                if self.start < self.end:
+                    return self.start, self.end
+                else:
+                    return self.end, self.start
+
+        def change_delete_move_yank_handler(keys, no_move_handler=False, needs_one_more_character=False):
+            """
+            Register a change/delete/move/yank handlers. e.g.  'dw'/'cw'/'w'/'yw'
+            The decorated function should return a ``CursorRegion``.
+            This decorator will create both the 'change', 'delete' and move variants,
+            based on that ``CursorRegion``.
+            """
+            def decorator(func):
+                def call_function(arg, done_callback):
+                    """ Call the original function. If we need an additional
+                    character, like for e.g. 'fx', then set a callback, and
+                    pass the result later into that function. """
+                    if needs_one_more_character:
+                        def cb(char):
+                            done_callback(func(arg, char))
+                        self._one_character_callback = cb
+                    else:
+                        done_callback(func(arg))
+
+                if not no_move_handler:
+                    @handle('%s' % keys)
+                    def move(arg):
+                        """ Create move handler. """
+                        def done(region):
+                            line.cursor_position += region.start
+                        call_function(arg, done)
+
+                @handle('y%s' % keys)
+                def yank_handler(arg):
+                    """ Create yank handler. """
+                    def done(region):
+                        start, end = region.get_sorted()
+                        substring = line.text[line.cursor_position + start : line.cursor_position + end]
+
+                        if substring:
+                            line.set_clipboard(ClipboardData(substring))
+                    call_function(arg, done)
+
+                def create(delete_only):
+                    """ Create delete and change handlers. """
+                    @handle('%s%s' % ('cd'[delete_only], keys))
+                    @handle('%s%s' % ('cd'[delete_only], keys))
+                    def _(arg):
+                        def done(region):
+                            deleted = ''
+
+                            if region:
+                                start, end = region.get_sorted()
+
+                                # Move to the start of the region.
+                                line.cursor_position += start
+
+                                # Delete until end of region.
+                                deleted = line.delete(count=end-start)
+
+                            # Set deleted/changed text to clipboard.
+                            if deleted:
+                                line.set_clipboard(ClipboardData(''.join(deleted)))
+
+                            # Only go back to insert mode in case of 'change'.
+                            if not delete_only:
+                                self._vi_mode = ViMode.INSERT
+                        call_function(arg, done)
+
+                create(True)
+                create(False)
+                return func
+            return decorator
+
+        @change_delete_move_yank_handler('b') # Move one word or token left.
+        @change_delete_move_yank_handler('B') # Move one non-blank word left ((# TODO: difference between 'b' and 'B')
         def _(arg):
-            data = ClipboardData(''.join(line.delete_word() for i in range(arg)))
-            line.set_clipboard(data)
-            self._vi_mode = ViMode.INSERT
+            return CursorRegion(line.document.find_start_of_previous_word(count=arg) or 0)
+
+        @change_delete_move_yank_handler('$')
+        def _(arg):
+            """ 'c$', 'd$' and '$':  Delete/change/move until end of line. """
+            return CursorRegion(len(line.document.current_line_after_cursor))
+
+        @change_delete_move_yank_handler('w') # TODO: difference between 'w' and 'W'
+        def _(arg):
+            """ 'cw', 'de', 'w': Delete/change/move one word.  """
+            return CursorRegion(line.document.find_next_word_beginning(count=arg) or 0)
+
+        @change_delete_move_yank_handler('e') # TODO: difference between 'e' and 'E'
+        def _(arg):
+            """ 'ce', 'de', 'e' """
+            end = line.document.find_next_word_ending(count=arg)
+            return CursorRegion(end - 1 if end else 0)
+
+        @change_delete_move_yank_handler('iw', no_move_handler=True)
+        def _(arg):
+            """ ciw and diw """
+            # Change inner word: change word under cursor.
+            start, end = line.document.find_boundaries_of_current_word()
+            return CursorRegion(start, end)
+
+        @change_delete_move_yank_handler('^')
+        def _(arg):
+            """ 'c^', 'd^' and '^': Start of line, after whitespace. """
+            return CursorRegion(-len(line.document.current_line_before_cursor.lstrip()))
+
+        @change_delete_move_yank_handler('0')
+        def _(arg):
+            """ 'c0', 'd0' and '0': Start of line, before whitespace. """
+            return CursorRegion(-len(line.document.current_line_before_cursor))
+
+        def create_ci_handles(ci_start, ci_end):
+            """
+            Delete/Change string between this start and stop character. But keep these characters.
+            This implements all the ci", ci<, ci{, ci(, di", di<, ... combinations.
+            """
+            @change_delete_move_yank_handler('i%s' % ci_start, no_move_handler=True)
+            @change_delete_move_yank_handler('i%s' % ci_end, no_move_handler=True)
+            def _(arg):
+                start = line.document.find_backwards(ci_start, in_current_line=True)
+                end = line.document.find(ci_end, in_current_line=True)
+
+                if start is not None and end is not None:
+                    return CursorRegion(start + 1, end)
+
+        for ci_start, ci_end in [ ('"', '"'), ("'", "'"), ('[', ']'), ('<', '>'), ('{', '}'), ('(', ')') ]:
+            create_ci_handles(ci_start, ci_end)
+
+        @change_delete_move_yank_handler('f', needs_one_more_character=True)
+        def _(arg, char):
+            # Go to next occurance of character. Typing 'fx' will move the
+            # cursor to the next occurance of character. 'x'.
+            self._last_character_find = (char, False)
+            match = line.document.find(char, in_current_line=True, count=arg)
+            return CursorRegion(match or 0)
+
+        @change_delete_move_yank_handler('F', needs_one_more_character=True)
+        def _(arg, char):
+            # Go to previous occurance of character. Typing 'Fx' will move the
+            # cursor to the previous occurance of character. 'x'.
+            self._last_character_find = (char, True)
+            return CursorRegion(line.document.find_backwards(char, in_current_line=True, count=arg) or 0)
+
+        @change_delete_move_yank_handler('t', needs_one_more_character=True)
+        def _(arg, char):
+            # Move right to the next occurance of c, then one char backward.
+            match = line.document.find(char, in_current_line=True, count=arg)
+            return CursorRegion(match - 1 if match else 0)
+
+        @change_delete_move_yank_handler('T', needs_one_more_character=True)
+        def _(arg, char):
+            # Move left to the previous occurance of c, then one char forward.
+            match = line.document.find_backwards(char, in_current_line=True, count=arg)
+            return CursorRegion(match + 1 if match else 0)
+
+        @change_delete_move_yank_handler(';')
+        def _(arg):
+            # Repeat the last 'f' or 'F' command.
+            pos = 0
+
+            if self._last_character_find:
+                char, backwards = self._last_character_find
+                if backwards:
+                    pos = line.document.find_backwards(char, in_current_line=True, count=arg)
+                else:
+                    pos = line.document.find(char, in_current_line=True, count=arg)
+            return CursorRegion(pos or 0)
+
+        @change_delete_move_yank_handler('h')
+        def _(arg):
+            """ Implements 'ch', 'dh', 'h': Cursor left. """
+            return CursorRegion(line.document.get_cursor_left_position(count=arg))
+
+        @change_delete_move_yank_handler('j')
+        def _(arg):
+            """ Implements 'cj', 'dj', 'j', ... Cursor up. """
+            return CursorRegion(line.document.get_cursor_down_position(count=arg))
+
+        @change_delete_move_yank_handler('k')
+        def _(arg):
+            """ Implements 'ck', 'dk', 'k', ... Cursor up. """
+            return CursorRegion(line.document.get_cursor_up_position(count=arg))
+
+        @change_delete_move_yank_handler('l')
+        @change_delete_move_yank_handler(' ')
+        def _(arg):
+            """ Implements 'cl', 'dl', 'l', 'c ', 'd ', ' '. Cursor right. """
+            return CursorRegion(line.document.get_cursor_right_position(count=arg))
+
+        @change_delete_move_yank_handler('H')
+        def _(arg):
+            """ Implements 'cH', 'dH', 'H'. """
+            # Vi moves to the start of the visible region.
+            # cursor position 0 is okay for us.
+            return CursorRegion(-len(line.document.text_before_cursor))
+
+        @change_delete_move_yank_handler('L')
+        def _(arg):
+            # Vi moves to the end of the visible region.
+            # cursor position 0 is okay for us.
+            return CursorRegion(len(line.document.text_after_cursor))
+
+
+        @change_delete_move_yank_handler('%')
+        def _(arg):
+            """ Implements 'c%', 'd%', '%, 'y%' """
+            # Move to the corresponding opening/closing bracket (()'s, []'s and {}'s).
+            return CursorRegion(line.document.matching_bracket_position)
+
+        @change_delete_move_yank_handler('|')
+        def _(arg):
+            # Move to the n-th column (you may specify the argument n by typing
+            # it on number keys, for example, 20|).
+            return CursorRegion(line.document.get_column_cursor_position(arg))
+
+        @change_delete_move_yank_handler('gg')
+        def _(arg):
+            """ Implements 'gg', 'cgg', 'ygg' """
+            # Move to the top of the input.
+            return CursorRegion(line.document.home_position)
 
         @handle('D')
         def _(arg):
@@ -662,62 +877,12 @@ class ViInputStreamHandler(InputStreamHandler):
             data = ClipboardData(text, ClipboardDataType.LINES)
             line.set_clipboard(data)
 
-        @handle('d$')
-        def _(arg):
-            # Delete until end of line.
-            data = ClipboardData(line.delete_until_end_of_line())
-            line.set_clipboard(data)
-
-        @handle('dw')
-        def _(arg):
-            data = ClipboardData(''.join(line.delete_word() for i in range(arg)))
-            line.set_clipboard(data)
-
-        @handle('e') # Move to the end of the current word
-        @handle('E') # Move to the end of the current non-blank word. (# TODO: diff between 'e' and 'E')
-        def _(arg):
-            # End of word
-            line.cursor_to_end_of_word()
-
-        @handle('f')
-        def _(arg):
-            # Go to next occurance of character. Typing 'fx' will move the
-            # cursor to the next occurance of character. 'x'.
-            def cb(char):
-                self._last_character_find = (char, False)
-
-                for i in range(arg):
-                    line.go_to_substring(char, in_current_line=True)
-            self._one_character_callback = cb
-
-        @handle('F')
-        def _(arg):
-            # Go to previous occurance of character. Typing 'Fx' will move the
-            # cursor to the previous occurance of character. 'x'.
-            def cb(char):
-                self._last_character_find = (char, True)
-
-                for i in range(arg):
-                    line.go_to_substring(char, in_current_line=True, backwards=True)
-            self._one_character_callback = cb
-
         @handle('G')
         def _(arg):
             # Move to the history line n (you may specify the argument n by
             # typing it on number keys, for example, 15G)
             if arg < len(line._working_lines) + 1:
                 line._working_index = arg - 1
-
-        @handle('h')
-        def _(arg):
-            for i in range(arg):
-                line.cursor_left()
-
-        @handle('H')
-        def _(arg):
-            # Vi moves to the start of the visible region.
-            # cursor position 0 is okay for us.
-            line.cursor_position = 0
 
         @handle('i')
         def _(arg):
@@ -728,33 +893,11 @@ class ViInputStreamHandler(InputStreamHandler):
             self._vi_mode = ViMode.INSERT
             line.cursor_to_start_of_line(after_whitespace=True)
 
-        @handle('j')
-        def _(arg):
-            for i in range(arg):
-                line.auto_down()
-
         @handle('J')
         def _(arg):
             line.join_next_line()
 
-        @handle('k')
-        def _(arg):
-            for i in range(arg):
-                line.auto_up()
-
-        @handle('l')
-        @handle(' ')
-        def _(arg):
-            for i in range(arg):
-                line.cursor_right()
-
-        @handle('L')
-        def _(arg):
-            # Vi moves to the start of the visible region.
-            # cursor position 0 is okay for us.
-            line.cursor_position = len(line.text)
-
-        @handle('n')
+        @handle('n') # XXX: use `change_delete_move_yank_handler`
         def _(arg):
             # TODO:
             pass
@@ -763,7 +906,7 @@ class ViInputStreamHandler(InputStreamHandler):
             #     # Repeat search in the same direction as previous.
             #     line.search_next(line.isearch_state.isearch_direction)
 
-        @handle('N')
+        @handle('N') # TODO: use `change_delete_move_yank_handler`
         def _(arg):
             # TODO:
             pass
@@ -807,24 +950,6 @@ class ViInputStreamHandler(InputStreamHandler):
             line.set_clipboard(data)
             self._vi_mode = ViMode.INSERT
 
-        @handle('t')
-        def _(arg):
-            # Move right to the next occurance of c, then one char backward.
-            def cb(char):
-                for i in range(arg):
-                    line.go_to_substring(char, in_current_line=True)
-                line.cursor_left()
-            self._one_character_callback = cb
-
-        @handle('T')
-        def _(arg):
-            # Move left to the previous occurance of c, then one char forward.
-            def cb(char):
-                for i in range(arg):
-                    line.go_to_substring(char, in_current_line=True, backwards=True)
-                line.cursor_right()
-            self._one_character_callback = cb
-
         @handle('u')
         def _(arg):
             for i in range(arg):
@@ -833,12 +958,6 @@ class ViInputStreamHandler(InputStreamHandler):
         @handle('v')
         def _(arg):
             line.open_in_editor()
-
-        @handle('w') # Move one word or token right.
-        @handle('W') # Move one non-blank word right. (# TODO: difference between 'w' and 'W')
-        def _(arg):
-            for i in range(arg):
-                line.cursor_word_forward()
 
         @handle('x')
         def _(arg):
@@ -857,29 +976,6 @@ class ViInputStreamHandler(InputStreamHandler):
 
             data = ClipboardData(text, ClipboardDataType.LINES)
             line.set_clipboard(data)
-
-        @handle('yw')
-        def _(arg):
-            # Yank word.
-            pass
-
-        @handle('^')
-        def _(arg):
-            line.cursor_to_start_of_line(after_whitespace=True)
-
-        @handle('0')
-        def _(arg):
-            # Move to the beginning of line.
-            line.cursor_to_start_of_line(after_whitespace=False)
-
-        @handle('$')
-        def _(arg):
-            line.cursor_to_end_of_line()
-
-        @handle('%')
-        def _(arg):
-            # Move to the corresponding opening/closing bracket (()'s, []'s and {}'s).
-            line.go_to_matching_bracket()
 
         @handle('+')
         def _(arg):
@@ -990,12 +1086,6 @@ class ViInputStreamHandler(InputStreamHandler):
                 c = (c.upper() if c.islower() else c.lower())
                 line.insert_text(c, overwrite=True)
 
-        @handle('|')
-        def _(arg):
-            # Move to the n-th column (you may specify the argument n by typing
-            # it on number keys, for example, 20|).
-            line.go_to_column(arg)
-
         @handle('/')
         def _(arg):
             # Search history backward for a command matching string.
@@ -1008,14 +1098,15 @@ class ViInputStreamHandler(InputStreamHandler):
             self._line.forward_search()
             self._vi_mode = ViMode.INSERT # We have to be able to insert the search string.
 
-        @handle(';')
+        @handle('#')
         def _(arg):
-            # Repeat the last 'f' or 'F' command.
-            if self._last_character_find:
-                char, backwards = self._last_character_find
+            # Go to previous occurence of this word.
+            pass
 
-                for i in range(arg):
-                    line.go_to_substring(char, in_current_line=True, backwards=backwards)
+        @handle('*')
+        def _(arg):
+            # Go to next occurence of this word.
+            pass
 
         return handles
 

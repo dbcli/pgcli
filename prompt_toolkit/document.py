@@ -12,6 +12,8 @@ __all__ = ('Document',)
 # it doesn't contain a space.)
 _FIND_WORD_RE =  re.compile('([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
 
+_FIND_CURRENT_WORD_RE =  re.compile('^([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
+
 
 class Document(object):
     """
@@ -131,53 +133,12 @@ class Document(object):
         return len('\n'.join(self.lines[:row])) + len('\n') + col
 
     @property
-    def cursor_up_position(self):
-        """
-        Return the cursor position (character index) where we would be if the
-        user pressed the arrow-up button.
-        """
-        if '\n' in self.text_before_cursor:
-            lines = self.text_before_cursor.split('\n')
-            current_line = lines[-1] # before the cursor
-            previous_line = lines[-2]
-
-            # When the current line is longer then the previous, move to the
-            # last character of the previous line.
-            if len(current_line) > len(previous_line):
-                return self.cursor_position - len(current_line) - 1
-
-            # Otherwise find the corresponding position in the previous line.
-            else:
-                return self.cursor_position - len(previous_line) - 1
-
-    @property
-    def cursor_down_position(self):
-        """
-        Return the cursor position (character index) where we would be if the
-        user pressed the arrow-down button.
-        """
-        if '\n' in self.text_after_cursor:
-            pos = len(self.text_before_cursor.split('\n')[-1])
-            lines = self.text_after_cursor.split('\n')
-            current_line = lines[0] # after the cursor
-            next_line = lines[1]
-
-            # When the current line is longer then the previous, move to the
-            # last character of the next line.
-            if pos > len(next_line):
-                return self.cursor_position + len(current_line) + len(next_line) + 1
-
-            # Otherwise find the corresponding position in the next line.
-            else:
-                return self.cursor_position + len(current_line) + pos + 1
-
-    @property
-    def cursor_at_the_end(self):
+    def is_cursor_at_the_end(self):
         """ True when the cursor is at the end of the text. """
         return self.cursor_position == len(self.text)
 
     @property
-    def cursor_at_the_end_of_line(self):
+    def is_cursor_at_the_end_of_line(self):
         """ True when the cursor is at the end of this line. """
         return self.cursor_position_col == len(self.current_line)
 
@@ -187,10 +148,12 @@ class Document(object):
         """
         return self.text[self.cursor_position:].find(sub) == 0
 
-    def find(self, sub, in_current_line=False, include_current_position=False):
+    def find(self, sub, in_current_line=False, include_current_position=False, count=1): # TODO: rename to `find_forwards`
         """
         Find `text` after the cursor, return position relative to the cursor
         position. Return `None` if nothing was found.
+
+        :param count: Find the n-th occurance.
         """
         if in_current_line:
             text = self.current_line_after_cursor
@@ -200,12 +163,17 @@ class Document(object):
         if not include_current_position:
             text = text[1:]
 
-        index = text.find(sub)
+        iterator = re.finditer(re.escape(sub), text)
 
-        if index >= 0:
-            if not include_current_position:
-                index += 1
-            return index
+        try:
+            for i, match in enumerate(iterator):
+                if i + 1 == count:
+                    if include_current_position:
+                        return match.start(0)
+                    else:
+                        return match.start(0) + 1
+        except StopIteration:
+            pass
 
     def find_all(self, sub):
         """
@@ -214,25 +182,31 @@ class Document(object):
         """
         return [a.start() for a in re.finditer(re.escape(sub), self.text)]
 
-    def find_backwards(self, sub, in_current_line=False):
+    def find_backwards(self, sub, in_current_line=False, count=1):
         """
         Find `text` before the cursor, return position relative to the cursor
         position. Return `None` if nothing was found.
+
+        :param count: Find the n-th occurance.
         """
         if in_current_line:
-            before_cursor = self.current_line_before_cursor
+            before_cursor = self.current_line_before_cursor[::-1]
         else:
-            before_cursor = self.text_before_cursor
+            before_cursor = self.text_before_cursor[::-1]
 
-        index = before_cursor.rfind(sub)
+        iterator = re.finditer(re.escape(sub), before_cursor)
 
-        if index >= 0:
-            return index - len(before_cursor)
+        try:
+            for i, match in enumerate(iterator):
+                if i + 1 == count:
+                    return - match.start(0) - 1
+        except StopIteration:
+            pass
 
     def get_word_before_cursor(self):
         return self.text_before_cursor[self.find_start_of_previous_word():]
 
-    def find_start_of_previous_word(self):
+    def find_start_of_previous_word(self, count=1):
         """
         Return an index relative to the cursor position pointing to the start
         of the previous word. Return `None` if nothing was found.
@@ -241,31 +215,52 @@ class Document(object):
         # backwards search.
         text_before_cursor = self.text_before_cursor[::-1]
 
-        match = _FIND_WORD_RE.search(text_before_cursor)
+        iterator = _FIND_WORD_RE.finditer(text_before_cursor)
 
-        if match:
-            return - match.end(1)
+        try:
+            for i, match in enumerate(iterator):
+                if i + 1 == count:
+                    return - match.end(1)
+        except StopIteration:
+            pass
 
-    def find_next_word_beginning(self):
+    def find_boundaries_of_current_word(self):
+        """
+        Return the relative boundaries (startpos, endpos) of the current word under the
+        cursor. (This is at the current line, because line boundaries obviously
+        don't belong to any word.)
+        If not on a word, this returns (0,0)
+        """
+        text_before_cursor = self.current_line_before_cursor[::-1]
+        text_after_cursor = self.current_line_after_cursor
+
+        match_before = _FIND_CURRENT_WORD_RE.search(text_before_cursor)
+        match_after = _FIND_CURRENT_WORD_RE.search(text_after_cursor)
+
+        return (
+                    - match_before.end(1) if match_before else 0,
+                    match_after.end(1) if match_after else 0
+                )
+
+    def find_next_word_beginning(self, count=1):
         """
         Return an index relative to the cursor position pointing to the start
         of the next word. Return `None` if nothing was found.
         """
-        iterable = _FIND_WORD_RE.finditer(self.text_after_cursor)
+        iterator = _FIND_WORD_RE.finditer(self.text_after_cursor)
 
         try:
-            # Take first match, unless it's the word on which we're right now.
-            result = next(iterable).start(1)
+            for i, match in enumerate(iterator):
+                # Take first match, unless it's the word on which we're right now.
+                if i == 0 and match.start(1) == 0:
+                    count += 1
 
-            if result > 0:
-                return result
-            else:
-                return next(iterable).start(1)
-
+                if i + 1 == count:
+                    return match.start(1)
         except StopIteration:
             pass
 
-    def find_next_word_ending(self, include_current_position=False):
+    def find_next_word_ending(self, include_current_position=False, count=1):
         """
         Return an index relative to the cursor position pointing to the end
         of the next word. Return `None` if nothing was found.
@@ -278,12 +273,14 @@ class Document(object):
         iterable = _FIND_WORD_RE.finditer(text)
 
         try:
-            value = next(iterable).end(1)
+            for i, match in enumerate(iterable):
+                if i + 1 == count:
+                    value = match.end(1)
 
-            if include_current_position:
-                return value
-            else:
-                return value + 1
+                    if include_current_position:
+                        return value
+                    else:
+                        return value + 1
 
         except StopIteration:
             pass
@@ -305,3 +302,105 @@ class Document(object):
         for index, line in enumerate(self.lines[:self.cursor_position_row][::-1]):
             if match_func(line):
                 return -1 - index
+
+    def get_cursor_left_position(self, count=1):
+        """
+        Relative position for cursor left.
+        """
+        return - min(self.cursor_position_col, count)
+
+    def get_cursor_right_position(self, count=1):
+        """
+        Relative position for cursor_right.
+        """
+        return min(count, len(self.current_line_after_cursor))
+
+    def get_cursor_up_position(self, count=1): # TODO: implement `count`
+        """
+        Return the relative cursor position (character index) where we would be if the
+        user pressed the arrow-up button.
+        """
+        if '\n' in self.text_before_cursor:
+            lines = self.text_before_cursor.split('\n')
+            current_line = lines[-1] # before the cursor
+            previous_line = lines[-2]
+
+            # When the current line is longer then the previous, move to the
+            # last character of the previous line.
+            if len(current_line) > len(previous_line):
+                return - len(current_line) - 1
+
+            # Otherwise find the corresponding position in the previous line.
+            else:
+                return - len(previous_line) - 1
+        return 0
+
+    def get_cursor_down_position(self, count=1): # TODO: implement `count`
+        """
+        Return the relative cursor position (character index) where we would be if the
+        user pressed the arrow-down button.
+        """
+        if '\n' in self.text_after_cursor:
+            pos = len(self.text_before_cursor.split('\n')[-1])
+            lines = self.text_after_cursor.split('\n')
+            current_line = lines[0] # after the cursor
+            next_line = lines[1]
+
+            # When the current line is longer then the previous, move to the
+            # last character of the next line.
+            if pos > len(next_line):
+                return len(current_line) + len(next_line) + 1
+
+            # Otherwise find the corresponding position in the next line.
+            else:
+                return len(current_line) + pos + 1
+
+        return 0
+
+    @property
+    def matching_bracket_position(self):
+        """
+        Return relative cursor position of matching [, (, { or < bracket.
+        """
+        stack = 1
+
+        for A, B in '()', '[]', '{}', '<>':
+            if self.current_char == A:
+                for i, c in enumerate(self.text_after_cursor[1:]):
+                    if c == A: stack += 1
+                    elif c == B: stack -= 1
+
+                    if stack == 0:
+                        return i + 1
+
+            elif self.current_char == B:
+                for i, c in enumerate(reversed(self.text_before_cursor)):
+                    if c == B: stack += 1
+                    elif c == A: stack -= 1
+
+                    if stack == 0:
+                        return - (i + 1)
+
+        return 0
+
+    @property
+    def home_position(self):
+        """ Relative position for the start of the document. """
+        return - self.cursor_position
+
+    @property
+    def end_position(self):
+        """ Relative position for the end of the document. """
+        return len(self.text) - self.cursor_position
+
+    def get_column_cursor_position(self, column):
+        """
+        Return the relative cursor position for this column at the current
+        line. (It will stay between the boundaries of the line in case of a
+        larger number.)
+        """
+        line_length = len(self.current_line)
+        current_column = self.cursor_position_col
+        column = max(0, min(line_length, column))
+
+        return column - current_column

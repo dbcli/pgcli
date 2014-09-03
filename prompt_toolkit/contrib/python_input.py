@@ -155,7 +155,7 @@ class _PythonInputStreamHandlerMixin(object): # XXX: Don't use Mixins for this. 
         """
         def is_empty_or_space(s):
             return s == '' or s.isspace()
-        cursor_at_the_end = self._line.document.cursor_at_the_end
+        cursor_at_the_end = self._line.document.is_cursor_at_the_end
 
         # If we just typed a colon, or still have open brackets, always insert a real newline.
         if cursor_at_the_end and (self._line._colon_before_cursor() or

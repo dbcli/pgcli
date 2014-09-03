@@ -324,40 +324,22 @@ class Line(object):
         self._arg_prompt_text = arg
 
     @_to_mode(LineMode.NORMAL)
-    def home(self):
-        self.cursor_position = 0
-
-    @_to_mode(LineMode.NORMAL)
-    def end(self):
-        self.cursor_position = len(self.text)
-
-    @_to_mode(LineMode.NORMAL)
     def cursor_left(self):
-        if self.document.cursor_position_col > 0:
-            self.cursor_position -= 1
+        self.cursor_position += self.document.get_cursor_left_position()
 
     @_to_mode(LineMode.NORMAL)
     def cursor_right(self):
-        if not self.document.cursor_at_the_end_of_line:
-            self.cursor_position += 1
+        self.cursor_position += self.document.get_cursor_right_position()
 
     @_to_mode(LineMode.NORMAL)
     def cursor_up(self):
-        """
-        (for multiline edit). Move cursor to the previous line.
-        """
-        new_pos = self.document.cursor_up_position
-        if new_pos is not None:
-            self.cursor_position = new_pos
+        """ (for multiline edit). Move cursor to the previous line.  """
+        self.cursor_position += self.document.get_cursor_up_position()
 
     @_to_mode(LineMode.NORMAL)
     def cursor_down(self):
-        """
-        (for multiline edit). Move cursor to the next line.
-        """
-        new_pos = self.document.cursor_down_position
-        if new_pos is not None:
-            self.cursor_position = new_pos
+        """ (for multiline edit). Move cursor to the next line.  """
+        self.cursor_position += self.document.get_cursor_down_position()
 
     @_to_mode(LineMode.NORMAL, LineMode.COMPLETE)
     def auto_up(self):
@@ -543,30 +525,6 @@ class Line(object):
             self.text = self.text[:pos-2] + b + a + self.text[pos:]
 
     @_to_mode(LineMode.NORMAL)
-    def go_to_matching_bracket(self):
-        """ Go to matching [, (, { or < bracket. """
-        stack = 1
-
-        for A, B in '()', '[]', '{}', '<>':
-            if self.document.current_char == A:
-                for i, c in enumerate(self.document.text_after_cursor[1:]):
-                    if c == A: stack += 1
-                    elif c == B: stack -= 1
-
-                    if stack == 0:
-                        self.cursor_position += (i + 1)
-                        break
-
-            elif self.document.current_char == B:
-                for i, c in enumerate(reversed(self.document.text_before_cursor)):
-                    if c == B: stack += 1
-                    elif c == A: stack -= 1
-
-                    if stack == 0:
-                        self.cursor_position -= (i + 1)
-                        break
-
-    @_to_mode(LineMode.NORMAL)
     def go_to_substring(self, sub, in_current_line=False, backwards=False):
         """
         Find next occurence of this substring, and move cursor position there.
@@ -578,18 +536,6 @@ class Line(object):
 
         if index:
             self.cursor_position += index
-
-    @_to_mode(LineMode.NORMAL)
-    def go_to_column(self, column):
-        """
-        Go to this column on the current line. (Go to the end column > length
-        of the line.)
-        """
-        line_length = len(self.document.current_line)
-        current_column = self.document.cursor_position_col
-        column = max(0, min(line_length, column))
-
-        self.cursor_position += column - current_column
 
     def create_code_obj(self):
         """
