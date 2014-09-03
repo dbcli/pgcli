@@ -194,12 +194,12 @@ class Document(object):
         else:
             before_cursor = self.text_before_cursor[::-1]
 
-        iterator = re.finditer(re.escape(sub), before_cursor)
+        iterator = re.finditer(re.escape(sub[::-1]), before_cursor)
 
         try:
             for i, match in enumerate(iterator):
                 if i + 1 == count:
-                    return - match.start(0) - 1
+                    return - match.start(0) - len(sub)
         except StopIteration:
             pass
 
