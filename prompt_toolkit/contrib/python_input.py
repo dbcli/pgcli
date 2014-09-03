@@ -429,7 +429,7 @@ class PythonPrompt(Prompt):
 
             # Shortcuts.
             if self.line.mode == LineMode.INCREMENTAL_SEARCH:
-                append((TB, '[Ctrl-G] Cancel search'))
+                append((TB, '[Ctrl-G] Cancel search [Enter] Go to this position.'))
             else:
                 if self.line.paste_mode:
                     append((TB.On, '[F6] Paste mode (on)  '))
