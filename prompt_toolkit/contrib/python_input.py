@@ -119,28 +119,28 @@ class _PythonInputStreamHandlerMixin(object): # XXX: Don't use Mixins for this. 
         """
         Enable/Disable paste mode.
         """
-        self._line.paste_mode = not self._line.paste_mode
-        if self._line.paste_mode:
-            self._line.is_multiline = True
+        self.line.paste_mode = not self.line.paste_mode
+        if self.line.paste_mode:
+            self.line.is_multiline = True
 
     def F7(self):
         """
         Enable/Disable multiline mode.
         """
-        self._line.is_multiline = not self._line.is_multiline
+        self.line.is_multiline = not self.line.is_multiline
 
     def tab(self):
         # When the 'tab' key is pressed with only whitespace character before the
         # cursor, do autocompletion. Otherwise, insert indentation.
-        current_char = self._line.document.current_line_before_cursor
+        current_char = self.line.document.current_line_before_cursor
         if not current_char or current_char.isspace():
-            self._line.insert_text('    ')
+            self.line.insert_text('    ')
         else:
-            self._line.complete_next()
+            self.line.complete_next()
 
     def backtab(self):
-        if self._line.mode == LineMode.COMPLETE:
-            self._line.complete_previous()
+        if self.line.mode == LineMode.COMPLETE:
+            self.line.complete_previous()
 
     def enter(self):
         self._auto_enable_multiline()
@@ -155,18 +155,18 @@ class _PythonInputStreamHandlerMixin(object): # XXX: Don't use Mixins for this. 
         """
         def is_empty_or_space(s):
             return s == '' or s.isspace()
-        cursor_at_the_end = self._line.document.is_cursor_at_the_end
+        cursor_at_the_end = self.line.document.is_cursor_at_the_end
 
         # If we just typed a colon, or still have open brackets, always insert a real newline.
-        if cursor_at_the_end and (self._line._colon_before_cursor() or
-                                  self._line._has_unclosed_brackets() or
-                                  self._line._starting_with_at()):
-            self._line.is_multiline = True
+        if cursor_at_the_end and (self.line._colon_before_cursor() or
+                                  self.line._has_unclosed_brackets() or
+                                  self.line._starting_with_at()):
+            self.line.is_multiline = True
 
         # If the character before the cursor is a backslash (line continuation
         # char), insert a new line.
-        elif cursor_at_the_end and (self._line.document.text_before_cursor[-1:] == '\\'):
-            self._line.is_multiline = True
+        elif cursor_at_the_end and (self.line.document.text_before_cursor[-1:] == '\\'):
+            self.line.is_multiline = True
 
 
 class PythonViInputStreamHandler(_PythonInputStreamHandlerMixin, ViInputStreamHandler):

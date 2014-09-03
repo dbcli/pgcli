@@ -27,10 +27,10 @@ class InputStreamHandler(object):
     :attr line: :class:`~prompt_toolkit.line.Line` class.
     """
     def __init__(self, line):
-        self._line = line
-        self._reset()
+        self.line = line
+        self.reset()
 
-    def _reset(self):
+    def reset(self):
         #: True when the user pressed on the 'tab' key.
         self._second_tab = False
 
@@ -50,9 +50,9 @@ class InputStreamHandler(object):
 
         # Set argument prompt
         if value:
-            self._line.set_arg_prompt(value)
+            self.line.set_arg_prompt(value)
         else:
-            self._line.set_arg_prompt('')
+            self.line.set_arg_prompt('')
 
     def __call__(self, name, *a):
         if name != 'ctrl_i':
@@ -63,13 +63,13 @@ class InputStreamHandler(object):
         if method:
             # First, safe current state to undo stack
             if self._needs_to_save(name):
-                self._line.save_to_undo_stack()
+                self.line.save_to_undo_stack()
 
             try:
                 method(*a)
             except (Abort, ReturnInput):
                 # Reset state when the input has been accepted/aborted.
-                self._reset()
+                self.reset()
                 raise
 
         # Keep track of what the last called method was.
@@ -85,41 +85,41 @@ class InputStreamHandler(object):
         return not (current_method == 'insert_char' and self._last_call == 'insert_char')
 
     def home(self):
-        self._line.cursor_position += self._line.document.home_position
+        self.line.cursor_position += self.line.document.home_position
 
     def end(self):
-        self._line.cursor_position += self._line.document.end_position
+        self.line.cursor_position += self.line.document.end_position
 
     # CTRL keys.
 
     def ctrl_a(self):
-        self._line.cursor_to_start_of_line()
+        self.line.cursor_to_start_of_line()
 
     def ctrl_b(self):
-        self._line.cursor_left()
+        self.line.cursor_left()
 
     def ctrl_c(self):
-        self._line.abort()
+        self.line.abort()
 
     def ctrl_d(self):
         # When there is text, act as delete, otherwise call exit.
-        if self._line.text:
-            self._line.delete()
+        if self.line.text:
+            self.line.delete()
         else:
-            self._line.exit()
+            self.line.exit()
 
     def ctrl_e(self):
-        self._line.cursor_to_end_of_line()
+        self.line.cursor_to_end_of_line()
 
     def ctrl_f(self):
-        self._line.cursor_right()
+        self.line.cursor_right()
 
     def ctrl_g(self):
         """ Abort an incremental search and restore the original line """
-        self._line.exit_isearch(restore_original_line=True)
+        self.line.exit_isearch(restore_original_line=True)
 
     def ctrl_h(self):
-        self._line.delete_character_before_cursor()
+        self.line.delete_character_before_cursor()
 
     def ctrl_i(self):
         r""" Ctrl-I is identical to "\t" """
@@ -130,11 +130,11 @@ class InputStreamHandler(object):
         self.enter()
 
     def ctrl_k(self):
-        data = ClipboardData(self._line.delete_until_end_of_line())
-        self._line.set_clipboard(data)
+        data = ClipboardData(self.line.delete_until_end_of_line())
+        self.line.set_clipboard(data)
 
     def ctrl_l(self):
-        self._line.clear()
+        self.line.clear()
 
     def ctrl_m(self):
         """ Carriage return """
@@ -142,33 +142,33 @@ class InputStreamHandler(object):
         self.ctrl_j()
 
     def ctrl_n(self):
-        self._line.history_forward()
+        self.line.history_forward()
 
     def ctrl_o(self):
         pass
 
     def ctrl_p(self):
-        self._line.history_backward()
+        self.line.history_backward()
 
     def ctrl_q(self):
         pass
 
     def ctrl_r(self):
-        self._line.reverse_search()
+        self.line.reverse_search()
 
     def ctrl_s(self):
-        self._line.forward_search()
+        self.line.forward_search()
 
     def ctrl_t(self):
-        self._line.swap_characters_before_cursor()
+        self.line.swap_characters_before_cursor()
 
     def ctrl_u(self):
         """
         Clears the line before the cursor position. If you are at the end of
         the line, clears the entire line.
         """
-        data = self._line.delete_from_start_of_line()
-        self._line.set_clipboard(ClipboardData(data))
+        data = self.line.delete_from_start_of_line()
+        self.line.set_clipboard(ClipboardData(data))
 
     def ctrl_v(self):
         pass
@@ -178,48 +178,48 @@ class InputStreamHandler(object):
         Delete the word before the cursor.
         """
         data = ClipboardData(''.join(
-            self._line.delete_word_before_cursor() for i in range(self._arg_count or 1)))
-        self._line.set_clipboard(data)
+            self.line.delete_word_before_cursor() for i in range(self._arg_count or 1)))
+        self.line.set_clipboard(data)
 
     def ctrl_x(self):
         pass
 
     def ctrl_y(self):
         # Pastes the clipboard content.
-        self._line.paste_from_clipboard()
+        self.line.paste_from_clipboard()
 
     def ctrl_z(self):
         pass
 
     def page_up(self):
-        if self._line.mode == LineMode.COMPLETE:
-            self._line.complete_previous(5)
+        if self.line.mode == LineMode.COMPLETE:
+            self.line.complete_previous(5)
         else:
-            self._line.history_backward()
+            self.line.history_backward()
 
     def page_down(self):
-        if self._line.mode == LineMode.COMPLETE:
-            self._line.complete_next(5)
+        if self.line.mode == LineMode.COMPLETE:
+            self.line.complete_next(5)
         else:
-            self._line.history_forward()
+            self.line.history_forward()
 
     def arrow_left(self):
-        self._line.cursor_left()
+        self.line.cursor_left()
 
     def arrow_right(self):
-        self._line.cursor_right()
+        self.line.cursor_right()
 
     def arrow_up(self):
-        self._line.auto_up()
+        self.line.auto_up()
 
     def arrow_down(self):
-        self._line.auto_down()
+        self.line.auto_down()
 
     def backspace(self):
-        self._line.delete_character_before_cursor()
+        self.line.delete_character_before_cursor()
 
     def delete(self):
-        self._line.delete()
+        self.line.delete()
 
     def tab(self):
         """
@@ -233,26 +233,26 @@ class InputStreamHandler(object):
         suffix and the second tab lists all the completions.
         """
         if self._second_tab:
-            self._line.list_completions()
+            self.line.list_completions()
             self._second_tab = False
         else:
-            self._second_tab = not self._line.complete()
+            self._second_tab = not self.line.complete()
 
     def insert_char(self, data):
         """ Insert data at cursor position.  """
         assert len(data) == 1
-        self._line.insert_text(data)
+        self.line.insert_text(data)
 
     def enter(self):
-        if self._line.mode == LineMode.INCREMENTAL_SEARCH:
+        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
             # When enter pressed in isearch, quit isearch mode. (Multiline
             # isearch would be too complicated.)
-            self._line.exit_isearch()
+            self.line.exit_isearch()
 
-        elif self._line.is_multiline:
-            self._line.newline()
+        elif self.line.is_multiline:
+            self.line.newline()
         else:
-            self._line.return_input()
+            self.line.return_input()
 
 
 class EmacsInputStreamHandler(InputStreamHandler):
@@ -262,8 +262,8 @@ class EmacsInputStreamHandler(InputStreamHandler):
     # Overview of Readline emacs commands:
     # http://www.catonmat.net/download/readline-emacs-editing-mode-cheat-sheet.pdf
 
-    def _reset(self):
-        super(EmacsInputStreamHandler, self)._reset()
+    def reset(self):
+        super(EmacsInputStreamHandler, self).reset()
         self._escape_pressed = False
         self._ctrl_x_pressed = False
 
@@ -272,14 +272,14 @@ class EmacsInputStreamHandler(InputStreamHandler):
         self._escape_pressed = True
 
     def ctrl_n(self):
-        self._line.auto_down()
+        self.line.auto_down()
 
     def ctrl_o(self):
         """ Insert newline, but don't move the cursor. """
-        self._line.insert_text('\n', move_cursor=False)
+        self.line.insert_text('\n', move_cursor=False)
 
     def ctrl_p(self):
-        self._line.auto_up()
+        self.line.auto_up()
 
     def ctrl_w(self):
         # TODO: cut current region.
@@ -290,7 +290,7 @@ class EmacsInputStreamHandler(InputStreamHandler):
 
     def ctrl_y(self):
         """ Paste before cursor. """
-        self._line.paste_from_clipboard(before=True)
+        self.line.paste_from_clipboard(before=True)
 
     def __call__(self, name, *a):
         reset_arg_count_after_call = True
@@ -365,11 +365,11 @@ class EmacsInputStreamHandler(InputStreamHandler):
 
     def meta_enter(self):
         """ Alt + Enter. Should always accept input. """
-        self._line.return_input()
+        self.line.return_input()
 
     def meta_backspace(self):
         """ Delete word backwards. """
-        self._line.delete_word_before_cursor()
+        self.line.delete_word_before_cursor()
 
     def meta_a(self):
         """
@@ -383,9 +383,9 @@ class EmacsInputStreamHandler(InputStreamHandler):
         Capitalize the current (or following) word.
         """
         for i in range(self._arg_count or 1):
-            pos = self._line.document.find_next_word_ending()
-            words = self._line.document.text_after_cursor[:pos]
-            self._line.insert_text(words.title(), overwrite=True)
+            pos = self.line.document.find_next_word_ending()
+            words = self.line.document.text_after_cursor[:pos]
+            self.line.insert_text(words.title(), overwrite=True)
 
     def meta_e(self):
         """ Move to end of sentence. """
@@ -396,30 +396,30 @@ class EmacsInputStreamHandler(InputStreamHandler):
         """
         Cursor to end of next word.
         """
-        pos = self._line.document.find_next_word_ending()
+        pos = self.line.document.find_next_word_ending()
         if pos:
-            self._line.cursor_position += pos
+            self.line.cursor_position += pos
 
     def meta_b(self):
         """ Cursor to start of previous word. """
-        self._line.cursor_word_back()
+        self.line.cursor_word_back()
 
     def meta_d(self):
         """
         Delete the Word after the cursor. (Delete until end of word.)
         """
-        pos = self._line.document.find_next_word_ending()
-        data = ClipboardData(self._line.delete(pos))
-        self._line.set_clipboard(data)
+        pos = self.line.document.find_next_word_ending()
+        data = ClipboardData(self.line.delete(pos))
+        self.line.set_clipboard(data)
 
     def meta_l(self):
         """
         Lowercase the current (or following) word.
         """
         for i in range(self._arg_count or 1): # XXX: not DRY: see meta_c and meta_u!!
-            pos = self._line.document.find_next_word_ending()
-            words = self._line.document.text_after_cursor[:pos]
-            self._line.insert_text(words.lower(), overwrite=True)
+            pos = self.line.document.find_next_word_ending()
+            words = self.line.document.text_after_cursor[:pos]
+            self.line.insert_text(words.lower(), overwrite=True)
 
     def meta_t(self):
         """
@@ -432,9 +432,9 @@ class EmacsInputStreamHandler(InputStreamHandler):
         Uppercase the current (or following) word.
         """
         for i in range(self._arg_count or 1):
-            pos = self._line.document.find_next_word_ending()
-            words = self._line.document.text_after_cursor[:pos]
-            self._line.insert_text(words.upper(), overwrite=True)
+            pos = self.line.document.find_next_word_ending()
+            words = self.line.document.text_after_cursor[:pos]
+            self.line.insert_text(words.upper(), overwrite=True)
 
     def meta_w(self):
         """
@@ -453,7 +453,7 @@ class EmacsInputStreamHandler(InputStreamHandler):
         """
         Undo.
         """
-        self._line.undo()
+        self.line.undo()
 
     def meta_backslash(self):
         """
@@ -470,20 +470,20 @@ class EmacsInputStreamHandler(InputStreamHandler):
         """
         Open editor.
         """
-        self._line.open_in_editor()
+        self.line.open_in_editor()
 
     def ctrl_x_ctrl_u(self):
-        self._line.undo()
+        self.line.undo()
 
     def ctrl_x_ctrl_x(self):
         """
         Move cursor back and forth between the start and end of the current
         line.
         """
-        if self._line.document.current_char == '\n':
-            self._line.cursor_to_start_of_line(after_whitespace=False)
+        if self.line.document.current_char == '\n':
+            self.line.cursor_to_start_of_line(after_whitespace=False)
         else:
-            self._line.cursor_to_end_of_line()
+            self.line.cursor_to_end_of_line()
 
 
 class ViMode(object):
@@ -504,8 +504,8 @@ class ViInputStreamHandler(InputStreamHandler):
     # Overview of Readline Vi commands:
     # http://www.catonmat.net/download/bash-vi-editing-mode-cheat-sheet.pdf
     """
-    def _reset(self):
-        super(ViInputStreamHandler, self)._reset()
+    def reset(self):
+        super(ViInputStreamHandler, self).reset()
         self._vi_mode = ViMode.INSERT
         self._all_navigation_handles = self._get_navigation_mode_handles()
 
@@ -539,9 +539,9 @@ class ViInputStreamHandler(InputStreamHandler):
         # an empty line.)
         if (
                 self._vi_mode == ViMode.NAVIGATION and
-                self._line.document.is_cursor_at_the_end_of_line and
-                len(self._line.document.current_line) > 0):
-            self._line.cursor_position -= 1
+                self.line.document.is_cursor_at_the_end_of_line and
+                len(self.line.document.current_line) > 0):
+            self.line.cursor_position -= 1
 
     def _needs_to_save(self, current_method):
         # Don't create undo entries in the middle of executing a macro.
@@ -560,16 +560,16 @@ class ViInputStreamHandler(InputStreamHandler):
         self._arg_count = None
 
         # Quit incremental search (if enabled.)
-        if self._line.mode == LineMode.INCREMENTAL_SEARCH:
-            self._line.exit_isearch()
+        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
+            self.line.exit_isearch()
 
     def enter(self):
-        if self._line.mode == LineMode.INCREMENTAL_SEARCH:
-            self._line.exit_isearch(restore_original_line=False)
+        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
+            self.line.exit_isearch(restore_original_line=False)
 
         elif self._vi_mode == ViMode.NAVIGATION:
             self._vi_mode = ViMode.INSERT
-            self._line.return_input()
+            self.line.return_input()
 
         else:
             super(ViInputStreamHandler, self).enter()
@@ -577,26 +577,26 @@ class ViInputStreamHandler(InputStreamHandler):
     def backspace(self):
         # In Vi-mode, either move cursor or delete character.
         if self._vi_mode == ViMode.INSERT:
-            self._line.delete_character_before_cursor()
+            self.line.delete_character_before_cursor()
         else:
-            self._line.cursor_left()
+            self.line.cursor_left()
 
     def ctrl_v(self):
         # TODO: Insert a character literally (quoted insert).
         pass
 
     def ctrl_n(self):
-        self._line.complete_next()
+        self.line.complete_next()
 
     def ctrl_p(self):
-        self._line.complete_previous()
+        self.line.complete_previous()
 
     def _get_navigation_mode_handles(self):
         """
         Create a dictionary that maps the vi key binding to their handlers.
         """
         handles = {}
-        line = self._line
+        line = self.line
 
         def handle(key):
             """ Decorator that registeres the handler function in the handles dict. """
@@ -1089,13 +1089,13 @@ class ViInputStreamHandler(InputStreamHandler):
         @handle('/')
         def _(arg):
             # Search history backward for a command matching string.
-            self._line.reverse_search()
+            self.line.reverse_search()
             self._vi_mode = ViMode.INSERT # We have to be able to insert the search string.
 
         @handle('?')
         def _(arg):
             # Search history forward for a command matching string.
-            self._line.forward_search()
+            self.line.forward_search()
             self._vi_mode = ViMode.INSERT # We have to be able to insert the search string.
 
         @handle('#')
@@ -1118,8 +1118,8 @@ class ViInputStreamHandler(InputStreamHandler):
             self._one_character_callback(data)
             self._one_character_callback = False
 
-        elif self._line.mode == LineMode.INCREMENTAL_SEARCH:
-            self._line.insert_text(data)
+        elif self.line.mode == LineMode.INCREMENTAL_SEARCH:
+            self.line.insert_text(data)
 
         elif self._vi_mode == ViMode.NAVIGATION:
             # Always handle numberics to build the arg
@@ -1134,7 +1134,7 @@ class ViInputStreamHandler(InputStreamHandler):
 
                 # Safe state (except if we called the 'undo' action.)
                 if data != 'u':
-                    self._line.save_to_undo_stack()
+                    self.line.save_to_undo_stack()
 
                 # Call handler
                 self._current_handles[data](arg_count or 1)
@@ -1152,7 +1152,7 @@ class ViInputStreamHandler(InputStreamHandler):
 
         # In replace/text mode.
         elif self._vi_mode == ViMode.REPLACE:
-            self._line.insert_text(data, overwrite=True)
+            self.line.insert_text(data, overwrite=True)
 
         # In insert/text mode.
         elif self._vi_mode == ViMode.INSERT:
