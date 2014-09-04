@@ -197,7 +197,11 @@ class CommandLine(object):
         #       `codecs.getreader('utf-8')(stdin)` and doing `read(1)`.
         #       Somehow that causes some latency when the escape
         #       character is pressed. (Especially on combination with the `select`.
-        bytes = os.read(self.stdin.fileno(), 1024)
+        try:
+            bytes = os.read(self.stdin.fileno(), 1024)
+        except OSError:
+            # In case of SIGWINCH
+            bytes = b''
 
         try:
             return self._stdin_decoder.decode(bytes)
@@ -322,7 +326,7 @@ def _select(*args, **kwargs):
     while True:
         try:
             return select.select(*args, **kwargs)
-        except Exception as e:
+        except select.error as e:
             # Retry select call when EINTR
             if e.args and e.args[0] == errno.EINTR:
                 continue
