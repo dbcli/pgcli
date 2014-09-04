@@ -656,6 +656,7 @@ class ViInputStreamHandler(InputStreamHandler):
             This decorator will create both the 'change', 'delete' and move variants,
             based on that ``CursorRegion``.
             """
+            # TODO: Also do '>' and '<' indent/unindent operators.
             def decorator(func):
                 def call_function(arg, done_callback):
                     """ Call the original function. If we need an additional
@@ -748,30 +749,35 @@ class ViInputStreamHandler(InputStreamHandler):
 
         @change_delete_move_yank_handler('^')
         def _(arg):
-            """ 'c^', 'd^' and '^': Start of line, after whitespace. """
+            """ 'c^', 'd^' and '^': Soft start of line, after whitespace. """
             return CursorRegion(-len(line.document.current_line_before_cursor.lstrip()))
 
         @change_delete_move_yank_handler('0')
         def _(arg):
-            """ 'c0', 'd0' and '0': Start of line, before whitespace. """
+            """ 'c0', 'd0' and '0': Hard start of line, before whitespace. """
             return CursorRegion(-len(line.document.current_line_before_cursor))
 
-        def create_ci_handles(ci_start, ci_end):
+        def create_ci_ca_handles(ci_start, ci_end, inner):
+                    # TODO: 'dab', 'dib', (brackets or block) 'daB', 'diB', Braces.
+                    # TODO: 'dat', 'dit', (tags (like xml)
             """
             Delete/Change string between this start and stop character. But keep these characters.
-            This implements all the ci", ci<, ci{, ci(, di", di<, ... combinations.
+            This implements all the ci", ci<, ci{, ci(, di", di<, ca", ca<, ... combinations.
             """
-            @change_delete_move_yank_handler('i%s' % ci_start, no_move_handler=True)
-            @change_delete_move_yank_handler('i%s' % ci_end, no_move_handler=True)
+            @change_delete_move_yank_handler('ai'[inner] + ci_start, no_move_handler=True)
+            @change_delete_move_yank_handler('ai'[inner] + ci_end, no_move_handler=True)
             def _(arg):
                 start = line.document.find_backwards(ci_start, in_current_line=True)
                 end = line.document.find(ci_end, in_current_line=True)
 
                 if start is not None and end is not None:
-                    return CursorRegion(start + 1, end)
+                    offset = 0 if inner else 1
+                    return CursorRegion(start + 1 - offset, end + offset)
 
-        for ci_start, ci_end in [ ('"', '"'), ("'", "'"), ('[', ']'), ('<', '>'), ('{', '}'), ('(', ')') ]:
-            create_ci_handles(ci_start, ci_end)
+        for inner in (False, True):
+            for ci_start  , ci_end in [ ('"', '"'), ("'", "'"), ("`", "`"),
+                                ('[', ']'), ('<', '>'), ('{', '}'), ('(', ')') ]:
+                create_ci_ca_handles(ci_start, ci_end, inner)
 
         @change_delete_move_yank_handler('f', needs_one_more_character=True)
         def _(arg, char):
@@ -791,27 +797,37 @@ class ViInputStreamHandler(InputStreamHandler):
         @change_delete_move_yank_handler('t', needs_one_more_character=True)
         def _(arg, char):
             # Move right to the next occurance of c, then one char backward.
+            self._last_character_find = (char, False)
             match = line.document.find(char, in_current_line=True, count=arg)
             return CursorRegion(match - 1 if match else 0)
 
         @change_delete_move_yank_handler('T', needs_one_more_character=True)
         def _(arg, char):
             # Move left to the previous occurance of c, then one char forward.
+            self._last_character_find = (char, True)
             match = line.document.find_backwards(char, in_current_line=True, count=arg)
             return CursorRegion(match + 1 if match else 0)
 
-        @change_delete_move_yank_handler(';')
-        def _(arg):
-            # Repeat the last 'f' or 'F' command.
-            pos = 0
+        def repeat(reverse):
+            """ Create ',' and ';' commands. """
+            @change_delete_move_yank_handler(',' if reverse else ';')
+            def _(arg):
+                # Repeat the last 'f'/'F'/'t'/'T' command.
+                pos = 0
 
-            if self._last_character_find:
-                char, backwards = self._last_character_find
-                if backwards:
-                    pos = line.document.find_backwards(char, in_current_line=True, count=arg)
-                else:
-                    pos = line.document.find(char, in_current_line=True, count=arg)
-            return CursorRegion(pos or 0)
+                if self._last_character_find:
+                    char, backwards = self._last_character_find
+
+                    if reverse:
+                        backwards = not backwards
+
+                    if backwards:
+                        pos = line.document.find_backwards(char, in_current_line=True, count=arg)
+                    else:
+                        pos = line.document.find(char, in_current_line=True, count=arg)
+                return CursorRegion(pos or 0)
+        repeat(True)
+        repeat(False)
 
         @change_delete_move_yank_handler('h')
         def _(arg):
@@ -846,7 +862,6 @@ class ViInputStreamHandler(InputStreamHandler):
             # Vi moves to the end of the visible region.
             # cursor position 0 is okay for us.
             return CursorRegion(len(line.document.text_after_cursor))
-
 
         @change_delete_move_yank_handler('%')
         def _(arg):
@@ -967,7 +982,8 @@ class ViInputStreamHandler(InputStreamHandler):
 
         @handle('X')
         def _(arg):
-            line.delete_character_before_cursor()
+            data = line.delete_character_before_cursor()
+            line.set_clipboard(data)
 
         @handle('yy')
         def _(arg):
@@ -1106,6 +1122,16 @@ class ViInputStreamHandler(InputStreamHandler):
         @handle('*')
         def _(arg):
             # Go to next occurence of this word.
+            pass
+
+        @handle('(')
+        def _(arg):
+            # TODO: go to begin of sentence.
+            pass
+
+        @handle(')')
+        def _(arg):
+            # TODO: go to end of sentence.
             pass
 
         return handles
