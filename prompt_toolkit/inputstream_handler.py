@@ -1,3 +1,4 @@
+# *** encoding: utf-8 ***
 """
 An :class:`~.InputStreamHandler` receives callbacks for the keystrokes parsed
 from the input in the :class:`~prompt_toolkit.inputstream.InputStream`
@@ -314,7 +315,9 @@ class EmacsInputStreamHandler(InputStreamHandler):
                     reset_arg_count_after_call = False
 
                 # Handle Alt + char in their respective `meta_X` method.
-                else:
+                elif ord(a[0]) < 128:
+                        # The odr<128 test is just to make sure that we only create
+                        # ASCII names. alt-§ otherwise crashes in Python27
                     name = 'meta_' + a[0]
                     a = []
             else:
