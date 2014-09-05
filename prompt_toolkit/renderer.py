@@ -323,6 +323,7 @@ class Screen(object):
         # When the previous screen has a different width, redraw everything anyway.
         if previous_screen and previous_screen.columns != self.columns:
             current_pos = move_cursor(_Point(0, 0))
+            write(TerminalCodes.RESET_ATTRIBUTES)
             write(TerminalCodes.ERASE_DOWN)
             previous_screen = None
 
@@ -377,6 +378,13 @@ class Screen(object):
         if accept_or_abort:
             write(TerminalCodes.RESET_ATTRIBUTES)
             write(TerminalCodes.ENABLE_AUTOWRAP)
+
+        # If the last printed character has a background color, always reset.
+        # (Many terminals give weird artifacs on resize events when there is an
+        # active background color.)
+        if last_char[0] and last_char[0]._background:
+            write(TerminalCodes.RESET_ATTRIBUTES)
+            last_char[0] = None
 
         return ''.join(result), current_pos, last_char[0]
 
