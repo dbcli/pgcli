@@ -33,7 +33,7 @@ class AnimalCode(Code):
 
         for a in self.animals:
             if a.startswith(word_before_cursor):
-                yield Completion(a, a[len(word_before_cursor):])
+                yield Completion(a, -len(word_before_cursor))
 
 
 class AnimalLine(CommandLine):

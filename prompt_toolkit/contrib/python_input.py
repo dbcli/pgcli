@@ -484,8 +484,8 @@ class ExtendedPopupCompletionMenu(PopupCompletionMenu):
 
 
 class PythonCompletion(Completion):
-    def __init__(self, display, suffix, jedi_completion): # XXX: rename suffix to 'addition'
-        super(PythonCompletion, self).__init__(display, suffix)
+    def __init__(self, text, start_position, jedi_completion):
+        super(PythonCompletion, self).__init__(text, start_position)
         self.jedi_completion = jedi_completion
 
 
@@ -529,8 +529,7 @@ class PythonCode(Code):
 
         if script:
             for c in script.completions():
-                #yield Completion('%s %s|%s' % (c.name, c.module_name, c.full_name), c.complete)
-                yield PythonCompletion(c.name, c.complete, c)
+                yield PythonCompletion(c.name, len(c.complete) - len(c.name), c)
 
 
 class PythonCommandLine(CommandLine):

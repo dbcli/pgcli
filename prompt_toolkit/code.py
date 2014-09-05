@@ -14,12 +14,26 @@ __all__ = (
 
 
 class Completion(object):
-    def __init__(self, display='', suffix=''): # XXX: rename suffix to 'addition'
-        self.display = display
-        self.suffix = suffix
+    def __init__(self, text, start_position=0, display=None):
+        """
+        :param text: The new string that will be inserted into the document.
+        :param start_position: Position relative to the cursor_position where the
+                               new text will start. The text will be inserted
+                               between the start_position and the original
+                               cursor position.
+        """
+        self.text = text
+        self.start_position = start_position
+
+        if display is None:
+            self.display = text
+        else:
+            self.display = display
+
+        assert self.start_position <= 0
 
     def __repr__(self):
-        return 'Completion(display=%r, suffix=%r)' % (self.display, self.suffix)
+        return 'Completion(text=%r, start_position=%r)' % (self.text, self.start_position)
 
 
 class ValidationError(Exception):
@@ -27,7 +41,6 @@ class ValidationError(Exception):
         self.line = line
         self.column = column
         self.message = message
-
 
 
 class CodeBase(object):

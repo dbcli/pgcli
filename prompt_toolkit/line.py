@@ -109,6 +109,9 @@ class CompletionState(object):
         #: Document as it was when the completion started.
         self.original_document = original_document
 
+        self.original_text_before_cursor = original_document.text_before_cursor
+        self.original_text_after_cursor = original_document.text_after_cursor
+
         #: List of all the current Completion instances which are possible at
         #: this point.
         self.current_completions = current_completions or []
@@ -121,12 +124,19 @@ class CompletionState(object):
     def original_cursor_position(self):
         self.original_document.cursor_position
 
-    @property
-    def current_completion_text(self):
+    def get_new_text_and_position(self):
+        """ Return (new_text, new_cursor_position) for this completion. """
         if self.complete_index is None:
-            return ''
+            return self.original_document.text, self.original_document.cursor_position
         else:
-            return self.current_completions[self.complete_index].suffix
+            c = self.current_completions[self.complete_index]
+            if c.start_position == 0:
+                before = self.original_text_before_cursor
+            else:
+                before = self.original_text_before_cursor[:c.start_position]
+            return before + c.text + self.original_text_after_cursor, len(before) + len(c.text)
+
+
 
 class _IncrementalSearchState(object):
     def __init__(self, original_cursor_position, original_working_index):
@@ -591,8 +601,8 @@ class Line(object):
             self.complete_state = CompletionState(
                         original_document=self.document,
                         current_completions=current_completions)
-            self.insert_text(self.complete_state.current_completion_text)
             self.mode = LineMode.COMPLETE
+            self._go_to_completion(0)
 
         else:
             self.mode = LineMode.NORMAL
@@ -604,14 +614,11 @@ class Line(object):
         """
         assert self.mode == LineMode.COMPLETE
 
-        # Undo previous completion
-        count = len(self.complete_state.current_completion_text)
-        if count:
-            self.delete_character_before_cursor(count=len(self.complete_state.current_completion_text))
-
         # Set new completion
         self.complete_state.complete_index = index
-        self.insert_text(self.complete_state.current_completion_text)
+
+        # Set text/cursor position
+        self.text, self.cursor_position = self.complete_state.get_new_text_and_position()
 
         self.mode = LineMode.COMPLETE
 
