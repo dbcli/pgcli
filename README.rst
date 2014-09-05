@@ -116,3 +116,10 @@ A simple example looks like this:
 
     if __name__ == '__main__':
         main()
+
+
+FAQ
+---
+
+Q: The Ctrl-S forward search doesn't work.
+A: Try to run ``stty -ixon`` in your terminal to disable flow control.
