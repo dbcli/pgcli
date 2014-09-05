@@ -267,6 +267,7 @@ class EmacsInputStreamHandler(InputStreamHandler):
         super(EmacsInputStreamHandler, self).reset()
         self._escape_pressed = False
         self._ctrl_x_pressed = False
+        self._ctrl_square_close_pressed = False
 
     def escape(self):
         # Escape is the same as the 'meta-' prefix.
@@ -283,8 +284,9 @@ class EmacsInputStreamHandler(InputStreamHandler):
         self.line.auto_up()
 
     def ctrl_w(self):
-        # TODO: cut current region.
-        pass
+        # TODO: if selection: cut current region.
+        # otherwise, cut word before cursor:
+        super(EmacsInputStreamHandler, self).ctrl_w()
 
     def ctrl_x(self):
         self._ctrl_x_pressed = True
@@ -292,6 +294,10 @@ class EmacsInputStreamHandler(InputStreamHandler):
     def ctrl_y(self):
         """ Paste before cursor. """
         self.line.paste_from_clipboard(before=True)
+
+    def ctrl_square_close(self):
+        """ Ctrl+], followed by character. Go to character. """
+        self._ctrl_square_close_pressed = True
 
     def __call__(self, name, *a):
         reset_arg_count_after_call = True
@@ -303,6 +309,16 @@ class EmacsInputStreamHandler(InputStreamHandler):
                 #       in separate InputStreamHandler classes.If a method, like (ctl_x)
                 #       is called and returns an object. That should become the
                 #       new handler.
+
+        # When Ctl-] + a character is pressed. go to that character.
+        if self._ctrl_square_close_pressed:
+            if name == 'insert_char':
+                match = self.line.document.find(a[0], in_current_line=True, count=(self._arg_count or 1))
+                if match is not None:
+                    self.line.cursor_position += match
+            self._ctrl_square_close_pressed= False
+            self._arg_count = None
+            return
 
         # When escape was pressed, call the `meta_`-function instead.
         # (This is emacs-mode behaviour. The meta-prefix is equal to the escape
