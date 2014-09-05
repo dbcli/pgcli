@@ -24,6 +24,14 @@ __all__ = (
 
 _Point = namedtuple('Point', 'y x')
 
+
+#: If True: write the output of the renderer also to the following file. This
+#: is very useful for debugging. (e.g.: to see that we don't write more bytes
+#: than required.)
+_DEBUG_RENDER_OUTPUT = False
+_DEBUG_RENDER_OUTPUT_FILENAME = '/tmp/prompt-toolkit-render-output'
+
+
 class TerminalCodes:
     """
     Escape codes for a VT100 terminal.
@@ -107,6 +115,8 @@ class Char(object):
         """ Return the output to write this character to the terminal. """
         style = self.style
 
+        # If the last printed charact has the same styling, we don't have to
+        # output the style.
         if last_char and last_char.style == self.style:
             return self.char
 
@@ -407,7 +417,8 @@ class Renderer(object):
         self._style = style or Style
         self._last_screen = None
 
-        self.LOG = open('/tmp/debug-diff', 'ab')
+        if _DEBUG_RENDER_OUTPUT:
+            self.LOG = open(_DEBUG_RENDER_OUTPUT_FILENAME, 'ab')
 
         self.reset()
 
@@ -445,7 +456,8 @@ class Renderer(object):
         # Render to string first.
         output = self.render_to_str(render_context)
 
-        if output:
+        # Write output to log file.
+        if _DEBUG_RENDER_OUTPUT and output:
             self.LOG.write(repr(output).encode('utf-8'))
             self.LOG.write(b'\n')
             self.LOG.flush()
