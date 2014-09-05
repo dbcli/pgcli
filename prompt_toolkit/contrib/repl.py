@@ -81,7 +81,7 @@ class PythonRepl(PythonCommandLine):
     def _handle_exception(self, e):
         tb = traceback.format_exc()
         self.stdout.write(highlight(tb, PythonTracebackLexer(), Terminal256Formatter()))
-        self.stdout.write('%s' % e)
+        self.stdout.write('%s\n' % e)
         self.stdout.flush()
 
     def _handle_keyboard_interrupt(self, e):

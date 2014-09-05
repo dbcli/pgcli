@@ -5,10 +5,11 @@ Renders the command line on the console.
 from __future__ import unicode_literals
 import sys
 import six
+import errno
 
 from .utils import get_size
 from .libs.wcwidth import wcwidth
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from pygments.formatters.terminal256 import Terminal256Formatter, EscapeSequence
 from pygments.style import Style
@@ -20,6 +21,8 @@ _tf = Terminal256Formatter()
 __all__ = (
     'Renderer',
 )
+
+_Point = namedtuple('Point', 'y x')
 
 class TerminalCodes:
     """
@@ -43,6 +46,12 @@ class TerminalCodes:
     HIDE_CURSOR = '\x1b[?25l'
     DISPLAY_CURSOR = '\x1b[?25h'
 
+    RESET_ATTRIBUTES = '\x1b[0m'
+
+    DISABLE_AUTOWRAP = '\x1b[?7l'
+    ENABLE_AUTOWRAP = '\x1b[?7h'
+
+
     @staticmethod
     def CURSOR_GOTO(row=0, column=0):
         """ Move cursor position. """
@@ -50,29 +59,37 @@ class TerminalCodes:
 
     @staticmethod
     def CURSOR_UP(amount):
-        if amount == 1:
+        if amount == 0:
+            return ''
+        elif amount == 1:
             return '\x1b[A'
         else:
             return '\x1b[%iA' % amount
 
     @staticmethod
     def CURSOR_DOWN(amount):
-        if amount == 1:
-            return '\x1b[B'
+        if amount == 0:
+            return ''
+        elif amount == 1:
+            return '\x1b[B' # XXX: would just `\n' also do?
         else:
             return '\x1b[%iB' % amount
 
     @staticmethod
     def CURSOR_FORWARD(amount):
-        if amount == 1:
+        if amount == 0:
+            return ''
+        elif amount == 1:
             return '\x1b[C'
         else:
             return '\x1b[%iC' % amount
 
     @staticmethod
     def CURSOR_BACKWARD(amount):
-        if amount == 1:
-            return '\x1b[D'
+        if amount == 0:
+            return ''
+        elif amount == 1:
+            return '\b' # '\x1b[D'
         else:
             return '\x1b[%iD' % amount
 
@@ -86,9 +103,12 @@ class Char(object):
                            #       `style` and use the actual style in the last step of the renderer.
         self.z_index = z_index
 
-    def output(self):
+    def output(self, last_char=None):
         """ Return the output to write this character to the terminal. """
         style = self.style
+
+        if last_char and last_char.style == self.style:
+            return self.char
 
         if style:
             e = EscapeSequence(
@@ -98,12 +118,15 @@ class Char(object):
                     underline=style.get('underline', False))
 
             return ''.join([
+                    TerminalCodes.RESET_ATTRIBUTES,
                     e.color_string(),
                     self.char,
-                    e.reset_string()
                 ])
         else:
-            return self.char
+            return ''.join([
+                TerminalCodes.RESET_ATTRIBUTES,
+                self.char
+                ])
 
     @property
     def width(self):
@@ -111,6 +134,22 @@ class Char(object):
         # characters, like e.g. Ctrl-underscore get a -1 wcwidth value.
         # It can be possible that these characters end up in the input text.
         return max(0, wcwidth(self.char))
+
+    @property
+    def _background(self):
+        if self.style:
+            return self.style.get('bgcolor', None)
+
+    def __eq__(self, other):
+        """
+        Test whether two `Char` instances are equal.
+        """
+        # Spaces are always equal, whathever their styling.
+        if self.char == other.char and self.char == ' ' and self._background == other._background:
+            return True
+
+        # We ignore z-index, that does not matter if things get painted.
+        return self.char == other.char and self.style == other.style
 
 
 class Screen(object):
@@ -137,7 +176,10 @@ class Screen(object):
 
     @property
     def current_height(self):
-        return max(self._buffer.keys())
+        if not self._buffer:
+            return 1
+        else:
+            return max(self._buffer.keys()) + 1
 
     def get_cursor_position(self):
         return self._cursor_y, self._cursor_x
@@ -233,111 +275,194 @@ class Screen(object):
             for c in text:
                 self.write_char(c, token=token)
 
-    def output(self):
+    def output(self, current_pos, previous_screen=None, last_char=None, accept_or_abort=False):
         """
-        Return (string, last_y, last_x) tuple.
+        Create diff of this screen with the previous screen.
         """
-        result = []
+        last_char = [last_char] # nonlocal
+        result = [];
+        write = result.append
+
+        def move_cursor(new):
+            if current_pos.x >= self.columns - 1:
+                write(TerminalCodes.CARRIAGE_RETURN)
+                write(TerminalCodes.CURSOR_FORWARD(new.x))
+            elif new.x < current_pos.x or current_pos.x >= self.columns - 1:
+                write(TerminalCodes.CURSOR_BACKWARD(current_pos.x - new.x))
+            elif new.x > current_pos.x:
+                write(TerminalCodes.CURSOR_FORWARD(new.x - current_pos.x))
+
+            if new.y > current_pos.y:
+                # Use newlines instead of CURSOR_DOWN, because this meight add new lines.
+                # CURSOR_DOWN will never create new lines at the bottom.
+                # Also reset attributes, otherwise the newline could draw a
+                # background color.
+                write(TerminalCodes.RESET_ATTRIBUTES)
+                write(TerminalCodes.NEWLINE * (new.y - current_pos.y))
+                write(TerminalCodes.CURSOR_FORWARD(new.x))
+                last_char[0] = None # Forget last char after resetting attributes.
+            elif new.y < current_pos.y:
+                write(TerminalCodes.CURSOR_UP(current_pos.y - new.y))
+
+            return new
 
         # Disable autowrap
-        result.append('\x1b[?7l')
+        if not previous_screen:
+            write(TerminalCodes.DISABLE_AUTOWRAP)
+            write(TerminalCodes.RESET_ATTRIBUTES)
 
-        rows = max(self._buffer.keys()) + 1
+        # Get height of the screen.
+        # (current_height changes as we loop over _buffer, so remember the current value.)
+        current_height = self.current_height
+
+        if previous_screen:
+            row_count = max(self.current_height, previous_screen.current_height)
+        else:
+            row_count = self.current_height
+
+        # When the previous screen has a different width, redraw everything anyway.
+        if previous_screen and previous_screen.columns != self.columns:
+            current_pos = move_cursor(_Point(0, 0))
+            write(TerminalCodes.ERASE_DOWN)
+            previous_screen = None
+
+        # Loop over the rows.
         c = 0
 
-        for y, r in enumerate(range(0, rows)):
-            line_data = self._buffer[r]
-            if line_data:
-                cols = max(line_data.keys()) + 1
+        for y, r in enumerate(range(0, row_count)):
+            new_row = self._buffer[r]
+            if previous_screen:
+                previous_row = previous_screen._buffer[r]
 
-                c = 0
-                while c < cols:
-                    result.append(line_data[c].output())
-                    c += (line_data[c].width or 1)
+            if new_row:
+                new_max_line_len = max(new_row.keys())
+            else:
+                new_max_line_len = 0
 
-            if y != rows - 1:
-                result.append(TerminalCodes.CRLF)
+            if previous_screen:
+                if previous_row:
+                    previous_max_line_len = max(previous_row.keys())
+                else:
+                    previous_max_line_len = 0
 
-        # Enable autowrap again.
-        result.append('\x1b[?7h')
+            # Loop over the columns.
+            c = 0
+            while c < new_max_line_len + 1:
+                char_width = (new_row[c].width or 1)
 
-        return ''.join(result), y, min(c, self.columns - 1)
+                if not previous_screen or not (new_row[c] == previous_row[c]):
+                    current_pos = move_cursor(_Point(y=y, x=c))
+                    write(new_row[c].output(last_char[0]))
+                    last_char[0] = new_row[c]
+                    current_pos = current_pos._replace(x=current_pos.x + char_width)
+
+                c += char_width
+
+            # If the new line is shorter, trim it
+            if previous_screen and new_max_line_len < previous_max_line_len:
+                current_pos = move_cursor(_Point(y=y, x=new_max_line_len+1))
+                write(TerminalCodes.RESET_ATTRIBUTES)
+                write(TerminalCodes.ERASE_END_OF_LINE)
+                last_char[0] = None # Forget last char after resetting attributes.
+
+        # Move cursor:
+        if accept_or_abort:
+            current_pos = move_cursor(_Point(y=current_height, x=0))
+            write(TerminalCodes.CRLF)
+            write(TerminalCodes.ERASE_DOWN)
+        else:
+            cursor_y, cursor_x = self.get_cursor_position()
+            current_pos = move_cursor(_Point(y=cursor_y, x=cursor_x))
+
+        if accept_or_abort:
+            write(TerminalCodes.RESET_ATTRIBUTES)
+            write(TerminalCodes.ENABLE_AUTOWRAP)
+
+        return ''.join(result), current_pos, last_char[0]
 
 
 class Renderer(object):
+    """
+
+    Typical usage:
+
+    ::
+
+        r = Renderer(Prompt)
+        r.render(Render_context(...))
+    """
     screen_cls = Screen
 
     def __init__(self, prompt_factory=None, stdout=None, style=None):
         self.prompt_factory = prompt_factory
         self._stdout = (stdout or sys.stdout)
         self._style = style or Style
+        self._last_screen = None
+
+        self.LOG = open('/tmp/debug-diff', 'ab')
 
         self.reset()
 
     def reset(self):
         # Reset position
-        self._cursor_line = 0
+        self._cursor_pos = _Point(x=0, y=0)
 
-        # Remember height of the screen between renderers. This way,
-        # a toolbar can remain at the 'bottom' position.
-        self._last_screen_height = 0
+        # Remember the last screen instance between renderers. This way,
+        # we can create a `diff` between two screens and only output the
+        # difference. It's also to remember the last height. (To show for
+        # instance a toolbar at the bottom position.)
+        self._last_screen = None
+        self._last_char = None
 
     def get_cols(self):
         rows, cols = get_size(self._stdout.fileno())
         return cols
 
-    def _render_to_str(self, render_context):
-        output = []
-        write = output.append
-
-        # Move the cursor to the first line that was printed before
-        # and erase everything below it.
-        if self._cursor_line:
-            write(TerminalCodes.CURSOR_UP(self._cursor_line))
-
-        write(TerminalCodes.CARRIAGE_RETURN)
-        write(TerminalCodes.ERASE_DOWN)
-
+    def render_to_str(self, render_context):
         # Generate the output of the new screen.
         screen = self.screen_cls(style=self._style, columns=self.get_cols(),
                 grayed=render_context.abort)
 
         prompt = self.prompt_factory(render_context)
-        prompt.write_to_screen(screen, self._last_screen_height)
+        prompt.write_to_screen(screen, self._last_screen.current_height if self._last_screen else 0)
 
-        o, last_y, last_x = screen.output()
-        write(o)
+        output, self._cursor_pos, self._last_char = screen.output(self._cursor_pos,
+                self._last_screen, self._last_char,
+                render_context.accept or render_context.abort)
+        self._last_screen = screen
 
-        # Move cursor to correct position.
-        if render_context.accept or render_context.abort:
-            self._cursor_line = 0
-            write(TerminalCodes.CRLF)
-        else:
-            cursor_y, cursor_x = screen.get_cursor_position()
-
-            # Up
-            if last_y - cursor_y:
-                write(TerminalCodes.CURSOR_UP(last_y - cursor_y))
-
-            # Horizontal
-                    # Note the '+1' is required to make sure that we first
-                    # really are back at the left margin. In some terminals
-                    # like gnome-terminal, it looks like if we disabled line
-                    # wrap but still write until the rigth margin, the cursor
-                    # could end up just past the right margin.
-            write(TerminalCodes.CURSOR_BACKWARD(last_x + 1))
-            write(TerminalCodes.CURSOR_FORWARD(cursor_x))
-
-            self._cursor_line = cursor_y
-
-        self._last_screen_height = max(self._last_screen_height, screen.current_height)
-
-        return ''.join(output)
+        return output
 
     def render(self, render_context):
-        out = self._render_to_str(render_context)
-        self._stdout.write(out)
-        self._stdout.flush()
+        # Render to string first.
+        output = self.render_to_str(render_context)
+
+        if output:
+            self.LOG.write(repr(output).encode('utf-8'))
+            self.LOG.write(b'\n')
+            self.LOG.flush()
+
+        # Write to output stream.
+        try:
+            self._stdout.write(output)
+            self._stdout.flush()
+        except IOError as e:
+            if e.args and e.args[0] == errno.EINTR:
+                # Interrupted system call. Can happpen in case of a window
+                # resize signal. (Just ignore. The resize handler will render
+                # again anyway.)
+                pass
+            else:
+                raise
+
+    def clear(self):
+        """
+        Clear screen and go to 0,0
+        """
+        self._stdout.write(TerminalCodes.ERASE_SCREEN)
+        self._stdout.write(TerminalCodes.CURSOR_GOTO(0, 0))
+
+        self.reset()
 
     def render_completions(self, completions):
         self._stdout.write(TerminalCodes.CRLF)
@@ -350,13 +475,6 @@ class Renderer(object):
         return
         if many: # TODO: Implement paging
             'Display all %i possibilities? (y on n)'
-
-    def clear(self):
-        """
-        Clear screen and go to 0,0
-        """
-        self._stdout.write(TerminalCodes.ERASE_SCREEN)
-        self._stdout.write(TerminalCodes.CURSOR_GOTO(0, 0))
 
     def _in_columns(self, item_iterator, margin_left=0): # XXX: copy of deployer.console.in_columns
         """

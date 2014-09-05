@@ -383,7 +383,8 @@ class PythonPrompt(Prompt):
         ])
 
     def write_after_input(self, screen):
-        screen.write_highlighted(list(self.get_help_tokens()))
+        if not (self.render_context.accept or self.render_context.abort):
+            screen.write_highlighted(list(self.get_help_tokens()))
 
     def write_to_screen(self, screen, last_screen_height):
         super(PythonPrompt, self).write_to_screen(screen, last_screen_height)
@@ -392,7 +393,7 @@ class PythonPrompt(Prompt):
     def write_toolbar(self, screen, last_screen_height):
         if not (self.render_context.accept or self.render_context.abort):
             # Draw the menu at the bottom position.
-            screen._y = max(screen.current_height, last_screen_height - 1)
+            screen._y = max(screen.current_height, last_screen_height - 1) - 1
 
             result = TokenList()
             append = result.append
