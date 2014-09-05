@@ -481,28 +481,6 @@ class Line(object):
         return self.delete_character_before_cursor(to_delete)
 
     @_to_mode(LineMode.NORMAL)
-    def delete_current_line(self):
-        """
-        Delete current line. Return deleted text.
-        """
-        document = self.document
-
-        # Remember deleted text.
-        deleted = document.current_line
-
-        # Cut line.
-        lines = document.lines
-        pos = document.cursor_position_row
-        self.text = '\n'.join(lines[:pos] + lines[pos+1:])
-
-        # Move cursor.
-        before_cursor = document.current_line_before_cursor
-        self.cursor_position -= len(before_cursor)
-        self.cursor_to_start_of_line(after_whitespace=True)
-
-        return deleted
-
-    @_to_mode(LineMode.NORMAL)
     def join_next_line(self):
         """
         Join the next line to the current one by deleting the line ending after
@@ -748,27 +726,29 @@ class Line(object):
         self._clipboard = clipboard_data
 
     @_to_mode(LineMode.NORMAL)
-    def paste_from_clipboard(self, before=False):
+    def paste_from_clipboard(self, before=False, count=1):
         """
         Insert the data from the clipboard.
         """
         if self._clipboard and self._clipboard.text:
             if self._clipboard.type == ClipboardDataType.CHARACTERS:
                 if before:
-                    self.insert_text(self._clipboard.text)
+                    self.insert_text(self._clipboard.text * count)
                 else:
                     self.cursor_right()
-                    self.insert_text(self._clipboard.text)
+                    self.insert_text(self._clipboard.text * count)
                     self.cursor_left()
 
             elif self._clipboard.type == ClipboardDataType.LINES:
                 if before:
                     self.cursor_to_start_of_line()
-                    self.insert_text(self._clipboard.text + '\n', move_cursor=False)
+                    self.insert_text((self._clipboard.text + '\n') * count, move_cursor=False)
                 else:
                     self.cursor_to_end_of_line()
-                    self.insert_text('\n')
-                    self.insert_text(self._clipboard.text, move_cursor=False)
+                    self.insert_text(('\n' + self._clipboard.text) * count, move_cursor=False)
+                    self.cursor_down()
+
+                self.cursor_to_start_of_line(after_whitespace=True)
 
     @_to_mode(LineMode.NORMAL)
     def undo(self):

@@ -888,9 +888,25 @@ class ViInputStreamHandler(InputStreamHandler):
 
         @handle('dd')
         def _(arg):
-            text = '\n'.join(line.delete_current_line() for i in range(arg))
-            data = ClipboardData(text, ClipboardDataType.LINES)
-            line.set_clipboard(data)
+            """ Delete line. (Or the following 'n' lines. """
+            # Split string in before/deleted/after text.
+            lines = line.document.lines
+
+            before = '\n'.join(lines[:line.document.cursor_position_row])
+            deleted = '\n'.join(lines[line.document.cursor_position_row : line.document.cursor_position_row + arg])
+            after = '\n'.join(lines[line.document.cursor_position_row + arg:])
+
+            # Set cursor position. (At the start of the first 'after' line, after the leading whitespace.)
+            line.cursor_position = len(before) + 1 + len(after) - len(after.lstrip(' '))
+
+            # Set new text.
+            if after:
+                after = '\n' + after
+
+            line.text = before + after
+
+            # Set clipboard data
+            line.set_clipboard(ClipboardData(deleted, ClipboardDataType.LINES))
 
         @handle('G')
         def _(arg):
