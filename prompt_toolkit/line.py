@@ -261,12 +261,12 @@ class Line(object):
         Safe current state (input text and cursor position), so that we can
         restore it by calling undo.
         """
-        state = (self.text, self.cursor_position)
-
         # Safe if the text is different from the text at the top of the stack
-        # is different.
-        if not self._undo_stack or self._undo_stack[-1][0] != state[0]:
-            self._undo_stack.append(state)
+        # is different. If the text is the same, just update the cursor position.
+        if self._undo_stack and self._undo_stack[-1][0] == self.text:
+            self._undo_stack[-1] = (self._undo_stack[-1][0], self.cursor_position)
+        else:
+            self._undo_stack.append((self.text, self.cursor_position))
 
     def set_current_line(self, value):
         """
@@ -752,11 +752,17 @@ class Line(object):
 
     @_to_mode(LineMode.NORMAL)
     def undo(self):
-        if self._undo_stack:
+        # Pop from the undo-stack until we find a text that if different from
+        # the current text. (The current logic of `save_to_undo_stack` will
+        # make sure that the top of the undo stack is usually the same as the
+        # current text, so in that case we have to pop twice.)
+        while self._undo_stack:
             text, pos = self._undo_stack.pop()
 
-            self.text = text
-            self.cursor_position = pos
+            if text != self.text:
+                self.text = text
+                self.cursor_position = pos
+                return
 
     @_to_mode(LineMode.NORMAL)
     def abort(self):
