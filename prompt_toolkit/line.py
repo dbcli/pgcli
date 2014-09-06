@@ -331,7 +331,7 @@ class Line(object):
         self.cursor_position += self.document.get_cursor_down_position()
 
     @_to_mode(LineMode.NORMAL, LineMode.COMPLETE)
-    def auto_up(self):
+    def auto_up(self, count=1):
         """
         If we're not on the first line (of a multiline input) go a line up,
         otherwise go back in history.
@@ -339,12 +339,12 @@ class Line(object):
         if self.mode == LineMode.COMPLETE:
             self.complete_previous()
         elif self.document.cursor_position_row > 0:
-            self.cursor_up()
+            self.cursor_position += self.document.get_cursor_up_position(count=count)
         else:
-            self.history_backward()
+            self.history_backward(count=count)
 
     @_to_mode(LineMode.NORMAL, LineMode.COMPLETE)
-    def auto_down(self):
+    def auto_down(self, count=1):
         """
         If we're not on the last line (of a multiline input) go a line down,
         otherwise go forward in history.
@@ -352,10 +352,10 @@ class Line(object):
         if self.mode == LineMode.COMPLETE:
             self.complete_next()
         elif self.document.cursor_position_row < self.document.line_count - 1:
-            self.cursor_down()
+            self.cursor_position += self.document.get_cursor_down_position(count=count)
         else:
             old_index = self._working_index
-            self.history_forward()
+            self.history_forward(count=count)
 
             # If we moved to the next line, place the cursor at the beginning.
             if old_index != self._working_index:
@@ -363,7 +363,7 @@ class Line(object):
 
     # NOTE: We can delete in i-search!
     @_to_mode(LineMode.NORMAL, LineMode.INCREMENTAL_SEARCH)
-    def delete_character_before_cursor(self, count=1): # TODO: unittest return type
+    def delete_before_cursor(self, count=1): # TODO: unittest return type
         """ Delete character before cursor, return deleted character. """
         assert count >= 0
         deleted = ''
@@ -547,17 +547,17 @@ class Line(object):
                         validation_error=self.validation_error)
 
     @_to_mode(LineMode.NORMAL)
-    def history_forward(self):
-        if self._working_index < len(self._working_lines) - 1:
+    def history_forward(self, count=1):
+        if self._working_index < len(self._working_lines) - count:
             # Go forward in history, and update cursor_position.
-            self._working_index += 1
+            self._working_index = count
             self.cursor_position = len(self.text)
 
     @_to_mode(LineMode.NORMAL)
-    def history_backward(self):
-        if self._working_index > 0:
+    def history_backward(self, count=1):
+        if self._working_index - count >= 0:
             # Go back in history, and update cursor_position.
-            self._working_index -= 1
+            self._working_index -= count
             self.cursor_position = len(self.text)
 
     @_to_mode(LineMode.NORMAL)

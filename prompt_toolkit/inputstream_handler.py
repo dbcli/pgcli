@@ -96,7 +96,7 @@ class InputStreamHandler(object):
         self.line.cursor_position += self.line.document.get_start_of_line_position(after_whitespace=False)
 
     def ctrl_b(self):
-        self.line.cursor_left()
+        self.line.cursor_position += self.line.document.get_cursor_left_position(count=self.get_arg_count())
 
     def ctrl_c(self):
         self.line.abort()
@@ -112,14 +112,14 @@ class InputStreamHandler(object):
         self.line.cursor_position += self.line.document.get_end_of_line_position()
 
     def ctrl_f(self):
-        self.line.cursor_right()
+        self.line.cursor_position += self.line.document.get_cursor_right_position(count=self.get_arg_count())
 
     def ctrl_g(self):
         """ Abort an incremental search and restore the original line """
         self.line.exit_isearch(restore_original_line=True)
 
     def ctrl_h(self):
-        self.line.delete_character_before_cursor()
+        self.line.delete_before_cursor()
 
     def ctrl_i(self):
         r""" Ctrl-I is identical to "\t" """
@@ -167,7 +167,7 @@ class InputStreamHandler(object):
         Clears the line before the cursor position. If you are at the end of
         the line, clears the entire line.
         """
-        deleted = self.line.delete_character_before_cursor(count=-self.line.document.get_start_of_line_position())
+        deleted = self.line.delete_before_cursor(count=-self.line.document.get_start_of_line_position())
         self.line.set_clipboard(ClipboardData(deleted))
 
     def ctrl_v(self):
@@ -179,7 +179,7 @@ class InputStreamHandler(object):
         """
         pos = self.line.document.find_start_of_previous_word(count=self.get_arg_count())
         if pos:
-            deleted = self.line.delete_character_before_cursor(count=-pos)
+            deleted = self.line.delete_before_cursor(count=-pos)
             self.line.set_clipboard(ClipboardData(deleted))
 
     def ctrl_x(self):
@@ -211,13 +211,13 @@ class InputStreamHandler(object):
         self.line.cursor_position += self.line.document.get_cursor_right_position(count=self.get_arg_count())
 
     def arrow_up(self):
-        self.line.auto_up()
+        self.line.auto_up(count=self.get_arg_count())
 
     def arrow_down(self):
-        self.line.auto_down()
+        self.line.auto_down(count=self.get_arg_count())
 
     def backspace(self):
-        self.line.delete_character_before_cursor(count=self.get_arg_count())
+        self.line.delete_before_cursor(count=self.get_arg_count())
 
     def delete(self):
         self.line.delete(count=self.get_arg_count())
@@ -381,7 +381,7 @@ class EmacsInputStreamHandler(InputStreamHandler):
         """ Delete word backwards. """
         pos = self.line.document.find_start_of_previous_word(count=self.get_arg_count())
         if pos:
-            deleted = self.line.delete_character_before_cursor(count=-pos)
+            deleted = self.line.delete_before_cursor(count=-pos)
             self.line.set_clipboard(ClipboardData(deleted))
 
     def meta_a(self):
@@ -598,7 +598,7 @@ class ViInputStreamHandler(InputStreamHandler):
     def backspace(self):
         # In Vi-mode, either move cursor or delete character.
         if self._vi_mode == ViMode.INSERT:
-            self.line.delete_character_before_cursor()
+            self.line.delete_before_cursor()
         else:
             self.line.cursor_left()
 
@@ -631,7 +631,7 @@ class ViInputStreamHandler(InputStreamHandler):
         @handle('a')
         def _(arg):
             self._vi_mode = ViMode.INSERT
-            line.cursor_right()
+            line.cursor_position += line.document.get_cursor_right_position()
 
         @handle('A')
         def _(arg):
@@ -1015,12 +1015,12 @@ class ViInputStreamHandler(InputStreamHandler):
         @handle('x')
         def _(arg):
             # Delete character.
-            data = ClipboardData(''.join(line.delete() for i in range(arg)))
+            data = ClipboardData(line.delete(count=arg))
             line.set_clipboard(data)
 
         @handle('X')
         def _(arg):
-            data = line.delete_character_before_cursor()
+            data = line.delete_before_cursor()
             line.set_clipboard(data)
 
         @handle('yy')
@@ -1051,8 +1051,7 @@ class ViInputStreamHandler(InputStreamHandler):
                                 lambda text: not text or text.isspace())
 
                 if index is not None:
-                    for i in range(-index):
-                        line.cursor_up()
+                    line.cursor_position += line.document.get_cursor_up_position(count=index)
 
         @handle('}')
         def _(arg):
@@ -1062,8 +1061,7 @@ class ViInputStreamHandler(InputStreamHandler):
                                 lambda text: not text or text.isspace())
 
                 if index is not None:
-                    for i in range(index):
-                        line.cursor_down()
+                    line.cursor_position += line.document.get_cursor_down_position(count=index)
 
         @handle('>>')
         def _(arg):

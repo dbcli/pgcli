@@ -335,40 +335,51 @@ class Document(object):
         Return the relative cursor position (character index) where we would be if the
         user pressed the arrow-up button.
         """
-        if '\n' in self.text_before_cursor:
+        assert count >= 1
+
+        count = min(self.text_before_cursor.count('\n'), count)
+
+        if count:
+            pos = self.cursor_position_col
+
             lines = self.text_before_cursor.split('\n')
-            current_line = lines[-1] # before the cursor
-            previous_line = lines[-2]
+            skip_lines = '\n'.join(lines[-count-1:])
+            new_line = lines[-count-1]
 
             # When the current line is longer then the previous, move to the
             # last character of the previous line.
-            if len(current_line) > len(previous_line):
-                return - len(current_line) - 1
+            if pos > len(new_line):
+                return - len(skip_lines) + len(new_line)
 
             # Otherwise find the corresponding position in the previous line.
             else:
-                return - len(previous_line) - 1
+                return - len(skip_lines) + pos
         return 0
 
-    def get_cursor_down_position(self, count=1): # TODO: implement `count`
+    def get_cursor_down_position(self, count=1):
         """
         Return the relative cursor position (character index) where we would be if the
         user pressed the arrow-down button.
         """
-        if '\n' in self.text_after_cursor:
-            pos = len(self.text_before_cursor.split('\n')[-1])
+        assert count >= 1
+
+        count = min(self.text_after_cursor.count('\n'), count)
+
+        if count:
+            pos = self.cursor_position_col
+
             lines = self.text_after_cursor.split('\n')
-            current_line = lines[0] # after the cursor
-            next_line = lines[1]
+            skip_lines = '\n'.join(lines[:count])
+            new_line = lines[count]
 
             # When the current line is longer then the previous, move to the
             # last character of the next line.
-            if pos > len(next_line):
-                return len(current_line) + len(next_line) + 1
+            if pos > len(new_line):
+                return len(skip_lines) + len(new_line) + 1
 
             # Otherwise find the corresponding position in the next line.
             else:
-                return len(current_line) + pos + 1
+                return len(skip_lines) + pos + 1
 
         return 0
 
