@@ -85,7 +85,7 @@ class PythonRepl(PythonCommandLine):
         self.stdout.flush()
 
     def _handle_keyboard_interrupt(self, e):
-        self.stdout.write('\rKeyboardInterrupt')
+        self.stdout.write('\rKeyboardInterrupt\n')
         self.stdout.flush()
 
 

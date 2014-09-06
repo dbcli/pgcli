@@ -501,18 +501,13 @@ class Line(object):
 
             self.text = self.text[:pos-2] + b + a + self.text[pos:]
 
-    @_to_mode(LineMode.NORMAL)
-    def go_to_substring(self, sub, in_current_line=False, backwards=False):
+    def go_to_history(self, index):
         """
-        Find next occurence of this substring, and move cursor position there.
+        Go to this item in the history.
         """
-        if backwards:
-            index = self.document.find_backwards(sub, in_current_line=in_current_line)
-        else:
-            index = self.document.find(sub, in_current_line=in_current_line)
-
-        if index:
-            self.cursor_position += index
+        if index < len(self._working_lines):
+            self._working_index = index
+            self.cursor_position = len(self.text)
 
     def create_code_obj(self):
         """
