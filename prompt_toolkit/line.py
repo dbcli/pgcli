@@ -550,7 +550,7 @@ class Line(object):
     def history_forward(self, count=1):
         if self._working_index < len(self._working_lines) - count:
             # Go forward in history, and update cursor_position.
-            self._working_index = count
+            self._working_index += count
             self.cursor_position = len(self.text)
 
     @_to_mode(LineMode.NORMAL)

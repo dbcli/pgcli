@@ -948,7 +948,8 @@ class ViInputStreamHandler(InputStreamHandler):
 
         @handle('J')
         def _(arg):
-            line.join_next_line()
+            for i in range(arg):
+                line.join_next_line()
 
         @handle('n') # XXX: use `change_delete_move_yank_handler`
         def _(arg):
