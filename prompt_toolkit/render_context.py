@@ -11,15 +11,12 @@ class RenderContext(object):
     :param highlighted_characters: `None` or list of (start,len) tuples of the
                               characters to highlight.
     """
-    def __init__(self, line, code_obj, accept=False, abort=False,
+    def __init__(self, line, code_obj,
                 highlighted_characters=None, complete_state=None,
                 validation_error=None):
-        assert not (accept and abort)
 
         self.line = line
         self.code_obj = code_obj
-        self.accept = accept
-        self.abort = abort
         self.highlighted_characters = highlighted_characters
         self.complete_state = complete_state
         self.validation_error = validation_error

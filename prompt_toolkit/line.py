@@ -9,7 +9,6 @@ from functools import wraps
 from .code import Code, ValidationError
 from .document import Document
 from .enums import IncrementalSearchDirection, LineMode
-from .prompt import Prompt
 from .render_context import RenderContext
 from .history import History
 
@@ -21,38 +20,25 @@ import subprocess
 
 __all__ = (
         'Line',
-
-        # Exceptions raised by the Line object.
-        'Exit',
-        'ReturnInput',
-        'Abort',
-        'ClearScreen',
+        'Callbacks',
 )
 
-class Exit(Exception):
-    def __init__(self, render_context):
-        self.render_context = render_context
 
+class Callbacks(object):
+    """
+    Callback API for the `Line` object.
+    """
+    def clear_screen(self):
+        pass
 
-class ReturnInput(Exception):
-    def __init__(self, document, render_context):
-        self.document = document
-        self.render_context = render_context
+    def exit(self):
+        pass
 
+    def abort(self):
+        pass
 
-class Abort(Exception):
-    def __init__(self, render_context):
-        self.render_context = render_context
-
-
-class ClearScreen(Exception):
-    pass
-
-
-class ListCompletions(Exception):
-    def __init__(self, render_context, completions):
-        self.render_context = render_context
-        self.completions = completions
+    def return_input(self, code):
+        pass
 
 
 class ClipboardDataType(object):
@@ -98,6 +84,7 @@ def _to_mode(*modes):
 
                 elif self.mode == LineMode.COMPLETE:
                     self.mode = LineMode.NORMAL
+                    self.complete_state = None
 
             return func(self, *a, **kw)
         return wrapper
@@ -160,6 +147,7 @@ class Line(object):
 
     :attr code_factory: :class:`~prompt_toolkit.code.CodeBase` class.
     :attr history: :class:`~prompt_toolkit.history.History` instance.
+    :attr callbacks: :class:`~.Callbacks` instance.
     """
     #: Boolean to indicate whether we should consider this line a multiline input.
     #: If so, the `InputStreamHandler` can decide to insert newlines when pressing [Enter].
@@ -169,11 +157,13 @@ class Line(object):
     #: Suffix to be appended to the tempfile for the 'open in editor' function.
     tempfile_suffix = ''
 
-    def __init__(self, code_factory=Code, history_factory=History):
+    def __init__(self, code_factory=Code, history_factory=History, callbacks=None):
         self.code_factory = code_factory
 
         #: The command line history.
         self._history = history_factory()
+
+        self._callbacks = callbacks or Callbacks()
 
         self._clipboard = ClipboardData()
 
@@ -520,10 +510,11 @@ class Line(object):
         """
         Get and show all completions
         """
-        results = list(self.create_code_obj().get_completions())
+        # TODO
+        ## results = list(self.create_code_obj().get_completions())
 
-        if results:
-            raise ListCompletions(self.get_render_context(), results)
+        ## if results:
+        ##     raise ListCompletions(self.get_render_context(), results)
 
     @_to_mode(LineMode.NORMAL)
     def complete_common(self):
@@ -607,7 +598,7 @@ class Line(object):
 
         self.mode = LineMode.COMPLETE
 
-    def get_render_context(self, _abort=False, _accept=False):
+    def get_render_context(self):
         """
         Return a `RenderContext` object, to pass the current state to the renderer.
         """
@@ -625,16 +616,9 @@ class Line(object):
                 highlighted_characters.update({
                         x: token for x in range(index, index + len(self.isearch_state.isearch_text)) })
 
-        # Complete state
-        if self.mode == LineMode.COMPLETE and not _abort and not _accept:
-            complete_state = self.complete_state
-        else:
-            complete_state = None
-
         # Create prompt instance.
         return RenderContext(self, code, highlighted_characters=highlighted_characters,
-                        complete_state=complete_state,
-                        abort=_abort, accept=_accept,
+                        complete_state=self.complete_state,
                         validation_error=self.validation_error)
 
     @_to_mode(LineMode.NORMAL)
@@ -680,13 +664,13 @@ class Line(object):
         self.cursor_to_end_of_line()
         self.insert_text(insert)
 
+    @_to_mode(LineMode.NORMAL, LineMode.INCREMENTAL_SEARCH)
     def insert_text(self, data, overwrite=False, move_cursor=True):
         """
         Insert characters at cursor position.
         """
         if self.mode == LineMode.INCREMENTAL_SEARCH:
             self.isearch_state.isearch_text += data
-
 
             if not self.document.has_match_at_current_position(self.isearch_state.isearch_text):
                 found = self.search_next(self.isearch_state.isearch_direction)
@@ -761,16 +745,16 @@ class Line(object):
         """
         Abort input. (Probably Ctrl-C press)
         """
-        render_context = self.get_render_context(_abort=True)
-        raise Abort(render_context)
+        self.complete_state = None
+        self._callbacks.abort()
 
     @_to_mode(LineMode.NORMAL)
     def exit(self):
         """
         Quit command line. (Probably Ctrl-D press.)
         """
-        render_context = self.get_render_context(_abort=True)
-        raise Exit(render_context)
+        self.complete_state = None
+        self._callbacks.exit()
 
     @_to_mode(LineMode.NORMAL)
     def return_input(self):
@@ -798,10 +782,8 @@ class Line(object):
             if text:
                 self._history.append(text)
 
-        render_context = self.get_render_context(_accept=True)
-
-        self.reset()
-        raise ReturnInput(code, render_context)
+        # Callback
+        self._callbacks.return_input(code)
 
     @_to_mode(LineMode.NORMAL, LineMode.INCREMENTAL_SEARCH)
     def reverse_search(self):
@@ -906,7 +888,7 @@ class Line(object):
         """
         Clear screen, usually as a result of Ctrl-L.
         """
-        raise ClearScreen()
+        self._callbacks.clear_screen()
 
     @_to_mode(LineMode.NORMAL)
     def open_in_editor(self):

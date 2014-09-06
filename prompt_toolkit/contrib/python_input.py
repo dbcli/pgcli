@@ -297,8 +297,8 @@ class PythonLine(Line):
 class PythonPrompt(Prompt):
     input_processors = [ BracketsMismatchProcessor() ]
 
-    def __init__(self, render_context, pythonline):
-        super(PythonPrompt, self).__init__(render_context)
+    def __init__(self, pythonline, *a, **kw):
+        super(PythonPrompt, self).__init__(*a, **kw)
         self._pythonline = pythonline
 
     @property
@@ -384,7 +384,7 @@ class PythonPrompt(Prompt):
         ])
 
     def write_after_input(self, screen):
-        if not (self.render_context.accept or self.render_context.abort):
+        if not (self.accept or self.abort):
             screen.write_highlighted(list(self.get_help_tokens()))
 
     def write_to_screen(self, screen, last_screen_height):
@@ -392,7 +392,7 @@ class PythonPrompt(Prompt):
         self.write_toolbar(screen, last_screen_height)
 
     def write_toolbar(self, screen, last_screen_height):
-        if not (self.render_context.accept or self.render_context.abort):
+        if not (self.accept or self.abort):
             # Draw the menu at the bottom position.
             screen._y = max(screen.current_height, last_screen_height - 1) - 1
 
@@ -569,10 +569,10 @@ class PythonCommandLine(CommandLine):
         else:
             return PythonEmacsInputStreamHandler
 
-    def prompt_factory(self, render_context):
+    def prompt_factory(self, *a, **kw):
         # The `PythonPrompt` class needs a reference back in order to show the
         # input method.
-        return PythonPrompt(render_context, self)
+        return PythonPrompt(self, *a, **kw)
 
     def code_factory(self, document):
         # The `PythonCode` needs a reference back to this class in order to do

@@ -437,24 +437,23 @@ class Renderer(object):
         rows, cols = get_size(self._stdout.fileno())
         return cols
 
-    def render_to_str(self, render_context):
+    def render_to_str(self, render_context, abort=False, accept=False):
         # Generate the output of the new screen.
-        screen = self.screen_cls(style=self._style, columns=self.get_cols(),
-                grayed=render_context.abort)
+        screen = self.screen_cls(style=self._style, columns=self.get_cols(), grayed=abort)
 
-        prompt = self.prompt_factory(render_context)
+        prompt = self.prompt_factory(render_context, abort=abort, accept=accept)
         prompt.write_to_screen(screen, self._last_screen.current_height if self._last_screen else 0)
 
         output, self._cursor_pos, self._last_char = screen.output(self._cursor_pos,
-                self._last_screen, self._last_char,
-                render_context.accept or render_context.abort)
+                self._last_screen, self._last_char, accept or abort)
         self._last_screen = screen
 
         return output
 
-    def render(self, render_context):
+    def render(self, render_context, abort=False, accept=False):
         # Render to string first.
-        output = self.render_to_str(render_context)
+        output = self.render_to_str(render_context,
+                abort=abort, accept=accept)
 
         # Write output to log file.
         if _DEBUG_RENDER_OUTPUT and output:
@@ -483,18 +482,6 @@ class Renderer(object):
         self._stdout.write(TerminalCodes.CURSOR_GOTO(0, 0))
 
         self.reset()
-
-    def render_completions(self, completions):
-        self._stdout.write(TerminalCodes.CRLF)
-        for line in self._in_columns([ c.display for c in completions ]):
-            self._stdout.write('%s\r\n' % line)
-
-        # Reset position
-        self._cursor_line = 0
-
-        return
-        if many: # TODO: Implement paging
-            'Display all %i possibilities? (y on n)'
 
     def _in_columns(self, item_iterator, margin_left=0): # XXX: copy of deployer.console.in_columns
         """

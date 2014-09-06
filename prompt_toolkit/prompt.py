@@ -288,9 +288,16 @@ class Prompt(object):
     #: Class responsible for the composition of the i-search tokens.
     isearch_composer = ISearchComposer
 
-    def __init__(self, render_context): # Wrap line/code in render_context
+    def __init__(self, render_context, abort=False, accept=False):
         self.render_context = render_context
-        self.line = render_context.line # XXX: remove
+
+        # Abort/accept flags.
+        self.abort = abort
+        self.accept = accept
+
+    @property
+    def line(self):
+        return self.render_context.line
 
     @property
     def tokens_before_input(self):
@@ -395,7 +402,7 @@ class Prompt(object):
 
     def write_after_input(self, screen):
         # Write help text.
-        if not (self.render_context.accept or self.render_context.abort):
+        if not (self.accept or self.abort):
             help_tokens = self.tokens_after_input
             if help_tokens:
                 screen.write_highlighted(help_tokens)

@@ -10,7 +10,7 @@ the correct manipulations on the :class:`~prompt_toolkit.line.Line` object.
 This module implements Vi and Emacs keybindings.
 """
 from __future__ import unicode_literals
-from .line import ReturnInput, Abort, ClipboardData, ClipboardDataType
+from .line import ClipboardData, ClipboardDataType
 from .enums import IncrementalSearchDirection, LineMode
 
 __all__ = (
@@ -70,12 +70,7 @@ class InputStreamHandler(object):
             if self._needs_to_save(name):
                 self.line.save_to_undo_stack()
 
-            try:
-                method(*a)
-            except (Abort, ReturnInput):
-                # Reset state when the input has been accepted/aborted.
-                self.reset()
-                raise
+            method(*a)
 
         # Keep track of what the last called method was.
         if not name.startswith('_'):

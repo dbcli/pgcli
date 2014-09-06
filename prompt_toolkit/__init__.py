@@ -26,7 +26,7 @@ from codecs import getincrementaldecoder
 from .code import Code
 from .inputstream import InputStream
 from .inputstream_handler import InputStreamHandler
-from .line import Line, Exit, ClearScreen, ReturnInput, Abort, ListCompletions
+from .line import Line, Callbacks
 from .prompt import Prompt
 from .renderer import Renderer
 from .utils import raw_mode, call_on_sigwinch
@@ -47,6 +47,14 @@ class AbortAction:
     RETRY = 'retry'
     RAISE_EXCEPTION = 'raise-exception'
     RETURN_NONE = 'return-none'
+
+
+class Exit(Exception):
+    pass
+
+
+class Abort(Exception):
+    pass
 
 
 class CommandLine(object):
@@ -99,7 +107,8 @@ class CommandLine(object):
 
         self._line = self.line_factory(
                                 code_factory=self.code_factory,
-                                history_factory=self.history_factory)
+                                history_factory=self.history_factory,
+                                callbacks=LineCallbacks(self))
 
         self._inputstream_handler = self.inputstream_handler_factory(self._line)
 
@@ -118,6 +127,13 @@ class CommandLine(object):
         # We can not just do `os.read(stdin.fileno(), 1024).decode('utf-8')`, because
         # it could be that we are in the middle of a utf-8 byte sequence.
         self._stdin_decoder = self.stdin_decoder_cls()
+
+        self._reset()
+
+    def _reset(self):
+        self._exit_flag = False
+        self._abort_flag = False
+        self._return_code = None
 
     def request_redraw(self):
         """
@@ -241,6 +257,8 @@ class CommandLine(object):
                 # Reset line
                 self._line.reset(initial_value=initial_value)
                 self._renderer.reset()
+                self._inputstream_handler.reset()
+                self._reset()
             reset_line()
 
             # Trigger read_start.
@@ -259,44 +277,37 @@ class CommandLine(object):
                         # If we got a character, feed it to the input stream. If we
                         # got none, it means we got a repaint request.
                         if c:
-                            try:
-                                # Feed one character at a time. Feeding can cause the
-                                # `Line` object to raise Exit/Abort/ReturnInput
-                                stream.feed(c)
+                            # Feed input text.
+                            stream.feed(c)
 
-                            except ClearScreen:
-                                self._renderer.clear()
+                        # If the exit flag has been set.
+                        if self._exit_flag:
+                            if on_exit != AbortAction.IGNORE:
+                                self._renderer.render(self._line.get_render_context(), abort=True)
 
-                            except ListCompletions as e:
-                                self._renderer.render_completions(e.completions)
+                            if on_exit == AbortAction.RAISE_EXCEPTION:
+                                raise Exit()
+                            elif on_exit == AbortAction.RETURN_NONE:
+                                return None
+                            elif on_exit == AbortAction.RETRY:
+                                reset_line()
 
-                            except Exit as e:
-                                # Handle exit.
-                                if on_exit != AbortAction.IGNORE:
-                                    self._renderer.render(e.render_context)
+                        # If the abort flag has been set.
+                        if self._abort_flag:
+                            if on_abort != AbortAction.IGNORE:
+                                self._renderer.render(self._line.get_render_context(), abort=True)
 
-                                if on_exit == AbortAction.RAISE_EXCEPTION:
-                                    raise
-                                elif on_exit == AbortAction.RETURN_NONE:
-                                    return None
-                                elif on_exit == AbortAction.RETRY:
-                                    reset_line()
+                            if on_abort == AbortAction.RAISE_EXCEPTION:
+                                raise Abort()
+                            elif on_abort == AbortAction.RETURN_NONE:
+                                return None
+                            elif on_abort == AbortAction.RETRY:
+                                reset_line()
 
-                            except Abort as abort:
-                                # Handle abort.
-                                if on_abort != AbortAction.IGNORE:
-                                    self._renderer.render(abort.render_context)
-
-                                if on_abort == AbortAction.RAISE_EXCEPTION:
-                                    raise
-                                elif on_abort == AbortAction.RETURN_NONE:
-                                    return None
-                                elif on_abort == AbortAction.RETRY:
-                                    reset_line()
-
-                            except ReturnInput as input:
-                                self._renderer.render(input.render_context)
-                                return input.document
+                        # If a return value has been set.
+                        if self._return_code:
+                            self._renderer.render(self._line.get_render_context(), accept=True)
+                            return self._return_code
 
                         # Now render the current prompt to the output.
                         self._redraw()
@@ -314,6 +325,35 @@ class CommandLine(object):
             self.on_read_input_end()
 
             self.is_reading_input = False
+
+    def set_exit(self):
+        self._exit_flag = True
+
+    def set_abort(self):
+        self._abort_flag = True
+
+    def set_return_value(self, code):
+        self._return_code = code
+
+
+class LineCallbacks(Callbacks):
+    """
+    Callback handlers for the `Line`
+    """
+    def __init__(self, command_line):
+        self.command_line = command_line
+
+    def clear_screen(self):
+        self.command_line._renderer.clear()
+
+    def exit(self):
+        self.command_line.set_exit()
+
+    def abort(self):
+        self.command_line.set_abort()
+
+    def return_input(self, code):
+        self.command_line.set_return_value(code)
 
 
 def _select(*args, **kwargs):

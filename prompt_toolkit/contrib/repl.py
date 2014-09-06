@@ -16,8 +16,7 @@ from pygments import highlight
 from pygments.formatters.terminal256  import Terminal256Formatter
 from pygments.lexers import PythonTracebackLexer
 
-from prompt_toolkit import AbortAction
-from prompt_toolkit.line import Exit
+from prompt_toolkit import AbortAction, Exit
 from prompt_toolkit.contrib.python_input import PythonCommandLine, PythonStyle, AutoCompletionStyle
 
 from six import exec_
