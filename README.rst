@@ -123,3 +123,10 @@ FAQ
 
 Q: The Ctrl-S forward search doesn't work.
 A: Try to run ``stty -ixon`` in your terminal to disable flow control.
+
+
+Special thanks to
+-----------------
+
+- `Pygments <http://pygments.org/>`_: Syntax highlighter.
+- `Jedi <http://jedi.jedidjah.ch/en/latest/>`_: Autocompletion library.
