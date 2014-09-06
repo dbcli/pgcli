@@ -408,6 +408,18 @@ class Document(object):
         """ Relative position for the end of the document. """
         return len(self.text) - self.cursor_position
 
+    def get_start_of_line_position(self, after_whitespace=False):
+        """ Relative position for the end of this line. """
+        if after_whitespace:
+            current_line = self.current_line
+            return len(current_line) - len(current_line.lstrip()) - self.cursor_position_col
+        else:
+            return - len(self.current_line_before_cursor)
+
+    def get_end_of_line_position(self):
+        """ Relative position for the end of this line. """
+        return len(self.current_line_after_cursor)
+
     def get_column_cursor_position(self, column):
         """
         Return the relative cursor position for this column at the current

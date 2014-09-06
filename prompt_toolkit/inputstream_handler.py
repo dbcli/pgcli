@@ -93,7 +93,7 @@ class InputStreamHandler(object):
     # CTRL keys.
 
     def ctrl_a(self):
-        self.line.cursor_to_start_of_line()
+        self.line.cursor_position += self.line.document.get_start_of_line_position(after_whitespace=False)
 
     def ctrl_b(self):
         self.line.cursor_left()
@@ -109,7 +109,7 @@ class InputStreamHandler(object):
             self.line.exit()
 
     def ctrl_e(self):
-        self.line.cursor_to_end_of_line()
+        self.line.cursor_position += self.line.document.get_end_of_line_position()
 
     def ctrl_f(self):
         self.line.cursor_right()
@@ -130,8 +130,8 @@ class InputStreamHandler(object):
         self.enter()
 
     def ctrl_k(self):
-        data = ClipboardData(self.line.delete_until_end_of_line())
-        self.line.set_clipboard(data)
+        deleted = self.line.delete(count=self.line.document.get_end_of_line_position())
+        self.line.set_clipboard(ClipboardData(deleted))
 
     def ctrl_l(self):
         self.line.clear()
@@ -167,8 +167,8 @@ class InputStreamHandler(object):
         Clears the line before the cursor position. If you are at the end of
         the line, clears the entire line.
         """
-        data = self.line.delete_from_start_of_line()
-        self.line.set_clipboard(ClipboardData(data))
+        deleted = self.line.delete_character_before_cursor(count=-self.line.document.get_start_of_line_position())
+        self.line.set_clipboard(ClipboardData(deleted))
 
     def ctrl_v(self):
         pass
@@ -177,9 +177,10 @@ class InputStreamHandler(object):
         """
         Delete the word before the cursor.
         """
-        data = ClipboardData(''.join(
-            self.line.delete_word_before_cursor() for i in range(self.get_arg_count())))
-        self.line.set_clipboard(data)
+        pos = self.line.document.find_start_of_previous_word(count=self.get_arg_count())
+        if pos:
+            deleted = self.line.delete_character_before_cursor(count=-pos)
+            self.line.set_clipboard(ClipboardData(deleted))
 
     def ctrl_x(self):
         pass
@@ -378,7 +379,10 @@ class EmacsInputStreamHandler(InputStreamHandler):
 
     def meta_backspace(self):
         """ Delete word backwards. """
-        self.line.delete_word_before_cursor()
+        pos = self.line.document.find_start_of_previous_word(count=self.get_arg_count())
+        if pos:
+            deleted = self.line.delete_character_before_cursor(count=-pos)
+            self.line.set_clipboard(ClipboardData(deleted))
 
     def meta_a(self):
         """
@@ -498,9 +502,9 @@ class EmacsInputStreamHandler(InputStreamHandler):
         line.
         """
         if self.line.document.current_char == '\n':
-            self.line.cursor_to_start_of_line(after_whitespace=False)
+            self.line.cursor_position += self.line.document.get_start_of_line_position(after_whitespace=False)
         else:
-            self.line.cursor_to_end_of_line()
+            self.line.cursor_position += self.line.document.get_end_of_line_position()
 
 
 class ViMode(object):
@@ -632,13 +636,15 @@ class ViInputStreamHandler(InputStreamHandler):
         @handle('A')
         def _(arg):
             self._vi_mode = ViMode.INSERT
-            line.cursor_to_end_of_line()
+            self.line.cursor_position += self.line.document.get_end_of_line_position()
 
         @handle('C') # Same as 'c$' (which is implemented elsewhere.)
         def _(arg):
             # Change to end of line.
-            data = ClipboardData(line.delete_until_end_of_line())
-            line.set_clipboard(data)
+            deleted = line.delete(count=self.line.document.get_end_of_line_position())
+            if deleted:
+                data = ClipboardData(deleted)
+                line.set_clipboard(data)
             self._vi_mode = ViMode.INSERT
 
         @handle('cc')
@@ -650,8 +656,8 @@ class ViInputStreamHandler(InputStreamHandler):
             line.set_clipboard(data)
 
             # But we delete after the whitespace
-            line.cursor_to_start_of_line(after_whitespace=True)
-            line.delete_until_end_of_line()
+            self.line.cursor_position += self.line.document.get_start_of_line_position(after_whitespace=True)
+            line.delete(count=self.line.document.get_end_of_line_position())
             self._vi_mode = ViMode.INSERT
 
         class CursorRegion(object):
@@ -744,7 +750,7 @@ class ViInputStreamHandler(InputStreamHandler):
         @change_delete_move_yank_handler('$')
         def _(arg):
             """ 'c$', 'd$' and '$':  Delete/change/move until end of line. """
-            return CursorRegion(len(line.document.current_line_after_cursor))
+            return CursorRegion(line.document.get_end_of_line_position())
 
         @change_delete_move_yank_handler('w') # TODO: difference between 'w' and 'W'
         def _(arg):
@@ -767,12 +773,12 @@ class ViInputStreamHandler(InputStreamHandler):
         @change_delete_move_yank_handler('^')
         def _(arg):
             """ 'c^', 'd^' and '^': Soft start of line, after whitespace. """
-            return CursorRegion(-len(line.document.current_line_before_cursor.lstrip()))
+            return CursorRegion(line.document.get_start_of_line_position(after_whitespace=True))
 
         @change_delete_move_yank_handler('0')
         def _(arg):
             """ 'c0', 'd0' and '0': Hard start of line, before whitespace. """
-            return CursorRegion(-len(line.document.current_line_before_cursor))
+            return CursorRegion(line.document.get_start_of_line_position(after_whitespace=False))
 
         def create_ci_ca_handles(ci_start, ci_end, inner):
                     # TODO: 'dab', 'dib', (brackets or block) 'daB', 'diB', Braces.
@@ -900,8 +906,8 @@ class ViInputStreamHandler(InputStreamHandler):
 
         @handle('D')
         def _(arg):
-            data = ClipboardData(line.delete_until_end_of_line())
-            line.set_clipboard(data)
+            deleted = line.delete(count=line.document.get_end_of_line_position())
+            line.set_clipboard(ClipboardData(deleted))
 
         @handle('dd')
         def _(arg):
@@ -938,7 +944,7 @@ class ViInputStreamHandler(InputStreamHandler):
         @handle('I')
         def _(arg):
             self._vi_mode = ViMode.INSERT
-            line.cursor_to_start_of_line(after_whitespace=True)
+            line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
 
         @handle('J')
         def _(arg):
@@ -1028,16 +1034,14 @@ class ViInputStreamHandler(InputStreamHandler):
         @handle('+')
         def _(arg):
             # Move to first non whitespace of next line
-            for i in range(arg):
-                line.cursor_down()
-            line.cursor_to_start_of_line(after_whitespace=True)
+            line.cursor_position += line.document.get_cursor_down_position(count=arg)
+            line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
 
         @handle('-')
         def _(arg):
             # Move to first non whitespace of previous line
-            for i in range(arg):
-                line.cursor_up()
-            line.cursor_to_start_of_line(after_whitespace=True)
+            line.cursor_position += line.document.get_cursor_up_position(count=arg)
+            line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
 
         @handle('{')
         def _(arg):
@@ -1068,7 +1072,7 @@ class ViInputStreamHandler(InputStreamHandler):
             line_range = range(current_line, current_line + arg)
             line.transform_lines(line_range, lambda l: '    ' + l)
 
-            line.cursor_to_start_of_line(after_whitespace=True)
+            line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
 
         @handle('<<')
         def _(arg):
@@ -1083,7 +1087,7 @@ class ViInputStreamHandler(InputStreamHandler):
                     return text.lstrip()
 
             line.transform_lines(line_range, transform)
-            line.cursor_to_start_of_line(after_whitespace=True)
+            line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
 
         @handle('O')
         def _(arg):

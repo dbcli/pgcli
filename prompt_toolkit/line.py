@@ -268,17 +268,6 @@ class Line(object):
         else:
             self._undo_stack.append((self.text, self.cursor_position))
 
-    def set_current_line(self, value):
-        """
-        Replace current line (Does not touch other lines in multi-line input.)
-        """
-        # Move cursor to start of line.
-        self.cursor_to_start_of_line(after_whitespace=False)
-
-        # Replace text
-        self.delete_until_end_of_line()
-        self.insert_text(value, move_cursor=False)
-
     def transform_lines(self, line_index_iterator, transform_callback):
         """
         Transforms the text on a range of lines.
@@ -372,32 +361,6 @@ class Line(object):
             if old_index != self._working_index:
                 self.cursor_position = 0
 
-    @_to_mode(LineMode.NORMAL)
-    def cursor_to_end_of_word(self):
-        """
-        Move the cursor right before the last character of the next word
-        ending.
-        """
-        end = self.document.find_next_word_ending(include_current_position=False)
-        if end > 1:
-            self.cursor_position += end - 1
-
-    @_to_mode(LineMode.NORMAL)
-    def cursor_to_end_of_line(self):
-        """
-        Move cursor to the end of the current line.
-        """
-        self.cursor_position += len(self.document.current_line_after_cursor)
-
-    @_to_mode(LineMode.NORMAL)
-    def cursor_to_start_of_line(self, after_whitespace=False):
-        """ Move the cursor to the first character of the current line. """
-        self.cursor_position -= len(self.document.current_line_before_cursor)
-
-        if after_whitespace:
-            text_after_cursor = self.document.current_line_after_cursor
-            self.cursor_position += len(text_after_cursor) - len(text_after_cursor.lstrip())
-
     # NOTE: We can delete in i-search!
     @_to_mode(LineMode.NORMAL, LineMode.INCREMENTAL_SEARCH)
     def delete_character_before_cursor(self, count=1): # TODO: unittest return type
@@ -432,50 +395,12 @@ class Line(object):
             return ''
 
     @_to_mode(LineMode.NORMAL)
-    def delete_word(self):
-        """ Delete one word. Return deleted word. """
-        to_delete = self.document.find_next_word_beginning()
-        return self.delete(count=to_delete)
-
-    @_to_mode(LineMode.NORMAL)
-    def delete_word_before_cursor(self): # TODO: unittest
-        """ Delete one word before cursor. Return deleted word. """
-        to_delete = - (self.document.find_start_of_previous_word() or 0)
-        return self.delete_character_before_cursor(to_delete)
-
-    @_to_mode(LineMode.NORMAL)
-    def delete_until_end(self):
-        """ Delete all input until the end. Return deleted text. """
-        deleted = self.text[self.cursor_position:]
-        self.text = self.text[:self.cursor_position]
-        return deleted
-
-    @_to_mode(LineMode.NORMAL)
-    def delete_until_end_of_line(self): # TODO: unittest.
-        """
-        Delete all input until the end of this line. Return deleted text.
-        """
-        to_delete = len(self.document.current_line_after_cursor)
-        return self.delete(count=to_delete)
-
-    @_to_mode(LineMode.NORMAL)
-    def delete_from_start_of_line(self): # TODO: unittest.
-        """
-        Delete all input from the start of the line until the current
-        character. Return deleted text.
-        (Actually, this is the same as pressing backspace until the start of
-        the line.)
-        """
-        to_delete = len(self.document.current_line_before_cursor)
-        return self.delete_character_before_cursor(to_delete)
-
-    @_to_mode(LineMode.NORMAL)
     def join_next_line(self):
         """
         Join the next line to the current one by deleting the line ending after
         the current line.
         """
-        self.cursor_to_end_of_line()
+        self.cursor_position += self.document.get_end_of_line_position()
         self.delete()
 
     @_to_mode(LineMode.NORMAL)
@@ -648,7 +573,7 @@ class Line(object):
         else:
             insert = '\n'
 
-        self.cursor_to_start_of_line()
+        self.cursor_position += self.document.get_start_of_line_position()
         self.insert_text(insert)
         self.cursor_position -= 1
 
@@ -661,7 +586,7 @@ class Line(object):
         else:
             insert = '\n'
 
-        self.cursor_to_end_of_line()
+        self.cursor_position += self.document.get_end_of_line_position()
         self.insert_text(insert)
 
     @_to_mode(LineMode.NORMAL, LineMode.INCREMENTAL_SEARCH)
@@ -717,14 +642,14 @@ class Line(object):
 
             elif self._clipboard.type == ClipboardDataType.LINES:
                 if before:
-                    self.cursor_to_start_of_line()
+                    self.cursor_position += self.document.get_start_of_line_position(after_whitespace=False)
                     self.insert_text((self._clipboard.text + '\n') * count, move_cursor=False)
                 else:
-                    self.cursor_to_end_of_line()
+                    self.cursor_position += self.document.get_end_of_line_position()
                     self.insert_text(('\n' + self._clipboard.text) * count, move_cursor=False)
                     self.cursor_down()
 
-                self.cursor_to_start_of_line(after_whitespace=True)
+                self.cursor_position += self.document.get_start_of_line_position(after_whitespace=True)
 
     @_to_mode(LineMode.NORMAL)
     def undo(self):
