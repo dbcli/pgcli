@@ -92,10 +92,6 @@ class CommandLine(object):
     #: `pygments.style.Style` class for the syntax highlighting.
     style = DefaultStyle
 
-    #: Boolean to indicate whether we will have other threads communicating
-    #: with the input event loop.
-    enable_concurency = False
-
     #: When to call the `on_input_timeout` callback.
     input_timeout = .5
 
@@ -139,8 +135,6 @@ class CommandLine(object):
         """
         Thread safe way of sending a repaint trigger to the input event loop.
         """
-        assert self.enable_concurency
-
         if self._redraw_pipe:
             os.write(self._redraw_pipe[1], b'x')
 
@@ -157,8 +151,6 @@ class CommandLine(object):
         (This is recommended for code that could block the `read_input` event
         loop.)
         """
-        assert self.enable_concurency
-
         class _Thread(threading.Thread):
             def run(t):
                 callback()
@@ -245,11 +237,8 @@ class CommandLine(object):
 
         try:
             # Create a pipe for inter thread communication.
-            if self.enable_concurency:
-                self._redraw_pipe = os.pipe()
-
-                # Make the read-end of this pipe non blocking.
-                fcntl.fcntl(self._redraw_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
+            self._redraw_pipe = os.pipe()
+            fcntl.fcntl(self._redraw_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
 
             stream = self.inputstream_factory(self._inputstream_handler, stdout=self.stdout)
 
@@ -267,12 +256,13 @@ class CommandLine(object):
             with raw_mode(self.stdin):
                 self._redraw()
 
-                with call_on_sigwinch(self._redraw):
+                # When the window size changes, we do a redraw request call.
+                # (We do it asynchronously, because doing the actual drawing
+                # inside the signal handler causes easily reentrant calls,
+                # giving runtime errors.)
+                with call_on_sigwinch(self.request_redraw):
                     while True:
-                        if self.enable_concurency:
-                            c = self._get_char_loop()
-                        else:
-                            c = self._read_from_stdin()
+                        c = self._get_char_loop()
 
                         # If we got a character, feed it to the input stream. If we
                         # got none, it means we got a repaint request.

@@ -537,8 +537,6 @@ class PythonCode(Code):
 class PythonCommandLine(CommandLine):
     line_factory = PythonLine
 
-    enable_concurency = True
-
     def __init__(self, globals=None, locals=None, vi_mode=False, stdin=None, stdout=None, history_filename=None,
                     style=PythonStyle, autocompletion_style=AutoCompletionStyle.POPUP_MENU):
 
