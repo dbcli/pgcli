@@ -543,7 +543,6 @@ class PythonCommandLine(CommandLine):
                     style=PythonStyle, autocompletion_style=AutoCompletionStyle.POPUP_MENU):
 
         self.globals = globals or {}
-        self.globals.update({k: getattr(__builtins__, k) for k in dir(__builtins__)})
         self.locals = locals or {}
         self.history_filename = history_filename
         self.style = style
