@@ -22,6 +22,7 @@ from prompt_toolkit.line import Line
 from prompt_toolkit.prompt import Prompt, TokenList, BracketsMismatchProcessor, PopupCompletionMenu, HorizontalCompletionMenu
 
 import jedi
+import platform
 import re
 import sys
 
@@ -448,7 +449,8 @@ class PythonPrompt(Prompt):
                 # Python version
                 version = sys.version_info
                 append((TB, ' - '))
-                append((TB.PythonVersion, 'Python %i.%i.%i' % (version.major, version.minor, version.micro)))
+                append((TB.PythonVersion, '%s %i.%i.%i' % (platform.python_implementation(),
+                                    version.major, version.minor, version.micro)))
 
             # Adjust toolbar width.
             if len(result) > screen.columns:
