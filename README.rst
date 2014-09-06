@@ -75,7 +75,8 @@ after a colon, however you can always turn it on by pressing ``F7``.
 To execute the input in multiline mode, you can either press ``Alt+Enter``, or
 ``Esc`` followed by ``Enter``. (If you want the first to work in the OS X
 terminal, you have to check the "Use option as meta key" checkbox in your
-terminal settings.)
+terminal settings. For iTerm2, you have to check "Left option acts as +Esc" in
+the options.)
 
 
 You love IPython?
