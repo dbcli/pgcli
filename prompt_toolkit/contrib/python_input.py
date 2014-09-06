@@ -312,27 +312,25 @@ class PythonPrompt(Prompt):
         if style == AutoCompletionStyle.POPUP_MENU:
             return PopupCompletionMenu()
         elif style == AutoCompletionStyle.HORIZONTAL_MENU:
-            return HorizontalCompletionMenu()
+            return None
         elif style == AutoCompletionStyle.EXTENDED_POPUP_MENU:
             return ExtendedPopupCompletionMenu()
 
-    def get_help_tokens(self):
+    def write_second_toolbar(self, screen):
         """
         When inside functions, show signature.
         """
-        result = []
-        result.append((Token, '\n'))
-
         if self.line.mode == LineMode.INCREMENTAL_SEARCH:
-            result.extend(self.isearch_prompt)
+            screen.write_highlighted(list(self.isearch_prompt))
         elif self.line._arg_prompt_text:
-            result.extend(self.arg_prompt)
+            screen.write_highlighted(list(self.arg_prompt))
         elif self.line.validation_error:
-            result.extend(self._get_error_tokens())
+            screen.write_highlighted(list(self._get_error_tokens()))
+        elif self._pythonline.autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU and \
+                        self.render_context.complete_state:
+            HorizontalCompletionMenu().write(screen, None, self.render_context.complete_state)
         else:
-            result.extend(self._get_signature_tokens())
-
-        return result
+            screen.write_highlighted(list(self._get_signature_tokens()))
 
     def _get_signature_tokens(self):
         result = []
@@ -355,12 +353,6 @@ class PythonPrompt(Prompt):
 
             result.pop() # Pop last comma
             append((Signature.Operator, ')'))
-
-        append((Signature, ' \n'))
-                            # Note the space before the newline.
-                            # This is to make sure that this line gets at least
-                            # some content in the screen, so that we don't put
-                            # the toolbar here already.
         return result
 
     def _get_error_tokens(self):
@@ -384,85 +376,99 @@ class PythonPrompt(Prompt):
         ])
 
     def write_after_input(self, screen):
-        if not (self.accept or self.abort):
-            screen.write_highlighted(list(self.get_help_tokens()))
+        pass
+
+    def _go_to_bottom(self, screen, last_screen_height):
+        # Draw the menu at the bottom position.
+        y = max(screen.current_height, last_screen_height - 2) - 1
+
+        # Fill space with tildes
+        for y in range(screen.current_height, y + 1):
+            screen.write_at_pos(y, 1, '~', Token)
+
+        return y
 
     def write_to_screen(self, screen, last_screen_height):
-        super(PythonPrompt, self).write_to_screen(screen, last_screen_height)
-        self.write_toolbar(screen, last_screen_height)
+        self.write_before_input(screen)
+        self.write_input(screen)
+        self.write_menus(screen)
 
-    def write_toolbar(self, screen, last_screen_height):
         if not (self.accept or self.abort):
-            # Draw the menu at the bottom position.
-            screen._y = max(screen.current_height, last_screen_height - 1) - 1
+            y = self._go_to_bottom(screen, last_screen_height)
 
-            result = TokenList()
-            append = result.append
-            TB = Token.Toolbar
+            screen._y, screen._x = y + 1, 0
+            self.write_second_toolbar(screen)
 
-            append((TB, ' '))
+            screen._y, screen._x = y + 2, 0
+            self.write_toolbar(screen)
 
-            # Mode
-            if self.line.mode == LineMode.INCREMENTAL_SEARCH:
-                append((TB.Mode, '(SEARCH)'))
+    def write_toolbar(self, screen):
+        result = TokenList()
+        append = result.append
+        TB = Token.Toolbar
+
+        append((TB, ' '))
+
+        # Mode
+        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
+            append((TB.Mode, '(SEARCH)'))
+            append((TB, '  '))
+        elif self._pythonline.vi_mode:
+            mode = self._pythonline._inputstream_handler._vi_mode
+            if mode == ViMode.NAVIGATION:
+                append((TB.Mode, '(NAV)'))
+                append((TB, '     '))
+            elif mode == ViMode.INSERT:
+                append((TB.Mode, '(INSERT)'))
                 append((TB, '  '))
-            elif self._pythonline.vi_mode:
-                mode = self._pythonline._inputstream_handler._vi_mode
-                if mode == ViMode.NAVIGATION:
-                    append((TB.Mode, '(NAV)'))
-                    append((TB, '     '))
-                elif mode == ViMode.INSERT:
-                    append((TB.Mode, '(INSERT)'))
-                    append((TB, '  '))
-                elif mode == ViMode.REPLACE:
-                    append((TB.Mode, '(REPLACE)'))
-                    append((TB, ' '))
-
-                if self._pythonline._inputstream_handler.is_recording_macro:
-                    append((TB.Mode, 'recording'))
-                    append((TB, ' '))
-
-            else:
-                append((TB.Mode, '(emacs)'))
+            elif mode == ViMode.REPLACE:
+                append((TB.Mode, '(REPLACE)'))
                 append((TB, ' '))
 
-            # Position in history.
-            append((TB, '%i/%i ' % (self.line._working_index + 1, len(self.line._working_lines))))
+            if self._pythonline._inputstream_handler.is_recording_macro:
+                append((TB.Mode, 'recording'))
+                append((TB, ' '))
 
-            # Shortcuts.
-            if self.line.mode == LineMode.INCREMENTAL_SEARCH:
-                append((TB, '[Ctrl-G] Cancel search [Enter] Go to this position.'))
+        else:
+            append((TB.Mode, '(emacs)'))
+            append((TB, ' '))
+
+        # Position in history.
+        append((TB, '%i/%i ' % (self.line._working_index + 1, len(self.line._working_lines))))
+
+        # Shortcuts.
+        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
+            append((TB, '[Ctrl-G] Cancel search [Enter] Go to this position.'))
+        else:
+            if self.line.paste_mode:
+                append((TB.On, '[F6] Paste mode (on)  '))
             else:
-                if self.line.paste_mode:
-                    append((TB.On, '[F6] Paste mode (on)  '))
-                else:
-                    append((TB.Off, '[F6] Paste mode (off) '))
+                append((TB.Off, '[F6] Paste mode (off) '))
 
-                if self.line.is_multiline:
-                    append((TB.On, '[F7] Multiline (on)'))
-                else:
-                    append((TB.Off, '[F7] Multiline (off)'))
-
-                if self.line.is_multiline:
-                    append((TB, ' [Meta+Enter] Execute'))
-
-                # Python version
-                version = sys.version_info
-                append((TB, ' - '))
-                append((TB.PythonVersion, '%s %i.%i.%i' % (platform.python_implementation(),
-                                    version.major, version.minor, version.micro)))
-
-            # Adjust toolbar width.
-            if len(result) > screen.columns:
-                # Trim toolbar
-                result = result[:screen.columns - 3]
-                result.append((TB, ' > '))
+            if self.line.is_multiline:
+                append((TB.On, '[F7] Multiline (on)'))
             else:
-                # Extend toolbar until the page width.
-                result.append((TB, ' ' * (screen.columns - len(result))))
+                append((TB.Off, '[F7] Multiline (off)'))
 
-            screen.write_highlighted([(Token, '\n')])
-            screen.write_highlighted(result)
+            if self.line.is_multiline:
+                append((TB, ' [Meta+Enter] Execute'))
+
+            # Python version
+            version = sys.version_info
+            append((TB, ' - '))
+            append((TB.PythonVersion, '%s %i.%i.%i' % (platform.python_implementation(),
+                                version.major, version.minor, version.micro)))
+
+        # Adjust toolbar width.
+        if len(result) > screen.columns:
+            # Trim toolbar
+            result = result[:screen.columns - 3]
+            result.append((TB, ' > '))
+        else:
+            # Extend toolbar until the page width.
+            result.append((TB, ' ' * (screen.columns - len(result))))
+
+        screen.write_highlighted(result)
 
 
 class ExtendedPopupCompletionMenu(PopupCompletionMenu):
