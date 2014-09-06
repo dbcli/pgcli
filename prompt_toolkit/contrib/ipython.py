@@ -66,11 +66,9 @@ class IPythonCode(PythonCode):
 
         if text.startswith('%'):
             # Complete magic functions.
-            text = text[1:]
-
             for m in self._magics_manager.magics['line']:
-                if m.startswith(text):
-                    yield Completion(m, m[len(text):])
+                if m.startswith(text[1:]):
+                    yield Completion('%%%s' % m, -len(text))
         else:
             # Complete as normal Python code.
             for c in super(IPythonCode, self).get_completions():
