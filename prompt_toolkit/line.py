@@ -531,14 +531,15 @@ class Line(object):
             raise ListCompletions(self.get_render_context(), results)
 
     @_to_mode(LineMode.NORMAL)
-    def complete(self): # TODO: rename to complete_common
-        """ Autocomplete.
-        Returns true if there was a completion. """
+    def complete_common(self):
+        """
+        Autocomplete. This appends the common part of all the possible completions.
+        Returns true if there was a completion.
+        """
         # On the first tab press, try to find one completion and complete.
-        result = self.create_code_obj().complete() # XXX: rename to get_common_completion()
+        result = self.create_code_obj().get_common_complete_suffix()
         if result:
-            self.text = self.text[:self.cursor_position] + result + self.text[self.cursor_position:]
-            self.cursor_position += len(result)
+            self.text = self.insert_text(result)
             return True
         else:
             return False

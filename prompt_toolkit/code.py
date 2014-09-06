@@ -56,13 +56,25 @@ class CodeBase(object):
     def get_tokens(self):
         return [(Token, self.text)]
 
-    def complete(self):
-        """ return one `Completion` instance or None. """
+    def get_common_complete_suffix(self):
+        """
+        return one `Completion` instance or None.
+        """
         # If there is one completion, return that.
         completions = list(self.get_completions())
 
+        # Take only completions that don't change the text before the cursor.
+        def doesnt_change_before_cursor(completion):
+            end = completion.text[:-completion.start_position]
+            return self.document.text_before_cursor.endswith(end)
+
+        completions = [c for c in completions if doesnt_change_before_cursor(c)]
+
         # Return the common prefix.
-        return _commonprefix([ c.suffix for c in completions ])
+        def get_suffix(completion):
+            return completion.text[-completion.start_position:]
+
+        return _commonprefix([ get_suffix(c) for c in completions ])
 
     def get_completions(self):
         """ Yield `Completion` instances. """

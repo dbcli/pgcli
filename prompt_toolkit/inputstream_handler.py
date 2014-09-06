@@ -244,7 +244,7 @@ class InputStreamHandler(object):
             self.line.list_completions()
             self._second_tab = False
         else:
-            self._second_tab = not self.line.complete()
+            self._second_tab = not self.line.complete_common()
 
     def insert_char(self, data):
         """ Insert data at cursor position.  """
