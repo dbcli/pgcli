@@ -5,8 +5,8 @@ Python Prompt Toolkit
 
 
 ``prompt_toolkit`` is a Library for building powerful interactive command lines
-in Python. It ships with a nice interative Python shell built on top of the
-library.
+in Python. It ships with a nice interative Python shell (called ``ptpython``)
+built on top of the library.
 
 ``prompt_toolkit`` can be a replacement for ``readline``.
 
@@ -14,12 +14,13 @@ Features:
 
 - Pure Python.
 - Syntax highlighting of the input while typing. (For instance, with a Pygments lexer.)
-- Multiline input editing
-- Advanced code completion
-- Both Emacs and Vi keybindings (Similar to readline)
-- Reverse and forward incremental search
-- Both Python 3 and Python 2.7 support
+- Multiline input editing.
+- Advanced code completion.
+- Both Emacs and Vi keybindings. (Similar to readline.)
+- Reverse and forward incremental search.
+- Both Python 3 and Python 2.7 support.
 - Works well with Unicode double width characters. (Chinese input.)
+- No global state.
 - Code written with love.
 
 
