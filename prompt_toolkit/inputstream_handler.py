@@ -40,14 +40,18 @@ class InputStreamHandler(object):
 
         self._arg_count = None
 
-    @property
-    def _arg_count(self):
-        """ 'arg' count. For command repeats. """
-        return self.__arg_count
+    def get_arg_count(self):
+        """
+        Return 'arg' count. For command repeats.
+        Calling this function will also reset the arg count.
+        """
+        value = self._arg_count
+        self._arg_count = None
+        self.line.set_arg_prompt('')
+        return value or 1
 
-    @_arg_count.setter
-    def _arg_count(self, value):
-        self.__arg_count = value
+    def set_arg_count(self, value):
+        self._arg_count = value
 
         # Set argument prompt
         if value:
@@ -179,7 +183,7 @@ class InputStreamHandler(object):
         Delete the word before the cursor.
         """
         data = ClipboardData(''.join(
-            self.line.delete_word_before_cursor() for i in range(self._arg_count or 1)))
+            self.line.delete_word_before_cursor() for i in range(self.get_arg_count())))
         self.line.set_clipboard(data)
 
     def ctrl_x(self):
@@ -205,10 +209,10 @@ class InputStreamHandler(object):
             self.line.history_forward()
 
     def arrow_left(self):
-        self.line.cursor_left()
+        self.line.cursor_position += self.line.document.get_cursor_left_position(count=self.get_arg_count())
 
     def arrow_right(self):
-        self.line.cursor_right()
+        self.line.cursor_position += self.line.document.get_cursor_right_position(count=self.get_arg_count())
 
     def arrow_up(self):
         self.line.auto_up()
@@ -217,10 +221,13 @@ class InputStreamHandler(object):
         self.line.auto_down()
 
     def backspace(self):
-        self.line.delete_character_before_cursor()
+        self.line.delete_character_before_cursor(count=self.get_arg_count())
 
     def delete(self):
-        self.line.delete()
+        self.line.delete(count=self.get_arg_count())
+
+    def shift_delete(self):
+        self.delete()
 
     def tab(self):
         """
@@ -242,7 +249,7 @@ class InputStreamHandler(object):
     def insert_char(self, data):
         """ Insert data at cursor position.  """
         assert len(data) == 1
-        self.line.insert_text(data)
+        self.line.insert_text(data * self.get_arg_count())
 
     def enter(self):
         if self.line.mode == LineMode.INCREMENTAL_SEARCH:
@@ -254,6 +261,14 @@ class InputStreamHandler(object):
             self.line.newline()
         else:
             self.line.return_input()
+
+    def meta_arrow_left(self):
+        """ Cursor to start of previous word. """
+        self.line.cursor_position += (self.line.document.find_previous_word_beginning(count=self.get_arg_count()) or 0)
+
+    def meta_arrow_right(self):
+        """ Cursor to start of next word. """
+        self.line.cursor_position += (self.line.document.find_next_word_beginning(count=self.get_arg_count()) or 0)
 
 
 class EmacsInputStreamHandler(InputStreamHandler):
@@ -300,11 +315,6 @@ class EmacsInputStreamHandler(InputStreamHandler):
         self._ctrl_square_close_pressed = True
 
     def __call__(self, name, *a):
-        reset_arg_count_after_call = True
-
-        if name == 'ctrl_x':
-            reset_arg_count_after_call = False
-
                 # TODO: implement these states (meta-prefix and  ctrl_x)
                 #       in separate InputStreamHandler classes.If a method, like (ctl_x)
                 #       is called and returns an object. That should become the
@@ -313,11 +323,10 @@ class EmacsInputStreamHandler(InputStreamHandler):
         # When Ctl-] + a character is pressed. go to that character.
         if self._ctrl_square_close_pressed:
             if name == 'insert_char':
-                match = self.line.document.find(a[0], in_current_line=True, count=(self._arg_count or 1))
+                match = self.line.document.find(a[0], in_current_line=True, count=(self.get_arg_count()))
                 if match is not None:
                     self.line.cursor_position += match
             self._ctrl_square_close_pressed= False
-            self._arg_count = None
             return
 
         # When escape was pressed, call the `meta_`-function instead.
@@ -327,8 +336,9 @@ class EmacsInputStreamHandler(InputStreamHandler):
             if name == 'insert_char':
                 # Handle Alt + digit in the `meta_digit` method.
                 if a[0] in '0123456789' or (a[0] == '-' and self._arg_count == None):
-                    name = 'meta_digit'
-                    reset_arg_count_after_call = False
+                    self.set_arg_count(_arg_count_append(self._arg_count, a[0]))
+                    self._escape_pressed = False
+                    return
 
                 # Handle Alt + char in their respective `meta_X` method.
                 elif ord(a[0]) < 128:
@@ -346,13 +356,6 @@ class EmacsInputStreamHandler(InputStreamHandler):
 
         super(EmacsInputStreamHandler, self).__call__(name, *a)
 
-        # Reset arg count.
-        if name == 'escape':
-            reset_arg_count_after_call = False
-
-        if reset_arg_count_after_call:
-            self._arg_count = None
-
         # Reset ctrl_x state.
         if name != 'ctrl_x':
             self._ctrl_x_pressed = False
@@ -364,10 +367,6 @@ class EmacsInputStreamHandler(InputStreamHandler):
 
         return super(EmacsInputStreamHandler, self)._needs_to_save(current_method)
 
-    def insert_char(self, data):
-        for i in range(self._arg_count or 1):
-            super(EmacsInputStreamHandler, self).insert_char(data)
-
     def meta_ctrl_j(self):
         """ ALT + Newline """
         # Alias for meta_enter
@@ -377,10 +376,6 @@ class EmacsInputStreamHandler(InputStreamHandler):
         """ ALT + Carriage return """
         # Alias for meta_enter
         self.meta_enter()
-
-    def meta_digit(self, digit):
-        """ ALT + digit or '-' pressed. """
-        self._arg_count = _arg_count_append(self._arg_count, digit)
 
     def meta_enter(self):
         """ Alt + Enter. Should always accept input. """
@@ -401,7 +396,7 @@ class EmacsInputStreamHandler(InputStreamHandler):
         """
         Capitalize the current (or following) word.
         """
-        for i in range(self._arg_count or 1):
+        for i in range(self.get_arg_count()):
             pos = self.line.document.find_next_word_ending()
             words = self.line.document.text_after_cursor[:pos]
             self.line.insert_text(words.title(), overwrite=True)
@@ -415,13 +410,15 @@ class EmacsInputStreamHandler(InputStreamHandler):
         """
         Cursor to end of next word.
         """
-        pos = self.line.document.find_next_word_ending()
+        pos = self.line.document.find_next_word_ending(count=self.get_arg_count())
         if pos:
             self.line.cursor_position += pos
 
     def meta_b(self):
         """ Cursor to start of previous word. """
-        self.line.cursor_word_back()
+        pos = self.line.document.find_previous_word_beginning(count=self.get_arg_count())
+        if pos:
+            self.line.cursor_position += pos
 
     def meta_d(self):
         """
@@ -435,7 +432,7 @@ class EmacsInputStreamHandler(InputStreamHandler):
         """
         Lowercase the current (or following) word.
         """
-        for i in range(self._arg_count or 1): # XXX: not DRY: see meta_c and meta_u!!
+        for i in range(self.get_arg_count()): # XXX: not DRY: see meta_c and meta_u!!
             pos = self.line.document.find_next_word_ending()
             words = self.line.document.text_after_cursor[:pos]
             self.line.insert_text(words.lower(), overwrite=True)
@@ -450,7 +447,7 @@ class EmacsInputStreamHandler(InputStreamHandler):
         """
         Uppercase the current (or following) word.
         """
-        for i in range(self._arg_count or 1):
+        for i in range(self.get_arg_count()):
             pos = self.line.document.find_next_word_ending()
             words = self.line.document.text_after_cursor[:pos]
             self.line.insert_text(words.upper(), overwrite=True)
@@ -458,6 +455,12 @@ class EmacsInputStreamHandler(InputStreamHandler):
     def meta_w(self):
         """
         Copy current region.
+        """
+        # TODO
+
+    def meta_dot(self):
+        """
+        Rotate through the last word (white-space delimited) of the previous lines in history.
         """
         # TODO
 
@@ -1185,13 +1188,12 @@ class ViInputStreamHandler(InputStreamHandler):
         elif self._vi_mode == ViMode.NAVIGATION:
             # Always handle numberics to build the arg
             if data in '123456789' or (self._arg_count and data == '0'):
-                self._arg_count = _arg_count_append(self._arg_count, data)
+                self.set_arg_count(_arg_count_append(self._arg_count, data))
 
             # If we have a handle for the current keypress. Call it.
             elif data in self._current_handles:
                 # Pass argument to handle.
-                arg_count = self._arg_count
-                self._arg_count = None
+                arg_count = self.get_arg_count()
 
                 # Safe state (except if we called the 'undo' action.)
                 if data != 'u':

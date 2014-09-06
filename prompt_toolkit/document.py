@@ -285,6 +285,21 @@ class Document(object):
         except StopIteration:
             pass
 
+    def find_previous_word_beginning(self, count=1):
+        """
+        Return an index relative to the cursor position pointing to the start
+        of the next word. Return `None` if nothing was found.
+        """
+        iterator = _FIND_WORD_RE.finditer(self.text_before_cursor[::-1])
+
+        try:
+            for i, match in enumerate(iterator):
+                if i + 1 == count:
+                    return - match.end(1)
+        except StopIteration:
+            pass
+
+
     def find_next_matching_line(self, match_func): # TODO: unittest.
         """
         Look downwards for empty lines.

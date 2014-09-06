@@ -66,6 +66,7 @@ class InputStream(object):
         '\x1b[F': 'end',
         '\x1bOF': 'end',
         '\x1b[3~': 'delete',
+        '\x1b[3;2~': 'shift_delete', # xterm, gnome-terminal.
         '\x1b[1~': 'home', # tmux
         '\x1b[4~': 'end', # tmux
         '\x1b[5~': 'page_up',
@@ -94,6 +95,20 @@ class InputStream(object):
         '\x1b[32~': 'F18',
         '\x1b[33~': 'F19',
         '\x1b[34~': 'F20',
+
+        # Meta + arrow keys. Several terminals handle this differently.
+        # The following sequences are for xterm and gnome-terminal.
+        #     (Iterm sends ESC followed by the normal arrow_up/down/left/right
+        #     sequences, and the OSX Terminal sends ESCb and ESCf for "alt
+        #     arrow_left" and "alt arrow_right." We don't handle these
+        #     explicitely, in here, because would could not distinguesh between
+        #     pressing ESC (to go to Vi navigation mode), followed by just the
+        #     'b' or 'f' key. These combinations are handled in
+        #     inputstream_handler.)
+        '\x1b[1;3D': 'meta_arrow_left',
+        '\x1b[1;3C': 'meta_arrow_right',
+        '\x1b[1;3A': 'meta_arrow_up',
+        '\x1b[1;3B': 'meta_arrow_down',
     }
 
     def __init__(self, handler, stdout=None):

@@ -383,17 +383,6 @@ class Line(object):
                 self.cursor_position = 0
 
     @_to_mode(LineMode.NORMAL)
-    def cursor_word_back(self):
-        """ Move the cursor to the start of the previous word. """
-        # Move at least one character to the left.
-        self.cursor_position += (self.document.find_start_of_previous_word() or 0)
-
-    @_to_mode(LineMode.NORMAL)
-    def cursor_word_forward(self):
-        """ Move the cursor to the start of the following word. """
-        self.cursor_position += (self.document.find_next_word_beginning() or 0)
-
-    @_to_mode(LineMode.NORMAL)
     def cursor_to_end_of_word(self):
         """
         Move the cursor right before the last character of the next word
