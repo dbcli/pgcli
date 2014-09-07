@@ -919,14 +919,14 @@ class ViInputStreamHandler(InputStreamHandler):
             deleted = '\n'.join(lines[line.document.cursor_position_row : line.document.cursor_position_row + arg])
             after = '\n'.join(lines[line.document.cursor_position_row + arg:])
 
-            # Set cursor position. (At the start of the first 'after' line, after the leading whitespace.)
-            line.cursor_position = len(before) + 1 + len(after) - len(after.lstrip(' '))
-
             # Set new text.
-            if after:
-                after = '\n' + after
+            if before and after:
+                before = before + '\n'
 
             line.text = before + after
+
+            # Set cursor position. (At the start of the first 'after' line, after the leading whitespace.)
+            line.cursor_position = len(before) + len(after) - len(after.lstrip(' '))
 
             # Set clipboard data
             line.set_clipboard(ClipboardData(deleted, ClipboardDataType.LINES))
