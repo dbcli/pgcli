@@ -91,24 +91,24 @@ class HorizontalCompletionMenu(object):
                     cut_right = True
                     break
 
-            tokens.append((Token.WildMenu.CurrentCompletion if i == index else Token.WildMenu.Completion, c.display))
-            tokens.append((Token.WildMenu, ' '))
+            tokens.append((Token.HorizontalMenu.CurrentCompletion if i == index else Token.HorizontalMenu.Completion, c.display))
+            tokens.append((Token.HorizontalMenu, ' '))
 
         # Extend/strip until the content width.
-        tokens.append((Token.WildMenu, ' ' * (content_width - len(tokens))))
+        tokens.append((Token.HorizontalMenu, ' ' * (content_width - len(tokens))))
         tokens = tokens[:content_width]
 
         # Draw to screen.
         screen.write_highlighted([
-                        (Token.WildMenu, ' '),
-                        (Token.WildMenu.Arrow, '<' if cut_left else ' '),
-                        (Token.WildMenu, ' '),
+                        (Token.HorizontalMenu, ' '),
+                        (Token.HorizontalMenu.Arrow, '<' if cut_left else ' '),
+                        (Token.HorizontalMenu, ' '),
                     ])
         screen.write_highlighted(tokens)
         screen.write_highlighted([
-                        (Token.WildMenu, ' '),
-                        (Token.WildMenu.Arrow, '>' if cut_right else ' '),
-                        (Token.WildMenu, ' '),
+                        (Token.HorizontalMenu, ' '),
+                        (Token.HorizontalMenu.Arrow, '>' if cut_right else ' '),
+                        (Token.HorizontalMenu, ' '),
                     ])
 
 

@@ -82,7 +82,7 @@ class PythonStyle(Style):
         Token.Prompt.ISearch.Text.NoMatch: 'bg:#aa4444 #ffffff',
 
         Token.Prompt.SecondLinePrefix: 'bold #888888',
-        Token.Prompt.LineNumber:       '#bbbbbb',# #ffffff',
+        Token.Prompt.LineNumber:       '#aa6666',
         Token.Prompt.Arg:              'noinherit',
         Token.Prompt.Arg.Text:          'bold',
 
@@ -100,15 +100,18 @@ class PythonStyle(Style):
         Token.CompletionMenu.JediDescription:        'bg:#888888 #cccccc',
         Token.CompletionMenu.CurrentJediDescription: 'bg:#bbbbbb #000000',
 
-        Token.WildMenu.Completion:              'bg:#dddddd #000000',
-        Token.WildMenu.CurrentCompletion:       'bg:#888888 #ffffbb',
-        Token.WildMenu:                         'bg:#dddddd',
-        Token.WildMenu.Arrow:                   'bg:#dddddd #888888',
+        Token.HorizontalMenu.Completion:              '#888888 noinherit',
+        Token.HorizontalMenu.CurrentCompletion:       'bold',
+        Token.HorizontalMenu:                         'noinherit',
+        Token.HorizontalMenu.Arrow:                   'bold #888888',
 
         # Grayed
         Token.Aborted:                 '#aaaaaa',
 
         Token.ValidationError:         'bg:#aa0000 #ffffff',
+
+        # Vi tildes
+        Token.Leftmargin.Tilde:   '#888888',
     }
 
 
@@ -375,32 +378,38 @@ class PythonPrompt(Prompt):
             (Token.Prompt.LineNumber, text)
         ])
 
-    def write_after_input(self, screen):
-        pass
-
-    def _go_to_bottom(self, screen, last_screen_height):
+    def _get_bottom_position(self, screen, last_screen_height):
         # Draw the menu at the bottom position.
-        y = max(screen.current_height, last_screen_height - 2) - 1
+        return max(screen.current_height, last_screen_height - 2) - 1
 
-        # Fill space with tildes
-        for y in range(screen.current_height, y + 1):
-            screen.write_at_pos(y, 1, '~', Token)
+    def _print_tildes(self, screen):
+        """
+        Print tildes in the left margin between the last input line and the
+        toolbars. (This is what Vi-users like.)
+        """
+        if self._pythonline.vi_mode:
+            last_char_y, last_char_x = screen._cursor_mappings[len(self.render_context.code_obj.document.text)]
 
-        return y
+            # Fill space with tildes
+            for y in range(last_char_y + 1, screen.current_height - 2):
+                screen.write_at_pos(y, 1, '~', Token.Leftmargin.Tilde)
 
     def write_to_screen(self, screen, last_screen_height):
         self.write_before_input(screen)
         self.write_input(screen)
-        self.write_menus(screen)
 
         if not (self.accept or self.abort):
-            y = self._go_to_bottom(screen, last_screen_height)
+            self.write_menus(screen)
+
+            y = self._get_bottom_position(screen, last_screen_height)
 
             screen._y, screen._x = y + 1, 0
             self.write_second_toolbar(screen)
 
             screen._y, screen._x = y + 2, 0
             self.write_toolbar(screen)
+
+            self._print_tildes(screen)
 
     def write_toolbar(self, screen):
         result = TokenList()
