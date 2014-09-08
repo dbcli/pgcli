@@ -123,8 +123,12 @@ A simple example looks like this:
 FAQ
 ---
 
-Q: The Ctrl-S forward search doesn't work.
+Q: The ``Ctrl-S`` forward search doesn't work and freezes my terminal.
 A: Try to run ``stty -ixon`` in your terminal to disable flow control.
+
+Q: The ``Meta``-key doesn't work.
+A: For some terminals you have to enable the Alt-key to act as enum key, but
+   you can also type ``Escape`` before any key instead.
 
 
 Special thanks to

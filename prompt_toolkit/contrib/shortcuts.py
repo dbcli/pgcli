@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 from .. import CommandLine, AbortAction
 from ..prompt import Prompt, PasswordProcessor
-from ..inputstream_handler import EmacsInputStreamHandler
+#from ..inputstream_handler import EmacsInputStreamHandler, BasicInputStreamHandler
 from ..line import Line
 
 
@@ -25,7 +25,6 @@ def get_input(message, raise_exception_on_abort=False, multiline=False, is_passw
 
     class CLI(CommandLine):
         prompt_factory = CustomPrompt
-        inputstream_handler_factory = EmacsInputStreamHandler
         line_factory = CustomLine
 
 

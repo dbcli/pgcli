@@ -4,7 +4,12 @@ Parser for VT100 input stream.
 from __future__ import unicode_literals
 import six
 
-__all__ = ('InputStream', )
+from .keys import Key
+
+__all__ = (
+    'InputStream',
+    'KeyPressHistory',
+)
 
 
 class InputStream(object):
@@ -12,7 +17,7 @@ class InputStream(object):
     Parser for VT100 input stream.
 
     Feed the data through the `feed` method and the correct callbacks of the
-    `inputstream_handler` will be called.
+    `input_processor` will be called.
 
     ::
 
@@ -20,81 +25,81 @@ class InputStream(object):
         i = InputStream(h)
         i.feed('data\x01...')
 
-    :attr handler: :class:`~prompt_toolkit.inputstream_handler.InputStreamHandler` instance.
+    :attr input_processor: :class:`~prompt_toolkit.key_binding.InputProcessor` instance.
     """
     # Lookup table of ANSI escape sequences for a VT100 terminal
-    CALLBACKS = {
-        '\x00': 'ctrl_space', # Control-Space (Also for Ctrl-@)
-        '\x01': 'ctrl_a', # Control-A (home)
-        '\x02': 'ctrl_b', # Control-B (emacs cursor left)
-        '\x03': 'ctrl_c', # Control-C (interrupt)
-        '\x04': 'ctrl_d', # Control-D (exit)
-        '\x05': 'ctrl_e', # Contrel-E (end)
-        '\x06': 'ctrl_f', # Control-F (cursor forward)
-        '\x07': 'ctrl_g', # Control-G
-        '\x08': 'ctrl_h', # Control-H (8) (Identical to '\b')
-        '\x09': 'ctrl_i', # Control-I (9) (Identical to '\t')
-        '\x0a': 'ctrl_j', # Control-J (10) (Identical to '\n')
-        '\x0b': 'ctrl_k', # Control-K (delete until end of line; vertical tab)
-        '\x0c': 'ctrl_l', # Control-L (clear; form feed)
-        '\x0d': 'ctrl_m', # Control-M (13) (Identical to '\r')
-        '\x0e': 'ctrl_n', # Control-N (14) (history forward)
-        '\x0f': 'ctrl_o', # Control-O (15)
-        '\x10': 'ctrl_p', # Control-P (16) (history back)
-        '\x11': 'ctrl_q', # Control-Q
-        '\x12': 'ctrl_r', # Control-R (18) (reverse search)
-        '\x13': 'ctrl_s', # Control-S (19) (forward search)
-        '\x14': 'ctrl_t', # Control-T
-        '\x15': 'ctrl_u', # Control-U
-        '\x16': 'ctrl_v', # Control-V
-        '\x17': 'ctrl_w', # Control-W
-        '\x18': 'ctrl_x', # Control-X
-        '\x19': 'ctrl_y', # Control-Y (25)
-        '\x1a': 'ctrl_z', # Control-Z
-        '\x1c': 'ctrl_backslash', # Both Control-\ and Ctrl-|
-        '\x1d': 'ctrl_square_close', # Control-]
-        '\x1e': 'ctrl_circumflex', # Control-^
-        '\x1f': 'ctrl_underscore', # Control-underscore (Also for Ctrl-hypen.)
-        '\x7f': 'backspace', # (127) Backspace
+    mappings = {
+        '\x00': Key.ControlSpace, # Control-Space (Also for Ctrl-@)
+        '\x01': Key.ControlA, # Control-A (home)
+        '\x02': Key.ControlB, # Control-B (emacs cursor left)
+        '\x03': Key.ControlC, # Control-C (interrupt)
+        '\x04': Key.ControlD, # Control-D (exit)
+        '\x05': Key.ControlE, # Contrel-E (end)
+        '\x06': Key.ControlF, # Control-F (cursor forward)
+        '\x07': Key.ControlG, # Control-G
+        '\x08': Key.ControlH, # Control-H (8) (Identical to '\b')
+        '\x09': Key.ControlI, # Control-I (9) (Identical to '\t')
+        '\x0a': Key.ControlJ, # Control-J (10) (Identical to '\n')
+        '\x0b': Key.ControlK, # Control-K (delete until end of line; vertical tab)
+        '\x0c': Key.ControlL, # Control-L (clear; form feed)
+        '\x0d': Key.ControlM, # Control-M (13) (Identical to '\r')
+        '\x0e': Key.ControlN, # Control-N (14) (history forward)
+        '\x0f': Key.ControlO, # Control-O (15)
+        '\x10': Key.ControlP, # Control-P (16) (history back)
+        '\x11': Key.ControlQ, # Control-Q
+        '\x12': Key.ControlR, # Control-R (18) (reverse search)
+        '\x13': Key.ControlS, # Control-S (19) (forward search)
+        '\x14': Key.ControlT, # Control-T
+        '\x15': Key.ControlU, # Control-U
+        '\x16': Key.ControlV, # Control-V
+        '\x17': Key.ControlW, # Control-W
+        '\x18': Key.ControlX, # Control-X
+        '\x19': Key.ControlY, # Control-Y (25)
+        '\x1a': Key.ControlZ, # Control-Z
+        '\x1c': Key.ControlBackslash, # Both Control-\ and Ctrl-|
+        '\x1d': Key.ControlSquareClose, # Control-]
+        '\x1e': Key.ControlCircumflex, # Control-^
+        '\x1f': Key.ControlUnderscore, # Control-underscore (Also for Ctrl-hypen.)
+        '\x7f': Key.Backspace, # (127) Backspace
            ### '\x1b': 'escape',
-        '\x1b[A': 'arrow_up',
-        '\x1b[B': 'arrow_down',
-        '\x1b[C': 'arrow_right',
-        '\x1b[D': 'arrow_left',
-        '\x1b[H': 'home',
-        '\x1bOH': 'home',
-        '\x1b[F': 'end',
-        '\x1bOF': 'end',
-        '\x1b[3~': 'delete',
-        '\x1b[3;2~': 'shift_delete', # xterm, gnome-terminal.
-        '\x1b[1~': 'home', # tmux
-        '\x1b[4~': 'end', # tmux
-        '\x1b[5~': 'page_up',
-        '\x1b[6~': 'page_down',
-        '\x1b[7~': 'home', # xrvt
-        '\x1b[8~': 'end', # xrvt
-        '\x1b[Z': 'backtab', # shift + tab
+        '\x1b[A': Key.Up,
+        '\x1b[B': Key.Down,
+        '\x1b[C': Key.Right,
+        '\x1b[D': Key.Left,
+        '\x1b[H': Key.Home,
+        '\x1bOH': Key.Home,
+        '\x1b[F': Key.End,
+        '\x1bOF': Key.End,
+        '\x1b[3~': Key.Delete,
+        '\x1b[3;2~': Key.ShiftDelete, # xterm, gnome-terminal.
+        '\x1b[1~': Key.Home, # tmux
+        '\x1b[4~': Key.End, # tmux
+        '\x1b[5~': Key.PageUp,
+        '\x1b[6~': Key.PageDown,
+        '\x1b[7~': Key.Home, # xrvt
+        '\x1b[8~': Key.End, # xrvt
+        '\x1b[Z': Key.BackTab, # shift + tab
 
-        '\x1bOP': 'F1',
-        '\x1bOQ': 'F2',
-        '\x1bOR': 'F3',
-        '\x1bOS': 'F4',
-        '\x1b[15~': 'F5',
-        '\x1b[17~': 'F6',
-        '\x1b[18~': 'F7',
-        '\x1b[19~': 'F8',
-        '\x1b[20~': 'F9',
-        '\x1b[21~': 'F10',
-        '\x1b[23~': 'F11',
-        '\x1b[24~': 'F12',
-        '\x1b[25~': 'F13',
-        '\x1b[26~': 'F14',
-        '\x1b[28~': 'F15',
-        '\x1b[29~': 'F16',
-        '\x1b[31~': 'F17',
-        '\x1b[32~': 'F18',
-        '\x1b[33~': 'F19',
-        '\x1b[34~': 'F20',
+        '\x1bOP': Key.F1,
+        '\x1bOQ': Key.F2,
+        '\x1bOR': Key.F3,
+        '\x1bOS': Key.F4,
+        '\x1b[15~': Key.F5,
+        '\x1b[17~': Key.F6,
+        '\x1b[18~': Key.F7,
+        '\x1b[19~': Key.F8,
+        '\x1b[20~': Key.F9,
+        '\x1b[21~': Key.F10,
+        '\x1b[23~': Key.F11,
+        '\x1b[24~': Key.F12,
+        '\x1b[25~': Key.F13,
+        '\x1b[26~': Key.F14,
+        '\x1b[28~': Key.F15,
+        '\x1b[29~': Key.F16,
+        '\x1b[31~': Key.F17,
+        '\x1b[32~': Key.F18,
+        '\x1b[33~': Key.F19,
+        '\x1b[34~': Key.F20,
 
         # Meta + arrow keys. Several terminals handle this differently.
         # The following sequences are for xterm and gnome-terminal.
@@ -104,24 +109,28 @@ class InputStream(object):
         #     explicitely, in here, because would could not distinguesh between
         #     pressing ESC (to go to Vi navigation mode), followed by just the
         #     'b' or 'f' key. These combinations are handled in
-        #     inputstream_handler.)
-        '\x1b[1;3D': 'meta_arrow_left',
-        '\x1b[1;3C': 'meta_arrow_right',
-        '\x1b[1;3A': 'meta_arrow_up',
-        '\x1b[1;3B': 'meta_arrow_down',
+        #     the input processor.)
+        '\x1b[1;3D': (Key.Escape, Key.Left),
+        '\x1b[1;3C': (Key.Escape, Key.Right),
+        '\x1b[1;3A': (Key.Escape, Key.Up),
+        '\x1b[1;3B': (Key.Escape, Key.Down),
     }
 
-    def __init__(self, handler, stdout=None):
-        self._start_parser()
-        self._handler = handler
+    def __init__(self, input_processor, stdout=None):
+        self._input_processor = input_processor
 
         # Put the terminal in cursor mode. (Instead of application mode.)
         if stdout:
             stdout.write('\x1b[?1l')
             stdout.flush()
 
+        self.reset()
+
         # Put the terminal in application mode.
         #print('\x1b[?1h')
+
+    def reset(self):
+        self._start_parser()
 
     def _start_parser(self):
         """
@@ -137,7 +146,7 @@ class InputStream(object):
         buffer = ''
 
         while True:
-            options = self.CALLBACKS
+            options = self.mappings
             prefix = ''
 
             while True:
@@ -152,7 +161,7 @@ class InputStream(object):
                     break # Reset. Go back to outer loop
 
                 # When the first character matches -> pop first letters in options dict
-                elif c in [ k[0] for k in options.keys() ]:
+                elif any(k[0] == c for k in options.keys()):
                     options = { k[1:]: v for k, v in options.items() if k[0] == c }
                     prefix += c
 
@@ -161,23 +170,27 @@ class InputStream(object):
                 # variable.
                 elif prefix:
                     if prefix[0] == '\x1b':
-                        self._call_handler('escape')
+                        self._call_handler(Key.Escape)
                     else:
-                        self._call_handler('insert_char', prefix[0])
+                        self._call_handler(prefix[0])
 
                     buffer = prefix[1:] + c
                     break # Reset. Go back to outer loop
 
                 # Handle letter (no match was found.)
                 else:
-                    self._call_handler('insert_char', c)
+                    self._call_handler(c)
                     break # Reset. Go back to outer loop
 
-    def _call_handler(self, name, *a):
+    def _call_handler(self, key):
         """
         Callback to handler.
         """
-        self._handler(name, *a)
+        if isinstance(key, tuple):
+            for k in key:
+                self._call_handler(k)
+        else:
+            self._input_processor.feed_key(key)
 
     def feed(self, data):
         """

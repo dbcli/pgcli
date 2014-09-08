@@ -15,11 +15,13 @@ from pygments.token import Keyword, Operator, Number, Name, Error, Comment, Toke
 
 from prompt_toolkit import CommandLine
 from prompt_toolkit.code import Completion, Code, ValidationError
-from prompt_toolkit.enums import LineMode
+from prompt_toolkit.enums import InputMode
 from prompt_toolkit.history import FileHistory, History
-from prompt_toolkit.inputstream_handler import ViInputStreamHandler, EmacsInputStreamHandler, ViMode
+from prompt_toolkit.key_bindings.vi import vi_bindings
+from prompt_toolkit.key_bindings.emacs import emacs_bindings
 from prompt_toolkit.line import Line
 from prompt_toolkit.prompt import Prompt, TokenList, BracketsMismatchProcessor, PopupCompletionMenu, HorizontalCompletionMenu
+from prompt_toolkit.keys import Key
 
 import jedi
 import platform
@@ -115,42 +117,54 @@ class PythonStyle(Style):
     }
 
 
-class _PythonInputStreamHandlerMixin(object): # XXX: Don't use Mixins for this. There are better solutions.
+def python_bindings(registry, line):
     """
-    Extensions to the input stream handler for custom 'enter' behaviour.
+    Custom key bindings.
     """
-    def F6(self):
+    handle = registry.add_binding
+
+    @handle(Key.F6)
+    def _(event):
         """
         Enable/Disable paste mode.
         """
-        self.line.paste_mode = not self.line.paste_mode
-        if self.line.paste_mode:
-            self.line.is_multiline = True
+        line.paste_mode = not line.paste_mode
+        if line.paste_mode:
+            line.is_multiline = True
 
-    def F7(self):
+    @handle(Key.F7)
+    def _(event):
         """
         Enable/Disable multiline mode.
         """
-        self.line.is_multiline = not self.line.is_multiline
+        line.is_multiline = not line.is_multiline
 
-    def tab(self):
+    @handle(Key.Tab)
+    def _(event):
         # When the 'tab' key is pressed with only whitespace character before the
         # cursor, do autocompletion. Otherwise, insert indentation.
-        current_char = self.line.document.current_line_before_cursor
+        current_char = line.document.current_line_before_cursor
         if not current_char or current_char.isspace():
-            self.line.insert_text('    ')
+            line.insert_text('    ')
         else:
-            self.line.complete_next()
+            line.complete_next()
+            event.input_processor.input_mode = InputMode.COMPLETE
 
-    def backtab(self):
-        if self.line.mode == LineMode.COMPLETE:
-            self.line.complete_previous()
+    @handle(Key.BackTab, in_mode=InputMode.COMPLETE)
+    def _(event):
+        line.complete_previous()
 
-    def enter(self):
-        self._auto_enable_multiline()
-        super(_PythonInputStreamHandlerMixin, self).enter()
+    @handle(Key.ControlJ) # TODO XXX: !!!!
+    @handle(Key.ControlM)
+    def _(event):
+        _auto_enable_multiline()
 
-    def _auto_enable_multiline(self):
+        if line.is_multiline:
+            line.newline()
+        else:
+            line.return_input()
+
+    def _auto_enable_multiline():
         """
         (Temporarily) enable multiline when pressing enter.
         When:
@@ -159,26 +173,18 @@ class _PythonInputStreamHandlerMixin(object): # XXX: Don't use Mixins for this. 
         """
         def is_empty_or_space(s):
             return s == '' or s.isspace()
-        cursor_at_the_end = self.line.document.is_cursor_at_the_end
+        cursor_at_the_end = line.document.is_cursor_at_the_end
 
         # If we just typed a colon, or still have open brackets, always insert a real newline.
-        if cursor_at_the_end and (self.line._colon_before_cursor() or
-                                  self.line._has_unclosed_brackets() or
-                                  self.line._starting_with_at()):
-            self.line.is_multiline = True
+        if cursor_at_the_end and (line._colon_before_cursor() or
+                                  line._has_unclosed_brackets() or
+                                  line._starting_with_at()):
+            line.is_multiline = True
 
         # If the character before the cursor is a backslash (line continuation
         # char), insert a new line.
-        elif cursor_at_the_end and (self.line.document.text_before_cursor[-1:] == '\\'):
-            self.line.is_multiline = True
-
-
-class PythonViInputStreamHandler(_PythonInputStreamHandlerMixin, ViInputStreamHandler):
-    pass
-
-
-class PythonEmacsInputStreamHandler(_PythonInputStreamHandlerMixin, EmacsInputStreamHandler):
-    pass
+        elif cursor_at_the_end and (line.document.text_before_cursor[-1:] == '\\'):
+            line.is_multiline = True
 
 
 class PythonLine(Line):
@@ -268,7 +274,7 @@ class PythonLine(Line):
         """
         before_cursor = self.document.current_line_before_cursor
 
-        if not self.paste_mode and not self.mode == LineMode.INCREMENTAL_SEARCH and before_cursor.isspace():
+        if not self.paste_mode and before_cursor.isspace():
             count = 1 + (len(before_cursor) - 1) % 4
         else:
             count = 1
@@ -287,7 +293,7 @@ class PythonLine(Line):
         # Count space characters, after the cursor.
         after_cursor_space_count = len(after_cursor) - len(after_cursor.lstrip())
 
-        if (not self.paste_mode and not self.mode == LineMode.INCREMENTAL_SEARCH and
+        if (not self.paste_mode and
                     (not before_cursor or before_cursor.isspace()) and after_cursor_space_count):
             count = min(4, after_cursor_space_count)
         else:
@@ -300,17 +306,13 @@ class PythonLine(Line):
 class PythonPrompt(Prompt):
     input_processors = [ BracketsMismatchProcessor() ]
 
-    def __init__(self, pythonline, *a, **kw):
-        super(PythonPrompt, self).__init__(*a, **kw)
-        self._pythonline = pythonline
-
     @property
     def tokens_before_input(self):
-        return [(Token.Prompt, 'In [%s]: ' % self._pythonline.current_statement_index)]
+        return [(Token.Prompt, 'In [%s]: ' % self.commandline.current_statement_index)]
 
     @property
     def completion_menu(self):
-        style = self._pythonline.autocompletion_style
+        style = self.commandline.autocompletion_style
 
         if style == AutoCompletionStyle.POPUP_MENU:
             return PopupCompletionMenu()
@@ -323,15 +325,16 @@ class PythonPrompt(Prompt):
         """
         When inside functions, show signature.
         """
-        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
+        if self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH:
             screen.write_highlighted(list(self.isearch_prompt))
-        elif self.line._arg_prompt_text:
+        elif self.commandline.input_processor.arg is not None:
             screen.write_highlighted(list(self.arg_prompt))
         elif self.line.validation_error:
             screen.write_highlighted(list(self._get_error_tokens()))
-        elif self._pythonline.autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU and \
-                        self.render_context.complete_state:
-            HorizontalCompletionMenu().write(screen, None, self.render_context.complete_state)
+        elif self.commandline.autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU and \
+                        self.line.complete_state and \
+                        self.commandline.input_processor.input_mode == InputMode.COMPLETE:
+            HorizontalCompletionMenu().write(screen, None, self.line.complete_state)
         else:
             screen.write_highlighted(list(self._get_signature_tokens()))
 
@@ -368,10 +371,14 @@ class PythonPrompt(Prompt):
         else:
             return []
 
-    def create_left_input_margin(self, screen, row):
+    def create_left_input_margin(self, screen, row, is_new_line):
         prompt_width = len(TokenList(self.tokens_before_input))
 
-        text = '%i. ' % (row + 1)
+        if is_new_line:
+            text = '%i. ' % row
+        else:
+            text = ''
+
         text = ' ' * (prompt_width - len(text)) + text
 
         screen.write_highlighted([
@@ -387,18 +394,18 @@ class PythonPrompt(Prompt):
         Print tildes in the left margin between the last input line and the
         toolbars. (This is what Vi-users like.)
         """
-        if self._pythonline.vi_mode:
-            last_char_y, last_char_x = screen._cursor_mappings[len(self.render_context.code_obj.document.text)]
+        if self.commandline.vi_mode:
+            last_char_y, last_char_x = screen._cursor_mappings[len(self.line.document.text)]
 
             # Fill space with tildes
             for y in range(last_char_y + 1, screen.current_height - 2):
                 screen.write_at_pos(y, 1, '~', Token.Leftmargin.Tilde)
 
-    def write_to_screen(self, screen, last_screen_height):
+    def write_to_screen(self, screen, last_screen_height, accept=False, abort=False):
         self.write_before_input(screen)
         self.write_input(screen)
 
-        if not (self.accept or self.abort):
+        if not (accept or abort):
             self.write_menus(screen)
 
             y = self._get_bottom_position(screen, last_screen_height)
@@ -412,31 +419,35 @@ class PythonPrompt(Prompt):
             self._print_tildes(screen)
 
     def write_toolbar(self, screen):
+        TB = Token.Toolbar
+        mode = self.commandline.input_processor.input_mode
+
         result = TokenList()
         append = result.append
-        TB = Token.Toolbar
 
         append((TB, ' '))
 
         # Mode
-        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
+        if mode == InputMode.INCREMENTAL_SEARCH:
             append((TB.Mode, '(SEARCH)'))
-            append((TB, '  '))
-        elif self._pythonline.vi_mode:
-            mode = self._pythonline._inputstream_handler._vi_mode
-            if mode == ViMode.NAVIGATION:
+            append((TB, '   '))
+        elif self.commandline.vi_mode:
+            if mode == InputMode.VI_NAVIGATION:
                 append((TB.Mode, '(NAV)'))
-                append((TB, '     '))
-            elif mode == ViMode.INSERT:
+                append((TB, '      '))
+            elif mode == InputMode.VI_INSERT:
                 append((TB.Mode, '(INSERT)'))
-                append((TB, '  '))
-            elif mode == ViMode.REPLACE:
+                append((TB, '   '))
+            elif mode == InputMode.VI_REPLACE:
                 append((TB.Mode, '(REPLACE)'))
+                append((TB, '  '))
+            elif mode == InputMode.COMPLETE:
+                append((TB.Mode, '(COMPLETE)'))
                 append((TB, ' '))
 
-            if self._pythonline._inputstream_handler.is_recording_macro:
-                append((TB.Mode, 'recording'))
-                append((TB, ' '))
+#            if self.commandline._input_processor.is_recording_macro:
+#                append((TB.Mode, 'recording'))
+#                append((TB, ' '))
 
         else:
             append((TB.Mode, '(emacs)'))
@@ -446,7 +457,7 @@ class PythonPrompt(Prompt):
         append((TB, '%i/%i ' % (self.line._working_index + 1, len(self.line._working_lines))))
 
         # Shortcuts.
-        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
+        if mode == InputMode.INCREMENTAL_SEARCH:
             append((TB, '[Ctrl-G] Cancel search [Enter] Go to this position.'))
         else:
             if self.line.paste_mode:
@@ -469,13 +480,13 @@ class PythonPrompt(Prompt):
                                 version.major, version.minor, version.micro)))
 
         # Adjust toolbar width.
-        if len(result) > screen.columns:
+        if len(result) > screen.size.columns:
             # Trim toolbar
-            result = result[:screen.columns - 3]
+            result = result[:screen.size.columns - 3]
             result.append((TB, ' > '))
         else:
             # Extend toolbar until the page width.
-            result.append((TB, ' ' * (screen.columns - len(result))))
+            result.append((TB, ' ' * (screen.size.columns - len(result))))
 
         screen.write_highlighted(result)
 
@@ -551,6 +562,7 @@ class PythonCode(Code):
 
 class PythonCommandLine(CommandLine):
     line_factory = PythonLine
+    prompt_factory = PythonPrompt
 
     def __init__(self, globals=None, locals=None, vi_mode=False, stdin=None, stdout=None, history_filename=None,
                     style=PythonStyle, autocompletion_style=AutoCompletionStyle.POPUP_MENU):
@@ -576,23 +588,18 @@ class PythonCommandLine(CommandLine):
             return History()
 
     @property
-    def inputstream_handler_factory(self):
+    def key_bindings_factories(self):
         if self.vi_mode:
-            return PythonViInputStreamHandler
+            return [vi_bindings, python_bindings]
         else:
-            return PythonEmacsInputStreamHandler
-
-    def prompt_factory(self, *a, **kw):
-        # The `PythonPrompt` class needs a reference back in order to show the
-        # input method.
-        return PythonPrompt(self, *a, **kw)
+            return [emacs_bindings, python_bindings]
 
     def code_factory(self, document):
         # The `PythonCode` needs a reference back to this class in order to do
         # autocompletion on the globals/locals.
         return PythonCode(document, self.globals, self.locals)
 
-    def on_input_timeout(self, code_obj):
+    def on_input_timeout(self):
         """
         When there is no input activity,
         in another thread, get the signature of the current code.
@@ -601,6 +608,8 @@ class PythonCommandLine(CommandLine):
         if self.get_signatures_thread_running:
             return
         self.get_signatures_thread_running = True
+
+        code_obj = self.line.create_code_obj()
 
         def run():
             script = code_obj._get_jedi_script()
@@ -623,10 +632,10 @@ class PythonCommandLine(CommandLine):
 
             # Set signatures and redraw if the text didn't change in the
             # meantime. Otherwise request new signatures.
-            if self._line.text == code_obj.text:
-                self._line.signatures = signatures
+            if self.line.text == code_obj.text:
+                self.line.signatures = signatures
                 self.request_redraw()
             else:
-                self.on_input_timeout(self._line.create_code_obj())
+                self.on_input_timeout()
 
         self.run_in_executor(run)

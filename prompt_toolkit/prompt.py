@@ -4,7 +4,7 @@ Prompt representation.
 from __future__ import unicode_literals
 
 from pygments.token import Token
-from .enums import IncrementalSearchDirection, LineMode
+from .enums import IncrementalSearchDirection, InputMode
 
 __all__ = (
     'HorizontalCompletionMenu',
@@ -69,8 +69,12 @@ class HorizontalCompletionMenu(object):
         completions = complete_state.current_completions
         index = complete_state.complete_index # Can be None!
 
+        # Don't draw the menu if there is just one completion.
+        if len(completions) <= 1:
+            return
+
         # Width of the completions without the left/right arrows in the margins.
-        content_width = screen.columns - 6
+        content_width = screen.size.columns - 6
 
         # Booleans indicating whether we stripped from the left/right
         cut_left = False
@@ -131,6 +135,10 @@ class PopupCompletionMenu(object):
         """
         completions = complete_state.current_completions
         index = complete_state.complete_index # Can be None!
+
+        # Don't draw the menu if there is just one completion.
+        if len(completions) <= 1:
+            return
 
         # Get position of the menu.
         y, x = complete_cursor_position
@@ -270,9 +278,7 @@ class ISearchComposer(object):
 
 class Prompt(object):
     """
-    Base class for a valid prompt.
-
-    :attr render_context: :class:`~prompt_toolkit.render_context.RenderContext` instance.
+    Default prompt class.
     """
     #: Menu class for autocompletions. This can be `None`
     completion_menu = PopupCompletionMenu()
@@ -288,16 +294,16 @@ class Prompt(object):
     #: Class responsible for the composition of the i-search tokens.
     isearch_composer = ISearchComposer
 
-    def __init__(self, render_context, abort=False, accept=False):
-        self.render_context = render_context
+    def __init__(self, commandline_ref):
+        self._commandline_ref = commandline_ref
 
-        # Abort/accept flags.
-        self.abort = abort
-        self.accept = accept
+    @property
+    def commandline(self):
+        return self._commandline_ref()
 
     @property
     def line(self):
-        return self.render_context.line
+        return self.commandline.line
 
     @property
     def tokens_before_input(self):
@@ -305,9 +311,9 @@ class Prompt(object):
         Text shown before the actual input.
         List of (Token, text) tuples.
         """
-        if self.line.mode == LineMode.INCREMENTAL_SEARCH:
+        if self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
             return self.isearch_prompt
-        elif self.line._arg_prompt_text:
+        elif self.commandline.input_processor.arg is not None:
             return self.arg_prompt
         else:
             return self.default_prompt
@@ -326,7 +332,7 @@ class Prompt(object):
         """
         return [
             (Token.Prompt.Arg, '(arg: '),
-            (Token.Prompt.Arg.Text, str(self.line._arg_prompt_text)),
+            (Token.Prompt.Arg.Text, str(self.commandline.input_processor.arg)),
             (Token.Prompt.Arg, ') '),
         ]
 
@@ -345,8 +351,7 @@ class Prompt(object):
         """
         return []
 
-    @property
-    def tokens_in_left_margin(self):
+    def get_tokens_in_left_margin(self, row, is_new_line):
         """
         When the renderer has to render the command line over several lines
         because the input contains newline characters. This prefix will be
@@ -362,32 +367,53 @@ class Prompt(object):
         yield (Token.Prompt.SecondLinePrefix, '.' * length)
         yield (Token.Prompt.SecondLinePrefix, ' ' * spaces)
 
-    def create_left_input_margin(self, screen, row):
+    def create_left_input_margin(self, screen, row, is_new_line):
         screen.write_highlighted(self.tokens_in_left_margin)
 
     def write_before_input(self, screen):
         screen.write_highlighted(self.tokens_before_input)
 
-    @property
-    def input_tokens(self):
-        tokens = self.render_context.code_obj.get_tokens()
+    def get_input_tokens(self):
+        tokens = self.line.create_code_obj().get_tokens()
 
         for p in self.input_processors:
             tokens = p.process_tokens(tokens)
 
         return tokens
 
+    def get_highlighted_characters(self):
+        """
+        Return a dictionary that maps the index of input string characters to
+        their Token in case of highlighting.
+        """
+        highlighted_characters = {}
+
+        # In case of incremental search, highlight all matches.
+        if self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
+            for index in self.line.document.find_all(self.line.isearch_state.isearch_text):
+                if index == self.line.cursor_position:
+                    token = Token.IncrementalSearchMatch.Current
+                else:
+                    token = Token.IncrementalSearchMatch
+
+                highlighted_characters.update({
+                    x: token for x in range(index, index + len(self.line.isearch_state.isearch_text)) })
+
+        return highlighted_characters
+
     def write_input(self, screen):
         # Set second line prefix
-        screen.set_left_margin(lambda row: self.create_left_input_margin(screen, row))
+        screen.set_left_margin(lambda row, is_new_line: self.create_left_input_margin(screen, row, is_new_line))
+
+        highlighted_characters = self.get_highlighted_characters()
 
         index = 0
             # Note, we add the space character at the end, because that's where
             #       the cursor could be.
-        for token, text in self.input_tokens + [(Token, ' ')]:
+        for token, text in self.get_input_tokens() + [(Token, ' ')]:
             for c in text:
                 # Determine Token-type for character.
-                t = self.render_context.highlighted_characters.get(index, token)
+                t = highlighted_characters.get(index, token)
 
                 # Insert char.
                 screen.write_char(c, t,
@@ -401,27 +427,29 @@ class Prompt(object):
         screen.set_left_margin(None)
 
     def write_after_input(self, screen):
-        # Write help text.
-        if not (self.accept or self.abort):
-            help_tokens = self.tokens_after_input
-            if help_tokens:
-                screen.write_highlighted(help_tokens)
+        """
+        Write tokens after input.
+        """
+        screen.write_highlighted(self.tokens_after_input)
 
     def write_menus(self, screen):
-        render_context = self.render_context
-
-        # Write completion menu.
-        if self.completion_menu and render_context.complete_state:
+        """
+        Write completion menu.
+        """
+        if self.commandline.input_processor.input_mode == InputMode.COMPLETE and \
+                        self.completion_menu and self.line.complete_state:
             # Calculate the position where the cursor was, the moment that we pressed the complete button (tab).
-            complete_cursor_position = screen._cursor_mappings[render_context.complete_state.original_document.cursor_position]
+            complete_cursor_position = screen._cursor_mappings[self.line.complete_state.original_document.cursor_position]
 
-            self.completion_menu.write(screen, complete_cursor_position, render_context.complete_state)
+            self.completion_menu.write(screen, complete_cursor_position, self.line.complete_state)
 
-    def write_to_screen(self, screen, last_screen_height):
+    def write_to_screen(self, screen, last_screen_height, accept=False, abort=False):
         """
         Render the prompt to a `Screen` instance.
         """
         self.write_before_input(screen)
         self.write_input(screen)
-        self.write_after_input(screen)
-        self.write_menus(screen)
+
+        if not (accept or abort):
+            self.write_after_input(screen)
+            self.write_menus(screen)

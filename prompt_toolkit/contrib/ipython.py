@@ -11,7 +11,7 @@ offer.
 from prompt_toolkit import AbortAction
 from prompt_toolkit.code import Completion
 from prompt_toolkit.contrib.python_input import PythonCommandLine, PythonPrompt, PythonCommandLine, PythonCode, AutoCompletionStyle
-from prompt_toolkit.line import Exit
+from prompt_toolkit import Exit
 
 from IPython.terminal.embed import InteractiveShellEmbed as _InteractiveShellEmbed
 from IPython.terminal.ipapp import load_default_config
@@ -79,12 +79,11 @@ class IPythonCommandLine(PythonCommandLine):
     """
     Override our `PythonCommandLine` to add IPython specific stuff.
     """
+    prompt_factory = IPythonPrompt
+
     def __init__(self, ipython_shell, *a, **kw):
         super(IPythonCommandLine, self).__init__(*a, **kw)
         self._ipython_shell = ipython_shell
-
-    def prompt_factory(self, render_context):
-        return IPythonPrompt(render_context, self)
 
     def code_factory(self, document):
         return IPythonCode(document, self.globals, self.locals, self._ipython_shell.magics_manager)

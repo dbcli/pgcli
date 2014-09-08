@@ -25,7 +25,11 @@ from codecs import getincrementaldecoder
 
 from .code import Code
 from .inputstream import InputStream
-from .inputstream_handler import InputStreamHandler
+from .key_binding import InputProcessor
+from .enums import InputMode
+from .key_binding import Registry
+from .key_bindings.emacs import emacs_bindings
+from .key_bindings.vi import vi_bindings
 from .line import Line, Callbacks
 from .prompt import Prompt
 from .renderer import Renderer
@@ -33,6 +37,9 @@ from .utils import raw_mode, call_on_sigwinch
 from .history import History
 
 from pygments.styles.default import DefaultStyle
+
+import weakref
+
 
 __all__ = (
         'AbortAction',
@@ -81,7 +88,8 @@ class CommandLine(object):
     inputstream_factory = InputStream
 
     #: `InputStreamHandler` class for the keybindings.
-    inputstream_handler_factory = InputStreamHandler
+    key_bindings_factories = [ emacs_bindings ]
+    default_input_mode = InputMode.VI_INSERT
 
     #: `Renderer` class.
     renderer_factory = Renderer
@@ -101,15 +109,25 @@ class CommandLine(object):
         self.stdin = stdin or sys.stdin
         self.stdout = stdout or sys.stdout
 
-        self._line = self.line_factory(
+        #: The `Line` instance.
+        self.line = self.line_factory(
                                 code_factory=self.code_factory,
                                 history_factory=self.history_factory,
                                 callbacks=LineCallbacks(self))
 
-        self._inputstream_handler = self.inputstream_handler_factory(self._line)
+        key_registry = Registry()
+        for kb in self.key_bindings_factories:
+            kb(key_registry, self.line)
 
-        self._renderer = self.renderer_factory(
-                                prompt_factory=self.prompt_factory,
+        #: The `InputProcessor` instance.
+        self.input_processor = InputProcessor(key_registry, default_input_mode=self.default_input_mode)
+
+        #: The `prompt` instance.
+        self.prompt = self.prompt_factory(weakref.ref(self))
+
+        #: The `Renderer` instance.
+        self.renderer = self.renderer_factory(
+                                prompt=self.prompt,
                                 stdout=self.stdout,
                                 style=self.style)
 
@@ -143,7 +161,7 @@ class CommandLine(object):
         Render the command line again. (Not thread safe!)
         (From other threads, or if unsure, use `request_redraw`.)
         """
-        self._renderer.render(self._line.get_render_context())
+        self.renderer.render()
 
     def run_in_executor(self, callback):
         """
@@ -157,7 +175,7 @@ class CommandLine(object):
 
         _Thread().start()
 
-    def on_input_timeout(self, code_obj):
+    def on_input_timeout(self):
         """
         Called when there is no input for x seconds.
         """
@@ -194,7 +212,7 @@ class CommandLine(object):
                 timeout = None
             else:
                 #
-                self.on_input_timeout(self._line.create_code_obj())
+                self.on_input_timeout()
                 timeout = None
 
     def _read_from_stdin(self):
@@ -240,13 +258,14 @@ class CommandLine(object):
             self._redraw_pipe = os.pipe()
             fcntl.fcntl(self._redraw_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
 
-            stream = self.inputstream_factory(self._inputstream_handler, stdout=self.stdout)
+            stream = self.inputstream_factory(self.input_processor, stdout=self.stdout)
 
             def reset_line():
-                # Reset line
-                self._line.reset(initial_value=initial_value)
-                self._renderer.reset()
-                self._inputstream_handler.reset()
+                """ Reset everything. """
+                stream.reset()
+                self.line.reset(initial_value=initial_value)
+                self.renderer.reset()
+                self.input_processor.reset()
                 self._reset()
             reset_line()
 
@@ -273,7 +292,7 @@ class CommandLine(object):
                         # If the exit flag has been set.
                         if self._exit_flag:
                             if on_exit != AbortAction.IGNORE:
-                                self._renderer.render(self._line.get_render_context(), abort=True)
+                                self.renderer.render(abort=True)
 
                             if on_exit == AbortAction.RAISE_EXCEPTION:
                                 raise Exit()
@@ -285,7 +304,7 @@ class CommandLine(object):
                         # If the abort flag has been set.
                         if self._abort_flag:
                             if on_abort != AbortAction.IGNORE:
-                                self._renderer.render(self._line.get_render_context(), abort=True)
+                                self.renderer.render(abort=True)
 
                             if on_abort == AbortAction.RAISE_EXCEPTION:
                                 raise Abort()
@@ -296,7 +315,7 @@ class CommandLine(object):
 
                         # If a return value has been set.
                         if self._return_code:
-                            self._renderer.render(self._line.get_render_context(), accept=True)
+                            self.renderer.render(accept=True)
                             return self._return_code
 
                         # Now render the current prompt to the output.
@@ -334,7 +353,7 @@ class LineCallbacks(Callbacks):
         self.command_line = command_line
 
     def clear_screen(self):
-        self.command_line._renderer.clear()
+        self.command_line.renderer.clear()
 
     def exit(self):
         self.command_line.set_exit()

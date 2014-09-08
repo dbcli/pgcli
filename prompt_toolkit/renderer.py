@@ -23,6 +23,7 @@ __all__ = (
 )
 
 _Point = namedtuple('Point', 'y x')
+_Size = namedtuple('Size', 'rows columns')
 
 
 #: If True: write the output of the renderer also to the following file. This
@@ -169,20 +170,21 @@ class Screen(object):
     :param style: Pygments style.
     :param grayed: True when all tokes should be replaced by `Token.Aborted`
     """
-    def __init__(self, style, columns, grayed=False):
+    def __init__(self, style, size, grayed=False):
         self._buffer = defaultdict(lambda: defaultdict(Char))
         self._cursor_mappings = { } # Map `source_string_index` of input data to (row, col) screen output.
         self._x = 0
         self._y = 0
         self._max_y = 0
 
-        self.columns = columns
+        self.size = size
         self._style = style
         self._grayed = grayed
-        self._left_margin_func = None
+        self._left_margin_func = lambda linenr, is_new_line: None
 
         self._cursor_x = 0
         self._cursor_y = 0
+        self._line_number = 1
 
     @property
     def current_height(self):
@@ -199,7 +201,7 @@ class Screen(object):
         Set a function that returns a list of (token,text) tuples to be
         inserted after every newline.
         """
-        self._left_margin_func = func
+        self._left_margin_func = func or (lambda linenr, is_new_line: None)
 
     def write_char(self, char, token, string_index=None,
                     set_cursor_position=False, z_index=False):
@@ -210,11 +212,12 @@ class Screen(object):
 
         char_width = wcwidth(char)
 
-        # In case of a double width character, if there is no more place left
-        # at this line, go first to the following line.
-        if self._x + char_width > self.columns:
+        # In case there is no more place left at this line, go first to the
+        # following line. (Also in case of double-width characters.)
+        if self._x + char_width > self.size.columns:
             self._y += 1
             self._x = 0
+            self._left_margin_func(self._line_number, False)
 
         insert_pos = self._y, self._x
 
@@ -233,21 +236,15 @@ class Screen(object):
         if char == '\n':
             self._y += 1
             self._x = 0
-
-            if self._left_margin_func:
-                self._left_margin_func(self._y)
-                #self.write_highlighted(self._left_margin_func())
+            self._line_number += 1
+            self._left_margin_func(self._line_number, True)
 
         # Insertion of a 'visible' character.
         else:
             self.write_at_pos(self._y, self._x, char, token, z_index=z_index)
 
             # Move cursor position
-            if self._x + char_width >= self.columns:
-                self._y += 1
-                self._x = 0
-            else:
-                self._x += char_width
+            self._x += char_width
 
         return insert_pos
 
@@ -263,7 +260,7 @@ class Screen(object):
             style = None
 
         # Add char to buffer
-        if y < self.columns:
+        if y < self.size.columns:
             if z_index >= self._buffer[y][x].z_index:
                 self._buffer[y][x] = Char(char=char, style=style, z_index=z_index)
 
@@ -290,14 +287,14 @@ class Screen(object):
         Create diff of this screen with the previous screen.
         """
         last_char = [last_char] # nonlocal
-        result = [];
+        result = []
         write = result.append
 
         def move_cursor(new):
-            if current_pos.x >= self.columns - 1:
+            if current_pos.x >= self.size.columns - 1:
                 write(TerminalCodes.CARRIAGE_RETURN)
                 write(TerminalCodes.CURSOR_FORWARD(new.x))
-            elif new.x < current_pos.x or current_pos.x >= self.columns - 1:
+            elif new.x < current_pos.x or current_pos.x >= self.size.columns - 1:
                 write(TerminalCodes.CURSOR_BACKWARD(current_pos.x - new.x))
             elif new.x > current_pos.x:
                 write(TerminalCodes.CURSOR_FORWARD(new.x - current_pos.x))
@@ -331,7 +328,7 @@ class Screen(object):
             row_count = self.current_height
 
         # When the previous screen has a different width, redraw everything anyway.
-        if previous_screen and previous_screen.columns != self.columns:
+        if previous_screen and previous_screen.size != self.size:
             current_pos = move_cursor(_Point(0, 0))
             write(TerminalCodes.RESET_ATTRIBUTES)
             write(TerminalCodes.ERASE_DOWN)
@@ -411,8 +408,8 @@ class Renderer(object):
     """
     screen_cls = Screen
 
-    def __init__(self, prompt_factory=None, stdout=None, style=None):
-        self.prompt_factory = prompt_factory
+    def __init__(self, prompt=None, stdout=None, style=None):
+        self.prompt = prompt
         self._stdout = (stdout or sys.stdout)
         self._style = style or Style
         self._last_screen = None
@@ -433,16 +430,16 @@ class Renderer(object):
         self._last_screen = None
         self._last_char = None
 
-    def get_cols(self):
-        rows, cols = get_size(self._stdout.fileno())
-        return cols
+    def get_size(self):
+        rows, columns = get_size(self._stdout.fileno())
+        return _Size(rows=rows, columns=columns)
 
-    def render_to_str(self, render_context, abort=False, accept=False):
+    def render_to_str(self, abort=False, accept=False):
         # Generate the output of the new screen.
-        screen = self.screen_cls(style=self._style, columns=self.get_cols(), grayed=abort)
+        screen = self.screen_cls(style=self._style, size=self.get_size(), grayed=abort)
 
-        prompt = self.prompt_factory(render_context, abort=abort, accept=accept)
-        prompt.write_to_screen(screen, self._last_screen.current_height if self._last_screen else 0)
+        self.prompt.write_to_screen(screen, self._last_screen.current_height if self._last_screen else 0,
+                abort=abort, accept=accept)
 
         output, self._cursor_pos, self._last_char = screen.output(self._cursor_pos,
                 self._last_screen, self._last_char, accept or abort)
@@ -450,10 +447,9 @@ class Renderer(object):
 
         return output
 
-    def render(self, render_context, abort=False, accept=False):
+    def render(self, abort=False, accept=False):
         # Render to string first.
-        output = self.render_to_str(render_context,
-                abort=abort, accept=accept)
+        output = self.render_to_str(abort=abort, accept=accept)
 
         # Write output to log file.
         if _DEBUG_RENDER_OUTPUT and output:
@@ -505,7 +501,7 @@ class Renderer(object):
         max_length = max(map(get_length, all_items)) + 1
 
         # World per line?
-        term_width = self.get_cols() - margin_left
+        term_width = self.get_size().columns - margin_left
         words_per_line = int(max(term_width / max_length, 1))
 
         # Iterate through items.
