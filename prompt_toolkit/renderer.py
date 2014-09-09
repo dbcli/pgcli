@@ -225,7 +225,7 @@ class Screen(object):
                 self.write_char(c, token=token)
 
 
-def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None, accept_or_abort=False, style=None, grayed=None):
+def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None, accept_or_abort=False, style=None, grayed=False):
     """
     Create diff of this screen with the previous screen.
     """
@@ -273,19 +273,21 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
         except KeyError:
             return None
 
-    def chars_are_equal(char1, char2):
+    def chars_are_equal(new_char, old_char):
         """
         Test whether two `Char` instances are equal if printed.
         """
+        new_token = Token.Aborted if grayed else new_char.token
+
         # If they are both a space and have the same background color, we
         # always consider them equal.
-        if char1.char == ' ' and char2.char == ' ':
-            style1 = get_style_for_token(char1.token)
-            style2 = get_style_for_token(char2.token)
+        if new_char.char == ' ' and old_char.char == ' ':
+            style1 = get_style_for_token(new_token)
+            style2 = get_style_for_token(old_char.token)
             return (style1 and style1.get('bgcolor')) == (style2 and style2.get('bgcolor'))
 
         # We ignore z-index, that does not matter if things get painted.
-        return char1.char == char2.char and char1.token == char2.token
+        return new_char.char == old_char.char and new_token == old_char.token
 
     def output_char(char):
         """
