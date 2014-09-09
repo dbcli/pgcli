@@ -1,14 +1,12 @@
 Python Prompt Toolkit
 =====================
 
-(Work in progress. Many things work, but APIs can change.)
-
-
 ``prompt_toolkit`` is a Library for building powerful interactive command lines
 in Python. It ships with a nice interative Python shell (called ``ptpython``)
 built on top of the library.
 
-``prompt_toolkit`` can be a replacement for ``readline``.
+``prompt_toolkit`` could be a replacement for ``readline``, but it can be much
+more than that.
 
 Features:
 
@@ -97,8 +95,11 @@ Using as a library
 ------------------
 
 This is a library which allows you to build highly customizable input prompts.
-Every step (from key bindings, to line behaviour until the renderer can be
-customized.)
+Every step (from key bindings, to line behaviour until the renderer) can be
+customized.
+
+Note that this is work in progress. Many things work, but code is still
+refactored a lot and APIs are changing. (They become better.)
 
 A simple example looks like this:
 
@@ -121,6 +122,8 @@ A simple example looks like this:
 
     if __name__ == '__main__':
         main()
+
+Have a look at the example directory to see what is possible.
 
 
 FAQ
