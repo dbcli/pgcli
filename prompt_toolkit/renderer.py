@@ -104,40 +104,12 @@ class TerminalCodes:
 
 
 class Char(object):
-    __slots__ = ('char', 'style', 'z_index')
+    __slots__ = ('char', 'token', 'z_index')
 
-    def __init__(self, char=' ', style=None, z_index=0):
+    def __init__(self, char=' ', token=None, z_index=0):
         self.char = char
-        self.style = style # TODO: maybe we should still use `token` instead of
-                           #       `style` and use the actual style in the last step of the renderer.
+        self.token = token
         self.z_index = z_index
-
-    def output(self, last_char=None):
-        """ Return the output to write this character to the terminal. """
-        style = self.style
-
-        # If the last printed charact has the same styling, we don't have to
-        # output the style.
-        if last_char and last_char.style == self.style:
-            return self.char
-
-        if style:
-            e = EscapeSequence(
-                    fg=(_tf._color_index(style['color']) if style['color'] else None),
-                    bg=(_tf._color_index(style['bgcolor']) if style['bgcolor'] else None),
-                    bold=style.get('bold', False),
-                    underline=style.get('underline', False))
-
-            return ''.join([
-                    TerminalCodes.RESET_ATTRIBUTES,
-                    e.color_string(),
-                    self.char,
-                ])
-        else:
-            return ''.join([
-                TerminalCodes.RESET_ATTRIBUTES,
-                self.char
-                ])
 
     @property
     def width(self):
@@ -145,22 +117,6 @@ class Char(object):
         # characters, like e.g. Ctrl-underscore get a -1 wcwidth value.
         # It can be possible that these characters end up in the input text.
         return max(0, wcwidth(self.char))
-
-    @property
-    def _background(self):
-        if self.style:
-            return self.style.get('bgcolor', None)
-
-    def __eq__(self, other):
-        """
-        Test whether two `Char` instances are equal.
-        """
-        # Spaces are always equal, whathever their styling.
-        if self.char == other.char and self.char == ' ' and self._background == other._background:
-            return True
-
-        # We ignore z-index, that does not matter if things get painted.
-        return self.char == other.char and self.style == other.style
 
 
 class Screen(object):
@@ -170,7 +126,7 @@ class Screen(object):
     :param style: Pygments style.
     :param grayed: True when all tokes should be replaced by `Token.Aborted`
     """
-    def __init__(self, style, size, grayed=False):
+    def __init__(self, size):
         self._buffer = defaultdict(lambda: defaultdict(Char))
         self._cursor_mappings = { } # Map `source_string_index` of input data to (row, col) screen output.
         self._x = 0
@@ -178,8 +134,6 @@ class Screen(object):
         self._max_y = 0
 
         self.size = size
-        self._style = style
-        self._grayed = grayed
         self._left_margin_func = lambda linenr, is_new_line: None
 
         self.cursor_position = _Point(y=0, x=0)
@@ -247,20 +201,10 @@ class Screen(object):
         Write character at position (y, x).
         (Truncate when character is outside margin.)
         """
-        # If grayed, replace token
-        if self._grayed:
-            token = Token.Aborted
-
-        # Get style
-        try:
-            style = self._style.style_for_token(token)
-        except KeyError:
-            style = None
-
         # Add char to buffer
         if y < self.size.columns:
             if z_index >= self._buffer[y][x].z_index:
-                self._buffer[y][x] = Char(char=char, style=style, z_index=z_index)
+                self._buffer[y][x] = Char(char=char, token=token, z_index=z_index)
 
     def write_highlighted_at_pos(self, y, x, data, z_index=0):
         """
@@ -280,117 +224,169 @@ class Screen(object):
             for c in text:
                 self.write_char(c, token=token)
 
-    def output(self, current_pos, previous_screen=None, last_char=None, accept_or_abort=False):
-        """
-        Create diff of this screen with the previous screen.
-        """
-        last_char = [last_char] # nonlocal
-        result = []
-        write = result.append
 
-        def move_cursor(new):
-            if current_pos.x >= self.size.columns - 1:
-                write(TerminalCodes.CARRIAGE_RETURN)
-                write(TerminalCodes.CURSOR_FORWARD(new.x))
-            elif new.x < current_pos.x or current_pos.x >= self.size.columns - 1:
-                write(TerminalCodes.CURSOR_BACKWARD(current_pos.x - new.x))
-            elif new.x > current_pos.x:
-                write(TerminalCodes.CURSOR_FORWARD(new.x - current_pos.x))
+def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None, accept_or_abort=False, style=None, grayed=None):
+    """
+    Create diff of this screen with the previous screen.
+    """
+    #: Remember the last printed character.
+    last_char = [last_char] # nonlocal
+    background_turned_on = [False] # Nonlocal
 
-            if new.y > current_pos.y:
-                # Use newlines instead of CURSOR_DOWN, because this meight add new lines.
-                # CURSOR_DOWN will never create new lines at the bottom.
-                # Also reset attributes, otherwise the newline could draw a
-                # background color.
-                write(TerminalCodes.RESET_ATTRIBUTES)
-                write(TerminalCodes.NEWLINE * (new.y - current_pos.y))
-                write(TerminalCodes.CURSOR_FORWARD(new.x))
-                last_char[0] = None # Forget last char after resetting attributes.
-            elif new.y < current_pos.y:
-                write(TerminalCodes.CURSOR_UP(current_pos.y - new.y))
+    #: Variable for capturing the output.
+    result = []
+    write = result.append
 
-            return new
+    def move_cursor(new):
+        if current_pos.x >= screen.size.columns - 1:
+            write(TerminalCodes.CARRIAGE_RETURN)
+            write(TerminalCodes.CURSOR_FORWARD(new.x))
+        elif new.x < current_pos.x or current_pos.x >= screen.size.columns - 1:
+            write(TerminalCodes.CURSOR_BACKWARD(current_pos.x - new.x))
+        elif new.x > current_pos.x:
+            write(TerminalCodes.CURSOR_FORWARD(new.x - current_pos.x))
 
-        # Disable autowrap
-        if not previous_screen:
-            write(TerminalCodes.DISABLE_AUTOWRAP)
+        if new.y > current_pos.y:
+            # Use newlines instead of CURSOR_DOWN, because this meight add new lines.
+            # CURSOR_DOWN will never create new lines at the bottom.
+            # Also reset attributes, otherwise the newline could draw a
+            # background color.
             write(TerminalCodes.RESET_ATTRIBUTES)
+            write(TerminalCodes.NEWLINE * (new.y - current_pos.y))
+            write(TerminalCodes.CURSOR_FORWARD(new.x))
+            last_char[0] = None # Forget last char after resetting attributes.
+        elif new.y < current_pos.y:
+            write(TerminalCodes.CURSOR_UP(current_pos.y - new.y))
 
-        # Get height of the screen.
-        # (current_height changes as we loop over _buffer, so remember the current value.)
-        current_height = self.current_height
+        return new
 
-        if previous_screen:
-            row_count = max(self.current_height, previous_screen.current_height)
+    def get_style_for_token(token):
+        """
+        Get style
+        """
+        # If grayed, replace token
+        if grayed:
+            token = Token.Aborted
+
+        try:
+            return style.style_for_token(token)
+        except KeyError:
+            return None
+
+    def chars_are_equal(char1, char2):
+        """
+        Test whether two `Char` instances are equal if printed.
+        """
+        # If they are both a space and have the same background color, we
+        # always consider them equal.
+        if char1.char == ' ' and char2.char == ' ':
+            style1 = get_style_for_token(char1.token)
+            style2 = get_style_for_token(char2.token)
+            return (style1 and style1.get('bgcolor')) == (style2 and style2.get('bgcolor'))
+
+        # We ignore z-index, that does not matter if things get painted.
+        return char1.char == char2.char and char1.token == char2.token
+
+    def output_char(char):
+        """
+        Write the output of this charact.r
+        """
+        # If the last printed character has the same token, it also has the
+        # same style, so we don't output it.
+        if last_char[0] and last_char[0].token == char.token:
+            write(char.char)
         else:
-            row_count = self.current_height
+            style = get_style_for_token(char.token)
 
-        # When the previous screen has a different width, redraw everything anyway.
-        if previous_screen and previous_screen.size != self.size:
-            current_pos = move_cursor(_Point(0, 0))
-            write(TerminalCodes.RESET_ATTRIBUTES)
-            write(TerminalCodes.ERASE_DOWN)
-            previous_screen = None
+            if style:
+                # Create new style and output.
+                fg = _tf._color_index(style['color']) if style['color'] else None
+                bg = _tf._color_index(style['bgcolor']) if style['bgcolor'] else None
 
-        # Loop over the rows.
-        c = 0
+                e = EscapeSequence(fg=fg, bg=bg,
+                        bold=style.get('bold', False),
+                        underline=style.get('underline', False))
 
-        for y, r in enumerate(range(0, row_count)):
-            new_row = self._buffer[r]
-            if previous_screen:
-                previous_row = previous_screen._buffer[r]
+                write(TerminalCodes.RESET_ATTRIBUTES)
+                write(e.color_string())
+                write(char.char)
 
-            if new_row:
-                new_max_line_len = max(new_row.keys())
+                # If we printed something with a background color, remember that.
+                background_turned_on[0] = bool(bg)
             else:
-                new_max_line_len = 0
-
-            if previous_screen:
-                if previous_row:
-                    previous_max_line_len = max(previous_row.keys())
-                else:
-                    previous_max_line_len = 0
-
-            # Loop over the columns.
-            c = 0
-            while c < new_max_line_len + 1:
-                char_width = (new_row[c].width or 1)
-
-                if not previous_screen or not (new_row[c] == previous_row[c]):
-                    current_pos = move_cursor(_Point(y=y, x=c))
-                    write(new_row[c].output(last_char[0]))
-                    last_char[0] = new_row[c]
-                    current_pos = current_pos._replace(x=current_pos.x + char_width)
-
-                c += char_width
-
-            # If the new line is shorter, trim it
-            if previous_screen and new_max_line_len < previous_max_line_len:
-                current_pos = move_cursor(_Point(y=y, x=new_max_line_len+1))
+                # Reset previous style and output.
                 write(TerminalCodes.RESET_ATTRIBUTES)
-                write(TerminalCodes.ERASE_END_OF_LINE)
-                last_char[0] = None # Forget last char after resetting attributes.
+                write(char.char)
 
-        # Move cursor:
-        if accept_or_abort:
-            current_pos = move_cursor(_Point(y=current_height, x=0))
-            write(TerminalCodes.CRLF)
-            write(TerminalCodes.ERASE_DOWN)
-        else:
-            current_pos = move_cursor(self.get_cursor_position())
+        last_char[0] = char
 
-        if accept_or_abort:
+    # Disable autowrap
+    if not previous_screen:
+        write(TerminalCodes.DISABLE_AUTOWRAP)
+        write(TerminalCodes.RESET_ATTRIBUTES)
+
+    # When the previous screen has a different width, redraw everything anyway.
+    if not previous_screen or previous_screen.size != screen.size:
+        current_pos = move_cursor(_Point(0, 0))
+        write(TerminalCodes.RESET_ATTRIBUTES)
+        write(TerminalCodes.ERASE_DOWN)
+
+        previous_screen = Screen(screen.size)
+
+    # Get height of the screen.
+    # (current_height changes as we loop over _buffer, so remember the current value.)
+    current_height = screen.current_height
+
+    # Loop over the rows.
+    row_count = max(screen.current_height, previous_screen.current_height)
+    c = 0 # Column counter.
+
+    for y, r in enumerate(range(0, row_count)):
+        new_row = screen._buffer[r]
+        previous_row = previous_screen._buffer[r]
+
+        new_max_line_len = max(new_row.keys()) if new_row else 0
+        previous_max_line_len = max(previous_row.keys()) if previous_row else 0
+
+        # Loop over the columns.
+        c = 0
+        while c < new_max_line_len + 1:
+            char_width = (new_row[c].width or 1)
+
+            if not chars_are_equal(new_row[c], previous_row[c]):
+                current_pos = move_cursor(_Point(y=y, x=c))
+                output_char(new_row[c])
+                current_pos = current_pos._replace(x=current_pos.x + char_width)
+
+            c += char_width
+
+        # If the new line is shorter, trim it
+        if previous_screen and new_max_line_len < previous_max_line_len:
+            current_pos = move_cursor(_Point(y=y, x=new_max_line_len+1))
             write(TerminalCodes.RESET_ATTRIBUTES)
-            write(TerminalCodes.ENABLE_AUTOWRAP)
+            write(TerminalCodes.ERASE_END_OF_LINE)
+            last_char[0] = None # Forget last char after resetting attributes.
 
-        # If the last printed character has a background color, always reset.
-        # (Many terminals give weird artifacs on resize events when there is an
-        # active background color.)
-        if last_char[0] and last_char[0]._background:
-            write(TerminalCodes.RESET_ATTRIBUTES)
-            last_char[0] = None
+    # Move cursor:
+    if accept_or_abort:
+        current_pos = move_cursor(_Point(y=current_height, x=0))
+        write(TerminalCodes.CRLF)
+        write(TerminalCodes.ERASE_DOWN)
+    else:
+        current_pos = move_cursor(screen.get_cursor_position())
 
-        return ''.join(result), current_pos, last_char[0]
+    if accept_or_abort:
+        write(TerminalCodes.RESET_ATTRIBUTES)
+        write(TerminalCodes.ENABLE_AUTOWRAP)
+
+    # If the last printed character has a background color, always reset.
+    # (Many terminals give weird artifacs on resize events when there is an
+    # active background color.)
+    if background_turned_on[0]:
+        write(TerminalCodes.RESET_ATTRIBUTES)
+        last_char[0] = None
+
+    return ''.join(result), current_pos, last_char[0]
 
 
 class Renderer(object):
@@ -433,13 +429,14 @@ class Renderer(object):
 
     def render_to_str(self, abort=False, accept=False):
         # Generate the output of the new screen.
-        screen = self.screen_cls(style=self._style, size=self.get_size(), grayed=abort)
+        screen = self.screen_cls(size=self.get_size())
 
         self.prompt.write_to_screen(screen, self._last_screen.current_height if self._last_screen else 0,
                 abort=abort, accept=accept)
 
-        output, self._cursor_pos, self._last_char = screen.output(self._cursor_pos,
-                self._last_screen, self._last_char, accept or abort)
+        output, self._cursor_pos, self._last_char = output_screen_diff(screen, self._cursor_pos,
+                self._last_screen, self._last_char, accept or abort,
+                style=self._style, grayed=abort)
         self._last_screen = screen
 
         return output
