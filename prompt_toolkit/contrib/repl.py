@@ -29,10 +29,13 @@ __all__ = ('PythonRepl', 'embed')
 
 
 class PythonRepl(PythonCommandLine):
-    def start_repl(self):
+    def start_repl(self, startup_path=None):
         """
         Start the Read-Eval-Print Loop.
         """
+        self._execute_startup(startup_path)
+
+        # Run REPL loop until Exit.
         try:
             while True:
                 # Read
@@ -53,6 +56,15 @@ class PythonRepl(PythonCommandLine):
                     self.current_statement_index += 1
         except Exit:
             pass
+
+    def _execute_startup(self, startup_path):
+        """
+        Load and execute startup file.
+        """
+        if startup_path:
+            with open(startup_path, 'r') as f:
+                code = compile(f.read(), startup_path, 'exec')
+                exec_(code, self.globals, self.locals)
 
     def _execute(self, line):
         """
@@ -88,7 +100,9 @@ class PythonRepl(PythonCommandLine):
         self.stdout.flush()
 
 
-def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_colors=False, autocompletion_style=AutoCompletionStyle.POPUP_MENU):
+def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_colors=False,
+                autocompletion_style=AutoCompletionStyle.POPUP_MENU,
+                startup_path=None):
     """
     Call this to embed  Python shell at the current point in your program.
     It's similar to `IPython.embed` and `bpython.embed`. ::
@@ -101,4 +115,4 @@ def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_co
     cli = PythonRepl(globals, locals, vi_mode=vi_mode, history_filename=history_filename,
             style=(None if no_colors else PythonStyle),
             autocompletion_style=autocompletion_style)
-    cli.start_repl()
+    cli.start_repl(startup_path=startup_path)

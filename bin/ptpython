@@ -11,6 +11,9 @@ Options:
     --history=<filename>    : Path to history file.
     --autocompletion=<type> : Type of autocompletion. This can be 'popup-menu'
                               or 'horizontal-menu'.
+
+Other environment variables:
+PYTHONSTARTUP: file executed on interactive startup (no default)
 """
 import docopt
 import os
@@ -45,9 +48,13 @@ def _run_repl():
     else:
         autocompletion_style = AutoCompletionStyle.POPUP_MENU
 
+    # Startup path
+    startup_path = os.environ.get('PYTHONSTARTUP', None)
+
     # Run interactive shell.
     embed(globals_, locals_, vi_mode=vi_mode, history_filename=history_filename,
-                    no_colors=no_colors, autocompletion_style=autocompletion_style)
+                    no_colors=no_colors, autocompletion_style=autocompletion_style,
+                    startup_path=startup_path)
 
 if __name__ == '__main__':
     _run_repl()
