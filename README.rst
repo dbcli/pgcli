@@ -30,6 +30,9 @@ Limitations:
   Linux systems are VT100 compatible the days, so that should not be an issue.
   There is no Windows support, however.)
 
+Feel free to create tickets for bugs and feature requests, and create pull
+requests if you have a nice patches that you would like to share with others.
+
 
 Installation
 ------------
