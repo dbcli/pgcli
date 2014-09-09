@@ -182,8 +182,7 @@ class Screen(object):
         self._grayed = grayed
         self._left_margin_func = lambda linenr, is_new_line: None
 
-        self._cursor_x = 0
-        self._cursor_y = 0
+        self.cursor_position = _Point(y=0, x=0)
         self._line_number = 1
 
     @property
@@ -194,7 +193,7 @@ class Screen(object):
             return max(self._buffer.keys()) + 1
 
     def get_cursor_position(self):
-        return self._cursor_y, self._cursor_x
+        return self.cursor_position
 
     def set_left_margin(self, func):
         """
@@ -225,12 +224,7 @@ class Screen(object):
             self._cursor_mappings[string_index] = insert_pos
 
         if set_cursor_position:
-            self._cursor_x = self._x
-            self._cursor_y = self._y
-
-        # If grayed, replace token
-        if self._grayed:
-            token = Token.Aborted
+            self.cursor_position = _Point(y=self._y, x=self._x)
 
         # Insertion of newline
         if char == '\n':
@@ -243,7 +237,7 @@ class Screen(object):
         else:
             self.write_at_pos(self._y, self._x, char, token, z_index=z_index)
 
-            # Move cursor position
+            # Move position
             self._x += char_width
 
         return insert_pos
@@ -253,6 +247,10 @@ class Screen(object):
         Write character at position (y, x).
         (Truncate when character is outside margin.)
         """
+        # If grayed, replace token
+        if self._grayed:
+            token = Token.Aborted
+
         # Get style
         try:
             style = self._style.style_for_token(token)
@@ -379,8 +377,7 @@ class Screen(object):
             write(TerminalCodes.CRLF)
             write(TerminalCodes.ERASE_DOWN)
         else:
-            cursor_y, cursor_x = self.get_cursor_position()
-            current_pos = move_cursor(_Point(y=cursor_y, x=cursor_x))
+            current_pos = move_cursor(self.get_cursor_position())
 
         if accept_or_abort:
             write(TerminalCodes.RESET_ATTRIBUTES)

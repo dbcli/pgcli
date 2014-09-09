@@ -102,7 +102,7 @@ A simple example looks like this:
 .. code:: python
 
     from prompt_toolkit import CommandLine, AbortAction
-    from prompt_toolkit.line import Exit
+    from prompt_toolkit import Exit
 
     def main():
         # Create CommandLine instance
@@ -123,12 +123,16 @@ A simple example looks like this:
 FAQ
 ---
 
-Q: The ``Ctrl-S`` forward search doesn't work and freezes my terminal.
-A: Try to run ``stty -ixon`` in your terminal to disable flow control.
+Q
+ The ``Ctrl-S`` forward search doesn't work and freezes my terminal.
+A
+ Try to run ``stty -ixon`` in your terminal to disable flow control.
 
-Q: The ``Meta``-key doesn't work.
-A: For some terminals you have to enable the Alt-key to act as enum key, but
-   you can also type ``Escape`` before any key instead.
+Q
+ The ``Meta``-key doesn't work.
+A
+ For some terminals you have to enable the Alt-key to act as enum key, but you
+ can also type ``Escape`` before any key instead.
 
 
 Special thanks to

@@ -343,8 +343,7 @@ class Prompt(object):
         """
         return self.isearch_composer(self.line.isearch_state).get_tokens()
 
-    @property
-    def tokens_after_input(self):
+    def get_tokens_after_input(self):
         """
         List of (Token, text) tuples for after the inut.
         (This can be used to create a help text or a status line.)
@@ -368,7 +367,7 @@ class Prompt(object):
         yield (Token.Prompt.SecondLinePrefix, ' ' * spaces)
 
     def create_left_input_margin(self, screen, row, is_new_line):
-        screen.write_highlighted(self.tokens_in_left_margin)
+        screen.write_highlighted(self.get_tokens_in_left_margin(row, is_new_line))
 
     def write_before_input(self, screen):
         screen.write_highlighted(self.tokens_before_input)
@@ -430,7 +429,7 @@ class Prompt(object):
         """
         Write tokens after input.
         """
-        screen.write_highlighted(self.tokens_after_input)
+        screen.write_highlighted(self.get_tokens_after_input())
 
     def write_menus(self, screen):
         """

@@ -272,7 +272,7 @@ class CommandLine(object):
             # Trigger read_start.
             self.on_read_input_start()
 
-            with raw_mode(self.stdin):
+            with raw_mode(self.stdin.fileno()):
                 self._redraw()
 
                 # When the window size changes, we do a redraw request call.

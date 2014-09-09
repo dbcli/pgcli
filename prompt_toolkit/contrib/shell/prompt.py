@@ -5,8 +5,7 @@ from .rules import TokenStream
 
 
 class ShellPrompt(Prompt):
-    @property
-    def tokens_after_input(self):
+    def get_tokens_after_input(self):
         def _():
             parts, last_part_token = self.render_context.code_obj._get_lex_result()
 
