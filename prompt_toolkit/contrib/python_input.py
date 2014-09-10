@@ -116,6 +116,32 @@ class PythonStyle(Style):
         Token.Leftmargin.Tilde:   '#888888',
     }
 
+def _has_unclosed_brackets(text):
+    """
+    Starting at the end of the string. If we find an opening bracket
+    for which we didn't had a closing one yet, return True.
+    """
+    stack = []
+
+    # Ignore braces inside strings
+    text = re.sub(r'''('[^']*'|"[^"]*")''', '', text) # XXX: handle escaped quotes.!
+
+    for c in reversed(text):
+        if c in '])}':
+            stack.append(c)
+
+        elif c in '[({':
+            if stack:
+                if ((c == '[' and stack[-1] == ']') or
+                    (c == '{' and stack[-1] == '}') or
+                    (c == '(' and stack[-1] == ')')):
+                    stack.pop()
+            else:
+                # Opening bracket for which we didn't had a closing one.
+                return True
+
+    return False
+
 
 def python_bindings(registry, line):
     """
@@ -154,7 +180,7 @@ def python_bindings(registry, line):
     def _(event):
         line.complete_previous()
 
-    @handle(Key.ControlJ) # TODO XXX: !!!!
+    @handle(Key.ControlJ)
     @handle(Key.ControlM)
     def _(event):
         _auto_enable_multiline()
@@ -176,9 +202,9 @@ def python_bindings(registry, line):
         cursor_at_the_end = line.document.is_cursor_at_the_end
 
         # If we just typed a colon, or still have open brackets, always insert a real newline.
-        if cursor_at_the_end and (line._colon_before_cursor() or
-                                  line._has_unclosed_brackets() or
-                                  line._starting_with_at()):
+        if cursor_at_the_end and (line.document.text_before_cursor.rstrip()[-1:] == ':' or
+                                  _has_unclosed_brackets(line.document.text_before_cursor) or
+                                  line.text.startswith('@')):
             line.is_multiline = True
 
         # If the character before the cursor is a backslash (line continuation
@@ -207,40 +233,8 @@ class PythonLine(Line):
         # Code signatures. (This is set asynchronously after a timeout.)
         self.signatures = []
 
-    def _text_changed(self):
+    def text_changed(self):
         self.is_multiline = '\n' in self.text
-
-    def _colon_before_cursor(self):
-        return self.document.text_before_cursor[-1:] == ':'
-
-    def _starting_with_at(self):
-        """ True when the line starts with a decorator. """
-        return self.text.startswith('@')
-
-    def _has_unclosed_brackets(self):
-        """ Starting at the end of the string. If we find an opening bracket
-        for which we didn't had a closing one yet, return True. """
-        text = self.document.text_before_cursor
-        stack = []
-
-        # Ignore braces inside strings
-        text = re.sub(r'''('[^']*'|"[^"]*")''', '', text) # XXX: handle escaped quotes.!
-
-        for c in reversed(text):
-            if c in '])}':
-                stack.append(c)
-
-            elif c in '[({':
-                if stack:
-                    if ((c == '[' and stack[-1] == ']') or
-                        (c == '{' and stack[-1] == '}') or
-                        (c == '(' and stack[-1] == ')')):
-                        stack.pop()
-                else:
-                    # Opening bracket for which we didn't had a closing one.
-                    return True
-
-        return False
 
     def newline(self):
         r"""
@@ -266,41 +260,6 @@ class PythonLine(Line):
             if current_line[-1:] == ':':
                 for x in range(4):
                     insert_text(' ')
-
-    def cursor_left(self):
-        """
-        When moving the cursor left in the left indentation margin, move four
-        spaces at a time.
-        """
-        before_cursor = self.document.current_line_before_cursor
-
-        if not self.paste_mode and before_cursor.isspace():
-            count = 1 + (len(before_cursor) - 1) % 4
-        else:
-            count = 1
-
-        for i in range(count):
-            super(PythonLine, self).cursor_left()
-
-    def cursor_right(self):
-        """
-        When moving the cursor right in the left indentation margin, move four
-        spaces at a time.
-        """
-        before_cursor = self.document.current_line_before_cursor
-        after_cursor = self.document.current_line_after_cursor
-
-        # Count space characters, after the cursor.
-        after_cursor_space_count = len(after_cursor) - len(after_cursor.lstrip())
-
-        if (not self.paste_mode and
-                    (not before_cursor or before_cursor.isspace()) and after_cursor_space_count):
-            count = min(4, after_cursor_space_count)
-        else:
-            count = 1
-
-        for i in range(count):
-            super(PythonLine, self).cursor_right()
 
 
 class PythonPrompt(Prompt):

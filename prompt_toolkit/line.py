@@ -182,7 +182,7 @@ class Line(object):
         self.validation_error = None
         self.complete_state = None
 
-        self._text_changed()
+        self.text_changed()
 
     @property
     def cursor_position(self):
@@ -203,11 +203,11 @@ class Line(object):
     @_working_index.setter
     def _working_index(self, value):
         self.__working_index = value
-        self._text_changed()
+        self.text_changed()
 
     ### End of <getters/setters>
 
-    def _text_changed(self):
+    def text_changed(self):
         """
         Not implemented. Override to capture when the current visible text
         changes.
