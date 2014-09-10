@@ -21,6 +21,7 @@ from prompt_toolkit.contrib.python_input import PythonCommandLine, PythonStyle, 
 
 from six import exec_
 
+import sys
 import os
 import traceback
 
@@ -80,7 +81,14 @@ class PythonRepl(PythonCommandLine):
                 self.locals['_'] = self.locals['_%i' % self.current_statement_index] = result
 
                 if result is not None:
-                    self.stdout.write('Out[%i]: %r\n' % (self.current_statement_index, result))
+                    try:
+                        self.stdout.write('Out[%i]: %r\n' % (self.current_statement_index, result))
+                    except UnicodeDecodeError:
+                        # In Python 2: `__repr__` should return a bytestring,
+                        # so to put it in a unicode context could raise an
+                        # exception that the 'ascii' codec can't decode certain
+                        # characters. Decode as utf-8 in that case.
+                        self.stdout.write('Out[%i]: %s\n' % (self.current_statement_index, repr(result).decode('utf-8')))
 
             # If not a valid `eval` expression, run using `exec` instead.
             except SyntaxError:
@@ -90,13 +98,23 @@ class PythonRepl(PythonCommandLine):
             self.stdout.flush()
 
     def _handle_exception(self, e):
-        tb = traceback.format_exc()
+        # Instead of just calling ``traceback.format_exc``, we take the
+        # traceback and skip the bottom calls of this framework.
+        t, v, tb = sys.exc_info()
+        tblist = traceback.extract_tb(tb)[3:]
+        l = traceback.format_list(tblist)
+        if l:
+            l.insert(0, "Traceback (most recent call last):\n")
+        l.extend(traceback.format_exception_only(t, v))
+        tb = ''.join(l)
+
+        # Format exception and write to output.
         self.stdout.write(highlight(tb, PythonTracebackLexer(), Terminal256Formatter()))
-        self.stdout.write('%s\n' % e)
+        self.stdout.write('%s\n\n' % e)
         self.stdout.flush()
 
     def _handle_keyboard_interrupt(self, e):
-        self.stdout.write('\rKeyboardInterrupt\n')
+        self.stdout.write('\rKeyboardInterrupt\n\n')
         self.stdout.flush()
 
 

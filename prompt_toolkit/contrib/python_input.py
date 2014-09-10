@@ -108,7 +108,7 @@ class PythonStyle(Style):
         Token.HorizontalMenu.Arrow:                   'bold #888888',
 
         # Grayed
-        Token.Aborted:                 '#aaaaaa',
+        Token.Aborted:                 '#888888',
 
         Token.ValidationError:         'bg:#aa0000 #ffffff',
 
@@ -306,6 +306,8 @@ class PythonLine(Line):
 class PythonPrompt(Prompt):
     input_processors = [ BracketsMismatchProcessor() ]
 
+    min_height = 7
+
     @property
     def tokens_before_input(self):
         return [(Token.Prompt, 'In [%s]: ' % self.commandline.current_statement_index)]
@@ -387,28 +389,29 @@ class PythonPrompt(Prompt):
 
     def _get_bottom_position(self, screen, last_screen_height):
         # Draw the menu at the bottom position.
-        return max(screen.current_height, last_screen_height - 2) - 1
+        return max(self.min_height - 2, screen.current_height, last_screen_height - 2) - 1
 
     def _print_tildes(self, screen):
         """
         Print tildes in the left margin between the last input line and the
-        toolbars. (This is what Vi-users like.)
+        toolbars.
         """
-        if self.commandline.vi_mode:
-            last_char_y, last_char_x = screen._cursor_mappings[len(self.line.document.text)]
+        last_char_y, last_char_x = screen._cursor_mappings[len(self.line.document.text)]
 
-            # Fill space with tildes
-            for y in range(last_char_y + 1, screen.current_height - 2):
-                screen.write_at_pos(y, 1, '~', Token.Leftmargin.Tilde)
+        # Fill space with tildes
+        for y in range(last_char_y + 1, screen.current_height - 2):
+            screen.write_at_pos(y, 1, '~', Token.Leftmargin.Tilde)
 
     def write_to_screen(self, screen, last_screen_height, accept=False, abort=False):
         self.write_before_input(screen)
         self.write_input(screen)
 
         if not (accept or abort):
-            self.write_menus(screen)
-
             y = self._get_bottom_position(screen, last_screen_height)
+            self.write_menus(screen) # XXX: menu should be able to cover the second toolbar.
+            y2 = self._get_bottom_position(screen, last_screen_height)
+            y = max(y, y2 - 1)
+
 
             screen._y, screen._x = y + 1, 0
             self.write_second_toolbar(screen)

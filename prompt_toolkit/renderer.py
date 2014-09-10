@@ -372,7 +372,6 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
     # Move cursor:
     if accept_or_abort:
         current_pos = move_cursor(_Point(y=current_height, x=0))
-        write(TerminalCodes.CRLF)
         write(TerminalCodes.ERASE_DOWN)
     else:
         current_pos = move_cursor(screen.get_cursor_position())
