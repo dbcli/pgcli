@@ -143,10 +143,11 @@ def _has_unclosed_brackets(text):
     return False
 
 
-def python_bindings(registry, line):
+def python_bindings(registry, cli_ref):
     """
     Custom key bindings.
     """
+    line = cli_ref().line
     handle = registry.add_binding
 
     @handle(Key.F6)

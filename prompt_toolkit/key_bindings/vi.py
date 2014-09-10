@@ -26,14 +26,15 @@ class CursorRegion(object):
             return self.end, self.start
 
 
-def vi_bindings(registry, line):
+def vi_bindings(registry, cli_ref):
     """
     Vi extensions.
 
     # Overview of Readline Vi commands:
     # http://www.catonmat.net/download/bash-vi-editing-mode-cheat-sheet.pdf
     """
-    basic_bindings(registry, line)
+    basic_bindings(registry, cli_ref)
+    line = cli_ref().line
     handle = create_handle_decorator(registry, line)
 
     _last_character_find = [None] # (char, backwards) tuple

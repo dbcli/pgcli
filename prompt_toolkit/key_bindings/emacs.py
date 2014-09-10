@@ -7,13 +7,14 @@ from .basic import basic_bindings
 from .utils import create_handle_decorator
 
 
-def emacs_bindings(registry, line):
+def emacs_bindings(registry, cli_ref):
     """
     Some e-macs extensions.
     """
     # Overview of Readline emacs commands:
     # http://www.catonmat.net/download/readline-emacs-editing-mode-cheat-sheet.pdf
-    basic_bindings(registry, line)
+    basic_bindings(registry, cli_ref)
+    line = cli_ref().line
     handle = create_handle_decorator(registry, line)
 
     @handle(Key.ControlN)

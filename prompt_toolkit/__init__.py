@@ -117,7 +117,7 @@ class CommandLine(object):
 
         key_registry = Registry()
         for kb in self.key_bindings_factories:
-            kb(key_registry, self.line)
+            kb(key_registry, weakref.ref(self))
 
         #: The `InputProcessor` instance.
         self.input_processor = InputProcessor(key_registry, default_input_mode=self.default_input_mode)

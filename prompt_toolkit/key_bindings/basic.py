@@ -7,7 +7,8 @@ from ..line import ClipboardData
 from .utils import create_handle_decorator
 
 
-def basic_bindings(registry, line):
+def basic_bindings(registry, cli_ref):
+    line = cli_ref().line
     handle = create_handle_decorator(registry, line)
 
     @handle(Key.Home)
