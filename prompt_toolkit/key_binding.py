@@ -25,7 +25,7 @@ class InputProcessor(object):
 
     def reset(self):
         self._previous_key_sequence = None
-        self.input_mode = self.default_input_mode
+        self._input_mode_stack = [self.default_input_mode]
 
         self._process_coroutine = self._process()
         self._process_coroutine.send(None)
@@ -33,6 +33,33 @@ class InputProcessor(object):
         #: Readline argument (for repetition of commands.)
         #: https://www.gnu.org/software/bash/manual/html_node/Readline-Arguments.html
         self.arg = None
+
+    @property
+    def input_mode(self):
+        """
+        Current :class:`~prompt_toolkit.enums.InputMode`
+        """
+        return self._input_mode_stack[-1]
+
+    @input_mode.setter
+    def input_mode(self, value):
+        self._input_mode_stack[-1] = value
+
+    def push_input_mode(self, value):
+        """
+        Push new :class:`~prompt_toolkit.enums.InputMode` on the stack.
+        """
+        self._input_mode_stack.append(value)
+
+    def pop_input_mode(self):
+        """
+        Push new :class:`~prompt_toolkit.enums.InputMode` on the stack.
+        """
+        # You can't pop the last item.
+        if len(self._input_mode_stack) > 1:
+            return self._input_mode_stack.pop()
+        else:
+            raise IndexError('Cannot pop the last InputMode.')
 
     def _process(self):
         """

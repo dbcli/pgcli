@@ -175,7 +175,8 @@ def python_bindings(registry, cli_ref):
             line.insert_text('    ')
         else:
             line.complete_next()
-            event.input_processor.input_mode = InputMode.COMPLETE
+            if event.input_processor.input_mode != InputMode.COMPLETE:
+                event.input_processor.push_input_mode(InputMode.COMPLETE)
 
     @handle(Key.BackTab, in_mode=InputMode.COMPLETE)
     def _(event):
@@ -287,7 +288,7 @@ class PythonPrompt(Prompt):
         """
         When inside functions, show signature.
         """
-        if self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH:
+        if self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
             screen.write_highlighted(list(self.isearch_prompt))
         elif self.commandline.input_processor.arg is not None:
             screen.write_highlighted(list(self.arg_prompt))
@@ -364,7 +365,7 @@ class PythonPrompt(Prompt):
 
     def write_to_screen(self, screen, last_screen_height, accept=False, abort=False):
         self.write_before_input(screen)
-        self.write_input(screen)
+        self.write_input(screen, highlight=not (accept or abort))
 
         if not (accept or abort):
             y = self._get_bottom_position(screen, last_screen_height)

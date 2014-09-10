@@ -84,8 +84,8 @@ def vi_bindings(registry, cli_ref):
 
         # Switch only to the 'complete' input mode if there really was a
         # completion found.
-        if line.complete_state:
-            event.input_processor.input_mode = InputMode.COMPLETE
+        if line.complete_state and event.input_processor.input_mode != InputMode.COMPLETE:
+            event.input_processor.push_input_mode(InputMode.COMPLETE)
 
     @handle(Key.ControlP)
     def _(event):
@@ -93,8 +93,8 @@ def vi_bindings(registry, cli_ref):
 
         # Switch only to the 'complete' input mode if there really was a
         # completion found.
-        if line.complete_state:
-            event.input_processor.input_mode = InputMode.COMPLETE
+        if line.complete_state and event.input_processor.input_mode != InputMode.COMPLETE:
+            event.input_processor.push_input_mode(InputMode.COMPLETE)
 
 
     @handle(Key.ControlJ, in_mode=InputMode.VI_NAVIGATION)
@@ -390,7 +390,7 @@ def vi_bindings(registry, cli_ref):
         Search history backward for a command matching string.
         """
         line.incremental_search(IncrementalSearchDirection.FORWARD)
-        event.input_processor.input_mode = InputMode.INCREMENTAL_SEARCH
+        event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
 
     @handle('?', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -398,7 +398,7 @@ def vi_bindings(registry, cli_ref):
         Search history forward for a command matching string.
         """
         line.incremental_search(IncrementalSearchDirection.BACKWARD)
-        event.input_processor.input_mode = InputMode.INCREMENTAL_SEARCH
+        event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
 
     @handle('#', in_mode=InputMode.VI_NAVIGATION)
     def _(event):

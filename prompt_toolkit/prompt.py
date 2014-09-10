@@ -341,7 +341,10 @@ class Prompt(object):
         """
         Tokens for the prompt when we go in reverse-i-search mode.
         """
-        return self.isearch_composer(self.line.isearch_state).get_tokens()
+        if self.line.isearch_state:
+            return self.isearch_composer(self.line.isearch_state).get_tokens()
+        else:
+            return []
 
     def get_tokens_after_input(self):
         """
@@ -402,11 +405,14 @@ class Prompt(object):
 
         return highlighted_characters
 
-    def write_input(self, screen):
+    def write_input(self, screen, highlight=True):
         # Set second line prefix
         screen.set_left_margin(lambda row, is_new_line: self.create_left_input_margin(screen, row, is_new_line))
 
-        highlighted_characters = self.get_highlighted_characters()
+        if highlight:
+            highlighted_characters = self.get_highlighted_characters()
+        else:
+            highlighted_characters = {}
 
         index = 0
             # Note, we add the space character at the end, because that's where
@@ -449,7 +455,7 @@ class Prompt(object):
         Render the prompt to a `Screen` instance.
         """
         self.write_before_input(screen)
-        self.write_input(screen)
+        self.write_input(screen, highlight=not (accept or abort))
 
         if not (accept or abort):
             self.write_after_input(screen)

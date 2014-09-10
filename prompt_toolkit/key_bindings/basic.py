@@ -54,13 +54,14 @@ def basic_bindings(registry, cli_ref):
         pass
 
     @handle(Key.ControlG, in_mode=InputMode.INCREMENTAL_SEARCH)
-    @handle(Key.Escape, in_mode=InputMode.INCREMENTAL_SEARCH)
+    # NOTE: the reason for not binding Escape to this one, is that we want
+    #       Alt+Enter to accept input directly in incremental search mode.
     def _(event):
         """
         Abort an incremental search and restore the original line.
         """
         line.exit_isearch(restore_original_line=True)
-        event.input_processor.input_mode = event.input_processor.default_input_mode
+        event.input_processor.pop_input_mode()
 
     @handle(Key.ControlI)
     @handle(Key.Tab)
@@ -86,7 +87,7 @@ def basic_bindings(registry, cli_ref):
         isearch would be too complicated.)
         """
         line.exit_isearch()
-        event.input_processor.input_mode = event.input_processor.default_input_mode
+        event.input_processor.pop_input_mode()
 
     @handle(Key.ControlJ)
     @handle(Key.ControlM)
@@ -125,14 +126,20 @@ def basic_bindings(registry, cli_ref):
         pass
 
     @handle(Key.ControlR)
+    @handle(Key.Up, in_mode=InputMode.INCREMENTAL_SEARCH)
     def _(event):
-        event.input_processor.input_mode = InputMode.INCREMENTAL_SEARCH
         line.incremental_search(IncrementalSearchDirection.BACKWARD)
 
+        if event.input_processor.input_mode != InputMode.INCREMENTAL_SEARCH:
+            event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
+
     @handle(Key.ControlS)
+    @handle(Key.Down, in_mode=InputMode.INCREMENTAL_SEARCH)
     def _(event):
-        event.input_processor.input_mode = InputMode.INCREMENTAL_SEARCH
         line.incremental_search(IncrementalSearchDirection.FORWARD)
+
+        if event.input_processor.input_mode != InputMode.INCREMENTAL_SEARCH:
+            event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
 
     @handle(Key.ControlT)
     def _(event):
@@ -243,7 +250,7 @@ def basic_bindings(registry, cli_ref):
 
         # Always quit autocomplete mode when the text changes.
         if event.input_processor.input_mode == InputMode.COMPLETE:
-            event.input_processor.input_mode = event.input_processor.default_input_mode
+            event.input_processor.pop_input_mode()
 
     @handle(Key.Escape, Key.Left)
     def _(event):
@@ -265,4 +272,4 @@ def basic_bindings(registry, cli_ref):
         """
         Pressing escape or Ctrl-C in complete mode, goes back to default mode.
         """
-        event.input_processor.input_mode = event.input_processor.default_input_mode
+        event.input_processor.pop_input_mode()

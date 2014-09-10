@@ -225,4 +225,4 @@ def emacs_bindings(registry, cli_ref):
     @handle(Key.Escape, in_mode=InputMode.COMPLETE)
     def _(event):
         """ Pressing escape in complete mode, goes back to emacs insert mode. """
-        event.input_processor.input_mode = InputMode.EMACS
+        event.input_processor.pop_input_mode()
