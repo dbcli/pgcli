@@ -10,6 +10,8 @@ from __future__ import unicode_literals
 from .keys import Key
 from .enums import InputMode
 
+import weakref
+
 __all__ = (
     'Registry',
     'InputProcessor',
@@ -89,11 +91,14 @@ class InputProcessor(object):
                     buffer = (processing + buffer)[1:]
                     break
 
+    def feed_key(self, key_press):
+        self._process_coroutine.send(key_press)
+
     def _call_handler(self, handler, data=None, key_sequence=None):
         arg = self.arg
         self.arg = None
 
-        event = Event(self, arg=arg, data=data, previous_key_sequence=self._previous_key_sequence)
+        event = Event(weakref.ref(self), arg=arg, data=data, previous_key_sequence=self._previous_key_sequence)
         handler.call(event)
 
         for h in self._registry.after_handler_callbacks:
@@ -101,17 +106,18 @@ class InputProcessor(object):
 
         self._previous_key_sequence = key_sequence
 
-    def feed_key(self, key_press):
-        self._process_coroutine.send(key_press)
-
 
 class Event(object):
-    def __init__(self, input_processor, arg=None, data=None, key_sequence=None, previous_key_sequence=None):
-        self.input_processor = input_processor
+    def __init__(self, input_processor_ref, arg=None, data=None, key_sequence=None, previous_key_sequence=None):
+        self._input_processor_ref = input_processor_ref
         self.data = data
         self.key_sequence = key_sequence
         self.previous_key_sequence = previous_key_sequence
         self._arg = arg
+
+    @property
+    def input_processor(self):
+        return self._input_processor_ref()
 
     @property
     def arg(self):
