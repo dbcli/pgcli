@@ -260,12 +260,12 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
 
         return new
 
-    def get_style_for_token(token):
+    def get_style_for_token(token, replace_if_grayed=True):
         """
         Get style
         """
         # If grayed, replace token
-        if grayed:
+        if grayed and replace_if_grayed:
             token = Token.Aborted
 
         try:
@@ -282,8 +282,8 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
         # If they are both a space and have the same background color, we
         # always consider them equal.
         if new_char.char == ' ' and old_char.char == ' ':
-            style1 = get_style_for_token(new_token)
-            style2 = get_style_for_token(old_char.token)
+            style1 = get_style_for_token(new_token, replace_if_grayed=False)
+            style2 = get_style_for_token(old_char.token, replace_if_grayed=False)
             return (style1 and style1.get('bgcolor')) == (style2 and style2.get('bgcolor'))
 
         # We ignore z-index, that does not matter if things get painted.
