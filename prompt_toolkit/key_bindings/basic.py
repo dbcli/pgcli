@@ -259,10 +259,9 @@ def basic_bindings(registry, line):
         line.cursor_position += line.document.find_next_word_beginning(count=event.arg) or 0
 
     @handle(Key.Escape, in_mode=InputMode.COMPLETE)
-    @handle(Key.ControlJ, in_mode=InputMode.COMPLETE)
-    @handle(Key.ControlM, in_mode=InputMode.COMPLETE)
+    @handle(Key.ControlC, in_mode=InputMode.COMPLETE)
     def _(event):
         """
-        Pressing escape or enter in complete mode, goes back to default mode.
+        Pressing escape or Ctrl-C in complete mode, goes back to default mode.
         """
         event.input_processor.input_mode = event.input_processor.default_input_mode
