@@ -64,6 +64,32 @@ class ClipboardData(object):
         self.type = type
 
 
+class SelectionType(object):
+    """
+    Type of selection.
+    """
+    #: Characters. (Visual in Vi.)
+    CHARACTERS = 'characters'
+
+    #: Whole lines. (Visual-Line in Vi.)
+    LINES = 'lines'
+
+    #: A block selection. (Visual-Block in Vi. But not supported yet.)
+    BLOCK = 'block'
+
+
+class SelectionState(object):
+    """
+    State of the current selection.
+
+    :param original_cursor_position: int
+    :param type: :class:`~.SelectionType`
+    """
+    def __init__(self, original_cursor_position=0, type=SelectionType.CHARACTERS):
+        self.original_cursor_position = original_cursor_position
+        self.type = type
+
+
 class CompletionState(object):
     def __init__(self, original_document, current_completions=None):
         #: Document as it was when the completion started.
@@ -153,6 +179,9 @@ class Line(object):
         # State of Incremental-search
         self.isearch_state = None
 
+        # State of the selection.
+        self.selection_state = None
+
         # State of complete browser
         self.complete_state = None # For interactive completion through Ctrl-N/Ctrl-P.
 
@@ -181,6 +210,7 @@ class Line(object):
         # Remove validation errors, complete state.
         self.validation_error = None
         self.complete_state = None
+        self.selection_state = None
 
         self.text_changed()
 
@@ -196,6 +226,9 @@ class Line(object):
         self.validation_error = None
         self.complete_state = None
 
+        # Note that the cursor position can change if we have a selection the
+        # new position of the cursor determines the end of the selection.
+
     @property
     def _working_index(self):
         return self.__working_index
@@ -203,6 +236,12 @@ class Line(object):
     @_working_index.setter
     def _working_index(self, value):
         self.__working_index = value
+
+        # Remove any validation errors and complete state.
+        self.validation_error = None
+        self.complete_state = None
+        self.selection_state = None
+
         self.text_changed()
 
     ### End of <getters/setters>
@@ -287,21 +326,21 @@ class Line(object):
     def auto_up(self, count=1):
         """
         If we're not on the first line (of a multiline input) go a line up,
-        otherwise go back in history.
+        otherwise go back in history. (If nothing is selected.)
         """
         if self.document.cursor_position_row > 0:
             self.cursor_position += self.document.get_cursor_up_position(count=count)
-        else:
+        elif not self.selection_state:
             self.history_backward(count=count)
 
     def auto_down(self, count=1):
         """
         If we're not on the last line (of a multiline input) go a line down,
-        otherwise go forward in history.
+        otherwise go forward in history. (If nothing is selected.)
         """
         if self.document.cursor_position_row < self.document.line_count - 1:
             self.cursor_position += self.document.get_cursor_down_position(count=count)
-        else:
+        elif not self.selection_state:
             old_index = self._working_index
             self.history_forward(count=count)
 
@@ -472,6 +511,41 @@ class Line(object):
             # Go back in history, and update cursor_position.
             self._working_index -= count
             self.cursor_position = len(self.text)
+
+    def start_selection(self, selection_type=SelectionType.CHARACTERS):
+        """
+        Take the current cursor position as the start of this selection.
+        """
+        self.selection_state = SelectionState(self.cursor_position, selection_type)
+
+    def copy_selection(self, _cut=False):
+        """
+        Copy selected text and return it as string.
+        """
+        if self.selection_state:
+            # Take start and end of selection
+            # (start and end position are always included in the selection.)
+            from_, to = sorted([self.cursor_position, self.selection_state.original_cursor_position])
+
+            copied_text = self.text[from_:to]
+
+            # If cutting, remove the text and set the new cursor position.
+            if _cut:
+                self.text = self.text[:from_] + self.text[to + 1:]
+                self.cursor_position = min(from_, to)
+
+            self.selection_state = None
+            return copied_text
+
+            # TODO: inclument line selection.
+        else:
+            return ''
+
+    def cut_selection(self):
+        """
+        Delete the selected text and return it as string.
+        """
+        return self.copy_selection(_cut=True)
 
     def newline(self):
         self.insert_text('\n')

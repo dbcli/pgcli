@@ -403,6 +403,11 @@ class Prompt(object):
                 highlighted_characters.update({
                     x: token for x in range(index, index + len(self.line.isearch_state.isearch_text)) })
 
+        # In case of selection, highlight all matches.
+        if self.line.selection_state:
+            for i in range(*sorted([ self.line.cursor_position, self.line.selection_state.original_cursor_position ])):
+                highlighted_characters[i] = Token.SelectedText
+
         return highlighted_characters
 
     def write_input(self, screen, highlight=True):

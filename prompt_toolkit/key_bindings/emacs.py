@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from ..line import ClipboardData
+from ..line import ClipboardData, SelectionType
 from ..keys import Key
 from ..enums import InputMode
 
@@ -226,3 +226,31 @@ def emacs_bindings(registry, cli_ref):
     def _(event):
         """ Pressing escape in complete mode, goes back to emacs insert mode. """
         event.input_processor.pop_input_mode()
+
+    @handle(Key.ControlSpace)
+    @handle(Key.ControlSpace, in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Start of the selection.
+        """
+        # Take the current cursor position as the start of this selection.
+        line.start_selection(selection_type=SelectionType.CHARACTERS)
+
+        if event.input_processor.input_mode != InputMode.SELECTION:
+            event.input_processor.push_input_mode(InputMode.SELECTION)
+
+    @handle(Key.ControlW, in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Cut selected text.
+        """
+        deleted = line.cut_selection()
+        line.set_clipboard(ClipboardData(deleted))
+
+    @handle(Key.Escape, 'w', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Copy selected text.
+        """
+        text = line.copy_selection()
+        line.set_clipboard(ClipboardData(text))

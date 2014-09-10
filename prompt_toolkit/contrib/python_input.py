@@ -72,6 +72,8 @@ class PythonStyle(Style):
         Token.IncrementalSearchMatch:         '#ffffff bg:#4444aa',
         Token.IncrementalSearchMatch.Current: '#ffffff bg:#44aa44',
 
+        Token.SelectedText:            '#ffffff bg:#6666aa',
+
         # Signature highlighting.
         Token.Signature:               '#888888',
         Token.Signature.Operator:      'bold #888888',
@@ -423,6 +425,9 @@ class PythonPrompt(Prompt):
         # Shortcuts.
         if mode == InputMode.INCREMENTAL_SEARCH:
             append((TB, '[Ctrl-G] Cancel search [Enter] Go to this position.'))
+        elif self.line.selection_state:
+            # Emacs cut/copy keys.
+            append((TB, '[Ctrl-W] Cut [Meta-W] Copy'))
         else:
             if self.line.paste_mode:
                 append((TB.On, '[F6] Paste mode (on)  '))

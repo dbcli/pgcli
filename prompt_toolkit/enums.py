@@ -14,10 +14,9 @@ class InputMode(object):
     VI_INSERT = 'vi-insert'
     VI_REPLACE = 'vi-replace'
 
-    # TODO: Not supported. But maybe for some day...
-    VI_VISUAL = 'vi-visual'
-    VI_VISUAL_LINE = 'vi-visual-line'
-    VI_VISUAL_BLOCK = 'vi-visual-block'
+    # Selection mode. The type of selection (characters/lines/block is saved in
+    # the line object.)
+    SELECTION = 'selection'
 
     #: Ctrl-R/Ctrl-S incremental search.
     INCREMENTAL_SEARCH = 'incremental-search'
