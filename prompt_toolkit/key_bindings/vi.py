@@ -515,9 +515,12 @@ def vi_bindings(registry, line):
         """ 'c^', 'd^' and '^': Soft start of line, after whitespace. """
         return CursorRegion(line.document.get_start_of_line_position(after_whitespace=True))
 
-    @change_delete_move_yank_handler('0')
+    @change_delete_move_yank_handler('0', no_move_handler=True)
     def key_zero(event):
-        """ 'c0', 'd0' and '0': Hard start of line, before whitespace. """
+        """
+        'c0', 'd0': Hard start of line, before whitespace.
+        (The move '0' key is implemented elsewhere, because a '0' could also change the `arg`.)
+        """
         return CursorRegion(line.document.get_start_of_line_position(after_whitespace=False))
 
     def create_ci_ca_handles(ci_start, ci_end, inner):
@@ -661,8 +664,10 @@ def vi_bindings(registry, line):
         """
         Always handle numberics in navigation mode as arg.
         """
-        if event.data in '123456789' or (event.arg and event.data == '0'):
+        if event.data in '123456789' or (event._arg and event.data == '0'):
             event.append_to_arg_count(event.data)
+        elif event.data == '0':
+            line.cursor_position += line.document.get_start_of_line_position(after_whitespace=False)
 
     @handle(Key.Any, in_mode=InputMode.VI_REPLACE)
     def _(event):
