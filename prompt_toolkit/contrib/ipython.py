@@ -10,7 +10,7 @@ offer.
 """
 from prompt_toolkit import AbortAction
 from prompt_toolkit.code import Completion
-from prompt_toolkit.contrib.python_input import PythonCommandLine, PythonPrompt, PythonCommandLine, PythonCode, AutoCompletionStyle
+from prompt_toolkit.contrib.python_input import PythonCommandLineInterface, PythonPrompt, PythonCode, AutoCompletionStyle
 from prompt_toolkit import Exit
 
 from IPython.terminal.embed import InteractiveShellEmbed as _InteractiveShellEmbed
@@ -75,14 +75,14 @@ class IPythonCode(PythonCode):
                 yield c
 
 
-class IPythonCommandLine(PythonCommandLine):
+class IPythonCommandLineInterface(PythonCommandLineInterface):
     """
-    Override our `PythonCommandLine` to add IPython specific stuff.
+    Override our `PythonCommandLineInterface` to add IPython specific stuff.
     """
     prompt_factory = IPythonPrompt
 
     def __init__(self, ipython_shell, *a, **kw):
-        super(IPythonCommandLine, self).__init__(*a, **kw)
+        super(IPythonCommandLineInterface, self).__init__(*a, **kw)
         self._ipython_shell = ipython_shell
 
     def code_factory(self, document):
@@ -101,7 +101,7 @@ class InteractiveShellEmbed(_InteractiveShellEmbed):
 
         super(InteractiveShellEmbed, self).__init__(*a, **kw)
 
-        self._cli = IPythonCommandLine(self, vi_mode=vi_mode,
+        self._cli = IPythonCommandLineInterface(self, vi_mode=vi_mode,
                         history_filename=history_filename, autocompletion_style=autocompletion_style)
 
     def raw_input(self, prompt=''):

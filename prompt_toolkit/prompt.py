@@ -363,8 +363,10 @@ class Prompt(object):
         length = len(prompt_text.rstrip())
         spaces = len(prompt_text) - length
 
-        yield (Token.Prompt.SecondLinePrefix, '.' * length)
-        yield (Token.Prompt.SecondLinePrefix, ' ' * spaces)
+        return [
+            (Token.Prompt.SecondLinePrefix, '.' * length),
+            (Token.Prompt.SecondLinePrefix, ' ' * spaces)
+        ]
 
     def create_left_input_margin(self, screen, row, is_new_line):
         screen.write_highlighted(self.get_tokens_in_left_margin(row, is_new_line))

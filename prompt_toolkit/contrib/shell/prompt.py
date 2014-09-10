@@ -7,14 +7,15 @@ from .rules import TokenStream
 class ShellPrompt(Prompt):
     def get_tokens_after_input(self):
         def _():
-            parts, last_part_token = self.render_context.code_obj._get_lex_result()
+            code = self.line.create_code_obj()
+            parts, last_part_token = code._get_lex_result()
 
             # Don't show help when you're in the middle of typing a 'token'.
             # (Show after having typed the space, or at the start of the line.)
             if not last_part_token.unescaped_text:
                 # Parse grammar
                 stream = TokenStream(parts)
-                trees = list(self.render_context.code_obj.rule.parse(stream))
+                trees = list(code.rule.parse(stream))
 
                 # print (trees) ### debug
 

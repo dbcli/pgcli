@@ -4,7 +4,7 @@ Simple example of a syntax-highlighted HTML input line.
 """
 from pygments.lexers import HtmlLexer
 
-from prompt_toolkit import CommandLine
+from prompt_toolkit import CommandLineInterface
 from prompt_toolkit.code import Code
 from prompt_toolkit.prompt import Prompt
 
@@ -17,14 +17,14 @@ class HtmlPrompt(Prompt):
     prompt_text = 'Enter HTML: '
 
 
-class HtmlCommandLine(CommandLine):
+class HtmlCLI(CommandLineInterface):
     code_factory = HtmlCode
     prompt_factory = HtmlPrompt
 
 
 
 def main():
-    cli = HtmlCommandLine()
+    cli = HtmlCLI()
 
     html_code_obj = cli.read_input()
     print('You said: ' + html_code_obj.text)

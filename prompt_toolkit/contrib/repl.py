@@ -17,7 +17,7 @@ from pygments.formatters.terminal256  import Terminal256Formatter
 from pygments.lexers import PythonTracebackLexer
 
 from prompt_toolkit import AbortAction, Exit
-from prompt_toolkit.contrib.python_input import PythonCommandLine, PythonStyle, AutoCompletionStyle
+from prompt_toolkit.contrib.python_input import PythonCommandLineInterface, PythonStyle, AutoCompletionStyle
 
 from six import exec_
 
@@ -29,7 +29,7 @@ import traceback
 __all__ = ('PythonRepl', 'embed')
 
 
-class PythonRepl(PythonCommandLine):
+class PythonRepl(PythonCommandLineInterface):
     def start_repl(self, startup_path=None):
         """
         Start the Read-Eval-Print Loop.

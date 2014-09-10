@@ -105,12 +105,12 @@ A simple example looks like this:
 
 .. code:: python
 
-    from prompt_toolkit import CommandLine, AbortAction
+    from prompt_toolkit import CommandLineInterface, AbortAction
     from prompt_toolkit import Exit
 
     def main():
-        # Create CommandLine instance
-        cli = CommandLine()
+        # Create CommandLineInterface
+        cli = CommandLineInterface()
 
         try:
             while True:

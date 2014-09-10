@@ -9,11 +9,11 @@ from pygments.style import Style
 from pygments.token import Token
 from pygments.token import Keyword, Operator, Number, Name, Error, Comment
 
-from prompt_toolkit import CommandLine, AbortAction
+from prompt_toolkit import CommandLineInterface, AbortAction
 from prompt_toolkit.contrib.shell.code import ShellCode
 from prompt_toolkit.contrib.shell.prompt import ShellPrompt
 from prompt_toolkit.contrib.shell.rules import Any, Sequence, Literal, Variable, Repeat
-from prompt_toolkit.line import Exit
+from prompt_toolkit import Exit
 from prompt_toolkit.prompt import Prompt
 
 from prompt_toolkit.contrib.python_input import PythonCode
@@ -202,13 +202,13 @@ class PdbOrPythonprompt(object):
     Create a prompt class that proxies around `PdbPrompt` if the input is valid
     PDB shell input, otherwise proxies around `PythonPrompt`.
     """
-    def __init__(self, render_context):
-        self._pdb_prompt = PdbPrompt(render_context)
-        self._python_prompt = PythonPrompt(render_context)
-        self._render_context = render_context
+    def __init__(self, cli_ref):
+        self._pdb_prompt = PdbPrompt(cli_ref)
+        self._python_prompt = PythonPrompt(cli_ref)
+        self.line = cli_ref().line
 
     def __getattr__(self, name):
-        if self._render_context.code_obj.is_pdb_statement:
+        if self.line.create_code_obj().is_pdb_statement:
             return getattr(self._pdb_prompt, name)
         else:
             return getattr(self._python_prompt, name)
@@ -236,7 +236,7 @@ class PdbStyle(Style):
         }
 
 
-class PdbCommandLine(CommandLine):
+class PdbCLI(CommandLineInterface):
     code_factory = PythonOrPdbCode
     prompt_factory = PdbOrPythonprompt
 
@@ -249,7 +249,7 @@ class PdbCommandLine(CommandLine):
 
 
 if __name__ == '__main__':
-    cli = PdbCommandLine()
+    cli = PdbCLI()
 
     try:
         while True:

@@ -29,7 +29,6 @@ from .key_binding import InputProcessor
 from .enums import InputMode
 from .key_binding import Registry
 from .key_bindings.emacs import emacs_bindings
-from .key_bindings.vi import vi_bindings
 from .line import Line, Callbacks
 from .prompt import Prompt
 from .renderer import Renderer
@@ -43,7 +42,7 @@ import weakref
 
 __all__ = (
         'AbortAction',
-        'CommandLine',
+        'CommandLineInterface',
 )
 
 class AbortAction:
@@ -64,7 +63,7 @@ class Abort(Exception):
     pass
 
 
-class CommandLine(object):
+class CommandLineInterface(object):
     """
     Wrapper around all the other classes, tying everything together.
     """
@@ -110,6 +109,10 @@ class CommandLine(object):
         self.stdout = stdout or sys.stdout
 
         #: The `Line` instance.
+                    # TODO: construct the `Line` object outside of this constructor.
+                    #       A commandline should be able to have several `Line` instances.
+                    #       e.g. one for the incremental-search input, one for
+                    #       another document, etc...
         self.line = self.line_factory(
                                 code_factory=self.code_factory,
                                 history_factory=self.history_factory,

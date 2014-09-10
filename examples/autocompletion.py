@@ -6,7 +6,7 @@ Press [Tab] to complete the current word.
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit import CommandLine
+from prompt_toolkit import CommandLineInterface
 from prompt_toolkit.code import Code, Completion
 
 
@@ -36,12 +36,12 @@ class AnimalCode(Code):
                 yield Completion(a, -len(word_before_cursor))
 
 
-class AnimalLine(CommandLine):
+class AnimalCLI(CommandLineInterface):
     code_factory = AnimalCode
 
 
 def main():
-    cli = AnimalLine()
+    cli = AnimalCLI()
 
     code_obj = cli.read_input()
     print('You said: ' + code_obj.text)

@@ -3,7 +3,7 @@ Useful shortcuts.
 """
 from __future__ import unicode_literals
 
-from .. import CommandLine, AbortAction
+from .. import CommandLineInterface, AbortAction
 from ..prompt import Prompt, PasswordProcessor
 #from ..inputstream_handler import EmacsInputStreamHandler, BasicInputStreamHandler
 from ..line import Line
@@ -23,7 +23,7 @@ def get_input(message, raise_exception_on_abort=False, multiline=False, is_passw
         is_multiline = multiline
 
 
-    class CLI(CommandLine):
+    class CLI(CommandLineInterface):
         prompt_factory = CustomPrompt
         line_factory = CustomLine
 

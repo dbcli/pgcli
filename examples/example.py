@@ -10,12 +10,12 @@ Alternative for a shell (like Bash).
 from pygments.style import Style
 from pygments.token import Token
 
-from prompt_toolkit import CommandLine, AbortAction
+from prompt_toolkit import CommandLineInterface, AbortAction
 from prompt_toolkit.contrib.shell.code import ShellCode
 from prompt_toolkit.contrib.shell.completers import Path
 from prompt_toolkit.contrib.shell.prompt import ShellPrompt
 from prompt_toolkit.contrib.shell.rules import Any, Sequence, Literal, Repeat, Variable
-from prompt_toolkit.line import Exit
+from prompt_toolkit import Exit
 
 
 class OurGitCode(ShellCode):
@@ -65,7 +65,7 @@ class ExampleStyle(Style):
         }
 
 
-class ExampleCommandLine(CommandLine):
+class ExampleCLI(CommandLineInterface):
     code_factory = OurGitCode
     prompt_factory = ShellPrompt
 
@@ -73,7 +73,7 @@ class ExampleCommandLine(CommandLine):
 
 
 if __name__ == '__main__':
-    cli = ExampleCommandLine()
+    cli = ExampleCLI()
 
     try:
         while True:

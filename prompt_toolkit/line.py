@@ -592,7 +592,7 @@ class Line(object):
 
     def return_input(self):
         """
-        Return the current line to the `CommandLine.read_input` call.
+        Return the current line to the `CommandLineInterface.read_input` call.
         """
         code = self.create_code_obj()
         text = self.text

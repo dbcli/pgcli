@@ -2,9 +2,9 @@
 
 ::
 
-    from prompt_toolkit.contrib.python_import import PythonCommandLine
+    from prompt_toolkit.contrib.python_import import PythonCommandLineInterface
 
-    cli = PythonCommandLine()
+    cli = PythonCommandLineInterface()
     cli.read_input()
 """
 from __future__ import unicode_literals
@@ -13,7 +13,7 @@ from pygments.lexers import PythonLexer
 from pygments.style import Style
 from pygments.token import Keyword, Operator, Number, Name, Error, Comment, Token
 
-from prompt_toolkit import CommandLine
+from prompt_toolkit import CommandLineInterface
 from prompt_toolkit.code import Completion, Code, ValidationError
 from prompt_toolkit.enums import InputMode
 from prompt_toolkit.history import FileHistory, History
@@ -30,7 +30,7 @@ import sys
 
 
 __all__ = (
-    'PythonCommandLine',
+    'PythonCommandLineInterface',
     'AutoCompletionStyle',
 )
 
@@ -523,7 +523,7 @@ class PythonCode(Code):
                 yield PythonCompletion(c.name, len(c.complete) - len(c.name), c)
 
 
-class PythonCommandLine(CommandLine):
+class PythonCommandLineInterface(CommandLineInterface):
     line_factory = PythonLine
     prompt_factory = PythonPrompt
 
@@ -542,7 +542,7 @@ class PythonCommandLine(CommandLine):
         #: Incremeting integer counting the current statement.
         self.current_statement_index = 1
 
-        super(PythonCommandLine, self).__init__(stdin=stdin, stdout=stdout)
+        super(PythonCommandLineInterface, self).__init__(stdin=stdin, stdout=stdout)
 
     def history_factory(self):
         if self.history_filename:

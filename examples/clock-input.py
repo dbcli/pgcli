@@ -2,7 +2,7 @@
 """
 Example of a 'dynamic' prompt. On that shows the current time in the prompt.
 """
-from prompt_toolkit import CommandLine
+from prompt_toolkit import CommandLineInterface
 from prompt_toolkit.prompt import Prompt
 from pygments.token import Token
 
@@ -20,7 +20,7 @@ class ClockPrompt(Prompt):
         ]
 
 
-class ClockCommandLine(CommandLine):
+class ClockCLI(CommandLineInterface):
     prompt_factory = ClockPrompt
     enable_concurency = True
 
@@ -35,7 +35,7 @@ class ClockCommandLine(CommandLine):
 
 
 def main():
-    cli = ClockCommandLine()
+    cli = ClockCLI()
 
     code_obj = cli.read_input()
     print('You said: ' + code_obj.text)
