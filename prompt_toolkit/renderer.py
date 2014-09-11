@@ -106,7 +106,48 @@ class TerminalCodes:
 class Char(object):
     __slots__ = ('char', 'token', 'z_index')
 
+    # If we end up having one of these special control sequences in the input string,
+    # we should display them as follows:
+    # Usually this happens after a "quoted insert".
+    display_mappings = {
+        '\x1b': '^[', # Escape
+        '\x01': '^A',
+        '\x02': '^B',
+        '\x03': '^C',
+        '\x04': '^D',
+        '\x05': '^E',
+        '\x06': '^F',
+        '\x07': '^G',
+        '\x08': '^H',
+        '\x09': '^I',
+        '\x0a': '^J',
+        '\x0b': '^K',
+        '\x0c': '^L',
+        '\x0d': '^M',
+        '\x0e': '^N',
+        '\x0f': '^O',
+        '\x10': '^P',
+        '\x11': '^Q',
+        '\x12': '^R',
+        '\x13': '^S',
+        '\x14': '^T',
+        '\x15': '^U',
+        '\x16': '^V',
+        '\x17': '^W',
+        '\x18': '^X',
+        '\x19': '^Y',
+        '\x1a': '^Z',
+        '\x00': '^ ', # Control space
+        '\x1c': '^\\',
+        '\x1d': '^]',
+        '\x1f': '^_',
+        '\x7f': '^?', # Control backspace
+    }
+
     def __init__(self, char=' ', token=None, z_index=0):
+        # If this character has to be displayed otherwise, take that one.
+        char = self.display_mappings.get(char, char)
+
         self.char = char
         self.token = token
         self.z_index = z_index
@@ -116,7 +157,7 @@ class Char(object):
         # We use the `max(0, ...` because some non printable control
         # characters, like e.g. Ctrl-underscore get a -1 wcwidth value.
         # It can be possible that these characters end up in the input text.
-        return max(0, wcwidth(self.char))
+        return max(0, sum([wcwidth(c) for c in self.char]))
 
 
 class Screen(object):
@@ -163,7 +204,8 @@ class Screen(object):
         """
         assert len(char) == 1
 
-        char_width = wcwidth(char)
+        char_obj  = Char(char, token, z_index)
+        char_width = char_obj.width
 
         # In case there is no more place left at this line, go first to the
         # following line. (Also in case of double-width characters.)
@@ -189,22 +231,22 @@ class Screen(object):
 
         # Insertion of a 'visible' character.
         else:
-            self.write_at_pos(self._y, self._x, char, token, z_index=z_index)
+            self.write_at_pos(self._y, self._x, char_obj)
 
             # Move position
             self._x += char_width
 
         return insert_pos
 
-    def write_at_pos(self, y, x, char, token, z_index=0):
+    def write_at_pos(self, y, x, char_obj): #char, token, z_index=0):
         """
         Write character at position (y, x).
         (Truncate when character is outside margin.)
         """
         # Add char to buffer
         if y < self.size.columns:
-            if z_index >= self._buffer[y][x].z_index:
-                self._buffer[y][x] = Char(char=char, token=token, z_index=z_index)
+            if char_obj.z_index >= self._buffer[y][x].z_index:
+                self._buffer[y][x] = char_obj
 
     def write_highlighted_at_pos(self, y, x, data, z_index=0):
         """
@@ -213,7 +255,7 @@ class Screen(object):
         """
         for token, text in data:
             for c in text:
-                self.write_at_pos(y, x, c, token, z_index=z_index)
+                self.write_at_pos(y, x, Char(c, token, z_index=z_index))
                 x += wcwidth(c)
 
     def write_highlighted(self, data):

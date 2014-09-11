@@ -88,7 +88,7 @@ class CommandLineInterface(object):
 
     #: `InputStreamHandler` class for the keybindings.
     key_bindings_factories = [ emacs_bindings ]
-    default_input_mode = InputMode.VI_INSERT
+    default_input_mode = InputMode.INSERT
 
     #: `Renderer` class.
     renderer_factory = Renderer

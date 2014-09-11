@@ -1,77 +1,93 @@
 from __future__ import unicode_literals
 
-__all__ = ('Key', )
+__all__ = (
+    'Key',
+    'Keys',
+)
 
-class Key:
-    Escape = '<Escape>'
 
-    ControlA = '<C-A>'
-    ControlB = '<C-B>'
-    ControlC = '<C-C>'
-    ControlD = '<C-D>'
-    ControlE = '<C-E>'
-    ControlF = '<C-F>'
-    ControlG = '<C-G>'
-    ControlH = '<C-H>'
-    ControlI = '<C-I>'
-    ControlJ = '<C-J>'
-    ControlK = '<C-K>'
-    ControlL = '<C-L>'
-    ControlM = '<C-M>'
-    ControlN = '<C-N>'
-    ControlO = '<C-O>'
-    ControlP = '<C-P>'
-    ControlQ = '<C-Q>'
-    ControlR = '<C-R>'
-    ControlS = '<C-S>'
-    ControlT = '<C-T>'
-    ControlU = '<C-U>'
-    ControlV = '<C-V>'
-    ControlW = '<C-W>'
-    ControlX = '<C-X>'
-    ControlY = '<C-Y>'
-    ControlZ = '<C-Z>'
+class Key(object):
+    def __init__(self, name):
 
-    ControlSpace = '<C-Space>'
-    ControlBackslash = '<C-Backslash>'
-    ControlSquareClose = '<C-SquareClose>'
-    ControlCircumflex = '<C-Circumflex>'
-    ControlUnderscore = '<C-Underscore>'
+        #: Descriptive way of writing keys in configuration files. e.g. <C-A>
+        #: for ``Control-A``.
+        self.name = name
 
-    Backspace   = '<BS>'
-    Up          = '<Up>'
-    Down        = '<Down>'
-    Right       = '<Right>'
-    Left        = '<Left>'
-    Home        = '<Home>'
-    End         = '<End>'
-    Delete      = '<Delete>'
-    ShiftDelete = '<ShiftDelete>'
-    PageUp      = '<PageUp>'
-    PageDown    = '<PageDown>'
+    def __repr__(self):
+        return 'Key(%s)' % self.name
+
+
+class Keys(object):
+    Escape = Key('<Escape>')
+
+    ControlA = Key('<C-A>')
+    ControlB = Key('<C-B>')
+    ControlC = Key('<C-C>')
+    ControlD = Key('<C-D>')
+    ControlE = Key('<C-E>')
+    ControlF = Key('<C-F>')
+    ControlG = Key('<C-G>')
+    ControlH = Key('<C-H>')
+    ControlI = Key('<C-I>') # Tab
+    ControlJ = Key('<C-J>') # Enter
+    ControlK = Key('<C-K>')
+    ControlL = Key('<C-L>')
+    ControlM = Key('<C-M>') # Enter
+    ControlN = Key('<C-N>')
+    ControlO = Key('<C-O>')
+    ControlP = Key('<C-P>')
+    ControlQ = Key('<C-Q>')
+    ControlR = Key('<C-R>')
+    ControlS = Key('<C-S>')
+    ControlT = Key('<C-T>')
+    ControlU = Key('<C-U>')
+    ControlV = Key('<C-V>')
+    ControlW = Key('<C-W>')
+    ControlX = Key('<C-X>')
+    ControlY = Key('<C-Y>')
+    ControlZ = Key('<C-Z>')
+
+    ControlSpace       = Key('<C-Space>')
+    ControlBackslash   = Key('<C-Backslash>')
+    ControlSquareClose = Key('<C-SquareClose>')
+    ControlCircumflex  = Key('<C-Circumflex>')
+    ControlUnderscore  = Key('<C-Underscore>')
+    Backspace          = Key('<BS>')
+
+    Up          = Key('<Up>')
+    Down        = Key('<Down>')
+    Right       = Key('<Right>')
+    Left        = Key('<Left>')
+    Home        = Key('<Home>')
+    End         = Key('<End>')
+    Delete      = Key('<Delete>')
+    ShiftDelete = Key('<ShiftDelete>')
+    PageUp      = Key('<PageUp>')
+    PageDown    = Key('<PageDown>')
+    BackTab     = Key('<BackTab>') # shift + tab
+
     Tab         = ControlI
-    BackTab     = '<BackTab>' # shift + tab
 
-    F1 = '<F1>'
-    F2 = '<F2>'
-    F3 = '<F3>'
-    F4 = '<F4>'
-    F5 = '<F5>'
-    F6 = '<F6>'
-    F7 = '<F7>'
-    F8 = '<F8>'
-    F9 = '<F9>'
-    F10 = '<F10>'
-    F11 = '<F11>'
-    F12 = '<F12>'
-    F13 = '<F13>'
-    F14 = '<F14>'
-    F15 = '<F15>'
-    F16 = '<F16>'
-    F17 = '<F17>'
-    F18 = '<F18>'
-    F19 = '<F19>'
-    F20 = '<F20>'
+    F1 = Key('<F1>')
+    F2 = Key('<F2>')
+    F3 = Key('<F3>')
+    F4 = Key('<F4>')
+    F5 = Key('<F5>')
+    F6 = Key('<F6>')
+    F7 = Key('<F7>')
+    F8 = Key('<F8>')
+    F9 = Key('<F9>')
+    F10 = Key('<F10>')
+    F11 = Key('<F11>')
+    F12 = Key('<F12>')
+    F13 = Key('<F13>')
+    F14 = Key('<F14>')
+    F15 = Key('<F15>')
+    F16 = Key('<F16>')
+    F17 = Key('<F17>')
+    F18 = Key('<F18>')
+    F19 = Key('<F19>')
+    F20 = Key('<F20>')
 
     # Matches any key.
-    Any = '<Any>'
+    Any = Key('<Any>')

@@ -7,7 +7,7 @@ The `InputProcessor` will according to the implemented keybindings call the
 correct callbacks when new key presses are feed through `feed_key`.
 """
 from __future__ import unicode_literals
-from .keys import Key
+from .keys import Keys
 from .enums import InputMode
 
 import weakref
@@ -19,7 +19,7 @@ __all__ = (
 
 
 class InputProcessor(object):
-    def __init__(self, registry, default_input_mode=InputMode.INPUT):
+    def __init__(self, registry, default_input_mode=InputMode.INSERT):
         self._registry = registry
         self.default_input_mode = default_input_mode
 
@@ -88,11 +88,11 @@ class InputProcessor(object):
                 key_sequence = processing + [key_press]
 
                 # Matches
-                exact_matches_with_mode = [(k, b) for k, b in options if k == (key_press,) and b.input_mode ]
-                exact_matches = [(k, b) for k, b in options if k == (key_press,)]
-                prefix_matches = [(k, b) for k, b in options if k[0] == key_press and len(k) > 1]
-                any_matches_with_mode = [(k, b) for k, b in options if k == (Key.Any,) and b.input_mode ]
-                any_matches = [(k, b) for k, b in options if k == (Key.Any,)]
+                exact_matches_with_mode = [(k, b) for k, b in options if k == (key_press.key,) and b.input_mode ]
+                exact_matches = [(k, b) for k, b in options if k == (key_press.key,)]
+                prefix_matches = [(k, b) for k, b in options if k[0] == key_press.key and len(k) > 1]
+                any_matches_with_mode = [(k, b) for k, b in options if k == (Keys.Any,) and b.input_mode ]
+                any_matches = [(k, b) for k, b in options if k == (Keys.Any,)]
 
                 # If we have an exact match, call handler.
                 # (An exact match that specifies the input mode will always get higher priority.)
@@ -105,11 +105,11 @@ class InputProcessor(object):
                     options = [(k[1:], b) for k, b in prefix_matches]
                     processing.append(key_press)
 
-                # If we have `Key.Any`, that should catch all keys (If there is
+                # If we have `Keys.Any`, that should catch all keys (If there is
                 # no other match) and pass the pressed key to the handler.
                 elif any_matches_with_mode or any_matches:
                     self._call_handler((any_matches_with_mode or any_matches)[0][1],
-                                    key_sequence=key_sequence, data=key_press)
+                                    key_sequence=key_sequence, key=key_press)
                     break
 
                 # An 'invalid' sequence, ignore the first key_press and start
@@ -121,11 +121,12 @@ class InputProcessor(object):
     def feed_key(self, key_press):
         self._process_coroutine.send(key_press)
 
-    def _call_handler(self, handler, data=None, key_sequence=None):
+    def _call_handler(self, handler, key=None, key_sequence=None):
         arg = self.arg
         self.arg = None
 
-        event = Event(weakref.ref(self), arg=arg, data=data, previous_key_sequence=self._previous_key_sequence)
+        event = Event(weakref.ref(self), arg=arg, data=(key and key.data),
+                        previous_key_sequence=self._previous_key_sequence)
         handler.call(event)
 
         for h in self._registry.after_handler_callbacks:
@@ -186,6 +187,8 @@ class _Binding(object):
     def call(self, event):
         return self._callable(event)
 
+    def __repr__(self):
+        return '_Binding(keys=%r, callable=%r)' % (self.keys, self._callable)
 
 class Registry(object):
     """

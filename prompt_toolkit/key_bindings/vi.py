@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
-from ..line import ClipboardData, ClipboardDataType
+from ..line import ClipboardData, ClipboardDataType, SelectionType
 from ..enums import IncrementalSearchDirection, InputMode
-from ..keys import Key
+from ..keys import Keys
 
 from .basic import basic_bindings
 from .utils import create_handle_decorator
@@ -57,28 +57,28 @@ def vi_bindings(registry, cli_ref):
                 len(line.document.current_line) > 0):
             line.cursor_position -= 1
 
-    @handle(Key.Escape)
+    @handle(Keys.Escape)
     def _(event):
         """
         Escape goes to vi navigation mode.
         """
         event.input_processor.input_mode = InputMode.VI_NAVIGATION
 
-    @handle(Key.Backspace, in_mode=InputMode.VI_NAVIGATION)
+    @handle(Keys.Backspace, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
         In navigation-mode, move cursor.
         """
         line.cursor_position += line.document.get_cursor_left_position(count=event.arg)
 
-    #@handle(Key.ControlV, Key.Any, in_mode=InputMode.VI_INSERT)
-    #def _(event):
-    #    """
-    #    Insert a character literally (quoted insert).
-    #    """
-    #    line.insert_text(event.data, overwrite=False)
+    @handle(Keys.ControlV, Keys.Any, in_mode=InputMode.INSERT)
+    def _(event):
+        """
+        Insert a character literally (quoted insert).
+        """
+        line.insert_text(event.data, overwrite=False)
 
-    @handle(Key.ControlN)
+    @handle(Keys.ControlN, in_mode=InputMode.INSERT)
     def _(event):
         line.complete_next()
 
@@ -87,7 +87,7 @@ def vi_bindings(registry, cli_ref):
         if line.complete_state and event.input_processor.input_mode != InputMode.COMPLETE:
             event.input_processor.push_input_mode(InputMode.COMPLETE)
 
-    @handle(Key.ControlP)
+    @handle(Keys.ControlP, in_mode=InputMode.INSERT)
     def _(event):
         line.complete_previous()
 
@@ -97,8 +97,8 @@ def vi_bindings(registry, cli_ref):
             event.input_processor.push_input_mode(InputMode.COMPLETE)
 
 
-    @handle(Key.ControlJ, in_mode=InputMode.VI_NAVIGATION)
-    @handle(Key.ControlM, in_mode=InputMode.VI_NAVIGATION)
+    @handle(Keys.ControlJ, in_mode=InputMode.VI_NAVIGATION)
+    @handle(Keys.ControlM, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
         In navigation mode, pressing enter will always return the input.
@@ -112,12 +112,12 @@ def vi_bindings(registry, cli_ref):
     @handle('a', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         line.cursor_position += line.document.get_cursor_right_position()
-        event.input_processor.input_mode = InputMode.VI_INSERT
+        event.input_processor.input_mode = InputMode.INSERT
 
     @handle('A', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         line.cursor_position += line.document.get_end_of_line_position()
-        event.input_processor.input_mode = InputMode.VI_INSERT
+        event.input_processor.input_mode = InputMode.INSERT
 
     @handle('C', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -129,7 +129,7 @@ def vi_bindings(registry, cli_ref):
         if deleted:
             data = ClipboardData(deleted)
             line.set_clipboard(data)
-        event.input_processor.input_mode = InputMode.VI_INSERT
+        event.input_processor.input_mode = InputMode.INSERT
 
     @handle('c', 'c', in_mode=InputMode.VI_NAVIGATION)
     @handle('S', in_mode=InputMode.VI_NAVIGATION)
@@ -144,7 +144,7 @@ def vi_bindings(registry, cli_ref):
         # But we delete after the whitespace
         line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
         line.delete(count=line.document.get_end_of_line_position())
-        event.input_processor.input_mode = InputMode.VI_INSERT
+        event.input_processor.input_mode = InputMode.INSERT
 
     @handle('D', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -185,11 +185,11 @@ def vi_bindings(registry, cli_ref):
 
     @handle('i', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
-        event.input_processor.input_mode = InputMode.VI_INSERT
+        event.input_processor.input_mode = InputMode.INSERT
 
     @handle('I', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
-        event.input_processor.input_mode = InputMode.VI_INSERT
+        event.input_processor.input_mode = InputMode.INSERT
         line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
 
     @handle('J', in_mode=InputMode.VI_NAVIGATION)
@@ -234,7 +234,7 @@ def vi_bindings(registry, cli_ref):
         for i in range(event.arg):
             line.paste_from_clipboard(before=True)
 
-    @handle('r', Key.Any, in_mode=InputMode.VI_NAVIGATION)
+    @handle('r', Keys.Any, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
         Replace single character under cursor
@@ -256,7 +256,7 @@ def vi_bindings(registry, cli_ref):
         """
         data = ClipboardData(''.join(line.delete() for i in range(event.arg)))
         line.set_clipboard(data)
-        event.input_processor.input_mode = InputMode.VI_INSERT
+        event.input_processor.input_mode = InputMode.INSERT
 
     @handle('u', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -315,8 +315,8 @@ def vi_bindings(registry, cli_ref):
             index = line.document.find_previous_matching_line(
                             lambda text: not text or text.isspace())
 
-            if index is not None:
-                line.cursor_position += line.document.get_cursor_up_position(count=index)
+            if index:
+                line.cursor_position += line.document.get_cursor_up_position(count=-index)
 
     @handle('}', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -327,7 +327,7 @@ def vi_bindings(registry, cli_ref):
             index = line.document.find_next_matching_line(
                             lambda text: not text or text.isspace())
 
-            if index is not None:
+            if index:
                 line.cursor_position += line.document.get_cursor_down_position(count=index)
 
     @handle('>', '>', in_mode=InputMode.VI_NAVIGATION)
@@ -364,7 +364,7 @@ def vi_bindings(registry, cli_ref):
         Open line above and enter insertion mode
         """
         line.insert_line_above()
-        event.input_processor.input_mode = InputMode.VI_INSERT
+        event.input_processor.input_mode = InputMode.INSERT
 
     @handle('o', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -372,7 +372,7 @@ def vi_bindings(registry, cli_ref):
         Open line below and enter insertion mode
         """
         line.insert_line_below()
-        event.input_processor.input_mode = InputMode.VI_INSERT
+        event.input_processor.input_mode = InputMode.INSERT
 
     @handle('~', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -476,7 +476,7 @@ def vi_bindings(registry, cli_ref):
 
                     # Only go back to insert mode in case of 'change'.
                     if not delete_only:
-                        event.input_processor.input_mode = InputMode.VI_INSERT
+                        event.input_processor.input_mode = InputMode.INSERT
 
             create(True)
             create(False)
@@ -546,7 +546,7 @@ def vi_bindings(registry, cli_ref):
                             ('[', ']'), ('<', '>'), ('{', '}'), ('(', ')') ]:
             create_ci_ca_handles(ci_start, ci_end, inner)
 
-    @change_delete_move_yank_handler('f', Key.Any)
+    @change_delete_move_yank_handler('f', Keys.Any)
     def _(event):
         """
         Go to next occurance of character. Typing 'fx' will move the
@@ -556,7 +556,7 @@ def vi_bindings(registry, cli_ref):
         match = line.document.find(event.data, in_current_line=True, count=event.arg)
         return CursorRegion(match or 0)
 
-    @change_delete_move_yank_handler('F', Key.Any)
+    @change_delete_move_yank_handler('F', Keys.Any)
     def _(event):
         """
         Go to previous occurance of character. Typing 'Fx' will move the
@@ -565,7 +565,7 @@ def vi_bindings(registry, cli_ref):
         _last_character_find[0] = (event.data, True)
         return CursorRegion(line.document.find_backwards(event.data, in_current_line=True, count=event.arg) or 0)
 
-    @change_delete_move_yank_handler('t', Key.Any)
+    @change_delete_move_yank_handler('t', Keys.Any)
     def _(event):
         """
         Move right to the next occurance of c, then one char backward.
@@ -574,7 +574,7 @@ def vi_bindings(registry, cli_ref):
         match = line.document.find(event.data, in_current_line=True, count=event.arg)
         return CursorRegion(match - 1 if match else 0)
 
-    @change_delete_move_yank_handler('T', Key.Any)
+    @change_delete_move_yank_handler('T', Keys.Any)
     def _(event):
         """
         Move left to the previous occurance of c, then one char forward.
@@ -660,7 +660,7 @@ def vi_bindings(registry, cli_ref):
         # Move to the top of the input.
         return CursorRegion(line.document.home_position)
 
-    @handle(Key.Any, in_mode=InputMode.VI_NAVIGATION)
+    @handle(Keys.Any, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
         Always handle numberics in navigation mode as arg.
@@ -670,7 +670,7 @@ def vi_bindings(registry, cli_ref):
         elif event.data == '0':
             line.cursor_position += line.document.get_start_of_line_position(after_whitespace=False)
 
-    @handle(Key.Any, in_mode=InputMode.VI_REPLACE)
+    @handle(Keys.Any, in_mode=InputMode.VI_REPLACE)
     def _(event):
         """
         Insert data at cursor position.

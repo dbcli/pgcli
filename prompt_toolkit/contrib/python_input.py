@@ -21,7 +21,8 @@ from prompt_toolkit.key_bindings.vi import vi_bindings
 from prompt_toolkit.key_bindings.emacs import emacs_bindings
 from prompt_toolkit.line import Line
 from prompt_toolkit.prompt import Prompt, TokenList, BracketsMismatchProcessor, PopupCompletionMenu, HorizontalCompletionMenu
-from prompt_toolkit.keys import Key
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.renderer import Char
 
 import jedi
 import platform
@@ -152,7 +153,7 @@ def python_bindings(registry, cli_ref):
     line = cli_ref().line
     handle = registry.add_binding
 
-    @handle(Key.F6)
+    @handle(Keys.F6)
     def _(event):
         """
         Enable/Disable paste mode.
@@ -161,14 +162,15 @@ def python_bindings(registry, cli_ref):
         if line.paste_mode:
             line.is_multiline = True
 
-    @handle(Key.F7)
+    @handle(Keys.F7)
     def _(event):
         """
         Enable/Disable multiline mode.
         """
         line.is_multiline = not line.is_multiline
 
-    @handle(Key.Tab)
+    @handle(Keys.Tab, in_mode=InputMode.INSERT)
+    @handle(Keys.Tab, in_mode=InputMode.COMPLETE)
     def _(event):
         # When the 'tab' key is pressed with only whitespace character before the
         # cursor, do autocompletion. Otherwise, insert indentation.
@@ -180,12 +182,17 @@ def python_bindings(registry, cli_ref):
             if event.input_processor.input_mode != InputMode.COMPLETE:
                 event.input_processor.push_input_mode(InputMode.COMPLETE)
 
-    @handle(Key.BackTab, in_mode=InputMode.COMPLETE)
+    @handle(Keys.BackTab, in_mode=InputMode.INSERT)
+    @handle(Keys.BackTab, in_mode=InputMode.COMPLETE)
     def _(event):
         line.complete_previous()
 
-    @handle(Key.ControlJ)
-    @handle(Key.ControlM)
+        if event.input_processor.input_mode != InputMode.COMPLETE:
+            event.input_processor.push_input_mode(InputMode.COMPLETE)
+            line.complete_previous()
+
+    @handle(Keys.ControlJ, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlM, in_mode=InputMode.INSERT)
     def _(event):
         _auto_enable_multiline()
 
@@ -363,7 +370,7 @@ class PythonPrompt(Prompt):
 
         # Fill space with tildes
         for y in range(last_char_y + 1, screen.current_height - 2):
-            screen.write_at_pos(y, 1, '~', Token.Leftmargin.Tilde)
+            screen.write_at_pos(y, 1, Char('~', Token.Leftmargin.Tilde))
 
     def write_to_screen(self, screen, last_screen_height, accept=False, abort=False):
         self.write_before_input(screen)
@@ -398,12 +405,12 @@ class PythonPrompt(Prompt):
             append((TB.Mode, '(SEARCH)'))
             append((TB, '   '))
         elif self.commandline.vi_mode:
-            if mode == InputMode.VI_NAVIGATION:
-                append((TB.Mode, '(NAV)'))
-                append((TB, '      '))
-            elif mode == InputMode.VI_INSERT:
+            if mode == InputMode.INSERT:
                 append((TB.Mode, '(INSERT)'))
                 append((TB, '   '))
+            elif mode == InputMode.VI_NAVIGATION:
+                append((TB.Mode, '(NAV)'))
+                append((TB, '      '))
             elif mode == InputMode.VI_REPLACE:
                 append((TB.Mode, '(REPLACE)'))
                 append((TB, '  '))
@@ -427,7 +434,7 @@ class PythonPrompt(Prompt):
             append((TB, '[Ctrl-G] Cancel search [Enter] Go to this position.'))
         elif self.line.selection_state:
             # Emacs cut/copy keys.
-            append((TB, '[Ctrl-W] Cut [Meta-W] Copy'))
+            append((TB, '[Ctrl-W] Cut [Meta-W] Copy [Ctrl-Y] Paste [Ctrl-G] Cancel'))
         else:
             if self.line.paste_mode:
                 append((TB.On, '[F6] Paste mode (on)  '))
@@ -503,6 +510,9 @@ class PythonCode(Code):
             # gives `None` as offset in case of '4=4' as input. (Looks like
             # fixed in Python 3.)
             raise ValidationError(e.lineno - 1, (e.offset or 1) - 1, 'Syntax Error')
+        except TypeError as e:
+            # e.g. "compile() expected string without null bytes"
+            raise ValidationError(0, 0, str(e))
 
     def _get_jedi_script(self):
         try:
@@ -537,7 +547,7 @@ class PythonCommandLineInterface(CommandLineInterface):
                     style=PythonStyle, autocompletion_style=AutoCompletionStyle.POPUP_MENU):
 
         self.globals = globals or {}
-        self.locals = locals or {}
+        self.locals = locals or globals
         self.history_filename = history_filename
         self.style = style
         self.autocompletion_style = autocompletion_style

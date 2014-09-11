@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from ..keys import Key
+from ..keys import Keys
 from ..enums import InputMode, IncrementalSearchDirection
 from ..line import ClipboardData
 
@@ -11,29 +11,74 @@ def basic_bindings(registry, cli_ref):
     line = cli_ref().line
     handle = create_handle_decorator(registry, line)
 
-    @handle(Key.Home)
+    @handle(Keys.F1)
+    @handle(Keys.F2)
+    @handle(Keys.F3)
+    @handle(Keys.F4)
+    @handle(Keys.F5)
+    @handle(Keys.F6)
+    @handle(Keys.F7)
+    @handle(Keys.F8)
+    @handle(Keys.F9)
+    @handle(Keys.F10)
+    @handle(Keys.F11)
+    @handle(Keys.F12)
+    @handle(Keys.F13)
+    @handle(Keys.F14)
+    @handle(Keys.F15)
+    @handle(Keys.F16)
+    @handle(Keys.F17)
+    @handle(Keys.F18)
+    @handle(Keys.F19)
+    @handle(Keys.F20)
+    @handle(Keys.ControlSpace)
+    @handle(Keys.ControlBackslash)
+    @handle(Keys.ControlSquareClose)
+    @handle(Keys.ControlCircumflex)
+    @handle(Keys.Backspace)
+    @handle(Keys.Up)
+    @handle(Keys.Down)
+    @handle(Keys.Right)
+    @handle(Keys.Left)
+    @handle(Keys.Home)
+    @handle(Keys.End)
+    @handle(Keys.Delete)
+    @handle(Keys.ShiftDelete)
+    @handle(Keys.PageUp)
+    @handle(Keys.PageDown)
+    @handle(Keys.BackTab)
+    @handle(Keys.Tab)
+    def _(event):
+        """
+        First, for any of these keys, Don't do anything by default. Also don't
+        catch them in the 'Any' handler which will insert them as data.
+        """
+        # We override the functionality below.
+        pass
+
+    @handle(Keys.Home)
     def _(event):
         line.cursor_position += line.document.home_position
 
-    @handle(Key.End)
+    @handle(Keys.End)
     def _(event):
         line.cursor_position += line.document.end_position
 
     # CTRL keys.
 
-    @handle(Key.ControlA)
+    @handle(Keys.ControlA)
     def _(event):
         line.cursor_position += line.document.get_start_of_line_position(after_whitespace=False)
 
-    @handle(Key.ControlB)
+    @handle(Keys.ControlB)
     def _(event):
         line.cursor_position += line.document.get_cursor_left_position(count=event.arg)
 
-    @handle(Key.ControlC)
+    @handle(Keys.ControlC)
     def _(event):
         line.abort()
 
-    @handle(Key.ControlD)
+    @handle(Keys.ControlD)
     def _(event):
         # When there is text, act as delete, otherwise call exit.
         if line.text:
@@ -41,19 +86,15 @@ def basic_bindings(registry, cli_ref):
         else:
             line.exit()
 
-    @handle(Key.ControlE)
+    @handle(Keys.ControlE)
     def _(event):
         line.cursor_position += line.document.get_end_of_line_position()
 
-    @handle(Key.ControlF)
+    @handle(Keys.ControlF)
     def _(event):
         line.cursor_position += line.document.get_cursor_right_position(count=event.arg)
 
-    @handle(Key.ControlG)
-    def _(event):
-        pass
-
-    @handle(Key.ControlG, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.ControlG, in_mode=InputMode.INCREMENTAL_SEARCH)
     # NOTE: the reason for not binding Escape to this one, is that we want
     #       Alt+Enter to accept input directly in incremental search mode.
     def _(event):
@@ -63,8 +104,8 @@ def basic_bindings(registry, cli_ref):
         line.exit_isearch(restore_original_line=True)
         event.input_processor.pop_input_mode()
 
-    @handle(Key.ControlI)
-    @handle(Key.Tab)
+    @handle(Keys.ControlI, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlI, in_mode=InputMode.COMPLETE)
     def _(event):
         r"""
         Ctrl-I is identical to "\t"
@@ -78,9 +119,8 @@ def basic_bindings(registry, cli_ref):
         else:
             not line.complete_common()
 
-
-    @handle(Key.ControlJ, in_mode=InputMode.INCREMENTAL_SEARCH)
-    @handle(Key.ControlM, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.ControlJ, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.ControlM, in_mode=InputMode.INCREMENTAL_SEARCH)
     def _(event):
         """
         When enter pressed in isearch, quit isearch mode. (Multiline
@@ -89,8 +129,8 @@ def basic_bindings(registry, cli_ref):
         line.exit_isearch()
         event.input_processor.pop_input_mode()
 
-    @handle(Key.ControlJ)
-    @handle(Key.ControlM)
+    @handle(Keys.ControlJ, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlM, in_mode=InputMode.INSERT)
     def _(event):
         """
         Newline/Enter.
@@ -100,52 +140,36 @@ def basic_bindings(registry, cli_ref):
         else:
             line.return_input()
 
-    @handle(Key.ControlK)
+    @handle(Keys.ControlK, in_mode=InputMode.INSERT)
     def _(event):
         deleted = line.delete(count=line.document.get_end_of_line_position())
         line.set_clipboard(ClipboardData(deleted))
 
-    @handle(Key.ControlL)
+    @handle(Keys.ControlL)
     def _(event):
         line.clear()
 
-    @handle(Key.ControlN)
-    def _(event):
-        line.history_forward()
-
-    @handle(Key.ControlO)
-    def _(event):
-        pass
-
-    @handle(Key.ControlP)
-    def _(event):
-        line.history_backward()
-
-    @handle(Key.ControlQ)
-    def _(event):
-        pass
-
-    @handle(Key.ControlR)
-    @handle(Key.Up, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.ControlR)
+    @handle(Keys.Up, in_mode=InputMode.INCREMENTAL_SEARCH)
     def _(event):
         line.incremental_search(IncrementalSearchDirection.BACKWARD)
 
         if event.input_processor.input_mode != InputMode.INCREMENTAL_SEARCH:
             event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
 
-    @handle(Key.ControlS)
-    @handle(Key.Down, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.ControlS)
+    @handle(Keys.Down, in_mode=InputMode.INCREMENTAL_SEARCH)
     def _(event):
         line.incremental_search(IncrementalSearchDirection.FORWARD)
 
         if event.input_processor.input_mode != InputMode.INCREMENTAL_SEARCH:
             event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
 
-    @handle(Key.ControlT)
+    @handle(Keys.ControlT)
     def _(event):
         line.swap_characters_before_cursor()
 
-    @handle(Key.ControlU)
+    @handle(Keys.ControlU, in_mode=InputMode.INSERT)
     def _(event):
         """
         Clears the line before the cursor position. If you are at the end of
@@ -154,11 +178,7 @@ def basic_bindings(registry, cli_ref):
         deleted = line.delete_before_cursor(count=-line.document.get_start_of_line_position())
         line.set_clipboard(ClipboardData(deleted))
 
-    @handle(Key.ControlV)
-    def _(event):
-        pass
-
-    @handle(Key.ControlW)
+    @handle(Keys.ControlW, in_mode=InputMode.INSERT)
     def _(event):
         """
         Delete the word before the cursor.
@@ -168,80 +188,76 @@ def basic_bindings(registry, cli_ref):
             deleted = line.delete_before_cursor(count=-pos)
             line.set_clipboard(ClipboardData(deleted))
 
-    @handle(Key.ControlX)
+    @handle(Keys.ControlX)
     def _(event):
         pass
 
-    @handle(Key.ControlY)
+    @handle(Keys.ControlY, InputMode.INSERT)
     def _(event):
         # Pastes the clipboard content.
         line.paste_from_clipboard()
 
-    @handle(Key.ControlZ)
-    def _(event):
-        pass
-
-    @handle(Key.PageUp, in_mode=InputMode.COMPLETE)
+    @handle(Keys.PageUp, in_mode=InputMode.COMPLETE)
     def _(event):
         line.complete_previous(5)
 
-    @handle(Key.PageUp)
+    @handle(Keys.PageUp, in_mode=InputMode.INSERT)
     def _(event):
         line.history_backward()
 
-    @handle(Key.PageDown, in_mode=InputMode.COMPLETE)
+    @handle(Keys.PageDown, in_mode=InputMode.COMPLETE)
     def _(event):
         line.complete_next(5)
 
-    @handle(Key.PageDown)
+    @handle(Keys.PageDown, in_mode=InputMode.INSERT)
     def _(event):
         line.history_forward()
 
-    @handle(Key.Left)
+    @handle(Keys.Left)
     def _(event):
         if not event.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH:
             line.cursor_position += line.document.get_cursor_left_position(count=event.arg)
 
-    @handle(Key.Right)
+    @handle(Keys.Right)
     def _(event):
         if not event.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH:
             line.cursor_position += line.document.get_cursor_right_position(count=event.arg)
 
-    @handle(Key.Up)
+    @handle(Keys.Up)
     def _(event):
         line.auto_up(count=event.arg)
 
-    @handle(Key.Down)
+    @handle(Keys.Down)
     def _(event):
         line.auto_down(count=event.arg)
 
-    @handle(Key.ControlH)
-    @handle(Key.Backspace)
+    @handle(Keys.ControlH, in_mode=InputMode.INSERT)
+    @handle(Keys.Backspace, in_mode=InputMode.INSERT)
     def _(event):
         line.delete_before_cursor(count=event.arg)
 
-    @handle(Key.ControlH, in_mode=InputMode.INCREMENTAL_SEARCH)
-    @handle(Key.Backspace, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.ControlH, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.Backspace, in_mode=InputMode.INCREMENTAL_SEARCH)
     def _(event):
         line.isearch_delete_before_cursor(count=event.arg)
 
-    @handle(Key.Delete)
+    @handle(Keys.Delete, in_mode=InputMode.INSERT)
     def _(event):
         line.delete(count=event.arg)
 
-    @handle(Key.ShiftDelete)
+    @handle(Keys.ShiftDelete, in_mode=InputMode.INSERT)
     def _(event):
         line.delete(count=event.arg)
 
-    @handle(Key.Any, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.Any, in_mode=InputMode.INCREMENTAL_SEARCH)
     def _(event):
         """
         Insert isearch string.
         """
         line.insert_isearch_text(event.data)
 
-    @handle(Key.Any, in_mode=InputMode.COMPLETE)
-    @handle(Key.Any)
+    @handle(Keys.Any, in_mode=InputMode.COMPLETE)
+    @handle(Keys.Any, in_mode=InputMode.INSERT)
     def _(event):
         """
         Insert data at cursor position.
@@ -252,24 +268,25 @@ def basic_bindings(registry, cli_ref):
         if event.input_processor.input_mode == InputMode.COMPLETE:
             event.input_processor.pop_input_mode()
 
-    @handle(Key.Escape, Key.Left)
+    @handle(Keys.Escape, Keys.Left)
     def _(event):
         """
         Cursor to start of previous word.
         """
         line.cursor_position += line.document.find_previous_word_beginning(count=event.arg) or 0
 
-    @handle(Key.Escape, Key.Right)
+    @handle(Keys.Escape, Keys.Right)
     def _(event):
         """
         Cursor to start of next word.
         """
         line.cursor_position += line.document.find_next_word_beginning(count=event.arg) or 0
 
-    @handle(Key.Escape, in_mode=InputMode.COMPLETE)
-    @handle(Key.ControlC, in_mode=InputMode.COMPLETE)
+    @handle(Keys.Escape, in_mode=InputMode.COMPLETE)
+    @handle(Keys.ControlC, in_mode=InputMode.COMPLETE)
     def _(event):
         """
         Pressing escape or Ctrl-C in complete mode, goes back to default mode.
         """
         event.input_processor.pop_input_mode()
+

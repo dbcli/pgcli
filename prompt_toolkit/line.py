@@ -762,6 +762,9 @@ class Line(object):
 
         self.isearch_state = None
 
+    def exit_selection(self):
+        self.selection_state = None
+
     def clear(self):
         """
         Clear screen, usually as a result of Ctrl-L.

@@ -7,11 +7,9 @@ class IncrementalSearchDirection:
 
 
 class InputMode(object):
-    INPUT = 'input'
-    EMACS = 'emacs'
+    INSERT = 'vi-insert'
 
     VI_NAVIGATION = 'vi-navigation'
-    VI_INSERT = 'vi-insert'
     VI_REPLACE = 'vi-replace'
 
     # Selection mode. The type of selection (characters/lines/block is saved in
