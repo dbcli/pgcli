@@ -176,11 +176,11 @@ class Line(object):
 
     @property
     def text(self):
-        return self._working_lines[self._working_index]
+        return self._working_lines[self.working_index]
 
     @text.setter
     def text(self, value):
-        self._working_lines[self._working_index] = value
+        self._working_lines[self.working_index] = value
 
         # Remove validation errors, complete state.
         self.validation_error = None
@@ -205,11 +205,11 @@ class Line(object):
         # new position of the cursor determines the end of the selection.
 
     @property
-    def _working_index(self):
+    def working_index(self):
         return self.__working_index
 
-    @_working_index.setter
-    def _working_index(self, value):
+    @working_index.setter
+    def working_index(self, value):
         self.__working_index = value
 
         # Remove any validation errors and complete state.
@@ -316,11 +316,11 @@ class Line(object):
         if self.document.cursor_position_row < self.document.line_count - 1:
             self.cursor_position += self.document.get_cursor_down_position(count=count)
         elif not self.selection_state:
-            old_index = self._working_index
+            old_index = self.working_index
             self.history_forward(count=count)
 
             # If we moved to the next line, place the cursor at the beginning.
-            if old_index != self._working_index:
+            if old_index != self.working_index:
                 self.cursor_position = 0
 
     def isearch_delete_before_cursor(self, count=1): # TODO: unittest return type
@@ -381,7 +381,7 @@ class Line(object):
         Go to this item in the history.
         """
         if index < len(self._working_lines):
-            self._working_index = index
+            self.working_index = index
             self.cursor_position = len(self.text)
 
     def create_code_obj(self):
@@ -476,15 +476,15 @@ class Line(object):
         self.complete_state = state
 
     def history_forward(self, count=1):
-        if self._working_index < len(self._working_lines) - count:
+        if self.working_index < len(self._working_lines) - count:
             # Go forward in history, and update cursor_position.
-            self._working_index += count
+            self.working_index += count
             self.cursor_position = len(self.text)
 
     def history_backward(self, count=1):
-        if self._working_index - count >= 0:
+        if self.working_index - count >= 0:
             # Go back in history, and update cursor_position.
-            self._working_index -= count
+            self.working_index -= count
             self.cursor_position = len(self.text)
 
     def start_selection(self, selection_type=SelectionType.CHARACTERS):
@@ -668,7 +668,7 @@ class Line(object):
         if not self.isearch_state:
             self.isearch_state = _IncrementalSearchState(
                     original_cursor_position = self.cursor_position,
-                    original_working_index = self._working_index)
+                    original_working_index = self.working_index)
 
     def incremental_search(self, direction):
         """
@@ -691,11 +691,11 @@ class Line(object):
                 found = True
             else:
                 # No match, go back in the history.
-                for i in range(self._working_index - 1, -1, -1):
+                for i in range(self.working_index - 1, -1, -1):
                     document = Document(self._working_lines[i], len(self._working_lines[i]))
                     new_index = document.find_backwards(isearch_text)
                     if new_index is not None:
-                        self._working_index = i
+                        self.working_index = i
                         self.cursor_position = len(self._working_lines[i]) + new_index
                         self.isearch_state.no_match_from_index = None
                         found = True
@@ -709,11 +709,11 @@ class Line(object):
                 found = True
             else:
                 # No match, go forward in the history.
-                for i in range(self._working_index + 1, len(self._working_lines)):
+                for i in range(self.working_index + 1, len(self._working_lines)):
                     document = Document(self._working_lines[i], 0)
                     new_index = document.find(isearch_text, include_current_position=True)
                     if new_index is not None:
-                        self._working_index = i
+                        self.working_index = i
                         self.cursor_position = new_index
                         self.isearch_state.no_match_from_index = None
                         found = True
@@ -729,7 +729,7 @@ class Line(object):
         Exit i-search mode.
         """
         if restore_original_line:
-            self._working_index = self.isearch_state.original_working_index
+            self.working_index = self.isearch_state.original_working_index
             self.cursor_position = self.isearch_state.original_cursor_position
 
         self.isearch_state = None

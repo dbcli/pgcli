@@ -266,3 +266,18 @@ def emacs_bindings(registry, cli_ref):
         """
         text = line.copy_selection()
         line.set_clipboard(ClipboardData(text))
+
+    @handle(Keys.Escape, '<', in_mode=InputMode.INSERT)
+    def _(event):
+        """
+        Move to the first line in the history.
+        """
+        line.go_to_history(0)
+
+    @handle(Keys.Escape, '>', in_mode=InputMode.INSERT)
+    def _(event):
+        """
+        Move to the end of the input history.
+        This is the line we are editing.
+        """
+        line.go_to_history(len(line._working_lines) - 1)

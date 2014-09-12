@@ -435,7 +435,7 @@ class PythonPrompt(Prompt):
             append((TB, ' '))
 
         # Position in history.
-        append((TB, '%i/%i ' % (self.line._working_index + 1, len(self.line._working_lines))))
+        append((TB, '%i/%i ' % (self.line.working_index + 1, len(self.line._working_lines))))
 
         # Shortcuts.
         if mode == InputMode.INCREMENTAL_SEARCH:
