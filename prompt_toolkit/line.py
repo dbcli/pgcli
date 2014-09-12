@@ -275,15 +275,6 @@ class Line(object):
         # TODO: this can be cached as long self.text does not change.
         return Document(self.text, self.cursor_position, selection=self.selection_state)
 
-    def set_arg_prompt(self, arg): # XXX: Just make a property of this???
-        """
-        Called from the `InputStreamHandler` to set a "(arg: x)"-like prompt.
-        (Both in Vi and Emacs-mode we have a way to repeat line operations.
-        Settings this attribute to the `Line` object allows the prompt/renderer
-        to visualise it.)
-        """
-        self._arg_prompt_text = arg
-
     def cursor_left(self):
         self.cursor_position += self.document.get_cursor_left_position()
 
