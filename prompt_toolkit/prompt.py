@@ -404,8 +404,11 @@ class Prompt(object):
                     x: token for x in range(index, index + len(self.line.isearch_state.isearch_text)) })
 
         # In case of selection, highlight all matches.
-        if self.line.selection_state:
-            for i in range(*sorted([ self.line.cursor_position, self.line.selection_state.original_cursor_position ])):
+        selection_range = self.line.document.selection_range()
+        if selection_range:
+            from_, to = selection_range
+
+            for i in range(from_, to):
                 highlighted_characters[i] = Token.SelectedText
 
         return highlighted_characters

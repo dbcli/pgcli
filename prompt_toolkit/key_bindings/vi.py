@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
-from ..line import ClipboardData, ClipboardDataType, SelectionType
+from ..line import ClipboardData, ClipboardDataType
+from ..selection import SelectionType
 from ..enums import IncrementalSearchDirection, InputMode
 from ..keys import Keys
 
@@ -62,7 +63,11 @@ def vi_bindings(registry, cli_ref):
         """
         Escape goes to vi navigation mode.
         """
-        event.input_processor.input_mode = InputMode.VI_NAVIGATION
+        if event.input_processor.input_mode == InputMode.SELECTION:
+            line.exit_selection()
+            event.input_processor.pop_input_mode()
+        else:
+            event.input_processor.input_mode = InputMode.VI_NAVIGATION
 
     @handle(Keys.Backspace, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -79,6 +84,7 @@ def vi_bindings(registry, cli_ref):
         line.insert_text(event.data, overwrite=False)
 
     @handle(Keys.ControlN, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlN, in_mode=InputMode.COMPLETE)
     def _(event):
         line.complete_next()
 
@@ -88,6 +94,7 @@ def vi_bindings(registry, cli_ref):
             event.input_processor.push_input_mode(InputMode.COMPLETE)
 
     @handle(Keys.ControlP, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlP, in_mode=InputMode.COMPLETE)
     def _(event):
         line.complete_previous()
 
@@ -267,6 +274,22 @@ def vi_bindings(registry, cli_ref):
     def _(event):
         line.open_in_editor()
 
+    # @handle('v', in_mode=InputMode.VI_NAVIGATION)
+    # def _(event):
+    #     """
+    #     Start characters selection.
+    #     """
+    #     line.start_selection(selection_type=SelectionType.CHARACTERS)
+    #     event.input_processor.push_input_mode(InputMode.SELECTION)
+
+    @handle('V', in_mode=InputMode.VI_NAVIGATION)
+    def _(event):
+        """
+        Start lines selection.
+        """
+        line.start_selection(selection_type=SelectionType.LINES)
+        event.input_processor.push_input_mode(InputMode.SELECTION)
+
     @handle('x', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
@@ -274,6 +297,27 @@ def vi_bindings(registry, cli_ref):
         """
         data = ClipboardData(line.delete(count=event.arg))
         line.set_clipboard(data)
+
+    @handle('x', in_mode=InputMode.SELECTION)
+    @handle('d', 'd', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Cut selection.
+        """
+        selection_type = line.selection_state.type
+        deleted = line.cut_selection()
+        line.set_clipboard(ClipboardData(deleted, selection_type))
+        event.input_processor.pop_input_mode()
+
+    @handle('y', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Copy selection.
+        """
+        selection_type = line.selection_state.type
+        deleted = line.copy_selection()
+        line.set_clipboard(ClipboardData(deleted, selection_type))
+        event.input_processor.pop_input_mode()
 
     @handle('X', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -305,30 +349,6 @@ def vi_bindings(registry, cli_ref):
         """
         line.cursor_position += line.document.get_cursor_up_position(count=event.arg)
         line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
-
-    @handle('{', in_mode=InputMode.VI_NAVIGATION)
-    def _(event):
-        """
-        Move to previous blank-line separated section.
-        """
-        for i in range(event.arg):
-            index = line.document.find_previous_matching_line(
-                            lambda text: not text or text.isspace())
-
-            if index:
-                line.cursor_position += line.document.get_cursor_up_position(count=-index)
-
-    @handle('}', in_mode=InputMode.VI_NAVIGATION)
-    def _(event):
-        """
-        Move to next blank-line separated section.
-        """
-        for i in range(event.arg):
-            index = line.document.find_next_matching_line(
-                            lambda text: not text or text.isspace())
-
-            if index:
-                line.cursor_position += line.document.get_cursor_down_position(count=index)
 
     @handle('>', '>', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -437,6 +457,7 @@ def vi_bindings(registry, cli_ref):
         def decorator(func):
             if not no_move_handler:
                 @handle(*keys, in_mode=InputMode.VI_NAVIGATION)
+                @handle(*keys, in_mode=InputMode.SELECTION)
                 def move(event):
                     """ Create move handler. """
                     region = func(event)
@@ -545,6 +566,37 @@ def vi_bindings(registry, cli_ref):
         for ci_start  , ci_end in [ ('"', '"'), ("'", "'"), ("`", "`"),
                             ('[', ']'), ('<', '>'), ('{', '}'), ('(', ')') ]:
             create_ci_ca_handles(ci_start, ci_end, inner)
+
+    @change_delete_move_yank_handler('{') # TODO: implement 'arg'
+    def _(event):
+        """
+        Move to previous blank-line separated section.
+        Implements '{', 'c{', 'd{', 'y{'
+        """
+        line_index = line.document.find_previous_matching_line(
+                        lambda text: not text or text.isspace())
+
+        if line_index:
+            index = line.document.get_cursor_up_position(count=-line_index)
+        else:
+            index = 0
+        return CursorRegion(index)
+
+    @change_delete_move_yank_handler('}') # TODO: implement 'arg'
+    def _(event):
+        """
+        Move to next blank-line separated section.
+        Implements '}', 'c}', 'd}', 'y}'
+        """
+        line_index = line.document.find_next_matching_line(
+                        lambda text: not text or text.isspace())
+
+        if line_index:
+            index = line.document.get_cursor_down_position(count=line_index)
+        else:
+            index = 0
+
+        return CursorRegion(index)
 
     @change_delete_move_yank_handler('f', Keys.Any)
     def _(event):
@@ -661,6 +713,7 @@ def vi_bindings(registry, cli_ref):
         return CursorRegion(line.document.home_position)
 
     @handle(Keys.Any, in_mode=InputMode.VI_NAVIGATION)
+    @handle(Keys.Any, in_mode=InputMode.SELECTION)
     def _(event):
         """
         Always handle numberics in navigation mode as arg.

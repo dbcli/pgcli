@@ -8,6 +8,7 @@ from .code import Code, ValidationError
 from .document import Document
 from .enums import IncrementalSearchDirection
 from .history import History
+from .selection import SelectionType, SelectionState
 
 import os
 import tempfile
@@ -61,32 +62,6 @@ class ClipboardData(object):
     """
     def __init__(self, text='', type=ClipboardDataType.CHARACTERS):
         self.text = text
-        self.type = type
-
-
-class SelectionType(object):
-    """
-    Type of selection.
-    """
-    #: Characters. (Visual in Vi.)
-    CHARACTERS = 'characters'
-
-    #: Whole lines. (Visual-Line in Vi.)
-    LINES = 'lines'
-
-    #: A block selection. (Visual-Block in Vi. But not supported yet.)
-    BLOCK = 'block'
-
-
-class SelectionState(object):
-    """
-    State of the current selection.
-
-    :param original_cursor_position: int
-    :param type: :class:`~.SelectionType`
-    """
-    def __init__(self, original_cursor_position=0, type=SelectionType.CHARACTERS):
-        self.original_cursor_position = original_cursor_position
         self.type = type
 
 
@@ -298,7 +273,7 @@ class Line(object):
         position.
         """
         # TODO: this can be cached as long self.text does not change.
-        return Document(self.text, self.cursor_position)
+        return Document(self.text, self.cursor_position, selection=self.selection_state)
 
     def set_arg_prompt(self, arg): # XXX: Just make a property of this???
         """
@@ -524,8 +499,7 @@ class Line(object):
         """
         if self.selection_state:
             # Take start and end of selection
-            # (start and end position are always included in the selection.)
-            from_, to = sorted([self.cursor_position, self.selection_state.original_cursor_position])
+            from_, to = self.document.selection_range()
 
             copied_text = self.text[from_:to]
 
@@ -536,8 +510,6 @@ class Line(object):
 
             self.selection_state = None
             return copied_text
-
-            # TODO: inclument line selection.
         else:
             return ''
 

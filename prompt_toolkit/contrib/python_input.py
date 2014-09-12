@@ -17,12 +17,13 @@ from prompt_toolkit import CommandLineInterface
 from prompt_toolkit.code import Completion, Code, ValidationError
 from prompt_toolkit.enums import InputMode
 from prompt_toolkit.history import FileHistory, History
-from prompt_toolkit.key_bindings.vi import vi_bindings
 from prompt_toolkit.key_bindings.emacs import emacs_bindings
+from prompt_toolkit.key_bindings.vi import vi_bindings
+from prompt_toolkit.keys import Keys
 from prompt_toolkit.line import Line
 from prompt_toolkit.prompt import Prompt, TokenList, BracketsMismatchProcessor, PopupCompletionMenu, HorizontalCompletionMenu
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.renderer import Char
+from prompt_toolkit.selection import SelectionType
 
 import jedi
 import platform
@@ -417,6 +418,13 @@ class PythonPrompt(Prompt):
             elif mode == InputMode.COMPLETE:
                 append((TB.Mode, '(COMPLETE)'))
                 append((TB, ' '))
+            elif mode == InputMode.SELECTION:
+                if self.line.selection_state.type == SelectionType.LINES:
+                    append((TB.Mode, '(VISUAL LINE)'))
+                    append((TB, ' '))
+                elif self.line.selection_state.type == SelectionType.CHARACTERS:
+                    append((TB.Mode, '(VISUAL)'))
+                    append((TB, ' '))
 
 #            if self.commandline._input_processor.is_recording_macro:
 #                append((TB.Mode, 'recording'))

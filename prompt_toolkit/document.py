@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 
 import re
 
+from .selection import SelectionType
+
 __all__ = ('Document',)
 
 
@@ -25,12 +27,14 @@ class Document(object):
 
     :param text: string
     :param cursor_position: int
+    :param selection: :class:`SelectionState`
     """
-    __slots__ = ('text', 'cursor_position')
+    __slots__ = ('text', 'cursor_position', 'selection')
 
-    def __init__(self, text='', cursor_position=0):
+    def __init__(self, text='', cursor_position=0, selection=None):
         self.text = text
         self.cursor_position = cursor_position
+        self.selection = selection
 
     @property
     def current_char(self):
@@ -442,3 +446,24 @@ class Document(object):
         column = max(0, min(line_length, column))
 
         return column - current_column
+
+
+    def selection_range(self):
+        """
+        Return (from, to) tuple of the selection or `None` if nothing was selected.
+        start and end position are always included in the selection.
+        """
+        if self.selection:
+            from_, to = sorted([self.cursor_position, self.selection.original_cursor_position])
+
+            # In case of a LINES selection, go to the start/end of the lines.
+            if self.selection.type == SelectionType.LINES:
+                from_ = max(0, self.text[:from_].rfind('\n') + 1)
+
+                if self.text[to:].find('\n') >= 0:
+                    to += self.text[to:].find('\n')
+                else:
+                    to = len(self.text)
+
+            return from_, to
+
