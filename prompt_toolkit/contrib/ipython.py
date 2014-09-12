@@ -101,7 +101,7 @@ class InteractiveShellEmbed(_InteractiveShellEmbed):
 
         super(InteractiveShellEmbed, self).__init__(*a, **kw)
 
-        self._cli = IPythonCommandLineInterface(self, vi_mode=vi_mode,
+        self._cli = IPythonCommandLineInterface(self, globals=self.user_ns, vi_mode=vi_mode,
                         history_filename=history_filename, autocompletion_style=autocompletion_style)
 
     def raw_input(self, prompt=''):
