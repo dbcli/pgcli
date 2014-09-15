@@ -314,7 +314,7 @@ class Line(object):
             if old_index != self.working_index:
                 self.cursor_position = 0
 
-    def isearch_delete_before_cursor(self, count=1): # TODO: unittest return type
+    def isearch_delete_before_cursor(self, count=1): # TODO: unittest
         assert count >= 0
 
         self._start_isearch()

@@ -185,10 +185,16 @@ def vi_bindings(registry, cli_ref):
     @handle('G', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
-        Move to the history line n (you may specify the argument n by
-        typing it on number keys, for example, 15G)
+        If an argument is given, move to this line in the  history. (for
+        example, 15G) Otherwise, go the the last line of the current string.
         """
-        line.go_to_history(event.arg - 1)
+        # If an arg has been given explicitely.
+        if event._arg:
+            line.go_to_history(event.arg - 1)
+
+        # Otherwise this goes to the last line of the file.
+        else:
+            line.cursor_position = len(line.text)
 
     @handle('i', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -325,6 +331,7 @@ def vi_bindings(registry, cli_ref):
         line.set_clipboard(data)
 
     @handle('y', 'y', in_mode=InputMode.VI_NAVIGATION)
+    @handle('Y', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
         Yank the whole line.
@@ -356,9 +363,26 @@ def vi_bindings(registry, cli_ref):
         Indent lines.
         """
         current_line = line.document.cursor_position_row
-        line_range = range(current_line, current_line + event.arg)
-        line.transform_lines(line_range, lambda l: '    ' + l)
+        _indent(current_line, current_line + event.arg)
 
+    def _indent(from_line, to_line, count=1):
+        line_range = range(from_line, to_line)
+        line.transform_lines(line_range, lambda l: '    ' * count + l)
+
+        line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
+
+    def _unindent(from_line, to_line, count=1):
+        #line_range = range(current_line, current_line + event.arg)
+        line_range = range(from_line, to_line)
+
+        def transform(text):
+            remove = '    ' * count
+            if text.startswith(remove):
+                return text[len(remove):]
+            else:
+                return text.lstrip()
+
+        line.transform_lines(line_range, transform)
         line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
 
     @handle('<', '<', in_mode=InputMode.VI_NAVIGATION)
@@ -367,16 +391,35 @@ def vi_bindings(registry, cli_ref):
         Unindent lines.
         """
         current_line = line.document.cursor_position_row
-        line_range = range(current_line, current_line + event.arg)
+        _unindent(current_line, current_line + event.arg)
 
-        def transform(text):
-            if text.startswith('    '):
-                return text[4:]
-            else:
-                return text.lstrip()
+    @handle('>', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Indent selection
+        """
+        selection_type = line.selection_state.type
+        if selection_type == SelectionType.LINES:
+            from_, to = line.document.selection_range()
+            from_, _ = line.document.translate_index_to_position(from_)
+            to, _ = line.document.translate_index_to_position(to)
 
-        line.transform_lines(line_range, transform)
-        line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
+            _indent(from_ - 1, to, count=event.arg) # XXX: why does translate_index_to_position return 1-based indexing???
+        event.input_processor.pop_input_mode()
+
+    @handle('<', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Unindent selection
+        """
+        selection_type = line.selection_state.type
+        if selection_type == SelectionType.LINES:
+            from_, to = line.document.selection_range()
+            from_, _ = line.document.translate_index_to_position(from_)
+            to, _ = line.document.translate_index_to_position(to)
+
+            _unindent(from_ - 1, to, count=event.arg)
+        event.input_processor.pop_input_mode()
 
     @handle('O', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -454,6 +497,14 @@ def vi_bindings(registry, cli_ref):
         no_move_handler = kw.pop('no_move_handler', False)
 
         # TODO: Also do '>' and '<' indent/unindent operators.
+        # TODO: Also
+        #                 ~: swap case # If tildeop is set
+        #                g~: swap case
+        #                gu: lowercase
+        #                gU: uppercase
+        #                g?: rot13
+        #                gq: text formatting
+        #  See: :help motion.txt
         def decorator(func):
             if not no_move_handler:
                 @handle(*keys, in_mode=InputMode.VI_NAVIGATION)
@@ -696,6 +747,7 @@ def vi_bindings(registry, cli_ref):
     def _(event):
         """ Implements 'c%', 'd%', '%, 'y%' """
         # Move to the corresponding opening/closing bracket (()'s, []'s and {}'s).
+        # TODO: if 'arg' has been given, the meaning of % is to go to the 'x%' row in the file.
         return CursorRegion(line.document.matching_bracket_position)
 
     @change_delete_move_yank_handler('|')

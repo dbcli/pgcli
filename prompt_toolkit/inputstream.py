@@ -8,10 +8,10 @@ from .keys import Keys
 
 __all__ = (
     'InputStream',
-    'KeysPressHistory',
 )
 
-class KeysPress(object):
+
+class KeyPress(object):
     """
     :param key: a `Keys` instance.
     :param data: The received string on stdin. (Often vt100 escape codes.)
@@ -19,6 +19,9 @@ class KeysPress(object):
     def __init__(self, key, data):
         self.key = key
         self.data = data
+
+    def __repr__(self):
+        return 'KeyPress(key=%r, data=%r)' % (self.key, self.data)
 
 
 class InputStream(object):
@@ -200,7 +203,7 @@ class InputStream(object):
             for k in key:
                 self._call_handler(k, insert_text)
         else:
-            self._input_processor.feed_key(KeysPress(key, insert_text))
+            self._input_processor.feed_key(KeyPress(key, insert_text))
 
     def feed(self, data):
         """

@@ -118,7 +118,7 @@ class Document(object):
         """
         return len(self.current_line_before_cursor)
 
-    def translate_index_to_position(self, index):
+    def translate_index_to_position(self, index): # TODO: make this 0-based indexed!!!
         """
         Given an index for the text, return the corresponding (row, col) tuple.
         """
