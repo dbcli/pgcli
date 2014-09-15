@@ -266,6 +266,23 @@ class Line(object):
 
         self.text = '\n'.join(lines)
 
+    def transform_region(self, from_, to, transform_callback):
+        """
+        Transform a part of the input string.
+
+        :param :from_: (int) start position.
+        :param :to: (int) end position.
+        :param :transform_callback: Callable which accepts a string and returns
+                                    the transformed string.
+        """
+        assert from_ < to
+
+        self.text = ''.join([
+                    self.text[:from_] +
+                    transform_callback(self.text[from_:to]) +
+                    self.text[to:]
+                ])
+
     @property
     def document(self):
         """

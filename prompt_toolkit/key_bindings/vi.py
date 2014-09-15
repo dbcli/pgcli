@@ -7,6 +7,8 @@ from ..keys import Keys
 from .basic import basic_bindings
 from .utils import create_handle_decorator
 
+import codecs
+
 __all__ = (
     'vi_bindings',
 )
@@ -372,7 +374,6 @@ def vi_bindings(registry, cli_ref):
         line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
 
     def _unindent(from_line, to_line, count=1):
-        #line_range = range(current_line, current_line + event.arg)
         line_range = range(from_line, to_line)
 
         def transform(text):
@@ -497,13 +498,7 @@ def vi_bindings(registry, cli_ref):
         no_move_handler = kw.pop('no_move_handler', False)
 
         # TODO: Also do '>' and '<' indent/unindent operators.
-        # TODO: Also
-        #                 ~: swap case # If tildeop is set
-        #                g~: swap case
-        #                gu: lowercase
-        #                gU: uppercase
-        #                g?: rot13
-        #                gq: text formatting
+        # TODO: Also "gq": text formatting
         #  See: :help motion.txt
         def decorator(func):
             if not no_move_handler:
@@ -513,6 +508,37 @@ def vi_bindings(registry, cli_ref):
                     """ Create move handler. """
                     region = func(event)
                     line.cursor_position += region.start
+
+            def create_transform_handler(transform_func, *a):
+                @handle(*(a + keys), in_mode=InputMode.VI_NAVIGATION)
+                def rot13_handler(event):
+                    """ Apply transformation. """
+                    region = func(event)
+                    start, end = region.get_sorted()
+
+                    # Transform.
+                    line.transform_region(
+                                line.cursor_position + start,
+                                line.cursor_position + end,
+                                transform_func)
+
+                    # Move cursor
+                    line.cursor_position += (region.end or region.start)
+
+            for k, f in [
+                        # Rot 13 transformation
+                        (('g', '?'), lambda string: codecs.encode(string, 'rot_13')),
+
+                        # To lowercase
+                        (('g', 'u'), lambda string: string.lower()),
+
+                        # To uppercase.
+                        (('g', 'U'), lambda string: string.upper()),
+
+                        # Swap case.
+                        (('g', '~'), lambda string: string.swapcase()),
+                        ]:
+                create_transform_handler(f, *k)
 
             @handle('y', *keys, in_mode=InputMode.VI_NAVIGATION)
             def yank_handler(event):
