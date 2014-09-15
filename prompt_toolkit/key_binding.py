@@ -19,9 +19,27 @@ __all__ = (
 
 
 class InputProcessor(object):
+    """
+    Statemachine that receives :class:`KeyPress` instances and according to the
+    key bindings in the given :class:`Registry`, calls the matching handlers.
+
+    ::
+
+        p = InputProcessor(registry)
+
+        # Send keys into the processor.
+        p.feed_key(KeyPress(Keys.ControlX, '\x18'))
+        p.feed_key(KeyPress(Keys.ControlC, '\x03')
+
+        # Now the ControlX-ControlC callback will be called if this sequence is
+        # registered in the registry.
+
+    """
     def __init__(self, registry, default_input_mode=InputMode.INSERT):
         self._registry = registry
         self.default_input_mode = default_input_mode
+
+        self.reset()
 
     def reset(self):
         self._previous_key_sequence = None
@@ -190,9 +208,19 @@ class _Binding(object):
     def __repr__(self):
         return '_Binding(keys=%r, callable=%r)' % (self.keys, self._callable)
 
+
 class Registry(object):
     """
     Key binding registry.
+
+    ::
+
+        r = Registry()
+
+        @r.add_binding(Keys.ControlX, Keys.ControlC, in_mode=INSERT)
+        def handler(event):
+            # Handle ControlX-ControlC key sequence.
+            pass
     """
     def __init__(self):
         self.key_bindings = []
