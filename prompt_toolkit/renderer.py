@@ -137,14 +137,14 @@ class Char(object):
         '\x18': '^X',
         '\x19': '^Y',
         '\x1a': '^Z',
-        '\x00': '^ ', # Control space
+        '\x00': '^@', # Control space
         '\x1c': '^\\',
         '\x1d': '^]',
         '\x1f': '^_',
         '\x7f': '^?', # Control backspace
     }
 
-    def __init__(self, char=' ', token=None, z_index=0):
+    def __init__(self, char=' ', token=Token, z_index=0):
         # If this character has to be displayed otherwise, take that one.
         char = self.display_mappings.get(char, char)
 
@@ -320,13 +320,6 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
         Test whether two `Char` instances are equal if printed.
         """
         new_token = Token.Aborted if grayed else new_char.token
-
-        # If they are both a space and have the same background color, we
-        # always consider them equal.
-        if new_char.char == ' ' and old_char.char == ' ':
-            style1 = get_style_for_token(new_token, replace_if_grayed=False)
-            style2 = get_style_for_token(old_char.token, replace_if_grayed=False)
-            return (style1 and style1.get('bgcolor')) == (style2 and style2.get('bgcolor'))
 
         # We ignore z-index, that does not matter if things get painted.
         return new_char.char == old_char.char and new_token == old_char.token
