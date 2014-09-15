@@ -771,10 +771,23 @@ def vi_bindings(registry, cli_ref):
 
     @change_delete_move_yank_handler('%')
     def _(event):
-        """ Implements 'c%', 'd%', '%, 'y%' """
-        # Move to the corresponding opening/closing bracket (()'s, []'s and {}'s).
-        # TODO: if 'arg' has been given, the meaning of % is to go to the 'x%' row in the file.
-        return CursorRegion(line.document.matching_bracket_position)
+        """
+        Implements 'c%', 'd%', '%, 'y%' (Move to corresponding bracket.)
+        If an 'arg' has been given, go this this % position in the file.
+        """
+        if event._arg:
+            # If 'arg' has been given, the meaning of % is to go to the 'x%'
+            # row in the file.
+            if 0 < event.arg <= 100:
+                absolute_index = line.document.translate_row_col_to_index(
+                                    int(event.arg * line.document.line_count / 100), 0)
+                return CursorRegion(absolute_index - line.document.cursor_position)
+            else:
+                return CursorRegion(0) # Do nothing.
+
+        else:
+            # Move to the corresponding opening/closing bracket (()'s, []'s and {}'s).
+            return CursorRegion(line.document.matching_bracket_position)
 
     @change_delete_move_yank_handler('|')
     def _(event):
