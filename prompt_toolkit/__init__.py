@@ -66,6 +66,13 @@ class Abort(Exception):
 class CommandLineInterface(object):
     """
     Wrapper around all the other classes, tying everything together.
+
+    Typical usage::
+
+        cli = CommandLineInterface()
+        while True:
+            result = cli.read_input()
+            print(result)
     """
     # All the factories below have to be callables that return instances of the
     # respective classes. They can be as simple as the class itself, but they
@@ -109,24 +116,13 @@ class CommandLineInterface(object):
         self.stdout = stdout or sys.stdout
 
         #: The `Line` instance.
-                    # TODO: construct the `Line` object outside of this constructor.
-                    #       A commandline should be able to have several `Line` instances.
-                    #       e.g. one for the incremental-search input, one for
-                    #       another document, etc...
-        self.line = self.line_factory(
-                                code_factory=self.code_factory,
-                                history_factory=self.history_factory,
-                                callbacks=LineCallbacks(self))
-
-        key_registry = Registry()
-        for kb in self.key_bindings_factories:
-            kb(key_registry, weakref.ref(self))
+        self.lines = self.create_lines()
 
         #: The `InputProcessor` instance.
-        self.input_processor = InputProcessor(key_registry, default_input_mode=self.default_input_mode)
+        self.input_processor = self.create_input_processor()
 
         #: The `prompt` instance.
-        self.prompt = self.prompt_factory(weakref.ref(self))
+        self.prompt = self.create_prompt()
 
         #: The `Renderer` instance.
         self.renderer = self.renderer_factory(
@@ -146,6 +142,48 @@ class CommandLineInterface(object):
         self._stdin_decoder = self.stdin_decoder_cls()
 
         self._reset()
+
+    @property
+    def line(self):
+        return self.lines['default']
+
+    def create_line_factories_dict(self):
+        """
+        Return declarative structure of the Line objects to be created.
+        """
+        return {
+            'default': (self.line_factory, self.code_factory, self.history_factory()),
+            'search': (Line, Code, History()),
+        }
+
+    def create_lines(self):
+        """
+        Create :class:`Line` instances.
+
+        We can have several `Line` instances. E.g: one for the main document,
+        one for the incremental-search input, etc...
+        """
+        def _create_line(line_cls, code_cls, history):
+            return line_cls(code_factory=code_cls, history=history, callbacks=LineCallbacks(self))
+
+        return { name: _create_line(*k) for (name, k) in self.create_line_factories_dict().items() }
+
+    def create_input_processor(self):
+        """
+        Create :class:`InputProcessor` instance.
+        """
+        key_registry = Registry()
+        for kb in self.key_bindings_factories:
+            kb(key_registry, weakref.ref(self))
+
+        #: The `InputProcessor` instance.
+        return InputProcessor(key_registry, default_input_mode=self.default_input_mode)
+
+    def create_prompt(self):
+        """
+        Create :class:`Prompt` instance.
+        """
+        return self.prompt_factory(weakref.ref(self))
 
     def _reset(self):
         self._exit_flag = False

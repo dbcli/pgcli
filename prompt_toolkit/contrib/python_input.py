@@ -298,12 +298,18 @@ class PythonPrompt(Prompt):
         """
         When inside functions, show signature.
         """
-        if self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
+        if self.commandline.input_processor.input_mode == InputMode.VI_SEARCH:
+            self.write_vi_search(screen)
+
+        elif self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
             screen.write_highlighted(list(self.isearch_prompt))
+
         elif self.commandline.input_processor.arg is not None:
             screen.write_highlighted(list(self.arg_prompt))
+
         elif self.line.validation_error:
             screen.write_highlighted(list(self._get_error_tokens()))
+
         elif self.commandline.autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU and \
                         self.line.complete_state and \
                         self.commandline.input_processor.input_mode == InputMode.COMPLETE:
@@ -408,6 +414,9 @@ class PythonPrompt(Prompt):
         elif self.commandline.vi_mode:
             if mode == InputMode.INSERT:
                 append((TB.Mode, '(INSERT)'))
+                append((TB, '   '))
+            elif mode == InputMode.VI_SEARCH:
+                append((TB.Mode, '(SEARCH)'))
                 append((TB, '   '))
             elif mode == InputMode.VI_NAVIGATION:
                 append((TB.Mode, '(NAV)'))

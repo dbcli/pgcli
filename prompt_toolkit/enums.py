@@ -19,5 +19,8 @@ class InputMode(object):
     #: Ctrl-R/Ctrl-S incremental search.
     INCREMENTAL_SEARCH = 'incremental-search'
 
+    #: Vi-style forward search. Usually with a '/' or '?' prompt.
+    VI_SEARCH = 'vi-forward-search'
+
     #: Ctrl-N/Ctrl-P style navigation through completions.
     COMPLETE = 'complete'

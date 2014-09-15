@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from ..line import ClipboardData, SelectionType
 from ..keys import Keys
-from ..enums import InputMode
+from ..enums import InputMode, IncrementalSearchDirection
 
 from .basic import basic_bindings
 from .utils import create_handle_decorator
@@ -15,6 +15,7 @@ def emacs_bindings(registry, cli_ref):
     # http://www.catonmat.net/download/readline-emacs-editing-mode-cheat-sheet.pdf
     basic_bindings(registry, cli_ref)
     line = cli_ref().line
+    search_line = cli_ref().lines['search']
     handle = create_handle_decorator(registry, line)
 
     @handle(Keys.ControlN)
@@ -281,3 +282,54 @@ def emacs_bindings(registry, cli_ref):
         This is the line we are editing.
         """
         line.go_to_history(len(line._working_lines) - 1)
+
+    @handle(Keys.ControlH, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.Backspace, in_mode=InputMode.INCREMENTAL_SEARCH)
+    def _(event):
+        search_line.delete_before_cursor()
+        line.set_search_text(search_line.text)
+
+    @handle(Keys.Any, in_mode=InputMode.INCREMENTAL_SEARCH)
+    def _(event):
+        """
+        Insert isearch string.
+        """
+        search_line.insert_text(event.data)
+        line.set_search_text(search_line.text)
+
+    @handle(Keys.ControlG, in_mode=InputMode.INCREMENTAL_SEARCH)
+    # NOTE: the reason for not binding Escape to this one, is that we want
+    #       Alt+Enter to accept input directly in incremental search mode.
+    def _(event):
+        """
+        Abort an incremental search and restore the original line.
+        """
+        line.exit_isearch(restore_original_line=True)
+        event.input_processor.pop_input_mode()
+
+    @handle(Keys.ControlJ, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.ControlM, in_mode=InputMode.INCREMENTAL_SEARCH)
+    def _(event):
+        """
+        When enter pressed in isearch, quit isearch mode. (Multiline
+        isearch would be too complicated.)
+        """
+        search_line.reset()
+        line.exit_isearch()
+        event.input_processor.pop_input_mode()
+
+    @handle(Keys.ControlR)
+    @handle(Keys.Up, in_mode=InputMode.INCREMENTAL_SEARCH)
+    def _(event):
+        line.incremental_search(IncrementalSearchDirection.BACKWARD)
+
+        if event.input_processor.input_mode != InputMode.INCREMENTAL_SEARCH:
+            event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
+
+    @handle(Keys.ControlS)
+    @handle(Keys.Down, in_mode=InputMode.INCREMENTAL_SEARCH)
+    def _(event):
+        line.incremental_search(IncrementalSearchDirection.FORWARD)
+
+        if event.input_processor.input_mode != InputMode.INCREMENTAL_SEARCH:
+            event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)

@@ -52,7 +52,6 @@ class Keys(object):
     ControlSquareClose = Key('<C-SquareClose>')
     ControlCircumflex  = Key('<C-Circumflex>')
     ControlUnderscore  = Key('<C-Underscore>')
-    Backspace          = Key('<BS>')
 
     Up          = Key('<Up>')
     Down        = Key('<Down>')
@@ -67,6 +66,7 @@ class Keys(object):
     BackTab     = Key('<BackTab>') # shift + tab
 
     Tab         = ControlI
+    Backspace   = ControlH
 
     F1 = Key('<F1>')
     F2 = Key('<F2>')

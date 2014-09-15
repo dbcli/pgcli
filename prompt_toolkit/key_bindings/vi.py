@@ -38,14 +38,11 @@ def vi_bindings(registry, cli_ref):
     """
     basic_bindings(registry, cli_ref)
     line = cli_ref().line
+    search_line = cli_ref().lines['search']
     handle = create_handle_decorator(registry, line)
 
     _last_character_find = [None] # (char, backwards) tuple
-
-#    def reset(self):
-#        # Remember the last 'F' or 'f' command.
-#        self._last_character_find = None # (char, backwards) tuple
-
+    _search_direction = [IncrementalSearchDirection.FORWARD]
 
     @registry.add_after_handler_callback
     def check_cursor_position(event):
@@ -214,24 +211,20 @@ def vi_bindings(registry, cli_ref):
 
     @handle('n', in_mode=InputMode.VI_NAVIGATION)
     def _(event): # XXX: use `change_delete_move_yank_handler`
-        # TODO:
-        pass
-
-        # if line.isearch_state:
-        #     # Repeat search in the same direction as previous.
-        #     line.search_next(line.isearch_state.isearch_direction)
+        """
+        Search next.
+        """
+        line.incremental_search(_search_direction[0])
 
     @handle('N', in_mode=InputMode.VI_NAVIGATION)
     def _(event): # TODO: use `change_delete_move_yank_handler`
-        # TODO:
-        pass
-
-        #if line.isearch_state:
-        #    # Repeat search in the opposite direction as previous.
-        #    if line.isearch_state.isearch_direction == IncrementalSearchDirection.FORWARD:
-        #        line.search_next(IncrementalSearchDirection.BACKWARD)
-        #    else:
-        #        line.search_next(IncrementalSearchDirection.FORWARD)
+        """
+        Search previous.
+        """
+        if _search_direction[0] == IncrementalSearchDirection.BACKWARD:
+            line.incremental_search(IncrementalSearchDirection.FORWARD)
+        else:
+            line.incremental_search(IncrementalSearchDirection.BACKWARD)
 
     @handle('p', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -451,18 +444,20 @@ def vi_bindings(registry, cli_ref):
     @handle('/', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
-        Search history backward for a command matching string.
+        Vi-style forward search.
         """
-        line.incremental_search(IncrementalSearchDirection.FORWARD)
-        event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
+        line.start_isearch(IncrementalSearchDirection.FORWARD)
+        event.input_processor.push_input_mode(InputMode.VI_SEARCH)
+        _search_direction[0] = IncrementalSearchDirection.FORWARD
 
     @handle('?', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
-        Search history forward for a command matching string.
+        Vi-style backward search.
         """
-        line.incremental_search(IncrementalSearchDirection.BACKWARD)
-        event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
+        line.start_isearch(IncrementalSearchDirection.BACKWARD)
+        event.input_processor.push_input_mode(InputMode.VI_SEARCH)
+        _search_direction[0] = IncrementalSearchDirection.BACKWARD
 
     @handle('#', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -820,3 +815,79 @@ def vi_bindings(registry, cli_ref):
         Insert data at cursor position.
         """
         line.insert_text(event.data, overwrite=True)
+
+    @handle(Keys.Any, in_mode=InputMode.VI_SEARCH)
+    def _(event):
+        """
+        Insert text after the / or ? prompt.
+        """
+        search_line.insert_text(event.data)
+        line.set_search_text(search_line.text)
+
+    @handle(Keys.ControlJ, in_mode=InputMode.VI_SEARCH)
+    @handle(Keys.ControlM, in_mode=InputMode.VI_SEARCH)
+    def _(event):
+        """
+        Enter at the / or ? prompt.
+        """
+        # Call return_input to put the current result on the history stack
+        # of search operations.
+        search_line.return_input(call_callback=False)
+        search_line.reset()
+
+        # Go back to navigation mode.
+        event.input_processor.pop_input_mode()
+
+    @handle(Keys.Backspace, in_mode=InputMode.VI_SEARCH)
+    def _(event):
+        """
+        Backspace at the vi-search prompt.
+        """
+        if search_line.text:
+            search_line.delete_before_cursor()
+            line.set_search_text(search_line.text)
+        else:
+            # If no text after the prompt, cancel search.
+            line.exit_isearch(restore_original_line=True)
+            search_line.reset()
+            event.input_processor.pop_input_mode()
+
+    @handle(Keys.Up, in_mode=InputMode.VI_SEARCH)
+    def _(event):
+        """
+        Go to the previous history item at the search prompt.
+        """
+        search_line.auto_up()
+        line.set_search_text(search_line.text)
+
+    @handle(Keys.Down, in_mode=InputMode.VI_SEARCH)
+    def _(event):
+        """
+        Go to the next history item at the search prompt.
+        """
+        search_line.auto_down()
+        search_line.cursor_position = len(search_line.text)
+        line.set_search_text(search_line.text)
+
+    @handle(Keys.Left, in_mode=InputMode.VI_SEARCH)
+    def _(event):
+        """
+        Arrow left at the search prompt.
+        """
+        search_line.cursor_left()
+
+    @handle(Keys.Right, in_mode=InputMode.VI_SEARCH)
+    def _(event):
+        """
+        Arrow right at the search prompt.
+        """
+        search_line.cursor_right()
+
+    @handle(Keys.ControlC, in_mode=InputMode.VI_SEARCH)
+    def _(event):
+        """
+        Cancel search.
+        """
+        line.exit_isearch(restore_original_line=True)
+        search_line.reset()
+        event.input_processor.pop_input_mode()

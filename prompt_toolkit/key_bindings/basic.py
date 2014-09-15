@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from ..keys import Keys
-from ..enums import InputMode, IncrementalSearchDirection
+from ..enums import InputMode
 from ..line import ClipboardData
 
 from .utils import create_handle_decorator
@@ -94,16 +94,6 @@ def basic_bindings(registry, cli_ref):
     def _(event):
         line.cursor_position += line.document.get_cursor_right_position(count=event.arg)
 
-    @handle(Keys.ControlG, in_mode=InputMode.INCREMENTAL_SEARCH)
-    # NOTE: the reason for not binding Escape to this one, is that we want
-    #       Alt+Enter to accept input directly in incremental search mode.
-    def _(event):
-        """
-        Abort an incremental search and restore the original line.
-        """
-        line.exit_isearch(restore_original_line=True)
-        event.input_processor.pop_input_mode()
-
     @handle(Keys.ControlI, in_mode=InputMode.INSERT)
     @handle(Keys.ControlI, in_mode=InputMode.COMPLETE)
     def _(event):
@@ -118,16 +108,6 @@ def basic_bindings(registry, cli_ref):
             line.list_completions()
         else:
             not line.complete_common()
-
-    @handle(Keys.ControlJ, in_mode=InputMode.INCREMENTAL_SEARCH)
-    @handle(Keys.ControlM, in_mode=InputMode.INCREMENTAL_SEARCH)
-    def _(event):
-        """
-        When enter pressed in isearch, quit isearch mode. (Multiline
-        isearch would be too complicated.)
-        """
-        line.exit_isearch()
-        event.input_processor.pop_input_mode()
 
     @handle(Keys.ControlJ, in_mode=InputMode.INSERT)
     @handle(Keys.ControlM, in_mode=InputMode.INSERT)
@@ -148,22 +128,6 @@ def basic_bindings(registry, cli_ref):
     @handle(Keys.ControlL)
     def _(event):
         line.clear()
-
-    @handle(Keys.ControlR)
-    @handle(Keys.Up, in_mode=InputMode.INCREMENTAL_SEARCH)
-    def _(event):
-        line.incremental_search(IncrementalSearchDirection.BACKWARD)
-
-        if event.input_processor.input_mode != InputMode.INCREMENTAL_SEARCH:
-            event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
-
-    @handle(Keys.ControlS)
-    @handle(Keys.Down, in_mode=InputMode.INCREMENTAL_SEARCH)
-    def _(event):
-        line.incremental_search(IncrementalSearchDirection.FORWARD)
-
-        if event.input_processor.input_mode != InputMode.INCREMENTAL_SEARCH:
-            event.input_processor.push_input_mode(InputMode.INCREMENTAL_SEARCH)
 
     @handle(Keys.ControlT)
     def _(event):
@@ -236,11 +200,6 @@ def basic_bindings(registry, cli_ref):
     def _(event):
         line.delete_before_cursor(count=event.arg)
 
-    @handle(Keys.ControlH, in_mode=InputMode.INCREMENTAL_SEARCH)
-    @handle(Keys.Backspace, in_mode=InputMode.INCREMENTAL_SEARCH)
-    def _(event):
-        line.isearch_delete_before_cursor(count=event.arg)
-
     @handle(Keys.Delete, in_mode=InputMode.INSERT)
     def _(event):
         line.delete(count=event.arg)
@@ -248,13 +207,6 @@ def basic_bindings(registry, cli_ref):
     @handle(Keys.ShiftDelete, in_mode=InputMode.INSERT)
     def _(event):
         line.delete(count=event.arg)
-
-    @handle(Keys.Any, in_mode=InputMode.INCREMENTAL_SEARCH)
-    def _(event):
-        """
-        Insert isearch string.
-        """
-        line.insert_isearch_text(event.data)
 
     @handle(Keys.Any, in_mode=InputMode.COMPLETE)
     @handle(Keys.Any, in_mode=InputMode.INSERT)

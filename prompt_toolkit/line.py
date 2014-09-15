@@ -99,7 +99,7 @@ class CompletionState(object):
 
 
 class _IncrementalSearchState(object):
-    def __init__(self, original_cursor_position, original_working_index):
+    def __init__(self, original_cursor_position, original_working_index, direction):
         self.isearch_text = ''
 
         self.original_working_index = original_working_index
@@ -109,7 +109,7 @@ class _IncrementalSearchState(object):
         #: This flag is updated every time we search for a new string.
         self.no_match_from_index = None
 
-        self.isearch_direction = IncrementalSearchDirection.FORWARD
+        self.isearch_direction = direction
 
 
 class Line(object):
@@ -131,11 +131,11 @@ class Line(object):
     #: Suffix to be appended to the tempfile for the 'open in editor' function.
     tempfile_suffix = ''
 
-    def __init__(self, code_factory=Code, history_factory=History, callbacks=None):
+    def __init__(self, code_factory=Code, history=None, callbacks=None):
         self.code_factory = code_factory
 
         #: The command line history.
-        self._history = history_factory()
+        self._history = history or History()
 
         self._callbacks = callbacks or Callbacks()
 
@@ -330,17 +330,6 @@ class Line(object):
             # If we moved to the next line, place the cursor at the beginning.
             if old_index != self.working_index:
                 self.cursor_position = 0
-
-    def isearch_delete_before_cursor(self, count=1): # TODO: unittest
-        assert count >= 0
-
-        self._start_isearch()
-        self.isearch_state.isearch_text = self.isearch_state.isearch_text[:-count]
-
-        # When the `no_match_from_index` is after the character that we deleted. Remove this mark.
-        if (self.isearch_state.no_match_from_index is not None and
-                self.isearch_state.no_match_from_index >= len(self.isearch_state.isearch_text)):
-            self.isearch_state.no_match_from_index = None
 
     def delete_before_cursor(self, count=1): # TODO: unittest return type
         """ Delete character before cursor, return deleted character. """
@@ -555,10 +544,18 @@ class Line(object):
         self.cursor_position += self.document.get_end_of_line_position()
         self.insert_text(insert)
 
-    def insert_isearch_text(self, data):
-        self._start_isearch()
+    def set_search_text(self, text):
+        if not self.isearch_state:
+            self.start_isearch()
 
-        self.isearch_state.isearch_text += data
+        # When `text` is not a suffix of the search string that we had.
+        if not text.startswith(self.isearch_state.isearch_text):
+            self.isearch_state.no_match_from_index = None
+
+            self.working_index = self.isearch_state.original_working_index
+            self.cursor_position = self.isearch_state.original_cursor_position
+
+        self.isearch_state.isearch_text = text
 
         if not self.document.has_match_at_current_position(self.isearch_state.isearch_text):
             found = self.incremental_search(self.isearch_state.isearch_direction)
@@ -644,7 +641,7 @@ class Line(object):
         self.complete_state = None
         self._callbacks.exit()
 
-    def return_input(self):
+    def return_input(self, call_callback=True):
         """
         Return the current line to the `CommandLineInterface.read_input` call.
         """
@@ -670,20 +667,26 @@ class Line(object):
                 self._history.append(text)
 
         # Callback
-        self._callbacks.return_input(code)
+        if call_callback:
+            self._callbacks.return_input(code)
 
-    def _start_isearch(self):
-        if not self.isearch_state:
-            self.isearch_state = _IncrementalSearchState(
-                    original_cursor_position = self.cursor_position,
-                    original_working_index = self.working_index)
+    def start_isearch(self, direction=IncrementalSearchDirection.FORWARD):
+        """
+        Start incremental search.
+        Take the current position as the start position for the search.
+        """
+        self.isearch_state = _IncrementalSearchState(
+                original_cursor_position = self.cursor_position,
+                original_working_index = self.working_index,
+                direction=direction)
 
     def incremental_search(self, direction):
         """
         Search for the next string.
         :returns: (bool) True if something was found.
         """
-        self._start_isearch()
+        if not self.isearch_state:
+            self.start_isearch()
 
         found = False
         self.isearch_state.isearch_direction = direction
@@ -736,7 +739,7 @@ class Line(object):
         """
         Exit i-search mode.
         """
-        if restore_original_line:
+        if restore_original_line and self.isearch_state:
             self.working_index = self.isearch_state.original_working_index
             self.cursor_position = self.isearch_state.original_cursor_position
 

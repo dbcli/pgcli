@@ -313,6 +313,8 @@ class Prompt(object):
         """
         if self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
             return self.isearch_prompt
+        elif self.commandline.input_processor.input_mode == InputMode.VI_SEARCH:
+            return self.vi_search_prompt
         elif self.commandline.input_processor.arg is not None:
             return self.arg_prompt
         else:
@@ -346,6 +348,17 @@ class Prompt(object):
         else:
             return []
 
+    def get_vi_search_prefix_tokens(self):
+        """
+        Tokens for the vi-search prompt.
+        """
+        if self.line.isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
+            prefix = '?'
+        else:
+            prefix = '/'
+
+        return [ (Token.Prompt.ViSearch, prefix) ]
+
     def get_tokens_after_input(self):
         """
         List of (Token, text) tuples for after the inut.
@@ -374,9 +387,6 @@ class Prompt(object):
     def create_left_input_margin(self, screen, row, is_new_line):
         screen.write_highlighted(self.get_tokens_in_left_margin(row, is_new_line))
 
-    def write_before_input(self, screen):
-        screen.write_highlighted(self.tokens_before_input)
-
     def get_input_tokens(self):
         tokens = self.line.create_code_obj().get_tokens()
 
@@ -393,7 +403,7 @@ class Prompt(object):
         highlighted_characters = {}
 
         # In case of incremental search, highlight all matches.
-        if self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
+        if self.line.isearch_state:
             for index in self.line.document.find_all(self.line.isearch_state.isearch_text):
                 if index == self.line.cursor_position:
                     token = Token.IncrementalSearchMatch.Current
@@ -412,6 +422,18 @@ class Prompt(object):
                 highlighted_characters[i] = Token.SelectedText
 
         return highlighted_characters
+
+    def write_vi_search(self, screen):
+        screen.write_highlighted(self.get_vi_search_prefix_tokens())
+
+        line = self.commandline.lines['search']
+
+        for index, c in enumerate(line.text + ' '):
+            screen.write_char(c, Token.Prompt.ViSearch.Text,
+                            set_cursor_position=(index == line.cursor_position))
+
+    def write_before_input(self, screen):
+        screen.write_highlighted(self.tokens_before_input)
 
     def write_input(self, screen, highlight=True):
         # Set second line prefix
@@ -462,8 +484,11 @@ class Prompt(object):
         """
         Render the prompt to a `Screen` instance.
         """
-        self.write_before_input(screen)
-        self.write_input(screen, highlight=not (accept or abort))
+        if self.commandline.input_processor.input_mode == InputMode.VI_SEARCH:
+            self.write_vi_search(screen)
+        else:
+            self.write_before_input(screen)
+            self.write_input(screen, highlight=not (accept or abort))
 
         if not (accept or abort):
             self.write_after_input(screen)
