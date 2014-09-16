@@ -342,6 +342,17 @@ def vi_bindings(registry, cli_ref):
         line.set_clipboard(ClipboardData(deleted, selection_type))
         event.input_processor.pop_input_mode()
 
+    @handle('c', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Change selection (cut and go to insert mode).
+        """
+        selection_type = line.selection_state.type
+        deleted = line.cut_selection()
+        line.set_clipboard(ClipboardData(deleted, selection_type))
+        event.input_processor.pop_input_mode()
+        event.input_processor.input_mode = InputMode.INSERT
+
     @handle('y', in_mode=InputMode.SELECTION)
     def _(event):
         """
