@@ -427,7 +427,7 @@ class PythonPrompt(Prompt):
             elif mode == InputMode.COMPLETE:
                 append((TB.Mode, '(COMPLETE)'))
                 append((TB, ' '))
-            elif mode == InputMode.SELECTION:
+            elif mode == InputMode.SELECTION and self.line.selection_state:
                 if self.line.selection_state.type == SelectionType.LINES:
                     append((TB.Mode, '(VISUAL LINE)'))
                     append((TB, ' '))
