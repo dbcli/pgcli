@@ -47,6 +47,21 @@ def vi_bindings(registry, cli_ref):
     _last_character_find = [None] # (char, backwards) tuple
     _search_direction = [IncrementalSearchDirection.FORWARD]
 
+    vi_transform_functions = [
+            # Rot 13 transformation
+            (('g', '?'), lambda string: codecs.encode(string, 'rot_13')),
+
+            # To lowercase
+            (('g', 'u'), lambda string: string.lower()),
+
+            # To uppercase.
+            (('g', 'U'), lambda string: string.upper()),
+
+            # Swap case.
+            # (XXX: If we would implement 'tildeop', the 'g' prefix is not required.)
+            (('g', '~'), lambda string: string.swapcase()),
+    ]
+
     @registry.add_after_handler_callback
     def check_cursor_position(event):
         """
@@ -523,8 +538,8 @@ def vi_bindings(registry, cli_ref):
 
             def create_transform_handler(transform_func, *a):
                 @handle(*(a + keys), in_mode=InputMode.VI_NAVIGATION)
-                def rot13_handler(event):
-                    """ Apply transformation. """
+                def _(event):
+                    """ Apply transformation (uppercase, lowercase, rot13, swap case). """
                     region = func(event)
                     start, end = region.sorted()
 
@@ -537,19 +552,7 @@ def vi_bindings(registry, cli_ref):
                     # Move cursor
                     line.cursor_position += (region.end or region.start)
 
-            for k, f in [
-                        # Rot 13 transformation
-                        (('g', '?'), lambda string: codecs.encode(string, 'rot_13')),
-
-                        # To lowercase
-                        (('g', 'u'), lambda string: string.lower()),
-
-                        # To uppercase.
-                        (('g', 'U'), lambda string: string.upper()),
-
-                        # Swap case.
-                        (('g', '~'), lambda string: string.swapcase()),
-                        ]:
+            for k, f in vi_transform_functions:
                 create_transform_handler(f, *k)
 
             @handle('y', *keys, in_mode=InputMode.VI_NAVIGATION)
@@ -910,3 +913,17 @@ def vi_bindings(registry, cli_ref):
         line.exit_isearch(restore_original_line=True)
         search_line.reset()
         event.input_processor.pop_input_mode()
+
+    def create_selection_transform_handler(keys, transform_func):
+        """
+        Apply transformation on selection (uppercase, lowercase, rot13, swap case).
+        """
+        @handle(*keys, in_mode=InputMode.SELECTION)
+        def _(event):
+            range = line.document.selection_range()
+            if range:
+                line.transform_region(range[0], range[1], transform_func)
+            event.input_processor.pop_input_mode()
+
+    for k, f in vi_transform_functions:
+        create_selection_transform_handler(k, f)
