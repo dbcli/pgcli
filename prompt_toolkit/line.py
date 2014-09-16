@@ -292,19 +292,19 @@ class Line(object):
         # TODO: this can be cached as long self.text does not change.
         return Document(self.text, self.cursor_position, selection=self.selection_state)
 
-    def cursor_left(self):
-        self.cursor_position += self.document.get_cursor_left_position()
+    def cursor_left(self, count=1):
+        self.cursor_position += self.document.get_cursor_left_position(count=count)
 
-    def cursor_right(self):
-        self.cursor_position += self.document.get_cursor_right_position()
+    def cursor_right(self, count=1):
+        self.cursor_position += self.document.get_cursor_right_position(count=count)
 
-    def cursor_up(self):
+    def cursor_up(self, count=1):
         """ (for multiline edit). Move cursor to the previous line.  """
-        self.cursor_position += self.document.get_cursor_up_position()
+        self.cursor_position += self.document.get_cursor_up_position(count=count)
 
-    def cursor_down(self):
+    def cursor_down(self, count=1):
         """ (for multiline edit). Move cursor to the next line.  """
-        self.cursor_position += self.document.get_cursor_down_position()
+        self.cursor_position += self.document.get_cursor_down_position(count=count)
 
     def auto_up(self, count=1):
         """

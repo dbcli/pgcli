@@ -449,7 +449,7 @@ class PythonPrompt(Prompt):
         # Shortcuts.
         if mode == InputMode.INCREMENTAL_SEARCH:
             append((TB, '[Ctrl-G] Cancel search [Enter] Go to this position.'))
-        elif self.line.selection_state:
+        elif mode == InputMode.SELECTION and not self.commandline.vi_mode:
             # Emacs cut/copy keys.
             append((TB, '[Ctrl-W] Cut [Meta-W] Copy [Ctrl-Y] Paste [Ctrl-G] Cancel'))
         else:

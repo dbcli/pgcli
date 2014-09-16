@@ -68,6 +68,20 @@ def vi_bindings(registry, cli_ref):
         else:
             event.input_processor.input_mode = InputMode.VI_NAVIGATION
 
+    @handle(Keys.Up, in_mode=InputMode.VI_NAVIGATION)
+    def _(event):
+        """
+        Arrow up in navigation mode.
+        """
+        line.auto_up(count=event.arg)
+
+    @handle(Keys.Down, in_mode=InputMode.VI_NAVIGATION)
+    def _(event):
+        """
+        Arrow down in navigation mode.
+        """
+        line.auto_down(count=event.arg)
+
     @handle(Keys.Backspace, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
@@ -210,14 +224,14 @@ def vi_bindings(registry, cli_ref):
             line.join_next_line()
 
     @handle('n', in_mode=InputMode.VI_NAVIGATION)
-    def _(event): # XXX: use `change_delete_move_yank_handler`
+    def _(event): # XXX: use `change_delete_move_yank_handler` and implement 'arg'
         """
         Search next.
         """
         line.incremental_search(_search_direction[0])
 
     @handle('N', in_mode=InputMode.VI_NAVIGATION)
-    def _(event): # TODO: use `change_delete_move_yank_handler`
+    def _(event): # TODO: use `change_delete_move_yank_handler` and implement 'arg'
         """
         Search previous.
         """
@@ -731,6 +745,7 @@ def vi_bindings(registry, cli_ref):
     repeat(False)
 
     @change_delete_move_yank_handler('h')
+    @change_delete_move_yank_handler(Keys.Left)
     def _(event):
         """ Implements 'ch', 'dh', 'h': Cursor left. """
         return CursorRegion(line.document.get_cursor_left_position(count=event.arg))
@@ -747,6 +762,7 @@ def vi_bindings(registry, cli_ref):
 
     @change_delete_move_yank_handler('l')
     @change_delete_move_yank_handler(' ')
+    @change_delete_move_yank_handler(Keys.Right)
     def _(event):
         """ Implements 'cl', 'dl', 'l', 'c ', 'd ', ' '. Cursor right. """
         return CursorRegion(line.document.get_cursor_right_position(count=event.arg))

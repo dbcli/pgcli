@@ -56,23 +56,17 @@ def basic_bindings(registry, cli_ref):
         # We override the functionality below.
         pass
 
-    @handle(Keys.Home)
+    @handle(Keys.Home, in_mode=InputMode.INSERT)
+    @handle(Keys.Home, in_mode=InputMode.SELECTION)
     def _(event):
         line.cursor_position += line.document.home_position
 
-    @handle(Keys.End)
+    @handle(Keys.End, in_mode=InputMode.INSERT)
+    @handle(Keys.End, in_mode=InputMode.SELECTION)
     def _(event):
         line.cursor_position += line.document.end_position
 
     # CTRL keys.
-
-    @handle(Keys.ControlA)
-    def _(event):
-        line.cursor_position += line.document.get_start_of_line_position(after_whitespace=False)
-
-    @handle(Keys.ControlB)
-    def _(event):
-        line.cursor_position += line.document.get_cursor_left_position(count=event.arg)
 
     @handle(Keys.ControlC)
     def _(event):
@@ -89,10 +83,6 @@ def basic_bindings(registry, cli_ref):
     @handle(Keys.ControlE)
     def _(event):
         line.cursor_position += line.document.get_end_of_line_position()
-
-    @handle(Keys.ControlF)
-    def _(event):
-        line.cursor_position += line.document.get_cursor_right_position(count=event.arg)
 
     @handle(Keys.ControlI, in_mode=InputMode.INSERT)
     @handle(Keys.ControlI, in_mode=InputMode.COMPLETE)
@@ -152,10 +142,6 @@ def basic_bindings(registry, cli_ref):
             deleted = line.delete_before_cursor(count=-pos)
             line.set_clipboard(ClipboardData(deleted))
 
-    @handle(Keys.ControlX)
-    def _(event):
-        pass
-
     @handle(Keys.ControlY, InputMode.INSERT)
     def _(event):
         # Pastes the clipboard content.
@@ -177,23 +163,31 @@ def basic_bindings(registry, cli_ref):
     def _(event):
         line.history_forward()
 
-    @handle(Keys.Left)
+    @handle(Keys.Left, in_mode=InputMode.INSERT)
+    @handle(Keys.Left, in_mode=InputMode.SELECTION)
     def _(event):
-        if not event.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH:
-            line.cursor_position += line.document.get_cursor_left_position(count=event.arg)
+        line.cursor_position += line.document.get_cursor_left_position(count=event.arg)
 
-    @handle(Keys.Right)
+    @handle(Keys.Right, in_mode=InputMode.INSERT)
+    @handle(Keys.Right, in_mode=InputMode.SELECTION)
     def _(event):
-        if not event.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH:
-            line.cursor_position += line.document.get_cursor_right_position(count=event.arg)
+        line.cursor_position += line.document.get_cursor_right_position(count=event.arg)
 
-    @handle(Keys.Up)
+    @handle(Keys.Up, in_mode=InputMode.INSERT)
     def _(event):
         line.auto_up(count=event.arg)
 
-    @handle(Keys.Down)
+    @handle(Keys.Down, in_mode=InputMode.INSERT)
     def _(event):
         line.auto_down(count=event.arg)
+
+    @handle(Keys.Up, in_mode=InputMode.SELECTION)
+    def _(event):
+        line.cursor_up(count=event.arg)
+
+    @handle(Keys.Down, in_mode=InputMode.SELECTION)
+    def _(event):
+        line.cursor_down(count=event.arg)
 
     @handle(Keys.ControlH, in_mode=InputMode.INSERT)
     @handle(Keys.Backspace, in_mode=InputMode.INSERT)
@@ -220,20 +214,6 @@ def basic_bindings(registry, cli_ref):
         if event.input_processor.input_mode == InputMode.COMPLETE:
             event.input_processor.pop_input_mode()
 
-    @handle(Keys.Escape, Keys.Left)
-    def _(event):
-        """
-        Cursor to start of previous word.
-        """
-        line.cursor_position += line.document.find_previous_word_beginning(count=event.arg) or 0
-
-    @handle(Keys.Escape, Keys.Right)
-    def _(event):
-        """
-        Cursor to start of next word.
-        """
-        line.cursor_position += line.document.find_next_word_beginning(count=event.arg) or 0
-
     @handle(Keys.Escape, in_mode=InputMode.COMPLETE)
     @handle(Keys.ControlC, in_mode=InputMode.COMPLETE)
     def _(event):
@@ -241,4 +221,3 @@ def basic_bindings(registry, cli_ref):
         Pressing escape or Ctrl-C in complete mode, goes back to default mode.
         """
         event.input_processor.pop_input_mode()
-
