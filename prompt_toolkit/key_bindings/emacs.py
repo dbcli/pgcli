@@ -397,3 +397,15 @@ def emacs_bindings(registry, cli_ref):
         Cursor to start of next word.
         """
         line.cursor_position += line.document.find_next_word_beginning(count=event.arg) or 0
+
+    @handle(Keys.Escape, '/', in_mode=InputMode.INSERT)
+    @handle(Keys.Escape, '/', in_mode=InputMode.COMPLETE)
+    def _(event):
+        """
+        M-/: Complete.
+        """
+        line.complete_next()
+
+        # Switch only to the 'complete' input mode if there really was a completion found.
+        if line.complete_state and event.input_processor.input_mode != InputMode.COMPLETE:
+            event.input_processor.push_input_mode(InputMode.COMPLETE)

@@ -189,6 +189,14 @@ def basic_bindings(registry, cli_ref):
     def _(event):
         line.cursor_down(count=event.arg)
 
+    @handle(Keys.Up, in_mode=InputMode.COMPLETE)
+    def _(event):
+        line.complete_previous()
+
+    @handle(Keys.Down, in_mode=InputMode.COMPLETE)
+    def _(event):
+        line.complete_next()
+
     @handle(Keys.ControlH, in_mode=InputMode.INSERT)
     @handle(Keys.Backspace, in_mode=InputMode.INSERT)
     def _(event):
