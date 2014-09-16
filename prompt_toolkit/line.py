@@ -381,7 +381,7 @@ class Line(object):
             self.working_index = index
             self.cursor_position = len(self.text)
 
-    def create_code_obj(self):
+    def create_code(self):
         """
         Create `Code` instance from the current input.
         """
@@ -399,7 +399,7 @@ class Line(object):
         Returns true if there was a completion.
         """
         # On the first tab press, try to find one completion and complete.
-        result = self.create_code_obj().get_common_complete_suffix()
+        result = self.create_code().get_common_complete_suffix()
         if result:
             self.text = self.insert_text(result)
             return True
@@ -445,7 +445,7 @@ class Line(object):
         Start completions. (Generate list of completions and initialize.)
         """
         # Generate list of all completions.
-        current_completions = list(self.create_code_obj().get_completions())
+        current_completions = list(self.create_code().get_completions())
 
         if current_completions:
             self.complete_state = CompletionState(
@@ -645,7 +645,7 @@ class Line(object):
         """
         Return the current line to the `CommandLineInterface.read_input` call.
         """
-        code = self.create_code_obj()
+        code = self.create_code()
         text = self.text
 
         # Validate first. If not valid, set validation exception.

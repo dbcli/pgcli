@@ -33,7 +33,7 @@ def get_input(message, raise_exception_on_abort=False, multiline=False, is_passw
     cli = CLI()
 
     on_abort = AbortAction.RAISE_EXCEPTION if raise_exception_on_abort else AbortAction.RETURN_NONE
-    code_obj = cli.read_input(on_abort=on_abort, on_exit=AbortAction.IGNORE)
+    code = cli.read_input(on_abort=on_abort, on_exit=AbortAction.IGNORE)
 
-    if code_obj:
-        return code_obj.text
+    if code:
+        return code.text

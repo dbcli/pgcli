@@ -605,10 +605,10 @@ class PythonCommandLineInterface(CommandLineInterface):
             return
         self.get_signatures_thread_running = True
 
-        code_obj = self.line.create_code_obj()
+        code = self.line.create_code()
 
         def run():
-            script = code_obj._get_jedi_script()
+            script = code._get_jedi_script()
 
             # Show signatures in help text.
             if script:
@@ -628,7 +628,7 @@ class PythonCommandLineInterface(CommandLineInterface):
 
             # Set signatures and redraw if the text didn't change in the
             # meantime. Otherwise request new signatures.
-            if self.line.text == code_obj.text:
+            if self.line.text == code.text:
                 self.line.signatures = signatures
                 self.request_redraw()
             else:

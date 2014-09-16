@@ -22,7 +22,10 @@ class CursorRegion(object):
         self.start = start
         self.end = end
 
-    def get_sorted(self):
+    def sorted(self):
+        """
+        Return a (start, end) tuple where start <= end.
+        """
         if self.start < self.end:
             return self.start, self.end
         else:
@@ -523,7 +526,7 @@ def vi_bindings(registry, cli_ref):
                 def rot13_handler(event):
                     """ Apply transformation. """
                     region = func(event)
-                    start, end = region.get_sorted()
+                    start, end = region.sorted()
 
                     # Transform.
                     line.transform_region(
@@ -554,7 +557,7 @@ def vi_bindings(registry, cli_ref):
                 """ Create yank handler. """
                 region = func(event)
 
-                start, end = region.get_sorted()
+                start, end = region.sorted()
                 substring = line.text[line.cursor_position + start : line.cursor_position + end]
 
                 if substring:
@@ -569,7 +572,7 @@ def vi_bindings(registry, cli_ref):
                     deleted = ''
 
                     if region:
-                        start, end = region.get_sorted()
+                        start, end = region.sorted()
 
                         # Move to the start of the region.
                         line.cursor_position += start

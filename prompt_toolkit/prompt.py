@@ -388,7 +388,7 @@ class Prompt(object):
         screen.write_highlighted(self.get_tokens_in_left_margin(row, is_new_line))
 
     def get_input_tokens(self):
-        tokens = self.line.create_code_obj().get_tokens()
+        tokens = self.line.create_code().get_tokens()
 
         for p in self.input_processors:
             tokens = p.process_tokens(tokens)

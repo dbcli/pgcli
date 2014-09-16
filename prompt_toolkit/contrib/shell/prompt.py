@@ -7,7 +7,7 @@ from .rules import TokenStream
 class ShellPrompt(Prompt):
     def get_tokens_after_input(self):
         def _():
-            code = self.line.create_code_obj()
+            code = self.line.create_code()
             parts, last_part_token = code._get_lex_result()
 
             # Don't show help when you're in the middle of typing a 'token'.
