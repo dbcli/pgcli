@@ -59,3 +59,53 @@ class InputStreamTest(unittest.TestCase):
         self.assertEqual(self.processor.keys[1].key, Keys.Left)
         self.assertEqual(self.processor.keys[0].data, '\x1b[1;3D')
         self.assertEqual(self.processor.keys[1].data, '\x1b[1;3D')
+
+    def test_flush_1(self):
+        # Send left key in two parts without flush.
+        self.stream.feed('\x1b')
+        self.stream.feed('[D')
+
+        self.assertEqual(len(self.processor.keys), 1)
+        self.assertEqual(self.processor.keys[0].key, Keys.Left)
+        self.assertEqual(self.processor.keys[0].data, '\x1b[D')
+
+    def test_flush_2(self):
+        # Send left key with a 'Flush' in between.
+        # The flush should make sure that we process evenything before as-is,
+        # with makes the first part just an escape character instead.
+        self.stream.feed('\x1b')
+        self.stream.flush()
+        self.stream.feed('[D')
+
+        self.assertEqual(len(self.processor.keys), 3)
+        self.assertEqual(self.processor.keys[0].key, Keys.Escape)
+        self.assertEqual(self.processor.keys[1].key, '[')
+        self.assertEqual(self.processor.keys[2].key, 'D')
+
+        self.assertEqual(self.processor.keys[0].data, '\x1b')
+        self.assertEqual(self.processor.keys[1].data, '[')
+        self.assertEqual(self.processor.keys[2].data, 'D')
+
+    def test_meta_arrows(self):
+        self.stream.feed('\x1b\x1b[D')
+
+        self.assertEqual(len(self.processor.keys), 2)
+        self.assertEqual(self.processor.keys[0].key, Keys.Escape)
+        self.assertEqual(self.processor.keys[1].key, Keys.Left)
+
+    def test_control_square_close(self):
+        self.stream.feed('\x1dC')
+
+        self.assertEqual(len(self.processor.keys), 2)
+        self.assertEqual(self.processor.keys[0].key, Keys.ControlSquareClose)
+        self.assertEqual(self.processor.keys[1].key, 'C')
+
+    def test_invalid(self):
+        # Invalid sequence that has at two characters in common with other
+        # sequences.
+        self.stream.feed('\x1b[*')
+
+        self.assertEqual(len(self.processor.keys), 3)
+        self.assertEqual(self.processor.keys[0].key, Keys.Escape)
+        self.assertEqual(self.processor.keys[1].key, '[')
+        self.assertEqual(self.processor.keys[2].key, '*')

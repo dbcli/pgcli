@@ -23,7 +23,9 @@ class KeyBindingTest(unittest.TestCase):
 
         self.registry = Registry()
         self.registry.add_binding(Keys.ControlX, Keys.ControlC)(self.handlers.controlx_controlc)
-        self.registry.add_binding(Keys.ControlD)(self.handlers.controld)
+        self.registry.add_binding(Keys.ControlX)(self.handlers.control_x)
+        self.registry.add_binding(Keys.ControlD)(self.handlers.control_d)
+        self.registry.add_binding(Keys.ControlSquareClose, Keys.Any)(self.handlers.control_square_close_any)
 
         self.processor = InputProcessor(self.registry)
 
@@ -49,4 +51,22 @@ class KeyBindingTest(unittest.TestCase):
 
         # Followed again by a know key sequence.
         self.processor.feed_key(KeyPress(Keys.ControlD, ''))
-        self.assertEqual(self.handlers.called, ['controlx_controlc', 'controld'])
+        self.assertEqual(self.handlers.called, ['controlx_controlc', 'control_d'])
+
+    def test_control_square_closed_any(self):
+        self.processor.feed_key(KeyPress(Keys.ControlSquareClose, ''))
+        self.processor.feed_key(KeyPress('C', 'C'))
+
+        self.assertEqual(self.handlers.called, ['control_square_close_any'])
+
+    def test_common_prefix(self):
+        # Sending Control_X should not yet do anything, because there is
+        # another sequence starting with that as well.
+        self.processor.feed_key(KeyPress(Keys.ControlX, ''))
+        self.assertEqual(self.handlers.called, [])
+
+        # When another key is pressed, we know that we did not meant the longer
+        # "ControlX ControlC" sequence and the callbacks are called.
+        self.processor.feed_key(KeyPress(Keys.ControlD, ''))
+
+        self.assertEqual(self.handlers.called, ['control_x', 'control_d'])
