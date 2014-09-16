@@ -89,10 +89,6 @@ class CommandLineInterface(object):
     #: `Prompt` class for the layout of the prompt. (and the help text.)
     prompt_factory = Prompt
 
-    #: `InputStream` class for the parser of the input
-    #: (Normally, you don't override this one.)
-    inputstream_factory = InputStream
-
     #: `InputStreamHandler` class for the keybindings.
     key_bindings_factories = [ emacs_bindings ]
     default_input_mode = InputMode.INSERT
@@ -120,6 +116,9 @@ class CommandLineInterface(object):
 
         #: The `InputProcessor` instance.
         self.input_processor = self.create_input_processor()
+
+        # Create `InputStream` instance.
+        self.inputstream = self.create_inputstream(self.input_processor, self.stdout)
 
         #: The `prompt` instance.
         self.prompt = self.create_prompt()
@@ -167,6 +166,9 @@ class CommandLineInterface(object):
             return line_cls(code_factory=code_cls, history=history, callbacks=LineCallbacks(self))
 
         return { name: _create_line(*k) for (name, k) in self.create_line_factories_dict().items() }
+
+    def create_inputstream(self, input_processor, stdout):
+        return InputStream(input_processor, stdout=stdout)
 
     def create_input_processor(self):
         """
@@ -235,7 +237,7 @@ class CommandLineInterface(object):
         """
         The input 'event loop'.
 
-        This should return the next character to process.
+        This should return the next characters to process.
         """
         timeout = self.input_timeout
 
@@ -299,11 +301,9 @@ class CommandLineInterface(object):
             self._redraw_pipe = os.pipe()
             fcntl.fcntl(self._redraw_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
 
-            stream = self.inputstream_factory(self.input_processor, stdout=self.stdout)
-
             def reset_line():
                 """ Reset everything. """
-                stream.reset()
+                self.inputstream.reset()
                 self.line.reset(initial_value=initial_value)
                 self.renderer.reset()
                 self.input_processor.reset()
@@ -328,7 +328,10 @@ class CommandLineInterface(object):
                         # got none, it means we got a repaint request.
                         if c:
                             # Feed input text.
-                            stream.feed(c)
+                            self.inputstream.feed(c)
+
+                            # Immediately flush the input.
+                            self.inputstream.flush()
 
                         # If the exit flag has been set.
                         if self._exit_flag:

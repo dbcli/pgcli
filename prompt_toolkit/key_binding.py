@@ -41,6 +41,8 @@ class InputProcessor(object):
 
         self.reset()
 
+        #print(' '.join(''.join(map(str, kb.keys)) for kb in registry.key_bindings))
+
     def reset(self):
         self._previous_key_sequence = None
         self._input_mode_stack = [self.default_input_mode]
@@ -79,71 +81,100 @@ class InputProcessor(object):
         else:
             raise IndexError('Cannot pop the last InputMode.')
 
-    def _process(self):
+    def _get_matches(self, key_presses):
         """
-        Coroutine for the processing of key presses.
+        For a list of :class:`KeyPress` instances. Give the matching handlers
+        that would handle this.
         """
-        def is_active(binding):
-            return binding.input_mode in (None, self.input_mode)
+        keys = tuple(k.key for k in key_presses)
+        bindings = self._registry.key_bindings
 
+        # Try match, with mode flag
+        with_mode = [b for b in bindings if b.keys == keys and b.input_mode == self.input_mode]
+        if with_mode:
+            return with_mode
+
+        # Try match without mode.
+        without_mode = [b for b in bindings if b.keys == keys and b.input_mode == None]
+        if without_mode:
+            return without_mode
+
+        # Try match, where the last key is replaced with 'Any', with mode.
+        keys_any = tuple(keys[:-1] + (Keys.Any,))
+
+        with_mode_any = [b for b in bindings if b.keys == keys_any and b.input_mode == self.input_mode]
+        if with_mode_any:
+            return with_mode_any
+
+        # Try match, where the last key is replaced with 'Any', without mode.
+        without_mode_any = [b for b in bindings if b.keys == keys_any and b.input_mode == None]
+        if without_mode_any:
+            return without_mode_any
+
+        return []
+
+    def _is_prefix_of_longer_match(self, key_presses):
+        """
+        For a list of :class:`KeyPress` instances. Return True if there is any
+        handler that is bound to a suffix of this keys.
+        """
+        keys = [k.key for k in key_presses]
+
+        for b in self._registry.key_bindings:
+            if b.input_mode in (None, self.input_mode):
+                if len(b.keys) > len(keys) and list(b.keys[:len(key_presses)]) == keys:
+                    return True
+
+        return False
+
+    def _process(self):
         buffer = []
+        retry = False
 
         while True:
-            # Start with all the active bindings.
-            # (In reverse order, because we want to give priority to bindings
-            # that are defined later.)
-            options = [ (b.keys, b) for b in self._registry.key_bindings[::-1] if is_active(b) ]
+            if retry:
+                retry = False
+            else:
+                buffer.append((yield))
 
-            processing = []
+            # If we have some key presses, check for matches.
+            if buffer:
+                is_prefix_of_longer_match = self._is_prefix_of_longer_match(buffer)
+                matches = self._get_matches(buffer)
 
-            while True:
-                # Receive next key press.
-                if buffer:
-                    key_press, buffer = buffer[0], buffer[1:]
-                else:
-                    key_press = yield
+                # Exact matches found, call handler.
+                if not is_prefix_of_longer_match and matches:
+                    self._call_handler(matches[-1], key_sequence=buffer)
+                    buffer = []
 
-                key_sequence = processing + [key_press]
+                # No match found.
+                elif not is_prefix_of_longer_match and not matches:
+                    retry = True
+                    found = False
 
-                # Matches
-                exact_matches_with_mode = [(k, b) for k, b in options if k == (key_press.key,) and b.input_mode ]
-                exact_matches = [(k, b) for k, b in options if k == (key_press.key,)]
-                prefix_matches = [(k, b) for k, b in options if k[0] == key_press.key and len(k) > 1]
-                any_matches_with_mode = [(k, b) for k, b in options if k == (Keys.Any,) and b.input_mode ]
-                any_matches = [(k, b) for k, b in options if k == (Keys.Any,)]
+                    # Loop over the input, try longest match first and shift.
+                    for i in range(len(buffer), 0, -1):
+                        matches = self._get_matches(buffer[:i])
+                        if matches:
+                            self._call_handler(matches[-1], key_sequence=buffer[:i])
+                            buffer = buffer[i:]
+                            found = True
 
-                # If we have an exact match, call handler.
-                # (An exact match that specifies the input mode will always get higher priority.)
-                if exact_matches_with_mode or exact_matches:
-                    self._call_handler((exact_matches_with_mode or exact_matches)[0][1], key_sequence=key_sequence)
-                    break # Reset. Go back to outer loop.
+                    if not found:
+                        buffer = buffer[1:]
 
-                # When the prefix matches -> pop first keys from options dict.
-                elif prefix_matches:
-                    options = [(k[1:], b) for k, b in prefix_matches]
-                    processing.append(key_press)
-
-                # If we have `Keys.Any`, that should catch all keys (If there is
-                # no other match) and pass the pressed key to the handler.
-                elif any_matches_with_mode or any_matches:
-                    self._call_handler((any_matches_with_mode or any_matches)[0][1],
-                                    key_sequence=key_sequence, key=key_press)
-                    break
-
-                # An 'invalid' sequence, ignore the first key_press and start
-                # processing the rest again by shifting in a temp variable.
-                else:
-                    buffer = (processing + buffer)[1:]
-                    break
 
     def feed_key(self, key_press):
+        """
+        Send a new :class:`KeyPress` into this processor.
+        """
         self._process_coroutine.send(key_press)
 
-    def _call_handler(self, handler, key=None, key_sequence=None):
+    def _call_handler(self, handler, key_sequence=None):
         arg = self.arg
         self.arg = None
 
-        event = Event(weakref.ref(self), arg=arg, data=(key and key.data),
+        event = Event(weakref.ref(self), arg=arg, key_sequence=key_sequence,
                         previous_key_sequence=self._previous_key_sequence)
         handler.call(event)
 
@@ -154,12 +185,15 @@ class InputProcessor(object):
 
 
 class Event(object):
-    def __init__(self, input_processor_ref, arg=None, data=None, key_sequence=None, previous_key_sequence=None):
+    def __init__(self, input_processor_ref, arg=None, key_sequence=None, previous_key_sequence=None):
         self._input_processor_ref = input_processor_ref
-        self.data = data
         self.key_sequence = key_sequence
         self.previous_key_sequence = previous_key_sequence
         self._arg = arg
+
+    @property
+    def data(self):
+        return self.key_sequence[-1].data
 
     @property
     def input_processor(self):

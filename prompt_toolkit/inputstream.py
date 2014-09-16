@@ -24,6 +24,11 @@ class KeyPress(object):
         return 'KeyPress(key=%r, data=%r)' % (self.key, self.data)
 
 
+class _Flush(object):
+    """ Helper object to indicate flush operation to the parser. """
+    pass
+
+
 class InputStream(object):
     """
     Parser for VT100 input stream.
@@ -41,6 +46,8 @@ class InputStream(object):
     """
     # Lookup table of ANSI escape sequences for a VT100 terminal
     mappings = {
+        '\x1b': Keys.Escape,
+
         '\x00': Keys.ControlSpace, # Control-Space (Also for Ctrl-@)
         '\x01': Keys.ControlA, # Control-A (home)
         '\x02': Keys.ControlB, # Control-B (emacs cursor left)
@@ -74,7 +81,6 @@ class InputStream(object):
         '\x1e': Keys.ControlCircumflex, # Control-^
         '\x1f': Keys.ControlUnderscore, # Control-underscore (Also for Ctrl-hypen.)
         '\x7f': Keys.Backspace, # (127) Backspace
-           ### '\x1b': 'escape',
         '\x1b[A': Keys.Up,
         '\x1b[B': Keys.Down,
         '\x1b[C': Keys.Right,
@@ -131,19 +137,20 @@ class InputStream(object):
 
     def __init__(self, input_processor, stdout=None):
         self._input_processor = input_processor
-
-        # Put the terminal in cursor mode. (Instead of application mode.)
-        if stdout:
-            stdout.write('\x1b[?1l')
-            stdout.flush()
+        self._stdout = stdout
 
         self.reset()
 
-        # Put the terminal in application mode.
-        #print('\x1b[?1h')
-
     def reset(self):
         self._start_parser()
+
+        # Put the terminal in cursor mode. (Instead of application mode.)
+        if self._stdout:
+            self._stdout.write('\x1b[?1l')
+            self._stdout.flush()
+
+            # Put the terminal in application mode.
+            #self._stdout.write('\x1b[?1h')
 
     def _start_parser(self):
         """
@@ -152,48 +159,67 @@ class InputStream(object):
         self._input_parser = self._input_parser_generator()
         self._input_parser.send(None)
 
+    def _get_matches(self, prefix):
+        """
+        Return the keys that map to this prefix.
+        """
+        return [ v for k, v in self.mappings.items() if k == prefix ]
+
+    def _is_prefix_of_longer_match(self, prefix):
+        """
+        True when there is any key that start with this characters.
+        """
+        return any(v for k, v in self.mappings.items() if k.startswith(prefix) and k != prefix)
+
     def _input_parser_generator(self):
         """
         Coroutine (state machine) for the input parser.
         """
-        buffer = ''
+        prefix = ''
+        retry = False
+        flush = False
 
         while True:
-            options = self.mappings
-            prefix = ''
+            flush = False
 
-            while True:
-                if buffer:
-                    c, buffer = buffer[0], buffer[1:]
+            if retry:
+                retry = False
+            else:
+                # Get next character.
+                c = yield
+
+                if c == _Flush:
+                    flush = True
                 else:
-                    c = yield
-
-                # When we have a match -> call handler
-                if c in options:
-                    self._call_handler(options[c], prefix + c)
-                    break # Reset. Go back to outer loop
-
-                # When the first character matches -> pop first letters in options dict
-                elif any(k[0] == c for k in options.keys()):
-                    options = { k[1:]: v for k, v in options.items() if k[0] == c }
                     prefix += c
 
-                # An 'invalid' sequence, take the first char as literal, and
-                # start processing the rest again by shifting it in a temp
-                # variable.
-                elif prefix:
-                    if prefix[0] == '\x1b':
-                        self._call_handler(Keys.Escape, prefix[0])
-                    else:
+            # If we have some data, check for matches.
+            if prefix:
+                is_prefix_of_longer_match = self._is_prefix_of_longer_match(prefix)
+                matches = self._get_matches(prefix)
+
+                # Exact matches found, call handlers..
+                if (flush or not is_prefix_of_longer_match) and matches:
+                    self._call_handler(matches[0], prefix)
+                    prefix = ''
+
+                # No exact matches found.
+                elif (flush or not is_prefix_of_longer_match) and not matches:
+                    found = False
+                    retry = True
+
+                    # Loop over the input, try the longest match first and
+                    # shift.
+                    for i in range(len(prefix), 0, -1):
+                        matches = self._get_matches(prefix[:i])
+                        if matches:
+                            self._call_handler(matches[0], prefix[:i])
+                            prefix = prefix[i:]
+                            found = True
+
+                    if not found:
                         self._call_handler(prefix[0], prefix[0])
-
-                    buffer = prefix[1:] + c
-                    break # Reset. Go back to outer loop
-
-                # Handle letter (no match was found.)
-                else:
-                    self._call_handler(c, c)
-                    break # Reset. Go back to outer loop
+                        prefix = prefix[1:]
 
     def _call_handler(self, key, insert_text):
         """
@@ -210,14 +236,21 @@ class InputStream(object):
         Feed the input stream.
         """
         assert isinstance(data, six.text_type)
-
         #print(repr(data))
 
-        try:
-            for c in data:
-                self._input_parser.send(c)
-        except Exception as e:
-            # Restart the parser in case of an exception.
-            # (The parse coroutine will go into `StopIteration` otherwise.)
-            self._start_parser()
-            raise
+        for c in data:
+            self._input_parser.send(c)
+
+    def flush(self):
+        """
+        Flush the buffer of the input stream.
+
+        This will allow us to handle the escape key (or maybe meta) sooner.
+        The input received by the escape key is actually the same as the first
+        characters of e.g. Arrow-Up, so without knowing what follows the escape
+        sequence, we don't know whether escape has been pressed, or whether
+        it's something else. This flush function should be called after a
+        timeout, and processes everything that's still in the buffer as-is, so
+        without assuming any characters will folow.
+        """
+        self._input_parser.send(_Flush)
