@@ -302,8 +302,14 @@ class CommandLineInterface(object):
             fcntl.fcntl(self._redraw_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
 
             def reset_line():
-                """ Reset everything. """
+                """
+                Reset everything.
+                """
                 self.inputstream.reset()
+
+                for l in self.lines.values():
+                    l.reset()
+
                 self.line.reset(initial_value=initial_value)
                 self.renderer.reset()
                 self.input_processor.reset()

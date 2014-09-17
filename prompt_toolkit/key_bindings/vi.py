@@ -124,6 +124,13 @@ def vi_bindings(registry, cli_ref):
         if line.complete_state and event.input_processor.input_mode != InputMode.COMPLETE:
             event.input_processor.push_input_mode(InputMode.COMPLETE)
 
+    @handle(Keys.ControlN, in_mode=InputMode.VI_NAVIGATION)
+    def _(event):
+        """
+        CtrlN in navigation mode goes down.
+        """
+        line.auto_down()
+
     @handle(Keys.ControlP, in_mode=InputMode.INSERT)
     @handle(Keys.ControlP, in_mode=InputMode.COMPLETE)
     def _(event):
@@ -134,6 +141,12 @@ def vi_bindings(registry, cli_ref):
         if line.complete_state and event.input_processor.input_mode != InputMode.COMPLETE:
             event.input_processor.push_input_mode(InputMode.COMPLETE)
 
+    @handle(Keys.ControlP, in_mode=InputMode.VI_NAVIGATION)
+    def _(event):
+        """
+        CtrlP in navigation mode goes up.
+        """
+        line.auto_up()
 
     @handle(Keys.ControlJ, in_mode=InputMode.VI_NAVIGATION)
     @handle(Keys.ControlM, in_mode=InputMode.VI_NAVIGATION)

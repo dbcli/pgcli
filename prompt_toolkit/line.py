@@ -519,6 +519,16 @@ class Line(object):
     def newline(self):
         self.insert_text('\n')
 
+    def auto_enter(self):
+        """
+        The default handler for 'Enter' key presses. Either insert a newline
+        or return the input.
+        """
+        if self.is_multiline:
+            self.newline()
+        else:
+            self.return_input()
+
     def insert_line_above(self, copy_margin=True):
         """
         Insert a new line above the current one.

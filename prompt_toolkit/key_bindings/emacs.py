@@ -121,6 +121,8 @@ def emacs_bindings(registry, cli_ref):
     @handle(Keys.Escape, Keys.ControlM, in_mode=InputMode.INSERT)
     @handle(Keys.Escape, Keys.ControlJ, in_mode=InputMode.COMPLETE)
     @handle(Keys.Escape, Keys.ControlM, in_mode=InputMode.COMPLETE)
+    @handle(Keys.Escape, Keys.ControlJ, in_mode=InputMode.INCREMENTAL_SEARCH)
+    @handle(Keys.Escape, Keys.ControlM, in_mode=InputMode.INCREMENTAL_SEARCH)
     def _(event):
         """
         Meta + Newline: always accept input.
@@ -147,7 +149,7 @@ def emacs_bindings(registry, cli_ref):
             deleted = line.delete_before_cursor(count=-pos)
             line.set_clipboard(ClipboardData(deleted))
 
-    @handle(Keys.Escape, 'a')
+    @handle(Keys.Escape, 'a', in_mode=InputMode.INSERT)
     def _(event):
         """
         Previous sentence.
@@ -165,7 +167,7 @@ def emacs_bindings(registry, cli_ref):
             words = line.document.text_after_cursor[:pos]
             line.insert_text(words.title(), overwrite=True)
 
-    @handle(Keys.Escape, 'e')
+    @handle(Keys.Escape, 'e', in_mode=InputMode.INSERT)
     def _(event):
         """ Move to end of sentence. """
         # TODO:
@@ -190,15 +192,6 @@ def emacs_bindings(registry, cli_ref):
         pos = line.document.find_previous_word_beginning(count=event.arg)
         if pos:
             line.cursor_position += pos
-
-    #@handle(Keys.Escape, 'b')
-    #def _(event):
-    #    """
-    #    Delete the Word after the cursor. (Delete until end of word.)
-    #    """
-    #    pos = line.document.find_next_word_ending()
-    #    data = ClipboardData(line.delete(pos))
-    #    line.set_clipboard(data)
 
     @handle(Keys.Escape, 'l', in_mode=InputMode.INSERT)
     def _(event):

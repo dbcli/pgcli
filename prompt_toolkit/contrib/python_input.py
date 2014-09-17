@@ -173,8 +173,10 @@ def python_bindings(registry, cli_ref):
     @handle(Keys.Tab, in_mode=InputMode.INSERT)
     @handle(Keys.Tab, in_mode=InputMode.COMPLETE)
     def _(event):
-        # When the 'tab' key is pressed with only whitespace character before the
-        # cursor, do autocompletion. Otherwise, insert indentation.
+        """
+        When the 'tab' key is pressed with only whitespace character before the
+        cursor, do autocompletion. Otherwise, insert indentation.
+        """
         current_char = line.document.current_line_before_cursor
         if not current_char or current_char.isspace():
             line.insert_text('    ')
@@ -186,43 +188,14 @@ def python_bindings(registry, cli_ref):
     @handle(Keys.BackTab, in_mode=InputMode.INSERT)
     @handle(Keys.BackTab, in_mode=InputMode.COMPLETE)
     def _(event):
+        """
+        Shift+Tab: go to previous completion.
+        """
         line.complete_previous()
 
         if event.input_processor.input_mode != InputMode.COMPLETE:
             event.input_processor.push_input_mode(InputMode.COMPLETE)
             line.complete_previous()
-
-    @handle(Keys.ControlJ, in_mode=InputMode.INSERT)
-    @handle(Keys.ControlM, in_mode=InputMode.INSERT)
-    def _(event):
-        _auto_enable_multiline()
-
-        if line.is_multiline:
-            line.newline()
-        else:
-            line.return_input()
-
-    def _auto_enable_multiline():
-        """
-        (Temporarily) enable multiline when pressing enter.
-        When:
-        - We press [enter] after a color or backslash (line continuation).
-        - After unclosed brackets.
-        """
-        def is_empty_or_space(s):
-            return s == '' or s.isspace()
-        cursor_at_the_end = line.document.is_cursor_at_the_end
-
-        # If we just typed a colon, or still have open brackets, always insert a real newline.
-        if cursor_at_the_end and (line.document.text_before_cursor.rstrip()[-1:] == ':' or
-                                  _has_unclosed_brackets(line.document.text_before_cursor) or
-                                  line.text.startswith('@')):
-            line.is_multiline = True
-
-        # If the character before the cursor is a backslash (line continuation
-        # char), insert a new line.
-        elif cursor_at_the_end and (line.document.text_before_cursor[-1:] == '\\'):
-            line.is_multiline = True
 
 
 class PythonLine(Line):
@@ -272,6 +245,32 @@ class PythonLine(Line):
             if current_line[-1:] == ':':
                 for x in range(4):
                     insert_text(' ')
+
+    def auto_enter(self):
+        self._auto_enable_multiline()
+        super(PythonLine, self).auto_enter()
+
+    def _auto_enable_multiline(self):
+        """
+        (Temporarily) enable multiline when pressing enter.
+        When:
+        - We press [enter] after a color or backslash (line continuation).
+        - After unclosed brackets.
+        """
+        def is_empty_or_space(s):
+            return s == '' or s.isspace()
+        cursor_at_the_end = self.document.is_cursor_at_the_end
+
+        # If we just typed a colon, or still have open brackets, always insert a real newline.
+        if cursor_at_the_end and (self.document.text_before_cursor.rstrip()[-1:] == ':' or
+                                  _has_unclosed_brackets(self.document.text_before_cursor) or
+                                  self.text.startswith('@')):
+            self.is_multiline = True
+
+        # If the character before the cursor is a backslash (line continuation
+        # char), insert a new line.
+        elif cursor_at_the_end and (self.document.text_before_cursor[-1:] == '\\'):
+            self.is_multiline = True
 
 
 class PythonPrompt(Prompt):
@@ -388,7 +387,6 @@ class PythonPrompt(Prompt):
             self.write_menus(screen) # XXX: menu should be able to cover the second toolbar.
             y2 = self._get_bottom_position(screen, last_screen_height)
             y = max(y, y2 - 1)
-
 
             screen._y, screen._x = y + 1, 0
             self.write_second_toolbar(screen)

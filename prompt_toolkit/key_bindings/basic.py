@@ -101,14 +101,13 @@ def basic_bindings(registry, cli_ref):
 
     @handle(Keys.ControlJ, in_mode=InputMode.INSERT)
     @handle(Keys.ControlM, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlJ, in_mode=InputMode.COMPLETE)
+    @handle(Keys.ControlM, in_mode=InputMode.COMPLETE)
     def _(event):
         """
-        Newline/Enter.
+        Newline/Enter. (Or return input.)
         """
-        if line.is_multiline:
-            line.newline()
-        else:
-            line.return_input()
+        line.auto_enter()
 
     @handle(Keys.ControlK, in_mode=InputMode.INSERT)
     def _(event):
@@ -119,7 +118,7 @@ def basic_bindings(registry, cli_ref):
     def _(event):
         line.clear()
 
-    @handle(Keys.ControlT)
+    @handle(Keys.ControlT, in_mode=InputMode.INSERT)
     def _(event):
         line.swap_characters_before_cursor()
 
@@ -141,11 +140,6 @@ def basic_bindings(registry, cli_ref):
         if pos:
             deleted = line.delete_before_cursor(count=-pos)
             line.set_clipboard(ClipboardData(deleted))
-
-    @handle(Keys.ControlY, InputMode.INSERT)
-    def _(event):
-        # Pastes the clipboard content.
-        line.paste_from_clipboard()
 
     @handle(Keys.PageUp, in_mode=InputMode.COMPLETE)
     def _(event):
@@ -199,8 +193,14 @@ def basic_bindings(registry, cli_ref):
 
     @handle(Keys.ControlH, in_mode=InputMode.INSERT)
     @handle(Keys.Backspace, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlH, in_mode=InputMode.COMPLETE)
+    @handle(Keys.Backspace, in_mode=InputMode.COMPLETE)
     def _(event):
         line.delete_before_cursor(count=event.arg)
+
+        # Quit autocomplete mode.
+        if event.input_processor.input_mode == InputMode.COMPLETE:
+            event.input_processor.pop_input_mode()
 
     @handle(Keys.Delete, in_mode=InputMode.INSERT)
     def _(event):
@@ -218,7 +218,7 @@ def basic_bindings(registry, cli_ref):
         """
         line.insert_text(event.data * event.arg)
 
-        # Always quit autocomplete mode when the text changes.
+        # Quit autocomplete mode.
         if event.input_processor.input_mode == InputMode.COMPLETE:
             event.input_processor.pop_input_mode()
 
