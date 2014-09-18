@@ -1,8 +1,8 @@
 """
 Data structures for the selection.
 """
-
 from __future__ import unicode_literals
+
 
 class SelectionType(object):
     """

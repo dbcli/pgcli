@@ -23,12 +23,10 @@ def get_input(message, raise_exception_on_abort=False, multiline=False, is_passw
     class CustomLine(Line):
         is_multiline = multiline
 
-
     class CLI(CommandLineInterface):
         prompt_factory = CustomPrompt
         line_factory = CustomLine
-        key_bindings_factories = [ (vi_bindings if vi_mode else emacs_bindings) ]
-
+        key_bindings_factories = [(vi_bindings if vi_mode else emacs_bindings)]
 
     cli = CLI()
 

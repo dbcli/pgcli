@@ -48,39 +48,39 @@ class InputStream(object):
     mappings = {
         '\x1b': Keys.Escape,
 
-        '\x00': Keys.ControlSpace, # Control-Space (Also for Ctrl-@)
-        '\x01': Keys.ControlA, # Control-A (home)
-        '\x02': Keys.ControlB, # Control-B (emacs cursor left)
-        '\x03': Keys.ControlC, # Control-C (interrupt)
-        '\x04': Keys.ControlD, # Control-D (exit)
-        '\x05': Keys.ControlE, # Contrel-E (end)
-        '\x06': Keys.ControlF, # Control-F (cursor forward)
-        '\x07': Keys.ControlG, # Control-G
-        '\x08': Keys.ControlH, # Control-H (8) (Identical to '\b')
-        '\x09': Keys.ControlI, # Control-I (9) (Identical to '\t')
-        '\x0a': Keys.ControlJ, # Control-J (10) (Identical to '\n')
-        '\x0b': Keys.ControlK, # Control-K (delete until end of line; vertical tab)
-        '\x0c': Keys.ControlL, # Control-L (clear; form feed)
-        '\x0d': Keys.ControlM, # Control-M (13) (Identical to '\r')
-        '\x0e': Keys.ControlN, # Control-N (14) (history forward)
-        '\x0f': Keys.ControlO, # Control-O (15)
-        '\x10': Keys.ControlP, # Control-P (16) (history back)
-        '\x11': Keys.ControlQ, # Control-Q
-        '\x12': Keys.ControlR, # Control-R (18) (reverse search)
-        '\x13': Keys.ControlS, # Control-S (19) (forward search)
-        '\x14': Keys.ControlT, # Control-T
-        '\x15': Keys.ControlU, # Control-U
-        '\x16': Keys.ControlV, # Control-V
-        '\x17': Keys.ControlW, # Control-W
-        '\x18': Keys.ControlX, # Control-X
-        '\x19': Keys.ControlY, # Control-Y (25)
-        '\x1a': Keys.ControlZ, # Control-Z
+        '\x00': Keys.ControlSpace,  # Control-Space (Also for Ctrl-@)
+        '\x01': Keys.ControlA,  # Control-A (home)
+        '\x02': Keys.ControlB,  # Control-B (emacs cursor left)
+        '\x03': Keys.ControlC,  # Control-C (interrupt)
+        '\x04': Keys.ControlD,  # Control-D (exit)
+        '\x05': Keys.ControlE,  # Contrel-E (end)
+        '\x06': Keys.ControlF,  # Control-F (cursor forward)
+        '\x07': Keys.ControlG,  # Control-G
+        '\x08': Keys.ControlH,  # Control-H (8) (Identical to '\b')
+        '\x09': Keys.ControlI,  # Control-I (9) (Identical to '\t')
+        '\x0a': Keys.ControlJ,  # Control-J (10) (Identical to '\n')
+        '\x0b': Keys.ControlK,  # Control-K (delete until end of line; vertical tab)
+        '\x0c': Keys.ControlL,  # Control-L (clear; form feed)
+        '\x0d': Keys.ControlM,  # Control-M (13) (Identical to '\r')
+        '\x0e': Keys.ControlN,  # Control-N (14) (history forward)
+        '\x0f': Keys.ControlO,  # Control-O (15)
+        '\x10': Keys.ControlP,  # Control-P (16) (history back)
+        '\x11': Keys.ControlQ,  # Control-Q
+        '\x12': Keys.ControlR,  # Control-R (18) (reverse search)
+        '\x13': Keys.ControlS,  # Control-S (19) (forward search)
+        '\x14': Keys.ControlT,  # Control-T
+        '\x15': Keys.ControlU,  # Control-U
+        '\x16': Keys.ControlV,  # Control-V
+        '\x17': Keys.ControlW,  # Control-W
+        '\x18': Keys.ControlX,  # Control-X
+        '\x19': Keys.ControlY,  # Control-Y (25)
+        '\x1a': Keys.ControlZ,  # Control-Z
 
-        '\x1c': Keys.ControlBackslash, # Both Control-\ and Ctrl-|
-        '\x1d': Keys.ControlSquareClose, # Control-]
-        '\x1e': Keys.ControlCircumflex, # Control-^
-        '\x1f': Keys.ControlUnderscore, # Control-underscore (Also for Ctrl-hypen.)
-        '\x7f': Keys.Backspace, # (127) Backspace
+        '\x1c': Keys.ControlBackslash,  # Both Control-\ and Ctrl-|
+        '\x1d': Keys.ControlSquareClose,  # Control-]
+        '\x1e': Keys.ControlCircumflex,  # Control-^
+        '\x1f': Keys.ControlUnderscore,  # Control-underscore (Also for Ctrl-hypen.)
+        '\x7f': Keys.Backspace,  # (127) Backspace
         '\x1b[A': Keys.Up,
         '\x1b[B': Keys.Down,
         '\x1b[C': Keys.Right,
@@ -90,14 +90,14 @@ class InputStream(object):
         '\x1b[F': Keys.End,
         '\x1bOF': Keys.End,
         '\x1b[3~': Keys.Delete,
-        '\x1b[3;2~': Keys.ShiftDelete, # xterm, gnome-terminal.
-        '\x1b[1~': Keys.Home, # tmux
-        '\x1b[4~': Keys.End, # tmux
+        '\x1b[3;2~': Keys.ShiftDelete,  # xterm, gnome-terminal.
+        '\x1b[1~': Keys.Home,  # tmux
+        '\x1b[4~': Keys.End,  # tmux
         '\x1b[5~': Keys.PageUp,
         '\x1b[6~': Keys.PageDown,
-        '\x1b[7~': Keys.Home, # xrvt
-        '\x1b[8~': Keys.End, # xrvt
-        '\x1b[Z': Keys.BackTab, # shift + tab
+        '\x1b[7~': Keys.Home,  # xrvt
+        '\x1b[8~': Keys.End,  # xrvt
+        '\x1b[Z': Keys.BackTab,  # shift + tab
 
         '\x1bOP': Keys.F1,
         '\x1bOQ': Keys.F2,
@@ -149,8 +149,8 @@ class InputStream(object):
             self._stdout.write('\x1b[?1l')
             self._stdout.flush()
 
-            # Put the terminal in application mode.
-            #self._stdout.write('\x1b[?1h')
+            # # Put the terminal in application mode.
+            # self._stdout.write('\x1b[?1h')
 
     def _start_parser(self):
         """
@@ -163,7 +163,7 @@ class InputStream(object):
         """
         Return the keys that map to this prefix.
         """
-        return [ v for k, v in self.mappings.items() if k == prefix ]
+        return [v for k, v in self.mappings.items() if k == prefix]
 
     def _is_prefix_of_longer_match(self, prefix):
         """
@@ -236,7 +236,7 @@ class InputStream(object):
         Feed the input stream.
         """
         assert isinstance(data, six.text_type)
-        #print(repr(data))
+#        print(repr(data))
 
         for c in data:
             self._input_parser.send(c)

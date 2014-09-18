@@ -6,7 +6,6 @@ Work in progress.
 Alternative for a shell (like Bash).
 
 """
-
 from pygments.style import Style
 from pygments.token import Token
 
@@ -20,49 +19,48 @@ from prompt_toolkit import Exit
 
 class OurGitCode(ShellCode):
     rule = Any([
-            Sequence([
-                Any([
-                    Literal('cd'),
-                    Literal('ls'),
-                    Literal('pushd'),
-                    ]),
-                    Variable(Path, placeholder='<directory>') ]),
-
-            Literal('pwd'),
-            Sequence([Literal('rm'), Variable(Path, placeholder='<file>') ]),
-            Sequence([Literal('cp'), Variable(Path, placeholder='<from>'), Variable(Path, placeholder='<to>') ]),
-            #Sequence([Literal('cp'), Repeat(Variable(Path, placeholder='<from>')), Variable(Path, placeholder='<to>') ]),
-            Sequence([Literal('git'), Repeat(
-                Any([
-                    #Sequence([]),
-                    Literal('--version'),
-                    Sequence([Literal('-c'), Variable(placeholder='<name>=<value>')]),
-                    Sequence([Literal('--exec-path'), Variable(Path, placeholder='<path>')]),
-                    Literal('--help'),
-                    ])
-                ),
-                Any([
-                    Sequence([ Literal('checkout'), Variable(placeholder='<commit>') ]),
-                    Sequence([ Literal('clone'), Variable(placeholder='<repository>') ]),
-                    Sequence([ Literal('diff'), Variable(placeholder='<commit>') ]),
-                    ]),
+        Sequence([
+            Any([
+                Literal('cd'),
+                Literal('ls'),
+                Literal('pushd'),
                 ]),
-            Sequence([Literal('echo'), Repeat(Variable(placeholder='<text>')), ]),
-    ])
+            Variable(Path, placeholder='<directory>')]),
 
+        Literal('pwd'),
+        Sequence([Literal('rm'), Variable(Path, placeholder='<file>')]),
+        Sequence([Literal('cp'), Variable(Path, placeholder='<from>'), Variable(Path, placeholder='<to>')]),
+        # #Sequence([Literal('cp'), Repeat(Variable(Path, placeholder='<from>')), Variable(Path, placeholder='<to>') ]),
+        Sequence([Literal('git'), Repeat(
+            Any([
+                # #Sequence([]),
+                Literal('--version'),
+                Sequence([Literal('-c'), Variable(placeholder='<name>=<value>')]),
+                Sequence([Literal('--exec-path'), Variable(Path, placeholder='<path>')]),
+                Literal('--help'),
+                ])
+            ),
+            Any([
+                Sequence([Literal('checkout'), Variable(placeholder='<commit>')]),
+                Sequence([Literal('clone'), Variable(placeholder='<repository>')]),
+                Sequence([Literal('diff'), Variable(placeholder='<commit>')]),
+                ]),
+            ]),
+        Sequence([Literal('echo'), Repeat(Variable(placeholder='<text>'))]),
+    ])
 
 
 class ExampleStyle(Style):
     background_color = None
     styles = {
-            Token.Placeholder: "#aa8888",
-            Token.Placeholder.Variable: "#aa8888",
-            Token.Placeholder.Bracket: "bold #ff7777",
-            Token.Placeholder.Separator: "#ee7777",
-#            A.Path:    '#0044aa',
-#            A.Param:   '#ff00ff',
-            Token.Aborted:    '#aaaaaa',
-        }
+        Token.Placeholder: "#aa8888",
+        Token.Placeholder.Variable: "#aa8888",
+        Token.Placeholder.Bracket: "bold #ff7777",
+        Token.Placeholder.Separator: "#ee7777",
+#        A.Path:    '#0044aa',
+#        A.Param:   '#ff00ff',
+        Token.Aborted:    '#aaaaaa',
+    }
 
 
 class ExampleCLI(CommandLineInterface):

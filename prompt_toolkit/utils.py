@@ -2,9 +2,9 @@ from __future__ import unicode_literals
 import array
 import fcntl
 import signal
+import six
 import termios
 import tty
-import six
 
 
 def get_size(fileno):
@@ -16,10 +16,10 @@ def get_size(fileno):
     :param fileno: stdout.fileno()
     :returns: A (rows, cols) tuple.
     """
-    #assert stdout.isatty()
+#    assert stdout.isatty()
 
     # Buffer for the C call
-    buf = array.array(u'h' if six.PY3 else b'h', [0, 0, 0, 0 ])
+    buf = array.array(u'h' if six.PY3 else b'h', [0, 0, 0, 0])
 
     # Do TIOCGWINSZ (Get)
     fcntl.ioctl(fileno, termios.TIOCGWINSZ, buf, True)
@@ -27,7 +27,6 @@ def get_size(fileno):
 
     # Return rows, cols
     return buf[0], buf[1]
-
 
 
 class raw_mode(object):
@@ -43,7 +42,7 @@ class raw_mode(object):
         # NOTE: On os X systems, using pty.setraw() fails. Therefor we are using this:
         newattr = termios.tcgetattr(self.fileno)
         newattr[tty.LFLAG] = newattr[tty.LFLAG] & ~(
-                        termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
+            termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
         termios.tcsetattr(self.fileno, termios.TCSANOW, newattr)
 
     def __exit__(self, *a, **kw):
@@ -59,7 +58,7 @@ class call_on_sigwinch(object):
         self.callback = callback
 
     def __enter__(self):
-        self.previous_callback = signal.signal(signal.SIGWINCH, lambda *a:self.callback())
+        self.previous_callback = signal.signal(signal.SIGWINCH, lambda *a: self.callback())
 
     def __exit__(self, *a, **kw):
         signal.signal(signal.SIGWINCH, self.previous_callback)

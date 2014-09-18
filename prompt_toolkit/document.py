@@ -12,9 +12,9 @@ __all__ = ('Document',)
 # Regex for finding the "words" in documents. (We consider a group of alnum
 # characters a word, but also a group of special characters a word, as long as
 # it doesn't contain a space.)
-_FIND_WORD_RE =  re.compile('([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
+_FIND_WORD_RE = re.compile('([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
 
-_FIND_CURRENT_WORD_RE =  re.compile('^([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
+_FIND_CURRENT_WORD_RE = re.compile('^([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
 
 
 class Document(object):
@@ -118,7 +118,7 @@ class Document(object):
         """
         return len(self.current_line_before_cursor)
 
-    def translate_index_to_position(self, index): # TODO: make this 0-based indexed!!!
+    def translate_index_to_position(self, index):  # TODO: make this 0-based indexed!!!
         """
         Given an index for the text, return the corresponding (row, col) tuple.
         """
@@ -129,7 +129,7 @@ class Document(object):
 
         return row, col
 
-    def translate_row_col_to_index(self, row, col): # TODO: unit test
+    def translate_row_col_to_index(self, row, col):  # TODO: unit test
         """
         Given a (row, col) tuple, return the corresponding index.
         (Row and col params are 0-based.)
@@ -152,7 +152,7 @@ class Document(object):
         """
         return self.text[self.cursor_position:].find(sub) == 0
 
-    def find(self, sub, in_current_line=False, include_current_position=False, count=1): # TODO: rename to `find_forwards`
+    def find(self, sub, in_current_line=False, include_current_position=False, count=1):  # TODO: rename to `find_forwards`
         """
         Find `text` after the cursor, return position relative to the cursor
         position. Return `None` if nothing was found.
@@ -242,9 +242,9 @@ class Document(object):
         match_after = _FIND_CURRENT_WORD_RE.search(text_after_cursor)
 
         return (
-                    - match_before.end(1) if match_before else 0,
-                    match_after.end(1) if match_after else 0
-                )
+            - match_before.end(1) if match_before else 0,
+            match_after.end(1) if match_after else 0
+        )
 
     def find_next_word_beginning(self, count=1):
         """
@@ -303,8 +303,7 @@ class Document(object):
         except StopIteration:
             pass
 
-
-    def find_next_matching_line(self, match_func): # TODO: unittest.
+    def find_next_matching_line(self, match_func):  # TODO: unittest.
         """
         Look downwards for empty lines.
         Return the line index, relative to the current line.
@@ -313,7 +312,7 @@ class Document(object):
             if match_func(line):
                 return 1 + index
 
-    def find_previous_matching_line(self, match_func): # TODO: unittest.
+    def find_previous_matching_line(self, match_func):  # TODO: unittest.
         """
         Look upwards for empty lines.
         Return the line index, relative to the current line.
@@ -334,7 +333,7 @@ class Document(object):
         """
         return min(count, len(self.current_line_after_cursor))
 
-    def get_cursor_up_position(self, count=1): # TODO: implement `count`
+    def get_cursor_up_position(self, count=1):  # TODO: implement `count`
         """
         Return the relative cursor position (character index) where we would be if the
         user pressed the arrow-up button.
@@ -447,7 +446,6 @@ class Document(object):
 
         return column - current_column
 
-
     def selection_range(self):
         """
         Return (from, to) tuple of the selection or `None` if nothing was selected.
@@ -466,4 +464,3 @@ class Document(object):
                     to = len(self.text)
 
             return from_, to
-

@@ -11,7 +11,7 @@ from .lexer import TextToken, ParametersLexer
 
 
 class ShellCode(Code):
-    rule = Sequence([ Literal('Hello'), Literal('World') ])
+    rule = Sequence([Literal('Hello'), Literal('World')])
 
     def _get_tokens(self):
         return list(ParametersLexer(stripnl=False, stripall=False, ensurenl=False).get_tokens(self.text))
@@ -22,7 +22,7 @@ class ShellCode(Code):
             tokens = self.get_tokens_before_cursor()
         else:
             tokens = self.get_tokens()
-        parts = [ t[1] for t in tokens if t[0] in Token.Text ]
+        parts = [t[1] for t in tokens if t[0] in Token.Text]
 
         # Separete the last token (where we are currently one)
         starting_new_token = not tokens or tokens[-1][0] in Token.WhiteSpace
@@ -32,11 +32,10 @@ class ShellCode(Code):
             last_part = parts.pop()
 
         # Unescape tokens
-        parts = [ TextToken(t).unescaped_text for t in parts ]
+        parts = [TextToken(t).unescaped_text for t in parts]
         last_part_token = TextToken(last_part)
 
         return parts, last_part_token
-
 
     def get_completions(self):
         parts, last_part_token = self._get_lex_result(only_before_cursor=True)
@@ -63,11 +62,11 @@ class ShellCode(Code):
 
     def get_parse_info(self):
         parts, last_part_token = self._get_lex_result()
-        stream = TokenStream(parts + [ last_part_token.unescaped_text ]) # TODO: raise error when this last token is not finished.
+        stream = TokenStream(parts + [last_part_token.unescaped_text])  # TODO: raise error when this last token is not finished.
 
         trees = list(self.rule.parse(stream))
 
         if len(trees) == 1:
             return(trees[0])
         else:
-            raise Exception('Invalid command.') # TODO: raise better exception.
+            raise Exception('Invalid command.')  # TODO: raise better exception.

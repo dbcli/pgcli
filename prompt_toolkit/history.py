@@ -20,7 +20,6 @@ class History(object):
         return len(self.strings)
 
 
-
 class FileHistory(History):
     def __init__(self, filename):
         super(FileHistory, self).__init__()
@@ -51,7 +50,6 @@ class FileHistory(History):
 
                 add()
 
-
     def append(self, string):
         super(FileHistory, self).append(string)
 
@@ -62,5 +60,3 @@ class FileHistory(History):
             write('\n# %s\n' % datetime.datetime.now())
             for line in string.split('\n'):
                 write('+%s\n' % line)
-
-

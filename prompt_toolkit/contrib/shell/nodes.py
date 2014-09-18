@@ -50,9 +50,9 @@ class ParseNode(object):
         tree definition.).
         """
         if self.rule.dest:
-            return { self.rule.dest: True }
+            return {self.rule.dest: True}
         else:
-            return { }
+            return {}
 
 
 class EmptyNode(ParseNode):
@@ -147,7 +147,7 @@ class RepeatNode(ParseNode):
         return 'RepeatNode(%r)' % self.children
 
     @property
-    def is_complete(self): # TODO: revise the definition of 'is_complete'... (does it mean not showing help info or processable?)
+    def is_complete(self):  # TODO: revise the definition of 'is_complete'... (does it mean not showing help info or processable?)
         # Note that an empty repeat is also 'complete'
         return all(c.is_complete for c in self.children)
 
@@ -219,7 +219,7 @@ class AnyNode(ParseNode):
 
 class LiteralNode(ParseNode):
     def __init__(self, rule, text):
-        #assert isinstance(rule, Literal)
+        # #assert isinstance(rule, Literal)
         super(LiteralNode, self).__init__(rule)
         self._text = text
 
@@ -228,14 +228,14 @@ class LiteralNode(ParseNode):
 
     def get_variables(self):
         if self.rule.dest:
-            return { self.rule.dest: self._text }
+            return {self.rule.dest: self._text}
         else:
-            return { }
+            return {}
 
 
 class VariableNode(ParseNode):
     def __init__(self, rule, text):
-        #assert isinstance(rule, Variable)
+        # #assert isinstance(rule, Variable)
         super(VariableNode, self).__init__(rule)
         self._text = text
 
@@ -244,6 +244,6 @@ class VariableNode(ParseNode):
 
     def get_variables(self):
         if self.rule.dest:
-            return { self.rule.dest: self._text }
+            return {self.rule.dest: self._text}
         else:
-            return { }
+            return {}

@@ -15,6 +15,7 @@ __all__ = (
     'BracketsMismatchProcessor',
 )
 
+
 class TokenList(object):
     """
     Wrapper around (Token, text) tuples.
@@ -60,14 +61,15 @@ class TokenList(object):
 
 class HorizontalCompletionMenu(object):
     """
-    Helper for drawing the completion menu 'wildmenu'-style. (Similar to Vim's wildmenu.)
+    Helper for drawing the completion menu 'wildmenu'-style.
+    (Similar to Vim's wildmenu.)
     """
     def write(self, screen, complete_cursor_position, complete_state):
         """
         Write the menu to the screen object.
         """
         completions = complete_state.current_completions
-        index = complete_state.complete_index # Can be None!
+        index = complete_state.complete_index  # Can be None!
 
         # Don't draw the menu if there is just one completion.
         if len(completions) <= 1:
@@ -104,16 +106,16 @@ class HorizontalCompletionMenu(object):
 
         # Draw to screen.
         screen.write_highlighted([
-                        (Token.HorizontalMenu, ' '),
-                        (Token.HorizontalMenu.Arrow, '<' if cut_left else ' '),
-                        (Token.HorizontalMenu, ' '),
-                    ])
+            (Token.HorizontalMenu, ' '),
+            (Token.HorizontalMenu.Arrow, '<' if cut_left else ' '),
+            (Token.HorizontalMenu, ' '),
+        ])
         screen.write_highlighted(tokens)
         screen.write_highlighted([
-                        (Token.HorizontalMenu, ' '),
-                        (Token.HorizontalMenu.Arrow, '>' if cut_right else ' '),
-                        (Token.HorizontalMenu, ' '),
-                    ])
+            (Token.HorizontalMenu, ' '),
+            (Token.HorizontalMenu.Arrow, '>' if cut_right else ' '),
+            (Token.HorizontalMenu, ' '),
+        ])
 
 
 class PopupCompletionMenu(object):
@@ -134,7 +136,7 @@ class PopupCompletionMenu(object):
         Write the menu to the screen object.
         """
         completions = complete_state.current_completions
-        index = complete_state.complete_index # Can be None!
+        index = complete_state.complete_index  # Can be None!
 
         # Don't draw the menu if there is just one completion.
         if len(completions) <= 1:
@@ -143,7 +145,7 @@ class PopupCompletionMenu(object):
         # Get position of the menu.
         y, x = complete_cursor_position
         y += 1
-        x = max(0, x - 1) # XXX: Don't draw it in the right margin!!!...
+        x = max(0, x - 1)  # XXX: Don't draw it in the right margin!!!...
 
         # Calculate width of completions menu.
         menu_width = self.get_menu_width(complete_state)
@@ -151,9 +153,9 @@ class PopupCompletionMenu(object):
         # Decide which slice of completions to show.
         if len(completions) > self.max_height and (index or 0) > self.max_height / 2:
             slice_from = min(
-                        (index or 0) - self.max_height // 2, # In the middle.
-                        len(completions) - self.max_height # At the bottom.
-                    )
+                (index or 0) - self.max_height // 2,  # In the middle.
+                len(completions) - self.max_height  # At the bottom.
+            )
         else:
             slice_from = 0
 
@@ -175,9 +177,9 @@ class PopupCompletionMenu(object):
             else:
                 button_token = self.progress_bar_token
 
-            tokens = [(Token, ' ')] + \
-                     self.get_menu_item_tokens(c, is_current_completion, menu_width) + \
-                     [(button_token, ' '), (Token, ' ')]
+            tokens = ([(Token, ' ')] +
+                      self.get_menu_item_tokens(c, is_current_completion, menu_width) +
+                      [(button_token, ' '), (Token, ' ')])
 
             screen.write_highlighted_at_pos(y+i, x, tokens, z_index=10)
 
@@ -216,7 +218,7 @@ class BracketsMismatchProcessor(object):
     def process_tokens(self, tokens):
         tokens = list(TokenList(tokens))
 
-        stack = [] # Pointers to the result array
+        stack = []  # Pointers to the result array
 
         for index, (token, text) in enumerate(tokens):
             top = tokens[stack[-1]][1] if stack else ''
@@ -264,8 +266,8 @@ class ISearchComposer(object):
             return [(Token.Prompt.ISearch.Text, text)]
         else:
             return [
-                    (Token.Prompt.ISearch.Text, text[:index]),
-                    (Token.Prompt.ISearch.Text.NoMatch, text[index:])
+                (Token.Prompt.ISearch.Text, text[:index]),
+                (Token.Prompt.ISearch.Text.NoMatch, text[index:])
             ]
 
     @property
@@ -289,7 +291,7 @@ class Prompt(object):
     #: Processors for transforming the tokens received from the `Code` object.
     #: (This can be used for displaying password input as '*' or for
     #: highlighting mismatches of brackets in case of Python input.)
-    input_processors = []
+    input_processors = []  # XXX: rename to something else !!!!!
 
     #: Class responsible for the composition of the i-search tokens.
     isearch_composer = ISearchComposer
@@ -357,7 +359,7 @@ class Prompt(object):
         else:
             prefix = '/'
 
-        return [ (Token.Prompt.ViSearch, prefix) ]
+        return [(Token.Prompt.ViSearch, prefix)]
 
     def get_tokens_after_input(self):
         """
@@ -412,7 +414,8 @@ class Prompt(object):
                     token = Token.IncrementalSearchMatch
 
                 highlighted_characters.update({
-                    x: token for x in range(index, index + len(self.line.isearch_state.isearch_text)) })
+                    x: token for x in range(index, index + len(self.line.isearch_state.isearch_text))
+                })
 
         # In case of selection, highlight all matches.
         selection_range = self.line.document.selection_range()
@@ -431,7 +434,7 @@ class Prompt(object):
 
         for index, c in enumerate(line.text + ' '):
             screen.write_char(c, Token.Prompt.ViSearch.Text,
-                            set_cursor_position=(index == line.cursor_position))
+                              set_cursor_position=(index == line.cursor_position))
 
     def write_before_input(self, screen):
         screen.write_highlighted(self.tokens_before_input)
@@ -447,8 +450,8 @@ class Prompt(object):
             highlighted_characters = {}
 
         index = 0
-            # Note, we add the space character at the end, because that's where
-            #       the cursor could be.
+        # Note, we add the space character at the end, because that's where
+        #       the cursor could be.
         for token, text in self.get_input_tokens() + [(Token, ' ')]:
             for c in text:
                 # Determine Token-type for character.
@@ -456,10 +459,8 @@ class Prompt(object):
 
                 # Insert char.
                 screen.write_char(c, t,
-                                string_index=index,
-                                set_cursor_position=(index == self.line.cursor_position)
-                        )
-
+                                  string_index=index,
+                                  set_cursor_position=(index == self.line.cursor_position))
                 index += 1
 
         # Unset left margin.
@@ -473,7 +474,7 @@ class Prompt(object):
 
     def need_to_show_completion_menu(self):
         return (self.commandline.input_processor.input_mode == InputMode.COMPLETE and
-                        self.completion_menu and self.line.complete_state)
+                self.completion_menu and self.line.complete_state)
 
     def write_menus(self, screen):
         """

@@ -1,6 +1,8 @@
+from __future__ import unicode_literals
 import os
 
 from prompt_toolkit.code import Completion
+
 
 class Path(object):
     """

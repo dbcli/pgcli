@@ -75,7 +75,6 @@ class TerminalCodes:
     DISABLE_AUTOWRAP = '\x1b[?7l'
     ENABLE_AUTOWRAP = '\x1b[?7h'
 
-
     @staticmethod
     def CURSOR_GOTO(row=0, column=0):
         """ Move cursor position. """
@@ -95,7 +94,9 @@ class TerminalCodes:
         if amount == 0:
             return ''
         elif amount == 1:
-            return '\x1b[B' # XXX: would just `\n' also do?
+            # Note: Not the same as '\n', '\n' can cause the window content to
+            #       scroll.
+            return '\x1b[B'
         else:
             return '\x1b[%iB' % amount
 
@@ -113,7 +114,7 @@ class TerminalCodes:
         if amount == 0:
             return ''
         elif amount == 1:
-            return '\b' # '\x1b[D'
+            return '\b'  # '\x1b[D'
         else:
             return '\x1b[%iD' % amount
 
@@ -125,7 +126,7 @@ class Char(object):
     # we should display them as follows:
     # Usually this happens after a "quoted insert".
     display_mappings = {
-        '\x00': '^@', # Control space
+        '\x00': '^@',  # Control space
         '\x01': '^A',
         '\x02': '^B',
         '\x03': '^C',
@@ -152,11 +153,11 @@ class Char(object):
         '\x18': '^X',
         '\x19': '^Y',
         '\x1a': '^Z',
-        '\x1b': '^[', # Escape
+        '\x1b': '^[',  # Escape
         '\x1c': '^\\',
         '\x1d': '^]',
         '\x1f': '^_',
-        '\x7f': '^?', # Control backspace
+        '\x7f': '^?',  # Control backspace
     }
 
     def __init__(self, char=' ', token=Token, z_index=0):
@@ -184,7 +185,7 @@ class Screen(object):
     """
     def __init__(self, size):
         self._buffer = defaultdict(lambda: defaultdict(Char))
-        self._cursor_mappings = { } # Map `source_string_index` of input data to (row, col) screen output.
+        self._cursor_mappings = {}  # Map `source_string_index` of input data to (row, col) screen output.
         self._x = 0
         self._y = 0
 
@@ -212,13 +213,13 @@ class Screen(object):
         self._left_margin_func = func or (lambda linenr, is_new_line: None)
 
     def write_char(self, char, token, string_index=None,
-                    set_cursor_position=False, z_index=False):
+                   set_cursor_position=False, z_index=False):
         """
         Write char to current cursor position and move cursor.
         """
         assert len(char) == 1
 
-        char_obj  = Char(char, token, z_index)
+        char_obj = Char(char, token, z_index)
         char_width = char_obj.width
 
         # In case there is no more place left at this line, go first to the
@@ -228,7 +229,7 @@ class Screen(object):
             self._x = 0
             self._left_margin_func(self._line_number, False)
 
-        insert_pos = self._y, self._x # XXX: make a Point of this?
+        insert_pos = self._y, self._x  # XXX: make a Point of this?
 
         if string_index is not None:
             self._cursor_mappings[string_index] = insert_pos
@@ -290,8 +291,8 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
     Create diff of this screen with the previous screen.
     """
     #: Remember the last printed character.
-    last_char = [last_char] # nonlocal
-    background_turned_on = [False] # Nonlocal
+    last_char = [last_char]  # nonlocal
+    background_turned_on = [False]  # Nonlocal
 
     #: Variable for capturing the output.
     result = []
@@ -314,7 +315,7 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
             write(TerminalCodes.RESET_ATTRIBUTES)
             write(TerminalCodes.NEWLINE * (new.y - current_pos.y))
             write(TerminalCodes.CURSOR_FORWARD(new.x))
-            last_char[0] = None # Forget last char after resetting attributes.
+            last_char[0] = None  # Forget last char after resetting attributes.
         elif new.y < current_pos.y:
             write(TerminalCodes.CURSOR_UP(current_pos.y - new.y))
 
@@ -359,8 +360,8 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
                 bg = _tf._color_index(style['bgcolor']) if style['bgcolor'] else None
 
                 e = EscapeSequence(fg=fg, bg=bg,
-                        bold=style.get('bold', False),
-                        underline=style.get('underline', False))
+                                   bold=style.get('bold', False),
+                                   underline=style.get('underline', False))
 
                 write(TerminalCodes.RESET_ATTRIBUTES)
                 write(e.color_string())
@@ -394,7 +395,7 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
 
     # Loop over the rows.
     row_count = max(screen.current_height, previous_screen.current_height)
-    c = 0 # Column counter.
+    c = 0  # Column counter.
 
     for y, r in enumerate(range(0, row_count)):
         new_row = screen._buffer[r]
@@ -420,7 +421,7 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
             current_pos = move_cursor(Point(y=y, x=new_max_line_len+1))
             write(TerminalCodes.RESET_ATTRIBUTES)
             write(TerminalCodes.ERASE_END_OF_LINE)
-            last_char[0] = None # Forget last char after resetting attributes.
+            last_char[0] = None  # Forget last char after resetting attributes.
 
     # Move cursor:
     if accept_or_abort:
@@ -445,7 +446,6 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
 
 class Renderer(object):
     """
-
     Typical usage:
 
     ::
@@ -488,11 +488,12 @@ class Renderer(object):
         screen = self.screen_cls(size=self.get_size())
 
         self.prompt.write_to_screen(screen, self._last_screen.current_height if self._last_screen else 0,
-                abort=abort, accept=accept)
+                                    abort=abort, accept=accept)
 
-        output, self._cursor_pos, self._last_char = output_screen_diff(screen, self._cursor_pos,
-                self._last_screen, self._last_char, accept or abort,
-                style=self._style, grayed=abort)
+        output, self._cursor_pos, self._last_char = output_screen_diff(
+            screen, self._cursor_pos,
+            self._last_screen, self._last_char, accept or abort,
+            style=self._style, grayed=abort)
         self._last_screen = screen
 
         return output
@@ -528,45 +529,3 @@ class Renderer(object):
         self._stdout.write(TerminalCodes.CURSOR_GOTO(0, 0))
 
         self.reset()
-
-    def _in_columns(self, item_iterator, margin_left=0): # XXX: copy of deployer.console.in_columns
-        """
-        :param item_iterator: An iterable, which yields either ``basestring``
-                              instances, or (colored_item, length) tuples.
-        """
-        # Helper functions for extracting items from the iterator
-        def get_length(item):
-            return len(item) if isinstance(item, six.string_types) else item[1]
-
-        def get_text(item):
-            return item if isinstance(item, six.string_types) else item[0]
-
-        # First, fetch all items
-        all_items = list(item_iterator)
-
-        if not all_items:
-            return
-
-        # Calculate the longest.
-        max_length = max(map(get_length, all_items)) + 1
-
-        # World per line?
-        term_width = self.get_size().columns - margin_left
-        words_per_line = int(max(term_width / max_length, 1))
-
-        # Iterate through items.
-        margin = ' ' * margin_left
-        line = [ margin ]
-        for i, j in enumerate(all_items):
-            # Print command and spaces
-            line.append(get_text(j))
-
-            # When we reached the max items on this line, yield line.
-            if (i+1) % words_per_line == 0:
-                yield ''.join(line)
-                line = [ margin ]
-            else:
-                # Pad with whitespace
-                line.append(' ' * (max_length - get_length(j)))
-
-        yield ''.join(line)

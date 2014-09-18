@@ -41,7 +41,7 @@ class InputProcessor(object):
 
         self.reset()
 
-        #print(' '.join(''.join(map(str, kb.keys)) for kb in registry.key_bindings))
+#        print(' '.join(set(''.join(map(str, kb.keys)) for kb in registry.key_bindings if all(isinstance(X, unicode) for X in kb.keys))))
 
     def reset(self):
         self._previous_key_sequence = None
@@ -95,7 +95,7 @@ class InputProcessor(object):
             return with_mode
 
         # Try match without mode.
-        without_mode = [b for b in bindings if b.keys == keys and b.input_mode == None]
+        without_mode = [b for b in bindings if b.keys == keys and b.input_mode is None]
         if without_mode:
             return without_mode
 
@@ -107,7 +107,7 @@ class InputProcessor(object):
             return with_mode_any
 
         # Try match, where the last key is replaced with 'Any', without mode.
-        without_mode_any = [b for b in bindings if b.keys == keys_any and b.input_mode == None]
+        without_mode_any = [b for b in bindings if b.keys == keys_any and b.input_mode is None]
         if without_mode_any:
             return without_mode_any
 
@@ -163,7 +163,6 @@ class InputProcessor(object):
                     if not found:
                         buffer = buffer[1:]
 
-
     def feed_key(self, key_press):
         """
         Send a new :class:`KeyPress` into this processor.
@@ -175,7 +174,7 @@ class InputProcessor(object):
         self.arg = None
 
         event = Event(weakref.ref(self), arg=arg, key_sequence=key_sequence,
-                        previous_key_sequence=self._previous_key_sequence)
+                      previous_key_sequence=self._previous_key_sequence)
         handler.call(event)
 
         for h in self._registry.after_handler_callbacks:

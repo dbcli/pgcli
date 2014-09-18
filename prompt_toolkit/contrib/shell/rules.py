@@ -127,7 +127,7 @@ class Sequence(Rule):
                 for tree in rules[0].parse(lexer_stream):
                     with lexer_stream.restore_point:
                         for suffix in _parse(rules[1:]):
-                            yield [ tree ] + suffix
+                            yield [tree] + suffix
             else:
                 yield []
 
@@ -236,7 +236,7 @@ class Repeat(Rule):
                 for tree in self.rule.parse(lexer_stream):
                     with lexer_stream.restore_point:
                         for suffix in _parse():
-                            yield [ tree ] + suffix
+                            yield [tree] + suffix
                             found = True
 
             if not found:
@@ -315,7 +315,6 @@ class Variable(Rule):
                 yield c
 
 
-
 '''
 TODO: implement Optional as follows:
 
@@ -326,7 +325,6 @@ def Optional(rule):
         rule
     ])
 '''
-
 
 
 class TokenStream(object):

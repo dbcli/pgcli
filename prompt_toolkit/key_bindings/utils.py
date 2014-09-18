@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+
 def create_handle_decorator(registry, line):
     """
     Create a key handle decorator, which is compatible with `Registry.handle`

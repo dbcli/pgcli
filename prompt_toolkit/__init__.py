@@ -41,9 +41,10 @@ import weakref
 
 
 __all__ = (
-        'AbortAction',
-        'CommandLineInterface',
+    'AbortAction',
+    'CommandLineInterface',
 )
+
 
 class AbortAction:
     """
@@ -90,7 +91,7 @@ class CommandLineInterface(object):
     prompt_factory = Prompt
 
     #: `InputStreamHandler` class for the keybindings.
-    key_bindings_factories = [ emacs_bindings ]
+    key_bindings_factories = [emacs_bindings]
     default_input_mode = InputMode.INSERT
 
     #: `Renderer` class.
@@ -124,10 +125,9 @@ class CommandLineInterface(object):
         self.prompt = self.create_prompt()
 
         #: The `Renderer` instance.
-        self.renderer = self.renderer_factory(
-                                prompt=self.prompt,
-                                stdout=self.stdout,
-                                style=self.style)
+        self.renderer = self.renderer_factory(prompt=self.prompt,
+                                              stdout=self.stdout,
+                                              style=self.style)
 
         # Pipe for inter thread communication.
         self._redraw_pipe = None
@@ -165,7 +165,7 @@ class CommandLineInterface(object):
         def _create_line(line_cls, code_cls, history):
             return line_cls(code_factory=code_cls, history=history, callbacks=LineCallbacks(self))
 
-        return { name: _create_line(*k) for (name, k) in self.create_line_factories_dict().items() }
+        return {name: _create_line(*k) for (name, k) in self.create_line_factories_dict().items()}
 
     def create_inputstream(self, input_processor, stdout):
         return InputStream(input_processor, stdout=stdout)
@@ -179,6 +179,7 @@ class CommandLineInterface(object):
             kb(key_registry, weakref.ref(self))
 
         #: The `InputProcessor` instance.
+        # TODO: default_input_mode should be passed into reset(). it can be different for each read_line()
         return InputProcessor(key_registry, default_input_mode=self.default_input_mode)
 
     def create_prompt(self):

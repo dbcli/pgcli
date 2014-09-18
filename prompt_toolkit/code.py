@@ -1,6 +1,6 @@
 """
-The `Code` object is responsible for parsing a document, received from the `Line` class.
-It's usually tokenized, using a Pygments lexer.
+The `Code` object is responsible for parsing a document, received from the
+`Line` class.  It's usually tokenized, using a Pygments lexer.
 """
 from __future__ import unicode_literals
 from pygments.token import Token
@@ -74,7 +74,7 @@ class CodeBase(object):
         def get_suffix(completion):
             return completion.text[-completion.start_position:]
 
-        return _commonprefix([ get_suffix(c) for c in completions ])
+        return _commonprefix([get_suffix(c) for c in completions])
 
     def get_completions(self):
         """ Yield `Completion` instances. """
@@ -87,7 +87,6 @@ class CodeBase(object):
         If invalid, this should raise `self.validation_error`.
         """
         pass
-
 
 
 class Code(CodeBase):
@@ -109,9 +108,9 @@ class Code(CodeBase):
         """ Return lexer instance. """
         if self.lexer:
             return self.lexer(
-                    stripnl=False,
-                    stripall=False,
-                    ensurenl=False)
+                stripnl=False,
+                stripall=False,
+                ensurenl=False)
         else:
             return None
 

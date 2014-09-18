@@ -8,34 +8,35 @@ import re
 
 __all__ = ('ParametersLexer', 'TextToken')
 
+
 class ParametersLexer(RegexLexer):
     flags = re.DOTALL | re.MULTILINE | re.VERBOSE
 
-    tokens =  {
-            'root': [
-                    (r'\s+', Token.WhiteSpace),
-                    (r'''
-                            (
-                                # Part of string inside a double quote.
-                                "([^"\\]|\\.)*("|$)
-                                |
+    tokens = {
+        'root': [
+            (r'\s+', Token.WhiteSpace),
+            (r'''
+                    (
+                        # Part of string inside a double quote.
+                        "([^"\\]|\\.)*("|$)
+                        |
 
-                                # Part of string inside a single quote.
-                                # (no escaping in single quotes.)
-                                '[^']*('|$)
-                                |
+                        # Part of string inside a single quote.
+                        # (no escaping in single quotes.)
+                        '[^']*('|$)
+                        |
 
-                                # Escaped character outside quotes
-                                \\(.|$)
-                                |
+                        # Escaped character outside quotes
+                        \\(.|$)
+                        |
 
-                                # Any not-quote character.
-                                [^'"\ \\]+
-                            )+
-                    ''', Token.Text),
-                    (r'.', Token.Error), # Can not happen normally.
-                ]
-            }
+                        # Any not-quote character.
+                        [^'"\ \\]+
+                    )+
+            ''', Token.Text),
+            (r'.', Token.Error),  # Can not happen normally.
+        ]
+    }
 
 
 class TextToken(object):
@@ -63,7 +64,7 @@ class TextToken(object):
                 i += 1
 
                 while i < len(text):
-                    if get()  == '\\':
+                    if get() == '\\':
                         i += 1
                         if i < len(text):
                             unescaped_text.append(get())
@@ -72,7 +73,7 @@ class TextToken(object):
                             inside_double_quotes = True
                             trailing_backslash = True
                             break
-                    elif get()  == '"':
+                    elif get() == '"':
                         i += 1
                         break
                     else:
@@ -111,7 +112,6 @@ class TextToken(object):
                 unescaped_text.append(get())
                 i += 1
 
-
         self.unescaped_text = u''.join(unescaped_text)
         self.trailing_backslash = trailing_backslash
         self.inside_double_quotes = inside_double_quotes
@@ -128,5 +128,3 @@ class TextToken(object):
 
         # TODO: handle trailing backslash
         return text
-
-

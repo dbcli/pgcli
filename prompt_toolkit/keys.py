@@ -28,11 +28,11 @@ class Keys(object):
     ControlF = Key('<C-F>')
     ControlG = Key('<C-G>')
     ControlH = Key('<C-H>')
-    ControlI = Key('<C-I>') # Tab
-    ControlJ = Key('<C-J>') # Enter
+    ControlI = Key('<C-I>')  # Tab
+    ControlJ = Key('<C-J>')  # Enter
     ControlK = Key('<C-K>')
     ControlL = Key('<C-L>')
-    ControlM = Key('<C-M>') # Enter
+    ControlM = Key('<C-M>')  # Enter
     ControlN = Key('<C-N>')
     ControlO = Key('<C-O>')
     ControlP = Key('<C-P>')
@@ -63,7 +63,7 @@ class Keys(object):
     ShiftDelete = Key('<ShiftDelete>')
     PageUp      = Key('<PageUp>')
     PageDown    = Key('<PageDown>')
-    BackTab     = Key('<BackTab>') # shift + tab
+    BackTab     = Key('<BackTab>')  # shift + tab
 
     Tab         = ControlI
     Backspace   = ControlH

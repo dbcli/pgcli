@@ -44,22 +44,22 @@ def vi_bindings(registry, cli_ref):
     search_line = cli_ref().lines['search']
     handle = create_handle_decorator(registry, line)
 
-    _last_character_find = [None] # (char, backwards) tuple
+    _last_character_find = [None]  # (char, backwards) tuple
     _search_direction = [IncrementalSearchDirection.FORWARD]
 
     vi_transform_functions = [
-            # Rot 13 transformation
-            (('g', '?'), lambda string: codecs.encode(string, 'rot_13')),
+        # Rot 13 transformation
+        (('g', '?'), lambda string: codecs.encode(string, 'rot_13')),
 
-            # To lowercase
-            (('g', 'u'), lambda string: string.lower()),
+        # To lowercase
+        (('g', 'u'), lambda string: string.lower()),
 
-            # To uppercase.
-            (('g', 'U'), lambda string: string.upper()),
+        # To uppercase.
+        (('g', 'U'), lambda string: string.upper()),
 
-            # Swap case.
-            # (XXX: If we would implement 'tildeop', the 'g' prefix is not required.)
-            (('g', '~'), lambda string: string.swapcase()),
+        # Swap case.
+        # (XXX: If we would implement 'tildeop', the 'g' prefix is not required.)
+        (('g', '~'), lambda string: string.swapcase()),
     ]
 
     @registry.add_after_handler_callback
@@ -184,7 +184,7 @@ def vi_bindings(registry, cli_ref):
 
     @handle('c', 'c', in_mode=InputMode.VI_NAVIGATION)
     @handle('S', in_mode=InputMode.VI_NAVIGATION)
-    def _(event): # TODO: implement 'arg'
+    def _(event):  # TODO: implement 'arg'
         """
         Change current line
         """
@@ -211,7 +211,7 @@ def vi_bindings(registry, cli_ref):
         lines = line.document.lines
 
         before = '\n'.join(lines[:line.document.cursor_position_row])
-        deleted = '\n'.join(lines[line.document.cursor_position_row : line.document.cursor_position_row + event.arg])
+        deleted = '\n'.join(lines[line.document.cursor_position_row: line.document.cursor_position_row + event.arg])
         after = '\n'.join(lines[line.document.cursor_position_row + event.arg:])
 
         # Set new text.
@@ -255,14 +255,14 @@ def vi_bindings(registry, cli_ref):
             line.join_next_line()
 
     @handle('n', in_mode=InputMode.VI_NAVIGATION)
-    def _(event): # XXX: use `change_delete_move_yank_handler` and implement 'arg'
+    def _(event):  # XXX: use `change_delete_move_yank_handler` and implement 'arg'
         """
         Search next.
         """
         line.incremental_search(_search_direction[0])
 
     @handle('N', in_mode=InputMode.VI_NAVIGATION)
-    def _(event): # TODO: use `change_delete_move_yank_handler` and implement 'arg'
+    def _(event):  # TODO: use `change_delete_move_yank_handler` and implement 'arg'
         """
         Search previous.
         """
@@ -454,7 +454,7 @@ def vi_bindings(registry, cli_ref):
             from_, _ = line.document.translate_index_to_position(from_)
             to, _ = line.document.translate_index_to_position(to)
 
-            _indent(from_ - 1, to, count=event.arg) # XXX: why does translate_index_to_position return 1-based indexing???
+            _indent(from_ - 1, to, count=event.arg)  # XXX: why does translate_index_to_position return 1-based indexing???
         event.input_processor.pop_input_mode()
 
     @handle('<', in_mode=InputMode.SELECTION)
@@ -579,9 +579,9 @@ def vi_bindings(registry, cli_ref):
 
                     # Transform.
                     line.transform_region(
-                                line.cursor_position + start,
-                                line.cursor_position + end,
-                                transform_func)
+                        line.cursor_position + start,
+                        line.cursor_position + end,
+                        transform_func)
 
                     # Move cursor
                     line.cursor_position += (region.end or region.start)
@@ -595,7 +595,7 @@ def vi_bindings(registry, cli_ref):
                 region = func(event)
 
                 start, end = region.sorted()
-                substring = line.text[line.cursor_position + start : line.cursor_position + end]
+                substring = line.text[line.cursor_position + start: line.cursor_position + end]
 
                 if substring:
                     line.set_clipboard(ClipboardData(substring))
@@ -630,8 +630,8 @@ def vi_bindings(registry, cli_ref):
             return func
         return decorator
 
-    @change_delete_move_yank_handler('b') # Move one word or token left.
-    @change_delete_move_yank_handler('B') # Move one non-blank word left ((# TODO: difference between 'b' and 'B')
+    @change_delete_move_yank_handler('b')  # Move one word or token left.
+    @change_delete_move_yank_handler('B')  # Move one non-blank word left ((# TODO: difference between 'b' and 'B')
     def key_b(event):
         return CursorRegion(line.document.find_start_of_previous_word(count=event.arg) or 0)
 
@@ -640,12 +640,12 @@ def vi_bindings(registry, cli_ref):
         """ 'c$', 'd$' and '$':  Delete/change/move until end of line. """
         return CursorRegion(line.document.get_end_of_line_position())
 
-    @change_delete_move_yank_handler('w') # TODO: difference between 'w' and 'W'
+    @change_delete_move_yank_handler('w')  # TODO: difference between 'w' and 'W'
     def key_w(event):
         """ 'cw', 'de', 'w': Delete/change/move one word.  """
         return CursorRegion(line.document.find_next_word_beginning(count=event.arg) or 0)
 
-    @change_delete_move_yank_handler('e') # TODO: difference between 'e' and 'E'
+    @change_delete_move_yank_handler('e')  # TODO: difference between 'e' and 'E'
     def key_e(event):
         """ 'ce', 'de', 'e' """
         end = line.document.find_next_word_ending(count=event.arg)
@@ -689,18 +689,18 @@ def vi_bindings(registry, cli_ref):
                 return CursorRegion(start + 1 - offset, end + offset)
 
     for inner in (False, True):
-        for ci_start  , ci_end in [ ('"', '"'), ("'", "'"), ("`", "`"),
-                            ('[', ']'), ('<', '>'), ('{', '}'), ('(', ')') ]:
+        for ci_start, ci_end in [('"', '"'), ("'", "'"), ("`", "`"),
+                                 ('[', ']'), ('<', '>'), ('{', '}'), ('(', ')')]:
             create_ci_ca_handles(ci_start, ci_end, inner)
 
-    @change_delete_move_yank_handler('{') # TODO: implement 'arg'
+    @change_delete_move_yank_handler('{')  # TODO: implement 'arg'
     def _(event):
         """
         Move to previous blank-line separated section.
         Implements '{', 'c{', 'd{', 'y{'
         """
         line_index = line.document.find_previous_matching_line(
-                        lambda text: not text or text.isspace())
+            lambda text: not text or text.isspace())
 
         if line_index:
             index = line.document.get_cursor_up_position(count=-line_index)
@@ -708,14 +708,14 @@ def vi_bindings(registry, cli_ref):
             index = 0
         return CursorRegion(index)
 
-    @change_delete_move_yank_handler('}') # TODO: implement 'arg'
+    @change_delete_move_yank_handler('}')  # TODO: implement 'arg'
     def _(event):
         """
         Move to next blank-line separated section.
         Implements '}', 'c}', 'd}', 'y}'
         """
         line_index = line.document.find_next_matching_line(
-                        lambda text: not text or text.isspace())
+            lambda text: not text or text.isspace())
 
         if line_index:
             index = line.document.get_cursor_down_position(count=line_index)
@@ -831,10 +831,10 @@ def vi_bindings(registry, cli_ref):
             # row in the file.
             if 0 < event.arg <= 100:
                 absolute_index = line.document.translate_row_col_to_index(
-                                    int(event.arg * line.document.line_count / 100), 0)
+                    int(event.arg * line.document.line_count / 100), 0)
                 return CursorRegion(absolute_index - line.document.cursor_position)
             else:
-                return CursorRegion(0) # Do nothing.
+                return CursorRegion(0)  # Do nothing.
 
         else:
             # Move to the corresponding opening/closing bracket (()'s, []'s and {}'s).

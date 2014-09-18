@@ -13,7 +13,7 @@ Utility for creating a Python repl.
 from __future__ import unicode_literals
 
 from pygments import highlight
-from pygments.formatters.terminal256  import Terminal256Formatter
+from pygments.formatters.terminal256 import Terminal256Formatter
 from pygments.lexers import PythonTracebackLexer
 
 from prompt_toolkit import AbortAction, Exit
@@ -41,15 +41,16 @@ class PythonRepl(PythonCommandLineInterface):
             while True:
                 # Read
                 document = self.read_input(
-                                on_abort=AbortAction.RETRY,
-                                on_exit=AbortAction.RAISE_EXCEPTION)
+                    on_abort=AbortAction.RETRY,
+                    on_exit=AbortAction.RAISE_EXCEPTION)
+
                 line = document.text
 
                 if line and not line.isspace():
                     try:
                         # Eval and print.
                         self._execute(line)
-                    except KeyboardInterrupt as e: # KeyboardInterrupt doesn't inherit from Exception.
+                    except KeyboardInterrupt as e:  # KeyboardInterrupt doesn't inherit from Exception.
                         self._handle_keyboard_interrupt(e)
                     except Exception as e:
                         self._handle_exception(e)
@@ -119,8 +120,7 @@ class PythonRepl(PythonCommandLineInterface):
 
 
 def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_colors=False,
-                autocompletion_style=AutoCompletionStyle.POPUP_MENU,
-                startup_path=None):
+          autocompletion_style=AutoCompletionStyle.POPUP_MENU, startup_path=None):
     """
     Call this to embed  Python shell at the current point in your program.
     It's similar to `IPython.embed` and `bpython.embed`. ::
@@ -131,6 +131,6 @@ def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_co
     :param vi_mode: Boolean. Use Vi instead of Emacs key bindings.
     """
     cli = PythonRepl(globals, locals, vi_mode=vi_mode, history_filename=history_filename,
-            style=(None if no_colors else PythonStyle),
-            autocompletion_style=autocompletion_style)
+                     style=(None if no_colors else PythonStyle),
+                     autocompletion_style=autocompletion_style)
     cli.start_repl(startup_path=startup_path)

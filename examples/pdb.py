@@ -21,137 +21,138 @@ from prompt_toolkit.contrib.python_input import PythonCode
 
 class PdbCode(ShellCode):
     rule = Any([
-            Sequence([
-                Any([
-                    Literal('b', dest='cmd_break'),
-                    Literal('break', dest='cmd_break'),
-                    Literal('tbreak', dest='tbreak'),
-                ]),
-                Variable(placeholder='<file:lineno/function>', dest='break_line'),
-                Variable(placeholder='<condition>', dest='break_condition'),
-            ]),
-            Sequence([
-                Literal('condition', dest='cmd_condition'),
-                Variable(placeholder='<bpnumber>', dest='condition_bpnumber'),
-                Variable(placeholder='<str_condition>', dest='condition_str')
-            ]),
-            Sequence([
-                Any([
-                    Literal('l', dest='cmd_list'),
-                    Literal('list', dest='cmd_list'),
-                ]),
-                Variable(placeholder='<first>', dest='list_first'),
-                Variable(placeholder='<last>', dest='list_last')
-            ]),
-            Sequence([
-                Literal('debug'),
-                Variable(placeholder='<code>'),
-            ]),
-            Sequence([
-                Literal('disable'),
-                Variable(placeholder='<bpnumber>'),
-            ]),
-            Sequence([
-                Literal('enable'),
-                Repeat(Variable(placeholder='<bpnumber>')),
-            ]),
-            Sequence([
-                Literal('ignore'),
-                Variable(placeholder='<bpnumber>'),
-                Variable(placeholder='<count>'),
-            ]),
-            Sequence([
-                Literal('run'),
-                Repeat(Variable(placeholder='<args>')),
-            ]),
-            Sequence([
-                Literal('alias'),
-                Variable(placeholder='<name>'),
-                Variable(placeholder='<command>'),
-                Repeat(Variable(placeholder='<parameter>')),
-            ]),
-            Sequence([
-                Any([
-                    Literal('h'),
-                    Literal('help'),
-                ]),
-                Variable(placeholder='<command>'),
-            ]),
-            Sequence([
-                Literal('unalias'),
-                Variable(placeholder='<name>'),
-            ]),
-            Sequence([
-                Literal('jump'),
-                Variable(placeholder='<lineno>'),
-            ]),
-            Sequence([
-                Literal('whatis'),
-                Variable(placeholder='<arg>'),
-            ]),
-            Sequence([
-                Literal('pp'),
-                Variable(placeholder='<expression>'),
-            ]),
-            Sequence([
-                Literal('p'),
-                Variable(placeholder='<expression>'),
-            ]),
-            Sequence([
-                Any([
-                    Literal('cl'),
-                    Literal('clear'),
-                ]),
-                Repeat(Variable(placeholder='<bpnumber>')),
-            ]),
+        Sequence([
             Any([
-                Literal('a'),
-                Literal('args'),
+                Literal('b', dest='cmd_break'),
+                Literal('break', dest='cmd_break'),
+                Literal('tbreak', dest='tbreak'),
             ]),
+            Variable(placeholder='<file:lineno/function>', dest='break_line'),
+            Variable(placeholder='<condition>', dest='break_condition'),
+        ]),
+        Sequence([
+            Literal('condition', dest='cmd_condition'),
+            Variable(placeholder='<bpnumber>', dest='condition_bpnumber'),
+            Variable(placeholder='<str_condition>', dest='condition_str')
+        ]),
+        Sequence([
             Any([
-                Literal('cont'),
-                Literal('continue'),
+                Literal('l', dest='cmd_list'),
+                Literal('list', dest='cmd_list'),
             ]),
+            Variable(placeholder='<first>', dest='list_first'),
+            Variable(placeholder='<last>', dest='list_last')
+        ]),
+        Sequence([
+            Literal('debug'),
+            Variable(placeholder='<code>'),
+        ]),
+        Sequence([
+            Literal('disable'),
+            Variable(placeholder='<bpnumber>'),
+        ]),
+        Sequence([
+            Literal('enable'),
+            Repeat(Variable(placeholder='<bpnumber>')),
+        ]),
+        Sequence([
+            Literal('ignore'),
+            Variable(placeholder='<bpnumber>'),
+            Variable(placeholder='<count>'),
+        ]),
+        Sequence([
+            Literal('run'),
+            Repeat(Variable(placeholder='<args>')),
+        ]),
+        Sequence([
+            Literal('alias'),
+            Variable(placeholder='<name>'),
+            Variable(placeholder='<command>'),
+            Repeat(Variable(placeholder='<parameter>')),
+        ]),
+        Sequence([
             Any([
-                Literal('d'),
-                Literal('down'),
+                Literal('h'),
+                Literal('help'),
             ]),
+            Variable(placeholder='<command>'),
+        ]),
+        Sequence([
+            Literal('unalias'),
+            Variable(placeholder='<name>'),
+        ]),
+        Sequence([
+            Literal('jump'),
+            Variable(placeholder='<lineno>'),
+        ]),
+        Sequence([
+            Literal('whatis'),
+            Variable(placeholder='<arg>'),
+        ]),
+        Sequence([
+            Literal('pp'),
+            Variable(placeholder='<expression>'),
+        ]),
+        Sequence([
+            Literal('p'),
+            Variable(placeholder='<expression>'),
+        ]),
+        Sequence([
             Any([
-                Literal('exit'),
-                Literal('q'),
-                Literal('quit'),
+                Literal('cl'),
+                Literal('clear'),
             ]),
-            Any([
-                Literal('n'),
-                Literal('next'),
-            ]),
-            Any([
-                Literal('run'),
-                Literal('restart'),
-            ]),
-            Any([
-                Literal('unt'),
-                Literal('until'),
-            ]),
-            Any([
-                Literal('u'),
-                Literal('up'),
-            ]),
-            Any([
-                Literal('r'),
-                Literal('return'),
-            ]),
-            Any([
-                Literal('w', dest='where'),
-                Literal('where', dest='where'),
-                Literal('bt'),
-            ]),
-            Any([
-                Literal('s'),
-                Literal('step'),
-            ]),
-            Literal('commands'),
+            Repeat(Variable(placeholder='<bpnumber>')),
+        ]),
+        Any([
+            Literal('a'),
+            Literal('args'),
+        ]),
+        Any([
+            Literal('cont'),
+            Literal('continue'),
+        ]),
+        Any([
+            Literal('d'),
+            Literal('down'),
+        ]),
+        Any([
+            Literal('exit'),
+            Literal('q'),
+            Literal('quit'),
+        ]),
+        Any([
+            Literal('n'),
+            Literal('next'),
+        ]),
+        Any([
+            Literal('run'),
+            Literal('restart'),
+        ]),
+        Any([
+            Literal('unt'),
+            Literal('until'),
+        ]),
+        Any([
+            Literal('u'),
+            Literal('up'),
+        ]),
+        Any([
+            Literal('r'),
+            Literal('return'),
+        ]),
+        Any([
+            Literal('w', dest='where'),
+            Literal('where', dest='where'),
+            Literal('bt'),
+        ]),
+        Any([
+            Literal('s'),
+            Literal('step'),
+        ]),
+        Literal('commands'),
     ])
+
 
 class PythonOrPdbCode(object):
     def __init__(self, document):
@@ -217,23 +218,23 @@ class PdbOrPythonprompt(object):
 class PdbStyle(Style):
     background_color = None
     styles = {
-            # Pdb commands highlighting.
-            Token.Placeholder:           "#aa8888",
-            Token.Placeholder.Variable:  "#aa8888",
-            Token.Placeholder.Bracket:   "bold #ff7777",
-            Token.Placeholder.Separator: "#ee7777",
-            Token.Aborted:               "#aaaaaa",
-            Token.Prompt:                "bold",
+        # Pdb commands highlighting.
+        Token.Placeholder:           "#aa8888",
+        Token.Placeholder.Variable:  "#aa8888",
+        Token.Placeholder.Bracket:   "bold #ff7777",
+        Token.Placeholder.Separator: "#ee7777",
+        Token.Aborted:               "#aaaaaa",
+        Token.Prompt:                "bold",
 
-            # Python code highlighting.
-            Keyword:                      '#ee00ee',
-            Operator:                     '#aa6666',
-            Number:                       '#ff0000',
-            Name:                         '#008800',
-            Token.Literal.String:         '#440000',
-            Comment:                      '#0000dd',
-            Error:                        '#000000 bg:#ff8888',
-        }
+        # Python code highlighting.
+        Keyword:                      '#ee00ee',
+        Operator:                     '#aa6666',
+        Number:                       '#ff0000',
+        Name:                         '#008800',
+        Token.Literal.String:         '#440000',
+        Comment:                      '#0000dd',
+        Error:                        '#000000 bg:#ff8888',
+    }
 
 
 class PdbCLI(CommandLineInterface):

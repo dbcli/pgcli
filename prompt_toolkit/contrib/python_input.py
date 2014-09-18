@@ -39,7 +39,7 @@ __all__ = (
 
 class AutoCompletionStyle:
     #: tab/double-tab completion
-    # TRADITIONAL = 'traditional' # TODO: not implemented yet.
+    # TRADITIONAL = 'traditional'  # TODO: not implemented yet.
 
     #: Pop-up
     POPUP_MENU = 'popup-menu'
@@ -47,7 +47,7 @@ class AutoCompletionStyle:
     #: Horizontal list
     HORIZONTAL_MENU = 'horizontal-menu'
 
-    #:Pop-up menu that also displays the references to the Python modules.
+    #: Pop-up menu that also displays the references to the Python modules.
     EXTENDED_POPUP_MENU = 'extended-popup-menu'
 
     #: No visualisation
@@ -120,6 +120,7 @@ class PythonStyle(Style):
         Token.Leftmargin.Tilde:   '#888888',
     }
 
+
 def _has_unclosed_brackets(text):
     """
     Starting at the end of the string. If we find an opening bracket
@@ -128,7 +129,7 @@ def _has_unclosed_brackets(text):
     stack = []
 
     # Ignore braces inside strings
-    text = re.sub(r'''('[^']*'|"[^"]*")''', '', text) # XXX: handle escaped quotes.!
+    text = re.sub(r'''('[^']*'|"[^"]*")''', '', text)  # XXX: handle escaped quotes.!
 
     for c in reversed(text):
         if c in '])}':
@@ -137,8 +138,8 @@ def _has_unclosed_brackets(text):
         elif c in '[({':
             if stack:
                 if ((c == '[' and stack[-1] == ']') or
-                    (c == '{' and stack[-1] == '}') or
-                    (c == '(' and stack[-1] == ')')):
+                        (c == '{' and stack[-1] == '}') or
+                        (c == '(' and stack[-1] == ')')):
                     stack.pop()
             else:
                 # Opening bracket for which we didn't had a closing one.
@@ -276,7 +277,7 @@ class PythonLine(Line):
 
 
 class PythonPrompt(Prompt):
-    input_processors = [ BracketsMismatchProcessor() ]
+    input_processors = [BracketsMismatchProcessor()]
 
     min_height = 7
 
@@ -314,8 +315,8 @@ class PythonPrompt(Prompt):
             screen.write_highlighted(list(self._get_error_tokens()))
 
         elif self.commandline.autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU and \
-                        self.line.complete_state and \
-                        self.commandline.input_processor.input_mode == InputMode.COMPLETE:
+                self.line.complete_state and \
+                self.commandline.input_processor.input_mode == InputMode.COMPLETE:
             HorizontalCompletionMenu().write(screen, None, self.line.complete_state)
         else:
             screen.write_highlighted(list(self._get_signature_tokens()))
@@ -326,7 +327,7 @@ class PythonPrompt(Prompt):
         Signature = Token.Signature
 
         if self.line.signatures:
-            sig = self.line.signatures[0] # Always take the first one.
+            sig = self.line.signatures[0]  # Always take the first one.
 
             append((Token, '           '))
             append((Signature, sig.full_name))
@@ -339,16 +340,16 @@ class PythonPrompt(Prompt):
                     append((Signature, str(p.name)))
                 append((Signature.Operator, ', '))
 
-            result.pop() # Pop last comma
+            result.pop()  # Pop last comma
             append((Signature.Operator, ')'))
         return result
 
     def _get_error_tokens(self):
         if self.line.validation_error:
             text = '%s (line=%s column=%s)' % (
-                    self.line.validation_error.message,
-                    self.line.validation_error.line + 1,
-                    self.line.validation_error.column + 1)
+                self.line.validation_error.message,
+                self.line.validation_error.line + 1,
+                self.line.validation_error.column + 1)
             return [(Token.ValidationError, text)]
         else:
             return []
@@ -358,7 +359,7 @@ class PythonPrompt(Prompt):
         return 'In [%s]: ' % self.commandline.current_statement_index
 
     def write_prompt(self, screen):
-        screen.write_highlighted_at_pos(0, 0, [ (Token.Prompt, self.prompt_text) ])
+        screen.write_highlighted_at_pos(0, 0, [(Token.Prompt, self.prompt_text)])
 
     def create_left_input_margin(self, screen, row, is_new_line):
         if is_new_line:
@@ -405,7 +406,7 @@ class PythonPrompt(Prompt):
                 screen._buffer[y][x] = temp_screen._buffer[y + self.vertical_scroll][x]
 
         screen.cursor_position = Point(y=temp_screen.cursor_position.y - self.vertical_scroll,
-                                        x=temp_screen.cursor_position.x)
+                                       x=temp_screen.cursor_position.x)
 
         # Fill up with tildes.
         if not accept_or_abort:
@@ -502,7 +503,7 @@ class PythonPrompt(Prompt):
             version = sys.version_info
             append((TB, ' - '))
             append((TB.PythonVersion, '%s %i.%i.%i' % (platform.python_implementation(),
-                                version.major, version.minor, version.micro)))
+                   version.major, version.minor, version.micro)))
 
         # Adjust toolbar width.
         if len(result) > screen.size.columns:
@@ -522,9 +523,9 @@ class ExtendedPopupCompletionMenu(PopupCompletionMenu):
     """
     def get_menu_width(self, complete_state):
         return [
-                super(ExtendedPopupCompletionMenu, self).get_menu_width(complete_state),
-                max(len(c.jedi_completion.type) for c in complete_state.current_completions)
-                ]
+            super(ExtendedPopupCompletionMenu, self).get_menu_width(complete_state),
+            max(len(c.jedi_completion.type) for c in complete_state.current_completions)
+        ]
 
     def get_menu_item_tokens(self, completion, is_current_completion, menu_width):
         if is_current_completion:
@@ -533,7 +534,8 @@ class ExtendedPopupCompletionMenu(PopupCompletionMenu):
             token = Token.CompletionMenu.JediDescription
 
         return super(ExtendedPopupCompletionMenu, self).get_menu_item_tokens(completion, is_current_completion, menu_width[0]) + [
-                (token, ' %%-%is ' % menu_width[1] % completion.jedi_completion.type or 'none') ]
+            (token, ' %%-%is ' % menu_width[1] % completion.jedi_completion.type or 'none')
+        ]
 
 
 class PythonCompletion(Completion):
@@ -565,11 +567,12 @@ class PythonCode(Code):
 
     def _get_jedi_script(self):
         try:
-            return jedi.Interpreter(self.text,
-                    column=self.document.cursor_position_col,
-                    line=self.document.cursor_position_row + 1,
-                    path='input-text',
-                    namespaces=[ self._locals, self._globals ])
+            return jedi.Interpreter(
+                self.text,
+                column=self.document.cursor_position_col,
+                line=self.document.cursor_position_row + 1,
+                path='input-text',
+                namespaces=[self._locals, self._globals])
 
         except jedi.common.MultiLevelStopIteration:
             # This happens when the document is just a backslash.
@@ -593,7 +596,7 @@ class PythonCommandLineInterface(CommandLineInterface):
     prompt_factory = PythonPrompt
 
     def __init__(self, globals=None, locals=None, vi_mode=False, stdin=None, stdout=None, history_filename=None,
-                    style=PythonStyle, autocompletion_style=AutoCompletionStyle.POPUP_MENU):
+                 style=PythonStyle, autocompletion_style=AutoCompletionStyle.POPUP_MENU):
 
         self.globals = globals or {}
         self.locals = locals or globals

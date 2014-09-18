@@ -22,7 +22,6 @@ class HtmlCLI(CommandLineInterface):
     prompt_factory = HtmlPrompt
 
 
-
 def main():
     cli = HtmlCLI()
 

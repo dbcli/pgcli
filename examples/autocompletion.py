@@ -12,22 +12,23 @@ from prompt_toolkit.code import Code, Completion
 
 class AnimalCode(Code):
     animals = [
-            'cat',
-            'dinosaur',
-            'dog',
-            'dolphine',
-            'dove',
-            'duck',
-            'eagle',
-            'elephant',
-            'lion',
-            'rabbit',
-            'rat',
-            'snake',
-            'spider',
-            'turkey',
-            'turtle',
+        'cat',
+        'dinosaur',
+        'dog',
+        'dolphine',
+        'dove',
+        'duck',
+        'eagle',
+        'elephant',
+        'lion',
+        'rabbit',
+        'rat',
+        'snake',
+        'spider',
+        'turkey',
+        'turtle',
     ]
+
     def get_completions(self):
         word_before_cursor = self.document.get_word_before_cursor()
 

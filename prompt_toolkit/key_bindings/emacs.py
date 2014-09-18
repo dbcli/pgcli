@@ -18,7 +18,6 @@ def emacs_bindings(registry, cli_ref):
     search_line = cli_ref().lines['search']
     handle = create_handle_decorator(registry, line)
 
-
     @handle(Keys.ControlA, in_mode=InputMode.INSERT)
     @handle(Keys.ControlA, in_mode=InputMode.SELECTION)
     def _(event):
@@ -114,7 +113,7 @@ def emacs_bindings(registry, cli_ref):
     def _(event):
         """
         """
-        if event._arg == None:
+        if event._arg is None:
             event.append_to_arg_count('-')
 
     @handle(Keys.Escape, Keys.ControlJ, in_mode=InputMode.INSERT)
@@ -198,7 +197,7 @@ def emacs_bindings(registry, cli_ref):
         """
         Lowercase the current (or following) word.
         """
-        for i in range(event.arg): # XXX: not DRY: see meta_c and meta_u!!
+        for i in range(event.arg):  # XXX: not DRY: see meta_c and meta_u!!
             pos = line.document.find_next_word_ending()
             words = line.document.text_after_cursor[:pos]
             line.insert_text(words.lower(), overwrite=True)

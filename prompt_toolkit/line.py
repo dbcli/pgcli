@@ -11,12 +11,13 @@ from .history import History
 from .selection import SelectionType, SelectionState
 
 import os
-import tempfile
+import six
 import subprocess
+import tempfile
 
 __all__ = (
-        'Line',
-        'Callbacks',
+    'Line',
+    'Callbacks',
 )
 
 
@@ -79,7 +80,7 @@ class CompletionState(object):
 
         #: Position in the `current_completions` array.
         #: This can be `None` to indicate "no completion", the original text.
-        self.complete_index = 0 # Position in the `_completions` array.
+        self.complete_index = 0  # Position in the `_completions` array.
 
     @property
     def original_cursor_position(self):
@@ -158,10 +159,10 @@ class Line(object):
         self.selection_state = None
 
         # State of complete browser
-        self.complete_state = None # For interactive completion through Ctrl-N/Ctrl-P.
+        self.complete_state = None  # For interactive completion through Ctrl-N/Ctrl-P.
 
         # Undo stack
-        self._undo_stack = [] # Stack of (text, cursor_position)
+        self._undo_stack = []  # Stack of (text, cursor_position)
 
         #: The working lines. Similar to history, except that this can be
         #: modified. The user can press arrow_up and edit previous entries.
@@ -172,7 +173,7 @@ class Line(object):
         self._working_lines.append(initial_value)
         self.__working_index = len(self._working_lines) - 1
 
-    ### <getters/setters>
+    # <getters/setters>
 
     @property
     def text(self):
@@ -180,6 +181,7 @@ class Line(object):
 
     @text.setter
     def text(self, value):
+        assert isinstance(value, six.text_type)
         self._working_lines[self.working_index] = value
 
         # Remove validation errors, complete state.
@@ -219,7 +221,7 @@ class Line(object):
 
         self.text_changed()
 
-    ### End of <getters/setters>
+    # End of <getters/setters>
 
     def text_changed(self):
         """
@@ -278,10 +280,10 @@ class Line(object):
         assert from_ < to
 
         self.text = ''.join([
-                    self.text[:from_] +
-                    transform_callback(self.text[from_:to]) +
-                    self.text[to:]
-                ])
+            self.text[:from_] +
+            transform_callback(self.text[from_:to]) +
+            self.text[to:]
+        ])
 
     @property
     def document(self):
@@ -331,8 +333,10 @@ class Line(object):
             if old_index != self.working_index:
                 self.cursor_position = 0
 
-    def delete_before_cursor(self, count=1): # TODO: unittest return type
-        """ Delete character before cursor, return deleted character. """
+    def delete_before_cursor(self, count=1):  # TODO: unittest return type
+        """
+        Delete character before cursor, return deleted character.
+        """
         assert count >= 0
         deleted = ''
 
@@ -343,12 +347,14 @@ class Line(object):
 
         return deleted
 
-    def delete(self, count=1): # TODO: unittest `count`
-        """ Delete one character. Return deleted character. """
+    def delete(self, count=1):  # TODO: unittest `count`
+        """
+        Delete one character. Return deleted character.
+        """
         if self.cursor_position < len(self.text):
             deleted = self.document.text_after_cursor[:count]
             self.text = self.text[:self.cursor_position] + \
-                    self.text[self.cursor_position + len(deleted):]
+                self.text[self.cursor_position + len(deleted):]
             return deleted
         else:
             return ''
@@ -401,7 +407,7 @@ class Line(object):
         # On the first tab press, try to find one completion and complete.
         result = self.create_code().get_common_complete_suffix()
         if result:
-            self.text = self.insert_text(result)
+            self.insert_text(result)
             return True
         else:
             return False
@@ -449,8 +455,8 @@ class Line(object):
 
         if current_completions:
             self.complete_state = CompletionState(
-                        original_document=self.document,
-                        current_completions=current_completions)
+                original_document=self.document,
+                current_completions=current_completions)
             self._go_to_completion(0)
 
         else:
@@ -686,9 +692,9 @@ class Line(object):
         Take the current position as the start position for the search.
         """
         self.isearch_state = _IncrementalSearchState(
-                original_cursor_position = self.cursor_position,
-                original_working_index = self.working_index,
-                direction=direction)
+            original_cursor_position=self.cursor_position,
+            original_working_index=self.working_index,
+            direction=direction)
 
     def incremental_search(self, direction):
         """
@@ -789,14 +795,14 @@ class Line(object):
         editor = os.environ.get('EDITOR')
 
         editors = [
-                editor,
+            editor,
 
-                # Order of preference.
-                '/usr/bin/editor',
-                '/usr/bin/nano',
-                '/usr/bin/pico',
-                '/usr/bin/vi',
-                '/usr/bin/emacs',
+            # Order of preference.
+            '/usr/bin/editor',
+            '/usr/bin/nano',
+            '/usr/bin/pico',
+            '/usr/bin/vi',
+            '/usr/bin/emacs',
         ]
 
         for e in editors:
