@@ -35,7 +35,8 @@ _DEBUG_RENDER_OUTPUT = False
 _DEBUG_RENDER_OUTPUT_FILENAME = '/tmp/prompt-toolkit-render-output'
 
 #: Cache for wcwidth sizes.
-_CHAR_SIZES_CACHE = [ wcwidth(unichr(i)) for i in range(0, 64000) ]
+_CHAR_SIZES_CACHE = [wcwidth(six.unichr(i)) for i in range(0, 64000)]
+
 
 def _get_width(c):
     """
