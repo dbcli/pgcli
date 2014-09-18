@@ -22,7 +22,7 @@ from prompt_toolkit.key_bindings.vi import vi_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.line import Line
 from prompt_toolkit.prompt import Prompt, TokenList, BracketsMismatchProcessor, PopupCompletionMenu, HorizontalCompletionMenu
-from prompt_toolkit.renderer import Char
+from prompt_toolkit.renderer import Char, Screen, Point
 from prompt_toolkit.selection import SelectionType
 
 import jedi
@@ -278,9 +278,11 @@ class PythonPrompt(Prompt):
 
     min_height = 7
 
-    @property
-    def tokens_before_input(self):
-        return [(Token.Prompt, 'In [%s]: ' % self.commandline.current_statement_index)]
+    def __init__(self, commandline_ref):
+        super(PythonPrompt, self).__init__(commandline_ref)
+
+        #: Vertical scrolling position of the main content.
+        self.vertical_scroll = 0
 
     @property
     def completion_menu(self):
@@ -349,52 +351,86 @@ class PythonPrompt(Prompt):
         else:
             return []
 
-    def create_left_input_margin(self, screen, row, is_new_line):
-        prompt_width = len(TokenList(self.tokens_before_input))
+    @property
+    def prompt_text(self):
+        return 'In [%s]: ' % self.commandline.current_statement_index
 
+    def write_prompt(self, screen):
+        screen.write_highlighted_at_pos(0, 0, [ (Token.Prompt, self.prompt_text) ])
+
+    def create_left_input_margin(self, screen, row, is_new_line):
         if is_new_line:
             text = '%i. ' % row
         else:
             text = ''
 
-        text = ' ' * (prompt_width - len(text)) + text
-
         screen.write_highlighted([
-            (Token.Prompt.LineNumber, text)
+            (Token.Prompt.LineNumber, ' ' * (len(self.prompt_text) - len(text))),
+            (Token.Prompt.LineNumber, text),
         ])
 
-    def _get_bottom_position(self, screen, last_screen_height):
-        # Draw the menu at the bottom position.
-        return max(self.min_height - 2, screen.current_height, last_screen_height - 2) - 1
+    def write_input_scrolled(self, screen, accept_or_abort, last_screen_height):
+        # Write to a temp screen first.
+        temp_screen = Screen(screen.size)
+        super(PythonPrompt, self).write_input(temp_screen, highlight=not accept_or_abort)
 
-    def _print_tildes(self, screen):
-        """
-        Print tildes in the left margin between the last input line and the
-        toolbars.
-        """
-        last_char_y, last_char_x = screen._cursor_mappings[len(self.line.document.text)]
+        # Determine the maximum height.
+        max_height = screen.size.rows - 2
 
-        # Fill space with tildes
-        for y in range(last_char_y + 1, screen.current_height - 2):
-            screen.write_at_pos(y, 1, Char('~', Token.Leftmargin.Tilde))
+        if True:
+            # Scroll back if we scrolled to much and there's still space at the top.
+            if self.vertical_scroll > temp_screen.current_height - max_height:
+                self.vertical_scroll = max(0, temp_screen.current_height - max_height)
+
+            # Scroll up if cursor is before visible part.
+            if self.vertical_scroll > temp_screen.cursor_position.y:
+                self.vertical_scroll = temp_screen.cursor_position.y
+
+            # Scroll down if cursor is after visible part.
+            if self.vertical_scroll <= temp_screen.cursor_position.y - max_height:
+                self.vertical_scroll = (temp_screen.cursor_position.y + 1) - max_height
+
+            # Scroll down if we need space for the menu.
+            if self.need_to_show_completion_menu():
+                menu_size = min(5, len(self.line.complete_state.current_completions)) - 1
+                if temp_screen.cursor_position.y - self.vertical_scroll >= max_height - menu_size:
+                    self.vertical_scroll = (temp_screen.cursor_position.y + 1) - (max_height - menu_size)
+
+        # Now copy the region we need to the real screen.
+        y = 0
+        for y in range(0, min(max_height, temp_screen.current_height - self.vertical_scroll)):
+            for x in range(0, temp_screen.size.columns):
+                screen._buffer[y][x] = temp_screen._buffer[y + self.vertical_scroll][x]
+
+        screen.cursor_position = Point(y=temp_screen.cursor_position.y - self.vertical_scroll,
+                                        x=temp_screen.cursor_position.x)
+
+        # Fill up with tildes.
+        if not accept_or_abort:
+            y += 1
+            while y < max([self.min_height - 2, last_screen_height - 2]) and y < max_height:
+                screen.write_at_pos(y, 1, Char('~', Token.Leftmargin.Tilde))
+                y += 1
+
+        return_y = y
+
+        # Show completion menu.
+        if not accept_or_abort and self.need_to_show_completion_menu():
+            y, x = temp_screen._cursor_mappings[self.line.complete_state.original_document.cursor_position]
+            self.completion_menu.write(screen, (y - self.vertical_scroll, x), self.line.complete_state)
+
+        return return_y
 
     def write_to_screen(self, screen, last_screen_height, accept=False, abort=False):
-        self.write_before_input(screen)
-        self.write_input(screen, highlight=not (accept or abort))
+        y = self.write_input_scrolled(screen, (accept or abort), last_screen_height)
+        self.write_prompt(screen)
 
         if not (accept or abort):
-            y = self._get_bottom_position(screen, last_screen_height)
-            self.write_menus(screen) # XXX: menu should be able to cover the second toolbar.
-            y2 = self._get_bottom_position(screen, last_screen_height)
-            y = max(y, y2 - 1)
-
-            screen._y, screen._x = y + 1, 0
+            screen._y, screen._x = y, 0
             self.write_second_toolbar(screen)
 
-            screen._y, screen._x = y + 2, 0
+            screen._y, screen._x = y + 1, 0
             self.write_toolbar(screen)
-
-            self._print_tildes(screen)
 
     def write_toolbar(self, screen):
         TB = Token.Toolbar
@@ -432,10 +468,6 @@ class PythonPrompt(Prompt):
                 elif self.line.selection_state.type == SelectionType.CHARACTERS:
                     append((TB.Mode, '(VISUAL)'))
                     append((TB, ' '))
-
-#            if self.commandline._input_processor.is_recording_macro:
-#                append((TB.Mode, 'recording'))
-#                append((TB, ' '))
 
         else:
             append((TB.Mode, '(emacs)'))

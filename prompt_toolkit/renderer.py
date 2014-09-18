@@ -19,11 +19,13 @@ from pygments.token import Token
 _tf = Terminal256Formatter()
 
 __all__ = (
+    'Point',
     'Renderer',
+    'Screen',
 )
 
-_Point = namedtuple('Point', 'y x')
-_Size = namedtuple('Size', 'rows columns')
+Point = namedtuple('Point', 'y x')
+Size = namedtuple('Size', 'rows columns')
 
 
 #: If True: write the output of the renderer also to the following file. This
@@ -31,6 +33,18 @@ _Size = namedtuple('Size', 'rows columns')
 #: than required.)
 _DEBUG_RENDER_OUTPUT = False
 _DEBUG_RENDER_OUTPUT_FILENAME = '/tmp/prompt-toolkit-render-output'
+
+#: Cache for wcwidth sizes.
+_CHAR_SIZES_CACHE = [ wcwidth(unichr(i)) for i in range(0, 64000) ]
+
+def _get_width(c):
+    """
+    Return width of character. Wrapper around ``wcwidth``.
+    """
+    try:
+        return _CHAR_SIZES_CACHE[ord(c)]
+    except IndexError:
+        return wcwidth(c)
 
 
 class TerminalCodes:
@@ -110,7 +124,7 @@ class Char(object):
     # we should display them as follows:
     # Usually this happens after a "quoted insert".
     display_mappings = {
-        '\x1b': '^[', # Escape
+        '\x00': '^@', # Control space
         '\x01': '^A',
         '\x02': '^B',
         '\x03': '^C',
@@ -137,7 +151,7 @@ class Char(object):
         '\x18': '^X',
         '\x19': '^Y',
         '\x1a': '^Z',
-        '\x00': '^@', # Control space
+        '\x1b': '^[', # Escape
         '\x1c': '^\\',
         '\x1d': '^]',
         '\x1f': '^_',
@@ -157,7 +171,7 @@ class Char(object):
         # We use the `max(0, ...` because some non printable control
         # characters, like e.g. Ctrl-underscore get a -1 wcwidth value.
         # It can be possible that these characters end up in the input text.
-        return max(0, sum([wcwidth(c) for c in self.char]))
+        return max(0, sum([_get_width(c) for c in self.char]))
 
 
 class Screen(object):
@@ -172,12 +186,11 @@ class Screen(object):
         self._cursor_mappings = { } # Map `source_string_index` of input data to (row, col) screen output.
         self._x = 0
         self._y = 0
-        self._max_y = 0
 
         self.size = size
         self._left_margin_func = lambda linenr, is_new_line: None
 
-        self.cursor_position = _Point(y=0, x=0)
+        self.cursor_position = Point(y=0, x=0)
         self._line_number = 1
 
     @property
@@ -214,13 +227,13 @@ class Screen(object):
             self._x = 0
             self._left_margin_func(self._line_number, False)
 
-        insert_pos = self._y, self._x
+        insert_pos = self._y, self._x # XXX: make a Point of this?
 
         if string_index is not None:
             self._cursor_mappings[string_index] = insert_pos
 
         if set_cursor_position:
-            self.cursor_position = _Point(y=self._y, x=self._x)
+            self.cursor_position = Point(y=self._y, x=self._x)
 
         # Insertion of newline
         if char == '\n':
@@ -231,20 +244,23 @@ class Screen(object):
 
         # Insertion of a 'visible' character.
         else:
-            self.write_at_pos(self._y, self._x, char_obj)
+            if char_obj.z_index >= self._buffer[self._y][self._x].z_index:
+                self._buffer[self._y][self._x] = char_obj
 
             # Move position
             self._x += char_width
 
         return insert_pos
 
-    def write_at_pos(self, y, x, char_obj): #char, token, z_index=0):
+    def write_at_pos(self, y, x, char_obj):
         """
         Write character at position (y, x).
         (Truncate when character is outside margin.)
+
+        :param char_obj: :class:`.Char` instance.
         """
         # Add char to buffer
-        if y < self.size.columns:
+        if x < self.size.columns:
             if char_obj.z_index >= self._buffer[y][x].z_index:
                 self._buffer[y][x] = char_obj
 
@@ -255,8 +271,9 @@ class Screen(object):
         """
         for token, text in data:
             for c in text:
-                self.write_at_pos(y, x, Char(c, token, z_index=z_index))
-                x += wcwidth(c)
+                char_obj = Char(c, token, z_index=z_index)
+                self.write_at_pos(y, x, char_obj)
+                x += char_obj.width
 
     def write_highlighted(self, data):
         """
@@ -362,9 +379,9 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
         write(TerminalCodes.DISABLE_AUTOWRAP)
         write(TerminalCodes.RESET_ATTRIBUTES)
 
-    # When the previous screen has a different width, redraw everything anyway.
+    # When the previous screen has a different size, redraw everything anyway.
     if not previous_screen or previous_screen.size != screen.size:
-        current_pos = move_cursor(_Point(0, 0))
+        current_pos = move_cursor(Point(0, 0))
         write(TerminalCodes.RESET_ATTRIBUTES)
         write(TerminalCodes.ERASE_DOWN)
 
@@ -391,7 +408,7 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
             char_width = (new_row[c].width or 1)
 
             if not chars_are_equal(new_row[c], previous_row[c]):
-                current_pos = move_cursor(_Point(y=y, x=c))
+                current_pos = move_cursor(Point(y=y, x=c))
                 output_char(new_row[c])
                 current_pos = current_pos._replace(x=current_pos.x + char_width)
 
@@ -399,14 +416,14 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
 
         # If the new line is shorter, trim it
         if previous_screen and new_max_line_len < previous_max_line_len:
-            current_pos = move_cursor(_Point(y=y, x=new_max_line_len+1))
+            current_pos = move_cursor(Point(y=y, x=new_max_line_len+1))
             write(TerminalCodes.RESET_ATTRIBUTES)
             write(TerminalCodes.ERASE_END_OF_LINE)
             last_char[0] = None # Forget last char after resetting attributes.
 
     # Move cursor:
     if accept_or_abort:
-        current_pos = move_cursor(_Point(y=current_height, x=0))
+        current_pos = move_cursor(Point(y=current_height, x=0))
         write(TerminalCodes.ERASE_DOWN)
     else:
         current_pos = move_cursor(screen.get_cursor_position())
@@ -450,7 +467,7 @@ class Renderer(object):
 
     def reset(self):
         # Reset position
-        self._cursor_pos = _Point(x=0, y=0)
+        self._cursor_pos = Point(x=0, y=0)
 
         # Remember the last screen instance between renderers. This way,
         # we can create a `diff` between two screens and only output the
@@ -461,10 +478,12 @@ class Renderer(object):
 
     def get_size(self):
         rows, columns = get_size(self._stdout.fileno())
-        return _Size(rows=rows, columns=columns)
+        return Size(rows=rows, columns=columns)
 
     def render_to_str(self, abort=False, accept=False):
-        # Generate the output of the new screen.
+        """
+        Generate the output of the new screen. Return as string.
+        """
         screen = self.screen_cls(size=self.get_size())
 
         self.prompt.write_to_screen(screen, self._last_screen.current_height if self._last_screen else 0,

@@ -208,7 +208,7 @@ class PdbOrPythonprompt(object):
         self.line = cli_ref().line
 
     def __getattr__(self, name):
-        if self.line.create_code_obj().is_pdb_statement:
+        if self.line.create_code().is_pdb_statement:
             return getattr(self._pdb_prompt, name)
         else:
             return getattr(self._python_prompt, name)

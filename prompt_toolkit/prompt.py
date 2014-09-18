@@ -385,7 +385,8 @@ class Prompt(object):
         ]
 
     def create_left_input_margin(self, screen, row, is_new_line):
-        screen.write_highlighted(self.get_tokens_in_left_margin(row, is_new_line))
+        if row > 1:
+            screen.write_highlighted(self.get_tokens_in_left_margin(row, is_new_line))
 
     def get_input_tokens(self):
         tokens = self.line.create_code().get_tokens()
@@ -438,6 +439,7 @@ class Prompt(object):
     def write_input(self, screen, highlight=True):
         # Set second line prefix
         screen.set_left_margin(lambda row, is_new_line: self.create_left_input_margin(screen, row, is_new_line))
+        self.create_left_input_margin(screen, 1, True)
 
         if highlight:
             highlighted_characters = self.get_highlighted_characters()
@@ -469,12 +471,15 @@ class Prompt(object):
         """
         screen.write_highlighted(self.get_tokens_after_input())
 
+    def need_to_show_completion_menu(self):
+        return (self.commandline.input_processor.input_mode == InputMode.COMPLETE and
+                        self.completion_menu and self.line.complete_state)
+
     def write_menus(self, screen):
         """
         Write completion menu.
         """
-        if self.commandline.input_processor.input_mode == InputMode.COMPLETE and \
-                        self.completion_menu and self.line.complete_state:
+        if self.need_to_show_completion_menu():
             # Calculate the position where the cursor was, the moment that we pressed the complete button (tab).
             complete_cursor_position = screen._cursor_mappings[self.line.complete_state.original_document.cursor_position]
 
