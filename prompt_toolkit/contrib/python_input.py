@@ -219,7 +219,9 @@ class PythonLine(Line):
         self.signatures = []
 
     def text_changed(self):
-        self.is_multiline = '\n' in self.text
+        # When there is '\n' in the input, or in case of paste mode, always
+        # make sure that we enable multiline.
+        self.is_multiline = '\n' in self.text or self.paste_mode
 
     def newline(self):
         r"""
