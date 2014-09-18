@@ -350,6 +350,11 @@ class Prompt(object):
         else:
             return []
 
+    @property
+    def vi_search_prompt(self):
+        # TODO
+        return []
+
     def get_vi_search_prefix_tokens(self):
         """
         Tokens for the vi-search prompt.

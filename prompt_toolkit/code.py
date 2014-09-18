@@ -8,7 +8,7 @@ from pygments.token import Token
 __all__ = (
     'Code',
     'CodeBase',
-    'Completion'
+    'Completion',
     'ValidationError',
 )
 
