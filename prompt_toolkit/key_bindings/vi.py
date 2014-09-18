@@ -498,22 +498,32 @@ def vi_bindings(registry, cli_ref):
             line.insert_text(c, overwrite=True)
 
     @handle('/', in_mode=InputMode.VI_NAVIGATION)
+    @handle(Keys.ControlS, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlS, in_mode=InputMode.VI_NAVIGATION)
+    @handle(Keys.ControlS, in_mode=InputMode.VI_SEARCH)
     def _(event):
         """
         Vi-style forward search.
         """
-        line.start_isearch(IncrementalSearchDirection.FORWARD)
-        event.input_processor.push_input_mode(InputMode.VI_SEARCH)
-        _search_direction[0] = IncrementalSearchDirection.FORWARD
+        _search_direction[0] = direction = IncrementalSearchDirection.FORWARD
+        line.incremental_search(direction)
+
+        if event.input_processor.input_mode != InputMode.VI_SEARCH:
+            event.input_processor.push_input_mode(InputMode.VI_SEARCH)
 
     @handle('?', in_mode=InputMode.VI_NAVIGATION)
+    @handle(Keys.ControlR, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlR, in_mode=InputMode.VI_NAVIGATION)
+    @handle(Keys.ControlR, in_mode=InputMode.VI_SEARCH)
     def _(event):
         """
         Vi-style backward search.
         """
-        line.start_isearch(IncrementalSearchDirection.BACKWARD)
-        event.input_processor.push_input_mode(InputMode.VI_SEARCH)
-        _search_direction[0] = IncrementalSearchDirection.BACKWARD
+        _search_direction[0] = direction = IncrementalSearchDirection.BACKWARD
+        line.incremental_search(direction)
+
+        if event.input_processor.input_mode != InputMode.VI_SEARCH:
+            event.input_processor.push_input_mode(InputMode.VI_SEARCH)
 
     @handle('#', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
