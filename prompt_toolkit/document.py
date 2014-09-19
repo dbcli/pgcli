@@ -165,7 +165,10 @@ class Document(object):
             text = self.text_after_cursor
 
         if not include_current_position:
-            text = text[1:]
+            if len(text) == 0:
+                return  # (Otherwise, we always get a match for the empty string.)
+            else:
+                text = text[1:]
 
         iterator = re.finditer(re.escape(sub), text)
 
