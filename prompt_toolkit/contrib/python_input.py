@@ -161,12 +161,13 @@ def python_bindings(registry, cli_ref):
         if line.paste_mode:
             line.is_multiline = True
 
-    @handle(Keys.F7)
-    def _(event):
-        """
-        Enable/Disable multiline mode.
-        """
-        line.is_multiline = not line.is_multiline
+    if not cli_ref().always_multiline:
+        @handle(Keys.F7)
+        def _(event):
+            """
+            Enable/Disable multiline mode.
+            """
+            line.is_multiline = not line.is_multiline
 
     @handle(Keys.Tab, in_mode=InputMode.INSERT)
     @handle(Keys.Tab, in_mode=InputMode.COMPLETE)
@@ -202,6 +203,10 @@ class PythonLine(Line):
     """
     tempfile_suffix = '.py'
 
+    def __init__(self, always_multiline, *a, **kw):
+        self.always_multiline = always_multiline
+        super(PythonLine, self).__init__(*a, **kw)
+
     def reset(self, *a, **kw):
         super(PythonLine, self).reset(*a, **kw)
 
@@ -211,7 +216,7 @@ class PythonLine(Line):
 
         #: Boolean `multiline` flag. If True, [Enter] will always insert a
         #: newline, and it is required to use [Meta+Enter] execute commands.
-        self.is_multiline = False
+        self.is_multiline = self.always_multiline
 
         # Code signatures. (This is set asynchronously after a timeout.)
         self.signatures = []
@@ -219,7 +224,7 @@ class PythonLine(Line):
     def text_changed(self):
         # When there is '\n' in the input, or in case of paste mode, always
         # make sure that we enable multiline.
-        self.is_multiline = '\n' in self.text or self.paste_mode
+        self.is_multiline = '\n' in self.text or self.paste_mode or self.always_multiline
 
     def newline(self):
         r"""
@@ -486,10 +491,11 @@ class PythonPrompt(Prompt):
             else:
                 append((TB.Off, '[F6] Paste mode (off) '))
 
-            if self.line.is_multiline:
-                append((TB.On, '[F7] Multiline (on)'))
-            else:
-                append((TB.Off, '[F7] Multiline (off)'))
+            if not self.commandline.always_multiline:
+                if self.line.is_multiline:
+                    append((TB.On, '[F7] Multiline (on)'))
+                else:
+                    append((TB.Off, '[F7] Multiline (off)'))
 
             if self.line.is_multiline:
                 append((TB, ' [Meta+Enter] Execute'))
@@ -566,17 +572,20 @@ class PythonCode(Code):
 
 
 class PythonCommandLineInterface(CommandLineInterface):
-    line_factory = PythonLine
     prompt_factory = PythonPrompt
 
+    def line_factory(self, *a, **kw):
+        return PythonLine(self.always_multiline, *a, **kw)
+
     def __init__(self, globals=None, locals=None, vi_mode=False, stdin=None, stdout=None, history_filename=None,
-                 style=PythonStyle, autocompletion_style=AutoCompletionStyle.POPUP_MENU):
+                 style=PythonStyle, autocompletion_style=AutoCompletionStyle.POPUP_MENU, always_multiline=False):
 
         self.globals = globals or {}
         self.locals = locals or globals
         self.history_filename = history_filename
         self.style = style
         self.autocompletion_style = autocompletion_style
+        self.always_multiline = always_multiline
 
         self.vi_mode = vi_mode
         self.get_signatures_thread_running = False

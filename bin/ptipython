@@ -3,7 +3,7 @@
 ptipython: IPython interactive shell with the `prompt_toolkit` front-end.
 Usage:
     ptpython [ --vi ] [ --history=<filename> ]
-             [ --autocompletion=<type> ]
+             [ --autocompletion=<type> ] [ --always-multiline ]
     ptpython -h | --help
 
 Options:
@@ -11,6 +11,7 @@ Options:
     --history=<filename>    : Path to history file.
     --autocompletion=<type> : Type of autocompletion. This can be 'popup-menu'
                               or 'horizontal-menu'.
+    --always-multiline      : Always enable multiline mode.
 """
 import docopt
 import os
@@ -40,10 +41,13 @@ def _run_ipython():
     else:
         autocompletion_style = AutoCompletionStyle.POPUP_MENU
 
+    # Always multiline
+    always_multiline = bool(a['--always-multiline'])
+
     # Run interactive shell.
     embed(vi_mode=vi_mode, history_filename=history_filename,
-                    autocompletion_style=autocompletion_style)
-
+          autocompletion_style=autocompletion_style,
+          always_multiline=always_multiline)
 
 
 if __name__ == '__main__':

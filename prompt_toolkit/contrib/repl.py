@@ -120,7 +120,7 @@ class PythonRepl(PythonCommandLineInterface):
 
 
 def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_colors=False,
-          autocompletion_style=AutoCompletionStyle.POPUP_MENU, startup_path=None):
+          autocompletion_style=AutoCompletionStyle.POPUP_MENU, startup_path=None, always_multiline=False):
     """
     Call this to embed  Python shell at the current point in your program.
     It's similar to `IPython.embed` and `bpython.embed`. ::
@@ -132,5 +132,5 @@ def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_co
     """
     cli = PythonRepl(globals, locals, vi_mode=vi_mode, history_filename=history_filename,
                      style=(None if no_colors else PythonStyle),
-                     autocompletion_style=autocompletion_style)
+                     autocompletion_style=autocompletion_style, always_multiline=always_multiline)
     cli.start_repl(startup_path=startup_path)

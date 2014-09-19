@@ -98,12 +98,15 @@ class InteractiveShellEmbed(_InteractiveShellEmbed):
         vi_mode = kw.pop('vi_mode', False)
         history_filename = kw.pop('history_filename', None)
         autocompletion_style = kw.pop('autocompletion_style', AutoCompletionStyle.POPUP_MENU)
+        always_multiline = kw.pop('always_multiline', False)
 
         super(InteractiveShellEmbed, self).__init__(*a, **kw)
 
         self._cli = IPythonCommandLineInterface(
             self, globals=self.user_ns, vi_mode=vi_mode,
-            history_filename=history_filename, autocompletion_style=autocompletion_style)
+            history_filename=history_filename,
+            autocompletion_style=autocompletion_style,
+            always_multiline=always_multiline)
 
     def raw_input(self, prompt=''):
         print('')
