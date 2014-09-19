@@ -27,7 +27,6 @@ __all__ = (
 Point = namedtuple('Point', 'y x')
 Size = namedtuple('Size', 'rows columns')
 
-
 #: If True: write the output of the renderer also to the following file. This
 #: is very useful for debugging. (e.g.: to see that we don't write more bytes
 #: than required.)
@@ -250,11 +249,11 @@ class Screen(object):
                 self._buffer[self._y][self._x] = char_obj
 
             # When we have a double width character, store this byte in the
-            # second cell. (The highest unicode byte) So that if this character
-            # gets deleted afterwarsd, the ``output_screen_diff`` will notice
-            # that this byte is also gone and redraw both cells.
+            # second cell. So that if this character gets deleted afterwarsd,
+            # the ``output_screen_diff`` will notice that this byte is also
+            # gone and redraw both cells.
             if char_width > 1:
-                self._buffer[self._y][self._x+1] = Char(six.unichr(0x110000-1))
+                self._buffer[self._y][self._x+1] = Char(six.unichr(0))
 
             # Move position
             self._x += char_width
