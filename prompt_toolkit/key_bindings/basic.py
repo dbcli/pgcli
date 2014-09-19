@@ -93,11 +93,28 @@ def basic_bindings(registry, cli_ref):
         Traditional tab-completion, where the first tab completes the common
         suffix and the second tab lists all the completions.
         """
+        def second_tab():
+            line.complete_next(start_at_first=False)
+
+            # Go to completion mode. (If we're not there yet.)
+            if event.input_processor.input_mode != InputMode.COMPLETE:
+                event.input_processor.push_input_mode(InputMode.COMPLETE)
+
         # On the second tab-press:
-        if event.second_press:
-            line.list_completions()
+        if event.second_press or event.input_processor.input_mode == InputMode.COMPLETE:
+            second_tab()
         else:
-            not line.complete_common()
+            # On the first tab press, only complete the common parts of all completions.
+            has_common = line.complete_common()
+            if not has_common:
+                second_tab()
+
+    @handle(Keys.BackTab, in_mode=InputMode.COMPLETE)
+    def _(event):
+        """
+        Shift+Tab: go to previous completion.
+        """
+        line.complete_previous()
 
     @handle(Keys.ControlJ, in_mode=InputMode.INSERT)
     @handle(Keys.ControlM, in_mode=InputMode.INSERT)

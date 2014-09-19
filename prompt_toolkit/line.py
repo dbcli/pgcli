@@ -393,12 +393,6 @@ class Line(object):
         """
         return self.code_factory(self.document)
 
-    def list_completions(self):
-        """
-        Get and show all completions
-        """
-        # TODO
-
     def complete_common(self):
         """
         Autocomplete. This appends the common part of all the possible completions.
@@ -412,12 +406,14 @@ class Line(object):
         else:
             return False
 
-    def complete_next(self, count=1):
+    def complete_next(self, count=1, start_at_first=True):
         """
         Enter complete mode and browse through the completions.
+
+        :param start_at_first: If True, immediately insert the first completion.
         """
         if not self.complete_state:
-            self._start_complete()
+            self._start_complete(go_to_first=start_at_first)
         else:
             completions_count = len(self.complete_state.current_completions)
 
@@ -446,7 +442,7 @@ class Line(object):
 
             self._go_to_completion(index)
 
-    def _start_complete(self):
+    def _start_complete(self, go_to_first=True):
         """
         Start completions. (Generate list of completions and initialize.)
         """
@@ -457,7 +453,10 @@ class Line(object):
             self.complete_state = CompletionState(
                 original_document=self.document,
                 current_completions=current_completions)
-            self._go_to_completion(0)
+            if go_to_first:
+                self._go_to_completion(0)
+            else:
+                self._go_to_completion(None)
 
         else:
             self.complete_state = None

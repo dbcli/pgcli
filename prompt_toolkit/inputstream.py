@@ -23,6 +23,9 @@ class KeyPress(object):
     def __repr__(self):
         return 'KeyPress(key=%r, data=%r)' % (self.key, self.data)
 
+    def __eq__(self, other):
+        return self.key == other.key and self.data == other.data
+
 
 class _Flush(object):
     """ Helper object to indicate flush operation to the parser. """
