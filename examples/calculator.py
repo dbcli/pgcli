@@ -54,11 +54,16 @@ class CalculatorCode(ShellCode):
 class ExampleStyle(Style):
     background_color = None
     styles = {
-        Token.Placeholder: "#aa8888",
-        Token.Placeholder.Variable: "#aa8888",
+        Token.Placeholder: "#888888",
+        Token.Placeholder.Variable: "#888888",
         Token.Placeholder.Bracket: "bold #ff7777",
         Token.Placeholder.Separator: "#ee7777",
         Token.Aborted:    '#aaaaaa',
+
+        Token.CompletionMenu.CurrentCompletion:  'bg:#00aaaa #000000',
+        Token.CompletionMenu.Completion:         'bg:#008888 #ffffff',
+        Token.CompletionMenu.ProgressButton:     'bg:#003333',
+        Token.CompletionMenu.ProgressBar:        'bg:#00aaaa',
     }
 
 
