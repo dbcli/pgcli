@@ -283,7 +283,7 @@ class Literal(Rule):
 
     def complete(self, text=''):
         if self.text.startswith(text):
-            yield Completion(self.text, self.text[len(text):])
+            yield Completion(self.text, -len(text))
 
 
 class Variable(Rule):

@@ -6,8 +6,17 @@ from prompt_toolkit.code import Code, Completion
 from .rules import Sequence, Literal, TokenStream
 from .lexer import TextToken, ParametersLexer
 
+__all__ = (
+    'ShellCode',
+    'InvalidCommandException',
+)
 
 # TODO: pressing enter when the last token is in a quote should insert newline.
+
+
+class InvalidCommandException(Exception):
+    def __init__(self):
+        super(InvalidCommandException, self).__init__('Invalid command.')
 
 
 class ShellCode(Code):
@@ -45,12 +54,12 @@ class ShellCode(Code):
                     #       the completion is 'complete', so whether we should
                     #       add a space.
             if last_part_token.inside_double_quotes:
-                return Completion(c.display, c.suffix + '" ')
+                return Completion(c.text + '" ', c.start_position, display=c.text)
 
             elif last_part_token.inside_single_quotes:
-                return Completion(c.display, c.suffix + "' ")
+                return Completion(c.text + "' ", c.start_position, display=c.text)
             else:
-                return Completion(c.display, c.suffix + " ")
+                return Completion(c.text + " ", c.start_position, display=c.text)
 
         # Parse grammar
         stream = TokenStream(parts)
@@ -69,4 +78,6 @@ class ShellCode(Code):
         if len(trees) == 1:
             return(trees[0])
         else:
-            raise Exception('Invalid command.')  # TODO: raise better exception.
+            raise InvalidCommandException()
+
+
