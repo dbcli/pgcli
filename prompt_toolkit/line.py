@@ -530,7 +530,10 @@ class Line(object):
         or return the input.
         """
         if self.is_multiline:
-            self.newline()
+            if self.document.is_cursor_at_the_end and self.document.empty_line_count_at_the_end() >= 2:
+                self.return_input()
+            else:
+                self.newline()
         else:
             self.return_input()
 
