@@ -4,7 +4,7 @@ It holds the text, cursor position, history, etc...
 """
 from __future__ import unicode_literals
 
-from .code import Code, ValidationError
+from .code import Code, ValidationError, Completion
 from .document import Document
 from .enums import IncrementalSearchDirection
 from .history import History
@@ -442,17 +442,18 @@ class Line(object):
 
             self._go_to_completion(index)
 
-    def _start_complete(self, go_to_first=True):
+    def _start_complete(self, go_to_first=True, completions=None):
         """
         Start completions. (Generate list of completions and initialize.)
         """
         # Generate list of all completions.
-        current_completions = list(self.create_code().get_completions())
+        if completions is None:
+            completions = list(self.create_code().get_completions())
 
-        if current_completions:
+        if completions:
             self.complete_state = CompletionState(
                 original_document=self.document,
-                current_completions=current_completions)
+                current_completions=completions)
             if go_to_first:
                 self._go_to_completion(0)
             else:
@@ -460,6 +461,38 @@ class Line(object):
 
         else:
             self.complete_state = None
+
+    def start_history_lines_completion(self):
+        """
+        Start a completion based on all the other lines in the document and the
+        history.
+        """
+        found_completions = set()
+        completions = []
+
+        # For every line of the whole history, find matches with the current line.
+        current_line = self.document.current_line_before_cursor.lstrip()
+
+        for i, string in enumerate(self._working_lines):
+            for j, l in enumerate(string.split('\n')):
+                l = l.strip()
+                if l and l.startswith(current_line):
+                    # When a new line has been found.
+                    if l not in found_completions:
+                        found_completions.add(l)
+
+                        # Create completion.
+                        if i == self.working_index:
+                            display_meta = "Current, line %s" % (j+1)
+                        else:
+                            display_meta = "History %s, line %s" % (i+1, j+1)
+
+                        completions.append(Completion(
+                            l,
+                            start_position=-len(current_line),
+                            display_meta=display_meta))
+
+        self._start_complete(completions=completions[::-1])
 
     def _go_to_completion(self, index):
         """

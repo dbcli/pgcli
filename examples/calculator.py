@@ -60,7 +60,7 @@ class ExampleStyle(Style):
         Token.Placeholder.Separator: "#ee7777",
         Token.Aborted:    '#aaaaaa',
 
-        Token.CompletionMenu.CurrentCompletion:  'bg:#00aaaa #000000',
+        Token.CompletionMenu.Completion.Current: 'bg:#00aaaa #000000',
         Token.CompletionMenu.Completion:         'bg:#008888 #ffffff',
         Token.CompletionMenu.ProgressButton:     'bg:#003333',
         Token.CompletionMenu.ProgressBar:        'bg:#00aaaa',

@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
-from ..line import ClipboardData, ClipboardDataType
-from ..selection import SelectionType
 from ..enums import IncrementalSearchDirection, InputMode
 from ..keys import Keys
+from ..line import ClipboardData, ClipboardDataType
+from ..selection import SelectionType
 
 from .basic import basic_bindings
 from .utils import create_handle_decorator
@@ -961,3 +961,22 @@ def vi_bindings(registry, cli_ref):
 
     for k, f in vi_transform_functions:
         create_selection_transform_handler(k, f)
+
+    @handle(Keys.ControlX, Keys.ControlL, in_mode=InputMode.INSERT)
+    def _(event):
+        """
+        Pressing the ControlX - ControlL sequence in Vi mode does line
+        completion based on the other lines in the document and the history.
+        """
+        line.start_history_lines_completion()
+
+        # Switch to complete mode.
+        event.input_processor.push_input_mode(InputMode.COMPLETE)
+
+    @handle(Keys.ControlX, Keys.ControlF, in_mode=InputMode.INSERT)
+    def _(event):
+        """
+        Complete file names.
+        """
+        # TODO
+        pass

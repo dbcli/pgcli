@@ -47,9 +47,6 @@ class AutoCompletionStyle:
     #: Horizontal list
     HORIZONTAL_MENU = 'horizontal-menu'
 
-    #: Pop-up menu that also displays the references to the Python modules.
-    EXTENDED_POPUP_MENU = 'extended-popup-menu'
-
     #: No visualisation
     NONE = 'none'
 
@@ -99,15 +96,15 @@ class PythonStyle(Style):
         Token.Toolbar.PythonVersion:   'bg:#222222 #ffffff bold',
 
         # Completion menu
-        Token.CompletionMenu.CurrentCompletion:      'bg:#dddddd #000000',
         Token.CompletionMenu.Completion:             'bg:#888888 #ffffbb',
-        Token.CompletionMenu.ProgressButton:         'bg:#000000',
+        Token.CompletionMenu.Completion.Current:     'bg:#dddddd #000000',
+        Token.CompletionMenu.Meta.Current:           'bg:#bbbbbb #000000',
+        Token.CompletionMenu.Meta:                   'bg:#888888 #cccccc',
         Token.CompletionMenu.ProgressBar:            'bg:#aaaaaa',
-        Token.CompletionMenu.JediDescription:        'bg:#888888 #cccccc',
-        Token.CompletionMenu.CurrentJediDescription: 'bg:#bbbbbb #000000',
+        Token.CompletionMenu.ProgressButton:         'bg:#000000',
 
         Token.HorizontalMenu.Completion:              '#888888 noinherit',
-        Token.HorizontalMenu.CurrentCompletion:       'bold',
+        Token.HorizontalMenu.Completion.Current:      'bold',
         Token.HorizontalMenu:                         'noinherit',
         Token.HorizontalMenu.Arrow:                   'bold #888888',
 
@@ -295,8 +292,6 @@ class PythonPrompt(Prompt):
             return PopupCompletionMenu()
         elif style == AutoCompletionStyle.HORIZONTAL_MENU:
             return None
-        elif style == AutoCompletionStyle.EXTENDED_POPUP_MENU:
-            return ExtendedPopupCompletionMenu()
 
     def write_second_toolbar(self, screen):
         """
@@ -515,27 +510,6 @@ class PythonPrompt(Prompt):
             result.append((TB, ' ' * (screen.size.columns - len(result))))
 
         screen.write_highlighted(result)
-
-
-class ExtendedPopupCompletionMenu(PopupCompletionMenu):
-    """
-    Extended completion menu, which shows more info from Jedi inside the completion menu.
-    """
-    def get_menu_width(self, complete_state):
-        return [
-            super(ExtendedPopupCompletionMenu, self).get_menu_width(complete_state),
-            max(len(c.jedi_completion.type) for c in complete_state.current_completions)
-        ]
-
-    def get_menu_item_tokens(self, completion, is_current_completion, menu_width):
-        if is_current_completion:
-            token = Token.CompletionMenu.CurrentJediDescription
-        else:
-            token = Token.CompletionMenu.JediDescription
-
-        return super(ExtendedPopupCompletionMenu, self).get_menu_item_tokens(completion, is_current_completion, menu_width[0]) + [
-            (token, ' %%-%is ' % menu_width[1] % completion.jedi_completion.type or 'none')
-        ]
 
 
 class PythonCompletion(Completion):

@@ -34,7 +34,6 @@ def _run_ipython():
     if a['--autocompletion'] in (
                         AutoCompletionStyle.POPUP_MENU,
                         AutoCompletionStyle.HORIZONTAL_MENU,
-                        AutoCompletionStyle.EXTENDED_POPUP_MENU,
                         AutoCompletionStyle.NONE
                     ):
         autocompletion_style = a['--autocompletion']

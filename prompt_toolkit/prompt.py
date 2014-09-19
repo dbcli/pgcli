@@ -97,7 +97,7 @@ class HorizontalCompletionMenu(object):
                     cut_right = True
                     break
 
-            tokens.append((Token.HorizontalMenu.CurrentCompletion if i == index else Token.HorizontalMenu.Completion, c.display))
+            tokens.append((Token.HorizontalMenu.Completion.Current if i == index else Token.HorizontalMenu.Completion, c.display))
             tokens.append((Token.HorizontalMenu, ' '))
 
         # Extend/strip until the content width.
@@ -122,8 +122,11 @@ class PopupCompletionMenu(object):
     """
     Helper for drawing the complete menu to the screen.
     """
-    current_completion_token = Token.CompletionMenu.CurrentCompletion
+    current_completion_token = Token.CompletionMenu.Completion.Current
     completion_token = Token.CompletionMenu.Completion
+
+    current_meta_token = Token.CompletionMenu.Meta.Current
+    meta_token = Token.CompletionMenu.Meta
 
     progress_button_token = Token.CompletionMenu.ProgressButton
     progress_bar_token = Token.CompletionMenu.ProgressBar
@@ -148,7 +151,9 @@ class PopupCompletionMenu(object):
         x = max(0, x - 1)  # XXX: Don't draw it in the right margin!!!...
 
         # Calculate width of completions menu.
-        menu_width = self.get_menu_width(complete_state)
+        menu_width = self.get_menu_width(screen, complete_state)
+        menu_meta_width = self.get_menu_meta_width(screen, complete_state)
+        show_meta = self.show_meta(complete_state)
 
         # Decide which slice of completions to show.
         if len(completions) > self.max_height and (index or 0) > self.max_height / 2:
@@ -179,23 +184,47 @@ class PopupCompletionMenu(object):
 
             tokens = ([(Token, ' ')] +
                       self.get_menu_item_tokens(c, is_current_completion, menu_width) +
+                      (self.get_menu_item_meta_tokens(c, is_current_completion, menu_meta_width)
+                          if show_meta else []) +
                       [(button_token, ' '), (Token, ' ')])
 
             screen.write_highlighted_at_pos(y+i, x, tokens, z_index=10)
 
-    def get_menu_width(self, complete_state):
+    def show_meta(self, complete_state):
         """
-        Calculate the menu width. This is passed to `get_menu_item_tokens`.
+        Return ``True`` if we need to show a column with meta information.
         """
-        return max(len(c.display) for c in complete_state.current_completions)
+        return any(c.display_meta for c in complete_state.current_completions)
 
-    def get_menu_item_tokens(self, completion, is_current_completion, menu_width):
+    def get_menu_width(self, screen, complete_state):
+        """
+        Return the width of the main column.
+        """
+        max_display = int(screen.size.columns / 2)
+        return min(max_display, max(len(c.display) for c in complete_state.current_completions)),
+
+    def get_menu_meta_width(self, screen, complete_state):
+        """
+        Return the width of the meta column.
+        """
+        max_display_meta = int(screen.size.columns / 4)
+        return min(max_display_meta, max(len(c.display_meta) for c in complete_state.current_completions))
+
+    def get_menu_item_tokens(self, completion, is_current_completion, width):
         if is_current_completion:
             token = self.current_completion_token
         else:
             token = self.completion_token
 
-        return [(token, ' %%-%is ' % menu_width % completion.display)]
+        return [(token, ' %%-%is ' % width % completion.display)]
+
+    def get_menu_item_meta_tokens(self, completion, is_current_completion, width):
+        if is_current_completion:
+            token = self.current_meta_token
+        else:
+            token = self.meta_token
+
+        return [(token, ' %%-%is ' % width % completion.display_meta or 'none')]
 
 
 class PasswordProcessor(object):
