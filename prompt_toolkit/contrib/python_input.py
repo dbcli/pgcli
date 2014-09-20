@@ -286,6 +286,7 @@ class PythonPrompt(Prompt):
     def __init__(self, commandline_ref):
         super(PythonPrompt, self).__init__(commandline_ref)
 
+    def reset(self):
         #: Vertical scrolling position of the main content.
         self.vertical_scroll = 0
 

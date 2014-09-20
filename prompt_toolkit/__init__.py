@@ -315,6 +315,7 @@ class CommandLineInterface(object):
                 self.renderer.reset()
                 self.input_processor.reset()
                 self._reset()
+                self.prompt.reset()
             reset_line()
 
             # Trigger read_start.
