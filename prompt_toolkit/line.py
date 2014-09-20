@@ -442,6 +442,14 @@ class Line(object):
 
             self._go_to_completion(index)
 
+    def cancel_completion(self):
+        """
+        Cancel completion, go back to the original text.
+        """
+        if self.complete_state:
+            self._go_to_completion(None)
+            self.complete_state = None
+
     def _start_complete(self, go_to_first=True, completions=None):
         """
         Start completions. (Generate list of completions and initialize.)

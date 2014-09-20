@@ -127,19 +127,37 @@ def vi_bindings(registry, cli_ref):
     @handle(Keys.ControlN, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
-        CtrlN in navigation mode goes down.
+        Control-N: Next completion.
         """
         line.auto_down()
 
     @handle(Keys.ControlP, in_mode=InputMode.INSERT)
     @handle(Keys.ControlP, in_mode=InputMode.COMPLETE)
     def _(event):
+        """
+        Control-P: To previous completion.
+        """
         line.complete_previous()
 
         # Switch only to the 'complete' input mode if there really was a
         # completion found.
         if line.complete_state and event.input_processor.input_mode != InputMode.COMPLETE:
             event.input_processor.push_input_mode(InputMode.COMPLETE)
+
+    @handle(Keys.ControlY, in_mode=InputMode.COMPLETE)
+    def _(event):
+        """
+        Accept current completion.
+        """
+        event.input_processor.pop_input_mode()
+
+    @handle(Keys.ControlE, in_mode=InputMode.COMPLETE)
+    def _(event):
+        """
+        Cancel completion. Go back to originally typed text.
+        """
+        line.cancel_completion()
+        event.input_processor.pop_input_mode()
 
     @handle(Keys.ControlP, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
