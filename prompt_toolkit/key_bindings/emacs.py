@@ -89,7 +89,8 @@ def emacs_bindings(registry, cli_ref):
         """
         Paste before cursor.
         """
-        line.paste_from_clipboard(before=True)
+        for i in range(event.arg):
+            line.paste_from_clipboard(before=True)
 
     @handle(Keys.ControlUnderscore, save_before=False, in_mode=InputMode.INSERT)
     def _(event):
