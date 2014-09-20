@@ -133,13 +133,6 @@ class PopupCompletionMenu(object):
 
     def __init__(self, max_height=5):
         self.max_height = max_height
-        self.reset()
-
-    def reset(self):
-        """
-        Reset render state.
-        """
-        pass
 
     def write(self, screen, complete_cursor_position, complete_state):
         """
@@ -334,6 +327,13 @@ class Prompt(object):
 
     def __init__(self, commandline_ref):
         self._commandline_ref = commandline_ref
+        self.reset()
+
+    def reset(self):
+        """
+        Reset render state.
+        """
+        pass
 
     @property
     def commandline(self):
