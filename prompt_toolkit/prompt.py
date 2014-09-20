@@ -432,7 +432,7 @@ class Prompt(object):
             screen.write_highlighted(self.get_tokens_in_left_margin(row, is_new_line))
 
     def get_input_tokens(self):
-        tokens = self.line.create_code().get_tokens()
+        tokens = list(self.line.create_code().get_tokens())
 
         for p in self.input_processors:
             tokens = p.process_tokens(tokens)
@@ -485,24 +485,26 @@ class Prompt(object):
         screen.set_left_margin(lambda row, is_new_line: self.create_left_input_margin(screen, row, is_new_line))
         self.create_left_input_margin(screen, 1, True)
 
+        # Get tokens
+        # Note: we add the space character at the end, because that's where
+        #       the cursor can also be.
+        input_tokens = self.get_input_tokens() + [(Token, ' ')]
+
+        # 'Explode' tokens in characters.
+        input_tokens = [(token, c) for token, text in input_tokens for c in text]
+
+        # Apply highlighting.
         if highlight:
             highlighted_characters = self.get_highlighted_characters()
-        else:
-            highlighted_characters = {}
 
-        index = 0
-        # Note, we add the space character at the end, because that's where
-        #       the cursor could be.
-        for token, text in self.get_input_tokens() + [(Token, ' ')]:
-            for c in text:
-                # Determine Token-type for character.
-                t = highlighted_characters.get(index, token)
+            for index, token in highlighted_characters.items():
+                input_tokens[index] = (token, input_tokens[index][1])
 
-                # Insert char.
-                screen.write_char(c, t,
-                                  string_index=index,
-                                  set_cursor_position=(index == self.line.cursor_position))
-                index += 1
+        for index, (token, c) in enumerate(input_tokens):
+            # Insert char.
+            screen.write_char(c, token,
+                              string_index=index,
+                              set_cursor_position=(index == self.line.cursor_position))
 
         # Unset left margin.
         screen.set_left_margin(None)
