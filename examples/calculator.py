@@ -9,6 +9,9 @@ Type for instance::
     > add 4 4
     > sub 4 4
     > sin 3.14
+
+Warning: this example uses "prompt_toolkit.contrib.shell", which we consider
+         still experimental.
 """
 from pygments.style import Style
 from pygments.token import Token
