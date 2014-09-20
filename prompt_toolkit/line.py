@@ -223,6 +223,20 @@ class Line(object):
 
     # End of <getters/setters>
 
+    @property
+    def document(self):
+        """
+        Return :class:`.Document` instance from the current text and cursor
+        position.
+        """
+        return Document(self.text, self.cursor_position, selection=self.selection_state)
+
+    def create_code(self):
+        """
+        Create `Code` instance from the current input.
+        """
+        return self.code_factory(self.document)
+
     def text_changed(self):
         """
         Not implemented. Override to capture when the current visible text
@@ -284,15 +298,6 @@ class Line(object):
             transform_callback(self.text[from_:to]) +
             self.text[to:]
         ])
-
-    @property
-    def document(self):
-        """
-        Return :class:`.Document` instance from the current text and cursor
-        position.
-        """
-        # TODO: this can be cached as long self.text does not change.
-        return Document(self.text, self.cursor_position, selection=self.selection_state)
 
     def cursor_left(self, count=1):
         self.cursor_position += self.document.get_cursor_left_position(count=count)
@@ -386,12 +391,6 @@ class Line(object):
         if index < len(self._working_lines):
             self.working_index = index
             self.cursor_position = len(self.text)
-
-    def create_code(self):
-        """
-        Create `Code` instance from the current input.
-        """
-        return self.code_factory(self.document)
 
     def complete_common(self):
         """
