@@ -21,9 +21,7 @@ class InvalidCommandException(Exception):
 
 class ShellCode(Code):
     rule = Sequence([Literal('Hello'), Literal('World')])
-
-    def _get_tokens(self):
-        return list(ParametersLexer(stripnl=False, stripall=False, ensurenl=False).get_tokens(self.text))
+    lexer = ParametersLexer
 
     def _get_lex_result(self, only_before_cursor=False):
         # Take Text tokens before cursor
