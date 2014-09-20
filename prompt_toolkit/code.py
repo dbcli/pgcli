@@ -56,8 +56,14 @@ class CodeBase(object):
     and `Renderer` classes. """
     def __init__(self, document):
         self.document = document
-        self.text = document.text
-        self.cursor_position = document.cursor_position
+
+    @property
+    def cursor_position(self):
+        return self.document.cursor_position
+
+    @property
+    def text(self):
+        return self.document.text
 
     def get_tokens(self):
         return [(Token, self.text)]
