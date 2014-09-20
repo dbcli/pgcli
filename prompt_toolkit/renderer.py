@@ -8,12 +8,17 @@ import six
 import errno
 
 from .utils import get_size
-from .libs.wcwidth import wcwidth
 from collections import defaultdict, namedtuple
 
 from pygments.formatters.terminal256 import Terminal256Formatter, EscapeSequence
 from pygments.style import Style
 from pygments.token import Token
+
+try:
+    from wcwidth import wcwidth
+except ImportError:
+    from .libs.wcwidth import wcwidth
+
 
 # Global variable to keep the colour table in memory.
 _tf = Terminal256Formatter()
