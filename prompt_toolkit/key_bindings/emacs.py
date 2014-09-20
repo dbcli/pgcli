@@ -18,6 +18,18 @@ def emacs_bindings(registry, cli_ref):
     search_line = cli_ref().lines['search']
     handle = create_handle_decorator(registry, line)
 
+    @handle(Keys.Escape)
+    def _(event):
+        """
+        By default, ignore escape key.
+
+        (If we don't put this here, and Esc is followed by a key which sequence
+        is not handled, we'll insert an Escape character in the input stream.
+        Something we don't want and happens to easily in emacs mode.
+        Further, people can always use ControlQ to do a quoted insert.)
+        """
+        pass
+
     @handle(Keys.ControlA, in_mode=InputMode.INSERT)
     @handle(Keys.ControlA, in_mode=InputMode.SELECTION)
     def _(event):
