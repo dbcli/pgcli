@@ -148,6 +148,8 @@ Special thanks to
 
 - `Pygments <http://pygments.org/>`_: Syntax highlighter.
 - `Jedi <http://jedi.jedidjah.ch/en/latest/>`_: Autocompletion library.
+- `Docopt <http://docopt.org/>`_: Command-line interface description language.
+- `wcwidth <https://github.com/jquast/wcwidth>`_: Determine columns needed for a wide characters.
 
 
 .. |Build Status| image:: https://travis-ci.org/jonathanslenders/python-prompt-toolkit.png
