@@ -50,10 +50,12 @@ class ValidationError(Exception):
 
 
 class CodeBase(object):
-    """ Dummy base class for Code implementations.
+    """
+    Base class for Code implementations.
 
     The methods in here are methods that are expected to exist for the `Line`
-    and `Renderer` classes. """
+    and `Renderer` classes.
+    """
     def __init__(self, document):
         self.document = document
 
@@ -101,6 +103,37 @@ class CodeBase(object):
         pass
 
 
+class SimpleLRUCache(object):
+    """
+    Very simple LRU cache.
+
+    :param maxsize: Maximum size of the cache. (Don't make it too big.)
+    """
+    def __init__(self, maxsize=8):
+        self.maxsize = maxsize
+        self._cache = [] # List of (key, value).
+
+    def get(self, key, getter_func):
+        """
+        Get object from the cache.
+        If not found, call `getter_func` to resolve it, and put that on the top
+        of the cache instead.
+        """
+        # Look in cache first.
+        for k, v in self._cache:
+            if k == key:
+                return v
+
+        # Not found? Get it.
+        value = getter_func()
+        self._cache.append((key, value))
+
+        if len(self._cache) > self.maxsize:
+            self._cache = self._cache[-self.maxsize:]
+
+        return value
+
+
 class Code(CodeBase):
     """
     Representation of a code document.
@@ -110,6 +143,13 @@ class Code(CodeBase):
     """
     #: The pygments Lexer class to use.
     lexer = None
+
+    #: LRU cache for the lexer.
+    #: Often, due to cursor movement and undo/redo operations, it happens that
+    #: in a short time, the same document has to be lexed. This is a faily easy
+    #: way to cache such an expensive operation.
+    #: (Set to ``None`` to disable cache.)
+    token_lru_cache = SimpleLRUCache(maxsize=8)
 
     def __init__(self, document):
         super(Code, self).__init__(document)
@@ -126,9 +166,23 @@ class Code(CodeBase):
         else:
             return None
 
+    def _get_tokens(self):
+        if self._lexer:
+            def get():
+                return list(self._lexer.get_tokens(self.text))
+
+            if self.token_lru_cache:
+                return self.token_lru_cache.get((self.lexer, self.text), get)
+            else:
+                return get()
+        else:
+            return [(Token, self.text)]
+
     def get_tokens(self):
-        """ Return the list of tokens for the input text. """
-        # This implements caching. Usually, you override `_get_tokens`
+        """
+        Return the list of tokens for the input text.
+        """
+        # This implements caching on top of _get_tokens.
         if self._tokens is None:
             self._tokens = self._get_tokens()
         return self._tokens
@@ -148,12 +202,6 @@ class Code(CodeBase):
             else:
                 break
         return result
-
-    def _get_tokens(self):
-        if self._lexer:
-            return list(self._lexer.get_tokens(self.text))
-        else:
-            return [(Token, self.text)]
 
 
 def _commonprefix(strings):
