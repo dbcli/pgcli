@@ -519,12 +519,6 @@ class PythonPrompt(Prompt):
         screen.write_highlighted(result)
 
 
-class PythonCompletion(Completion):
-    def __init__(self, text, start_position, jedi_completion):
-        super(PythonCompletion, self).__init__(text, start_position)
-        self.jedi_completion = jedi_completion
-
-
 class PythonCode(Code):
     lexer = PythonLexer
 
@@ -569,7 +563,8 @@ class PythonCode(Code):
 
         if script:
             for c in script.completions():
-                yield PythonCompletion(c.name, len(c.complete) - len(c.name), c)
+                yield Completion(c.name_with_symbols, len(c.complete) - len(c.name_with_symbols),
+                                 display=c.name_with_symbols)
 
 
 class PythonCommandLineInterface(CommandLineInterface):

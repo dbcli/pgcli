@@ -141,10 +141,6 @@ class PopupCompletionMenu(object):
         completions = complete_state.current_completions
         index = complete_state.complete_index  # Can be None!
 
-        # Don't draw the menu if there is just one completion.
-        if len(completions) <= 1:
-            return
-
         # Get position of the menu.
         y, x = complete_cursor_position
         y += 1
@@ -516,8 +512,7 @@ class Prompt(object):
         screen.write_highlighted(self.get_tokens_after_input())
 
     def need_to_show_completion_menu(self):
-        return (self.commandline.input_processor.input_mode == InputMode.COMPLETE and
-                self.completion_menu and self.line.complete_state)
+        return self.completion_menu and self.line.complete_state
 
     def write_menus(self, screen):
         """
