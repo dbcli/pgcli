@@ -323,7 +323,7 @@ class CommandLineInterface(object):
 
             with raw_mode(self.stdin.fileno()):
                 self.inputstream.prepare_terminal(self.stdout)
-                self.renderer.prepare_terminal()
+                self.renderer.request_absolute_cursor_position()
 
                 self._redraw()
 
@@ -355,6 +355,7 @@ class CommandLineInterface(object):
                                 return None
                             elif on_exit == AbortAction.RETRY:
                                 reset_line()
+                                self.renderer.request_absolute_cursor_position()
 
                         # If the abort flag has been set.
                         if self._abort_flag:
@@ -367,6 +368,7 @@ class CommandLineInterface(object):
                                 return None
                             elif on_abort == AbortAction.RETRY:
                                 reset_line()
+                                self.renderer.request_absolute_cursor_position()
 
                         # If a return value has been set.
                         if self._return_code:

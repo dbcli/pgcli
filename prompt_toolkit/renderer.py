@@ -492,7 +492,10 @@ class Renderer(object):
         #: We don't know this until a `report_absolute_cursor_row` call.
         self._min_available_height = 0
 
-    def prepare_terminal(self):
+    def request_absolute_cursor_position(self):
+        """
+        Do CPR request.
+        """
         # Asks for a cursor position report (CPR).
         self._stdout.write('\x1b[6n')
         self._stdout.flush()
@@ -563,4 +566,4 @@ class Renderer(object):
         self._stdout.write(TerminalCodes.CURSOR_GOTO(0, 0))
 
         self.reset()
-        self.prepare_terminal()
+        self.request_absolute_cursor_position()
