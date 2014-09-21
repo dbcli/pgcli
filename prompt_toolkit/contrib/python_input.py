@@ -277,6 +277,15 @@ class PythonLine(Line):
         elif cursor_at_the_end and (self.document.text_before_cursor[-1:] == '\\'):
             self.is_multiline = True
 
+    def complete_after_insert_text(self):
+        """
+        Start autocompletion when a we have a valid identifier before the
+        cursor. (In this case it's not required to press [Tab] in order to view
+        the completion menu.)
+        """
+        word_before_cursor = self.document.get_word_before_cursor()
+        return word_before_cursor is not None and word_before_cursor.isidentifier()
+
 
 class PythonPrompt(Prompt):
     input_processors = [BracketsMismatchProcessor()]
