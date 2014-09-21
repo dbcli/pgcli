@@ -647,7 +647,7 @@ class Line(object):
         the completions. E.g. for display in completion menu. (This is called
         after ``insert_text``.)
         """
-        return True
+        return False
 
     def set_clipboard(self, clipboard_data):
         """
