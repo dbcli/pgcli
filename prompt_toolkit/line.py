@@ -183,13 +183,7 @@ class Line(object):
     def text(self, value):
         assert isinstance(value, six.text_type)
         self._working_lines[self.working_index] = value
-
-        # Remove validation errors, complete state.
-        self.validation_error = None
-        self.complete_state = None
-        self.selection_state = None
-
-        self.text_changed()
+        self._text_changed()
 
     @property
     def cursor_position(self):
@@ -213,12 +207,15 @@ class Line(object):
     @working_index.setter
     def working_index(self, value):
         self.__working_index = value
+        self._text_changed()
 
+    def _text_changed(self):
         # Remove any validation errors and complete state.
         self.validation_error = None
         self.complete_state = None
         self.selection_state = None
 
+        # Call text changed 'event'.
         self.text_changed()
 
     # End of <getters/setters>
@@ -639,6 +636,18 @@ class Line(object):
 
         if move_cursor:
             self.cursor_position += len(data)
+
+        # Get completions.
+        if self.complete_after_insert_text():
+            self._start_complete(go_to_first=False)
+
+    def complete_after_insert_text(self):
+        """
+        Returns boolean. If True, this indicates that right now, we should get
+        the completions. E.g. for display in completion menu. (This is called
+        after ``insert_text``.)
+        """
+        return True
 
     def set_clipboard(self, clipboard_data):
         """

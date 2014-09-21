@@ -11,6 +11,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit import CommandLineInterface
 from prompt_toolkit.code import Code, Completion
+from prompt_toolkit.line import Line
 
 from pygments.token import Token
 from pygments.style import Style
@@ -18,6 +19,9 @@ from pygments.style import Style
 
 class AnimalCode(Code):
     animals = [
+        'alligator',
+        'ant',
+        'ape',
         'bat',
         'bear',
         'beaver',
@@ -66,8 +70,18 @@ class AnimalStyle(Style):
     }
 
 
+class AnimalLine(Line):
+    def complete_after_insert_text(self):
+        """
+        Open completion menu when we type a character.
+        (Except if we typed whitespace.)
+        """
+        return not self.document.char_before_cursor.isspace()
+
+
 class AnimalCLI(CommandLineInterface):
     code_factory = AnimalCode
+    line_factory = AnimalLine
     style = AnimalStyle
 
 
