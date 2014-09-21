@@ -14,8 +14,8 @@ __all__ = (
 # Regex matching any CPR response
 _cpr_response_re = re.compile('^' + re.escape('\x1b[') + r'\d+;\d+R$')
 
-# Regex matching anything valid prefix of a CPR response.
-_cpr_response_prefix_re = re.compile('^' + re.escape('\x1b[') + r'($|\d)')
+# Regex matching any valid prefix of a CPR response.
+_cpr_response_prefix_re = re.compile('^' + re.escape('\x1b[') + r'[\d;R]*$')
 
 
 class KeyPress(object):
