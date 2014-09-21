@@ -104,7 +104,7 @@ class PythonStyle(Style):
         Token.CompletionMenu.ProgressButton:         'bg:#000000',
 
         Token.HorizontalMenu.Completion:              '#888888 noinherit',
-        Token.HorizontalMenu.Completion.Current:      'bold',
+        Token.HorizontalMenu.Completion.Current:      'bold noinherit',
         Token.HorizontalMenu:                         'noinherit',
         Token.HorizontalMenu.Arrow:                   'bold #888888',
 
