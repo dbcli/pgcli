@@ -140,6 +140,7 @@ def basic_bindings(registry, cli_ref):
         line.swap_characters_before_cursor()
 
     @handle(Keys.ControlU, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlU, in_mode=InputMode.COMPLETE)
     def _(event):
         """
         Clears the line before the cursor position. If you are at the end of
@@ -148,7 +149,12 @@ def basic_bindings(registry, cli_ref):
         deleted = line.delete_before_cursor(count=-line.document.get_start_of_line_position())
         line.set_clipboard(ClipboardData(deleted))
 
+        # Quit autocomplete mode.
+        if event.input_processor.input_mode == InputMode.COMPLETE:
+            event.input_processor.pop_input_mode()
+
     @handle(Keys.ControlW, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlW, in_mode=InputMode.COMPLETE)
     def _(event):
         """
         Delete the word before the cursor.
@@ -157,6 +163,10 @@ def basic_bindings(registry, cli_ref):
         if pos:
             deleted = line.delete_before_cursor(count=-pos)
             line.set_clipboard(ClipboardData(deleted))
+
+        # Quit autocomplete mode.
+        if event.input_processor.input_mode == InputMode.COMPLETE:
+            event.input_processor.pop_input_mode()
 
     @handle(Keys.PageUp, in_mode=InputMode.COMPLETE)
     def _(event):
