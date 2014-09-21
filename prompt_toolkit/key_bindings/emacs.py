@@ -61,6 +61,13 @@ def emacs_bindings(registry, cli_ref):
         """
         line.auto_down()
 
+    @handle(Keys.ControlN, in_mode=InputMode.COMPLETE)
+    def _(event):
+        """
+        Control N in complete mode: go to next completion.
+        """
+        line.complete_next()
+
     @handle(Keys.ControlN, in_mode=InputMode.SELECTION)
     def _(event):
         """
@@ -88,6 +95,13 @@ def emacs_bindings(registry, cli_ref):
         Previous line.
         """
         line.cursor_up()
+
+    @handle(Keys.ControlP, in_mode=InputMode.COMPLETE)
+    def _(event):
+        """
+        Control P in complete mode: go to previous completion.
+        """
+        line.complete_previous()
 
     @handle(Keys.ControlQ, Keys.Any, in_mode=InputMode.INSERT)
     def _(event):
