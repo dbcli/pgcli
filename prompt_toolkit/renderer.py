@@ -488,9 +488,31 @@ class Renderer(object):
         self._last_screen = None
         self._last_char = None
 
+        #: Space from the top of the prompt, until the bottom of the terminal.
+        #: We don't know this until a `report_absolute_cursor_row` call.
+        self._min_available_height = 0
+
+    def prepare_terminal(self):
+        # Asks for a cursor position report (CPR).
+        self._stdout.write('\x1b[6n')
+        self._stdout.flush()
+
     def get_size(self):
         rows, columns = get_size(self._stdout.fileno())
         return Size(rows=rows, columns=columns)
+
+    def report_absolute_cursor_row(self, row):
+        """
+        To be called when we know the absolute cursor position.
+        (As an answer of a "Cursor Position Request" response.)
+        """
+        # Calculate the amount of rows from the cursor position until the
+        # bottom of the terminal.
+        total_rows = self.get_size().rows
+        rows_below_cursor = total_rows - row + 1
+
+        # Set the
+        self._min_available_height = self._cursor_pos.y + rows_below_cursor
 
     def render_to_str(self, abort=False, accept=False):
         """
@@ -498,8 +520,9 @@ class Renderer(object):
         """
         screen = self.screen_cls(size=self.get_size())
 
-        self.prompt.write_to_screen(screen, self._last_screen.current_height if self._last_screen else 0,
-                                    abort=abort, accept=accept)
+        height = self._last_screen.current_height if self._last_screen else 0
+        height = max(self._min_available_height, height)
+        self.prompt.write_to_screen(screen, height, abort=abort, accept=accept)
 
         output, self._cursor_pos, self._last_char = output_screen_diff(
             screen, self._cursor_pos,
@@ -540,3 +563,4 @@ class Renderer(object):
         self._stdout.write(TerminalCodes.CURSOR_GOTO(0, 0))
 
         self.reset()
+        self.prepare_terminal()

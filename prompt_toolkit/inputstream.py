@@ -3,12 +3,19 @@ Parser for VT100 input stream.
 """
 from __future__ import unicode_literals
 import six
+import re
 
 from .keys import Keys
 
 __all__ = (
     'InputStream',
 )
+
+# Regex matching any CPR response
+_cpr_response_re = re.compile('^' + re.escape('\x1b[') + r'\d+;\d+R$')
+
+# Regex matching anything valid prefix of a CPR response.
+_cpr_response_prefix_re = re.compile('^' + re.escape('\x1b[') + r'($|\d)')
 
 
 class KeyPress(object):
@@ -138,22 +145,23 @@ class InputStream(object):
         '\x1b[1;3B': (Keys.Escape, Keys.Down),
     }
 
-    def __init__(self, input_processor, stdout=None):
+    def __init__(self, input_processor):
         self._input_processor = input_processor
-        self._stdout = stdout
-
         self.reset()
 
-    def reset(self):
+    def reset(self, request=False):
         self._start_parser()
 
+    def prepare_terminal(self, stdout):
+        """
+        Prepare terminal.
+        """
         # Put the terminal in cursor mode. (Instead of application mode.)
-        if self._stdout:
-            self._stdout.write('\x1b[?1l')
-            self._stdout.flush()
+        stdout.write('\x1b[?1l')
+        stdout.flush()
 
-            # # Put the terminal in application mode.
-            # self._stdout.write('\x1b[?1h')
+        # # Put the terminal in application mode.
+        # self._stdout.write('\x1b[?1h')
 
     def _start_parser(self):
         """
@@ -166,12 +174,25 @@ class InputStream(object):
         """
         Return the keys that map to this prefix.
         """
+        # (hard coded) If we match a CPR response, return Keys.CPRResponse.
+        # (This one doesn't fit in the mappings, because it contains
+        # integer variables.)
+        if _cpr_response_re.match(prefix):
+            return [Keys.CPRResponse]
+
+        # Otherwise, use the mappings.
         return [v for k, v in self.mappings.items() if k == prefix]
 
     def _is_prefix_of_longer_match(self, prefix):
         """
         True when there is any key that start with this characters.
         """
+        # (hard coded) If this could be a prefix of a CPR response, return
+        # True.
+        if _cpr_response_prefix_re.match(prefix):
+            return True
+
+        # If this could be a prefix of anything else, also return True.
         return any(v for k, v in self.mappings.items() if k.startswith(prefix) and k != prefix)
 
     def _input_parser_generator(self):

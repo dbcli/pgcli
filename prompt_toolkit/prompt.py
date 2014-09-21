@@ -524,9 +524,15 @@ class Prompt(object):
 
             self.completion_menu.write(screen, complete_cursor_position, self.line.complete_state)
 
-    def write_to_screen(self, screen, last_screen_height, accept=False, abort=False):
+    def write_to_screen(self, screen, min_available_height, accept=False, abort=False):
         """
         Render the prompt to a `Screen` instance.
+
+        :param screen: The :class:`Screen` class into which we write the output.
+        :param min_available_height: The space (amount of rows) available from
+                                     the top of the prompt, until the bottom of
+                                     the terminal. We don't have to use them,
+                                     but we can.
         """
         if self.commandline.input_processor.input_mode == InputMode.VI_SEARCH:
             self.write_vi_search(screen)

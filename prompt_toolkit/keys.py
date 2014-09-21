@@ -91,3 +91,6 @@ class Keys(object):
 
     # Matches any key.
     Any = Key('<Any>')
+
+    # Special
+    CPRResponse = Key('<Cursor-Position-Response>')

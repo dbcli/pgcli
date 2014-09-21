@@ -385,7 +385,7 @@ class PythonPrompt(Prompt):
             (Token.Prompt.LineNumber, text),
         ])
 
-    def write_input_scrolled(self, screen, accept_or_abort, last_screen_height):
+    def write_input_scrolled(self, screen, accept_or_abort, min_available_height):
         # Write to a temp screen first.
         temp_screen = Screen(screen.size)
         super(PythonPrompt, self).write_input(temp_screen, highlight=not accept_or_abort)
@@ -424,7 +424,7 @@ class PythonPrompt(Prompt):
         # Fill up with tildes.
         if not accept_or_abort:
             y += 1
-            while y < max([self.min_height - 2, last_screen_height - 2]) and y < max_height:
+            while y < max([self.min_height - 2, min_available_height - 2]) and y < max_height:
                 screen.write_at_pos(y, 1, Char('~', Token.Leftmargin.Tilde))
                 y += 1
 
@@ -437,8 +437,8 @@ class PythonPrompt(Prompt):
 
         return return_y
 
-    def write_to_screen(self, screen, last_screen_height, accept=False, abort=False):
-        y = self.write_input_scrolled(screen, (accept or abort), last_screen_height)
+    def write_to_screen(self, screen, min_available_height, accept=False, abort=False):
+        y = self.write_input_scrolled(screen, (accept or abort), min_available_height)
         self.write_prompt(screen)
 
         if not (accept or abort):

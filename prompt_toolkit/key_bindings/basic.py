@@ -246,3 +246,15 @@ def basic_bindings(registry, cli_ref):
         Pressing escape or Ctrl-C in complete mode, goes back to default mode.
         """
         event.input_processor.pop_input_mode()
+
+    @handle(Keys.CPRResponse)
+    def _(event):
+        """
+        Handle incoming Cursor-Position-Request response.
+        """
+        # The incoming data looks like u'\x1b[35;1R'
+        # Parse row/col information.
+        row, col = map(int, event.data[2:-1].split(';'))
+
+        # Report absolute cursor position to the renderer.
+        cli_ref().renderer.report_absolute_cursor_row(row)

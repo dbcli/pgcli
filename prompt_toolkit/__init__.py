@@ -119,7 +119,7 @@ class CommandLineInterface(object):
         self.input_processor = self.create_input_processor()
 
         # Create `InputStream` instance.
-        self.inputstream = self.create_inputstream(self.input_processor, self.stdout)
+        self.inputstream = self.create_inputstream(self.input_processor)
 
         #: The `prompt` instance.
         self.prompt = self.create_prompt()
@@ -167,8 +167,8 @@ class CommandLineInterface(object):
 
         return {name: _create_line(*k) for (name, k) in self.create_line_factories_dict().items()}
 
-    def create_inputstream(self, input_processor, stdout):
-        return InputStream(input_processor, stdout=stdout)
+    def create_inputstream(self, input_processor):
+        return InputStream(input_processor)
 
     def create_input_processor(self):
         """
@@ -322,6 +322,9 @@ class CommandLineInterface(object):
             self.on_read_input_start()
 
             with raw_mode(self.stdin.fileno()):
+                self.inputstream.prepare_terminal(self.stdout)
+                self.renderer.prepare_terminal()
+
                 self._redraw()
 
                 # When the window size changes, we do a redraw request call.
