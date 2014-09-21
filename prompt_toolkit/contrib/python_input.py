@@ -37,6 +37,9 @@ __all__ = (
 )
 
 
+_identifier_re = re.compile(r'[a-zA-Z_0-9_\.]+')
+
+
 class AutoCompletionStyle:
     #: tab/double-tab completion
     # TRADITIONAL = 'traditional'  # TODO: not implemented yet.
@@ -284,7 +287,7 @@ class PythonLine(Line):
         the completion menu.)
         """
         word_before_cursor = self.document.get_word_before_cursor()
-        return word_before_cursor is not None and word_before_cursor.isidentifier()
+        return word_before_cursor is not None and _identifier_re.match(word_before_cursor)
 
 
 class PythonPrompt(Prompt):
