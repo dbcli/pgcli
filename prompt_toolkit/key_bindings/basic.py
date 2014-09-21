@@ -11,6 +11,32 @@ def basic_bindings(registry, cli_ref):
     line = cli_ref().line
     handle = create_handle_decorator(registry, line)
 
+    @handle(Keys.ControlA)
+    @handle(Keys.ControlB)
+    @handle(Keys.ControlC)
+    @handle(Keys.ControlD)
+    @handle(Keys.ControlE)
+    @handle(Keys.ControlF)
+    @handle(Keys.ControlG)
+    @handle(Keys.ControlH)
+    @handle(Keys.ControlI)
+    @handle(Keys.ControlJ)
+    @handle(Keys.ControlK)
+    @handle(Keys.ControlL)
+    @handle(Keys.ControlM)
+    @handle(Keys.ControlN)
+    @handle(Keys.ControlO)
+    @handle(Keys.ControlP)
+    @handle(Keys.ControlQ)
+    @handle(Keys.ControlR)
+    @handle(Keys.ControlS)
+    @handle(Keys.ControlT)
+    @handle(Keys.ControlU)
+    @handle(Keys.ControlV)
+    @handle(Keys.ControlW)
+    @handle(Keys.ControlX)
+    @handle(Keys.ControlY)
+    @handle(Keys.ControlZ)
     @handle(Keys.F1)
     @handle(Keys.F2)
     @handle(Keys.F3)
@@ -35,6 +61,7 @@ def basic_bindings(registry, cli_ref):
     @handle(Keys.ControlBackslash)
     @handle(Keys.ControlSquareClose)
     @handle(Keys.ControlCircumflex)
+    @handle(Keys.ControlUnderscore)
     @handle(Keys.Backspace)
     @handle(Keys.Up)
     @handle(Keys.Down)
@@ -52,8 +79,11 @@ def basic_bindings(registry, cli_ref):
         """
         First, for any of these keys, Don't do anything by default. Also don't
         catch them in the 'Any' handler which will insert them as data.
+
+        If people want to insert these characters as a literal, they can always
+        do by doing a quoted insert. (ControlQ in emacs mode, ControlV in Vi
+        mode.)
         """
-        # We override the functionality below.
         pass
 
     @handle(Keys.Home, in_mode=InputMode.INSERT)
