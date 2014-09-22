@@ -331,8 +331,8 @@ class Prompt(object):
     #: Class responsible for the composition of the i-search tokens.
     isearch_composer = ISearchComposer
 
-    def __init__(self, commandline_ref):
-        self._commandline_ref = commandline_ref
+    def __init__(self,cli_ref):
+        self._cli_ref = cli_ref
         self.reset()
 
     def reset(self):
@@ -340,24 +340,29 @@ class Prompt(object):
         self.vertical_scroll = 0
 
     @property
-    def commandline(self):
-        return self._commandline_ref()
+    def cli(self):
+        """
+        The :class:`CommandLineInterface` instance.
+        """
+        return self._cli_ref()
 
     @property
     def line(self):
-        return self.commandline.line
+        """
+        The main :class:`Line` instance.
+        """
+        return self.cli.line
 
-    @property
-    def tokens_before_input(self):
+    def get_tokens_before_input(self):
         """
         Text shown before the actual input.
         List of (Token, text) tuples.
         """
-        if self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
+        if self.cli.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
             return self.isearch_prompt
-        elif self.commandline.input_processor.input_mode == InputMode.VI_SEARCH:
+        elif self.cli.input_processor.input_mode == InputMode.VI_SEARCH:
             return self.vi_search_prompt
-        elif self.commandline.input_processor.arg is not None:
+        elif self.cli.input_processor.arg is not None:
             return self.arg_prompt
         else:
             return self.default_prompt
@@ -376,7 +381,7 @@ class Prompt(object):
         """
         return [
             (Token.Prompt.Arg, '(arg: '),
-            (Token.Prompt.Arg.Text, str(self.commandline.input_processor.arg)),
+            (Token.Prompt.Arg.Text, str(self.cli.input_processor.arg)),
             (Token.Prompt.Arg, ') '),
         ]
 
@@ -462,14 +467,14 @@ class Prompt(object):
     def write_vi_search(self, screen):
         screen.write_highlighted(self.get_vi_search_prefix_tokens())
 
-        line = self.commandline.lines['search']
+        line = self.cli.lines['search']
 
         for index, c in enumerate(line.text + ' '):
             screen.write_char(c, Token.Prompt.ViSearch.Text,
                               set_cursor_position=(index == line.cursor_position))
 
     def write_before_input(self, screen):
-        screen.write_highlighted(self.tokens_before_input)
+        screen.write_highlighted(self.get_tokens_before_input())
 
     def write_input(self, screen, highlight=True):
         # Get tokens
@@ -591,7 +596,7 @@ class Prompt(object):
                                      the terminal. We don't have to use them,
                                      but we can.
         """
-        if self.commandline.input_processor.input_mode == InputMode.VI_SEARCH:
+        if self.cli.input_processor.input_mode == InputMode.VI_SEARCH:
             self.write_vi_search(screen)
         else:
             self.write_before_input(screen)

@@ -11,8 +11,7 @@ import time
 
 
 class ClockPrompt(Prompt):
-    @property
-    def tokens_before_input(self):
+    def get_tokens_before_input(self):
         now = datetime.datetime.now()
         return [
             (Token.Prompt, '%s:%s:%s' % (now.hour, now.minute, now.second)),

@@ -293,12 +293,12 @@ class PythonLine(Line):
 class PythonPrompt(Prompt):
     input_processors = [BracketsMismatchProcessor()]
 
-    def __init__(self, commandline_ref):
-        super(PythonPrompt, self).__init__(commandline_ref)
+    def __init__(self, cli_ref):
+        super(PythonPrompt, self).__init__(cli_ref)
 
     @property
     def completion_menu(self):
-        style = self.commandline.autocompletion_style
+        style = self.cli.autocompletion_style
 
         if style == AutoCompletionStyle.POPUP_MENU:
             return PopupCompletionMenu()
@@ -309,21 +309,21 @@ class PythonPrompt(Prompt):
         """
         When inside functions, show signature.
         """
-        if self.commandline.input_processor.input_mode == InputMode.VI_SEARCH:
+        if self.cli.input_processor.input_mode == InputMode.VI_SEARCH:
             self.write_vi_search(screen)
 
-        elif self.commandline.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
+        elif self.cli.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and self.line.isearch_state:
             screen.write_highlighted(list(self.isearch_prompt))
 
-        elif self.commandline.input_processor.arg is not None:
+        elif self.cli.input_processor.arg is not None:
             screen.write_highlighted(list(self.arg_prompt))
 
         elif self.line.validation_error:
             screen.write_highlighted(list(self._get_error_tokens()))
 
-        elif self.commandline.autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU and \
+        elif self.cli.autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU and \
                 self.line.complete_state and \
-                self.commandline.input_processor.input_mode == InputMode.COMPLETE:
+                self.cli.input_processor.input_mode == InputMode.COMPLETE:
             HorizontalCompletionMenu().write(screen, None, self.line.complete_state)
         else:
             screen.write_highlighted(list(self._get_signature_tokens()))
@@ -363,7 +363,7 @@ class PythonPrompt(Prompt):
 
     @property
     def prompt_text(self):
-        return 'In [%s]: ' % self.commandline.current_statement_index
+        return 'In [%s]: ' % self.cli.current_statement_index
 
     def write_prompt(self, screen):
         screen.write_highlighted_at_pos(0, 0, [(Token.Prompt, self.prompt_text)])
@@ -395,7 +395,7 @@ class PythonPrompt(Prompt):
 
     def write_toolbar(self, screen):
         TB = Token.Toolbar
-        mode = self.commandline.input_processor.input_mode
+        mode = self.cli.input_processor.input_mode
 
         result = TokenList()
         append = result.append
@@ -406,7 +406,7 @@ class PythonPrompt(Prompt):
         if mode == InputMode.INCREMENTAL_SEARCH:
             append((TB.Mode, '(SEARCH)'))
             append((TB, '   '))
-        elif self.commandline.vi_mode:
+        elif self.cli.vi_mode:
             if mode == InputMode.INSERT:
                 append((TB.Mode, '(INSERT)'))
                 append((TB, '   '))
@@ -440,7 +440,7 @@ class PythonPrompt(Prompt):
         # Shortcuts.
         if mode == InputMode.INCREMENTAL_SEARCH:
             append((TB, '[Ctrl-G] Cancel search [Enter] Go to this position.'))
-        elif mode == InputMode.SELECTION and not self.commandline.vi_mode:
+        elif mode == InputMode.SELECTION and not self.cli.vi_mode:
             # Emacs cut/copy keys.
             append((TB, '[Ctrl-W] Cut [Meta-W] Copy [Ctrl-Y] Paste [Ctrl-G] Cancel'))
         else:
@@ -449,7 +449,7 @@ class PythonPrompt(Prompt):
             else:
                 append((TB.Off, '[F6] Paste mode (off) '))
 
-            if not self.commandline.always_multiline:
+            if not self.cli.always_multiline:
                 if self.line.is_multiline:
                     append((TB.On, '[F7] Multiline (on)'))
                 else:
