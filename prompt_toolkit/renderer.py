@@ -172,12 +172,15 @@ class Char(object):
         self.token = token
         self.z_index = z_index
 
-    @property
-    def width(self):
+    def get_width(self):
         # We use the `max(0, ...` because some non printable control
         # characters, like e.g. Ctrl-underscore get a -1 wcwidth value.
         # It can be possible that these characters end up in the input text.
-        return max(0, sum([_get_width(c) for c in self.char]))
+        char = self.char
+        if len(char) == 1:
+            return max(0, _get_width(char))
+        else:
+            return max(0, sum([_get_width(c) for c in char]))
 
 
 class Screen(object):
@@ -194,7 +197,6 @@ class Screen(object):
         self._y = 0
 
         self.size = size
-        self._left_margin_func = lambda linenr, is_new_line: None
 
         self.cursor_position = Point(y=0, x=0)
         self._line_number = 1
@@ -209,13 +211,6 @@ class Screen(object):
     def get_cursor_position(self):
         return self.cursor_position
 
-    def set_left_margin(self, func):
-        """
-        Set a function that returns a list of (token,text) tuples to be
-        inserted after every newline.
-        """
-        self._left_margin_func = func or (lambda linenr, is_new_line: None)
-
     def write_char(self, char, token, string_index=None,
                    set_cursor_position=False, z_index=False):
         """
@@ -224,14 +219,13 @@ class Screen(object):
         assert len(char) == 1
 
         char_obj = Char(char, token, z_index)
-        char_width = char_obj.width
+        char_width = char_obj.get_width()
 
         # In case there is no more place left at this line, go first to the
         # following line. (Also in case of double-width characters.)
         if self._x + char_width > self.size.columns:
             self._y += 1
             self._x = 0
-            self._left_margin_func(self._line_number, False)
 
         insert_pos = self._y, self._x  # XXX: make a Point of this?
 
@@ -246,7 +240,6 @@ class Screen(object):
             self._y += 1
             self._x = 0
             self._line_number += 1
-            self._left_margin_func(self._line_number, True)
 
         # Insertion of a 'visible' character.
         else:
@@ -284,9 +277,9 @@ class Screen(object):
         """
         for token, text in data:
             for c in text:
-                char_obj = Char(c, token, z_index=z_index)
+                char_obj = Char(c, token, z_index)
                 self.write_at_pos(y, x, char_obj)
-                x += char_obj.width
+                x += char_obj.get_width()
 
     def write_highlighted(self, data):
         """
@@ -418,7 +411,7 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
         # Loop over the columns.
         c = 0
         while c < new_max_line_len + 1:
-            char_width = (new_row[c].width or 1)
+            char_width = (new_row[c].get_width() or 1)
 
             if not chars_are_equal(new_row[c], previous_row[c]):
                 current_pos = move_cursor(Point(y=y, x=c))
@@ -465,6 +458,9 @@ class Renderer(object):
         r.render(Render_context(...))
     """
     screen_cls = Screen
+
+    #: Set minimal screen height. (rows to fill at least.)
+    min_screen_height = 0
 
     def __init__(self, prompt=None, stdout=None, style=None):
         self.prompt = prompt
@@ -524,7 +520,7 @@ class Renderer(object):
         screen = self.screen_cls(size=self.get_size())
 
         height = self._last_screen.current_height if self._last_screen else 0
-        height = max(self._min_available_height, height)
+        height = max(self._min_available_height, height, self.min_screen_height)
         self.prompt.write_to_screen(screen, height, abort=abort, accept=accept)
 
         output, self._cursor_pos, self._last_char = output_screen_diff(

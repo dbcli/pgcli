@@ -22,7 +22,7 @@ from prompt_toolkit.key_bindings.vi import vi_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.line import Line
 from prompt_toolkit.prompt import Prompt, TokenList, BracketsMismatchProcessor, PopupCompletionMenu, HorizontalCompletionMenu
-from prompt_toolkit.renderer import Char, Screen, Point
+from prompt_toolkit.renderer import Renderer
 from prompt_toolkit.selection import SelectionType
 
 import jedi
@@ -293,14 +293,8 @@ class PythonLine(Line):
 class PythonPrompt(Prompt):
     input_processors = [BracketsMismatchProcessor()]
 
-    min_height = 7
-
     def __init__(self, commandline_ref):
         super(PythonPrompt, self).__init__(commandline_ref)
-
-    def reset(self):
-        #: Vertical scrolling position of the main content.
-        self.vertical_scroll = 0
 
     @property
     def completion_menu(self):
@@ -374,71 +368,22 @@ class PythonPrompt(Prompt):
     def write_prompt(self, screen):
         screen.write_highlighted_at_pos(0, 0, [(Token.Prompt, self.prompt_text)])
 
-    def create_left_input_margin(self, screen, row, is_new_line):
-        if is_new_line:
-            text = '%i. ' % row
-        else:
-            text = ''
-
-        screen.write_highlighted([
-            (Token.Prompt.LineNumber, ' ' * (len(self.prompt_text) - len(text))),
-            (Token.Prompt.LineNumber, text),
-        ])
-
-    def write_input_scrolled(self, screen, accept_or_abort, min_available_height):
-        # Write to a temp screen first.
-        temp_screen = Screen(screen.size)
-        super(PythonPrompt, self).write_input(temp_screen, highlight=not accept_or_abort)
-
-        # Determine the maximum height.
-        max_height = screen.size.rows - 2
-
-        if True:
-            # Scroll back if we scrolled to much and there's still space at the top.
-            if self.vertical_scroll > temp_screen.current_height - max_height:
-                self.vertical_scroll = max(0, temp_screen.current_height - max_height)
-
-            # Scroll up if cursor is before visible part.
-            if self.vertical_scroll > temp_screen.cursor_position.y:
-                self.vertical_scroll = temp_screen.cursor_position.y
-
-            # Scroll down if cursor is after visible part.
-            if self.vertical_scroll <= temp_screen.cursor_position.y - max_height:
-                self.vertical_scroll = (temp_screen.cursor_position.y + 1) - max_height
-
-            # Scroll down if we need space for the menu.
-            if self.need_to_show_completion_menu():
-                menu_size = min(5, len(self.line.complete_state.current_completions)) - 1
-                if temp_screen.cursor_position.y - self.vertical_scroll >= max_height - menu_size:
-                    self.vertical_scroll = (temp_screen.cursor_position.y + 1) - (max_height - menu_size)
-
-        # Now copy the region we need to the real screen.
-        y = 0
-        for y in range(0, min(max_height, temp_screen.current_height - self.vertical_scroll)):
-            for x in range(0, temp_screen.size.columns):
-                screen._buffer[y][x] = temp_screen._buffer[y + self.vertical_scroll][x]
-
-        screen.cursor_position = Point(y=temp_screen.cursor_position.y - self.vertical_scroll,
-                                       x=temp_screen.cursor_position.x)
-
-        # Fill up with tildes.
-        if not accept_or_abort:
-            y += 1
-            while y < max([self.min_height - 2, min_available_height - 2]) and y < max_height:
-                screen.write_at_pos(y, 1, Char('~', Token.Leftmargin.Tilde))
-                y += 1
-
-        return_y = y
-
-        # Show completion menu.
-        if not accept_or_abort and self.need_to_show_completion_menu():
-            y, x = temp_screen._cursor_mappings[self.line.complete_state.original_document.cursor_position]
-            self.completion_menu.write(screen, (y - self.vertical_scroll, x), self.line.complete_state)
-
-        return return_y
+    def get_left_margin_tokens(self, line_number, margin_width):
+        """
+        Line numbering in left margin.
+        """
+        return [
+            (Token.Prompt.LineNumber, '%%%ii. ' % (margin_width - 2) % (line_number + 1)),
+        ]
 
     def write_to_screen(self, screen, min_available_height, accept=False, abort=False):
-        y = self.write_input_scrolled(screen, (accept or abort), min_available_height)
+        left_margin_width = len(self.prompt_text)
+        y = self.write_input_scrolled(screen,
+                                      accept_or_abort=(accept or abort),
+                                      min_available_height=min_available_height,
+                                      left_margin_width=left_margin_width,
+                                      bottom_margin_height=2, # 2 toolbars.
+                                      )
         self.write_prompt(screen)
 
         if not (accept or abort):
@@ -579,8 +524,13 @@ class PythonCode(Code):
                                  display=c.name_with_symbols)
 
 
+class PythonRenderer(Renderer):
+    min_screen_height = 7
+
+
 class PythonCommandLineInterface(CommandLineInterface):
     prompt_factory = PythonPrompt
+    renderer_factory = PythonRenderer
 
     def line_factory(self, *a, **kw):
         return PythonLine(self.always_multiline, *a, **kw)
