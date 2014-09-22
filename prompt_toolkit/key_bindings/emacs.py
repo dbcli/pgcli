@@ -194,7 +194,6 @@ def emacs_bindings(registry, cli_ref):
             line.insert_text(words.title(), overwrite=True)
 
     @handle(Keys.Escape, 'd', in_mode=InputMode.INSERT)
-    @handle(Keys.Escape, 'd', in_mode=InputMode.SELECTION)
     def _(event):
         """
         Delete word forwards.
