@@ -193,6 +193,17 @@ def emacs_bindings(registry, cli_ref):
             words = line.document.text_after_cursor[:pos]
             line.insert_text(words.title(), overwrite=True)
 
+    @handle(Keys.Escape, 'd', in_mode=InputMode.INSERT)
+    @handle(Keys.Escape, 'd', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Delete word forwards.
+        """
+        pos = line.document.find_next_word_ending(count=event.arg)
+        if pos:
+            deleted = line.delete(count=pos)
+            line.set_clipboard(ClipboardData(deleted))
+
     @handle(Keys.Escape, 'e', in_mode=InputMode.INSERT)
     def _(event):
         """ Move to end of sentence. """
