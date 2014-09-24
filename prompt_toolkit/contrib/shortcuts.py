@@ -22,9 +22,10 @@ def get_input(message, raise_exception_on_abort=False, multiline=False, is_passw
         before_input=DefaultPrompt(message),
         input_processors=([PasswordProcessor()] if is_password else []))
 
-    cli = CommandLineInterface(layout=layout,
-              line=Line(is_multiline=multiline),
-              key_binding_factories=[(vi_bindings if vi_mode else emacs_bindings)])
+    cli = CommandLineInterface(
+        layout=layout,
+        line=Line(is_multiline=multiline),
+        key_binding_factories=[(vi_bindings if vi_mode else emacs_bindings)])
 
     on_abort = AbortAction.RAISE_EXCEPTION if raise_exception_on_abort else AbortAction.RETURN_NONE
     code = cli.read_input(on_abort=on_abort, on_exit=AbortAction.IGNORE)

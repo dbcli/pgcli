@@ -23,7 +23,6 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.menus import CompletionMenu
 from prompt_toolkit.layout.processors import BracketsMismatchProcessor
-from prompt_toolkit.layout.prompt import Prompt
 from prompt_toolkit.layout.toolbars import CompletionToolbar, ArgToolbar, SearchToolbar, ValidationToolbar
 from prompt_toolkit.layout.toolbars import Toolbar
 from prompt_toolkit.layout.utils import TokenList
@@ -89,10 +88,11 @@ class PythonStyle(Style):
         Token.Signature.CurrentName:   'bold underline #888888',
 
         # Highlighting for the reverse-search prompt.
-        Token.Prompt:                     'bold #008800',
-        Token.Prompt.ISearch:             'noinherit',
-        Token.Prompt.ISearch.Text:        'bold',
-        Token.Prompt.ISearch.Text.NoMatch: 'bg:#aa4444 #ffffff',
+        Token.Prompt:  'bold #008800',
+        Token.Layout.Toolbar.Search:             'noinherit',
+        Token.Layout.Toolbar.Search.Prefix:      'noinherit',
+        Token.Layout.Toolbar.Search.Text:        'bold',
+        Token.Layout.Toolbar.Search.Text.NoMatch: 'bg:#aa4444 #ffffff',
 
         Token.Prompt.SecondLinePrefix: 'bold #888888',
         Token.Prompt.LineNumber:       '#aa6666',
@@ -263,14 +263,14 @@ class PythonLine(Line):
             return True
 
         # If we just typed a colon, or still have open brackets, always insert a real newline.
-        if (self.document.text_before_cursor.rstrip()[-1:] == ':' or
-                                  _has_unclosed_brackets(self.document.text_before_cursor) or
-                                  self.text.startswith('@')):
+        if self.document.text_before_cursor.rstrip()[-1:] == ':' or \
+                _has_unclosed_brackets(self.document.text_before_cursor) or \
+                self.text.startswith('@'):
             return True
 
         # If the character before the cursor is a backslash (line continuation
         # char), insert a new line.
-        elif (self.document.text_before_cursor[-1:] == '\\'):
+        elif self.document.text_before_cursor[-1:] == '\\':
             return True
 
         return False
@@ -324,7 +324,7 @@ class PythonToolbar(Toolbar):
         super(PythonToolbar, self).__init__()
 
     def get_tokens(self, cli, width):
-        TB = Token.Toolbar # XXX: use self.token
+        TB = Token.Toolbar  # XXX: use self.token
         mode = cli.input_processor.input_mode
 
         result = TokenList()
@@ -406,24 +406,6 @@ class PythonToolbar(Toolbar):
         return result
 
 
-'''
-class PythonPrompt(Prompt):
-    @property
-    def completion_menu(self):
-        style = self.cli.autocompletion_style
-
-        if style == AutoCompletionStyle.POPUP_MENU:
-            return PopupCompletionMenu()
-        elif style == AutoCompletionStyle.HORIZONTAL_MENU:
-            return None
-
-        elif self.cli.autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU and \
-                self.line.complete_state and \
-                self.cli.input_processor.input_mode == InputMode.COMPLETE:
-            HorizontalCompletionMenu().write(screen, None, self.line.complete_state)
-
-'''
-
 class PythonLeftMargin(LeftMarginWithLineNumbers):
     def width(self, cli):
         return len('In [%s]: ' % cli.current_statement_index)
@@ -477,6 +459,12 @@ class PythonCompleter(Completer):
         self._globals = globals
         self._locals = locals
 
+    def complete_after_insert_text(self, document):
+        """
+        Open completion menu when we type a character.
+        (Except if we typed whitespace.)
+        """
+        return not document.char_before_cursor.isspace()
 
     def get_completions(self, document):
         """ Ask jedi to complete. """
@@ -493,7 +481,8 @@ class PythonCommandLineInterface(CommandLineInterface):
                  globals=None, locals=None,
                  stdin=None, stdout=None,
                  vi_mode=False, history_filename=None,
-                 style=PythonStyle, autocompletion_style=AutoCompletionStyle.POPUP_MENU,
+                 style=PythonStyle,
+                 autocompletion_style=AutoCompletionStyle.POPUP_MENU,
                  always_multiline=False):
 
         self.globals = globals or {}
@@ -502,20 +491,22 @@ class PythonCommandLineInterface(CommandLineInterface):
         self.autocompletion_style = autocompletion_style
 
         layout = Layout(
-                input_processors = [BracketsMismatchProcessor()],
-                min_height=7,
-                lexer = PythonLexer,
-                left_margin = PythonLeftMargin(),
-                menus=[CompletionMenu()],
-                bottom_toolbars =[
-                        ArgToolbar(),
-                        SignatureToolbar(),
-                        SearchToolbar(),
-                        ValidationToolbar(),
-                        CompletionToolbar(),
-                        PythonToolbar(vi_mode=vi_mode),
-                    ],
-                show_tildes=True)
+            input_processors=[BracketsMismatchProcessor()],
+            min_height=7,
+            lexer=PythonLexer,
+            left_margin=PythonLeftMargin(),
+            menus=[CompletionMenu()] if autocompletion_style == AutoCompletionStyle.POPUP_MENU else [],
+            bottom_toolbars=[
+                ArgToolbar(),
+                SignatureToolbar(),
+                SearchToolbar(),
+                ValidationToolbar(),
+            ] +
+            ([CompletionToolbar()] if autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU else []) +
+            [
+                PythonToolbar(vi_mode=vi_mode),
+            ],
+            show_tildes=True)
 
         if history_filename:
             history = FileHistory(history_filename)
@@ -523,9 +514,9 @@ class PythonCommandLineInterface(CommandLineInterface):
             history = History()
 
         if vi_mode:
-           key_binding_factories = [vi_bindings, python_bindings]
+            key_binding_factories = [vi_bindings, python_bindings]
         else:
-           key_binding_factories = [emacs_bindings, python_bindings]
+            key_binding_factories = [emacs_bindings, python_bindings]
 
         #: Incremeting integer counting the current statement.
         self.current_statement_index = 1

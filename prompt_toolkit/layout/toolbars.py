@@ -79,6 +79,10 @@ class ArgToolbar(Toolbar):
 
 
 class SearchToolbar(Toolbar):
+    def __init__(self, token=None):
+        token = token or Token.Layout.Toolbar.Search
+        super(SearchToolbar, self).__init__(token=token)
+
     def is_visible(self, cli):
         return super(SearchToolbar, self).is_visible(cli) and \
             cli.input_processor.input_mode in (InputMode.INCREMENTAL_SEARCH, InputMode.VI_SEARCH)
@@ -98,8 +102,8 @@ class SearchToolbar(Toolbar):
         line = cli.lines['search']
 
         return [
-            (Token.Prompt.ViSearch.Prefix, self._prefix(cli)),
-            (Token.Prompt.ViSearch.Text, line.text),
+            (self.token.Prefix, self._prefix(cli)),
+            (self.token.Text, line.text),
         ]
 
     def write(self, cli, screen):

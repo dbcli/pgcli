@@ -153,7 +153,7 @@ class Layout(object):
         input_tokens = [(token, c) for token, text in input_tokens for c in text]
 
         # Apply highlighting.
-        if not (cli.is_exiting or cli.is_aborting):
+        if not (cli.is_exiting or cli.is_aborting or cli.is_returning):
             highlighted_characters = self.get_highlighted_characters(cli.line)
 
             for index, token in highlighted_characters.items():
