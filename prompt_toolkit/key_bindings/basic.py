@@ -8,7 +8,9 @@ from .utils import create_handle_decorator
 
 
 def basic_bindings(registry, cli_ref):
+    cli = cli_ref()
     line = cli_ref().line
+    renderer = cli_ref().renderer
     handle = create_handle_decorator(registry, line)
 
     @handle(Keys.ControlA)
@@ -100,7 +102,7 @@ def basic_bindings(registry, cli_ref):
 
     @handle(Keys.ControlC)
     def _(event):
-        line.abort()
+        cli.set_abort()
 
     @handle(Keys.ControlD)
     def _(event):
@@ -108,7 +110,7 @@ def basic_bindings(registry, cli_ref):
         if line.text:
             line.delete()
         else:
-            line.exit()
+            cli.set_exit()
 
     @handle(Keys.ControlE)
     def _(event):
@@ -154,7 +156,12 @@ def basic_bindings(registry, cli_ref):
         """
         Newline/Enter. (Or return input.)
         """
-        line.auto_enter()
+        if line.is_multiline:
+            line.newline()
+        else:
+            if line.validate():
+                cli_ref().line.add_to_history()
+                cli_ref().set_return_value(line.document)
 
     @handle(Keys.ControlK, in_mode=InputMode.INSERT)
     def _(event):
@@ -163,7 +170,7 @@ def basic_bindings(registry, cli_ref):
 
     @handle(Keys.ControlL)
     def _(event):
-        line.clear()
+        renderer.clear()
 
     @handle(Keys.ControlT, in_mode=InputMode.INSERT)
     def _(event):

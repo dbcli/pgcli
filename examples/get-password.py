@@ -4,5 +4,5 @@ from prompt_toolkit.contrib.shortcuts import get_input
 
 
 if __name__ == '__main__':
-    password = get_input('Give me some input: ', is_password=True)
+    password = get_input('Password: ', is_password=True)
     print('You said: %s' % password)

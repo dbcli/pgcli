@@ -4,7 +4,8 @@ It holds the text, cursor position, history, etc...
 """
 from __future__ import unicode_literals
 
-from .code import Code, ValidationError, Completion
+from .completion import Completion
+from .validation import ValidationError
 from .document import Document
 from .enums import IncrementalSearchDirection
 from .history import History
@@ -17,25 +18,7 @@ import tempfile
 
 __all__ = (
     'Line',
-    'Callbacks',
 )
-
-
-class Callbacks(object):
-    """
-    Callback API for the `Line` object.
-    """
-    def clear_screen(self):
-        pass
-
-    def exit(self):
-        pass
-
-    def abort(self):
-        pass
-
-    def return_input(self, code):
-        pass
 
 
 class ClipboardDataType(object):
@@ -120,25 +103,25 @@ class Line(object):
     also implements the history, undo stack, reverse search and the completion
     state.
 
-    :attr code_factory: :class:`~prompt_toolkit.code.CodeBase` class.
+    :attr completer : :class:`~prompt_toolkit.completion.Completer` class.
     :attr history: :class:`~prompt_toolkit.history.History` instance.
     :attr callbacks: :class:`~.Callbacks` instance.
+
+    :attr tempfile_suffix: Suffix to be appended to the tempfile for the 'open
+                           in editor' function.
+    :attr is_multiline: Boolean to indicate whether we should consider this
+                        line a multiline input. If so, the `InputStreamHandler`
+                        can decide to insert newlines when pressing [Enter].
+                        (Instead of accepting the input.)
     """
-    #: Boolean to indicate whether we should consider this line a multiline input.
-    #: If so, the `InputStreamHandler` can decide to insert newlines when pressing [Enter].
-    #: (Instead of accepting the input.)
-    is_multiline = False
-
-    #: Suffix to be appended to the tempfile for the 'open in editor' function.
-    tempfile_suffix = ''
-
-    def __init__(self, code_factory=Code, history=None, callbacks=None):
-        self.code_factory = code_factory
+    def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='', is_multiline=False):
+        self.completer = completer
+        self.validator = validator
+        self.is_multiline = is_multiline
+        self.tempfile_suffix = tempfile_suffix
 
         #: The command line history.
         self._history = history or History()
-
-        self._callbacks = callbacks or Callbacks()
 
         self._clipboard = ClipboardData()
 
@@ -181,7 +164,7 @@ class Line(object):
 
     @text.setter
     def text(self, value):
-        assert isinstance(value, six.text_type)
+        assert isinstance(value, six.text_type), 'Got %r' % value
         self._working_lines[self.working_index] = value
         self._text_changed()
 
@@ -227,12 +210,6 @@ class Line(object):
         position.
         """
         return Document(self.text, self.cursor_position, selection=self.selection_state)
-
-    def create_code(self):
-        """
-        Create `Code` instance from the current input.
-        """
-        return self.code_factory(self.document)
 
     def text_changed(self):
         """
@@ -395,10 +372,13 @@ class Line(object):
         Returns true if there was a completion.
         """
         # On the first tab press, try to find one completion and complete.
-        result = self.create_code().get_common_complete_suffix()
-        if result:
-            self.insert_text(result)
-            return True
+        if self.completer:
+            result = self.completer.get_common_complete_suffix(self.document)
+            if result:
+                self.insert_text(result)
+                return True
+            else:
+                return False
         else:
             return False
 
@@ -452,7 +432,10 @@ class Line(object):
         """
         # Generate list of all completions.
         if completions is None:
-            completions = list(self.create_code().get_completions())
+            if self.completer:
+                completions = list(self.completer.get_completions(self.document))
+            else:
+                completions = []
 
         if completions:
             self.complete_state = CompletionState(
@@ -561,19 +544,6 @@ class Line(object):
     def newline(self):
         self.insert_text('\n')
 
-    def auto_enter(self):
-        """
-        The default handler for 'Enter' key presses. Either insert a newline
-        or return the input.
-        """
-        if self.is_multiline:
-            if self.document.is_cursor_at_the_end and self.document.empty_line_count_at_the_end() >= 2:
-                self.return_input()
-            else:
-                self.newline()
-        else:
-            self.return_input()
-
     def insert_line_above(self, copy_margin=True):
         """
         Insert a new line above the current one.
@@ -638,16 +608,8 @@ class Line(object):
             self.cursor_position += len(data)
 
         # Get completions.
-        if self.complete_after_insert_text():
+        if self.completer and self.completer.complete_after_insert_text(self.document):
             self._start_complete(go_to_first=False)
-
-    def complete_after_insert_text(self):
-        """
-        Returns boolean. If True, this indicates that right now, we should get
-        the completions. E.g. for display in completion menu. (This is called
-        after ``insert_text``.)
-        """
-        return False
 
     def set_clipboard(self, clipboard_data):
         """
@@ -694,48 +656,38 @@ class Line(object):
                 self.cursor_position = pos
                 return
 
-    def abort(self):
+    def validate(self):
         """
-        Abort input. (Probably Ctrl-C press)
+        Returns `True` if valid.
         """
-        self.complete_state = None
-        self._callbacks.abort()
-
-    def exit(self):
-        """
-        Quit command line. (Probably Ctrl-D press.)
-        """
-        self.complete_state = None
-        self._callbacks.exit()
-
-    def return_input(self, call_callback=True):
-        """
-        Return the current line to the `CommandLineInterface.read_input` call.
-        """
-        code = self.create_code()
-        text = self.text
-
         # Validate first. If not valid, set validation exception.
         try:
-            code.validate()
-            self.validation_error = None
+            if self.validator:
+                self.validator.validate(self.document)
+                self.validation_error = None
         except ValidationError as e:
             # Set cursor position (don't allow invalid values.)
             cursor_position = self.document.translate_row_col_to_index(e.line, e.column)
             self.cursor_position = min(max(0, cursor_position), len(self.text))
 
             self.validation_error = e
+            return False
+
+        return True
+
+    def add_to_history(self):
+        """
+        Append the current input to the history.
+        (Only if valid input.)
+        """
+        # Validate first. If not valid, set validation exception.
+        if not self.validate():
             return
 
         # Save at the tail of the history. (But don't if the last entry the
         # history is already the same.)
-        if not len(self._history) or self._history[-1] != text:
-            if text:
-                self._history.append(text)
-
-        # Callback
-        if call_callback:
-            self._callbacks.return_input(code)
+        if self.text and (not len(self._history) or self._history[-1] != self.text):
+            self._history.append(self.text)
 
     def start_isearch(self, direction=IncrementalSearchDirection.FORWARD):
         """
@@ -814,12 +766,6 @@ class Line(object):
 
     def exit_selection(self):
         self.selection_state = None
-
-    def clear(self):
-        """
-        Clear screen, usually as a result of Ctrl-L.
-        """
-        self._callbacks.clear_screen()
 
     def open_in_editor(self):
         """ Open code in editor. """

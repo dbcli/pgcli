@@ -7,7 +7,9 @@ from .. import CommandLineInterface, AbortAction
 from ..key_bindings.emacs import emacs_bindings
 from ..key_bindings.vi import vi_bindings
 from ..line import Line
-from ..prompt import Prompt, PasswordProcessor
+from ..layout import Layout
+from ..layout.processors import PasswordProcessor
+from ..layout.prompt import DefaultPrompt
 
 
 def get_input(message, raise_exception_on_abort=False, multiline=False, is_password=False, vi_mode=False):
@@ -16,19 +18,13 @@ def get_input(message, raise_exception_on_abort=False, multiline=False, is_passw
     Ask for input, return the answer.
     This returns `None` when Ctrl-D was pressed.
     """
-    class CustomPrompt(Prompt):
-        prompt_text = message
-        input_processors = ([PasswordProcessor()] if is_password else [])
+    layout = Layout(
+        before_input=DefaultPrompt(message),
+        input_processors=([PasswordProcessor()] if is_password else []))
 
-    class CustomLine(Line):
-        is_multiline = multiline
-
-    class CLI(CommandLineInterface):
-        prompt_factory = CustomPrompt
-        line_factory = CustomLine
-        key_bindings_factories = [(vi_bindings if vi_mode else emacs_bindings)]
-
-    cli = CLI()
+    cli = CommandLineInterface(layout=layout,
+              line=Line(is_multiline=multiline),
+              key_binding_factories=[(vi_bindings if vi_mode else emacs_bindings)])
 
     on_abort = AbortAction.RAISE_EXCEPTION if raise_exception_on_abort else AbortAction.RETURN_NONE
     code = cli.read_input(on_abort=on_abort, on_exit=AbortAction.IGNORE)

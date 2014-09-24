@@ -10,14 +10,17 @@ Press [Tab] to complete the current word.
 from __future__ import unicode_literals
 
 from prompt_toolkit import CommandLineInterface
-from prompt_toolkit.code import Code, Completion
+from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.line import Line
+from prompt_toolkit.layout import Layout
+from prompt_toolkit.layout.prompt import DefaultPrompt
+from prompt_toolkit.layout.menus import CompletionMenu
 
 from pygments.token import Token
 from pygments.style import Style
 
 
-class AnimalCode(Code):
+class AnimalCompleter(Completer):
     animals = [
         'alligator',
         'ant',
@@ -53,8 +56,15 @@ class AnimalCode(Code):
         'turtle',
     ]
 
-    def get_completions(self):
-        word_before_cursor = self.document.get_word_before_cursor()
+    def complete_after_insert_text(self, document):
+        """
+        Open completion menu when we type a character.
+        (Except if we typed whitespace.)
+        """
+        return not document.char_before_cursor.isspace()
+
+    def get_completions(self, document):
+        word_before_cursor = document.get_word_before_cursor()
 
         for a in self.animals:
             if a.startswith(word_before_cursor):
@@ -70,23 +80,12 @@ class AnimalStyle(Style):
     }
 
 
-class AnimalLine(Line):
-    def complete_after_insert_text(self):
-        """
-        Open completion menu when we type a character.
-        (Except if we typed whitespace.)
-        """
-        return not self.document.char_before_cursor.isspace()
-
-
-class AnimalCLI(CommandLineInterface):
-    code_factory = AnimalCode
-    line_factory = AnimalLine
-    style = AnimalStyle
-
-
 def main():
-    cli = AnimalCLI()
+    cli = CommandLineInterface(style=AnimalStyle,
+                   layout=Layout(before_input=DefaultPrompt('Give some animals: '),
+                                 menus=[CompletionMenu()]),
+                   line=Line(completer=AnimalCompleter())
+            )
 
     print('Press tab to complete')
     code_obj = cli.read_input()

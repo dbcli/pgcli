@@ -172,7 +172,9 @@ def vi_bindings(registry, cli_ref):
         """
         In navigation mode, pressing enter will always return the input.
         """
-        line.return_input()
+        if line.validate():
+            line.add_to_history()
+            cli_ref().set_return_value(line.document)
 
     # ** In navigation mode **
 
@@ -904,9 +906,8 @@ def vi_bindings(registry, cli_ref):
         """
         Enter at the / or ? prompt.
         """
-        # Call return_input to put the current result on the history stack
-        # of search operations.
-        search_line.return_input(call_callback=False)
+        # Add query to history of searh line.
+        search_line.add_to_history()
         search_line.reset()
 
         # Go back to navigation mode.

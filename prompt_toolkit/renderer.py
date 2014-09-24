@@ -457,13 +457,8 @@ class Renderer(object):
         r = Renderer(Prompt)
         r.render(Render_context(...))
     """
-    screen_cls = Screen
-
-    #: Set minimal screen height. (rows to fill at least.)
-    min_screen_height = 0
-
-    def __init__(self, prompt=None, stdout=None, style=None):
-        self.prompt = prompt
+    def __init__(self, layout=None, stdout=None, style=None):
+        self.layout = layout
         self._stdout = (stdout or sys.stdout)
         self._style = style or Style
         self._last_screen = None
@@ -484,7 +479,7 @@ class Renderer(object):
         self._last_screen = None
         self._last_char = None
 
-        #: Space from the top of the prompt, until the bottom of the terminal.
+        #: Space from the top of the layout, until the bottom of the terminal.
         #: We don't know this until a `report_absolute_cursor_row` call.
         self._min_available_height = 0
 
@@ -492,6 +487,10 @@ class Renderer(object):
         """
         Do CPR request.
         """
+        # Only do this request when the cursor is at the top row. (after a
+        # clear or reset). We rely on that in `report_absolute_cursor_row`.
+        assert self._cursor_pos.y == 0
+
         # Asks for a cursor position report (CPR).
         self._stdout.write('\x1b[6n')
         self._stdout.flush()
@@ -511,29 +510,31 @@ class Renderer(object):
         rows_below_cursor = total_rows - row + 1
 
         # Set the
-        self._min_available_height = self._cursor_pos.y + rows_below_cursor
+        self._min_available_height = rows_below_cursor
 
-    def render_to_str(self, abort=False, accept=False):
+    def render_to_str(self, cli):
         """
         Generate the output of the new screen. Return as string.
         """
-        screen = self.screen_cls(size=self.get_size())
+        screen = Screen(size=self.get_size())
 
         height = self._last_screen.current_height if self._last_screen else 0
-        height = max(self._min_available_height, height, self.min_screen_height)
-        self.prompt.write_to_screen(screen, height, abort=abort, accept=accept)
+        height = max(self._min_available_height, height)
+        self.layout.write_to_screen(cli, screen, height)
+
+        accept_or_abort = cli.is_exiting or cli.is_aborting or cli.is_returning
 
         output, self._cursor_pos, self._last_char = output_screen_diff(
             screen, self._cursor_pos,
-            self._last_screen, self._last_char, accept or abort,
-            style=self._style, grayed=abort)
+            self._last_screen, self._last_char, accept_or_abort,
+            style=self._style, grayed=cli.is_aborting)
         self._last_screen = screen
 
         return output
 
-    def render(self, abort=False, accept=False):
+    def render(self, cli):
         # Render to string first.
-        output = self.render_to_str(abort=abort, accept=accept)
+        output = self.render_to_str(cli)
 
         # Write output to log file.
         if _DEBUG_RENDER_OUTPUT and output:

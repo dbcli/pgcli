@@ -153,7 +153,9 @@ def emacs_bindings(registry, cli_ref):
         """
         Meta + Newline: always accept input.
         """
-        line.return_input()
+        if line.validate():
+            cli_ref().line.add_to_history()
+            cli_ref().set_return_value(line.document)
 
     @handle(Keys.ControlSquareClose, Keys.Any, in_mode=InputMode.INSERT)
     @handle(Keys.ControlSquareClose, Keys.Any, in_mode=InputMode.SELECTION)

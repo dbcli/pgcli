@@ -23,14 +23,14 @@ import threading
 
 from codecs import getincrementaldecoder
 
-from .code import Code
 from .inputstream import InputStream
 from .key_binding import InputProcessor
 from .enums import InputMode
 from .key_binding import Registry
 from .key_bindings.emacs import emacs_bindings
-from .line import Line, Callbacks
-from .prompt import Prompt
+from .line import Line
+from .layout import Layout
+from .layout.prompt import DefaultPrompt
 from .renderer import Renderer
 from .utils import raw_mode, call_on_sigwinch
 from .history import History
@@ -38,7 +38,6 @@ from .history import History
 from pygments.styles.default import DefaultStyle
 
 import weakref
-
 
 __all__ = (
     'AbortAction',
@@ -80,54 +79,47 @@ class CommandLineInterface(object):
     # can also be instance methods that pass some additional parameters to the
     # class.
 
-    #: The `Line` class which implements the text manipulation.
-    line_factory = Line
-
-    #: A `Code` class which implements the interpretation of the input string.
-    #: It tokenizes/parses the input text.
-    code_factory = Code
-
-    #: `Prompt` class for the layout of the prompt. (and the help text.)
-    prompt_factory = Prompt
-
-    #: `InputStreamHandler` class for the keybindings.
-    key_bindings_factories = [emacs_bindings]
-    default_input_mode = InputMode.INSERT
-
-    #: `Renderer` class.
-    renderer_factory = Renderer
-
-    #: `History` class.
-    history_factory = History
-
-    #: `pygments.style.Style` class for the syntax highlighting.
-    style = DefaultStyle
-
     #: When to call the `on_input_timeout` callback.
     input_timeout = .5
 
     stdin_decoder_cls = getincrementaldecoder('utf-8')
 
-    def __init__(self, stdin=None, stdout=None):
+    def __init__(self, stdin=None, stdout=None,
+                 layout=None,
+                 line=None,
+                 renderer_factory=Renderer,
+                 default_input_mode=InputMode.INSERT,
+                 style=DefaultStyle,
+                 key_binding_factories=None):
+
         self.stdin = stdin or sys.stdin
         self.stdout = stdout or sys.stdout
 
+        self.default_input_mode = default_input_mode
+        self.style = style
+
         #: The `Line` instance.
-        self.lines = self.create_lines()
+        line = line or Line()
+        self.lines = {
+            'default': line,
+            'search': Line(history=History()),
+        }
 
-        #: The `InputProcessor` instance.
-        self.input_processor = self.create_input_processor()
-
-        # Create `InputStream` instance.
-        self.inputstream = self.create_inputstream(self.input_processor)
-
-        #: The `prompt` instance.
-        self.prompt = self.create_prompt()
+        #: The `Layout` instance.
+        self.layout = layout or Layout(before_input=DefaultPrompt())
 
         #: The `Renderer` instance.
-        self.renderer = self.renderer_factory(prompt=self.prompt,
-                                              stdout=self.stdout,
-                                              style=self.style)
+        self.renderer = renderer_factory(layout=self.layout,
+                                         stdout=self.stdout,
+                                         style=self.style)
+
+        key_binding_factories = key_binding_factories or [emacs_bindings]
+
+        #: The `InputProcessor` instance.
+        self.input_processor = self.create_input_processor(key_binding_factories)
+
+        # Create `InputStream` instance.
+        self.inputstream = InputStream(self.input_processor)
 
         # Pipe for inter thread communication.
         self._redraw_pipe = None
@@ -146,47 +138,16 @@ class CommandLineInterface(object):
     def line(self):
         return self.lines['default']
 
-    def create_line_factories_dict(self):
-        """
-        Return declarative structure of the Line objects to be created.
-        """
-        return {
-            'default': (self.line_factory, self.code_factory, self.history_factory()),
-            'search': (Line, Code, History()),
-        }
-
-    def create_lines(self):
-        """
-        Create :class:`Line` instances.
-
-        We can have several `Line` instances. E.g: one for the main document,
-        one for the incremental-search input, etc...
-        """
-        def _create_line(line_cls, code_cls, history):
-            return line_cls(code_factory=code_cls, history=history, callbacks=LineCallbacks(self))
-
-        return {name: _create_line(*k) for (name, k) in self.create_line_factories_dict().items()}
-
-    def create_inputstream(self, input_processor):
-        return InputStream(input_processor)
-
-    def create_input_processor(self):
+    def create_input_processor(self, key_binding_factories):
         """
         Create :class:`InputProcessor` instance.
         """
         key_registry = Registry()
-        for kb in self.key_bindings_factories:
+        for kb in key_binding_factories:
             kb(key_registry, weakref.ref(self))
 
         #: The `InputProcessor` instance.
-        # TODO: default_input_mode should be passed into reset(). it can be different for each read_line()
-        return InputProcessor(key_registry, default_input_mode=self.default_input_mode)
-
-    def create_prompt(self):
-        """
-        Create :class:`Prompt` instance.
-        """
-        return self.prompt_factory(weakref.ref(self))
+        return InputProcessor(key_registry)
 
     def _reset(self):
         self._exit_flag = False
@@ -205,7 +166,7 @@ class CommandLineInterface(object):
         Render the command line again. (Not thread safe!)
         (From other threads, or if unsure, use `request_redraw`.)
         """
-        self.renderer.render()
+        self.renderer.render(self)
 
     def run_in_executor(self, callback):
         """
@@ -313,9 +274,9 @@ class CommandLineInterface(object):
 
                 self.line.reset(initial_value=initial_value)
                 self.renderer.reset()
-                self.input_processor.reset()
+                self.input_processor.reset(default_input_mode=self.default_input_mode)
                 self._reset()
-                self.prompt.reset()
+                self.layout.reset()
             reset_line()
 
             # Trigger read_start.
@@ -347,7 +308,7 @@ class CommandLineInterface(object):
                         # If the exit flag has been set.
                         if self._exit_flag:
                             if on_exit != AbortAction.IGNORE:
-                                self.renderer.render(abort=True)
+                                self.renderer.render(self)
 
                             if on_exit == AbortAction.RAISE_EXCEPTION:
                                 raise Exit()
@@ -360,7 +321,7 @@ class CommandLineInterface(object):
                         # If the abort flag has been set.
                         if self._abort_flag:
                             if on_abort != AbortAction.IGNORE:
-                                self.renderer.render(abort=True)
+                                self.renderer.render(self)
 
                             if on_abort == AbortAction.RAISE_EXCEPTION:
                                 raise Abort()
@@ -372,10 +333,10 @@ class CommandLineInterface(object):
 
                         # If a return value has been set.
                         if self._return_code:
-                            self.renderer.render(accept=True)
+                            self.renderer.render(self)
                             return self._return_code
 
-                        # Now render the current prompt to the output.
+                        # Now render the current layout to the output.
                         self._redraw()
 
         finally:
@@ -401,25 +362,17 @@ class CommandLineInterface(object):
     def set_return_value(self, code):
         self._return_code = code
 
+    @property
+    def is_exiting(self):
+        return self._exit_flag
 
-class LineCallbacks(Callbacks):
-    """
-    Callback handlers for the `Line`
-    """
-    def __init__(self, command_line):
-        self.command_line = command_line
+    @property
+    def is_aborting(self):
+        return self._abort_flag
 
-    def clear_screen(self):
-        self.command_line.renderer.clear()
-
-    def exit(self):
-        self.command_line.set_exit()
-
-    def abort(self):
-        self.command_line.set_abort()
-
-    def return_input(self, code):
-        self.command_line.set_return_value(code)
+    @property
+    def is_returning(self):
+        return self._return_code
 
 
 def _select(*args, **kwargs):

@@ -35,17 +35,15 @@ class InputProcessor(object):
         # registered in the registry.
 
     """
-    def __init__(self, registry, default_input_mode=InputMode.INSERT):
+    def __init__(self, registry):
         self._registry = registry
-        self.default_input_mode = default_input_mode
-
         self.reset()
 
 #        print(' '.join(set(''.join(map(str, kb.keys)) for kb in registry.key_bindings if all(isinstance(X, unicode) for X in kb.keys))))
 
-    def reset(self):
+    def reset(self, default_input_mode=InputMode.INSERT):
         self._previous_key_sequence = None
-        self._input_mode_stack = [self.default_input_mode]
+        self._input_mode_stack = [default_input_mode]
 
         self._process_coroutine = self._process()
         self._process_coroutine.send(None)
