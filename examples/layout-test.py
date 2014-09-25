@@ -38,25 +38,6 @@ class TestCompleter(Completer):
             yield Completion('Completion %i' % i, -len(word_before_cursor))
 
 
-layout = Layout(
-    left_margin = LeftMarginWithLineNumbers(),
-    before_input = DefaultPrompt(text='Before input >> '),
-    after_input = Prompt(' << after input'),
-    top_toolbars = [
-            TextToolbar('This is a top toolbar', token=Token.TopToolbar1),
-            TextToolbar('This is another top toolbar', token=Token.TopToolbar2),
-    ],
-    bottom_toolbars = [
-            ArgToolbar(),
-            SearchToolbar(),
-            CompletionToolbar(),
-            TextToolbar('This is a bottom toolbar', token=Token.BottomToolbar1),
-            TextToolbar('This is another bottom toolbar', token=Token.BottomToolbar2),
-    ],
-    show_tildes=True,
-    menus=[CompletionMenu()])
-
-
 class TestStyle(Style):
     styles = {
         Token.Layout.LeftMargin: 'bg:#00aaaa #000000',
@@ -85,6 +66,24 @@ class TestStyle(Style):
 
 
 def main():
+    layout = Layout(
+        left_margin=LeftMarginWithLineNumbers(),
+        before_input=DefaultPrompt(text='Before input >> '),
+        after_input=Prompt(' << after input'),
+        top_toolbars=[
+            TextToolbar('This is a top toolbar', token=Token.TopToolbar1),
+            TextToolbar('This is another top toolbar', token=Token.TopToolbar2),
+        ],
+        bottom_toolbars=[
+            ArgToolbar(),
+            SearchToolbar(),
+            CompletionToolbar(),
+            TextToolbar('This is a bottom toolbar', token=Token.BottomToolbar1),
+            TextToolbar('This is another bottom toolbar', token=Token.BottomToolbar2),
+        ],
+        show_tildes=True,
+        menus=[CompletionMenu()])
+
     cli = CommandLineInterface(layout=layout,
                                style=TestStyle,
                                line=Line(is_multiline=True, completer=TestCompleter()))
