@@ -37,7 +37,7 @@ class Toolbar(object):
         if len(result) > columns:
             # Trim toolbar
             result = result[:columns - 3]
-            result.append((self.toolbar_token, ' > '))
+            result.append((self.token, ' > '))
         else:
             # Extend toolbar until the page width.
             result.append((self.token, ' ' * (columns - len(result))))
@@ -100,11 +100,19 @@ class SearchToolbar(Toolbar):
         Tokens for the vi-search prompt.
         """
         line = cli.lines['search']
+        index = cli.line.isearch_state.no_match_from_index
 
-        return [
-            (self.token.Prefix, self._prefix(cli)),
-            (self.token.Text, line.text),
-        ]
+        if index is None:
+            return [
+                (self.token.Prefix, self._prefix(cli)),
+                (self.token.Text, line.text),
+            ]
+        else:
+            return [
+                (self.token.Prefix, self._prefix(cli)),
+                (self.token.Text, line.text[:index]),
+                (self.token.Text.NoMatch, line.text[index:]),
+            ]
 
     def write(self, cli, screen):
         # Write output.
@@ -113,6 +121,7 @@ class SearchToolbar(Toolbar):
         #  Set cursor position.
         line = cli.lines['search']
         screen.cursor_position = Point(screen._y, line.cursor_position + len(self._prefix(cli)))
+            # XXX: cursor_position not correct in case of double width characters.
 
 
 class CompletionToolbar(Toolbar):

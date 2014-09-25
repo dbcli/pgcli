@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from pygments.token import Token
 
 __all__ = (
-    'PopupCompletionMenu',
+    'CompletionMenu',
 )
 
 

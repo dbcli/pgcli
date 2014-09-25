@@ -1,13 +1,10 @@
 """
-The `Code` object is responsible for parsing a document, received from the
-`Line` class.
 """
 from __future__ import unicode_literals
 
 __all__ = (
-    'Code',
     'Completion',
-    'ValidationError',
+    'Completer',
 )
 
 

@@ -90,8 +90,8 @@ class PythonStyle(Style):
         # Highlighting for the reverse-search prompt.
         Token.Prompt:  'bold #008800',
         Token.Layout.Toolbar.Search:             'noinherit',
-        Token.Layout.Toolbar.Search.Prefix:      'noinherit',
-        Token.Layout.Toolbar.Search.Text:        'bold',
+        Token.Layout.Toolbar.Search.Prefix:      '#6666aa noinherit',
+        Token.Layout.Toolbar.Search.Text:        'noinherit',
         Token.Layout.Toolbar.Search.Text.NoMatch: 'bg:#aa4444 #ffffff',
 
         Token.Prompt.SecondLinePrefix: 'bold #888888',
@@ -352,11 +352,11 @@ class PythonToolbar(Toolbar):
             elif mode == InputMode.COMPLETE:
                 append((TB.Mode, '(COMPLETE)'))
                 append((TB, ' '))
-            elif mode == InputMode.SELECTION and self.line.selection_state:
-                if self.line.selection_state.type == SelectionType.LINES:
+            elif mode == InputMode.SELECTION and cli.line.selection_state:
+                if cli.line.selection_state.type == SelectionType.LINES:
                     append((TB.Mode, '(VISUAL LINE)'))
                     append((TB, ' '))
-                elif self.line.selection_state.type == SelectionType.CHARACTERS:
+                elif cli.line.selection_state.type == SelectionType.CHARACTERS:
                     append((TB.Mode, '(VISUAL)'))
                     append((TB, ' '))
 
@@ -370,7 +370,7 @@ class PythonToolbar(Toolbar):
         # Shortcuts.
         if mode == InputMode.INCREMENTAL_SEARCH:
             append((TB, '[Ctrl-G] Cancel search [Enter] Go to this position.'))
-        elif mode == InputMode.SELECTION and not cli.vi_mode:
+        elif mode == InputMode.SELECTION and not self.vi_mode:
             # Emacs cut/copy keys.
             append((TB, '[Ctrl-W] Cut [Meta-W] Copy [Ctrl-Y] Paste [Ctrl-G] Cancel'))
         else:
@@ -410,11 +410,16 @@ class PythonLeftMargin(LeftMarginWithLineNumbers):
     def width(self, cli):
         return len('In [%s]: ' % cli.current_statement_index)
 
+    def current_statement_index(self, cli):
+        return cli.current_statement_index
+
     def write(self, cli, screen, y, line_number):
         if y == 0:
             screen.write_highlighted([
-                (Token.Prompt, 'In [%s]: ' % cli.current_statement_index)
+                (Token.Prompt, 'In [%s]: ' % self.current_statement_index(cli))
             ])
+        else:
+            super(PythonLeftMargin, self).write(cli, screen, y, line_number)
 
 
 class PythonValidator(Validator):
@@ -464,7 +469,8 @@ class PythonCompleter(Completer):
         Open completion menu when we type a character.
         (Except if we typed whitespace.)
         """
-        return not document.char_before_cursor.isspace()
+        char = document.char_before_cursor
+        return not char.isspace() and not char.isdigit() and not char in '()+-*/,:;\'"={}[]%^&#@!'
 
     def get_completions(self, document):
         """ Ask jedi to complete. """
@@ -483,12 +489,19 @@ class PythonCommandLineInterface(CommandLineInterface):
                  vi_mode=False, history_filename=None,
                  style=PythonStyle,
                  autocompletion_style=AutoCompletionStyle.POPUP_MENU,
-                 always_multiline=False):
+                 always_multiline=False,
+
+                 # For internal use.
+                 _completer=None,
+                 _validator=None):
 
         self.globals = globals or {}
-        self.locals = locals or globals
+        self.locals = locals or self.globals
         self.always_multiline = always_multiline
         self.autocompletion_style = autocompletion_style
+
+        completer = _completer or PythonCompleter(self.globals, self.locals)
+        validator = _validator or PythonValidator()
 
         layout = Layout(
             input_processors=[BracketsMismatchProcessor()],
@@ -530,8 +543,8 @@ class PythonCommandLineInterface(CommandLineInterface):
             line=PythonLine(always_multiline=always_multiline,
                             tempfile_suffix='.py',
                             history=history,
-                            completer=PythonCompleter(self.globals, self.locals),
-                            validator=PythonValidator()))
+                            completer=completer,
+                            validator=validator))
 
     def on_input_timeout(self):
         """

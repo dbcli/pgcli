@@ -9,56 +9,47 @@ offer.
 
 """
 from prompt_toolkit import AbortAction
-from prompt_toolkit.code import Completion
-from prompt_toolkit.contrib.python_input import PythonCommandLineInterface, PythonPrompt, PythonCode, AutoCompletionStyle
+from prompt_toolkit.completion import Completion
+from prompt_toolkit.contrib.python_input import PythonCommandLineInterface, PythonLeftMargin, PythonValidator, AutoCompletionStyle, PythonCompleter
 from prompt_toolkit import Exit
 
 from IPython.terminal.embed import InteractiveShellEmbed as _InteractiveShellEmbed
 from IPython.terminal.ipapp import load_default_config
 
-from pygments.token import Token
 from pygments.lexers import PythonLexer, BashLexer, TextLexer
 
 
-class IPythonPrompt(PythonPrompt):
-    @property
-    def _prefix(self):
-        return (Token.Prompt, 'In [%s]' % self._pythonline._ipython_shell.execution_count)
+class IPythonLeftMargin(PythonLeftMargin):
+    def current_statement_index(self, cli):
+        return cli.ipython_shell.execution_count
 
 
-class IPythonCode(PythonCode):
-    def __init__(self, document, globals, locals, magics_manager):
-        super(IPythonCode, self).__init__(document, globals, locals)
-        self._magics_manager = magics_manager
-
-    @property
-    def lexer(self):
-        if self.text.lstrip().startswith('!'):
-            return BashLexer
-        elif self.text.rstrip().endswith('?'):
-            return TextLexer
-        else:
-            return PythonLexer
-
-    def validate(self):
+class IPythonValidator(PythonValidator):
+    def validate(self, document):
         # Accept magic functions as valid input.
-        if self.text.lstrip().startswith('%'):
+        if document.text.lstrip().startswith('%'):
             return
 
         # Accept shell input
-        if self.text.lstrip().startswith('!'):
+        if document.text.lstrip().startswith('!'):
             return
 
         # Accept text ending with '?' or '??'
         # (IPython object inspection.)
-        if self.text.rstrip().endswith('?'):
+        if document.text.rstrip().endswith('?'):
             return
 
         # Only other, validate as valid Python code.
-        super(IPythonCode, self).validate()
+        super(IPythonValidator, self).validate(document)
 
-    def get_completions(self):
-        text = self.document.text_before_cursor.lstrip()
+
+class IPythonCompleter(PythonCompleter):
+    def __init__(self, globals, locals, magics_manager):
+        super(IPythonCompleter, self).__init__(globals, locals)
+        self._magics_manager = magics_manager
+
+    def get_completions(self, document):
+        text = document.text_before_cursor.lstrip()
 
         # Don't complete in shell mode.
         if text.startswith('!'):
@@ -71,22 +62,31 @@ class IPythonCode(PythonCode):
                     yield Completion('%%%s' % m, -len(text))
         else:
             # Complete as normal Python code.
-            for c in super(IPythonCode, self).get_completions():
+            for c in super(IPythonCompleter, self).get_completions(document):
                 yield c
+
+
+# TODO: Use alternate lexers in layout, if we have a ! prefix or ? suffix.
+#    @property
+#    def lexer(self):
+#        if self.text.lstrip().startswith('!'):
+#            return BashLexer
+#        elif self.text.rstrip().endswith('?'):
+#            return TextLexer
+#        else:
+#            return PythonLexer
 
 
 class IPythonCommandLineInterface(PythonCommandLineInterface):
     """
     Override our `PythonCommandLineInterface` to add IPython specific stuff.
     """
-    prompt_factory = IPythonPrompt
-
     def __init__(self, ipython_shell, *a, **kw):
-        super(IPythonCommandLineInterface, self).__init__(*a, **kw)
-        self._ipython_shell = ipython_shell
+        kw['_completer'] = IPythonCompleter(kw['globals'], kw['globals'], ipython_shell.magics_manager)
+        kw['_validator'] = IPythonValidator()
 
-    def code_factory(self, document):
-        return IPythonCode(document, self.globals, self.locals, self._ipython_shell.magics_manager)
+        super(IPythonCommandLineInterface, self).__init__(*a, **kw)
+        self.ipython_shell = ipython_shell
 
 
 class InteractiveShellEmbed(_InteractiveShellEmbed):

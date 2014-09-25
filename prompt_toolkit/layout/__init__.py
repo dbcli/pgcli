@@ -102,17 +102,17 @@ class Layout(object):
         """
         Tokenize input text for highlighting.
         """
-        if self.lexer:
-            def get():
-                return list(self.lexer.get_tokens(line.text))
-            return self._token_lru_cache.get(line.text, get)
-        else:
-            tokens = [(Token, line.text)]
+        def get():
+            if self.lexer:
+                tokens = list(self.lexer.get_tokens(line.text))
+            else:
+                tokens = [(Token, line.text)]
 
-        for p in self.input_processors:
-            tokens = p.process_tokens(tokens)
+            for p in self.input_processors:
+                tokens = p.process_tokens(tokens)
+            return tokens
 
-        return tokens
+        return self._token_lru_cache.get(line.text, get)
 
     def get_highlighted_characters(self, line):
         """
