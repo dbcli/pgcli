@@ -43,7 +43,7 @@ import six
 import re
 
 from .nodes import AnyNode, SequenceNode, RepeatNode, LiteralNode, VariableNode, EmptyNode
-from prompt_toolkit.code import Completion
+from prompt_toolkit.completion import Completion
 
 __all__ = (
     # Classes for defining the grammar.

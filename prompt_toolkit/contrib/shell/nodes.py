@@ -3,6 +3,8 @@ Nodes for representing the parse tree.
 
 The return type for `.rule.Rule.parse`.
 """
+from __future__ import unicode_literals
+
 from pygments.token import Token
 
 __all__ = ('AnyNode', 'LiteralNode', 'RepeatNode', 'SequenceNode',  'VariableNode')

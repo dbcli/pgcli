@@ -17,41 +17,45 @@ from pygments.style import Style
 from pygments.token import Token
 
 from prompt_toolkit import CommandLineInterface, AbortAction
-from prompt_toolkit.contrib.shell.code import ShellCode, InvalidCommandException
-from prompt_toolkit.contrib.shell.prompt import ShellPrompt
+from prompt_toolkit.contrib.shell.completion import ShellCompleter
 from prompt_toolkit.contrib.shell.rules import Any, Sequence, Literal, Variable
+from prompt_toolkit.contrib.shell.layout import CompletionHint
+from prompt_toolkit.contrib.shell.parse_info import get_parse_info, InvalidCommandException
 from prompt_toolkit import Exit
+from prompt_toolkit.line import Line
+from prompt_toolkit.layout.menus import CompletionMenu
 
+from prompt_toolkit.layout import Layout
+from prompt_toolkit.layout.prompt import DefaultPrompt
 import math
 
 
-class CalculatorCode(ShellCode):
-    rule = Any([
-                Sequence([
-                            Literal('add', dest='operator'),
-                            Variable(placeholder='<number>', dest='var1'),
-                            Variable(placeholder='<number>', dest='var2'),
-                        ]),
-                Sequence([
-                            Literal('sub', dest='operator'),
-                            Variable(placeholder='<number>', dest='var1'),
-                            Variable(placeholder='<number>', dest='var2'),
-                        ]),
-                Sequence([
-                            Literal('div', dest='operator'),
-                            Variable(placeholder='<number>', dest='var1'),
-                            Variable(placeholder='<number>', dest='var2'),
-                        ]),
-                Sequence([
-                            Literal('mul', dest='operator'),
-                            Variable(placeholder='<number>', dest='var1'),
-                            Variable(placeholder='<number>', dest='var2'),
-                        ]),
-                Sequence([
-                            Literal('sin', dest='operator'),
-                            Variable(placeholder='<number>', dest='var1'),
-                        ]),
-            ])
+grammar = Any([
+            Sequence([
+                        Literal('add', dest='operator'),
+                        Variable(placeholder='<number>', dest='var1'),
+                        Variable(placeholder='<number>', dest='var2'),
+                    ]),
+            Sequence([
+                        Literal('sub', dest='operator'),
+                        Variable(placeholder='<number>', dest='var1'),
+                        Variable(placeholder='<number>', dest='var2'),
+                    ]),
+            Sequence([
+                        Literal('div', dest='operator'),
+                        Variable(placeholder='<number>', dest='var1'),
+                        Variable(placeholder='<number>', dest='var2'),
+                    ]),
+            Sequence([
+                        Literal('mul', dest='operator'),
+                        Variable(placeholder='<number>', dest='var1'),
+                        Variable(placeholder='<number>', dest='var2'),
+                    ]),
+            Sequence([
+                        Literal('sin', dest='operator'),
+                        Variable(placeholder='<number>', dest='var1'),
+                    ]),
+        ])
 
 
 class ExampleStyle(Style):
@@ -70,23 +74,21 @@ class ExampleStyle(Style):
     }
 
 
-class CalculatorCLI(CommandLineInterface):
-    code_factory = CalculatorCode
-    prompt_factory = ShellPrompt
-
-    style = ExampleStyle
-
-
 if __name__ == '__main__':
-    cli = CalculatorCLI()
+    cli = CommandLineInterface(
+        layout=Layout(before_input=DefaultPrompt('Calculate: '),
+                      after_input=CompletionHint(grammar),
+                      menus=[CompletionMenu()]),
+        line=Line(completer=ShellCompleter(grammar)),
+        style=ExampleStyle)
 
     try:
         # REPL loop.
         while True:
             # Read input and parse the result.
             try:
-                calculator_code = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-                parse_info = calculator_code.get_parse_info()
+                document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
+                parse_info = get_parse_info(grammar, document)
             except InvalidCommandException:
                 print('Invalid command\n')
                 continue
@@ -96,7 +98,7 @@ if __name__ == '__main__':
 
             try:
                 # Get the variables.
-                vars = parse_info.get_variables()
+                vars = get_parse_info(grammar, document).get_variables()
 
                 var1 = float(vars.get('var1', 0))
                 var2 = float(vars.get('var2', 0))

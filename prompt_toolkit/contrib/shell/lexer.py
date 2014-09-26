@@ -1,6 +1,8 @@
 """
 Lexer for any shell input line.
 """
+# XXX: Don't import unicode_literals from __future__, this will break ParametersLexer
+
 from pygments.lexer import RegexLexer
 from pygments.token import Token
 
@@ -128,3 +130,30 @@ class TextToken(object):
 
         # TODO: handle trailing backslash
         return text
+
+
+def lex_document(document, only_before_cursor=False):
+    """
+    Lex the document using the `ParametersLexer`.
+    """
+    lexer = ParametersLexer(stripnl=False, stripall=False, ensurenl=False)
+
+    # Take Text tokens before cursor
+    if only_before_cursor:
+        tokens = list(lexer.get_tokens(document.text_before_cursor))
+    else:
+        tokens = list(lexer.get_tokens(document.text))
+    parts = [t[1] for t in tokens if t[0] in Token.Text]
+
+    # Separete the last token (where we are currently one)
+    starting_new_token = not tokens or tokens[-1][0] in Token.WhiteSpace
+    if starting_new_token:
+        last_part = ''
+    else:
+        last_part = parts.pop()
+
+    # Unescape tokens
+    parts = [TextToken(t).unescaped_text for t in parts]
+    last_part_token = TextToken(last_part)
+
+    return parts, last_part_token

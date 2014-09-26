@@ -8,6 +8,7 @@ also the power of for instance all the %-magic functions that IPython has to
 offer.
 
 """
+from __future__ import unicode_literals
 from prompt_toolkit import AbortAction
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.contrib.python_input import PythonCommandLineInterface, PythonLeftMargin, PythonValidator, AutoCompletionStyle, PythonCompleter
