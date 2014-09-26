@@ -73,23 +73,6 @@ class Completer(object):
             yield
 
 
-#    def get_tokens_before_cursor(self): # XXX: move this to contrib.shell.
-#        """ Return the list of tokens that appear before the cursor. If the
-#        cursor is in the middle of a token, that token will be split.  """
-#        count = 0
-#        result = []
-#        for c in self.get_tokens():
-#            if count + len(c[1]) < self.cursor_position:
-#                result.append(c)
-#                count += len(c[1])
-#            elif count < self.cursor_position:
-#                result.append((c[0], c[1][:self.cursor_position - count]))
-#                break
-#            else:
-#                break
-#        return result
-
-
 def _commonprefix(strings):
     # Similar to os.path.commonprefix
     if not strings:

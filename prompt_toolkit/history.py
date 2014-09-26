@@ -7,6 +7,9 @@ __all__ = ('History', 'FileHistory')
 
 
 class History(object):
+    """
+    Base ``History`` class that keeps a list of all strings in memory.
+    """
     def __init__(self):
         self.strings = []
 
@@ -21,6 +24,9 @@ class History(object):
 
 
 class FileHistory(History):
+    """
+    ``History`` class that stores all strings in a file.
+    """
     def __init__(self, filename):
         super(FileHistory, self).__init__()
         self.filename = filename

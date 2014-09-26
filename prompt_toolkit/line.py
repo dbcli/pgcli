@@ -121,7 +121,9 @@ class Line(object):
         self.tempfile_suffix = tempfile_suffix
 
         #: The command line history.
-        self._history = history or History()
+        # Note that we shouldn't use a lazy 'or' here. bool(history) could be
+        # False when empty.
+        self._history = History() if history is None else history
 
         self._clipboard = ClipboardData()
 
@@ -660,18 +662,19 @@ class Line(object):
         """
         Returns `True` if valid.
         """
-        # Validate first. If not valid, set validation exception.
-        try:
-            if self.validator:
-                self.validator.validate(self.document)
-                self.validation_error = None
-        except ValidationError as e:
-            # Set cursor position (don't allow invalid values.)
-            cursor_position = self.document.translate_row_col_to_index(e.line, e.column)
-            self.cursor_position = min(max(0, cursor_position), len(self.text))
+        self.validation_error = None
 
-            self.validation_error = e
-            return False
+        # Validate first. If not valid, set validation exception.
+        if self.validator:
+            try:
+                self.validator.validate(self.document)
+            except ValidationError as e:
+                # Set cursor position (don't allow invalid values.)
+                cursor_position = self.document.translate_row_col_to_index(e.line, e.column)
+                self.cursor_position = min(max(0, cursor_position), len(self.text))
+
+                self.validation_error = e
+                return False
 
         return True
 
