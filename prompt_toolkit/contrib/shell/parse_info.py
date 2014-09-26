@@ -1,6 +1,6 @@
+from __future__ import unicode_literals
 from .rules import TokenStream
 from .lexer import lex_document
-
 
 __all__ = (
     'get_parse_info',

@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import os
 
-from prompt_toolkit.code import Completion
+from prompt_toolkit.completion import Completion
 
 
 class Path(object):
@@ -25,6 +25,11 @@ class Path(object):
                         if not self._include_files:
                             continue
 
-                    yield Completion(filename, completion)
+                    yield Completion(completion, 0, display=filename)
         except OSError:
             pass
+
+
+class Directory(Path):
+    _include_files = False
+

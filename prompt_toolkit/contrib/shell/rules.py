@@ -37,6 +37,7 @@ Example:
         print(tree)
 
 """
+from __future__ import unicode_literals
 from pygments.token import Token
 
 import six
@@ -78,9 +79,7 @@ class Rule(object):
         """
         return False
 
-    def parse(self, lexer_stream, allow_incomplete_trees=True):
-                                            # TODO: implement option: allow_incomplete_trees=True
-                                            # TODO: OR REMOVE THIS OPTION (I don't think we still need it.)
+    def parse(self, lexer_stream):
         """
         Yield a list of possible parse trees.
 
