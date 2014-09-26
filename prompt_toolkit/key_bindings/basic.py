@@ -117,7 +117,6 @@ def basic_bindings(registry, cli_ref):
         line.cursor_position += line.document.get_end_of_line_position()
 
     @handle(Keys.ControlI, in_mode=InputMode.INSERT)
-    @handle(Keys.ControlI, in_mode=InputMode.COMPLETE)
     def _(event):
         r"""
         Ctrl-I is identical to "\t"
@@ -128,12 +127,9 @@ def basic_bindings(registry, cli_ref):
         def second_tab():
             line.complete_next(start_at_first=False)
 
-            # Go to completion mode. (If we're not there yet.)
-            if event.input_processor.input_mode != InputMode.COMPLETE:
-                event.input_processor.push_input_mode(InputMode.COMPLETE)
-
-        # On the second tab-press:
-        if event.second_press or event.input_processor.input_mode == InputMode.COMPLETE:
+        # On the second tab-press, or when already navigating through
+        # completions.
+        if event.second_press or (line.complete_state and line.complete_state.complete_index is not None):
             second_tab()
         else:
             # On the first tab press, only complete the common parts of all completions.
@@ -141,7 +137,7 @@ def basic_bindings(registry, cli_ref):
             if not has_common:
                 second_tab()
 
-    @handle(Keys.BackTab, in_mode=InputMode.COMPLETE)
+    @handle(Keys.BackTab, in_mode=InputMode.INSERT)
     def _(event):
         """
         Shift+Tab: go to previous completion.
@@ -150,8 +146,6 @@ def basic_bindings(registry, cli_ref):
 
     @handle(Keys.ControlJ, in_mode=InputMode.INSERT)
     @handle(Keys.ControlM, in_mode=InputMode.INSERT)
-    @handle(Keys.ControlJ, in_mode=InputMode.COMPLETE)
-    @handle(Keys.ControlM, in_mode=InputMode.COMPLETE)
     def _(event):
         """
         Newline/Enter. (Or return input.)
@@ -177,7 +171,6 @@ def basic_bindings(registry, cli_ref):
         line.swap_characters_before_cursor()
 
     @handle(Keys.ControlU, in_mode=InputMode.INSERT)
-    @handle(Keys.ControlU, in_mode=InputMode.COMPLETE)
     def _(event):
         """
         Clears the line before the cursor position. If you are at the end of
@@ -186,12 +179,7 @@ def basic_bindings(registry, cli_ref):
         deleted = line.delete_before_cursor(count=-line.document.get_start_of_line_position())
         line.set_clipboard(ClipboardData(deleted))
 
-        # Quit autocomplete mode.
-        if event.input_processor.input_mode == InputMode.COMPLETE:
-            event.input_processor.pop_input_mode()
-
     @handle(Keys.ControlW, in_mode=InputMode.INSERT)
-    @handle(Keys.ControlW, in_mode=InputMode.COMPLETE)
     def _(event):
         """
         Delete the word before the cursor.
@@ -201,21 +189,9 @@ def basic_bindings(registry, cli_ref):
             deleted = line.delete_before_cursor(count=-pos)
             line.set_clipboard(ClipboardData(deleted))
 
-        # Quit autocomplete mode.
-        if event.input_processor.input_mode == InputMode.COMPLETE:
-            event.input_processor.pop_input_mode()
-
-    @handle(Keys.PageUp, in_mode=InputMode.COMPLETE)
-    def _(event):
-        line.complete_previous(5)
-
     @handle(Keys.PageUp, in_mode=InputMode.INSERT)
     def _(event):
         line.history_backward()
-
-    @handle(Keys.PageDown, in_mode=InputMode.COMPLETE)
-    def _(event):
-        line.complete_next(5)
 
     @handle(Keys.PageDown, in_mode=InputMode.INSERT)
     def _(event):
@@ -247,24 +223,10 @@ def basic_bindings(registry, cli_ref):
     def _(event):
         line.cursor_down(count=event.arg)
 
-    @handle(Keys.Up, in_mode=InputMode.COMPLETE)
-    def _(event):
-        line.complete_previous()
-
-    @handle(Keys.Down, in_mode=InputMode.COMPLETE)
-    def _(event):
-        line.complete_next()
-
     @handle(Keys.ControlH, in_mode=InputMode.INSERT)
     @handle(Keys.Backspace, in_mode=InputMode.INSERT)
-    @handle(Keys.ControlH, in_mode=InputMode.COMPLETE)
-    @handle(Keys.Backspace, in_mode=InputMode.COMPLETE)
     def _(event):
         line.delete_before_cursor(count=event.arg)
-
-        # Quit autocomplete mode.
-        if event.input_processor.input_mode == InputMode.COMPLETE:
-            event.input_processor.pop_input_mode()
 
     @handle(Keys.Delete, in_mode=InputMode.INSERT)
     def _(event):
@@ -274,25 +236,12 @@ def basic_bindings(registry, cli_ref):
     def _(event):
         line.delete(count=event.arg)
 
-    @handle(Keys.Any, in_mode=InputMode.COMPLETE)
     @handle(Keys.Any, in_mode=InputMode.INSERT)
     def _(event):
         """
         Insert data at cursor position.
         """
         line.insert_text(event.data * event.arg)
-
-        # Quit autocomplete mode.
-        if event.input_processor.input_mode == InputMode.COMPLETE:
-            event.input_processor.pop_input_mode()
-
-    @handle(Keys.Escape, in_mode=InputMode.COMPLETE)
-    @handle(Keys.ControlC, in_mode=InputMode.COMPLETE)
-    def _(event):
-        """
-        Pressing escape or Ctrl-C in complete mode, goes back to default mode.
-        """
-        event.input_processor.pop_input_mode()
 
     @handle(Keys.CPRResponse)
     def _(event):

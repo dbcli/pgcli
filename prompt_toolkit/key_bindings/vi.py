@@ -115,14 +115,8 @@ def vi_bindings(registry, cli_ref):
         line.insert_text(event.data, overwrite=False)
 
     @handle(Keys.ControlN, in_mode=InputMode.INSERT)
-    @handle(Keys.ControlN, in_mode=InputMode.COMPLETE)
     def _(event):
         line.complete_next()
-
-        # Switch only to the 'complete' input mode if there really was a
-        # completion found.
-        if line.complete_state and event.input_processor.input_mode != InputMode.COMPLETE:
-            event.input_processor.push_input_mode(InputMode.COMPLETE)
 
     @handle(Keys.ControlN, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -132,32 +126,25 @@ def vi_bindings(registry, cli_ref):
         line.auto_down()
 
     @handle(Keys.ControlP, in_mode=InputMode.INSERT)
-    @handle(Keys.ControlP, in_mode=InputMode.COMPLETE)
     def _(event):
         """
         Control-P: To previous completion.
         """
         line.complete_previous()
 
-        # Switch only to the 'complete' input mode if there really was a
-        # completion found.
-        if line.complete_state and event.input_processor.input_mode != InputMode.COMPLETE:
-            event.input_processor.push_input_mode(InputMode.COMPLETE)
-
-    @handle(Keys.ControlY, in_mode=InputMode.COMPLETE)
+    @handle(Keys.ControlY, in_mode=InputMode.INSERT)
     def _(event):
         """
         Accept current completion.
         """
-        event.input_processor.pop_input_mode()
+        line.complete_state = None
 
-    @handle(Keys.ControlE, in_mode=InputMode.COMPLETE)
+    @handle(Keys.ControlE, in_mode=InputMode.INSERT)
     def _(event):
         """
         Cancel completion. Go back to originally typed text.
         """
         line.cancel_completion()
-        event.input_processor.pop_input_mode()
 
     @handle(Keys.ControlP, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
@@ -988,9 +975,6 @@ def vi_bindings(registry, cli_ref):
         completion based on the other lines in the document and the history.
         """
         line.start_history_lines_completion()
-
-        # Switch to complete mode.
-        event.input_processor.push_input_mode(InputMode.COMPLETE)
 
     @handle(Keys.ControlX, Keys.ControlF, in_mode=InputMode.INSERT)
     def _(event):

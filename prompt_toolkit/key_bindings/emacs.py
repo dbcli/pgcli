@@ -61,13 +61,6 @@ def emacs_bindings(registry, cli_ref):
         """
         line.auto_down()
 
-    @handle(Keys.ControlN, in_mode=InputMode.COMPLETE)
-    def _(event):
-        """
-        Control N in complete mode: go to next completion.
-        """
-        line.complete_next()
-
     @handle(Keys.ControlN, in_mode=InputMode.SELECTION)
     def _(event):
         """
@@ -95,13 +88,6 @@ def emacs_bindings(registry, cli_ref):
         Previous line.
         """
         line.cursor_up()
-
-    @handle(Keys.ControlP, in_mode=InputMode.COMPLETE)
-    def _(event):
-        """
-        Control P in complete mode: go to previous completion.
-        """
-        line.complete_previous()
 
     @handle(Keys.ControlQ, Keys.Any, in_mode=InputMode.INSERT)
     def _(event):
@@ -145,8 +131,6 @@ def emacs_bindings(registry, cli_ref):
 
     @handle(Keys.Escape, Keys.ControlJ, in_mode=InputMode.INSERT)
     @handle(Keys.Escape, Keys.ControlM, in_mode=InputMode.INSERT)
-    @handle(Keys.Escape, Keys.ControlJ, in_mode=InputMode.COMPLETE)
-    @handle(Keys.Escape, Keys.ControlM, in_mode=InputMode.COMPLETE)
     @handle(Keys.Escape, Keys.ControlJ, in_mode=InputMode.INCREMENTAL_SEARCH)
     @handle(Keys.Escape, Keys.ControlM, in_mode=InputMode.INCREMENTAL_SEARCH)
     def _(event):
@@ -301,11 +285,6 @@ def emacs_bindings(registry, cli_ref):
         else:
             line.cursor_position += line.document.get_end_of_line_position()
 
-    @handle(Keys.Escape, in_mode=InputMode.COMPLETE)
-    def _(event):
-        """ Pressing escape in complete mode, goes back to emacs insert mode. """
-        event.input_processor.pop_input_mode()
-
     @handle(Keys.ControlSpace, in_mode=InputMode.INSERT)
     @handle(Keys.ControlSpace, in_mode=InputMode.SELECTION)
     def _(event):
@@ -438,13 +417,8 @@ def emacs_bindings(registry, cli_ref):
         line.cursor_position += line.document.find_next_word_beginning(count=event.arg) or 0
 
     @handle(Keys.Escape, '/', in_mode=InputMode.INSERT)
-    @handle(Keys.Escape, '/', in_mode=InputMode.COMPLETE)
     def _(event):
         """
         M-/: Complete.
         """
         line.complete_next()
-
-        # Switch only to the 'complete' input mode if there really was a completion found.
-        if line.complete_state and event.input_processor.input_mode != InputMode.COMPLETE:
-            event.input_processor.push_input_mode(InputMode.COMPLETE)

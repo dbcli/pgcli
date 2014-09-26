@@ -11,7 +11,8 @@ class CompletionHint(object):
         self.grammar = grammar
 
     def write(self, cli, screen):
-        screen.write_highlighted(self.tokens(cli))
+        if not (cli.is_exiting or cli.is_aborting or cli.is_returning):
+            screen.write_highlighted(self.tokens(cli))
 
     def tokens(self, cli):
         def _():

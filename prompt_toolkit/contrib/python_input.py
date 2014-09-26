@@ -180,7 +180,6 @@ def python_bindings(registry, cli_ref):
             line.is_multiline = not line.is_multiline
 
     @handle(Keys.Tab, in_mode=InputMode.INSERT)
-    @handle(Keys.Tab, in_mode=InputMode.COMPLETE)
     def _(event):
         """
         When the 'tab' key is pressed with only whitespace character before the
@@ -191,20 +190,6 @@ def python_bindings(registry, cli_ref):
             line.insert_text('    ')
         else:
             line.complete_next()
-            if event.input_processor.input_mode != InputMode.COMPLETE:
-                event.input_processor.push_input_mode(InputMode.COMPLETE)
-
-    @handle(Keys.BackTab, in_mode=InputMode.INSERT)
-    @handle(Keys.BackTab, in_mode=InputMode.COMPLETE)
-    def _(event):
-        """
-        Shift+Tab: go to previous completion.
-        """
-        line.complete_previous()
-
-        if event.input_processor.input_mode != InputMode.COMPLETE:
-            event.input_processor.push_input_mode(InputMode.COMPLETE)
-            line.complete_previous()
 
 
 class PythonLine(Line):
@@ -349,9 +334,6 @@ class PythonToolbar(Toolbar):
             elif mode == InputMode.VI_REPLACE:
                 append((TB.Mode, '(REPLACE)'))
                 append((TB, '  '))
-            elif mode == InputMode.COMPLETE:
-                append((TB.Mode, '(COMPLETE)'))
-                append((TB, ' '))
             elif mode == InputMode.SELECTION and cli.line.selection_state:
                 if cli.line.selection_state.type == SelectionType.LINES:
                     append((TB.Mode, '(VISUAL LINE)'))

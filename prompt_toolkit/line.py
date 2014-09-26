@@ -294,7 +294,9 @@ class Line(object):
         If we're not on the first line (of a multiline input) go a line up,
         otherwise go back in history. (If nothing is selected.)
         """
-        if self.document.cursor_position_row > 0:
+        if self.complete_state:
+            self.complete_previous()
+        elif self.document.cursor_position_row > 0:
             self.cursor_position += self.document.get_cursor_up_position(count=count)
         elif not self.selection_state:
             self.history_backward(count=count)
@@ -304,7 +306,9 @@ class Line(object):
         If we're not on the last line (of a multiline input) go a line down,
         otherwise go forward in history. (If nothing is selected.)
         """
-        if self.document.cursor_position_row < self.document.line_count - 1:
+        if self.complete_state:
+            self.complete_next()
+        elif self.document.cursor_position_row < self.document.line_count - 1:
             self.cursor_position += self.document.get_cursor_down_position(count=count)
         elif not self.selection_state:
             old_index = self.working_index
