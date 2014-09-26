@@ -318,6 +318,14 @@ def emacs_bindings(registry, cli_ref):
         if event.input_processor.input_mode != InputMode.SELECTION:
             event.input_processor.push_input_mode(InputMode.SELECTION)
 
+    @handle(Keys.ControlG, in_mode=InputMode.INSERT)
+    def _(event):
+        """
+        Control + G: Cancel completion menu and validation state.
+        """
+        line.complete_state = None
+        line.validation_error = None
+
     @handle(Keys.ControlG, in_mode=InputMode.SELECTION)
     def _(event):
         """
