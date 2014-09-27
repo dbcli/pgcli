@@ -93,6 +93,9 @@ class PythonStyle(Style):
         Token.Layout.Toolbar.Search.Text:        'noinherit',
         Token.Layout.Toolbar.Search.Text.NoMatch: 'bg:#aa4444 #ffffff',
 
+        Token.Layout.Toolbar.Arg:             '#44ffff noinherit',
+        Token.Layout.Toolbar.Arg.TExt:        'noinherit',
+
         Token.Prompt.SecondLinePrefix: 'bold #888888',
         Token.Prompt.LineNumber:       '#aa6666',
         Token.Prompt.Arg:              'noinherit',

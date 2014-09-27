@@ -373,7 +373,7 @@ class CommandLineInterface(object):
         # Run system command.
         with cooked_mode(self.stdin.fileno()):
             os.system(command.encode('utf-8'))
-            raw_input('Press ENTER to continue...')
+            raw_input('\nPress ENTER to continue...')
 
     @property
     def is_exiting(self):
