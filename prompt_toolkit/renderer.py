@@ -454,12 +454,12 @@ class Renderer(object):
 
     ::
 
-        r = Renderer(Prompt)
+        r = Renderer(layout)
         r.render(Render_context(...))
     """
     def __init__(self, layout=None, stdout=None, style=None):
         self.layout = layout
-        self._stdout = (stdout or sys.stdout)
+        self._stdout = stdout or sys.stdout
         self._style = style or Style
         self._last_screen = None
 
@@ -555,12 +555,28 @@ class Renderer(object):
             else:
                 raise
 
+    def erase(self):
+        """
+        Hide all output and put the cursor back at the first line. This is for
+        instance used for running a system command (while hiding the CLI) and
+        later resuming the same CLI.)
+        """
+        self._stdout.write(TerminalCodes.CURSOR_BACKWARD(self._cursor_pos.x))
+        self._stdout.write(TerminalCodes.CURSOR_UP(self._cursor_pos.y))
+        self._stdout.write(TerminalCodes.ERASE_DOWN)
+        self._stdout.write(TerminalCodes.RESET_ATTRIBUTES)
+        self._stdout.flush()
+
+        self.reset()
+
     def clear(self):
         """
         Clear screen and go to 0,0
         """
         self._stdout.write(TerminalCodes.ERASE_SCREEN)
+        self._stdout.write(TerminalCodes.RESET_ATTRIBUTES)
         self._stdout.write(TerminalCodes.CURSOR_GOTO(0, 0))
+        self._stdout.flush()
 
         self.reset()
         self.request_absolute_cursor_position()

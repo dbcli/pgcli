@@ -23,7 +23,7 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.menus import CompletionMenu
 from prompt_toolkit.layout.processors import BracketsMismatchProcessor
-from prompt_toolkit.layout.toolbars import CompletionToolbar, ArgToolbar, SearchToolbar, ValidationToolbar
+from prompt_toolkit.layout.toolbars import CompletionToolbar, ArgToolbar, SearchToolbar, ValidationToolbar, SystemToolbar
 from prompt_toolkit.layout.toolbars import Toolbar
 from prompt_toolkit.layout.utils import TokenList
 from prompt_toolkit.line import Line
@@ -89,8 +89,7 @@ class PythonStyle(Style):
 
         # Highlighting for the reverse-search prompt.
         Token.Prompt:  'bold #008800',
-        Token.Layout.Toolbar.Search:             'noinherit',
-        Token.Layout.Toolbar.Search.Prefix:      '#6666aa noinherit',
+        Token.Layout.Toolbar.Search:             '#44ffff noinherit',
         Token.Layout.Toolbar.Search.Text:        'noinherit',
         Token.Layout.Toolbar.Search.Text.NoMatch: 'bg:#aa4444 #ffffff',
 
@@ -452,7 +451,7 @@ class PythonCompleter(Completer):
         (Except if we typed whitespace.)
         """
         char = document.char_before_cursor
-        return not char.isspace() and not char.isdigit() and not char in '()+-*/,:;\'"={}[]%^&#@!'
+        return not char.isspace() and not char.isdigit() and not char in '()+-*/,:;\'"={}[]%^&#@!?'
 
     def get_completions(self, document):
         """ Ask jedi to complete. """
@@ -495,6 +494,7 @@ class PythonCommandLineInterface(CommandLineInterface):
                 ArgToolbar(),
                 SignatureToolbar(),
                 SearchToolbar(),
+                SystemToolbar(),
                 ValidationToolbar(),
             ] +
             ([CompletionToolbar()] if autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU else []) +

@@ -21,3 +21,6 @@ class InputMode(object):
 
     #: Vi-style forward search. Usually with a '/' or '?' prompt.
     VI_SEARCH = 'vi-forward-search'
+
+    #: When the system prompt (after typing '!' or M-!) has the focus.
+    SYSTEM = 'system'

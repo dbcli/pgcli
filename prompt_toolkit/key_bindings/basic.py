@@ -10,6 +10,7 @@ from .utils import create_handle_decorator
 def basic_bindings(registry, cli_ref):
     cli = cli_ref()
     line = cli_ref().line
+    system_line = cli_ref().lines['system']
     renderer = cli_ref().renderer
     handle = create_handle_decorator(registry, line)
 
@@ -254,3 +255,76 @@ def basic_bindings(registry, cli_ref):
 
         # Report absolute cursor position to the renderer.
         cli_ref().renderer.report_absolute_cursor_row(row)
+
+    @handle(Keys.Up, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Previous history item at system prompt.
+        """
+        system_line.auto_up()
+
+    @handle(Keys.Down, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Next history item at system prompt.
+        """
+        system_line.auto_down()
+
+    @handle(Keys.Left, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Arrow left at the system prompt.
+        """
+        system_line.cursor_left()
+
+    @handle(Keys.Right, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Arrow right at the system prompt.
+        """
+        system_line.cursor_right()
+
+    @handle(Keys.ControlC, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Cancel system prompt.
+        """
+        system_line.reset()
+        event.input_processor.pop_input_mode()
+
+    @handle(Keys.ControlM, in_mode=InputMode.SYSTEM)
+    @handle(Keys.ControlJ, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Run system command.
+        """
+        cli_ref().run_system_command(system_line.text)
+        system_line.add_to_history()
+        system_line.reset()
+        event.input_processor.pop_input_mode()
+
+    @handle(Keys.Backspace, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Backspace at the system prompt.
+        """
+        if system_line.text:
+            system_line.delete_before_cursor()
+        else:
+            # If no text after the prompt, cancel.
+            system_line.reset()
+            event.input_processor.pop_input_mode()
+
+    @handle(Keys.Delete, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Delete at the system prompt.
+        """
+        system_line.delete()
+
+    @handle(Keys.Any, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Insert text after the system prompt.
+        """
+        system_line.insert_text(event.data)

@@ -44,8 +44,9 @@ class _ISearch(object):
 
 
 class Prompt(object):
-    def __init__(self, text='> '):
+    def __init__(self, text='> ', token=Token.Prompt.BeforeInput):
         self.text = text
+        self.token = token
 
     def write(self, cli, screen):
         screen.write_highlighted(self.tokens(cli))
@@ -54,7 +55,7 @@ class Prompt(object):
         """
         Tokens for the default prompt.
         """
-        return [(Token.Prompt.BeforeInput, self.text)]
+        return [(self.token, self.text)]
 
 
 class DefaultPrompt(Prompt):

@@ -32,7 +32,7 @@ from .line import Line
 from .layout import Layout
 from .layout.prompt import DefaultPrompt
 from .renderer import Renderer
-from .utils import raw_mode, call_on_sigwinch
+from .utils import raw_mode, cooked_mode, call_on_sigwinch
 from .history import History
 
 from pygments.styles.default import DefaultStyle
@@ -103,6 +103,7 @@ class CommandLineInterface(object):
         self.lines = {
             'default': line,
             'search': Line(history=History()),
+            'system': Line(history=History()),
         }
 
         #: The `Layout` instance.
@@ -361,6 +362,18 @@ class CommandLineInterface(object):
 
     def set_return_value(self, code):
         self._return_code = code
+
+    def run_system_command(self, command):
+        """
+        (Not thread safe -- to be called from inside the key bindings.)
+        Run system command.
+        """
+        self.renderer.erase()
+
+        # Run system command.
+        with cooked_mode(self.stdin.fileno()):
+            os.system(command.encode('utf-8'))
+            raw_input('Press ENTER to continue...')
 
     @property
     def is_exiting(self):

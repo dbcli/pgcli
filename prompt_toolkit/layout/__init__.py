@@ -65,6 +65,7 @@ class Layout(object):
             lexer=None,
             min_height=0,
             show_tildes=False,
+            line_name='default',
             ):
 
         self.before_input = before_input
@@ -76,6 +77,7 @@ class Layout(object):
         self.menus = menus or []
         self.min_height = min_height
         self.show_tildes = show_tildes
+        self.line_name = line_name
 
         if lexer:
             self.lexer = lexer(
@@ -94,14 +96,22 @@ class Layout(object):
 
         self.reset()
 
+    def _line(self, cli):
+        """
+        The line object that contains the 'main' content.
+        """
+        return cli.lines[self.line_name]
+
     def reset(self):
         #: Vertical scrolling position of the main content.
         self.vertical_scroll = 0
 
-    def get_input_tokens(self, line):
+    def get_input_tokens(self, cli):
         """
         Tokenize input text for highlighting.
         """
+        line = self._line(cli)
+
         def get():
             if self.lexer:
                 tokens = list(self.lexer.get_tokens(line.text))
@@ -147,14 +157,14 @@ class Layout(object):
         # Get tokens
         # Note: we add the space character at the end, because that's where
         #       the cursor can also be.
-        input_tokens = self.get_input_tokens(cli.line) + [(Token, ' ')]
+        input_tokens = self.get_input_tokens(cli) + [(Token, ' ')]
 
         # 'Explode' tokens in characters.
         input_tokens = [(token, c) for token, text in input_tokens for c in text]
 
         # Apply highlighting.
         if not (cli.is_exiting or cli.is_aborting or cli.is_returning):
-            highlighted_characters = self.get_highlighted_characters(cli.line)
+            highlighted_characters = self.get_highlighted_characters(self._line(cli))
 
             for index, token in highlighted_characters.items():
                 input_tokens[index] = (token, input_tokens[index][1])
@@ -163,7 +173,7 @@ class Layout(object):
             # Insert char.
             screen.write_char(c, token,
                               string_index=index,
-                              set_cursor_position=(index == cli.line.cursor_position))
+                              set_cursor_position=(index == self._line(cli).cursor_position))
 
     def write_input_scrolled(self, cli, screen, write_content,
                              min_height=1, top_margin=0, bottom_margin=0):
@@ -206,7 +216,7 @@ class Layout(object):
 
             # Scroll down if we need space for the menu.
             if self.need_to_show_completion_menu(cli):
-                menu_size = self.menus[0].get_height(cli.line.complete_state)
+                menu_size = self.menus[0].get_height(self._line(cli).complete_state)
                 if temp_screen.cursor_position.y - self.vertical_scroll >= max_height - menu_size:
                     self.vertical_scroll = (temp_screen.cursor_position.y + 1) - (max_height - menu_size)
 
@@ -230,8 +240,8 @@ class Layout(object):
 
         # Show completion menu.
         if not is_done and self.need_to_show_completion_menu(cli):
-            y, x = temp_screen._cursor_mappings[cli.line.complete_state.original_document.cursor_position]
-            self.menus[0].write(screen, (y - self.vertical_scroll + top_margin, x + left_margin_width), cli.line.complete_state)
+            y, x = temp_screen._cursor_mappings[self._line(cli).complete_state.original_document.cursor_position]
+            self.menus[0].write(screen, (y - self.vertical_scroll + top_margin, x + left_margin_width), self._line(cli).complete_state)
 
         return_value = max([min_height + top_margin, screen.current_height])
 
@@ -246,7 +256,7 @@ class Layout(object):
         return return_value
 
     def need_to_show_completion_menu(self, cli): # XXX: remove
-        return self.menus and cli.line.complete_state
+        return self.menus and self._line(cli).complete_state
 
     def write_to_screen(self, cli, screen, min_height):
         """
@@ -266,18 +276,9 @@ class Layout(object):
             screen._y, screen._x = i, 0
             t.write(cli, screen)
 
-        # Write actual content.
-        def write_content(scr):
-            if self.before_input is not None:
-                self.before_input.write(cli, scr)
-
-            self._write_input(cli, scr)
-
-            if self.after_input is not None:
-                self.after_input.write(cli, scr)
-
+        # Write actual content (scrolled).
         y = self.write_input_scrolled(cli, screen,
-                                      write_content,
+                                      lambda scr : self.write_content(cli, scr),
                                       min_height=max(self.min_height, min_height),
                                       top_margin=len(top_toolbars),
                                       bottom_margin=len(bottom_toolbars))
@@ -286,3 +287,16 @@ class Layout(object):
         for i, t in enumerate(bottom_toolbars):
             screen._y, screen._x = y + i, 0
             t.write(cli, screen)
+
+    def write_content(self, cli, screen):
+        """
+        Write the actual content at the current position at the screen.
+        """
+        if self.before_input is not None:
+            self.before_input.write(cli, screen)
+
+        self._write_input(cli, screen)
+
+        if self.after_input is not None:
+            self.after_input.write(cli, screen)
+

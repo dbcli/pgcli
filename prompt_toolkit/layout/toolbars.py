@@ -1,16 +1,22 @@
 from __future__ import unicode_literals
 
+from pygments.lexers import BashLexer
 from pygments.token import Token
-from ..renderer import Point
+
 from ..enums import InputMode, IncrementalSearchDirection
+from ..layout import Layout
+from ..layout.prompt import Prompt
+from ..renderer import Point
+
 from .utils import TokenList
 
 __all__ = (
-    'Toolbar',
-    'TextToolbar',
     'ArgToolbar',
-    'SearchToolbar',
     'CompletionToolbar',
+    'SearchToolbar',
+    'SystemToolbar',
+    'TextToolbar',
+    'Toolbar',
 )
 
 
@@ -45,7 +51,7 @@ class Toolbar(object):
         return result
 
     def get_tokens(self, cli, width):
-        pass
+        return []
 
 
 class TextToolbar(Toolbar):
@@ -78,50 +84,68 @@ class ArgToolbar(Toolbar):
         ]
 
 
+class SystemToolbar(Toolbar):
+    """
+    The system toolbar. Shows the '!'-prompt.
+    """
+    def __init__(self):
+        token = Token.Layout.Toolbar.System
+        super(SystemToolbar, self).__init__(token=token)
+
+        # We use a nested single-line-no-wrap layout for this.
+        self.layout = Layout(before_input=Prompt(':!'),
+                             lexer=BashLexer,
+                             line_name='system')
+
+    def is_visible(self, cli):
+        return super(SystemToolbar, self).is_visible(cli) and \
+            cli.input_processor.input_mode == InputMode.SYSTEM
+
+    def write(self, cli, screen):
+        # Just write this layout at the current position.
+        # XXX: Make sure that we don't have multiline here. Force layout to be single line.
+        self.layout.write_content(cli, screen)
+
+
 class SearchToolbar(Toolbar):
     def __init__(self, token=None):
         token = token or Token.Layout.Toolbar.Search
         super(SearchToolbar, self).__init__(token=token)
 
+        class Prefix(Prompt):
+            """ Search prompt. """
+            def tokens(self, cli):
+                vi = cli.input_processor.input_mode == InputMode.VI_SEARCH
+
+                if cli.line.isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
+                    text = '?' if vi else 'I-search backward: '
+                else:
+                    text = '/' if vi else 'I-search: '
+
+                return [(token, text)]
+
+        class SearchLayout(Layout):
+            def get_input_tokens(self, cli):
+                line = cli.line
+                search_line = cli.lines['search']
+                index = line.isearch_state and line.isearch_state.no_match_from_index
+
+                if index is None:
+                    return [(token.Text, search_line.text)]
+                else:
+                    return [
+                        (token.Text, search_line.text[:index]),
+                        (token.Text.NoMatch, search_line.text[index:]),
+                    ]
+
+        self.layout = SearchLayout(before_input=Prefix(), line_name='search')
+
     def is_visible(self, cli):
         return super(SearchToolbar, self).is_visible(cli) and \
             cli.input_processor.input_mode in (InputMode.INCREMENTAL_SEARCH, InputMode.VI_SEARCH)
 
-    def _prefix(self, cli):
-        vi = cli.input_processor.input_mode == InputMode.VI_SEARCH
-
-        if cli.line.isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
-            return '?' if vi else 'I-search backward: '
-        else:
-            return '/' if vi else 'I-search: '
-
-    def get_tokens(self, cli, width):
-        """
-        Tokens for the vi-search prompt.
-        """
-        line = cli.lines['search']
-        index = cli.line.isearch_state.no_match_from_index
-
-        if index is None:
-            return [
-                (self.token.Prefix, self._prefix(cli)),
-                (self.token.Text, line.text),
-            ]
-        else:
-            return [
-                (self.token.Prefix, self._prefix(cli)),
-                (self.token.Text, line.text[:index]),
-                (self.token.Text.NoMatch, line.text[index:]),
-            ]
-
     def write(self, cli, screen):
-        # Write output.
-        super(SearchToolbar, self).write(cli, screen)
-
-        #  Set cursor position.
-        line = cli.lines['search']
-        screen.cursor_position = Point(screen._y, line.cursor_position + len(self._prefix(cli)))
-            # XXX: cursor_position not correct in case of double width characters.
+        self.layout.write_content(cli, screen)
 
 
 class CompletionToolbar(Toolbar):

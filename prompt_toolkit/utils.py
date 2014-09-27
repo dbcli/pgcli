@@ -31,8 +31,10 @@ def get_size(fileno):
 
 class raw_mode(object):
     """
-    with raw_mode(stdin):
-        ''' the pseudo-terminal stdin is now used in raw mode '''
+    ::
+
+        with raw_mode(stdin):
+            ''' the pseudo-terminal stdin is now used in raw mode '''
     """
     def __init__(self, fileno):
         self.fileno = fileno
@@ -41,12 +43,25 @@ class raw_mode(object):
     def __enter__(self):
         # NOTE: On os X systems, using pty.setraw() fails. Therefor we are using this:
         newattr = termios.tcgetattr(self.fileno)
-        newattr[tty.LFLAG] = newattr[tty.LFLAG] & ~(
-            termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
+        newattr[tty.LFLAG] = self._patch(newattr[tty.LFLAG])
         termios.tcsetattr(self.fileno, termios.TCSANOW, newattr)
+
+    def _patch(self, attrs):
+        return attrs & ~(termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
 
     def __exit__(self, *a, **kw):
         termios.tcsetattr(self.fileno, termios.TCSANOW, self.attrs_before)
+
+
+class cooked_mode(raw_mode):
+    """
+    (The opposide of ``raw_mode``::
+
+        with cooked_mode(stdin):
+            ''' the pseudo-terminal stdin is now used in cooked mode. '''
+    """
+    def _patch(self, attrs):
+        return attrs | (termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
 
 
 class call_on_sigwinch(object):

@@ -861,6 +861,13 @@ def vi_bindings(registry, cli_ref):
         # Move to the top of the input.
         return CursorRegion(line.document.home_position)
 
+    @handle('!', in_mode=InputMode.VI_NAVIGATION)
+    def _(event):
+        """
+        '!' opens the system prompt.
+        """
+        event.input_processor.push_input_mode(InputMode.SYSTEM)
+
     @handle(Keys.Any, in_mode=InputMode.VI_NAVIGATION)
     @handle(Keys.Any, in_mode=InputMode.SELECTION)
     def _(event):

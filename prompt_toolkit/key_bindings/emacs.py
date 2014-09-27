@@ -422,3 +422,10 @@ def emacs_bindings(registry, cli_ref):
         M-/: Complete.
         """
         line.complete_next()
+
+    @handle(Keys.Escape, '!', in_mode=InputMode.INSERT)
+    def _(event):
+        """
+        M-'!' opens the system prompt.
+        """
+        event.input_processor.push_input_mode(InputMode.SYSTEM)

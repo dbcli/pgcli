@@ -682,7 +682,7 @@ class Line(object):
 
         return True
 
-    def add_to_history(self):
+    def add_to_history(self):  # TODO: Rename to `append_to_history`
         """
         Append the current input to the history.
         (Only if valid input.)
