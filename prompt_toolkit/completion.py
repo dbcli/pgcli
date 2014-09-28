@@ -42,9 +42,6 @@ class Completer(object):
     The methods in here are methods that are expected to exist for the `Line`
     and `Renderer` classes.
     """
-    def complete_after_insert_text(self, document):
-        return False
-
     def get_common_complete_suffix(self, document):
         """
         return one `Completion` instance or None.

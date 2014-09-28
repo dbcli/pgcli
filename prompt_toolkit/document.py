@@ -98,11 +98,13 @@ class Document(object):
         return current_line[:length]
 
     def _get_char_relative_to_cursor(self, offset=0):
-        """ Return character relative to cursor position, or None """
+        """
+        Return character relative to cursor position, or empty string
+        """
         try:
             return self.text[self.cursor_position + offset]
         except IndexError:
-            return None
+            return ''
 
     @property
     def cursor_position_row(self):

@@ -123,7 +123,7 @@ class CommandLineInterface(object):
         self.inputstream = InputStream(self.input_processor)
 
         # Pipe for inter thread communication.
-        self._redraw_pipe = None
+        self._schedule_pipe = None
 
         #: Currently reading input.
         self.is_reading_input = False
@@ -132,6 +132,8 @@ class CommandLineInterface(object):
         # We can not just do `os.read(stdin.fileno(), 1024).decode('utf-8')`, because
         # it could be that we are in the middle of a utf-8 byte sequence.
         self._stdin_decoder = self.stdin_decoder_cls()
+
+        self._calls_from_executor = []
 
         self._reset()
 
@@ -159,8 +161,7 @@ class CommandLineInterface(object):
         """
         Thread safe way of sending a repaint trigger to the input event loop.
         """
-        if self._redraw_pipe:
-            os.write(self._redraw_pipe[1], b'x')
+        self.call_from_executor(self._redraw)
 
     def _redraw(self):
         """
@@ -174,12 +175,23 @@ class CommandLineInterface(object):
         Run a long running function in a background thread.
         (This is recommended for code that could block the `read_input` event
         loop.)
+        Similar to Twisted's ``deferToThread``.
         """
         class _Thread(threading.Thread):
             def run(t):
                 callback()
 
         _Thread().start()
+
+    def call_from_executor(self, callback):
+        """
+        Call this function in the main event loop.
+        Similar to Twisted's ``callFromThread``.
+        """
+        self._calls_from_executor.append(callback)
+
+        if self._schedule_pipe:
+            os.write(self._schedule_pipe[1], b'x')
 
     def on_input_timeout(self):
         """
@@ -190,10 +202,10 @@ class CommandLineInterface(object):
         # function below the cursor position in the case of a REPL.
         pass
 
-    def on_read_input_start(self):
+    def on_read_input_start(self):  # XXX: replace with EventHook
         pass
 
-    def on_read_input_end(self):
+    def on_read_input_end(self):  # XXX: replace with EventHook
         pass
 
     def _get_char_loop(self):
@@ -205,16 +217,22 @@ class CommandLineInterface(object):
         timeout = self.input_timeout
 
         while True:
-            r, w, x = _select([self.stdin, self._redraw_pipe[0]], [], [], timeout)
+            r, w, x = _select([self.stdin, self._schedule_pipe[0]], [], [], timeout)
 
             if self.stdin in r:
                 return self._read_from_stdin()
 
-            # If we receive something on our redraw pipe, render again.
-            elif self._redraw_pipe[0] in r:
-                # Flush all the pipe content and repaint.
-                os.read(self._redraw_pipe[0], 1024)
-                self._redraw()
+            # If we receive something on our "call_from_executor" pipe, process
+            # these callbacks in a thread safe way.
+            elif self._schedule_pipe[0] in r:
+                # Flush all the pipe content.
+                os.read(self._schedule_pipe[0], 1024)
+
+                # Process calls from executor.
+                calls_from_executor, self._calls_from_executor = self._calls_from_executor, []
+                for c in calls_from_executor:
+                    c()
+
                 timeout = None
             else:
                 #
@@ -261,8 +279,8 @@ class CommandLineInterface(object):
 
         try:
             # Create a pipe for inter thread communication.
-            self._redraw_pipe = os.pipe()
-            fcntl.fcntl(self._redraw_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
+            self._schedule_pipe = os.pipe()
+            fcntl.fcntl(self._schedule_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
 
             def reset_line():
                 """
@@ -341,13 +359,13 @@ class CommandLineInterface(object):
                         self._redraw()
 
         finally:
-            # Close redraw pipes.
-            redraw_pipe = self._redraw_pipe
-            self._redraw_pipe = None
+            # Close pipes.
+            schedule_pipe = self._schedule_pipe
+            self._schedule_pipe = None
 
-            if redraw_pipe:
-                os.close(redraw_pipe[0])
-                os.close(redraw_pipe[1])
+            if schedule_pipe:
+                os.close(schedule_pipe[0])
+                os.close(schedule_pipe[1])
 
             # Trigger read_end.
             self.on_read_input_end()

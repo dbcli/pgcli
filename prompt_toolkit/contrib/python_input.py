@@ -267,15 +267,6 @@ class PythonLine(Line):
         """ Ignore setter. """
         pass
 
-    def complete_after_insert_text(self):
-        """
-        Start autocompletion when a we have a valid identifier before the
-        cursor. (In this case it's not required to press [Tab] in order to view
-        the completion menu.)
-        """
-        word_before_cursor = self.document.get_word_before_cursor()
-        return word_before_cursor is not None and _identifier_re.match(word_before_cursor)
-
 
 class SignatureToolbar(Toolbar):
     def is_visible(self, cli):
@@ -448,14 +439,6 @@ class PythonCompleter(Completer):
         self._globals = globals
         self._locals = locals
 
-    def complete_after_insert_text(self, document):
-        """
-        Open completion menu when we type a character.
-        (Except if we typed whitespace.)
-        """
-        char = document.char_before_cursor
-        return not char.isspace() and not char.isdigit() and not char in '()+-*/,:;\'"={}[]%^&#@!?'
-
     def get_completions(self, document):
         """ Ask jedi to complete. """
         script = get_jedi_script_from_document(document, self._locals, self._globals)
@@ -484,7 +467,7 @@ class PythonCommandLineInterface(CommandLineInterface):
         self.always_multiline = always_multiline
         self.autocompletion_style = autocompletion_style
 
-        completer = _completer or PythonCompleter(self.globals, self.locals)
+        self.completer = _completer or PythonCompleter(self.globals, self.locals)
         validator = _validator or PythonValidator()
 
         layout = Layout(
@@ -516,20 +499,26 @@ class PythonCommandLineInterface(CommandLineInterface):
         else:
             key_binding_factories = [emacs_bindings, python_bindings]
 
+        line=PythonLine(always_multiline=always_multiline,
+                        tempfile_suffix='.py',
+                        history=history,
+                        completer=self.completer,
+                        validator=validator)
+
         #: Incremeting integer counting the current statement.
         self.current_statement_index = 1
 
         self.get_signatures_thread_running = False
+        self.complete_thread_running = False
 
         super(PythonCommandLineInterface, self).__init__(
             layout=layout,
             style=style,
             key_binding_factories=key_binding_factories,
-            line=PythonLine(always_multiline=always_multiline,
-                            tempfile_suffix='.py',
-                            history=history,
-                            completer=completer,
-                            validator=validator))
+            line=line)
+
+        # Handle events.
+        line.onTextInsert += self._on_text_changed
 
     def on_input_timeout(self):
         """
@@ -569,5 +558,52 @@ class PythonCommandLineInterface(CommandLineInterface):
                 self.request_redraw()
             else:
                 self.on_input_timeout()
+
+        self.run_in_executor(run)
+
+    def _on_text_changed(self):
+        """
+        Asynchronous autocompletion while typing.
+        (Autocomplete in other thread.)
+        """
+        document = self.line.document
+
+        # Don't start two threads at the same time.
+        if self.complete_thread_running:
+            return
+
+        # Don't complete when we already have completions.
+        if self.line.complete_state:
+            return
+
+        # Don't automatically complete on empty inputs.
+        char = document.char_before_cursor
+        if not self.line.text or char.isspace():
+            return
+
+        # Otherwise, get completions in other thread.
+        self.complete_thread_running = True
+
+        def run():
+            completions = list(self.completer.get_completions(document))
+            self.complete_thread_running = False
+
+            def callback():
+                """
+                Set the new complete_state in a safe way. Don't replace an
+                existing complete_state if we had one. (The user could have
+                pressed 'Tab' in the meantime. Also don't set it if the text
+                was changed in the meantime.
+                """
+                # Set completions if the text was not yet changed.
+                if self.line.text == document.text and \
+                        self.line.cursor_position == document.cursor_position and \
+                        not self.line.complete_state:
+                    self.line._start_complete(go_to_first=False, completions=completions)
+                    self._redraw()
+                else:
+                    # Otherwise, restart thread.
+                    self._on_text_changed()
+            self.call_from_executor(callback)
 
         self.run_in_executor(run)

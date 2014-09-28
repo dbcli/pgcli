@@ -77,3 +77,31 @@ class call_on_sigwinch(object):
 
     def __exit__(self, *a, **kw):
         signal.signal(signal.SIGWINCH, self.previous_callback)
+
+
+
+class EventHook(object):
+    """
+    Event hook::
+
+        e = EventHook()
+        e += handler_function  # Add event handler.
+        e.fire()  # Fire event.
+
+    Thanks to Michael Foord:
+    http://www.voidspace.org.uk/python/weblog/arch_d7_2007_02_03.shtml#e616
+    """
+    def __init__(self):
+        self.__handlers = []
+
+    def __iadd__(self, handler):
+        self.__handlers.append(handler)
+        return self
+
+    def __isub__(self, handler):
+        self.__handlers.remove(handler)
+        return self
+
+    def fire(self, *args, **keywargs):
+        for handler in self.__handlers:
+            handler(*args, **keywargs)

@@ -10,6 +10,7 @@ from .document import Document
 from .enums import IncrementalSearchDirection
 from .history import History
 from .selection import SelectionType, SelectionState
+from .utils import EventHook
 
 import os
 import six
@@ -131,6 +132,11 @@ class Line(object):
 
         self.reset()
 
+        # Events
+        self.onTextChanged = EventHook()
+        self.onTextInsert = EventHook()
+        self.onCursorPositionChanged = EventHook()
+
     def reset(self, initial_value=''):
         self.cursor_position = len(initial_value)
 
@@ -167,8 +173,11 @@ class Line(object):
     @text.setter
     def text(self, value):
         assert isinstance(value, six.text_type), 'Got %r' % value
+        original_value = self._working_lines[self.working_index]
         self._working_lines[self.working_index] = value
-        self._text_changed()
+
+        if value != original_value:
+            self._text_changed()
 
     @property
     def cursor_position(self):
@@ -200,8 +209,8 @@ class Line(object):
         self.complete_state = None
         self.selection_state = None
 
-        # Call text changed 'event'.
-        self.text_changed()
+        # fire 'onTextChanged' event.
+        self.onTextChanged.fire()
 
     # End of <getters/setters>
 
@@ -212,13 +221,6 @@ class Line(object):
         position.
         """
         return Document(self.text, self.cursor_position, selection=self.selection_state)
-
-    def text_changed(self):
-        """
-        Not implemented. Override to capture when the current visible text
-        changes.
-        """
-        pass
 
     def save_to_undo_stack(self):
         """
@@ -613,9 +615,8 @@ class Line(object):
         if move_cursor:
             self.cursor_position += len(data)
 
-        # Get completions.
-        if self.completer and self.completer.complete_after_insert_text(self.document):
-            self._start_complete(go_to_first=False)
+        # fire 'onTextInsert' event.
+        self.onTextInsert.fire()
 
     def set_clipboard(self, clipboard_data):
         """
