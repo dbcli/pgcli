@@ -13,7 +13,7 @@ from pygments.token import Token
 
 from prompt_toolkit import CommandLineInterface, AbortAction
 from prompt_toolkit import Exit
-from prompt_toolkit.contrib.shell.completers import Path, Directory
+from prompt_toolkit.contrib.shell.completers import Path, Directory, ExecutableInPATH
 from prompt_toolkit.contrib.shell.completion import ShellCompleter
 from prompt_toolkit.contrib.shell.layout import CompletionHint
 from prompt_toolkit.contrib.shell.parse_info import get_parse_info, InvalidCommandException
@@ -35,6 +35,11 @@ grammar = Any([
                 Literal('pushd', dest='commnd'),
                 ]),
             Variable(Directory, placeholder='<directory>', dest='directory')]),
+
+        Sequence([
+            Variable(ExecutableInPATH, placeholder='<executable>', dest='executable'),
+            Repeat(Variable(Path, 'param'))
+        ]),
 
         #Sequence([
         #    Literal('cp'),
@@ -113,7 +118,7 @@ if __name__ == '__main__':
             else:
                 params = parse_info.get_variables()
 
-                if params['command'] == 'cd':
+                if params.get('command', '') == 'cd':
                     # Handle 'cd' command.
                     try:
                         os.chdir(params['directory'])

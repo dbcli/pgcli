@@ -16,6 +16,7 @@ def emacs_bindings(registry, cli_ref):
     basic_bindings(registry, cli_ref)
     line = cli_ref().line
     search_line = cli_ref().lines['search']
+    system_line = cli_ref().lines['system']
     handle = create_handle_decorator(registry, line)
 
     @handle(Keys.Escape)
@@ -38,6 +39,13 @@ def emacs_bindings(registry, cli_ref):
         """
         line.cursor_position += line.document.get_start_of_line_position(after_whitespace=False)
 
+    @handle(Keys.ControlA, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Start of system line.
+        """
+        system_line.cursor_position += system_line.document.get_start_of_line_position(after_whitespace=False)
+
     @handle(Keys.ControlB, in_mode=InputMode.INSERT)
     @handle(Keys.ControlB, in_mode=InputMode.SELECTION)
     def _(event):
@@ -45,6 +53,21 @@ def emacs_bindings(registry, cli_ref):
         Character back.
         """
         line.cursor_position += line.document.get_cursor_left_position(count=event.arg)
+
+    @handle(Keys.ControlE, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlE, in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        End of line.
+        """
+        line.cursor_position += line.document.get_end_of_line_position()
+
+    @handle(Keys.ControlE, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        End of "system" line.
+        """
+        system_line.cursor_position += system_line.document.get_end_of_line_position()
 
     @handle(Keys.ControlF, in_mode=InputMode.INSERT)
     @handle(Keys.ControlF, in_mode=InputMode.SELECTION)
@@ -313,6 +336,25 @@ def emacs_bindings(registry, cli_ref):
         event.input_processor.pop_input_mode()
         line.exit_selection()
 
+    @handle(Keys.ControlG, in_mode=InputMode.INCREMENTAL_SEARCH)
+    # NOTE: the reason for not also binding Escape to this one, is that we want
+    #       Alt+Enter to accept input directly in incremental search mode.
+    def _(event):
+        """
+        Abort an incremental search and restore the original line.
+        """
+        line.exit_isearch(restore_original_line=True)
+        event.input_processor.pop_input_mode()
+        search_line.reset()
+
+    @handle(Keys.ControlG, in_mode=InputMode.SYSTEM)
+    def _(event):
+        """
+        Abort system prompt.
+        """
+        system_line.reset()
+        event.input_processor.pop_input_mode()
+
     @handle(Keys.ControlW, in_mode=InputMode.SELECTION)
     def _(event):
         """
@@ -359,17 +401,6 @@ def emacs_bindings(registry, cli_ref):
         """
         search_line.insert_text(event.data)
         line.set_search_text(search_line.text)
-
-    @handle(Keys.ControlG, in_mode=InputMode.INCREMENTAL_SEARCH)
-    # NOTE: the reason for not binding Escape to this one, is that we want
-    #       Alt+Enter to accept input directly in incremental search mode.
-    def _(event):
-        """
-        Abort an incremental search and restore the original line.
-        """
-        line.exit_isearch(restore_original_line=True)
-        event.input_processor.pop_input_mode()
-        search_line.reset()
 
     @handle(Keys.ControlJ, in_mode=InputMode.INCREMENTAL_SEARCH)
     @handle(Keys.ControlM, in_mode=InputMode.INCREMENTAL_SEARCH)

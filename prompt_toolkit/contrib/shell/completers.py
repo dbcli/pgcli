@@ -33,3 +33,18 @@ class Path(object):
 class Directory(Path):
     _include_files = False
 
+
+class ExecutableInPATH(object):
+    """
+    Complete on the names of all the executables that are found in the PATH
+    environment variable.
+    """
+    def complete(self, text):
+        paths = os.environ.get('PATH', '').split(':')
+
+        for p in paths:
+            if os.path.isdir(p):
+                for filename in os.listdir(p):
+                    if filename.startswith(text):
+                        if os.access(os.path.join(p, filename), os.X_OK):
+                            yield Completion(filename, -len(text))

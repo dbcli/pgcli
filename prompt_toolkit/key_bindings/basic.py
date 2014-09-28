@@ -113,10 +113,6 @@ def basic_bindings(registry, cli_ref):
         else:
             cli.set_exit()
 
-    @handle(Keys.ControlE)
-    def _(event):
-        line.cursor_position += line.document.get_end_of_line_position()
-
     @handle(Keys.ControlI, in_mode=InputMode.INSERT)
     def _(event):
         r"""
