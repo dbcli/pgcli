@@ -399,6 +399,9 @@ class CommandLineInterface(object):
             os.system(command.encode('utf-8'))
             raw_input('\nPress ENTER to continue...')
 
+        self.renderer.reset()
+        self.renderer.request_absolute_cursor_position()
+
     @property
     def is_exiting(self):
         return self._exit_flag
