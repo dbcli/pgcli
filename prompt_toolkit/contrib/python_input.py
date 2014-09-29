@@ -517,7 +517,7 @@ class PythonCommandLineInterface(CommandLineInterface):
             style=style,
             key_binding_factories=key_binding_factories,
             line=line,
-            async_autocomplete_on_text_insert=True)
+            create_async_autocompleters=True)
 
         def on_input_timeout():
             """

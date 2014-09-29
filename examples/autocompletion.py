@@ -85,7 +85,7 @@ def main():
                    layout=Layout(before_input=DefaultPrompt('Give some animals: '),
                                  menus=[CompletionMenu()]),
                    line=Line(completer=AnimalCompleter()),
-                   async_autocomplete_on_text_insert=True,
+                   create_async_autocompleters=True,
             )
 
     print('Press tab to complete')
