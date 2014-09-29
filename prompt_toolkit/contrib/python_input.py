@@ -181,7 +181,7 @@ def python_bindings(registry, cli_ref):
             """
             Enable/Disable multiline mode.
             """
-            line.is_multiline = not line.is_multiline
+            line.always_multiline = not line.always_multiline
 
     @handle(Keys.Tab, in_mode=InputMode.INSERT)
     def _(event):
