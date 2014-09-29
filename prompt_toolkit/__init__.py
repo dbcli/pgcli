@@ -238,10 +238,8 @@ class CommandLineInterface(object):
                 calls_from_executor, self._calls_from_executor = self._calls_from_executor, []
                 for c in calls_from_executor:
                     c()
-
-                timeout = None
             else:
-                #
+                # Handle input timeout.
                 self.on_input_timeout()
                 timeout = None
 
