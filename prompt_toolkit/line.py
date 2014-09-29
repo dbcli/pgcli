@@ -584,8 +584,15 @@ class Line(object):
         if not self.isearch_state:
             self.start_isearch()
 
-        # When `text` is not a suffix of the search string that we had.
-        if not text.startswith(self.isearch_state.isearch_text):
+        # When backspace has been pressed.
+        if self.isearch_state.no_match_from_index and \
+                self.isearch_state.isearch_text.startswith(text):
+            if len(text) < self.isearch_state.no_match_from_index:
+                self.isearch_state.no_match_from_index = None
+
+        # When not appending text.
+        # (When `text` is not a suffix of the search string that we had.)
+        elif not text.startswith(self.isearch_state.isearch_text):
             self.isearch_state.no_match_from_index = None
 
             self.working_index = self.isearch_state.original_working_index
