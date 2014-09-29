@@ -4,14 +4,16 @@ ptpython: Interactive Python shell.
 Usage:
     ptpython [ --vi ] [ --history=<filename> ] [ --no-colors ]
              [ --autocompletion=<type> ] [ --always-multiline ]
+             [ --interactive=<filename> ]
     ptpython -h | --help
 
 Options:
-    --vi                    : Use Vi keybindings instead of Emacs bindings.
-    --history=<filename>    : Path to history file.
-    --autocompletion=<type> : Type of autocompletion. This can be 'popup-menu'
-                              or 'horizontal-menu'.
-    --always-multiline      : Always enable multiline mode.
+    --vi                     : Use Vi keybindings instead of Emacs bindings.
+    --history=<filename>     : Path to history file.
+    --autocompletion=<type>  : Type of autocompletion. This can be 'popup-menu'
+                               or 'horizontal-menu'.
+    --always-multiline       : Always enable multiline mode.
+    --interactive=<filename> : Start interactive shell after executing this file.
 
 Other environment variables:
 PYTHONSTARTUP: file executed on interactive startup (no default)
@@ -52,12 +54,18 @@ def _run_repl():
     always_multiline = bool(a['--always-multiline'])
 
     # Startup path
-    startup_path = os.environ.get('PYTHONSTARTUP', None)
+    startup_paths = []
+    if 'PYTHONSTARTUP' in os.environ:
+        startup_paths.append(os.environ['PYTHONSTARTUP'])
+
+    # --interactive
+    if a['--interactive']:
+        startup_paths.append(a['--interactive'])
 
     # Run interactive shell.
     embed(globals_, locals_, vi_mode=vi_mode, history_filename=history_filename,
                     no_colors=no_colors, autocompletion_style=autocompletion_style,
-                    startup_path=startup_path, always_multiline=always_multiline)
+                    startup_paths=startup_paths, always_multiline=always_multiline)
 
 if __name__ == '__main__':
     _run_repl()

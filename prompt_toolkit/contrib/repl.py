@@ -30,11 +30,13 @@ __all__ = ('PythonRepl', 'embed')
 
 
 class PythonRepl(PythonCommandLineInterface):
-    def start_repl(self, startup_path=None):
+    def start_repl(self, startup_paths=None):
         """
         Start the Read-Eval-Print Loop.
+
+        :param startup_paths: Array of paths to Python files.
         """
-        self._execute_startup(startup_path)
+        self._execute_startup(startup_paths)
 
         # Run REPL loop until Exit.
         try:
@@ -59,14 +61,15 @@ class PythonRepl(PythonCommandLineInterface):
         except Exit:
             pass
 
-    def _execute_startup(self, startup_path):
+    def _execute_startup(self, startup_paths):
         """
         Load and execute startup file.
         """
-        if startup_path:
-            with open(startup_path, 'r') as f:
-                code = compile(f.read(), startup_path, 'exec')
-                exec_(code, self.globals, self.locals)
+        if startup_paths:
+            for path in startup_paths:
+                with open(path, 'r') as f:
+                    code = compile(f.read(), path, 'exec')
+                    exec_(code, self.globals, self.locals)
 
     def _execute(self, line):
         """
@@ -120,7 +123,7 @@ class PythonRepl(PythonCommandLineInterface):
 
 
 def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_colors=False,
-          autocompletion_style=AutoCompletionStyle.POPUP_MENU, startup_path=None, always_multiline=False):
+          autocompletion_style=AutoCompletionStyle.POPUP_MENU, startup_paths=None, always_multiline=False):
     """
     Call this to embed  Python shell at the current point in your program.
     It's similar to `IPython.embed` and `bpython.embed`. ::
@@ -133,4 +136,4 @@ def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_co
     cli = PythonRepl(globals, locals, vi_mode=vi_mode, history_filename=history_filename,
                      style=(None if no_colors else PythonStyle),
                      autocompletion_style=autocompletion_style, always_multiline=always_multiline)
-    cli.start_repl(startup_path=startup_path)
+    cli.start_repl(startup_paths=startup_paths)
