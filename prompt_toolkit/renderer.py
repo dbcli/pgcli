@@ -573,10 +573,12 @@ class Renderer(object):
         """
         Clear screen and go to 0,0
         """
+        # Erase current output first.
+        self.erase()
+
+        # Send "Erase Screen" command and go to (0, 0).
         self._stdout.write(TerminalCodes.ERASE_SCREEN)
-        self._stdout.write(TerminalCodes.RESET_ATTRIBUTES)
         self._stdout.write(TerminalCodes.CURSOR_GOTO(0, 0))
         self._stdout.flush()
 
-        self.reset()
         self.request_absolute_cursor_position()
