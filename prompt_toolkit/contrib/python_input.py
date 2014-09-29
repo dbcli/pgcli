@@ -101,6 +101,8 @@ class PythonStyle(Style):
         Token.Prompt.Arg:              'noinherit',
         Token.Prompt.Arg.Text:          'bold',
 
+        Token.Layout.Toolbar.System.Prefix: '#44ffff noinherit',
+
         Token.Toolbar:                 'bg:#222222 #aaaaaa',
         Token.Toolbar.Off:             'bg:#222222 #888888',
         Token.Toolbar.On:              'bg:#222222 #ffffff',

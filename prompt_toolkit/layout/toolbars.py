@@ -93,7 +93,7 @@ class SystemToolbar(Toolbar):
         super(SystemToolbar, self).__init__(token=token)
 
         # We use a nested single-line-no-wrap layout for this.
-        self.layout = Layout(before_input=Prompt(':!'),
+        self.layout = Layout(before_input=Prompt('Shell command: ', token=token.Prefix),
                              lexer=BashLexer,
                              line_name='system')
 
