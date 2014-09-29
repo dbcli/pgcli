@@ -130,12 +130,12 @@ class Line(object):
 
         self.__cursor_position = 0
 
-        self.reset()
-
         # Events
         self.onTextChanged = EventHook()
         self.onTextInsert = EventHook()
         self.onCursorPositionChanged = EventHook()
+
+        self.reset()
 
     def reset(self, initial_value=''):
         self.cursor_position = len(initial_value)
@@ -193,6 +193,9 @@ class Line(object):
 
         # Note that the cursor position can change if we have a selection the
         # new position of the cursor determines the end of the selection.
+
+        # fire 'onCursorPositionChanged' event.
+        self.onCursorPositionChanged.fire()
 
     @property
     def working_index(self):
