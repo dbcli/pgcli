@@ -4,6 +4,7 @@ Layout representation.
 from __future__ import unicode_literals
 
 from pygments.token import Token
+from ..enums import InputMode
 from ..renderer import Screen, Size, Point, Char
 
 
@@ -256,6 +257,9 @@ class Layout(object):
         return return_value
 
     def need_to_show_completion_menu(self, cli): # XXX: remove
+        if cli.input_processor.input_mode in (InputMode.SYSTEM, InputMode.INCREMENTAL_SEARCH):
+            return False
+
         return self.menus and self._line(cli).complete_state
 
     def write_to_screen(self, cli, screen, min_height):
