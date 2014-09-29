@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from pygments.token import Token
+from ..enums import InputMode
 
 __all__ = (
     'CompletionMenu',
@@ -20,8 +21,18 @@ class CompletionMenu(object):
     progress_button_token = Token.CompletionMenu.ProgressButton
     progress_bar_token = Token.CompletionMenu.ProgressBar
 
-    def __init__(self, max_height=5):
+    def __init__(self, max_height=5, line_name='default'):
         self.max_height = max_height
+        self.line_name = line_name
+
+    def is_visible(self, cli):
+        """
+        True when this menu is visible.
+        """
+        if cli.input_processor.input_mode in (InputMode.SYSTEM, InputMode.INCREMENTAL_SEARCH):
+            return False
+
+        return bool(cli.lines[self.line_name].complete_state)
 
     def get_height(self, complete_state):
         """

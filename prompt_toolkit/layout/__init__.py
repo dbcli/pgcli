@@ -216,7 +216,7 @@ class Layout(object):
                 self.vertical_scroll = (temp_screen.cursor_position.y + 1) - max_height
 
             # Scroll down if we need space for the menu.
-            if self.need_to_show_completion_menu(cli):
+            if self._need_to_show_completion_menu(cli):
                 menu_size = self.menus[0].get_height(self._line(cli).complete_state)
                 if temp_screen.cursor_position.y - self.vertical_scroll >= max_height - menu_size:
                     self.vertical_scroll = (temp_screen.cursor_position.y + 1) - (max_height - menu_size)
@@ -240,7 +240,7 @@ class Layout(object):
         y_after_input = y + top_margin
 
         # Show completion menu.
-        if not is_done and self.need_to_show_completion_menu(cli):
+        if not is_done and self._need_to_show_completion_menu(cli):
             y, x = temp_screen._cursor_mappings[self._line(cli).complete_state.original_document.cursor_position]
             self.menus[0].write(screen, (y - self.vertical_scroll + top_margin, x + left_margin_width), self._line(cli).complete_state)
 
@@ -256,11 +256,8 @@ class Layout(object):
 
         return return_value
 
-    def need_to_show_completion_menu(self, cli): # XXX: remove
-        if cli.input_processor.input_mode in (InputMode.SYSTEM, InputMode.INCREMENTAL_SEARCH):
-            return False
-
-        return self.menus and self._line(cli).complete_state
+    def _need_to_show_completion_menu(self, cli):
+        return self.menus and self.menus[0].is_visible(cli)
 
     def write_to_screen(self, cli, screen, min_height):
         """
