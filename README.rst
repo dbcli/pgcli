@@ -20,6 +20,7 @@ Features:
 - Reverse and forward incremental search.
 - Both Python 3 and Python 2.7 support.
 - Works well with Unicode double width characters. (Chinese input.)
+- Selecting text for copy/paste. (Both Emacs and Vi style.)
 - No global state.
 - Code written with love.
 
@@ -82,6 +83,15 @@ terminal, you have to check the "Use option as meta key" checkbox in your
 terminal settings. For iTerm2, you have to check "Left option acts as +Esc" in
 the options.)
 
+Other fatures
+*************
+
+Running system commands: Press ``Meta-!`` in Emacs mode or just ``!`` in Vi
+navigation mode to see the "Shell command" prompt. There you can enter system
+commands without leaving the REPL.
+
+Selecting text: Press ``Control+Space`` in Emacs mode on ``V`` (major V) in Vi
+navigation mode.
 
 You love IPython?
 *****************
