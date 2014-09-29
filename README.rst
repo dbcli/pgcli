@@ -83,8 +83,8 @@ terminal, you have to check the "Use option as meta key" checkbox in your
 terminal settings. For iTerm2, you have to check "Left option acts as +Esc" in
 the options.)
 
-Other fatures
-*************
+Other features
+***************
 
 Running system commands: Press ``Meta-!`` in Emacs mode or just ``!`` in Vi
 navigation mode to see the "Shell command" prompt. There you can enter system
