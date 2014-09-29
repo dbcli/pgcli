@@ -32,7 +32,7 @@ from .line import Line
 from .layout import Layout
 from .layout.prompt import DefaultPrompt
 from .renderer import Renderer
-from .utils import raw_mode, cooked_mode, call_on_sigwinch
+from .utils import raw_mode, cooked_mode, call_on_sigwinch, EventHook
 from .history import History
 
 from pygments.styles.default import DefaultStyle
@@ -143,6 +143,17 @@ class CommandLineInterface(object):
 
         self._reset()
 
+        # Events
+
+        #: Called when there is no input for x seconds.
+        #:   At this event, you can for instance start a background thread to
+        #:   generate information about the input. E.g. get the code signature
+        #:   of the function below the cursor position in the case of a REPL.
+        self.onInputTimeout = EventHook()
+
+        self.onReadInputStart = EventHook()
+        self.onReadInputEnd = EventHook()
+
     @property
     def line(self):
         return self.lines['default']
@@ -199,21 +210,6 @@ class CommandLineInterface(object):
         if self._schedule_pipe:
             os.write(self._schedule_pipe[1], b'x')
 
-    def on_input_timeout(self):
-        """
-        Called when there is no input for x seconds.
-        """
-        # At this place, you can for instance start a background thread to
-        # generate information about the input. E.g. the code signature of the
-        # function below the cursor position in the case of a REPL.
-        pass
-
-    def on_read_input_start(self):  # XXX: replace with EventHook
-        pass
-
-    def on_read_input_end(self):  # XXX: replace with EventHook
-        pass
-
     def _get_char_loop(self):
         """
         The input 'event loop'.
@@ -239,8 +235,8 @@ class CommandLineInterface(object):
                 for c in calls_from_executor:
                     c()
             else:
-                # Handle input timeout.
-                self.on_input_timeout()
+                # Fire input timeout event.
+                self.onInputTimeout.fire()
                 timeout = None
 
     def _read_from_stdin(self):
@@ -302,8 +298,8 @@ class CommandLineInterface(object):
                 self.layout.reset()
             reset_line()
 
-            # Trigger read_start.
-            self.on_read_input_start()
+            # Trigger onReadInputStart event.
+            self.onReadInputStart.fire()
 
             with raw_mode(self.stdin.fileno()):
                 self.inputstream.prepare_terminal(self.stdout)
@@ -371,8 +367,8 @@ class CommandLineInterface(object):
                 os.close(schedule_pipe[0])
                 os.close(schedule_pipe[1])
 
-            # Trigger read_end.
-            self.on_read_input_end()
+            # Trigger onReadInputEnd event.
+            self.onReadInputEnd.fire()
 
             self.is_reading_input = False
 

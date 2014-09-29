@@ -519,43 +519,45 @@ class PythonCommandLineInterface(CommandLineInterface):
             line=line,
             async_autocomplete_on_text_insert=True)
 
-    def on_input_timeout(self):
-        """
-        When there is no input activity,
-        in another thread, get the signature of the current code.
-        """
-        # Never run multiple get-signature threads.
-        if self.get_signatures_thread_running:
-            return
-        self.get_signatures_thread_running = True
+        def on_input_timeout():
+            """
+            When there is no input activity,
+            in another thread, get the signature of the current code.
+            """
+            # Never run multiple get-signature threads.
+            if self.get_signatures_thread_running:
+                return
+            self.get_signatures_thread_running = True
 
-        document = self.line.document
+            document = self.line.document
 
-        def run():
-            script = get_jedi_script_from_document(document, self.locals, self.globals)
+            def run():
+                script = get_jedi_script_from_document(document, self.locals, self.globals)
 
-            # Show signatures in help text.
-            if script:
-                try:
-                    signatures = script.call_signatures()
-                except ValueError:
-                    # e.g. in case of an invalid \\x escape.
+                # Show signatures in help text.
+                if script:
+                    try:
+                        signatures = script.call_signatures()
+                    except ValueError:
+                        # e.g. in case of an invalid \\x escape.
+                        signatures = []
+                    except Exception:
+                        # Sometimes we still get an exception (TypeError), because
+                        # of probably bugs in jedi. We can silence them.
+                        signatures = []
+                else:
                     signatures = []
-                except Exception:
-                    # Sometimes we still get an exception (TypeError), because
-                    # of probably bugs in jedi. We can silence them.
-                    signatures = []
-            else:
-                signatures = []
 
-            self.get_signatures_thread_running = False
+                self.get_signatures_thread_running = False
 
-            # Set signatures and redraw if the text didn't change in the
-            # meantime. Otherwise request new signatures.
-            if self.line.text == document.text:
-                self.line.signatures = signatures
-                self.request_redraw()
-            else:
-                self.on_input_timeout()
+                # Set signatures and redraw if the text didn't change in the
+                # meantime. Otherwise request new signatures.
+                if self.line.text == document.text:
+                    self.line.signatures = signatures
+                    self.request_redraw()
+                else:
+                    self.on_input_timeout()
 
-        self.run_in_executor(run)
+            self.run_in_executor(run)
+
+        self.onInputTimeout += on_input_timeout
