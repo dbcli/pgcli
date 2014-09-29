@@ -104,7 +104,7 @@ class Line(object):
     also implements the history, undo stack, reverse search and the completion
     state.
 
-    :attr completer : :class:`~prompt_toolkit.completion.Completer` class.
+    :attr completer : :class:`~prompt_toolkit.completion.Completer` instance.
     :attr history: :class:`~prompt_toolkit.history.History` instance.
     :attr callbacks: :class:`~.Callbacks` instance.
 
@@ -779,7 +779,9 @@ class Line(object):
         self.selection_state = None
 
     def open_in_editor(self):
-        """ Open code in editor. """
+        """
+        Open code in editor.
+        """
         # Write to temporary file
         descriptor, filename = tempfile.mkstemp(self.tempfile_suffix)
         os.write(descriptor, self.text.encode('utf-8'))
