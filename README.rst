@@ -107,13 +107,15 @@ Using as a library
 ------------------
 
 This is a library which allows you to build highly customizable input prompts.
-Every step (from key bindings, to line behaviour until the renderer) can be
-customized.
+Every step (key bindings, layout, etc..) can be customized.
 
 Note that this is work in progress. Many things work, but code is still
-refactored a lot and APIs are changing. (They become better.)
+refactored a lot and APIs can change (they will become even better), so be
+prepared to handle these changes.
 
-A simple example looks like this:
+Certainly look in the ``examples`` directory to see what is possible.
+
+A very simple example:
 
 .. code:: python
 
@@ -121,7 +123,6 @@ A simple example looks like this:
     from prompt_toolkit import Exit
 
     def main():
-        # Create CommandLineInterface
         cli = CommandLineInterface()
 
         try:
@@ -134,8 +135,6 @@ A simple example looks like this:
 
     if __name__ == '__main__':
         main()
-
-Have a look at the example directory to see what is possible.
 
 
 FAQ
