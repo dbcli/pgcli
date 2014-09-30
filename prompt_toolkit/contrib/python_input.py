@@ -369,7 +369,7 @@ class PythonToolbar(Toolbar):
             version = sys.version_info
             append((TB, ' - '))
             append((TB.PythonVersion, '%s %i.%i.%i' % (platform.python_implementation(),
-                   version.major, version.minor, version.micro)))
+                   version[0], version[1], version[2])))
 
         # Adjust toolbar width.
         if len(result) > width:

@@ -140,9 +140,9 @@ class Layout(object):
                 else:
                     token = Token.IncrementalSearchMatch
 
-                highlighted_characters.update({
-                    x: token for x in range(index, index + len(line.isearch_state.isearch_text))
-                })
+                highlighted_characters.update(dict([
+                    (x, token) for x in range(index, index + len(line.isearch_state.isearch_text))
+                ]))
 
         # In case of selection, highlight all matches.
         selection_range = line.document.selection_range()
