@@ -28,7 +28,7 @@ Features:
 Limitations:
 
 - Only for vt100-compatible terminals. (Actually, all terminals in OS X and
-  Linux systems are VT100 compatible the days, so that should not be an issue.
+  Linux systems are VT100 compatible these days, so that should not be an issue.
   There is no Windows support, however.)
 
 Feel free to create tickets for bugs and feature requests, and create pull
