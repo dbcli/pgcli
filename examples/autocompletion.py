@@ -56,13 +56,6 @@ class AnimalCompleter(Completer):
         'turtle',
     ]
 
-    def complete_after_insert_text(self, document):
-        """
-        Open completion menu when we type a character.
-        (Except if we typed whitespace.)
-        """
-        return not document.char_before_cursor.isspace()
-
     def get_completions(self, document):
         word_before_cursor = document.get_word_before_cursor()
 

@@ -79,7 +79,7 @@ class CommandLineInterface(object):
     # can also be instance methods that pass some additional parameters to the
     # class.
 
-    #: When to call the `on_input_timeout` callback.
+    #: When to trigger the `onInputTimeout` event.
     input_timeout = .5
 
     stdin_decoder_cls = getincrementaldecoder('utf-8')
