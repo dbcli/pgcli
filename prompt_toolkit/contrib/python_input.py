@@ -556,7 +556,7 @@ class PythonCommandLineInterface(CommandLineInterface):
                     self.line.signatures = signatures
                     self.request_redraw()
                 else:
-                    self.on_input_timeout()
+                    on_input_timeout()
 
             self.run_in_executor(run)
 
