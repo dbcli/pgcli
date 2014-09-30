@@ -4,7 +4,7 @@ Python Prompt Toolkit
 |Build Status|
 
 ``prompt_toolkit`` is a Library for building powerful interactive command lines
-in Python. It ships with a nice interative Python shell (called ``ptpython``)
+in Python. It ships with a nice interactive Python shell (called ``ptpython``)
 built on top of the library.
 
 ``prompt_toolkit`` could be a replacement for ``readline``, but it can be much
@@ -14,9 +14,9 @@ Features:
 
 - Pure Python.
 - Syntax highlighting of the input while typing. (For instance, with a Pygments lexer.)
-- Multiline input editing.
+- Multi-line input editing.
 - Advanced code completion.
-- Both Emacs and Vi keybindings. (Similar to readline.)
+- Both Emacs and Vi key bindings. (Similar to readline.)
 - Reverse and forward incremental search.
 - Both Python 3 and Python 2.7 support.
 - Works well with Unicode double width characters. (Chinese input.)
@@ -27,7 +27,7 @@ Features:
 
 Limitations:
 
-- Only for vt100-compatible terminals. (Actually, all terminals in OS X and
+- Only for VT100-compatible terminals. (Actually, all terminals in OS X and
   Linux systems are VT100 compatible these days, so that should not be an issue.
   There is no Windows support, however.)
 
@@ -46,15 +46,15 @@ Installation
 The Python repl
 ---------------
 
-Run ``ptpython`` to get an interactive Python prompt with syntaxt highlighting,
+Run ``ptpython`` to get an interactive Python prompt with syntax highlighting,
 code completion, etc...
 
 .. image :: docs/images/ptpython-screenshot.png
 
-If you prefer to have Vi keybindings (which currently are more completely
+If you prefer to have Vi key bindings (which currently are more completely
 implemented than the Emacs bindings), run ``ptpython --vi``.
 
-If you want to embed the repl inside your application at one point, do:
+If you want to embed the REPL inside your application at one point, do:
 
 .. code:: python
 
@@ -74,10 +74,10 @@ In Vi-mode, you can also use ``Ctrl+N`` and ``Ctrl+P``.
 Multiline editing
 *****************
 
-Usually, multiline editing mode will automatically turn on when you press enter
+Usually, multi-line editing mode will automatically turn on when you press enter
 after a colon, however you can always turn it on by pressing ``F7``.
 
-To execute the input in multiline mode, you can either press ``Alt+Enter``, or
+To execute the input in multi-line mode, you can either press ``Alt+Enter``, or
 ``Esc`` followed by ``Enter``. (If you want the first to work in the OS X
 terminal, you have to check the "Use option as meta key" checkbox in your
 terminal settings. For iTerm2, you have to check "Left option acts as +Esc" in
