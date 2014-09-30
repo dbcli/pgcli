@@ -14,11 +14,12 @@ Author: Jonathan Slenders
 """
 from __future__ import unicode_literals
 
+import errno
 import fcntl
 import os
 import select
+import six
 import sys
-import errno
 import threading
 
 from codecs import getincrementaldecoder
@@ -392,7 +393,7 @@ class CommandLineInterface(object):
         # Run system command.
         with cooked_mode(self.stdin.fileno()):
             os.system(command.encode('utf-8'))
-            raw_input('\nPress ENTER to continue...')
+            (input if six.PY3 else raw_input)('\nPress ENTER to continue...')
 
         self.renderer.reset()
         self.renderer.request_absolute_cursor_position()
