@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from ..line import ClipboardData, SelectionType
+from ..line import ClipboardData, SelectionType, indent, unindent
 from ..keys import Keys
 from ..enums import InputMode, IncrementalSearchDirection
 
@@ -139,6 +139,7 @@ def emacs_bindings(registry, cli_ref):
         Handle Alt + digit in the `meta_digit` method.
         """
         @handle(Keys.Escape, c, in_mode=InputMode.INSERT)
+        @handle(Keys.Escape, c, in_mode=InputMode.SELECTION)
         def _(event):
             event.append_to_arg_count(c)
 
@@ -460,3 +461,29 @@ def emacs_bindings(registry, cli_ref):
         M-'!' opens the system prompt.
         """
         event.input_processor.push_input_mode(InputMode.SYSTEM)
+
+    @handle(Keys.ControlC, '>', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Indent selected text.
+        """
+        line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
+
+        from_, to = line.document.selection_range()
+        from_, _ = line.document.translate_index_to_position(from_)
+        to, _ = line.document.translate_index_to_position(to)
+
+        indent(line, from_ - 1, to, count=event.arg)  # XXX: why does translate_index_to_position return 1-based indexing???
+        event.input_processor.pop_input_mode()
+
+    @handle(Keys.ControlC, '<', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Unindent selected text.
+        """
+        from_, to = line.document.selection_range()
+        from_, _ = line.document.translate_index_to_position(from_)
+        to, _ = line.document.translate_index_to_position(to)
+
+        unindent(line, from_ - 1, to, count=event.arg)
+        event.input_processor.pop_input_mode()

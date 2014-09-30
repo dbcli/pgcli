@@ -18,7 +18,11 @@ import subprocess
 import tempfile
 
 __all__ = (
+    'ClipboardData',
     'Line',
+    'SelectionType',
+    'indent',
+    'unindent',
 )
 
 
@@ -831,3 +835,36 @@ class Line(object):
                 except OSError:
                     # Executable does not exist, try the next one.
                     pass
+
+
+def indent(line, from_row, to_row, count=1):
+    """
+    Indent text of the `Line` object.
+    """
+    current_row = line.document.cursor_position_row
+    line_range = range(from_row, to_row)
+
+    line.transform_lines(line_range, lambda l: '    ' * count + l)
+
+    line.cursor_position = line.document.translate_row_col_to_index(current_row, 0)
+    line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
+
+
+def unindent(line, from_row, to_row, count=1):
+    """
+    Unindent text of the `Line` object.
+    """
+    current_row = line.document.cursor_position_row
+    line_range = range(from_row, to_row)
+
+    def transform(text):
+        remove = '    ' * count
+        if text.startswith(remove):
+            return text[len(remove):]
+        else:
+            return text.lstrip()
+
+    line.transform_lines(line_range, transform)
+
+    line.cursor_position = line.document.translate_row_col_to_index(current_row, 0)
+    line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)

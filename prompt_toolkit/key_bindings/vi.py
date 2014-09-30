@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from ..enums import IncrementalSearchDirection, InputMode
 from ..keys import Keys
-from ..line import ClipboardData, ClipboardDataType
+from ..line import ClipboardData, ClipboardDataType, SelectionType, indent, unindent
 from ..selection import SelectionType
 
 from .basic import basic_bindings
@@ -420,35 +420,16 @@ def vi_bindings(registry, cli_ref):
         """
         Indent lines.
         """
-        current_line = line.document.cursor_position_row
-        _indent(current_line, current_line + event.arg)
-
-    def _indent(from_line, to_line, count=1):
-        line_range = range(from_line, to_line)
-        line.transform_lines(line_range, lambda l: '    ' * count + l)
-
-        line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
-
-    def _unindent(from_line, to_line, count=1):
-        line_range = range(from_line, to_line)
-
-        def transform(text):
-            remove = '    ' * count
-            if text.startswith(remove):
-                return text[len(remove):]
-            else:
-                return text.lstrip()
-
-        line.transform_lines(line_range, transform)
-        line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
+        current_row = line.document.cursor_position_row
+        indent(line, current_row, current_row + event.arg)
 
     @handle('<', '<', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
         Unindent lines.
         """
-        current_line = line.document.cursor_position_row
-        _unindent(current_line, current_line + event.arg)
+        current_row = line.document.cursor_position_row
+        unindent(line, current_row, current_row + event.arg)
 
     @handle('>', in_mode=InputMode.SELECTION)
     def _(event):
@@ -461,7 +442,7 @@ def vi_bindings(registry, cli_ref):
             from_, _ = line.document.translate_index_to_position(from_)
             to, _ = line.document.translate_index_to_position(to)
 
-            _indent(from_ - 1, to, count=event.arg)  # XXX: why does translate_index_to_position return 1-based indexing???
+            indent(line, from_ - 1, to, count=event.arg)  # XXX: why does translate_index_to_position return 1-based indexing???
         event.input_processor.pop_input_mode()
 
     @handle('<', in_mode=InputMode.SELECTION)
@@ -475,7 +456,7 @@ def vi_bindings(registry, cli_ref):
             from_, _ = line.document.translate_index_to_position(from_)
             to, _ = line.document.translate_index_to_position(to)
 
-            _unindent(from_ - 1, to, count=event.arg)
+            unindent(line, from_ - 1, to, count=event.arg)
         event.input_processor.pop_input_mode()
 
     @handle('O', in_mode=InputMode.VI_NAVIGATION)
