@@ -45,8 +45,8 @@ class IPythonValidator(PythonValidator):
 
 
 class IPythonCompleter(PythonCompleter):
-    def __init__(self, globals, locals, magics_manager):
-        super(IPythonCompleter, self).__init__(globals, locals)
+    def __init__(self, get_globals, get_locals, magics_manager):
+        super(IPythonCompleter, self).__init__(get_globals, get_locals)
         self._magics_manager = magics_manager
 
     def get_completions(self, document):
@@ -83,7 +83,7 @@ class IPythonCommandLineInterface(PythonCommandLineInterface):
     Override our `PythonCommandLineInterface` to add IPython specific stuff.
     """
     def __init__(self, ipython_shell, *a, **kw):
-        kw['_completer'] = IPythonCompleter(kw['globals'], kw['globals'], ipython_shell.magics_manager)
+        kw['_completer'] = IPythonCompleter(kw['get_globals'], kw['get_globals'], ipython_shell.magics_manager)
         kw['_validator'] = IPythonValidator()
 
         super(IPythonCommandLineInterface, self).__init__(*a, **kw)
@@ -103,8 +103,11 @@ class InteractiveShellEmbed(_InteractiveShellEmbed):
 
         super(InteractiveShellEmbed, self).__init__(*a, **kw)
 
+        def get_globals():
+            return self.user_ns
+
         self._cli = IPythonCommandLineInterface(
-            self, globals=self.user_ns, vi_mode=vi_mode,
+            self, get_globals=get_globals, vi_mode=vi_mode,
             history_filename=history_filename,
             autocompletion_style=autocompletion_style,
             always_multiline=always_multiline)

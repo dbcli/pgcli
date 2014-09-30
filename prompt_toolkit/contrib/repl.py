@@ -69,7 +69,7 @@ class PythonRepl(PythonCommandLineInterface):
             for path in startup_paths:
                 with open(path, 'r') as f:
                     code = compile(f.read(), path, 'exec')
-                    exec_(code, self.globals, self.locals)
+                    exec_(code, self.get_globals(), self.get_locals())
 
     def _execute(self, line):
         """
@@ -81,8 +81,9 @@ class PythonRepl(PythonCommandLineInterface):
         else:
             # Try eval first
             try:
-                result = eval(line, self.globals, self.locals)
-                self.locals['_'] = self.locals['_%i' % self.current_statement_index] = result
+                result = eval(line, self.get_globals(), self.get_locals())
+                locals = self.get_locals()
+                locals['_'] = locals['_%i' % self.current_statement_index] = result
 
                 if result is not None:
                     try:
@@ -96,7 +97,7 @@ class PythonRepl(PythonCommandLineInterface):
 
             # If not a valid `eval` expression, run using `exec` instead.
             except SyntaxError:
-                exec_(line, self.globals, self.locals)
+                exec_(line, self.get_globals(), self.get_locals())
 
             self.stdout.write('\n')
             self.stdout.flush()
@@ -133,7 +134,15 @@ def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_co
 
     :param vi_mode: Boolean. Use Vi instead of Emacs key bindings.
     """
-    cli = PythonRepl(globals, locals, vi_mode=vi_mode, history_filename=history_filename,
+    globals = globals or {}
+    locals = locals or globals
+
+    def get_globals():
+        return globals
+    def get_locals():
+        return locals
+
+    cli = PythonRepl(get_globals, get_locals, vi_mode=vi_mode, history_filename=history_filename,
                      style=(None if no_colors else PythonStyle),
                      autocompletion_style=autocompletion_style, always_multiline=always_multiline)
     cli.start_repl(startup_paths=startup_paths)

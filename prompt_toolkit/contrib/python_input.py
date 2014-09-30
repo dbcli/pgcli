@@ -435,15 +435,15 @@ def get_jedi_script_from_document(document, locals, globals):
 
 
 class PythonCompleter(Completer):
-    def __init__(self, globals, locals):
+    def __init__(self, get_globals, get_locals):
         super(PythonCompleter, self).__init__()
 
-        self._globals = globals
-        self._locals = locals
+        self.get_globals = get_globals
+        self.get_locals = get_locals
 
     def get_completions(self, document):
         """ Ask jedi to complete. """
-        script = get_jedi_script_from_document(document, self._locals, self._globals)
+        script = get_jedi_script_from_document(document, self.get_locals(), self.get_globals())
 
         if script:
             for c in script.completions():
@@ -453,7 +453,7 @@ class PythonCompleter(Completer):
 
 class PythonCommandLineInterface(CommandLineInterface):
     def __init__(self,
-                 globals=None, locals=None,
+                 get_globals=None, get_locals=None,
                  stdin=None, stdout=None,
                  vi_mode=False, history_filename=None,
                  style=PythonStyle,
@@ -464,12 +464,12 @@ class PythonCommandLineInterface(CommandLineInterface):
                  _completer=None,
                  _validator=None):
 
-        self.globals = globals or {}
-        self.locals = locals or self.globals
+        self.get_globals = get_globals or (lambda: {})
+        self.get_locals = get_locals or self.get_globals
         self.always_multiline = always_multiline
         self.autocompletion_style = autocompletion_style
 
-        self.completer = _completer or PythonCompleter(self.globals, self.locals)
+        self.completer = _completer or PythonCompleter(self.get_globals, self.get_locals)
         validator = _validator or PythonValidator()
 
         layout = Layout(
@@ -532,7 +532,7 @@ class PythonCommandLineInterface(CommandLineInterface):
             document = self.line.document
 
             def run():
-                script = get_jedi_script_from_document(document, self.locals, self.globals)
+                script = get_jedi_script_from_document(document, self.get_locals(), self.get_globals())
 
                 # Show signatures in help text.
                 if script:
