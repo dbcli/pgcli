@@ -1,3 +1,27 @@
-Jan 25, 2014
+CHANGELOG
+=========
 
+0.19: 2014-09-30
+----------------
+Fixed:
+- Handle Jedi crashes.
+- Autocompletion in `ptipython`
+- Input validation in `ptipython`
+- Execution of system commands (in `ptpython`) in Python 3
+- Add current directory to sys.path for `ptpython`.
+- Minimal jedi and six version in setup.py
+
+New features
+- Python 2.6 support
+- C-C> and C-C< indent and unindent emacs key bindings.
+- `ptpython` can now also run python scripts, so aliasing of `ptpython` as
+  `python` will work better.
+
+0.18: 2014-09-29
+----------------
+- First official (beta) release.
+
+
+Jan 25, 2014
+------------
 first commit
