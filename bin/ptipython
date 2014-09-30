@@ -4,6 +4,7 @@ ptipython: IPython interactive shell with the `prompt_toolkit` front-end.
 Usage:
     ptpython [ --vi ] [ --history=<filename> ]
              [ --autocompletion=<type> ] [ --always-multiline ]
+             [--] [ <file> <arg>... ]
     ptpython -h | --help
 
 Options:
@@ -15,6 +16,7 @@ Options:
 """
 import docopt
 import os
+import six
 import sys
 
 from prompt_toolkit.contrib.ipython import embed
@@ -34,10 +36,9 @@ def _run_ipython():
 
     # Autocompletion type
     if a['--autocompletion'] in (
-                        AutoCompletionStyle.POPUP_MENU,
-                        AutoCompletionStyle.HORIZONTAL_MENU,
-                        AutoCompletionStyle.NONE
-                    ):
+            AutoCompletionStyle.POPUP_MENU,
+            AutoCompletionStyle.HORIZONTAL_MENU,
+            AutoCompletionStyle.NONE):
         autocompletion_style = a['--autocompletion']
     else:
         autocompletion_style = AutoCompletionStyle.POPUP_MENU
@@ -48,10 +49,15 @@ def _run_ipython():
     # Add the current directory to `sys.path`.
     sys.path.append('.')
 
-    # Run interactive shell.
-    embed(vi_mode=vi_mode, history_filename=history_filename,
-          autocompletion_style=autocompletion_style,
-          always_multiline=always_multiline)
+    # When a file has been given, run that, otherwise start the shell.
+    if a['<file>']:
+        sys.argv = [a['<file>']] + a['<arg>']
+        six.exec_(compile(open(a['<file>'], "rb").read(), a['<file>'], 'exec'))
+    else:
+        # Run interactive shell.
+        embed(vi_mode=vi_mode, history_filename=history_filename,
+              autocompletion_style=autocompletion_style,
+              always_multiline=always_multiline)
 
 
 if __name__ == '__main__':
