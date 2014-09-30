@@ -20,6 +20,7 @@ PYTHONSTARTUP: file executed on interactive startup (no default)
 """
 import docopt
 import os
+import sys
 
 from prompt_toolkit.contrib.repl import embed
 from prompt_toolkit.contrib.python_input import AutoCompletionStyle
@@ -61,6 +62,9 @@ def _run_repl():
     # --interactive
     if a['--interactive']:
         startup_paths.append(a['--interactive'])
+
+    # Add the current directory to `sys.path`.
+    sys.path.append('.')
 
     # Run interactive shell.
     embed(globals_, locals_, vi_mode=vi_mode, history_filename=history_filename,

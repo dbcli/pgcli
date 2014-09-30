@@ -15,6 +15,7 @@ Options:
 """
 import docopt
 import os
+import sys
 
 from prompt_toolkit.contrib.ipython import embed
 from prompt_toolkit.contrib.python_input import AutoCompletionStyle
@@ -43,6 +44,9 @@ def _run_ipython():
 
     # Always multiline
     always_multiline = bool(a['--always-multiline'])
+
+    # Add the current directory to `sys.path`.
+    sys.path.append('.')
 
     # Run interactive shell.
     embed(vi_mode=vi_mode, history_filename=history_filename,
