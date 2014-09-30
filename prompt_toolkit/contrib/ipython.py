@@ -31,8 +31,9 @@ class IPythonValidator(PythonValidator):
         if document.text.lstrip().startswith('%'):
             return
 
-        # Accept shell input
-        if document.text.lstrip().startswith('!'):
+        # Accept shell input and shell assignments.
+        # In Ipython you can do "a = !ls" or just "!ls"
+        if '!' in document.text:
             return
 
         # Accept text ending with '?' or '??'
