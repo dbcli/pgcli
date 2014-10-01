@@ -84,6 +84,18 @@ class IPythonCommandLineInterface(PythonCommandLineInterface):
         super(IPythonCommandLineInterface, self).__init__(*a, **kw)
         self.ipython_shell = ipython_shell
 
+    @property
+    def current_statement_index(self):
+        """
+        Take execution count from IPython shell.
+        """
+        return self.ipython_shell.execution_count
+
+    @current_statement_index.setter
+    def current_statement_index(self, value):
+        # Ignore.
+        pass
+
 
 class InteractiveShellEmbed(_InteractiveShellEmbed):
     """
