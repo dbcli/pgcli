@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 
 from pygments.lexers import PythonLexer
 from pygments.style import Style
-from pygments.token import Keyword, Operator, Number, Name, Error, Comment, Token
+from pygments.token import Keyword, Operator, Number, Name, Error, Comment, Token, String
 
 from prompt_toolkit import CommandLineInterface
 from prompt_toolkit.completion import Completer, Completion
@@ -63,72 +63,76 @@ class AutoCompletionStyle:
 class PythonStyle(Style):
     background_color = None
     styles = {
-        Keyword:                       '#ee00ee',
-        Operator:                      '#ff6666 bold',
-        Number:                        '#ff0000',
-        Name:                          '#008800',
-        Name.Namespace:                '#008800 underline',
-        Name.Decorator:                '#aa22ff',
+        # Build-ins from the Pygments lexer.
+        Comment:                                    '#0000dd',
+        Error:                                      '#000000 bg:#ff8888',
+        Keyword:                                    '#ee00ee',
+        Name.Decorator:                             '#aa22ff',
+        Name.Namespace:                             '#008800 underline',
+        Name:                                       '#008800',
+        Number:                                     '#ff0000',
+        Operator:                                   '#ff6666 bold',
+        String:                                     '#ba4444 bold',
 
-        Token.Literal.String:          '#ba4444 bold',
+        # Highlighting of search matches in document.
+        Token.SearchMatch:                          '#ffffff bg:#4444aa',
+        Token.SearchMatch.Current:                  '#ffffff bg:#44aa44',
 
-        Error:                         '#000000 bg:#ff8888',
-        Comment:                       '#0000dd',
-        Token.Bash:                    '#333333',
-        Token.IPython:                 '#660066',
+        # Highlighting of select text in document.
+        Token.SelectedText:                         '#ffffff bg:#6666aa',
 
-        Token.IncrementalSearchMatch:         '#ffffff bg:#4444aa',
-        Token.IncrementalSearchMatch.Current: '#ffffff bg:#44aa44',
+        # (Python) Prompt: "In [1]:"
+        Token.Prompt:                               'bold #008800',
 
-        Token.SelectedText:            '#ffffff bg:#6666aa',
+        # Line numbers.
+        Token.Layout.LeftMargin:                    '#aa6666',
 
-        # Signature highlighting.
-        Token.Signature:               '#888888',
-        Token.Signature.Operator:      'bold #888888',
-        Token.Signature.CurrentName:   'bold underline #888888',
+        # Search toolbar.
+        Token.Toolbar.Search:                       '#22aaaa noinherit',
+        Token.Toolbar.Search.Text:                  'noinherit',
+        Token.Toolbar.Search.Text.NoMatch:          'bg:#aa4444 #ffffff',
 
-        # Highlighting for the reverse-search prompt.
-        Token.Prompt:  'bold #008800',
-        Token.Layout.Toolbar.Search:             '#44ffff noinherit',
-        Token.Layout.Toolbar.Search.Text:        'noinherit',
-        Token.Layout.Toolbar.Search.Text.NoMatch: 'bg:#aa4444 #ffffff',
+        # System toolbar
+        Token.Toolbar.System.Prefix:                '#22aaaa noinherit',
 
-        Token.Layout.Toolbar.Arg:             '#44ffff noinherit',
-        Token.Layout.Toolbar.Arg.TExt:        'noinherit',
+        # "arg" toolbar.
+        Token.Toolbar.Arg:                          '#22aaaa noinherit',
+        Token.Toolbar.Arg.Text:                     'noinherit',
 
-        Token.Prompt.SecondLinePrefix: 'bold #888888',
-        Token.Prompt.LineNumber:       '#aa6666',
-        Token.Prompt.Arg:              'noinherit',
-        Token.Prompt.Arg.Text:          'bold',
+        # Signature toolbar.
+        Token.Toolbar.Signature:                    '#888888',
+        Token.Toolbar.Signature.CurrentName:        'bold underline #888888',
+        Token.Toolbar.Signature.Operator:           'bold #888888',
 
-        Token.Layout.Toolbar.System.Prefix: '#44ffff noinherit',
+        # Validation toolbar.
+        Token.Toolbar.Validation:                   'bg:#440000 #aaaaaa',
 
-        Token.Toolbar:                 'bg:#222222 #aaaaaa',
-        Token.Toolbar.Off:             'bg:#222222 #888888',
-        Token.Toolbar.On:              'bg:#222222 #ffffff',
-        Token.Toolbar.Mode:            'bg:#222222 #ffffaa',
-        Token.Toolbar.PythonVersion:   'bg:#222222 #ffffff bold',
+        # Status toolbar.
+        Token.Toolbar.Status:                       'bg:#222222 #aaaaaa',
+        Token.Toolbar.Status.InputMode:             'bg:#222222 #ffffaa',
+        Token.Toolbar.Status.Off:                   'bg:#222222 #888888',
+        Token.Toolbar.Status.On:                    'bg:#222222 #ffffff',
+        Token.Toolbar.Status.PythonVersion:         'bg:#222222 #ffffff bold',
 
-        # Completion menu
-        Token.CompletionMenu.Completion:             'bg:#888888 #ffffbb',
-        Token.CompletionMenu.Completion.Current:     'bg:#dddddd #000000',
-        Token.CompletionMenu.Meta.Current:           'bg:#bbbbbb #000000',
-        Token.CompletionMenu.Meta:                   'bg:#888888 #cccccc',
-        Token.CompletionMenu.ProgressBar:            'bg:#aaaaaa',
-        Token.CompletionMenu.ProgressButton:         'bg:#000000',
+        # Completer toolbar.
+        Token.Toolbar.Completer:                    'noinherit',
+        Token.Toolbar.Completer.Arrow:              'bold #888888',
+        Token.Toolbar.Completer.Completion:         '#888888 noinherit',
+        Token.Toolbar.Completer.Completion.Current: 'bold noinherit',
 
-        Token.CompletionToolbar.Completion:              '#888888 noinherit',
-        Token.CompletionToolbar.Completion.Current:      'bold noinherit',
-        Token.CompletionToolbar:                         'noinherit',
-        Token.CompletionToolbar.Arrow:                   'bold #888888',
+        # Completer menu.
+        Token.Menu.Completer.Completion:            'bg:#888888 #ffffbb',
+        Token.Menu.Completer.Completion.Current:    'bg:#dddddd #000000',
+        Token.Menu.Completer.Meta:                  'bg:#888888 #cccccc',
+        Token.Menu.Completer.Meta.Current:          'bg:#bbbbbb #000000',
+        Token.Menu.Completer.ProgressBar:           'bg:#aaaaaa',
+        Token.Menu.Completer.ProgressButton:        'bg:#000000',
 
-        # Grayed
-        Token.Aborted:                 '#888888',
+        # When Control-C has been pressed. Grayed.
+        Token.Aborted:                              '#888888',
 
-        Token.ValidationToolbar:         'bg:#440000 #aaaaaa',
-
-        # Vi tildes
-        Token.Leftmargin.Tilde:   '#888888',
+        # Vi-style tildes.
+        Token.Leftmargin.Tilde:                     '#888888',
     }
 
 
@@ -277,7 +281,7 @@ class SignatureToolbar(Toolbar):
     def get_tokens(self, cli, width):
         result = []
         append = result.append
-        Signature = Token.Signature
+        Signature = Token.Toolbar.Signature
 
         if cli.line.signatures:
             sig = cli.line.signatures[0]  # Always take the first one.
@@ -299,12 +303,13 @@ class SignatureToolbar(Toolbar):
 
 
 class PythonToolbar(Toolbar):
-    def __init__(self, vi_mode):
+    def __init__(self, vi_mode, token=None):
+        token = token or Token.Toolbar.Status
         self.vi_mode = vi_mode
-        super(PythonToolbar, self).__init__()
+        super(PythonToolbar, self).__init__(token=token)
 
     def get_tokens(self, cli, width):
-        TB = Token.Toolbar  # XXX: use self.token
+        TB = self.token
         mode = cli.input_processor.input_mode
 
         result = TokenList()
@@ -312,33 +317,33 @@ class PythonToolbar(Toolbar):
 
         append((TB, ' '))
 
-        # Mode
+        # InputMode
         if mode == InputMode.INCREMENTAL_SEARCH:
-            append((TB.Mode, '(SEARCH)'))
+            append((TB.InputMode, '(SEARCH)'))
             append((TB, '   '))
         elif self.vi_mode:
             if mode == InputMode.INSERT:
-                append((TB.Mode, '(INSERT)'))
+                append((TB.InputMode, '(INSERT)'))
                 append((TB, '   '))
             elif mode == InputMode.VI_SEARCH:
-                append((TB.Mode, '(SEARCH)'))
+                append((TB.InputMode, '(SEARCH)'))
                 append((TB, '   '))
             elif mode == InputMode.VI_NAVIGATION:
-                append((TB.Mode, '(NAV)'))
+                append((TB.InputMode, '(NAV)'))
                 append((TB, '      '))
             elif mode == InputMode.VI_REPLACE:
-                append((TB.Mode, '(REPLACE)'))
+                append((TB.InputMode, '(REPLACE)'))
                 append((TB, '  '))
             elif mode == InputMode.SELECTION and cli.line.selection_state:
                 if cli.line.selection_state.type == SelectionType.LINES:
-                    append((TB.Mode, '(VISUAL LINE)'))
+                    append((TB.InputMode, '(VISUAL LINE)'))
                     append((TB, ' '))
                 elif cli.line.selection_state.type == SelectionType.CHARACTERS:
-                    append((TB.Mode, '(VISUAL)'))
+                    append((TB.InputMode, '(VISUAL)'))
                     append((TB, ' '))
 
         else:
-            append((TB.Mode, '(emacs)'))
+            append((TB.InputMode, '(emacs)'))
             append((TB, ' '))
 
         # Position in history.

@@ -136,9 +136,9 @@ class Layout(object):
         if line.isearch_state:
             for index in line.document.find_all(line.isearch_state.isearch_text):
                 if index == line.cursor_position:
-                    token = Token.IncrementalSearchMatch.Current
+                    token = Token.SearchMatch.Current
                 else:
-                    token = Token.IncrementalSearchMatch
+                    token = Token.SearchMatch
 
                 highlighted_characters.update(dict([
                     (x, token) for x in range(index, index + len(line.isearch_state.isearch_text))

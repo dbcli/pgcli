@@ -22,7 +22,7 @@ __all__ = (
 
 class Toolbar(object):
     def __init__(self, token=None):
-        self.token = token or Token.Layout.Toolbar
+        self.token = token or Token.Toolbar
 
     def write(self, cli, screen):
         width = screen.size.columns
@@ -70,7 +70,7 @@ class ArgToolbar(Toolbar):
     A simple toolbar which shows the repeat 'arg'.
     """
     def __init__(self, token=None):
-        token = token or Token.Layout.Toolbar.Arg
+        token = token or Token.Toolbar.Arg
         super(ArgToolbar, self).__init__(token=token)
 
     def is_visible(self, cli):
@@ -79,8 +79,8 @@ class ArgToolbar(Toolbar):
 
     def get_tokens(self, cli, width):
         return [
-            (Token.Layout.Toolbar.Arg, 'Repeat: '),
-            (Token.Layout.Toolbar.Arg.Text, str(cli.input_processor.arg)),
+            (Token.Toolbar.Arg, 'Repeat: '),
+            (Token.Toolbar.Arg.Text, str(cli.input_processor.arg)),
         ]
 
 
@@ -89,7 +89,7 @@ class SystemToolbar(Toolbar):
     The system toolbar. Shows the '!'-prompt.
     """
     def __init__(self):
-        token = Token.Layout.Toolbar.System
+        token = Token.Toolbar.System
         super(SystemToolbar, self).__init__(token=token)
 
         # We use a nested single-line-no-wrap layout for this.
@@ -109,7 +109,7 @@ class SystemToolbar(Toolbar):
 
 class SearchToolbar(Toolbar):
     def __init__(self, token=None):
-        token = token or Token.Layout.Toolbar.Search
+        token = token or Token.Toolbar.Search
         super(SearchToolbar, self).__init__(token=token)
 
         class Prefix(Prompt):
@@ -154,7 +154,7 @@ class CompletionToolbar(Toolbar):
     (Similar to Vim's wildmenu.)
     """
     def __init__(self, token=None):
-        token = token or Token.CompletionToolbar
+        token = token or Token.Toolbar.Completer
         super(CompletionToolbar, self).__init__(token=token)
 
     def is_visible(self, cli):
@@ -219,7 +219,7 @@ class ValidationToolbar(Toolbar):
     Toolbar for displaying validation errors.
     """
     def __init__(self, token=None):
-        token = token or Token.ValidationToolbar
+        token = token or Token.Toolbar.Validation
         super(ValidationToolbar, self).__init__(token=token)
 
     def is_visible(self, cli):

@@ -12,18 +12,10 @@ class CompletionMenu(object):
     """
     Helper for drawing the complete menu to the screen.
     """
-    current_completion_token = Token.CompletionMenu.Completion.Current
-    completion_token = Token.CompletionMenu.Completion
-
-    current_meta_token = Token.CompletionMenu.Meta.Current
-    meta_token = Token.CompletionMenu.Meta
-
-    progress_button_token = Token.CompletionMenu.ProgressButton
-    progress_bar_token = Token.CompletionMenu.ProgressBar
-
     def __init__(self, max_height=5, line_name='default'):
         self.max_height = max_height
         self.line_name = line_name
+        self.token = Token.Menu.Completer
 
     def is_visible(self, cli):
         """
@@ -80,9 +72,9 @@ class CompletionMenu(object):
             is_current_completion = (i + slice_from == index)
 
             if is_scroll_button(i):
-                button_token = self.progress_button_token
+                button_token = self.token.ProgressButton
             else:
-                button_token = self.progress_bar_token
+                button_token = self.token.ProgressBar
 
             tokens = ([(Token, ' ')] +
                       self.get_menu_item_tokens(c, is_current_completion, menu_width) +
@@ -114,16 +106,16 @@ class CompletionMenu(object):
 
     def get_menu_item_tokens(self, completion, is_current_completion, width):
         if is_current_completion:
-            token = self.current_completion_token
+            token = self.token.Completion.Current
         else:
-            token = self.completion_token
+            token = self.token.Completion
 
         return [(token, ' %%-%is ' % width % completion.display)]
 
     def get_menu_item_meta_tokens(self, completion, is_current_completion, width):
         if is_current_completion:
-            token = self.current_meta_token
+            token = self.token.Meta.Current
         else:
-            token = self.meta_token
+            token = self.token.Meta
 
         return [(token, ' %%-%is ' % width % completion.display_meta or 'none')]
