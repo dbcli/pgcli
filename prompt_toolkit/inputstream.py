@@ -11,6 +11,10 @@ __all__ = (
     'InputStream',
 )
 
+_DEBUG_RENDERER_INPUT = False
+_DEBUG_RENDERER_INPUT_FILENAME = '/tmp/prompt-toolkit-render-input'
+
+
 # Regex matching any CPR response
 _cpr_response_re = re.compile('^' + re.escape('\x1b[') + r'\d+;\d+R$')
 
@@ -149,6 +153,9 @@ class InputStream(object):
         self._input_processor = input_processor
         self.reset()
 
+        if _DEBUG_RENDERER_INPUT:
+            self.LOG = open(_DEBUG_RENDERER_INPUT_FILENAME, 'ab')
+
     def reset(self, request=False):
         self._start_parser()
 
@@ -158,6 +165,7 @@ class InputStream(object):
         """
         # Put the terminal in cursor mode. (Instead of application mode.)
         stdout.write('\x1b[?1l')
+#        stdout.write('\x1b[?9h')
         stdout.flush()
 
         # # Put the terminal in application mode.
@@ -260,7 +268,10 @@ class InputStream(object):
         Feed the input stream.
         """
         assert isinstance(data, six.text_type)
-#        print(repr(data))
+
+        if _DEBUG_RENDERER_INPUT:
+            self.LOG.write(repr(data).encode('utf-8') + b'\n')
+            self.LOG.flush()
 
         for c in data:
             self._input_parser.send(c)
