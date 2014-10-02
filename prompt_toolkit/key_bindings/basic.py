@@ -324,3 +324,10 @@ def basic_bindings(registry, cli_ref):
         Insert text after the system prompt.
         """
         system_line.insert_text(event.data)
+
+    @handle(Keys.ControlZ)
+    def _(event):
+        """
+        Suspend process to background.
+        """
+        cli_ref().suspend_to_background()

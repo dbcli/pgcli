@@ -18,6 +18,7 @@ import errno
 import fcntl
 import os
 import select
+import signal
 import six
 import sys
 import threading
@@ -394,6 +395,23 @@ class CommandLineInterface(object):
         with cooked_mode(self.stdin.fileno()):
             os.system(command.encode('utf-8'))
             (input if six.PY3 else raw_input)('\nPress ENTER to continue...')
+
+        self.renderer.reset()
+        self.renderer.request_absolute_cursor_position()
+
+    def suspend_to_background(self):
+        """
+        Suspend process.
+        """
+        assert self.is_reading_input, 'Should be called while reading input.'
+
+        self.renderer.erase()
+
+        # Make sure to be in cooked mode when suspending.
+        with cooked_mode(self.stdin.fileno()):
+            # Send `SIGSTP` to own process.
+            # This will cause it to suspend.
+            os.kill(os.getpid(), signal.SIGTSTP)
 
         self.renderer.reset()
         self.renderer.request_absolute_cursor_position()
