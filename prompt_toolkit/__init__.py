@@ -389,6 +389,8 @@ class CommandLineInterface(object):
         (Not thread safe -- to be called from inside the key bindings.)
         Run system command.
         """
+        assert self.is_reading_input, 'Should be called while reading input.'
+
         self.renderer.erase()
 
         # Run system command.
@@ -401,6 +403,7 @@ class CommandLineInterface(object):
 
     def suspend_to_background(self):
         """
+        (Not thread safe -- to be called from inside the key bindings.)
         Suspend process.
         """
         assert self.is_reading_input, 'Should be called while reading input.'

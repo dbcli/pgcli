@@ -483,6 +483,22 @@ class Renderer(object):
         #: We don't know this until a `report_absolute_cursor_row` call.
         self._min_available_height = 0
 
+    def _write_and_flush(self, data):
+        """
+        Write to output stream and flush.
+        """
+        try:
+            self._stdout.write(data)
+            self._stdout.flush()
+        except IOError as e:
+            if e.args and e.args[0] == errno.EINTR:
+                # Interrupted system call. Can happpen in case of a window
+                # resize signal. (Just ignore. The resize handler will render
+                # again anyway.)
+                pass
+            else:
+                raise
+
     def request_absolute_cursor_position(self):
         """
         Do CPR request.
@@ -492,8 +508,7 @@ class Renderer(object):
         assert self._cursor_pos.y == 0
 
         # Asks for a cursor position report (CPR).
-        self._stdout.write('\x1b[6n')
-        self._stdout.flush()
+        self._write_and_flush('\x1b[6n')
 
     def get_size(self):
         rows, columns = get_size(self._stdout.fileno())
@@ -533,6 +548,9 @@ class Renderer(object):
         return output
 
     def render(self, cli):
+        """
+        Render the current interface to stdout.
+        """
         # Render to string first.
         output = self.render_to_str(cli)
 
@@ -543,17 +561,7 @@ class Renderer(object):
             self.LOG.flush()
 
         # Write to output stream.
-        try:
-            self._stdout.write(output)
-            self._stdout.flush()
-        except IOError as e:
-            if e.args and e.args[0] == errno.EINTR:
-                # Interrupted system call. Can happpen in case of a window
-                # resize signal. (Just ignore. The resize handler will render
-                # again anyway.)
-                pass
-            else:
-                raise
+        self._write_and_flush(output)
 
     def erase(self):
         """
@@ -561,11 +569,12 @@ class Renderer(object):
         instance used for running a system command (while hiding the CLI) and
         later resuming the same CLI.)
         """
-        self._stdout.write(TerminalCodes.CURSOR_BACKWARD(self._cursor_pos.x))
-        self._stdout.write(TerminalCodes.CURSOR_UP(self._cursor_pos.y))
-        self._stdout.write(TerminalCodes.ERASE_DOWN)
-        self._stdout.write(TerminalCodes.RESET_ATTRIBUTES)
-        self._stdout.flush()
+        self._write_and_flush(''.join([
+            TerminalCodes.CURSOR_BACKWARD(self._cursor_pos.x),
+            TerminalCodes.CURSOR_UP(self._cursor_pos.y),
+            TerminalCodes.ERASE_DOWN,
+            TerminalCodes.RESET_ATTRIBUTES,
+        ]))
 
         self.reset()
 
@@ -577,8 +586,9 @@ class Renderer(object):
         self.erase()
 
         # Send "Erase Screen" command and go to (0, 0).
-        self._stdout.write(TerminalCodes.ERASE_SCREEN)
-        self._stdout.write(TerminalCodes.CURSOR_GOTO(0, 0))
-        self._stdout.flush()
+        self._write_and_flush(''.join([
+            TerminalCodes.ERASE_SCREEN,
+            TerminalCodes.CURSOR_GOTO(0, 0),
+        ]))
 
         self.request_absolute_cursor_position()
