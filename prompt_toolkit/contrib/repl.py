@@ -139,6 +139,7 @@ def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_co
 
     def get_globals():
         return globals
+
     def get_locals():
         return locals
 

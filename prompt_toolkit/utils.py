@@ -79,7 +79,6 @@ class call_on_sigwinch(object):
         signal.signal(signal.SIGWINCH, self.previous_callback)
 
 
-
 class EventHook(object):
     """
     Event hook::

@@ -448,7 +448,7 @@ class CommandLineInterface(object):
         (Autocomplete in other thread.)
         """
         line = self.lines[line_name]
-        complete_thread_running = [False] # By ref.
+        complete_thread_running = [False]  # By ref.
 
         def async_completer():
             document = line.document

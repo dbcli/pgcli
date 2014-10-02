@@ -408,16 +408,20 @@ class Document(object):
         for A, B in '()', '[]', '{}', '<>':
             if self.current_char == A:
                 for i, c in enumerate(self.text_after_cursor[1:]):
-                    if c == A: stack += 1
-                    elif c == B: stack -= 1
+                    if c == A:
+                        stack += 1
+                    elif c == B:
+                        stack -= 1
 
                     if stack == 0:
                         return i + 1
 
             elif self.current_char == B:
                 for i, c in enumerate(reversed(self.text_before_cursor)):
-                    if c == B: stack += 1
-                    elif c == A: stack -= 1
+                    if c == B:
+                        stack += 1
+                    elif c == A:
+                        stack -= 1
 
                     if stack == 0:
                         return - (i + 1)

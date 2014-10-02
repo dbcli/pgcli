@@ -224,7 +224,7 @@ class ValidationToolbar(Toolbar):
 
     def is_visible(self, cli):
         return super(ValidationToolbar, self).is_visible(cli) and \
-                bool(cli.line.validation_error)
+            bool(cli.line.validation_error)
 
     def get_tokens(self, cli, width):
         if cli.line.validation_error:

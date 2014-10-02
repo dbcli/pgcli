@@ -31,7 +31,7 @@ class IPythonLeftMargin(PythonLeftMargin):
 
 class IPythonValidator(PythonValidator):
     def __init__(self, *args, **kwargs):
-        super(IPythonValidator, self).__init__(*args,**kwargs)
+        super(IPythonValidator, self).__init__(*args, **kwargs)
         self.isp = IPythonInputSplitter()
 
     def validate(self, document):

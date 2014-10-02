@@ -4,13 +4,13 @@ Layout representation.
 from __future__ import unicode_literals
 
 from pygments.token import Token
-from ..enums import InputMode
 from ..renderer import Screen, Size, Point, Char
 
 
 __all__ = (
     'Layout',
 )
+
 
 class _SimpleLRUCache(object):
     """
@@ -20,7 +20,7 @@ class _SimpleLRUCache(object):
     """
     def __init__(self, maxsize=8):
         self.maxsize = maxsize
-        self._cache = [] # List of (key, value).
+        self._cache = []  # List of (key, value).
 
     def get(self, key, getter_func):
         """
@@ -56,18 +56,17 @@ class Layout(object):
     :param menus: List of `Menu` classes or `None`.
     """
     def __init__(self,
-            before_input=None,
-            after_input=None,
-            left_margin=None,
-            top_toolbars=None,
-            bottom_toolbars=None,
-            input_processors=None,
-            menus=None,
-            lexer=None,
-            min_height=0,
-            show_tildes=False,
-            line_name='default',
-            ):
+                 before_input=None,
+                 after_input=None,
+                 left_margin=None,
+                 top_toolbars=None,
+                 bottom_toolbars=None,
+                 input_processors=None,
+                 menus=None,
+                 lexer=None,
+                 min_height=0,
+                 show_tildes=False,
+                 line_name='default'):
 
         self.before_input = before_input
         self.after_input = after_input
@@ -190,7 +189,7 @@ class Layout(object):
         # Make sure that `min_height` is in the 0..max_height interval.
         min_height = min(min_height, screen.size.rows)
         min_height = max(0, min_height)
-        min_height -= (top_margin+ bottom_margin)
+        min_height -= (top_margin + bottom_margin)
 
         # Write to a temp screen first. (Later, we will copy the visible region
         # of this screen to the real screen.)
@@ -279,7 +278,7 @@ class Layout(object):
 
         # Write actual content (scrolled).
         y = self.write_input_scrolled(cli, screen,
-                                      lambda scr : self.write_content(cli, scr),
+                                      lambda scr: self.write_content(cli, scr),
                                       min_height=max(self.min_height, min_height),
                                       top_margin=len(top_toolbars),
                                       bottom_margin=len(bottom_toolbars))
@@ -300,4 +299,3 @@ class Layout(object):
 
         if self.after_input is not None:
             self.after_input.write(cli, screen)
-
