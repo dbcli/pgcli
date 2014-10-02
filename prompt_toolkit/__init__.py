@@ -142,7 +142,7 @@ class CommandLineInterface(object):
         if create_async_autocompleters:
             for n, l in self.lines.items():
                 if l.completer:
-                    l.onTextInsert += self._create_async_complter(n)
+                    l.onTextInsert += self._create_async_completer(n)
 
         self._reset()
 
@@ -442,7 +442,7 @@ class CommandLineInterface(object):
     def is_returning(self):
         return self._return_code
 
-    def _create_async_complter(self, line_name):
+    def _create_async_completer(self, line_name):
         """
         Create function for asynchronous autocompletion while typing.
         (Autocomplete in other thread.)
