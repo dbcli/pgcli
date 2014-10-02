@@ -266,6 +266,21 @@ class CommandLineInterface(object):
             self._stdin_decoder = self.stdin_decoder_cls()
             return ''
 
+    def _on_resize(self):
+        """
+        When the window size changes, we erase the current output and request
+        again the cursor position. We the CPR answer arrives, the output is
+        drawn again.
+        (We do it asynchronously, because writing to the output from inside the
+        signal handler causes easily reentrant calls, giving runtime errors.)
+        """
+        assert self.is_reading_input
+
+        def do_in_event_loop():
+            self.renderer.erase()
+            self.renderer.request_absolute_cursor_position()
+        self.call_from_executor(do_in_event_loop)
+
     def read_input(self, initial_value='', on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
         """
         Read input string from command line.
@@ -310,11 +325,7 @@ class CommandLineInterface(object):
 
                 self._redraw()
 
-                # When the window size changes, we do a redraw request call.
-                # (We do it asynchronously, because doing the actual drawing
-                # inside the signal handler causes easily reentrant calls,
-                # giving runtime errors.)
-                with call_on_sigwinch(self.request_redraw):
+                with call_on_sigwinch(self._on_resize):
                     while True:
                         c = self._get_char_loop()
 
