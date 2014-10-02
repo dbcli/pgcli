@@ -19,7 +19,9 @@ _DEBUG_RENDERER_INPUT_FILENAME = '/tmp/prompt-toolkit-render-input'
 _cpr_response_re = re.compile('^' + re.escape('\x1b[') + r'\d+;\d+R$')
 
 # Regex matching any valid prefix of a CPR response.
-_cpr_response_prefix_re = re.compile('^' + re.escape('\x1b[') + r'[\d;R]*$')
+# (Note that it doesn't contain the last character, the 'R'. The prefix has to
+# be shorter.)
+_cpr_response_prefix_re = re.compile('^' + re.escape('\x1b[') + r'[\d;]*$')
 
 
 class KeyPress(object):
