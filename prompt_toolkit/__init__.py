@@ -1,16 +1,7 @@
 """
-
-prompt_toolkit
---------------
-
-Pure Python alternative to readline.
-
-Still experimental and incomplete. It should be able to handle RAW vt100 input
-sequences for a command line and construct a command line with autocompletion
-there.
+prompt_toolkit: Pure Python alternative to readline.
 
 Author: Jonathan Slenders
-
 """
 from __future__ import unicode_literals
 
