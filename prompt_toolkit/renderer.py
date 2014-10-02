@@ -182,6 +182,9 @@ class Char(object):
         else:
             return max(0, sum([_get_width(c) for c in char]))
 
+    def __repr__(self):
+        return 'Char(%r, %r, %r)' % (self.char, self.token, self.z_index)
+
 
 class Screen(object):
     """
@@ -274,6 +277,8 @@ class Screen(object):
         """
         Write (Token, text) tuples at position (y, x).
         (Truncate when character is outside margin.)
+
+        :param data: Enumerable of (Token, text) tuples.
         """
         for token, text in data:
             for c in text:
