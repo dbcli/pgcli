@@ -52,7 +52,7 @@ class InputStreamTest(unittest.TestCase):
         self.assertEqual(self.processor.keys[1].data, 'h')
 
     def test_special_double_keys(self):
-        self.stream.feed('\x1b[1;3D') # Should both send escape and left.
+        self.stream.feed('\x1b[1;3D')  # Should both send escape and left.
 
         self.assertEqual(len(self.processor.keys), 2)
         self.assertEqual(self.processor.keys[0].key, Keys.Escape)

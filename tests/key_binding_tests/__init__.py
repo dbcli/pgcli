@@ -7,7 +7,6 @@ from prompt_toolkit.inputstream import KeyPress
 import unittest
 
 
-
 class KeyBindingTest(unittest.TestCase):
     def setUp(self):
         class Handlers(object):

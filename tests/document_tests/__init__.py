@@ -5,18 +5,15 @@ from prompt_toolkit.line import Document
 import unittest
 
 
-
 class DocumentTest(unittest.TestCase):
     def setUp(self):
         self.document = Document(
-                    'line 1\n' +
-                    'line 2\n' +
-                    'line 3\n' +
-                    'line 4\n',
-                    len(
-                        'line 1\n' +
-                        'lin')
-                )
+            'line 1\n' +
+            'line 2\n' +
+            'line 3\n' +
+            'line 4\n',
+            len('line 1\n' + 'lin')
+        )
 
     def test_current_char(self):
         self.assertEqual(self.document.current_char, 'e')
@@ -26,16 +23,16 @@ class DocumentTest(unittest.TestCase):
 
     def test_text_after_cursor(self):
         self.assertEqual(self.document.text_after_cursor,
-                    'e 2\n' +
-                    'line 3\n' +
-                    'line 4\n')
+                         'e 2\n' +
+                         'line 3\n' +
+                         'line 4\n')
 
     def test_lines(self):
         self.assertEqual(self.document.lines, [
-                    'line 1',
-                    'line 2',
-                    'line 3',
-                    'line 4', '' ])
+                         'line 1',
+                         'line 2',
+                         'line 3',
+                         'line 4', ''])
 
     def test_line_count(self):
         self.assertEqual(self.document.line_count, 5)
@@ -59,8 +56,7 @@ class DocumentTest(unittest.TestCase):
 
     def test_translate_index_to_position(self):
         pos = self.document.translate_index_to_position(
-                len('line 1\nline 2\nlin'))
+            len('line 1\nline 2\nlin'))
 
         self.assertEqual(pos[0], 3)
         self.assertEqual(pos[1], 3)
-
