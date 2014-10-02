@@ -32,7 +32,7 @@ class TestLine(Line):
 
 class TestStyle(Style):
     styles = {
-        Token.ValidationToolbar:  'bg:#aa0000 #ffbbbb',
+        Token.Toolbar.Validation:  'bg:#aa0000 #ffbbbb',
     }
 
 

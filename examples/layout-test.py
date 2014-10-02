@@ -51,15 +51,15 @@ class TestStyle(Style):
         Token.Layout.Toolbar.Arg: 'bg:#aaaaff #000088',
         Token.Layout.Toolbar.Arg.Text: 'bg:#aaaaff #000088 bold',
 
-        Token.CompletionMenu.Completion.Current: 'bg:#00aaaa #000000',
-        Token.CompletionMenu.Completion:         'bg:#008888 #ffffff',
-        Token.CompletionMenu.ProgressButton:     'bg:#003333',
-        Token.CompletionMenu.ProgressBar:        'bg:#00aaaa',
+        Token.Menu.Completer.Completion.Current: 'bg:#00aaaa #000000',
+        Token.Menu.Completer.Completion:         'bg:#008888 #ffffff',
+        Token.Menu.Completer.ProgressButton:     'bg:#003333',
+        Token.Menu.Completer.ProgressBar:        'bg:#00aaaa',
 
-        Token.CompletionToolbar:  'bg:#888800 #000000',
-        Token.CompletionToolbar.Arrow: 'bg:#888800 #000000',
-        Token.CompletionToolbar.Completion:  'bg:#aaaa00 #000000',
-        Token.CompletionToolbar.Completion.Current:  'bg:#ffffaa #000000 bold',
+        Token.Toolbar.Completer:  'bg:#888800 #000000',
+        Token.Toolbar.Completer.Arrow: 'bg:#888800 #000000',
+        Token.Toolbar.Completer.Completion:  'bg:#aaaa00 #000000',
+        Token.Toolbar.Completer.Completion.Current:  'bg:#ffffaa #000000 bold',
 
         Token.SelectedText: 'bg:#000088 #ffffff',
     }

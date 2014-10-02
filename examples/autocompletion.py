@@ -66,10 +66,10 @@ class AnimalCompleter(Completer):
 
 class AnimalStyle(Style):
     styles = {
-        Token.CompletionMenu.Completion.Current: 'bg:#00aaaa #000000',
-        Token.CompletionMenu.Completion:         'bg:#008888 #ffffff',
-        Token.CompletionMenu.ProgressButton:     'bg:#003333',
-        Token.CompletionMenu.ProgressBar:        'bg:#00aaaa',
+        Token.Menu.Completer.Completion.Current: 'bg:#00aaaa #000000',
+        Token.Menu.Completer.Completion:         'bg:#008888 #ffffff',
+        Token.Menu.Completer.ProgressButton:     'bg:#003333',
+        Token.Menu.Completer.ProgressBar:        'bg:#00aaaa',
     }
 
 
