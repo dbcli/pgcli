@@ -287,7 +287,13 @@ class SignatureToolbar(Toolbar):
             sig = cli.line.signatures[0]  # Always take the first one.
 
             append((Token, '           '))
-            append((Signature, sig.full_name))
+            try:
+                append((Signature, sig.full_name))
+            except IndexError:
+                # Workaround for #37: https://github.com/jonathanslenders/python-prompt-toolkit/issues/37
+                # See also: https://github.com/davidhalter/jedi/issues/490
+                return []
+
             append((Signature.Operator, '('))
 
             for i, p in enumerate(sig.params):
