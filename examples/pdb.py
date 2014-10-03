@@ -177,10 +177,10 @@ class PdbStyle(Style):
         Error:                        '#000000 bg:#ff8888',
 
         # Completion Menu
-        Token.Menu.Completer.Completion.Current: 'bg:#00aaaa #000000',
-        Token.Menu.Completer.Completion:         'bg:#008888 #ffffff',
-        Token.Menu.Completer.ProgressButton:     'bg:#003333',
-        Token.Menu.Completer.ProgressBar:        'bg:#00aaaa',
+        Token.Menu.Completions.Completion.Current: 'bg:#00aaaa #000000',
+        Token.Menu.Completions.Completion:         'bg:#008888 #ffffff',
+        Token.Menu.Completions.ProgressButton:     'bg:#003333',
+        Token.Menu.Completions.ProgressBar:        'bg:#00aaaa',
     }
 
 

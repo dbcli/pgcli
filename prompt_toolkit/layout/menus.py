@@ -15,7 +15,7 @@ class CompletionMenu(object):
     def __init__(self, max_height=5, line_name='default'):
         self.max_height = max_height
         self.line_name = line_name
-        self.token = Token.Menu.Completer
+        self.token = Token.Menu.Completions
 
     def is_visible(self, cli):
         """

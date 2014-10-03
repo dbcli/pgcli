@@ -154,7 +154,7 @@ class CompletionToolbar(Toolbar):
     (Similar to Vim's wildmenu.)
     """
     def __init__(self, token=None):
-        token = token or Token.Toolbar.Completer
+        token = token or Token.Toolbar.Completions
         super(CompletionToolbar, self).__init__(token=token)
 
     def is_visible(self, cli):

@@ -8,43 +8,13 @@ from __future__ import unicode_literals
 
 import unittest
 
-
-#class PromptTest(unittest.TestCase):
-#    def setUp(self):
-#        self.line = Line()
-#        self.line.insert_text('some text')
-#
-#        self.code = Code(self.line.document)
-#        self.prompt = Prompt(self.line, self.code)
-#
-#    def _test_token_text_list(self, data):
-#        # Test whether data is list of (Token, text) tuples.
-#        for token, text in data:
-#            self.assertIsInstance(token, pygments.token._TokenType)
-#            self.assertIsInstance(text, six.text_type)
-#
-#    def test_get_prompt(self):
-#        result = list(self.prompt.get_prompt())
-#        self._test_token_text_list(result)
-#
-#    def test_second_line_prefix(self):
-#        result = list(self.prompt.get_second_line_prefix())
-#        self._test_token_text_list(result)
-#
-#    def test_get_help_tokens(self):
-#        result = list(self.prompt.get_second_line_prefix())
-#        self._test_token_text_list(result)
-#
-
-#--
-
-
-from prompt_toolkit.contrib.shell.lexer import ParametersLexer, TextToken
+from prompt_toolkit.contrib.shell.lexer import ShellLexer, TextToken
 from pygments.token import Token
 
-class ParameterLexerTest(unittest.TestCase):
+
+class ShellLexerTest(unittest.TestCase):
     def setUp(self):
-        self.lexer = ParametersLexer(stripnl=False, stripall=False, ensurenl=False)
+        self.lexer = ShellLexer(stripnl=False, stripall=False, ensurenl=False)
 
     def test_simple(self):
         t = list(self.lexer.get_tokens('aaa bbb ccc'))

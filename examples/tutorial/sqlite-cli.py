@@ -28,10 +28,10 @@ class SqlCompleter(Completer):
 
 class DocumentStyle(Style):
     styles = {
-        Token.CompletionMenu.Completion.Current: 'bg:#00aaaa #000000',
-        Token.CompletionMenu.Completion: 'bg:#008888 #ffffff',
-        Token.CompletionMenu.ProgressButton: 'bg:#003333',
-        Token.CompletionMenu.ProgressBar: 'bg:#00aaaa',
+        Token.Menu.Completions.Completion.Current: 'bg:#00aaaa #000000',
+        Token.Menu.Completions.Completion: 'bg:#008888 #ffffff',
+        Token.Menu.Completions.ProgressButton: 'bg:#003333',
+        Token.Menu.Completions.ProgressBar: 'bg:#00aaaa',
     }
     styles.update(DefaultStyle.styles)
 
