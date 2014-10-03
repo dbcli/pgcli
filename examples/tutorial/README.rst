@@ -76,7 +76,7 @@ Let's get started!
        from prompt_toolkit import CommandLineInterface, AbortAction, Exit
        from prompt_toolkit.layout import Layout
        from prompt_toolkit.layout.prompt import DefaultPrompt
-       from pygments.lexers.sql import SqlLexer
+       from pygments.lexers import SqlLexer
 
        def main():
            layout = Layout(before_input=DefaultPrompt('> '), lexer=SqlLexer)
@@ -115,7 +115,7 @@ Let's get started!
        from prompt_toolkit.layout.prompt import DefaultPrompt
        from prompt_toolkit.layout.menus import CompletionMenu
        from prompt_toolkit.completion import Completion, Completer
-       from pygments.lexers.sql import SqlLexer
+       from pygments.lexers import SqlLexer
 
        class SqlCompleter(Completer):
            keywords = ['create', 'select', 'insert', 'drop',
@@ -163,7 +163,7 @@ Let's get started!
        from prompt_toolkit.layout.prompt import DefaultPrompt
        from prompt_toolkit.layout.menus import CompletionMenu
        from prompt_toolkit.completion import Completion, Completer
-       from pygments.lexers.sql import SqlLexer
+       from pygments.lexers import SqlLexer
        from pygments.style import Style
        from pygments.token import Token
        from pygments.styles.default import DefaultStyle
@@ -227,7 +227,7 @@ Let's get started!
        from prompt_toolkit.layout.prompt import DefaultPrompt
        from prompt_toolkit.layout.menus import CompletionMenu
        from prompt_toolkit.completion import Completion, Completer
-       from pygments.lexers.sql import SqlLexer
+       from pygments.lexers import SqlLexer
        from pygments.style import Style
        from pygments.token import Token
        from pygments.styles.default import DefaultStyle

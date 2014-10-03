@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 import sqlite3
 
@@ -8,7 +9,7 @@ from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionMenu
 from prompt_toolkit.completion import Completion, Completer
 
-from pygments.lexers.sql import SqlLexer
+from pygments.lexers import SqlLexer
 from pygments.style import Style
 from pygments.token import Token
 from pygments.styles.default import DefaultStyle
