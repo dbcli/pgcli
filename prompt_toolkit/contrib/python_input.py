@@ -257,7 +257,8 @@ class PythonLine(Line):
 
         # If we just typed a colon, or still have open brackets, always insert a real newline.
         if self.document.text_before_cursor.rstrip()[-1:] == ':' or \
-                _has_unclosed_brackets(self.document.text_before_cursor) or \
+                (self.document.is_cursor_at_the_end and
+                 _has_unclosed_brackets(self.document.text_before_cursor)) or \
                 self.text.startswith('@'):
             return True
 
