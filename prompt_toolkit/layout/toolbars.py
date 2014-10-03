@@ -12,7 +12,7 @@ from .utils import TokenList
 
 __all__ = (
     'ArgToolbar',
-    'CompletionToolbar',
+    'CompletionsToolbar',
     'SearchToolbar',
     'SystemToolbar',
     'TextToolbar',
@@ -148,17 +148,17 @@ class SearchToolbar(Toolbar):
         self.layout.write_content(cli, screen)
 
 
-class CompletionToolbar(Toolbar):
+class CompletionsToolbar(Toolbar):
     """
     Helper for drawing the completion menu 'wildmenu'-style.
     (Similar to Vim's wildmenu.)
     """
     def __init__(self, token=None):
         token = token or Token.Toolbar.Completions
-        super(CompletionToolbar, self).__init__(token=token)
+        super(CompletionsToolbar, self).__init__(token=token)
 
     def is_visible(self, cli):
-        return super(CompletionToolbar, self).is_visible(cli) and \
+        return super(CompletionsToolbar, self).is_visible(cli) and \
             bool(cli.line.complete_state) and len(cli.line.complete_state.current_completions) >= 1
 
     def get_tokens(self, cli, width):

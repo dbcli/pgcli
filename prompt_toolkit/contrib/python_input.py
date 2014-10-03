@@ -23,7 +23,7 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.menus import CompletionMenu
 from prompt_toolkit.layout.processors import BracketsMismatchProcessor
-from prompt_toolkit.layout.toolbars import CompletionToolbar, ArgToolbar, SearchToolbar, ValidationToolbar, SystemToolbar
+from prompt_toolkit.layout.toolbars import CompletionsToolbar, ArgToolbar, SearchToolbar, ValidationToolbar, SystemToolbar
 from prompt_toolkit.layout.toolbars import Toolbar
 from prompt_toolkit.layout.utils import TokenList
 from prompt_toolkit.line import Line
@@ -507,7 +507,7 @@ class PythonCommandLineInterface(CommandLineInterface):
                 SystemToolbar(),
                 ValidationToolbar(),
             ] +
-            ([CompletionToolbar()] if autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU else []) +
+            ([CompletionsToolbar()] if autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU else []) +
             [
                 PythonToolbar(vi_mode=vi_mode),
             ],
