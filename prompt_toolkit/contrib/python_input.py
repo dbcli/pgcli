@@ -565,6 +565,7 @@ class PythonCommandLineInterface(CommandLineInterface):
                     except Exception:
                         # Sometimes we still get an exception (TypeError), because
                         # of probably bugs in jedi. We can silence them.
+                        # See: https://github.com/davidhalter/jedi/issues/492
                         signatures = []
                 else:
                     signatures = []
