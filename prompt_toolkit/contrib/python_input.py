@@ -303,7 +303,10 @@ class SignatureToolbar(Toolbar):
                     append((Signature, str(p.name)))
                 append((Signature.Operator, ', '))
 
-            result.pop()  # Pop last comma
+            if sig.params:
+                # Pop last comma
+                result.pop()
+
             append((Signature.Operator, ')'))
         return result
 
