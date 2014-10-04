@@ -343,6 +343,15 @@ def vi_bindings(registry, cli_ref):
         line.start_selection(selection_type=SelectionType.LINES)
         event.input_processor.push_input_mode(InputMode.SELECTION)
 
+    @handle('a', 'w', in_mode=InputMode.SELECTION)
+    @handle('a', 'W', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Switch from visual linewise mode to visual characterwise mode.
+        """
+        if line.selection_state and line.selection_state.type == SelectionType.LINES:
+            line.selection_state.type = SelectionType.CHARACTERS
+
     @handle('x', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
