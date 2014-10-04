@@ -618,32 +618,65 @@ def vi_bindings(registry, cli_ref):
             return func
         return decorator
 
-    @change_delete_move_yank_handler('b')  # Move one word or token left.
-    @change_delete_move_yank_handler('B')  # Move one non-blank word left ((# TODO: difference between 'b' and 'B')
-    def key_b(event):
+    @change_delete_move_yank_handler('b')
+    def _(event):
+        """ Move one word or token left. """
         return CursorRegion(line.document.find_start_of_previous_word(count=event.arg) or 0)
+
+    @change_delete_move_yank_handler('B')
+    def _(event):
+        """ Move one non-blank word left """
+        return CursorRegion(line.document.find_start_of_previous_word(count=event.arg, WORD=True) or 0)
 
     @change_delete_move_yank_handler('$')
     def key_dollar(event):
         """ 'c$', 'd$' and '$':  Delete/change/move until end of line. """
         return CursorRegion(line.document.get_end_of_line_position())
 
-    @change_delete_move_yank_handler('w')  # TODO: difference between 'w' and 'W'
-    def key_w(event):
-        """ 'cw', 'de', 'w': Delete/change/move one word.  """
+    @change_delete_move_yank_handler('w')
+    def _(event):
+        """ 'word' forward. 'cw', 'dw', 'w': Delete/change/move one word.  """
         return CursorRegion(line.document.find_next_word_beginning(count=event.arg) or 0)
 
-    @change_delete_move_yank_handler('e')  # TODO: difference between 'e' and 'E'
-    def key_e(event):
-        """ 'ce', 'de', 'e' """
+    @change_delete_move_yank_handler('W')
+    def _(event):
+        """ 'WORD' forward. 'cW', 'dW', 'W': Delete/change/move one WORD.  """
+        return CursorRegion(line.document.find_next_word_beginning(count=event.arg, WORD=True) or 0)
+
+    @change_delete_move_yank_handler('e')
+    def _(event):
+        """ End of 'word': 'ce', 'de', 'e' """
         end = line.document.find_next_word_ending(count=event.arg)
         return CursorRegion(end - 1 if end else 0)
 
+    @change_delete_move_yank_handler('E')
+    def _(event):
+        """ End of 'WORD': 'cE', 'dE', 'E' """
+        end = line.document.find_next_word_ending(count=event.arg, WORD=True)
+        return CursorRegion(end - 1 if end else 0)
+
     @change_delete_move_yank_handler('i', 'w', no_move_handler=True)
-    def key_iw(event):
-        """ ciw and diw """
-        # Change inner word: change word under cursor.
+    def _(event):
+        """ Inner 'word': ciw and diw """
         start, end = line.document.find_boundaries_of_current_word()
+        return CursorRegion(start, end)
+
+    @change_delete_move_yank_handler('a', 'w', no_move_handler=True)
+    def _(event):
+        """ A 'word': caw and daw """
+        start, end = line.document.find_boundaries_of_current_word(include_trailing_whitespace=True)
+        return CursorRegion(start, end)
+
+    @change_delete_move_yank_handler('i', 'W', no_move_handler=True)
+    def _(event):
+        """ Inner 'WORD': ciW and diW """
+        start, end = line.document.find_boundaries_of_current_word(WORD=True)
+        return CursorRegion(start, end)
+
+    @change_delete_move_yank_handler('a', 'W', no_move_handler=True)
+    def _(event):
+        """ A 'WORD': caw and daw """
+        start, end = line.document.find_boundaries_of_current_word(WORD=True, include_trailing_whitespace=True)
         return CursorRegion(start, end)
 
     @change_delete_move_yank_handler('^')

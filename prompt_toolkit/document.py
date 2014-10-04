@@ -9,12 +9,19 @@ from .selection import SelectionType
 __all__ = ('Document',)
 
 
-# Regex for finding the "words" in documents. (We consider a group of alnum
+# Regex for finding "words" in documents. (We consider a group of alnum
 # characters a word, but also a group of special characters a word, as long as
 # it doesn't contain a space.)
+# (This is a 'word' in Vi.)
 _FIND_WORD_RE = re.compile('([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
-
 _FIND_CURRENT_WORD_RE = re.compile('^([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
+_FIND_CURRENT_WORD_INCLUDE_TRAILING_WHITESPACE_RE = re.compile('^(([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)\s*)')
+
+# Regex for finding "WORDS" in documents.
+# (This is a 'WORD in Vi.)
+_FIND_BIG_WORD_RE = re.compile('([^\s]+)')
+_FIND_CURRENT_BIG_WORD_RE = re.compile('^([^\s]+)')
+_FIND_CURRENT_BIG_WORD_INCLUDE_TRAILING_WHITESPACE_RE = re.compile('^([^\s]+\s*)')
 
 
 class Document(object):
@@ -222,7 +229,7 @@ class Document(object):
         else:
             return self.text_before_cursor[self.find_start_of_previous_word():]
 
-    def find_start_of_previous_word(self, count=1):
+    def find_start_of_previous_word(self, count=1, WORD=False):
         """
         Return an index relative to the cursor position pointing to the start
         of the previous word. Return `None` if nothing was found.
@@ -231,7 +238,8 @@ class Document(object):
         # backwards search.
         text_before_cursor = self.text_before_cursor[::-1]
 
-        iterator = _FIND_WORD_RE.finditer(text_before_cursor)
+        regex = _FIND_BIG_WORD_RE if WORD else _FIND_WORD_RE
+        iterator = regex.finditer(text_before_cursor)
 
         try:
             for i, match in enumerate(iterator):
@@ -240,7 +248,7 @@ class Document(object):
         except StopIteration:
             pass
 
-    def find_boundaries_of_current_word(self):
+    def find_boundaries_of_current_word(self, WORD=False, include_leading_whitespace=False, include_trailing_whitespace=False):
         """
         Return the relative boundaries (startpos, endpos) of the current word under the
         cursor. (This is at the current line, because line boundaries obviously
@@ -250,20 +258,29 @@ class Document(object):
         text_before_cursor = self.current_line_before_cursor[::-1]
         text_after_cursor = self.current_line_after_cursor
 
-        match_before = _FIND_CURRENT_WORD_RE.search(text_before_cursor)
-        match_after = _FIND_CURRENT_WORD_RE.search(text_after_cursor)
+        def get_regex(include_whitespace):
+            return {
+                (False, False): _FIND_CURRENT_WORD_RE,
+                (False, True): _FIND_CURRENT_WORD_INCLUDE_TRAILING_WHITESPACE_RE,
+                (True, False): _FIND_CURRENT_BIG_WORD_RE,
+                (True, True): _FIND_CURRENT_BIG_WORD_INCLUDE_TRAILING_WHITESPACE_RE,
+            }[(WORD, include_whitespace)]
+
+        match_before = get_regex(include_leading_whitespace).search(text_before_cursor)
+        match_after = get_regex(include_trailing_whitespace).search(text_after_cursor)
 
         return (
             - match_before.end(1) if match_before else 0,
             match_after.end(1) if match_after else 0
         )
 
-    def find_next_word_beginning(self, count=1):
+    def find_next_word_beginning(self, count=1, WORD=False):
         """
         Return an index relative to the cursor position pointing to the start
         of the next word. Return `None` if nothing was found.
         """
-        iterator = _FIND_WORD_RE.finditer(self.text_after_cursor)
+        regex = _FIND_BIG_WORD_RE if WORD else _FIND_WORD_RE
+        iterator = regex.finditer(self.text_after_cursor)
 
         try:
             for i, match in enumerate(iterator):
@@ -276,7 +293,7 @@ class Document(object):
         except StopIteration:
             pass
 
-    def find_next_word_ending(self, include_current_position=False, count=1):
+    def find_next_word_ending(self, include_current_position=False, count=1, WORD=False):
         """
         Return an index relative to the cursor position pointing to the end
         of the next word. Return `None` if nothing was found.
@@ -286,7 +303,8 @@ class Document(object):
         else:
             text = self.text_after_cursor[1:]
 
-        iterable = _FIND_WORD_RE.finditer(text)
+        regex = _FIND_BIG_WORD_RE if WORD else _FIND_WORD_RE
+        iterable = regex.finditer(text)
 
         try:
             for i, match in enumerate(iterable):
@@ -301,12 +319,13 @@ class Document(object):
         except StopIteration:
             pass
 
-    def find_previous_word_beginning(self, count=1):
+    def find_previous_word_beginning(self, count=1, WORD=False):
         """
         Return an index relative to the cursor position pointing to the start
         of the next word. Return `None` if nothing was found.
         """
-        iterator = _FIND_WORD_RE.finditer(self.text_before_cursor[::-1])
+        regex = _FIND_BIG_WORD_RE if WORD else _FIND_WORD_RE
+        iterator = regex.finditer(self.text_before_cursor[::-1])
 
         try:
             for i, match in enumerate(iterator):
