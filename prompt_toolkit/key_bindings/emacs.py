@@ -446,7 +446,8 @@ def emacs_bindings(registry, cli_ref):
         """
         Cursor to start of next word.
         """
-        line.cursor_position += line.document.find_next_word_beginning(count=event.arg) or 0
+        line.cursor_position += line.document.find_next_word_beginning(count=event.arg) or \
+            line.document.end_position
 
     @handle(Keys.Escape, '/', in_mode=InputMode.INSERT)
     def _(event):

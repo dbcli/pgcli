@@ -645,12 +645,14 @@ def vi_bindings(registry, cli_ref):
     @change_delete_move_yank_handler('w')
     def _(event):
         """ 'word' forward. 'cw', 'dw', 'w': Delete/change/move one word.  """
-        return CursorRegion(line.document.find_next_word_beginning(count=event.arg) or 0)
+        return CursorRegion(line.document.find_next_word_beginning(count=event.arg) or
+                            line.document.end_position)
 
     @change_delete_move_yank_handler('W')
     def _(event):
         """ 'WORD' forward. 'cW', 'dW', 'W': Delete/change/move one WORD.  """
-        return CursorRegion(line.document.find_next_word_beginning(count=event.arg, WORD=True) or 0)
+        return CursorRegion(line.document.find_next_word_beginning(count=event.arg, WORD=True) or
+                            line.document.end_position)
 
     @change_delete_move_yank_handler('e')
     def _(event):
