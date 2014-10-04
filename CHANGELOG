@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+0.20: 2014-10-04
+----------------
+Fixed:
+- Workarounds for Jedi bugs.
+- Better handling of window resize events.
+- Fixed counter in ptipython prompt.
+- Use IPythonInputSplitter.transform_cell for IPython syntax validation.
+- Only insert newlines for open brackets if the cursor is at the end of the input string.
+
+New features:
+- More Vi key bindings: 'B', 'W', 'E', 'aW', 'aw' and 'iW'
+- ControlZ now suspends the process
+
+
 0.19: 2014-09-30
 ----------------
 Fixed:
