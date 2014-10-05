@@ -1,82 +1,9 @@
 from __future__ import unicode_literals
-import array
-import fcntl
-import signal
-import six
-import termios
-import tty
 
-
-def get_size(fileno):
-    # Thanks to fabric (fabfile.org), and
-    # http://sqizit.bartletts.id.au/2011/02/14/pseudo-terminals-in-python/
-    """
-    Get the size of this pseudo terminal.
-
-    :param fileno: stdout.fileno()
-    :returns: A (rows, cols) tuple.
-    """
-#    assert stdout.isatty()
-
-    # Buffer for the C call
-    buf = array.array(u'h' if six.PY3 else b'h', [0, 0, 0, 0])
-
-    # Do TIOCGWINSZ (Get)
-    fcntl.ioctl(fileno, termios.TIOCGWINSZ, buf, True)
-#    fcntl.ioctl(0, termios.TIOCGWINSZ, buf, True)
-
-    # Return rows, cols
-    return buf[0], buf[1]
-
-
-class raw_mode(object):
-    """
-    ::
-
-        with raw_mode(stdin):
-            ''' the pseudo-terminal stdin is now used in raw mode '''
-    """
-    def __init__(self, fileno):
-        self.fileno = fileno
-        self.attrs_before = termios.tcgetattr(fileno)
-
-    def __enter__(self):
-        # NOTE: On os X systems, using pty.setraw() fails. Therefor we are using this:
-        newattr = termios.tcgetattr(self.fileno)
-        newattr[tty.LFLAG] = self._patch(newattr[tty.LFLAG])
-        termios.tcsetattr(self.fileno, termios.TCSANOW, newattr)
-
-    def _patch(self, attrs):
-        return attrs & ~(termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
-
-    def __exit__(self, *a, **kw):
-        termios.tcsetattr(self.fileno, termios.TCSANOW, self.attrs_before)
-
-
-class cooked_mode(raw_mode):
-    """
-    (The opposide of ``raw_mode``::
-
-        with cooked_mode(stdin):
-            ''' the pseudo-terminal stdin is now used in cooked mode. '''
-    """
-    def _patch(self, attrs):
-        return attrs | (termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
-
-
-class call_on_sigwinch(object):
-    """
-    Context manager which Installs a SIGWINCH callback.
-    (This signal occurs when the terminal size changes.)
-    """
-    def __init__(self, callback):
-        self.callback = callback
-
-    def __enter__(self):
-        self.previous_callback = signal.signal(signal.SIGWINCH, lambda *a: self.callback())
-
-    def __exit__(self, *a, **kw):
-        signal.signal(signal.SIGWINCH, self.previous_callback)
+__all__ = (
+    'EventHook',
+    'DummyContext',
+)
 
 
 class EventHook(object):
@@ -104,3 +31,14 @@ class EventHook(object):
     def fire(self, *args, **keywargs):
         for handler in self.__handlers:
             handler(*args, **keywargs)
+
+
+class DummyContext(object):
+    """
+    (contextlib.nested is not available on Py3)
+    """
+    def __enter__(self):
+        pass
+
+    def __exit__(self, *a):
+        pass

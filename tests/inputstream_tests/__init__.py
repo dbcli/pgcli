@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from prompt_toolkit.inputstream import InputStream
+from prompt_toolkit.terminal.vt100_input import InputStream
 from prompt_toolkit.keys import Keys
 
 import unittest

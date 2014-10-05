@@ -23,16 +23,32 @@ Features:
 - Selecting text for copy/paste. (Both Emacs and Vi style.)
 - No global state.
 - Code written with love.
+- Runs on Linux, OS X and Windows systems.
 
-
-Limitations:
-
-- Only for VT100-compatible terminals. (Actually, all terminals in OS X and
-  Linux systems are VT100 compatible these days, so that should not be an issue.
-  There is no Windows support, however.)
 
 Feel free to create tickets for bugs and feature requests, and create pull
 requests if you have a nice patches that you would like to share with others.
+
+About Windows support
+*********************
+
+``prompt_toolkit`` is cross platform, and everything that you build on top
+should run fine on both Unix and Windows systems. On Windows, it uses a
+different event loop (``WaitForMultipleObjects`` instead of ``select``), and
+another input and output system. (Win32 APIs instead of pseudo-terminals and
+VT100.)
+
+.. image :: docs/images/ptpython-windows.png
+
+
+That should work fine, however the library is currently much more tested on
+Linux and Mac os X systems. So, if you find any bugs in the Windows
+implementation, or you have an idea how to make the experience better, please
+create a Github issue.
+
+It's worth noting that the implementation is a "best effort of what is
+possible". Both Unix and Windows terminals have their limitations. But in
+general, the Unix experience will still be a little better.
 
 
 Installation

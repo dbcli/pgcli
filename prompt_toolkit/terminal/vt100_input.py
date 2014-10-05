@@ -2,17 +2,24 @@
 Parser for VT100 input stream.
 """
 from __future__ import unicode_literals
-import six
-import re
 
-from .keys import Keys
+import os
+import re
+import six
+import termios
+import tty
+
+from ..keys import Keys
+from ..key_binding import KeyPress
 
 __all__ = (
     'InputStream',
+    'raw_mode',
+    'cooked_mode',
 )
 
 _DEBUG_RENDERER_INPUT = False
-_DEBUG_RENDERER_INPUT_FILENAME = '/tmp/prompt-toolkit-render-input'
+_DEBUG_RENDERER_INPUT_FILENAME = 'prompt-toolkit-render-input.log'
 
 
 # Regex matching any CPR response
@@ -22,22 +29,6 @@ _cpr_response_re = re.compile('^' + re.escape('\x1b[') + r'\d+;\d+R$')
 # (Note that it doesn't contain the last character, the 'R'. The prefix has to
 # be shorter.)
 _cpr_response_prefix_re = re.compile('^' + re.escape('\x1b[') + r'[\d;]*$')
-
-
-class KeyPress(object):
-    """
-    :param key: a `Keys` instance.
-    :param data: The received string on stdin. (Often vt100 escape codes.)
-    """
-    def __init__(self, key, data):
-        self.key = key
-        self.data = data
-
-    def __repr__(self):
-        return 'KeyPress(key=%r, data=%r)' % (self.key, self.data)
-
-    def __eq__(self, other):
-        return self.key == other.key and self.data == other.data
 
 
 class _Flush(object):
@@ -161,18 +152,6 @@ class InputStream(object):
     def reset(self, request=False):
         self._start_parser()
 
-    def prepare_terminal(self, stdout):
-        """
-        Prepare terminal.
-        """
-        # Put the terminal in cursor mode. (Instead of application mode.)
-        stdout.write('\x1b[?1l')
-#        stdout.write('\x1b[?9h')
-        stdout.flush()
-
-        # # Put the terminal in application mode.
-        # self._stdout.write('\x1b[?1h')
-
     def _start_parser(self):
         """
         Start the parser coroutine.
@@ -291,3 +270,44 @@ class InputStream(object):
         without assuming any characters will folow.
         """
         self._input_parser.send(_Flush)
+
+
+class raw_mode(object):
+    """
+    ::
+
+        with raw_mode(stdin):
+            ''' the pseudo-terminal stdin is now used in raw mode '''
+    """
+    def __init__(self, fileno):
+        self.fileno = fileno
+        self.attrs_before = termios.tcgetattr(fileno)
+
+    def __enter__(self):
+        # NOTE: On os X systems, using pty.setraw() fails. Therefor we are using this:
+        newattr = termios.tcgetattr(self.fileno)
+        newattr[tty.LFLAG] = self._patch(newattr[tty.LFLAG])
+        termios.tcsetattr(self.fileno, termios.TCSANOW, newattr)
+
+        # Put the terminal in cursor mode. (Instead of application mode.)
+        os.write(self.fileno, '\x1b[?1l')
+
+    def _patch(self, attrs):
+        return attrs & ~(termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
+
+    def __exit__(self, *a, **kw):
+        termios.tcsetattr(self.fileno, termios.TCSANOW, self.attrs_before)
+
+        # # Put the terminal in application mode.
+        # self._stdout.write('\x1b[?1h')
+
+
+class cooked_mode(raw_mode):
+    """
+    (The opposide of ``raw_mode``::
+
+        with cooked_mode(stdin):
+            ''' the pseudo-terminal stdin is now used in cooked mode. '''
+    """
+    def _patch(self, attrs):
+        return attrs | (termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)

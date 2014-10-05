@@ -6,17 +6,10 @@ Author: Jonathan Slenders
 from __future__ import unicode_literals
 
 import errno
-import fcntl
 import os
-import select
-import signal
 import six
 import sys
-import threading
 
-from codecs import getincrementaldecoder
-
-from .inputstream import InputStream
 from .key_binding import InputProcessor
 from .enums import InputMode
 from .key_binding import Registry
@@ -25,15 +18,26 @@ from .line import Line
 from .layout import Layout
 from .layout.prompt import DefaultPrompt
 from .renderer import Renderer
-from .utils import raw_mode, cooked_mode, call_on_sigwinch, EventHook
+from .utils import EventHook, DummyContext
 from .history import History
 
 from pygments.styles.default import DefaultStyle
 
 import weakref
 
+if sys.platform == 'win32':
+    from .terminal.win32_input import raw_mode, cooked_mode
+    from .eventloop.win32 import Win32EventLoop as EventLoop
+else:
+    from .terminal.vt100_input import raw_mode, cooked_mode
+    from .eventloop.posix import PosixEventLoop as EventLoop
+    from .eventloop.posix import call_on_sigwinch
+
+
 __all__ = (
     'AbortAction',
+    'Exit',
+    'Abort',
     'CommandLineInterface',
 )
 
@@ -67,16 +71,6 @@ class CommandLineInterface(object):
             result = cli.read_input()
             print(result)
     """
-    # All the factories below have to be callables that return instances of the
-    # respective classes. They can be as simple as the class itself, but they
-    # can also be instance methods that pass some additional parameters to the
-    # class.
-
-    #: When to trigger the `onInputTimeout` event.
-    input_timeout = .5
-
-    stdin_decoder_cls = getincrementaldecoder('utf-8')
-
     def __init__(self, stdin=None, stdout=None,
                  layout=None,
                  line=None,
@@ -113,22 +107,6 @@ class CommandLineInterface(object):
         #: The `InputProcessor` instance.
         self.input_processor = self.create_input_processor(key_binding_factories)
 
-        # Create `InputStream` instance.
-        self.inputstream = InputStream(self.input_processor)
-
-        # Pipe for inter thread communication.
-        self._schedule_pipe = None
-
-        #: Currently reading input.
-        self.is_reading_input = False
-
-        # Create incremental decoder for decoding stdin.
-        # We can not just do `os.read(stdin.fileno(), 1024).decode('utf-8')`, because
-        # it could be that we are in the middle of a utf-8 byte sequence.
-        self._stdin_decoder = self.stdin_decoder_cls()
-
-        self._calls_from_executor = []
-
         # Handle events.
         if create_async_autocompleters:
             for n, l in self.lines.items():
@@ -137,16 +115,21 @@ class CommandLineInterface(object):
 
         self._reset()
 
+        # Event loop.
+        self.eventloop = None
+
         # Events
 
         #: Called when there is no input for x seconds.
-        #:   At this event, you can for instance start a background thread to
-        #:   generate information about the input. E.g. get the code signature
-        #:   of the function below the cursor position in the case of a REPL.
+        #: (Fired when any eventloop.onInputTimeout is fired.)
         self.onInputTimeout = EventHook()
 
         self.onReadInputStart = EventHook()
         self.onReadInputEnd = EventHook()
+
+    @property
+    def is_reading_input(self):
+        return bool(self.eventloop)
 
     @property
     def line(self):
@@ -163,16 +146,28 @@ class CommandLineInterface(object):
         #: The `InputProcessor` instance.
         return InputProcessor(key_registry)
 
-    def _reset(self):
+    def _reset(self, initial_value=''):
+        """
+        Reset everything.
+        """
         self._exit_flag = False
         self._abort_flag = False
         self._return_code = None
+
+        for l in self.lines.values():
+            l.reset()
+
+        self.line.reset(initial_value=initial_value)
+        self.renderer.reset()
+        self.input_processor.reset(default_input_mode=self.default_input_mode)
+        self.layout.reset()
 
     def request_redraw(self):
         """
         Thread safe way of sending a repaint trigger to the input event loop.
         """
-        self.call_from_executor(self._redraw)
+        if self.is_reading_input:
+            self.call_from_executor(self._redraw)
 
     def _redraw(self):
         """
@@ -188,74 +183,18 @@ class CommandLineInterface(object):
         loop.)
         Similar to Twisted's ``deferToThread``.
         """
-        class _Thread(threading.Thread):
-            def run(t):
-                callback()
-
-        _Thread().start()
+        self.eventloop.run_in_executor(callback)
 
     def call_from_executor(self, callback):
         """
         Call this function in the main event loop.
         Similar to Twisted's ``callFromThread``.
         """
-        self._calls_from_executor.append(callback)
-
-        if self._schedule_pipe:
-            os.write(self._schedule_pipe[1], b'x')
-
-    def _get_char_loop(self):
-        """
-        The input 'event loop'.
-
-        This should return the next characters to process.
-        """
-        timeout = self.input_timeout
-
-        while True:
-            r, w, x = _select([self.stdin, self._schedule_pipe[0]], [], [], timeout)
-
-            if self.stdin in r:
-                return self._read_from_stdin()
-
-            # If we receive something on our "call_from_executor" pipe, process
-            # these callbacks in a thread safe way.
-            elif self._schedule_pipe[0] in r:
-                # Flush all the pipe content.
-                os.read(self._schedule_pipe[0], 1024)
-
-                # Process calls from executor.
-                calls_from_executor, self._calls_from_executor = self._calls_from_executor, []
-                for c in calls_from_executor:
-                    c()
-            else:
-                # Fire input timeout event.
-                self.onInputTimeout.fire()
-                timeout = None
-
-    def _read_from_stdin(self):
-        """
-        Read the input and return it.
-        """
-        # Note: the following works better than wrapping `self.stdin` like
-        #       `codecs.getreader('utf-8')(stdin)` and doing `read(1)`.
-        #       Somehow that causes some latency when the escape
-        #       character is pressed. (Especially on combination with the `select`.
-        try:
-            bytes = os.read(self.stdin.fileno(), 1024)
-        except OSError:
-            # In case of SIGWINCH
-            bytes = b''
-
-        try:
-            return self._stdin_decoder.decode(bytes)
-        except UnicodeDecodeError:
-            # When it's not possible to decode this bytes, reset the decoder.
-            # The only occurence of this that I had was when using iTerm2 on OS
-            # X, with "Option as Meta" checked (You should choose "Option as
-            # +Esc".)
-            self._stdin_decoder = self.stdin_decoder_cls()
-            return ''
+        if self.eventloop:
+            self.eventloop.call_from_executor(callback)
+            return True
+        else:
+            return False
 
     def _on_resize(self):
         """
@@ -265,7 +204,7 @@ class CommandLineInterface(object):
         (We do it asynchronously, because writing to the output from inside the
         signal handler causes easily reentrant calls, giving runtime errors.)
         """
-        assert self.is_reading_input
+        assert self.eventloop
 
         def do_in_event_loop():
             self.renderer.erase()
@@ -284,50 +223,27 @@ class CommandLineInterface(object):
         if self.is_reading_input:
             raise Exception('Already reading input. Read_input is not thread safe.')
 
-        self.is_reading_input = True
+        # Create new event loop.
+        self.eventloop = EventLoop(self.input_processor, self.stdin)
+        self.eventloop.onInputTimeout += lambda: self.onInputTimeout.fire()
 
         try:
-            # Create a pipe for inter thread communication.
-            self._schedule_pipe = os.pipe()
-            fcntl.fcntl(self._schedule_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
-
-            def reset_line():
-                """
-                Reset everything.
-                """
-                self.inputstream.reset()
-
-                for l in self.lines.values():
-                    l.reset()
-
-                self.line.reset(initial_value=initial_value)
-                self.renderer.reset()
-                self.input_processor.reset(default_input_mode=self.default_input_mode)
-                self._reset()
-                self.layout.reset()
-            reset_line()
+            def reset():
+                self._reset(initial_value=initial_value)
+            reset()
 
             # Trigger onReadInputStart event.
             self.onReadInputStart.fire()
 
             with raw_mode(self.stdin.fileno()):
-                self.inputstream.prepare_terminal(self.stdout)
                 self.renderer.request_absolute_cursor_position()
 
                 self._redraw()
 
-                with call_on_sigwinch(self._on_resize):
+                with (DummyContext() if sys.platform == 'win32' else
+                      call_on_sigwinch(self._on_resize)):
                     while True:
-                        c = self._get_char_loop()
-
-                        # If we got a character, feed it to the input stream. If we
-                        # got none, it means we got a repaint request.
-                        if c:
-                            # Feed input text.
-                            self.inputstream.feed(c)
-
-                            # Immediately flush the input.
-                            self.inputstream.flush()
+                        self.eventloop.loop()
 
                         # If the exit flag has been set.
                         if self._exit_flag:
@@ -339,7 +255,7 @@ class CommandLineInterface(object):
                             elif on_exit == AbortAction.RETURN_NONE:
                                 return None
                             elif on_exit == AbortAction.RETRY:
-                                reset_line()
+                                reset()
                                 self.renderer.request_absolute_cursor_position()
 
                         # If the abort flag has been set.
@@ -352,7 +268,7 @@ class CommandLineInterface(object):
                             elif on_abort == AbortAction.RETURN_NONE:
                                 return None
                             elif on_abort == AbortAction.RETRY:
-                                reset_line()
+                                reset()
                                 self.renderer.request_absolute_cursor_position()
 
                         # If a return value has been set.
@@ -364,18 +280,12 @@ class CommandLineInterface(object):
                         self._redraw()
 
         finally:
-            # Close pipes.
-            schedule_pipe = self._schedule_pipe
-            self._schedule_pipe = None
-
-            if schedule_pipe:
-                os.close(schedule_pipe[0])
-                os.close(schedule_pipe[1])
+            # Close event loop
+            self.eventloop.close()
+            self.eventloop = None
 
             # Trigger onReadInputEnd event.
             self.onReadInputEnd.fire()
-
-            self.is_reading_input = False
 
     def set_exit(self):
         self._exit_flag = True
@@ -397,7 +307,11 @@ class CommandLineInterface(object):
 
         # Run system command.
         with cooked_mode(self.stdin.fileno()):
-            os.system(command.encode('utf-8'))
+            if sys.platform == 'win32':
+                os.system(command)  # Needs to be unicode for win32
+            else:
+                os.system(command.encode('utf-8'))
+
             (input if six.PY3 else raw_input)('\nPress ENTER to continue...')
 
         self.renderer.reset()
@@ -484,21 +398,3 @@ class CommandLineInterface(object):
 
             self.run_in_executor(run)
         return async_completer
-
-
-def _select(*args, **kwargs):
-    """
-    Wrapper around select.select.
-
-    When the SIGWINCH signal is handled, other system calls, like select
-    are aborted in Python. This wrapper will retry the system call.
-    """
-    while True:
-        try:
-            return select.select(*args, **kwargs)
-        except select.error as e:
-            # Retry select call when EINTR
-            if e.args and e.args[0] == errno.EINTR:
-                continue
-            else:
-                raise

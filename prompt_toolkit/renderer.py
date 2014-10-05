@@ -7,12 +7,11 @@ import sys
 import six
 import errno
 
-from .utils import get_size
 from collections import defaultdict, namedtuple
 
-from pygments.formatters.terminal256 import Terminal256Formatter, EscapeSequence
 from pygments.style import Style
 from pygments.token import Token
+
 
 try:
     from wcwidth import wcwidth
@@ -20,8 +19,11 @@ except ImportError:
     from .libs.wcwidth import wcwidth
 
 
-# Global variable to keep the colour table in memory.
-_tf = Terminal256Formatter()
+if sys.platform == 'win32':
+    from .terminal.win32_output import Win32Output as Output
+else:
+    from .terminal.vt100_output import Vt100_Output as Output
+
 
 __all__ = (
     'Point',
@@ -29,14 +31,9 @@ __all__ = (
     'Screen',
 )
 
+
 Point = namedtuple('Point', 'y x')
 Size = namedtuple('Size', 'rows columns')
-
-#: If True: write the output of the renderer also to the following file. This
-#: is very useful for debugging. (e.g.: to see that we don't write more bytes
-#: than required.)
-_DEBUG_RENDER_OUTPUT = False
-_DEBUG_RENDER_OUTPUT_FILENAME = '/tmp/prompt-toolkit-render-output'
 
 #: Cache for wcwidth sizes.
 _CHAR_SIZES_CACHE = [wcwidth(six.unichr(i)) for i in range(0, 64000)]
@@ -50,77 +47,6 @@ def _get_width(c):
         return _CHAR_SIZES_CACHE[ord(c)]
     except IndexError:
         return wcwidth(c)
-
-
-class TerminalCodes:
-    """
-    Escape codes for a VT100 terminal.
-
-    For more info, see: http://www.termsys.demon.co.uk/vtansi.htm
-    """
-    #: Erases the screen with the background colour and moves the cursor to home.
-    ERASE_SCREEN = '\x1b[2J'
-
-    #: Erases from the current cursor position to the end of the current line.
-    ERASE_END_OF_LINE = '\x1b[K'
-
-    #: Erases the screen from the current line down to the bottom of the screen.
-    ERASE_DOWN = '\x1b[J'
-
-    CARRIAGE_RETURN = '\r'
-    NEWLINE = '\n'
-    CRLF = '\r\n'
-
-    HIDE_CURSOR = '\x1b[?25l'
-    DISPLAY_CURSOR = '\x1b[?25h'
-
-    RESET_ATTRIBUTES = '\x1b[0m'
-
-    DISABLE_AUTOWRAP = '\x1b[?7l'
-    ENABLE_AUTOWRAP = '\x1b[?7h'
-
-    @staticmethod
-    def CURSOR_GOTO(row=0, column=0):
-        """ Move cursor position. """
-        return '\x1b[%i;%iH' % (row, column)
-
-    @staticmethod
-    def CURSOR_UP(amount):
-        if amount == 0:
-            return ''
-        elif amount == 1:
-            return '\x1b[A'
-        else:
-            return '\x1b[%iA' % amount
-
-    @staticmethod
-    def CURSOR_DOWN(amount):
-        if amount == 0:
-            return ''
-        elif amount == 1:
-            # Note: Not the same as '\n', '\n' can cause the window content to
-            #       scroll.
-            return '\x1b[B'
-        else:
-            return '\x1b[%iB' % amount
-
-    @staticmethod
-    def CURSOR_FORWARD(amount):
-        if amount == 0:
-            return ''
-        elif amount == 1:
-            return '\x1b[C'
-        else:
-            return '\x1b[%iC' % amount
-
-    @staticmethod
-    def CURSOR_BACKWARD(amount):
-        if amount == 0:
-            return ''
-        elif amount == 1:
-            return '\b'  # '\x1b[D'
-        else:
-            return '\x1b[%iD' % amount
 
 
 class Char(object):
@@ -295,7 +221,7 @@ class Screen(object):
                 self.write_char(c, token=token)
 
 
-def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None, accept_or_abort=False, style=None, grayed=False):
+def output_screen_diff(output, screen, current_pos, previous_screen=None, last_char=None, accept_or_abort=False, style=None, grayed=False):
     """
     Create diff of this screen with the previous screen.
     """
@@ -304,29 +230,32 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
     background_turned_on = [False]  # Nonlocal
 
     #: Variable for capturing the output.
-    result = []
-    write = result.append
+    write = output.write
 
     def move_cursor(new):
-        if current_pos.x >= screen.size.columns - 1:
-            write(TerminalCodes.CARRIAGE_RETURN)
-            write(TerminalCodes.CURSOR_FORWARD(new.x))
-        elif new.x < current_pos.x or current_pos.x >= screen.size.columns - 1:
-            write(TerminalCodes.CURSOR_BACKWARD(current_pos.x - new.x))
-        elif new.x > current_pos.x:
-            write(TerminalCodes.CURSOR_FORWARD(new.x - current_pos.x))
+        current_x, current_y = current_pos.x, current_pos.y
 
-        if new.y > current_pos.y:
+        if new.y > current_y:
             # Use newlines instead of CURSOR_DOWN, because this meight add new lines.
             # CURSOR_DOWN will never create new lines at the bottom.
             # Also reset attributes, otherwise the newline could draw a
             # background color.
-            write(TerminalCodes.RESET_ATTRIBUTES)
-            write(TerminalCodes.NEWLINE * (new.y - current_pos.y))
-            write(TerminalCodes.CURSOR_FORWARD(new.x))
+            output.reset_attributes()
+            write('\r\n' * (new.y - current_y))
+            current_x = 0
+            output.cursor_forward(new.x)
             last_char[0] = None  # Forget last char after resetting attributes.
-        elif new.y < current_pos.y:
-            write(TerminalCodes.CURSOR_UP(current_pos.y - new.y))
+            return new
+        elif new.y < current_y:
+            output.cursor_up(current_y - new.y)
+
+        if current_x >= screen.size.columns - 1:
+            write('\r')
+            output.cursor_forward(new.x)
+        elif new.x < current_x or current_x >= screen.size.columns - 1:
+            output.cursor_backward(current_x - new.x)
+        elif new.x > current_x:
+            output.cursor_forward(new.x - current_x)
 
         return new
 
@@ -364,37 +293,31 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
             style = get_style_for_token(char.token)
 
             if style:
-                # Create new style and output.
-                fg = _tf._color_index(style['color']) if style['color'] else None
-                bg = _tf._color_index(style['bgcolor']) if style['bgcolor'] else None
+                output.set_attributes(style['color'], style['bgcolor'],
+                                      bold=style.get('bold', False),
+                                      underline=style.get('underline', False))
 
-                e = EscapeSequence(fg=fg, bg=bg,
-                                   bold=style.get('bold', False),
-                                   underline=style.get('underline', False))
-
-                write(TerminalCodes.RESET_ATTRIBUTES)
-                write(e.color_string())
-                write(char.char)
-
-                # If we printed something with a background color, remember that.
-                background_turned_on[0] = bool(bg)
+                # If we print something with a background color, remember that.
+                background_turned_on[0] = bool(style['bgcolor'])
             else:
                 # Reset previous style and output.
-                write(TerminalCodes.RESET_ATTRIBUTES)
-                write(char.char)
+                output.reset_attributes()
+
+            write(char.char)
 
         last_char[0] = char
 
+
     # Disable autowrap
     if not previous_screen:
-        write(TerminalCodes.DISABLE_AUTOWRAP)
-        write(TerminalCodes.RESET_ATTRIBUTES)
+        output.disable_autowrap()
+        output.reset_attributes()
 
     # When the previous screen has a different size, redraw everything anyway.
     if not previous_screen or previous_screen.size != screen.size:
         current_pos = move_cursor(Point(0, 0))
-        write(TerminalCodes.RESET_ATTRIBUTES)
-        write(TerminalCodes.ERASE_DOWN)
+        output.reset_attributes()
+        output.erase_down()
 
         previous_screen = Screen(screen.size)
 
@@ -428,29 +351,29 @@ def output_screen_diff(screen, current_pos, previous_screen=None, last_char=None
         # If the new line is shorter, trim it
         if previous_screen and new_max_line_len < previous_max_line_len:
             current_pos = move_cursor(Point(y=y, x=new_max_line_len+1))
-            write(TerminalCodes.RESET_ATTRIBUTES)
-            write(TerminalCodes.ERASE_END_OF_LINE)
+            output.reset_attributes()
+            output.erase_end_of_line()
             last_char[0] = None  # Forget last char after resetting attributes.
 
     # Move cursor:
     if accept_or_abort:
         current_pos = move_cursor(Point(y=current_height, x=0))
-        write(TerminalCodes.ERASE_DOWN)
+        output.erase_down()
     else:
         current_pos = move_cursor(screen.get_cursor_position())
 
     if accept_or_abort:
-        write(TerminalCodes.RESET_ATTRIBUTES)
-        write(TerminalCodes.ENABLE_AUTOWRAP)
+        output.reset_attributes()
+        output.enable_autowrap()
 
     # If the last printed character has a background color, always reset.
     # (Many terminals give weird artifacs on resize events when there is an
     # active background color.)
     if background_turned_on[0]:
-        write(TerminalCodes.RESET_ATTRIBUTES)
+        output.reset_attributes()
         last_char[0] = None
 
-    return ''.join(result), current_pos, last_char[0]
+    return current_pos, last_char[0]
 
 
 class Renderer(object):
@@ -464,12 +387,9 @@ class Renderer(object):
     """
     def __init__(self, layout=None, stdout=None, style=None):
         self.layout = layout
-        self._stdout = stdout or sys.stdout
+        self.stdout = stdout or sys.stdout
         self._style = style or Style
         self._last_screen = None
-
-        if _DEBUG_RENDER_OUTPUT:
-            self.LOG = open(_DEBUG_RENDER_OUTPUT_FILENAME, 'ab')
 
         self.reset()
 
@@ -488,13 +408,18 @@ class Renderer(object):
         #: We don't know this until a `report_absolute_cursor_row` call.
         self._min_available_height = 0
 
+	# In case of Windown, also make sure to scroll to the current cursor
+	# position.
+        if sys.platform == 'win32':
+            Output(self.stdout).scroll_buffer_to_prompt()
+
     def _write_and_flush(self, data):
         """
         Write to output stream and flush.
         """
         try:
-            self._stdout.write(data)
-            self._stdout.flush()
+            self.stdout.write(data)
+            self.stdout.flush()
         except IOError as e:
             if e.args and e.args[0] == errno.EINTR:
                 # Interrupted system call. Can happpen in case of a window
@@ -506,18 +431,21 @@ class Renderer(object):
 
     def request_absolute_cursor_position(self):
         """
-        Do CPR request.
+        Get current cursor position.
+        For vt100: Do CPR request. (answer will arrive later.)
+        For win32: Do API call. (Answer comes immediately.)
         """
         # Only do this request when the cursor is at the top row. (after a
-        # clear or reset). We rely on that in `report_absolute_cursor_row`.
+        # clear or reset). We will rely on that in `report_absolute_cursor_row`.
         assert self._cursor_pos.y == 0
 
-        # Asks for a cursor position report (CPR).
-        self._write_and_flush('\x1b[6n')
-
-    def get_size(self):
-        rows, columns = get_size(self._stdout.fileno())
-        return Size(rows=rows, columns=columns)
+        # For Win32, we have an API call to get the number of rows below the
+        # cursor.
+        if sys.platform == 'win32':
+            self._min_available_height = Output(self.stdout).get_rows_below_cursor_position()
+        else:
+            # Asks for a cursor position report (CPR).
+            self._write_and_flush('\x1b[6n')
 
     def report_absolute_cursor_row(self, row):
         """
@@ -526,17 +454,20 @@ class Renderer(object):
         """
         # Calculate the amount of rows from the cursor position until the
         # bottom of the terminal.
-        total_rows = self.get_size().rows
+        total_rows = Output(self.stdout).get_size().rows
         rows_below_cursor = total_rows - row + 1
 
         # Set the
         self._min_available_height = rows_below_cursor
 
-    def render_to_str(self, cli):
+    def render(self, cli):
         """
-        Generate the output of the new screen. Return as string.
+        Render the current interface to the output.
         """
-        screen = Screen(size=self.get_size())
+        output = Output(self.stdout)
+
+        # Create screen and write layout to it.
+        screen = Screen(size=output.get_size())
 
         height = self._last_screen.current_height if self._last_screen else 0
         height = max(self._min_available_height, height)
@@ -544,29 +475,16 @@ class Renderer(object):
 
         accept_or_abort = cli.is_exiting or cli.is_aborting or cli.is_returning
 
-        output, self._cursor_pos, self._last_char = output_screen_diff(
-            screen, self._cursor_pos,
+        # Process diff and write to output.
+        output_buffer = []
+        self._cursor_pos, self._last_char = output_screen_diff(
+            output, screen, self._cursor_pos,
             self._last_screen, self._last_char, accept_or_abort,
-            style=self._style, grayed=cli.is_aborting)
+            style=self._style, grayed=cli.is_aborting,
+            )
         self._last_screen = screen
 
-        return output
-
-    def render(self, cli):
-        """
-        Render the current interface to stdout.
-        """
-        # Render to string first.
-        output = self.render_to_str(cli)
-
-        # Write output to log file.
-        if _DEBUG_RENDER_OUTPUT and output:
-            self.LOG.write(repr(output).encode('utf-8'))
-            self.LOG.write(b'\n')
-            self.LOG.flush()
-
-        # Write to output stream.
-        self._write_and_flush(output)
+        output.flush()
 
     def erase(self):
         """
@@ -574,12 +492,13 @@ class Renderer(object):
         instance used for running a system command (while hiding the CLI) and
         later resuming the same CLI.)
         """
-        self._write_and_flush(''.join([
-            TerminalCodes.CURSOR_BACKWARD(self._cursor_pos.x),
-            TerminalCodes.CURSOR_UP(self._cursor_pos.y),
-            TerminalCodes.ERASE_DOWN,
-            TerminalCodes.RESET_ATTRIBUTES,
-        ]))
+        output = Output(self.stdout)
+
+        output.cursor_backward(self._cursor_pos.x)
+        output.cursor_up(self._cursor_pos.y)
+        output.erase_down()
+        output.reset_attributes()
+        output.flush()
 
         self.reset()
 
@@ -591,9 +510,10 @@ class Renderer(object):
         self.erase()
 
         # Send "Erase Screen" command and go to (0, 0).
-        self._write_and_flush(''.join([
-            TerminalCodes.ERASE_SCREEN,
-            TerminalCodes.CURSOR_GOTO(0, 0),
-        ]))
+        output = Output(self.stdout)
+
+        output.erase_screen()
+        output.cursor_goto(0, 0)
+        output.flush()
 
         self.request_absolute_cursor_position()
