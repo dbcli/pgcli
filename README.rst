@@ -148,7 +148,7 @@ A
 Q
  The ``Meta``-key doesn't work.
 A
- For some terminals you have to enable the Alt-key to act as enum key, but you
+ For some terminals you have to enable the Alt-key to act as meta key, but you
  can also type ``Escape`` before any key instead.
 
 
