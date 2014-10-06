@@ -21,7 +21,7 @@ from prompt_toolkit.key_bindings.emacs import emacs_bindings
 from prompt_toolkit.key_bindings.vi import vi_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.menus import CompletionMenu
+from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.processors import BracketsMismatchProcessor
 from prompt_toolkit.layout.toolbars import CompletionsToolbar, ArgToolbar, SearchToolbar, ValidationToolbar, SystemToolbar
 from prompt_toolkit.layout.toolbars import Toolbar
@@ -499,7 +499,7 @@ class PythonCommandLineInterface(CommandLineInterface):
             min_height=7,
             lexer=PythonLexer,
             left_margin=PythonLeftMargin(),
-            menus=[CompletionMenu()] if autocompletion_style == AutoCompletionStyle.POPUP_MENU else [],
+            menus=[CompletionsMenu()] if autocompletion_style == AutoCompletionStyle.POPUP_MENU else [],
             bottom_toolbars=[
                 ArgToolbar(),
                 SignatureToolbar(),

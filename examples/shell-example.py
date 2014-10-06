@@ -19,7 +19,7 @@ from prompt_toolkit.contrib.shell.layout import CompletionHint
 from prompt_toolkit.contrib.shell.parse_info import get_parse_info, InvalidCommandException
 from prompt_toolkit.contrib.shell.rules import Any, Sequence, Literal, Repeat, Variable
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.menus import CompletionMenu
+from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.toolbars import Toolbar
 from prompt_toolkit.line import Line
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     cli = CommandLineInterface(
         layout=Layout(before_input=DefaultPrompt('Shell> '),
                       #after_input=CompletionHint(grammar),
-                      menus=[CompletionMenu()],
+                      menus=[CompletionsMenu()],
                       bottom_toolbars=[
                           StatusToolbar()
                       ]),

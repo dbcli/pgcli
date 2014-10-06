@@ -8,8 +8,8 @@ from prompt_toolkit import CommandLineInterface
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt, Prompt
 from prompt_toolkit.layout.margins import LeftMarginWithLineNumbers
-from prompt_toolkit.layout.menus import CompletionMenu
-from prompt_toolkit.layout.toolbars import TextToolbar, ArgToolbar, SearchToolbar, CompletionToolbar
+from prompt_toolkit.layout.menus import CompletionsMenu
+from prompt_toolkit.layout.toolbars import TextToolbar, ArgToolbar, SearchToolbar, CompletionsToolbar
 from prompt_toolkit.line import Line
 from prompt_toolkit.completion import Completion, Completer
 
@@ -77,12 +77,12 @@ def main():
         bottom_toolbars=[
             ArgToolbar(),
             SearchToolbar(),
-            CompletionToolbar(),
+            CompletionsToolbar(),
             TextToolbar('This is a bottom toolbar', token=Token.BottomToolbar1),
             TextToolbar('This is another bottom toolbar', token=Token.BottomToolbar2),
         ],
         show_tildes=True,
-        menus=[CompletionMenu()])
+        menus=[CompletionsMenu()])
 
     cli = CommandLineInterface(layout=layout,
                                style=TestStyle,

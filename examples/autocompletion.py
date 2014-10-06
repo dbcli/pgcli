@@ -14,7 +14,7 @@ from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.line import Line
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
-from prompt_toolkit.layout.menus import CompletionMenu
+from prompt_toolkit.layout.menus import CompletionsMenu
 
 from pygments.token import Token
 from pygments.style import Style
@@ -76,7 +76,7 @@ class AnimalStyle(Style):
 def main():
     cli = CommandLineInterface(style=AnimalStyle,
                    layout=Layout(before_input=DefaultPrompt('Give some animals: '),
-                                 menus=[CompletionMenu()]),
+                                 menus=[CompletionsMenu()]),
                    line=Line(completer=AnimalCompleter()),
                    create_async_autocompleters=True,
             )

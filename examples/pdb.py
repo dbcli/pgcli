@@ -16,7 +16,7 @@ from prompt_toolkit.contrib.shell.layout import CompletionHint
 from prompt_toolkit.contrib.shell.parse_info import get_parse_info, InvalidCommandException
 from prompt_toolkit import Exit
 from prompt_toolkit.line import Line
-from prompt_toolkit.layout.menus import CompletionMenu
+from prompt_toolkit.layout.menus import CompletionsMenu
 
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
@@ -188,7 +188,7 @@ if __name__ == '__main__':
     cli = CommandLineInterface(
         layout=Layout(before_input=DefaultPrompt('(pdb) '),
                       after_input=CompletionHint(grammar),
-                      menus=[CompletionMenu()]),
+                      menus=[CompletionsMenu()]),
         line=Line(completer=ShellCompleter(grammar)),
         style=PdbStyle)
 

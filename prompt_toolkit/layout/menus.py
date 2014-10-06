@@ -4,11 +4,11 @@ from pygments.token import Token
 from ..enums import InputMode
 
 __all__ = (
-    'CompletionMenu',
+    'CompletionsMenu',
 )
 
 
-class CompletionMenu(object):
+class CompletionsMenu(object):
     """
     Helper for drawing the complete menu to the screen.
     """

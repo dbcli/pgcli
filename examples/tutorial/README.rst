@@ -113,7 +113,7 @@ Let's get started!
        from prompt_toolkit.layout import Layout
        from prompt_toolkit.line import Line
        from prompt_toolkit.layout.prompt import DefaultPrompt
-       from prompt_toolkit.layout.menus import CompletionMenu
+       from prompt_toolkit.layout.menus import CompletionsMenu
        from prompt_toolkit.completion import Completion, Completer
        from pygments.lexers import SqlLexer
 
@@ -130,7 +130,7 @@ Let's get started!
 
        def main():
            layout = Layout(before_input=DefaultPrompt('> '),
-                           lexer=SqlLexer, menus=[CompletionMenu()])
+                           lexer=SqlLexer, menus=[CompletionsMenu()])
            line = Line(completer=SqlCompleter())
            cli = CommandLineInterface(layout=layout, line=line)
            try:
@@ -161,7 +161,7 @@ Let's get started!
        from prompt_toolkit.layout import Layout
        from prompt_toolkit.line import Line
        from prompt_toolkit.layout.prompt import DefaultPrompt
-       from prompt_toolkit.layout.menus import CompletionMenu
+       from prompt_toolkit.layout.menus import CompletionsMenu
        from prompt_toolkit.completion import Completion, Completer
        from pygments.lexers import SqlLexer
        from pygments.style import Style
@@ -190,7 +190,7 @@ Let's get started!
 
        def main():
            layout = Layout(before_input=DefaultPrompt('> '),
-                           lexer=SqlLexer, menus=[CompletionMenu()])
+                           lexer=SqlLexer, menus=[CompletionsMenu()])
            line = Line(completer=SqlCompleter())
            cli = CommandLineInterface(style=DocumentStyle, layout=layout, line=line)
            try:
@@ -225,7 +225,7 @@ Let's get started!
        from prompt_toolkit.layout import Layout
        from prompt_toolkit.line import Line
        from prompt_toolkit.layout.prompt import DefaultPrompt
-       from prompt_toolkit.layout.menus import CompletionMenu
+       from prompt_toolkit.layout.menus import CompletionsMenu
        from prompt_toolkit.completion import Completion, Completer
        from pygments.lexers import SqlLexer
        from pygments.style import Style
@@ -255,7 +255,7 @@ Let's get started!
        def main(database):
            connection = sqlite3.connect(database)
            layout = Layout(before_input=DefaultPrompt('> '),
-                           lexer=SqlLexer, menus=[CompletionMenu()])
+                           lexer=SqlLexer, menus=[CompletionsMenu()])
            line = Line(completer=SqlCompleter())
            cli = CommandLineInterface(style=DocumentStyle, layout=layout, line=line)
            try:
