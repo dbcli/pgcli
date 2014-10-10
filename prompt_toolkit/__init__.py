@@ -112,7 +112,7 @@ class CommandLineInterface(object):
         key_binding_factories = key_binding_factories or [emacs_bindings]
 
         #: The `InputProcessor` instance.
-        self.input_processor = self.create_input_processor(key_binding_factories)
+        self.input_processor = self._create_input_processor(key_binding_factories)
 
         # Handle events.
         if create_async_autocompleters:
@@ -142,7 +142,7 @@ class CommandLineInterface(object):
     def line(self):
         return self.lines['default']
 
-    def create_input_processor(self, key_binding_factories):
+    def _create_input_processor(self, key_binding_factories):
         """
         Create :class:`InputProcessor` instance.
         """
