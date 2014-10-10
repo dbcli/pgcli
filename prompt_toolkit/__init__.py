@@ -70,6 +70,13 @@ class CommandLineInterface(object):
         while True:
             result = cli.read_input()
             print(result)
+
+    :param stdin: Input stream, by default sys.stdin
+    :param stdout: Output stream, by default sys.stdout
+    :param layout: :class:`Layout` instance.
+    :param style: :class:`Layout` instance.
+    :param create_async_autocompleters: Boolean. If True, autocompletions will
+        be generated asynchronously while you type.
     """
     def __init__(self, stdin=None, stdout=None,
                  layout=None,
@@ -182,6 +189,8 @@ class CommandLineInterface(object):
         (This is recommended for code that could block the `read_input` event
         loop.)
         Similar to Twisted's ``deferToThread``.
+
+        :param callback: The callable that should run in the executor.
         """
         self.eventloop.run_in_executor(callback)
 
@@ -189,6 +198,8 @@ class CommandLineInterface(object):
         """
         Call this function in the main event loop.
         Similar to Twisted's ``callFromThread``.
+
+        :param callback: The callable that should run in the main event loop.
         """
         if self.eventloop:
             self.eventloop.call_from_executor(callback)
@@ -300,6 +311,8 @@ class CommandLineInterface(object):
         """
         (Not thread safe -- to be called from inside the key bindings.)
         Run system command.
+
+        :param command: Shell command to be executed.
         """
         assert self.is_reading_input, 'Should be called while reading input.'
 
@@ -337,14 +350,23 @@ class CommandLineInterface(object):
 
     @property
     def is_exiting(self):
+        """
+        ``True`` when the exit flag as been set.
+        """
         return self._exit_flag
 
     @property
     def is_aborting(self):
+        """
+        ``True`` when the abort flag as been set.
+        """
         return self._abort_flag
 
     @property
     def is_returning(self):
+        """
+        ``True`` when a return value has been set.
+        """
         return self._return_code
 
     def _create_async_completer(self, line_name):
