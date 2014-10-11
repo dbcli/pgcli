@@ -290,7 +290,7 @@ class raw_mode(object):
         termios.tcsetattr(self.fileno, termios.TCSANOW, newattr)
 
         # Put the terminal in cursor mode. (Instead of application mode.)
-        os.write(self.fileno, '\x1b[?1l')
+        os.write(self.fileno, b'\x1b[?1l')
 
     def _patch(self, attrs):
         return attrs & ~(termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
