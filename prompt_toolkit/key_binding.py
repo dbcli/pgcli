@@ -58,9 +58,9 @@ class InputProcessor(object):
 
 #        print(' '.join(set(''.join(map(str, kb.keys)) for kb in registry.key_bindings if all(isinstance(X, unicode) for X in kb.keys))))
 
-    def reset(self, default_input_mode=InputMode.INSERT):
+    def reset(self, initial_input_mode=InputMode.INSERT):
         self._previous_key_sequence = None
-        self._input_mode_stack = [default_input_mode]
+        self._input_mode_stack = [initial_input_mode]
 
         self._process_coroutine = self._process()
         self._process_coroutine.send(None)

@@ -81,7 +81,6 @@ class CommandLineInterface(object):
     def __init__(self, stdin=None, stdout=None,
                  layout=None,
                  line=None,
-                 default_input_mode=InputMode.INSERT,
                  style=DefaultStyle,
                  key_binding_factories=None,
                  create_async_autocompleters=True,
@@ -89,8 +88,6 @@ class CommandLineInterface(object):
 
         self.stdin = stdin or sys.stdin
         self.stdout = stdout or sys.stdout
-
-        self.default_input_mode = default_input_mode
         self.style = style
 
         #: The `Line` instance.
@@ -153,7 +150,7 @@ class CommandLineInterface(object):
         #: The `InputProcessor` instance.
         return InputProcessor(key_registry)
 
-    def _reset(self, initial_value=''):
+    def _reset(self, initial_value='', initial_input_mode=InputMode.INSERT):
         """
         Reset everything.
         """
@@ -166,7 +163,7 @@ class CommandLineInterface(object):
 
         self.line.reset(initial_value=initial_value)
         self.renderer.reset()
-        self.input_processor.reset(default_input_mode=self.default_input_mode)
+        self.input_processor.reset(initial_input_mode=initial_input_mode)
         self.layout.reset()
 
     def request_redraw(self):
@@ -222,7 +219,8 @@ class CommandLineInterface(object):
             self.renderer.request_absolute_cursor_position()
         self.call_from_executor(do_in_event_loop)
 
-    def read_input(self, initial_value='', on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
+    def read_input(self, initial_value='', initial_input_mode=InputMode.INSERT,
+                   on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
         """
         Read input string from command line.
 
@@ -240,7 +238,8 @@ class CommandLineInterface(object):
 
         try:
             def reset():
-                self._reset(initial_value=initial_value)
+                self._reset(initial_value=initial_value,
+                            initial_input_mode=initial_input_mode)
             reset()
 
             # Trigger onReadInputStart event.
