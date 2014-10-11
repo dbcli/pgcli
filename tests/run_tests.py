@@ -1,9 +1,13 @@
 #!/usr/bin/env python
-from line_tests import LineTest
-from document_tests import DocumentTest
-from inputstream_tests import InputStreamTest
-from key_binding_tests import KeyBindingTest
-from screen_tests import ScreenTest
+from __future__ import unicode_literals
+
+from line_tests import *
+from document_tests import *
+from inputstream_tests import *
+from key_binding_tests import *
+from screen_tests import *
+from regular_languages_tests import *
+from layout_tests import *
 
 import unittest
 

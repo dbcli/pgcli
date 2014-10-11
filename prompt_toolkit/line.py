@@ -4,13 +4,13 @@ It holds the text, cursor position, history, etc...
 """
 from __future__ import unicode_literals
 
-from .completion import Completion
-from .validation import ValidationError
+from .completion import Completion, CompleteEvent, get_common_complete_suffix
 from .document import Document
 from .enums import IncrementalSearchDirection
 from .history import History
 from .selection import SelectionType, SelectionState
 from .utils import EventHook
+from .validation import ValidationError
 
 import os
 import six
@@ -84,7 +84,10 @@ class CompletionState(object):
                 before = self.original_text_before_cursor
             else:
                 before = self.original_text_before_cursor[:c.start_position]
-            return before + c.text + self.original_text_after_cursor, len(before) + len(c.text)
+
+            new_text = before + c.text + self.original_text_after_cursor
+            new_cursor_position = len(before) + len(c.text)
+            return new_text, new_cursor_position
 
 
 class _IncrementalSearchState(object):
@@ -141,8 +144,10 @@ class Line(object):
 
         self.reset()
 
-    def reset(self, initial_value=''):
-        self.cursor_position = len(initial_value)
+    def reset(self, initial_document=None):
+        initial_document = initial_document or Document()
+
+        self.cursor_position = initial_document.cursor_position
 
         # `ValidationError` instance. (Will be set when the input is wrong.)
         self.validation_error = None
@@ -165,7 +170,7 @@ class Line(object):
         #: Enter should process the current command and append to the real
         #: history.
         self._working_lines = self._history.strings[:]
-        self._working_lines.append(initial_value)
+        self._working_lines.append(initial_document.text)
         self.__working_index = len(self._working_lines) - 1
 
     # <getters/setters>
@@ -388,7 +393,10 @@ class Line(object):
         """
         # On the first tab press, try to find one completion and complete.
         if self.completer:
-            result = self.completer.get_common_complete_suffix(self.document)
+            result = get_common_complete_suffix(
+                self.completer, self.document,
+                CompleteEvent(completion_requested=True))
+
             if result:
                 self.insert_text(result)
                 return True
@@ -448,10 +456,14 @@ class Line(object):
         # Generate list of all completions.
         if completions is None:
             if self.completer:
-                completions = list(self.completer.get_completions(self.document))
+                completions = list(self.completer.get_completions(
+                    self.document,
+                    CompleteEvent(completion_requested=True)
+                ))
             else:
                 completions = []
 
+        # Set `complete_state`.
         if completions:
             self.complete_state = CompletionState(
                 original_document=self.document,
@@ -689,7 +701,7 @@ class Line(object):
                 self.validator.validate(self.document)
             except ValidationError as e:
                 # Set cursor position (don't allow invalid values.)
-                cursor_position = self.document.translate_row_col_to_index(e.line, e.column)
+                cursor_position = e.index
                 self.cursor_position = min(max(0, cursor_position), len(self.text))
 
                 self.validation_error = e

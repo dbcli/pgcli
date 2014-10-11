@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod
 __all__ = (
     'Completion',
     'Completer',
+    'get_common_complete_suffix',
 )
 
 
@@ -35,6 +36,30 @@ class Completion(object):
     def __repr__(self):
         return 'Completion(text=%r, start_position=%r)' % (self.text, self.start_position)
 
+    def __eq__(self, other):
+        return (
+            self.text == other.text and
+            self.start_position == other.start_position and
+            self.display == other.display and
+            self.display_meta == other.display_meta)
+
+    def __hash__(self):
+        return hash((self.text, self.start_position, self.display, self.display_meta))
+
+
+class CompleteEvent(object):
+    """
+    Event that called the completer.
+    """
+    def __init__(self, text_inserted=False, completion_requested=False):
+        assert not (text_inserted and completion_requested)
+
+        #: Automatic completion while typing.
+        self.text_inserted = text_inserted
+
+        #: Used explicitely requested completion by pressing 'tab'.
+        self.completion_requested = completion_requested
+
 
 class Completer(object):
     """
@@ -45,33 +70,34 @@ class Completer(object):
     """
     __metaclass__ = ABCMeta
 
-    def get_common_complete_suffix(self, document):
-        """
-        return one `Completion` instance or None.
-        """
-        # If there is one completion, return that.
-        completions = list(self.get_completions(document))
-
-        # Take only completions that don't change the text before the cursor.
-        def doesnt_change_before_cursor(completion):
-            end = completion.text[:-completion.start_position]
-            return document.text_before_cursor.endswith(end)
-
-        completions = [c for c in completions if doesnt_change_before_cursor(c)]
-
-        # Return the common prefix.
-        def get_suffix(completion):
-            return completion.text[-completion.start_position:]
-
-        return _commonprefix([get_suffix(c) for c in completions])
-
     @abstractmethod
-    def get_completions(self, document):
+    def get_completions(self, document, complete_event):
         """
         Yield `Completion` instances.
         """
         while False:
             yield
+
+
+def get_common_complete_suffix(completer, document, complete_event):
+    """
+    return one `Completion` instance or None.
+    """
+    # If there is one completion, return that.
+    completions = list(completer.get_completions(document, complete_event))
+
+    # Take only completions that don't change the text before the cursor.
+    def doesnt_change_before_cursor(completion):
+        end = completion.text[:-completion.start_position]
+        return document.text_before_cursor.endswith(end)
+
+    completions = [c for c in completions if doesnt_change_before_cursor(c)]
+
+    # Return the common prefix.
+    def get_suffix(completion):
+        return completion.text[-completion.start_position:]
+
+    return _commonprefix([get_suffix(c) for c in completions])
 
 
 def _commonprefix(strings):

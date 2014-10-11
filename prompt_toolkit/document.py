@@ -38,7 +38,13 @@ class Document(object):
     """
     __slots__ = ('text', 'cursor_position', 'selection')
 
-    def __init__(self, text='', cursor_position=0, selection=None):
+    def __init__(self, text='', cursor_position=None, selection=None):
+        # By default, if no cursor position was given, make sure to put the
+        # cursor position is at the end of the document. This is what makes
+        # sense in most places.
+        if cursor_position is None:
+            cursor_position = len(text)
+
         self.text = text
         self.cursor_position = cursor_position
         self.selection = selection

@@ -12,12 +12,7 @@ from collections import defaultdict, namedtuple
 from pygments.style import Style
 from pygments.token import Token
 
-
-try:
-    from wcwidth import wcwidth
-except ImportError:
-    from .libs.wcwidth import wcwidth
-
+from .utils import get_cwidth
 
 if sys.platform == 'win32':
     from .terminal.win32_output import Win32Output as Output
@@ -34,19 +29,6 @@ __all__ = (
 
 Point = namedtuple('Point', 'y x')
 Size = namedtuple('Size', 'rows columns')
-
-#: Cache for wcwidth sizes.
-_CHAR_SIZES_CACHE = [wcwidth(six.unichr(i)) for i in range(0, 64000)]
-
-
-def _get_width(c):
-    """
-    Return width of character. Wrapper around ``wcwidth``.
-    """
-    try:
-        return _CHAR_SIZES_CACHE[ord(c)]
-    except IndexError:
-        return wcwidth(c)
 
 
 class Char(object):
@@ -104,9 +86,9 @@ class Char(object):
         # It can be possible that these characters end up in the input text.
         char = self.char
         if len(char) == 1:
-            return max(0, _get_width(char))
+            return max(0, get_cwidth(char))
         else:
-            return max(0, sum([_get_width(c) for c in char]))
+            return max(0, sum(get_cwidth(c) for c in char))
 
     def __repr__(self):
         return 'Char(%r, %r, %r)' % (self.char, self.token, self.z_index)

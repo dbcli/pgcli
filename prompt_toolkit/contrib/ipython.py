@@ -52,7 +52,7 @@ class IPythonCompleter(PythonCompleter):
         super(IPythonCompleter, self).__init__(get_globals, get_locals)
         self._magics_manager = magics_manager
 
-    def get_completions(self, document):
+    def get_completions(self, document, complete_event):
         text = document.text_before_cursor.lstrip()
 
         # Don't complete in shell mode.
@@ -66,7 +66,7 @@ class IPythonCompleter(PythonCompleter):
                     yield Completion('%%%s' % m, -len(text))
         else:
             # Complete as normal Python code.
-            for c in super(IPythonCompleter, self).get_completions(document):
+            for c in super(IPythonCompleter, self).get_completions(document, complete_event):
                 yield c
 
 

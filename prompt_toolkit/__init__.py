@@ -11,16 +11,17 @@ import six
 import sys
 import weakref
 
-from .key_binding import InputProcessor
+from .completion import CompleteEvent
 from .enums import InputMode
+from .history import History
+from .key_binding import InputProcessor
 from .key_binding import Registry
 from .key_bindings.emacs import emacs_bindings
-from .line import Line
 from .layout import Layout
 from .layout.prompt import DefaultPrompt
+from .line import Line
 from .renderer import Renderer
 from .utils import EventHook, DummyContext
-from .history import History
 
 from pygments.styles.default import DefaultStyle
 from types import GeneratorType
@@ -113,9 +114,9 @@ class CommandLineInterface(object):
 
         # Handle events.
         if create_async_autocompleters:
-            for n, l in self.lines.items():
+            for l in self.lines.values():
                 if l.completer:
-                    l.onTextInsert += self._create_async_completer(n)
+                    l.onTextInsert += self._create_async_completer(l)
 
         self._reset()
 
@@ -150,7 +151,7 @@ class CommandLineInterface(object):
         #: The `InputProcessor` instance.
         return InputProcessor(key_registry)
 
-    def _reset(self, initial_value='', initial_input_mode=InputMode.INSERT):
+    def _reset(self, initial_document=None, initial_input_mode=InputMode.INSERT):
         """
         Reset everything.
         """
@@ -161,7 +162,7 @@ class CommandLineInterface(object):
         for l in self.lines.values():
             l.reset()
 
-        self.line.reset(initial_value=initial_value)
+        self.line.reset(initial_document=initial_document)
         self.renderer.reset()
         self.input_processor.reset(initial_input_mode=initial_input_mode)
         self.layout.reset()
@@ -219,17 +220,17 @@ class CommandLineInterface(object):
             self.renderer.request_absolute_cursor_position()
         self.call_from_executor(do_in_event_loop)
 
-    def read_input(self, initial_value='', initial_input_mode=InputMode.INSERT,
+    def read_input(self, initial_document=None, initial_input_mode=InputMode.INSERT,
                    on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
         """
         Read input string from command line.
 
-        :param initial_value: The original value of the input string.
+        :param initial_document: The original document (text and cursor_position) of the default line.
         :param on_abort: :class:`AbortAction` value. What to do when Ctrl-C has been pressed.
         :param on_exit:  :class:`AbortAction` value. What to do when Ctrl-D has been pressed.
         """
         eventloop = EventLoop(self.input_processor, self.stdin)
-        g = self._read_input(initial_value=initial_value,
+        g = self._read_input(initial_document=initial_document,
                              initial_input_mode=initial_input_mode,
                              on_abort=on_abort,
                              on_exit=on_exit,
@@ -243,7 +244,7 @@ class CommandLineInterface(object):
         except StopIteration as e:
             return e.args[0]
 
-    def read_input_async(self, initial_value='', initial_input_mode=InputMode.INSERT,
+    def read_input_async(self, initial_document=None, initial_input_mode=InputMode.INSERT,
                          on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
         """
         Same as `read_input`, but this returns an asyncio coroutine.
@@ -257,14 +258,14 @@ class CommandLineInterface(object):
             from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop
 
         eventloop = AsyncioEventLoop(self.input_processor, self.stdin)
-        return self._read_input(initial_value=initial_value,
+        return self._read_input(initial_document=initial_document,
                                 initial_input_mode=initial_input_mode,
                                 on_abort=on_abort,
                                 on_exit=on_exit,
                                 eventloop=eventloop,
                                 return_corountine=True)
 
-    def _read_input(self, initial_value, initial_input_mode, on_abort, on_exit,
+    def _read_input(self, initial_document, initial_input_mode, on_abort, on_exit,
                     eventloop, return_corountine):
         """
         The implementation of ``read_input`` which can be called both
@@ -282,7 +283,7 @@ class CommandLineInterface(object):
 
         try:
             def reset():
-                self._reset(initial_value=initial_value,
+                self._reset(initial_document=initial_document,
                             initial_input_mode=initial_input_mode)
             reset()
 
@@ -353,8 +354,8 @@ class CommandLineInterface(object):
     def set_abort(self):
         self._abort_flag = True
 
-    def set_return_value(self, code):
-        self._return_value = code
+    def set_return_value(self, document):
+        self._return_value = document
 
     def run_in_terminal(self, func):
         """
@@ -434,12 +435,11 @@ class CommandLineInterface(object):
         """
         return self._return_value is not None
 
-    def _create_async_completer(self, line_name):
+    def _create_async_completer(self, line):
         """
         Create function for asynchronous autocompletion while typing.
         (Autocomplete in other thread.)
         """
-        line = self.lines[line_name]
         complete_thread_running = [False]  # By ref.
 
         def async_completer():
@@ -454,15 +454,16 @@ class CommandLineInterface(object):
                 return
 
             # Don't automatically complete on empty inputs.
-            char = document.char_before_cursor
-            if not line.text or char.isspace():
+            if not line.text:
                 return
 
             # Otherwise, get completions in other thread.
             complete_thread_running[0] = True
 
             def run():
-                completions = list(line.completer.get_completions(document))
+                completions = list(line.completer.get_completions(
+                    document,
+                    CompleteEvent(text_inserted=True)))
                 complete_thread_running[0] = False
 
                 def callback():

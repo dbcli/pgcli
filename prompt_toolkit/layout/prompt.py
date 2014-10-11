@@ -44,6 +44,9 @@ class _ISearch(object):
 
 
 class Prompt(object):
+    """
+    Text to show before the actual input.
+    """
     def __init__(self, text='> ', token=Token.Prompt.BeforeInput):
         self.text = text
         self.token = token
@@ -60,7 +63,8 @@ class Prompt(object):
 
 class DefaultPrompt(Prompt):
     """
-    Text to show before the actual input.
+    Default prompt. This one shows the 'arg' and reverse search like
+    Bash/readline normally do.
     """
     #: Class responsible for the composition of the i-search tokens.
     isearch_composer = _ISearch

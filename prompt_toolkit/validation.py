@@ -1,6 +1,7 @@
 """
 """
 from __future__ import unicode_literals
+from abc import ABCMeta, abstractmethod
 
 __all__ = (
     'ValidationError',
@@ -8,13 +9,15 @@ __all__ = (
 
 
 class ValidationError(Exception):
-    def __init__(self, line=0, column=0, message=''):
-        self.line = line
-        self.column = column
+    def __init__(self, index=0, message=''):
+        self.index = index
         self.message = message
 
 
 class Validator(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def validate(self, document):
         """
         Validate the input.

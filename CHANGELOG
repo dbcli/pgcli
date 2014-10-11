@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+Backwards-incompatible changes:
+- Completer.get_completions now gets a complete_event argument.
+
+
 0.23: 2014-11-28
 ----------------
 

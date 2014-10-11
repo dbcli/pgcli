@@ -25,11 +25,14 @@ from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.processors import BracketsMismatchProcessor
 from prompt_toolkit.layout.toolbars import CompletionsToolbar, ArgToolbar, SearchToolbar, ValidationToolbar, SystemToolbar
 from prompt_toolkit.layout.toolbars import Toolbar
-from prompt_toolkit.layout.utils import TokenList
 from prompt_toolkit.line import Line
 from prompt_toolkit.selection import SelectionType
 from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.layout.margins import LeftMarginWithLineNumbers
+
+from .regular_languages.compiler import compile as compile_grammar
+from .regular_languages.completion import GrammarCompleter
+from .completers import PathCompleter
 
 import jedi
 import platform
@@ -328,6 +331,50 @@ class SignatureToolbar(Toolbar):
         return result
 
 
+def get_inputmode_tokens(token, vi_mode, cli):
+    """
+    Return current input mode as a list of (token, text) tuples for use in a
+    toolbar.
+
+    :param vi_mode: (bool) True when vi mode is enabled.
+    :param cli: `CommandLineInterface` instance.
+    """
+    mode = cli.input_processor.input_mode
+    result = []
+    append = result.append
+
+    # InputMode
+    if mode == InputMode.INCREMENTAL_SEARCH:
+        append((token.InputMode, '(SEARCH)'))
+        append((token, '   '))
+    elif vi_mode:
+        if mode == InputMode.INSERT:
+            append((token.InputMode, '(INSERT)'))
+            append((token, '   '))
+        elif mode == InputMode.VI_SEARCH:
+            append((token.InputMode, '(SEARCH)'))
+            append((token, '   '))
+        elif mode == InputMode.VI_NAVIGATION:
+            append((token.InputMode, '(NAV)'))
+            append((token, '      '))
+        elif mode == InputMode.VI_REPLACE:
+            append((token.InputMode, '(REPLACE)'))
+            append((token, '  '))
+        elif mode == InputMode.SELECTION and cli.line.selection_state:
+            if cli.line.selection_state.type == SelectionType.LINES:
+                append((token.InputMode, '(VISUAL LINE)'))
+                append((token, ' '))
+            elif cli.line.selection_state.type == SelectionType.CHARACTERS:
+                append((token.InputMode, '(VISUAL)'))
+                append((token, ' '))
+
+    else:
+        append((token.InputMode, '(emacs)'))
+        append((token, ' '))
+
+    return result
+
+
 class PythonToolbar(Toolbar):
     def __init__(self, vi_mode, token=None):
         token = token or Token.Toolbar.Status
@@ -337,40 +384,11 @@ class PythonToolbar(Toolbar):
     def get_tokens(self, cli, width):
         TB = self.token
         mode = cli.input_processor.input_mode
-
-        result = TokenList()
+        result = []
         append = result.append
 
         append((TB, ' '))
-
-        # InputMode
-        if mode == InputMode.INCREMENTAL_SEARCH:
-            append((TB.InputMode, '(SEARCH)'))
-            append((TB, '   '))
-        elif self.vi_mode:
-            if mode == InputMode.INSERT:
-                append((TB.InputMode, '(INSERT)'))
-                append((TB, '   '))
-            elif mode == InputMode.VI_SEARCH:
-                append((TB.InputMode, '(SEARCH)'))
-                append((TB, '   '))
-            elif mode == InputMode.VI_NAVIGATION:
-                append((TB.InputMode, '(NAV)'))
-                append((TB, '      '))
-            elif mode == InputMode.VI_REPLACE:
-                append((TB.InputMode, '(REPLACE)'))
-                append((TB, '  '))
-            elif mode == InputMode.SELECTION and cli.line.selection_state:
-                if cli.line.selection_state.type == SelectionType.LINES:
-                    append((TB.InputMode, '(VISUAL LINE)'))
-                    append((TB, ' '))
-                elif cli.line.selection_state.type == SelectionType.CHARACTERS:
-                    append((TB.InputMode, '(VISUAL)'))
-                    append((TB, ' '))
-
-        else:
-            append((TB.InputMode, '(emacs)'))
-            append((TB, ' '))
+        result.extend(get_inputmode_tokens(TB, self.vi_mode, cli))
 
         # Position in history.
         append((TB, '%i/%i ' % (cli.line.working_index + 1, len(cli.line._working_lines))))
@@ -441,10 +459,11 @@ class PythonValidator(Validator):
             # Note, the 'or 1' for offset is required because Python 2.7
             # gives `None` as offset in case of '4=4' as input. (Looks like
             # fixed in Python 3.)
-            raise ValidationError(e.lineno - 1, (e.offset or 1) - 1, 'Syntax Error')
+            index = document.translate_row_col_to_index(e.lineno - 1,  (e.offset or 1) - 1)
+            raise ValidationError(index, 'Syntax Error')
         except TypeError as e:
             # e.g. "compile() expected string without null bytes"
-            raise ValidationError(0, 0, str(e))
+            raise ValidationError(0, str(e))
 
 
 def get_jedi_script_from_document(document, locals, globals):
@@ -479,28 +498,95 @@ class PythonCompleter(Completer):
         self.get_globals = get_globals
         self.get_locals = get_locals
 
-    def get_completions(self, document):
-        """ Ask jedi to complete. """
-        script = get_jedi_script_from_document(document, self.get_locals(), self.get_globals())
+        self._path_completer = self._create_path_completer()
 
-        if script:
-            try:
-                completions = script.completions()
-            except TypeError:
-                # Issue #9: bad syntax causes completions() to fail in jedi.
-                # https://github.com/jonathanslenders/python-prompt-toolkit/issues/9
-                pass
-            except UnicodeDecodeError:
-                # Issue #43: UnicodeDecodeError on OpenBSD
-                # https://github.com/jonathanslenders/python-prompt-toolkit/issues/43
-                pass
-            except AttributeError:
-                # Jedi issue #513: https://github.com/davidhalter/jedi/issues/513
-                pass
-            else:
-                for c in completions:
-                    yield Completion(c.name_with_symbols, len(c.complete) - len(c.name_with_symbols),
-                                     display=c.name_with_symbols)
+    def _create_path_completer(self):
+        def unwrapper(text):
+            return re.sub(r'\\(.)', r'\1', text)
+
+        def single_quoted_wrapper(text):
+            return text.replace('\\', '\\\\').replace("'", "\\'")
+
+        def double_quoted_wrapper(text):
+            return text.replace('\\', '\\\\').replace('"', '\\"')
+
+        grammar = r"""
+                # Text before the current string.
+                (
+                    [^'"#]            |  # Not quoted characters.
+                    '''.*'''          |  # Inside single quoted triple strings
+                    "" ".*"" "        |  # Inside double quoted triple strings
+                    \#[^\n]*          |  # Comment.
+                    ([^"\\]|\\.)*"'   |  # Inside double quoted strings.
+                    ([^'\\]|\\.)*'"      # Inside single quoted strings.
+                )*
+                # The current string that we're completing.
+                (
+                    ' (?P<var1>([^\n'\\]|\\.)*)  # Inside a single quoted string.
+                    " (?P<var2>([^\n"\\]|\\.)*)  # Inside a double quoted string.
+                )
+        """
+
+        g = compile_grammar(grammar,
+            escape_funcs={
+                'var1': single_quoted_wrapper,
+                'var2': double_quoted_wrapper,
+            },
+            unescape_funcs={
+                'var1': unwrapper,
+                'var2': unwrapper,
+            })
+        return GrammarCompleter(g, {
+                'var1': PathCompleter(),
+                'var2': PathCompleter(),
+            })
+
+    def _complete_path_while_typing(self, document):
+        char_before_cursor = document.char_before_cursor
+        return document.text and (
+            char_before_cursor.isalnum() or char_before_cursor in '/.~')
+
+    def _complete_python_while_typing(self, document):
+        char_before_cursor = document.char_before_cursor
+        return document.text and (
+            char_before_cursor.isalnum() or char_before_cursor in '_.')
+
+    def get_completions(self, document, complete_event):
+        """
+        Get Python completions.
+        """
+        # Do Path completions
+        if complete_event.completion_requested or self._complete_path_while_typing(document):
+            found_path_completions = False
+            for c in self._path_completer.get_completions(document, complete_event):
+                found_path_completions = True
+                yield c
+
+            if found_path_completions:
+                return
+
+        # Do Jedi Python completions.
+        if complete_event.completion_requested or self._complete_python_while_typing(document):
+            script = get_jedi_script_from_document(document, self.get_locals(), self.get_globals())
+
+            if script:
+                try:
+                    completions = script.completions()
+                except TypeError:
+                    # Issue #9: bad syntax causes completions() to fail in jedi.
+                    # https://github.com/jonathanslenders/python-prompt-toolkit/issues/9
+                    pass
+                except UnicodeDecodeError:
+                    # Issue #43: UnicodeDecodeError on OpenBSD
+                    # https://github.com/jonathanslenders/python-prompt-toolkit/issues/43
+                    pass
+                except AttributeError:
+                    # Jedi issue #513: https://github.com/davidhalter/jedi/issues/513
+                    pass
+                else:
+                    for c in completions:
+                        yield Completion(c.name_with_symbols, len(c.complete) - len(c.name_with_symbols),
+                                         display=c.name_with_symbols)
 
 
 class PythonCommandLineInterface(CommandLineInterface):

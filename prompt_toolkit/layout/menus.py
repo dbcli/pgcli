@@ -45,8 +45,8 @@ class CompletionsMenu(object):
         x = max(0, x - 1)  # XXX: Don't draw it in the right margin!!!...
 
         # Calculate width of completions menu.
-        menu_width = self.get_menu_width(screen, complete_state)
-        menu_meta_width = self.get_menu_meta_width(screen, complete_state)
+        menu_width = self.get_menu_width(screen, complete_state, x)
+        menu_meta_width = self.get_menu_meta_width(screen, complete_state, x + menu_width)
         show_meta = self.show_meta(complete_state)
 
         # Decide which slice of completions to show.
@@ -90,18 +90,18 @@ class CompletionsMenu(object):
         """
         return any(c.display_meta for c in complete_state.current_completions)
 
-    def get_menu_width(self, screen, complete_state):
+    def get_menu_width(self, screen, complete_state, x_pos):
         """
         Return the width of the main column.
         """
-        max_display = int(screen.size.columns / 2)
-        return min(max_display, max(len(c.display) for c in complete_state.current_completions)),
+        max_display = int(screen.size.columns - x_pos - 6)
+        return min(max_display, max(len(c.display) for c in complete_state.current_completions))
 
-    def get_menu_meta_width(self, screen, complete_state):
+    def get_menu_meta_width(self, screen, complete_state, x_pos):
         """
         Return the width of the meta column.
         """
-        max_display_meta = int(screen.size.columns / 4)
+        max_display_meta = int(screen.size.columns - x_pos - 8)
         return min(max_display_meta, max(len(c.display_meta) for c in complete_state.current_completions))
 
     def get_menu_item_tokens(self, completion, is_current_completion, width):
@@ -110,7 +110,8 @@ class CompletionsMenu(object):
         else:
             token = self.token.Completion
 
-        return [(token, ' %%-%is ' % width % completion.display)]
+        text = self._trim_text(completion.display, width)
+        return [(token, ' %%-%is ' % width % text)]
 
     def get_menu_item_meta_tokens(self, completion, is_current_completion, width):
         if is_current_completion:
@@ -118,4 +119,16 @@ class CompletionsMenu(object):
         else:
             token = self.token.Meta
 
-        return [(token, ' %%-%is ' % width % completion.display_meta or 'none')]
+        text = self._trim_text(completion.display_meta, width)
+        return [(token, ' %%-%is ' % width % text or 'none')]
+
+    def _trim_text(self, text, max_width):
+        """
+        Trim the text to `max_width`, append dots when the text is too long.
+        """
+        # TODO: support for double width characters.
+        if len(text) > max_width:
+            return (text[:max(1, max_width-3)] + '...')[:max_width]
+        else:
+            return text
+

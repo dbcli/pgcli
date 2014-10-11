@@ -1,5 +1,13 @@
 from __future__ import unicode_literals
 
+import six
+
+try:
+    from wcwidth import wcwidth
+except ImportError:
+    from .libs.wcwidth import wcwidth
+
+
 __all__ = (
     'EventHook',
     'DummyContext',
@@ -42,3 +50,17 @@ class DummyContext(object):
 
     def __exit__(self, *a):
         pass
+
+
+#: Cache for wcwidth sizes.
+_CHAR_SIZES_CACHE = [wcwidth(six.unichr(i)) for i in range(0, 64000)]
+
+
+def get_cwidth(c):
+    """
+    Return width of character. Wrapper around ``wcwidth``.
+    """
+    try:
+        return _CHAR_SIZES_CACHE[ord(c)]
+    except IndexError:
+        return wcwidth(c)

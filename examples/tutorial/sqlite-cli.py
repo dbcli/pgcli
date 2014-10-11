@@ -19,7 +19,7 @@ class SqlCompleter(Completer):
     keywords = ['create', 'select', 'insert', 'drop',
                 'delete', 'from', 'where', 'table']
 
-    def get_completions(self, document):
+    def get_completions(self, document, complete_event):
         word_before_cursor = document.get_word_before_cursor()
 
         for keyword in self.keywords:
