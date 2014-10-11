@@ -23,7 +23,7 @@ Features:
 - Selecting text for copy/paste. (Both Emacs and Vi style.)
 - No global state.
 - Code written with love.
-- Runs on Linux, OS X and Windows systems.
+- Runs on Linux, OS X, OpenBSD and Windows systems.
 
 
 Feel free to create tickets for bugs and feature requests, and create pull
