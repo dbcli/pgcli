@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import unicode_literals
 
-from prompt_toolkit import CommandLineInterface
+from prompt_toolkit import CommandLineInterface, AbortAction, Exit
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.line import Line
 from prompt_toolkit.layout import Layout
@@ -48,16 +48,18 @@ class DocumentStyle(Style):
 
 
 def main():
-    cli = CommandLineInterface(style=DocumentStyle,
-            layout=Layout(before_input=DefaultPrompt('> '),
-                menus=[CompletionMenu()],
-                lexer=SqlLexer),
-            line=Line(completer=SqlCompleter())
-            )
+    layout = Layout(before_input=DefaultPrompt('> '),
+            menus=[CompletionMenu()],
+            lexer=SqlLexer)
+    line = Line(completer=SqlCompleter())
+    cli = CommandLineInterface(style=DocumentStyle, layout=layout, line=line)
 
-    print('Press tab to complete')
-    code_obj = cli.read_input()
-    print('You said: ' + code_obj.text)
+    try:
+        while True:
+            document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
+            print 'You entered:', document.text
+    except Exit:
+        print 'GoodBye!'
 
 
 if __name__ == '__main__':
