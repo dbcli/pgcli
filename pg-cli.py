@@ -11,6 +11,7 @@ from prompt_toolkit.layout.menus import CompletionMenu
 from pygments.token import Token
 from pygments.style import Style
 from pygments.lexers.sql import SqlLexer
+from pygments.styles.default import DefaultStyle
 
 
 class SqlCompleter(Completer):
@@ -33,20 +34,21 @@ class SqlCompleter(Completer):
                 yield Completion(keyword, -len(word_before_cursor))
 
 
-class SyntaxStyle(Style):
+class DocumentStyle(Style):
     styles = {
-        Token.CompletionMenu.Completion.Current: 'bg:#00aaaa #000000',
-        Token.CompletionMenu.Completion:         'bg:#008888 #ffffff',
-        Token.CompletionMenu.ProgressButton:     'bg:#003333',
-        Token.CompletionMenu.ProgressBar:        'bg:#00aaaa',
-        Token.SelectedText:            '#ffffff bg:#6666aa',
-        Token.IncrementalSearchMatch:         '#ffffff bg:#4444aa',
-        Token.IncrementalSearchMatch.Current: '#ffffff bg:#44aa44',
-    }
+            Token.Menu.Completions.Completion.Current: 'bg:#00aaaa #000000',
+            Token.Menu.Completions.Completion: 'bg:#008888 #ffffff',
+            Token.Menu.Completions.ProgressButton: 'bg:#003333',
+            Token.Menu.Completions.ProgressBar: 'bg:#00aaaa',
+            Token.SelectedText: '#ffffff bg:#6666aa',
+            Token.IncrementalSearchMatch: '#ffffff bg:#4444aa',
+            Token.IncrementalSearchMatch.Current: '#ffffff bg:#44aa44',
+            }
+    styles.update(DefaultStyle.styles)
 
 
 def main():
-    cli = CommandLineInterface(style=SyntaxStyle,
+    cli = CommandLineInterface(style=DocumentStyle,
             layout=Layout(before_input=DefaultPrompt('> '),
                 menus=[CompletionMenu()],
                 lexer=SqlLexer),
