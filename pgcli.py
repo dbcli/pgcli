@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 from __future__ import unicode_literals
+import sys
+
+import click
+import psycopg2
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
 from prompt_toolkit.completion import Completer, Completion
@@ -47,7 +51,8 @@ class DocumentStyle(Style):
     styles.update(DefaultStyle.styles)
 
 
-def main():
+@click.command()
+def pgcli():
     layout = Layout(before_input=DefaultPrompt('> '),
             menus=[CompletionMenu()],
             lexer=SqlLexer)
@@ -62,5 +67,3 @@ def main():
         print 'GoodBye!'
 
 
-if __name__ == '__main__':
-    main()
