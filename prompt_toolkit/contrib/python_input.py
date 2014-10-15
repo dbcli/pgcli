@@ -248,7 +248,12 @@ class PythonLine(Line):
         """
         Dynamically determine whether we're in multiline mode.
         """
-        if self.always_multiline or self.paste_mode or '\n' in self.text:
+        if any([
+                self.always_multiline,
+                self.paste_mode,
+                '\n' in self.text,
+                '"""' in self.text,
+                "'''" in self.text]):
             return True
 
         # If we just typed a colon, or still have open brackets, always insert a real newline.
