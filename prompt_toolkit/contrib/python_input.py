@@ -215,10 +215,6 @@ class PythonLine(Line):
         #: newline.
         self.paste_mode = False
 
-        #: Boolean `multiline` flag. If True, [Enter] will always insert a
-        #: newline, and it is required to use [Meta+Enter] execute commands.
-        self.is_multiline = self.always_multiline
-
         # Code signatures. (This is set asynchronously after a timeout.)
         self.signatures = []
 
