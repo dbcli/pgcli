@@ -204,6 +204,8 @@ class PythonLine(Line):
     """
     Custom `Line` class with some helper functions.
     """
+    _multiline_string_delims = re.compile('''[']{3}|["]{3}''')
+
     def __init__(self, always_multiline, *a, **kw):
         self.always_multiline = always_multiline
         super(PythonLine, self).__init__(*a, **kw)
@@ -244,6 +246,20 @@ class PythonLine(Line):
                     insert_text(' ')
 
     @property
+    def _ends_in_multiline_string(self):
+        """
+        ``True`` if we're inside a multiline string at the end of the text.
+        """
+        delims = self._multiline_string_delims.findall(self.text)
+        opening = None
+        for delim in delims:
+            if opening is None:
+                opening = delim
+            elif delim == opening:
+                opening = None
+        return bool(opening)
+
+    @property
     def is_multiline(self):
         """
         Dynamically determine whether we're in multiline mode.
@@ -252,8 +268,7 @@ class PythonLine(Line):
                 self.always_multiline,
                 self.paste_mode,
                 '\n' in self.text,
-                '"""' in self.text,
-                "'''" in self.text]):
+                self._ends_in_multiline_string]):
             return True
 
         # If we just typed a colon, or still have open brackets, always insert a real newline.
