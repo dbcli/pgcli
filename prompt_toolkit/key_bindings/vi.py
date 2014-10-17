@@ -80,7 +80,8 @@ def vi_bindings(registry, cli_ref):
         """
         Escape goes to vi navigation mode.
         """
-        if event.input_processor.input_mode == InputMode.INSERT:
+        if event.input_processor.input_mode in (InputMode.INSERT,
+                                                InputMode.VI_REPLACE):
             line.cursor_position += line.document.get_cursor_left_position()
         if event.input_processor.input_mode == InputMode.SELECTION:
             line.exit_selection()
