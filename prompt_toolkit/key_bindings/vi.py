@@ -303,6 +303,7 @@ def vi_bindings(registry, cli_ref):
         Replace single character under cursor
         """
         line.insert_text(event.data * event.arg, overwrite=True)
+        line.cursor_position -= 1
 
     @handle('R', in_mode=InputMode.VI_NAVIGATION)
     def _(event):
