@@ -114,9 +114,17 @@ You love IPython?
 
 Run ``ptipython`` (prompt_toolkit - IPython), to get a nice interactive shell
 with all the power that IPython has to offer, like magic functions and shell
-integration.
+integration. Make sure that IPython has been installed. (``pip install
+ipython``)
 
 .. image :: docs/images/ipython-integration.png
+
+You are using Django?
+*********************
+
+`django-extensions <https://github.com/django-extensions/django-extensions>`_
+has a ``shell_plus`` management command. When ``prompt_toolkit`` has been
+installed, it will by default use ``ptpython`` or ``ptipython``.
 
 
 Using as a library
