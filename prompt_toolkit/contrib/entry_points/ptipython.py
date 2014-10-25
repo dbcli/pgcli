@@ -23,7 +23,7 @@ from prompt_toolkit.contrib.ipython import embed
 from prompt_toolkit.contrib.python_input import AutoCompletionStyle
 
 
-def _run_ipython():
+def run():
     a = docopt.docopt(__doc__)
 
     vi_mode = bool(a['--vi'])
@@ -61,4 +61,4 @@ def _run_ipython():
 
 
 if __name__ == '__main__':
-    _run_ipython()
+    run()

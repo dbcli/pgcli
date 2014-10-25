@@ -27,7 +27,7 @@ from prompt_toolkit.contrib.repl import embed
 from prompt_toolkit.contrib.python_input import AutoCompletionStyle
 
 
-def _run_repl():
+def run():
     a = docopt.docopt(__doc__)
 
     vi_mode = bool(a['--vi'])
@@ -77,4 +77,4 @@ def _run_repl():
               startup_paths=startup_paths, always_multiline=always_multiline)
 
 if __name__ == '__main__':
-    _run_repl()
+    run()

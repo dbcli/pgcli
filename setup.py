@@ -19,8 +19,10 @@ setup(
             'six>=1.8.0',
             'wcwidth',
         ],
-        scripts = [
-            'bin/ptpython',
-            'bin/ptipython',
-        ]
+        entry_points={
+            'console_scripts': [
+                'ptpython = prompt_toolkit.contrib.entry_points.ptpython:run',
+                'ptipython = prompt_toolkit.contrib.entry_points.ptipython:run',
+            ]
+        }
 )
