@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+0.21: 2014-10-25
+----------------
+New features:
+- Using entry_points in setup.py
+- Experimental Win32 support added.
+
+Fixed:
+- Behaviour of 'r' and 'R' key bindings in Vi mode.
+- Detect multiline correctly for ptpython when there are triple quoted strings.
+- Some other small improvements.
+
+
 0.20: 2014-10-04
 ----------------
 Fixed:
