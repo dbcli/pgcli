@@ -9,6 +9,7 @@ import errno
 import os
 import six
 import sys
+import signal
 
 from .key_binding import InputProcessor
 from .enums import InputMode
