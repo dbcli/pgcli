@@ -24,5 +24,8 @@ setup(
                 'ptpython = prompt_toolkit.contrib.entry_points.ptpython:run',
                 'ptipython = prompt_toolkit.contrib.entry_points.ptipython:run',
             ]
+        },
+        extras_require = {
+            'ptipython':  ['ipython'] # For ptipython, we need to have IPython
         }
 )
