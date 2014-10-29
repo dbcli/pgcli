@@ -19,7 +19,6 @@ import os
 import six
 import sys
 
-from prompt_toolkit.contrib.ipython import embed
 from prompt_toolkit.contrib.python_input import AutoCompletionStyle
 
 
@@ -27,6 +26,16 @@ def run():
     a = docopt.docopt(__doc__)
 
     vi_mode = bool(a['--vi'])
+
+    # If IPython is not available, show message and exit here with error status
+    # code.
+    try:
+        import IPython
+    except ImportError:
+        print('IPython not found. Please install IPython (pip install ipython).')
+        sys.exit(1)
+    else:
+        from prompt_toolkit.contrib.ipython import embed
 
     # Log history
     if a['--history']:
