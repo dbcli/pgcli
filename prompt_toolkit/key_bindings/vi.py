@@ -89,6 +89,35 @@ def vi_bindings(registry, cli_ref):
         else:
             event.input_processor.input_mode = InputMode.VI_NAVIGATION
 
+    @handle('k', in_mode=InputMode.VI_NAVIGATION)
+    def _(event):
+        """
+        Arrow up in navigation mode.
+        """
+        line.auto_up(count=event.arg)
+
+    @handle('j', in_mode=InputMode.VI_NAVIGATION)
+    def _(event):
+        """
+        Arrow down in navigation mode.
+        """
+        line.auto_down(count=event.arg)
+
+    @handle('k', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Arrow up in selection mode.
+        """
+        line.cursor_up(count=event.arg)
+
+    @handle('j', in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Arrow down in selection mode.
+        """
+        line.cursor_down(count=event.arg)
+
+
     @handle(Keys.Up, in_mode=InputMode.VI_NAVIGATION)
     def _(event):
         """
@@ -826,12 +855,12 @@ def vi_bindings(registry, cli_ref):
         """ Implements 'ch', 'dh', 'h': Cursor left. """
         return CursorRegion(line.document.get_cursor_left_position(count=event.arg))
 
-    @change_delete_move_yank_handler('j')
+    @change_delete_move_yank_handler('j', no_move_handler=True)
     def _(event):
         """ Implements 'cj', 'dj', 'j', ... Cursor up. """
         return CursorRegion(line.document.get_cursor_down_position(count=event.arg))
 
-    @change_delete_move_yank_handler('k')
+    @change_delete_move_yank_handler('k', no_move_handler=True)
     def _(event):
         """ Implements 'ck', 'dk', 'k', ... Cursor up. """
         return CursorRegion(line.document.get_cursor_up_position(count=event.arg))
