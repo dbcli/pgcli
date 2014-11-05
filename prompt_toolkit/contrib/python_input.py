@@ -503,6 +503,7 @@ class PythonCommandLineInterface(CommandLineInterface):
                  always_multiline=False,
 
                  # For internal use.
+                 _left_margin=None,
                  _completer=None,
                  _validator=None):
 
@@ -511,6 +512,7 @@ class PythonCommandLineInterface(CommandLineInterface):
         self.always_multiline = always_multiline
         self.autocompletion_style = autocompletion_style
 
+        left_margin = _left_margin or PythonLeftMargin()
         self.completer = _completer or PythonCompleter(self.get_globals, self.get_locals)
         validator = _validator or PythonValidator()
 
@@ -518,7 +520,7 @@ class PythonCommandLineInterface(CommandLineInterface):
             input_processors=[BracketsMismatchProcessor()],
             min_height=7,
             lexer=PythonLexer,
-            left_margin=PythonLeftMargin(),
+            left_margin=left_margin,
             menus=[CompletionsMenu()] if autocompletion_style == AutoCompletionStyle.POPUP_MENU else [],
             bottom_toolbars=[
                 ArgToolbar(),

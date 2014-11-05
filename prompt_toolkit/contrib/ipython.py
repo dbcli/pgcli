@@ -11,7 +11,8 @@ offer.
 from __future__ import unicode_literals
 from prompt_toolkit import AbortAction
 from prompt_toolkit.completion import Completion
-from prompt_toolkit.contrib.python_input import PythonCommandLineInterface, PythonLeftMargin, PythonValidator, AutoCompletionStyle, PythonCompleter
+from prompt_toolkit.contrib.python_input import PythonCommandLineInterface, PythonValidator, AutoCompletionStyle, PythonCompleter
+from prompt_toolkit.layout.margins import LeftMargin
 from prompt_toolkit import Exit
 from prompt_toolkit.document import Document
 
@@ -20,13 +21,20 @@ from IPython.terminal.ipapp import load_default_config
 from IPython import utils as ipy_utils
 from IPython.core.inputsplitter import IPythonInputSplitter
 
-
 from pygments.lexers import PythonLexer, BashLexer, TextLexer
+from pygments.token import Token
 
 
-class IPythonLeftMargin(PythonLeftMargin):
-    def current_statement_index(self, cli):
-        return cli.ipython_shell.execution_count
+class IPythonLeftMargin(LeftMargin):
+    def _get_prompt(self, cli, prompt_name):
+        return cli.ipython_shell.prompt_manager.render(prompt_name, color=False, just=False)
+
+    def width(self, cli):
+        return len(str(self._get_prompt(cli, 'in')))
+
+    def write(self, cli, screen, y, line_number):
+        prompt = self._get_prompt(cli, 'in' if y == 0 else 'in2')
+        screen.write_highlighted([(Token.Prompt, prompt)])
 
 
 class IPythonValidator(PythonValidator):
@@ -80,6 +88,7 @@ class IPythonCommandLineInterface(PythonCommandLineInterface):
     def __init__(self, ipython_shell, *a, **kw):
         kw['_completer'] = IPythonCompleter(kw['get_globals'], kw['get_globals'], ipython_shell.magics_manager)
         kw['_validator'] = IPythonValidator()
+        kw['_left_margin'] = IPythonLeftMargin()
 
         super(IPythonCommandLineInterface, self).__init__(*a, **kw)
         self.ipython_shell = ipython_shell
