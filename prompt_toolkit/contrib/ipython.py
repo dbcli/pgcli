@@ -17,7 +17,7 @@ from prompt_toolkit.document import Document
 
 from IPython.terminal.embed import InteractiveShellEmbed as _InteractiveShellEmbed
 from IPython.terminal.ipapp import load_default_config
-
+from IPython import utils as ipy_utils
 from IPython.core.inputsplitter import IPythonInputSplitter
 
 
@@ -135,6 +135,25 @@ class InteractiveShellEmbed(_InteractiveShellEmbed):
             return ''
 
 
+def initialize_extensions(shell, extensions):
+    """
+    Partial copy of `InteractiveShellApp.init_extensions` from IPython.
+    """
+    try:
+        iter(extensions)
+    except TypeError:
+        pass  # no extensions found
+    else:
+        for ext in extensions:
+            try:
+                shell.extension_manager.load_extension(ext)
+            except:
+                ipy_utils.warn.warn(
+                    "Error in loading extension: %s" % ext +
+                    "\nCheck your config files in %s" % ipy_utils.path.get_ipython_dir())
+                shell.showtraceback()
+
+
 def embed(**kwargs):
     """
     Copied from `IPython/terminal/embed.py`, but using our `InteractiveShellEmbed` instead.
@@ -147,4 +166,5 @@ def embed(**kwargs):
         config.InteractiveShellEmbed = config.TerminalInteractiveShell
         kwargs['config'] = config
     shell = InteractiveShellEmbed.instance(**kwargs)
+    initialize_extensions(shell, config['InteractiveShellApp']['extensions'])
     shell(header=header, stack_depth=2, compile_flags=compile_flags)
