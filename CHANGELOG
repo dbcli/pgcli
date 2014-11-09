@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.22: 2014-11-09
+----------------
+
+Fixed:
+- Fixed missing import which caused Ctrl-Z to crash.
+- Show error message for ptipython when IPython is not installed.
+
 0.21: 2014-10-25
 ----------------
 New features:
