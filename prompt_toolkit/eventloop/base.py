@@ -38,11 +38,8 @@ class BaseEventLoop(object):
         loop.)
         Similar to Twisted's ``deferToThread``.
         """
-        class _Thread(threading.Thread):
-            def run(t):
-                callback()
-
-        _Thread().start()
+        t = threading.Thread(target=callback)
+        t.start()
 
     def call_from_executor(self, callback):
         raise NotImplementedError
