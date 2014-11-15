@@ -63,10 +63,16 @@ def run():
         sys.argv = [a['<file>']] + a['<arg>']
         six.exec_(compile(open(a['<file>'], "rb").read(), a['<file>'], 'exec'))
     else:
+        # Create an empty namespace for this interactive shell. (If we don't do
+        # that, all the variables from this function will become available in
+        # the IPython shell.)
+        user_ns = {}
+
         # Run interactive shell.
         embed(vi_mode=vi_mode, history_filename=history_filename,
               autocompletion_style=autocompletion_style,
-              always_multiline=always_multiline)
+              always_multiline=always_multiline,
+              user_ns=user_ns)
 
 
 if __name__ == '__main__':
