@@ -273,6 +273,13 @@ class InputStream(object):
         """
         self._input_parser.send(_Flush)
 
+    def feed_and_flush(self, data):
+        """
+        Wrapper around ``feed`` and ``flush``.
+        """
+        self.feed(data)
+        self.flush()
+
 
 class raw_mode(object):
     """

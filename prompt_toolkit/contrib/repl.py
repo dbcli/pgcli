@@ -18,6 +18,7 @@ from pygments.lexers import PythonTracebackLexer
 
 from prompt_toolkit import AbortAction, Exit
 from prompt_toolkit.contrib.python_input import PythonCommandLineInterface, PythonStyle, AutoCompletionStyle
+from prompt_toolkit.utils import DummyContext
 
 from six import exec_
 
@@ -45,21 +46,48 @@ class PythonRepl(PythonCommandLineInterface):
                 document = self.read_input(
                     on_abort=AbortAction.RETRY,
                     on_exit=AbortAction.RAISE_EXCEPTION)
-
-                line = document.text
-
-                if line and not line.isspace():
-                    try:
-                        # Eval and print.
-                        self._execute(line)
-                    except KeyboardInterrupt as e:  # KeyboardInterrupt doesn't inherit from Exception.
-                        self._handle_keyboard_interrupt(e)
-                    except Exception as e:
-                        self._handle_exception(e)
-
-                    self.current_statement_index += 1
+                self._process_document(document)
         except Exit:
             pass
+
+    def asyncio_start_repl(self):
+        """
+        (coroutine) Start a Read-Eval-print Loop for usage in asyncio. E.g.::
+
+            repl = PythonRepl(get_globals=lambda:globals())
+            yield from repl.asyncio_start_repl()
+        """
+        try:
+            while True:
+                # Read
+                g = self.read_input_async(
+                    on_abort=AbortAction.RETRY,
+                    on_exit=AbortAction.RAISE_EXCEPTION)
+
+                # We use Python 2 syntax for delegating the coroutine and
+                # catching the returned document.
+                try:
+                    while True:
+                        yield next(g)
+                except StopIteration as e:
+                    document = e.args[0]
+                    self._process_document(document)
+        except Exit:
+            pass
+
+    def _process_document(self, document):
+        line = document.text
+
+        if line and not line.isspace():
+            try:
+                # Eval and print.
+                self._execute(line)
+            except KeyboardInterrupt as e:  # KeyboardInterrupt doesn't inherit from Exception.
+                self._handle_keyboard_interrupt(e)
+            except Exception as e:
+                self._handle_exception(e)
+
+            self.current_statement_index += 1
 
     def _execute_startup(self, startup_paths):
         """
@@ -124,7 +152,8 @@ class PythonRepl(PythonCommandLineInterface):
 
 
 def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_colors=False,
-          autocompletion_style=AutoCompletionStyle.POPUP_MENU, startup_paths=None, always_multiline=False):
+          autocompletion_style=AutoCompletionStyle.POPUP_MENU, startup_paths=None, always_multiline=False,
+          patch_stdout=False, return_asyncio_coroutine=False):
     """
     Call this to embed  Python shell at the current point in your program.
     It's similar to `IPython.embed` and `bpython.embed`. ::
@@ -146,4 +175,15 @@ def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_co
     cli = PythonRepl(get_globals, get_locals, vi_mode=vi_mode, history_filename=history_filename,
                      style=(None if no_colors else PythonStyle),
                      autocompletion_style=autocompletion_style, always_multiline=always_multiline)
-    cli.start_repl(startup_paths=startup_paths)
+
+    patch_context = cli.patch_stdout_context() if patch_stdout else DummyContext()
+
+    if return_asyncio_coroutine:
+        def coroutine():
+            with patch_context:
+                for future in cli.asyncio_start_repl():
+                    yield future
+        return coroutine()
+    else:
+        with patch_context:
+            cli.start_repl(startup_paths=startup_paths)

@@ -20,6 +20,7 @@ class Win32EventLoop(BaseEventLoop):
         super(Win32EventLoop, self).__init__(input_processor, stdin)
         self._event = _create_event()
         self._console_input_reader = ConsoleInputReader()
+        self._calls_from_executor = []
 
         # XXX: There is still one bug here. When input has been read from the
         #      ConsoleInputReader, `_wait_for_handles` never returns the Event
@@ -35,8 +36,8 @@ class Win32EventLoop(BaseEventLoop):
             handle = _wait_for_handles([self._event, self._console_input_reader.handle], timeout)
 
             if handle == self._event:
-                ret = windll.kernel32.ResetEvent(self._event)
-                self.process_queued_calls_from_executor()
+                windll.kernel32.ResetEvent(self._event)
+                self._process_queued_calls_from_executor()
                 return
 
             elif handle == self._console_input_reader.handle:
@@ -66,6 +67,12 @@ class Win32EventLoop(BaseEventLoop):
 
         # Set Windows event.
         windll.kernel32.SetEvent(self._event)
+
+    def _process_queued_calls_from_executor(self):
+        # Process calls from executor.
+        calls_from_executor, self._calls_from_executor = self._calls_from_executor, []
+        for c in calls_from_executor:
+            c()
 
 
 def _wait_for_handles(handles, timeout=-1):

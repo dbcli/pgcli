@@ -22,10 +22,12 @@ class BaseEventLoop(object):
         #:   of the function below the cursor position in the case of a REPL.
         self.onInputTimeout = EventHook()
 
-        self._calls_from_executor = []
         self.closed = False
 
     def loop(self):
+        raise NotImplementedError
+
+    def loop_coroutine(self):
         raise NotImplementedError
 
     def close(self):
@@ -38,14 +40,7 @@ class BaseEventLoop(object):
         loop.)
         Similar to Twisted's ``deferToThread``.
         """
-        t = threading.Thread(target=callback)
-        t.start()
+        threading.Thread(target=callback).start()
 
     def call_from_executor(self, callback):
         raise NotImplementedError
-
-    def process_queued_calls_from_executor(self):
-        # Process calls from executor.
-        calls_from_executor, self._calls_from_executor = self._calls_from_executor, []
-        for c in calls_from_executor:
-            c()

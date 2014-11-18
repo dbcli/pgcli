@@ -5,11 +5,11 @@ Author: Jonathan Slenders
 """
 from __future__ import unicode_literals
 
-import errno
 import os
+import signal
 import six
 import sys
-import signal
+import weakref
 
 from .key_binding import InputProcessor
 from .enums import InputMode
@@ -23,8 +23,7 @@ from .utils import EventHook, DummyContext
 from .history import History
 
 from pygments.styles.default import DefaultStyle
-
-import weakref
+from types import GeneratorType
 
 if sys.platform == 'win32':
     from .terminal.win32_input import raw_mode, cooked_mode
@@ -87,8 +86,8 @@ class CommandLineInterface(object):
                  create_async_autocompleters=True,
                  renderer_factory=Renderer):
 
-        self.stdin = stdin or sys.stdin
-        self.stdout = stdout or sys.stdout
+        self.stdin = stdin or sys.__stdin__
+        self.stdout = stdout or sys.__stdout__
         self.style = style
 
         #: The `Line` instance.
@@ -229,12 +228,56 @@ class CommandLineInterface(object):
         :param on_abort: :class:`AbortAction` value. What to do when Ctrl-C has been pressed.
         :param on_exit:  :class:`AbortAction` value. What to do when Ctrl-D has been pressed.
         """
+        eventloop = EventLoop(self.input_processor, self.stdin)
+        g = self._read_input(initial_value=initial_value,
+                             initial_input_mode=initial_input_mode,
+                             on_abort=on_abort,
+                             on_exit=on_exit,
+                             eventloop=eventloop,
+                             return_corountine=False)
+
+        # Return result from `_read_input`.
+        try:
+            while True:
+                next(g)
+        except StopIteration as e:
+            return e.args[0]
+
+    def read_input_async(self, initial_value='', initial_input_mode=InputMode.INSERT,
+                         on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
+        """
+        Same as `read_input`, but this returns an asyncio coroutine.
+
+        Warning: this will only work on Python >3.3
+        """
+        # Inline import, to make sure the rest doesn't break on Python 2
+        if sys.platform == 'win32':
+            from prompt_toolkit.eventloop.asyncio_win32 import Win32AsyncioEventLoop as AsyncioEventLoop
+        else:
+            from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop
+
+        eventloop = AsyncioEventLoop(self.input_processor, self.stdin)
+        return self._read_input(initial_value=initial_value,
+                                initial_input_mode=initial_input_mode,
+                                on_abort=on_abort,
+                                on_exit=on_exit,
+                                eventloop=eventloop,
+                                return_corountine=True)
+
+    def _read_input(self, initial_value, initial_input_mode, on_abort, on_exit,
+                    eventloop, return_corountine):
+        """
+        The implementation of ``read_input`` which can be called both
+        synchronously and asynchronously. When called as coroutine it will
+        delegate all the futures from ``eventloop.loop_coroutine``. In both
+        cases it returns the result through ``StopIteration``.
+        """
         # Set `is_reading_input` flag.
         if self.is_reading_input:
             raise Exception('Already reading input. Read_input is not thread safe.')
 
         # Create new event loop.
-        self.eventloop = EventLoop(self.input_processor, self.stdin)
+        self.eventloop = eventloop
         self.eventloop.onInputTimeout += lambda: self.onInputTimeout.fire()
 
         try:
@@ -248,13 +291,20 @@ class CommandLineInterface(object):
 
             with raw_mode(self.stdin.fileno()):
                 self.renderer.request_absolute_cursor_position()
-
                 self._redraw()
 
                 with (DummyContext() if sys.platform == 'win32' else
                       call_on_sigwinch(self._on_resize)):
                     while True:
-                        self.eventloop.loop()
+                        if return_corountine:
+                            loop_result = self.eventloop.loop_coroutine()
+                            assert isinstance(loop_result, GeneratorType)
+
+                            for future in loop_result:
+                                yield future
+                        else:
+                            loop_result = self.eventloop.loop()
+                            assert not isinstance(loop_result, GeneratorType)
 
                         # If the exit flag has been set.
                         if self._exit_flag:
@@ -264,7 +314,7 @@ class CommandLineInterface(object):
                             if on_exit == AbortAction.RAISE_EXCEPTION:
                                 raise Exit()
                             elif on_exit == AbortAction.RETURN_NONE:
-                                return None
+                                return
                             elif on_exit == AbortAction.RETRY:
                                 reset()
                                 self.renderer.request_absolute_cursor_position()
@@ -277,7 +327,7 @@ class CommandLineInterface(object):
                             if on_abort == AbortAction.RAISE_EXCEPTION:
                                 raise Abort()
                             elif on_abort == AbortAction.RETURN_NONE:
-                                return None
+                                return
                             elif on_abort == AbortAction.RETRY:
                                 reset()
                                 self.renderer.request_absolute_cursor_position()
@@ -285,11 +335,10 @@ class CommandLineInterface(object):
                         # If a return value has been set.
                         if self._return_value is not None:
                             self.renderer.render(self)
-                            return self._return_value
+                            raise StopIteration(self._return_value)
 
                         # Now render the current layout to the output.
                         self._redraw()
-
         finally:
             # Close event loop
             self.eventloop.close()
@@ -307,19 +356,42 @@ class CommandLineInterface(object):
     def set_return_value(self, code):
         self._return_value = code
 
-    def run_system_command(self, command):
+    def run_in_terminal(self, func):
         """
-        (Not thread safe -- to be called from inside the key bindings.)
-        Run system command.
+        Run function on the terminal above the prompt.
 
-        :param command: Shell command to be executed.
+        What this does is first hiding the prompt, then running this callable
+        (which can safely output to the terminal), and then again rendering the
+        prompt which causes the output of this function to scroll above the
+        prompt.
+
+        This function is thread safe. It will return immediately and the
+        callable will be scheduled in the eventloop of this
+        :class:`CommandLineInterface`.
         """
+        self.call_from_executor(lambda: self._run_in_terminal(func))
+
+    def _run_in_terminal(self, func):
+        """ Blocking, not thread safe version of ``run_in_terminal``. """
         assert self.is_reading_input, 'Should be called while reading input.'
-
         self.renderer.erase()
 
         # Run system command.
         with cooked_mode(self.stdin.fileno()):
+            func()
+
+        self.renderer.reset()
+        self.renderer.request_absolute_cursor_position()
+        self._redraw()
+
+    def run_system_command(self, command):
+        """
+        Run system command (While hiding the prompt. When finished, all the
+        output will scroll above the prompt.)
+
+        :param command: Shell command to be executed.
+        """
+        def run():
             if sys.platform == 'win32':
                 os.system(command)  # Needs to be unicode for win32
             else:
@@ -327,26 +399,19 @@ class CommandLineInterface(object):
 
             (input if six.PY3 else raw_input)('\nPress ENTER to continue...')
 
-        self.renderer.reset()
-        self.renderer.request_absolute_cursor_position()
+        self.run_in_terminal(run)
 
     def suspend_to_background(self):
         """
         (Not thread safe -- to be called from inside the key bindings.)
         Suspend process.
         """
-        assert self.is_reading_input, 'Should be called while reading input.'
-
-        self.renderer.erase()
-
-        # Make sure to be in cooked mode when suspending.
-        with cooked_mode(self.stdin.fileno()):
+        def run():
             # Send `SIGSTP` to own process.
             # This will cause it to suspend.
             os.kill(os.getpid(), signal.SIGTSTP)
 
-        self.renderer.reset()
-        self.renderer.request_absolute_cursor_position()
+        self.run_in_terminal(run)
 
     @property
     def is_exiting(self):
@@ -420,3 +485,87 @@ class CommandLineInterface(object):
 
             self.run_in_executor(run)
         return async_completer
+
+    def stdout_proxy(self):
+        """
+        Create an :class:`_StdoutProxy` class which can be used as a patch for
+        sys.stdout. Writing to this proxy will make sure that the text appears
+        above the prompt, and that it doesn't destroy the output from the
+        renderer.
+        """
+        return _StdoutProxy(self)
+
+    def patch_stdout_context(self):
+        """
+        Return a context manager that will replace ``sys.stdout`` with a proxy
+        that makes sure that all printed text will appear above the prompt, and
+        that it doesn't destroy the output from the renderer.
+        """
+        return _PatchStdoutContext(self.stdout_proxy())
+
+
+class _PatchStdoutContext(object):
+    def __init__(self, new_stdout):
+        self.new_stdout = new_stdout
+
+    def __enter__(self):
+        self.original_stdout = sys.stdout
+        sys.stdout = self.new_stdout
+
+    def __exit__(self, *a, **kw):
+        sys.stdout = self.original_stdout
+
+
+class _StdoutProxy(object):
+    """
+    Proxy for stdout, as returned by
+    :class:`CommandLineInterface.stdout_proxy`.
+    """
+    def __init__(self, cli):
+        self._cli = cli
+        self._buffer = []
+
+    def _do(self, func):
+        if self._cli.is_reading_input:
+            self._cli.run_in_terminal(func)
+        else:
+            func()
+
+    def write(self, data):
+        """
+        Note: print()-statements cause to multiple write calls.
+              (write('line') and write('\n')). Of course we don't want to call
+              `run_in_terminal` for every individual call, because that's too
+              expensive, and as long as the newline hasn't been written, the
+              text itself is again overwritter by the rendering of the input
+              command line. Therefor, we have a little buffer which holds the
+              text until a newline is written to stdout.
+        """
+        if '\n' in data:
+            # When there is a newline in the data, write everything before the
+            # newline, including the newline itself.
+            before, after = data.rsplit('\n', 1)
+            to_write = self._buffer + [before, '\n']
+            self._buffer = [after]
+
+            def run():
+                for s in to_write:
+                    self._cli.stdout.write(s)
+            self._do(run)
+        else:
+            # Otherwise, cache in buffer.
+            self._buffer.append(data)
+
+    def flush(self):
+        """
+        Flush buffered output.
+        """
+        def run():
+            for s in self._buffer:
+                self._cli.stdout.write(s)
+            self._buffer = []
+            self._cli.stdout.flush()
+        self._do(run)
+
+    def __getattr__(self, name):
+        return getattr(self._cli.stdout, name)

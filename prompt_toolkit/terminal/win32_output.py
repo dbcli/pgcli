@@ -187,6 +187,10 @@ class Win32Output(object):
         Write to output stream and flush.
         """
         if not self._buffer:
+            # Only flush stdout buffer. (It could be that Python still has
+            # something in its buffer. -- We want to be sure to print that in
+            # the correct color.)
+            self.stdout.flush()
             return
 
         data = ''.join(self._buffer)

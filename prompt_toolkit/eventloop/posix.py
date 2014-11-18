@@ -23,6 +23,7 @@ class PosixEventLoop(BaseEventLoop):
         super(PosixEventLoop, self).__init__(input_processor, stdin)
 
         self.inputstream = InputStream(self.input_processor)
+        self._calls_from_executor = []
 
         # Create a pipe for inter thread communication.
         self._schedule_pipe = os.pipe()
@@ -48,15 +49,9 @@ class PosixEventLoop(BaseEventLoop):
             # If we got a character, feed it to the input stream. If we got
             # none, it means we got a repaint request.
             if self.stdin in r:
-                c = self._read_from_stdin()
-
-                if c:
-                    # Feed input text.
-                    self.inputstream.feed(c)
-
-                    # Immediately flush the input.
-                    self.inputstream.flush()
-
+                # Feed input text.
+                data = self._read_from_stdin()
+                self.inputstream.feed_and_flush(data)
                 return
 
             # If we receive something on our "call_from_executor" pipe, process
