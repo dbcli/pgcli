@@ -157,7 +157,7 @@ class CommandLineInterface(object):
         """
         self._exit_flag = False
         self._abort_flag = False
-        self._return_code = None
+        self._return_value = None
 
         for l in self.lines.values():
             l.reset()
@@ -283,9 +283,9 @@ class CommandLineInterface(object):
                                 self.renderer.request_absolute_cursor_position()
 
                         # If a return value has been set.
-                        if self._return_code:
+                        if self._return_value is not None:
                             self.renderer.render(self)
-                            return self._return_code
+                            return self._return_value
 
                         # Now render the current layout to the output.
                         self._redraw()
@@ -305,7 +305,7 @@ class CommandLineInterface(object):
         self._abort_flag = True
 
     def set_return_value(self, code):
-        self._return_code = code
+        self._return_value = code
 
     def run_system_command(self, command):
         """
@@ -367,7 +367,7 @@ class CommandLineInterface(object):
         """
         ``True`` when a return value has been set.
         """
-        return self._return_code
+        return self._return_value is not None
 
     def _create_async_completer(self, line_name):
         """
