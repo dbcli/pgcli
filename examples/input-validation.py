@@ -16,13 +16,14 @@ from pygments.style import Style
 
 
 layout = Layout(
-    before_input = DefaultPrompt(text='Give an e-mail address: '),
-    bottom_toolbars = [ValidationToolbar()]
+    before_input=DefaultPrompt(text='Give an e-mail address: '),
+    bottom_toolbars=[ValidationToolbar()]
 )
+
 
 class EmailValidator(Validator):
     def validate(self, document):
-        if not '@' in document.text:
+        if '@' not in document.text:
             raise ValidationError(message='Not a valid e-mail address')
 
 

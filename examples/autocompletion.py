@@ -74,12 +74,12 @@ class AnimalStyle(Style):
 
 
 def main():
-    cli = CommandLineInterface(style=AnimalStyle,
-                   layout=Layout(before_input=DefaultPrompt('Give some animals: '),
-                                 menus=[CompletionsMenu()]),
-                   line=Line(completer=AnimalCompleter()),
-                   create_async_autocompleters=True,
-            )
+    cli = CommandLineInterface(
+        style=AnimalStyle,
+        layout=Layout(before_input=DefaultPrompt('Give some animals: '),
+                      menus=[CompletionsMenu()]),
+        line=Line(completer=AnimalCompleter()),
+        create_async_autocompleters=True)
 
     print('Press tab to complete')
     code_obj = cli.read_input()
