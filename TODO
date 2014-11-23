@@ -11,3 +11,6 @@
 * [ ] Add a lot more SQL keywords to auto-completion.
 * [X] Add a history file.
 * [ ] Prettify the output into nice columnar tables.
+* [ ] Add context sensitive auto-completion.
+    * Check how sqlpython is doing it.
+* [ ] Check how to deal with failed commands that result in dangling transaction.
