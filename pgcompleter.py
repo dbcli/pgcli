@@ -11,6 +11,10 @@ class PGCompleter(Completer):
         'WHERE',
     ]
 
+    @classmethod
+    def extend_keywords(cls, additional_keywords):
+        cls.keywords.extend(additional_keywords)
+
     def get_completions(self, document):
         word_before_cursor = document.get_word_before_cursor()
 

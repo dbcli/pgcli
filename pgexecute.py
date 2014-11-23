@@ -7,6 +7,9 @@ class PGExecute(object):
             '\dt': '''SELECT n.nspname as "Schema", c.relname as "Name", CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 'f' THEN 'foreign table' END as "Type", pg_catalog.pg_get_userbyid(c.relowner) as "Owner" FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN ('r','') AND n.nspname <> 'pg_catalog' AND n.nspname <> 'information_schema' AND n.nspname !~ '^pg_toast' AND pg_catalog.pg_table_is_visible(c.oid) ORDER BY 1,2;'''
             }
 
+    tables_query = '''SELECT c.relname as "Name" FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN ('r','') AND n.nspname <> 'pg_catalog' AND n.nspname <> 'information_schema' AND n.nspname !~ '^pg_toast' AND pg_catalog.pg_table_is_visible(c.oid) ORDER BY 1;'''
+    columns_query = '''SELECT column_name FROM information_schema.columns WHERE table_name =%s;'''
+
     def __init__(self, database, user, password, host, port):
         self.conn = psycopg2.connect(database=database, user=user,
                 password=password, host=host, port=port)
@@ -19,3 +22,18 @@ class PGExecute(object):
                 cur.execute(sql)
             return cur.fetchall()
 
+    def tables(self):
+        with self.conn.cursor() as cur:
+            cur.execute(self.tables_query)
+            return (x[0] for x in cur.fetchall())
+
+    def columns(self, table):
+        with self.conn.cursor() as cur:
+            cur.execute(self.columns_query, (table,))
+            return (x[0] for x in cur.fetchall())
+
+    def all_columns(self):
+        columns = set()
+        for table in self.tables():
+            columns.update(self.columns(table))
+        return columns
