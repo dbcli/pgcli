@@ -1,8 +1,13 @@
 * [X] Translate the commands to pg backend.
 * [X] Add options to read the host, user, passwd etc.
-* [ ] Add the back-slash commands.
+* [X] Add the back-slash commands.
+    * launch psql with -E option and try \d, \dt etc and copy the sql statements.
+* [ ] Add more complex slash commands such as \d <table_name>.
 * [X] Deal with errors that happen at connection (password, host etc).
 * [X] Deal with errors that happen during sql execution.
-* [ ] Add auto-completion based on the tables, columns names.
+* [X] Add auto-completion based on the tables, columns names.
+    * launch psql with -E option and try \d, \dt etc and copy the sql statements.
 * [ ] Figure out how to deal with transactions.
 * [ ] Add a lot more SQL keywords to auto-completion.
+* [ ] Add a history file.
+* [ ] Prettify the output into nice columnar tables.
