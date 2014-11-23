@@ -1,4 +1,8 @@
-* [ ] Translate the commands to pg backend.
-* [ ] Add options to read the host, user, passwd etc.
-* [ ] Add auto-completion based on the tables, columns names.
+* [X] Translate the commands to pg backend.
+* [X] Add options to read the host, user, passwd etc.
 * [ ] Add the back-slash commands.
+* [X] Deal with errors that happen at connection (password, host etc).
+* [X] Deal with errors that happen during sql execution.
+* [ ] Add auto-completion based on the tables, columns names.
+* [ ] Figure out how to deal with transactions.
+* [ ] Add a lot more SQL keywords to auto-completion.

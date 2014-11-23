@@ -19,12 +19,15 @@ from pygments.lexers import SqlLexer
 @click.option('-h', '--host', default='localhost')
 @click.option('-p', '--port', default=5432)
 @click.option('-U', '--user', prompt=True, envvar='USER')
-@click.password_option('-P', '--password', default='',
+@click.password_option('-W', '--password', default='',
         confirmation_prompt=False)
 @click.argument('database', envvar='USER')
 def pgcli(database, user, password, host, port):
-    print('database: %s host: %s user: %s password: %s' % (database, host, user, password))
-    pgexecute = PGExecute(database, user, password, host, port)
+    try:
+        pgexecute = PGExecute(database, user, password, host, port)
+    except Exception as e:
+        click.secho(e.message, err=True, fg='red')
+        exit(1)
     layout = Layout(before_input=DefaultPrompt('%s> ' % database),
             menus=[CompletionsMenu()],
             lexer=SqlLexer)
@@ -34,6 +37,10 @@ def pgcli(database, user, password, host, port):
     try:
         while True:
             document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-            print (pgexecute.run(document.text))
+            try:
+                print(pgexecute.run(document.text))
+            except Exception as e:
+                click.secho("Does not compute!", fg='red')
+                click.secho(e.message, err=True, fg='red')
     except Exit:
         print ('GoodBye!')
