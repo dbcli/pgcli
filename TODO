@@ -9,5 +9,5 @@
     * launch psql with -E option and try \d, \dt etc and copy the sql statements.
 * [ ] Figure out how to deal with transactions.
 * [ ] Add a lot more SQL keywords to auto-completion.
-* [ ] Add a history file.
+* [X] Add a history file.
 * [ ] Prettify the output into nice columnar tables.

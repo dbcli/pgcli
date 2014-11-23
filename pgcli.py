@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+from os.path import expanduser
+
 import click
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
@@ -12,6 +14,7 @@ from prompt_toolkit.line import Line
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
+from prompt_toolkit.history import FileHistory
 
 from pygments.lexers import SqlLexer
 
@@ -34,7 +37,8 @@ def pgcli(database, user, password, host, port):
     completer = PGCompleter()
     completer.extend_keywords(pgexecute.tables())
     completer.extend_keywords(pgexecute.all_columns())
-    line = Line(completer=completer)
+    line = Line(completer=completer,
+            history=FileHistory(expanduser('~/.pgcli-history')))
     cli = CommandLineInterface(style=PGStyle, layout=layout, line=line)
 
     try:
