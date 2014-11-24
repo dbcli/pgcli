@@ -1,16 +1,16 @@
-* [X] Translate the commands to pg backend.
-* [X] Add options to read the host, user, passwd etc.
-* [X] Add the back-slash commands.
-    * launch psql with -E option and try \d, \dt etc and copy the sql statements.
+* [ ] Prettify the output into nice columnar tables.
+* [ ] Add a lot more SQL keywords to auto-completion.
+* [ ] Add context sensitive auto-completion.
+    * Check how sqlpython is doing it.
 * [ ] Add more complex slash commands such as \d <table_name>.
+* [ ] Figure out how to deal with transactions.
+* [X] Check how to deal with failed commands that result in dangling transaction.
+* [X] Add a history file.
 * [X] Deal with errors that happen at connection (password, host etc).
 * [X] Deal with errors that happen during sql execution.
 * [X] Add auto-completion based on the tables, columns names.
     * launch psql with -E option and try \d, \dt etc and copy the sql statements.
-* [ ] Figure out how to deal with transactions.
-* [ ] Add a lot more SQL keywords to auto-completion.
-* [X] Add a history file.
-* [ ] Prettify the output into nice columnar tables.
-* [ ] Add context sensitive auto-completion.
-    * Check how sqlpython is doing it.
-* [ ] Check how to deal with failed commands that result in dangling transaction.
+* [X] Translate the commands to pg backend.
+* [X] Add options to read the host, user, passwd etc.
+* [X] Add the back-slash commands.
+    * launch psql with -E option and try \d, \dt etc and copy the sql statements.

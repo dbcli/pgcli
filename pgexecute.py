@@ -13,6 +13,7 @@ class PGExecute(object):
     def __init__(self, database, user, password, host, port):
         self.conn = psycopg2.connect(database=database, user=user,
                 password=password, host=host, port=port)
+        self.conn.autocommit = True
 
     def run(self, sql):
         with self.conn.cursor() as cur:
