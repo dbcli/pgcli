@@ -1,9 +1,9 @@
-* [X] Prettify the output into nice columnar tables.
+* [ ] Add more complex slash commands such as \d <table_name>.
 * [ ] Add a lot more SQL keywords to auto-completion.
 * [ ] Add context sensitive auto-completion.
     * Check how sqlpython is doing it.
-* [ ] Add more complex slash commands such as \d <table_name>.
 * [ ] Figure out how to deal with transactions.
+* [X] Prettify the output into nice columnar tables.
 * [X] Check how to deal with failed commands that result in dangling transaction.
 * [X] Add a history file.
 * [X] Deal with errors that happen at connection (password, host etc).
