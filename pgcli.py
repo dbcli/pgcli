@@ -16,7 +16,8 @@ from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.history import FileHistory
 
-from pygments.lexers import SqlLexer
+from pygments.lexers.sql import SqlLexer
+from tabulate import tabulate
 
 @click.command()
 @click.option('-h', '--host', default='localhost')
@@ -45,7 +46,8 @@ def pgcli(database, user, password, host, port):
         while True:
             document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
             try:
-                print(pgexecute.run(document.text))
+                print(tabulate(*pgexecute.run(document.text),
+                    tablefmt='orgtbl'))
             except Exception as e:
                 click.secho("Does not compute!", fg='red')
                 click.secho(e.message, err=True, fg='red')

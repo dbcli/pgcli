@@ -13,6 +13,7 @@ setup(
             'Click',
             'prompt_toolkit',
             'psycopg2',
+            'tabulate',
             ],
         entry_points='''
             [console_scripts]

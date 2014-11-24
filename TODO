@@ -1,4 +1,4 @@
-* [ ] Prettify the output into nice columnar tables.
+* [X] Prettify the output into nice columnar tables.
 * [ ] Add a lot more SQL keywords to auto-completion.
 * [ ] Add context sensitive auto-completion.
     * Check how sqlpython is doing it.

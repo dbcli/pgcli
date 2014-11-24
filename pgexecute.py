@@ -21,7 +21,8 @@ class PGExecute(object):
                 cur.execute(self.special_commands[sql])
             else:
                 cur.execute(sql)
-            return cur.fetchall()
+            headers = [x[0] for x in cur.description]
+            return cur.fetchall(), headers
 
     def tables(self):
         with self.conn.cursor() as cur:
