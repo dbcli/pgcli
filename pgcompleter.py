@@ -1,6 +1,6 @@
 from __future__ import print_function
 from prompt_toolkit.completion import Completer, Completion
-import sqlparser
+import sqlparse
 
 class PGCompleter(Completer):
     keywords = [
@@ -9,10 +9,11 @@ class PGCompleter(Completer):
         'ALTER',
         'DROP',
         'DELETE',
+        'FROM',
     ]
 
     table_names = []
-    column_names = []
+    column_names = ['*']
 
     @classmethod
     def extend_keywords(cls, additional_keywords):
@@ -34,13 +35,18 @@ class PGCompleter(Completer):
                     yield Completion(item, -len(text))
 
         word_before_cursor = document.get_word_before_cursor()
-        segment = sqlparser.whichSegment(document.text)
 
-        if segment in ('select', 'where', 'having', 'set', 'order by', 'group by'):
+        parsed = sqlparse.parse(document.text[:-len(word_before_cursor)])
+
+        last_token = ''
+        if parsed:
+            last_token = parsed[0].token_prev(len(parsed[0].tokens)).value
+
+        #print(last_token)
+
+        if last_token.lower() in ('select', 'where', 'having', 'set', 'order by', 'group by'):
             return find_matches(word_before_cursor, self.column_names)
-        elif segment in ('from', 'update', 'insert into'):
+        elif last_token.lower() in ('from', 'update', 'insert into'):
             return find_matches(word_before_cursor, self.table_names)
-        elif segment == 'beginning':
-            return find_matches(word_before_cursor, self.keywords)
         else:
-            return find_matches(word_before_cursor, sqlparser.reserved)
+            return find_matches(word_before_cursor, self.keywords)
