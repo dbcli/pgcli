@@ -36,8 +36,8 @@ def pgcli(database, user, password, host, port):
             menus=[CompletionsMenu()],
             lexer=SqlLexer)
     completer = PGCompleter()
-    completer.extend_keywords(pgexecute.tables())
-    completer.extend_keywords(pgexecute.all_columns())
+    completer.extend_table_names(pgexecute.tables())
+    completer.extend_column_names(pgexecute.all_columns())
     line = Line(completer=completer,
             history=FileHistory(expanduser('~/.pgcli-history')))
     cli = CommandLineInterface(style=PGStyle, layout=layout, line=line)
