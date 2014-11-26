@@ -26,7 +26,7 @@ from tabulate import tabulate
 @click.password_option('-W', '--password', default='',
         confirmation_prompt=False)
 @click.argument('database', envvar='USER')
-def pgcli(database, user, password, host, port):
+def cli(database, user, password, host, port):
     try:
         pgexecute = PGExecute(database, user, password, host, port)
     except Exception as e:
