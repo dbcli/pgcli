@@ -2,14 +2,15 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-from os.path import expanduser
+import os.path
 
 import click
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
-from pgcompleter import PGCompleter
-from pgstyle import PGStyle
-from pgexecute import PGExecute
+from .pgcompleter import PGCompleter
+from .pgstyle import PGStyle
+from .pgexecute import PGExecute
+from .config import write_default_config, load_config
 from prompt_toolkit.line import Line
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
@@ -27,6 +28,18 @@ from tabulate import tabulate
         confirmation_prompt=False)
 @click.argument('database', envvar='USER')
 def cli(database, user, password, host, port):
+
+    from pgcli import __file__ as package_root
+    package_root = os.path.dirname(package_root)
+
+    default_config = os.path.join(package_root, 'pgclirc')
+    # Write default config.
+    write_default_config(default_config, '~/.pgclirc')
+
+    # Load config.
+    config = load_config('~/.pgclirc')
+
+    # Connect to the database.
     try:
         pgexecute = PGExecute(database, user, password, host, port)
     except Exception as e:
@@ -35,11 +48,11 @@ def cli(database, user, password, host, port):
     layout = Layout(before_input=DefaultPrompt('%s> ' % database),
             menus=[CompletionsMenu()],
             lexer=SqlLexer)
-    completer = PGCompleter()
+    completer = PGCompleter(config.get('main', 'smart_completion'))
     completer.extend_table_names(pgexecute.tables())
     completer.extend_column_names(pgexecute.all_columns())
     line = Line(completer=completer,
-            history=FileHistory(expanduser('~/.pgcli-history')))
+            history=FileHistory(os.path.expanduser('~/.pgcli-history')))
     cli = CommandLineInterface(style=PGStyle, layout=layout, line=line)
 
     try:

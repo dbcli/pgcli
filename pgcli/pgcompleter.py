@@ -15,6 +15,10 @@ class PGCompleter(Completer):
     table_names = []
     column_names = ['*']
 
+    def __init__(self, smart_completion=True):
+        super(self.__class__, self).__init__()
+        self.smart_completion = smart_completion
+
     @classmethod
     def extend_keywords(cls, additional_keywords):
         cls.keywords.extend(additional_keywords)
