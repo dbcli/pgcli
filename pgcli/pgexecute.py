@@ -27,12 +27,12 @@ class PGExecute(object):
     def tables(self):
         with self.conn.cursor() as cur:
             cur.execute(self.tables_query)
-            return (x[0] for x in cur.fetchall())
+            return [x[0] for x in cur.fetchall()]
 
     def columns(self, table):
         with self.conn.cursor() as cur:
             cur.execute(self.columns_query, (table,))
-            return (x[0] for x in cur.fetchall())
+            return [x[0] for x in cur.fetchall()]
 
     def all_columns(self):
         columns = set()

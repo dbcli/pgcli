@@ -10,6 +10,9 @@ class PGCompleter(Completer):
         'DROP',
         'DELETE',
         'FROM',
+        'BEGIN',
+        'TRANSACTION',
+        'ROLLBACK',
     ]
 
     table_names = []
@@ -20,20 +23,17 @@ class PGCompleter(Completer):
         super(self.__class__, self).__init__()
         self.smart_completion = smart_completion
 
-    @classmethod
-    def extend_keywords(cls, additional_keywords):
-        cls.keywords.extend(additional_keywords)
-        cls.all_completions.update(additional_keywords)
+    def extend_keywords(self, additional_keywords):
+        self.keywords.extend(additional_keywords)
+        self.all_completions.update(additional_keywords)
 
-    @classmethod
-    def extend_table_names(cls, table_names):
-        cls.table_names.extend(table_names)
-        cls.all_completions.update(table_names)
+    def extend_table_names(self, table_names):
+        self.table_names.extend(table_names)
+        self.all_completions.update(table_names)
 
-    @classmethod
-    def extend_column_names(cls, column_names):
-        cls.column_names.extend(column_names)
-        cls.all_completions.update(column_names)
+    def extend_column_names(self, column_names):
+        self.column_names.extend(column_names)
+        self.all_completions.update(column_names)
 
     @staticmethod
     def find_matches(text, collection):

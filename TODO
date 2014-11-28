@@ -1,8 +1,9 @@
-* [] Detect a '.' and parse the word before it and get it's real name.
+* [ ] Detect a '.' and parse the word before it and get it's real name.
 * [ ] Add more complex slash commands such as \d <table_name>.
 * [ ] Add a lot more SQL keywords to auto-completion.
-* [ ] Figure out how to deal with transactions.
-* [] Control smart completion via config file.
+* [ ] Deal with commands that have no return rows (such as delete, begin transaction etc).
+* [x] Control smart completion via config file.
+* [x] Figure out how to deal with transactions.
 * [X] Add a config file.
 * [X] Add context sensitive auto-completion.
     * Check how sqlpython is doing it.
