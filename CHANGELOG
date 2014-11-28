@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+0.23: 2014-11-28
+----------------
+
+New features:
+- contrib.completers added.
+
+Fixed:
+- Improved j/k key bindings in Vi mode.
+- Don't leak internal variables into ptipython shell.
+- Initialize IPython extensions.
+- Use IPython's prompt.
+- Workarounds for Jedi crashes.
+
 0.22: 2014-11-09
 ----------------
 
