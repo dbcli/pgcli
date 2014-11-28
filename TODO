@@ -2,6 +2,8 @@
 * [ ] Add more complex slash commands such as \d <table_name>.
 * [ ] Add a lot more SQL keywords to auto-completion.
 * [ ] Figure out how to deal with transactions.
+* [] Control smart completion via config file.
+* [X] Add a config file.
 * [X] Add context sensitive auto-completion.
     * Check how sqlpython is doing it.
 * [X] Prettify the output into nice columnar tables.
