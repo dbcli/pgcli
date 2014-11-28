@@ -40,13 +40,14 @@ class PGCompleter(Completer):
 
         word_before_cursor = document.get_word_before_cursor()
 
-        parsed = sqlparse.parse(document.text[:-len(word_before_cursor)])
+        if word_before_cursor:
+            parsed = sqlparse.parse(document.text[:-len(word_before_cursor)])
+        else:
+            parsed = sqlparse.parse(document.text)
 
         last_token = ''
         if parsed:
             last_token = parsed[0].token_prev(len(parsed[0].tokens)).value
-
-        #print(last_token)
 
         if last_token.lower() in ('select', 'where', 'having', 'set', 'order by', 'group by'):
             return find_matches(word_before_cursor, self.column_names)

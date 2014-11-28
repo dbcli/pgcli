@@ -1,8 +1,9 @@
+* [] Detect a '.' and parse the word before it and get it's real name.
 * [ ] Add more complex slash commands such as \d <table_name>.
 * [ ] Add a lot more SQL keywords to auto-completion.
-* [ ] Add context sensitive auto-completion.
-    * Check how sqlpython is doing it.
 * [ ] Figure out how to deal with transactions.
+* [X] Add context sensitive auto-completion.
+    * Check how sqlpython is doing it.
 * [X] Prettify the output into nice columnar tables.
 * [X] Check how to deal with failed commands that result in dangling transaction.
 * [X] Add a history file.
