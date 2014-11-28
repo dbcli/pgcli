@@ -5,14 +5,15 @@ import sqlparse
 class PGCompleter(Completer):
     keywords = [
         'SELECT',
-        'INSERT',
+        'INSERT INTO',
         'ALTER',
         'DROP',
-        'DELETE',
+        'DELETE FROM',
         'FROM',
         'BEGIN',
         'TRANSACTION',
         'ROLLBACK',
+        'VALUES',
     ]
 
     table_names = []
@@ -67,7 +68,7 @@ class PGCompleter(Completer):
         if last_token.lower() in ('select', 'where', 'having', 'set',
                 'order by', 'group by'):
             return self.find_matches(word_before_cursor, self.column_names)
-        elif last_token.lower() in ('from', 'update', 'insert into'):
+        elif last_token.lower() in ('from', 'update', 'into'):
             return self.find_matches(word_before_cursor, self.table_names)
         else:
             return self.find_matches(word_before_cursor, self.keywords)

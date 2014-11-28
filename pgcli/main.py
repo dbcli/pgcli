@@ -60,7 +60,7 @@ def cli(database, user, password, host, port):
             document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
             try:
                 print(tabulate(*pgexecute.run(document.text),
-                    tablefmt='orgtbl'))
+                    tablefmt='psql'))
             except Exception as e:
                 click.secho("Does not compute!", fg='red')
                 click.secho(e.message, err=True, fg='red')
