@@ -1,6 +1,7 @@
 """
 """
 from __future__ import unicode_literals
+from abc import ABCMeta, abstractmethod
 
 __all__ = (
     'Completion',
@@ -42,6 +43,8 @@ class Completer(object):
     The methods in here are methods that are expected to exist for the `Line`
     and `Renderer` classes.
     """
+    __metaclass__ = ABCMeta
+
     def get_common_complete_suffix(self, document):
         """
         return one `Completion` instance or None.
@@ -62,11 +65,12 @@ class Completer(object):
 
         return _commonprefix([get_suffix(c) for c in completions])
 
+    @abstractmethod
     def get_completions(self, document):
         """
         Yield `Completion` instances.
         """
-        if False:
+        while False:
             yield
 
 
