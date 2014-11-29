@@ -1,4 +1,6 @@
 * [X] Add borders around the table.
+* [] Update README.
+* [] Upload rev 2 to PyPI.
 * [ ] Add a new trigger for M-/ that does dumb completion.
 * [ ] Find a way to add documentation to sql commands. This could get tricky.
 * [ ] Deal with commands that have no return rows (such as delete, begin transaction etc).

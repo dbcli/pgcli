@@ -59,10 +59,11 @@ def cli(database, user, password, host, port):
         while True:
             document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
             try:
-                print(tabulate(*pgexecute.run(document.text),
-                    tablefmt='psql'))
+                rows, headers, status = pgexecute.run(document.text)
+                if rows:
+                    print(tabulate(rows, headers, tablefmt='psql'))
+                print(status)
             except Exception as e:
-                click.secho("Does not compute!", fg='red')
                 click.secho(e.message, err=True, fg='red')
     except Exit:
         print ('GoodBye!')

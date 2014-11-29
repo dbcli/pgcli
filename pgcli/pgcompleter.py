@@ -14,6 +14,7 @@ class PGCompleter(Completer):
         'TRANSACTION',
         'ROLLBACK',
         'VALUES',
+        'WHERE',
     ]
 
     table_names = []

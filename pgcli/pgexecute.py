@@ -21,8 +21,14 @@ class PGExecute(object):
                 cur.execute(self.special_commands[sql])
             else:
                 cur.execute(sql)
-            headers = [x[0] for x in cur.description]
-            return cur.fetchall(), headers
+
+            # cur.description will be None for operations that do not return
+            # rows.
+            if cur.description:
+                headers = [x[0] for x in cur.description]
+                return cur.fetchall(), headers, cur.statusmessage
+            else:
+                return None, None, cur.statusmessage
 
     def tables(self):
         with self.conn.cursor() as cur:
