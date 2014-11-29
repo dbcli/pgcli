@@ -467,6 +467,9 @@ def get_jedi_script_from_document(document, locals, globals):
         # Workaround for #65: https://github.com/jonathanslenders/python-prompt-toolkit/issues/65
         # See also: https://github.com/davidhalter/jedi/issues/508
         return None
+    except IndexError:
+        # Workaround Jedi issue #514: for https://github.com/davidhalter/jedi/issues/514
+        return None
 
 
 class PythonCompleter(Completer):
