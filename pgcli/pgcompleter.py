@@ -17,6 +17,8 @@ class PGCompleter(Completer):
         'WHERE',
     ]
 
+    special_commands = []
+
     table_names = []
     column_names = ['*']
     all_completions = set(keywords)
@@ -24,6 +26,9 @@ class PGCompleter(Completer):
     def __init__(self, smart_completion=True):
         super(self.__class__, self).__init__()
         self.smart_completion = smart_completion
+
+    def extend_special_commands(self, special_commands):
+        self.special_commands.extend(special_commands)
 
     def extend_keywords(self, additional_keywords):
         self.keywords.extend(additional_keywords)
@@ -45,7 +50,7 @@ class PGCompleter(Completer):
 
     def get_completions(self, document):
 
-        word_before_cursor = document.get_word_before_cursor()
+        word_before_cursor = document.get_word_before_cursor(WORD=True)
 
         if not self.smart_completion:
             return self.find_matches(word_before_cursor, self.all_completions)
@@ -72,4 +77,5 @@ class PGCompleter(Completer):
         elif last_token.lower() in ('from', 'update', 'into'):
             return self.find_matches(word_before_cursor, self.table_names)
         else:
-            return self.find_matches(word_before_cursor, self.keywords)
+            return self.find_matches(word_before_cursor,
+                    self.keywords + self.special_commands)

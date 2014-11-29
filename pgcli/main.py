@@ -49,6 +49,7 @@ def cli(database, user, password, host, port):
             menus=[CompletionsMenu()],
             lexer=SqlLexer)
     completer = PGCompleter(config.getboolean('main', 'smart_completion'))
+    completer.extend_special_commands(pgexecute.special_commands.keys())
     completer.extend_table_names(pgexecute.tables())
     completer.extend_column_names(pgexecute.all_columns())
     line = Line(completer=completer,

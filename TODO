@@ -1,16 +1,17 @@
 * [X] Add borders around the table.
+* [] Investigate why having a space in the beginning of the line breaks everything.
+* [ ] Add more complex slash commands such as \d <table_name>.
 * [] Update README.
 * [] Upload rev 2 to PyPI.
 * [ ] Add a new trigger for M-/ that does dumb completion.
 * [ ] Find a way to add documentation to sql commands. This could get tricky.
-* [ ] Deal with commands that have no return rows (such as delete, begin transaction etc).
+* [X] Deal with commands that have no return rows (such as delete, begin transaction etc).
 * [ ] Add a lot more SQL keywords to auto-completion (Read the postgres docs)
-* [] Add tests for smart completion.
+* [ ] Add tests for smart completion.
 * [ ] Detect a '.' and parse the word before it and get it's real name.
-* [ ] Add more complex slash commands such as \d <table_name>.
 * [] Refactor the execution and output into a separate class.
 * [] Create a class for the config and make it easy to access.
-* [ ] Get new table style merged back to tabulate.
+* [o] Get new table style merged back to tabulate.
 * [] Send the last token as a PR back to sqlparse.
 * [] Create a better framework for adding special commands.
     * A dict with special commands as keys.
