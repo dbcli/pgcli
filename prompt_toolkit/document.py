@@ -219,7 +219,7 @@ class Document(object):
         except StopIteration:
             pass
 
-    def get_word_before_cursor(self):
+    def get_word_before_cursor(self, WORD=False):
         """
         Give the word before the cursor.
         If we have whitespace before the cursor this returns an empty string.
@@ -227,7 +227,7 @@ class Document(object):
         if self.text_before_cursor[-1:].isspace():
             return ''
         else:
-            return self.text_before_cursor[self.find_start_of_previous_word():]
+            return self.text_before_cursor[self.find_start_of_previous_word(WORD=WORD):]
 
     def find_start_of_previous_word(self, count=1, WORD=False):
         """
