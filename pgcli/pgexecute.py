@@ -16,6 +16,7 @@ class PGExecute(object):
         self.conn.autocommit = True
 
     def run(self, sql):
+        sql = sql.strip()
         with self.conn.cursor() as cur:
             if sql in self.special_commands:
                 cur.execute(self.special_commands[sql])

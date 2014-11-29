@@ -69,7 +69,8 @@ class PGCompleter(Completer):
 
         last_token = ''
         if parsed:
-            last_token = parsed[0].token_prev(len(parsed[0].tokens)).value
+            last_token = parsed[0].token_prev(len(parsed[0].tokens))
+            last_token = last_token.value if last_token else ''
 
         if last_token.lower() in ('select', 'where', 'having', 'set',
                 'order by', 'group by'):
