@@ -19,7 +19,7 @@ setup(
         url='https://github.com/amjith/pgcli',
         packages=find_packages(),
         description=description,
-        long_description=open('Readme.rst').read(),
+        long_description=open('README.rst').read(),
         install_requires=[
             'Click',
             'prompt_toolkit',

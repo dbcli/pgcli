@@ -56,7 +56,33 @@ If pip is not installed check if easy_install is available on the system.
 Linux:
 ------
 
+Check if pip is already available in your system.
 
+:: 
+
+    $ which pip
+
+If it does then install pgcli using the pip command as follows:
+
+:: 
+
+    $ sudo pip install pgcli
+
+If it doesn't exist, use your linux package manager to install `pip`. This might look something like: 
+
+::
+
+    $ sudo apt-get install python-pip
+
+    or
+
+    $ sudo yum install python-pip
+
+Then you can install pgcli: 
+
+:: 
+
+    $ sudo pip install pgcli
 
 
 Usage
