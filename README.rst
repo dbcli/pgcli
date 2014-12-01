@@ -1,3 +1,5 @@
+** WIP - DO NOT USE **
+
 A REPL for Postgres 
 -------------------
 
