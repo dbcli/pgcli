@@ -1,16 +1,21 @@
-* [ ] Add more complex slash commands such as \d <table_name>.
+* [] Add multi-line support.
+* [] Vendor in tabulate.
 * [ ] Add a new trigger for M-/ that does dumb completion.
-* [ ] Add a lot more SQL keywords to auto-completion (Read the postgres docs)
+* [] Improve the smart completion for Insert statement.
+* [] Improve the smart completion for Update statement.
 * [ ] Find a way to add documentation to sql commands. This could get tricky.
 * [ ] Add tests for smart completion.
 * [ ] Detect a '.' and parse the word before it and get it's real name.
 * [] Refactor the execution and output into a separate class.
 * [] Create a class for the config and make it easy to access.
-* [o] Get new table style merged back to tabulate.
+* [ ] Add more complex slash commands such as \d <table_name>.
+    * This is going to take a separate lib.
 * [] Send the last token as a PR back to sqlparse.
 * [] Create a better framework for adding special commands.
     * A dict with special commands as keys.
     * The value can either be a string or a callable.
+* [o] Get new table style merged back to tabulate.
+* [x] Add a lot more SQL keywords to auto-completion (Read the postgres docs)
 * [X] Deal with commands that have no return rows (such as delete, begin transaction etc).
 * [X] Update README.
 * [X] Upload rev 2 to PyPI.
