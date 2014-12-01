@@ -11,7 +11,7 @@ Installation
 
 If you don't know how to install python pacakges, please check the `detailed instructions`__.
 
-__ Detailed Installation Instructions
+__ https://github.com/amjith/pgcli#detailed-installation-instructions 
 
 If you already know how to install python pacakges, then you can simply do:
 
