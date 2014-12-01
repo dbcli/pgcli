@@ -23,12 +23,14 @@ _DEBUG_RENDERER_INPUT_FILENAME = 'prompt-toolkit-render-input.log'
 
 
 # Regex matching any CPR response
-_cpr_response_re = re.compile('^' + re.escape('\x1b[') + r'\d+;\d+R$')
+# (Note that we use '\Z' instead of '$', because '$' could include a trailing
+# newline.)
+_cpr_response_re = re.compile('^' + re.escape('\x1b[') + r'\d+;\d+R\Z')
 
 # Regex matching any valid prefix of a CPR response.
 # (Note that it doesn't contain the last character, the 'R'. The prefix has to
 # be shorter.)
-_cpr_response_prefix_re = re.compile('^' + re.escape('\x1b[') + r'[\d;]*$')
+_cpr_response_prefix_re = re.compile('^' + re.escape('\x1b[') + r'[\d;]*\Z')
 
 
 class _Flush(object):

@@ -109,3 +109,17 @@ class InputStreamTest(unittest.TestCase):
         self.assertEqual(self.processor.keys[0].key, Keys.Escape)
         self.assertEqual(self.processor.keys[1].key, '[')
         self.assertEqual(self.processor.keys[2].key, '*')
+
+    def test_cpr_response(self):
+        self.stream.feed('a\x1b[40;10Rb')
+        self.assertEqual(len(self.processor.keys), 3)
+        self.assertEqual(self.processor.keys[0].key, 'a')
+        self.assertEqual(self.processor.keys[1].key, Keys.CPRResponse)
+        self.assertEqual(self.processor.keys[2].key, 'b')
+
+    def test_cpr_response_2(self):
+        # Make sure that the newline is not included in the CPR response.
+        self.stream.feed('\x1b[40;1R\n')
+        self.assertEqual(len(self.processor.keys), 2)
+        self.assertEqual(self.processor.keys[0].key, Keys.CPRResponse)
+        self.assertEqual(self.processor.keys[1].key, Keys.ControlJ)
