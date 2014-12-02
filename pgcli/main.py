@@ -10,8 +10,8 @@ from prompt_toolkit import CommandLineInterface, AbortAction, Exit
 from .pgcompleter import PGCompleter
 from .pgstyle import PGStyle
 from .pgexecute import PGExecute
+from .pgline import PGLine
 from .config import write_default_config, load_config
-from prompt_toolkit.line import Line
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
@@ -52,7 +52,7 @@ def cli(database, user, password, host, port):
     completer.extend_special_commands(pgexecute.special_commands.keys())
     completer.extend_table_names(pgexecute.tables())
     completer.extend_column_names(pgexecute.all_columns())
-    line = Line(completer=completer,
+    line = PGLine(completer=completer,
             history=FileHistory(os.path.expanduser('~/.pgcli-history')))
     cli = CommandLineInterface(style=PGStyle, layout=layout, line=line)
 

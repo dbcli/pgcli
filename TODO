@@ -1,4 +1,4 @@
-* [] Add multi-line support.
+* [X] Add multi-line support.
 * [] Vendor in tabulate.
 * [ ] Add a new trigger for M-/ that does dumb completion.
 * [] Improve the smart completion for Insert statement.
