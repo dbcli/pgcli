@@ -196,8 +196,8 @@ class Win32Output(object):
             self.LOG.flush()
 
         # Write to output
-        sys.stdout.write(data)
-        sys.stdout.flush()
+        self.stdout.write(data)
+        self.stdout.flush()
 
         self._buffer = []
 
