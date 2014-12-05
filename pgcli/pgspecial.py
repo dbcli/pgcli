@@ -219,7 +219,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
 
     # Make Footers
 
-    return res, headers, "blah"
+    return cells, headers, "blah"
 
 def sql_name_pattern(pattern):
     """

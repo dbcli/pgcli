@@ -1,6 +1,7 @@
-* [X] Add multi-line support.
-* [] Refresh tables and columns after a create table and alter table.
 * [] Vendor in tabulate.
+* [] Show only table sensitive columns.
+* [] Add logging.
+* [] Add some tests. Sanity, Unit, Completion, Config.
 * [ ] Add a new trigger for M-/ that does dumb completion.
 * [] Improve the smart completion for Insert statement.
 * [] Improve the smart completion for Update statement.
@@ -15,7 +16,9 @@
 * [] Create a better framework for adding special commands.
     * A dict with special commands as keys.
     * The value can either be a string or a callable.
-* [o] Get new table style merged back to tabulate.
+* [X] Get new table style merged back to tabulate.
+* [X] Add multi-line support.
+* [X] Refresh tables and columns after a create table and alter table.
 * [x] Add a lot more SQL keywords to auto-completion (Read the postgres docs)
 * [X] Deal with commands that have no return rows (such as delete, begin transaction etc).
 * [X] Update README.

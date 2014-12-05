@@ -7,18 +7,19 @@ import os.path
 import click
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
+from prompt_toolkit.layout import Layout
+from prompt_toolkit.layout.prompt import DefaultPrompt
+from prompt_toolkit.layout.menus import CompletionsMenu
+from prompt_toolkit.history import FileHistory
+from pygments.lexers.sql import SqlLexer
+from tabulate import tabulate
+import sqlparse
+
 from .pgcompleter import PGCompleter
 from .pgstyle import PGStyle
 from .pgexecute import PGExecute
 from .pgline import PGLine
 from .config import write_default_config, load_config
-from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.prompt import DefaultPrompt
-from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.history import FileHistory
-
-from pygments.lexers.sql import SqlLexer
-from tabulate import tabulate
 
 @click.command()
 @click.option('-h', '--host', default='localhost')
@@ -66,5 +67,14 @@ def cli(database, user, password, host, port):
                 print(status)
             except Exception as e:
                 click.secho(e.message, err=True, fg='red')
+
+            # Refresh the table names and column names if necessary.
+            if need_completion_refresh(document.text):
+                completer.extend_table_names(pgexecute.tables())
+                completer.extend_column_names(pgexecute.all_columns())
     except Exit:
         print ('GoodBye!')
+
+def need_completion_refresh(sql):
+    parsed = sqlparse.parse(sql)
+    return parsed and parsed[0].token_first().value in ('alter', 'create')
