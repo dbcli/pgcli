@@ -188,14 +188,12 @@ class raw_mode(object):
 
     def _patch(self):
         # Set raw
-        lpMode = DWORD()
-
         ENABLE_ECHO_INPUT = 0x0004
         ENABLE_LINE_INPUT = 0x0002
         ENABLE_PROCESSED_INPUT = 0x0001
 
         windll.kernel32.SetConsoleMode(
-            self.handle, lpMode.value &
+            self.handle, self.original_mode.value &
             ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT))
 
     def __exit__(self, *a, **kw):
@@ -212,12 +210,10 @@ class cooked_mode(raw_mode):
     """
     def _patch(self):
         # Set cooked.
-        lpMode = DWORD()
-
         ENABLE_ECHO_INPUT = 0x0004
         ENABLE_LINE_INPUT = 0x0002
         ENABLE_PROCESSED_INPUT = 0x0001
 
         windll.kernel32.SetConsoleMode(
-            self.handle, lpMode.value &
+            self.handle, self.original_mode.value |
             (ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT))
