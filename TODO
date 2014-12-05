@@ -1,4 +1,5 @@
 * [X] Add multi-line support.
+* [] Refresh tables and columns after a create table and alter table.
 * [] Vendor in tabulate.
 * [ ] Add a new trigger for M-/ that does dumb completion.
 * [] Improve the smart completion for Insert statement.
