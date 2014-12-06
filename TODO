@@ -1,7 +1,10 @@
 * [] Vendor in tabulate.
+* [] Add MySQL commands (use, describe etc)
+* [X] Add exit keyword.
 * [] Show only table sensitive columns.
 * [] Add logging.
 * [] Add some tests. Sanity, Unit, Completion, Config.
+* [] Setup the pgcli.com website.
 * [ ] Add a new trigger for M-/ that does dumb completion.
 * [] Improve the smart completion for Insert statement.
 * [] Improve the smart completion for Update statement.

@@ -25,15 +25,21 @@ def describe_table_details(cur, pattern, verbose):
     """
     Returns (rows, headers, status)
     """
-    schema, relname = sql_name_pattern(pattern)
+
     sql = '''SELECT c.oid, n.nspname, c.relname FROM pg_catalog.pg_class c LEFT
     JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace '''
-    if relname:
-        sql += ' WHERE c.relname ~ ' + relname
-    if schema:
-        sql += ' AND n.nspname ~ ' + schema
 
-    sql += ' AND pg_catalog.pg_table_is_visible(c.oid) '
+    if pattern:
+        schema, relname = sql_name_pattern(pattern)
+        if relname:
+            sql += ' WHERE c.relname ~ ' + relname
+        if schema:
+            sql += ' AND n.nspname ~ ' + schema
+        sql += ' AND pg_catalog.pg_table_is_visible(c.oid) '
+    else:
+        sql += """WHERE n.nspname <> 'pg_catalog'
+        AND n.nspname <> 'information_schema'"""
+
     sql += ' ORDER BY 2,3'
 
     # Execute the sql, get the results and call describe_one_table_details on each table.
@@ -248,4 +254,5 @@ if __name__ == '__main__':
     import psycopg2
     con = psycopg2.connect(database='misago_testforum')
     cur = con.cursor()
-    print describe_table_details(cur, 'django_migrations', False)
+    #print describe_table_details(cur, 'django_migrations', False)
+    print describe_table_details(cur, None, False)

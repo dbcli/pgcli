@@ -10,7 +10,7 @@ class PGLine(Line):
         Dynamically determine whether we're in multiline mode.
         """
 
-        if self.text.rstrip().endswith(';'):
+        if _multiline_exception(self.text):
             return False
 
         return True
@@ -18,3 +18,12 @@ class PGLine(Line):
     @is_multiline.setter
     def is_multiline(self, value):
         pass
+
+
+def _multiline_exception(text):
+    text = text.strip()
+    return (text.startswith('\\') or   # Special Command
+            text.endswith(';') or      # Ended with a semi-colon
+            (text == 'exit') or        # Exit and Quit doesn't need semi-colon
+            (text == 'quit')
+            )

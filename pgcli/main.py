@@ -60,6 +60,13 @@ def cli(database, user, password, host, port):
     try:
         while True:
             document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
+
+            # The reason we check here instead of inside the pgexecute is
+            # because we want to raise the Exit exception which will be caught
+            # by the try/except block that wraps the pgexecute.run() statement.
+            if (document.text.strip() == 'exit'
+                    or document.text.strip() == 'quit'):
+                raise Exit
             try:
                 rows, headers, status = pgexecute.run(document.text)
                 if rows:
