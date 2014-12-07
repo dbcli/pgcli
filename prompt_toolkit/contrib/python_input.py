@@ -517,13 +517,13 @@ class PythonCompleter(Completer):
                     '''.*'''          |  # Inside single quoted triple strings
                     "" ".*"" "        |  # Inside double quoted triple strings
                     \#[^\n]*          |  # Comment.
-                    ([^"\\]|\\.)*"'   |  # Inside double quoted strings.
-                    ([^'\\]|\\.)*'"      # Inside single quoted strings.
+                    "([^"\\]|\\.)*"   |  # Inside double quoted strings.
+                    '([^'\\]|\\.)*'      # Inside single quoted strings.
                 )*
                 # The current string that we're completing.
                 (
-                    ' (?P<var1>([^\n'\\]|\\.)*)  # Inside a single quoted string.
-                    " (?P<var2>([^\n"\\]|\\.)*)  # Inside a double quoted string.
+                    ' (?P<var1>([^\n'\\]|\\.)*) |  # Inside a single quoted string.
+                    " (?P<var2>([^\n"\\]|\\.)*)    # Inside a double quoted string.
                 )
         """
 
