@@ -21,10 +21,10 @@ from prompt_toolkit.contrib.regular_languages.compiler import compile
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
 
+from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.prompt import DefaultPrompt
-from prompt_toolkit.line import Line
 
 from pygments.style import Style
 from pygments.token import Token
@@ -74,7 +74,7 @@ if __name__ == '__main__':
                           'var2': Token.Number
                       }),
                       menus=[CompletionsMenu()]),
-        line=Line(completer=GrammarCompleter(g, {
+        buffer=Buffer(completer=GrammarCompleter(g, {
             'operator1': WordCompleter(operators1),
             'operator2': WordCompleter(operators2),
             })),

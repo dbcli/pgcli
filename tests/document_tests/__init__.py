@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from prompt_toolkit.line import Document
+from prompt_toolkit.document import Document
 
 import unittest
 

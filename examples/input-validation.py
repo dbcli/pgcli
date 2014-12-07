@@ -9,7 +9,7 @@ from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.toolbars import ValidationToolbar
 from prompt_toolkit.validation import Validator, ValidationError
-from prompt_toolkit.line import Line
+from prompt_toolkit.buffer import Buffer
 
 from pygments.token import Token
 from pygments.style import Style
@@ -27,10 +27,6 @@ class EmailValidator(Validator):
             raise ValidationError(message='Not a valid e-mail address')
 
 
-class TestLine(Line):
-    is_multiline = True
-
-
 class TestStyle(Style):
     styles = {
         Token.Toolbar.Validation:  'bg:#aa0000 #ffbbbb',
@@ -38,7 +34,10 @@ class TestStyle(Style):
 
 
 def main():
-    cli = CommandLineInterface(layout=layout, style=TestStyle, line=Line(validator=EmailValidator()))
+    cli = CommandLineInterface(
+        layout=layout,
+        style=TestStyle,
+        buffer=Buffer(validator=EmailValidator()))
 
     document = cli.read_input()
     print('You said: ' + document.text)

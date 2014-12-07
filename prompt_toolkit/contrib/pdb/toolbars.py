@@ -56,34 +56,13 @@ class SourceCodeToolbar(TextToolbar):
         return ''.join(result)
 
 
-class ShortcutsToolbar(Toolbar):
-    """
-    Display shortcuts.
-    """
-    def get_tokens(self, cli, width):
-        result = []
-        append = result.append
-        TB = Token.X.Shortcut
-
-        append((TB, '    '))
-        append((TB.Key, '[F6]'))
-        append((TB.Description, ' Open Repl '))
-        append((TB.Key, '[F7]'))
-        append((TB.Description, ' Step  '))
-        append((TB.Key, '[F8]'))
-        append((TB.Description, ' Next  '))
-        append((TB.Key, '[F9]'))
-        append((TB.Description, ' Continue '))
-
-        return result
-
-
 class PdbStatusToolbar(Toolbar):
     """
     Toolbar which shows the Pdb status. (current line and line number.)
     """
-    def __init__(self, pdb_ref, token=None):
+    def __init__(self, pdb_ref, key_bindings_manager, token=None):
         self._pdb_ref = pdb_ref
+        self.key_bindings_manager = key_bindings_manager
         token = token or Token.Toolbar.Status
         super(PdbStatusToolbar, self).__init__(token=token)
 
@@ -93,19 +72,17 @@ class PdbStatusToolbar(Toolbar):
         TB = self.token
         pdb = self._pdb_ref()
 
-        # Show current input mode.
-        result.extend(get_inputmode_tokens(self.token, False, cli))
+        # Shortcuts
+        append((TB.Pdb.Shortcut.Key, ' [F8]'))
+        append((TB.Pdb.Shortcut.Description, ' Step '))
+        append((TB.Pdb.Shortcut.Key, '[F9]'))
+        append((TB.Pdb.Shortcut.Description, ' Next '))
+        append((TB.Pdb.Shortcut.Key, '[F10]'))
+        append((TB.Pdb.Shortcut.Description, ' Continue'))
 
         # Filename and line number.
-        append((TB, ' Break at: '))
+        append((TB, ' | At: '))
         append((TB.Pdb.Filename, pdb.curframe.f_code.co_filename or 'None'))
-        append((TB, ' '))
-        append((TB.Pdb.Lineno, ': %s' % pdb.curframe.f_lineno))
-
-        # Python version
-        version = sys.version_info
-        append((TB, ' - '))
-        append((TB.PythonVersion, '%s %i.%i.%i' % (platform.python_implementation(),
-               version[0], version[1], version[2])))
+        append((TB.Pdb.Lineno, ':%s' % pdb.curframe.f_lineno))
 
         return result

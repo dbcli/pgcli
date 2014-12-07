@@ -390,8 +390,8 @@ class Renderer(object):
         #: We don't know this until a `report_absolute_cursor_row` call.
         self._min_available_height = 0
 
-	# In case of Windown, also make sure to scroll to the current cursor
-	# position.
+        # In case of Windown, also make sure to scroll to the current cursor
+        # position.
         if sys.platform == 'win32':
             Output(self.stdout).scroll_buffer_to_prompt()
 

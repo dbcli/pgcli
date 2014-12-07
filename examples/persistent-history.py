@@ -4,12 +4,13 @@ Simple example of a CLI that keeps a persistent history of all the entered
 strings in a file.
 """
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
-from prompt_toolkit.line import Line
+from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.history import FileHistory
 
 
 def main():
-    cli = CommandLineInterface(line=Line(history=FileHistory('.example-history-file')))
+    cli = CommandLineInterface(
+        buffer=Buffer(history=FileHistory('.example-history-file')))
 
     try:
         while True:

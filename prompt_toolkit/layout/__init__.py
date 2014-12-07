@@ -66,7 +66,7 @@ class Layout(object):
                  lexer=None,
                  min_height=0,
                  show_tildes=False,
-                 line_name='default'):
+                 buffer_name='default'):
 
         self.before_input = before_input
         self.after_input = after_input
@@ -77,7 +77,7 @@ class Layout(object):
         self.menus = menus or []
         self.min_height = min_height
         self.show_tildes = show_tildes
-        self.line_name = line_name
+        self.buffer_name = buffer_name
 
         if lexer:
             self.lexer = lexer(
@@ -96,11 +96,11 @@ class Layout(object):
 
         self.reset()
 
-    def _line(self, cli):
+    def _buffer(self, cli):
         """
-        The line object that contains the 'main' content.
+        The buffer object that contains the 'main' content.
         """
-        return cli.lines[self.line_name]
+        return cli.buffers[self.buffer_name]
 
     def reset(self):
         #: Vertical scrolling position of the main content.
@@ -110,21 +110,21 @@ class Layout(object):
         """
         Tokenize input text for highlighting.
         """
-        line = self._line(cli)
+        buffer = self._buffer(cli)
 
         def get():
             if self.lexer:
-                tokens = list(self.lexer.get_tokens(line.text))
+                tokens = list(self.lexer.get_tokens(buffer.text))
             else:
-                tokens = [(Token, line.text)]
+                tokens = [(Token, buffer.text)]
 
             for p in self.input_processors:
                 tokens = p.process_tokens(tokens)
             return tokens
 
-        return self._token_lru_cache.get(line.text, get)
+        return self._token_lru_cache.get(buffer.text, get)
 
-    def get_highlighted_characters(self, line):
+    def get_highlighted_characters(self, buffer):
         """
         Return a dictionary that maps the index of input string characters to
         their Token in case of highlighting.
@@ -132,19 +132,19 @@ class Layout(object):
         highlighted_characters = {}
 
         # In case of incremental search, highlight all matches.
-        if line.isearch_state:
-            for index in line.document.find_all(line.isearch_state.isearch_text):
-                if index == line.cursor_position:
+        if buffer.isearch_state:
+            for index in buffer.document.find_all(buffer.isearch_state.isearch_text):
+                if index == buffer.cursor_position:
                     token = Token.SearchMatch.Current
                 else:
                     token = Token.SearchMatch
 
                 highlighted_characters.update(dict([
-                    (x, token) for x in range(index, index + len(line.isearch_state.isearch_text))
+                    (x, token) for x in range(index, index + len(buffer.isearch_state.isearch_text))
                 ]))
 
         # In case of selection, highlight all matches.
-        selection_range = line.document.selection_range()
+        selection_range = buffer.document.selection_range()
         if selection_range:
             from_, to = selection_range
 
@@ -164,7 +164,7 @@ class Layout(object):
 
         # Apply highlighting.
         if not (cli.is_exiting or cli.is_aborting or cli.is_returning):
-            highlighted_characters = self.get_highlighted_characters(self._line(cli))
+            highlighted_characters = self.get_highlighted_characters(self._buffer(cli))
 
             for index, token in highlighted_characters.items():
                 input_tokens[index] = (token, input_tokens[index][1])
@@ -173,7 +173,7 @@ class Layout(object):
             # Insert char.
             screen.write_char(c, token,
                               string_index=index,
-                              set_cursor_position=(index == self._line(cli).cursor_position))
+                              set_cursor_position=(index == self._buffer(cli).cursor_position))
 
     def write_input_scrolled(self, cli, screen, write_content,
                              min_height=1, top_margin=0, bottom_margin=0):
@@ -216,7 +216,7 @@ class Layout(object):
 
             # Scroll down if we need space for the menu.
             if self._need_to_show_completion_menu(cli):
-                menu_size = self.menus[0].get_height(self._line(cli).complete_state)
+                menu_size = self.menus[0].get_height(self._buffer(cli).complete_state)
                 if temp_screen.cursor_position.y - self.vertical_scroll >= max_height - menu_size:
                     self.vertical_scroll = (temp_screen.cursor_position.y + 1) - (max_height - menu_size)
 
@@ -241,7 +241,7 @@ class Layout(object):
         # Show completion menu.
         if not is_done and self._need_to_show_completion_menu(cli):
             try:
-                y, x = temp_screen._cursor_mappings[self._line(cli).complete_state.original_document.cursor_position]
+                y, x = temp_screen._cursor_mappings[self._buffer(cli).complete_state.original_document.cursor_position]
             except KeyError:
                 # This happens when the new, completed string is shorter than
                 # the original string. (e.g. in case of useless backslash
@@ -249,7 +249,7 @@ class Layout(object):
                 # Not worth fixing at the moment. Just don't show the menu.
                 pass
             else:
-                self.menus[0].write(screen, (y - self.vertical_scroll + top_margin, x + left_margin_width), self._line(cli).complete_state)
+                self.menus[0].write(screen, (y - self.vertical_scroll + top_margin, x + left_margin_width), self._buffer(cli).complete_state)
 
         return_value = max([min_height + top_margin, screen.current_height])
 

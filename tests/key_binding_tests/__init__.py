@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
-from prompt_toolkit.key_binding import InputProcessor, Registry, KeyPress
+from prompt_toolkit.key_binding.input_processor import InputProcessor, KeyPress
+from prompt_toolkit.key_binding.registry import Registry
 from prompt_toolkit.keys import Keys
 
 import unittest
@@ -25,7 +26,7 @@ class KeyBindingTest(unittest.TestCase):
         self.registry.add_binding(Keys.ControlD)(self.handlers.control_d)
         self.registry.add_binding(Keys.ControlSquareClose, Keys.Any)(self.handlers.control_square_close_any)
 
-        self.processor = InputProcessor(self.registry)
+        self.processor = InputProcessor(self.registry, lambda: None)
 
     def test_feed_simple(self):
         self.processor.feed_key(KeyPress(Keys.ControlX, '\x18'))

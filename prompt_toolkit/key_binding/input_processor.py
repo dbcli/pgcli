@@ -7,15 +7,13 @@ The `InputProcessor` will according to the implemented keybindings call the
 correct callbacks when new key presses are feed through `feed_key`.
 """
 from __future__ import unicode_literals
-from .keys import Keys
-from .enums import InputMode
+from ..keys import Keys
 
 import weakref
 
 __all__ = (
     'InputProcessor',
     'KeyPress',
-    'Registry',
 )
 
 
@@ -51,16 +49,18 @@ class InputProcessor(object):
         # Now the ControlX-ControlC callback will be called if this sequence is
         # registered in the registry.
 
+    :param registry: `Registry` instance.
+    :param cli_ref: weakref to `CommandLineInterface`.
     """
-    def __init__(self, registry):
+    def __init__(self, registry, cli_ref):
         self._registry = registry
+        self._cli_ref = cli_ref
         self.reset()
 
 #        print(' '.join(set(''.join(map(str, kb.keys)) for kb in registry.key_bindings if all(isinstance(X, unicode) for X in kb.keys))))
 
-    def reset(self, initial_input_mode=InputMode.INSERT):
+    def reset(self):
         self._previous_key_sequence = None
-        self._input_mode_stack = [initial_input_mode]
 
         self._process_coroutine = self._process()
         self._process_coroutine.send(None)
@@ -68,33 +68,6 @@ class InputProcessor(object):
         #: Readline argument (for repetition of commands.)
         #: https://www.gnu.org/software/bash/manual/html_node/Readline-Arguments.html
         self.arg = None
-
-    @property
-    def input_mode(self):
-        """
-        Current :class:`~prompt_toolkit.enums.InputMode`
-        """
-        return self._input_mode_stack[-1]
-
-    @input_mode.setter
-    def input_mode(self, value):
-        self._input_mode_stack[-1] = value
-
-    def push_input_mode(self, value):
-        """
-        Push new :class:`~prompt_toolkit.enums.InputMode` on the stack.
-        """
-        self._input_mode_stack.append(value)
-
-    def pop_input_mode(self):
-        """
-        Push new :class:`~prompt_toolkit.enums.InputMode` on the stack.
-        """
-        # You can't pop the last item.
-        if len(self._input_mode_stack) > 1:
-            return self._input_mode_stack.pop()
-        else:
-            raise IndexError('Cannot pop the last InputMode.')
 
     def _get_matches(self, key_presses):
         """
@@ -105,26 +78,16 @@ class InputProcessor(object):
         bindings = self._registry.key_bindings
 
         # Try match, with mode flag
-        with_mode = [b for b in bindings if b.keys == keys and b.input_mode == self.input_mode]
+        with_mode = [b for b in bindings if b.keys == keys and b.filter(self._cli_ref())]
         if with_mode:
             return with_mode
-
-        # Try match without mode.
-        without_mode = [b for b in bindings if b.keys == keys and b.input_mode is None]
-        if without_mode:
-            return without_mode
 
         # Try match, where the last key is replaced with 'Any', with mode.
         keys_any = tuple(keys[:-1] + (Keys.Any,))
 
-        with_mode_any = [b for b in bindings if b.keys == keys_any and b.input_mode == self.input_mode]
+        with_mode_any = [b for b in bindings if b.keys == keys_any and b.filter(self._cli_ref())]
         if with_mode_any:
             return with_mode_any
-
-        # Try match, where the last key is replaced with 'Any', without mode.
-        without_mode_any = [b for b in bindings if b.keys == keys_any and b.input_mode is None]
-        if without_mode_any:
-            return without_mode_any
 
         return []
 
@@ -136,7 +99,7 @@ class InputProcessor(object):
         keys = [k.key for k in key_presses]
 
         for b in self._registry.key_bindings:
-            if b.input_mode in (None, self.input_mode):
+            if b.filter(self._cli_ref()):
                 if len(b.keys) > len(keys) and list(b.keys[:len(key_presses)]) == keys:
                     return True
 
@@ -191,9 +154,7 @@ class InputProcessor(object):
         event = Event(weakref.ref(self), arg=arg, key_sequence=key_sequence,
                       previous_key_sequence=self._previous_key_sequence)
         handler.call(event)
-
-        for h in self._registry.after_handler_callbacks:
-            h(event)
+        self._registry.onHandlerCalled.fire(event)
 
         self._previous_key_sequence = key_sequence
 
@@ -212,6 +173,20 @@ class Event(object):
     @property
     def input_processor(self):
         return self._input_processor_ref()
+
+    @property
+    def cli(self):
+        """
+        Command line interface.
+        """
+        return self.input_processor._cli_ref()
+
+    @property
+    def current_buffer(self):
+        """
+        The current buffer.
+        """
+        return self.cli.current_buffer
 
     @property
     def arg(self):
@@ -242,50 +217,3 @@ class Event(object):
             result = None
 
         self.input_processor.arg = result
-
-
-class _Binding(object):
-    def __init__(self, keys, callable, input_mode=None):
-        self.keys = keys
-        self._callable = callable
-        self.input_mode = input_mode
-
-    def call(self, event):
-        return self._callable(event)
-
-    def __repr__(self):
-        return '_Binding(keys=%r, callable=%r)' % (self.keys, self._callable)
-
-
-class Registry(object):
-    """
-    Key binding registry.
-
-    ::
-
-        r = Registry()
-
-        @r.add_binding(Keys.ControlX, Keys.ControlC, in_mode=INSERT)
-        def handler(event):
-            # Handle ControlX-ControlC key sequence.
-            pass
-    """
-    def __init__(self):
-        self.key_bindings = []
-        self.after_handler_callbacks = []
-
-    def add_binding(self, *keys, **kwargs):
-        """
-        Decorator for annotating key bindings.
-        """
-        input_mode = kwargs.pop('in_mode', None)
-        assert not kwargs
-        assert keys
-
-        def decorator(func):
-            self.key_bindings.append(_Binding(keys, func, input_mode=input_mode))
-            return func
-        return decorator
-
-    def add_after_handler_callback(self, callback):
-        self.after_handler_callbacks.append(callback)

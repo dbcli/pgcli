@@ -14,25 +14,27 @@ from pygments.token import Token
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
 
-from prompt_toolkit.contrib.python_input import PythonCompleter, PythonValidator
+from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.contrib.python_input import PythonCompleter, PythonValidator, document_is_multiline_python, PythonToolbar, PythonCLISettings, load_python_bindings
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
 from prompt_toolkit.contrib.regular_languages.validation import GrammarValidator
+from prompt_toolkit.document import Document
 from prompt_toolkit.history import FileHistory
-from prompt_toolkit.key_bindings.emacs import emacs_bindings
+from prompt_toolkit.key_binding.manager import KeyBindingManager
+from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.toolbars import SystemToolbar, ValidationToolbar, ArgToolbar, SearchToolbar
-from prompt_toolkit.line import Line
 
 from .commands import commands_with_help, shortcuts
 from .completers import PythonFileCompleter, PythonFunctionCompleter, BreakPointListCompleter, AliasCompleter, PdbCommandsCompleter
 from .completion_hints import CompletionHint
 from .grammar import create_pdb_grammar
-from .key_bindings import custom_pdb_key_bindings
-from .prompt import PdbPrompt
+from .key_bindings import load_custom_pdb_key_bindings
+from .layout import PdbLeftMargin
 from .style import PdbStyle
-from .toolbars import SourceCodeToolbar, ShortcutsToolbar, PdbStatusToolbar
+from .toolbars import SourceCodeToolbar, PdbStatusToolbar
 
 import os
 import pdb
@@ -54,6 +56,19 @@ class PtPdb(pdb.Pdb):
         self._grammar_cache = None  # (current_pdb_commands, grammar) tuple.
 
         self._cli_history = FileHistory(os.path.expanduser('~/.ptpdb_history'))
+
+        self.python_cli_settings = PythonCLISettings()
+
+        # The key bindings manager. We reuse it between Pdb calls, in order to
+        # remember vi/emacs state, etc..)
+        self.key_bindings_manager = self._create_key_bindings_manager(self.python_cli_settings)
+
+    def _create_key_bindings_manager(self, settings):
+        key_bindings_manager = KeyBindingManager()
+        load_custom_pdb_key_bindings(key_bindings_manager.registry)
+        load_python_bindings(key_bindings_manager, settings)
+
+        return key_bindings_manager
 
     def cmdloop(self, intro=None):
         """
@@ -109,9 +124,28 @@ class PtPdb(pdb.Pdb):
         """
         g = self._create_grammar()
 
+        # Reset multiline/paste mode every time.
+        self.python_cli_settings.paste_mode = False
+        self.python_cli_settings.currently_multiline = False
+
+        # Make sure not to start in Vi navigation mode.
+        self.key_bindings_manager.reset()
+
+        def is_multiline(document):
+            if (self.python_cli_settings.paste_mode or
+                    self.python_cli_settings.currently_multiline):
+                return True
+
+            match = g.match_prefix(document.text)
+            if match:
+                for v in match.variables().getall('python_code'):
+                    if document_is_multiline_python(Document(v)):
+                        return True
+            return False
+
         cli = CommandLineInterface(
             layout=Layout(
-                before_input=PdbPrompt(self._get_current_pdb_commands()),
+                left_margin=PdbLeftMargin(self._get_current_pdb_commands()),
                 show_tildes=True,
                 min_height=15,
                 lexer=GrammarLexer(
@@ -128,10 +162,10 @@ class PtPdb(pdb.Pdb):
                     SearchToolbar(),
                     SourceCodeToolbar(weakref.ref(self)),
                     ValidationToolbar(),
-                    ShortcutsToolbar(),
-                    PdbStatusToolbar(weakref.ref(self)),
+                    PdbStatusToolbar(weakref.ref(self), self.key_bindings_manager),
+                    PythonToolbar(self.key_bindings_manager, self.python_cli_settings),
                 ]),
-            line=Line(
+            buffer=Buffer(
                 completer=GrammarCompleter(g, completers={
                     'enabled_breakpoint': BreakPointListCompleter(only_enabled=True),
                     'disabled_breakpoint': BreakPointListCompleter(only_disabled=True),
@@ -146,8 +180,9 @@ class PtPdb(pdb.Pdb):
                 validator=GrammarValidator(g, {
                     'python_code': PythonValidator()
                 }),
+                is_multiline=is_multiline,
             ),
-            key_binding_factories=[emacs_bindings, custom_pdb_key_bindings],
+            key_bindings_registry=self.key_bindings_manager.registry,
             style=PdbStyle)
 
         try:

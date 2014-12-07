@@ -65,7 +65,7 @@ class Completer(object):
     """
     Base class for Code implementations.
 
-    The methods in here are methods that are expected to exist for the `Line`
+    The methods in here are methods that are expected to exist for the `Buffer`
     and `Renderer` classes.
     """
     __metaclass__ = ABCMeta

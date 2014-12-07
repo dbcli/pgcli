@@ -33,18 +33,18 @@ Architecture
     |     ============                                              |
     |          - Every key binding consists of a function that      |
     |            receives an `Event` and usually it operates on     |
-    |            the `Line` object. (It could insert data or move   |
-    |            the cursor for example.)                           |
+    |            the `Buffer` object. (It could insert data or      |
+    |            move the cursor for example.)                      |
     +---------------------------------------------------------------+
         |
-        | Most of the key bindings operate on a `Line` object, but
+        | Most of the key bindings operate on a `Buffer` object, but
         | they don't have to. They could also change the visibility
         | of a menu for instance, or change the color scheme.
         |
         v
     +---------------------------------------------------------------+
-    |     Line                                                      |
-    |     ====                                                      |
+    |     Buffer                                                    |
+    |     ======                                                    |
     |          - Contains a data structure to hold the current      |
     |            input (text and cursor position). This class       |
     |            implements all text manipulations and cursor       |
@@ -55,7 +55,7 @@ Architecture
     |            | Document (text, cursor_position)              |  |
     |            | ================================              |  |
     |            | Accessed as the `document` property of the    |  |
-    |            | `Line` class. This is a wrapper around the    |  |
+    |            | `Buffer` class. This is a wrapper around the  |  |
     |            | text and cursor position, and contains        |  |
     |            | methods for querying this data , e.g. to give |  |
     |            | the text before the cursor.                   |  |

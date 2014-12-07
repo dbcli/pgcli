@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from pygments.token import Token
-from ..enums import IncrementalSearchDirection, InputMode
+from ..enums import IncrementalSearchDirection
 
 __all__ = (
     'Prompt',
@@ -73,11 +73,10 @@ class DefaultPrompt(Prompt):
         """
         List of (Token, text) tuples.
         """
-        if cli.input_processor.input_mode == InputMode.INCREMENTAL_SEARCH and cli.line.isearch_state:
-            return self.isearch_prompt(cli.line.isearch_state)
+        buffer = cli.buffers['default']
 
-        elif cli.input_processor.input_mode == InputMode.VI_SEARCH:
-            return self.vi_search_prompt()
+        if buffer.isearch_state:
+            return self.isearch_prompt(buffer.isearch_state)
 
         elif cli.input_processor.arg is not None:
             return self.arg_prompt(cli.input_processor.arg)
@@ -100,7 +99,3 @@ class DefaultPrompt(Prompt):
         Tokens for the prompt when we go in reverse-i-search mode.
         """
         return self.isearch_composer(isearch_state).get_tokens()
-
-    def vi_search_prompt(self):
-        # TODO
-        return []

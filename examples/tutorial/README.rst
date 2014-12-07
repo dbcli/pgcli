@@ -104,14 +104,14 @@ Let's get started!
    populate the completion menu with possible candidates from the list
    of ``keywords``.
 
-   This ``SqlCompleter`` class will be passed into the ``prompt_toolkit.Line`` class
+   This ``SqlCompleter`` class will be passed into the ``prompt_toolkit.Buffer`` class
    which controls the cusor position and completion of a line.
 
    .. code:: python
 
        from prompt_toolkit import CommandLineInterface, AbortAction, Exit
        from prompt_toolkit.layout import Layout
-       from prompt_toolkit.line import Line
+       from prompt_toolkit.buffer import Buffer
        from prompt_toolkit.layout.prompt import DefaultPrompt
        from prompt_toolkit.layout.menus import CompletionsMenu
        from prompt_toolkit.completion import Completion, Completer
@@ -131,7 +131,7 @@ Let's get started!
        def main():
            layout = Layout(before_input=DefaultPrompt('> '),
                            lexer=SqlLexer, menus=[CompletionsMenu()])
-           line = Line(completer=SqlCompleter())
+           buffer = Buffer(completer=SqlCompleter())
            cli = CommandLineInterface(layout=layout, line=line)
            try:
                while True:
@@ -159,7 +159,7 @@ Let's get started!
 
        from prompt_toolkit import CommandLineInterface, AbortAction, Exit
        from prompt_toolkit.layout import Layout
-       from prompt_toolkit.line import Line
+       from prompt_toolkit.buffer import Buffer
        from prompt_toolkit.layout.prompt import DefaultPrompt
        from prompt_toolkit.layout.menus import CompletionsMenu
        from prompt_toolkit.completion import Completion, Completer
@@ -191,8 +191,8 @@ Let's get started!
        def main():
            layout = Layout(before_input=DefaultPrompt('> '),
                            lexer=SqlLexer, menus=[CompletionsMenu()])
-           line = Line(completer=SqlCompleter())
-           cli = CommandLineInterface(style=DocumentStyle, layout=layout, line=line)
+           buffer = Buffer(completer=SqlCompleter())
+           cli = CommandLineInterface(style=DocumentStyle, layout=layout, buffer=buffer)
            try:
                while True:
                    document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
@@ -223,7 +223,7 @@ Let's get started!
 
        from prompt_toolkit import CommandLineInterface, AbortAction, Exit
        from prompt_toolkit.layout import Layout
-       from prompt_toolkit.line import Line
+       from prompt_toolkit.buffer import Buffer
        from prompt_toolkit.layout.prompt import DefaultPrompt
        from prompt_toolkit.layout.menus import CompletionsMenu
        from prompt_toolkit.completion import Completion, Completer
@@ -256,8 +256,8 @@ Let's get started!
            connection = sqlite3.connect(database)
            layout = Layout(before_input=DefaultPrompt('> '),
                            lexer=SqlLexer, menus=[CompletionsMenu()])
-           line = Line(completer=SqlCompleter())
-           cli = CommandLineInterface(style=DocumentStyle, layout=layout, line=line)
+           buffer = Buffer(completer=SqlCompleter())
+           cli = CommandLineInterface(style=DocumentStyle, layout=layout, buffer=buffer)
            try:
                while True:
                    document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)

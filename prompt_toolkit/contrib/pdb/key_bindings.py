@@ -2,31 +2,26 @@ from __future__ import unicode_literals
 from prompt_toolkit.keys import Keys
 
 
-def custom_pdb_key_bindings(registry, cli_ref):
+def load_custom_pdb_key_bindings(registry):
     """
     Custom key bindings.
     """
-    line = cli_ref().line
     handle = registry.add_binding
 
-    def return_text(text):
-        line.text = text
-        line.cursor_position = len(text)
-        cli_ref().set_return_value(line.document)
-
-    @handle(Keys.F6)
-    def _(event):
-        # TODO: Open REPL
-        pass
-
-    @handle(Keys.F7)
-    def _(event):
-        return_text('step')
+    def return_text(event, text):
+        buffer = event.cli.buffers['default']
+        buffer.text = text
+        buffer.cursor_position = len(text)
+        event.cli.set_return_value(buffer.document)
 
     @handle(Keys.F8)
     def _(event):
-        return_text('next')
+        return_text(event, 'step')
 
     @handle(Keys.F9)
     def _(event):
-        return_text('continue')
+        return_text(event, 'next')
+
+    @handle(Keys.F10)
+    def _(event):
+        return_text(event, 'continue')

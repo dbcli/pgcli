@@ -14,25 +14,27 @@ from pygments.style import Style
 from pygments.token import Keyword, Operator, Number, Name, Error, Comment, Token, String
 
 from prompt_toolkit import CommandLineInterface
+from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.completion import Completer, Completion
-from prompt_toolkit.enums import InputMode
 from prompt_toolkit.history import FileHistory, History
-from prompt_toolkit.key_bindings.emacs import emacs_bindings
-from prompt_toolkit.key_bindings.vi import vi_bindings
+from prompt_toolkit.key_binding.bindings.vi import ViStateFilter
+from prompt_toolkit.key_binding.manager import KeyBindingManager, ViModeEnabled
+from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Layout
+from prompt_toolkit.layout.margins import LeftMarginWithLineNumbers
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.processors import BracketsMismatchProcessor
 from prompt_toolkit.layout.toolbars import CompletionsToolbar, ArgToolbar, SearchToolbar, ValidationToolbar, SystemToolbar
 from prompt_toolkit.layout.toolbars import Toolbar
-from prompt_toolkit.line import Line
 from prompt_toolkit.selection import SelectionType
 from prompt_toolkit.validation import Validator, ValidationError
-from prompt_toolkit.layout.margins import LeftMarginWithLineNumbers
 
 from .regular_languages.compiler import compile as compile_grammar
 from .regular_languages.completion import GrammarCompleter
 from .completers import PathCompleter
+
+import prompt_toolkit.filters as filters
 
 import jedi
 import platform
@@ -166,94 +168,114 @@ def _has_unclosed_brackets(text):
     return False
 
 
-def python_bindings(registry, cli_ref):
+def load_python_bindings(key_bindings_manager, settings, always_multiline=False):
     """
     Custom key bindings.
     """
-    line = cli_ref().line
-    handle = registry.add_binding
+    handle = key_bindings_manager.registry.add_binding
+    has_selection = filters.HasSelection()
+
+    @handle(Keys.F4)
+    def _(event):
+        """
+        Toggle between Vi and Emacs mode.
+        """
+        key_bindings_manager.enable_vi_mode = not key_bindings_manager.enable_vi_mode
 
     @handle(Keys.F6)
     def _(event):
         """
         Enable/Disable paste mode.
         """
-        line.paste_mode = not line.paste_mode
-        if line.paste_mode:
-            line.is_multiline = True
+        settings.paste_mode = not settings.paste_mode
 
-    if not cli_ref().line.always_multiline:
-        @handle(Keys.F7)
-        def _(event):
-            """
-            Enable/Disable multiline mode.
-            """
-            line.always_multiline = not line.always_multiline
+    @handle(Keys.F7)
+    def _(event):
+        """
+        Enable/Disable multiline mode.
+        """
+        settings.currently_multiline = not settings.currently_multiline
 
-    @handle(Keys.Tab, in_mode=InputMode.INSERT)
+    @handle(Keys.Tab, filter= ~has_selection)
     def _(event):
         """
         When the 'tab' key is pressed with only whitespace character before the
         cursor, do autocompletion. Otherwise, insert indentation.
         """
-        current_char = line.document.current_line_before_cursor
+        buffer = event.cli.buffers['default']
+        current_char = buffer.document.current_line_before_cursor
+
         if not current_char or current_char.isspace():
-            line.insert_text('    ')
+            buffer.insert_text('    ')
         else:
-            line.complete_next()
+            buffer.complete_next()
+
+    @handle(Keys.ControlJ, filter= ~has_selection &
+                                   ~(ViModeEnabled(key_bindings_manager) &
+                                     ViStateFilter(key_bindings_manager.vi_state, InputMode.NAVIGATION)) &
+                                   filters.HasFocus('default') & filters.IsMultiline())
+    def _(event):
+        """
+        Auto indent after newline/Enter.
+        (When not in Vi navigaton mode, and when multiline is enabled.)
+        """
+        buffer = event.current_buffer
+
+        if settings.paste_mode:
+            buffer.insert_text('\n')
+        else:
+            auto_newline(buffer)
 
 
-class PythonLine(Line):
+def auto_newline(buffer):
+    r"""
+    Insert \n at the cursor position. Also add necessary padding.
     """
-    Custom `Line` class with some helper functions.
+    insert_text = buffer.insert_text
+
+    if buffer.document.current_line_after_cursor:
+        insert_text('\n')
+    else:
+        # Go to new line, but also add indentation.
+        current_line = buffer.document.current_line_before_cursor.rstrip()
+        insert_text('\n')
+
+        # Copy whitespace from current line
+        for c in current_line:
+            if c.isspace():
+                insert_text(c)
+            else:
+                break
+
+        # If the last line ends with a colon, add four extra spaces.
+        if current_line[-1:] == ':':
+            for x in range(4):
+                insert_text(' ')
+
+
+class PythonBuffer(Buffer):
     """
-    _multiline_string_delims = re.compile('''[']{3}|["]{3}''')
-
-    def __init__(self, always_multiline, *a, **kw):
-        self.always_multiline = always_multiline
-        super(PythonLine, self).__init__(*a, **kw)
-
+    Custom `Buffer` class with some helper functions.
+    """
     def reset(self, *a, **kw):
-        super(PythonLine, self).reset(*a, **kw)
-
-        #: Boolean `paste` flag. If True, don't insert whitespace after a
-        #: newline.
-        self.paste_mode = False
+        super(PythonBuffer, self).reset(*a, **kw)
 
         # Code signatures. (This is set asynchronously after a timeout.)
         self.signatures = []
 
-    def newline(self):
-        r"""
-        Insert \n at the cursor position. Also add necessary padding.
-        """
-        insert_text = super(PythonLine, self).insert_text
 
-        if self.paste_mode or self.document.current_line_after_cursor:
-            insert_text('\n')
-        else:
-            # Go to new line, but also add indentation.
-            current_line = self.document.current_line_before_cursor.rstrip()
-            insert_text('\n')
+_multiline_string_delims = re.compile('''[']{3}|["]{3}''')
 
-            # Copy whitespace from current line
-            for c in current_line:
-                if c.isspace():
-                    insert_text(c)
-                else:
-                    break
 
-            # If the last line ends with a colon, add four extra spaces.
-            if current_line[-1:] == ':':
-                for x in range(4):
-                    insert_text(' ')
-
-    @property
-    def _ends_in_multiline_string(self):
+def document_is_multiline_python(document):
+    """
+    Determine whether this is a multiline Python document.
+    """
+    def ends_in_multiline_string():
         """
         ``True`` if we're inside a multiline string at the end of the text.
         """
-        delims = self._multiline_string_delims.findall(self.text)
+        delims = _multiline_string_delims.findall(document.text)
         opening = None
         for delim in delims:
             if opening is None:
@@ -262,49 +284,35 @@ class PythonLine(Line):
                 opening = None
         return bool(opening)
 
-    @property
-    def is_multiline(self):
-        """
-        Dynamically determine whether we're in multiline mode.
-        """
-        if any([
-                self.always_multiline,
-                self.paste_mode,
-                '\n' in self.text,
-                self._ends_in_multiline_string]):
-            return True
+    if '\n' in document.text or ends_in_multiline_string():
+        return True
 
-        # If we just typed a colon, or still have open brackets, always insert a real newline.
-        if self.document.text_before_cursor.rstrip()[-1:] == ':' or \
-                (self.document.is_cursor_at_the_end and
-                 _has_unclosed_brackets(self.document.text_before_cursor)) or \
-                self.text.startswith('@'):
-            return True
+    # If we just typed a colon, or still have open brackets, always insert a real newline.
+    if document.text_before_cursor.rstrip()[-1:] == ':' or \
+            (document.is_cursor_at_the_end and
+             _has_unclosed_brackets(document.text_before_cursor)) or \
+            document.text.startswith('@'):
+        return True
 
-        # If the character before the cursor is a backslash (line continuation
-        # char), insert a new line.
-        elif self.document.text_before_cursor[-1:] == '\\':
-            return True
+    # If the character before the cursor is a backslash (line continuation
+    # char), insert a new line.
+    elif document.text_before_cursor[-1:] == '\\':
+        return True
 
-        return False
-
-    @is_multiline.setter
-    def is_multiline(self, value):
-        """ Ignore setter. """
-        pass
+    return False
 
 
 class SignatureToolbar(Toolbar):
     def is_visible(self, cli):
-        return super(SignatureToolbar, self).is_visible(cli) and bool(cli.line.signatures)
+        return super(SignatureToolbar, self).is_visible(cli) and bool(cli.buffers['default'].signatures)
 
     def get_tokens(self, cli, width):
         result = []
         append = result.append
         Signature = Token.Toolbar.Signature
 
-        if cli.line.signatures:
-            sig = cli.line.signatures[0]  # Always take the first one.
+        if cli.buffers['default'].signatures:
+            sig = cli.buffers['default'].signatures[0]  # Always take the first one.
 
             append((Token, '           '))
             try:
@@ -331,7 +339,7 @@ class SignatureToolbar(Toolbar):
         return result
 
 
-def get_inputmode_tokens(token, vi_mode, cli):
+def get_inputmode_tokens(token, key_bindings_manager, cli):
     """
     Return current input mode as a list of (token, text) tuples for use in a
     toolbar.
@@ -339,79 +347,74 @@ def get_inputmode_tokens(token, vi_mode, cli):
     :param vi_mode: (bool) True when vi mode is enabled.
     :param cli: `CommandLineInterface` instance.
     """
-    mode = cli.input_processor.input_mode
+    mode = key_bindings_manager.vi_state.input_mode
     result = []
     append = result.append
 
     # InputMode
-    if mode == InputMode.INCREMENTAL_SEARCH:
-        append((token.InputMode, '(SEARCH)'))
-        append((token, '   '))
-    elif vi_mode:
-        if mode == InputMode.INSERT:
-            append((token.InputMode, '(INSERT)'))
-            append((token, '   '))
-        elif mode == InputMode.VI_SEARCH:
-            append((token.InputMode, '(SEARCH)'))
-            append((token, '   '))
-        elif mode == InputMode.VI_NAVIGATION:
-            append((token.InputMode, '(NAV)'))
-            append((token, '      '))
-        elif mode == InputMode.VI_REPLACE:
-            append((token.InputMode, '(REPLACE)'))
+    if key_bindings_manager.enable_vi_mode:
+        if bool(cli.buffers['default'].selection_state):
+            if cli.buffers['default'].selection_state.type == SelectionType.LINES:
+                append((token.InputMode, '[F4] Vi (VISUAL LINE)'))
+                append((token, ' '))
+            elif cli.buffers['default'].selection_state.type == SelectionType.CHARACTERS:
+                append((token.InputMode, '[F4] Vi (VISUAL)'))
+                append((token, ' '))
+        elif mode == InputMode.INSERT:
+            append((token.InputMode, '[F4] Vi (INSERT)'))
             append((token, '  '))
-        elif mode == InputMode.SELECTION and cli.line.selection_state:
-            if cli.line.selection_state.type == SelectionType.LINES:
-                append((token.InputMode, '(VISUAL LINE)'))
-                append((token, ' '))
-            elif cli.line.selection_state.type == SelectionType.CHARACTERS:
-                append((token.InputMode, '(VISUAL)'))
-                append((token, ' '))
-
+        elif mode == InputMode.NAVIGATION:
+            append((token.InputMode, '[F4] Vi (NAV)'))
+            append((token, '     '))
+        elif mode == InputMode.REPLACE:
+            append((token.InputMode, '[F4] Vi (REPLACE)'))
+            append((token, ' '))
     else:
-        append((token.InputMode, '(emacs)'))
+        append((token.InputMode, '[F4] Emacs'))
         append((token, ' '))
 
     return result
 
 
 class PythonToolbar(Toolbar):
-    def __init__(self, vi_mode, token=None):
+    def __init__(self, key_bindings_manager, settings, token=None):
+        self.key_bindings_manager = key_bindings_manager
+        self.settings = settings
+
         token = token or Token.Toolbar.Status
-        self.vi_mode = vi_mode
         super(PythonToolbar, self).__init__(token=token)
 
     def get_tokens(self, cli, width):
         TB = self.token
-        mode = cli.input_processor.input_mode
         result = []
         append = result.append
 
         append((TB, ' '))
-        result.extend(get_inputmode_tokens(TB, self.vi_mode, cli))
+        result.extend(get_inputmode_tokens(TB, self.key_bindings_manager, cli))
 
         # Position in history.
-        append((TB, '%i/%i ' % (cli.line.working_index + 1, len(cli.line._working_lines))))
+        append((TB, '%i/%i ' % (cli.buffers['default'].working_index + 1, len(cli.buffers['default']._working_lines))))
 
         # Shortcuts.
-        if mode == InputMode.INCREMENTAL_SEARCH:
+        if not self.key_bindings_manager.enable_vi_mode and cli.focus_stack.current == 'search':
             append((TB, '[Ctrl-G] Cancel search [Enter] Go to this position.'))
-        elif mode == InputMode.SELECTION and not self.vi_mode:
+        elif bool(cli.buffers['default'].selection_state) and not self.key_bindings_manager.enable_vi_mode:
             # Emacs cut/copy keys.
             append((TB, '[Ctrl-W] Cut [Meta-W] Copy [Ctrl-Y] Paste [Ctrl-G] Cancel'))
         else:
-            if cli.line.paste_mode:
+            if self.settings.paste_mode:
                 append((TB.On, '[F6] Paste mode (on)  '))
             else:
                 append((TB.Off, '[F6] Paste mode (off) '))
 
-            if not cli.always_multiline:
-                if cli.line.is_multiline:
+            if not self.settings.always_multiline:
+                if self.settings.currently_multiline or \
+                        document_is_multiline_python(cli.buffers['default'].document):
                     append((TB.On, '[F7] Multiline (on)'))
                 else:
                     append((TB.Off, '[F7] Multiline (off)'))
 
-            if cli.line.is_multiline:
+            if cli.buffers['default'].is_multiline:
                 append((TB, ' [Meta+Enter] Execute'))
 
             # Python version
@@ -588,6 +591,21 @@ class PythonCompleter(Completer):
                                          display=c.name_with_symbols)
 
 
+class PythonCLISettings(object):
+    """
+    Settings for the Python REPL which can change at runtime.
+    """
+    def __init__(self,
+                 always_multiline=False,
+                 paste_mode=False):
+        self.always_multiline = always_multiline
+        self.currently_multiline = False
+
+        #: Boolean `paste` flag. If True, don't insert whitespace after a
+        #: newline.
+        self.paste_mode = paste_mode
+
+
 class PythonCommandLineInterface(CommandLineInterface):
     def __init__(self,
                  get_globals=None, get_locals=None,
@@ -602,14 +620,23 @@ class PythonCommandLineInterface(CommandLineInterface):
                  _completer=None,
                  _validator=None):
 
+        self.settings = PythonCLISettings(always_multiline=always_multiline)
+
         self.get_globals = get_globals or (lambda: {})
         self.get_locals = get_locals or self.get_globals
-        self.always_multiline = always_multiline
-        self.autocompletion_style = autocompletion_style
 
         left_margin = _left_margin or PythonLeftMargin()
         self.completer = _completer or PythonCompleter(self.get_globals, self.get_locals)
         validator = _validator or PythonValidator()
+
+        if history_filename:
+            history = FileHistory(history_filename)
+        else:
+            history = History()
+
+        # Use a KeyBindingManager for loading the key bindings.
+        self.key_bindings_manager = KeyBindingManager(enable_vi_mode=vi_mode, enable_system_prompt=True)
+        load_python_bindings(self.key_bindings_manager, self.settings, always_multiline=always_multiline)
 
         layout = Layout(
             input_processors=[BracketsMismatchProcessor()],
@@ -626,21 +653,18 @@ class PythonCommandLineInterface(CommandLineInterface):
             ] +
             ([CompletionsToolbar()] if autocompletion_style == AutoCompletionStyle.HORIZONTAL_MENU else []) +
             [
-                PythonToolbar(vi_mode=vi_mode),
+                PythonToolbar(self.key_bindings_manager, self.settings),
             ],
             show_tildes=True)
 
-        if history_filename:
-            history = FileHistory(history_filename)
-        else:
-            history = History()
+        def is_buffer_multiline(document):
+            return (self.settings.paste_mode or
+                    self.settings.always_multiline or
+                    self.settings.currently_multiline or
+                    document_is_multiline_python(document))
 
-        if vi_mode:
-            key_binding_factories = [vi_bindings, python_bindings]
-        else:
-            key_binding_factories = [emacs_bindings, python_bindings]
-
-        line=PythonLine(always_multiline=always_multiline,
+        buffer=PythonBuffer(
+                        is_multiline=is_buffer_multiline,
                         tempfile_suffix='.py',
                         history=history,
                         completer=self.completer,
@@ -654,8 +678,8 @@ class PythonCommandLineInterface(CommandLineInterface):
         super(PythonCommandLineInterface, self).__init__(
             layout=layout,
             style=style,
-            key_binding_factories=key_binding_factories,
-            line=line,
+            key_bindings_registry=self.key_bindings_manager.registry,
+            buffer=buffer,
             create_async_autocompleters=True)
 
         def on_input_timeout():
@@ -663,12 +687,15 @@ class PythonCommandLineInterface(CommandLineInterface):
             When there is no input activity,
             in another thread, get the signature of the current code.
             """
+            if self.focus_stack.current != 'default':
+                return
+
             # Never run multiple get-signature threads.
             if self.get_signatures_thread_running:
                 return
             self.get_signatures_thread_running = True
 
-            document = self.line.document
+            document = self.buffers['default'].document
 
             def run():
                 script = get_jedi_script_from_document(document, self.get_locals(), self.get_globals())
@@ -692,8 +719,8 @@ class PythonCommandLineInterface(CommandLineInterface):
 
                 # Set signatures and redraw if the text didn't change in the
                 # meantime. Otherwise request new signatures.
-                if self.line.text == document.text:
-                    self.line.signatures = signatures
+                if self.buffers['default'].text == document.text:
+                    self.buffers['default'].signatures = signatures
                     self.request_redraw()
                 else:
                     on_input_timeout()
@@ -701,3 +728,4 @@ class PythonCommandLineInterface(CommandLineInterface):
             self.run_in_executor(run)
 
         self.onInputTimeout += on_input_timeout
+        self.onReset += self.key_bindings_manager.reset

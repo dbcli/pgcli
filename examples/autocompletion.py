@@ -10,7 +10,7 @@ Press [Tab] to complete the current word.
 from __future__ import unicode_literals
 
 from prompt_toolkit import CommandLineInterface
-from prompt_toolkit.line import Line
+from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
@@ -70,7 +70,7 @@ def main():
         style=AnimalStyle,
         layout=Layout(before_input=DefaultPrompt('Give some animals: '),
                       menus=[CompletionsMenu()]),
-        line=Line(completer=animal_completer),
+        buffer=Buffer(completer=animal_completer),
         create_async_autocompleters=True)
 
     print('Press tab to complete')

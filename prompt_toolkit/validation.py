@@ -13,6 +13,10 @@ class ValidationError(Exception):
         self.index = index
         self.message = message
 
+    def __repr__(self):
+        return 'ValidationError(index=%r, message=%r)' % (
+            self.index, self.message)
+
 
 class Validator(object):
     __metaclass__ = ABCMeta

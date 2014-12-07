@@ -10,7 +10,7 @@ import termios
 import tty
 
 from ..keys import Keys
-from ..key_binding import KeyPress
+from ..key_binding.input_processor import KeyPress
 
 __all__ = (
     'InputStream',

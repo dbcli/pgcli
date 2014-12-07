@@ -5,13 +5,14 @@ Simple example of the layout options.
 from __future__ import unicode_literals
 
 from prompt_toolkit import CommandLineInterface
+from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.completion import Completion, Completer
+from prompt_toolkit.document import Document
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.prompt import DefaultPrompt, Prompt
 from prompt_toolkit.layout.margins import LeftMarginWithLineNumbers
 from prompt_toolkit.layout.menus import CompletionsMenu
+from prompt_toolkit.layout.prompt import DefaultPrompt, Prompt
 from prompt_toolkit.layout.toolbars import TextToolbar, ArgToolbar, SearchToolbar, CompletionsToolbar
-from prompt_toolkit.line import Line
-from prompt_toolkit.completion import Completion, Completer
 
 from pygments.token import Token
 from pygments.style import Style
@@ -86,9 +87,9 @@ def main():
 
     cli = CommandLineInterface(layout=layout,
                                style=TestStyle,
-                               line=Line(is_multiline=True, completer=TestCompleter()))
+                               buffer=Buffer(is_multiline=True, completer=TestCompleter()))
 
-    code_obj = cli.read_input(initial_value=lipsum)
+    code_obj = cli.read_input(initial_document=Document(lipsum))
     print('You said: ' + code_obj.text)
 
 

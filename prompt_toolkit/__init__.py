@@ -12,14 +12,14 @@ import sys
 import weakref
 
 from .completion import CompleteEvent
-from .enums import InputMode
+from .focus_stack import FocusStack
 from .history import History
-from .key_binding import InputProcessor
-from .key_binding import Registry
-from .key_bindings.emacs import emacs_bindings
+from .key_binding.input_processor import InputProcessor
+from .key_binding.registry import Registry
+from .key_binding.bindings.emacs import load_emacs_bindings
 from .layout import Layout
 from .layout.prompt import DefaultPrompt
-from .line import Line
+from .buffer import Buffer
 from .renderer import Renderer
 from .utils import EventHook, DummyContext
 
@@ -81,47 +81,19 @@ class CommandLineInterface(object):
     """
     def __init__(self, stdin=None, stdout=None,
                  layout=None,
-                 line=None,
+                 buffer=None,
+                 buffers=None,
                  style=DefaultStyle,
-                 key_binding_factories=None,
+                 key_bindings_registry=None,
                  create_async_autocompleters=True,
                  renderer_factory=Renderer):
+
+        assert buffer is None or isinstance(buffer, Buffer)
+        assert buffers is None or isinstance(buffers, dict)
 
         self.stdin = stdin or sys.__stdin__
         self.stdout = stdout or sys.__stdout__
         self.style = style
-
-        #: The `Line` instance.
-        line = line or Line()
-        self.lines = {
-            'default': line,
-            'search': Line(history=History()),
-            'system': Line(history=History()),
-        }
-
-        #: The `Layout` instance.
-        self.layout = layout or Layout(before_input=DefaultPrompt())
-
-        #: The `Renderer` instance.
-        self.renderer = renderer_factory(layout=self.layout,
-                                         stdout=self.stdout,
-                                         style=self.style)
-
-        key_binding_factories = key_binding_factories or [emacs_bindings]
-
-        #: The `InputProcessor` instance.
-        self.input_processor = self._create_input_processor(key_binding_factories)
-
-        # Handle events.
-        if create_async_autocompleters:
-            for l in self.lines.values():
-                if l.completer:
-                    l.onTextInsert += self._create_async_completer(l)
-
-        self._reset()
-
-        # Event loop.
-        self.eventloop = None
 
         # Events
 
@@ -131,27 +103,55 @@ class CommandLineInterface(object):
 
         self.onReadInputStart = EventHook()
         self.onReadInputEnd = EventHook()
+        self.onReset = EventHook()
+
+        # Focus stack.
+        self.focus_stack = FocusStack(initial='default')
+
+        #: The input buffers.
+        self.buffers = {
+            'default': (buffer or Buffer()),
+            'search': Buffer(history=History()),
+            'system': Buffer(history=History()),
+        }
+        if buffers:
+            self.buffers.update(buffers)
+
+        #: The `Layout` instance.
+        self.layout = layout or Layout(before_input=DefaultPrompt())
+
+        #: The `Renderer` instance.
+        self.renderer = renderer_factory(layout=self.layout,
+                                         stdout=self.stdout,
+                                         style=self.style)
+
+        if key_bindings_registry is None:
+            key_bindings_registry = Registry()
+            load_emacs_bindings(key_bindings_registry)
+
+        #: The `InputProcessor` instance.
+        self.input_processor = InputProcessor(key_bindings_registry, weakref.ref(self))
+
+        # Handle events.
+        if create_async_autocompleters:
+            for b in self.buffers.values():
+                if b.completer:
+                    b.onTextInsert += self._create_async_completer(b)
+
+        self._reset()
+
+        # Event loop.
+        self.eventloop = None
 
     @property
     def is_reading_input(self):
         return bool(self.eventloop)
 
     @property
-    def line(self):
-        return self.lines['default']
+    def current_buffer(self):
+        return self.buffers[self.focus_stack.current]
 
-    def _create_input_processor(self, key_binding_factories):
-        """
-        Create :class:`InputProcessor` instance.
-        """
-        key_registry = Registry()
-        for kb in key_binding_factories:
-            kb(key_registry, weakref.ref(self))
-
-        #: The `InputProcessor` instance.
-        return InputProcessor(key_registry)
-
-    def _reset(self, initial_document=None, initial_input_mode=InputMode.INSERT):
+    def _reset(self, initial_document=None):
         """
         Reset everything.
         """
@@ -159,13 +159,17 @@ class CommandLineInterface(object):
         self._abort_flag = False
         self._return_value = None
 
-        for l in self.lines.values():
-            l.reset()
+        for b in self.buffers.values():
+            b.reset()
 
-        self.line.reset(initial_document=initial_document)
+        self.focus_stack.reset()
+        self.current_buffer.reset(initial_document=initial_document)
         self.renderer.reset()
-        self.input_processor.reset(initial_input_mode=initial_input_mode)
+        self.input_processor.reset()
         self.layout.reset()
+
+        # Trigger reset event.
+        self.onReset.fire()
 
     def request_redraw(self):
         """
@@ -220,7 +224,7 @@ class CommandLineInterface(object):
             self.renderer.request_absolute_cursor_position()
         self.call_from_executor(do_in_event_loop)
 
-    def read_input(self, initial_document=None, initial_input_mode=InputMode.INSERT,
+    def read_input(self, initial_document=None,
                    on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
         """
         Read input string from command line.
@@ -231,7 +235,6 @@ class CommandLineInterface(object):
         """
         eventloop = EventLoop(self.input_processor, self.stdin)
         g = self._read_input(initial_document=initial_document,
-                             initial_input_mode=initial_input_mode,
                              on_abort=on_abort,
                              on_exit=on_exit,
                              eventloop=eventloop,
@@ -244,7 +247,7 @@ class CommandLineInterface(object):
         except StopIteration as e:
             return e.args[0]
 
-    def read_input_async(self, initial_document=None, initial_input_mode=InputMode.INSERT,
+    def read_input_async(self, initial_document=None,
                          on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
         """
         Same as `read_input`, but this returns an asyncio coroutine.
@@ -259,13 +262,12 @@ class CommandLineInterface(object):
 
         eventloop = AsyncioEventLoop(self.input_processor, self.stdin)
         return self._read_input(initial_document=initial_document,
-                                initial_input_mode=initial_input_mode,
                                 on_abort=on_abort,
                                 on_exit=on_exit,
                                 eventloop=eventloop,
                                 return_corountine=True)
 
-    def _read_input(self, initial_document, initial_input_mode, on_abort, on_exit,
+    def _read_input(self, initial_document, on_abort, on_exit,
                     eventloop, return_corountine):
         """
         The implementation of ``read_input`` which can be called both
@@ -283,8 +285,7 @@ class CommandLineInterface(object):
 
         try:
             def reset():
-                self._reset(initial_document=initial_document,
-                            initial_input_mode=initial_input_mode)
+                self._reset(initial_document=initial_document)
             reset()
 
             # Trigger onReadInputStart event.
@@ -435,7 +436,7 @@ class CommandLineInterface(object):
         """
         return self._return_value is not None
 
-    def _create_async_completer(self, line):
+    def _create_async_completer(self, buffer):
         """
         Create function for asynchronous autocompletion while typing.
         (Autocomplete in other thread.)
@@ -443,25 +444,25 @@ class CommandLineInterface(object):
         complete_thread_running = [False]  # By ref.
 
         def async_completer():
-            document = line.document
+            document = buffer.document
 
             # Don't start two threads at the same time.
             if complete_thread_running[0]:
                 return
 
             # Don't complete when we already have completions.
-            if line.complete_state:
+            if buffer.complete_state:
                 return
 
             # Don't automatically complete on empty inputs.
-            if not line.text:
+            if not buffer.text:
                 return
 
             # Otherwise, get completions in other thread.
             complete_thread_running[0] = True
 
             def run():
-                completions = list(line.completer.get_completions(
+                completions = list(buffer.completer.get_completions(
                     document,
                     CompleteEvent(text_inserted=True)))
                 complete_thread_running[0] = False
@@ -474,10 +475,10 @@ class CommandLineInterface(object):
                     was changed in the meantime.
                     """
                     # Set completions if the text was not yet changed.
-                    if line.text == document.text and \
-                            line.cursor_position == document.cursor_position and \
-                            not line.complete_state:
-                        line._start_complete(go_to_first=False, completions=completions)
+                    if buffer.text == document.text and \
+                            buffer.cursor_position == document.cursor_position and \
+                            not buffer.complete_state:
+                        buffer._start_complete(go_to_first=False, completions=completions)
                         self._redraw()
                     else:
                         # Otherwise, restart thread.

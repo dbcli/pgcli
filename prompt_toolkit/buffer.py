@@ -1,5 +1,5 @@
 """
-Data structures for the line input.
+Data structures for the Buffer.
 It holds the text, cursor position, history, etc...
 """
 from __future__ import unicode_literals
@@ -19,7 +19,7 @@ import tempfile
 
 __all__ = (
     'ClipboardData',
-    'Line',
+    'Buffer',
     'SelectionType',
     'indent',
     'unindent',
@@ -104,7 +104,7 @@ class _IncrementalSearchState(object):
         self.isearch_direction = direction
 
 
-class Line(object):
+class Buffer(object):
     """
     The core data structure that holds the text and cursor position of the
     current input line and implements all text manupulations on top of it. It
@@ -118,17 +118,30 @@ class Line(object):
     :attr tempfile_suffix: Suffix to be appended to the tempfile for the 'open
                            in editor' function.
     :attr is_multiline: Boolean to indicate whether we should consider this
-                        line a multiline input. If so, the `InputStreamHandler`
+                        buffer a multiline input. If so, the `InputStreamHandler`
                         can decide to insert newlines when pressing [Enter].
                         (Instead of accepting the input.)
+
+                        This can also be a callable that takes a `Document` and
+                        returns either True or False,
     """
-    def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='', is_multiline=False):
+    def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='', is_multiline=None):
+        assert is_multiline is None or callable(is_multiline) or isinstance(is_multiline, bool)
+
         self.completer = completer
         self.validator = validator
-        self.is_multiline = is_multiline
         self.tempfile_suffix = tempfile_suffix
 
-        #: The command line history.
+        # Is multiline. (can be dynamic or static.)
+        if is_multiline is not None:
+            if callable(is_multiline):
+                self._is_multiline = is_multiline
+            elif isinstance(is_multiline, bool):
+                self._is_multiline = lambda document: is_multiline
+        else:
+            self._is_multiline = lambda document: False
+
+        #: The command buffer history.
         # Note that we shouldn't use a lazy 'or' here. bool(history) could be
         # False when empty.
         self._history = History() if history is None else history
@@ -144,7 +157,17 @@ class Line(object):
 
         self.reset()
 
-    def reset(self, initial_document=None):
+    @property
+    def is_multiline(self):
+        return self._is_multiline(self.document)
+
+    def reset(self, initial_document=None, append_to_history=False):
+        """
+        :param append_to_history: Append current input to history first.
+        """
+        if append_to_history:
+            self.add_to_history()
+
         initial_document = initial_document or Document()
 
         self.cursor_position = initial_document.cursor_position
@@ -196,15 +219,16 @@ class Line(object):
     def cursor_position(self, value):
         self.__cursor_position = max(0, value)
 
-        # Remove any validation errors and complete state.
-        self.validation_error = None
-        self.complete_state = None
+        if value != self.__cursor_position:
+            # Remove any validation errors and complete state.
+            self.validation_error = None
+            self.complete_state = None
 
-        # Note that the cursor position can change if we have a selection the
-        # new position of the cursor determines the end of the selection.
+            # Note that the cursor position can change if we have a selection the
+            # new position of the cursor determines the end of the selection.
 
-        # fire 'onCursorPositionChanged' event.
-        self.onCursorPositionChanged.fire()
+            # fire 'onCursorPositionChanged' event.
+            self.onCursorPositionChanged.fire()
 
     @property
     def working_index(self):
@@ -849,24 +873,24 @@ class Line(object):
                     pass
 
 
-def indent(line, from_row, to_row, count=1):
+def indent(buffer, from_row, to_row, count=1):
     """
-    Indent text of the `Line` object.
+    Indent text of the `Buffer` object.
     """
-    current_row = line.document.cursor_position_row
+    current_row = buffer.document.cursor_position_row
     line_range = range(from_row, to_row)
 
-    line.transform_lines(line_range, lambda l: '    ' * count + l)
+    buffer.transform_lines(line_range, lambda l: '    ' * count + l)
 
-    line.cursor_position = line.document.translate_row_col_to_index(current_row, 0)
-    line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
+    buffer.cursor_position = buffer.document.translate_row_col_to_index(current_row, 0)
+    buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=True)
 
 
-def unindent(line, from_row, to_row, count=1):
+def unindent(buffer, from_row, to_row, count=1):
     """
-    Unindent text of the `Line` object.
+    Unindent text of the `Buffer` object.
     """
-    current_row = line.document.cursor_position_row
+    current_row = buffer.document.cursor_position_row
     line_range = range(from_row, to_row)
 
     def transform(text):
@@ -876,7 +900,7 @@ def unindent(line, from_row, to_row, count=1):
         else:
             return text.lstrip()
 
-    line.transform_lines(line_range, transform)
+    buffer.transform_lines(line_range, transform)
 
-    line.cursor_position = line.document.translate_row_col_to_index(current_row, 0)
-    line.cursor_position += line.document.get_start_of_line_position(after_whitespace=True)
+    buffer.cursor_position = buffer.document.translate_row_col_to_index(current_row, 0)
+    buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=True)

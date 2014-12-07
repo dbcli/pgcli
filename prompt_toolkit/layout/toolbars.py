@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from pygments.lexers import BashLexer
 from pygments.token import Token
 
-from ..enums import InputMode, IncrementalSearchDirection
+from ..enums import IncrementalSearchDirection
 from ..layout import Layout
 from ..layout.prompt import Prompt
 
@@ -95,18 +95,19 @@ class SystemToolbar(Toolbar):
     """
     The system toolbar. Shows the '!'-prompt.
     """
-    def __init__(self):
+    def __init__(self, buffer_name='system'):
         token = Token.Toolbar.System
         super(SystemToolbar, self).__init__(token=token)
 
         # We use a nested single-line-no-wrap layout for this.
         self.layout = Layout(before_input=Prompt('Shell command: ', token=token.Prefix),
                              lexer=BashLexer,
-                             line_name='system')
+                             buffer_name='system')
+        self.buffer_name = buffer_name
 
     def is_visible(self, cli):
         return super(SystemToolbar, self).is_visible(cli) and \
-            cli.input_processor.input_mode == InputMode.SYSTEM
+            cli.focus_stack.current == self.buffer_name
 
     def write(self, cli, screen):
         # Just write this layout at the current position.
@@ -115,41 +116,46 @@ class SystemToolbar(Toolbar):
 
 
 class SearchToolbar(Toolbar):
-    def __init__(self, token=None):
+    def __init__(self, token=None, buffer_name='search'):
         token = token or Token.Toolbar.Search
         super(SearchToolbar, self).__init__(token=token)
+
+        self.buffer_name = buffer_name
 
         class Prefix(Prompt):
             """ Search prompt. """
             def tokens(self, cli):
-                vi = cli.input_processor.input_mode == InputMode.VI_SEARCH
+                buffer = cli.buffers[cli.focus_stack.previous]
 
-                if cli.line.isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
-                    text = '?' if vi else 'I-search backward: '
+                if buffer.isearch_state is None:
+                    text = ''
+                elif buffer.isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
+                    text = 'I-search backward: '
                 else:
-                    text = '/' if vi else 'I-search: '
+                    text = 'I-search: '
 
                 return [(token, text)]
 
         class SearchLayout(Layout):
             def get_input_tokens(self, cli):
-                line = cli.line
-                search_line = cli.lines['search']
-                index = line.isearch_state and line.isearch_state.no_match_from_index
+                buffer = cli.buffers[cli.focus_stack.previous]
+
+                search_buffer = cli.buffers[self.buffer_name]
+                index = buffer.isearch_state and buffer.isearch_state.no_match_from_index
 
                 if index is None:
-                    return [(token.Text, search_line.text)]
+                    return [(token.Text, search_buffer.text)]
                 else:
                     return [
-                        (token.Text, search_line.text[:index]),
-                        (token.Text.NoMatch, search_line.text[index:]),
+                        (token.Text, search_buffer.text[:index]),
+                        (token.Text.NoMatch, search_buffer.text[index:]),
                     ]
 
-        self.layout = SearchLayout(before_input=Prefix(), line_name='search')
+        self.layout = SearchLayout(before_input=Prefix(), buffer_name=self.buffer_name)
 
     def is_visible(self, cli):
         return super(SearchToolbar, self).is_visible(cli) and \
-            cli.input_processor.input_mode in (InputMode.INCREMENTAL_SEARCH, InputMode.VI_SEARCH)
+            cli.focus_stack.current == self.buffer_name
 
     def write(self, cli, screen):
         self.layout.write_content(cli, screen)
@@ -160,19 +166,21 @@ class CompletionsToolbar(Toolbar):
     Helper for drawing the completion menu 'wildmenu'-style.
     (Similar to Vim's wildmenu.)
     """
-    def __init__(self, token=None):
+    def __init__(self, token=None, buffer_name='default'):
         token = token or Token.Toolbar.Completions
         super(CompletionsToolbar, self).__init__(token=token)
+        self.buffer_name = buffer_name
 
     def is_visible(self, cli):
         return super(CompletionsToolbar, self).is_visible(cli) and \
-            bool(cli.line.complete_state) and len(cli.line.complete_state.current_completions) >= 1
+            bool(cli.buffers[self.buffer_name].complete_state) and \
+            len(cli.buffers[self.buffer_name].complete_state.current_completions) >= 1
 
     def get_tokens(self, cli, width):
         """
         Write the menu to the screen object.
         """
-        complete_state = cli.line.complete_state
+        complete_state = cli.buffers[self.buffer_name].complete_state
         completions = complete_state.current_completions
         index = complete_state.complete_index  # Can be None!
 
@@ -225,21 +233,24 @@ class ValidationToolbar(Toolbar):
     """
     Toolbar for displaying validation errors.
     """
-    def __init__(self, token=None):
+    def __init__(self, token=None, buffer_name='default'):
         token = token or Token.Toolbar.Validation
         super(ValidationToolbar, self).__init__(token=token)
+        self.buffer_name = buffer_name
 
     def is_visible(self, cli):
         return super(ValidationToolbar, self).is_visible(cli) and \
-            bool(cli.line.validation_error)
+            bool(cli.current_buffer.validation_error)
 
     def get_tokens(self, cli, width):
-        if cli.line.validation_error:
-            row, column = cli.line.document.translate_index_to_position(
-                cli.line.validation_error.index)
+        buffer = cli.buffers[self.buffer_name]
+
+        if buffer.validation_error:
+            row, column = buffer.document.translate_index_to_position(
+                buffer.validation_error.index)
 
             text = '%s (line=%s column=%s)' % (
-                cli.line.validation_error.message, row, column)
+                buffer.validation_error.message, row, column)
             return [(self.token, text)]
         else:
             return []

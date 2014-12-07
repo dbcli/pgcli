@@ -12,7 +12,7 @@ class CompletionHint(object):
             screen.write_highlighted(self._tokens(cli))
 
     def _tokens(self, cli):
-        words = cli.line.document.text.split()
+        words = cli.buffers['default'].document.text.split()
         if len(words) == 1:
             word = words[0]
 

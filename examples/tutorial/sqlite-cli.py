@@ -4,7 +4,7 @@ import sqlite3
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.line import Line
+from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.completion import Completion, Completer
@@ -41,8 +41,8 @@ def main(database):
     connection = sqlite3.connect(database)
     layout = Layout(before_input=DefaultPrompt('> '),
                     lexer=SqlLexer, menus=[CompletionsMenu()])
-    line = Line(completer=SqlCompleter())
-    cli = CommandLineInterface(style=DocumentStyle, layout=layout, line=line)
+    buffer = Buffer(completer=SqlCompleter())
+    cli = CommandLineInterface(style=DocumentStyle, layout=layout, buffer=buffer)
     try:
         while True:
             document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
