@@ -24,7 +24,6 @@ setup(
             'Click',
             'prompt_toolkit',
             'psycopg2',
-            'tabulate',
             'sqlparse',
             ],
         entry_points='''
