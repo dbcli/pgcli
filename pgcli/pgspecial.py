@@ -675,14 +675,10 @@ def sql_name_pattern(pattern):
 
     return schema, relname
 
-
 if __name__ == '__main__':
     import psycopg2
     con = psycopg2.connect(database='misago_testforum')
     cur = con.cursor()
-    #print describe_table_details(cur, 'django_migrations', False)
-    #rows, headers, status = describe_table_details(cur, 'django_migrations', False)
-    #rows, headers, status = describe_table_details(cur, None, False)
     table = sys.argv[1]
     for rows, headers, status in describe_table_details(cur, table, False):
         print tabulate(rows, headers, tablefmt='psql')

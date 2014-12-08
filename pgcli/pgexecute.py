@@ -13,10 +13,37 @@ class PGExecute(object):
     def __init__(self, database, user, password, host, port):
         self.conn = psycopg2.connect(database=database, user=user,
                 password=password, host=host, port=port)
+        self.dbname = database
+        self.user = user
+        self.password = password
+        self.host = host
+        self.port = port
         self.conn.autocommit = True
 
+    @staticmethod
+    def parse_pattern(sql):
+        command, _, arg = sql.partition(' ')
+        verbose = '+' in command
+        return (command.strip(), verbose, arg.strip())
+
     def run(self, sql):
+
+        # Remove spaces, eol and semi-colons.
         sql = sql.strip()
+        sql = sql.rstrip(';')
+
+        # Check if the command is a \c or 'use'. This is a special exception
+        # that cannot be offloaded to `pgspecial` lib. Because we have to
+        # change the database connection that we're connected to.
+        if sql.startswith('\c') or sql.lower().startswith('use'):
+            dbname = self.parse_pattern(sql)[2]
+            self.conn = psycopg2.connect(database=dbname,
+                    user=self.user, password=self.password, host=self.host,
+                    port=self.port)
+            self.dbname = dbname
+            return (None, None, 'You are now connected to database "%s" as '
+                    'user "%s"' % (self.dbname, self.user))
+
         with self.conn.cursor() as cur:
             if sql in self.special_commands:
                 cur.execute(self.special_commands[sql])

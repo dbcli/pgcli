@@ -1,4 +1,7 @@
 * [] Vendor in tabulate.
+* [] Create a separate pgspecial package.
+* [] Vendor in pgspecial package.
+* [] Add \c command.
 * [] Add MySQL commands (use, describe etc)
 * [X] Add exit keyword.
 * [] Show only table sensitive columns.

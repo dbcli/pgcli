@@ -46,7 +46,7 @@ def cli(database, user, password, host, port):
     except Exception as e:
         click.secho(e.message, err=True, fg='red')
         exit(1)
-    layout = Layout(before_input=DefaultPrompt('%s> ' % database),
+    layout = Layout(before_input=DefaultPrompt('%s> ' % pgexecute.dbname),
             menus=[CompletionsMenu()],
             lexer=SqlLexer)
     completer = PGCompleter(config.getboolean('main', 'smart_completion'))
@@ -59,13 +59,14 @@ def cli(database, user, password, host, port):
 
     try:
         while True:
+            cli.layout.before_input = DefaultPrompt('%s> ' % pgexecute.dbname)
             document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
 
             # The reason we check here instead of inside the pgexecute is
             # because we want to raise the Exit exception which will be caught
             # by the try/except block that wraps the pgexecute.run() statement.
-            if (document.text.strip() == 'exit'
-                    or document.text.strip() == 'quit'):
+            if (document.text.strip().lower() == 'exit'
+                    or document.text.strip().lower() == 'quit'):
                 raise Exit
             try:
                 rows, headers, status = pgexecute.run(document.text)
