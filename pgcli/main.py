@@ -12,9 +12,10 @@ from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.history import FileHistory
 from pygments.lexers.sql import SqlLexer
-from tabulate import tabulate
 import sqlparse
 
+from .packages.tabulate import tabulate
+from .packages.pgspecial import COMMANDS
 from .pgcompleter import PGCompleter
 from .pgstyle import PGStyle
 from .pgexecute import PGExecute
@@ -50,7 +51,7 @@ def cli(database, user, password, host, port):
             menus=[CompletionsMenu()],
             lexer=SqlLexer)
     completer = PGCompleter(config.getboolean('main', 'smart_completion'))
-    completer.extend_special_commands(pgexecute.special_commands.keys())
+    completer.extend_special_commands(COMMANDS.keys())
     completer.extend_table_names(pgexecute.tables())
     completer.extend_column_names(pgexecute.all_columns())
     line = PGLine(completer=completer,
@@ -66,7 +67,8 @@ def cli(database, user, password, host, port):
             # because we want to raise the Exit exception which will be caught
             # by the try/except block that wraps the pgexecute.run() statement.
             if (document.text.strip().lower() == 'exit'
-                    or document.text.strip().lower() == 'quit'):
+                    or document.text.strip().lower() == 'quit'
+                    or document.text.strip() == '\q'):
                 raise Exit
             try:
                 rows, headers, status = pgexecute.run(document.text)
@@ -78,11 +80,12 @@ def cli(database, user, password, host, port):
 
             # Refresh the table names and column names if necessary.
             if need_completion_refresh(document.text):
+                completer.reset_completions()
                 completer.extend_table_names(pgexecute.tables())
                 completer.extend_column_names(pgexecute.all_columns())
     except Exit:
         print ('GoodBye!')
 
 def need_completion_refresh(sql):
-    parsed = sqlparse.parse(sql)
-    return parsed and parsed[0].token_first().value in ('alter', 'create')
+    first_token = sql.split()[0]
+    return first_token in ('alter', 'create', 'use', '\c', 'drop')

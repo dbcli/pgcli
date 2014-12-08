@@ -1,9 +1,10 @@
-* [] Vendor in tabulate.
-* [] Create a separate pgspecial package.
-* [] Vendor in pgspecial package.
-* [] Add \c command.
-* [] Add MySQL commands (use, describe etc)
-* [X] Add exit keyword.
+* [X] Vendor in tabulate.
+* [X] Create a separate pgspecial package.
+* [X] Vendor in pgspecial package.
+* [X] Auto-refresh for \c and 'use' statements.
+* [X] Add \c command.
+* [O] Add MySQL commands (use, describe etc)
+* [X] Add exit, quit and \q.
 * [] Show only table sensitive columns.
 * [] Add logging.
 * [] Add some tests. Sanity, Unit, Completion, Config.

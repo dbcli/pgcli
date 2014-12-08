@@ -201,7 +201,6 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
 
             cell.append(modifier)
 
-        #import pdb; pdb.set_trace()
         # Sequence
         if tableinfo.relkind == 'S':
             cell.append(seq_values[i])
@@ -693,7 +692,6 @@ def execute(cur, command, verbose, arg):
     global COMMANDS
     command_executor = COMMANDS[command]
 
-    import pdb; pdb.set_trace()
     if callable(command_executor):
         return command_executor(cur, arg, verbose)
     elif isinstance(command_executor, str):

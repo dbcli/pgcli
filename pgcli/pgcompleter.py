@@ -46,6 +46,11 @@ class PGCompleter(Completer):
         self.column_names.extend(column_names)
         self.all_completions.update(column_names)
 
+    def reset_completions(self):
+        self.table_names = []
+        self.column_names = ['*']
+        self.all_completions = set(self.keywords)
+
     @staticmethod
     def find_matches(text, collection):
         for item in collection:
