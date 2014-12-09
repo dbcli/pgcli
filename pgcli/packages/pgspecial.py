@@ -41,7 +41,7 @@ def describe_table_details(cur, pattern, verbose):
         cur.execute(sql)
         if cur.description:
             headers = [x[0] for x in cur.description]
-            return cur.fetchall(), headers, cur.statusmessage
+            return [(cur.fetchall(), headers, cur.statusmessage)]
 
     # This is a \d <tablename> command. A royal pain in the ass.
     sql = '''SELECT c.oid, n.nspname, c.relname FROM pg_catalog.pg_class c LEFT
@@ -59,7 +59,7 @@ def describe_table_details(cur, pattern, verbose):
     log.debug(sql)
     cur.execute(sql)
     if not (cur.rowcount > 0):
-        return None, None, 'Did not find any relation named %s.' % pattern
+        return [(None, None, 'Did not find any relation named %s.' % pattern)]
 
     results = []
     for oid, nspname, relname in cur.fetchall():
@@ -87,7 +87,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
     if (cur.rowcount > 0):
         tableinfo = TableInfo._make(cur.fetchone())
     else:
-        return None, None, 'Did not find any relation with OID %s.' % oid
+        return (None, None, 'Did not find any relation with OID %s.' % oid)
 
     # If it's a seq, fetch it's value and store it for later.
     if tableinfo.relkind == 'S':
@@ -96,7 +96,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
         log.debug(sql)
         cur.execute(sql)
         if not (cur.rowcount > 0):
-            return None, None, 'Something went wrong.'
+            return (None, None, 'Something went wrong.')
 
         seq_values = cur.fetchone()
 
@@ -251,7 +251,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
         condeferrable, (NOT i.indimmediate) AND EXISTS (SELECT 1 FROM
         pg_catalog.pg_constraint WHERE conrelid = i.indrelid AND conindid =
         i.indexrelid AND contype IN ('p','u','x') AND condeferred) AS
-        condeferred a.amname, c2.relname, pg_catalog.pg_get_expr(i.indpred,
+        condeferred, a.amname, c2.relname, pg_catalog.pg_get_expr(i.indpred,
         i.indrelid, true) FROM pg_catalog.pg_index i, pg_catalog.pg_class c,
         pg_catalog.pg_class c2, pg_catalog.pg_am a WHERE i.indexrelid = c.oid
         AND c.oid = '%s' AND c.relam = a.oid AND i.indrelid = c2.oid;""" % oid
@@ -645,7 +645,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
     if (verbose and tableinfo.reloptions):
         status.append("Options: %s\n" % tableinfo.reloptions)
 
-    return cells, headers, "".join(status)
+    return (cells, headers, "".join(status))
 
 def sql_name_pattern(pattern):
     """

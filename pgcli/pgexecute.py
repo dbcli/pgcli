@@ -43,12 +43,13 @@ class PGExecute(object):
                     user=self.user, password=self.password, host=self.host,
                     port=self.port)
             self.dbname = dbname
-            return (None, None, 'You are now connected to database "%s" as '
-                    'user "%s"' % (self.dbname, self.user))
+            return [(None, None, 'You are now connected to database "%s" as '
+                    'user "%s"' % (self.dbname, self.user))]
 
         with self.conn.cursor() as cur:
             try:
-                return pgspecial.execute(cur, *self.parse_pattern(sql))
+                results = pgspecial.execute(cur, *self.parse_pattern(sql))
+                return results
             except KeyError:
                 cur.execute(sql)
 
@@ -56,9 +57,9 @@ class PGExecute(object):
             # rows.
             if cur.description:
                 headers = [x[0] for x in cur.description]
-                return cur.fetchall(), headers, cur.statusmessage
+                return [cur.fetchall(), headers, cur.statusmessage]
             else:
-                return None, None, cur.statusmessage
+                return [None, None, cur.statusmessage]
 
     def tables(self):
         with self.conn.cursor() as cur:

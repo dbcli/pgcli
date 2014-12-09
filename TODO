@@ -1,3 +1,7 @@
+* [X] Fix the \d <tablename>. Seems broken.
+* [X] Check what happens when \d django* is run.
+* [] \c is broken. 
+* [] Check why Indexes have a invalid at the end when \d is called on them.
 * [X] Vendor in tabulate.
 * [X] Create a separate pgspecial package.
 * [X] Vendor in pgspecial package.

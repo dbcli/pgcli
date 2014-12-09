@@ -71,10 +71,11 @@ def cli(database, user, password, host, port):
                     or document.text.strip() == '\q'):
                 raise Exit
             try:
-                rows, headers, status = pgexecute.run(document.text)
-                if rows:
-                    print(tabulate(rows, headers, tablefmt='psql'))
-                print(status)
+                res = pgexecute.run(document.text)
+                for rows, headers, status in res:
+                    if rows:
+                        print(tabulate(rows, headers, tablefmt='psql'))
+                    print(status)
             except Exception as e:
                 click.secho(e.message, err=True, fg='red')
 
