@@ -498,7 +498,7 @@ class PythonCompleter(Completer):
         self.get_globals = get_globals
         self.get_locals = get_locals
 
-        self._path_completer = self._create_path_completer()
+        self._path_completer_grammar, self._path_completer = self._create_path_completer()
 
     def _create_path_completer(self):
         def unwrapper(text):
@@ -536,7 +536,7 @@ class PythonCompleter(Completer):
                 'var1': unwrapper,
                 'var2': unwrapper,
             })
-        return GrammarCompleter(g, {
+        return g, GrammarCompleter(g, {
                 'var1': PathCompleter(),
                 'var2': PathCompleter(),
             })
@@ -557,13 +557,12 @@ class PythonCompleter(Completer):
         """
         # Do Path completions
         if complete_event.completion_requested or self._complete_path_while_typing(document):
-            found_path_completions = False
             for c in self._path_completer.get_completions(document, complete_event):
-                found_path_completions = True
                 yield c
 
-            if found_path_completions:
-                return
+        # If we are inside a string, Don't do Jedi completion.
+        if self._path_completer_grammar.match(document.text):
+            return
 
         # Do Jedi Python completions.
         if complete_event.completion_requested or self._complete_python_while_typing(document):
