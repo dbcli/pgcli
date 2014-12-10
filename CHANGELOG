@@ -1,9 +1,23 @@
 CHANGELOG
 =========
 
+0.24: 2014-12-18
+----------------
+
 Backwards-incompatible changes:
 - Completer.get_completions now gets a complete_event argument.
 
+New features:
+- For ptpython: filename completion inside Python strings.
+- prompt_toolkit.contrib.regular_languages added.
+- prompt_toolkit.contrib.pdb added. (Experimental PDB front-end.)
+- Support for multiline toolbars.
+- asyncio support added. (Integration with asyncio event loop.)
+- WORD parameter added to Document.word_before_cursor.
+
+Fixed:
+- Small fixes in Win32 terminal output.
+- Bug fix in parsing of CPR response.
 
 0.23: 2014-11-28
 ----------------
