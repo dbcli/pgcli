@@ -1,32 +1,34 @@
+* [] Check why Indexes have a invalid at the end when \d is called on them.
+* [] Add some tests. Sanity, Unit, Completion, Config.
+* [ ] Add tests for smart completion.
+* [] Check how to add the name of the table before printing the table.
+* [] Show only table sensitive columns in autocompletion.
+* [] Add a toolbar at the bottom with some helpful keyboard shortcuts.
+* [] Add logging.
+* [] Setup the pgcli.com website.
+* [ ] Add a new trigger for M-/ that does dumb completion.
+* [] Add function keys that can enable/disable smart completion.
+* [] Improve the smart completion for Insert statement.
+* [] Improve the smart completion for Update statement.
+* [ ] Find a way to add documentation to sql commands. This could get tricky.
+* [ ] Detect a '.' and parse the word before it and get it's real name.
+* [] Refactor the execution and output into a separate class.
+* [] Create a class for the config and make it easy to access.
+* [O] Add MySQL commands (use, describe etc)
+* [X] Add more complex slash commands such as \d <table_name>.
+    * This is going to take a separate lib.
+* [X] Create a better framework for adding special commands.
+    * A dict with special commands as keys.
+    * The value can either be a string or a callable.
 * [X] Fix the \d <tablename>. Seems broken.
 * [X] Check what happens when \d django* is run.
-* [] \c is broken. 
-* [] Check why Indexes have a invalid at the end when \d is called on them.
+* [X] \c is broken. 
 * [X] Vendor in tabulate.
 * [X] Create a separate pgspecial package.
 * [X] Vendor in pgspecial package.
 * [X] Auto-refresh for \c and 'use' statements.
 * [X] Add \c command.
-* [O] Add MySQL commands (use, describe etc)
 * [X] Add exit, quit and \q.
-* [] Show only table sensitive columns.
-* [] Add logging.
-* [] Add some tests. Sanity, Unit, Completion, Config.
-* [] Setup the pgcli.com website.
-* [ ] Add a new trigger for M-/ that does dumb completion.
-* [] Improve the smart completion for Insert statement.
-* [] Improve the smart completion for Update statement.
-* [ ] Find a way to add documentation to sql commands. This could get tricky.
-* [ ] Add tests for smart completion.
-* [ ] Detect a '.' and parse the word before it and get it's real name.
-* [] Refactor the execution and output into a separate class.
-* [] Create a class for the config and make it easy to access.
-* [ ] Add more complex slash commands such as \d <table_name>.
-    * This is going to take a separate lib.
-* [] Send the last token as a PR back to sqlparse.
-* [] Create a better framework for adding special commands.
-    * A dict with special commands as keys.
-    * The value can either be a string or a callable.
 * [X] Get new table style merged back to tabulate.
 * [X] Add multi-line support.
 * [X] Refresh tables and columns after a create table and alter table.
