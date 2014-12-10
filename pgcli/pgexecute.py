@@ -29,6 +29,9 @@ class PGExecute(object):
         return (command.strip(), verbose, arg.strip())
 
     def run(self, sql):
+        """Execute the sql in the database and return the results. The results
+        are a list of tuples. Each tuple has 3 values (rows, headers, status).
+        """
 
         # Remove spaces, eol and semi-colons.
         sql = sql.strip()
@@ -57,9 +60,9 @@ class PGExecute(object):
             # rows.
             if cur.description:
                 headers = [x[0] for x in cur.description]
-                return [cur.fetchall(), headers, cur.statusmessage]
+                return [(cur.fetchall(), headers, cur.statusmessage)]
             else:
-                return [None, None, cur.statusmessage]
+                return [(None, None, cur.statusmessage)]
 
     def tables(self):
         with self.conn.cursor() as cur:
