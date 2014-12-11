@@ -125,7 +125,7 @@ Then you can install pgcli:
 Thanks:
 =======
 
-A special thanks to `Jonathan Slenders <https://twitter.com/jonathan_s>`_ for creating `Python Prompt Toolkit <github.com/jonathanslenders/python-prompt-toolkit>`_, which
+A special thanks to `Jonathan Slenders <https://twitter.com/jonathan_s>`_ for creating `Python Prompt Toolkit <https://github.com/jonathanslenders/python-prompt-toolkit>`_, which
 is quite literally the backbone library, that made this app possible. Jonathan
 has also provided valuable feedback and support during the development of this
 app.
