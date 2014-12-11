@@ -24,9 +24,17 @@ class Win32AsyncioEventLoop(BaseAsyncioEventLoop):
 
     def wait_for_input(self, f_ready):
         def wait():
-            keys = yield from self.loop.run_in_executor(
-                None, self._console_input_reader.read)
+            # Note: We cannot use "yield from", because this package also
+            #       installs on Python 2.
 
+            # Get keys
+            try:
+                for f in self.loop.run_in_executor(None, self._console_input_reader.read):
+                    yield f
+            except StopIteration as e:
+                keys = e.args[0]
+
+            # Feed keys to input processor.
             for k in keys:
                 self.input_processor.feed_key(k)
 

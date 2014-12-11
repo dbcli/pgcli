@@ -3,6 +3,10 @@ Eventloop for integration with Python3 asyncio.
 
 Windows notes:
 - Somehow it doesn't seem to work with the 'ProactorEventLoop'.
+
+Note that we can't use "yield from", because the package should be installable
+under Python 2.6 as well, and it should contain syntactically valid Python 2.6
+code.
 """
 from __future__ import unicode_literals
 
@@ -11,8 +15,6 @@ from codecs import getincrementaldecoder
 from .base import BaseEventLoop
 
 import asyncio
-import os
-import sys
 
 __all__ = (
     'BaseAsyncioEventLoop',
@@ -44,7 +46,8 @@ class BaseAsyncioEventLoop(BaseEventLoop):
         # Start a timeout coroutine.
         @asyncio.coroutine
         def timeout():
-            yield from asyncio.sleep(self.input_timeout, loop=self.loop)
+            for f in asyncio.sleep(self.input_timeout, loop=self.loop):
+                yield f
 
             # Only fire timeout event when no input data was returned yet.
             if not f_ready.done():
@@ -52,7 +55,8 @@ class BaseAsyncioEventLoop(BaseEventLoop):
         asyncio.async(timeout(), loop=self.loop)
 
         # Return when there is input ready.
-        yield from f_ready
+        for f in f_ready:
+            yield f
 
     def run_in_executor(self, callback):
         self.loop.run_in_executor(None, callback)
