@@ -11,16 +11,18 @@ from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.history import FileHistory
+from prompt_toolkit.key_bindings.emacs import emacs_bindings
 from pygments.lexers.sql import SqlLexer
-import sqlparse
 
 from .packages.tabulate import tabulate
 from .packages.pgspecial import COMMANDS
 from .pgcompleter import PGCompleter
+from .pgtoolbar import PGToolbar
 from .pgstyle import PGStyle
 from .pgexecute import PGExecute
 from .pgline import PGLine
 from .config import write_default_config, load_config
+from .key_bindings import pgcli_bindings
 
 @click.command()
 @click.option('-h', '--host', default='localhost')
@@ -40,23 +42,27 @@ def cli(database, user, password, host, port):
 
     # Load config.
     config = load_config('~/.pgclirc')
+    smart_completion = config.getboolean('main', 'smart_completion')
 
     # Connect to the database.
     try:
         pgexecute = PGExecute(database, user, password, host, port)
-    except Exception as e:
+    except Exception as e:  # Connecting to a database could fail.
         click.secho(e.message, err=True, fg='red')
         exit(1)
     layout = Layout(before_input=DefaultPrompt('%s> ' % pgexecute.dbname),
             menus=[CompletionsMenu()],
-            lexer=SqlLexer)
-    completer = PGCompleter(config.getboolean('main', 'smart_completion'))
+            lexer=SqlLexer,
+            bottom_toolbars=[
+                PGToolbar()])
+    completer = PGCompleter(smart_completion)
     completer.extend_special_commands(COMMANDS.keys())
     completer.extend_table_names(pgexecute.tables())
     completer.extend_column_names(pgexecute.all_columns())
     line = PGLine(completer=completer,
             history=FileHistory(os.path.expanduser('~/.pgcli-history')))
-    cli = CommandLineInterface(style=PGStyle, layout=layout, line=line)
+    cli = CommandLineInterface(style=PGStyle, layout=layout, line=line,
+            key_binding_factories=[emacs_bindings, pgcli_bindings])
 
     try:
         while True:
