@@ -19,6 +19,7 @@ setup(
         license='LICENSE.txt',
         url='https://github.com/amjith/pgcli',
         packages=find_packages(),
+        package_data={'pgcli': ['pgclirc']},
         description=description,
         long_description=open('README.rst').read(),
         install_requires=[
