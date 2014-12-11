@@ -25,12 +25,16 @@ from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 
 @click.command()
-@click.option('-h', '--host', default='localhost')
-@click.option('-p', '--port', default=5432)
-@click.option('-U', '--user', prompt=True, envvar='USER')
-@click.password_option('-W', '--password', default='',
-        confirmation_prompt=False)
-@click.argument('database', envvar='USER')
+@click.option('-h', '--host', default='localhost', help='Host address of the '
+        'postgres database.')
+@click.option('-p', '--port', default=5432, help='Port number at which the '
+        'postgres instance is listening.')
+@click.option('-U', '--user', prompt=True, envvar='USER', help='User name to '
+        'connect to the postgres database.')
+@click.password_option('-W', '--password', default='', help='Password if '
+        'needed.', confirmation_prompt=False)
+@click.argument('database', envvar='USER', help='Name of the database to '
+        'connect.')
 def cli(database, user, password, host, port):
 
     from pgcli import __file__ as package_root

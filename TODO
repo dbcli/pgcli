@@ -1,4 +1,5 @@
 * [] Check why Indexes have a invalid at the end when \d is called on them.
+* [] Fix smartcompletion for special commands. \d <tab>
 * [] Add some tests. Sanity, Unit, Completion, Config.
 * [ ] Add tests for smart completion.
 * [] Check how to add the name of the table before printing the table.

@@ -125,10 +125,10 @@ Then you can install pgcli:
 Thanks:
 =======
 
-A special thanks to `Jonathan Slenders <https://twitter.com/jonathan_s>`_ for creating `Python Prompt Toolkit <https://github.com/jonathanslenders/python-prompt-toolkit>`_, which
-is quite literally the backbone library, that made this app possible. Jonathan
-has also provided valuable feedback and support during the development of this
-app.
+A special thanks to `Jonathan Slenders <https://twitter.com/jonathan_s>`_ for
+creating `Python Prompt Toolkit <http://github.com/jonathanslenders/python-prompt-toolkit>`_, which is quite
+literally the backbone library, that made this app possible. Jonathan has also
+provided valuable feedback and support during the development of this app.
 
 This app includes the awesome `tabulate <https://pypi.python.org/pypi/tabulate>`_ library
 for printing the output of tables. The reason for vendoring this library rather than 
