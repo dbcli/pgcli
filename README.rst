@@ -125,16 +125,16 @@ Then you can install pgcli:
 Thanks:
 =======
 
-A special thanks to `Jonathan Slenders<https://twitter.com/jonathan_s>`_ for creating `Python Prompt Toolkit<github.com/jonathanslenders/python-prompt-toolkit>`_, which
+A special thanks to `Jonathan Slenders <https://twitter.com/jonathan_s>`_ for creating `Python Prompt Toolkit <github.com/jonathanslenders/python-prompt-toolkit>`_, which
 is quite literally the backbone library, that made this app possible. Jonathan
 has also provided valuable feedback and support during the development of this
 app.
 
-This app includes the awesome `tabulate<https://pypi.python.org/pypi/tabulate>`_ library
+This app includes the awesome `tabulate <https://pypi.python.org/pypi/tabulate>`_ library
 for printing the output of tables. The reason for vendoring this library rather than 
 listing it as a dependency in setup.py, is because I had to make a change to the table
 format which is merged back into the original repo, but not yet released inPyPI.
 
-`Click<http://click.pocoo.org/3/>`_ is used for command line option parsing and printing error messages.
+`Click <http://click.pocoo.org/3/>`_ is used for command line option parsing and printing error messages.
 
-Thanks to `psycopg<http://initd.org/psycopg/>`_ for providing a rock solid interface to Postgres dataabase.
+Thanks to `psycopg <http://initd.org/psycopg/>`_ for providing a rock solid interface to Postgres dataabase.
