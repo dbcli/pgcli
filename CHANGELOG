@@ -1,7 +1,13 @@
 CHANGELOG
 =========
 
-0.24: 2014-12-18
+0.25: 2014-12-11
+----------------
+
+Fixed:
+- Package did not install on Python 2.6/2.7.
+
+0.24: 2014-12-10
 ----------------
 
 Backwards-incompatible changes:

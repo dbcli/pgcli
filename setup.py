@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 setup(
         name='prompt_toolkit',
         author='Jonathan Slenders',
-        version='0.24',
+        version='0.25',
         license='LICENSE.txt',
         url='https://github.com/jonathanslenders/python-prompt-toolkit',
 
