@@ -698,9 +698,9 @@ def execute(cur, command, verbose, arg):
         cur.execute(command_executor)
         if cur.description:
             headers = [x[0] for x in cur.description]
-            return cur.fetchall(), headers, cur.statusmessage
+            return [(cur.fetchall(), headers, cur.statusmessage)]
         else:
-            return None, None, cur.statusmessage
+            return [(None, None, cur.statusmessage)]
 
 if __name__ == '__main__':
     import psycopg2

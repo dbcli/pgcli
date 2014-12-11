@@ -31,10 +31,9 @@ from .key_bindings import pgcli_bindings
         'postgres instance is listening.')
 @click.option('-U', '--user', prompt=True, envvar='USER', help='User name to '
         'connect to the postgres database.')
-@click.password_option('-W', '--password', default='', help='Password if '
-        'needed.', confirmation_prompt=False)
-@click.argument('database', envvar='USER', help='Name of the database to '
-        'connect.')
+@click.password_option('-W', '--password', default='',
+        confirmation_prompt=False)
+@click.argument('database', envvar='USER')
 def cli(database, user, password, host, port):
 
     from pgcli import __file__ as package_root
