@@ -16,7 +16,7 @@ setup(
         author='Amjith Ramanujam',
         author_email='amjith[dot]r[at]gmail.com',
         version=version,
-        license=open('LICENSE').read(),
+        license='LICENSE.txt',
         url='https://github.com/amjith/pgcli',
         packages=find_packages(),
         description=description,
