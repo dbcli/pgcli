@@ -14,6 +14,7 @@ description = 'CLI for Postgres Database. With auto-completion and syntax highli
 setup(
         name='pgcli',
         author='Amjith Ramanujam',
+        author_email='amjith[dot]r[at]gmail.com',
         version=version,
         license='LICENSE',
         url='https://github.com/amjith/pgcli',
