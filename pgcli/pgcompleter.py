@@ -57,7 +57,7 @@ class PGCompleter(Completer):
             if item.startswith(text) or item.startswith(text.upper()):
                 yield Completion(item, -len(text))
 
-    def get_completions(self, document):
+    def get_completions(self, document, complete_event):
 
         word_before_cursor = document.get_word_before_cursor(WORD=True)
 
