@@ -8,14 +8,14 @@ with open('pgcli/__init__.py', 'rb') as f:
     version = str(ast.literal_eval(_version_re.search(
         f.read().decode('utf-8')).group(1)))
 
-description = 'CLI for Postgres. With auto-completion and syntax highlighting.'
+description = 'CLI for Postgres Database. With auto-completion and syntax highlighting.'
 
 
 setup(
         name='pgcli',
         author='Amjith Ramanujam',
         version=version,
-        license='LICENSE.txt',
+        license='LICENSE',
         url='https://github.com/amjith/pgcli',
         packages=find_packages(),
         description=description,
