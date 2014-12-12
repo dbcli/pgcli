@@ -1,4 +1,18 @@
+* [] Implement \l, show databases
 * [] Check why Indexes have a invalid at the end when \d is called on them.
+* [] Meta-enter to end the line not just semi-colon.
+* [] Cmd-K breaks in OS X.
+* [] Typing mid stream doesn't complete, only end of line is auto-completed.
+* [] Column list for INSERT INTO would be nice. 
+* [] DESCRIBE is also not listed in the autocompletion. 
+* [] :q for quit.
+* [] INSERT INTO accounts ;
+      show accounts;
+      current transaction aborted error.
+
+
+
+
 * [] Add some tests. Sanity, Unit, Completion, Config.
 * [ ] Add tests for smart completion.
 * [] Check how to add the name of the table before printing the table.
