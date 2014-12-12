@@ -19,6 +19,24 @@ class MockLogging(object):
 
 #log = MockLogging()
 
+#def parse_special_command(sql):
+
+    ## Sort the command by the length, so the longest command comes first. This
+    ## is to ensure we match the most specific command first. For example: \dt+
+    ## will match \dt instead of \d.
+    #ordered_commands = sorted(COMMANDS, key=len, reverse=True)
+    #for command in ordered_commands:
+        #if sql.startswith(command):
+            #plus, _, arg = sql[len(command):].partition(' ')
+            #break
+    #verbose = '+' in plus
+    #return (command.strip(), verbose, arg.strip())
+
+def parse_special_command(sql):
+    command, _, arg = sql.partition(' ')
+    verbose = '+' in command
+    return (command.strip(), verbose, arg.strip())
+
 def describe_table_details(cur, pattern, verbose):
     """
     Returns (rows, headers, status)
@@ -670,6 +688,7 @@ def sql_name_pattern(pattern):
     return schema, relname
 
 COMMANDS = {
+            'describe': describe_table_details,
             '\d': describe_table_details,
             '\dt': '''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
@@ -683,12 +702,12 @@ COMMANDS = {
             1,2;'''
         }
 
-command_available = COMMANDS.__contains__
-
-def execute(cur, command, verbose, arg):
+def execute(cur, sql):
     """Execute a special command and return the results. If the special command
     is not supported a KeyError will be raised.
     """
+    command, verbose, arg = parse_special_command(sql)
+
     global COMMANDS
     command_executor = COMMANDS[command]
 

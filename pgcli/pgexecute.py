@@ -24,12 +24,6 @@ class PGExecute(object):
         self.port = port
         self.conn.autocommit = True
 
-    @staticmethod
-    def parse_pattern(sql):
-        command, _, arg = sql.partition(' ')
-        verbose = '+' in command
-        return (command.strip(), verbose, arg.strip())
-
     def run(self, sql):
         """Execute the sql in the database and return the results. The results
         are a list of tuples. Each tuple has 3 values (rows, headers, status).
@@ -43,7 +37,10 @@ class PGExecute(object):
         # that cannot be offloaded to `pgspecial` lib. Because we have to
         # change the database connection that we're connected to.
         if sql.startswith('\c') or sql.lower().startswith('use'):
-            dbname = self.parse_pattern(sql)[2]
+            try:
+                dbname = sql.split()[1]
+            except:
+                raise RuntimeError('Database name missing.')
             self.conn = psycopg2.connect(database=dbname,
                     user=self.user, password=self.password, host=self.host,
                     port=self.port)
@@ -53,8 +50,7 @@ class PGExecute(object):
 
         with self.conn.cursor() as cur:
             try:
-                results = pgspecial.execute(cur, *self.parse_pattern(sql))
-                return results
+                return pgspecial.execute(cur, sql)
             except KeyError:
                 cur.execute(sql)
 
