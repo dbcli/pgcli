@@ -1,18 +1,13 @@
-* [] Implement \l, show databases
-* [] Check why Indexes have a invalid at the end when \d is called on them.
+* [] postgres:// url is failing.
 * [] Meta-enter to end the line not just semi-colon.
 * [] Cmd-K breaks in OS X.
 * [] Typing mid stream doesn't complete, only end of line is auto-completed.
 * [] Column list for INSERT INTO would be nice. 
-* [] DESCRIBE is also not listed in the autocompletion. 
 * [] :q for quit.
 * [] INSERT INTO accounts ;
       show accounts;
       current transaction aborted error.
-
-
-
-
+* [] Check why Indexes have a invalid at the end when \d is called on them.
 * [] Add some tests. Sanity, Unit, Completion, Config.
 * [ ] Add tests for smart completion.
 * [] Check how to add the name of the table before printing the table.
@@ -26,6 +21,8 @@
 * [ ] Detect a '.' and parse the word before it and get it's real name.
 * [] Refactor the execution and output into a separate class.
 * [] Create a class for the config and make it easy to access.
+* [X] Implement \l, show databases
+* [X] DESCRIBE is also not listed in the autocompletion. 
 * [X] Add MySQL commands (use, describe etc)
 * [X] Add function keys that can enable/disable smart completion.
 * [X] Add a toolbar at the bottom with some helpful keyboard shortcuts.

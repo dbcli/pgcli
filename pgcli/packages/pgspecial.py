@@ -688,6 +688,7 @@ def sql_name_pattern(pattern):
     return schema, relname
 
 CASE_SENSITIVE_COMMANDS = {
+            '\l': '''SELECT datname FROM pg_database;''',
             '\d': describe_table_details,
             '\dt': '''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
