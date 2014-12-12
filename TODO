@@ -1,4 +1,3 @@
-* [O] Add MySQL commands (use, describe etc)
 * [] Check why Indexes have a invalid at the end when \d is called on them.
 * [] Add some tests. Sanity, Unit, Completion, Config.
 * [ ] Add tests for smart completion.
@@ -13,6 +12,7 @@
 * [ ] Detect a '.' and parse the word before it and get it's real name.
 * [] Refactor the execution and output into a separate class.
 * [] Create a class for the config and make it easy to access.
+* [X] Add MySQL commands (use, describe etc)
 * [X] Add function keys that can enable/disable smart completion.
 * [X] Add a toolbar at the bottom with some helpful keyboard shortcuts.
 * [X] Fix smartcompletion for special commands. \d <tab>
