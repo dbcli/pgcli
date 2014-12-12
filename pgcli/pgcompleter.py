@@ -96,7 +96,7 @@ class PGCompleter(Completer):
             return self.find_matches(word_before_cursor, self.table_names)
         elif last_token in ('d', 'describe'):  # This for the \d special command.
             return self.find_matches(word_before_cursor, self.table_names)
-        elif last_token in ('c',):  # This for the \c special command.
+        elif last_token in ('c', 'use'):  # This for the \c special command.
             return self.find_matches(word_before_cursor, self.database_names)
         else:
             return self.find_matches(word_before_cursor,
