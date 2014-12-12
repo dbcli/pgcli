@@ -67,6 +67,8 @@ class PGCompleter(Completer):
 
         word_before_cursor = document.get_word_before_cursor(WORD=True)
 
+        # If smart_completion is off then match any word that starts with
+        # 'word_before_cursor'.
         if not self.smart_completion:
             return self.find_matches(word_before_cursor, self.all_completions)
 
@@ -92,6 +94,10 @@ class PGCompleter(Completer):
             return self.find_matches(word_before_cursor, self.column_names)
         elif last_token.lower() in ('from', 'update', 'into'):
             return self.find_matches(word_before_cursor, self.table_names)
+        elif last_token in ('d',):  # This for the \d special command.
+            return self.find_matches(word_before_cursor, self.table_names)
+        elif last_token in ('c',):  # This for the \c special command.
+            return self.find_matches(word_before_cursor, self.database_names)
         else:
             return self.find_matches(word_before_cursor,
                     self.keywords + self.special_commands)
