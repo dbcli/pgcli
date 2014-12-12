@@ -15,7 +15,8 @@ from prompt_toolkit.key_bindings.emacs import emacs_bindings
 from pygments.lexers.sql import SqlLexer
 
 from .packages.tabulate import tabulate
-from .packages.pgspecial import COMMANDS
+from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
+        NON_CASE_SENSITIVE_COMMANDS)
 from .pgcompleter import PGCompleter
 from .pgtoolbar import PGToolbar
 from .pgstyle import PGStyle
@@ -59,7 +60,8 @@ def cli(database, user, password, host, port):
             bottom_toolbars=[
                 PGToolbar()])
     completer = PGCompleter(smart_completion)
-    completer.extend_special_commands(COMMANDS.keys())
+    completer.extend_special_commands(CASE_SENSITIVE_COMMANDS.keys())
+    completer.extend_special_commands(NON_CASE_SENSITIVE_COMMANDS.keys())
     completer.extend_table_names(pgexecute.tables())
     completer.extend_column_names(pgexecute.all_columns())
     completer.extend_database_names(pgexecute.databases())

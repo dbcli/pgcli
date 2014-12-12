@@ -60,7 +60,8 @@ class PGCompleter(Completer):
     @staticmethod
     def find_matches(text, collection):
         for item in collection:
-            if item.startswith(text) or item.startswith(text.upper()):
+            if item.startswith(text) or item.startswith(text.upper() or
+                    item.startswith(text.lower())):
                 yield Completion(item, -len(text))
 
     def get_completions(self, document, complete_event):
@@ -92,11 +93,11 @@ class PGCompleter(Completer):
         if last_token.lower() in ('select', 'where', 'having', 'set',
                 'order by', 'group by'):
             return self.find_matches(word_before_cursor, self.column_names)
-        elif last_token.lower() in ('from', 'update', 'into'):
+        elif last_token.lower() in ('from', 'update', 'into', 'describe'):
             return self.find_matches(word_before_cursor, self.table_names)
-        elif last_token in ('d', 'describe'):  # This for the \d special command.
+        elif last_token.lower() in ('d',):  # This for the \d special command.
             return self.find_matches(word_before_cursor, self.table_names)
-        elif last_token in ('c', 'use'):  # This for the \c special command.
+        elif last_token.lower() in ('c', 'use'):  # This for the \c special command.
             return self.find_matches(word_before_cursor, self.database_names)
         else:
             return self.find_matches(word_before_cursor,

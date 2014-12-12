@@ -687,8 +687,7 @@ def sql_name_pattern(pattern):
 
     return schema, relname
 
-COMMANDS = {
-            'describe': describe_table_details,
+CASE_SENSITIVE_COMMANDS = {
             '\d': describe_table_details,
             '\dt': '''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
@@ -699,8 +698,12 @@ COMMANDS = {
             = c.relnamespace WHERE c.relkind IN ('r','') AND n.nspname <>
             'pg_catalog' AND n.nspname <> 'information_schema' AND n.nspname !~
             '^pg_toast' AND pg_catalog.pg_table_is_visible(c.oid) ORDER BY
-            1,2;'''
-        }
+            1,2;''',
+            }
+
+NON_CASE_SENSITIVE_COMMANDS = {
+            'describe': describe_table_details,
+            }
 
 def execute(cur, sql):
     """Execute a special command and return the results. If the special command
@@ -708,9 +711,17 @@ def execute(cur, sql):
     """
     command, verbose, arg = parse_special_command(sql)
 
-    global COMMANDS
-    command_executor = COMMANDS[command]
+    # Look up the command in the case-sensitive dict, if it's not there look in
+    # non-case-sensitive dict. If not there either, throw a KeyError exception.
+    global CASE_SENSITIVE_COMMANDS
+    global NON_CASE_SENSITIVE_COMMANDS
+    try:
+        command_executor = CASE_SENSITIVE_COMMANDS[command]
+    except KeyError:
+        command_executor = NON_CASE_SENSITIVE_COMMANDS[command.lower()]
 
+    # If the command executor is a function, then call the function with the
+    # args. If it's a string, then assume it's an SQL command and run it.
     if callable(command_executor):
         return command_executor(cur, arg, verbose)
     elif isinstance(command_executor, str):
