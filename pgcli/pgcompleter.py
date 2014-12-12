@@ -23,6 +23,7 @@ class PGCompleter(Completer):
 
     special_commands = []
 
+    database_names = []
     table_names = []
     column_names = ['*']
     all_completions = set(keywords)
@@ -32,7 +33,12 @@ class PGCompleter(Completer):
         self.smart_completion = smart_completion
 
     def extend_special_commands(self, special_commands):
+        # Special commands are not part of all_completions since they can only
+        # be at the beginning of a line.
         self.special_commands.extend(special_commands)
+
+    def extend_database_names(self, database_names):
+        self.database_names.extend(database_names)
 
     def extend_keywords(self, additional_keywords):
         self.keywords.extend(additional_keywords)

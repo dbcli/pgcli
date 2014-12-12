@@ -12,6 +12,8 @@ class PGExecute(object):
     columns_query = '''SELECT column_name FROM information_schema.columns WHERE
     table_name =%s;'''
 
+    databases_query = '''SELECT datname FROM pg_database;'''
+
     def __init__(self, database, user, password, host, port):
         self.conn = psycopg2.connect(database=database, user=user,
                 password=password, host=host, port=port)
@@ -79,3 +81,16 @@ class PGExecute(object):
         for table in self.tables():
             columns.update(self.columns(table))
         return columns
+
+    def databases(self):
+        with self.conn.cursor() as cur:
+            cur.execute(self.databases_query)
+            return [x[0] for x in cur.fetchall()]
+
+    #def _meta_execute(self, sql, query_params=()):
+        #with self.conn.cursor() as cur:
+            #if query_params:
+                #cur.execute(sql, query_params)
+            #else:
+                #cur.execute(sql)
+            #return [x[0] for x in cur.fetchall()]
