@@ -80,7 +80,8 @@ def cli(database, user, password, host, port):
             # by the try/except block that wraps the pgexecute.run() statement.
             if (document.text.strip().lower() == 'exit'
                     or document.text.strip().lower() == 'quit'
-                    or document.text.strip() == '\q'):
+                    or document.text.strip() == '\q'
+                    or document.text.strip() == ':q'):
                 raise Exit
             try:
                 res = pgexecute.run(document.text)
