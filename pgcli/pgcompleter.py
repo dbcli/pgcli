@@ -78,11 +78,11 @@ class PGCompleter(Completer):
         # will always be the partially typed string which renders the smart
         # completion useless because it will always return the list of keywords
         # as completion.
-
         if word_before_cursor:
-            parsed = sqlparse.parse(document.text[:-len(word_before_cursor)])
+            parsed = sqlparse.parse(
+                    document.text_before_cursor[:-len(word_before_cursor)])
         else:
-            parsed = sqlparse.parse(document.text)
+            parsed = sqlparse.parse(document.text_before_cursor)
 
         last_token = ''
         if parsed:
