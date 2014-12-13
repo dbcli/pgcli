@@ -1,6 +1,40 @@
 import psycopg2
 from .packages import pgspecial
 
+def _parse_dsn(dsn, default_user, default_password, default_host,
+        default_port):
+    """
+    postgres://user:password@host:port/dbname
+    postgres://user@host:port/dbname
+    postgres://localhost:port/dbname
+    postgres://user:password@host/dbname
+    postgres://user@host/dbname
+    postgres://localhost/dbname
+    postgres:///dbname
+    """
+
+    user = password = host = port = dbname = None
+
+    if '//' in dsn:  # Check if the string is a database url.
+        # Assume that dsn starts with postgres://
+        dsn = dsn.lstrip('postgres://')
+
+        host, dbname = dsn.split('/', 1)
+        if '@' in host:
+            user, _, host = host.partition('@')
+        if ':' in host:
+            host, _, port = host.partition(':')
+        if ':' in user:
+            user, _, password = user.partition(':')
+
+    user = user or default_user
+    password = password or default_password
+    host = host or default_host
+    port = port or default_port
+    dbname = dbname or dsn
+
+    return (dbname, user, password, host, port)
+
 class PGExecute(object):
 
     tables_query = '''SELECT c.relname as "Name" FROM pg_catalog.pg_class c
@@ -15,13 +49,11 @@ class PGExecute(object):
     databases_query = '''SELECT datname FROM pg_database;'''
 
     def __init__(self, database, user, password, host, port):
-        self.conn = psycopg2.connect(database=database, user=user,
-                password=password, host=host, port=port)
-        self.dbname = database
-        self.user = user
-        self.password = password
-        self.host = host
-        self.port = port
+        self.conn = psycopg2.connect(database)
+        (self.dbname, self.user, self.password, self.host, self.port) = \
+                _parse_dsn(database, default_user=user,
+                        default_password=password, default_host=host,
+                        default_port=port)
         self.conn.autocommit = True
 
     def run(self, sql):
