@@ -1,69 +1,18 @@
-* [] Meta-enter to end the line not just semi-colon.
-* [] Cmd-K breaks in OS X.
-* [] Typing mid stream doesn't complete, only end of line is auto-completed.
-* [] Column list for INSERT INTO would be nice. 
-* [] :q for quit.
-* [] INSERT INTO accounts ;
-      show accounts;
-      current transaction aborted error.
-* [] Check why Indexes have a invalid at the end when \d is called on them.
-* [] Add some tests. Sanity, Unit, Completion, Config.
+* [ ] Meta-enter to end the line not just semi-colon.
+* [ ] Column list for INSERT INTO would be nice. 
+* [ ] Cmd-K breaks in OS X iterm. - This might be a prompt_toolkit bug.
+* [ ] Check why Indexes have a invalid at the end when \d is called on them.
+* [ ] Add some tests. Sanity, Unit, Completion, Config.
 * [ ] Add tests for smart completion.
-* [] Check how to add the name of the table before printing the table.
-* [] Show only table sensitive columns in autocompletion.
-* [] Add logging.
-* [] Setup the pgcli.com website.
+* [ ] Check how to add the name of the table before printing the table.
+* [ ] Show only table sensitive columns in autocompletion.
+* [ ] Add logging.
+* [ ] Setup the pgcli.com website.
 * [ ] Add a new trigger for M-/ that does dumb completion.
-* [] Improve the smart completion for Insert statement.
-* [] Improve the smart completion for Update statement.
+* [ ] Improve the smart completion for Insert statement.
+* [ ] Improve the smart completion for Update statement.
 * [ ] Find a way to add documentation to sql commands. This could get tricky.
 * [ ] Detect a '.' and parse the word before it and get it's real name.
-* [] Refactor the execution and output into a separate class.
-* [] Create a class for the config and make it easy to access.
-* [X] postgres:// url is failing.
-* [X] Implement \l, show databases
-* [X] DESCRIBE is also not listed in the autocompletion. 
-* [X] Add MySQL commands (use, describe etc)
-* [X] Add function keys that can enable/disable smart completion.
-* [X] Add a toolbar at the bottom with some helpful keyboard shortcuts.
-* [X] Fix smartcompletion for special commands. \d <tab>
-* [X] Add more complex slash commands such as \d <table_name>.
-    * This is going to take a separate lib.
-* [X] Create a better framework for adding special commands.
-    * A dict with special commands as keys.
-    * The value can either be a string or a callable.
-* [X] Fix the \d <tablename>. Seems broken.
-* [X] Check what happens when \d django* is run.
-* [X] \c is broken. 
-* [X] Vendor in tabulate.
-* [X] Create a separate pgspecial package.
-* [X] Vendor in pgspecial package.
-* [X] Auto-refresh for \c and 'use' statements.
-* [X] Add \c command.
-* [X] Add exit, quit and \q.
-* [X] Get new table style merged back to tabulate.
-* [X] Add multi-line support.
-* [X] Refresh tables and columns after a create table and alter table.
-* [x] Add a lot more SQL keywords to auto-completion (Read the postgres docs)
-* [X] Deal with commands that have no return rows (such as delete, begin transaction etc).
-* [X] Update README.
-* [X] Upload rev 2 to PyPI.
-* [X] Add borders around the table.
-* [X] Investigate why having a space in the beginning of the line breaks everything.
-* [X] Test if the special comands are autocompleted correctly.
-* [x] Control smart completion via config file.
-* [x] Figure out how to deal with transactions.
-* [X] Add a config file.
-* [X] Add context sensitive auto-completion.
-    * Check how sqlpython is doing it.
-* [X] Prettify the output into nice columnar tables.
-* [X] Check how to deal with failed commands that result in dangling transaction.
-* [X] Add a history file.
-* [X] Deal with errors that happen at connection (password, host etc).
-* [X] Deal with errors that happen during sql execution.
-* [X] Add auto-completion based on the tables, columns names.
-    * launch psql with -E option and try \d, \dt etc and copy the sql statements.
-* [X] Translate the commands to pg backend.
-* [X] Add options to read the host, user, passwd etc.
-* [X] Add the back-slash commands.
-    * launch psql with -E option and try \d, \dt etc and copy the sql statements.
+* [ ] Refactor the execution and output into a separate class.
+* [ ] Create a class for the config and make it easy to access.
+* [X] Pressing enter should just pop another prompt.
