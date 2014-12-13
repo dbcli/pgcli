@@ -49,11 +49,12 @@ class PGExecute(object):
     databases_query = '''SELECT datname FROM pg_database;'''
 
     def __init__(self, database, user, password, host, port):
-        self.conn = psycopg2.connect(database)
         (self.dbname, self.user, self.password, self.host, self.port) = \
                 _parse_dsn(database, default_user=user,
                         default_password=password, default_host=host,
                         default_port=port)
+        self.conn = psycopg2.connect(database=self.dbname, user=self.user,
+                password=self.password, host=self.host, port=self.port)
         self.conn.autocommit = True
 
     def run(self, sql):
@@ -114,11 +115,3 @@ class PGExecute(object):
         with self.conn.cursor() as cur:
             cur.execute(self.databases_query)
             return [x[0] for x in cur.fetchall()]
-
-    #def _meta_execute(self, sql, query_params=()):
-        #with self.conn.cursor() as cur:
-            #if query_params:
-                #cur.execute(sql, query_params)
-            #else:
-                #cur.execute(sql)
-            #return [x[0] for x in cur.fetchall()]
