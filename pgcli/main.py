@@ -88,12 +88,13 @@ def cli(database, user, password, host, port):
                 for rows, headers, status in res:
                     if rows:
                         print(tabulate(rows, headers, tablefmt='psql'))
-                    print(status)
+                    if status:  # Only print the status if it's not None.
+                        print(status)
             except Exception as e:
                 click.secho(e.message, err=True, fg='red')
 
             # Refresh the table names and column names if necessary.
-            if need_completion_refresh(document.text):
+            if document.text and need_completion_refresh(document.text):
                 completer.reset_completions()
                 completer.extend_table_names(pgexecute.tables())
                 completer.extend_column_names(pgexecute.all_columns())
@@ -101,5 +102,8 @@ def cli(database, user, password, host, port):
         print ('GoodBye!')
 
 def need_completion_refresh(sql):
-    first_token = sql.split()[0]
-    return first_token in ('alter', 'create', 'use', '\c', 'drop')
+    try:
+        first_token = sql.split()[0]
+        return first_token in ('alter', 'create', 'use', '\c', 'drop')
+    except Exception:
+        return False

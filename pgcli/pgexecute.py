@@ -62,6 +62,9 @@ class PGExecute(object):
         are a list of tuples. Each tuple has 3 values (rows, headers, status).
         """
 
+        if not sql:  # Empty string
+            return [(None, None, None)]
+
         # Remove spaces, eol and semi-colons.
         sql = sql.strip()
         sql = sql.rstrip(';')
