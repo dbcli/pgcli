@@ -78,6 +78,7 @@ class PGExecute(object):
                     user=self.user, password=self.password, host=self.host,
                     port=self.port)
             self.dbname = dbname
+            self.conn.autocommit = True
             return [(None, None, 'You are now connected to database "%s" as '
                     'user "%s"' % (self.dbname, self.user))]
 
