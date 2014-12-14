@@ -1,5 +1,11 @@
+# vi: ft=vimwiki
+* [ ] Automate the release procedure.
+* [ ] Improve the smart completion for Insert statement.
+* [ ] Improve the smart completion for Update statement.
+* [ ] Implement \?.
+* [ ] Enable multi-line mode via a keybinding.
+* [ ] Show/hide docs for a statement using a keybinding.
 * [ ] Meta-enter to end the line not just semi-colon.
-* [ ] Column list for INSERT INTO would be nice. 
 * [ ] Cmd-K breaks in OS X iterm. - This might be a prompt_toolkit bug.
 * [ ] Check why Indexes have a invalid at the end when \d is called on them.
 * [ ] Add some tests. Sanity, Unit, Completion, Config.
@@ -9,8 +15,6 @@
 * [ ] Add logging.
 * [ ] Setup the pgcli.com website.
 * [ ] Add a new trigger for M-/ that does dumb completion.
-* [ ] Improve the smart completion for Insert statement.
-* [ ] Improve the smart completion for Update statement.
 * [ ] Find a way to add documentation to sql commands. This could get tricky.
 * [ ] Detect a '.' and parse the word before it and get it's real name.
 * [ ] Refactor the execution and output into a separate class.
