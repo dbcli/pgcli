@@ -1,0 +1,31 @@
+# vi: ft=vimwiki
+
+* Launch pgcli with different inputs. 
+    * pgcli test_db
+    * pgcli postgres://localhost/test_db
+    * pgcli postgres://localhost:5432/test_db
+    * pgcli postgres://amjith@localhost:5432/test_db
+    * pgcli postgres://amjith:password@localhost:5432/test_db
+    * pgcli non-existent-db
+
+* Test special command
+    * \d
+    * \d table_name
+    * \dt
+    * \l 
+    * \c amjith 
+    * \q
+
+* Test smart-completion
+    * Sele - Must auto-complete to SELECT
+    * SELECT * FROM  - Must list the table names.
+    * INSERT INTO - Must list table names.
+    * \d <tab> - Must list table names.
+    * \c <tab> - Database names.
+    * SELECT * FROM table_name WHERE <tab> - column names (all of it).
+
+* Test naive-completion - turn off smart completion (using F2 key after launch)
+    * Sele - autocomplete to select. 
+    * SELECT * FROM - autocomplete list should have everything. 
+
+
