@@ -16,6 +16,12 @@
     * \c amjith 
     * \q
 
+* Simple execution:
+    1 Execute a simple 'select * from users;' test taht will pass.
+    2 Execute a syntax error: 'insert into users ( ;'
+    3 Execute a simple test from step 1 again to see if it still passes.
+    * Change the database and try steps 1 - 3.
+
 * Test smart-completion
     * Sele - Must auto-complete to SELECT
     * SELECT * FROM  - Must list the table names.

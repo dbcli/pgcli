@@ -26,5 +26,6 @@ def _multiline_exception(text):
             text.endswith(';') or      # Ended with a semi-colon
             (text == 'exit') or        # Exit doesn't need semi-colon
             (text == 'quit') or        # Quit doesn't need semi-colon
+            (text == ':q') or          # To all the vim fans out there
             (text == '')               # Just a plain enter without any text
             )
