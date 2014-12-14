@@ -4,27 +4,40 @@ from .packages import pgspecial
 def _parse_dsn(dsn, default_user, default_password, default_host,
         default_port):
     """
-    postgres://user:password@host:port/dbname
-    postgres://user@host:port/dbname
-    postgres://localhost:port/dbname
-    postgres://user:password@host/dbname
-    postgres://user@host/dbname
-    postgres://localhost/dbname
-    postgres:///dbname
+    This function parses a postgres url to get the different components.
+
+    >>> _parse_dsn('postgres://user:password@host:5432/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
+    ('dbname', 'user', 'password', 'host', '5432')
+    >>> _parse_dsn('postgres://user@host:5432/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
+    ('dbname', 'user', 'fpasswd', 'host', '5432')
+    >>> _parse_dsn('postgres://localhost:5432/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
+    ('dbname', 'fuser', 'fpasswd', 'localhost', '5432')
+    >>> _parse_dsn('postgres://user:password@host/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
+    ('dbname', 'user', 'password', 'host', '1234')
+    >>> _parse_dsn('postgres://user@host/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
+    ('dbname', 'user', 'fpasswd', 'host', '1234')
+    >>> _parse_dsn('postgres://localhost/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
+    ('dbname', 'fuser', 'fpasswd', 'localhost', '1234')
+    >>> _parse_dsn('postgres:///dbname', 'fuser', 'fpasswd', 'fhost', '1234')
+    ('dbname', 'fuser', 'fpasswd', 'fhost', '1234')
+    >>> _parse_dsn('postgresql://user:password@host:5432/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
+    ('dbname', 'user', 'password', 'host', '5432')
     """
 
     user = password = host = port = dbname = None
 
-    if '//' in dsn:  # Check if the string is a database url.
-        # Assume that dsn starts with postgres://
-        dsn = dsn.lstrip('postgres://')
+    if dsn.startswith('postgres://'):  # Check if the string is a database url.
+        dsn = dsn[len('postgres://'):]
+    elif dsn.startswith('postgresql://'):
+        dsn = dsn[len('postgresql://'):]
 
+    if '/' in dsn:
         host, dbname = dsn.split('/', 1)
         if '@' in host:
             user, _, host = host.partition('@')
         if ':' in host:
             host, _, port = host.partition(':')
-        if ':' in user:
+        if user and ':' in user:
             user, _, password = user.partition(':')
 
     user = user or default_user
