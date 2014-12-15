@@ -19,19 +19,6 @@ class MockLogging(object):
 
 #log = MockLogging()
 
-#def parse_special_command(sql):
-
-    ## Sort the command by the length, so the longest command comes first. This
-    ## is to ensure we match the most specific command first. For example: \dt+
-    ## will match \dt instead of \d.
-    #ordered_commands = sorted(COMMANDS, key=len, reverse=True)
-    #for command in ordered_commands:
-        #if sql.startswith(command):
-            #plus, _, arg = sql[len(command):].partition(' ')
-            #break
-    #verbose = '+' in plus
-    #return (command.strip(), verbose, arg.strip())
-
 def parse_special_command(sql):
     command, _, arg = sql.partition(' ')
     verbose = '+' in command
@@ -687,10 +674,24 @@ def sql_name_pattern(pattern):
 
     return schema, relname
 
+def show_help(cur, arg, verbose):  # All the parameters are ignored.
+    headers = ['Command', 'Description']
+    result = []
+    for command, value in CASE_SENSITIVE_COMMANDS.iteritems():
+        if value[1]:
+            result.append(value[1])
+    return [(result, headers, None)]
+
+def change_db(cur, arg, verbose):
+    raise NotImplementedError
+
+
 CASE_SENSITIVE_COMMANDS = {
-            '\l': '''SELECT datname FROM pg_database;''',
-            '\d': describe_table_details,
-            '\dt': '''SELECT n.nspname as "Schema", c.relname as "Name", CASE
+            '\?': (show_help, ['\?', 'Help on pgcli commands.']),
+            '\c': (change_db, ['\c database_name', 'Connect to a new database.']),
+            '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'list databases.']),
+            '\d': (describe_table_details, ['\d [pattern]', 'list or describe tables, views and sequences.']),
+            '\dt': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
             'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'
             WHEN 's' THEN 'special' WHEN 'f' THEN 'foreign table' END as
@@ -699,11 +700,11 @@ CASE_SENSITIVE_COMMANDS = {
             = c.relnamespace WHERE c.relkind IN ('r','') AND n.nspname <>
             'pg_catalog' AND n.nspname <> 'information_schema' AND n.nspname !~
             '^pg_toast' AND pg_catalog.pg_table_is_visible(c.oid) ORDER BY
-            1,2;''',
+            1,2;''', ['\dt', 'list tables.']),
             }
 
 NON_CASE_SENSITIVE_COMMANDS = {
-            'describe': describe_table_details,
+            'describe': (describe_table_details, ['DESCRIBE [pattern]', '']),
             }
 
 def execute(cur, sql):
@@ -717,9 +718,9 @@ def execute(cur, sql):
     global CASE_SENSITIVE_COMMANDS
     global NON_CASE_SENSITIVE_COMMANDS
     try:
-        command_executor = CASE_SENSITIVE_COMMANDS[command]
+        command_executor = CASE_SENSITIVE_COMMANDS[command][0]
     except KeyError:
-        command_executor = NON_CASE_SENSITIVE_COMMANDS[command.lower()]
+        command_executor = NON_CASE_SENSITIVE_COMMANDS[command.lower()][0]
 
     # If the command executor is a function, then call the function with the
     # args. If it's a string, then assume it's an SQL command and run it.

@@ -1,8 +1,8 @@
 # vi: ft=vimwiki
+* [ ] Implement \?.
 * [ ] Automate the release procedure.
 * [ ] Improve the smart completion for Insert statement.
 * [ ] Improve the smart completion for Update statement.
-* [ ] Implement \?.
 * [ ] Enable multi-line mode via a keybinding.
 * [ ] Show/hide docs for a statement using a keybinding.
 * [ ] Meta-enter to end the line not just semi-colon.
