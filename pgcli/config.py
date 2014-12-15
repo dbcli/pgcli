@@ -1,11 +1,14 @@
 from shutil import copyfile
 from os.path import expanduser, exists
-from ConfigParser import SafeConfigParser
-#from prompt_toolkit.contrib.pdb import set_trace
+try:
+    from ConfigParser import SafeConfigParser as ConfigParser
+except ImportError:
+    from configparser import ConfigParser
+# from prompt_toolkit.contrib.pdb import set_trace
 
 def load_config(filename):
     filename = expanduser(filename)
-    parser = SafeConfigParser()
+    parser = ConfigParser()
     parser.read(filename)
     return parser
 

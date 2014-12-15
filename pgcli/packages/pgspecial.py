@@ -1,7 +1,8 @@
+from __future__ import print_function
 import sys
 import logging
 from collections import namedtuple
-from tabulate import tabulate
+from .tabulate import tabulate
 
 TableInfo = namedtuple("TableInfo", ['checks', 'relkind', 'hasindex',
 'hasrules', 'hastriggers', 'hasoids', 'tablespace', 'reloptions', 'reloftype',
@@ -12,10 +13,10 @@ log = logging.getLogger(__name__)
 
 class MockLogging(object):
     def debug(self, string):
-        print "***** Query ******"
-        print string
-        print "******************"
-        print
+        print ("***** Query ******")
+        print (string)
+        print ("******************")
+        print ()
 
 #log = MockLogging()
 
@@ -740,5 +741,5 @@ if __name__ == '__main__':
     cur = con.cursor()
     table = sys.argv[1]
     for rows, headers, status in describe_table_details(cur, table, False):
-        print tabulate(rows, headers, tablefmt='psql')
-        print status
+        print(tabulate(rows, headers, tablefmt='psql'))
+        print(status)
