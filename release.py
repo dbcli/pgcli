@@ -3,14 +3,27 @@ import re
 import ast
 import subprocess
 
-def version():
+DEBUG = False
+
+def version(version_file):
     _version_re = re.compile(r'__version__\s+=\s+(.*)')
 
-    with open('pgcli/__init__.py', 'rb') as f:
-        version = str(ast.literal_eval(_version_re.search(
+    with open(version_file, 'rb') as f:
+        ver = str(ast.literal_eval(_version_re.search(
             f.read().decode('utf-8')).group(1)))
 
-    return version
+    return ver
+
+def commit_for_release(version_file, ver):
+    cmd = ['git', 'reset']
+    print ' '.join(cmd)
+    subprocess.check_output(cmd)
+    cmd = ['git', 'add', version_file]
+    print ' '.join(cmd)
+    subprocess.check_output(cmd)
+    cmd = ['git', 'commit', '--message', 'Releasing version %s' % ver]
+    print ' '.join(cmd)
+    subprocess.check_output(cmd)
 
 def create_git_tag(tag_name):
     cmd = ['git', 'tag', tag_name]
@@ -28,8 +41,11 @@ def create_source_tarball():
     subprocess.check_output(cmd)
 
 if __name__ == '__main__':
-    ver = version()
-    print ver
+    if DEBUG:
+        subprocess.check_output = lambda x: x
+
+    ver = version('pgcli/__init__.py')
+    commit_for_release('pgcli/__init__.py', ver)
     create_git_tag('v%s' % ver)
     register_with_pypi()
     create_source_tarball()
