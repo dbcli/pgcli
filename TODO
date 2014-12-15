@@ -1,11 +1,9 @@
 # vi: ft=vimwiki
-* [ ] Implement \?.
-* [ ] Automate the release procedure.
-* [ ] Improve the smart completion for Insert statement.
-* [ ] Improve the smart completion for Update statement.
 * [ ] Enable multi-line mode via a keybinding.
+* [ ] Separate the column completions to be table specific.
+* [ ] Improve the smart completion for Insert statement. (Needs table specific columns)
+* [ ] Improve the smart completion for Update statement. (Needs table specific columns)
 * [ ] Show/hide docs for a statement using a keybinding.
-* [ ] Meta-enter to end the line not just semi-colon.
 * [ ] Cmd-K breaks in OS X iterm. - This might be a prompt_toolkit bug.
 * [ ] Check why Indexes have a invalid at the end when \d is called on them.
 * [ ] Add some tests. Sanity, Unit, Completion, Config.
@@ -20,3 +18,5 @@
 * [ ] Refactor the execution and output into a separate class.
 * [ ] Create a class for the config and make it easy to access.
 * [X] Pressing enter should just pop another prompt.
+* [X] Implement \?.
+* [X] Automate the release procedure.
