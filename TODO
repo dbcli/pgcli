@@ -2,6 +2,7 @@
 * [ ] Separate the column completions to be table specific.
 * [ ] Improve the smart completion for Insert statement. (Needs table specific columns)
 * [ ] Improve the smart completion for Update statement. (Needs table specific columns)
+* [ ] Improve the SELECT <> completion when a FROM clause is already present. (Send the whole text to sqlparse to find the table name and do column suggestions based on that.)
 * [ ] Show/hide docs for a statement using a keybinding.
 * [ ] Cmd-K breaks in OS X iterm. - This might be a prompt_toolkit bug.
 * [ ] Check why Indexes have a invalid at the end when \d is called on them.
@@ -16,6 +17,8 @@
 * [ ] Detect a '.' and parse the word before it and get it's real name.
 * [ ] Refactor the execution and output into a separate class.
 * [ ] Create a class for the config and make it easy to access.
+* [ ] Set multi-line via config file.
+* [ ] New Feature List - Write the current version to config file. At launch if the version has changed, display the changelog between the two versions.
 * [X] Enable multi-line mode via a keybinding.
 * [X] Pressing enter should just pop another prompt.
 * [X] Implement \?.
