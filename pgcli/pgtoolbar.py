@@ -11,9 +11,17 @@ class PGToolbar(Toolbar):
         result = TokenList()
         result.append((self.token, ' '))
         if cli.line.completer.smart_completion:
-            result.append((self.token.On, '[F2] Smart Completion (on)'))
+            result.append((self.token.On, '[F2] Smart Completion: ON  '))
         else:
-            result.append((self.token.Off, '[F2] Smart Completion (off)'))
+            result.append((self.token.Off, '[F2] Smart Completion: OFF  '))
 
-        #result.append((self.token, ' ' * (width - len(result))))
+        if cli.line.always_multiline:
+            result.append((self.token.On, '[F3] Multiline: ON'))
+        else:
+            result.append((self.token.Off, '[F3] Multiline: OFF'))
+
+        if cli.line.always_multiline:
+            result.append((self.token,
+                ' (Semi-colon [;] will end the line)'))
+
         return result

@@ -1,7 +1,8 @@
 from prompt_toolkit.line import Line
 
 class PGLine(Line):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, always_multiline, *args, **kwargs):
+        self.always_multiline = always_multiline
         super(self.__class__, self).__init__(*args, **kwargs)
 
     @property
@@ -10,7 +11,10 @@ class PGLine(Line):
         Dynamically determine whether we're in multiline mode.
         """
 
-        if _multiline_exception(self.text):
+        if not self.always_multiline:
+            return False
+
+        if self.always_multiline and _multiline_exception(self.text):
             return False
 
         return True

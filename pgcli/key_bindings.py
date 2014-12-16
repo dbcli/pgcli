@@ -13,3 +13,11 @@ def pgcli_bindings(registry, cli_ref):
         Enable/Disable SmartCompletion Mode.
         """
         line.completer.smart_completion = not line.completer.smart_completion
+
+    @handle(Keys.F3)
+    def _(event):
+        """
+        Enable/Disable Multiline Mode.
+        """
+        #import pdb; pdb.set_trace()
+        line.always_multiline = not line.always_multiline

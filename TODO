@@ -1,5 +1,4 @@
 # vi: ft=vimwiki
-* [ ] Enable multi-line mode via a keybinding.
 * [ ] Separate the column completions to be table specific.
 * [ ] Improve the smart completion for Insert statement. (Needs table specific columns)
 * [ ] Improve the smart completion for Update statement. (Needs table specific columns)
@@ -17,6 +16,7 @@
 * [ ] Detect a '.' and parse the word before it and get it's real name.
 * [ ] Refactor the execution and output into a separate class.
 * [ ] Create a class for the config and make it easy to access.
+* [X] Enable multi-line mode via a keybinding.
 * [X] Pressing enter should just pop another prompt.
 * [X] Implement \?.
 * [X] Automate the release procedure.

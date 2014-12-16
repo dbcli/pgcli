@@ -65,7 +65,7 @@ def cli(database, user, password, host, port):
     completer.extend_table_names(pgexecute.tables())
     completer.extend_column_names(pgexecute.all_columns())
     completer.extend_database_names(pgexecute.databases())
-    line = PGLine(completer=completer,
+    line = PGLine(always_multiline=False, completer=completer,
             history=FileHistory(os.path.expanduser('~/.pgcli-history')))
     cli = CommandLineInterface(style=PGStyle, layout=layout, line=line,
             key_binding_factories=[emacs_bindings, pgcli_bindings])
