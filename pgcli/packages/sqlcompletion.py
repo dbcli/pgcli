@@ -1,14 +1,10 @@
 import re
 import sqlparse
 
-# Regex for finding "words" in documents. (We consider a group of alnum
-# characters a word, but also a group of special characters a word, as long as
-# it doesn't contain a space.)
-# (This is a 'word' in Vi.)
-_FIND_WORD_RE = re.compile(r'(\w+)$')
-# Regex for finding "WORDS" in documents.
-# (This is a 'WORD in Vi.)
-_FIND_BIG_WORD_RE = re.compile(r'([^\s]+)$')
+# This matches only alphanumerics and underscores.
+_LAST_WORD_RE = re.compile(r'(\w+)$')
+# This matches everything except a space.
+_LAST_WORD_SPL_RE = re.compile(r'([^\s]+)$')
 
 def last_word(text, include_special_chars=False):
     """
@@ -46,7 +42,7 @@ def last_word(text, include_special_chars=False):
     if text[-1].isspace():
         return ''
     else:
-        regex = _FIND_BIG_WORD_RE if include_special_chars else _FIND_WORD_RE
+        regex = _LAST_WORD_SPL_RE if include_special_chars else _LAST_WORD_RE
         result = regex.findall(text)
         if result:
             return result[0]
