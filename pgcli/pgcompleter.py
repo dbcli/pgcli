@@ -1,6 +1,6 @@
 from __future__ import print_function
 from prompt_toolkit.completion import Completer, Completion
-import sqlparse
+from .packages.sqlcompletion import suggest_type
 
 class PGCompleter(Completer):
     keywords = ['ACCESS', 'ADD', 'ALL', 'ALTER TABLE', 'AND', 'ANY', 'AS',
@@ -23,9 +23,9 @@ class PGCompleter(Completer):
 
     special_commands = []
 
-    database_names = []
-    table_names = []
-    column_names = ['*']
+    databases = []
+    tables = []
+    columns = ['*']
     all_completions = set(keywords)
 
     def __init__(self, smart_completion=True):
@@ -37,24 +37,24 @@ class PGCompleter(Completer):
         # be at the beginning of a line.
         self.special_commands.extend(special_commands)
 
-    def extend_database_names(self, database_names):
-        self.database_names.extend(database_names)
+    def extend_database_names(self, databases):
+        self.databases.extend(databases)
 
     def extend_keywords(self, additional_keywords):
         self.keywords.extend(additional_keywords)
         self.all_completions.update(additional_keywords)
 
-    def extend_table_names(self, table_names):
-        self.table_names.extend(table_names)
-        self.all_completions.update(table_names)
+    def extend_table_names(self, tables):
+        self.tables.extend(tables)
+        self.all_completions.update(tables)
 
-    def extend_column_names(self, column_names):
-        self.column_names.extend(column_names)
-        self.all_completions.update(column_names)
+    def extend_column_names(self, columns):
+        self.columns.extend(columns)
+        self.all_completions.update(columns)
 
     def reset_completions(self):
-        self.table_names = []
-        self.column_names = ['*']
+        self.tables = []
+        self.columns = ['*']
         self.all_completions = set(self.keywords)
 
     @staticmethod
@@ -72,32 +72,15 @@ class PGCompleter(Completer):
         if not self.smart_completion:
             return self.find_matches(word_before_cursor, self.all_completions)
 
-        # If we've partially typed a word then word_before_cursor won't be an
-        # empty string. In that case we want to remove the partially typed
-        # string before sending it to the sqlparser. Otherwise the last token
-        # will always be the partially typed string which renders the smart
-        # completion useless because it will always return the list of keywords
-        # as completion.
-        if word_before_cursor:
-            parsed = sqlparse.parse(
-                    document.text_before_cursor[:-len(word_before_cursor)])
-        else:
-            parsed = sqlparse.parse(document.text_before_cursor)
+        category, scope = suggest_type(document.text,
+                document.text_before_cursor)
 
-        last_token = ''
-        if parsed:
-            last_token = parsed[0].token_prev(len(parsed[0].tokens))
-            last_token = last_token.value if last_token else ''
-
-        if last_token.lower() in ('select', 'where', 'having', 'set',
-                'order by', 'group by'):
-            return self.find_matches(word_before_cursor, self.column_names)
-        elif last_token.lower() in ('from', 'update', 'into', 'describe'):
-            return self.find_matches(word_before_cursor, self.table_names)
-        elif last_token.lower() in ('d',):  # This for the \d special command.
-            return self.find_matches(word_before_cursor, self.table_names)
-        elif last_token.lower() in ('c', 'use'):  # This for the \c special command.
-            return self.find_matches(word_before_cursor, self.database_names)
-        else:
-            return self.find_matches(word_before_cursor,
-                    self.keywords + self.special_commands)
+        if category == 'columns':
+            return self.find_matches(word_before_cursor, self.columns)
+        elif category == 'tables':
+            return self.find_matches(word_before_cursor, self.tables)
+        elif category == 'databases':
+            return self.find_matches(word_before_cursor, self.databases)
+        elif category == 'keywords':
+            return self.find_matches(word_before_cursor, self.keywords +
+                    self.special_commands)
