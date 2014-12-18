@@ -29,7 +29,7 @@ def suggest_type(full_text, text_before_cursor):
         last_token = parsed[0].token_prev(len(parsed[0].tokens))
         last_token = last_token.value if last_token else ''
 
-    if last_token.lower() in ('set', 'order by', 'group by'):
+    if last_token.lower() in ('set', 'by'):
         return ('columns', extract_tables(full_text))
     elif last_token.lower() in ('select', 'where', 'having'):
         return ('columns-and-functions', extract_tables(full_text))
