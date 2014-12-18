@@ -1,9 +1,12 @@
 # vi: ft=vimwiki
 * [o] Separate the column completions to be table specific. (SELECT, INSERT, UPDATE)
-* [ ] Column completion for nested sql.
-* [ ] Default host should not be set to localhost. Since it causes problems in IPv6 machines. Need to research this one further.
-* [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
+* [ ] Column completion for simple SELECT.
+* [ ] Column completion for simple INSERT.
+* [ ] Column completion for simple UPDATE.
 * [ ] Use a pager to display the output. (Check Click's document).
+* [ ] Default host should not be set to localhost. Since it causes problems in IPv6 machines. Need to research this one further.
+* [ ] Column completion for nested sql.
+* [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
 * [ ] Improve the smart completion for Insert statement. (Needs table specific columns)
 * [ ] Add a few more special commands. (\l pattern, \di, \dp, \ds, \dv, \dy, \z etc)
 * [ ] Write a doc about how to run it in develop mode. (pip install -e .)
