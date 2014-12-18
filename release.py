@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import re
 import ast
 import subprocess
@@ -17,28 +18,28 @@ def version(version_file):
 
 def commit_for_release(version_file, ver):
     cmd = ['git', 'reset']
-    print ' '.join(cmd)
+    print(' '.join(cmd))
     subprocess.check_output(cmd)
     cmd = ['git', 'add', version_file]
-    print ' '.join(cmd)
+    print(' '.join(cmd))
     subprocess.check_output(cmd)
     cmd = ['git', 'commit', '--message', 'Releasing version %s' % ver]
-    print ' '.join(cmd)
+    print(' '.join(cmd))
     subprocess.check_output(cmd)
 
 def create_git_tag(tag_name):
     cmd = ['git', 'tag', tag_name]
-    print ' '.join(cmd)
+    print(' '.join(cmd))
     subprocess.check_output(cmd)
 
 def register_with_pypi():
     cmd = ['python', 'setup.py', 'register']
-    print ' '.join(cmd)
+    print(' '.join(cmd))
     subprocess.check_output(cmd)
 
 def create_source_tarball():
     cmd = ['python', 'setup.py', 'sdist']
-    print ' '.join(cmd)
+    print(' '.join(cmd))
     subprocess.check_output(cmd)
 
 if __name__ == '__main__':
@@ -46,8 +47,8 @@ if __name__ == '__main__':
         subprocess.check_output = lambda x: x
 
     ver = version('pgcli/__init__.py')
-    print ('Releasing Version:', ver)
-    choice = raw_input('Are you sure? (Y/N)')
+    print('Releasing Version:', ver)
+    choice = raw_input('Are you sure? (y/N)')
     if choice.lower() != 'y':
         sys.exit(1)
     commit_for_release('pgcli/__init__.py', ver)
