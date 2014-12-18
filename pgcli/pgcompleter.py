@@ -62,7 +62,7 @@ class PGCompleter(Completer):
 
     def reset_completions(self):
         self.tables = []
-        self.columns = defaultdict(itertools.repeat(['*']).next)
+        self.columns = defaultdict(lambda: ['*'])
         self.all_completions = set(self.keywords)
 
     @staticmethod
@@ -87,8 +87,6 @@ class PGCompleter(Completer):
             scoped_cols = []
             for table in scope:
                 scoped_cols.extend(self.columns[table])
-            print ('scope:', scope)
-            print ('scoped_cols:', scoped_cols)
             return self.find_matches(word_before_cursor, scoped_cols)
         elif category == 'columns-and-functions':
             scoped_cols = []
