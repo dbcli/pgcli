@@ -1,61 +1,12 @@
-import re
 import sqlparse
-
-# This matches only alphanumerics and underscores.
-_LAST_WORD_RE = re.compile(r'(\w+)$')
-# This matches everything except a space.
-_LAST_WORD_SPL_RE = re.compile(r'([^\s]+)$')
-
-def last_word(text, include_special_chars=False):
-    """
-    Find the last word in a sentence.
-
-    >>> last_word('abc')
-    'abc'
-    >>> last_word(' abc')
-    'abc'
-    >>> last_word('')
-    ''
-    >>> last_word(' ')
-    ''
-    >>> last_word('abc ')
-    ''
-    >>> last_word('abc def')
-    'def'
-    >>> last_word('abc def ')
-    ''
-    >>> last_word('abc def;')
-    ''
-    >>> last_word('bac $def')
-    'def'
-    >>> last_word('bac $def', True)
-    '$def'
-    >>> last_word('bac \def', True)
-    '\\\\def'
-    >>> last_word('bac \def;', True)
-    '\\\\def;'
-    """
-
-    if not text:   # Empty string
-        return ''
-
-    if text[-1].isspace():
-        return ''
-    else:
-        regex = _LAST_WORD_SPL_RE if include_special_chars else _LAST_WORD_RE
-        result = regex.findall(text)
-        if result:
-            return result[0]
-        else:
-            return ''
+from parseutils import last_word, extract_tables
 
 def suggest_type(full_text, text_before_cursor):
     """Takes the full_text that is typed so far and also the text before the
     cursor to suggest completion type and scope.
 
     Returns a tuple with a type of entity ('table', 'column' etc) and a scope.
-    A scope for a column category will be the table name. Scope is set to None
-    if unavailable.
+    A scope for a column category will be a list of tables.
     """
 
     word_before_cursor = last_word(text_before_cursor,
@@ -79,14 +30,14 @@ def suggest_type(full_text, text_before_cursor):
         last_token = last_token.value if last_token else ''
 
     if last_token.lower() in ('set', 'order by', 'group by'):
-        return ('columns', None)
+        return ('columns', extract_tables(full_text))
     elif last_token.lower() in ('select', 'where', 'having'):
-        return ('columns-and-functions', None)
+        return ('columns-and-functions', extract_tables(full_text))
     elif last_token.lower() in ('from', 'update', 'into', 'describe'):
-        return ('tables', None)
+        return ('tables', [])
     elif last_token in ('d',):  # \d
-        return ('tables', None)
+        return ('tables', [])
     elif last_token.lower() in ('c', 'use'):  # \c
-        return ('databases', None)
+        return ('databases', [])
     else:
-        return ('keywords', None)
+        return ('keywords', [])
