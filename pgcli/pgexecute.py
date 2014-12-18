@@ -120,7 +120,8 @@ class PGExecute(object):
     def columns(self, table):
         with self.conn.cursor() as cur:
             cur.execute(self.columns_query, (table,))
-            return [x[0] for x in cur.fetchall()]
+            cols = [x[0] for x in cur.fetchall()]
+            return cols
 
     def all_columns(self):
         columns = set()

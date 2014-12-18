@@ -32,9 +32,8 @@ class PGCompleter(Completer):
     databases = []
     tables = []
     # This will create a defaultdict which is initialized with a list that has
-    # a '*' by default. Inspired by the constant_factory example in
-    # https://docs.python.org/2/library/collections.html#defaultdict-examples
-    columns = defaultdict(itertools.repeat(['*']).next)
+    # a '*' by default.
+    columns = defaultdict(lambda: ['*'])
     all_completions = set(keywords)
 
     def __init__(self, smart_completion=True):
@@ -88,6 +87,8 @@ class PGCompleter(Completer):
             scoped_cols = []
             for table in scope:
                 scoped_cols.extend(self.columns[table])
+            print ('scope:', scope)
+            print ('scoped_cols:', scoped_cols)
             return self.find_matches(word_before_cursor, scoped_cols)
         elif category == 'columns-and-functions':
             scoped_cols = []
