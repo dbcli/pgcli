@@ -55,7 +55,7 @@ def cli(database, user, password, host, port):
         click.secho(e.message, err=True, fg='red')
         exit(1)
     layout = Layout(before_input=DefaultPrompt('%s> ' % pgexecute.dbname),
-            menus=[CompletionsMenu()],
+            menus=[CompletionsMenu(max_height=10)],
             lexer=SqlLexer,
             bottom_toolbars=[
                 PGToolbar()])
