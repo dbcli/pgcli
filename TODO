@@ -1,5 +1,6 @@
 # vi: ft=vimwiki
-* [ ] Separate the column completions to be table specific.
+* [o] Separate the column completions to be table specific. (SELECT, INSERT, UPDATE)
+* [ ] Column completion for nested sql.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
 * [ ] Use a pager to display the output. (Check Click's document).
 * [ ] Improve the smart completion for Insert statement. (Needs table specific columns)

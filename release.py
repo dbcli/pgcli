@@ -2,6 +2,7 @@
 import re
 import ast
 import subprocess
+import sys
 
 DEBUG = False
 
@@ -45,6 +46,10 @@ if __name__ == '__main__':
         subprocess.check_output = lambda x: x
 
     ver = version('pgcli/__init__.py')
+    print ('Releasing Version:', ver)
+    choice = raw_input('Are you sure? (Y/N)')
+    if choice.lower() != 'y':
+        sys.exit(1)
     commit_for_release('pgcli/__init__.py', ver)
     create_git_tag('v%s' % ver)
     register_with_pypi()
