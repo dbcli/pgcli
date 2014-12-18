@@ -62,8 +62,10 @@ def cli(database, user, password, host, port):
     completer = PGCompleter(smart_completion)
     completer.extend_special_commands(CASE_SENSITIVE_COMMANDS.keys())
     completer.extend_special_commands(NON_CASE_SENSITIVE_COMMANDS.keys())
-    completer.extend_table_names(pgexecute.tables())
-    completer.extend_column_names(pgexecute.all_columns())
+    tables = pgexecute.tables()
+    completer.extend_table_names(tables)
+    for table in tables:
+        completer.extend_column_names(table, pgexecute.columns(table))
     completer.extend_database_names(pgexecute.databases())
     line = PGLine(always_multiline=False, completer=completer,
             history=FileHistory(os.path.expanduser('~/.pgcli-history')))
@@ -96,8 +98,11 @@ def cli(database, user, password, host, port):
             # Refresh the table names and column names if necessary.
             if document.text and need_completion_refresh(document.text):
                 completer.reset_completions()
-                completer.extend_table_names(pgexecute.tables())
-                completer.extend_column_names(pgexecute.all_columns())
+                tables = pgexecute.tables()
+                completer.extend_table_names(tables)
+                for table in tables:
+                    completer.extend_column_names(table,
+                            pgexecute.columns(table))
     except Exit:
         print ('GoodBye!')
 

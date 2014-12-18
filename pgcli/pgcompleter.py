@@ -1,4 +1,6 @@
 from __future__ import print_function
+from collections import defaultdict
+import itertools
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 
@@ -29,7 +31,10 @@ class PGCompleter(Completer):
 
     databases = []
     tables = []
-    columns = ['*']
+    # This will create a defaultdict which is initialized with a list that has
+    # a '*' by default. Inspired by the constant_factory example in
+    # https://docs.python.org/2/library/collections.html#defaultdict-examples
+    columns = defaultdict(itertools.repeat(['*']).next)
     all_completions = set(keywords)
 
     def __init__(self, smart_completion=True):
@@ -52,13 +57,13 @@ class PGCompleter(Completer):
         self.tables.extend(tables)
         self.all_completions.update(tables)
 
-    def extend_column_names(self, columns):
-        self.columns.extend(columns)
+    def extend_column_names(self, table, columns):
+        self.columns[table].extend(columns)
         self.all_completions.update(columns)
 
     def reset_completions(self):
         self.tables = []
-        self.columns = ['*']
+        self.columns = defaultdict(itertools.repeat(['*']).next)
         self.all_completions = set(self.keywords)
 
     @staticmethod
@@ -80,10 +85,16 @@ class PGCompleter(Completer):
                 document.text_before_cursor)
 
         if category == 'columns':
-            return self.find_matches(word_before_cursor, self.columns)
+            scoped_cols = []
+            for table in scope:
+                scoped_cols.extend(self.columns[table])
+            return self.find_matches(word_before_cursor, scoped_cols)
         elif category == 'columns-and-functions':
-            return self.find_matches(word_before_cursor, self.columns +
-                                     self.functions)
+            scoped_cols = []
+            for table in scope:
+                scoped_cols.extend(self.columns[table])
+            return self.find_matches(word_before_cursor, scoped_cols +
+                    self.functions)
         elif category == 'tables':
             return self.find_matches(word_before_cursor, self.tables)
         elif category == 'databases':
