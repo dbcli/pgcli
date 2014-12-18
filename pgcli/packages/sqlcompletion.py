@@ -78,9 +78,10 @@ def suggest_type(full_text, text_before_cursor):
         last_token = parsed[0].token_prev(len(parsed[0].tokens))
         last_token = last_token.value if last_token else ''
 
-    if last_token.lower() in ('select', 'where', 'having', 'set',
-            'order by', 'group by'):
+    if last_token.lower() in ('set', 'order by', 'group by'):
         return ('columns', None)
+    elif last_token.lower() in ('select', 'where', 'having'):
+        return ('columns-and-functions', None)
     elif last_token.lower() in ('from', 'update', 'into', 'describe'):
         return ('tables', None)
     elif last_token in ('d',):  # \d

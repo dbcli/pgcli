@@ -4,11 +4,11 @@ from .packages.sqlcompletion import suggest_type
 
 class PGCompleter(Completer):
     keywords = ['ACCESS', 'ADD', 'ALL', 'ALTER TABLE', 'AND', 'ANY', 'AS',
-            'ASC', 'AUDIT', 'BETWEEN', 'BY', 'CHAR', 'CHECK', 'CLUSTER',
+            'ASC', 'AUDIT', 'BETWEEN', 'BY', 'CASE', 'CHAR', 'CHECK', 'CLUSTER',
             'COLUMN', 'COMMENT', 'COMPRESS', 'CONNECT', 'CREATE', 'CURRENT',
             'DATE', 'DECIMAL', 'DEFAULT', 'DELETE FROM', 'DESC', 'DESCRIBE',
             'DISTINCT', 'DROP', 'ELSE', 'EXCLUSIVE', 'EXISTS', 'FILE', 'FLOAT',
-            'FOR', 'FROM', 'GRANT', 'GROUP', 'HAVING', 'IDENTIFIED',
+            'FOR', 'FROM', 'FULL', 'GRANT', 'GROUP BY', 'HAVING', 'IDENTIFIED',
             'IMMEDIATE', 'IN', 'INCREMENT', 'INDEX', 'INITIAL', 'INSERT INTO',
             'INTEGER', 'INTERSECT', 'INTO', 'IS', 'LEVEL', 'LIKE', 'LOCK',
             'LONG', 'MAXEXTENTS', 'MINUS', 'MLSLABEL', 'MODE', 'MODIFY',
@@ -19,7 +19,11 @@ class PGCompleter(Completer):
             'SET', 'SHARE', 'SIZE', 'SMALLINT', 'START', 'SUCCESSFUL',
             'SYNONYM', 'SYSDATE', 'TABLE', 'THEN', 'TO', 'TRIGGER', 'UID',
             'UNION', 'UNIQUE', 'UPDATE', 'USE', 'USER', 'VALIDATE', 'VALUES',
-            'VARCHAR', 'VARCHAR2', 'VIEW', 'WHENEVER', 'WHERE', 'WITH', ]
+            'VARCHAR', 'VARCHAR2', 'VIEW', 'WHEN', 'WHENEVER', 'WHERE', 'WITH', ]
+
+    functions = ['AVG', 'COUNT', 'DISTINCT', 'FIRST', 'FORMAT', 'LAST', 'LCASE',
+                 'LEN', 'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP',
+                 'UCASE']
 
     special_commands = []
 
@@ -77,6 +81,9 @@ class PGCompleter(Completer):
 
         if category == 'columns':
             return self.find_matches(word_before_cursor, self.columns)
+        elif category == 'columns-and-functions':
+            return self.find_matches(word_before_cursor, self.columns +
+                                     self.functions)
         elif category == 'tables':
             return self.find_matches(word_before_cursor, self.tables)
         elif category == 'databases':
