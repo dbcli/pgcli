@@ -58,6 +58,18 @@ The `pgcli` is written using prompt_toolkit_.
 
 .. _prompt_toolkit: https://github.com/jonathanslenders/python-prompt-toolkit
 
+Contributions:
+--------------
+
+If you're interested in contributing to this project, first of all I would like
+to extend my heartfelt gratitude. I've written a small doc to describe how to
+get this running in a development setup.
+
+https://github.com/amjith/pgcli/blob/master/DEVELOP.rst
+
+Please feel free to reach out to me if you need help. 
+My email: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
+
 Detailed Installation Instructions:
 -----------------------------------
 
@@ -126,7 +138,7 @@ Then you can install pgcli:
 
 
 Thanks:
-=======
+-------
 
 A special thanks to `Jonathan Slenders <https://twitter.com/jonathan_s>`_ for
 creating `Python Prompt Toolkit <http://github.com/jonathanslenders/python-prompt-toolkit>`_, 
