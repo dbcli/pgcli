@@ -1,4 +1,5 @@
 from prompt_toolkit.keys import Keys
+from prompt_toolkit.enums import InputMode
 
 def pgcli_bindings(registry, cli_ref):
     """
@@ -21,3 +22,11 @@ def pgcli_bindings(registry, cli_ref):
         """
         #import pdb; pdb.set_trace()
         line.always_multiline = not line.always_multiline
+
+    @handle(Keys.ControlSpace, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlSpace, in_mode=InputMode.SELECTION)
+    def _(event):
+        """
+        Force autocompletion at cursor
+        """
+        line.complete_next()
