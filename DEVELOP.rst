@@ -2,17 +2,17 @@ Development Guide
 -----------------
 This is a guide for developers who would like to contribute to this project.
 
-Git Workflow
+GitHub Workflow
 ------------
 
 If you're interested in contributing to pgcli, first of all my heart felt
-thanks. Please `fork the project <https://github.com/amjith/pgcli>`_ in github.
-Then clone your fork into your computer (``git clone <url-for-your-fork>``).
-Make the necessary changes and create the commits in your local machine. Then
-push those changes to your fork. Then click on the pull request icon on github
-and create a new pull request. Add a description about the change and send it
-along. I promise to review you in a reasonable window of time and get back to
-you. 
+thanks. `Fork the project <https://github.com/amjith/pgcli>`_ in github.  Then
+clone your fork into your computer (``git clone <url-for-your-fork>``).  Make
+the changes and create the commits in your local machine. Then push those
+changes to your fork. Then click on the pull request icon on github and create
+a new pull request. Add a description about the change and send it along. I
+promise to review the pull request in a reasonable window of time and get back
+to you. 
 
 In order to keep your fork up to date with any changes from mainline, add a new
 git remote to your local copy called 'upstream' and point it to the main pgcli
