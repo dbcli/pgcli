@@ -1,15 +1,11 @@
 # vi: ft=vimwiki
-* [o] Separate the column completions to be table specific. (SELECT, INSERT, UPDATE)
-* [ ] Column completion for simple SELECT.
-* [ ] Column completion for simple INSERT.
-* [ ] Column completion for simple UPDATE.
+* [ ] Fix: SELECT id, <tab>  FROM django_migrations; - Auto-completion for the second column name is broken. Find the last keyword and use it for completion.
 * [ ] Use a pager to display the output. (Check Click's document).
 * [ ] Default host should not be set to localhost. Since it causes problems in IPv6 machines. Need to research this one further.
 * [ ] Column completion for nested sql.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
 * [ ] Improve the smart completion for Insert statement. (Needs table specific columns)
 * [ ] Add a few more special commands. (\l pattern, \di, \dp, \ds, \dv, \dy, \z etc)
-* [ ] Write a doc about how to run it in develop mode. (pip install -e .)
 * [ ] Write a doc about how to add new pgspecial commands.(psql -E)
 * [ ] Improve the smart completion for Update statement. (Needs table specific columns)
 * [ ] Improve the SELECT <> completion when a FROM clause is already present. (Send the whole text to sqlparse to find the table name and do column suggestions based on that.)
@@ -29,6 +25,11 @@
 * [ ] Create a class for the config and make it easy to access.
 * [ ] Set multi-line via config file.
 * [ ] New Feature List - Write the current version to config file. At launch if the version has changed, display the changelog between the two versions.
+* [o] Separate the column completions to be table specific. (SELECT, INSERT, UPDATE)
+* [X] Write a doc about how to run it in develop mode. (pip install -e .)
+* [X] Column completion for simple SELECT.
+* [X] Column completion for simple INSERT.
+* [X] Column completion for simple UPDATE.
 * [X] Enable multi-line mode via a keybinding.
 * [X] Pressing enter should just pop another prompt.
 * [X] Implement \?.

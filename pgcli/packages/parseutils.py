@@ -51,11 +51,15 @@ def last_word(text, include_special_chars=False):
         else:
             return ''
 
+
+# This code is borrowed from sqlparse example script.
+# <url>
 def is_subselect(parsed):
     if not parsed.is_group():
         return False
     for item in parsed.tokens:
-        if item.ttype is DML and item.value.upper() == 'SELECT':
+        if item.ttype is DML and item.value.upper() in ('SELECT', 'INSERT',
+                'UPDATE', 'CREATE', 'DELETE'):
             return True
     return False
 
@@ -70,7 +74,8 @@ def extract_from_part(parsed):
                 raise StopIteration
             else:
                 yield item
-        elif item.ttype is Keyword and item.value.upper() == 'FROM':
+        elif item.ttype is Keyword and item.value.upper() in ('FROM', 'INTO',
+                'UPDATE', 'TABLE', ):
             from_seen = True
 
 def extract_table_identifiers(token_stream):
