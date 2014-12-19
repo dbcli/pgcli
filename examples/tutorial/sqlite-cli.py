@@ -49,9 +49,9 @@ def main(database):
             with connection:
                 messages = connection.execute(document.text)
                 for message in messages:
-                    print message
+                    print(message)
     except Exit:
-        print 'GoodBye!'
+        print('GoodBye!')
 
 
 if __name__ == '__main__':

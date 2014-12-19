@@ -29,7 +29,7 @@ Let's get started!
        def main():
            cli = CommandLineInterface()
            document = cli.read_input()
-           print 'You entered:', document.text
+           print('You entered:', document.text)
 
        if __name__ == '__main__':
            main()
@@ -52,9 +52,9 @@ Let's get started!
            try:
                while True:
                    document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-                   print 'You entered:', document.text
+                   print('You entered:', document.text)
            except Exit:
-               print 'GoodBye!'
+               print('GoodBye!')
 
        if __name__ == '__main__':
            main()
@@ -84,9 +84,9 @@ Let's get started!
            try:
                while True:
                    document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-                   print 'You entered:', document.text
+                   print('You entered:', document.text)
            except Exit:
-               print 'GoodBye!'
+               print('GoodBye!')
 
        if __name__ == '__main__':
            main()
@@ -136,9 +136,9 @@ Let's get started!
            try:
                while True:
                    document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-                   print 'You entered:', document.text
+                   print('You entered:', document.text)
            except Exit:
-               print 'GoodBye!'
+               print('GoodBye!')
 
        if __name__ == '__main__':
            main()
@@ -196,9 +196,9 @@ Let's get started!
            try:
                while True:
                    document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-                   print 'You entered:', document.text
+                   print('You entered:', document.text)
            except Exit:
-               print 'GoodBye!'
+               print('GoodBye!')
 
        if __name__ == '__main__':
            main()
@@ -264,9 +264,9 @@ Let's get started!
                    with connection:
                        messages = connection.execute(document.text)
                        for message in messages:
-                           print message
+                           print(message)
            except Exit:
-               print 'GoodBye!'
+               print('GoodBye!')
 
        if __name__ == '__main__':
            if len(sys.argv) < 2:
