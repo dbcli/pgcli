@@ -3,6 +3,7 @@ from collections import defaultdict
 import itertools
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
+from .packages.parseutils import last_word
 
 class PGCompleter(Completer):
     keywords = ['ACCESS', 'ADD', 'ALL', 'ALTER TABLE', 'AND', 'ANY', 'AS',
@@ -68,6 +69,7 @@ class PGCompleter(Completer):
 
     @staticmethod
     def find_matches(text, collection):
+        text = last_word(text)
         for item in collection:
             if item.startswith(text) or item.startswith(text.upper()):
                 yield Completion(item, -len(text))

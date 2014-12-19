@@ -45,9 +45,9 @@ def last_word(text, include_special_chars=False):
         return ''
     else:
         regex = _LAST_WORD_SPL_RE if include_special_chars else _LAST_WORD_RE
-        result = regex.findall(text)
-        if result:
-            return result[0]
+        matches = regex.search(text)
+        if matches:
+            return matches.group(0)
         else:
             return ''
 
