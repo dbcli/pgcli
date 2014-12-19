@@ -15,7 +15,8 @@ If you already know how to install python pacakges, then you can simply do:
 
     $ pip install pgcli
 
-If you don't know how to install python pacakges, please check the `detailed instructions`__.
+If you don't know how to install python pacakges, please check the 
+`detailed instructions`__.
 
 __ https://github.com/amjith/pgcli#detailed-installation-instructions 
 
@@ -46,7 +47,8 @@ The `pgcli` is written using prompt_toolkit_.
 * Auto-completion as you type for SQL keywords as well as tables and
   columns in the database.
 * Syntax highlighting using Pygments.
-* Smart-completion (enabled by default) will suggest context-sensitive completion.
+* Smart-completion (enabled by default) will suggest context-sensitive
+  completion.
 
       - `SELECT * FROM <tab>` will only show table names. 
       - `SELECT * FROM users WHERE <tab>` will only show column names. 
@@ -105,7 +107,8 @@ If it does then install pgcli using the pip command as follows:
 
     $ sudo pip install pgcli
 
-If it doesn't exist, use your linux package manager to install `pip`. This might look something like: 
+If it doesn't exist, use your linux package manager to install `pip`. This
+might look something like: 
 
 ::
 
@@ -126,15 +129,21 @@ Thanks:
 =======
 
 A special thanks to `Jonathan Slenders <https://twitter.com/jonathan_s>`_ for
-creating `Python Prompt Toolkit <http://github.com/jonathanslenders/python-prompt-toolkit>`_, which is quite
-literally the backbone library, that made this app possible. Jonathan has also
-provided valuable feedback and support during the development of this app.
+creating `Python Prompt Toolkit <http://github.com/jonathanslenders/python-prompt-toolkit>`_, 
+which is quite literally the backbone library, that made this app possible.
+Jonathan has also provided valuable feedback and support during the development
+of this app.
 
-This app includes the awesome `tabulate <https://pypi.python.org/pypi/tabulate>`_ library
-for printing the output of tables. The reason for vendoring this library rather than 
-listing it as a dependency in setup.py, is because I had to make a change to the table
-format which is merged back into the original repo, but not yet released inPyPI.
+This app includes the awesome `tabulate <https://pypi.python.org/pypi/tabulate>`_ 
+library for printing the output of tables. The reason for vendoring this
+library rather than listing it as a dependency in setup.py, is because I had to
+make a change to the table format which is merged back into the original repo,
+but not yet released inPyPI.
 
-`Click <http://click.pocoo.org/3/>`_ is used for command line option parsing and printing error messages.
+`Click <http://click.pocoo.org/3/>`_ is used for command line option parsing
+and printing error messages.
 
-Thanks to `psycopg <http://initd.org/psycopg/>`_ for providing a rock solid interface to Postgres dataabase.
+Thanks to `psycopg <http://initd.org/psycopg/>`_ for providing a rock solid
+interface to Postgres dataabase.
+
+Thanks to all the beta testers and contributors for your time and patience. :)
