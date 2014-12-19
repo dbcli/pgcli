@@ -1,6 +1,5 @@
 from __future__ import print_function
 from collections import defaultdict
-import itertools
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
