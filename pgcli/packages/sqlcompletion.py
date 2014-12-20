@@ -1,5 +1,7 @@
+from __future__ import print_function
 import sqlparse
 from parseutils import last_word, extract_tables
+
 
 def suggest_type(full_text, text_before_cursor):
     """Takes the full_text that is typed so far and also the text before the
