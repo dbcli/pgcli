@@ -87,11 +87,13 @@ def cli(database, user, password, host, port):
                 raise Exit
             try:
                 res = pgexecute.run(document.text)
+                output = []
                 for rows, headers, status in res:
                     if rows:
-                        print(tabulate(rows, headers, tablefmt='psql'))
+                        output.append(tabulate(rows, headers, tablefmt='psql'))
                     if status:  # Only print the status if it's not None.
-                        print(status)
+                        output.append(status)
+                    click.echo_via_pager('\n'.join(output))
             except Exception as e:
                 click.secho(e.message, err=True, fg='red')
 

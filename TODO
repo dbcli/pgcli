@@ -1,6 +1,6 @@
 # vi: ft=vimwiki
 * [ ] Fix: SELECT id, <tab>  FROM django_migrations; - Auto-completion for the second column name is broken. Find the last keyword and use it for completion.
-* [ ] Use a pager to display the output. (Check Click's document).
+* [ ] Bottom status bar is cut-off in half pane. Figure out how to fix that.
 * [ ] Default host should not be set to localhost. Since it causes problems in IPv6 machines. Need to research this one further.
 * [ ] Column completion for nested sql.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
@@ -27,6 +27,7 @@
 * [ ] New Feature List - Write the current version to config file. At launch if the version has changed, display the changelog between the two versions.
 * [o] Separate the column completions to be table specific. (SELECT, INSERT, UPDATE)
 * [X] Write a doc about how to run it in develop mode. (pip install -e .)
+* [X] Use a pager to display the output. (Check Click's document).
 * [X] Column completion for simple SELECT.
 * [X] Column completion for simple INSERT.
 * [X] Column completion for simple UPDATE.
