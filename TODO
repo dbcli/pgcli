@@ -1,6 +1,7 @@
 # vi: ft=vimwiki
 * [ ] Fix: SELECT id, <tab>  FROM django_migrations; - Auto-completion for the second column name is broken. Find the last keyword and use it for completion.
 * [ ] Bottom status bar is cut-off in half pane. Figure out how to fix that.
+* [ ] Fix: Autocompletion won't go away after semi-colons. This an artifact of stripping special chars in the partially typed words. Need to selectively remove parens.
 * [ ] Default host should not be set to localhost. Since it causes problems in IPv6 machines. Need to research this one further.
 * [ ] Column completion for nested sql.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 

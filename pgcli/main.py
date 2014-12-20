@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import os.path
+import os
 
 import click
 
@@ -26,7 +26,7 @@ from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 
 @click.command()
-@click.option('-h', '--host', default='localhost', help='Host address of the '
+@click.option('-h', '--host', default='', help='Host address of the '
         'postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
         'postgres instance is listening.')
@@ -47,6 +47,15 @@ def cli(database, user, password, host, port):
     # Load config.
     config = load_config('~/.pgclirc')
     smart_completion = config.getboolean('main', 'smart_completion')
+
+    less_opts = os.environ.get('LESS', '')
+    if not less_opts:
+        os.environ['LESS'] = '-RXF'
+
+    if 'X' not in less_opts:
+        os.environ['LESS'] += 'X'
+    if 'F' not in less_opts:
+        os.environ['LESS'] += 'F'
 
     # Connect to the database.
     try:
@@ -107,6 +116,9 @@ def cli(database, user, password, host, port):
                             pgexecute.columns(table))
     except Exit:
         print ('GoodBye!')
+    finally:  # Reset the less opts back to normal.
+        if less_opts:
+            os.environ['LESS'] = less_opts
 
 def need_completion_refresh(sql):
     try:
