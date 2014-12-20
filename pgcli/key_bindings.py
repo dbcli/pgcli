@@ -24,7 +24,6 @@ def pgcli_bindings(registry, cli_ref):
         line.always_multiline = not line.always_multiline
 
     @handle(Keys.ControlSpace, in_mode=InputMode.INSERT)
-    @handle(Keys.ControlSpace, in_mode=InputMode.SELECTION)
     def _(event):
         """
         Force autocompletion at cursor
