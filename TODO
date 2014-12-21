@@ -27,13 +27,3 @@
 * [ ] Set multi-line via config file.
 * [ ] New Feature List - Write the current version to config file. At launch if the version has changed, display the changelog between the two versions.
 * [o] Separate the column completions to be table specific. (SELECT, INSERT, UPDATE)
-* [X] Default host should not be set to localhost. Since it causes problems in IPv6 machines. Need to research this one further.
-* [X] Write a doc about how to run it in develop mode. (pip install -e .)
-* [X] Use a pager to display the output. (Check Click's document).
-* [X] Column completion for simple SELECT.
-* [X] Column completion for simple INSERT.
-* [X] Column completion for simple UPDATE.
-* [X] Enable multi-line mode via a keybinding.
-* [X] Pressing enter should just pop another prompt.
-* [X] Implement \?.
-* [X] Automate the release procedure.
