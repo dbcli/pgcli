@@ -39,3 +39,8 @@ def test_into_suggests_tables():
     suggestion = suggest_type('INSERT INTO ',
             'INSERT INTO ')
     assert suggestion == ('tables', [])
+
+def test_partially_typed_col_name_suggests_col_names():
+    suggestion = suggest_type('SELECT * FROM tabl WHERE col_n',
+            'SELECT * FROM tabl WHERE col_n')
+    assert suggestion == ('columns-and-functions', ['tabl'])
