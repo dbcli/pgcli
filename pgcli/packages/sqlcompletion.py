@@ -7,9 +7,7 @@ def suggest_type(full_text, text_before_cursor):
     """Takes the full_text that is typed so far and also the text before the
     cursor to suggest completion type and scope.
 
-    Returns a tuple with a type of entity ('table', 'column' etc), a scope
-    and a flag to tell the caller to ignore the word at cursor and return all
-    matches in current scope.
+    Returns a tuple with a type of entity ('table', 'column' etc) and a scope.
     A scope for a column category will be a list of tables.
     """
 
@@ -33,25 +31,19 @@ def suggest_type(full_text, text_before_cursor):
         last_token = last_token.value if last_token else ''
 
     def is_function_word(word):
-        """
-        Checks iw we are at function call, such as MAX(, MIN(, AVG(, etc.
-        In this case, we want to return all columns.
-        :param word: word at cursor, for example MAX(
-        :return: true or false
-        """
         return word and len(word) > 1 and word[-1] == '('
 
     if is_function_word(word_before_cursor):
-        return ('columns', extract_tables(full_text), True)
+        return ('columns', extract_tables(full_text))
     elif last_token.lower() in ('set', 'by', 'distinct'):
-        return ('columns', extract_tables(full_text), False)
+        return ('columns', extract_tables(full_text))
     elif last_token.lower() in ('select', 'where', 'having'):
-        return ('columns-and-functions', extract_tables(full_text), False)
+        return ('columns-and-functions', extract_tables(full_text))
     elif last_token.lower() in ('from', 'update', 'into', 'describe'):
-        return ('tables', [], False)
+        return ('tables', [])
     elif last_token in ('d',):  # \d
-        return ('tables', [], False)
+        return ('tables', [])
     elif last_token.lower() in ('c', 'use'):  # \c
-        return ('databases', [], False)
+        return ('databases', [])
     else:
-        return ('keywords', [], False)
+        return ('keywords', [])

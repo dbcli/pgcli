@@ -83,26 +83,24 @@ class PGCompleter(Completer):
         if not self.smart_completion:
             return self.find_matches(word_before_cursor, self.all_completions)
 
-        category, scope, match_all = suggest_type(document.text,
+        category, scope = suggest_type(document.text,
                 document.text_before_cursor)
-
-        word_to_match = '' if match_all else word_before_cursor
 
         if category == 'columns':
             scoped_cols = []
             for table in scope:
                 scoped_cols.extend(self.columns[table])
-            return self.find_matches(word_to_match, scoped_cols)
+            return self.find_matches(word_before_cursor, scoped_cols)
         elif category == 'columns-and-functions':
             scoped_cols = []
             for table in scope:
                 scoped_cols.extend(self.columns[table])
-            return self.find_matches(word_to_match, scoped_cols +
+            return self.find_matches(word_before_cursor, scoped_cols +
                     self.functions)
         elif category == 'tables':
-            return self.find_matches(word_to_match, self.tables)
+            return self.find_matches(word_before_cursor, self.tables)
         elif category == 'databases':
-            return self.find_matches(word_to_match, self.databases)
+            return self.find_matches(word_before_cursor, self.databases)
         elif category == 'keywords':
-            return self.find_matches(word_to_match, self.keywords +
+            return self.find_matches(word_before_cursor, self.keywords +
                     self.special_commands)
