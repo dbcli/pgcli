@@ -3,12 +3,16 @@ import sqlparse
 from sqlparse.sql import IdentifierList, Identifier
 from sqlparse.tokens import Keyword, DML
 
-# This matches only alphanumerics and underscores.
-_LAST_WORD_RE = re.compile(r'(\w+)$')
-# This matches everything except a space.
-_LAST_WORD_SPL_RE = re.compile(r'([^\s]+)$')
+cleanup_regex = {
+        # This matches only alphanumerics and underscores.
+        'alphanum_underscore': re.compile(r'(\w+)$'),
+        # This matches everything except spaces, parens and comma.
+        'most_punctuations': re.compile(r'([^(),\s]+)$'),
+        # This matches everything except a space.
+        'all_punctuations': re.compile('([^\s]+)$'),
+        }
 
-def last_word(text, include_special_chars=False):
+def last_word(text, include='alphanum_underscore'):
     """
     Find the last word in a sentence.
 
@@ -44,7 +48,7 @@ def last_word(text, include_special_chars=False):
     if text[-1].isspace():
         return ''
     else:
-        regex = _LAST_WORD_SPL_RE if include_special_chars else _LAST_WORD_RE
+        regex = cleanup_regex[include]
         matches = regex.search(text)
         if matches:
             return matches.group(0)
