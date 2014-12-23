@@ -12,7 +12,7 @@ def suggest_type(full_text, text_before_cursor):
     """
 
     word_before_cursor = last_word(text_before_cursor,
-            include_special_chars=True)
+            include='all_punctuations')
 
     # If we've partially typed a word then word_before_cursor won't be an empty
     # string. In that case we want to remove the partially typed string before
