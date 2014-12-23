@@ -2,7 +2,6 @@
 * [ ] Fix: SELECT id, <tab>  FROM django_migrations; - Auto-completion for the second column name is broken. Find the last keyword and use it for completion.
 * [ ] Skip the password prompt by default. It should only be presented if -W option is provided.
 * [ ] Bottom status bar is cut-off in half pane. Figure out how to fix that.
-* [ ] Fix: Autocompletion won't go away after semi-colons. This an artifact of stripping special chars in the partially typed words. Need to selectively remove parens.
 * [ ] Column completion for nested sql.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
 * [ ] Improve the smart completion for Insert statement. (Needs table specific columns)
@@ -27,3 +26,4 @@
 * [ ] Set multi-line via config file.
 * [ ] New Feature List - Write the current version to config file. At launch if the version has changed, display the changelog between the two versions.
 * [o] Separate the column completions to be table specific. (SELECT, INSERT, UPDATE)
+* [X] Fix: Autocompletion won't go away after semi-colons. This an artifact of stripping special chars in the partially typed words. Need to selectively remove parens.
