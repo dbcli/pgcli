@@ -81,6 +81,8 @@ def extract_from_part(parsed):
         elif item.ttype is Keyword and item.value.upper() in ('FROM', 'INTO',
                 'UPDATE', 'TABLE', ):
             tbl_prefix_seen = True
+        # 'SELECT a, FROM abc' will detect FROM as part of the column list.
+        # So this check here is necessary.
         elif isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
                 if identifier.ttype is Keyword and identifier.value.upper() == 'FROM':
@@ -92,8 +94,10 @@ def extract_table_identifiers(token_stream):
         if isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
                 yield identifier.get_real_name()
-        elif isinstance(item, Identifier) or isinstance(item, Function):
+        elif isinstance(item, Identifier):
             yield item.get_real_name()
+        elif isinstance(item, Function):
+            yield item.get_name()
         # It's a bug to check for Keyword here, but in the example
         # above some tables names are identified as keywords...
         elif item.ttype is Keyword:
