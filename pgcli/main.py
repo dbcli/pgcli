@@ -32,10 +32,15 @@ from .key_bindings import pgcli_bindings
         'postgres instance is listening.')
 @click.option('-U', '--user', prompt=True, envvar='USER', help='User name to '
         'connect to the postgres database.')
-@click.password_option('-W', '--password', default='',
-        confirmation_prompt=False)
+@click.option('-W', '--password', is_flag=True)
 @click.argument('database', envvar='USER')
 def cli(database, user, password, host, port):
+
+    if password:
+        passwd = click.prompt('Password', hide_input=True, show_default=False,
+                type=str)
+    else:
+        passwd = ''
 
     from pgcli import __file__ as package_root
     package_root = os.path.dirname(package_root)
@@ -59,7 +64,7 @@ def cli(database, user, password, host, port):
 
     # Connect to the database.
     try:
-        pgexecute = PGExecute(database, user, password, host, port)
+        pgexecute = PGExecute(database, user, passwd, host, port)
     except Exception as e:  # Connecting to a database could fail.
         click.secho(e.message, err=True, fg='red')
         exit(1)
