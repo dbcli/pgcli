@@ -56,7 +56,7 @@ def suggest_based_on_last_token(last_token_v, text_before_cursor):
         return 'tables'
     elif last_token_v.lower() in ('c', 'use'):  # \c
         return 'databases'
-    elif last_token_v == ',':
+    elif last_token_v.endswith(','):
         prev_keyword = find_prev_keyword(text_before_cursor)
         return suggest_based_on_last_token(prev_keyword, text_before_cursor)
     else:
