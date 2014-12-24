@@ -1,6 +1,6 @@
 import re
 import sqlparse
-from sqlparse.sql import IdentifierList, Identifier
+from sqlparse.sql import IdentifierList, Identifier, Function
 from sqlparse.tokens import Keyword, DML
 
 cleanup_regex = {
@@ -68,9 +68,9 @@ def is_subselect(parsed):
     return False
 
 def extract_from_part(parsed):
-    from_seen = False
+    tbl_prefix_seen = False
     for item in parsed.tokens:
-        if from_seen:
+        if tbl_prefix_seen:
             if is_subselect(item):
                 for x in extract_from_part(item):
                     yield x
@@ -80,15 +80,20 @@ def extract_from_part(parsed):
                 yield item
         elif item.ttype is Keyword and item.value.upper() in ('FROM', 'INTO',
                 'UPDATE', 'TABLE', ):
-            from_seen = True
+            tbl_prefix_seen = True
+        elif isinstance(item, IdentifierList):
+            for identifier in item.get_identifiers():
+                if identifier.ttype is Keyword and identifier.value.upper() == 'FROM':
+                    tbl_prefix_seen = True
+                    break
 
 def extract_table_identifiers(token_stream):
     for item in token_stream:
         if isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
-                yield identifier.get_name()
-        elif isinstance(item, Identifier):
-            yield item.get_name()
+                yield identifier.get_real_name()
+        elif isinstance(item, Identifier) or isinstance(item, Function):
+            yield item.get_real_name()
         # It's a bug to check for Keyword here, but in the example
         # above some tables names are identified as keywords...
         elif item.ttype is Keyword:
