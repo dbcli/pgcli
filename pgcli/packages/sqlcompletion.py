@@ -36,33 +36,36 @@ def suggest_type(full_text, text_before_cursor):
 
     def is_function_word(word):
         return word and len(word) > 1 and word[-1] == '('
-
     if is_function_word(word_before_cursor):
-        return ('columns', extract_tables(full_text))
-    elif last_token_v.lower().endswith('('):
         return ('columns', tables)
+
+    return (suggest_based_on_last_token(last_token_v, text_before_cursor),
+            tables)
+
+
+def suggest_based_on_last_token(last_token_v, text_before_cursor):
+    if last_token_v.lower().endswith('('):
+        return 'columns'
     if last_token_v.lower() in ('set', 'by', 'distinct'):
-        return ('columns', tables)
+        return 'columns'
     elif last_token_v.lower() in ('select', 'where', 'having'):
-        return ('columns-and-functions', tables)
+        return 'columns-and-functions'
     elif last_token_v.lower() in ('from', 'update', 'into', 'describe'):
-        return ('tables', tables)
+        return 'tables'
     elif last_token_v in ('d',):  # \d
-        return ('tables', tables)
+        return 'tables'
     elif last_token_v.lower() in ('c', 'use'):  # \c
-        return ('databases', tables)
+        return 'databases'
     elif last_token_v == ',':
         prev_keyword = find_prev_keyword(text_before_cursor)
-        if prev_keyword in('select', 'where', 'having'):
-            return ('columns-and-functions', tables)
-        return ('keywords', tables)
+        return suggest_based_on_last_token(prev_keyword, text_before_cursor)
     else:
-        return ('keywords', tables)
+        return 'keywords'
 
 def find_prev_keyword(sql):
     if not sql.strip():
         return None
 
-    for t in sqlparse.parse(sql)[0].flatten():
+    for t in reversed(list(sqlparse.parse(sql)[0].flatten())):
         if t.is_keyword:
-            return t.value.lower()
+            return t.value

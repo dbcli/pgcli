@@ -33,7 +33,7 @@ def test_col_comma_suggests_cols():
 def test_table_comma_suggests_tables():
     suggestion = suggest_type('SELECT a, b FROM tbl1, ',
             'SELECT a, b FROM tbl1, ')
-    assert suggestion == ('tables', [])
+    assert suggestion == ('tables', ['tbl1'])
 
 def test_into_suggests_tables():
     suggestion = suggest_type('INSERT INTO ',
