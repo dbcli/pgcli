@@ -1,5 +1,6 @@
 # vi: ft=vimwiki
 * [ ] Skip the password prompt by default. It should only be presented if -W option is provided.
+* [ ] Detect a '.' and parse the word before it and get it's real name.
 * [ ] Bottom status bar is cut-off in half pane. Figure out how to fix that.
 * [ ] Column completion for nested sql.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
@@ -17,7 +18,6 @@
 * [ ] Setup the pgcli.com website.
 * [ ] Add a new trigger for M-/ that does dumb completion.
 * [ ] Find a way to add documentation to sql commands. This could get tricky.
-* [ ] Detect a '.' and parse the word before it and get it's real name.
 * [ ] Refactor the execution and output into a separate class.
 * [ ] Create a class for the config and make it easy to access.
 * [ ] Set multi-line via config file.
