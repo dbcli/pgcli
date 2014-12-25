@@ -7,7 +7,7 @@ cleanup_regex = {
         # This matches only alphanumerics and underscores.
         'alphanum_underscore': re.compile(r'(\w+)$'),
         # This matches everything except spaces, parens and comma.
-        'most_punctuations': re.compile(r'([^(),\s]+)$'),
+        'most_punctuations': re.compile(r'([^\.(),\s]+)$'),
         # This matches everything except a space.
         'all_punctuations': re.compile('([^\s]+)$'),
         }
@@ -93,18 +93,23 @@ def extract_table_identifiers(token_stream):
     for item in token_stream:
         if isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
-                yield identifier.get_real_name()
+                real_name = identifier.get_real_name()
+                yield (real_name, identifier.get_alias() or real_name)
         elif isinstance(item, Identifier):
-            yield item.get_real_name()
+            real_name = item.get_real_name()
+            yield (real_name, item.get_alias() or real_name)
         elif isinstance(item, Function):
-            yield item.get_name()
+            yield (item.get_name(), item.get_name())
         # It's a bug to check for Keyword here, but in the example
         # above some tables names are identified as keywords...
         elif item.ttype is Keyword:
-            yield item.value
+            yield (item.value, item.value)
 
-def extract_tables(sql):
+def extract_tables(sql, include_alias=False):
     if not sql:
         return []
     stream = extract_from_part(sqlparse.parse(sql)[0])
-    return list(extract_table_identifiers(stream))
+    if include_alias:
+        return dict((alias, t) for t, alias in extract_table_identifiers(stream))
+    else:
+        return [x[0] for x in extract_table_identifiers(stream)]
