@@ -1,6 +1,8 @@
 # vi: ft=vimwiki
 * [ ] Skip the password prompt by default. It should only be presented if -W option is provided.
 * [ ] Detect a '.' and parse the word before it and get it's real name.
+* [ ] Multiple cols for dot is failing.
+* [ ] Table detection for INSERT INTO is not stopping after it encounters the lparen.
 * [ ] Bottom status bar is cut-off in half pane. Figure out how to fix that.
 * [ ] Column completion for nested sql.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 

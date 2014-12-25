@@ -11,9 +11,10 @@ def suggest_type(full_text, text_before_cursor):
     A scope for a column category will be a list of tables.
     """
 
-
+    #word_before_cursor = last_word(text_before_cursor,
+            #include='all_punctuations')
     word_before_cursor = last_word(text_before_cursor,
-            include='all_punctuations')
+            include='most_punctuations')
 
     # If we've partially typed a word then word_before_cursor won't be an empty
     # string. In that case we want to remove the partially typed string before
@@ -21,7 +22,7 @@ def suggest_type(full_text, text_before_cursor):
     # partially typed string which renders the smart completion useless because
     # it will always return the list of keywords as completion.
     if word_before_cursor:
-        if word_before_cursor[-1] in ('.'):
+        if word_before_cursor[-1] in ('(', '.'):
             parsed = sqlparse.parse(text_before_cursor)
         else:
             parsed = sqlparse.parse(
@@ -33,12 +34,6 @@ def suggest_type(full_text, text_before_cursor):
     # an empty tuple.
     p = parsed[0] if parsed else None
     last_token = p and p.token_prev(len(p.tokens)) or ''
-
-    def is_function_word(word):
-        return word.endswith('(')
-
-    if is_function_word(word_before_cursor):
-        return ('columns', extract_tables(full_text))
 
     return suggest_based_on_last_token(last_token, text_before_cursor, full_text)
 
@@ -74,5 +69,6 @@ def find_prev_keyword(sql):
         return None
 
     for t in reversed(list(sqlparse.parse(sql)[0].flatten())):
-        if t.is_keyword:
+        if t.is_keyword or t.value == '(':
             return t.value
+

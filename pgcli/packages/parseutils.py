@@ -1,7 +1,7 @@
 import re
 import sqlparse
 from sqlparse.sql import IdentifierList, Identifier, Function
-from sqlparse.tokens import Keyword, DML
+from sqlparse.tokens import Keyword, DML, Punctuation
 
 cleanup_regex = {
         # This matches only alphanumerics and underscores.
@@ -74,7 +74,7 @@ def extract_from_part(parsed):
             if is_subselect(item):
                 for x in extract_from_part(item):
                     yield x
-            elif item.ttype is Keyword:
+            elif item.ttype is Keyword or item.ttype is Punctuation:
                 raise StopIteration
             else:
                 yield item
