@@ -1,8 +1,4 @@
 # vi: ft=vimwiki
-* [ ] Skip the password prompt by default. It should only be presented if -W option is provided.
-* [ ] Detect a '.' and parse the word before it and get it's real name.
-* [ ] Multiple cols for dot is failing.
-* [ ] Table detection for INSERT INTO is not stopping after it encounters the lparen.
 * [ ] Bottom status bar is cut-off in half pane. Figure out how to fix that.
 * [ ] Column completion for nested sql.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
@@ -28,3 +24,7 @@
 * [X] Fix: Autocompletion won't go away after semi-colons. This an artifact of stripping special chars in the partially typed words. Need to selectively remove parens.
 * [X] Fix: SELECT id, <tab>  FROM django_migrations; - Auto-completion for the second column name is broken. Find the last keyword and use it for completion.
 * [X] Show only table sensitive columns in autocompletion.
+* [X] Skip the password prompt by default. It should only be presented if -W option is provided.
+* [X] Detect a '.' and parse the word before it and get it's real name.
+* [X] Multiple cols for dot is failing.
+* [X] Table detection for INSERT INTO is not stopping after it encounters the lparen.
