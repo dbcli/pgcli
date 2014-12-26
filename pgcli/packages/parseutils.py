@@ -113,3 +113,11 @@ def extract_tables(sql, include_alias=False):
         return dict((alias, t) for t, alias in extract_table_identifiers(stream))
     else:
         return [x[0] for x in extract_table_identifiers(stream)]
+
+def find_prev_keyword(sql):
+    if not sql.strip():
+        return None
+
+    for t in reversed(list(sqlparse.parse(sql)[0].flatten())):
+        if t.is_keyword or t.value == '(':
+            return t.value
