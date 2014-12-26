@@ -29,6 +29,5 @@ def test_simple_insert_single_table():
     assert tables == ['abc']
 
 def test_simple_update_table():
-    import pdb; pdb.set_trace()
     tables = extract_tables('update abc set id = 1')
     assert tables == ['abc']
