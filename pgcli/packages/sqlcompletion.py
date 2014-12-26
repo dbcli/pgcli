@@ -1,6 +1,6 @@
 from __future__ import print_function
 import sqlparse
-from parseutils import last_word, extract_tables
+from parseutils import last_word, extract_tables, find_prev_keyword
 
 
 def suggest_type(full_text, text_before_cursor):
@@ -11,8 +11,6 @@ def suggest_type(full_text, text_before_cursor):
     A scope for a column category will be a list of tables.
     """
 
-    #word_before_cursor = last_word(text_before_cursor,
-            #include='all_punctuations')
     word_before_cursor = last_word(text_before_cursor,
             include='most_punctuations')
 
@@ -61,15 +59,6 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
     elif token_v.endswith('.'):
         current_alias = last_word(token_v[:-1])
         tables = extract_tables(full_text, include_alias=True)
-        return 'columns', [tables.get(current_alias)]
+        return 'columns', [tables.get(current_alias) or current_alias]
     else:
         return 'keywords', []
-
-def find_prev_keyword(sql):
-    if not sql.strip():
-        return None
-
-    for t in reversed(list(sqlparse.parse(sql)[0].flatten())):
-        if t.is_keyword or t.value == '(':
-            return t.value
-
