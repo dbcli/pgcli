@@ -27,3 +27,8 @@ def test_select_with_hanging_comma_multiple_tables():
 def test_simple_insert_single_table():
     tables = extract_tables('insert into abc (id, name) values (1, "def")')
     assert tables == ['abc']
+
+def test_simple_update_table():
+    import pdb; pdb.set_trace()
+    tables = extract_tables('update abc set id = 1')
+    assert tables == ['abc']

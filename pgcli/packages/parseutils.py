@@ -78,8 +78,8 @@ def extract_from_part(parsed):
                 raise StopIteration
             else:
                 yield item
-        elif item.ttype is Keyword and item.value.upper() in ('FROM', 'INTO',
-                'UPDATE', 'TABLE', ):
+        elif ((item.ttype is Keyword or item.ttype is Keyword.DML) and
+                item.value.upper() in ('FROM', 'INTO', 'UPDATE', 'TABLE', )):
             tbl_prefix_seen = True
         # 'SELECT a, FROM abc' will detect FROM as part of the column list.
         # So this check here is necessary.
