@@ -2,15 +2,11 @@
 * [ ] Bottom status bar is cut-off in half pane. Figure out how to fix that.
 * [ ] Column completion for nested sql.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
-* [ ] Improve the smart completion for Insert statement. (Needs table specific columns)
 * [ ] Add a few more special commands. (\l pattern, \di, \dp, \ds, \dv, \dy, \z etc)
 * [ ] Write a doc about how to add new pgspecial commands.(psql -E)
-* [ ] Improve the smart completion for Update statement. (Needs table specific columns)
 * [ ] Show/hide docs for a statement using a keybinding.
 * [ ] Cmd-K breaks in OS X iterm. - This might be a prompt_toolkit bug.
 * [ ] Check why Indexes have a invalid at the end when \d is called on them.
-* [ ] Add some tests. Sanity, Unit, Completion, Config.
-* [ ] Add tests for smart completion.
 * [ ] Check how to add the name of the table before printing the table.
 * [ ] Add logging.
 * [ ] Setup the pgcli.com website.
@@ -28,3 +24,7 @@
 * [X] Detect a '.' and parse the word before it and get it's real name.
 * [X] Multiple cols for dot is failing.
 * [X] Table detection for INSERT INTO is not stopping after it encounters the lparen.
+* [X] Improve the smart completion for Update statement. (Needs table specific columns)
+* [X] Add some tests. Sanity, Unit, Completion, Config.
+* [X] Add tests for smart completion.
+* [X] Improve the smart completion for Insert statement. (Needs table specific columns)
