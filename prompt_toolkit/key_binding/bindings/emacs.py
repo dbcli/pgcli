@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from prompt_toolkit.buffer import ClipboardData, SelectionType, indent, unindent
+from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.enums import IncrementalSearchDirection
 
@@ -118,8 +118,8 @@ def load_emacs_bindings(registry, filter=None):
         """
         Paste before cursor.
         """
-        for i in range(event.arg):
-            event.current_buffer.paste_from_clipboard(before=True)
+        event.current_buffer.paste_clipboard_data(
+            event.cli.clipboard.get_data(), count=event.arg, before=True)
 
     @handle(Keys.ControlUnderscore, save_before=False, filter= ~has_selection)
     def _(event):
@@ -174,7 +174,7 @@ def load_emacs_bindings(registry, filter=None):
 
         if pos:
             deleted = buffer.delete_before_cursor(count=-pos)
-            buffer.set_clipboard(ClipboardData(deleted))
+            event.cli.clipboard.set_text(deleted)
 
     @handle(Keys.Escape, 'a', filter= ~has_selection)
     def _(event):
@@ -206,7 +206,7 @@ def load_emacs_bindings(registry, filter=None):
 
         if pos:
             deleted = buffer.delete(count=pos)
-            buffer.set_clipboard(ClipboardData(deleted))
+            event.cli.clipboard.set_text(deleted)
 
     @handle(Keys.Escape, 'e', filter= ~has_selection)
     def _(event):
@@ -338,16 +338,16 @@ def load_emacs_bindings(registry, filter=None):
         """
         Cut selected text.
         """
-        deleted = event.current_buffer.cut_selection()
-        event.current_buffer.set_clipboard(ClipboardData(deleted))
+        data = event.current_buffer.cut_selection()
+        event.cli.clipboard.set_data(data)
 
     @handle(Keys.Escape, 'w', filter=has_selection)
     def _(event):
         """
         Copy selected text.
         """
-        text = event.current_buffer.copy_selection()
-        event.current_buffer.set_clipboard(ClipboardData(text))
+        data = event.current_buffer.copy_selection()
+        event.cli.clipboard.set_data(data)
 
     @handle(Keys.Escape, '<', filter= ~has_selection)
     def _(event):

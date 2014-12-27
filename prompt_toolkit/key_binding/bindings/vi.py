@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from prompt_toolkit.enums import IncrementalSearchDirection
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.buffer import ClipboardData, ClipboardDataType, indent, unindent
+from prompt_toolkit.buffer import ClipboardData, indent, unindent
 from prompt_toolkit.selection import SelectionType
 from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
 from prompt_toolkit.filters import Filter
@@ -242,9 +242,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
         buffer = event.current_buffer
 
         deleted = buffer.delete(count=buffer.document.get_end_of_line_position())
-        if deleted:
-            data = ClipboardData(deleted)
-            buffer.set_clipboard(data)
+        event.cli.clipboard.set_text(deleted)
         vi_state.input_mode = InputMode.INSERT
 
     @handle('c', 'c', filter=navigation_mode)
@@ -256,8 +254,8 @@ def load_vi_bindings(registry, vi_state, filter=None):
         buffer = event.current_buffer
 
         # We copy the whole line.
-        data = ClipboardData(buffer.document.current_line, ClipboardDataType.LINES)
-        buffer.set_clipboard(data)
+        data = ClipboardData(buffer.document.current_line, SelectionType.LINES)
+        event.cli.clipboard.set_data(data)
 
         # But we delete after the whitespace
         buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=True)
@@ -268,7 +266,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
     def _(event):
         buffer = event.current_buffer
         deleted = buffer.delete(count=buffer.document.get_end_of_line_position())
-        buffer.set_clipboard(ClipboardData(deleted))
+        event.cli.clipboard.set_text(deleted)
 
     @handle('d', 'd', filter=navigation_mode)
     def _(event):
@@ -294,7 +292,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
         buffer.cursor_position = len(before) + len(after) - len(after.lstrip(' '))
 
         # Set clipboard data
-        buffer.set_clipboard(ClipboardData(deleted, ClipboardDataType.LINES))
+        event.cli.clipboard.set_data(ClipboardData(deleted, SelectionType.LINES))
 
     @handle('G', filter=navigation_mode)
     def _(event):
@@ -348,16 +346,19 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Paste after
         """
-        for i in range(event.arg):
-            event.current_buffer.paste_from_clipboard()
+        event.current_buffer.paste_clipboard_data(
+            event.cli.clipboard.get_data(),
+            count=event.arg)
 
     @handle('P', filter=navigation_mode)
     def _(event):
         """
         Paste before
         """
-        for i in range(event.arg):
-            event.current_buffer.paste_from_clipboard(before=True)
+        event.current_buffer.paste_clipboard_data(
+            event.cli.clipboard.get_data(),
+            before=True,
+            count=event.arg)
 
     @handle('r', Keys.Any, filter=navigation_mode)
     def _(event):
@@ -380,8 +381,8 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Substitute with new text
         (Delete character(s) and go to insert mode.)
         """
-        data = ClipboardData(''.join(event.current_buffer.delete() for i in range(event.arg)))
-        event.current_buffer.set_clipboard(data)
+        text = event.current_buffer.delete(count=event.arg)
+        event.cli.clipboard.set_text(text)
         vi_state.input_mode = InputMode.INSERT
 
     @handle('u', filter=navigation_mode)
@@ -423,8 +424,8 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Delete character.
         """
-        data = ClipboardData(event.current_buffer.delete(count=event.arg))
-        event.current_buffer.set_clipboard(data)
+        text = event.current_buffer.delete(count=event.arg)
+        event.cli.clipboard.set_text(text)
 
     @handle('x', filter=selection_mode)
     @handle('d', 'd', filter=selection_mode)
@@ -432,11 +433,8 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Cut selection.
         """
-        buffer = event.current_buffer
-
-        selection_type = buffer.selection_state.type
-        deleted = buffer.cut_selection()
-        buffer.set_clipboard(ClipboardData(deleted, selection_type))
+        clipboard_data = event.current_buffer.cut_selection()
+        event.cli.clipboard.set_data(clipboard_data)
 
     @handle('c', filter=selection_mode)
     def _(event):
@@ -447,7 +445,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
 
         selection_type = buffer.selection_state.type
         deleted = buffer.cut_selection()
-        buffer.set_clipboard(ClipboardData(deleted, selection_type))
+        event.cli.clipboard.set_data(ClipboardData(deleted, selection_type))
         vi_state.input_mode = InputMode.INSERT
 
     @handle('y', filter=selection_mode)
@@ -455,16 +453,13 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Copy selection.
         """
-        buffer = event.current_buffer
-
-        selection_type = buffer.selection_state.type
-        deleted = buffer.copy_selection()
-        buffer.set_clipboard(ClipboardData(deleted, selection_type))
+        clipboard_data = event.current_buffer.copy_selection()
+        event.cli.clipboard.set_data(clipboard_data)
 
     @handle('X', filter=navigation_mode)
     def _(event):
-        data = event.current_buffer.delete_before_cursor()
-        event.current_buffer.set_clipboard(data)
+        text = event.current_buffer.delete_before_cursor()
+        event.cli.clipboard.set_text(text)
 
     @handle('y', 'y', filter=navigation_mode)
     @handle('Y', filter=navigation_mode)
@@ -473,9 +468,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Yank the whole line.
         """
         text = '\n'.join(event.current_buffer.document.lines_from_current[:event.arg])
-
-        data = ClipboardData(text, ClipboardDataType.LINES)
-        event.current_buffer.set_clipboard(data)
+        event.cli.clipboard.set_data(ClipboardData(text, SelectionType.LINES))
 
     @handle('+', filter=navigation_mode)
     def _(event):
@@ -645,7 +638,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
                 substring = buffer.text[buffer.cursor_position + start: buffer.cursor_position + end]
 
                 if substring:
-                    buffer.set_clipboard(ClipboardData(substring))
+                    event.cli.clipboard.set_text(substring)
 
             def create(delete_only):
                 """ Create delete and change handlers. """
@@ -667,7 +660,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
 
                     # Set deleted/changed text to clipboard.
                     if deleted:
-                        buffer.set_clipboard(ClipboardData(''.join(deleted)))
+                        event.cli.clipboard.set_text(deleted)
 
                     # Only go back to insert mode in case of 'change'.
                     if not delete_only:

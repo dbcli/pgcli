@@ -11,15 +11,16 @@ import six
 import sys
 import weakref
 
+from .buffer import Buffer
+from .clipboard import Clipboard
 from .completion import CompleteEvent
 from .focus_stack import FocusStack
 from .history import History
+from .key_binding.bindings.emacs import load_emacs_bindings
 from .key_binding.input_processor import InputProcessor
 from .key_binding.registry import Registry
-from .key_binding.bindings.emacs import load_emacs_bindings
 from .layout import Layout
 from .layout.prompt import DefaultPrompt
-from .buffer import Buffer
 from .renderer import Renderer
 from .utils import EventHook, DummyContext
 
@@ -85,6 +86,7 @@ class CommandLineInterface(object):
                  buffers=None,
                  style=DefaultStyle,
                  key_bindings_registry=None,
+                 clipboard=None,
                  create_async_autocompleters=True,
                  renderer_factory=Renderer):
 
@@ -119,6 +121,9 @@ class CommandLineInterface(object):
 
         #: The `Layout` instance.
         self.layout = layout or Layout(before_input=DefaultPrompt())
+
+        #: The clipboard instance
+        self.clipboard = clipboard or Clipboard()
 
         #: The `Renderer` instance.
         self.renderer = renderer_factory(layout=self.layout,

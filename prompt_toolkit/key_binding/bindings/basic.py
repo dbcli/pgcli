@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.buffer import ClipboardData
 import prompt_toolkit.filters as filters
 
 from .utils import create_handle_decorator
@@ -173,7 +172,7 @@ def load_basic_bindings(registry, filter=None):
     def _(event):
         buffer = event.current_buffer
         deleted = buffer.delete(count=buffer.document.get_end_of_line_position())
-        buffer.set_clipboard(ClipboardData(deleted))
+        event.cli.clipboard.set_text(deleted)
 
     @handle(Keys.ControlL)
     def _(event):
@@ -191,7 +190,7 @@ def load_basic_bindings(registry, filter=None):
         """
         buffer = event.current_buffer
         deleted = buffer.delete_before_cursor(count=-buffer.document.get_start_of_line_position())
-        buffer.set_clipboard(ClipboardData(deleted))
+        event.cli.clipboard.set_text(deleted)
 
     @handle(Keys.ControlW, filter= ~has_selection)
     def _(event):
@@ -203,7 +202,7 @@ def load_basic_bindings(registry, filter=None):
 
         if pos:
             deleted = buffer.delete_before_cursor(count=-pos)
-            buffer.set_clipboard(ClipboardData(deleted))
+            event.cli.clipboard.set_text(deleted)
 
     @handle(Keys.PageUp, filter= ~has_selection)
     def _(event):

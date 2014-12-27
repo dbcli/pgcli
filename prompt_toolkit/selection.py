@@ -28,3 +28,7 @@ class SelectionState(object):
     def __init__(self, original_cursor_position=0, type=SelectionType.CHARACTERS):
         self.original_cursor_position = original_cursor_position
         self.type = type
+
+    def __repr__(self):
+        return 'SelectionState(original_cursor_position=%r, type=%r)' % (
+            self.original_cursor_position, self.type)
