@@ -36,7 +36,7 @@ class PGCompleter(Completer):
     # This will create a defaultdict which is initialized with a list that has
     # a '*' by default.
     columns = defaultdict(lambda: ['*'])
-    all_completions = set(keywords)
+    all_completions = set(keywords + functions)
 
     def __init__(self, smart_completion=True):
         super(self.__class__, self).__init__()
