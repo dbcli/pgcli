@@ -196,6 +196,17 @@ def load_python_bindings(key_bindings_manager, settings, always_multiline=False)
         """
         settings.currently_multiline = not settings.currently_multiline
 
+    @handle(Keys.F2, filter=filters.HasFocus('default') & ~has_selection)
+    def _(event):
+        """
+        Merge the previous entry from the history on top.
+        """
+        buffer = event.cli.buffers['default']
+
+        buffer.text = buffer._working_lines[buffer.working_index - 1] + '\n' + buffer.text
+        buffer._working_lines = buffer._working_lines[:buffer.working_index - 1] + buffer._working_lines[buffer.working_index:]
+        buffer.working_index -= 1
+
     @handle(Keys.Tab, filter= ~has_selection)
     def _(event):
         """
@@ -402,6 +413,7 @@ class PythonToolbar(Toolbar):
             # Emacs cut/copy keys.
             append((TB, '[Ctrl-W] Cut [Meta-W] Copy [Ctrl-Y] Paste [Ctrl-G] Cancel'))
         else:
+            append((TB.On, '[F2] Merge history '))
             if self.settings.paste_mode:
                 append((TB.On, '[F6] Paste mode (on)  '))
             else:
