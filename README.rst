@@ -102,7 +102,7 @@ If pip is not installed check if easy_install is available on the system.
 
     $ which easy_install
 
-    $ sudo easy_install pgcli
+    $ sudo easy_install install pgcli
 
 Linux:
 ======
