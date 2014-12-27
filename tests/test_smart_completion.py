@@ -59,3 +59,29 @@ def test_suggested_column_names_in_function(completer, complete_event):
         Completion(text='email', start_position=0),
         Completion(text='first_name', start_position=0),
         Completion(text='last_name', start_position=0)])
+
+def test_suggested_column_names_with_dot(completer, complete_event):
+    text = 'SELECT users. from users'
+    position = len('SELECT users.')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='*', start_position=0),
+        Completion(text='id', start_position=0),
+        Completion(text='email', start_position=0),
+        Completion(text='first_name', start_position=0),
+        Completion(text='last_name', start_position=0)])
+
+def test_suggested_column_names_with_alias(completer, complete_event):
+    text = 'SELECT u. from users u'
+    position = len('SELECT u.')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='*', start_position=0),
+        Completion(text='id', start_position=0),
+        Completion(text='email', start_position=0),
+        Completion(text='first_name', start_position=0),
+        Completion(text='last_name', start_position=0)])
