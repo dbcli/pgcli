@@ -7,9 +7,53 @@ def completer():
     import pgcli.pgcompleter as pgcompleter
     return pgcompleter.PGCompleter(smart_completion=False)
 
-def test_empty_string_completion(completer):
-    #print set(completer.get_completions(Document(text='')))
-    #print set(map(Completion, completer.all_completions))
-    #assert False
-    #assert set(map(Completion, completer.keywords)) == set(completer.get_completions(Document(text='')))
-    pass
+@pytest.fixture
+def complete_event():
+    from mock import Mock
+    return Mock()
+
+def test_empty_string_completion(completer, complete_event):
+    text = ''
+    position = 0
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert result == set(map(Completion, completer.all_completions))
+
+def test_select_keyword_completion(completer, complete_event):
+    text = 'SEL'
+    position = len('SEL')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert result == set([Completion(text='SELECT', start_position=-3)])
+
+def test_function_name_completion(completer, complete_event):
+    text = 'SELECT MA'
+    position = len('SELECT MA')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert result == set([
+        Completion(text='MAX', start_position=-2),
+        Completion(text='MAXEXTENTS', start_position=-2)])
+
+def test_function_name_completion(completer, complete_event):
+    text = 'SELECT MA'
+    position = len('SELECT MA')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert result == set([
+        Completion(text='MAX', start_position=-2),
+        Completion(text='MAXEXTENTS', start_position=-2)])
+
+def test_function_name_completion(completer, complete_event):
+    text = 'SELECT MA'
+    position = len('SELECT MA')
+    result = completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event)
+    assert result == set([
+        Completion(text='MAX', start_position=-2),
+        Completion(text='MAXEXTENTS', start_position=-2)])
