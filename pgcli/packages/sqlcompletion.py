@@ -1,6 +1,6 @@
 from __future__ import print_function
 import sqlparse
-from parseutils import last_word, extract_tables
+from parseutils import last_word, extract_tables, find_prev_keyword
 
 
 def suggest_type(full_text, text_before_cursor):
@@ -12,7 +12,7 @@ def suggest_type(full_text, text_before_cursor):
     """
 
     word_before_cursor = last_word(text_before_cursor,
-            include='all_punctuations')
+            include='most_punctuations')
 
     # If we've partially typed a word then word_before_cursor won't be an empty
     # string. In that case we want to remove the partially typed string before
@@ -20,30 +20,45 @@ def suggest_type(full_text, text_before_cursor):
     # partially typed string which renders the smart completion useless because
     # it will always return the list of keywords as completion.
     if word_before_cursor:
-        parsed = sqlparse.parse(
-                text_before_cursor[:-len(word_before_cursor)])
+        if word_before_cursor[-1] in ('(', '.'):
+            parsed = sqlparse.parse(text_before_cursor)
+        else:
+            parsed = sqlparse.parse(
+                    text_before_cursor[:-len(word_before_cursor)])
     else:
         parsed = sqlparse.parse(text_before_cursor)
 
-    last_token = ''
-    if parsed:
-        last_token = parsed[0].token_prev(len(parsed[0].tokens))
-        last_token = last_token.value if last_token else ''
+    # Need to check if `p` is not empty, since an empty string will result in
+    # an empty tuple.
+    p = parsed[0] if parsed else None
+    last_token = p and p.token_prev(len(p.tokens)) or ''
 
-    def is_function_word(word):
-        return word and len(word) > 1 and word[-1] == '('
+    return suggest_based_on_last_token(last_token, text_before_cursor, full_text)
 
-    if is_function_word(word_before_cursor):
-        return ('columns', extract_tables(full_text))
-    elif last_token.lower() in ('set', 'by', 'distinct'):
-        return ('columns', extract_tables(full_text))
-    elif last_token.lower() in ('select', 'where', 'having'):
-        return ('columns-and-functions', extract_tables(full_text))
-    elif last_token.lower() in ('from', 'update', 'into', 'describe'):
-        return ('tables', [])
-    elif last_token in ('d',):  # \d
-        return ('tables', [])
-    elif last_token.lower() in ('c', 'use'):  # \c
-        return ('databases', [])
+def suggest_based_on_last_token(token, text_before_cursor, full_text):
+    if isinstance(token, basestring):
+        token_v = token
     else:
-        return ('keywords', [])
+        token_v = token.value
+
+    if token_v.lower().endswith('('):
+        return 'columns', extract_tables(full_text)
+    if token_v.lower() in ('set', 'by', 'distinct'):
+        return 'columns', extract_tables(full_text)
+    elif token_v.lower() in ('select', 'where', 'having'):
+        return 'columns-and-functions', extract_tables(full_text)
+    elif token_v.lower() in ('from', 'update', 'into', 'describe'):
+        return 'tables', []
+    elif token_v in ('d',):  # \d
+        return 'tables', []
+    elif token_v.lower() in ('c', 'use'):  # \c
+        return 'databases', []
+    elif token_v.endswith(','):
+        prev_keyword = find_prev_keyword(text_before_cursor)
+        return suggest_based_on_last_token(prev_keyword, text_before_cursor, full_text)
+    elif token_v.endswith('.'):
+        current_alias = last_word(token_v[:-1])
+        tables = extract_tables(full_text, include_alias=True)
+        return 'columns', [tables.get(current_alias) or current_alias]
+    else:
+        return 'keywords', []
