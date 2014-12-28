@@ -114,6 +114,7 @@ def load_emacs_bindings(registry, filter=None):
         event.current_buffer.insert_text(event.data, overwrite=False)
 
     @handle(Keys.ControlY, filter= ~has_selection)
+    @handle(Keys.ControlX, 'r', 'y', filter= ~has_selection)
     def _(event):
         """
         Paste before cursor.
@@ -334,6 +335,7 @@ def load_emacs_bindings(registry, filter=None):
         event.current_buffer.exit_selection()
 
     @handle(Keys.ControlW, filter=has_selection)
+    @handle(Keys.ControlX, 'r', 'k', filter=has_selection)
     def _(event):
         """
         Cut selected text.
