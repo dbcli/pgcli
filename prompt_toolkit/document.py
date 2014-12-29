@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import re
+import six
 
 from .selection import SelectionType
 
@@ -39,6 +40,8 @@ class Document(object):
     __slots__ = ('text', 'cursor_position', 'selection')
 
     def __init__(self, text='', cursor_position=None, selection=None):
+        assert isinstance(text, six.text_type), 'Got %r' % text
+
         # By default, if no cursor position was given, make sure to put the
         # cursor position is at the end of the document. This is what makes
         # sense in most places.
@@ -48,6 +51,9 @@ class Document(object):
         self.text = text
         self.cursor_position = cursor_position
         self.selection = selection
+
+    def __repr__(self):
+        return 'Document(%r, %r)' % (self.text, self.cursor_position)
 
     @property
     def current_char(self):
@@ -149,7 +155,11 @@ class Document(object):
         Given a (row, col) tuple, return the corresponding index.
         (Row and col params are 0-based.)
         """
-        return len('\n'.join(self.lines[:row])) + len('\n') + col
+        result = len('\n'.join(self.lines[:row])) + (len('\n') if row > 0 else 0) + col
+
+        # Keep in range.
+        result = max(0, min(result, len(self.text) - 1))
+        return result
 
     @property
     def is_cursor_at_the_end(self):
@@ -254,7 +264,8 @@ class Document(object):
         except StopIteration:
             pass
 
-    def find_boundaries_of_current_word(self, WORD=False, include_leading_whitespace=False, include_trailing_whitespace=False):
+    def find_boundaries_of_current_word(self, WORD=False, include_leading_whitespace=False,
+                                        include_trailing_whitespace=False):
         """
         Return the relative boundaries (startpos, endpos) of the current word under the
         cursor. (This is at the current line, because line boundaries obviously

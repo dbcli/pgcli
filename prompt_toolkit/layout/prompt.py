@@ -2,30 +2,58 @@ from __future__ import unicode_literals
 
 from pygments.token import Token
 from ..enums import IncrementalSearchDirection
+from .utils import token_list_len
+from .processors import Processor
 
 __all__ = (
-    'Prompt',
     'DefaultPrompt',
 )
 
 
-class _ISearch(object):
-    def __init__(self, isearch_state):
-        self.isearch_state = isearch_state
+class DefaultPrompt(Processor):
+    """
+    Default prompt. This one shows the 'arg' and reverse search like
+    Bash/readline normally do.
+    """
+    def __init__(self, prompt='> '):
+        self.prompt = prompt
 
-    @property
-    def before(self):
-        if self.isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
+    def run(self, cli, buffer, tokens):
+        # Get text before cursor.
+        if buffer.isearch_state:
+            before = _get_isearch_tokens(buffer.isearch_state)
+
+        elif cli.input_processor.arg is not None:
+            before = _get_arg_tokens(cli)
+
+        else:
+            before = [(Token.Prompt, self.prompt)]
+
+        # Insert before buffer text.
+        shift_position = token_list_len(before)
+
+        return before + tokens, lambda i: i + shift_position
+
+    def invalidation_hash(self, cli, buffer):
+        return (
+            cli.input_processor.arg,
+            buffer.isearch_state,
+            buffer.isearch_state and buffer.isearch_state.isearch_text,
+        )
+
+
+def _get_isearch_tokens(isearch_state):
+    def before():
+        if isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
             text = 'reverse-i-search'
         else:
             text = 'i-search'
 
         return [(Token.Prompt.ISearch, '(%s)`' % text)]
 
-    @property
-    def text(self):
-        index = self.isearch_state.no_match_from_index
-        text = self.isearch_state.isearch_text
+    def text():
+        index = isearch_state.no_match_from_index
+        text = isearch_state.isearch_text
 
         if index is None:
             return [(Token.Prompt.ISearch.Text, text)]
@@ -35,67 +63,20 @@ class _ISearch(object):
                 (Token.Prompt.ISearch.Text.NoMatch, text[index:])
             ]
 
-    @property
-    def after(self):
+    def after():
         return [(Token.Prompt.ISearch, '`: ')]
 
-    def get_tokens(self):
-        return self.before + self.text + self.after
+    return before() + text() + after()
 
 
-class Prompt(object):
+def _get_arg_tokens(cli):
     """
-    Text to show before the actual input.
+    Tokens for the arg-prompt.
     """
-    def __init__(self, text='> ', token=Token.Prompt.BeforeInput):
-        self.text = text
-        self.token = token
+    arg = cli.input_processor.arg
 
-    def write(self, cli, screen):
-        screen.write_highlighted(self.tokens(cli))
-
-    def tokens(self, cli):
-        """
-        Tokens for the default prompt.
-        """
-        return [(self.token, self.text)]
-
-
-class DefaultPrompt(Prompt):
-    """
-    Default prompt. This one shows the 'arg' and reverse search like
-    Bash/readline normally do.
-    """
-    #: Class responsible for the composition of the i-search tokens.
-    isearch_composer = _ISearch
-
-    def tokens(self, cli):
-        """
-        List of (Token, text) tuples.
-        """
-        buffer = cli.buffers['default']
-
-        if buffer.isearch_state:
-            return self.isearch_prompt(buffer.isearch_state)
-
-        elif cli.input_processor.arg is not None:
-            return self.arg_prompt(cli.input_processor.arg)
-
-        else:
-            return super(DefaultPrompt, self).tokens(cli)
-
-    def arg_prompt(self, arg):
-        """
-        Tokens for the arg-prompt.
-        """
-        return [
-            (Token.Prompt.Arg, '(arg: '),
-            (Token.Prompt.Arg.Text, str(arg)),
-            (Token.Prompt.Arg, ') '),
-        ]
-
-    def isearch_prompt(self, isearch_state):
-        """
-        Tokens for the prompt when we go in reverse-i-search mode.
-        """
-        return self.isearch_composer(isearch_state).get_tokens()
+    return [
+        (Token.Prompt.Arg, '(arg: '),
+        (Token.Prompt.Arg.Text, str(arg)),
+        (Token.Prompt.Arg, ') '),
+    ]

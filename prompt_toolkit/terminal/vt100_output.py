@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 from pygments.formatters.terminal256 import Terminal256Formatter, EscapeSequence
 
+from prompt_toolkit.layout.screen import Size
+
 import array
 import fcntl
 import six
@@ -40,12 +42,12 @@ def _get_size(fileno):
 
 
 class Vt100_Output(object):
-    def __init__(self, stdout):
+    def __init__(self, stdout, use_alternate_screen=False):
         self._buffer = []
         self.stdout = stdout
+        self.use_alternate_screen = use_alternate_screen
 
     def get_size(self):
-        from ..renderer import Size
         rows, columns = _get_size(self.stdout.fileno())
         return Size(rows=rows, columns=columns)
 
@@ -58,6 +60,12 @@ class Vt100_Output(object):
         home.
         """
         self.write('\x1b[2J')
+
+    def enter_alternate_screen(self):
+        self.write('\x1b[?1049l')
+
+    def quit_alternate_screen(self):
+        self.write('\x1b[?1049h')
 
     def erase_end_of_line(self):
         """

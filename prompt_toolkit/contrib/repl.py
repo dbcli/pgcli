@@ -17,7 +17,7 @@ from pygments.formatters.terminal256 import Terminal256Formatter
 from pygments.lexers import PythonTracebackLexer
 
 from prompt_toolkit import AbortAction, Exit
-from prompt_toolkit.contrib.python_input import PythonCommandLineInterface, PythonStyle, AutoCompletionStyle
+from prompt_toolkit.contrib.python_input import PythonCommandLineInterface, PythonStyle
 from prompt_toolkit.utils import DummyContext
 
 from six import exec_
@@ -43,7 +43,7 @@ class PythonRepl(PythonCommandLineInterface):
         try:
             while True:
                 # Read
-                document = self.read_input(
+                document = self.cli.read_input(
                     on_abort=AbortAction.RETRY,
                     on_exit=AbortAction.RAISE_EXCEPTION)
                 self._process_document(document)
@@ -60,7 +60,7 @@ class PythonRepl(PythonCommandLineInterface):
         try:
             while True:
                 # Read
-                g = self.read_input_async(
+                g = self.cli.read_input_async(
                     on_abort=AbortAction.RETRY,
                     on_exit=AbortAction.RAISE_EXCEPTION)
 
@@ -87,7 +87,7 @@ class PythonRepl(PythonCommandLineInterface):
             except Exception as e:
                 self._handle_exception(e)
 
-            self.current_statement_index += 1
+            self.settings.current_statement_index += 1
 
     def _execute_startup(self, startup_paths):
         """
@@ -103,6 +103,9 @@ class PythonRepl(PythonCommandLineInterface):
         """
         Evaluate the line and print the result.
         """
+        stdout = self.cli.stdout
+        settings = self.settings
+
         if line[0:1] == '!':
             # Run as shell command
             os.system(line[1:])
@@ -111,9 +114,9 @@ class PythonRepl(PythonCommandLineInterface):
             try:
                 result = eval(line, self.get_globals(), self.get_locals())
                 locals = self.get_locals()
-                locals['_'] = locals['_%i' % self.current_statement_index] = result
+                locals['_'] = locals['_%i' % settings.current_statement_index] = result
 
-                out_mark = 'Out[%i]: ' % self.current_statement_index
+                out_mark = 'Out[%i]: ' % settings.current_statement_index
 
                 if result is not None:
                     try:
@@ -129,15 +132,17 @@ class PythonRepl(PythonCommandLineInterface):
                 line_sep = '\n' + ' ' * len(out_mark)
                 out_string = out_mark + line_sep.join(result_str.splitlines())
 
-                self.stdout.write(out_string)
+                self.cli.stdout.write(out_string)
             # If not a valid `eval` expression, run using `exec` instead.
             except SyntaxError:
                 exec_(line, self.get_globals(), self.get_locals())
 
-            self.stdout.write('\n')
-            self.stdout.flush()
+            stdout.write('\n\n')
+            stdout.flush()
 
     def _handle_exception(self, e):
+        stdout = self.cli.stdout
+
         # Instead of just calling ``traceback.format_exc``, we take the
         # traceback and skip the bottom calls of this framework.
         t, v, tb = sys.exc_info()
@@ -149,18 +154,19 @@ class PythonRepl(PythonCommandLineInterface):
         tb = ''.join(l)
 
         # Format exception and write to output.
-        self.stdout.write(highlight(tb, PythonTracebackLexer(), Terminal256Formatter()))
-        self.stdout.write('%s\n\n' % e)
-        self.stdout.flush()
+        stdout.write(highlight(tb, PythonTracebackLexer(), Terminal256Formatter()))
+        stdout.write('%s\n\n' % e)
+        stdout.flush()
 
     def _handle_keyboard_interrupt(self, e):
-        self.stdout.write('\rKeyboardInterrupt\n\n')
-        self.stdout.flush()
+        stdout = self.cli.stdout
+
+        stdout.write('\rKeyboardInterrupt\n\n')
+        stdout.flush()
 
 
 def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_colors=False,
-          autocompletion_style=AutoCompletionStyle.POPUP_MENU, startup_paths=None, always_multiline=False,
-          patch_stdout=False, return_asyncio_coroutine=False):
+          startup_paths=None, patch_stdout=False, return_asyncio_coroutine=False):
     """
     Call this to embed  Python shell at the current point in your program.
     It's similar to `IPython.embed` and `bpython.embed`. ::
@@ -179,18 +185,17 @@ def embed(globals=None, locals=None, vi_mode=False, history_filename=None, no_co
     def get_locals():
         return locals
 
-    cli = PythonRepl(get_globals, get_locals, vi_mode=vi_mode, history_filename=history_filename,
-                     style=(None if no_colors else PythonStyle),
-                     autocompletion_style=autocompletion_style, always_multiline=always_multiline)
+    repl = PythonRepl(get_globals, get_locals, vi_mode=vi_mode, history_filename=history_filename,
+                     style=(None if no_colors else PythonStyle))
 
-    patch_context = cli.patch_stdout_context() if patch_stdout else DummyContext()
+    patch_context = repl.cli.patch_stdout_context() if patch_stdout else DummyContext()
 
     if return_asyncio_coroutine:
         def coroutine():
             with patch_context:
-                for future in cli.asyncio_start_repl():
+                for future in repl.asyncio_start_repl():
                     yield future
         return coroutine()
     else:
         with patch_context:
-            cli.start_repl(startup_paths=startup_paths)
+            repl.start_repl(startup_paths=startup_paths)

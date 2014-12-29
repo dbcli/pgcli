@@ -12,19 +12,13 @@ Type for instance::
 This example shows how you can define the grammar of a regular language and how
 to use variables in this grammar with completers and tokens attached.
 """
-from prompt_toolkit import AbortAction
-from prompt_toolkit import CommandLineInterface
 from prompt_toolkit import Exit
 from prompt_toolkit.contrib.completers import WordCompleter
 
 from prompt_toolkit.contrib.regular_languages.compiler import compile
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
-
-from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.layout.prompt import DefaultPrompt
+from prompt_toolkit.contrib.shortcuts import get_input
 
 from pygments.style import Style
 from pygments.token import Token
@@ -65,27 +59,26 @@ class ExampleStyle(Style):
 
 if __name__ == '__main__':
     g = create_grammar()
-    cli = CommandLineInterface(
-        layout=Layout(before_input=DefaultPrompt('Calculate: '),
-                      lexer=GrammarLexer(g, tokens={
-                          'operator1': Token.Operator,
-                          'operator2': Token.Operator,
-                          'var1': Token.Number,
-                          'var2': Token.Number
-                      }),
-                      menus=[CompletionsMenu()]),
-        buffer=Buffer(completer=GrammarCompleter(g, {
-            'operator1': WordCompleter(operators1),
-            'operator2': WordCompleter(operators2),
-            })),
-        style=ExampleStyle)
+
+    lexer = GrammarLexer(g, tokens={
+        'operator1': Token.Operator,
+        'operator2': Token.Operator,
+        'var1': Token.Number,
+        'var2': Token.Number
+    })
+
+    completer = GrammarCompleter(g, {
+        'operator1': WordCompleter(operators1),
+        'operator2': WordCompleter(operators2),
+    })
+
 
     try:
         # REPL loop.
         while True:
             # Read input and parse the result.
-            document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-            m = g.match(document.text)
+            text = get_input('Calculate: ', lexer=lexer, completer=completer, style=ExampleStyle)
+            m = g.match(text)
             if m:
                 vars = m.variables()
             else:

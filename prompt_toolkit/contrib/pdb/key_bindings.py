@@ -9,7 +9,7 @@ def load_custom_pdb_key_bindings(registry):
     handle = registry.add_binding
 
     def return_text(event, text):
-        buffer = event.cli.buffers['default']
+        buffer = event.cli.buffers['default']  # XXX: only if the current buffer is a Python buffer.
         buffer.text = text
         buffer.cursor_position = len(text)
         event.cli.set_return_value(buffer.document)

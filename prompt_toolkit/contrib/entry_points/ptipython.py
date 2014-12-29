@@ -10,16 +10,11 @@ Usage:
 Options:
     --vi                    : Use Vi keybindings instead of Emacs bindings.
     --history=<filename>    : Path to history file.
-    --autocompletion=<type> : Type of autocompletion. This can be 'popup-menu'
-                              or 'horizontal-menu'.
-    --always-multiline      : Always enable multiline mode.
 """
 import docopt
 import os
 import six
 import sys
-
-from prompt_toolkit.contrib.python_input import AutoCompletionStyle
 
 
 def run():
@@ -43,18 +38,6 @@ def run():
     else:
         history_filename = os.path.expanduser('~/.ptpython_history')
 
-    # Autocompletion type
-    if a['--autocompletion'] in (
-            AutoCompletionStyle.POPUP_MENU,
-            AutoCompletionStyle.HORIZONTAL_MENU,
-            AutoCompletionStyle.NONE):
-        autocompletion_style = a['--autocompletion']
-    else:
-        autocompletion_style = AutoCompletionStyle.POPUP_MENU
-
-    # Always multiline
-    always_multiline = bool(a['--always-multiline'])
-
     # Add the current directory to `sys.path`.
     sys.path.append('.')
 
@@ -69,10 +52,7 @@ def run():
         user_ns = {}
 
         # Run interactive shell.
-        embed(vi_mode=vi_mode, history_filename=history_filename,
-              autocompletion_style=autocompletion_style,
-              always_multiline=always_multiline,
-              user_ns=user_ns)
+        embed(vi_mode=vi_mode, history_filename=history_filename, user_ns=user_ns)
 
 
 if __name__ == '__main__':

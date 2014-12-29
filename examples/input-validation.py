@@ -1,24 +1,14 @@
 #!/usr/bin/env python
 """
-Simple example of the layout options.
+Simple example of input validation.
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit import CommandLineInterface
-from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.prompt import DefaultPrompt
-from prompt_toolkit.layout.toolbars import ValidationToolbar
 from prompt_toolkit.validation import Validator, ValidationError
-from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.contrib.shortcuts import get_input
 
 from pygments.token import Token
 from pygments.style import Style
-
-
-layout = Layout(
-    before_input=DefaultPrompt(text='Give an e-mail address: '),
-    bottom_toolbars=[ValidationToolbar()]
-)
 
 
 class EmailValidator(Validator):
@@ -34,14 +24,8 @@ class TestStyle(Style):
 
 
 def main():
-    cli = CommandLineInterface(
-        layout=layout,
-        style=TestStyle,
-        buffer=Buffer(validator=EmailValidator()))
-
-    document = cli.read_input()
-    print('You said: ' + document.text)
-
+    text = get_input('Enter e-mail address: ', validator=EmailValidator(), style=TestStyle)
+    print('You said: %s' % text)
 
 if __name__ == '__main__':
     main()

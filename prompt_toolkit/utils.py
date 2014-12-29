@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import six
+from collections import defaultdict
 
 try:
     from wcwidth import wcwidth
@@ -52,15 +53,29 @@ class DummyContext(object):
         pass
 
 
-#: Cache for wcwidth sizes.
-_CHAR_SIZES_CACHE = [wcwidth(six.unichr(i)) for i in range(0, 64000)]
+class _CharSizesCache(dict):
+    """
+    Cache for wcwidth sizes.
+    """
+    def __missing__(self, string):
+        # Note: We use the `max(0, ...` because some non printable control
+        #       characters, like e.g. Ctrl-underscore get a -1 wcwidth value.
+        #       It can be possible that these characters end up in the input
+        #       text.
+        if len(string) == 1:
+            result = max(0, wcwidth(string))
+        else:
+            result = sum(max(0, wcwidth(c)) for c in string)
+
+        self[string] = result
+        return result
 
 
-def get_cwidth(c):
+_CHAR_SIZES_CACHE = _CharSizesCache()
+
+
+def get_cwidth(string):
     """
-    Return width of character. Wrapper around ``wcwidth``.
+    Return width of a string. Wrapper around ``wcwidth``.
     """
-    try:
-        return _CHAR_SIZES_CACHE[ord(c)]
-    except IndexError:
-        return wcwidth(c)
+    return _CHAR_SIZES_CACHE[string]

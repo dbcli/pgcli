@@ -55,7 +55,7 @@ class Win32Output(object):
         self._buffer.append(data)
 
     def get_size(self):
-        from ..renderer import Size
+        from prompt_toolkit.layout.screen import Size
         info = self._screen_buffer_info()
 
         # We take the width of the *visible* region as the size. Not the width
@@ -99,7 +99,7 @@ class Win32Output(object):
         """
         sbinfo = CONSOLE_SCREEN_BUFFER_INFO()
         success = self._winapi(windll.kernel32.GetConsoleScreenBufferInfo,
-                     self.hconsole, byref(sbinfo))
+                               self.hconsole, byref(sbinfo))
         if success:
             return sbinfo
 
@@ -207,7 +207,7 @@ class Win32Output(object):
 
     def get_rows_below_cursor_position(self):
         info = self._screen_buffer_info()
-        return info.srWindow.Bottom - info.dwCursorPosition.Y# - 1
+        return info.srWindow.Bottom - info.dwCursorPosition.Y  # - 1
 
     def scroll_buffer_to_prompt(self):
         """

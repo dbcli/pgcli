@@ -14,5 +14,9 @@ class PdbStyle(PythonStyle):
         Token.Toolbar.Status.Pdb.Lineno:               'bg:#222222 #ffffff',
         Token.Toolbar.Status.Pdb.Shortcut.Key:         'bg:#222222 #aaaaaa',
         Token.Toolbar.Status.Pdb.Shortcut.Description: 'bg:#222222 #aaaaaa',
+
+        Token.Toolbar.Location:    'underline',
+        Token.Toolbar.Location.Filename:    '',
+        Token.Toolbar.Location.Lineno:    '',
     }
     styles.update(PythonStyle.styles)

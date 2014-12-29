@@ -109,7 +109,8 @@ def load_basic_bindings(registry, filter=None):
 
     @handle(Keys.ControlC)
     def _(event):
-        event.cli.set_abort()
+        if event.current_buffer.returnable(event.cli):
+            event.cli.set_abort()
 
     @handle(Keys.ControlD)  # XXX: this is emacs behaviour.
     def _(event):
@@ -187,7 +188,7 @@ def load_basic_bindings(registry, filter=None):
         if buffer.is_multiline:
             buffer.newline()
         else:
-            if buffer.validate():
+            if event.current_buffer.returnable(event.cli) and buffer.validate():
                 event.current_buffer.add_to_history()
                 event.cli.set_return_value(buffer.document)
 

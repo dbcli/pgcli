@@ -10,9 +10,6 @@ Usage:
 Options:
     --vi                     : Use Vi keybindings instead of Emacs bindings.
     --history=<filename>     : Path to history file.
-    --autocompletion=<type>  : Type of autocompletion. This can be 'popup-menu'
-                               or 'horizontal-menu'.
-    --always-multiline       : Always enable multiline mode.
     --interactive=<filename> : Start interactive shell after executing this file.
 
 Other environment variables:
@@ -24,7 +21,6 @@ import six
 import sys
 
 from prompt_toolkit.contrib.repl import embed
-from prompt_toolkit.contrib.python_input import AutoCompletionStyle
 
 
 def run():
@@ -41,18 +37,6 @@ def run():
         history_filename = os.path.expanduser(a['--history'])
     else:
         history_filename = os.path.expanduser('~/.ptpython_history')
-
-    # Autocompletion type
-    if a['--autocompletion'] in (
-            AutoCompletionStyle.POPUP_MENU,
-            AutoCompletionStyle.HORIZONTAL_MENU,
-            AutoCompletionStyle.NONE):
-        autocompletion_style = a['--autocompletion']
-    else:
-        autocompletion_style = AutoCompletionStyle.POPUP_MENU
-
-    # Always multiline
-    always_multiline = bool(a['--always-multiline'])
 
     # Startup path
     startup_paths = []
@@ -73,8 +57,7 @@ def run():
     else:
         # Run interactive shell.
         embed(globals_, locals_, vi_mode=vi_mode, history_filename=history_filename,
-              no_colors=no_colors, autocompletion_style=autocompletion_style,
-              startup_paths=startup_paths, always_multiline=always_multiline)
+              no_colors=no_colors, startup_paths=startup_paths)
 
 if __name__ == '__main__':
     run()

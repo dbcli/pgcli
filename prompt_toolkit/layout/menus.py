@@ -1,123 +1,141 @@
 from __future__ import unicode_literals
 
 from pygments.token import Token
+from prompt_toolkit.filters import HasCompletions, IsDone, AlwaysOn
+from .controls import UIControl
+from .containers import Window
+from .dimension import LayoutDimension
+from .screen import Screen
 
 __all__ = (
     'CompletionsMenu',
 )
 
 
-class CompletionsMenu(object):
+class CompletionsMenuControl(UIControl):
     """
     Helper for drawing the complete menu to the screen.
     """
-    def __init__(self, max_height=5, buffer_name='default'):
-        self.max_height = max_height
-        self.buffer_name = buffer_name
+    def __init__(self):
         self.token = Token.Menu.Completions
 
-    def is_visible(self, cli):
-        """
-        True when this menu is visible.
-        """
-        return (cli.focus_stack.current == self.buffer_name and
-                bool(cli.buffers[self.buffer_name].complete_state))
+    def has_focus(self, cli):
+        return False
 
-    def get_height(self, complete_state):
-        """
-        Return the height of the menu. (Number of rows it will use.)
-        """
-        return min(self.max_height, len(complete_state.current_completions))
+    def preferred_width(self, cli):
+        complete_state = cli.current_buffer.complete_state
+        if complete_state:
+            menu_width = self._get_menu_width(500, complete_state)
+            menu_meta_width = self._get_menu_meta_width(500, complete_state)
 
-    def write(self, screen, complete_cursor_position, complete_state):
+            return menu_width + menu_meta_width + 1
+        else:
+            return 0
+
+    def preferred_height(self, cli, width):
+        complete_state = cli.current_buffer.complete_state
+        if complete_state:
+            return len(complete_state.current_completions)
+        else:
+            return 0
+
+    def create_screen(self, cli, width, height):
         """
         Write the menu to the screen object.
         """
-        completions = complete_state.current_completions
-        index = complete_state.complete_index  # Can be None!
+        screen = Screen(width)
 
-        # Get position of the menu.
-        y, x = complete_cursor_position
-        y += 1
-        x = max(0, x - 1)  # XXX: Don't draw it in the right margin!!!...
+        complete_state = cli.current_buffer.complete_state
+        if complete_state:
+            completions = complete_state.current_completions
+            index = complete_state.complete_index  # Can be None!
 
-        # Calculate width of completions menu.
-        menu_width = self.get_menu_width(screen, complete_state, x)
-        menu_meta_width = self.get_menu_meta_width(screen, complete_state, x + menu_width)
-        show_meta = self.show_meta(complete_state)
+            # Calculate width of completions menu.
+            menu_width = self._get_menu_width(width - 1, complete_state)
+            menu_meta_width = self._get_menu_meta_width(width - 1 - menu_width, complete_state)
+            show_meta = self._show_meta(complete_state)
 
-        # Decide which slice of completions to show.
-        if len(completions) > self.max_height and (index or 0) > self.max_height / 2:
-            slice_from = min(
-                (index or 0) - self.max_height // 2,  # In the middle.
-                len(completions) - self.max_height  # At the bottom.
-            )
-        else:
-            slice_from = 0
+            if menu_width + menu_meta_width + 1 < width:
+                menu_width += width - (menu_width + menu_meta_width + 1)
 
-        slice_to = min(slice_from + self.max_height, len(completions))
-
-        # Create a function which decides at which positions the scroll button should be shown.
-        def is_scroll_button(row):
-            items_per_row = float(len(completions)) / min(len(completions), self.max_height)
-            items_on_this_row_from = row * items_per_row
-            items_on_this_row_to = (row + 1) * items_per_row
-            return items_on_this_row_from <= (index or 0) < items_on_this_row_to
-
-        # Write completions to screen.
-        for i, c in enumerate(completions[slice_from:slice_to]):
-            is_current_completion = (i + slice_from == index)
-
-            if is_scroll_button(i):
-                button_token = self.token.ProgressButton
+            # Decide which slice of completions to show.
+            if len(completions) > height and (index or 0) > height / 2:
+                slice_from = min(
+                    (index or 0) - height // 2,  # In the middle.
+                    len(completions) - height  # At the bottom.
+                )
             else:
-                button_token = self.token.ProgressBar
+                slice_from = 0
 
-            tokens = ([(Token, ' ')] +
-                      self.get_menu_item_tokens(c, is_current_completion, menu_width) +
-                      (self.get_menu_item_meta_tokens(c, is_current_completion, menu_meta_width)
-                          if show_meta else []) +
-                      [(button_token, ' '), (Token, ' ')])
+            slice_to = min(slice_from + height, len(completions))
 
-            screen.write_highlighted_at_pos(y+i, x, tokens, z_index=10)
+            # Create a function which decides at which positions the scroll button should be shown.
+            def is_scroll_button(row):
+                items_per_row = float(len(completions)) / min(len(completions), height)
+                items_on_this_row_from = row * items_per_row
+                items_on_this_row_to = (row + 1) * items_per_row
+                return items_on_this_row_from <= (index or 0) < items_on_this_row_to
 
-    def show_meta(self, complete_state):
+            # Write completions to screen.
+            tokens = []
+
+            for i, c in enumerate(completions[slice_from:slice_to]):
+                is_current_completion = (i + slice_from == index)
+
+                if is_scroll_button(i):
+                    button_token = self.token.ProgressButton
+                else:
+                    button_token = self.token.ProgressBar
+
+                if tokens:
+                    tokens += [(Token, '\n')]
+                tokens += (self._get_menu_item_tokens(c, is_current_completion, menu_width) +
+                           (self._get_menu_item_meta_tokens(c, is_current_completion, menu_meta_width)
+                               if show_meta else []) +
+                           [(button_token, ' '), ])
+
+            screen.write_at_position(tokens, width)
+
+        return screen
+
+    def _show_meta(self, complete_state):
         """
         Return ``True`` if we need to show a column with meta information.
         """
         return any(c.display_meta for c in complete_state.current_completions)
 
-    def get_menu_width(self, screen, complete_state, x_pos):
+    def _get_menu_width(self, max_width, complete_state):
         """
         Return the width of the main column.
         """
-        max_display = int(screen.size.columns - x_pos - 6)
-        return min(max_display, max(len(c.display) for c in complete_state.current_completions))
+        return min(max_width, max(len(c.display) for c in complete_state.current_completions) + 2)
 
-    def get_menu_meta_width(self, screen, complete_state, x_pos):
+    def _get_menu_meta_width(self, max_width, complete_state):
         """
         Return the width of the meta column.
         """
-        max_display_meta = int(screen.size.columns - x_pos - 8)
-        return min(max_display_meta, max(len(c.display_meta) for c in complete_state.current_completions))
+        if self._show_meta(complete_state):
+            return min(max_width, max(len(c.display_meta) for c in complete_state.current_completions) + 2)
+        else:
+            return 0
 
-    def get_menu_item_tokens(self, completion, is_current_completion, width):
+    def _get_menu_item_tokens(self, completion, is_current_completion, width):
         if is_current_completion:
             token = self.token.Completion.Current
         else:
             token = self.token.Completion
 
-        text = self._trim_text(completion.display, width)
-        return [(token, ' %%-%is ' % width % text)]
+        text = self._trim_text(completion.display, width - 2)
+        return [(token, ' %%-%is ' % (width - 2) % text)]
 
-    def get_menu_item_meta_tokens(self, completion, is_current_completion, width):
+    def _get_menu_item_meta_tokens(self, completion, is_current_completion, width):
         if is_current_completion:
             token = self.token.Meta.Current
         else:
             token = self.token.Meta
 
-        text = self._trim_text(completion.display_meta, width)
-        return [(token, ' %%-%is ' % width % text or 'none')]
+        text = self._trim_text(completion.display_meta, width - 2)
+        return [(token, ' %%-%is ' % (width - 2) % text or 'none')]
 
     def _trim_text(self, text, max_width):
         """
@@ -129,3 +147,13 @@ class CompletionsMenu(object):
         else:
             return text
 
+
+class CompletionsMenu(Window):
+    def __init__(self, max_height=None, extra_filter=AlwaysOn()):
+        super(CompletionsMenu, self).__init__(
+            content=CompletionsMenuControl(),
+            width=LayoutDimension(min=8),
+            height=LayoutDimension(min=1, max=max_height),
+            # Show when there are completions but not at the point we are
+            # returning the input.
+            filter=HasCompletions() & ~IsDone() & extra_filter)

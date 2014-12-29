@@ -1,26 +1,25 @@
 from __future__ import unicode_literals, absolute_import
 from .commands import completion_hints
 from pygments.token import Token
+from prompt_toolkit.layout.processors import AfterInput
 
 
-class CompletionHint(object):
+class CompletionHint(AfterInput):
     """
     Completion hint to be shown after the input.
     """
-    def write(self, cli, screen):
-        if not (cli.is_exiting or cli.is_aborting or cli.is_returning):
-            screen.write_highlighted(self._tokens(cli))
+    def __init__(self):
+        def get_tokens(cli, buffer):
+            words = buffer.document.text.split()
+            if len(words) == 1:
+                word = words[0]
 
-    def _tokens(self, cli):
-        words = cli.buffers['default'].document.text.split()
-        if len(words) == 1:
-            word = words[0]
+                for commands, help in completion_hints:
+                    if word in commands:
+                        return self._highlight_completion(' ' + help)
 
-            for commands, help in completion_hints:
-                if word in commands:
-                    return self._highlight_completion(' ' + help)
-
-        return []
+            return []
+        super(CompletionHint, self).__init__(get_tokens)
 
     def _highlight_completion(self, text):
         """

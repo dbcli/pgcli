@@ -6,6 +6,9 @@ from prompt_toolkit.contrib.pdb import set_trace
 
 
 def fibo(n):
+    """
+    Calculate fibonaci number.
+    """
     if n == 10:
         set_trace()
 

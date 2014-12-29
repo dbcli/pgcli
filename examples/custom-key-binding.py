@@ -25,6 +25,10 @@ def main():
         """
         (Useless, but for demoing.)
         Typing 'xy' will insert 'z'.
+
+        Note that when you type for instance 'xa', the insertion of 'x' is
+        postponed until the 'a' is typed. because we don't know earlier whether
+        or not a 'y' will follow.
         """
         event.cli.current_buffer.insert_text('z')
 

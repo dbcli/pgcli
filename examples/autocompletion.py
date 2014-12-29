@@ -9,12 +9,8 @@ Press [Tab] to complete the current word.
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit import CommandLineInterface
-from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.prompt import DefaultPrompt
-from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.contrib.completers import WordCompleter
+from prompt_toolkit.contrib.shortcuts import get_input
 
 from pygments.token import Token
 from pygments.style import Style
@@ -66,16 +62,8 @@ class AnimalStyle(Style):
 
 
 def main():
-    cli = CommandLineInterface(
-        style=AnimalStyle,
-        layout=Layout(before_input=DefaultPrompt('Give some animals: '),
-                      menus=[CompletionsMenu()]),
-        buffer=Buffer(completer=animal_completer),
-        create_async_autocompleters=True)
-
-    print('Press tab to complete')
-    code_obj = cli.read_input()
-    print('You said: ' + code_obj.text)
+    text = get_input('Give some animals: ', completer=animal_completer, style=AnimalStyle)
+    print('You said: %s' % text)
 
 
 if __name__ == '__main__':

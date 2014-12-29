@@ -10,32 +10,29 @@ Usage::
 """
 from __future__ import unicode_literals, absolute_import
 from pygments.lexers import PythonLexer
-from pygments.token import Token
 
-from prompt_toolkit import CommandLineInterface, AbortAction, Exit
-
+from prompt_toolkit import AbortAction, Exit
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.contrib.python_input import PythonCompleter, PythonValidator, document_is_multiline_python, PythonToolbar, PythonCLISettings, load_python_bindings
+from prompt_toolkit.contrib.python_input import PythonCompleter, PythonValidator, document_is_multiline_python, PythonCLISettings, load_python_bindings, PythonCommandLineInterface
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
-from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
 from prompt_toolkit.contrib.regular_languages.validation import GrammarValidator
 from prompt_toolkit.document import Document
+from prompt_toolkit.filters import IsDone
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding.manager import KeyBindingManager
-from prompt_toolkit.keys import Keys
-from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.layout.toolbars import SystemToolbar, ValidationToolbar, ArgToolbar, SearchToolbar
+from prompt_toolkit.layout import HSplit, Window
+from prompt_toolkit.layout.controls import BufferControl
+from prompt_toolkit.completion import Completer
+from prompt_toolkit.validation import Validator
 
 from .commands import commands_with_help, shortcuts
 from .completers import PythonFileCompleter, PythonFunctionCompleter, BreakPointListCompleter, AliasCompleter, PdbCommandsCompleter
-from .completion_hints import CompletionHint
 from .grammar import create_pdb_grammar
-from .key_bindings import load_custom_pdb_key_bindings
+#from .key_bindings import load_custom_pdb_key_bindings
 from .layout import PdbLeftMargin
-from .style import PdbStyle
-from .toolbars import SourceCodeToolbar, PdbStatusToolbar
+from .toolbars import PdbShortcutsToolbar, FileLocationToolbar
 
+import linecache
 import os
 import pdb
 import sys
@@ -46,6 +43,29 @@ __all__ = (
     'PtPdb',
     'set_trace',
 )
+
+
+class DynamicCompleter(Completer):
+    """
+    Proxy to a real completer which we can change at runtime.
+    """
+    def __init__(self, get_completer_func):
+        self.get_completer_func = get_completer_func
+
+    def get_completions(self, document, complete_event):
+        for c in self.get_completer_func().get_completions(document, complete_event):
+            yield c
+
+
+class DynamicValidator(Validator):
+    """
+    Proxy to a real validator which we can change at runtime.
+    """
+    def __init__(self, get_validator_func):
+        self.get_validator_func = get_validator_func
+
+    def validate(self, document):
+        return self.get_validator_func().validate(document)
 
 
 class PtPdb(pdb.Pdb):
@@ -59,16 +79,56 @@ class PtPdb(pdb.Pdb):
 
         self.python_cli_settings = PythonCLISettings()
 
-        # The key bindings manager. We reuse it between Pdb calls, in order to
-        # remember vi/emacs state, etc..)
-        self.key_bindings_manager = self._create_key_bindings_manager(self.python_cli_settings)
+        self.completer = None
+        self.validator = None
 
-    def _create_key_bindings_manager(self, settings):
-        key_bindings_manager = KeyBindingManager()
-        load_custom_pdb_key_bindings(key_bindings_manager.registry)
-        load_python_bindings(key_bindings_manager, settings)
+        # def is_multiline(document):
+        #     if (self.python_cli_settings.paste_mode or
+        #             self.python_cli_settings.currently_multiline):
+        #         return True
 
-        return key_bindings_manager
+        #     match = g.match_prefix(document.text)
+        #     if match:
+        #         for v in match.variables().getall('python_code'):
+        #             if document_is_multiline_python(Document(v)):
+        #                 return True
+        #     return False
+
+        self.cli = PythonCommandLineInterface(
+                get_locals=lambda: self.curframe.f_locals,
+                get_globals=lambda: self.curframe.f_globals,
+                _completer=DynamicCompleter(lambda: self.completer),
+                _validator=DynamicValidator(lambda: self.validator),
+                _python_prompt_control=PdbLeftMargin(self.python_cli_settings,
+                                                     self._get_current_pdb_commands()),
+                _extra_buffers={'source_code': Buffer()},
+                _extra_sidebars=[
+                    HSplit([
+                        FileLocationToolbar(weakref.ref(self)),
+                        Window(
+                            BufferControl(
+                                buffer_name='source_code',
+                                lexer=PythonLexer,
+                            ),
+                            filter=~IsDone(),
+                        ),
+                        PdbShortcutsToolbar(weakref.ref(self)),
+                    ]),
+                ],
+        )
+            # XXX: TODO: add CompletionHint() after the input!!
+            # XXX: TODO: Add PDB key bindings again.
+
+#        # The key bindings manager. We reuse it between Pdb calls, in order to
+#        # remember vi/emacs state, etc..)
+#        self.key_bindings_manager = self._create_key_bindings_manager(self.python_cli_settings)
+#
+#    def _create_key_bindings_manager(self, settings):
+#        key_bindings_manager = KeyBindingManager()
+#        load_custom_pdb_key_bindings(key_bindings_manager.registry)  # XXX: implement
+#        load_python_bindings(key_bindings_manager, settings, None, None) # XXX: pass create tab functions
+#
+#        return key_bindings_manager
 
     def cmdloop(self, intro=None):
         """
@@ -122,75 +182,73 @@ class PtPdb(pdb.Pdb):
         """
         Read PDB input. Return input text.
         """
-        g = self._create_grammar()
-
         # Reset multiline/paste mode every time.
         self.python_cli_settings.paste_mode = False
         self.python_cli_settings.currently_multiline = False
 
         # Make sure not to start in Vi navigation mode.
-        self.key_bindings_manager.reset()
+#        self.key_bindings_manager.reset()
 
-        def is_multiline(document):
-            if (self.python_cli_settings.paste_mode or
-                    self.python_cli_settings.currently_multiline):
-                return True
+        # Set source code document.
+        self.cli.cli.buffers['source_code'].document = Document(self._get_source_code())
 
-            match = g.match_prefix(document.text)
-            if match:
-                for v in match.variables().getall('python_code'):
-                    if document_is_multiline_python(Document(v)):
-                        return True
-            return False
+        # Set up a new completer and validator for the new grammar.
+        g = self._create_grammar()
 
-        cli = CommandLineInterface(
-            layout=Layout(
-                left_margin=PdbLeftMargin(self._get_current_pdb_commands()),
-                show_tildes=True,
-                min_height=15,
-                lexer=GrammarLexer(
-                    g,
-                    tokens={'pdb_command': Token.PdbCommand},
-                    lexers={'python_code': PythonLexer}
-                ),
-                after_input=CompletionHint(),
-                menus=[CompletionsMenu()],
-                top_toolbars=[],
-                bottom_toolbars=[
-                    SystemToolbar(),
-                    ArgToolbar(),
-                    SearchToolbar(),
-                    SourceCodeToolbar(weakref.ref(self)),
-                    ValidationToolbar(),
-                    PdbStatusToolbar(weakref.ref(self), self.key_bindings_manager),
-                    PythonToolbar(self.key_bindings_manager, self.python_cli_settings),
-                ]),
-            buffer=Buffer(
-                completer=GrammarCompleter(g, completers={
-                    'enabled_breakpoint': BreakPointListCompleter(only_enabled=True),
-                    'disabled_breakpoint': BreakPointListCompleter(only_disabled=True),
-                    'alias_name': AliasCompleter(self),
-                    'python_code': PythonCompleter(lambda: self.curframe.f_globals, lambda: self.curframe.f_locals),
-                    'breakpoint': BreakPointListCompleter(),
-                    'pdb_command': PdbCommandsCompleter(self),
-                    'python_file': PythonFileCompleter(),
-                    'python_function': PythonFunctionCompleter(self),
-                }),
-                history=self._cli_history,
-                validator=GrammarValidator(g, {
-                    'python_code': PythonValidator()
-                }),
-                is_multiline=is_multiline,
-            ),
-            key_bindings_registry=self.key_bindings_manager.registry,
-            style=PdbStyle)
+        self.completer = GrammarCompleter(g, completers={
+            'enabled_breakpoint': BreakPointListCompleter(only_enabled=True),
+            'disabled_breakpoint': BreakPointListCompleter(only_disabled=True),
+            'alias_name': AliasCompleter(self),
+            'python_code': PythonCompleter(lambda: self.curframe.f_globals, lambda: self.curframe.f_locals),
+            'breakpoint': BreakPointListCompleter(),
+            'pdb_command': PdbCommandsCompleter(self),
+            'python_file': PythonFileCompleter(),
+            'python_function': PythonFunctionCompleter(self),
+        })
+        self.validator = GrammarValidator(g, {
+            'python_code': PythonValidator()
+        })
 
         try:
-            return cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION).text
+            return self.cli.cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION).text
         except Exit:
             # Turn Control-D key press into a 'quit' command.
             return 'q'
 
+    def _get_source_code(self):
+        """
+        Return source code around current line as string.
+        (Partly taken from Pdb.do_list.)
+        """
+        filename = self.curframe.f_code.co_filename
+        breaklist = self.get_file_breaks(filename)
+
+        first = max(1,  self.curframe.f_lineno - 3)
+        last = first + 12 # 6
+
+        result = []
+
+        for lineno in range(first, last+1):
+            line = linecache.getline(filename, lineno, self.curframe.f_globals)
+            if not line:
+                line = '[EOF]'
+                break
+            else:
+                s = repr(lineno).rjust(3)
+                if len(s) < 4:
+                    s = s + ' '
+                if lineno in breaklist:
+                    s = s + 'B'
+                else:
+                    s = s + ' '
+                if lineno == self.curframe.f_lineno:
+                    s = s + '->'
+                else:
+                    s = s + '  '
+
+                result.append(s + ' ' + line)
+
+        return ''.join(result)
 
 def set_trace():
     PtPdb().set_trace(sys._getframe().f_back)

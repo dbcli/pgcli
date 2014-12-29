@@ -54,6 +54,8 @@ class InputStream(object):
     :attr input_processor: :class:`~prompt_toolkit.key_binding.InputProcessor` instance.
     """
     # Lookup table of ANSI escape sequences for a VT100 terminal
+    # Hint: in order to know what sequences your terminal writes to stdin, run
+    #       "od -c" and start typing.
     mappings = {
         '\x1b': Keys.Escape,
 
@@ -132,14 +134,19 @@ class InputStream(object):
         '\x1b[32~': Keys.F18,
         '\x1b[33~': Keys.F19,
         '\x1b[34~': Keys.F20,
-        '\x1b[1;5D': Keys.ControlLeft,   # Cursor Mode
-        '\x1b[1;5C': Keys.ControlRight,  # Cursor Mode
         '\x1b[1;5A': Keys.ControlUp,     # Cursor Mode
         '\x1b[1;5B': Keys.ControlDown,   # Cursor Mode
-        '\x1bOD': Keys.ControlLeft,     # Application Mode (tmux)
-        '\x1bOC': Keys.ControlRight,    # Application Mode (tmux)
+        '\x1b[1;5C': Keys.ControlRight,  # Cursor Mode
+        '\x1b[1;5D': Keys.ControlLeft,   # Cursor Mode
         '\x1bOA': Keys.ControlUp,       # Application Mode (tmux)
         '\x1bOB': Keys.ControlDown,     # Application Mode (tmux)
+        '\x1bOC': Keys.ControlRight,    # Application Mode (tmux)
+        '\x1bOD': Keys.ControlLeft,     # Application Mode (tmux)
+
+        '\x1b[5A': Keys.ControlUp,
+        '\x1b[5B': Keys.ControlDown,
+        '\x1b[5C': Keys.ControlRight,
+        '\x1b[5D': Keys.ControlLeft,
 
         # Meta + arrow keys. Several terminals handle this differently.
         # The following sequences are for xterm and gnome-terminal.

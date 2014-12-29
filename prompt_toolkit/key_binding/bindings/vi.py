@@ -7,7 +7,7 @@ from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMod
 from prompt_toolkit.filters import Filter
 
 from .basic import load_basic_bindings
-from .utils import create_handle_decorator
+from .utils import create_handle_decorator, focus_next_buffer
 
 import prompt_toolkit.filters as filters
 import codecs
@@ -215,7 +215,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         In navigation mode, pressing enter will always return the input.
         """
-        if event.current_buffer.validate():
+        if event.current_buffer.returnable(event.cli) and event.current_buffer.validate():
             event.current_buffer.add_to_history()
             event.cli.set_return_value(event.current_buffer.document)
 
@@ -1008,6 +1008,13 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         # TODO
         pass
+
+    @handle(Keys.ControlW, Keys.ControlW, filter=navigation_mode)
+    def _(event):
+        """
+        Focus next buffer.
+        """
+        focus_next_buffer(event.cli)
 
 
 def load_vi_system_bindings(registry, vi_state, filter=None, system_buffer_name='system'):

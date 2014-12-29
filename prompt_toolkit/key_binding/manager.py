@@ -45,7 +45,7 @@ class SearchEnabled(ManagerFilter):
 
 class KeyBindingManager(object):
     def __init__(self, registry=None, enable_vi_mode=False,
-            enable_system_prompt=False, enable_search=True):
+                 enable_system_prompt=False, enable_search=True):
 
         self.registry = registry or Registry()
 
@@ -66,15 +66,17 @@ class KeyBindingManager(object):
 
         # Load all bindings in the registry with the correct filters.
         load_emacs_bindings(self.registry, emacs_mode_enabled)
-        load_emacs_search_bindings(self.registry,
-            emacs_mode_enabled & search_enabled)
-        load_emacs_system_bindings(self.registry,
-            emacs_mode_enabled & system_prompt_enabled)
+        load_emacs_search_bindings(
+            self.registry, emacs_mode_enabled & search_enabled)
+        load_emacs_system_bindings(
+            self.registry, emacs_mode_enabled & system_prompt_enabled)
 
         load_vi_bindings(self.registry, self.vi_state, vi_mode_enabled)
-        load_vi_search_bindings(self.registry, self.vi_state,
+        load_vi_search_bindings(
+            self.registry, self.vi_state,
             vi_mode_enabled & search_enabled)
-        load_vi_system_bindings(self.registry, self.vi_state,
+        load_vi_system_bindings(
+            self.registry, self.vi_state,
             vi_mode_enabled & system_prompt_enabled)
 
     def reset(self):

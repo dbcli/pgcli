@@ -12,6 +12,7 @@ from .selection import SelectionType, SelectionState
 from .utils import EventHook
 from .validation import ValidationError
 from .clipboard import ClipboardData
+from .filters import AlwaysOn
 
 import os
 import six
@@ -26,12 +27,12 @@ __all__ = (
 
 
 class CompletionState(object):
-    def __init__(self, original_document, current_completions=None):
+    """
+    Immutable class that contains a completion state.
+    """
+    def __init__(self, original_document, current_completions=None, complete_index=None):
         #: Document as it was when the completion started.
         self.original_document = original_document
-
-        self.original_text_before_cursor = original_document.text_before_cursor
-        self.original_text_after_cursor = original_document.text_after_cursor
 
         #: List of all the current Completion instances which are possible at
         #: this point.
@@ -39,38 +40,54 @@ class CompletionState(object):
 
         #: Position in the `current_completions` array.
         #: This can be `None` to indicate "no completion", the original text.
-        self.complete_index = 0  # Position in the `_completions` array.
+        self.complete_index = complete_index  # Position in the `_completions` array.
+
+    def __repr__(self):
+        return 'CompletionState(%r, <%r> completions, index=%r)' % (
+            self.original_document, len(self.current_completions), self.complete_index)
+
+    def go_to_index(self, index):
+        """
+        Create a new CompletionState object with the new index.
+        """
+        return CompletionState(self.original_document, self.current_completions, complete_index=index)
 
     @property
     def original_cursor_position(self):
         self.original_document.cursor_position
 
-    def get_new_text_and_position(self):
-        """ Return (new_text, new_cursor_position) for this completion. """
+    def new_text_and_position(self):
+        """
+        Return (new_text, new_cursor_position) for this completion.
+        """
         if self.complete_index is None:
             return self.original_document.text, self.original_document.cursor_position
         else:
+            original_text_before_cursor = self.original_document.text_before_cursor
+            original_text_after_cursor = self.original_document.text_after_cursor
+
             c = self.current_completions[self.complete_index]
             if c.start_position == 0:
-                before = self.original_text_before_cursor
+                before = original_text_before_cursor
             else:
-                before = self.original_text_before_cursor[:c.start_position]
+                before = original_text_before_cursor[:c.start_position]
 
-            new_text = before + c.text + self.original_text_after_cursor
+            new_text = before + c.text + original_text_after_cursor
             new_cursor_position = len(before) + len(c.text)
             return new_text, new_cursor_position
 
 
-class _IncrementalSearchState(object):
-    def __init__(self, original_cursor_position, original_working_index, direction):
-        self.isearch_text = ''
+class _IncrementalSearchState(object):  # XXX: make immutable.
+    def __init__(self, original_cursor_position, original_working_index, direction,
+                 isearch_text='', no_match_from_index=None):
+        self.isearch_text = isearch_text
 
         self.original_working_index = original_working_index
         self.original_cursor_position = original_cursor_position
 
         #: From this character index, we didn't found any more matches.
         #: This flag is updated every time we search for a new string.
-        self.no_match_from_index = None
+        self.no_match_from_index = no_match_from_index
 
         self.isearch_direction = direction
 
@@ -96,12 +113,15 @@ class Buffer(object):
                         This can also be a callable that takes a `Document` and
                         returns either True or False,
     """
-    def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='', is_multiline=None):
+    def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='',
+                 is_multiline=None, initial_document=None, focussable=AlwaysOn(), returnable=AlwaysOn()):
         assert is_multiline is None or callable(is_multiline) or isinstance(is_multiline, bool)
 
         self.completer = completer
         self.validator = validator
         self.tempfile_suffix = tempfile_suffix
+        self.focussable = focussable
+        self.returnable = returnable
 
         # Is multiline. (can be dynamic or static.)
         if is_multiline is not None:
@@ -124,7 +144,7 @@ class Buffer(object):
         self.onTextInsert = EventHook()
         self.onCursorPositionChanged = EventHook()
 
-        self.reset()
+        self.reset(initial_document=initial_document)
 
     @property
     def is_multiline(self):
@@ -134,6 +154,8 @@ class Buffer(object):
         """
         :param append_to_history: Append current input to history first.
         """
+        assert initial_document is None or isinstance(initial_document, Document)
+
         if append_to_history:
             self.add_to_history()
 
@@ -223,10 +245,19 @@ class Buffer(object):
     @property
     def document(self):
         """
-        Return :class:`.Document` instance from the current text and cursor
+        Return :class:`Document` instance from the current text and cursor
         position.
         """
         return Document(self.text, self.cursor_position, selection=self.selection_state)
+
+    @document.setter
+    def document(self, value):
+        """
+        Set :class:`Document` instance.
+        """
+        assert isinstance(value, Document)
+        self.cursor_position = value.cursor_position
+        self.text = value.text
 
     def save_to_undo_stack(self):
         """
@@ -507,13 +538,12 @@ class Buffer(object):
         Select a completion from the list of current completions.
         """
         assert self.complete_state
-        state = self.complete_state
 
         # Set new completion
-        self.complete_state.complete_index = index
+        state = self.complete_state.go_to_index(index)
 
         # Set text/cursor position
-        self.text, self.cursor_position = self.complete_state.get_new_text_and_position()
+        self.text, self.cursor_position = state.new_text_and_position()
 
         # (changing text/cursor position will unset complete_state.)
         self.complete_state = state

@@ -4,7 +4,7 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.enums import IncrementalSearchDirection
 
 from .basic import load_basic_bindings
-from .utils import create_handle_decorator
+from .utils import create_handle_decorator, focus_next_buffer
 
 import prompt_toolkit.filters as filters
 
@@ -152,7 +152,7 @@ def load_emacs_bindings(registry, filter=None):
         """
         Meta + Newline: always accept input.
         """
-        if event.current_buffer.validate():
+        if event.current_buffer.returnable(event.cli) and event.current_buffer.validate():
             event.current_buffer.add_to_history()
             event.cli.set_return_value(event.current_buffer.document)
 
@@ -300,6 +300,13 @@ def load_emacs_bindings(registry, filter=None):
     def _(event):
         event.current_buffer.undo()
 
+    @handle(Keys.ControlX, 'o')
+    def _(event):
+        """
+        Focus next buffer.
+        """
+        focus_next_buffer(event.cli)
+
     @handle(Keys.ControlX, Keys.ControlX)
     def _(event):
         """
@@ -366,7 +373,7 @@ def load_emacs_bindings(registry, filter=None):
         Move to the end of the input history.
         This is the line we are editing.
         """
-        buffer= event.current_buffer
+        buffer = event.current_buffer
         buffer.go_to_history(len(buffer._working_lines) - 1)
 
     @handle(Keys.Escape, Keys.Left)
@@ -435,6 +442,7 @@ def load_emacs_system_bindings(registry, filter=None, system_buffer_name='system
 
     @handle(Keys.Escape, filter=has_focus)
     @handle(Keys.ControlG, filter=has_focus)
+    @handle(Keys.ControlC, filter=has_focus)
     def _(event):
         """
         Cancel system prompt.
@@ -470,28 +478,7 @@ def load_emacs_search_bindings(registry, filter=None, search_buffer_name='search
 
         event.current_buffer.exit_isearch(restore_original_line=True)
         search_line.reset()
-
-    @handle(Keys.ControlH, filter=has_focus)
-    @handle(Keys.Backspace, filter=has_focus)
-    def _(event):
-        search_line = event.cli.buffers[search_buffer_name]
-        search_line.delete_before_cursor()
-
-        buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        buffer.set_search_text(search_line.text)
-
-    @handle(Keys.Any, filter=has_focus)
-    def _(event):
-        """
-        Insert isearch string.
-        """
-        # Insert text in search line.
-        search_line = event.cli.buffers[search_buffer_name]
-        search_line.insert_text(event.data)
-
-        # Set current search search text as line search text.
-        buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        buffer.set_search_text(search_line.text)
+        event.cli.focus_stack.pop()
 
     @handle(Keys.ControlJ, filter=has_focus)
     def _(event):

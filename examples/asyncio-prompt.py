@@ -18,9 +18,8 @@ possible. ::
     sys.stdout = cli.stdout_proxy()
 """
 from __future__ import unicode_literals
-from prompt_toolkit import CommandLineInterface, AbortAction, Exit, Abort
-from prompt_toolkit.layout.prompt import DefaultPrompt
-from prompt_toolkit.layout import Layout
+from prompt_toolkit import AbortAction, Exit, Abort
+from prompt_toolkit.contrib.shortcuts import create_cli
 
 from pygments.style import Style
 from pygments.token import Token
@@ -56,9 +55,7 @@ def interactive_shell():
     Coroutine that shows the interactive command line.
     """
     # Create interface. (style/layout is only for demonstration.)
-    cli = CommandLineInterface(
-        layout=Layout(before_input=DefaultPrompt(text='Say something inside the event loop: ')),
-        style=TestStyle)
+    cli = create_cli('Say something inside the event loop: ')
 
     # Patch stdout in something that will always print *above* the prompt when
     # something is written to stdout.
