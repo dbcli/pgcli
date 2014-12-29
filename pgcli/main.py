@@ -52,6 +52,7 @@ def cli(database, user, password, host, port):
     # Load config.
     config = load_config('~/.pgclirc')
     smart_completion = config.getboolean('main', 'smart_completion')
+    multi_line = config.getboolean('main', 'multi_line')
 
     less_opts = os.environ.get('LESS', '')
     if not less_opts:
@@ -81,7 +82,7 @@ def cli(database, user, password, host, port):
     for table in tables:
         completer.extend_column_names(table, pgexecute.columns(table))
     completer.extend_database_names(pgexecute.databases())
-    line = PGLine(always_multiline=False, completer=completer,
+    line = PGLine(always_multiline=multi_line, completer=completer,
             history=FileHistory(os.path.expanduser('~/.pgcli-history')))
     cli = CommandLineInterface(style=PGStyle, layout=layout, line=line,
             key_binding_factories=[emacs_bindings, pgcli_bindings])
