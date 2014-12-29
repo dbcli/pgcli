@@ -1,2 +1,3 @@
 [main]
 smart_completion = true
+multi_line = False
