@@ -52,6 +52,10 @@ class Keys(object):
     ControlSquareClose = Key('<C-SquareClose>')
     ControlCircumflex  = Key('<C-Circumflex>')
     ControlUnderscore  = Key('<C-Underscore>')
+    ControlLeft        = Key('<C-Left>')
+    ControlRight       = Key('<C-Right>')
+    ControlUp          = Key('<C-Up>')
+    ControlDown        = Key('<C-Down>')
 
     Up          = Key('<Up>')
     Down        = Key('<Down>')

@@ -128,6 +128,14 @@ class InputStream(object):
         '\x1b[32~': Keys.F18,
         '\x1b[33~': Keys.F19,
         '\x1b[34~': Keys.F20,
+        '\x1b[1;5D': Keys.ControlLeft,   # Cursor Mode
+        '\x1b[1;5C': Keys.ControlRight,  # Cursor Mode
+        '\x1b[1;5A': Keys.ControlUp,     # Cursor Mode
+        '\x1b[1;5B': Keys.ControlDown,   # Cursor Mode
+        '\x1bOD': Keys.ControlLeft,     # Application Mode (tmux)
+        '\x1bOC': Keys.ControlRight,    # Application Mode (tmux)
+        '\x1bOA': Keys.ControlUp,       # Application Mode (tmux)
+        '\x1bOB': Keys.ControlDown,     # Application Mode (tmux)
 
         # Meta + arrow keys. Several terminals handle this differently.
         # The following sequences are for xterm and gnome-terminal.
