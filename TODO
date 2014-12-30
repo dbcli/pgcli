@@ -1,5 +1,5 @@
 # vi: ft=vimwiki
-* [ ] Bottom status bar is cut-off in half pane. Figure out how to fix that.
+* [ ] Reading a config file is broken if an option doesn't exist. 
 * [ ] Column completion for nested sql.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
 * [ ] Add a few more special commands. (\l pattern, \di, \dp, \ds, \dv, \dy, \z etc)
