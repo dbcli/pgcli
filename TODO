@@ -1,6 +1,11 @@
 # vi: ft=vimwiki
-* [ ] Reading a config file is broken if an option doesn't exist. 
-* [ ] Column completion for nested sql.
+* [X] Reading a config file is broken if an option doesn't exist. 
+* [X] Change the Promise to Responsibility.
+* [ ] Add a page to keep track of changelog in pgcli.com
+* [X] Change the phrasing for multi-line to say 'In multi-line mode you can break your sql statement into multiple lines. A semi-colon is needed to end the line.'
+* [ ] Add the difference between smart completion and naive completion.
+* [ ] Add a word about C compilers and the dependence on libpq. Needs libpq-dev on linux.
+* [X] Column completion for nested sql.
 * [ ] Refactor to sqlcompletion to consume the text from left to right and use
 a state machine to suggest cols or tables instead of relying on hacks.
 * [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
