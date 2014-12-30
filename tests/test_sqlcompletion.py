@@ -81,15 +81,15 @@ def test_sub_select_table_name_completion():
             'SELECT * FROM (SELECT * FROM ')
     assert suggestion == ('tables', [])
 
-#def test_sub_select_col_name_completion():
-    #suggestion = suggest_type('SELECT * FROM (SELECT  FROM abc',
-            #'SELECT * FROM (SELECT ')
-    #assert suggestion == ('columns', ['abc'])
+def test_sub_select_col_name_completion():
+    suggestion = suggest_type('SELECT * FROM (SELECT  FROM abc',
+            'SELECT * FROM (SELECT ')
+    assert suggestion == ('columns-and-functions', ['abc'])
 
-#def test_sub_select_multiple_col_name_completion():
-    #suggestion = suggest_type('SELECT * FROM (SELECT a, FROM abc',
-            #'SELECT * FROM (SELECT a, ')
-    #assert suggestion == ('columns', ['abc'])
+def test_sub_select_multiple_col_name_completion():
+    suggestion = suggest_type('SELECT * FROM (SELECT a, FROM abc',
+            'SELECT * FROM (SELECT a, ')
+    assert suggestion == ('columns-and-functions', ['abc'])
 
 def test_sub_select_dot_col_name_completion():
     suggestion = suggest_type('SELECT * FROM (SELECT t. FROM tabl t',

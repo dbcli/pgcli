@@ -92,7 +92,8 @@ def extract_from_part(parsed, stop_at_punctuation=True):
         # So this check here is necessary.
         elif isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
-                if identifier.ttype is Keyword and identifier.value.upper() == 'FROM':
+                if (identifier.ttype is Keyword and
+                        identifier.value.upper() == 'FROM'):
                     tbl_prefix_seen = True
                     break
 
@@ -100,7 +101,12 @@ def extract_table_identifiers(token_stream):
     for item in token_stream:
         if isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
-                real_name = identifier.get_real_name()
+                # Sometimes Keywords (such as FROM ) are classified as
+                # identifiers which don't have the get_real_name() method.
+                try:
+                    real_name = identifier.get_real_name()
+                except AttributeError:
+                    continue
                 if real_name:
                     yield (real_name, identifier.get_alias() or real_name)
         elif isinstance(item, Identifier):
@@ -109,11 +115,8 @@ def extract_table_identifiers(token_stream):
                 yield (real_name, item.get_alias() or real_name)
         elif isinstance(item, Function):
             yield (item.get_name(), item.get_name())
-        # It's a bug to check for Keyword here, but in the example
-        # above some tables names are identified as keywords...
-        #elif item.ttype is Keyword:
-            #yield (item.value, item.value)
 
+# extract_tables is inspired from examples in the sqlparse lib.
 def extract_tables(sql, include_alias=False):
     parsed = sqlparse.parse(sql)
     if not parsed:
