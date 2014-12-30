@@ -216,6 +216,7 @@ def load_emacs_bindings(registry, filter=None):
         pass
 
     @handle(Keys.Escape, 'f')
+    @handle(Keys.ControlRight)
     def _(event):
         """
         Cursor to end of next word.
@@ -227,6 +228,7 @@ def load_emacs_bindings(registry, filter=None):
             buffer.cursor_position += pos
 
     @handle(Keys.Escape, 'b')
+    @handle(Keys.ControlLeft)
     def _(event):
         """
         Cursor to start of previous word.
