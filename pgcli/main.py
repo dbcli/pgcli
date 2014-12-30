@@ -50,7 +50,7 @@ def cli(database, user, password, host, port):
     write_default_config(default_config, '~/.pgclirc')
 
     # Load config.
-    config = load_config('~/.pgclirc')
+    config = load_config('~/.pgclirc', default_config)
     smart_completion = config.getboolean('main', 'smart_completion')
     multi_line = config.getboolean('main', 'multi_line')
 
