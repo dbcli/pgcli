@@ -67,14 +67,21 @@ def is_subselect(parsed):
             return True
     return False
 
-def extract_from_part(parsed):
+def extract_from_part(parsed, stop_at_punctuation=True):
     tbl_prefix_seen = False
     for item in parsed.tokens:
         if tbl_prefix_seen:
             if is_subselect(item):
-                for x in extract_from_part(item):
+                for x in extract_from_part(item, stop_at_punctuation):
                     yield x
-            elif item.ttype is Keyword or item.ttype is Punctuation:
+            # An incomplete nested select won't be recognized correctly as a
+            # sub-select. eg: 'SELECT * FROM (SELECT id FROM user'. This causes
+            # the second FROM to trigger this elif condition resulting in a
+            # StopIteration. So we need to ignore the keyword if the keyword
+            # FROM.
+            elif stop_at_punctuation and item.ttype is Punctuation:
+                raise StopIteration
+            elif item.ttype is Keyword and item.value.upper() != 'FROM':
                 raise StopIteration
             else:
                 yield item
@@ -94,21 +101,29 @@ def extract_table_identifiers(token_stream):
         if isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
                 real_name = identifier.get_real_name()
-                yield (real_name, identifier.get_alias() or real_name)
+                if real_name:
+                    yield (real_name, identifier.get_alias() or real_name)
         elif isinstance(item, Identifier):
             real_name = item.get_real_name()
-            yield (real_name, item.get_alias() or real_name)
+            if real_name:
+                yield (real_name, item.get_alias() or real_name)
         elif isinstance(item, Function):
             yield (item.get_name(), item.get_name())
         # It's a bug to check for Keyword here, but in the example
         # above some tables names are identified as keywords...
-        elif item.ttype is Keyword:
-            yield (item.value, item.value)
+        #elif item.ttype is Keyword:
+            #yield (item.value, item.value)
 
 def extract_tables(sql, include_alias=False):
-    if not sql:
+    parsed = sqlparse.parse(sql)
+    if not parsed:
         return []
-    stream = extract_from_part(sqlparse.parse(sql)[0])
+    # INSERT statements must stop looking for tables at the sign of first
+    # Punctuation. eg: INSERT INTO abc (col1, col2) VALUES (1, 2)
+    # abc is the table name, but if we don't stop at the first lparen, then
+    # we'll identify abc, col1 and col2 as table names.
+    insert_stmt = parsed[0].token_first().value.lower() == 'insert'
+    stream = extract_from_part(parsed[0], stop_at_punctuation=insert_stmt)
     if include_alias:
         return dict((alias, t) for t, alias in extract_table_identifiers(stream))
     else:
@@ -121,3 +136,7 @@ def find_prev_keyword(sql):
     for t in reversed(list(sqlparse.parse(sql)[0].flatten())):
         if t.is_keyword or t.value == '(':
             return t.value
+
+if __name__ == '__main__':
+    sql = 'select * from (select t. from tabl t'
+    print extract_tables(sql, True)

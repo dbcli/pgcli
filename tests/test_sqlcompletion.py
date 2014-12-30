@@ -48,7 +48,6 @@ def test_insert_into_lparen_partial_text_suggests_cols():
     assert suggestion == ('columns', ['abc'])
 
 def test_insert_into_lparen_comma_suggests_cols():
-    #import pdb; pdb.set_trace()
     suggestion = suggest_type('INSERT INTO abc (id,', 'INSERT INTO abc (id,')
     assert suggestion == ('columns', ['abc'])
 
@@ -71,3 +70,28 @@ def test_dot_col_comma_suggests_cols():
     suggestion = suggest_type('SELECT t1.a, t2. FROM tabl1 t1, tabl2 t2',
             'SELECT t1.a, t2.')
     assert suggestion == ('columns', ['tabl2'])
+
+#def test_sub_select_suggests_keyword():
+    #suggestion = suggest_type('SELECT * FROM (',
+            #'SELECT * FROM (')
+    #assert suggestion == ('keywords', [])
+
+def test_sub_select_table_name_completion():
+    suggestion = suggest_type('SELECT * FROM (SELECT * FROM ',
+            'SELECT * FROM (SELECT * FROM ')
+    assert suggestion == ('tables', [])
+
+#def test_sub_select_col_name_completion():
+    #suggestion = suggest_type('SELECT * FROM (SELECT  FROM abc',
+            #'SELECT * FROM (SELECT ')
+    #assert suggestion == ('columns', ['abc'])
+
+#def test_sub_select_multiple_col_name_completion():
+    #suggestion = suggest_type('SELECT * FROM (SELECT a, FROM abc',
+            #'SELECT * FROM (SELECT a, ')
+    #assert suggestion == ('columns', ['abc'])
+
+def test_sub_select_dot_col_name_completion():
+    suggestion = suggest_type('SELECT * FROM (SELECT t. FROM tabl t',
+            'SELECT * FROM (SELECT t.')
+    assert suggestion == ('columns', ['tabl'])
