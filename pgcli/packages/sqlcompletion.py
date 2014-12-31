@@ -42,6 +42,12 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         token_v = token.value
 
     if token_v.lower().endswith('('):
+        p = sqlparse.parse(text_before_cursor)[0]
+        if p.token_first().value.lower() == 'select':
+            # If the lparen is preceeded by a space chances are we're about to
+            # do a sub-select.
+            if last_word(text_before_cursor, 'all_punctuations').startswith('('):
+                return 'keywords', []
         return 'columns', extract_tables(full_text)
     if token_v.lower() in ('set', 'by', 'distinct'):
         return 'columns', extract_tables(full_text)

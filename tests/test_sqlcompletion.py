@@ -57,8 +57,7 @@ def test_partially_typed_col_name_suggests_col_names():
     assert suggestion == ('columns-and-functions', ['tabl'])
 
 def test_dot_suggests_cols_of_a_table():
-    suggestion = suggest_type('SELECT tabl. FROM tabl',
-            'SELECT tabl.')
+    suggestion = suggest_type('SELECT tabl. FROM tabl', 'SELECT tabl.')
     assert suggestion == ('columns', ['tabl'])
 
 def test_dot_suggests_cols_of_an_alias():
@@ -71,10 +70,13 @@ def test_dot_col_comma_suggests_cols():
             'SELECT t1.a, t2.')
     assert suggestion == ('columns', ['tabl2'])
 
-#def test_sub_select_suggests_keyword():
-    #suggestion = suggest_type('SELECT * FROM (',
-            #'SELECT * FROM (')
-    #assert suggestion == ('keywords', [])
+def test_sub_select_suggests_keyword():
+    suggestion = suggest_type('SELECT * FROM (', 'SELECT * FROM (')
+    assert suggestion == ('keywords', [])
+
+def test_sub_select_partial_text_suggests_keyword():
+    suggestion = suggest_type('SELECT * FROM (S', 'SELECT * FROM (S')
+    assert suggestion == ('keywords', [])
 
 def test_sub_select_table_name_completion():
     suggestion = suggest_type('SELECT * FROM (SELECT * FROM ',
