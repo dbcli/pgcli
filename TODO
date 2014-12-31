@@ -1,8 +1,14 @@
 # vi: ft=vimwiki
-* [ ] Add JOIN to the list of keywords and provide proper autocompletion for it. 
+* [o] Add JOIN to the list of keywords and provide proper autocompletion for it. 
 * [ ] Add a page to keep track of changelog in pgcli.com
-* [ ] Refactor to sqlcompletion to consume the text from left to right and use
-      a state machine to suggest cols or tables instead of relying on hacks.
+* [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
+* [ ] Extract tables should also look for table names after the JOIN keyword.
+        - SELECT * FROM some_very_long_table_name s JOIN another_fairly_long_name a ON s.id = a.num;
+* [ ] Test if the aliases are identified correctly if the AS keyword is used
+        - SELECT * FROM my_table AS m WHERE m.a > 5;
+* [ ] ON keyword should suggest aliases. This is something we don't currently support since a collection of aliases is not maintained.
+* [ ] Add a page to keep track of changelog in pgcli.com
+* [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
 * [ ] Add a few more special commands. (\l pattern, \di, \dp, \ds, \dv, \dy, \z etc)
 * [ ] Write a doc about how to add new pgspecial commands.(psql -E)
 * [ ] Show/hide docs for a statement using a keybinding.
