@@ -74,19 +74,21 @@ def extract_from_part(parsed, stop_at_punctuation=True):
             if is_subselect(item):
                 for x in extract_from_part(item, stop_at_punctuation):
                     yield x
+            elif stop_at_punctuation and item.ttype is Punctuation:
+                raise StopIteration
             # An incomplete nested select won't be recognized correctly as a
             # sub-select. eg: 'SELECT * FROM (SELECT id FROM user'. This causes
             # the second FROM to trigger this elif condition resulting in a
             # StopIteration. So we need to ignore the keyword if the keyword
             # FROM.
-            elif stop_at_punctuation and item.ttype is Punctuation:
-                raise StopIteration
-            elif item.ttype is Keyword and item.value.upper() != 'FROM':
+            # Also 'SELECT * FROM abc JOIN def' will trigger this elif
+            # condition. So we need to ignore the keyword JOIN.
+            elif item.ttype is Keyword and item.value.upper() not in ('FROM', 'JOIN'):
                 raise StopIteration
             else:
                 yield item
         elif ((item.ttype is Keyword or item.ttype is Keyword.DML) and
-                item.value.upper() in ('FROM', 'INTO', 'UPDATE', 'TABLE', )):
+                item.value.upper() in ('FROM', 'INTO', 'UPDATE', 'TABLE', 'JOIN',)):
             tbl_prefix_seen = True
         # 'SELECT a, FROM abc' will detect FROM as part of the column list.
         # So this check here is necessary.
@@ -118,6 +120,13 @@ def extract_table_identifiers(token_stream):
 
 # extract_tables is inspired from examples in the sqlparse lib.
 def extract_tables(sql, include_alias=False):
+    """Extract the table names from an SQL statment.
+
+    Returns a list of table names if include_alias=False (default).
+    If include_alias=True, then a dictionary is returned where the keys are
+    aliases and values are real table names.
+
+    """
     parsed = sqlparse.parse(sql)
     if not parsed:
         return []
