@@ -13,7 +13,7 @@ class PGCompleter(Completer):
             'FILE', 'FLOAT', 'FOR', 'FROM', 'FULL', 'GRANT', 'GROUP BY',
             'HAVING', 'IDENTIFIED', 'IMMEDIATE', 'IN', 'INCREMENT', 'INDEX',
             'INITIAL', 'INSERT INTO', 'INTEGER', 'INTERSECT', 'INTO', 'IS',
-            'JOIN' 'LEFT', 'LEVEL', 'LIKE', 'LOCK', 'LONG', 'MAXEXTENTS',
+            'JOIN', 'LEFT', 'LEVEL', 'LIKE', 'LOCK', 'LONG', 'MAXEXTENTS',
             'MINUS', 'MLSLABEL', 'MODE', 'MODIFY', 'NOAUDIT', 'NOCOMPRESS',
             'NOT', 'NOWAIT', 'NULL', 'NUMBER', 'OF', 'OFFLINE', 'ON', 'ONLINE',
             'OPTION', 'OR', 'ORDER BY', 'OUTER', 'PCTFREE', 'PRIMARY', 'PRIOR',
