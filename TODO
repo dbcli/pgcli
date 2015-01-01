@@ -1,11 +1,6 @@
 # vi: ft=vimwiki
-* [o] Add JOIN to the list of keywords and provide proper autocompletion for it. 
 * [ ] Add a page to keep track of changelog in pgcli.com
 * [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
-* [X] Extract tables should also look for table names after the JOIN keyword.
-        - SELECT * FROM some_very_long_table_name s JOIN another_fairly_long_name a ON s.id = a.num;
-* [X] Test if the aliases are identified correctly if the AS keyword is used
-        - SELECT * FROM my_table AS m WHERE m.a > 5;
 * [ ] ON keyword should suggest aliases. This is something we don't currently support since a collection of aliases is not maintained.
 * [ ] Add a page to keep track of changelog in pgcli.com
 * [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
@@ -16,3 +11,8 @@
 * [ ] Add logging.
 * [ ] Add a new trigger for M-/ that does naive completion.
 * [ ] New Feature List - Write the current version to config file. At launch if the version has changed, display the changelog between the two versions.
+* [X] Add JOIN to the list of keywords and provide proper autocompletion for it. 
+* [X] Extract tables should also look for table names after the JOIN keyword.
+        - SELECT * FROM some_very_long_table_name s JOIN another_fairly_long_name a ON s.id = a.num;
+* [X] Test if the aliases are identified correctly if the AS keyword is used
+        - SELECT * FROM my_table AS m WHERE m.a > 5;
