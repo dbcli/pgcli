@@ -38,8 +38,12 @@ def test_simple_update_table():
     assert tables == ['abc']
 
 def test_join_table():
-    tables = extract_tables('SELECT * FROM abc a JOIN def d ON s.id = a.num')
-    assert tables == ['abc', 'def']
+    expected = {'a': 'abc', 'd': 'def'}
+    tables = extract_tables('SELECT * FROM abc a JOIN def d ON a.id = d.num')
+    tables_aliases = extract_tables(
+            'SELECT * FROM abc a JOIN def d ON a.id = d.num', True)
+    assert tables == expected.values()
+    assert tables_aliases == expected
 
 def test_join_as_table():
     expected = {'m': 'my_table'}

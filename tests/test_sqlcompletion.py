@@ -66,6 +66,7 @@ def test_dot_suggests_cols_of_an_alias():
     assert suggestion == ('columns', ['tabl1'])
 
 def test_dot_col_comma_suggests_cols():
+    import pdb; pdb.set_trace()
     suggestion = suggest_type('SELECT t1.a, t2. FROM tabl1 t1, tabl2 t2',
             'SELECT t1.a, t2.')
     assert suggestion == ('columns', ['tabl2'])
@@ -97,3 +98,18 @@ def test_sub_select_dot_col_name_completion():
     suggestion = suggest_type('SELECT * FROM (SELECT t. FROM tabl t',
             'SELECT * FROM (SELECT t.')
     assert suggestion == ('columns', ['tabl'])
+
+def test_join_suggests_tables():
+    suggestion = suggest_type('SELECT * FROM abc a JOIN ',
+            'SELECT * FROM abc a JOIN ')
+    assert suggestion == ('tables', [])
+
+def test_join_alias_dot_suggests_cols1():
+    suggestion = suggest_type('SELECT * FROM abc a JOIN def d ON a.',
+            'SELECT * FROM abc a JOIN def d ON a.')
+    assert suggestion == ('columns', ['abc'])
+
+def test_join_alias_dot_suggests_cols2():
+    suggestion = suggest_type('SELECT * FROM abc a JOIN def d ON a.',
+            'SELECT * FROM abc a JOIN def d ON a.id = d.')
+    assert suggestion == ('columns', ['def'])

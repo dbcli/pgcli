@@ -1,5 +1,6 @@
 from __future__ import print_function
 import sqlparse
+from sqlparse.sql import Comparison
 from parseutils import last_word, extract_tables, find_prev_keyword
 
 
@@ -39,7 +40,16 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
     if isinstance(token, basestring):
         token_v = token
     else:
-        token_v = token.value
+        # If 'token' is a Comparison type such as
+        # 'select * FROM abc a JOIN def d ON a.id = d.'. Then calling
+        # token.value on the comparison type will only return the lhs of the
+        # comparison. In this case a.id. So we need to do token.tokens to get
+        # both sides of the comparison and pick the last token out of that
+        # list.
+        if isinstance(token, Comparison):
+            token_v = token.tokens[-1].value
+        else:
+            token_v = token.value
 
     if token_v.lower().endswith('('):
         p = sqlparse.parse(text_before_cursor)[0]
@@ -53,7 +63,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         return 'columns', extract_tables(full_text)
     elif token_v.lower() in ('select', 'where', 'having'):
         return 'columns-and-functions', extract_tables(full_text)
-    elif token_v.lower() in ('from', 'update', 'into', 'describe'):
+    elif token_v.lower() in ('from', 'update', 'into', 'describe', 'join'):
         return 'tables', []
     elif token_v in ('d',):  # \d
         return 'tables', []
