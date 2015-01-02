@@ -1,7 +1,7 @@
 Python Prompt Toolkit
 =====================
 
-|Build Status|
+|Build Status|  |PyPI|
 
 ``prompt_toolkit`` is a Library for building powerful interactive command lines
 in Python. It ships with a nice interactive Python shell (called ``ptpython``)
@@ -186,3 +186,7 @@ Special thanks to
 
 .. |Build Status| image:: https://api.travis-ci.org/jonathanslenders/python-prompt-toolkit.svg?branch=master
     :target: https://travis-ci.org/jonathanslenders/python-prompt-toolkit#
+
+.. |PyPI| image:: https://pypip.in/version/prompt-toolkit/badge.svg
+    :target: https://pypi.python.org/pypi/prompt-toolkit/
+    :alt: Latest Version
