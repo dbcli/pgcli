@@ -65,7 +65,7 @@ def test_suggested_column_names(completer, complete_event):
         Completion(text='email', start_position=0),
         Completion(text='first_name', start_position=0),
         Completion(text='last_name', start_position=0)] +
-        map(Completion, completer.functions))
+        list(map(Completion, completer.functions)))
 
 def test_suggested_column_names_in_function(completer, complete_event):
     """
@@ -144,7 +144,7 @@ def test_suggested_multiple_column_names(completer, complete_event):
         Completion(text='email', start_position=0),
         Completion(text='first_name', start_position=0),
         Completion(text='last_name', start_position=0)] +
-        map(Completion, completer.functions))
+        list(map(Completion, completer.functions)))
 
 def test_suggested_multiple_column_names_with_alias(completer, complete_event):
     """

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 import sqlparse
 from sqlparse.sql import IdentifierList, Identifier, Function
@@ -151,4 +152,4 @@ def find_prev_keyword(sql):
 
 if __name__ == '__main__':
     sql = 'select * from (select t. from tabl t'
-    print extract_tables(sql, True)
+    print (extract_tables(sql, True))

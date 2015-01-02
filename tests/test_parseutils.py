@@ -42,12 +42,13 @@ def test_join_table():
     tables = extract_tables('SELECT * FROM abc a JOIN def d ON a.id = d.num')
     tables_aliases = extract_tables(
             'SELECT * FROM abc a JOIN def d ON a.id = d.num', True)
-    assert tables == expected.values()
+    assert tables == sorted(expected.values())
     assert tables_aliases == expected
 
 def test_join_as_table():
     expected = {'m': 'my_table'}
     assert extract_tables(
-            'SELECT * FROM my_table AS m WHERE m.a > 5') == expected.values()
+            'SELECT * FROM my_table AS m WHERE m.a > 5') == \
+                    sorted(expected.values())
     assert extract_tables(
             'SELECT * FROM my_table AS m WHERE m.a > 5', True) == expected
