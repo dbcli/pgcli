@@ -27,7 +27,7 @@ Features:
 
 
 Feel free to create tickets for bugs and feature requests, and create pull
-requests if you have a nice patches that you would like to share with others.
+requests if you have nice patches that you would like to share with others.
 
 About Windows support
 *********************
