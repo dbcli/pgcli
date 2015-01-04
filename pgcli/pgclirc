@@ -1,3 +1,19 @@
+# vi: ft=dosini
 [main]
+
+# Enables context sensitive auto-completion. If this is disabled the all
+# possible completions will be listed.
 smart_completion = True
+
+# Multi-line mode allows breaking up the sql statements into multiple lines. If
+# this is set to True, then the end of the statements must have a semi-colon.
+# If this is set to False then sql statements can't be split into multiple
+# lines. End of line (return) is considered as the end of the statement.
 multi_line = False
+
+# log_file location.
+log_file = ~/.pgcli.log
+
+# Default log level. Possible values: "CRITICAL", "ERROR", "WARNING", "INFO"
+# and "DEBUG".
+log_level = INFO

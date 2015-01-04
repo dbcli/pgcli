@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import os
+import logging
 
 import click
 
@@ -25,6 +26,8 @@ from .pgline import PGLine
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 
+_logger = logging.getLogger(__name__)
+
 @click.command()
 @click.option('-h', '--host', default='', help='Host address of the '
         'postgres database.')
@@ -35,7 +38,6 @@ from .key_bindings import pgcli_bindings
 @click.option('-W', '--password', is_flag=True, help='Force password prompt.')
 @click.argument('database', envvar='USER')
 def cli(database, user, password, host, port):
-
     if password:
         passwd = click.prompt('Password', hide_input=True, show_default=False,
                 type=str)
@@ -53,15 +55,12 @@ def cli(database, user, password, host, port):
     config = load_config('~/.pgclirc', default_config)
     smart_completion = config.getboolean('main', 'smart_completion')
     multi_line = config.getboolean('main', 'multi_line')
+    log_file = config.get('main', 'log_file')
+    log_level = config.get('main', 'log_level')
 
-    less_opts = os.environ.get('LESS', '')
-    if not less_opts:
-        os.environ['LESS'] = '-RXF'
+    initialize_logging(log_file, log_level)
 
-    if 'X' not in less_opts:
-        os.environ['LESS'] += 'X'
-    if 'F' not in less_opts:
-        os.environ['LESS'] += 'F'
+    original_less_opts = setup_less_opts()
 
     # Connect to the database.
     try:
@@ -122,9 +121,8 @@ def cli(database, user, password, host, port):
                             pgexecute.columns(table))
     except Exit:
         print ('GoodBye!')
-    finally:  # Reset the less opts back to normal.
-        if less_opts:
-            os.environ['LESS'] = less_opts
+    finally:  # Reset the less opts back to original.
+        os.environ['LESS'] = original_less_opts
 
 def need_completion_refresh(sql):
     try:
@@ -132,3 +130,36 @@ def need_completion_refresh(sql):
         return first_token in ('alter', 'create', 'use', '\c', 'drop')
     except Exception:
         return False
+
+def initialize_logging(log_file, log_level):
+
+    level_map = {'CRITICAL': logging.CRITICAL,
+                 'ERROR': logging.ERROR,
+                 'WARNING': logging.WARNING,
+                 'INFO': logging.INFO,
+                 'DEBUG': logging.DEBUG
+                 }
+
+    handler = logging.FileHandler(os.path.expanduser(log_file))
+
+    formatter = logging.Formatter('%(asctime)s (%(process)d/%(threadName)s) '
+              '%(name)s %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
+    _logger.addHandler(handler)
+    _logger.setLevel(level_map[log_level.upper()])
+
+    _logger.debug('Initializing pgcli logging.')
+    _logger.debug('Log file "%s".' % log_file)
+
+def setup_less_opts():
+    less_opts = os.environ.get('LESS', '')
+    if not less_opts:
+        os.environ['LESS'] = '-RXF'
+
+    if 'X' not in less_opts:
+        os.environ['LESS'] += 'X'
+    if 'F' not in less_opts:
+        os.environ['LESS'] += 'F'
+
+    return less_opts
