@@ -63,6 +63,7 @@ class PGCompleter(Completer):
         self.all_completions.update(columns)
 
     def reset_completions(self):
+        self.databases = []
         self.tables = []
         self.columns = defaultdict(lambda: ['*'])
         self.all_completions = set(self.keywords)

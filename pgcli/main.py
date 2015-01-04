@@ -60,12 +60,20 @@ def cli(database, user, password, host, port):
 
     initialize_logging(log_file, log_level)
 
-    original_less_opts = setup_less_opts()
+    original_less_opts = adjust_less_opts()
+
+    _logger.debug('Launch Params: \n'
+            '\tdatabase: %r'
+            '\tuser: %r'
+            '\tpassword: %r'
+            '\thost: %r'
+            '\tport: %r', database, user, passwd, host, port)
 
     # Connect to the database.
     try:
         pgexecute = PGExecute(database, user, passwd, host, port)
     except Exception as e:  # Connecting to a database could fail.
+        _logger.debug('Database connection failed: %r.', e.message)
         click.secho(e.message, err=True, fg='red')
         exit(1)
     layout = Layout(before_input=DefaultPrompt('%s> ' % pgexecute.dbname),
@@ -76,11 +84,7 @@ def cli(database, user, password, host, port):
     completer = PGCompleter(smart_completion)
     completer.extend_special_commands(CASE_SENSITIVE_COMMANDS.keys())
     completer.extend_special_commands(NON_CASE_SENSITIVE_COMMANDS.keys())
-    tables = pgexecute.tables()
-    completer.extend_table_names(tables)
-    for table in tables:
-        completer.extend_column_names(table, pgexecute.columns(table))
-    completer.extend_database_names(pgexecute.databases())
+    refresh_completions(pgexecute, completer)
     line = PGLine(always_multiline=multi_line, completer=completer,
             history=FileHistory(os.path.expanduser('~/.pgcli-history')))
     cli = CommandLineInterface(style=PGStyle, layout=layout, line=line,
@@ -94,34 +98,33 @@ def cli(database, user, password, host, port):
             # The reason we check here instead of inside the pgexecute is
             # because we want to raise the Exit exception which will be caught
             # by the try/except block that wraps the pgexecute.run() statement.
-            if (document.text.strip().lower() == 'exit'
-                    or document.text.strip().lower() == 'quit'
-                    or document.text.strip() == '\q'
-                    or document.text.strip() == ':q'):
+            if quit_command(document.text):
                 raise Exit
             try:
+                _logger.debug('sql: %r', document.text)
                 res = pgexecute.run(document.text)
                 output = []
                 for rows, headers, status in res:
+                    _logger.debug("headers: %r", headers)
+                    _logger.debug("rows: %r", rows)
                     if rows:
                         output.append(tabulate(rows, headers, tablefmt='psql'))
                     if status:  # Only print the status if it's not None.
                         output.append(status)
+                    _logger.debug("status: %r", status)
                     click.echo_via_pager('\n'.join(output))
             except Exception as e:
+                _logger.debug("sql: %r, error: %r", document.text, e.message)
                 click.secho(e.message, err=True, fg='red')
 
             # Refresh the table names and column names if necessary.
-            if document.text and need_completion_refresh(document.text):
+            if need_completion_refresh(document.text):
                 completer.reset_completions()
-                tables = pgexecute.tables()
-                completer.extend_table_names(tables)
-                for table in tables:
-                    completer.extend_column_names(table,
-                            pgexecute.columns(table))
+                refresh_completions(pgexecute, completer)
     except Exit:
         print ('GoodBye!')
     finally:  # Reset the less opts back to original.
+        _logger.debug('Restoring env var LESS to %r.', original_less_opts)
         os.environ['LESS'] = original_less_opts
 
 def need_completion_refresh(sql):
@@ -132,7 +135,6 @@ def need_completion_refresh(sql):
         return False
 
 def initialize_logging(log_file, log_level):
-
     level_map = {'CRITICAL': logging.CRITICAL,
                  'ERROR': logging.ERROR,
                  'WARNING': logging.WARNING,
@@ -152,8 +154,9 @@ def initialize_logging(log_file, log_level):
     _logger.debug('Initializing pgcli logging.')
     _logger.debug('Log file "%s".' % log_file)
 
-def setup_less_opts():
+def adjust_less_opts():
     less_opts = os.environ.get('LESS', '')
+    _logger.debug('Original value for LESS env var: %r', less_opts)
     if not less_opts:
         os.environ['LESS'] = '-RXF'
 
@@ -163,3 +166,16 @@ def setup_less_opts():
         os.environ['LESS'] += 'F'
 
     return less_opts
+
+def quit_command(sql):
+    return (sql.strip().lower() == 'exit'
+            or sql.strip().lower() == 'quit'
+            or sql.strip() == '\q'
+            or sql.strip() == ':q')
+
+def refresh_completions(pgexecute, completer):
+    tables = pgexecute.tables()
+    completer.extend_table_names(tables)
+    for table in tables:
+        completer.extend_column_names(table, pgexecute.columns(table))
+    completer.extend_database_names(pgexecute.databases())

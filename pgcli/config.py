@@ -1,4 +1,4 @@
-from shutil import copyfile
+import shutil
 from os.path import expanduser, exists
 try:
     from ConfigParser import SafeConfigParser as ConfigParser
@@ -21,10 +21,8 @@ def load_config(filename, default_filename=None):
 
 
 def write_default_config(source, destination, overwrite=False):
-    #import pdb; pdb.set_trace()
-    #set_trace()
     destination = expanduser(destination)
     if not overwrite and exists(destination):
         return
 
-    copyfile(source, destination)
+    shutil.copyfile(source, destination)
