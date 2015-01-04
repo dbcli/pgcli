@@ -678,7 +678,7 @@ def sql_name_pattern(pattern):
 def show_help(cur, arg, verbose):  # All the parameters are ignored.
     headers = ['Command', 'Description']
     result = []
-    for command, value in CASE_SENSITIVE_COMMANDS.iteritems():
+    for command, value in sorted(CASE_SENSITIVE_COMMANDS.iteritems()):
         if value[1]:
             result.append(value[1])
     return [(result, headers, None)]
