@@ -1,27 +1,14 @@
+import logging
 import psycopg2
 from .packages import pgspecial
+
+_logger = logging.getLogger(__name__)
 
 def _parse_dsn(dsn, default_user, default_password, default_host,
         default_port):
     """
     This function parses a postgres url to get the different components.
 
-    >>> _parse_dsn('postgres://user:password@host:5432/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
-    ('dbname', 'user', 'password', 'host', '5432')
-    >>> _parse_dsn('postgres://user@host:5432/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
-    ('dbname', 'user', 'fpasswd', 'host', '5432')
-    >>> _parse_dsn('postgres://localhost:5432/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
-    ('dbname', 'fuser', 'fpasswd', 'localhost', '5432')
-    >>> _parse_dsn('postgres://user:password@host/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
-    ('dbname', 'user', 'password', 'host', '1234')
-    >>> _parse_dsn('postgres://user@host/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
-    ('dbname', 'user', 'fpasswd', 'host', '1234')
-    >>> _parse_dsn('postgres://localhost/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
-    ('dbname', 'fuser', 'fpasswd', 'localhost', '1234')
-    >>> _parse_dsn('postgres:///dbname', 'fuser', 'fpasswd', 'fhost', '1234')
-    ('dbname', 'fuser', 'fpasswd', 'fhost', '1234')
-    >>> _parse_dsn('postgresql://user:password@host:5432/dbname', 'fuser', 'fpasswd', 'fhost', '1234')
-    ('dbname', 'user', 'password', 'host', '5432')
     """
 
     user = password = host = port = dbname = None
@@ -45,6 +32,10 @@ def _parse_dsn(dsn, default_user, default_password, default_host,
     host = host or default_host
     port = port or default_port
     dbname = dbname or dsn
+
+    _logger.debug('Parsed connection params:'
+            'dbname: %r, user: %r, password: %r, host: %r, port: %r',
+            dbname, user, password, host, port)
 
     return (dbname, user, password, host, port)
 
