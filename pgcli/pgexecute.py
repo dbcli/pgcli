@@ -59,7 +59,14 @@ class PGExecute(object):
     columns_query = '''SELECT column_name FROM information_schema.columns WHERE
     table_name =%s;'''
 
-    databases_query = '''SELECT datname FROM pg_database;'''
+    databases_query = """SELECT d.datname as "Name",
+       pg_catalog.pg_get_userbyid(d.datdba) as "Owner",
+       pg_catalog.pg_encoding_to_char(d.encoding) as "Encoding",
+       d.datcollate as "Collate",
+       d.datctype as "Ctype",
+       pg_catalog.array_to_string(d.datacl, E'\n') AS "Access privileges"
+    FROM pg_catalog.pg_database d
+    ORDER BY 1;"""
 
     def __init__(self, database, user, password, host, port):
         (self.dbname, self.user, self.password, self.host, self.port) = \
