@@ -1,6 +1,8 @@
 A REPL for Postgres 
 -------------------
 
+|Build Status|  |PyPI|
+
 This is a postgres client that does auto-completion and syntax highlighting.
 
 .. image:: screenshots/image02.png
@@ -159,3 +161,11 @@ Thanks to `psycopg <http://initd.org/psycopg/>`_ for providing a rock solid
 interface to Postgres dataabase.
 
 Thanks to all the beta testers and contributors for your time and patience. :)
+
+
+.. |Build Status| image:: https://api.travis-ci.org/amjith/pgcli.svg?branch=master
+    :target: https://travis-ci.org/amjith/pgcli
+
+.. |PyPI| image:: https://pypip.in/version/pgcli/badge.svg
+    :target: https://pypi.python.org/pypi/pgcli/
+    :alt: Latest Version
