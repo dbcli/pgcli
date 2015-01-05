@@ -10,7 +10,6 @@ class PGLine(Line):
         """
         Dynamically determine whether we're in multiline mode.
         """
-
         if not self.always_multiline:
             return False
 
@@ -22,7 +21,6 @@ class PGLine(Line):
     @is_multiline.setter
     def is_multiline(self, value):
         pass
-
 
 def _multiline_exception(text):
     text = text.strip()
