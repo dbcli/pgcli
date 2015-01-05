@@ -89,14 +89,10 @@ class PGCompleter(Completer):
                 document.text_before_cursor)
 
         if category == 'columns':
-            scoped_cols = []
-            for table in scope:
-                scoped_cols.extend(self.columns[table])
+            scoped_cols = self.populate_scoped_cols(scope)
             return self.find_matches(word_before_cursor, scoped_cols)
         elif category == 'columns-and-functions':
-            scoped_cols = []
-            for table in scope:
-                scoped_cols.extend(self.columns[table])
+            scoped_cols = self.populate_scoped_cols(scope)
             return self.find_matches(word_before_cursor, scoped_cols +
                     self.functions)
         elif category == 'tables':
@@ -106,3 +102,10 @@ class PGCompleter(Completer):
         elif category == 'keywords':
             return self.find_matches(word_before_cursor, self.keywords +
                     self.special_commands)
+
+    def populate_scoped_cols(self, tables):
+        scoped_cols = []
+        for table in tables:
+            scoped_cols.extend(self.columns[table])
+
+        return scoped_cols
