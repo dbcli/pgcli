@@ -48,7 +48,6 @@ def cli(database, user, password, host, port):
     package_root = os.path.dirname(package_root)
 
     default_config = os.path.join(package_root, 'pgclirc')
-    # Write default config.
     write_default_config(default_config, '~/.pgclirc')
 
     # Load config.

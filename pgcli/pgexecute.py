@@ -84,22 +84,27 @@ class PGExecute(object):
         # that cannot be offloaded to `pgspecial` lib. Because we have to
         # change the database connection that we're connected to.
         if sql.startswith('\c') or sql.lower().startswith('use'):
+            _logger.debug('Database change command detected.')
             try:
                 dbname = sql.split()[1]
             except:
+                _logger.debug('Failed to switch. DB missing: %r', dbname)
                 raise RuntimeError('Database name missing.')
             self.conn = psycopg2.connect(database=dbname,
                     user=self.user, password=self.password, host=self.host,
                     port=self.port)
             self.dbname = dbname
             self.conn.autocommit = True
+            _logger.debug('Successfully switched to DB: %r', dbname)
             return [(None, None, 'You are now connected to database "%s" as '
                     'user "%s"' % (self.dbname, self.user))]
 
         with self.conn.cursor() as cur:
             try:
+                _logger.debug('Trying a pgspecial command. sql: %r', sql)
                 return pgspecial.execute(cur, sql)
             except KeyError:
+                _logger.debug('Regular sql statement. sql: %r', sql)
                 cur.execute(sql)
 
             # cur.description will be None for operations that do not return
@@ -108,6 +113,7 @@ class PGExecute(object):
                 headers = [x[0] for x in cur.description]
                 return [(cur.fetchall(), headers, cur.statusmessage)]
             else:
+                _logger.debug('No rows in result.')
                 return [(None, None, cur.statusmessage)]
 
     def tables(self):
