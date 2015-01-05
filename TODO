@@ -2,14 +2,12 @@
 * [ ] Add a page to keep track of changelog in pgcli.com
 * [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
 * [ ] ON keyword should suggest aliases. This is something we don't currently support since a collection of aliases is not maintained.
-* [ ] Add a page to keep track of changelog in pgcli.com
 * [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
 * [ ] Add a few more special commands. (\l pattern, \dp, \ds, \dy, \z etc)
 * [ ] Refactor pgspecial.py to a class. 
 * [ ] Write a doc about how to add new pgspecial commands.(psql -E)
 * [ ] Show/hide docs for a statement using a keybinding.
 * [ ] Check how to add the name of the table before printing the table.
-* [ ] Add logging.
 * [ ] Add a new trigger for M-/ that does naive completion.
 * [ ] New Feature List - Write the current version to config file. At launch if the version has changed, display the changelog between the two versions.
 * [X] Add JOIN to the list of keywords and provide proper autocompletion for it. 
@@ -17,3 +15,4 @@
         - SELECT * FROM some_very_long_table_name s JOIN another_fairly_long_name a ON s.id = a.num;
 * [X] Test if the aliases are identified correctly if the AS keyword is used
         - SELECT * FROM my_table AS m WHERE m.a > 5;
+* [X] Add logging.
