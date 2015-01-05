@@ -1,8 +1,11 @@
 from __future__ import print_function
+import logging
 from collections import defaultdict
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
+
+_logger = logging.getLogger(__name__)
 
 class PGCompleter(Completer):
     keywords = ['ACCESS', 'ADD', 'ALL', 'ALTER TABLE', 'AND', 'ANY', 'AS',
@@ -89,17 +92,23 @@ class PGCompleter(Completer):
                 document.text_before_cursor)
 
         if category == 'columns':
+            _logger.debug("Completion: 'columns' Scope: %r", scope)
             scoped_cols = self.populate_scoped_cols(scope)
             return self.find_matches(word_before_cursor, scoped_cols)
         elif category == 'columns-and-functions':
+            _logger.debug("Completion: 'columns-and-functions' Scope: %r",
+                    scope)
             scoped_cols = self.populate_scoped_cols(scope)
             return self.find_matches(word_before_cursor, scoped_cols +
                     self.functions)
         elif category == 'tables':
+            _logger.debug("Completion: 'tables' Scope: %r", scope)
             return self.find_matches(word_before_cursor, self.tables)
         elif category == 'databases':
+            _logger.debug("Completion: 'databases' Scope: %r", scope)
             return self.find_matches(word_before_cursor, self.databases)
         elif category == 'keywords':
+            _logger.debug("Completion: 'keywords' Scope: %r", scope)
             return self.find_matches(word_before_cursor, self.keywords +
                     self.special_commands)
 
@@ -107,5 +116,4 @@ class PGCompleter(Completer):
         scoped_cols = []
         for table in tables:
             scoped_cols.extend(self.columns[table])
-
         return scoped_cols
