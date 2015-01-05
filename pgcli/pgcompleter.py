@@ -75,13 +75,14 @@ class PGCompleter(Completer):
             if item.startswith(text) or item.startswith(text.upper()):
                 yield Completion(item, -len(text))
 
-    def get_completions(self, document, complete_event):
-
+    def get_completions(self, document, complete_event, smart_completion=None):
         word_before_cursor = document.get_word_before_cursor(WORD=True)
+        if smart_completion is None:
+            smart_completion = self.smart_completion
 
         # If smart_completion is off then match any word that starts with
         # 'word_before_cursor'.
-        if not self.smart_completion:
+        if not smart_completion:
             return self.find_matches(word_before_cursor, self.all_completions)
 
         category, scope = suggest_type(document.text,
