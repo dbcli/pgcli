@@ -14,7 +14,7 @@ setup(
         packages=find_packages('.'),
         install_requires = [
             'docopt',
-            'jedi>=0.8.1-final0',
+            'jedi>=0.8.1',
             'pygments',
             'six>=1.8.0',
             'wcwidth',
