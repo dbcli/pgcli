@@ -178,3 +178,6 @@ def refresh_completions(pgexecute, completer):
     for table in tables:
         completer.extend_column_names(table, pgexecute.columns(table))
     completer.extend_database_names(pgexecute.databases())
+
+if __name__ == "__main__":
+    cli()
