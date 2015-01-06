@@ -1,5 +1,6 @@
 # vi: ft=vimwiki
 * [ ] Add a page to keep track of changelog in pgcli.com
+* [ ] Add coverage.
 * [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
 * [ ] ON keyword should suggest aliases. This is something we don't currently support since a collection of aliases is not maintained.
 * [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
