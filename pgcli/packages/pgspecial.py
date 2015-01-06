@@ -557,7 +557,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
                         elif category == 3:
                             status.append("Triggers firing on replica only:")
                         status.append('\n')
-                        have_heading = true;
+                        have_heading = True
 
                     #/* Everything after "TRIGGER" is echoed verbatim */
                     tgdef = row[1]
