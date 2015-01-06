@@ -25,7 +25,7 @@ setup(
         install_requires=[
             'Click',
             'prompt_toolkit',
-            'psycopg2',
+            'psycopg2 >= 2.5.4',
             'sqlparse',
             ],
         entry_points='''
