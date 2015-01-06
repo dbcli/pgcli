@@ -1,8 +1,14 @@
 import logging
 import psycopg2
+import psycopg2.extensions
 from .packages import pgspecial
 
 _logger = logging.getLogger(__name__)
+
+# Cast all database input to unicode automatically.
+# See http://initd.org/psycopg/docs/usage.html#unicode-handling for more info.
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 def _parse_dsn(dsn, default_user, default_password, default_host,
         default_port):
