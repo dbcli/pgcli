@@ -942,6 +942,25 @@ def load_vi_bindings(registry, vi_state, filter=None):
         return CursorRegion(
             event.current_buffer.document.last_non_blank_of_current_line_position())
 
+    @change_delete_move_yank_handler('g', 'e')
+    def _(event):
+        """
+        Go to last character of previous word.
+        'ge', 'cge', 'yge', etc..
+        """
+        return CursorRegion(
+            event.current_buffer.document.find_start_of_previous_word(count=event.arg) or 0)
+
+    @change_delete_move_yank_handler('g', 'E')
+    def _(event):
+        """
+        Go to last character of previous WORD.
+        'gE', 'cgE', 'ygE', etc..
+        """
+        return CursorRegion(
+            event.current_buffer.document.find_start_of_previous_word(
+                count=event.arg, WORD=True) or 0)
+
     @handle(Keys.Any, filter=navigation_mode)
     @handle(Keys.Any, filter=selection_mode)
     def _(event):
