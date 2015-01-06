@@ -933,6 +933,15 @@ def load_vi_bindings(registry, vi_state, filter=None):
         # Move to the top of the input.
         return CursorRegion(event.current_buffer.document.home_position)
 
+    @change_delete_move_yank_handler('g', '_')
+    def _(event):
+        """
+        Go to last non-blank of line.
+        'g_', 'cg_', 'yg_', etc..
+        """
+        return CursorRegion(
+            event.current_buffer.document.last_non_blank_of_current_line_position())
+
     @handle(Keys.Any, filter=navigation_mode)
     @handle(Keys.Any, filter=selection_mode)
     def _(event):

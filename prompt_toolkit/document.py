@@ -475,6 +475,12 @@ class Document(object):
         """ Relative position for the end of this line. """
         return len(self.current_line_after_cursor)
 
+    def last_non_blank_of_current_line_position(self):
+        """
+        Relative position for the last non blank character of this line.
+        """
+        return len(self.current_line_after_cursor.rstrip())
+
     def get_column_cursor_position(self, column):
         """
         Return the relative cursor position for this column at the current
