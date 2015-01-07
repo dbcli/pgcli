@@ -65,7 +65,7 @@ class PGExecute(object):
     FROM pg_catalog.pg_database d
     ORDER BY 1;"""
 
-    def __init__(self, database, user, password, host, port):
+    def __init__(self, database=None, user=None, password=None, host=None, port=None):
         (self.dbname, self.user, self.password, self.host, self.port) = \
                 _parse_dsn(database, default_user=user,
                         default_password=password, default_host=host,

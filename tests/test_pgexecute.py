@@ -1,4 +1,5 @@
 from pgcli.pgexecute import _parse_dsn
+from utils import *
 
 def test__parse_dsn():
     test_cases = [
@@ -32,9 +33,13 @@ def test__parse_dsn():
 
             # Full dsn with all components but with postgresql:// prefix.
             ('postgresql://user:password@host:5432/dbname',
-                ('dbname', 'user', 'password', 'host', '5432')),
-
+                ('dbname', 'user', 'password', 'host', '5432'))
             ]
 
     for dsn, expected in test_cases:
         assert _parse_dsn(dsn, 'fuser', 'fpasswd', 'fhost', '1234') == expected
+
+@dbtest
+def test_conn(cursor, executor):
+    data = executor.run('''create table test(id integer)''')
+    assert not data
