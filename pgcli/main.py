@@ -74,8 +74,8 @@ def cli(database, user, password, host, port):
     try:
         pgexecute = PGExecute(database, user, passwd, host, port)
     except Exception as e:  # Connecting to a database could fail.
-        _logger.debug('Database connection failed: %r.', e.message)
-        click.secho(e.message, err=True, fg='red')
+        _logger.debug('Database connection failed: %r.', e)
+        click.secho(str(e), err=True, fg='red')
         exit(1)
     layout = Layout(before_input=DefaultPrompt('%s> ' % pgexecute.dbname),
             menus=[CompletionsMenu(max_height=10)],
