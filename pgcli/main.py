@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import os
+import traceback
 import logging
 
 import click
@@ -113,8 +114,9 @@ def cli(database, user, password, host, port):
                     _logger.debug("status: %r", status)
                     click.echo_via_pager('\n'.join(output))
             except Exception as e:
-                _logger.debug("sql: %r, error: %r", document.text, e.message)
-                click.secho(e.message, err=True, fg='red')
+                _logger.error("sql: %r, error: %r", document.text, str(e))
+                _logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg='red')
 
             # Refresh the table names and column names if necessary.
             if need_completion_refresh(document.text):
