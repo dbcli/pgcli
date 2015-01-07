@@ -1,4 +1,5 @@
 from pgcli.pgexecute import _parse_dsn
+from textwrap import dedent
 from utils import *
 
 def test__parse_dsn():
@@ -40,6 +41,13 @@ def test__parse_dsn():
         assert _parse_dsn(dsn, 'fuser', 'fpasswd', 'fhost', '1234') == expected
 
 @dbtest
-def test_conn(cursor, executor):
-    data = executor.run('''create table test(id integer)''')
-    assert not data
+def test_conn(executor):
+    run(executor, '''create table test(a text)''')
+    run(executor, '''insert into test values('abc')''')
+    assert run(executor, '''select * from test''') == dedent("""\
+        +-----+
+        | a   |
+        |-----|
+        | abc |
+        +-----+
+        SELECT 1""")
