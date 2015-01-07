@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import os
 import logging
-
 import click
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
@@ -26,23 +25,44 @@ from .pgline import PGLine
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 
+from urlparse import urlparse
+from getpass import getuser
+from psycopg2 import OperationalError
+
 _logger = logging.getLogger(__name__)
 
 @click.command()
-@click.option('-h', '--host', default='', envvar='PGHOST', 
+@click.option('-h', '--host', default='localhost', envvar='PGHOST',
         help='Host address of the postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
         'postgres instance is listening.', envvar='PGPORT')
-@click.option('-U', '--user', prompt=True, envvar='PGUSER', help='User name to '
+@click.option('-U', '--user', envvar='PGUSER', help='User name to '
         'connect to the postgres database.')
-@click.option('-W', '--password', is_flag=True, help='Force password prompt.')
-@click.argument('database', envvar='PGDATABASE')
-def cli(database, user, password, host, port):
-    if password:
+@click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
+              help='Force password prompt.')
+@click.option('-w', '--no-password', 'never_prompt', is_flag=True,
+              default=False, help='Never issue a password prompt')
+@click.argument('database', default='', envvar='PGDATABASE')
+def cli(database, user, host, port, prompt_passwd, never_prompt):
+
+    passwd = ''
+    if not database:
+        #default to current OS username just like psql
+        database = user = getuser()
+    elif '://' in database:
+        #a URI connection string
+        parsed = urlparse(database)
+        database = parsed.path[1:]  # ignore the leading fwd slash
+        user = parsed.username
+        passwd = parsed.password
+        port = parsed.port
+        host = parsed.hostname
+
+    if prompt_passwd and not passwd:
         passwd = click.prompt('Password', hide_input=True, show_default=False,
                 type=str)
-    else:
-        passwd = ''
+
+    auto_passwd_prompt = not passwd and not never_prompt
 
     from pgcli import __file__ as package_root
     package_root = os.path.dirname(package_root)
@@ -70,7 +90,16 @@ def cli(database, user, password, host, port):
 
     # Connect to the database.
     try:
-        pgexecute = PGExecute(database, user, passwd, host, port)
+        try:
+            pgexecute = PGExecute(database, user, passwd, host, port)
+        except OperationalError as e:
+            if 'no password supplied' in e.message and auto_passwd_prompt:
+                passwd = click.prompt('Password', hide_input=True,
+                                      show_default=False, type=str)
+                pgexecute = PGExecute(database, user, passwd, host, port)
+            else:
+                raise e
+
     except Exception as e:  # Connecting to a database could fail.
         _logger.debug('Database connection failed: %r.', e.message)
         click.secho(e.message, err=True, fg='red')
