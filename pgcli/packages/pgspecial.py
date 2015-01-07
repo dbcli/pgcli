@@ -701,7 +701,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\c': (change_db, ['\c database_name', 'Connect to a new database.']),
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'list databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'list or describe tables, views and sequences.']),
-            '\\x': (expanded_output, ['x', "hello"]),
+            '\\x': (expanded_output, ['\\x', 'Toggle expanded output.']),
             '\dt': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
             'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'
