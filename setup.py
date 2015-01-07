@@ -23,7 +23,7 @@ setup(
         description=description,
         long_description=open('README.rst').read(),
         install_requires=[
-            'click >= 3.0',
+            'click >= 3.2',
             'prompt_toolkit==0.25',  # Need to pin this to 0.25 since APIs change quite a bit after this.
             'psycopg2 >= 2.5.4',
             'sqlparse >= 0.1.14',
