@@ -112,6 +112,10 @@ class InputStream(object):
         '\x1bOQ': Keys.F2,
         '\x1bOR': Keys.F3,
         '\x1bOS': Keys.F4,
+        '\x1b[11~': Keys.F1,  # rxvt-unicode
+        '\x1b[12~': Keys.F2,  # rxvt-unicode
+        '\x1b[13~': Keys.F3,  # rxvt-unicode
+        '\x1b[14~': Keys.F4,  # rxvt-unicode
         '\x1b[15~': Keys.F5,
         '\x1b[17~': Keys.F6,
         '\x1b[18~': Keys.F7,
