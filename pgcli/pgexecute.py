@@ -94,7 +94,7 @@ class PGExecute(object):
             try:
                 dbname = sql.split()[1]
             except:
-                _logger.debug('Failed to switch. DB missing: %r', dbname)
+                _logger.debug('Database name missing.')
                 raise RuntimeError('Database name missing.')
             self.conn = psycopg2.connect(database=dbname,
                     user=self.user, password=self.password, host=self.host,
