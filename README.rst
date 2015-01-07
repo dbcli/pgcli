@@ -11,7 +11,7 @@ This is a postgres client that does auto-completion and syntax highlighting.
 Quick Start
 -----------
 
-If you already know how to install python pacakges, then you can simply do:
+If you already know how to install python packages, then you can simply do:
 
 ::
 
