@@ -145,6 +145,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
             try:
                 _logger.debug('sql: %r', document.text)
                 res = pgexecute.run(document.text)
+
                 output = []
                 for rows, headers, status in res:
                     _logger.debug("headers: %r", headers)
@@ -157,6 +158,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
                     if status:  # Only print the status if it's not None.
                         output.append(status)
                     _logger.debug("status: %r", status)
+                    output.extend(format_output(rows, headers, status))
                 click.echo_via_pager('\n'.join(output))
             except Exception as e:
                 _logger.error("sql: %r, error: %r", document.text, e)
@@ -172,6 +174,14 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
     finally:  # Reset the less opts back to original.
         _logger.debug('Restoring env var LESS to %r.', original_less_opts)
         os.environ['LESS'] = original_less_opts
+
+def format_output(rows, headers, status):
+    output = []
+    if rows:
+        output.append(tabulate(rows, headers, tablefmt='psql'))
+    if status:  # Only print the status if it's not None.
+        output.append(status)
+    return '\n'.join(output)
 
 def need_completion_refresh(sql):
     try:

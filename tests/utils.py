@@ -1,5 +1,6 @@
 import pytest
 import psycopg2
+from pgcli.main import format_output
 
 # TODO: should this be somehow be divined from environment?
 POSTGRES_USER, POSTGRES_HOST = 'postgres', 'localhost'
@@ -32,3 +33,10 @@ def create_db(dbname):
 def drop_tables(conn):
     with conn.cursor() as cur:
         cur.execute('''DROP SCHEMA public CASCADE; CREATE SCHEMA public''')
+
+
+def run(executor, sql):
+    " Return string output for the sql to be run "
+    data = executor.run(sql)
+    assert len(data) == 1 # current code does that
+    return format_output(*data[0])
