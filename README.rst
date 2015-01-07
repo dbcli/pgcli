@@ -11,13 +11,13 @@ This is a postgres client that does auto-completion and syntax highlighting.
 Quick Start
 -----------
 
-If you already know how to install python pacakges, then you can simply do:
+If you already know how to install python packages, then you can simply do:
 
 ::
 
     $ pip install pgcli
 
-If you don't know how to install python pacakges, please check the 
+If you don't know how to install python packages, please check the 
 `detailed instructions`__.
 
 __ https://github.com/amjith/pgcli#detailed-installation-instructions 
@@ -57,6 +57,7 @@ The `pgcli` is written using prompt_toolkit_.
 
 * Config file is automatically created at ~/.pglirc at first launch.
 * Primitive support for `psql` back-slash commands. 
+* Pretty prints tabular data.
 
 .. _prompt_toolkit: https://github.com/jonathanslenders/python-prompt-toolkit
 
@@ -78,7 +79,7 @@ Detailed Installation Instructions:
 OS X:
 =====
 
-For installing Python pacakges it is recommended to use the package manager
+For installing Python packages it is recommended to use the package manager
 called `pip`. Check if `pip` is installed on the system.
 
 :: 
@@ -104,7 +105,7 @@ If pip is not installed check if easy_install is available on the system.
 
     $ which easy_install
 
-    $ sudo easy_install install pgcli
+    $ sudo easy_install pgcli
 
 Linux:
 ======
@@ -149,7 +150,7 @@ Jonathan has also provided valuable feedback and support during the development
 of this app.
 
 This app includes the awesome `tabulate <https://pypi.python.org/pypi/tabulate>`_ 
-library for printing the output of tables. The reason for vendoring this
+library for pretty printing the output of tables. The reason for vendoring this
 library rather than listing it as a dependency in setup.py, is because I had to
 make a change to the table format which is merged back into the original repo,
 but not yet released inPyPI.
@@ -158,7 +159,7 @@ but not yet released inPyPI.
 and printing error messages.
 
 Thanks to `psycopg <http://initd.org/psycopg/>`_ for providing a rock solid
-interface to Postgres dataabase.
+interface to Postgres database.
 
 Thanks to all the beta testers and contributors for your time and patience. :)
 

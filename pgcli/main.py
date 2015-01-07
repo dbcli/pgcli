@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import os
+import traceback
 import logging
 import click
 
@@ -101,8 +102,8 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
                 raise e
 
     except Exception as e:  # Connecting to a database could fail.
-        _logger.debug('Database connection failed: %r.', e.message)
-        click.secho(e.message, err=True, fg='red')
+        _logger.debug('Database connection failed: %r.', e)
+        click.secho(str(e), err=True, fg='red')
         exit(1)
     layout = Layout(before_input=DefaultPrompt('%s> ' % pgexecute.dbname),
             menus=[CompletionsMenu(max_height=10)],
@@ -142,8 +143,9 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
                     _logger.debug("status: %r", status)
                     click.echo_via_pager('\n'.join(output))
             except Exception as e:
-                _logger.debug("sql: %r, error: %r", document.text, e.message)
-                click.secho(e.message, err=True, fg='red')
+                _logger.error("sql: %r, error: %r", document.text, e)
+                _logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg='red')
 
             # Refresh the table names and column names if necessary.
             if need_completion_refresh(document.text):
@@ -207,3 +209,6 @@ def refresh_completions(pgexecute, completer):
     for table in tables:
         completer.extend_column_names(table, pgexecute.columns(table))
     completer.extend_database_names(pgexecute.databases())
+
+if __name__ == "__main__":
+    cli()

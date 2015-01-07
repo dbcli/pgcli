@@ -1,8 +1,14 @@
 import logging
 import psycopg2
+import psycopg2.extensions
 from .packages import pgspecial
 
 _logger = logging.getLogger(__name__)
+
+# Cast all database input to unicode automatically.
+# See http://initd.org/psycopg/docs/usage.html#unicode-handling for more info.
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 def _parse_dsn(dsn, default_user, default_password, default_host,
         default_port):
@@ -88,7 +94,7 @@ class PGExecute(object):
             try:
                 dbname = sql.split()[1]
             except:
-                _logger.debug('Failed to switch. DB missing: %r', dbname)
+                _logger.debug('Database name missing.')
                 raise RuntimeError('Database name missing.')
             self.conn = psycopg2.connect(database=dbname,
                     user=self.user, password=self.password, host=self.host,

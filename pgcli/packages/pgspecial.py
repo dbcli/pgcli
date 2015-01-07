@@ -23,7 +23,9 @@ class MockLogging(object):
 def parse_special_command(sql):
     command, _, arg = sql.partition(' ')
     verbose = '+' in command
-    return (command.strip(), verbose, arg.strip())
+
+    command = command.strip().replace('+', '')
+    return (command, verbose, arg.strip())
 
 def describe_table_details(cur, pattern, verbose):
     """
