@@ -4,6 +4,7 @@ from collections import defaultdict
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
+from re import compile
 
 _logger = logging.getLogger(__name__)
 
@@ -62,6 +63,12 @@ class PGCompleter(Completer):
         self.all_completions.update(tables)
 
     def extend_column_names(self, table, columns):
+        column_name_pattern = compile("^[_a-zA-Z][_a-zA-Z0-9\$]*$")
+
+        columns = ['"%s"' % column
+            if not column_name_pattern.match(column) or column in self.keywords or column in self.functions else column
+                for column in columns]
+
         self.columns[table].extend(columns)
         self.all_completions.update(columns)
 
@@ -75,7 +82,9 @@ class PGCompleter(Completer):
     def find_matches(text, collection):
         text = last_word(text, include='most_punctuations')
         for item in collection:
-            if item.startswith(text) or item.startswith(text.upper()):
+            item_unescaped = item[1:] if item[0] == '"' else item
+
+            if item_unescaped.startswith(text) or item_unescaped.startswith(text.upper()):
                 yield Completion(item, -len(text))
 
     def get_completions(self, document, complete_event, smart_completion=None):
