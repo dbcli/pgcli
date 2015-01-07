@@ -118,7 +118,7 @@ def cli(database, user, password, host, port):
                 _logger.debug("sql: %r, error: %r", document.text, e.pgerror)
                 click.secho(e.pgerror, err=True, fg='red')
             except Exception as e:
-                _logger.error("sql: %r, error: %r", document.text, str(e))
+                _logger.error("sql: %r, error: %r", document.text, e)
                 _logger.error("traceback: %r", traceback.format_exc())
                 click.secho(str(e), err=True, fg='red')
 
