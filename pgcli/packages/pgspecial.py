@@ -686,12 +686,15 @@ def show_help(cur, arg, verbose):  # All the parameters are ignored.
 def change_db(cur, arg, verbose):
     raise NotImplementedError
 
+def expanded_output(cur, arg, verbose):
+    import ipdb; ipdb.set_trace()
 
 CASE_SENSITIVE_COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
             '\c': (change_db, ['\c database_name', 'Connect to a new database.']),
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'list databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'list or describe tables, views and sequences.']),
+            '\\x': (expanded_output, ['x', "hello"]),
             '\dt': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
             'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'
