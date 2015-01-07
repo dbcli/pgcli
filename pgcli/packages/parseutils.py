@@ -114,8 +114,12 @@ def extract_table_identifiers(token_stream):
                     yield (real_name, identifier.get_alias() or real_name)
         elif isinstance(item, Identifier):
             real_name = item.get_real_name()
+
             if real_name:
                 yield (real_name, item.get_alias() or real_name)
+            else:
+                name = item.get_name()
+                yield (name, item.get_alias() or name)
         elif isinstance(item, Function):
             yield (item.get_name(), item.get_name())
 

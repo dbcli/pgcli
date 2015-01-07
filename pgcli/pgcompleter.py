@@ -4,6 +4,7 @@ from collections import defaultdict
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
+from re import compile
 
 _logger = logging.getLogger(__name__)
 
@@ -45,12 +46,34 @@ class PGCompleter(Completer):
         super(self.__class__, self).__init__()
         self.smart_completion = smart_completion
 
+        self.name_pattern = compile("^[_a-zA-Z][_a-zA-Z0-9\$]*$")
+
+    def extend_escape_name(self, name):
+        if not self.name_pattern.match(name) or name in self.keywords or name in self.functions:
+            name = '"%s"' % name
+
+        return name
+
+    def extend_unescape_name(self, name):
+        if name[0] == '"' and name[-1] == '"':
+            name = name[1:-1]
+
+        return name
+
+    def extend_escaped_names(self, names):
+        for i, name in enumerate(names):
+            names[i] = self.extend_escape_name(name)
+
+        return names
+
     def extend_special_commands(self, special_commands):
         # Special commands are not part of all_completions since they can only
         # be at the beginning of a line.
         self.special_commands.extend(special_commands)
 
     def extend_database_names(self, databases):
+        databases = self.extend_escaped_names(databases)
+
         self.databases.extend(databases)
 
     def extend_keywords(self, additional_keywords):
@@ -58,11 +81,17 @@ class PGCompleter(Completer):
         self.all_completions.update(additional_keywords)
 
     def extend_table_names(self, tables):
+        tables = self.extend_escaped_names(tables)
+
         self.tables.extend(tables)
         self.all_completions.update(tables)
 
     def extend_column_names(self, table, columns):
-        self.columns[table].extend(columns)
+        columns = self.extend_escaped_names(columns)
+
+        unescaped_table_name = self.extend_unescape_name(table)
+
+        self.columns[unescaped_table_name].extend(columns)
         self.all_completions.update(columns)
 
     def reset_completions(self):
@@ -75,7 +104,9 @@ class PGCompleter(Completer):
     def find_matches(text, collection):
         text = last_word(text, include='most_punctuations')
         for item in collection:
-            if item.startswith(text) or item.startswith(text.upper()):
+            item_unescaped = item[1:] if item[0] == '"' else item
+
+            if item_unescaped.startswith(text) or item_unescaped.startswith(text.upper()):
                 yield Completion(item, -len(text))
 
     def get_completions(self, document, complete_event, smart_completion=None):
@@ -115,5 +146,6 @@ class PGCompleter(Completer):
     def populate_scoped_cols(self, tables):
         scoped_cols = []
         for table in tables:
-            scoped_cols.extend(self.columns[table])
+            unescaped_table_name = self.extend_unescape_name(table)
+            scoped_cols.extend(self.columns[unescaped_table_name])
         return scoped_cols

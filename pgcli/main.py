@@ -178,6 +178,7 @@ def refresh_completions(pgexecute, completer):
     tables = pgexecute.tables()
     completer.extend_table_names(tables)
     for table in tables:
+        table = table[1:-1] if table[0] == '"' and table[-1] == '"' else table
         completer.extend_column_names(table, pgexecute.columns(table))
     completer.extend_database_names(pgexecute.databases())
 
