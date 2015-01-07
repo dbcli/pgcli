@@ -60,22 +60,22 @@ def describe_table_details(cur, pattern, verbose):
 
     # This is a simple \d command. No table name to follow.
     if not pattern:
-        sql = """SELECT n.nspname as "Schema", c.relname as "Name", 
-                    CASE c.relkind WHEN 'r' THEN 'table' 
-                        WHEN 'v' THEN 'view' 
-                        WHEN 'm' THEN 'materialized view' 
-                        WHEN 'i' THEN 'index' 
-                        WHEN 'S' THEN 'sequence' 
-                        WHEN 's' THEN 'special' 
-                        WHEN 'f' THEN 'foreign table' 
+        sql = """SELECT n.nspname as "Schema", c.relname as "Name",
+                    CASE c.relkind WHEN 'r' THEN 'table'
+                        WHEN 'v' THEN 'view'
+                        WHEN 'm' THEN 'materialized view'
+                        WHEN 'i' THEN 'index'
+                        WHEN 'S' THEN 'sequence'
+                        WHEN 's' THEN 'special'
+                        WHEN 'f' THEN 'foreign table'
                     END as "Type",
-                    pg_catalog.pg_get_userbyid(c.relowner) as "Owner" 
-                FROM pg_catalog.pg_class c 
-                LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
-                WHERE c.relkind IN ('r','v','m','S','f','') 
-                AND n.nspname <> 'pg_catalog' 
-                AND n.nspname <> 'information_schema' 
-                AND n.nspname !~ '^pg_toast' 
+                    pg_catalog.pg_get_userbyid(c.relowner) as "Owner"
+                FROM pg_catalog.pg_class c
+                LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+                WHERE c.relkind IN ('r','v','m','S','f','')
+                AND n.nspname <> 'pg_catalog'
+                AND n.nspname <> 'information_schema'
+                AND n.nspname !~ '^pg_toast'
                 AND pg_catalog.pg_table_is_visible(c.oid)
                 ORDER BY 1,2 """
 
@@ -128,16 +128,16 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
     else:
         suffix = "''"
 
-    sql ="""SELECT c.relchecks, c.relkind, c.relhasindex, 
-                c.relhasrules, c.relhastriggers, c.relhasoids, 
-                %s, 
-                c.reltablespace, 
-                CASE WHEN c.reloftype = 0 THEN '' 
-                    ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text 
+    sql ="""SELECT c.relchecks, c.relkind, c.relhasindex,
+                c.relhasrules, c.relhastriggers, c.relhasoids,
+                %s,
+                c.reltablespace,
+                CASE WHEN c.reloftype = 0 THEN ''
+                    ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text
                 END,
-                c.relpersistence 
-            FROM pg_catalog.pg_class c 
-            LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid) 
+                c.relpersistence
+            FROM pg_catalog.pg_class c
+            LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)
             WHERE c.oid = '%s'""" % (suffix, oid)
 
     # Create a namedtuple called tableinfo and match what's in describe.c
@@ -767,6 +767,8 @@ def show_help(cur, arg, verbose):  # All the parameters are ignored.
 def change_db(cur, arg, verbose):
     raise NotImplementedError
 
+def expanded_output(cur, arg, verbose):
+    import ipdb; ipdb.set_trace()
 
 CASE_SENSITIVE_COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
@@ -774,6 +776,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'list databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'list or describe tables, views and sequences.']),
             '\dn': (list_schemas, ['\dn[+] [pattern]', 'list schemas']),
+            '\\x': (expanded_output, ['x', "hello"]),
             '\dt': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
             'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'
