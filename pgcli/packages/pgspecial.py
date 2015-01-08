@@ -23,7 +23,9 @@ class MockLogging(object):
 def parse_special_command(sql):
     command, _, arg = sql.partition(' ')
     verbose = '+' in command
-    return (command.strip(), verbose, arg.strip())
+
+    command = command.strip().replace('+', '')
+    return (command, verbose, arg.strip())
 
 def list_schemas(cur, pattern, verbose):
     """
@@ -52,16 +54,24 @@ def describe_table_details(cur, pattern, verbose):
 
     # This is a simple \d command. No table name to follow.
     if not pattern:
-        sql = """SELECT n.nspname as "Schema", c.relname as "Name", CASE
-        c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
-        'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN
-        's' THEN 'special' WHEN 'f' THEN 'foreign table' END as "Type",
-        pg_catalog.pg_get_userbyid(c.relowner) as "Owner" FROM
-        pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid =
-        c.relnamespace WHERE c.relkind IN ('r','v','m','S','f','') AND
-        n.nspname <> 'pg_catalog' AND n.nspname <> 'information_schema' AND
-        n.nspname !~ '^pg_toast' AND pg_catalog.pg_table_is_visible(c.oid)
-        ORDER BY 1,2"""
+        sql = """SELECT n.nspname as "Schema", c.relname as "Name", 
+                    CASE c.relkind WHEN 'r' THEN 'table' 
+                        WHEN 'v' THEN 'view' 
+                        WHEN 'm' THEN 'materialized view' 
+                        WHEN 'i' THEN 'index' 
+                        WHEN 'S' THEN 'sequence' 
+                        WHEN 's' THEN 'special' 
+                        WHEN 'f' THEN 'foreign table' 
+                    END as "Type",
+                    pg_catalog.pg_get_userbyid(c.relowner) as "Owner" 
+                FROM pg_catalog.pg_class c 
+                LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+                WHERE c.relkind IN ('r','v','m','S','f','') 
+                AND n.nspname <> 'pg_catalog' 
+                AND n.nspname <> 'information_schema' 
+                AND n.nspname !~ '^pg_toast' 
+                AND pg_catalog.pg_table_is_visible(c.oid)
+                ORDER BY 1,2 """
 
         log.debug(sql)
         cur.execute(sql)
@@ -70,16 +80,17 @@ def describe_table_details(cur, pattern, verbose):
             return [(cur.fetchall(), headers, cur.statusmessage)]
 
     # This is a \d <tablename> command. A royal pain in the ass.
-    sql = '''SELECT c.oid, n.nspname, c.relname FROM pg_catalog.pg_class c LEFT
-    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace '''
-
     schema, relname = sql_name_pattern(pattern)
-    if relname:
-        sql += ' WHERE c.relname ~ ' + relname
-    if schema:
-        sql += ' AND n.nspname ~ ' + schema
-    sql += ' AND pg_catalog.pg_table_is_visible(c.oid) '
-    sql += ' ORDER BY 2,3'
+    sql ="""SELECT c.oid, n.nspname, c.relname 
+            FROM pg_catalog.pg_class c 
+            LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+                AND pg_catalog.pg_table_is_visible(c.oid)
+            %s
+            %s
+            ORDER BY 2,3
+        """ % ( ' WHERE c.relname ~ ' + relname if relname else '',
+                ' AND n.nspname ~ ' + schema if schema else '' )
+
     # Execute the sql, get the results and call describe_one_table_details on each table.
 
     log.debug(sql)
@@ -100,11 +111,17 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
     else:
         suffix = "''"
 
-    sql = """SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules,
-    c.relhastriggers, c.relhasoids, %s, c.reltablespace, CASE WHEN c.reloftype
-    = 0 THEN '' ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text END,
-    c.relpersistence FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_class
-    tc ON (c.reltoastrelid = tc.oid) WHERE c.oid = '%s'""" % (suffix, oid)
+    sql ="""SELECT c.relchecks, c.relkind, c.relhasindex, 
+                c.relhasrules, c.relhastriggers, c.relhasoids, 
+                %s, 
+                c.reltablespace, 
+                CASE WHEN c.reloftype = 0 THEN '' 
+                    ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text 
+                END,
+                c.relpersistence 
+            FROM pg_catalog.pg_class c 
+            LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid) 
+            WHERE c.oid = '%s'""" % (suffix, oid)
 
     # Create a namedtuple called tableinfo and match what's in describe.c
 
@@ -127,8 +144,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
         seq_values = cur.fetchone()
 
     # Get column info
-    sql = """
-        SELECT a.attname, pg_catalog.format_type(a.atttypid, a.atttypmod),
+    sql = """SELECT a.attname, pg_catalog.format_type(a.atttypid, a.atttypmod),
         (SELECT substring(pg_catalog.pg_get_expr(d.adbin, d.adrelid) for 128)
         FROM pg_catalog.pg_attrdef d WHERE d.adrelid = a.attrelid AND d.adnum =
         a.attnum AND a.atthasdef), a.attnotnull, a.attnum, (SELECT c.collname

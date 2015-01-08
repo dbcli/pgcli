@@ -15,7 +15,6 @@ from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_bindings.emacs import emacs_bindings
 from pygments.lexers.sql import SqlLexer
-from psycopg2 import Error
 
 from .packages.tabulate import tabulate
 from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
@@ -113,10 +112,7 @@ def cli(database, user, password, host, port):
                     if status:  # Only print the status if it's not None.
                         output.append(status)
                     _logger.debug("status: %r", status)
-                    click.echo_via_pager('\n'.join(output))
-            except Error as e:
-                _logger.debug("sql: %r, error: %r", document.text, e.pgerror)
-                click.secho(e.pgerror, err=True, fg='red')
+                click.echo_via_pager('\n'.join(output))
             except Exception as e:
                 _logger.error("sql: %r, error: %r", document.text, e)
                 _logger.error("traceback: %r", traceback.format_exc())
