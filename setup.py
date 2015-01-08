@@ -16,7 +16,7 @@ setup(
         author='Amjith Ramanujam',
         author_email='amjith[dot]r[at]gmail.com',
         version=version,
-        license='LICENSE.txt',
+        license='BSD',
         url='http://pgcli.com',
         packages=find_packages(),
         package_data={'pgcli': ['pgclirc']},
