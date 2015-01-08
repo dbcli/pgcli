@@ -1,26 +1,10 @@
-from prompt_toolkit.line import Line
+from prompt_toolkit.buffer import Buffer
 
-class PGLine(Line):
+class PGBuffer(Buffer):
     def __init__(self, always_multiline, *args, **kwargs):
         self.always_multiline = always_multiline
-        super(self.__class__, self).__init__(*args, **kwargs)
-
-    @property
-    def is_multiline(self):
-        """
-        Dynamically determine whether we're in multiline mode.
-        """
-        if not self.always_multiline:
-            return False
-
-        if self.always_multiline and _multiline_exception(self.text):
-            return False
-
-        return True
-
-    @is_multiline.setter
-    def is_multiline(self, value):
-        pass
+        is_multiline = lambda doc: self.always_multiline and not _multiline_exception(doc.text)
+        super(self.__class__, self).__init__(*args, is_multiline=is_multiline, **kwargs)
 
 def _multiline_exception(text):
     text = text.strip()

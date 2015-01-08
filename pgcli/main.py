@@ -13,7 +13,6 @@ from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.history import FileHistory
-from prompt_toolkit.key_bindings.emacs import emacs_bindings
 from pygments.lexers.sql import SqlLexer
 
 from .packages.tabulate import tabulate
@@ -23,7 +22,7 @@ from .pgcompleter import PGCompleter
 from .pgtoolbar import PGToolbar
 from .pgstyle import PGStyle
 from .pgexecute import PGExecute
-from .pgline import PGLine
+from .pgbuffer import PGBuffer
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 
@@ -85,10 +84,10 @@ def cli(database, user, password, host, port):
     completer.extend_special_commands(CASE_SENSITIVE_COMMANDS.keys())
     completer.extend_special_commands(NON_CASE_SENSITIVE_COMMANDS.keys())
     refresh_completions(pgexecute, completer)
-    line = PGLine(always_multiline=multi_line, completer=completer,
+    buf = PGBuffer(always_multiline=multi_line, completer=completer,
             history=FileHistory(os.path.expanduser('~/.pgcli-history')))
-    cli = CommandLineInterface(style=PGStyle, layout=layout, line=line,
-            key_binding_factories=[emacs_bindings, pgcli_bindings])
+    cli = CommandLineInterface(style=PGStyle, layout=layout, buffer=buf,
+            key_bindings_registry=pgcli_bindings())
 
     try:
         while True:
