@@ -1,6 +1,26 @@
 CHANGELOG
 =========
 
+0.26: 2015-01-08
+----------------
+
+Backwards-incompatible changes:
+- Refactoring of the key input system. (The registry which contains the key
+  bindings, the focus stack, key binding manager.) Overal much better API.
+- Renamed `Line` to `Buffer`.
+
+New features:
+- Added filters as a way of disabling/enabling parts of the runtime according
+  to certain conditions.
+- Global clipboard, shared between all buffers.
+- Added (experimental) "merge history" feature to ptpython.
+- Added 'C-x r k' and 'C-x r y' emacs key bindings for cut and paste.
+- Added g_, ge and gE vi key bindings.
+- Added support for handling control + arrows keys.
+
+Fixed:
+- Correctly handle f1-f4 in rxvt-unicode.
+
 0.25: 2014-12-11
 ----------------
 
