@@ -34,7 +34,7 @@ def test__parse_dsn():
 
             # Full dsn with all components but with postgresql:// prefix.
             ('postgresql://user:password@host:5432/dbname',
-                ('dbname', 'user', 'password', 'host', '5432'))
+                ('dbname', 'user', 'password', 'host', '5432')),
             ]
 
     for dsn, expected in test_cases:
@@ -44,7 +44,7 @@ def test__parse_dsn():
 def test_conn(executor):
     run(executor, '''create table test(a text)''')
     run(executor, '''insert into test values('abc')''')
-    assert run(executor, '''select * from test''') == dedent("""\
+    assert run(executor, '''select * from test''', join=True) == dedent("""\
         +-----+
         | a   |
         |-----|
