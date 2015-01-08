@@ -186,9 +186,10 @@ class Buffer(object):
 
     @cursor_position.setter
     def cursor_position(self, value):
+        original_position = self.__cursor_position
         self.__cursor_position = max(0, value)
 
-        if value != self.__cursor_position:
+        if value != original_position:
             # Remove any validation errors and complete state.
             self.validation_error = None
             self.complete_state = None
