@@ -112,7 +112,7 @@ def cli(database, user, password, host, port):
                     if status:  # Only print the status if it's not None.
                         output.append(status)
                     _logger.debug("status: %r", status)
-                    click.echo_via_pager('\n'.join(output))
+                click.echo_via_pager('\n'.join(output))
             except Exception as e:
                 _logger.error("sql: %r, error: %r", document.text, e)
                 _logger.error("traceback: %r", traceback.format_exc())
