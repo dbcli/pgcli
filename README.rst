@@ -17,7 +17,7 @@ If you already know how to install python packages, then you can simply do:
 
     $ pip install pgcli
 
-If you don't know how to install python pacakges, please check the 
+If you don't know how to install python packages, please check the 
 `detailed instructions`__.
 
 __ https://github.com/amjith/pgcli#detailed-installation-instructions 
@@ -79,7 +79,7 @@ Detailed Installation Instructions:
 OS X:
 =====
 
-For installing Python pacakges it is recommended to use the package manager
+For installing Python packages it is recommended to use the package manager
 called `pip`. Check if `pip` is installed on the system.
 
 :: 
@@ -159,7 +159,7 @@ but not yet released inPyPI.
 and printing error messages.
 
 Thanks to `psycopg <http://initd.org/psycopg/>`_ for providing a rock solid
-interface to Postgres dataabase.
+interface to Postgres database.
 
 Thanks to all the beta testers and contributors for your time and patience. :)
 
