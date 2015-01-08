@@ -52,11 +52,11 @@ The `pgcli` is written using prompt_toolkit_.
 * Smart-completion (enabled by default) will suggest context-sensitive
   completion.
 
-      - `SELECT * FROM <tab>` will only show table names. 
-      - `SELECT * FROM users WHERE <tab>` will only show column names. 
+    - ``SELECT * FROM <tab>`` will only show table names. 
+    - ``SELECT * FROM users WHERE <tab>`` will only show column names. 
 
-* Config file is automatically created at ~/.pglirc at first launch.
-* Primitive support for `psql` back-slash commands. 
+* Config file is automatically created at ``~/.pglirc`` at first launch.
+* Primitive support for ``psql`` back-slash commands. 
 * Pretty prints tabular data.
 
 .. _prompt_toolkit: https://github.com/jonathanslenders/python-prompt-toolkit
