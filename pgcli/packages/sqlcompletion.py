@@ -72,7 +72,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         return 'columns', extract_tables(full_text)
     elif token_v.lower() in ('select', 'where', 'having'):
         return 'columns-and-functions', extract_tables(full_text)
-    elif token_v.lower() in ('from', 'update', 'into', 'describe', 'join', 'alter table'):
+    elif token_v.lower() in ('from', 'update', 'into', 'describe', 'join', 'table'):
         return 'tables', []
     elif token_v in ('d',):  # \d
         return 'tables', []
