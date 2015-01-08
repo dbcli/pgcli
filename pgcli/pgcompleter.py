@@ -46,7 +46,7 @@ class PGCompleter(Completer):
         super(self.__class__, self).__init__()
         self.smart_completion = smart_completion
 
-        self.name_pattern = compile("^[_a-zA-Z][_a-zA-Z0-9\$]*$")
+        self.name_pattern = compile("^[_a-z][_a-z0-9\$]*$")
 
     def extend_escape_name(self, name):
         if not self.name_pattern.match(name) or name in self.keywords or name in self.functions:
