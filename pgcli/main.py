@@ -131,7 +131,7 @@ def cli(database, user, password, host, port):
 def need_completion_refresh(sql):
     try:
         first_token = sql.split()[0]
-        return first_token in ('alter', 'create', 'use', '\c', 'drop')
+        return first_token.lower() in ('alter', 'create', 'use', '\c', 'drop')
     except Exception:
         return False
 
