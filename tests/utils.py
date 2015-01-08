@@ -35,8 +35,11 @@ def drop_tables(conn):
         cur.execute('''DROP SCHEMA public CASCADE; CREATE SCHEMA public''')
 
 
-def run(executor, sql):
+def run(executor, sql, join=False):
     " Return string output for the sql to be run "
-    data = executor.run(sql)
-    assert len(data) == 1 # current code does that
-    return format_output(*data[0])
+    result = []
+    for rows, headers, status in executor.run(sql):
+        result.extend(format_output(rows, headers, status))
+    if join:
+        result = '\n'.join(result)
+    return result

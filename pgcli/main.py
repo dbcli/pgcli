@@ -181,7 +181,7 @@ def format_output(rows, headers, status):
         output.append(tabulate(rows, headers, tablefmt='psql'))
     if status:  # Only print the status if it's not None.
         output.append(status)
-    return '\n'.join(output)
+    return output
 
 def need_completion_refresh(sql):
     try:
