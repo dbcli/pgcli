@@ -153,7 +153,7 @@ This app includes the awesome `tabulate <https://pypi.python.org/pypi/tabulate>`
 library for pretty printing the output of tables. The reason for vendoring this
 library rather than listing it as a dependency in setup.py, is because I had to
 make a change to the table format which is merged back into the original repo,
-but not yet released inPyPI.
+but not yet released in PyPI.
 
 `Click <http://click.pocoo.org/3/>`_ is used for command line option parsing
 and printing error messages.
