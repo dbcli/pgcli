@@ -61,10 +61,7 @@ class PGCompleter(Completer):
         return name
 
     def extend_escaped_names(self, names):
-        for i, name in enumerate(names):
-            names[i] = self.extend_escape_name(name)
-
-        return names
+        return [self.extend_escape_name(name) for name in names]
 
     def extend_special_commands(self, special_commands):
         # Special commands are not part of all_completions since they can only
