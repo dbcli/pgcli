@@ -30,14 +30,14 @@ from .key_bindings import pgcli_bindings
 _logger = logging.getLogger(__name__)
 
 @click.command()
-@click.option('-h', '--host', default='', help='Host address of the '
-        'postgres database.')
-@click.option('-p', '--port', default=5432, help='Port number at which the '
+@click.option('-h', '--host', default='', envvar="PGHOST", help='Host address of the '
+        'postgres server.')
+@click.option('-p', '--port', default=5432, envvar="PGPORT", help='Port number at which the '
         'postgres instance is listening.')
-@click.option('-U', '--user', prompt=True, envvar='USER', help='User name to '
+@click.option('-U', '--user', prompt=True, envvar='PGUSER', help='User name to '
         'connect to the postgres database.')
 @click.option('-W', '--password', is_flag=True, help='Force password prompt.')
-@click.argument('database', envvar='USER')
+@click.argument('database', envvar='PGUSER')
 def cli(database, user, password, host, port):
     if password:
         passwd = click.prompt('Password', hide_input=True, show_default=False,
