@@ -51,3 +51,18 @@ def test_conn(executor):
         | abc |
         +-----+
         SELECT 1""")
+
+@dbtest
+def test_table_and_columns_query(executor):
+    run(executor, "create table a(x text, y text)")
+    run(executor, "create table b(z text)")
+
+    tables, columns = executor.tables()
+    assert tables == ['a', 'b']
+    assert columns['a'] == ['x', 'y']
+    assert columns['b'] == ['z']
+
+@dbtest
+def test_database_list(executor):
+    databases = executor.databases()
+    assert '_test_db' in databases
