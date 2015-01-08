@@ -62,11 +62,11 @@ def describe_table_details(cur, pattern, verbose):
     sql ="""SELECT c.oid, n.nspname, c.relname 
             FROM pg_catalog.pg_class c 
             LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
-            AND pg_catalog.pg_table_is_visible(c.oid)
+                AND pg_catalog.pg_table_is_visible(c.oid)
             %s
             %s
             ORDER BY 2,3
-        """ % ( ' WHERE c.relname ~ ' + relname if relname else ''
+        """ % ( ' WHERE c.relname ~ ' + relname if relname else '',
                 ' AND n.nspname ~ ' + schema if schema else '' )
 
     # Execute the sql, get the results and call describe_one_table_details on each table.
