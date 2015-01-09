@@ -27,7 +27,10 @@ from .pgline import PGLine
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 
-from urlparse import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 from getpass import getuser
 from psycopg2 import OperationalError
 
