@@ -5,7 +5,6 @@ from __future__ import print_function
 import os
 import traceback
 import logging
-
 import click
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
@@ -27,23 +26,53 @@ from .pgline import PGLine
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 
+from urlparse import urlparse
+from getpass import getuser
+from psycopg2 import OperationalError
+
 _logger = logging.getLogger(__name__)
 
 @click.command()
-@click.option('-h', '--host', default='', help='Host address of the '
-        'postgres database.')
+
+# Default host is '' so psycopg2 can default to either localhost or unix socket
+@click.option('-h', '--host', default='', envvar='PGHOST',
+        help='Host address of the postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
-        'postgres instance is listening.')
-@click.option('-U', '--user', prompt=True, envvar='USER', help='User name to '
+        'postgres instance is listening.', envvar='PGPORT')
+@click.option('-U', '--user', envvar='PGUSER', help='User name to '
         'connect to the postgres database.')
-@click.option('-W', '--password', is_flag=True, help='Force password prompt.')
-@click.argument('database', envvar='USER')
-def cli(database, user, password, host, port):
-    if password:
+@click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
+              help='Force password prompt.')
+@click.option('-w', '--no-password', 'never_prompt', is_flag=True,
+              default=False, help='Never issue a password prompt')
+@click.argument('database', default='', envvar='PGDATABASE')
+def cli(database, user, host, port, prompt_passwd, never_prompt):
+
+    passwd = ''
+    if not database:
+        #default to current OS username just like psql
+        database = user = getuser()
+    elif '://' in database:
+        #a URI connection string
+        parsed = urlparse(database)
+        database = parsed.path[1:]  # ignore the leading fwd slash
+        user = parsed.username
+        passwd = parsed.password
+        port = parsed.port
+        host = parsed.hostname
+
+    # Prompt for a password immediately if requested via the -W flag. This
+    # avoids wasting time trying to connect to the database and catching a
+    # no-password exception.
+    # If we successfully parsed a password from a URI, there's no need to prompt
+    # for it, even with the -W flag
+    if prompt_passwd and not passwd:
         passwd = click.prompt('Password', hide_input=True, show_default=False,
                 type=str)
-    else:
-        passwd = ''
+
+    # Prompt for a password after 1st attempt to connect without a password
+    # fails. Don't prompt if the -w flag is supplied
+    auto_passwd_prompt = not passwd and not never_prompt
 
     from pgcli import __file__ as package_root
     package_root = os.path.dirname(package_root)
@@ -69,9 +98,21 @@ def cli(database, user, password, host, port):
             '\thost: %r'
             '\tport: %r', database, user, passwd, host, port)
 
-    # Connect to the database.
+    # Attempt to connect to the database.
+    # Note that passwd may be empty on the first attempt. If connection fails
+    # because of a missing password, but we're allowed to prompt for a password,
+    # (no -w flag), prompt for a passwd and try again.
     try:
-        pgexecute = PGExecute(database, user, passwd, host, port)
+        try:
+            pgexecute = PGExecute(database, user, passwd, host, port)
+        except OperationalError as e:
+            if 'no password supplied' in e.message and auto_passwd_prompt:
+                passwd = click.prompt('Password', hide_input=True,
+                                      show_default=False, type=str)
+                pgexecute = PGExecute(database, user, passwd, host, port)
+            else:
+                raise e
+
     except Exception as e:  # Connecting to a database could fail.
         _logger.debug('Database connection failed: %r.', e)
         click.secho(str(e), err=True, fg='red')
