@@ -144,15 +144,13 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
             try:
                 _logger.debug('sql: %r', document.text)
                 res = pgexecute.run(document.text)
+
                 output = []
                 for rows, headers, status in res:
                     _logger.debug("headers: %r", headers)
                     _logger.debug("rows: %r", rows)
-                    if rows:
-                        output.append(tabulate(rows, headers, tablefmt='psql'))
-                    if status:  # Only print the status if it's not None.
-                        output.append(status)
                     _logger.debug("status: %r", status)
+                    output.extend(format_output(rows, headers, status))
                 click.echo_via_pager('\n'.join(output))
             except Exception as e:
                 _logger.error("sql: %r, error: %r", document.text, e)
@@ -168,6 +166,14 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
     finally:  # Reset the less opts back to original.
         _logger.debug('Restoring env var LESS to %r.', original_less_opts)
         os.environ['LESS'] = original_less_opts
+
+def format_output(rows, headers, status):
+    output = []
+    if rows:
+        output.append(tabulate(rows, headers, tablefmt='psql'))
+    if status:  # Only print the status if it's not None.
+        output.append(status)
+    return output
 
 def need_completion_refresh(sql):
     try:
@@ -216,10 +222,10 @@ def quit_command(sql):
             or sql.strip() == ':q')
 
 def refresh_completions(pgexecute, completer):
-    tables = pgexecute.tables()
+    tables, columns = pgexecute.tables()
     completer.extend_table_names(tables)
     for table in tables:
-        completer.extend_column_names(table, pgexecute.columns(table))
+        completer.extend_column_names(table, columns[table])
     completer.extend_database_names(pgexecute.databases())
 
 if __name__ == "__main__":
