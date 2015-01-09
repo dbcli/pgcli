@@ -1,5 +1,6 @@
 import logging
 import psycopg2
+import psycopg2.extras
 import psycopg2.extensions
 from collections import defaultdict
 from .packages import pgspecial
@@ -10,6 +11,9 @@ _logger = logging.getLogger(__name__)
 # See http://initd.org/psycopg/docs/usage.html#unicode-handling for more info.
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
+
+# When running a query, make pressing CTRL+C raise a KeyboardInterrupt
+psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
 
 def _parse_dsn(dsn, default_user, default_password, default_host,
         default_port):
@@ -70,6 +74,9 @@ class PGExecute(object):
                 _parse_dsn(database, default_user=user,
                         default_password=password, default_host=host,
                         default_port=port)
+        self.reconnect()
+
+    def reconnect(self):
         self.conn = psycopg2.connect(database=self.dbname, user=self.user,
                 password=self.password, host=self.host, port=self.port)
         self.conn.autocommit = True
