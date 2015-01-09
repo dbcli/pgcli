@@ -19,6 +19,9 @@ class MockLogging(object):
         print ()
 
 #log = MockLogging()
+use_expanded_output = False
+def is_expanded_output():
+    return use_expanded_output
 
 def parse_special_command(sql):
     command, _, arg = sql.partition(' ')
@@ -702,12 +705,19 @@ def show_help(cur, arg, verbose):  # All the parameters are ignored.
 def change_db(cur, arg, verbose):
     raise NotImplementedError
 
+def expanded_output(cur, arg, verbose):
+    global use_expanded_output
+    use_expanded_output = not use_expanded_output
+    message = u"Expanded display is "
+    message += u"on" if use_expanded_output else u"off"
+    return [(None, None, message + u".")]
 
 CASE_SENSITIVE_COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
             '\c': (change_db, ['\c database_name', 'Connect to a new database.']),
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'list databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'list or describe tables, views and sequences.']),
+            '\\x': (expanded_output, ['\\x', 'Toggle expanded output.']),
             '\dt': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
             'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'

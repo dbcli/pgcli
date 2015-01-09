@@ -16,8 +16,9 @@ from prompt_toolkit.key_bindings.emacs import emacs_bindings
 from pygments.lexers.sql import SqlLexer
 
 from .packages.tabulate import tabulate
+from .packages.expanded import expanded_table
 from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
-        NON_CASE_SENSITIVE_COMMANDS)
+        NON_CASE_SENSITIVE_COMMANDS, is_expanded_output)
 from .pgcompleter import PGCompleter
 from .pgtoolbar import PGToolbar
 from .pgstyle import PGStyle
@@ -149,7 +150,10 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
                     _logger.debug("headers: %r", headers)
                     _logger.debug("rows: %r", rows)
                     if rows:
-                        output.append(tabulate(rows, headers, tablefmt='psql'))
+                        if is_expanded_output():
+                            output.append(expanded_table(rows, headers))
+                        else:
+                            output.append(tabulate(rows, headers, tablefmt='psql'))
                     if status:  # Only print the status if it's not None.
                         output.append(status)
                     _logger.debug("status: %r", status)
