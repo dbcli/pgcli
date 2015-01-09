@@ -52,11 +52,11 @@ The `pgcli` is written using prompt_toolkit_.
 * Smart-completion (enabled by default) will suggest context-sensitive
   completion.
 
-      - `SELECT * FROM <tab>` will only show table names. 
-      - `SELECT * FROM users WHERE <tab>` will only show column names. 
+    - ``SELECT * FROM <tab>`` will only show table names. 
+    - ``SELECT * FROM users WHERE <tab>`` will only show column names. 
 
-* Config file is automatically created at ~/.pglirc at first launch.
-* Primitive support for `psql` back-slash commands. 
+* Config file is automatically created at ``~/.pglirc`` at first launch.
+* Primitive support for ``psql`` back-slash commands. 
 * Pretty prints tabular data.
 
 .. _prompt_toolkit: https://github.com/jonathanslenders/python-prompt-toolkit
@@ -153,7 +153,7 @@ This app includes the awesome `tabulate <https://pypi.python.org/pypi/tabulate>`
 library for pretty printing the output of tables. The reason for vendoring this
 library rather than listing it as a dependency in setup.py, is because I had to
 make a change to the table format which is merged back into the original repo,
-but not yet released inPyPI.
+but not yet released in PyPI.
 
 `Click <http://click.pocoo.org/3/>`_ is used for command line option parsing
 and printing error messages.

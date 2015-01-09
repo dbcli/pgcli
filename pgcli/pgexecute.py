@@ -1,6 +1,7 @@
 import logging
 import psycopg2
 import psycopg2.extensions
+from collections import defaultdict
 from .packages import pgspecial
 
 _logger = logging.getLogger(__name__)
@@ -53,8 +54,7 @@ class PGExecute(object):
     'information_schema' AND n.nspname !~ '^pg_toast' AND
     pg_catalog.pg_table_is_visible(c.oid) ORDER BY 1;'''
 
-    columns_query = '''SELECT column_name FROM information_schema.columns WHERE
-    table_name =%s;'''
+    columns_query = '''SELECT table_name, column_name FROM information_schema.columns'''
 
     databases_query = """SELECT d.datname as "Name",
        pg_catalog.pg_get_userbyid(d.datdba) as "Owner",
@@ -123,21 +123,19 @@ class PGExecute(object):
                 return [(None, None, cur.statusmessage)]
 
     def tables(self):
+        """ Returns tuple (sorted_tables, columns). Columns is a dictionary of
+            table name -> list of columns """
+        columns = defaultdict(list)
         with self.conn.cursor() as cur:
             cur.execute(self.tables_query)
-            return [x[0] for x in cur.fetchall()]
+            tables = [x[0] for x in cur.fetchall()]
 
-    def columns(self, table):
-        with self.conn.cursor() as cur:
-            cur.execute(self.columns_query, (table,))
-            cols = [x[0] for x in cur.fetchall()]
-            return cols
-
-    def all_columns(self):
-        columns = set()
-        for table in self.tables():
-            columns.update(self.columns(table))
-        return columns
+            table_set = set(tables)
+            cur.execute(self.columns_query)
+            for table, column in cur.fetchall():
+                if table in table_set:
+                    columns[table].append(column)
+        return tables, columns
 
     def databases(self):
         with self.conn.cursor() as cur:

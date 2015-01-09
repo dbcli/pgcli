@@ -80,10 +80,11 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         return 'databases', []
     elif token_v.endswith(','):
         prev_keyword = find_prev_keyword(text_before_cursor)
-        return suggest_based_on_last_token(prev_keyword, text_before_cursor, full_text)
+        if prev_keyword:
+            return suggest_based_on_last_token(prev_keyword, text_before_cursor, full_text)
     elif token_v.endswith('.'):
         current_alias = last_word(token_v[:-1])
         tables = extract_tables(full_text, include_alias=True)
         return 'columns', [tables.get(current_alias) or current_alias]
-    else:
-        return 'keywords', []
+
+    return 'keywords', []

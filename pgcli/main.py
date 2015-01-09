@@ -5,7 +5,6 @@ from __future__ import print_function
 import os
 import traceback
 import logging
-
 import click
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
@@ -17,8 +16,9 @@ from prompt_toolkit.key_bindings.emacs import emacs_bindings
 from pygments.lexers.sql import SqlLexer
 
 from .packages.tabulate import tabulate
+from .packages.expanded import expanded_table
 from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
-        NON_CASE_SENSITIVE_COMMANDS)
+        NON_CASE_SENSITIVE_COMMANDS, is_expanded_output)
 from .pgcompleter import PGCompleter
 from .pgtoolbar import PGToolbar
 from .pgstyle import PGStyle
@@ -27,23 +27,56 @@ from .pgline import PGLine
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
+from getpass import getuser
+from psycopg2 import OperationalError
+
 _logger = logging.getLogger(__name__)
 
 @click.command()
-@click.option('-h', '--host', default='', help='Host address of the '
-        'postgres database.')
+
+# Default host is '' so psycopg2 can default to either localhost or unix socket
+@click.option('-h', '--host', default='', envvar='PGHOST',
+        help='Host address of the postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
-        'postgres instance is listening.')
-@click.option('-U', '--user', prompt=True, envvar='USER', help='User name to '
+        'postgres instance is listening.', envvar='PGPORT')
+@click.option('-U', '--user', envvar='PGUSER', help='User name to '
         'connect to the postgres database.')
-@click.option('-W', '--password', is_flag=True, help='Force password prompt.')
-@click.argument('database', envvar='USER')
-def cli(database, user, password, host, port):
-    if password:
+@click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
+              help='Force password prompt.')
+@click.option('-w', '--no-password', 'never_prompt', is_flag=True,
+              default=False, help='Never issue a password prompt')
+@click.argument('database', default='', envvar='PGDATABASE')
+def cli(database, user, host, port, prompt_passwd, never_prompt):
+
+    passwd = ''
+    if not database:
+        #default to current OS username just like psql
+        database = user = getuser()
+    elif '://' in database:
+        #a URI connection string
+        parsed = urlparse(database)
+        database = parsed.path[1:]  # ignore the leading fwd slash
+        user = parsed.username
+        passwd = parsed.password
+        port = parsed.port
+        host = parsed.hostname
+
+    # Prompt for a password immediately if requested via the -W flag. This
+    # avoids wasting time trying to connect to the database and catching a
+    # no-password exception.
+    # If we successfully parsed a password from a URI, there's no need to prompt
+    # for it, even with the -W flag
+    if prompt_passwd and not passwd:
         passwd = click.prompt('Password', hide_input=True, show_default=False,
                 type=str)
-    else:
-        passwd = ''
+
+    # Prompt for a password after 1st attempt to connect without a password
+    # fails. Don't prompt if the -w flag is supplied
+    auto_passwd_prompt = not passwd and not never_prompt
 
     from pgcli import __file__ as package_root
     package_root = os.path.dirname(package_root)
@@ -69,9 +102,21 @@ def cli(database, user, password, host, port):
             '\thost: %r'
             '\tport: %r', database, user, passwd, host, port)
 
-    # Connect to the database.
+    # Attempt to connect to the database.
+    # Note that passwd may be empty on the first attempt. If connection fails
+    # because of a missing password, but we're allowed to prompt for a password,
+    # (no -w flag), prompt for a passwd and try again.
     try:
-        pgexecute = PGExecute(database, user, passwd, host, port)
+        try:
+            pgexecute = PGExecute(database, user, passwd, host, port)
+        except OperationalError as e:
+            if 'no password supplied' in e.message and auto_passwd_prompt:
+                passwd = click.prompt('Password', hide_input=True,
+                                      show_default=False, type=str)
+                pgexecute = PGExecute(database, user, passwd, host, port)
+            else:
+                raise e
+
     except Exception as e:  # Connecting to a database could fail.
         _logger.debug('Database connection failed: %r.', e)
         click.secho(str(e), err=True, fg='red')
@@ -103,15 +148,13 @@ def cli(database, user, password, host, port):
             try:
                 _logger.debug('sql: %r', document.text)
                 res = pgexecute.run(document.text)
+
                 output = []
                 for rows, headers, status in res:
                     _logger.debug("headers: %r", headers)
                     _logger.debug("rows: %r", rows)
-                    if rows:
-                        output.append(tabulate(rows, headers, tablefmt='psql'))
-                    if status:  # Only print the status if it's not None.
-                        output.append(status)
                     _logger.debug("status: %r", status)
+                    output.extend(format_output(rows, headers, status))
                 click.echo_via_pager('\n'.join(output))
             except Exception as e:
                 _logger.error("sql: %r, error: %r", document.text, e)
@@ -127,6 +170,17 @@ def cli(database, user, password, host, port):
     finally:  # Reset the less opts back to original.
         _logger.debug('Restoring env var LESS to %r.', original_less_opts)
         os.environ['LESS'] = original_less_opts
+
+def format_output(rows, headers, status):
+    output = []
+    if rows:
+        if is_expanded_output():
+            output.append(expanded_table(rows, headers))
+        else:
+            output.append(tabulate(rows, headers, tablefmt='psql'))
+    if status:  # Only print the status if it's not None.
+        output.append(status)
+    return output
 
 def need_completion_refresh(sql):
     try:
@@ -175,11 +229,11 @@ def quit_command(sql):
             or sql.strip() == ':q')
 
 def refresh_completions(pgexecute, completer):
-    tables = pgexecute.tables()
+    tables, columns = pgexecute.tables()
     completer.extend_table_names(tables)
     for table in tables:
         table = table[1:-1] if table[0] == '"' and table[-1] == '"' else table
-        completer.extend_column_names(table, pgexecute.columns(table))
+        completer.extend_column_names(table, columns[table])
     completer.extend_database_names(pgexecute.databases())
 
 if __name__ == "__main__":
