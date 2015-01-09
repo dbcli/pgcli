@@ -157,7 +157,8 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
                     output.extend(format_output(rows, headers, status))
                 click.echo_via_pager('\n'.join(output))
             except KeyboardInterrupt:
-                pgexecute.reconnect()
+                # Restart connection to the database
+                pgexecute.connect()
                 _logger.debug("cancelled query, sql: %r", document.text)
                 click.secho("cancelled query", err=True, fg='red')
             except Exception as e:

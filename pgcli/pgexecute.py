@@ -13,6 +13,7 @@ psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
+# See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
 psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
 
 def _parse_dsn(dsn, default_user, default_password, default_host,
@@ -74,9 +75,11 @@ class PGExecute(object):
                 _parse_dsn(database, default_user=user,
                         default_password=password, default_host=host,
                         default_port=port)
-        self.reconnect()
+        self.connect()
 
-    def reconnect(self):
+    def connect(self):
+        if hasattr(self, 'conn'):
+            self.conn.close()
         self.conn = psycopg2.connect(database=self.dbname, user=self.user,
                 password=self.password, host=self.host, port=self.port)
         self.conn.autocommit = True
