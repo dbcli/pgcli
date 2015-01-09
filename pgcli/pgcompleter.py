@@ -48,20 +48,20 @@ class PGCompleter(Completer):
 
         self.name_pattern = compile("^[_a-z][_a-z0-9\$]*$")
 
-    def extend_escape_name(self, name):
+    def escape_name(self, name):
         if not self.name_pattern.match(name) or name.upper() in self.keywords or name.upper() in self.functions:
             name = '"%s"' % name
 
         return name
 
-    def extend_unescape_name(self, name):
+    def unescape_name(self, name):
         if name[0] == '"' and name[-1] == '"':
             name = name[1:-1]
 
         return name
 
-    def extend_escaped_names(self, names):
-        return [self.extend_escape_name(name) for name in names]
+    def escaped_names(self, names):
+        return [self.escape_name(name) for name in names]
 
     def extend_special_commands(self, special_commands):
         # Special commands are not part of all_completions since they can only
@@ -69,7 +69,7 @@ class PGCompleter(Completer):
         self.special_commands.extend(special_commands)
 
     def extend_database_names(self, databases):
-        databases = self.extend_escaped_names(databases)
+        databases = self.escaped_names(databases)
 
         self.databases.extend(databases)
 
@@ -78,15 +78,15 @@ class PGCompleter(Completer):
         self.all_completions.update(additional_keywords)
 
     def extend_table_names(self, tables):
-        tables = self.extend_escaped_names(tables)
+        tables = self.escaped_names(tables)
 
         self.tables.extend(tables)
         self.all_completions.update(tables)
 
     def extend_column_names(self, table, columns):
-        columns = self.extend_escaped_names(columns)
+        columns = self.escaped_names(columns)
 
-        unescaped_table_name = self.extend_unescape_name(table)
+        unescaped_table_name = self.unescape_name(table)
 
         self.columns[unescaped_table_name].extend(columns)
         self.all_completions.update(columns)
@@ -143,6 +143,6 @@ class PGCompleter(Completer):
     def populate_scoped_cols(self, tables):
         scoped_cols = []
         for table in tables:
-            unescaped_table_name = self.extend_unescape_name(table)
+            unescaped_table_name = self.unescape_name(table)
             scoped_cols.extend(self.columns[unescaped_table_name])
         return scoped_cols
