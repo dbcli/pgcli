@@ -49,7 +49,7 @@ class PGCompleter(Completer):
         self.name_pattern = compile("^[_a-z][_a-z0-9\$]*$")
 
     def extend_escape_name(self, name):
-        if not self.name_pattern.match(name) or name in self.keywords or name in self.functions:
+        if not self.name_pattern.match(name) or name.upper() in self.keywords or name.upper() in self.functions:
             name = '"%s"' % name
 
         return name
