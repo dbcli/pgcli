@@ -27,6 +27,32 @@ def parse_special_command(sql):
     command = command.strip().replace('+', '')
     return (command, verbose, arg.strip())
 
+def list_schemas(cur, pattern, verbose):
+    """
+    Returns (rows, headers, status)
+    """
+
+    sql = '''SELECT n.nspname AS "Name",
+    pg_catalog.pg_get_userbyid(n.nspowner) AS "Owner"''' + (''',
+    pg_catalog.array_to_string(n.nspacl, E'\\n') AS "Access privileges",
+    pg_catalog.obj_description(n.oid, 'pg_namespace') AS "Description"''' if verbose else '') + """
+    FROM pg_catalog.pg_namespace n WHERE n.nspname """
+
+    params = []
+    if pattern:
+        _, schema = sql_name_pattern(pattern)
+        sql += '~ %s'
+        params.append(schema)
+    else:
+        sql += "!~ '^pg_' AND n.nspname <> 'information_schema'"
+    sql = cur.mogrify(sql + " ORDER BY 1", params)
+
+    log.debug(sql)
+    cur.execute(sql)
+    if cur.description:
+        headers = [x[0] for x in cur.description]
+        return [(cur.fetchall(), headers, cur.statusmessage)]
+
 def describe_table_details(cur, pattern, verbose):
     """
     Returns (rows, headers, status)
@@ -61,15 +87,26 @@ def describe_table_details(cur, pattern, verbose):
 
     # This is a \d <tablename> command. A royal pain in the ass.
     schema, relname = sql_name_pattern(pattern)
-    sql ="""SELECT c.oid, n.nspname, c.relname 
-            FROM pg_catalog.pg_class c 
-            LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
-                AND pg_catalog.pg_table_is_visible(c.oid)
-            %s
-            %s
-            ORDER BY 2,3
-        """ % ( ' WHERE c.relname ~ ' + relname if relname else '',
-                ' AND n.nspname ~ ' + schema if schema else '' )
+    where = []
+    params = []
+
+    if not pattern:
+        where.append('pg_catalog.pg_table_is_visible(c.oid)')
+
+    if schema:
+        where.append('n.nspname ~ %s')
+        params.append(schema)
+
+    if relname:
+        where.append('c.relname ~ %s')
+        params.append(relname)
+
+    sql = """SELECT c.oid, n.nspname, c.relname
+             FROM pg_catalog.pg_class c
+             LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+             """ + ('WHERE ' + ' AND '.join(where) if where else '') + """
+             ORDER BY 2,3"""
+    sql = cur.mogrify(sql, params)
 
     # Execute the sql, get the results and call describe_one_table_details on each table.
 
@@ -675,19 +712,47 @@ def sql_name_pattern(pattern):
     used in a WHERE clause.
 
     Returns: schema_pattern, table_pattern
+
+    >>> sql_name_pattern('foo*."b""$ar*"')
+    ('^(foo.*)$', '^(b"\\\\$ar\\\\*)$')
     """
 
-    def replacements(pattern):
-        result = pattern.replace('*', '.*')
-        result = result.replace('?', '.')
-        result = result.replace('$', '\\$')
-        return result
+    inquotes = False
+    relname = ''
+    schema = None
+    pattern_len = len(pattern)
+    i = 0
 
-    schema, _, relname = pattern.rpartition('.')
-    if schema:
-        schema = "'^(" + replacements(schema) + ")$'"
+    while i < pattern_len:
+        c = pattern[i]
+        if c == '"':
+            if inquotes and i + 1 < pattern_len and pattern[i + 1] == '"':
+                relname += '"'
+                i += 1
+            else:
+                inquotes = not inquotes
+        elif not inquotes and c.isupper():
+            relname += c.lower()
+        elif not inquotes and c == '*':
+            relname += '.*'
+        elif not inquotes and c == '?':
+            relname += '.'
+        elif not inquotes and c == '.':
+            # Found schema/name separator, move current pattern to schema
+            schema = relname
+            relname = ''
+        else:
+            # Dollar is always quoted, whether inside quotes or not.
+            if c == '$' or inquotes and c in '|*+?()[]{}.^\\':
+                relname += '\\'
+            relname += c
+        i += 1
+
     if relname:
-        relname = "'^(" + replacements(relname) + ")$'"
+        relname = '^(' + relname + ')$'
+
+    if schema:
+        schema = '^(' + schema + ')$'
 
     return schema, relname
 
@@ -708,6 +773,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\c': (change_db, ['\c database_name', 'Connect to a new database.']),
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'list databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'list or describe tables, views and sequences.']),
+            '\dn': (list_schemas, ['\dn[+] [pattern]', 'list schemas']),
             '\dt': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
             'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'
