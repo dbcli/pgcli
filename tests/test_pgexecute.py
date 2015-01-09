@@ -1,4 +1,6 @@
 from pgcli.pgexecute import _parse_dsn
+from textwrap import dedent
+from utils import *
 
 def test__parse_dsn():
     test_cases = [
@@ -33,8 +35,19 @@ def test__parse_dsn():
             # Full dsn with all components but with postgresql:// prefix.
             ('postgresql://user:password@host:5432/dbname',
                 ('dbname', 'user', 'password', 'host', '5432')),
-
             ]
 
     for dsn, expected in test_cases:
         assert _parse_dsn(dsn, 'fuser', 'fpasswd', 'fhost', '1234') == expected
+
+@dbtest
+def test_conn(executor):
+    run(executor, '''create table test(a text)''')
+    run(executor, '''insert into test values('abc')''')
+    assert run(executor, '''select * from test''', join=True) == dedent("""\
+        +-----+
+        | a   |
+        |-----|
+        | abc |
+        +-----+
+        SELECT 1""")
