@@ -34,6 +34,10 @@ except ImportError:
 from getpass import getuser
 from psycopg2 import OperationalError
 
+from collections import deque, namedtuple
+
+#Query tuples are used for maintaining history
+Query = namedtuple('Query', ['query', 'successful'])
 
 class PGCli(object):
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
@@ -56,6 +60,8 @@ class PGCli(object):
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
+
+        self.query_history = []
 
     def initialize_logging(self):
 
@@ -163,6 +169,7 @@ class PGCli(object):
                 try:
                     logger.debug('sql: %r', document.text)
                     res = pgexecute.run(document.text)
+                    successful = True
                     output = []
                     for rows, headers, status in res:
                         logger.debug("headers: %r", headers)
@@ -180,11 +187,15 @@ class PGCli(object):
                     logger.error("sql: %r, error: %r", document.text, e)
                     logger.error("traceback: %r", traceback.format_exc())
                     click.secho(str(e), err=True, fg='red')
+                    successful = False
 
                 # Refresh the table names and column names if necessary.
                 if need_completion_refresh(document.text):
                     completer.reset_completions()
                     refresh_completions(pgexecute, completer)
+
+                self.query_history.append(Query(document.text, successful))
+
         except Exit:
             print ('GoodBye!')
         finally:  # Reset the less opts back to original.
