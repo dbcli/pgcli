@@ -153,13 +153,6 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
                 for rows, headers, status in res:
                     _logger.debug("headers: %r", headers)
                     _logger.debug("rows: %r", rows)
-                    if rows:
-                        if is_expanded_output():
-                            output.append(expanded_table(rows, headers))
-                        else:
-                            output.append(tabulate(rows, headers, tablefmt='psql'))
-                    if status:  # Only print the status if it's not None.
-                        output.append(status)
                     _logger.debug("status: %r", status)
                     output.extend(format_output(rows, headers, status))
                 click.echo_via_pager('\n'.join(output))
@@ -181,7 +174,10 @@ def cli(database, user, host, port, prompt_passwd, never_prompt):
 def format_output(rows, headers, status):
     output = []
     if rows:
-        output.append(tabulate(rows, headers, tablefmt='psql'))
+        if is_expanded_output():
+            output.append(expanded_table(rows, headers))
+        else:
+            output.append(tabulate(rows, headers, tablefmt='psql'))
     if status:  # Only print the status if it's not None.
         output.append(status)
     return output
