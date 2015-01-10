@@ -45,6 +45,10 @@ def pgcli_line_magic(line):
         return
 
     q = pgcli.query_history[-1]
+    if q.mutating:
+        _logger.debug('Mutating query detected -- ignoring')
+        return
+
     if q.successful:
         ipython = get_ipython()
         return ipython.run_cell_magic('sql', line, q.query)
