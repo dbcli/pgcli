@@ -36,7 +36,7 @@ from psycopg2 import OperationalError
 from collections import deque, namedtuple
 
 #Query tuples are used for maintaining history
-Query = namedtuple('Query', ['query', 'successful'])
+Query = namedtuple('Query', ['query', 'successful', 'mutating'])
 
 class PGCli(object):
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
@@ -170,6 +170,12 @@ class PGCli(object):
                 # statement.
                 if quit_command(document.text):
                     raise Exit
+
+                # Keep track of whether or not the query is mutating. In case
+                # of a multi-statement query, the overall query is considered
+                # mutating if any one of the component statements is mutating
+                mutating = False
+
                 try:
                     logger.debug('sql: %r', document.text)
                     res = pgexecute.run(document.text)
@@ -180,6 +186,7 @@ class PGCli(object):
                         logger.debug("rows: %r", rows)
                         logger.debug("status: %r", status)
                         output.extend(format_output(rows, headers, status))
+                        mutating = mutating or is_mutating(status)
                     click.echo_via_pager('\n'.join(output))
                 except KeyboardInterrupt:
                     # Restart connection to the database
@@ -198,7 +205,8 @@ class PGCli(object):
                     completer.reset_completions()
                     refresh_completions(pgexecute, completer)
 
-                self.query_history.append(Query(document.text, successful))
+                query = Query(document.text, successful, mutating)
+                self.query_history.append(query)
 
         except Exit:
             print ('GoodBye!')
@@ -266,6 +274,10 @@ def need_completion_refresh(sql):
         return first_token.lower() in ('alter', 'create', 'use', '\c', 'drop')
     except Exception:
         return False
+
+def is_mutating(status):
+    mutating = ['insert', 'update', 'delete', 'alter', 'create', 'drop']
+    return status.split(None, 1)[0].lower() in mutating
 
 def quit_command(sql):
     return (sql.strip().lower() == 'exit'
