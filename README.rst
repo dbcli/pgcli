@@ -55,7 +55,7 @@ The `pgcli` is written using prompt_toolkit_.
     - ``SELECT * FROM <tab>`` will only show table names. 
     - ``SELECT * FROM users WHERE <tab>`` will only show column names. 
 
-* Config file is automatically created at ``~/.pglirc`` at first launch.
+* Config file is automatically created at ``~/.pgclirc`` at first launch.
 * Primitive support for ``psql`` back-slash commands. 
 * Pretty prints tabular data.
 
