@@ -122,7 +122,7 @@ class PGCli(object):
             try:
                 pgexecute = PGExecute(database, user, passwd, host, port)
             except OperationalError as e:
-                if 'no password supplied' in e.message and auto_passwd_prompt:
+                if 'no password supplied' in e.args[0] and auto_passwd_prompt:
                     passwd = click.prompt('Password', hide_input=True,
                                           show_default=False, type=str)
                     pgexecute = PGExecute(database, user, passwd, host, port)
