@@ -2,6 +2,7 @@ import logging
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions
+import sqlparse
 from collections import defaultdict
 from .packages import pgspecial
 
@@ -89,11 +90,12 @@ class PGExecute(object):
         are a list of tuples. Each tuple has 3 values (rows, headers, status).
         """
 
+        # Remove spaces and EOL
+        sql = sql.strip()
         if not sql:  # Empty string
             return [(None, None, None)]
 
         # Remove spaces, eol and semi-colons.
-        sql = sql.strip()
         sql = sql.rstrip(';')
 
         # Check if the command is a \c or 'use'. This is a special exception
@@ -106,31 +108,35 @@ class PGExecute(object):
             except:
                 _logger.debug('Database name missing.')
                 raise RuntimeError('Database name missing.')
-            self.conn = psycopg2.connect(database=dbname,
-                    user=self.user, password=self.password, host=self.host,
-                    port=self.port)
             self.dbname = dbname
-            self.conn.autocommit = True
+            self.connect()
             _logger.debug('Successfully switched to DB: %r', dbname)
             return [(None, None, 'You are now connected to database "%s" as '
                     'user "%s"' % (self.dbname, self.user))]
 
-        with self.conn.cursor() as cur:
-            try:
-                _logger.debug('Trying a pgspecial command. sql: %r', sql)
+        # Special command
+        try:
+            _logger.debug('Trying a pgspecial command. sql: %r', sql)
+            with self.conn.cursor() as cur:
                 return pgspecial.execute(cur, sql)
-            except KeyError:
-                _logger.debug('Regular sql statement. sql: %r', sql)
-                cur.execute(sql)
+        except KeyError:
+            # Split the sql into separate queries and run each one. If any
+            # single query fails, the rest are not run and no results are shown.
+            queries = sqlparse.split(sql)
+            return [self.execute_normal_sql(query) for query in queries]
 
+    def execute_normal_sql(self, split_sql):
+        _logger.debug('Regular sql statement. sql: %r', split_sql)
+        with self.conn.cursor() as cur:
+            cur.execute(split_sql)
             # cur.description will be None for operations that do not return
             # rows.
             if cur.description:
                 headers = [x[0] for x in cur.description]
-                return [(cur.fetchall(), headers, cur.statusmessage)]
+                return (cur.fetchall(), headers, cur.statusmessage)
             else:
                 _logger.debug('No rows in result.')
-                return [(None, None, cur.statusmessage)]
+                return (None, None, cur.statusmessage)
 
     def tables(self):
         """ Returns tuple (sorted_tables, columns). Columns is a dictionary of
