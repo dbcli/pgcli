@@ -1,14 +1,18 @@
 import logging
+from prompt_toolkit import filters
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.enums import InputMode
+from prompt_toolkit.key_binding.registry import Registry
+from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings
 
 _logger = logging.getLogger(__name__)
 
-def pgcli_bindings(registry, cli_ref):
+def pgcli_bindings():
     """
     Custom key bindings for pgcli.
     """
-    line = cli_ref().line
+    registry = Registry()
+    load_emacs_bindings(registry)
+
     handle = registry.add_binding
 
     @handle(Keys.F2)
@@ -17,7 +21,8 @@ def pgcli_bindings(registry, cli_ref):
         Enable/Disable SmartCompletion Mode.
         """
         _logger.debug('Detected F2 key.')
-        line.completer.smart_completion = not line.completer.smart_completion
+        buf = event.cli.current_buffer
+        buf.completer.smart_completion = not buf.completer.smart_completion
 
     @handle(Keys.F3)
     def _(event):
@@ -25,12 +30,15 @@ def pgcli_bindings(registry, cli_ref):
         Enable/Disable Multiline Mode.
         """
         _logger.debug('Detected F3 key.')
-        line.always_multiline = not line.always_multiline
+        buf = event.cli.current_buffer
+        buf.always_multiline = not buf.always_multiline
 
-    @handle(Keys.ControlSpace, in_mode=InputMode.INSERT)
+    @handle(Keys.ControlSpace, filter=~filters.HasSelection())
     def _(event):
         """
         Force autocompletion at cursor.
         """
         _logger.debug('Detected <C-Space> key.')
-        line.complete_next()
+        event.cli.current_buffer.complete_next()
+
+    return registry
