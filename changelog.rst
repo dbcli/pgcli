@@ -1,3 +1,18 @@
+0.12.0
+======
+
+Features:
+---------
+
+* Upgrade to prompt_toolkit version 0.26 (Thanks: https://github.com/macobo) 
+  * Adds Ctrl-left/right to move the cursor one word left/right respectively.
+  * Internal API changes.
+* IPython integration through `ipython-sql`_ (Thanks: https://github.com/darikg)
+  * Add an ipython magic extension to embed pgcli inside ipython. 
+  * Results from a pgcli query are sent back to ipython. 
+
+.. _`ipython-sql`: https://github.com/catherinedevlin/ipython-sql
+
 0.11.0
 ======
 
