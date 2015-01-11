@@ -82,11 +82,12 @@ class PGCli(object):
 
         handler.setFormatter(formatter)
 
-        self.logger.addHandler(handler)
-        self.logger.setLevel(level_map[log_level.upper()])
+        root_logger = logging.getLogger('pgcli')
+        root_logger.addHandler(handler)
+        root_logger.setLevel(level_map[log_level.upper()])
 
-        self.logger.debug('Initializing pgcli logging.')
-        self.logger.debug('Log file "%s".' % log_file)
+        root_logger.debug('Initializing pgcli logging.')
+        root_logger.debug('Log file "%s".' % log_file)
 
     def connect_uri(self, uri):
         uri = urlparse(uri)
