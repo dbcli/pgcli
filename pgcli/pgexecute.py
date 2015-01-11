@@ -143,10 +143,12 @@ class PGExecute(object):
             table name -> list of columns """
         columns = defaultdict(list)
         with self.conn.cursor() as cur:
+            _logger.debug('Tables Query. sql: %r', self.tables_query)
             cur.execute(self.tables_query)
             tables = [x[0] for x in cur.fetchall()]
 
             table_set = set(tables)
+            _logger.debug('Columns Query. sql: %r', self.columns_query)
             cur.execute(self.columns_query)
             for table, column in cur.fetchall():
                 if table in table_set:
@@ -155,5 +157,6 @@ class PGExecute(object):
 
     def databases(self):
         with self.conn.cursor() as cur:
+            _logger.debug('Databases Query. sql: %r', self.databases_query)
             cur.execute(self.databases_query)
             return [x[0] for x in cur.fetchall()]
