@@ -18,7 +18,7 @@ Bug Fixes:
 ----------
 
 * Fix 'message' attribute not found exception in Python 3. (Thanks: https://github.com/GMLudo)
-* 
+* Use the database username as the database name instead of defaulting to OS username. (Thanks: https://github.com/fpietka)
 
 0.11.0
 ======
