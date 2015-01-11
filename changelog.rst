@@ -1,5 +1,5 @@
-0.12.0
-======
+Current
+=======
 
 Features:
 ---------
@@ -10,8 +10,15 @@ Features:
 * IPython integration through `ipython-sql`_ (Thanks: https://github.com/darikg)
   * Add an ipython magic extension to embed pgcli inside ipython. 
   * Results from a pgcli query are sent back to ipython. 
+* Multiple sql statments in the same line separated by semi-colon. (Thanks: https://github.com/macobo)
 
 .. _`ipython-sql`: https://github.com/catherinedevlin/ipython-sql
+
+Bug Fixes:
+----------
+
+* Fix 'message' attribute not found exception in Python 3. (Thanks: https://github.com/GMLudo)
+* 
 
 0.11.0
 ======
