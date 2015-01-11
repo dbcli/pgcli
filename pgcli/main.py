@@ -98,8 +98,11 @@ class PGCli(object):
         # Connect to the database.
 
         if not database:
-            # default to current OS username just like psql
-            database = user = getuser()
+            if user:
+                database = user
+            else:
+                # default to current OS username just like psql
+                database = user = getuser()
 
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
