@@ -101,9 +101,7 @@ class PGCompleter(Completer):
     def find_matches(text, collection):
         text = last_word(text, include='most_punctuations')
         for item in collection:
-            item_unescaped = item[1:] if item[0] == '"' else item
-
-            if item_unescaped.startswith(text) or item_unescaped.startswith(text.upper()):
+            if item.startswith(text) or item.startswith(text.upper()):
                 yield Completion(item, -len(text))
 
     def get_completions(self, document, complete_event, smart_completion=None):
