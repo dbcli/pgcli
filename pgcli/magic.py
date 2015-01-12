@@ -36,6 +36,9 @@ def pgcli_line_magic(line):
         pgcli.connect(u.database, u.host, u.username, u.port, u.password)
         conn._pgcli = pgcli
 
+    #For convenience, print the connection alias
+    print('Connected: {}'.format(conn.name))
+
     try:
         pgcli.run_cli()
     except SystemExit:
