@@ -2,6 +2,7 @@
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 
 __all__ = (
     'Completion',
@@ -61,15 +62,13 @@ class CompleteEvent(object):
         self.completion_requested = completion_requested
 
 
-class Completer(object):
+class Completer(with_metaclass(ABCMeta, object)):
     """
     Base class for Code implementations.
 
     The methods in here are methods that are expected to exist for the `Buffer`
     and `Renderer` classes.
     """
-    __metaclass__ = ABCMeta
-
     @abstractmethod
     def get_completions(self, document, complete_event):
         """

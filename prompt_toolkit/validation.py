@@ -2,6 +2,7 @@
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 
 __all__ = (
     'ValidationError',
@@ -18,9 +19,7 @@ class ValidationError(Exception):
             self.index, self.message)
 
 
-class Validator(object):
-    __metaclass__ = ABCMeta
-
+class Validator(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def validate(self, document):
         """

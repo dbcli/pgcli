@@ -12,6 +12,7 @@ Filters can be chained using ``&`` and ``|`` operations, and inverted using the
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 
 __all__ = (
     'HasFocus',
@@ -21,13 +22,11 @@ __all__ = (
 )
 
 
-class Filter(object):
+class Filter(with_metaclass(ABCMeta, object)):
     """
     Filter to activate/deactivate a key binding, depending on a condition.
     The return value of ``__call__`` will tell if the key binding should be active.
     """
-    __metaclass__ = ABCMeta
-
     @abstractmethod
     def __call__(self, cli):
         return True
