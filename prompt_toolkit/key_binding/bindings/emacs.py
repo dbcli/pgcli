@@ -475,9 +475,10 @@ def load_emacs_search_bindings(registry, filter=None, search_buffer_name='search
     @handle(Keys.Backspace, filter=has_focus)
     def _(event):
         search_line = event.cli.buffers[search_buffer_name]
-
         search_line.delete_before_cursor()
-        event.current_buffer.set_search_text(search_line.text)
+
+        buffer = event.cli.buffers[event.cli.focus_stack.previous]
+        buffer.set_search_text(search_line.text)
 
     @handle(Keys.Any, filter=has_focus)
     def _(event):
