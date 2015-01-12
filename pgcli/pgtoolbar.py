@@ -10,17 +10,17 @@ class PGToolbar(Toolbar):
     def get_tokens(self, cli, width):
         result = TokenList()
         result.append((self.token, ' '))
-        if cli.current_buffer.completer.smart_completion:
+        if cli.buffers['default'].completer.smart_completion:
             result.append((self.token.On, '[F2] Smart Completion: ON  '))
         else:
             result.append((self.token.Off, '[F2] Smart Completion: OFF  '))
 
-        if cli.current_buffer.always_multiline:
+        if cli.buffers['default'].always_multiline:
             result.append((self.token.On, '[F3] Multiline: ON'))
         else:
             result.append((self.token.Off, '[F3] Multiline: OFF'))
 
-        if cli.current_buffer.always_multiline:
+        if cli.buffers['default'].always_multiline:
             result.append((self.token,
                 ' (Semi-colon [;] will end the line)'))
 
