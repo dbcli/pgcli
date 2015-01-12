@@ -1,8 +1,6 @@
 import logging
-from prompt_toolkit import filters
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.key_binding.registry import Registry
-from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings
+from prompt_toolkit.key_binding.manager import KeyBindingManager
 
 _logger = logging.getLogger(__name__)
 
@@ -10,12 +8,9 @@ def pgcli_bindings():
     """
     Custom key bindings for pgcli.
     """
-    registry = Registry()
-    load_emacs_bindings(registry)
+    key_binding_manager = KeyBindingManager()
 
-    handle = registry.add_binding
-
-    @handle(Keys.F2)
+    @key_binding_manager.registry.add_binding(Keys.F2)
     def _(event):
         """
         Enable/Disable SmartCompletion Mode.
@@ -24,7 +19,7 @@ def pgcli_bindings():
         buf = event.cli.current_buffer
         buf.completer.smart_completion = not buf.completer.smart_completion
 
-    @handle(Keys.F3)
+    @key_binding_manager.registry.add_binding(Keys.F3)
     def _(event):
         """
         Enable/Disable Multiline Mode.
@@ -33,7 +28,7 @@ def pgcli_bindings():
         buf = event.cli.current_buffer
         buf.always_multiline = not buf.always_multiline
 
-    @handle(Keys.ControlSpace, filter=~filters.HasSelection())
+    @key_binding_manager.registry.add_binding(Keys.ControlSpace)
     def _(event):
         """
         Force autocompletion at cursor.
@@ -41,4 +36,4 @@ def pgcli_bindings():
         _logger.debug('Detected <C-Space> key.')
         event.cli.current_buffer.complete_next()
 
-    return registry
+    return key_binding_manager.registry
