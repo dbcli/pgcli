@@ -20,6 +20,7 @@ Bug Fixes:
 * Fix 'message' attribute not found exception in Python 3. (Thanks: https://github.com/GMLudo)
 * Use the database username as the database name instead of defaulting to OS username. (Thanks: https://github.com/fpietka)
 * Auto-completion for auto-escaped column/table names.
+* Fix i-reverse-search to work in prompt_toolkit version 0.26.
 
 0.11.0
 ======
