@@ -617,7 +617,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
 
                     #/* Everything after "TRIGGER" is echoed verbatim */
                     tgdef = row[1]
-                    triggerpos = indexdef.find(" TRIGGER ")
+                    triggerpos = tgdef.find(" TRIGGER ")
                     if triggerpos >= 0:
                         tgdef = triggerpos + 9;
 
