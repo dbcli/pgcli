@@ -283,6 +283,9 @@ def need_completion_refresh(sql):
         return False
 
 def is_mutating(status):
+    if not status:
+        return False
+    
     mutating = ['insert', 'update', 'delete', 'alter', 'create', 'drop']
     return status.split(None, 1)[0].lower() in mutating
 
