@@ -78,11 +78,14 @@ class PGExecute(object):
                         default_port=port)
         self.connect()
 
-    def connect(self):
+    def connect(self, database=None, user=None, password=None, host=None,
+            port=None):
+        conn = psycopg2.connect(database=database or self.dbname, user=user or
+                self.user, password=password or self.password, host=host or
+                self.host, port=port or self.port)
         if hasattr(self, 'conn'):
             self.conn.close()
-        self.conn = psycopg2.connect(database=self.dbname, user=self.user,
-                password=self.password, host=self.host, port=self.port)
+        self.conn = conn
         self.conn.autocommit = True
 
     def run(self, sql):
@@ -108,8 +111,8 @@ class PGExecute(object):
             except:
                 _logger.debug('Database name missing.')
                 raise RuntimeError('Database name missing.')
+            self.connect(database=dbname)
             self.dbname = dbname
-            self.connect()
             _logger.debug('Successfully switched to DB: %r', dbname)
             return [(None, None, 'You are now connected to database "%s" as '
                     'user "%s"' % (self.dbname, self.user))]
