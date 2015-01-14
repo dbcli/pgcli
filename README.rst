@@ -17,6 +17,10 @@ If you already know how to install python packages, then you can simply do:
 
     $ pip install pgcli
 
+    or
+
+    $ brew install pgcli  # Only on OS X
+
 If you don't know how to install python packages, please check the 
 `detailed instructions`__.
 
@@ -79,8 +83,17 @@ Detailed Installation Instructions:
 OS X:
 =====
 
-For installing Python packages it is recommended to use the package manager
-called `pip`. Check if `pip` is installed on the system.
+Easiest way to install pgcli is using brew. 
+
+::
+
+    $ brew install pgcli
+
+Done!
+
+Alternatively, you can install ``pgcli`` as a python package using a package
+manager called called ``pip``. You will need postgres installed on your system
+for this to work.  Check if ``pip`` is installed on the system.  
 
 :: 
 
@@ -116,22 +129,28 @@ Check if pip is already available in your system.
 
     $ which pip
 
-If it does then install pgcli using the pip command as follows:
-
-:: 
-
-    $ sudo pip install pgcli
-
 If it doesn't exist, use your linux package manager to install `pip`. This
 might look something like: 
 
 ::
 
-    $ sudo apt-get install python-pip
+    $ sudo apt-get install python-pip   # Debian, Ubuntu, Mint etc
 
     or
 
-    $ sudo yum install python-pip
+    $ sudo yum install python-pip  # RHEL, Centos, Fedora etc
+
+``pgcli`` requires python-dev, libpq-dev and libevent-dev packages. You can
+install these via your operating system package manager. 
+
+
+::
+
+    $ sudo apt-get install python-dev libpq-dev libevent-dev
+
+    or 
+
+    $ sudo yum install python-devel postgresql-devel
 
 Then you can install pgcli: 
 
