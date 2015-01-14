@@ -109,3 +109,7 @@ def test_multiple_queries_same_line_syntaxerror(executor):
     with pytest.raises(psycopg2.ProgrammingError) as excinfo:
         run(executor, "select 'foo'; invalid syntax")
     assert 'syntax error at or near "invalid"' in str(excinfo.value)
+
+@dbtest
+def test_special_command(executor):
+    run(executor, '\\?')
