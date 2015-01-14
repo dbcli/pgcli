@@ -236,13 +236,20 @@ class PGCli(object):
 @click.option('-U', '--user', envvar='PGUSER', help='User name to '
         'connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
-              help='Force password prompt.')
+        help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
-              default=False, help='Never issue a password prompt')
-@click.argument('database', default='', envvar='PGDATABASE')
-def cli(database, user, host, port, prompt_passwd, never_prompt):
-
+        default=False, help='Never prompt for password.')
+@click.option('-d', '--dbname', default='', envvar='PGDATABASE',
+        help='database name to connect to.')
+@click.argument('database', default='', envvar='PGDATABASE', nargs=1)
+@click.argument('username', default='', envvar='PGUSER', nargs=1)
+def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
+        username):
     pgcli = PGCli(prompt_passwd, never_prompt)
+
+    # Choose which ever one has a valid database name.
+    database = database or dbname
+    user = user or username
 
     if '://' in database:
         pgcli.connect_uri(database)
