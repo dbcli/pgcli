@@ -1,3 +1,19 @@
+Current
+=======
+
+Features:
+---------
+
+* Add -d/--dbname option to the commandline. 
+  eg: pgcli -d database
+* Add the username as an argument after the database.
+  eg: pgcli dbname user
+
+Bug Fixes:
+----------
+* Fix the crash when \c fails.
+* Fix the error thrown by \d when triggers are present.
+
 0.12.0
 ======
 
