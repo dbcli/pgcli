@@ -13,6 +13,7 @@ Bug Fixes:
 ----------
 * Fix the crash when \c fails.
 * Fix the error thrown by \d when triggers are present.
+* Fix broken behavior on \?. (Thanks: darikg_)
 
 0.12.0
 ======
@@ -60,3 +61,5 @@ Improvements:
 -------------
 * Faster test runs on TravisCI. (Thanks: https://github.com/macobo)
 * Integration tests with Postgres!! (Thanks: https://github.com/macobo)
+
+.. _darikg: https://github.com/darikg
