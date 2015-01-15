@@ -80,6 +80,10 @@ def load_basic_bindings(registry, filter=None):
     @handle(Keys.PageDown)
     @handle(Keys.BackTab)
     @handle(Keys.Tab)
+    @handle(Keys.ControlLeft)
+    @handle(Keys.ControlRight)
+    @handle(Keys.ControlUp)
+    @handle(Keys.ControlDown)
     def _(event):
         """
         First, for any of these keys, Don't do anything by default. Also don't
