@@ -17,7 +17,7 @@ from pygments.lexers.sql import SqlLexer
 from .packages.tabulate import tabulate
 from .packages.expanded import expanded_table
 from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
-        NON_CASE_SENSITIVE_COMMANDS, is_expanded_output)
+        NON_CASE_SENSITIVE_COMMANDS, is_expanded_output, is_timing_enabled)
 from .pgcompleter import PGCompleter
 from .pgtoolbar import PGToolbar
 from .pgstyle import PGStyle
@@ -26,6 +26,8 @@ from .pgbuffer import PGBuffer
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 
+from time import time
+
 try:
     from urlparse import urlparse
 except ImportError:
@@ -33,9 +35,9 @@ except ImportError:
 from getpass import getuser
 from psycopg2 import OperationalError
 
-from collections import deque, namedtuple
+from collections import namedtuple
 
-#Query tuples are used for maintaining history
+# Query tuples are used for maintaining history
 Query = namedtuple('Query', ['query', 'successful', 'mutating'])
 
 class PGCli(object):
@@ -87,7 +89,7 @@ class PGCli(object):
         root_logger.setLevel(level_map[log_level.upper()])
 
         root_logger.debug('Initializing pgcli logging.')
-        root_logger.debug('Log file "%s".' % log_file)
+        root_logger.debug('Log file %r.', log_file)
 
     def connect_uri(self, uri):
         uri = urlparse(uri)
@@ -178,16 +180,22 @@ class PGCli(object):
 
                 try:
                     logger.debug('sql: %r', document.text)
+                    successful = False
+                    start = time()
                     res = pgexecute.run(document.text)
+                    duration = time() - start
                     successful = True
                     output = []
+                    total = 0
                     for rows, headers, status in res:
                         logger.debug("headers: %r", headers)
                         logger.debug("rows: %r", rows)
                         logger.debug("status: %r", status)
+                        start = time()
                         output.extend(format_output(rows, headers, status))
+                        end = time()
+                        total += end - start
                         mutating = mutating or is_mutating(status)
-                    click.echo_via_pager('\n'.join(output))
                 except KeyboardInterrupt:
                     # Restart connection to the database
                     pgexecute.connect()
@@ -197,7 +205,12 @@ class PGCli(object):
                     logger.error("sql: %r, error: %r", document.text, e)
                     logger.error("traceback: %r", traceback.format_exc())
                     click.secho(str(e), err=True, fg='red')
-                    successful = False
+                else:
+                    click.echo_via_pager('\n'.join(output))
+
+                    if is_timing_enabled():
+                        print('Command Time:', duration)
+                        print('Render  Time:', total)
 
                 # Refresh the table names and column names if necessary.
                 if need_completion_refresh(document.text):
@@ -285,7 +298,7 @@ def need_completion_refresh(sql):
 def is_mutating(status):
     if not status:
         return False
-    
+
     mutating = ['insert', 'update', 'delete', 'alter', 'create', 'drop']
     return status.split(None, 1)[0].lower() in mutating
 

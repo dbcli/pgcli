@@ -38,5 +38,6 @@ def expanded_table(rows, headers):
     for i, result in enumerate(results):
         output.append(get_separator(i, header_len, max_row_len))
         output.append(result)
+        output.append('\n')
 
     return ''.join(output)

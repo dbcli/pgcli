@@ -23,6 +23,10 @@ use_expanded_output = False
 def is_expanded_output():
     return use_expanded_output
 
+timing_enabled = False
+def is_timing_enabled():
+    return timing_enabled
+
 def parse_special_command(sql):
     command, _, arg = sql.partition(' ')
     verbose = '+' in command
@@ -775,8 +779,15 @@ def expanded_output(cur, arg, verbose):
     global use_expanded_output
     use_expanded_output = not use_expanded_output
     message = u"Expanded display is "
-    message += u"on" if use_expanded_output else u"off"
-    return [(None, None, message + u".")]
+    message += u"on." if use_expanded_output else u"off."
+    return [(None, None, message)]
+
+def toggle_timing(cur, arg, verbose):
+    global timing_enabled
+    timing_enabled = not timing_enabled
+    message = "Timing is "
+    message += "on." if timing_enabled else "off."
+    return [(None, None, message)]
 
 CASE_SENSITIVE_COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
@@ -785,6 +796,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\d': (describe_table_details, ['\d [pattern]', 'list or describe tables, views and sequences.']),
             '\dn': (list_schemas, ['\dn[+] [pattern]', 'list schemas']),
             '\\x': (expanded_output, ['\\x', 'Toggle expanded output.']),
+            '\\timing': (toggle_timing, ['\\timing', 'Toggle timing of commands.']),
             '\dt': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
             'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'
