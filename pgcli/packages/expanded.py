@@ -25,18 +25,18 @@ def expanded_table(rows, headers):
 
     for row in rows:
         row_len = max([len(_text_type(x)) for x in row])
-        row_result = ""
+        row_result = []
         if row_len > max_row_len:
             max_row_len = row_len
 
-        for item in zip(padded_headers, row):
-            row_result += u"{0} {1}\n".format(item[0], item[1])
+        for header, value in zip(padded_headers, row):
+            row_result.append(u"%s %s" % (header, value))
 
-        results.append(row_result)
+        results.append('\n'.join(row_result))
 
-    output = ""
+    output = []
     for i, result in enumerate(results):
-        output += get_separator(i, header_len, max_row_len)
-        output += result
+        output.append(get_separator(i, header_len, max_row_len))
+        output.append(result)
 
-    return output
+    return ''.join(output)
