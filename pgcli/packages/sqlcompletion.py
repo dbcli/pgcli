@@ -46,6 +46,12 @@ def suggest_type(full_text, text_before_cursor):
     return suggest_based_on_last_token(last_token, text_before_cursor, full_text)
 
 def suggest_based_on_last_token(token, text_before_cursor, full_text):
+    """Returns a list of suggestion dicts
+
+        A suggestion dict is a dict with a mandatory field "type", and optional
+        additional fields supplying additional scope information.
+    """
+
     if isinstance(token, string_types):
         token_v = token
     else:
@@ -66,28 +72,67 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
             # If the lparen is preceeded by a space chances are we're about to
             # do a sub-select.
             if last_word(text_before_cursor, 'all_punctuations').startswith('('):
-                return 'keywords', []
-        return 'columns', extract_tables(full_text)
+                return [{'type': 'keyword'}]
+
+        return [{'type': 'column', 'tables': extract_tables(full_text)}]
+
     if token_v.lower() in ('set', 'by', 'distinct'):
-        return 'columns', extract_tables(full_text)
+        return [{'type': 'column', 'tables': extract_tables(full_text)}]
     elif token_v.lower() in ('select', 'where', 'having'):
-        return 'columns-and-functions', extract_tables(full_text)
+        return [{'type': 'column', 'tables': extract_tables(full_text)},
+                {'type': 'function'}]
     elif token_v.lower() in ('from', 'update', 'into', 'describe', 'join', 'table'):
-        return 'tables', []
+        return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
     elif token_v.lower() == 'on':
-        tables = extract_tables(full_text, include_alias=True)
-        return 'tables-or-aliases', tables.keys()
+        tables = extract_tables(full_text)
+
+        # Use table alias if there is one, otherwise the table name
+        alias = tables['alias'].where(tables['alias'].notnull(), tables['table'])
+
+        return [{'type': 'alias', 'aliases': list(alias)}]
+
     elif token_v in ('d',):  # \d
-        return 'tables', []
+        return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
     elif token_v.lower() in ('c', 'use'):  # \c
-        return 'databases', []
+        return [{'type': 'database'}]
     elif token_v.endswith(','):
         prev_keyword = find_prev_keyword(text_before_cursor)
         if prev_keyword:
-            return suggest_based_on_last_token(prev_keyword, text_before_cursor, full_text)
+            return suggest_based_on_last_token(
+                prev_keyword, text_before_cursor, full_text)
     elif token_v.endswith('.'):
-        current_alias = last_word(token_v[:-1])
-        tables = extract_tables(full_text, include_alias=True)
-        return 'columns', [tables.get(current_alias) or current_alias]
 
-    return 'keywords', []
+        suggestions = []
+
+        identifier = last_word(token_v[:-1], 'all_punctuations')
+
+        # TABLE.<suggestion> or SCHEMA.TABLE.<suggestion>
+        tables = extract_tables(full_text)
+        tables = get_matching_tables(tables, identifier)
+        suggestions.append({'type': 'column',
+                            'tables': tables[['schema', 'table', 'alias']]})
+
+        # SCHEMA.<suggestion>
+        suggestions.append({'type': 'table', 'schema': identifier})
+
+        return suggestions
+
+    return [{'type': 'keyword'}]
+
+def get_matching_tables(tables, identifier):
+    """
+    :param tables: DataFrame with columns [schema, table, alias]
+    :param identifier: a table name, table alias, or fully qualified schema.tablename
+    :return: a row or rows from tables that match the indentifier
+    """
+    tables['full_name'] = tables.apply(qualify_table_name, axis=1)
+
+    #match a table to an identifier if the identifer is equal to any one of the
+    #table name, table alias, or schema-qualified table name
+    matches = tables[['table', 'alias', 'full_name']] == identifier
+    is_match = matches.any(axis=1)
+
+    return tables[is_match]
+
+def qualify_table_name(row):
+    return row['schema'] + '.' + row['table'] if row['schema'] else row['table']

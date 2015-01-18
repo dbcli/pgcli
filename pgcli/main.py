@@ -332,11 +332,9 @@ def quit_command(sql):
             or sql.strip() == ':q')
 
 def refresh_completions(pgexecute, completer):
-    tables, columns = pgexecute.tables()
-    completer.extend_table_names(tables)
-    for table in tables:
-        table = table[1:-1] if table[0] == '"' and table[-1] == '"' else table
-        completer.extend_column_names(table, columns[table])
+    tables, columns = pgexecute.get_metadata()
+    completer.extend_tables(tables)
+    completer.extend_columns(columns)
     completer.extend_database_names(pgexecute.databases())
 
 if __name__ == "__main__":

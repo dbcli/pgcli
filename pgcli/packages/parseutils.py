@@ -1,6 +1,7 @@
 from __future__ import print_function
 import re
 import sqlparse
+from pandas import DataFrame
 from sqlparse.sql import IdentifierList, Identifier, Function
 from sqlparse.tokens import Keyword, DML, Punctuation
 
@@ -101,50 +102,51 @@ def extract_from_part(parsed, stop_at_punctuation=True):
                     break
 
 def extract_table_identifiers(token_stream):
+    """yields tuples of (schema_name, table_name, table_alias)"""
+
     for item in token_stream:
         if isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
                 # Sometimes Keywords (such as FROM ) are classified as
                 # identifiers which don't have the get_real_name() method.
                 try:
+                    schema_name = identifier.get_parent_name()
                     real_name = identifier.get_real_name()
                 except AttributeError:
                     continue
                 if real_name:
-                    yield (real_name, identifier.get_alias() or real_name)
+                    yield (schema_name, real_name, identifier.get_alias())
         elif isinstance(item, Identifier):
             real_name = item.get_real_name()
+            schema_name = item.get_parent_name()
 
             if real_name:
-                yield (real_name, item.get_alias() or real_name)
+                yield (schema_name, real_name, item.get_alias())
             else:
                 name = item.get_name()
-                yield (name, item.get_alias() or name)
+                yield (None, name, item.get_alias() or name)
         elif isinstance(item, Function):
-            yield (item.get_name(), item.get_name())
+            yield (None, item.get_name(), item.get_name())
 
 # extract_tables is inspired from examples in the sqlparse lib.
-def extract_tables(sql, include_alias=False):
+def extract_tables(sql):
     """Extract the table names from an SQL statment.
 
-    Returns a list of table names if include_alias=False (default).
-    If include_alias=True, then a dictionary is returned where the keys are
-    aliases and values are real table names.
+    Returns a DataFrame with columns [schema, table, alias]
 
     """
     parsed = sqlparse.parse(sql)
     if not parsed:
-        return []
+        return DataFrame({}, columns=['schema', 'table', 'alias'])
+
     # INSERT statements must stop looking for tables at the sign of first
     # Punctuation. eg: INSERT INTO abc (col1, col2) VALUES (1, 2)
     # abc is the table name, but if we don't stop at the first lparen, then
     # we'll identify abc, col1 and col2 as table names.
     insert_stmt = parsed[0].token_first().value.lower() == 'insert'
     stream = extract_from_part(parsed[0], stop_at_punctuation=insert_stmt)
-    if include_alias:
-        return dict((alias, t) for t, alias in extract_table_identifiers(stream))
-    else:
-        return [x[0] for x in extract_table_identifiers(stream)]
+    tables = extract_table_identifiers(stream)
+    return DataFrame.from_records(tables, columns=['schema', 'table', 'alias'])
 
 def find_prev_keyword(sql):
     if not sql.strip():
@@ -156,4 +158,4 @@ def find_prev_keyword(sql):
 
 if __name__ == '__main__':
     sql = 'select * from (select t. from tabl t'
-    print (extract_tables(sql, True))
+    print (extract_tables(sql))
