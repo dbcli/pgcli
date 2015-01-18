@@ -4,7 +4,7 @@ from prompt_toolkit.document import Document
 
 tables = {
     'users': ['id', 'email', 'first_name', 'last_name'],
-    'orders': ['id', 'ordered_date', 'status']
+    'orders': ['id', 'user_id', 'ordered_date', 'status']
 }
 
 @pytest.fixture
@@ -185,3 +185,23 @@ def test_suggested_multiple_column_names_with_dot(completer, complete_event):
         Completion(text='email', start_position=0),
         Completion(text='first_name', start_position=0),
         Completion(text='last_name', start_position=0)])
+
+def test_suggested_aliases_after_on(completer, complete_event):
+    text = 'SELECT u.name, o.id FROM users u JOIN orders o ON '
+    position = len('SELECT u.name, o.id FROM users u JOIN orders o ON ')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='u', start_position=0),
+        Completion(text='o', start_position=0)])
+
+def test_suggested_tables_after_on(completer, complete_event):
+    text = 'SELECT users.name, orders.id FROM users JOIN orders ON '
+    position = len('SELECT users.name, orders.id FROM users JOIN orders ON ')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='users', start_position=0),
+        Completion(text='orders', start_position=0)])

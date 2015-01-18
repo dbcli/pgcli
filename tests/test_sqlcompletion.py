@@ -113,3 +113,17 @@ def test_join_alias_dot_suggests_cols2():
     suggestion = suggest_type('SELECT * FROM abc a JOIN def d ON a.',
             'SELECT * FROM abc a JOIN def d ON a.id = d.')
     assert suggestion == ('columns', ['def'])
+
+def test_on_suggests_aliases():
+    category, scope = suggest_type(
+        'select a.x, b.y from abc a join bcd b on ',
+        'select a.x, b.y from abc a join bcd b on ')
+    assert category == 'tables-or-aliases'
+    assert set(scope) == set(['a', 'b'])
+
+def test_on_suggests_tables():
+    category, scope = suggest_type(
+        'select abc.x, bcd.y from abc join bcd on ',
+        'select abc.x, bcd.y from abc join bcd on ')
+    assert category == 'tables-or-aliases'
+    assert set(scope) == set(['abc', 'bcd'])
