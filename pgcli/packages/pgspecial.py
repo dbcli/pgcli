@@ -58,7 +58,7 @@ def list_schemas(cur, pattern, verbose):
     cur.execute(sql)
     if cur.description:
         headers = [x[0] for x in cur.description]
-        return [(cur.fetchall(), headers, cur.statusmessage)]
+        return [(cur, headers, cur.statusmessage)]
 
 def describe_table_details(cur, pattern, verbose):
     """
@@ -90,7 +90,7 @@ def describe_table_details(cur, pattern, verbose):
         cur.execute(sql)
         if cur.description:
             headers = [x[0] for x in cur.description]
-            return [(cur.fetchall(), headers, cur.statusmessage)]
+            return [(cur, headers, cur.statusmessage)]
 
     # This is a \d <tablename> command. A royal pain in the ass.
     schema, relname = sql_name_pattern(pattern)
@@ -860,7 +860,7 @@ def execute(cur, sql):
         cur.execute(command_executor)
         if cur.description:
             headers = [x[0] for x in cur.description]
-            return [(cur.fetchall(), headers, cur.statusmessage)]
+            return [(cur, headers, cur.statusmessage)]
         else:
             return [(None, None, cur.statusmessage)]
 

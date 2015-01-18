@@ -182,17 +182,21 @@ class PGCli(object):
                     logger.debug('sql: %r', document.text)
                     successful = False
                     start = time()
+                    # Initialized to None because res might never get
+                    # initialized if an exception occurs in pgexecute.run().
+                    # Which causes finally clause to fail.
+                    res = None
                     res = pgexecute.run(document.text)
                     duration = time() - start
                     successful = True
                     output = []
                     total = 0
-                    for rows, headers, status in res:
+                    for cur, headers, status in res:
                         logger.debug("headers: %r", headers)
-                        logger.debug("rows: %r", rows)
+                        logger.debug("rows: %r", cur)
                         logger.debug("status: %r", status)
                         start = time()
-                        output.extend(format_output(rows, headers, status))
+                        output.extend(format_output(cur, headers, status))
                         end = time()
                         total += end - start
                         mutating = mutating or is_mutating(status)
@@ -210,7 +214,11 @@ class PGCli(object):
 
                     if is_timing_enabled():
                         print('Command Time:', duration)
-                        print('Render  Time:', total)
+                        print('Format Time:', total)
+                finally:
+                    for cur, _, _ in res:
+                        if hasattr(cur, 'close'):
+                            cur.close()
 
                 # Refresh the table names and column names if necessary.
                 if need_completion_refresh(document.text):

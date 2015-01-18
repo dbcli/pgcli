@@ -117,29 +117,29 @@ class PGExecute(object):
             return [(None, None, 'You are now connected to database "%s" as '
                     'user "%s"' % (self.dbname, self.user))]
 
-        # Special command
-        try:
+        try:   # Special command
             _logger.debug('Trying a pgspecial command. sql: %r', sql)
-            with self.conn.cursor() as cur:
-                return pgspecial.execute(cur, sql)
-        except KeyError:
+            cur = self.conn.cursor()
+            return pgspecial.execute(cur, sql)
+        except KeyError:  # Regular SQL
             # Split the sql into separate queries and run each one. If any
-            # single query fails, the rest are not run and no results are shown.
+            # single query fails, the rest of them are not run and no results
+            # are shown.
             queries = sqlparse.split(sql)
             return [self.execute_normal_sql(query) for query in queries]
 
     def execute_normal_sql(self, split_sql):
         _logger.debug('Regular sql statement. sql: %r', split_sql)
-        with self.conn.cursor() as cur:
-            cur.execute(split_sql)
-            # cur.description will be None for operations that do not return
-            # rows.
-            if cur.description:
-                headers = [x[0] for x in cur.description]
-                return (cur.fetchall(), headers, cur.statusmessage)
-            else:
-                _logger.debug('No rows in result.')
-                return (None, None, cur.statusmessage)
+        cur = self.conn.cursor()
+        cur.execute(split_sql)
+        # cur.description will be None for operations that do not return
+        # rows.
+        if cur.description:
+            headers = [x[0] for x in cur.description]
+            return (cur, headers, cur.statusmessage)
+        else:
+            _logger.debug('No rows in result.')
+            return (None, None, cur.statusmessage)
 
     def tables(self):
         """ Returns tuple (sorted_tables, columns). Columns is a dictionary of
