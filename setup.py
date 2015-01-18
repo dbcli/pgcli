@@ -29,6 +29,7 @@ setup(
             'prompt_toolkit==0.26',
             'psycopg2 >= 2.5.4',
             'sqlparse >= 0.1.14',
+            'pandas >= 0.15.0'
             ],
         entry_points='''
             [console_scripts]
