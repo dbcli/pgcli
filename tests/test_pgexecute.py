@@ -55,14 +55,25 @@ def test_conn(executor):
         SELECT 1""")
 
 @dbtest
-def test_table_and_columns_query(executor):
+def test_schemata_table_and_columns_query(executor):
     run(executor, "create table a(x text, y text)")
     run(executor, "create table b(z text)")
+    run(executor, "create schema schema1")
+    run(executor, "create table schema1.c (w text)")
+    run(executor, "create schema schema2")
 
-    tables, columns = executor.get_metadata()
-    assert set(tables['table']) == set(['a', 'b'])
-    assert set(columns['column'][columns['table']=='a']) == set(['x', 'y'])
-    assert set(columns['column'][columns['table']=='b']) == set(['z'])
+    schemata, tables, columns = executor.get_metadata()
+    assert schemata.to_dict('list') == {
+        'schema': ['public', 'schema1', 'schema2']}
+    assert tables.to_dict('list') == {
+           'schema': ['public', 'public', 'schema1'],
+           'table': ['a', 'b', 'c'],
+           'is_visible': [True, True, False]}
+
+    assert columns.to_dict('list') == {
+           'schema': ['public', 'public', 'public', 'schema1'],
+           'table': ['a', 'a', 'b', 'c'],
+           'column': ['x', 'y', 'z', 'w']}
 
 @dbtest
 def test_database_list(executor):

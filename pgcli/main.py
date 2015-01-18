@@ -332,7 +332,8 @@ def quit_command(sql):
             or sql.strip() == ':q')
 
 def refresh_completions(pgexecute, completer):
-    tables, columns = pgexecute.get_metadata()
+    schemata, tables, columns = pgexecute.get_metadata()
+    completer.extend_schemata(schemata)
     completer.extend_tables(tables)
     completer.extend_columns(columns)
     completer.extend_database_names(pgexecute.databases())

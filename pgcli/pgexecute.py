@@ -54,6 +54,12 @@ def _parse_dsn(dsn, default_user, default_password, default_host,
 
 class PGExecute(object):
 
+    schemata_query = '''
+        SELECT  nspname
+        FROM    pg_catalog.pg_namespace
+        WHERE   nspname !~ '^pg_'
+                AND nspname <> 'information_schema' '''
+
     tables_query = '''
         SELECT 	n.nspname schema_name,
                 c.relname table_name,
@@ -163,12 +169,19 @@ class PGExecute(object):
             return (None, None, cur.statusmessage)
 
     def get_metadata(self):
-        """ Returns a tuple [tables, columns] of DataFrames
+        """ Returns a tuple [schemata, tables, columns] of DataFrames
 
+            schemata:   DataFrame with columns [schema]
             tables:     DataFrame with columns [schema, table, is_visible]
             columns:    DataFrame with columns [schema, table, column]
 
         """
+
+        with self.conn.cursor() as cur:
+            _logger.debug('Schemata Query. sql: %r', self.schemata_query)
+            cur.execute(self.schemata_query)
+            schemata = DataFrame.from_records(cur,
+                        columns=['schema'])
 
         with self.conn.cursor() as cur:
             _logger.debug('Tables Query. sql: %r', self.tables_query)
@@ -182,7 +195,7 @@ class PGExecute(object):
             columns = DataFrame.from_records(cur,
                         columns=['schema', 'table', 'column'])
 
-        return [tables, columns]
+        return [schemata, tables, columns]
 
     def databases(self):
         with self.conn.cursor() as cur:
