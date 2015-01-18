@@ -196,6 +196,14 @@ class PGCli(object):
                         logger.debug("rows: %r", cur)
                         logger.debug("status: %r", status)
                         start = time()
+                        threshold = 1000
+                        if is_select(status) and cur.rowcount > threshold:
+                            click.secho('The result set has more than %s rows.'
+                                    % threshold, fg='red')
+                            if not click.confirm('Do you want to continue?',
+                                    default=True):
+                                click.secho("Aborted!", err=True, fg='red')
+                                break
                         output.extend(format_output(cur, headers, status))
                         end = time()
                         total += end - start
@@ -285,13 +293,13 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
 
     pgcli.run_cli()
 
-def format_output(rows, headers, status):
+def format_output(cur, headers, status):
     output = []
-    if rows:
+    if cur:
         if is_expanded_output():
-            output.append(expanded_table(rows, headers))
+            output.append(expanded_table(cur, headers))
         else:
-            output.append(tabulate(rows, headers, tablefmt='psql'))
+            output.append(tabulate(cur, headers, tablefmt='psql'))
     if status:  # Only print the status if it's not None.
         output.append(status)
     return output
@@ -304,11 +312,18 @@ def need_completion_refresh(sql):
         return False
 
 def is_mutating(status):
+    """Determines if the statement is mutating based on the status."""
     if not status:
         return False
 
-    mutating = ['insert', 'update', 'delete', 'alter', 'create', 'drop']
+    mutating = set(['insert', 'update', 'delete', 'alter', 'create', 'drop'])
     return status.split(None, 1)[0].lower() in mutating
+
+def is_select(status):
+    """Returns true if the first word in status is 'select'."""
+    if not status:
+        return False
+    return status.split(None, 1)[0].lower() == 'select'
 
 def quit_command(sql):
     return (sql.strip().lower() == 'exit'
