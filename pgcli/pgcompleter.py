@@ -55,6 +55,7 @@ class PGCompleter(Completer):
         return name
 
     def unescape_name(self, name):
+        """ Unquote a string."""
         if name[0] == '"' and name[-1] == '"':
             name = name[1:-1]
 
@@ -130,6 +131,9 @@ class PGCompleter(Completer):
         elif category == 'tables':
             _logger.debug("Completion: 'tables' Scope: %r", scope)
             return self.find_matches(word_before_cursor, self.tables)
+        elif category == 'tables-or-aliases':
+            _logger.debug("Completion: 'tables-or-aliases' Scope: %r", scope)
+            return self.find_matches(word_before_cursor, scope)
         elif category == 'databases':
             _logger.debug("Completion: 'databases' Scope: %r", scope)
             return self.find_matches(word_before_cursor, self.databases)
