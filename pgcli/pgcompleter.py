@@ -52,7 +52,7 @@ class PGCompleter(Completer):
         self.name_pattern = compile("^[_a-z][_a-z0-9\$]*$")
 
     def escape_name(self, name):
-        if ((not self.name_pattern.match(name))
+        if name and not name=='*' and ((not self.name_pattern.match(name))
                 or (name.upper() in self.reserved_words)
                 or (name.upper() in self.functions)):
             name = '"%s"' % name
@@ -61,7 +61,7 @@ class PGCompleter(Completer):
 
     def unescape_name(self, name):
         """ Unquote a string."""
-        if name[0] == '"' and name[-1] == '"':
+        if name and name[0] == '"' and name[-1] == '"':
             name = name[1:-1]
 
         return name
