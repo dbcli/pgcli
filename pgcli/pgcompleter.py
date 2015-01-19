@@ -155,8 +155,9 @@ class PGCompleter(Completer):
                 completions.extend(funcs)
 
             elif suggestion['type'] == 'schema':
-                schemata = self.find_matches(word_before_cursor, self.schemata)
-                completions.extend(schemata)
+                schema_names = self.schemata['schema']
+                schema_names = self.find_matches(word_before_cursor, schema_names)
+                completions.extend(schema_names)
 
             elif suggestion['type'] == 'table':
                 meta = self.tables
