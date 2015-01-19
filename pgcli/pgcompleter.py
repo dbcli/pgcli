@@ -85,13 +85,15 @@ class PGCompleter(Completer):
     def extend_schemata(self, data):
 
         # data is a DataFrame with columns [schema]
+        data['schema'] = data['schema'].apply(self.unescape_name)
         self.schemata = self.schemata.append(data)
         self.all_completions.update(data['schema'])
 
     def extend_tables(self, data):
 
         # data is a DataFrame with columns [schema, table, is_visible]
-        data[['schema', 'table']].apply(self.escaped_names)
+        data[['schema', 'table']] = \
+            data[['schema', 'table']].apply(self.unescaped_names)
         self.tables = self.tables.append(data)
 
         self.all_completions.update(data['schema'])
@@ -105,7 +107,8 @@ class PGCompleter(Completer):
     def extend_columns(self, data):
 
         # data is a DataFrame with columns [schema, table, column]
-        data[['schema', 'table', 'column']].apply(self.escaped_names)
+        data[['schema', 'table', 'column']] = \
+            data[['schema', 'table', 'column']].apply(self.unescaped_names)
         self.columns = self.columns.append(data)
         self.all_completions.update(data.column)
 
@@ -188,7 +191,8 @@ class PGCompleter(Completer):
 
         columns = self.columns  # dataframe with columns [schema, table, column]
 
-        scoped_tbls[['schema', 'table', 'alias']].apply(self.unescape_name)
+        scoped_tbls[['schema', 'table', 'alias']] = \
+            scoped_tbls[['schema', 'table', 'alias']].apply(self.unescaped_names)
 
         # For fully qualified tables, inner join on (schema, table)
         qualed = scoped_tbls.merge(columns, how='inner', on=['schema', 'table'])
