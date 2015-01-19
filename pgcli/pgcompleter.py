@@ -37,7 +37,7 @@ class PGCompleter(Completer):
     special_commands = []
 
     databases = []
-    schemata = set()
+    schemata = DataFrame({}, columns=['schema'])
     tables = DataFrame({}, columns=['schema', 'table', 'alias'])
     columns = DataFrame({}, columns=['schema', 'table', 'column'])
 
@@ -78,13 +78,18 @@ class PGCompleter(Completer):
         self.keywords.extend(additional_keywords)
         self.all_completions.update(additional_keywords)
 
+    def extend_schemata(self, data):
+
+        # data is a DataFrame with columns [schema]
+        self.schemata = self.schemata.append(data)
+        self.all_completions.update(data['schema'])
+
     def extend_tables(self, data):
 
         # data is a DataFrame with columns [schema, table, is_visible]
         data[['schema', 'table']].apply(self.escaped_names)
         self.tables = self.tables.append(data)
 
-        self.schemata.update(data['schema'])
         self.all_completions.update(data['schema'])
         self.all_completions.update(data['table'])
 
@@ -102,7 +107,7 @@ class PGCompleter(Completer):
 
     def reset_completions(self):
         self.databases = []
-        self.schemata = set()
+        self.schemata = DataFrame({}, columns=['schema'])
         self.tables = DataFrame({}, columns=['schema', 'table', 'alias'])
         self.columns = DataFrame({}, columns=['schema', 'table', 'column'])
         self.all_completions = set(self.keywords)
