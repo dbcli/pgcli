@@ -1,3 +1,4 @@
+import pytest
 from pgcli.packages.parseutils import extract_tables
 
 
