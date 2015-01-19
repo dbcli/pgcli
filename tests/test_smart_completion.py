@@ -36,7 +36,7 @@ def completer():
                     for column in columns),
         columns=['schema', 'table', 'column'])
 
-
+    comp.extend_schemata(tables[['schema']].drop_duplicates())
     comp.extend_tables(tables)
     comp.extend_columns(columns)
 
@@ -73,6 +73,7 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     assert set(result) == set([Completion(text='public', start_position=0),
                                Completion(text='custom', start_position=0),
                                Completion(text='users', start_position=0),
+                               Completion(text='"select"', start_position=0),
                                Completion(text='orders', start_position=0)])
 
 
@@ -276,6 +277,8 @@ def test_table_names_after_from(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
+        Completion(text='public', start_position=0),
+        Completion(text='custom', start_position=0),
         Completion(text='users', start_position=0),
         Completion(text='orders', start_position=0),
         Completion(text='"select"', start_position=0),
