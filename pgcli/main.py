@@ -182,10 +182,10 @@ class PGCli(object):
                     logger.debug('sql: %r', document.text)
                     successful = False
                     start = time()
-                    # Initialized to None because res might never get
-                    # initialized if an exception occurs in pgexecute.run().
-                    # Which causes finally clause to fail.
-                    res = None
+                    # Initialized to [] because res might never get initialized
+                    # if an exception occurs in pgexecute.run(). Which causes
+                    # finally clause to fail.
+                    res = []
                     res = pgexecute.run(document.text)
                     duration = time() - start
                     successful = True

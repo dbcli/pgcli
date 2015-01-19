@@ -6,14 +6,14 @@ from prompt_toolkit.document import Document
 schemata = {
             'public':   {
                             'users': ['id', 'email', 'first_name', 'last_name'],
-                            'orders': ['id', 'ordered_date', 'status']
+                            'orders': ['id', 'ordered_date', 'status'],
+                            'select': ['id', 'insert', 'ABC'],
                         },
             'custom':   {
                             'products': ['id', 'product_name', 'price'],
                             'shipments': ['id', 'address', 'user_id']
                         }
             }
-
 
 @pytest.fixture
 def completer():
@@ -268,3 +268,28 @@ def test_suggested_tables_after_on(completer, complete_event):
     assert set(result) == set([
         Completion(text='users', start_position=0),
         Completion(text='orders', start_position=0)])
+
+def test_table_names_after_from(completer, complete_event):
+    text = 'SELECT * FROM '
+    position = len('SELECT * FROM ')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='users', start_position=0),
+        Completion(text='orders', start_position=0),
+        Completion(text='"select"', start_position=0),
+        ])
+
+def test_auto_escaped_col_names(completer, complete_event):
+    text = 'SELECT  from "select"'
+    position = len('SELECT ')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='*', start_position=0),
+        Completion(text='id', start_position=0),
+        Completion(text='"insert"', start_position=0),
+        Completion(text='"ABC"', start_position=0), ] +
+        list(map(Completion, completer.functions)))
