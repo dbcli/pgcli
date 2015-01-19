@@ -45,11 +45,15 @@ class PGCompleter(Completer):
     def __init__(self, smart_completion=True):
         super(self.__class__, self).__init__()
         self.smart_completion = smart_completion
-
+        self.reserved_words = set()
+        for x in self.keywords:
+            self.reserved_words.update(x.split())
         self.name_pattern = compile("^[_a-z][_a-z0-9\$]*$")
 
     def escape_name(self, name):
-        if not self.name_pattern.match(name) or name.upper() in self.keywords or name.upper() in self.functions:
+        if ((not self.name_pattern.match(name))
+                or (name.upper() in self.reserved_words)
+                or (name.upper() in self.functions)):
             name = '"%s"' % name
 
         return name
