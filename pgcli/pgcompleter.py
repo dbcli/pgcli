@@ -200,8 +200,10 @@ class PGCompleter(Completer):
 
         # Only allow unqualified table reference on visible tables
         vis_tables = self.tables[self.tables['is_visible']]
-        unqualed_tables = scoped_tbls.merge(vis_tables, how='inner', on=['table'])
-        unqualed = unqualed_tables.merge(columns, how='inner', on=['table'])
+        unqualed_tables = scoped_tbls.merge(vis_tables,
+            how='inner', on=['table'], suffixes=['_left', '_right'])
+        unqualed_tables['schema'] = unqualed_tables['schema_right']
+        unqualed = unqualed_tables.merge(columns, how='inner', on=['schema', 'table'])
 
         return list(qualed['column']) + list(unqualed['column'])
 
