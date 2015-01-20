@@ -127,3 +127,17 @@ def test_on_suggests_tables():
         'select abc.x, bcd.y from abc join bcd on ')
     assert category == 'tables-or-aliases'
     assert set(scope) == set(['abc', 'bcd'])
+
+def test_on_suggests_aliases_right_side():
+    category, scope = suggest_type(
+        'select a.x, b.y from abc a join bcd b on a.id = ',
+        'select a.x, b.y from abc a join bcd b on a.id = ')
+    assert category == 'tables-or-aliases'
+    assert set(scope) == set(['a', 'b'])
+
+def test_on_suggests_tables_right_side():
+    category, scope = suggest_type(
+        'select abc.x, bcd.y from abc join bcd on ',
+        'select abc.x, bcd.y from abc join bcd on ')
+    assert category == 'tables-or-aliases'
+    assert set(scope) == set(['abc', 'bcd'])

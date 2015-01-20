@@ -6,7 +6,7 @@
 * [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
 * [ ] Add a few more special commands. (\l pattern, \dp, \ds, \dy, \z etc)
 * [ ] Refactor pgspecial.py to a class. 
-* [ ] Write a doc about how to add new pgspecial commands.(psql -E)
+* [X] Write a doc about how to add new pgspecial commands.(psql -E)
 * [ ] Show/hide docs for a statement using a keybinding.
 * [ ] Check how to add the name of the table before printing the table.
 * [ ] Add a new trigger for M-/ that does naive completion.
