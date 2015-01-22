@@ -113,3 +113,12 @@ def test_multiple_queries_same_line_syntaxerror(executor):
 @dbtest
 def test_special_command(executor):
     run(executor, '\\?')
+
+
+@dbtest
+def test_bytea_field_support_in_output(executor):
+    run(executor, "create table binarydata(c bytea)")
+    run(executor,
+        "insert into binarydata (c) values (decode('DEADBEEF', 'hex'))")
+
+    assert u'\\xdeadbeef' in run(executor, "select * from binarydata", join=True)

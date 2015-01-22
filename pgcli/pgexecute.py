@@ -13,6 +13,11 @@ _logger = logging.getLogger(__name__)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
+# Cast bytea fields to text. By default, this will render as hex strings with
+# Postgres 9+ and as escaped binary in earlier versions.
+psycopg2.extensions.register_type(
+    psycopg2.extensions.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
+
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
 psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
