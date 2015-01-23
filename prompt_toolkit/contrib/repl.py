@@ -117,7 +117,7 @@ class PythonRepl(PythonCommandLineInterface):
 
                 if result is not None:
                     try:
-                        result_str = '%r\n' % result
+                        result_str = '%r\n' % (result, )
                     except UnicodeDecodeError:
                         # In Python 2: `__repr__` should return a bytestring,
                         # so to put it in a unicode context could raise an
