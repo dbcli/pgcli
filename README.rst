@@ -83,13 +83,18 @@ Detailed Installation Instructions:
 OS X:
 =====
 
-Easiest way to install pgcli is using brew. 
+Easiest way to install pgcli is using brew. Please be aware that this will
+install postgres via brew if it wasn't installed via brew.
 
 ::
 
     $ brew install pgcli
 
 Done!
+
+If you have postgres installed via a different means (such as PostgresApp), you
+can ``brew install --build-from-source pgcli`` which will skip installing
+postgres via brew if postgres is available in the path.
 
 Alternatively, you can install ``pgcli`` as a python package using a package
 manager called called ``pip``. You will need postgres installed on your system
