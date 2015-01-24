@@ -72,7 +72,7 @@ def create_default_layout(message='', lexer=None, is_password=False, reserve_spa
             [
                 Float(xcursor=True,
                       ycursor=True,
-                      layout=CompletionsMenu(max_height=16))
+                      content=CompletionsMenu(max_height=16))
             ]
         ),
         ValidationToolbar(),
