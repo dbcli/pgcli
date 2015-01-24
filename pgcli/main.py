@@ -8,6 +8,7 @@ import logging
 import click
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
+from prompt_toolkit.document import Document
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
@@ -268,6 +269,11 @@ class PGCli(object):
             table = table[1:-1] if table[0] == '"' and table[-1] == '"' else table
             self.completer.extend_column_names(table, columns[table])
         self.completer.extend_database_names(self.pgexecute.databases())
+
+    def get_completions(self, text, cursor_positition):
+        return self.completer.get_completions(
+            Document(text=text, cursor_position=cursor_positition), None)
+
 @click.command()
 # Default host is '' so psycopg2 can default to either localhost or unix socket
 @click.option('-h', '--host', default='', envvar='PGHOST',
