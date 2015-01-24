@@ -203,11 +203,11 @@ class PGCli(object):
                         logger.debug("status: %r", status)
                         start = time()
                         threshold = 1000
-                        if is_select(status) and cur.rowcount > threshold:
+                        if (is_select(status) and
+                                cur and cur.rowcount > threshold):
                             click.secho('The result set has more than %s rows.'
                                     % threshold, fg='red')
-                            if not click.confirm('Do you want to continue?',
-                                    default=True):
+                            if not click.confirm('Do you want to continue?'):
                                 click.secho("Aborted!", err=True, fg='red')
                                 break
                         output.extend(format_output(cur, headers, status))
