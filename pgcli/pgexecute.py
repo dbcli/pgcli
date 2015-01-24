@@ -13,44 +13,14 @@ _logger = logging.getLogger(__name__)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
+# Cast bytea fields to text. By default, this will render as hex strings with
+# Postgres 9+ and as escaped binary in earlier versions.
+psycopg2.extensions.register_type(
+    psycopg2.extensions.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
+
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
 psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
-
-def _parse_dsn(dsn, default_user, default_password, default_host,
-        default_port):
-    """
-    This function parses a postgres url to get the different components.
-
-    """
-
-    user = password = host = port = dbname = None
-
-    if dsn.startswith('postgres://'):  # Check if the string is a database url.
-        dsn = dsn[len('postgres://'):]
-    elif dsn.startswith('postgresql://'):
-        dsn = dsn[len('postgresql://'):]
-
-    if '/' in dsn:
-        host, dbname = dsn.split('/', 1)
-        if '@' in host:
-            user, _, host = host.partition('@')
-        if ':' in host:
-            host, _, port = host.partition(':')
-        if user and ':' in user:
-            user, _, password = user.partition(':')
-
-    user = user or default_user
-    password = password or default_password
-    host = host or default_host
-    port = port or default_port
-    dbname = dbname or dsn
-
-    _logger.debug('Parsed connection params:'
-            'dbname: %r, user: %r, password: %r, host: %r, port: %r',
-            dbname, user, password, host, port)
-
-    return (dbname, user, password, host, port)
 
 class PGExecute(object):
 
@@ -99,10 +69,11 @@ class PGExecute(object):
     ORDER BY 1;"""
 
     def __init__(self, database, user, password, host, port):
-        (self.dbname, self.user, self.password, self.host, self.port) = \
-                _parse_dsn(database, default_user=user,
-                        default_password=password, default_host=host,
-                        default_port=port)
+        self.dbname = database
+        self.user = user
+        self.password = password
+        self.host = host
+        self.port = port
         self.connect()
 
     def connect(self, database=None, user=None, password=None, host=None,

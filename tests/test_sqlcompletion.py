@@ -225,3 +225,17 @@ def test_on_suggests_tables():
         'select abc.x, bcd.y from abc join bcd on ')
     assert_equals(suggestions,
         [{'type': 'alias', 'aliases': ['abc', 'bcd']}])
+    
+def test_on_suggests_aliases_right_side():
+    suggestions = suggest_type(
+        'select a.x, b.y from abc a join bcd b on a.id = ',
+        'select a.x, b.y from abc a join bcd b on a.id = ')
+    assert_equals(suggestions,
+        [{'type': 'alias', 'aliases': ['a', 'b']}])
+        
+def test_on_suggests_tables_right_side():
+    suggestions = suggest_type(
+        'select abc.x, bcd.y from abc join bcd on ',
+        'select abc.x, bcd.y from abc join bcd on ')
+    assert_equals(suggestions,
+        [{'type': 'alias', 'aliases': ['abc', 'bcd']}])

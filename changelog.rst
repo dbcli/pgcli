@@ -1,3 +1,19 @@
+current
+=======
+
+Features:
+---------
+* Add alias completion support to ON keyword. (Thanks: `Iryna Cherniavska`_)
+* Add LIMIT keyword to completion. 
+* Confirm before printing large tables. 
+
+Bug Fixes:
+----------
+
+* Performance improvements to expanded view display (\x).
+* Cast bytea files to text while displaying. (Thanks: `Daniel Rocco`_)
+* Added a list of reserved words that should be auto-escaped.
+
 0.13.0
 ======
 
@@ -63,3 +79,5 @@ Improvements:
 * Integration tests with Postgres!! (Thanks: https://github.com/macobo)
 
 .. _darikg: https://github.com/darikg
+.. _`Iryna Cherniavska`: https://github.com/j-bennet
+.. _`Daniel Rocco`: https://github.com/drocco007 

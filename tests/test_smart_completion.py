@@ -260,9 +260,29 @@ def test_suggested_aliases_after_on(completer, complete_event):
         Completion(text='u', start_position=0),
         Completion(text='o', start_position=0)])
 
+def test_suggested_aliases_after_on_right_side(completer, complete_event):
+    text = 'SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = '
+    position = len('SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = ')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='u', start_position=0),
+        Completion(text='o', start_position=0)])
+
 def test_suggested_tables_after_on(completer, complete_event):
     text = 'SELECT users.name, orders.id FROM users JOIN orders ON '
     position = len('SELECT users.name, orders.id FROM users JOIN orders ON ')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='users', start_position=0),
+        Completion(text='orders', start_position=0)])
+
+def test_suggested_tables_after_on_right_side(completer, complete_event):
+    text = 'SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = '
+    position = len('SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = ')
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))

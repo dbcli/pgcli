@@ -46,12 +46,6 @@ def suggest_type(full_text, text_before_cursor):
     return suggest_based_on_last_token(last_token, text_before_cursor, full_text)
 
 def suggest_based_on_last_token(token, text_before_cursor, full_text):
-    """Returns a list of suggestion dicts
-
-        A suggestion dict is a dict with a mandatory field "type", and optional
-        additional fields supplying additional scope information.
-    """
-
     if isinstance(token, string_types):
         token_v = token
     else:
@@ -95,7 +89,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
     elif token_v.lower() in ('c', 'use'):  # \c
         return [{'type': 'database'}]
-    elif token_v.endswith(','):
+    elif token_v.endswith(',') or token_v == '=':
         prev_keyword = find_prev_keyword(text_before_cursor)
         if prev_keyword:
             return suggest_based_on_last_token(

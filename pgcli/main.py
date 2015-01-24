@@ -8,6 +8,7 @@ import logging
 import click
 
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
+from prompt_toolkit.document import Document
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
@@ -56,13 +57,19 @@ class PGCli(object):
 
         # Load config.
         c = self.config = load_config('~/.pgclirc', default_config)
-        self.smart_completion = c.getboolean('main', 'smart_completion')
         self.multi_line = c.getboolean('main', 'multi_line')
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
 
         self.query_history = []
+
+        # Initialize completer
+        smart_completion = c.getboolean('main', 'smart_completion')
+        completer = PGCompleter(smart_completion)
+        completer.extend_special_commands(CASE_SENSITIVE_COMMANDS.keys())
+        completer.extend_special_commands(NON_CASE_SENSITIVE_COMMANDS.keys())
+        self.completer = completer
 
     def initialize_logging(self):
 
@@ -152,10 +159,9 @@ class PGCli(object):
             menus=[CompletionsMenu(max_height=10)],
             lexer=SqlLexer, bottom_toolbars=[PGToolbar()])
 
-        completer = PGCompleter(self.smart_completion)
-        completer.extend_special_commands(CASE_SENSITIVE_COMMANDS.keys())
-        completer.extend_special_commands(NON_CASE_SENSITIVE_COMMANDS.keys())
-        refresh_completions(pgexecute, completer)
+        completer = self.completer
+        self.refresh_completions()
+
         buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
                 history=FileHistory(os.path.expanduser('~/.pgcli-history')))
         cli = CommandLineInterface(style=PGStyle, layout=layout, buffer=buf,
@@ -197,11 +203,11 @@ class PGCli(object):
                         logger.debug("status: %r", status)
                         start = time()
                         threshold = 1000
-                        if is_select(status) and cur.rowcount > threshold:
+                        if (is_select(status) and
+                                cur and cur.rowcount > threshold):
                             click.secho('The result set has more than %s rows.'
                                     % threshold, fg='red')
-                            if not click.confirm('Do you want to continue?',
-                                    default=True):
+                            if not click.confirm('Do you want to continue?'):
                                 click.secho("Aborted!", err=True, fg='red')
                                 break
                         output.extend(format_output(cur, headers, status))
@@ -231,8 +237,7 @@ class PGCli(object):
                 # Refresh the table names and column names if necessary.
                 if need_completion_refresh(document.text):
                     prompt = '%s> ' % pgexecute.dbname
-                    completer.reset_completions()
-                    refresh_completions(pgexecute, completer)
+                    self.refresh_completions()
 
                 query = Query(document.text, successful, mutating)
                 self.query_history.append(query)
@@ -255,6 +260,22 @@ class PGCli(object):
             os.environ['LESS'] += 'F'
 
         return less_opts
+
+    def refresh_completions(self):
+        completer = self.completer
+        completer.reset_completions()
+
+        pgexecute = self.pgexecute
+
+        schemata, tables, columns = pgexecute.get_metadata()
+        completer.extend_schemata(schemata)
+        completer.extend_tables(tables)
+        completer.extend_columns(columns)
+        completer.extend_database_names(pgexecute.databases())
+
+    def get_completions(self, text, cursor_positition):
+        return self.completer.get_completions(
+            Document(text=text, cursor_position=cursor_positition), None)
 
 @click.command()
 # Default host is '' so psycopg2 can default to either localhost or unix socket
@@ -332,10 +353,11 @@ def quit_command(sql):
             or sql.strip() == ':q')
 
 def refresh_completions(pgexecute, completer):
-    schemata, tables, columns = pgexecute.get_metadata()
-    completer.extend_schemata(schemata)
-    completer.extend_tables(tables)
-    completer.extend_columns(columns)
+    tables, columns = pgexecute.tables()
+    completer.extend_table_names(tables)
+    for table in tables:
+        table = table[1:-1] if table[0] == '"' and table[-1] == '"' else table
+        completer.extend_column_names(table, columns[table])
     completer.extend_database_names(pgexecute.databases())
 
 if __name__ == "__main__":
