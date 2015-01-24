@@ -116,9 +116,9 @@ class PythonRepl(PythonCommandLineInterface):
                 locals = self.get_locals()
                 locals['_'] = locals['_%i' % settings.current_statement_index] = result
 
-                out_mark = 'Out[%i]: ' % settings.current_statement_index
-
                 if result is not None:
+                    out_mark = 'Out[%i]: ' % settings.current_statement_index
+
                     try:
                         result_str = '%r\n' % (result, )
                     except UnicodeDecodeError:
@@ -128,11 +128,11 @@ class PythonRepl(PythonCommandLineInterface):
                         # characters. Decode as utf-8 in that case.
                         result_str = '%s\n' % repr(result).decode('utf-8')
 
-                # align every line to the first one
-                line_sep = '\n' + ' ' * len(out_mark)
-                out_string = out_mark + line_sep.join(result_str.splitlines())
+                    # align every line to the first one
+                    line_sep = '\n' + ' ' * len(out_mark)
+                    out_string = out_mark + line_sep.join(result_str.splitlines())
 
-                self.cli.stdout.write(out_string)
+                    self.cli.stdout.write(out_string)
             # If not a valid `eval` expression, run using `exec` instead.
             except SyntaxError:
                 exec_(line, self.get_globals(), self.get_locals())
