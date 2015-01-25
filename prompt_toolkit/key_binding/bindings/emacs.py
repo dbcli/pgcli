@@ -152,9 +152,15 @@ def load_emacs_bindings(registry, filter=None):
         """
         Meta + Newline: always accept input.
         """
-        if event.current_buffer.returnable(event.cli) and event.current_buffer.validate():
-            event.current_buffer.add_to_history()
-            event.cli.set_return_value(event.current_buffer.document)
+        b = event.current_buffer
+
+        if b.returnable(event.cli) and b.validate():
+            b.add_to_history()
+            event.cli.set_return_value(b.document)
+
+        # Not returnable, but multiline.
+        elif b.is_multiline:
+            b.insert_text('\n')
 
     @handle(Keys.ControlSquareClose, Keys.Any)
     def _(event):

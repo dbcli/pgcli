@@ -215,9 +215,15 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         In navigation mode, pressing enter will always return the input.
         """
-        if event.current_buffer.returnable(event.cli) and event.current_buffer.validate():
-            event.current_buffer.add_to_history()
-            event.cli.set_return_value(event.current_buffer.document)
+        b = event.current_buffer
+
+        if b.returnable(event.cli) and b.validate():
+            b.add_to_history()
+            event.cli.set_return_value(b.document)
+
+        # Not returnable, but multiline.
+        elif b.is_multiline:
+            b.insert_text('\n')
 
     # ** In navigation mode **
 
