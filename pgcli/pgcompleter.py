@@ -33,13 +33,6 @@ class PGCompleter(Completer):
             'LCASE', 'LEN', 'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP',
             'UCASE']
 
-    special_commands = []
-    databases = []
-    dbmetadata = {}
-    search_path = []
-
-    all_completions = set(keywords + functions)
-
     def __init__(self, smart_completion=True):
         super(self.__class__, self).__init__()
         self.smart_completion = smart_completion
@@ -47,6 +40,13 @@ class PGCompleter(Completer):
         for x in self.keywords:
             self.reserved_words.update(x.split())
         self.name_pattern = compile("^[_a-z][_a-z0-9\$]*$")
+
+        self.special_commands = []
+        self.databases = []
+        self.dbmetadata = {}
+        self.search_path = []
+
+        self.all_completions = set(self.keywords + self.functions)
 
     def escape_name(self, name):
         if name and ((not self.name_pattern.match(name))
