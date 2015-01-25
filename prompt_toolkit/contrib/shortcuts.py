@@ -24,15 +24,19 @@ from __future__ import unicode_literals
 
 from prompt_toolkit import CommandLineInterface, AbortAction
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.filters import IsDone
+from prompt_toolkit.history import History, FileHistory
 from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
-from prompt_toolkit.layout.controls import BufferControl
+from prompt_toolkit.layout.controls import BufferControl, TokenListControl
+from prompt_toolkit.layout.dimension import LayoutDimension
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.processors import PasswordProcessor
 from prompt_toolkit.layout.prompt import DefaultPrompt
+from prompt_toolkit.layout.screen import Char
 from prompt_toolkit.layout.toolbars import ValidationToolbar, SystemToolbar
-from prompt_toolkit.layout.dimension import LayoutDimension
-from prompt_toolkit.history import History, FileHistory
+
+from pygments.token import Token
 
 
 __all__ = (
@@ -42,15 +46,27 @@ __all__ = (
 )
 
 
-def create_default_layout(message='', lexer=None, is_password=False, reserve_space_for_menu=False):
+def create_default_layout(message='', lexer=None, is_password=False,
+                          reserve_space_for_menu=False, get_bottom_toolbar_tokens=None):
     """
     Generate default layout.
     """
+    assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
+
     # Create processors list.
     if is_password:
         input_processors = [PasswordProcessor(), DefaultPrompt(message)]
     else:
         input_processors = [DefaultPrompt(message)]
+
+    # Create bottom toolbar.
+    if get_bottom_toolbar_tokens:
+        toolbars = [Window(TokenListControl(get_bottom_toolbar_tokens,
+                                            default_char=Char(' ', Token.Toolbar)),
+                           height=LayoutDimension.exact(1),
+                           filter=~IsDone())]
+    else:
+        toolbars = []
 
     def get_height(cli):
         # If there is an autocompletion menu to be shown, make sure that our
@@ -77,7 +93,7 @@ def create_default_layout(message='', lexer=None, is_password=False, reserve_spa
         ),
         ValidationToolbar(),
         SystemToolbar(),
-    ])
+    ] + toolbars)
 
 
 def create_cli(message='',
@@ -90,7 +106,8 @@ def create_cli(message='',
                validator=None,
                completer=None,
                style=None,
-               history_filename=None):
+               history_filename=None,
+               get_bottom_toolbar_tokens=None):
 
     # Create history instance.
     if history_filename:
@@ -106,7 +123,8 @@ def create_cli(message='',
     # Create interface.
     return CommandLineInterface(
         layout=create_default_layout(message=message, lexer=lexer, is_password=is_password,
-                                     reserve_space_for_menu=(completer is not None)),
+                                     reserve_space_for_menu=(completer is not None),
+                                     get_bottom_toolbar_tokens=get_bottom_toolbar_tokens),
         buffer=Buffer(
             is_multiline=multiline,
             history=history,
@@ -128,7 +146,8 @@ def get_input(message='',
               style=None,
               enable_system_prompt=False,
               enable_open_in_editor=False,
-              history_filename=None):
+              history_filename=None,
+              get_bottom_toolbar_tokens=None):
     """
     Get input from the user and return it. This wrapper builds the most obvious
     configuration of a `CommandLineInterface`. This can be a replacement for
@@ -149,6 +168,9 @@ def get_input(message='',
     :param enable_open_in_editor: Pressing 'v' in Vi mode or C-X C-E in emacs
                                   mode will open an external editor.
     :param history_filename: If not `None`, keep a persistent history in this file.
+    :param get_bottom_toolbar_tokens: Optional callable which takes a
+        :class:`CommandLineInterface` and returns a list of tokens for the
+        bottom toolbar.
     """
     cli = create_cli(
         message=message,
@@ -161,7 +183,8 @@ def get_input(message='',
         validator=validator,
         completer=completer,
         style=style,
-        history_filename=history_filename)
+        history_filename=history_filename,
+        get_bottom_toolbar_tokens=get_bottom_toolbar_tokens)
 
     # Read input and return it.
     on_abort = AbortAction.RAISE_EXCEPTION if raise_exception_on_abort else AbortAction.RETURN_NONE
