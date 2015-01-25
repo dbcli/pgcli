@@ -3,15 +3,9 @@ from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
 metadata = {
-            'public':   {
-                            'users': ['id', 'email', 'first_name', 'last_name'],
-                            'orders': ['id', 'ordered_date', 'status'],
-                            'select': ['id', 'insert', 'ABC'],
-                        },
-            'custom':   {
-                            'products': ['id', 'product_name', 'price'],
-                            'shipments': ['id', 'address', 'user_id']
-                        }
+                'users': ['id', 'email', 'first_name', 'last_name'],
+                'orders': ['id', 'ordered_date', 'status'],
+                'select': ['id', 'insert', 'ABC']
             }
 
 @pytest.fixture
@@ -20,14 +14,12 @@ def completer():
     import pgcli.pgcompleter as pgcompleter
     comp = pgcompleter.PGCompleter(smart_completion=True)
 
-    schemata, tables, columns = [], [], []
+    schemata = ['public']
+    tables, columns = [], []
 
-    for schema, tbls in metadata.items():
-        schemata.append(schema)
-
-        for table, cols in tbls.items():
-            tables.append((schema, table))
-            columns.extend([(schema, table, col) for col in cols])
+    for table, cols in metadata.items():
+        tables.append(('public', table))
+        columns.extend([('public', table, col) for col in cols])
 
     comp.extend_schemata(schemata)
     comp.extend_tables(tables)
@@ -65,7 +57,6 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([Completion(text='public', start_position=0),
-                               Completion(text='custom', start_position=0),
                                Completion(text='users', start_position=0),
                                Completion(text='"select"', start_position=0),
                                Completion(text='orders', start_position=0)])
@@ -96,24 +87,6 @@ def test_suggested_column_names_from_visible_table(completer, complete_event):
         Completion(text='email', start_position=0),
         Completion(text='first_name', start_position=0),
         Completion(text='last_name', start_position=0)] +
-        list(map(Completion, completer.functions)))
-
-def test_suggested_column_names_from_schema_qualifed_table(completer, complete_event):
-    """
-    Suggest column and function names when selecting from a qualified-table
-    :param completer:
-    :param complete_event:
-    :return:
-    """
-    text = 'SELECT  from custom.products'
-    position = len('SELECT ')
-    result = set(completer.get_completions(
-        Document(text=text, cursor_position=position), complete_event))
-    assert set(result) == set([
-        Completion(text='*', start_position=0),
-        Completion(text='id', start_position=0),
-        Completion(text='product_name', start_position=0),
-        Completion(text='price', start_position=0)] +
         list(map(Completion, completer.functions)))
 
 def test_suggested_column_names_in_function(completer, complete_event):
@@ -154,15 +127,6 @@ def test_suggested_column_names_with_table_dot(completer, complete_event):
         Completion(text='email', start_position=0),
         Completion(text='first_name', start_position=0),
         Completion(text='last_name', start_position=0)])
-
-def test_suggested_table_names_with_schema_dot(completer, complete_event):
-    text = 'SELECT * FROM custom.'
-    position = len(text)
-    result = completer.get_completions(
-        Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set([
-        Completion(text='products', start_position=0),
-        Completion(text='shipments', start_position=0)])
 
 def test_suggested_column_names_with_alias(completer, complete_event):
     """
@@ -292,7 +256,6 @@ def test_table_names_after_from(completer, complete_event):
         complete_event))
     assert set(result) == set([
         Completion(text='public', start_position=0),
-        Completion(text='custom', start_position=0),
         Completion(text='users', start_position=0),
         Completion(text='orders', start_position=0),
         Completion(text='"select"', start_position=0),
