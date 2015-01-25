@@ -12,7 +12,7 @@ def embed(*a, **kw):
     Please call ptpython.ipython.embed directly!
     """
     try:
-        import ptpython.ipython import embed
+        from ptpython.ipython import embed
         embed(*a, **kw)
     except ImportError as e:
         print('prompt_toolkit was installed, but could not find ptpython.')
