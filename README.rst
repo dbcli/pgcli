@@ -19,7 +19,7 @@ through::
 
 `Go to ptpython... <http://github.com/jonathanslenders/ptpython/>`_
 
-.. image :: docs/images/ptpython.png
+.. image :: https://github.com/jonathanslenders/python-prompt-toolkit/raw/master/docs/images/ptpython.png
 
 prompt-toolkit features
 ***********************
