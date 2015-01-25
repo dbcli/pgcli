@@ -1,6 +1,23 @@
 CHANGELOG
 =========
 
+0.27: 2015-01-25
+----------------
+
+Backwards-incompatible changes:
+- Complete refactoring of the layout system. (HSplit, VSplit, FloatContainer)
+  as well as a list of controls (TokenListControl, BufferControl) in order to
+  design much more complex layouts.
+- ptpython code has been moved to a separate repository.
+
+New features:
+- prompt_toolkit.contrib.shortcuts.get_input has been extended.
+
+Fixed:
+- Behaviour of Control+left/right/up/down.
+- Backspace in incremental search.
+- Hide completion menu correctly when the cursor position changes.
+
 0.26: 2015-01-08
 ----------------
 
