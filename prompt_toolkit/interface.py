@@ -87,7 +87,7 @@ class CommandLineInterface(object):
                  key_bindings_registry=None,
                  clipboard=None,
                  create_async_autocompleters=True,
-                 renderer_factory=Renderer,
+                 renderer=None,
                  initial_focussed_buffer='default'):
 
         assert buffer is None or isinstance(buffer, Buffer)
@@ -142,7 +142,9 @@ class CommandLineInterface(object):
         self.clipboard = clipboard or Clipboard()
 
         #: The `Renderer` instance.
-        self.renderer = renderer_factory(stdout=self.stdout)
+        # Make sure that the same stdout is used, when a custom renderer has been passed.
+        self.renderer = renderer or Renderer(stdout=self.stdout)
+        assert self.renderer.stdout == self.stdout
 
         if key_bindings_registry is None:
             key_bindings_registry = Registry()
@@ -262,8 +264,11 @@ class CommandLineInterface(object):
         assert self.eventloop
 
         def do_in_event_loop():
+            # Erase, request position (when cursor is at the start position)
+            # and redraw again. -- The order is important.
             self.renderer.erase()
             self.renderer.request_absolute_cursor_position()
+            self._redraw()
         self.call_from_executor(do_in_event_loop)
 
     def read_input(self, on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
@@ -284,6 +289,11 @@ class CommandLineInterface(object):
             while True:
                 next(g)
         except StopIteration as e:
+            # Clean up renderer. (This will leave the alternate screen, if we
+            # use that.)
+            self.renderer.reset()
+
+            # Return result.
             return e.args[0]
 
     def read_input_async(self,

@@ -186,12 +186,13 @@ class Renderer(object):
         r = Renderer(sys.stdout)
         r.render(cli, layout=..., style=...)
     """
-    def __init__(self, stdout=None, use_alternate_screen=False):  # XXX: implement alternate screen. (Don't forget Windows.)
+    def __init__(self, stdout=None, use_alternate_screen=False):  # XXX: implement alternate screen for Windows.
         self.stdout = stdout or sys.stdout
         self.use_alternate_screen = use_alternate_screen
 
-        self._last_screen = None
         self._in_alternate_screen = False
+
+        self.output = Output(self.stdout)
 
         self.reset()
 
@@ -204,6 +205,7 @@ class Renderer(object):
         # difference. It's also to remember the last height. (To show for
         # instance a toolbar at the bottom position.)
         self._last_screen = None
+        self._last_size = None
         self._last_char = None
 
         #: Space from the top of the layout, until the bottom of the terminal.
@@ -213,12 +215,13 @@ class Renderer(object):
         # In case of Windown, also make sure to scroll to the current cursor
         # position.
         if sys.platform == 'win32':
-            Output(self.stdout).scroll_buffer_to_prompt()
+            self.output.scroll_buffer_to_prompt()
 
         # Quit alternate screen.
         if self._in_alternate_screen:
+            self.output.quit_alternate_screen()
+            self.output.flush()
             self._in_alternate_screen = False
-            Output(self.stdout).quit_alternate_screen()
 
     @property
     def height_is_known(self):
@@ -259,10 +262,10 @@ class Renderer(object):
         # For Win32, we have an API call to get the number of rows below the
         # cursor.
         if sys.platform == 'win32':
-            self._min_available_height = Output(self.stdout).get_rows_below_cursor_position()
+            self._min_available_height = self.output.get_rows_below_cursor_position()
         else:
             if self.use_alternate_screen:
-                self._min_available_height = Output(self.stdout).get_size().rows
+                self._min_available_height = self.output.get_size().rows
             else:
                 # Asks for a cursor position report (CPR).
                 self._write_and_flush('\x1b[6n')
@@ -274,7 +277,7 @@ class Renderer(object):
         """
         # Calculate the amount of rows from the cursor position until the
         # bottom of the terminal.
-        total_rows = Output(self.stdout).get_size().rows
+        total_rows = self.output.get_size().rows
         rows_below_cursor = total_rows - row + 1
 
         # Set the
@@ -285,9 +288,9 @@ class Renderer(object):
         Render the current interface to the output.
         """
         style = style or Style
-        output = Output(self.stdout)
+        output = self.output
 
-        # Enteralternate screen.
+        # Enter alternate screen.
         if self.use_alternate_screen and not self._in_alternate_screen:
             self._in_alternate_screen = True
             output.enter_alternate_screen()
@@ -301,6 +304,10 @@ class Renderer(object):
         else:
             height = self._last_screen.current_height if self._last_screen else 0
             height = max(self._min_available_height, height)
+
+        # When te size changes, don't consider the previous screen.
+        if self._last_size != size:
+            self._last_screen=None
 
         layout.write_to_screen(cli, screen, WritePosition(
             xpos=0,
@@ -317,6 +324,7 @@ class Renderer(object):
             style=style, grayed=(cli.is_aborting or cli.is_exiting),
             )
         self._last_screen = screen
+        self._last_size = size
 
         output.flush()
 
@@ -326,7 +334,7 @@ class Renderer(object):
         instance used for running a system command (while hiding the CLI) and
         later resuming the same CLI.)
         """
-        output = Output(self.stdout)
+        output = self.output
 
         output.cursor_backward(self._cursor_pos.x)
         output.cursor_up(self._cursor_pos.y)
@@ -344,7 +352,7 @@ class Renderer(object):
         self.erase()
 
         # Send "Erase Screen" command and go to (0, 0).
-        output = Output(self.stdout)
+        output = self.output
 
         output.erase_screen()
         output.cursor_goto(0, 0)

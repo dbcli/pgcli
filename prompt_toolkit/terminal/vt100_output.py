@@ -42,10 +42,9 @@ def _get_size(fileno):
 
 
 class Vt100_Output(object):
-    def __init__(self, stdout, use_alternate_screen=False):
+    def __init__(self, stdout):
         self._buffer = []
         self.stdout = stdout
-        self.use_alternate_screen = use_alternate_screen
 
     def get_size(self):
         rows, columns = _get_size(self.stdout.fileno())
@@ -62,10 +61,10 @@ class Vt100_Output(object):
         self.write('\x1b[2J')
 
     def enter_alternate_screen(self):
-        self.write('\x1b[?1049l')
+        self.write('\x1b[?1049h\x1b[H')
 
     def quit_alternate_screen(self):
-        self.write('\x1b[?1049h')
+        self.write('\x1b[?1049l')
 
     def erase_end_of_line(self):
         """
