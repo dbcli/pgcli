@@ -1,9 +1,8 @@
 import pytest
-from pandas import DataFrame
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
-schemata = {
+metadata = {
             'public':   {
                             'users': ['id', 'email', 'first_name', 'last_name'],
                             'orders': ['id', 'ordered_date', 'status'],
@@ -21,24 +20,19 @@ def completer():
     import pgcli.pgcompleter as pgcompleter
     comp = pgcompleter.PGCompleter(smart_completion=True)
 
-    # Table metadata is a dataframe with columns [schema, table, is_visible]
-    tables = DataFrame.from_records(
-        ((schema, table, schema=='public')
-            for schema, tables in schemata.items()
-                for table, columns in tables.items()),
-        columns=['schema', 'table', 'is_visible'])
+    schemata, tables, columns = [], [], []
 
-    # Column metadata is a dataframe with columns [schema, table, column]
-    columns = DataFrame.from_records(
-        ((schema, table, column)
-            for schema, tables in schemata.items()
-                for table, columns in tables.items()
-                    for column in columns),
-        columns=['schema', 'table', 'column'])
+    for schema, tbls in metadata.items():
+        schemata.append(schema)
 
-    comp.extend_schemata(tables[['schema']].drop_duplicates())
+        for table, cols in tbls.items():
+            tables.append((schema, table))
+            columns.extend([(schema, table, col) for col in cols])
+
+    comp.extend_schemata(schemata)
     comp.extend_tables(tables)
     comp.extend_columns(columns)
+    comp.set_search_path(['public'])
 
     return comp
 

@@ -78,12 +78,12 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
     elif token_v.lower() in ('from', 'update', 'into', 'describe', 'join', 'table'):
         return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
     elif token_v.lower() == 'on':
-        tables = extract_tables(full_text)
+        tables = extract_tables(full_text)  # [(schema, table, alias), ...]
 
         # Use table alias if there is one, otherwise the table name
-        alias = tables['alias'].where(tables['alias'].notnull(), tables['table'])
+        alias = [t[2] or t[1] for t in tables]
 
-        return [{'type': 'alias', 'aliases': list(alias)}]
+        return [{'type': 'alias', 'aliases': alias}]
 
     elif token_v in ('d',):  # \d
         return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
@@ -102,9 +102,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
 
         # TABLE.<suggestion> or SCHEMA.TABLE.<suggestion>
         tables = extract_tables(full_text)
-        tables = get_matching_tables(tables, identifier)
-        suggestions.append({'type': 'column',
-                            'tables': tables[['schema', 'table', 'alias']]})
+        tables = [t for t in tables if identifies(identifier, *t)]
+        suggestions.append({'type': 'column', 'tables': tables})
 
         # SCHEMA.<suggestion>
         suggestions.append({'type': 'table', 'schema': identifier})
@@ -113,20 +112,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
 
     return [{'type': 'keyword'}]
 
-def get_matching_tables(tables, identifier):
-    """
-    :param tables: DataFrame with columns [schema, table, alias]
-    :param identifier: a table name, table alias, or fully qualified schema.tablename
-    :return: a row or rows from tables that match the indentifier
-    """
-    tables['full_name'] = tables.apply(qualify_table_name, axis=1)
 
-    #match a table to an identifier if the identifer is equal to any one of the
-    #table name, table alias, or schema-qualified table name
-    matches = tables[['table', 'alias', 'full_name']] == identifier
-    is_match = matches.any(axis=1)
-
-    return tables[is_match]
-
-def qualify_table_name(row):
-    return row['schema'] + '.' + row['table'] if row['schema'] else row['table']
+def identifies(id, schema, table, alias):
+    return id == alias or id == table or (
+        schema and (id == schema + '.' + table))

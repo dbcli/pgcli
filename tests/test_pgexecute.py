@@ -23,18 +23,15 @@ def test_schemata_table_and_columns_query(executor):
     run(executor, "create table schema1.c (w text)")
     run(executor, "create schema schema2")
 
-    schemata, tables, columns = executor.get_metadata()
-    assert schemata.to_dict('list') == {
-        'schema': ['public', 'schema1', 'schema2']}
-    assert tables.to_dict('list') == {
-           'schema': ['public', 'public', 'schema1'],
-           'table': ['a', 'b', 'c'],
-           'is_visible': [True, True, False]}
+    assert executor.schemata() == ['public', 'schema1', 'schema2']
+    assert executor.tables() == [
+        ('public', 'a'), ('public', 'b'), ('schema1', 'c')]
 
-    assert columns.to_dict('list') == {
-           'schema': ['public', 'public', 'public', 'schema1'],
-           'table': ['a', 'a', 'b', 'c'],
-           'column': ['x', 'y', 'z', 'w']}
+    assert executor.columns() == [
+        ('public', 'a', 'x'), ('public', 'a', 'y'),
+        ('public', 'b', 'z'), ('schema1', 'c', 'w')]
+
+    assert executor.search_path() == ['public']
 
 @dbtest
 def test_database_list(executor):

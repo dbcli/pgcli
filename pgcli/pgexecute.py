@@ -3,7 +3,6 @@ import psycopg2
 import psycopg2.extras
 import psycopg2.extensions
 import sqlparse
-from pandas import DataFrame
 from .packages import pgspecial
 
 _logger = logging.getLogger(__name__)
@@ -24,16 +23,19 @@ psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
 
 class PGExecute(object):
 
+    search_path_query = '''
+        SELECT * FROM unnest(current_schemas(false))'''
+
     schemata_query = '''
         SELECT  nspname
         FROM    pg_catalog.pg_namespace
         WHERE   nspname !~ '^pg_'
-                AND nspname <> 'information_schema' '''
+                AND nspname <> 'information_schema'
+        ORDER BY 1 '''
 
     tables_query = '''
         SELECT 	n.nspname schema_name,
-                c.relname table_name,
-                pg_catalog.pg_table_is_visible(c.oid) is_visible
+                c.relname table_name
         FROM 	pg_catalog.pg_class c
                 LEFT JOIN pg_catalog.pg_namespace n
                     ON n.oid = c.relnamespace
@@ -139,34 +141,37 @@ class PGExecute(object):
             _logger.debug('No rows in result.')
             return (None, None, cur.statusmessage)
 
-    def get_metadata(self):
-        """ Returns a tuple [schemata, tables, columns] of DataFrames
+    def search_path(self):
+        """Returns the current search path as a list of schema names"""
 
-            schemata:   DataFrame with columns [schema]
-            tables:     DataFrame with columns [schema, table, is_visible]
-            columns:    DataFrame with columns [schema, table, column]
+        with self.conn.cursor() as cur:
+            _logger.debug('Search path query. sql: %r', self.search_path_query)
+            cur.execute(self.search_path_query)
+            return [x[0] for x in cur.fetchall()]
 
-        """
+    def schemata(self):
+        """Returns a list of schema names in the database"""
 
         with self.conn.cursor() as cur:
             _logger.debug('Schemata Query. sql: %r', self.schemata_query)
             cur.execute(self.schemata_query)
-            schemata = DataFrame.from_records(cur,
-                        columns=['schema'])
+            return [x[0] for x in cur.fetchall()]
+
+    def tables(self):
+        """Returns a list of (schema_name, table_name) tuples """
 
         with self.conn.cursor() as cur:
             _logger.debug('Tables Query. sql: %r', self.tables_query)
             cur.execute(self.tables_query)
-            tables = DataFrame.from_records(cur,
-                      columns=['schema', 'table', 'is_visible'])
+            return cur.fetchall()
+
+    def columns(self):
+        """Returns a list of (schema_name, table_name, column_name) tuples"""
 
         with self.conn.cursor() as cur:
             _logger.debug('Columns Query. sql: %r', self.columns_query)
             cur.execute(self.columns_query)
-            columns = DataFrame.from_records(cur,
-                        columns=['schema', 'table', 'column'])
-
-        return [schemata, tables, columns]
+            return cur.fetchall()
 
     def databases(self):
         with self.conn.cursor() as cur:

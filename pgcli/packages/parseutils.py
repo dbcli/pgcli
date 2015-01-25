@@ -1,7 +1,6 @@
 from __future__ import print_function
 import re
 import sqlparse
-from pandas import DataFrame
 from sqlparse.sql import IdentifierList, Identifier, Function
 from sqlparse.tokens import Keyword, DML, Punctuation
 
@@ -132,12 +131,12 @@ def extract_table_identifiers(token_stream):
 def extract_tables(sql):
     """Extract the table names from an SQL statment.
 
-    Returns a DataFrame with columns [schema, table, alias]
+    Returns a list of (schema, table, alias) tuples
 
     """
     parsed = sqlparse.parse(sql)
     if not parsed:
-        return DataFrame({}, columns=['schema', 'table', 'alias'])
+        return []
 
     # INSERT statements must stop looking for tables at the sign of first
     # Punctuation. eg: INSERT INTO abc (col1, col2) VALUES (1, 2)
@@ -145,8 +144,7 @@ def extract_tables(sql):
     # we'll identify abc, col1 and col2 as table names.
     insert_stmt = parsed[0].token_first().value.lower() == 'insert'
     stream = extract_from_part(parsed[0], stop_at_punctuation=insert_stmt)
-    tables = extract_table_identifiers(stream)
-    return DataFrame.from_records(tables, columns=['schema', 'table', 'alias'])
+    return list(extract_table_identifiers(stream))
 
 def find_prev_keyword(sql):
     if not sql.strip():

@@ -1,11 +1,10 @@
 from __future__ import print_function
 import logging
-from collections import defaultdict
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
 from re import compile
-from pandas import DataFrame
+
 
 _logger = logging.getLogger(__name__)
 
@@ -35,11 +34,9 @@ class PGCompleter(Completer):
             'UCASE']
 
     special_commands = []
-
     databases = []
-    schemata = DataFrame({}, columns=['schema'])
-    tables = DataFrame({}, columns=['schema', 'table', 'alias'])
-    columns = DataFrame({}, columns=['schema', 'table', 'column'])
+    dbmetadata = {}
+    search_path = []
 
     all_completions = set(keywords + functions)
 
@@ -52,7 +49,7 @@ class PGCompleter(Completer):
         self.name_pattern = compile("^[_a-z][_a-z0-9\$]*$")
 
     def escape_name(self, name):
-        if name and not name=='*' and ((not self.name_pattern.match(name))
+        if name and ((not self.name_pattern.match(name))
                 or (name.upper() in self.reserved_words)
                 or (name.upper() in self.functions)):
             name = '"%s"' % name
@@ -82,41 +79,44 @@ class PGCompleter(Completer):
         self.keywords.extend(additional_keywords)
         self.all_completions.update(additional_keywords)
 
-    def extend_schemata(self, data):
+    def extend_schemata(self, schemata):
 
         # data is a DataFrame with columns [schema]
-        data['schema'] = data['schema'].apply(self.escape_name)
-        self.schemata = self.schemata.append(data)
-        self.all_completions.update(data['schema'])
+        schemata = self.escaped_names(schemata)
+        for schema in schemata:
+            self.dbmetadata[schema] = {}
 
-    def extend_tables(self, data):
+        self.all_completions.update(schemata)
 
-        # data is a DataFrame with columns [schema, table, is_visible]
-        data[['schema', 'table']] = \
-            data[['schema', 'table']].apply(self.escaped_names)
-        self.tables = self.tables.append(data)
+    def extend_tables(self, table_data):
 
-        self.all_completions.update(data['schema'])
-        self.all_completions.update(data['table'])
+        # table_data is a list of (schema_name, table_name) tuples
+        table_data = [self.escaped_names(d) for d in table_data]
 
-        # Auto-add '*' as a column in all tables
-        cols = data[['schema', 'table']].copy()
-        cols['column'] = '*'
-        self.columns = self.columns.append(cols)
+        # dbmetadata['schema_name']['table_name'] should be a list of column
+        # names. Default to an asterisk
+        for schema, table in table_data:
+            self.dbmetadata[schema][table] = ['*']
 
-    def extend_columns(self, data):
+        self.all_completions.update(t[1] for t in table_data)
 
-        # data is a DataFrame with columns [schema, table, column]
-        data[['schema', 'table', 'column']] = \
-            data[['schema', 'table', 'column']].apply(self.escaped_names)
-        self.columns = self.columns.append(data)
-        self.all_completions.update(data.column)
+    def extend_columns(self, column_data):
+
+        # column_data is a list of (schema_name, table_name, column_name) tuples
+        column_data = [self.escaped_names(d) for d in column_data]
+
+        for schema, table, column in column_data:
+            self.dbmetadata[schema][table].append(column)
+
+        self.all_completions.update(t[2] for t in column_data)
+
+    def set_search_path(self, search_path):
+        self.search_path = self.escaped_names(search_path)
 
     def reset_completions(self):
         self.databases = []
-        self.schemata = DataFrame({}, columns=['schema'])
-        self.tables = DataFrame({}, columns=['schema', 'table', 'alias'])
-        self.columns = DataFrame({}, columns=['schema', 'table', 'column'])
+        self.search_path = []
+        self.dbmetadata = {}
         self.all_completions = set(self.keywords)
 
     @staticmethod
@@ -155,17 +155,23 @@ class PGCompleter(Completer):
                 completions.extend(funcs)
 
             elif suggestion['type'] == 'schema':
-                schema_names = self.schemata['schema']
+                schema_names = self.dbmetadata.keys()
                 schema_names = self.find_matches(word_before_cursor, schema_names)
                 completions.extend(schema_names)
 
             elif suggestion['type'] == 'table':
-                meta = self.tables
 
                 if suggestion['schema']:
-                    tables = meta.table[meta.schema == suggestion['schema']]
+                    try:
+                        tables = self.dbmetadata[suggestion['schema']].keys()
+                    except KeyError:
+                        #schema doesn't exist
+                        tables = []
                 else:
-                    tables = meta.table[meta.is_visible]
+                    schemas = self.search_path
+                    meta = self.dbmetadata
+                    tables = [tbl for schema in schemas
+                                    for tbl in meta[schema].keys()]
 
                 tables = self.find_matches(word_before_cursor, tables)
                 completions.extend(tables)
@@ -186,25 +192,34 @@ class PGCompleter(Completer):
 
     def populate_scoped_cols(self, scoped_tbls):
         """ Find all columns in a set of scoped_tables
-        :param scoped_tbls: DataFrame with columns [schema, table, alias]
+        :param scoped_tbls: list of (schema, table, alias) tuples
         :return: list of column names
         """
 
-        columns = self.columns  # dataframe with columns [schema, table, column]
+        columns = []
+        meta = self.dbmetadata
 
-        scoped_tbls[['schema', 'table', 'alias']] = \
-            scoped_tbls[['schema', 'table', 'alias']].apply(self.escaped_names)
+        for tbl in scoped_tbls:
+            if tbl[0]:
+                # A fully qualified schema.table reference
+                schema = self.escape_name(tbl[0])
+                table = self.escape_name(tbl[1])
+                try:
+                    # Get columns from the corresponding schema.table
+                    columns.extend(meta[schema][table])
+                except KeyError:
+                    # Either the schema or table doesn't exist
+                    pass
+            else:
+                for schema in self.search_path:
+                    table = self.escape_name(tbl[1])
+                    try:
+                        columns.extend(meta[schema][table])
+                        break
+                    except KeyError:
+                        pass
 
-        # For fully qualified tables, inner join on (schema, table)
-        qualed = scoped_tbls.merge(columns, how='inner', on=['schema', 'table'])
+        return columns
 
-        # Only allow unqualified table reference on visible tables
-        vis_tables = self.tables[self.tables['is_visible']]
-        unqualed_tables = scoped_tbls.merge(vis_tables,
-            how='inner', on=['table'], suffixes=['_left', '_right'])
-        unqualed_tables['schema'] = unqualed_tables['schema_right']
-        unqualed = unqualed_tables.merge(columns, how='inner', on=['schema', 'table'])
-
-        return list(qualed['column']) + list(unqualed['column'])
 
 
