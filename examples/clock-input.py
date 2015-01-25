@@ -48,7 +48,7 @@ def main():
     cli.onReadInputStart += on_read_start
 
     code_obj = cli.read_input()
-    print('You said: ' + code_obj.text)
+    print('You said: %s' % code_obj.text)
 
 
 if __name__ == '__main__':
