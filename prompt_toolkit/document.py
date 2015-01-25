@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import re
 import six
+import string
 
 from .selection import SelectionType
 
@@ -286,10 +287,30 @@ class Document(object):
         match_before = get_regex(include_leading_whitespace).search(text_before_cursor)
         match_after = get_regex(include_trailing_whitespace).search(text_after_cursor)
 
+        # When there is a match before and after, and we're not looking for
+        # WORDs, make sure that both the part before and after the cursor are
+        # either in the [a-zA-Z_] alphabet or not. Otherwise, drop the part
+        # before the cursor.
+        if not WORD and match_before and match_after:
+            c1 = self.text[self.cursor_position - 1]
+            c2 = self.text[self.cursor_position]
+            alphabet = string.ascii_letters + '0123456789_'
+
+            if (c1 in alphabet) != (c2 in alphabet):
+                match_before = None
+
         return (
             - match_before.end(1) if match_before else 0,
             match_after.end(1) if match_after else 0
         )
+
+    def get_word_under_cursor(self, WORD=False):
+        """
+        Return the word, currently below the cursor.
+        This returns an empty string when the cursor is on a whitespace region.
+        """
+        start, end = self.find_boundaries_of_current_word(WORD=WORD)
+        return self.text[self.cursor_position + start: self.cursor_position + end]
 
     def find_next_word_beginning(self, count=1, WORD=False):
         """

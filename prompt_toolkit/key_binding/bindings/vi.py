@@ -570,7 +570,11 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Go to previous occurence of this word.
         """
-        pass
+        b = event.cli.current_buffer
+        word = b.document.get_word_under_cursor()
+
+        b.set_search_text(word)
+        b.incremental_search(IncrementalSearchDirection.BACKWARD)
 
     @handle('*', filter=navigation_mode)
     def _(event):
