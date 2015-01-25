@@ -392,14 +392,10 @@ def load_vi_bindings(registry, vi_state, filter=None):
 
     @handle('v', filter=navigation_mode)
     def _(event):
-        event.current_buffer.open_in_editor()
-
-    # @handle('v', filter=navigation_mode)
-    # def _(event):
-    #     """
-    #     Start characters selection.
-    #     """
-    #     event.current_buffer.start_selection(selection_type=SelectionType.CHARACTERS)
+        """
+        Start characters selection.
+        """
+        event.current_buffer.start_selection(selection_type=SelectionType.CHARACTERS)
 
     @handle('V', filter=navigation_mode)
     def _(event):
@@ -1015,6 +1011,18 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Focus next buffer.
         """
         focus_next_buffer(event.cli)
+
+
+def load_vi_open_in_editor_bindings(registry, vi_state, filter=None):
+    """
+    Pressing 'v' in navigation mode will open the buffer in an external editor.
+    """
+    navigation_mode = ViStateFilter(vi_state, InputMode.NAVIGATION) & ~ filters.HasSelection()
+    handle = create_handle_decorator(registry, filter)
+
+    @handle('v', filter=navigation_mode)
+    def _(event):
+        event.current_buffer.open_in_editor()
 
 
 def load_vi_system_bindings(registry, vi_state, filter=None, system_buffer_name='system'):

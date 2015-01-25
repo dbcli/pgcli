@@ -289,13 +289,6 @@ def load_emacs_bindings(registry, filter=None):
         `meta-*`: Insert all possible completions of the preceding text.
         """
 
-    @handle(Keys.ControlX, Keys.ControlE, filter= ~has_selection)
-    def _(event):
-        """
-        Open editor.
-        """
-        event.current_buffer.open_in_editor()
-
     @handle(Keys.ControlX, Keys.ControlU, save_before=False, filter= ~has_selection)
     def _(event):
         event.current_buffer.undo()
@@ -427,6 +420,21 @@ def load_emacs_bindings(registry, filter=None):
         to, _ = buffer.document.translate_index_to_position(to)
 
         unindent(buffer, from_ - 1, to, count=event.arg)
+
+
+def load_emacs_open_in_editor_bindings(registry, filter=None):
+    """
+    Pressing C-X C-E will open the buffer in an external editor.
+    """
+    handle = create_handle_decorator(registry, filter)
+    has_selection = filters.HasSelection()
+
+    @handle(Keys.ControlX, Keys.ControlE, filter= ~has_selection)
+    def _(event):
+        """
+        Open editor.
+        """
+        event.current_buffer.open_in_editor()
 
 
 def load_emacs_system_bindings(registry, filter=None, system_buffer_name='system'):

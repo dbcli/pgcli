@@ -86,6 +86,7 @@ def create_cli(message='',
                vi_mode=False,
                lexer=None,
                enable_system_prompt=False,
+               enable_open_in_editor=False,
                validator=None,
                completer=None,
                style=None,
@@ -98,7 +99,9 @@ def create_cli(message='',
         history = History()
 
     # Load all key bindings.
-    manager = KeyBindingManager(enable_vi_mode=vi_mode, enable_system_prompt=enable_system_prompt)
+    manager = KeyBindingManager(enable_vi_mode=vi_mode,
+                                enable_system_prompt=enable_system_prompt,
+                                enable_open_in_editor=enable_open_in_editor)
 
     # Create interface.
     return CommandLineInterface(
@@ -124,6 +127,7 @@ def get_input(message='',
               completer=None,
               style=None,
               enable_system_prompt=False,
+              enable_open_in_editor=False,
               history_filename=None):
     """
     Get input from the user and return it. This wrapper builds the most obvious
@@ -142,6 +146,8 @@ def get_input(message='',
     :param completer: `Completer` instance for input completion.
     :param style: Pygments style class for the color scheme.
     :param enable_system_prompt: Pressing Meta+'!' will show a system prompt.
+    :param enable_open_in_editor: Pressing 'v' in Vi mode or C-X C-E in emacs
+                                  mode will open an external editor.
     :param history_filename: If not `None`, keep a persistent history in this file.
     """
     cli = create_cli(
@@ -151,6 +157,7 @@ def get_input(message='',
         vi_mode=vi_mode,
         lexer=lexer,
         enable_system_prompt=enable_system_prompt,
+        enable_open_in_editor=enable_open_in_editor,
         validator=validator,
         completer=completer,
         style=style,
