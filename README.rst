@@ -69,7 +69,7 @@ general, the Unix experience will still be a little better.
 
 
 Installation
-------------
+************
 
 ::
 
@@ -77,7 +77,7 @@ Installation
 
 
 Getting started
----------------
+***************
 
 The most simple example of the library would look like this:
 
@@ -96,7 +96,7 @@ start.
 
 
 Projects using prompt-toolkit
-------------------------------
+*****************************
 
 - `ptpython <http://github.com/jonathanslenders/ptpython/>`_: Python REPL
 - `ptpdb <http://github.com/jonathanslenders/ptpdb/>`_: Python debugger (pdb replacement)
@@ -106,7 +106,7 @@ Projects using prompt-toolkit
 
 
 Philosophy
----------
+**********
 
 The source code of ``prompt_toolkit`` should be readable, concise and
 efficient. We prefer short functions focussing each on one task and for which
@@ -124,7 +124,7 @@ important, but avoid premature optimization.
 
 
 Special thanks to
------------------
+*****************
 
 - `Pygments <http://pygments.org/>`_: Syntax highlighter.
 - `wcwidth <https://github.com/jquast/wcwidth>`_: Determine columns needed for a wide characters.
