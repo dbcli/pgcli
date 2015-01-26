@@ -86,7 +86,19 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         return [{'type': 'alias', 'aliases': alias}]
 
     elif token_v in ('d',):  # \d
-        return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
+        # Apparently "\d <other>" is parsed by sqlparse as
+        # Identifer('d', Whitespace, '<other>')
+        if len(token.tokens) > 2:
+            other = token.tokens[-1].value
+            identifiers = other.split('.')
+            if len(identifiers) == 1:
+                # "\d table" or "\d schema"
+                return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
+            elif len(identifiers) == 2:
+                # \d schema.table
+                return [{'type': 'table', 'schema': identifiers[0]}]
+        else:
+            return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
     elif token_v.lower() in ('c', 'use'):  # \c
         return [{'type': 'database'}]
     elif token_v.endswith(',') or token_v == '=':
