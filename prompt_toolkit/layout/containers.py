@@ -247,7 +247,7 @@ class FloatContainer(Layout):
 
                 xpos = cursor_position.x
                 if xpos + width > write_position.width:
-                    xpos = write_position.width - width
+                    xpos = max(0, write_position.width - width)
             else:
                 xpos = 0
                 width = write_position.width
