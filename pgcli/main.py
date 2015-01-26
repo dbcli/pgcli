@@ -214,6 +214,12 @@ class PGCli(object):
                         end = time()
                         total += end - start
                         mutating = mutating or is_mutating(status)
+
+                        if need_search_path_refresh(document.text, status):
+                            logger.debug('Refreshing search path')
+                            completer.set_search_path(pgexecute.search_path())
+                            logger.debug('Search path: %r', completer.search_path)
+
                 except KeyboardInterrupt:
                     # Restart connection to the database
                     pgexecute.connect()
@@ -329,6 +335,22 @@ def need_completion_refresh(sql):
     try:
         first_token = sql.split()[0]
         return first_token.lower() in ('alter', 'create', 'use', '\c', 'drop')
+    except Exception:
+        return False
+
+def need_search_path_refresh(sql, status):
+    # note that sql may be a multi-command query, but status belongs to an
+    # individual query, since pgexecute handles splitting up multi-commands
+    try:
+        status = status.split()[0]
+        if status.lower() == 'set':
+            # Since sql could be a multi-line query, it's hard to robustly
+            # pick out the variable name that's been set. Err on the side of
+            # false positives here, since the worst case is we refresh the
+            # search path when it's not necessary
+            return 'search_path' in sql.lower()
+        else:
+            return False
     except Exception:
         return False
 
