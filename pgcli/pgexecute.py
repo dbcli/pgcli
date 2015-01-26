@@ -2,7 +2,7 @@ import sys
 import logging
 import psycopg2
 import psycopg2.extras
-import psycopg2.extensions
+import psycopg2.extensions as ext
 import sqlparse
 from collections import defaultdict
 from .packages import pgspecial
@@ -14,8 +14,10 @@ _logger = logging.getLogger(__name__)
 
 # Cast all database input to unicode automatically.
 # See http://initd.org/psycopg/docs/usage.html#unicode-handling for more info.
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
+ext.register_type(psycopg2.extensions.UNICODE)
+ext.register_type(psycopg2.extensions.UNICODEARRAY)
+ext.register_type(ext.new_type((705,), "UNKNOWN", ext.UNICODE))
+ext.register_type(ext.new_type((51766,), "HSTORE", ext.UNICODE))
 
 # Cast bytea fields to text. By default, this will render as hex strings with
 # Postgres 9+ and as escaped binary in earlier versions.
