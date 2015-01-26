@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+0.30: 2015-01-26
+----------------
+
+Fixed:
+- Backward compatibility with django_extensions.
+- Usage of alternate screen in the renderer.
+
+New features:
+- Vi '#' key binding.
+- contrib.shortcuts.get_input got a get_bottom_toolbar_tokens argument.
+- Separate key bindings for "open in editor." KeyBindingManager got a
+  enable_open_in_editor argument.
+
 0.28: 2015-01-25
 ----------------
 
