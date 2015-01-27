@@ -14,3 +14,6 @@
 * [ ] Search for Dataframe in the source and replace them.
 * [ ] pgexecute columns(), tables() etc can be just cursors instead of fetchall()
 * [ ] Add unicode tests.
+* [ ] Add colorschemes in config file.
+* [ ] Add \timing in config file.
+* [ ] Add table format to config file.
