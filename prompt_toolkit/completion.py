@@ -12,7 +12,8 @@ __all__ = (
 
 
 class Completion(object):
-    def __init__(self, text, start_position=0, display=None, display_meta=''):
+    def __init__(self, text, start_position=0, display=None, display_meta=None,
+                 get_display_meta=None):
         """
         :param text: The new string that will be inserted into the document.
         :param start_position: Position relative to the cursor_position where the
@@ -22,10 +23,13 @@ class Completion(object):
             differently in the completion menu.
         :param display_meta: (Optional string) Meta information about the
             completion, e.g. the path or source where it's coming from.
+        :param get_display_meta: Lazy `display_meta`. Retrieve meta information
+            only when meta is displayed.
         """
         self.text = text
         self.start_position = start_position
-        self.display_meta = display_meta
+        self._display_meta = display_meta
+        self._get_display_meta = get_display_meta
 
         if display is None:
             self.display = text
@@ -46,6 +50,19 @@ class Completion(object):
 
     def __hash__(self):
         return hash((self.text, self.start_position, self.display, self.display_meta))
+
+    @property
+    def display_meta(self):
+        # Return meta-text. (This is lazy when using "get_display_meta".)
+        if self._display_meta is not None:
+            return self._display_meta
+
+        elif self._get_display_meta:
+            self._display_meta = self._get_display_meta()
+            return self._display_meta
+
+        else:
+            return ''
 
 
 class CompleteEvent(object):
