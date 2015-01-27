@@ -17,17 +17,28 @@ class PathCompleter(Completer):
     :param file_filter: Callable which takes a filename and returns whether
                         this file should show up in the completion. ``None``
                         when no filtering has to be done.
+    :param min_input_len: Don't do autocompletion when the input string is shorter.
     """
-    def __init__(self, include_files=True, get_paths=None, file_filter=None):   # TODO: rename include_files to only_directories.
+    def __init__(self, only_directories=False, get_paths=None, file_filter=None,
+                 min_input_len=0):
         assert get_paths is None or callable(get_paths)
         assert file_filter is None or callable(file_filter)
+        assert isinstance(min_input_len, int)
 
-        self.include_files = include_files
+        self.only_directories = only_directories
         self.get_paths = get_paths or (lambda: ['.'])
         self.file_filter = file_filter or (lambda _: True)
+        self.min_input_len = min_input_len
 
     def get_completions(self, document, complete_event):
         text = document.text_before_cursor
+
+        # Complete only when we have at least the  minimal input length,
+        # otherwise, we can too many results and autocompletion will become too
+        # heavy.
+        if len(text) < self.min_input_len:
+            return
+
         try:
             dirname = os.path.dirname(text)
             directories = [os.path.dirname(text)] if dirname else self.get_paths()
@@ -49,23 +60,25 @@ class PathCompleter(Completer):
                 full_name = os.path.join(directory, filename)
 
                 if not os.path.isdir(full_name):
-                    if not self.include_files or not self.file_filter(full_name):
+                    if self.only_directories or not self.file_filter(full_name):
                         continue
 
-                meta = self._get_meta(full_name)
-                yield Completion(completion, 0, display=filename, display_meta=meta)
+                yield Completion(completion, 0, display=filename,
+                                 get_display_meta=self._create_meta_getter(full_name))
         except OSError:
             pass
 
-    def _get_meta(self, full_name):
+    def _create_meta_getter(self, full_name):
         """
-        Return meta display string for file/directory.
+        Create lazy meta getter.
         """
-        if os.path.isdir(full_name):
-            return 'Directory'
-        elif os.path.isfile(full_name):
-            return 'File'
-        elif os.path.islink(full_name):
-            return 'Link'
-        else:
-            return ''
+        def getter():
+            if os.path.isdir(full_name):
+                return 'Directory'
+            elif os.path.isfile(full_name):
+                return 'File'
+            elif os.path.islink(full_name):
+                return 'Link'
+            else:
+                return ''
+        return getter

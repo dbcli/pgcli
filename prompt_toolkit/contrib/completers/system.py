@@ -51,10 +51,11 @@ class SystemCompleter(GrammarCompleter):
         super(SystemCompleter, self).__init__(
             g,
             {
-                'executable': PathCompleter(include_files=True,
+                'executable': PathCompleter(only_directories=False,
+                                            min_input_len=1,
                                             get_paths=lambda: os.environ.get('PATH', '').split(os.pathsep),
                                             file_filter=lambda name: os.access(name, os.X_OK)),
-                'filename': PathCompleter(include_files=True),
-                'double_quoted_filename': PathCompleter(include_files=True),
-                'single_quoted_filename': PathCompleter(include_files=True),
+                'filename': PathCompleter(only_directories=False),
+                'double_quoted_filename': PathCompleter(only_directories=False),
+                'single_quoted_filename': PathCompleter(only_directories=False),
             })
