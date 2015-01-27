@@ -6,6 +6,8 @@ Features:
 * Add alias completion support to ON keyword. (Thanks: `Iryna Cherniavska`_)
 * Add LIMIT keyword to completion. 
 * Confirm before printing large tables. 
+* Auto-completion for Postgres schemas. (Thanks: darikg_)
+* Better unicode handling for datatypes, dbname and roles. 
 
 Bug Fixes:
 ----------
