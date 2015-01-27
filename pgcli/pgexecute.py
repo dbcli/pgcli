@@ -1,13 +1,10 @@
-import sys
 import logging
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 from .packages import pgspecial
-
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
+from .encodingutils import unicode2utf8
 
 _logger = logging.getLogger(__name__)
 
@@ -86,16 +83,6 @@ class PGExecute(object):
 
     def connect(self, database=None, user=None, password=None, host=None,
             port=None):
-
-        def unicode2utf8(arg):
-            """
-            Only in Python 2. Psycopg2 expects the args as bytes not unicode.
-            In Python 3 the args are expected as unicode.
-            """
-
-            if PY2 and isinstance(arg, unicode):
-                return arg.encode('utf-8')
-            return arg
 
         db = unicode2utf8(database or self.dbname)
         user = unicode2utf8(user or self.user)

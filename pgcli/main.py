@@ -26,6 +26,7 @@ from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
+from .encodingutils import utf8tounicode
 
 from time import time
 
@@ -135,7 +136,8 @@ class PGCli(object):
             try:
                 pgexecute = PGExecute(database, user, passwd, host, port)
             except OperationalError as e:
-                if 'no password supplied' in e.args[0] and auto_passwd_prompt:
+                if ('no password supplied' in utf8tounicode(e.args[0]) and
+                        auto_passwd_prompt):
                     passwd = click.prompt('Password', hide_input=True,
                                           show_default=False, type=str)
                     pgexecute = PGExecute(database, user, passwd, host, port)
@@ -144,6 +146,7 @@ class PGCli(object):
 
         except Exception as e:  # Connecting to a database could fail.
             self.logger.debug('Database connection failed: %r.', e)
+            self.logger.error("traceback: %r", traceback.format_exc())
             click.secho(str(e), err=True, fg='red')
             exit(1)
 
