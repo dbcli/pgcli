@@ -98,7 +98,9 @@ postgres via brew if postgres is available in the path.
 
 Alternatively, you can install ``pgcli`` as a python package using a package
 manager called called ``pip``. You will need postgres installed on your system
-for this to work.  Check if ``pip`` is installed on the system.  
+for this to work. 
+
+In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/installing.html.
 
 :: 
 
@@ -127,6 +129,8 @@ If pip is not installed check if easy_install is available on the system.
 
 Linux:
 ======
+
+In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/installing.html.
 
 Check if pip is already available in your system.
 
