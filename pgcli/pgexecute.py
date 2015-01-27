@@ -4,7 +4,6 @@ import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
-from collections import defaultdict
 from .packages import pgspecial
 
 PY2 = sys.version_info[0] == 2
@@ -30,13 +29,43 @@ psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
 
 class PGExecute(object):
 
-    tables_query = '''SELECT c.relname as "Name" FROM pg_catalog.pg_class c
-    LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE
-    c.relkind IN ('r','') AND n.nspname <> 'pg_catalog' AND n.nspname <>
-    'information_schema' AND n.nspname !~ '^pg_toast' AND
-    pg_catalog.pg_table_is_visible(c.oid) ORDER BY 1;'''
+    search_path_query = '''
+        SELECT * FROM unnest(current_schemas(false))'''
 
-    columns_query = '''SELECT table_name, column_name FROM information_schema.columns'''
+    schemata_query = '''
+        SELECT  nspname
+        FROM    pg_catalog.pg_namespace
+        WHERE   nspname !~ '^pg_'
+                AND nspname <> 'information_schema'
+        ORDER BY 1 '''
+
+    tables_query = '''
+        SELECT 	n.nspname schema_name,
+                c.relname table_name
+        FROM 	pg_catalog.pg_class c
+                LEFT JOIN pg_catalog.pg_namespace n
+                    ON n.oid = c.relnamespace
+        WHERE 	c.relkind IN ('r','v', 'm') -- table, view, materialized view
+                AND n.nspname !~ '^pg_toast'
+                AND n.nspname NOT IN ('information_schema', 'pg_catalog')
+        ORDER BY 1,2;'''
+
+    columns_query = '''
+        SELECT 	nsp.nspname schema_name,
+                cls.relname table_name,
+                att.attname column_name
+        FROM 	pg_catalog.pg_attribute att
+                INNER JOIN pg_catalog.pg_class cls
+                    ON att.attrelid = cls.oid
+                INNER JOIN pg_catalog.pg_namespace nsp
+                    ON cls.relnamespace = nsp.oid
+        WHERE 	cls.relkind IN ('r', 'v', 'm')
+                AND nsp.nspname !~ '^pg_'
+                AND nsp.nspname <> 'information_schema'
+                AND NOT att.attisdropped
+                AND att.attnum  > 0
+        ORDER BY 1, 2, 3'''
+
 
     databases_query = """SELECT d.datname as "Name",
        pg_catalog.pg_get_userbyid(d.datdba) as "Owner",
@@ -133,22 +162,37 @@ class PGExecute(object):
             _logger.debug('No rows in result.')
             return (None, None, cur.statusmessage)
 
+    def search_path(self):
+        """Returns the current search path as a list of schema names"""
+
+        with self.conn.cursor() as cur:
+            _logger.debug('Search path query. sql: %r', self.search_path_query)
+            cur.execute(self.search_path_query)
+            return [x[0] for x in cur.fetchall()]
+
+    def schemata(self):
+        """Returns a list of schema names in the database"""
+
+        with self.conn.cursor() as cur:
+            _logger.debug('Schemata Query. sql: %r', self.schemata_query)
+            cur.execute(self.schemata_query)
+            return [x[0] for x in cur.fetchall()]
+
     def tables(self):
-        """ Returns tuple (sorted_tables, columns). Columns is a dictionary of
-            table name -> list of columns """
-        columns = defaultdict(list)
+        """Returns a list of (schema_name, table_name) tuples """
+
         with self.conn.cursor() as cur:
             _logger.debug('Tables Query. sql: %r', self.tables_query)
             cur.execute(self.tables_query)
-            tables = [x[0] for x in cur.fetchall()]
+            return cur.fetchall()
 
-            table_set = set(tables)
+    def columns(self):
+        """Returns a list of (schema_name, table_name, column_name) tuples"""
+
+        with self.conn.cursor() as cur:
             _logger.debug('Columns Query. sql: %r', self.columns_query)
             cur.execute(self.columns_query)
-            for table, column in cur.fetchall():
-                if table in table_set:
-                    columns[table].append(column)
-        return tables, columns
+            return cur.fetchall()
 
     def databases(self):
         with self.conn.cursor() as cur:

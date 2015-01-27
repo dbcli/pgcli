@@ -28,7 +28,7 @@ setup(
             'jedi == 0.8.1',    # Temporary fix for installation woes.
             'prompt_toolkit==0.26',
             'psycopg2 >= 2.5.4',
-            'sqlparse >= 0.1.14',
+            'sqlparse >= 0.1.14'
             ],
         entry_points='''
             [console_scripts]

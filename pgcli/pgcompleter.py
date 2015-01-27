@@ -1,10 +1,10 @@
 from __future__ import print_function
 import logging
-from collections import defaultdict
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
 from re import compile
+
 
 _logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class PGCompleter(Completer):
             'MAXEXTENTS', 'MINUS', 'MLSLABEL', 'MODE', 'MODIFY', 'NOAUDIT',
             'NOCOMPRESS', 'NOT', 'NOWAIT', 'NULL', 'NUMBER', 'OF', 'OFFLINE',
             'ON', 'ONLINE', 'OPTION', 'OR', 'ORDER BY', 'OUTER', 'PCTFREE',
-            'PRIMARY', 'PRIOR', 'PRIVILEGES', 'PUBLIC', 'RAW', 'RENAME',
+            'PRIMARY', 'PRIOR', 'PRIVILEGES', 'RAW', 'RENAME',
             'RESOURCE', 'REVOKE', 'RIGHT', 'ROW', 'ROWID', 'ROWNUM', 'ROWS',
             'SELECT', 'SESSION', 'SET', 'SHARE', 'SIZE', 'SMALLINT', 'START',
             'SUCCESSFUL', 'SYNONYM', 'SYSDATE', 'TABLE', 'THEN', 'TO',
@@ -33,15 +33,6 @@ class PGCompleter(Completer):
             'LCASE', 'LEN', 'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP',
             'UCASE']
 
-    special_commands = []
-
-    databases = []
-    tables = []
-    # This will create a defaultdict which is initialized with a list that has
-    # a '*' by default.
-    columns = defaultdict(lambda: ['*'])
-    all_completions = set(keywords + functions)
-
     def __init__(self, smart_completion=True):
         super(self.__class__, self).__init__()
         self.smart_completion = smart_completion
@@ -50,8 +41,15 @@ class PGCompleter(Completer):
             self.reserved_words.update(x.split())
         self.name_pattern = compile("^[_a-z][_a-z0-9\$]*$")
 
+        self.special_commands = []
+        self.databases = []
+        self.dbmetadata = {}
+        self.search_path = []
+
+        self.all_completions = set(self.keywords + self.functions)
+
     def escape_name(self, name):
-        if ((not self.name_pattern.match(name))
+        if name and ((not self.name_pattern.match(name))
                 or (name.upper() in self.reserved_words)
                 or (name.upper() in self.functions)):
             name = '"%s"' % name
@@ -60,7 +58,7 @@ class PGCompleter(Completer):
 
     def unescape_name(self, name):
         """ Unquote a string."""
-        if name[0] == '"' and name[-1] == '"':
+        if name and name[0] == '"' and name[-1] == '"':
             name = name[1:-1]
 
         return name
@@ -75,31 +73,50 @@ class PGCompleter(Completer):
 
     def extend_database_names(self, databases):
         databases = self.escaped_names(databases)
-
         self.databases.extend(databases)
 
     def extend_keywords(self, additional_keywords):
         self.keywords.extend(additional_keywords)
         self.all_completions.update(additional_keywords)
 
-    def extend_table_names(self, tables):
-        tables = self.escaped_names(tables)
+    def extend_schemata(self, schemata):
 
-        self.tables.extend(tables)
-        self.all_completions.update(tables)
+        # data is a DataFrame with columns [schema]
+        schemata = self.escaped_names(schemata)
+        for schema in schemata:
+            self.dbmetadata[schema] = {}
 
-    def extend_column_names(self, table, columns):
-        columns = self.escaped_names(columns)
+        self.all_completions.update(schemata)
 
-        unescaped_table_name = self.unescape_name(table)
+    def extend_tables(self, table_data):
 
-        self.columns[unescaped_table_name].extend(columns)
-        self.all_completions.update(columns)
+        # table_data is a list of (schema_name, table_name) tuples
+        table_data = [self.escaped_names(d) for d in table_data]
+
+        # dbmetadata['schema_name']['table_name'] should be a list of column
+        # names. Default to an asterisk
+        for schema, table in table_data:
+            self.dbmetadata[schema][table] = ['*']
+
+        self.all_completions.update(t[1] for t in table_data)
+
+    def extend_columns(self, column_data):
+
+        # column_data is a list of (schema_name, table_name, column_name) tuples
+        column_data = [self.escaped_names(d) for d in column_data]
+
+        for schema, table, column in column_data:
+            self.dbmetadata[schema][table].append(column)
+
+        self.all_completions.update(t[2] for t in column_data)
+
+    def set_search_path(self, search_path):
+        self.search_path = self.escaped_names(search_path)
 
     def reset_completions(self):
         self.databases = []
-        self.tables = []
-        self.columns = defaultdict(lambda: ['*'])
+        self.search_path = []
+        self.dbmetadata = {}
         self.all_completions = set(self.keywords)
 
     @staticmethod
@@ -119,36 +136,90 @@ class PGCompleter(Completer):
         if not smart_completion:
             return self.find_matches(word_before_cursor, self.all_completions)
 
-        category, scope = suggest_type(document.text,
-                document.text_before_cursor)
+        completions = []
+        suggestions = suggest_type(document.text, document.text_before_cursor)
 
-        if category == 'columns':
-            _logger.debug("Completion: 'columns' Scope: %r", scope)
-            scoped_cols = self.populate_scoped_cols(scope)
-            return self.find_matches(word_before_cursor, scoped_cols)
-        elif category == 'columns-and-functions':
-            _logger.debug("Completion: 'columns-and-functions' Scope: %r",
-                    scope)
-            scoped_cols = self.populate_scoped_cols(scope)
-            return self.find_matches(word_before_cursor, scoped_cols +
-                    self.functions)
-        elif category == 'tables':
-            _logger.debug("Completion: 'tables' Scope: %r", scope)
-            return self.find_matches(word_before_cursor, self.tables)
-        elif category == 'tables-or-aliases':
-            _logger.debug("Completion: 'tables-or-aliases' Scope: %r", scope)
-            return self.find_matches(word_before_cursor, scope)
-        elif category == 'databases':
-            _logger.debug("Completion: 'databases' Scope: %r", scope)
-            return self.find_matches(word_before_cursor, self.databases)
-        elif category == 'keywords':
-            _logger.debug("Completion: 'keywords' Scope: %r", scope)
-            return self.find_matches(word_before_cursor, self.keywords +
-                    self.special_commands)
+        for suggestion in suggestions:
 
-    def populate_scoped_cols(self, tables):
-        scoped_cols = []
-        for table in tables:
-            unescaped_table_name = self.unescape_name(table)
-            scoped_cols.extend(self.columns[unescaped_table_name])
-        return scoped_cols
+            _logger.debug('Suggestion type: %r', suggestion['type'])
+
+            if suggestion['type'] == 'column':
+                tables = suggestion['tables']
+                _logger.debug("Completion column scope: %r", tables)
+                scoped_cols = self.populate_scoped_cols(tables)
+                cols = self.find_matches(word_before_cursor, scoped_cols)
+                completions.extend(cols)
+
+            elif suggestion['type'] == 'function':
+                funcs = self.find_matches(word_before_cursor, self.functions)
+                completions.extend(funcs)
+
+            elif suggestion['type'] == 'schema':
+                schema_names = self.dbmetadata.keys()
+                schema_names = self.find_matches(word_before_cursor, schema_names)
+                completions.extend(schema_names)
+
+            elif suggestion['type'] == 'table':
+
+                if suggestion['schema']:
+                    try:
+                        tables = self.dbmetadata[suggestion['schema']].keys()
+                    except KeyError:
+                        #schema doesn't exist
+                        tables = []
+                else:
+                    schemas = self.search_path
+                    meta = self.dbmetadata
+                    tables = [tbl for schema in schemas
+                                    for tbl in meta[schema].keys()]
+
+                tables = self.find_matches(word_before_cursor, tables)
+                completions.extend(tables)
+            elif suggestion['type'] == 'alias':
+                aliases = suggestion['aliases']
+                aliases = self.find_matches(word_before_cursor, aliases)
+                completions.extend(aliases)
+            elif suggestion['type'] == 'database':
+                dbs = self.find_matches(word_before_cursor, self.databases)
+                completions.extend(dbs)
+
+            elif suggestion['type'] == 'keyword':
+                keywords = self.keywords + self.special_commands
+                keywords = self.find_matches(word_before_cursor, keywords)
+                completions.extend(keywords)
+
+        return completions
+
+    def populate_scoped_cols(self, scoped_tbls):
+        """ Find all columns in a set of scoped_tables
+        :param scoped_tbls: list of (schema, table, alias) tuples
+        :return: list of column names
+        """
+
+        columns = []
+        meta = self.dbmetadata
+
+        for tbl in scoped_tbls:
+            if tbl[0]:
+                # A fully qualified schema.table reference
+                schema = self.escape_name(tbl[0])
+                table = self.escape_name(tbl[1])
+                try:
+                    # Get columns from the corresponding schema.table
+                    columns.extend(meta[schema][table])
+                except KeyError:
+                    # Either the schema or table doesn't exist
+                    pass
+            else:
+                for schema in self.search_path:
+                    table = self.escape_name(tbl[1])
+                    try:
+                        columns.extend(meta[schema][table])
+                        break
+                    except KeyError:
+                        pass
+
+        return columns
+
+
+

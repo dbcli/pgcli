@@ -16,14 +16,22 @@ def test_conn(executor):
         SELECT 1""")
 
 @dbtest
-def test_table_and_columns_query(executor):
+def test_schemata_table_and_columns_query(executor):
     run(executor, "create table a(x text, y text)")
     run(executor, "create table b(z text)")
+    run(executor, "create schema schema1")
+    run(executor, "create table schema1.c (w text)")
+    run(executor, "create schema schema2")
 
-    tables, columns = executor.tables()
-    assert tables == ['a', 'b']
-    assert columns['a'] == ['x', 'y']
-    assert columns['b'] == ['z']
+    assert executor.schemata() == ['public', 'schema1', 'schema2']
+    assert executor.tables() == [
+        ('public', 'a'), ('public', 'b'), ('schema1', 'c')]
+
+    assert executor.columns() == [
+        ('public', 'a', 'x'), ('public', 'a', 'y'),
+        ('public', 'b', 'z'), ('schema1', 'c', 'w')]
+
+    assert executor.search_path() == ['public']
 
 @dbtest
 def test_database_list(executor):

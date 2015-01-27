@@ -32,7 +32,11 @@ def create_db(dbname):
 
 def drop_tables(conn):
     with conn.cursor() as cur:
-        cur.execute('''DROP SCHEMA public CASCADE; CREATE SCHEMA public''')
+        cur.execute('''
+            DROP SCHEMA public CASCADE;
+            CREATE SCHEMA public;
+            DROP SCHEMA IF EXISTS schema1 CASCADE;
+            DROP SCHEMA IF EXISTS schema2 CASCADE''')
 
 
 def run(executor, sql, join=False):

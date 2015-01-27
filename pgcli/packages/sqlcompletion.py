@@ -66,28 +66,65 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
             # If the lparen is preceeded by a space chances are we're about to
             # do a sub-select.
             if last_word(text_before_cursor, 'all_punctuations').startswith('('):
-                return 'keywords', []
-        return 'columns', extract_tables(full_text)
+                return [{'type': 'keyword'}]
+
+        return [{'type': 'column', 'tables': extract_tables(full_text)}]
+
     if token_v.lower() in ('set', 'by', 'distinct'):
-        return 'columns', extract_tables(full_text)
+        return [{'type': 'column', 'tables': extract_tables(full_text)}]
     elif token_v.lower() in ('select', 'where', 'having'):
-        return 'columns-and-functions', extract_tables(full_text)
+        return [{'type': 'column', 'tables': extract_tables(full_text)},
+                {'type': 'function'}]
     elif token_v.lower() in ('from', 'update', 'into', 'describe', 'join', 'table'):
-        return 'tables', []
+        return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
     elif token_v.lower() == 'on':
-        tables = extract_tables(full_text, include_alias=True)
-        return 'tables-or-aliases', tables.keys()
+        tables = extract_tables(full_text)  # [(schema, table, alias), ...]
+
+        # Use table alias if there is one, otherwise the table name
+        alias = [t[2] or t[1] for t in tables]
+
+        return [{'type': 'alias', 'aliases': alias}]
+
     elif token_v in ('d',):  # \d
-        return 'tables', []
+        # Apparently "\d <other>" is parsed by sqlparse as
+        # Identifer('d', Whitespace, '<other>')
+        if len(token.tokens) > 2:
+            other = token.tokens[-1].value
+            identifiers = other.split('.')
+            if len(identifiers) == 1:
+                # "\d table" or "\d schema"
+                return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
+            elif len(identifiers) == 2:
+                # \d schema.table
+                return [{'type': 'table', 'schema': identifiers[0]}]
+        else:
+            return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
     elif token_v.lower() in ('c', 'use'):  # \c
-        return 'databases', []
+        return [{'type': 'database'}]
     elif token_v.endswith(',') or token_v == '=':
         prev_keyword = find_prev_keyword(text_before_cursor)
         if prev_keyword:
-            return suggest_based_on_last_token(prev_keyword, text_before_cursor, full_text)
+            return suggest_based_on_last_token(
+                prev_keyword, text_before_cursor, full_text)
     elif token_v.endswith('.'):
-        current_alias = last_word(token_v[:-1])
-        tables = extract_tables(full_text, include_alias=True)
-        return 'columns', [tables.get(current_alias) or current_alias]
 
-    return 'keywords', []
+        suggestions = []
+
+        identifier = last_word(token_v[:-1], 'all_punctuations')
+
+        # TABLE.<suggestion> or SCHEMA.TABLE.<suggestion>
+        tables = extract_tables(full_text)
+        tables = [t for t in tables if identifies(identifier, *t)]
+        suggestions.append({'type': 'column', 'tables': tables})
+
+        # SCHEMA.<suggestion>
+        suggestions.append({'type': 'table', 'schema': identifier})
+
+        return suggestions
+
+    return [{'type': 'keyword'}]
+
+
+def identifies(id, schema, table, alias):
+    return id == alias or id == table or (
+        schema and (id == schema + '.' + table))
