@@ -38,10 +38,30 @@ def suggest_type(full_text, text_before_cursor):
     else:
         parsed = sqlparse.parse(text_before_cursor)
 
-    # Need to check if `p` is not empty, since an empty string will result in
-    # an empty tuple.
-    p = parsed[0] if parsed else None
-    last_token = p and p.token_prev(len(p.tokens)) or ''
+    if len(parsed) > 1:
+        # Multiple statements being edited -- isolate the current one by
+        # cumulatively summing statement lengths to find the one that bounds the
+        # current position
+        current_pos = len(text_before_cursor)
+        stmt_start, stmt_end = 0, 0
+
+        for statement in parsed:
+            stmt_len = len(statement.to_unicode())
+            stmt_start, stmt_end = stmt_end, stmt_end + stmt_len
+
+            if stmt_end >= current_pos:
+                text_before_cursor = full_text[stmt_start:current_pos]
+                full_text = full_text[stmt_start:]
+                break
+
+    elif parsed:
+        # A single statement
+        statement = parsed[0]
+    else:
+        # The empty string
+        statement = None
+
+    last_token = statement and statement.token_prev(len(statement.tokens)) or ''
 
     return suggest_based_on_last_token(last_token, text_before_cursor, full_text)
 
