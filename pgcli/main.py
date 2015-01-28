@@ -18,7 +18,8 @@ from pygments.lexers.sql import SqlLexer
 from .packages.tabulate import tabulate
 from .packages.expanded import expanded_table
 from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
-        NON_CASE_SENSITIVE_COMMANDS, is_expanded_output, is_timing_enabled)
+        NON_CASE_SENSITIVE_COMMANDS, is_expanded_output)
+import pgcli.packages.pgspecial as pgspecial
 from .pgcompleter import PGCompleter
 from .pgtoolbar import PGToolbar
 from .pgstyle import PGStyle
@@ -59,6 +60,8 @@ class PGCli(object):
         # Load config.
         c = self.config = load_config('~/.pgclirc', default_config)
         self.multi_line = c.getboolean('main', 'multi_line')
+        pgspecial.TIMING_ENABLED = c.getboolean('main', 'timing')
+        self.table_format = c.get('main', 'table_format')
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
@@ -213,7 +216,8 @@ class PGCli(object):
                             if not click.confirm('Do you want to continue?'):
                                 click.secho("Aborted!", err=True, fg='red')
                                 break
-                        output.extend(format_output(cur, headers, status))
+                        output.extend(format_output(cur, headers, status,
+                            self.table_format))
                         end = time()
                         total += end - start
                         mutating = mutating or is_mutating(status)
@@ -234,8 +238,7 @@ class PGCli(object):
                     click.secho(str(e), err=True, fg='red')
                 else:
                     click.echo_via_pager('\n'.join(output))
-
-                    if is_timing_enabled():
+                    if pgspecial.TIMING_ENABLED:
                         print('Command Time:', duration)
                         print('Format Time:', total)
                 finally:
@@ -323,13 +326,13 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
 
     pgcli.run_cli()
 
-def format_output(cur, headers, status):
+def format_output(cur, headers, status, table_format):
     output = []
     if cur:
         if is_expanded_output():
             output.append(expanded_table(cur, headers))
         else:
-            output.append(tabulate(cur, headers, tablefmt='psql'))
+            output.append(tabulate(cur, headers, tablefmt=table_format))
     if status:  # Only print the status if it's not None.
         output.append(status)
     return output

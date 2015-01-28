@@ -17,3 +17,11 @@ log_file = ~/.pgcli.log
 # Default log level. Possible values: "CRITICAL", "ERROR", "WARNING", "INFO"
 # and "DEBUG".
 log_level = INFO
+
+# Timing of sql statments and table rendering. 
+timing = True
+
+# Table format. Possible values: psql, plain, simple, grid, fancy_grid, pipe,
+# orgtbl, rst, mediawiki, html, latex, latex_booktabs.
+# Recommended: psql, fancy_grid and grid.
+table_format = psql

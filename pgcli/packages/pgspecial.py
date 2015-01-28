@@ -11,21 +11,11 @@ TableInfo = namedtuple("TableInfo", ['checks', 'relkind', 'hasindex',
 
 log = logging.getLogger(__name__)
 
-class MockLogging(object):
-    def debug(self, string):
-        print ("***** Query ******")
-        print (string)
-        print ("******************")
-        print ()
-
-#log = MockLogging()
 use_expanded_output = False
 def is_expanded_output():
     return use_expanded_output
 
-timing_enabled = False
-def is_timing_enabled():
-    return timing_enabled
+TIMING_ENABLED = False
 
 def parse_special_command(sql):
     command, _, arg = sql.partition(' ')
@@ -783,10 +773,10 @@ def expanded_output(cur, arg, verbose):
     return [(None, None, message)]
 
 def toggle_timing(cur, arg, verbose):
-    global timing_enabled
-    timing_enabled = not timing_enabled
+    global TIMING_ENABLED
+    TIMING_ENABLED = not TIMING_ENABLED
     message = "Timing is "
-    message += "on." if timing_enabled else "off."
+    message += "on." if TIMING_ENABLED else "off."
     return [(None, None, message)]
 
 CASE_SENSITIVE_COMMANDS = {

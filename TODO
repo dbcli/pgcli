@@ -1,7 +1,6 @@
 # vi: ft=vimwiki
 * [ ] Add coverage.
 * [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
-* [ ] Refactor to sqlcompletion to consume the text from left to right and use a state machine to suggest cols or tables instead of relying on hacks.
 * [ ] Add a few more special commands. (\l pattern, \dp, \ds, \dy, \z etc)
 * [ ] Refactor pgspecial.py to a class. 
 * [ ] Show/hide docs for a statement using a keybinding.
@@ -15,5 +14,5 @@
 * [ ] pgexecute columns(), tables() etc can be just cursors instead of fetchall()
 * [ ] Add unicode tests.
 * [ ] Add colorschemes in config file.
-* [ ] Add \timing in config file.
-* [ ] Add table format to config file.
+* [X] Add \timing in config file.
+* [X] Add table format to config file.
