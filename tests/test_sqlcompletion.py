@@ -183,3 +183,46 @@ def test_on_suggests_tables_right_side():
         'select abc.x, bcd.y from abc join bcd on ',
         'select abc.x, bcd.y from abc join bcd on ')
     assert suggestions == [{'type': 'alias', 'aliases': ['abc', 'bcd']}]
+
+def test_2_statements_2nd_current():
+    suggestions = suggest_type('select * from a; select * from ',
+                               'select * from a; select * from ')
+    assert sorted_dicts(suggestions) == sorted_dicts([
+         {'type': 'table', 'schema': []}, {'type': 'schema'}])
+
+    suggestions = suggest_type('select * from a; select  from b',
+                               'select * from a; select ')
+    assert sorted_dicts(suggestions) == sorted_dicts([
+            {'type': 'column', 'tables': [(None, 'b', None)]},
+            {'type': 'function'}])
+
+    # Should work even if first statement is invalid
+    suggestions = suggest_type('select * from; select * from ',
+                               'select * from; select * from ')
+    assert sorted_dicts(suggestions) == sorted_dicts([
+         {'type': 'table', 'schema': []}, {'type': 'schema'}])
+
+def test_2_statements_1st_current():
+    suggestions = suggest_type('select * from ; select * from b',
+                               'select * from ')
+    assert sorted_dicts(suggestions) == sorted_dicts([
+         {'type': 'table', 'schema': []}, {'type': 'schema'}])
+
+    suggestions = suggest_type('select  from a; select * from b',
+                               'select ')
+    assert sorted_dicts(suggestions) == sorted_dicts([
+            {'type': 'column', 'tables': [(None, 'a', None)]},
+            {'type': 'function'}])
+
+def test_3_statements_2nd_current():
+    suggestions = suggest_type('select * from a; select * from ; select * from c',
+                               'select * from a; select * from ')
+    assert sorted_dicts(suggestions) == sorted_dicts([
+         {'type': 'table', 'schema': []}, {'type': 'schema'}])
+
+    suggestions = suggest_type('select * from a; select  from b; select * from c',
+                               'select * from a; select ')
+    assert sorted_dicts(suggestions) == sorted_dicts([
+            {'type': 'column', 'tables': [(None, 'b', None)]},
+            {'type': 'function'}])
+
