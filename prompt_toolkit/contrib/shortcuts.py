@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit import CommandLineInterface, AbortAction
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.filters import IsDone
+from prompt_toolkit.filters import IsDone, HasFocus
 from prompt_toolkit.history import History, FileHistory
 from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
@@ -88,7 +88,8 @@ def create_default_layout(message='', lexer=None, is_password=False,
             [
                 Float(xcursor=True,
                       ycursor=True,
-                      content=CompletionsMenu(max_height=16))
+                      content=CompletionsMenu(max_height=16,
+                                              extra_filter=HasFocus('default')))
             ]
         ),
         ValidationToolbar(),
