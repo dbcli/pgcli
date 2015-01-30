@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+0.31: 2015-01-30
+----------------
+
+Fixed:
+- Bug in float positioning
+- Show completion menu only for the default_buffer in get_input.
+
+New features:
+- PathCompleter got a get_paths parameter.
+- PathCompleter sorts alphabetically.
+- Added contrib.completers.SystemCompleter
+- Completion got a get_display_meta parameter.
+
+
 0.30: 2015-01-26
 ----------------
 
