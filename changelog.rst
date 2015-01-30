@@ -15,6 +15,8 @@ Bug Fixes:
 * Performance improvements to expanded view display (\x).
 * Cast bytea files to text while displaying. (Thanks: `Daniel Rocco`_)
 * Added a list of reserved words that should be auto-escaped.
+* Auto-completion is now case-insensitive.
+* Fix the broken completion for multiple sql statements. (Thanks: darikg_)
 
 0.13.0
 ======
