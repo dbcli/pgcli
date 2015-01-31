@@ -122,7 +122,7 @@ class PGCompleter(Completer):
     @staticmethod
     def find_matches(text, collection):
         text = last_word(text, include='most_punctuations')
-        for item in collection:
+        for item in sorted(collection):
             if (item.startswith(text) or item.startswith(text.upper()) or
                     item.startswith(text.lower())):
                 yield Completion(item, -len(text))
