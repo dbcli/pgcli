@@ -5,8 +5,10 @@ from __future__ import print_function
 import os
 import traceback
 import logging
-import click
+from time import time
 
+import click
+import sqlparse
 from prompt_toolkit import CommandLineInterface, AbortAction, Exit
 from prompt_toolkit.document import Document
 from prompt_toolkit.layout import Layout
@@ -29,7 +31,6 @@ from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
 
-from time import time
 
 try:
     from urlparse import urlparse
@@ -193,11 +194,12 @@ class PGCli(object):
                 try:
                     logger.debug('sql: %r', document.text)
                     successful = False
-                    start = time()
                     # Initialized to [] because res might never get initialized
                     # if an exception occurs in pgexecute.run(). Which causes
                     # finally clause to fail.
                     res = []
+                    start = time()
+                    # Run the query.
                     res = pgexecute.run(document.text)
                     duration = time() - start
                     successful = True
@@ -222,11 +224,6 @@ class PGCli(object):
                         total += end - start
                         mutating = mutating or is_mutating(status)
 
-                        if need_search_path_refresh(document.text, status):
-                            logger.debug('Refreshing search path')
-                            completer.set_search_path(pgexecute.search_path())
-                            logger.debug('Search path: %r', completer.search_path)
-
                 except KeyboardInterrupt:
                     # Restart connection to the database
                     pgexecute.connect()
@@ -250,6 +247,12 @@ class PGCli(object):
                 if need_completion_refresh(document.text):
                     prompt = '%s> ' % pgexecute.dbname
                     self.refresh_completions()
+
+                # Refresh search_path to set default schema.
+                if need_search_path_refresh(document.text):
+                    logger.debug('Refreshing search path')
+                    completer.set_search_path(pgexecute.search_path())
+                    logger.debug('Search path: %r', completer.search_path)
 
                 query = Query(document.text, successful, mutating)
                 self.query_history.append(query)
@@ -337,28 +340,21 @@ def format_output(cur, headers, status, table_format):
         output.append(status)
     return output
 
-def need_completion_refresh(sql):
-    try:
-        first_token = sql.split()[0]
-        return first_token.lower() in ('alter', 'create', 'use', '\c', 'drop')
-    except Exception:
-        return False
-
-def need_search_path_refresh(sql, status):
-    # note that sql may be a multi-command query, but status belongs to an
-    # individual query, since pgexecute handles splitting up multi-commands
-    try:
-        status = status.split()[0]
-        if status.lower() == 'set':
-            # Since sql could be a multi-line query, it's hard to robustly
-            # pick out the variable name that's been set. Err on the side of
-            # false positives here, since the worst case is we refresh the
-            # search path when it's not necessary
-            return 'search_path' in sql.lower()
-        else:
+def need_completion_refresh(queries):
+    """Determines if the completion needs a refresh by checking if the sql
+    statement is an alter, create, drop or change db."""
+    for query in sqlparse.split(queries):
+        try:
+            first_token = query.split()[0]
+            return first_token.lower() in ('alter', 'create', 'use', '\c',
+                    'drop')
+        except Exception:
             return False
-    except Exception:
-        return False
+
+def need_search_path_refresh(sql):
+    """Determines if the search_path should be refreshed by checking if the
+    sql has 'set search_path'."""
+    return 'set search_path' in sql.lower()
 
 def is_mutating(status):
     """Determines if the statement is mutating based on the status."""

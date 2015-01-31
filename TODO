@@ -7,12 +7,6 @@
 * [ ] Check how to add the name of the table before printing the table.
 * [ ] Add a new trigger for M-/ that does naive completion.
 * [ ] New Feature List - Write the current version to config file. At launch if the version has changed, display the changelog between the two versions.
-* [ ] need_search_path_refresh doesn't need to split the document.text, cur.query returns the current sql. 
-* [ ] See if the need_search_path_refresh can be done outside the loop.
 * [ ] Add a test for 'select * from custom.abc where custom.abc.' should suggest columns from abc.
-* [ ] Search for Dataframe in the source and replace them.
 * [ ] pgexecute columns(), tables() etc can be just cursors instead of fetchall()
-* [ ] Add unicode tests.
 * [ ] Add colorschemes in config file.
-* [X] Add \timing in config file.
-* [X] Add table format to config file.
