@@ -18,18 +18,15 @@ Let's get started!
 
 #. Read User Input
 
-   Create an object of type ``prompt_toolkit.CommandLineInterface`` and start
-   accepting input using the ``read_input()`` method. This is similar to the
-   python's ``raw_input()`` method.
+   Start accepting input using the ``get_input()`` method.
 
    .. code:: python
 
-       from prompt_toolkit import CommandLineInterface
+       from prompt_toolkit.contrib.shortcuts import get_input
 
        def main():
-           cli = CommandLineInterface()
-           document = cli.read_input()
-           print('You entered:', document.text)
+           text = get_input("> ")
+           print('You entered:', text)
 
        if __name__ == '__main__':
            main()
@@ -38,23 +35,21 @@ Let's get started!
 
 #. Loop The REPL
 
-   The ``read_input`` method takes a kwarg called ``on_exit`` that dictates
-   what happens when ``^D`` is pressed. ``AbortAction`` is a class that provides
-   various opitons and we've chosen to throw an exception called ``Exit``. This
-   exception is caught in the except clause to quit the program.
+   Now we call the ``get_input`` method in a loop while keeeping the line
+   history in our ``History`` object.
 
    .. code:: python
 
-       from prompt_toolkit import CommandLineInterface, AbortAction, Exit
+       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.history import History
 
        def main():
-           cli = CommandLineInterface()
-           try:
-               while True:
-                   document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-                   print('You entered:', document.text)
-           except Exit:
-               print('GoodBye!')
+           history = History()
+
+           while True:
+               text = get_input("> ", history=history)
+               print('You entered:', text)
+           print('GoodBye!')
 
        if __name__ == '__main__':
            main()
@@ -66,27 +61,23 @@ Let's get started!
    So far we've been doing really basic stuff, let's step it up a notch by
    adding syntax highlighting to the user input. We know that users will be
    entering sql statements, so let's leverage the Pygments_ library for
-   coloring the input.  The ``prompt_toolkit.layout`` class is responsible for
-   how the REPL is displayed. This allows us to customize the prompt and choose
-   a lexer for syntax.  We're going to use the ``SqlLexer`` from the Pygments_
-   library for highlighting.
+   coloring the input.  The ``lexer`` param allow you to set the syntax lexer.
+   We're going to use the ``SqlLexer`` from the Pygments_ library for
+   highlighting.
 
    .. code:: python
 
-       from prompt_toolkit import CommandLineInterface, AbortAction, Exit
-       from prompt_toolkit.layout import Layout
-       from prompt_toolkit.layout.prompt import DefaultPrompt
+       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.history import History
        from pygments.lexers import SqlLexer
 
        def main():
-           layout = Layout(before_input=DefaultPrompt('> '), lexer=SqlLexer)
-           cli = CommandLineInterface(layout=layout)
-           try:
-               while True:
-                   document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-                   print('You entered:', document.text)
-           except Exit:
-               print('GoodBye!')
+           history = History()
+
+           while True:
+               text = get_input('> ', lexer=SqlLexer, history=history)
+               print('You entered:', text)
+           print('GoodBye!')
 
        if __name__ == '__main__':
            main()
@@ -98,47 +89,30 @@ Let's get started!
    OMG! Syntax highlighting is awesome! You know what's awesomer!?
    Auto-completion! Let's do that.
 
-   Create a class called ``SqlCompleter`` that is derived from
-   ``prompt_toolkit.Completer``. Define a set of ``keywords`` for
-   auto-completion. Override the `get_completions`` method to
-   populate the completion menu with possible candidates from the list
-   of ``keywords``.
+   Create your ``sql_completer`` instance from the ``WordCompleter`` class
+   defining a set of ``keywords`` for auto-completion.
 
-   This ``SqlCompleter`` class will be passed into the ``prompt_toolkit.Buffer`` class
-   which controls the cusor position and completion of a line.
+   This ``sql_completer`` instance will be passed into the ``get_input``
+   function.
 
    .. code:: python
 
-       from prompt_toolkit import CommandLineInterface, AbortAction, Exit
-       from prompt_toolkit.layout import Layout
-       from prompt_toolkit.buffer import Buffer
-       from prompt_toolkit.layout.prompt import DefaultPrompt
-       from prompt_toolkit.layout.menus import CompletionsMenu
-       from prompt_toolkit.completion import Completion, Completer
+       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.history import History
+       from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
 
-       class SqlCompleter(Completer):
-           keywords = ['create', 'select', 'insert', 'drop',
-                       'delete', 'from', 'where', 'table']
+       sql_completer = WordCompleter(['create', 'select', 'insert', 'drop',
+                                      'delete', 'from', 'where', 'table'], ignore_case=True)
 
-           def get_completions(self, document, complete_event):
-               word_before_cursor = document.get_word_before_cursor()
-
-               for keyword in self.keywords:
-                   if keyword.startswith(word_before_cursor):
-                       yield Completion(keyword, -len(word_before_cursor))
 
        def main():
-           layout = Layout(before_input=DefaultPrompt('> '),
-                           lexer=SqlLexer, menus=[CompletionsMenu()])
-           buffer = Buffer(completer=SqlCompleter())
-           cli = CommandLineInterface(layout=layout, line=line)
-           try:
-               while True:
-                   document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-                   print('You entered:', document.text)
-           except Exit:
-               print('GoodBye!')
+           history = History()
+
+           while True:
+               text = get_input('> ', lexer=SqlLexer, completer=sql_completer, history=history)
+               print('You entered:', text)
+           print('GoodBye!')
 
        if __name__ == '__main__':
            main()
@@ -153,31 +127,20 @@ Let's get started!
    The completion menu is hard to see, so let's add some customization to the
    menu colors. Create a class named ``DocumentStyle`` and sub-class it from
    ``pygments.style``. Customize the colors for the completion menu and pass in
-   the style as a parameter to the ``CommandLineInterface`` constructor.
+   the style as a parameter to the ``get_input`` function.
 
    .. code:: python
 
-       from prompt_toolkit import CommandLineInterface, AbortAction, Exit
-       from prompt_toolkit.layout import Layout
-       from prompt_toolkit.buffer import Buffer
-       from prompt_toolkit.layout.prompt import DefaultPrompt
-       from prompt_toolkit.layout.menus import CompletionsMenu
-       from prompt_toolkit.completion import Completion, Completer
+       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.history import History
+       from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
        from pygments.style import Style
        from pygments.token import Token
        from pygments.styles.default import DefaultStyle
 
-       class SqlCompleter(Completer):
-           keywords = ['create', 'select', 'insert', 'drop',
-                       'delete', 'from', 'where', 'table']
-
-           def get_completions(self, document, complete_event):
-               word_before_cursor = document.get_word_before_cursor()
-
-               for keyword in self.keywords:
-                   if keyword.startswith(word_before_cursor):
-                       yield Completion(keyword, -len(word_before_cursor))
+       sql_completer = WordCompleter(['create', 'select', 'insert', 'drop',
+                                      'delete', 'from', 'where', 'table'], ignore_case=True)
 
        class DocumentStyle(Style):
            styles = {
@@ -189,16 +152,12 @@ Let's get started!
            styles.update(DefaultStyle.styles)
 
        def main():
-           layout = Layout(before_input=DefaultPrompt('> '),
-                           lexer=SqlLexer, menus=[CompletionsMenu()])
-           buffer = Buffer(completer=SqlCompleter())
-           cli = CommandLineInterface(style=DocumentStyle, layout=layout, buffer=buffer)
-           try:
-               while True:
-                   document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-                   print('You entered:', document.text)
-           except Exit:
-               print('GoodBye!')
+           history = History()
+
+           while True:
+               text = get_input('> ', lexer=SqlLexer, completer=sql_completer, style=DocumentStyle, history=history)
+               print('You entered:', text)
+           print('GoodBye!')
 
        if __name__ == '__main__':
            main()
@@ -221,27 +180,16 @@ Let's get started!
        import sys
        import sqlite3
 
-       from prompt_toolkit import CommandLineInterface, AbortAction, Exit
-       from prompt_toolkit.layout import Layout
-       from prompt_toolkit.buffer import Buffer
-       from prompt_toolkit.layout.prompt import DefaultPrompt
-       from prompt_toolkit.layout.menus import CompletionsMenu
-       from prompt_toolkit.completion import Completion, Completer
+       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.history import History
+       from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
        from pygments.style import Style
        from pygments.token import Token
        from pygments.styles.default import DefaultStyle
 
-       class SqlCompleter(Completer):
-           keywords = ['create', 'select', 'insert', 'drop',
-                       'delete', 'from', 'where', 'table']
-
-           def get_completions(self, document, complete_event):
-               word_before_cursor = document.get_word_before_cursor()
-
-               for keyword in self.keywords:
-                   if keyword.startswith(word_before_cursor):
-                       yield Completion(keyword, -len(word_before_cursor))
+       sql_completer = WordCompleter(['create', 'select', 'insert', 'drop',
+                                      'delete', 'from', 'where', 'table'], ignore_case=True)
 
        class DocumentStyle(Style):
            styles = {
@@ -253,20 +201,20 @@ Let's get started!
            styles.update(DefaultStyle.styles)
 
        def main(database):
+           history = History()
            connection = sqlite3.connect(database)
-           layout = Layout(before_input=DefaultPrompt('> '),
-                           lexer=SqlLexer, menus=[CompletionsMenu()])
-           buffer = Buffer(completer=SqlCompleter())
-           cli = CommandLineInterface(style=DocumentStyle, layout=layout, buffer=buffer)
-           try:
-               while True:
-                   document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
-                   with connection:
-                       messages = connection.execute(document.text)
-                       for message in messages:
-                           print(message)
-           except Exit:
-               print('GoodBye!')
+
+           while True:
+               try:
+                   text = get_input('> ', lexer=SqlLexer, completer=sql_completer, style=DocumentStyle, history=history,
+                                    on_abort=AbortAction.RETRY)
+               except EOFError:
+                   break  # Control-D pressed.
+               with connection:
+                   messages = connection.execute(text)
+                   for message in messages:
+                       print(message)
+           print('GoodBye!')
 
        if __name__ == '__main__':
            if len(sys.argv) < 2:
