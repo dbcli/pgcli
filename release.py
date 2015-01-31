@@ -42,6 +42,12 @@ def create_source_tarball():
     print(' '.join(cmd))
     subprocess.check_output(cmd)
 
+def push_tags_to_github():
+    cmd = ['git', 'push', '--tags', 'origin']
+    print(' '.join(cmd))
+    subprocess.check_output(cmd)
+
+
 if __name__ == '__main__':
     if DEBUG:
         subprocess.check_output = lambda x: x
@@ -55,3 +61,4 @@ if __name__ == '__main__':
     create_git_tag('v%s' % ver)
     register_with_pypi()
     create_source_tarball()
+    push_tags_to_github()
