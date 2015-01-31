@@ -1,7 +1,9 @@
 # coding=UTF-8
 
+import pytest
+import psycopg2
 from textwrap import dedent
-from utils import *
+from utils import run, dbtest
 
 @dbtest
 def test_conn(executor):
@@ -69,7 +71,7 @@ def test_unicode_support_in_output(executor, expanded):
 @dbtest
 def test_multiple_queries_same_line(executor):
     result = run(executor, "select 'foo'; select 'bar'")
-    assert len(result) == 4 # 2 * (output+status)
+    assert len(result) == 4  # 2 * (output+status)
     assert "foo" in result[0]
     assert "bar" in result[2]
 
@@ -91,3 +93,7 @@ def test_bytea_field_support_in_output(executor):
         "insert into binarydata (c) values (decode('DEADBEEF', 'hex'))")
 
     assert u'\\xdeadbeef' in run(executor, "select * from binarydata", join=True)
+
+@dbtest
+def test_unicode_support_in_unknown_type(executor):
+    assert u'日本語' in run(executor, "SELECT '日本語' AS japanese;", join=True)
