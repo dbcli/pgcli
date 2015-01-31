@@ -8,6 +8,11 @@ Features:
 * Confirm before printing large tables. 
 * Auto-completion for Postgres schemas. (Thanks: darikg_)
 * Better unicode handling for datatypes, dbname and roles. 
+* Add \timing command to time the sql commands. 
+  This can be set via config file (~/.pgclirc) using `timing = True`.
+* Add different table styles for displaying output. 
+  This can be changed via config file (~/.pgclirc) using `table_format = fancy_grid`.
+* Add confirmation before printing results that have more than 1000 rows. 
 
 Bug Fixes:
 ----------
