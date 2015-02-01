@@ -50,8 +50,15 @@ def list_schemas(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(cur, headers, cur.statusmessage)]
 
-def list_tables(cur, pattern, verbose):
+def list_tables_or_views(cur, pattern, verbose, relkinds):
+    """
+        Returns (rows, header, status)
 
+        This method is used by list_tables and list_views.
+
+        relkinds is a list of strings to filter pg_class.relkind
+
+    """
     schema_pattern, table_pattern = sql_name_pattern(pattern)
 
     verbose_columns = ('''
@@ -72,12 +79,13 @@ def list_tables(cur, pattern, verbose):
             FROM    pg_catalog.pg_class c
                     LEFT JOIN pg_catalog.pg_namespace n
                       ON n.oid = c.relnamespace
-            WHERE   c.relkind IN ('r','')
+            WHERE   c.relkind = ANY(%s)
                     AND n.nspname <> 'pg_catalog'
                     AND n.nspname <> 'information_schema'
                     AND n.nspname !~ '^pg_toast' '''
 
-    params = []
+    params = [relkinds]
+
     if schema_pattern:
         sql += ' AND n.nspname ~ %s'
         params.append(schema_pattern)
@@ -94,6 +102,14 @@ def list_tables(cur, pattern, verbose):
     if cur.description:
         headers = [x[0] for x in cur.description]
         return [(cur, headers, cur.statusmessage)]
+
+
+def list_tables(cur, pattern, verbose):
+    return list_tables_or_views(cur, pattern, verbose, ['r', ''])
+
+
+def list_views(cur, pattern, verbose):
+    return list_tables_or_views(cur, pattern, verbose, ['v', 's', ''])
 
 
 def describe_table_details(cur, pattern, verbose):
@@ -847,17 +863,7 @@ CASE_SENSITIVE_COMMANDS = {
             n.nspname <> 'information_schema' AND n.nspname !~ '^pg_toast'
             AND pg_catalog.pg_table_is_visible(c.oid)
             ORDER BY 1,2;''', ['\di', 'list indexes.']),
-            '\dv': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
-            c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
-            'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'
-            WHEN 's' THEN 'special' WHEN 'f' THEN 'foreign table' END as
-            "Type", pg_catalog.pg_get_userbyid(c.relowner) as "Owner" FROM
-            pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON
-            n.oid = c.relnamespace WHERE c.relkind IN ('v','') AND
-            n.nspname <> 'pg_catalog' AND n.nspname <> 'information_schema'
-            AND n.nspname !~ '^pg_toast' AND
-            pg_catalog.pg_table_is_visible(c.oid) ORDER BY 1,2;''',
-            ['\dv', 'list views.']),
+            '\dv': (list_views, ['\dv', 'list views.']),
             }
 
 NON_CASE_SENSITIVE_COMMANDS = {
