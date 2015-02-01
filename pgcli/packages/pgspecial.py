@@ -50,6 +50,52 @@ def list_schemas(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(cur, headers, cur.statusmessage)]
 
+def list_tables(cur, pattern, verbose):
+
+    schema_pattern, table_pattern = sql_name_pattern(pattern)
+
+    verbose_columns = ('''
+        ,pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as "Size",
+         pg_catalog.obj_description(c.oid, 'pg_class') as "Description" '''
+            if verbose else '')
+
+    sql = '''SELECT n.nspname as "Schema",
+                    c.relname as "Name",
+                    CASE c.relkind
+                      WHEN 'r' THEN 'table' WHEN 'v' THEN 'view'
+                      WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index'
+                      WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special'
+                      WHEN 'f' THEN 'foreign table' END
+                    as "Type",
+                    pg_catalog.pg_get_userbyid(c.relowner) as "Owner"
+          ''' + verbose_columns + '''
+            FROM    pg_catalog.pg_class c
+                    LEFT JOIN pg_catalog.pg_namespace n
+                      ON n.oid = c.relnamespace
+            WHERE   c.relkind IN ('r','')
+                    AND n.nspname <> 'pg_catalog'
+                    AND n.nspname <> 'information_schema'
+                    AND n.nspname !~ '^pg_toast' '''
+
+    params = []
+    if schema_pattern:
+        sql += ' AND n.nspname ~ %s'
+        params.append(schema_pattern)
+
+    if table_pattern:
+        sql += ' AND c.relname ~ %s'
+        params.append(table_pattern)
+
+    sql = cur.mogrify(sql + ' ORDER BY 1, 2', params)
+
+    log.debug(sql)
+    cur.execute(sql)
+
+    if cur.description:
+        headers = [x[0] for x in cur.description]
+        return [(cur, headers, cur.statusmessage)]
+
+
 def describe_table_details(cur, pattern, verbose):
     """
     Returns (rows, headers, status)
@@ -787,16 +833,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\dn': (list_schemas, ['\dn[+] [pattern]', 'list schemas']),
             '\\x': (expanded_output, ['\\x', 'Toggle expanded output.']),
             '\\timing': (toggle_timing, ['\\timing', 'Toggle timing of commands.']),
-            '\dt': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
-            c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
-            'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'
-            WHEN 's' THEN 'special' WHEN 'f' THEN 'foreign table' END as
-            "Type", pg_catalog.pg_get_userbyid(c.relowner) as "Owner" FROM
-            pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid
-            = c.relnamespace WHERE c.relkind IN ('r','') AND n.nspname <>
-            'pg_catalog' AND n.nspname <> 'information_schema' AND n.nspname !~
-            '^pg_toast' AND pg_catalog.pg_table_is_visible(c.oid) ORDER BY
-            1,2;''', ['\dt', 'list tables.']),
+            '\dt': (list_tables, ['\dt', 'list tables.']),
             '\di': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
             c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
             'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'
