@@ -1,3 +1,11 @@
+Current
+=======
+
+Bug Fixes:
+----------
+* Treat boolean values as strings instead of ints.
+
+
 0.14.0
 ======
 

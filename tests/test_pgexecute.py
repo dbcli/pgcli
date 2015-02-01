@@ -18,6 +18,18 @@ def test_conn(executor):
         SELECT 1""")
 
 @dbtest
+def test_bools_are_treated_as_strings(executor):
+    run(executor, '''create table test(a boolean)''')
+    run(executor, '''insert into test values(True)''')
+    assert run(executor, '''select * from test''', join=True) == dedent("""\
+        +------+
+        | a    |
+        |------|
+        | True |
+        +------+
+        SELECT 1""")
+
+@dbtest
 def test_schemata_table_and_columns_query(executor):
     run(executor, "create table a(x text, y text)")
     run(executor, "create table b(z text)")
