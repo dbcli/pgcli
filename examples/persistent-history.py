@@ -5,10 +5,12 @@ strings in a file. When you run this script for a second time, pressing
 arrow-up will go back in history.
 """
 from prompt_toolkit.contrib.shortcuts import get_input
+from prompt_toolkit.history import FileHistory
 
 
 def main():
-    text = get_input('Say something: ', history_filename='.example-history-file')
+    our_history = FileHistory('.example-history-file')
+    text = get_input('Say something: ', history=our_history)
     print('You said: %s' % text)
 
 

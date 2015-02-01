@@ -107,13 +107,11 @@ def create_cli(message='',
                validator=None,
                completer=None,
                style=None,
-               history_filename=None,
+               history=None,
                get_bottom_toolbar_tokens=None):
 
     # Create history instance.
-    if history_filename:
-        history = FileHistory(history_filename)
-    else:
+    if history is None:
         history = History()
 
     # Load all key bindings.
@@ -147,7 +145,7 @@ def get_input(message='',
               style=None,
               enable_system_prompt=False,
               enable_open_in_editor=False,
-              history_filename=None,
+              history=None,
               get_bottom_toolbar_tokens=None):
     """
     Get input from the user and return it. This wrapper builds the most obvious
@@ -155,6 +153,9 @@ def get_input(message='',
     `raw_input`. (or GNU readline.)
 
     This returns `None` when Ctrl-D was pressed.
+
+    If you want to keep your history across several ``get_input`` calls, you
+    have to create a :class:`History` instance and pass it every time.
 
     :param message: Text to be shown before the prompt.
     :param mulitiline: Allow multiline input. Pressing enter will insert a
@@ -168,7 +169,7 @@ def get_input(message='',
     :param enable_system_prompt: Pressing Meta+'!' will show a system prompt.
     :param enable_open_in_editor: Pressing 'v' in Vi mode or C-X C-E in emacs
                                   mode will open an external editor.
-    :param history_filename: If not `None`, keep a persistent history in this file.
+    :param history: `History` instance. (e.g. `FileHistory`)
     :param get_bottom_toolbar_tokens: Optional callable which takes a
         :class:`CommandLineInterface` and returns a list of tokens for the
         bottom toolbar.
@@ -184,7 +185,7 @@ def get_input(message='',
         validator=validator,
         completer=completer,
         style=style,
-        history_filename=history_filename,
+        history=history,
         get_bottom_toolbar_tokens=get_bottom_toolbar_tokens)
 
     # Read input and return it.
