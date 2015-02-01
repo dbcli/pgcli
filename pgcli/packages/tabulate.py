@@ -329,6 +329,8 @@ def _type(string, has_invisible=True):
 
     if string is None:
         return _none_type
+    if isinstance(string, bool):
+        return _text_type
     elif hasattr(string, "isoformat"):  # datetime.datetime, date, and time
         return _text_type
     elif _isint(string):
