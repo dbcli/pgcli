@@ -61,10 +61,12 @@ def list_tables_or_views(cur, pattern, verbose, relkinds):
     """
     schema_pattern, table_pattern = sql_name_pattern(pattern)
 
-    verbose_columns = ('''
-        ,pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as "Size",
-         pg_catalog.obj_description(c.oid, 'pg_class') as "Description" '''
-            if verbose else '')
+    if verbose:
+        verbose_columns = '''
+            ,pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as "Size",
+            pg_catalog.obj_description(c.oid, 'pg_class') as "Description" '''
+    else:
+        verbose_columns = ''
 
     sql = '''SELECT n.nspname as "Schema",
                     c.relname as "Name",
