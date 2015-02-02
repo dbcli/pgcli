@@ -855,9 +855,9 @@ CASE_SENSITIVE_COMMANDS = {
             '\dn': (list_schemas, ['\dn[+] [pattern]', 'list schemas']),
             '\\x': (expanded_output, ['\\x', 'Toggle expanded output.']),
             '\\timing': (toggle_timing, ['\\timing', 'Toggle timing of commands.']),
-            '\dt': (list_tables, ['\dt', 'list tables.']),
-            '\di': (list_indexes, ['\di', 'list indexes.']),
-            '\dv': (list_views, ['\dv', 'list views.']),
+            '\\dt': (list_tables, ['\\dt[+] [pattern]', 'list tables.']),
+            '\\di': (list_indexes, ['\\di[+] [pattern]', 'list indexes.']),
+            '\\dv': (list_views, ['\\dv[+] [pattern]', 'list views.']),
             }
 
 NON_CASE_SENSITIVE_COMMANDS = {
