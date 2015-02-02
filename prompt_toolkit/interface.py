@@ -37,8 +37,6 @@ else:
 
 __all__ = (
     'AbortAction',
-    'Exit',
-    'Abort',
     'CommandLineInterface',
 )
 
@@ -51,14 +49,6 @@ class AbortAction:
     RETRY = 'retry'
     RAISE_EXCEPTION = 'raise-exception'
     RETURN_NONE = 'return-none'
-
-
-class Exit(Exception):
-    pass
-
-
-class Abort(Exception):
-    pass
 
 
 class CommandLineInterface(object):
@@ -271,7 +261,7 @@ class CommandLineInterface(object):
             self._redraw()
         self.call_from_executor(do_in_event_loop)
 
-    def read_input(self, on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
+    def read_input(self, on_abort=AbortAction.RAISE_EXCEPTION, on_exit=AbortAction.RAISE_EXCEPTION):
         """
         Read input string from command line.
 
@@ -364,7 +354,7 @@ class CommandLineInterface(object):
                                 self.current_buffer.reset()
 
                             if on_exit == AbortAction.RAISE_EXCEPTION:
-                                raise Exit()
+                                raise EOFError()
                             elif on_exit == AbortAction.RETURN_NONE:
                                 raise StopIteration(None)
                             elif on_exit == AbortAction.RETRY:
@@ -378,7 +368,7 @@ class CommandLineInterface(object):
                                 self.current_buffer.reset()
 
                             if on_abort == AbortAction.RAISE_EXCEPTION:
-                                raise Abort()
+                                raise KeyboardInterrupt()
                             elif on_abort == AbortAction.RETURN_NONE:
                                 raise StopIteration(None)
                             elif on_abort == AbortAction.RETRY:

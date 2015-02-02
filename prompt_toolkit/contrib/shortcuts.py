@@ -135,7 +135,8 @@ def create_cli(message='',
 
 
 def get_input(message='',
-              raise_exception_on_abort=False,
+              on_abort=AbortAction.RAISE_EXCEPTION,
+              on_exit=AbortAction.RAISE_EXCEPTION,
               multiline=False,
               is_password=False,
               vi_mode=False,
@@ -189,8 +190,7 @@ def get_input(message='',
         get_bottom_toolbar_tokens=get_bottom_toolbar_tokens)
 
     # Read input and return it.
-    on_abort = AbortAction.RAISE_EXCEPTION if raise_exception_on_abort else AbortAction.RETURN_NONE
-    document = cli.read_input(on_abort=on_abort, on_exit=AbortAction.IGNORE)
+    document = cli.read_input(on_abort=on_abort, on_exit=on_exit)
 
     if document:
         return document.text
