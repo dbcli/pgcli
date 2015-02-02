@@ -50,11 +50,11 @@ def list_schemas(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(cur, headers, cur.statusmessage)]
 
-def list_tables_or_views(cur, pattern, verbose, relkinds):
+def list_objects(cur, pattern, verbose, relkinds):
     """
         Returns (rows, header, status)
 
-        This method is used by list_tables and list_views.
+        This method is used by list_tables, list_views, and list_indexes
 
         relkinds is a list of strings to filter pg_class.relkind
 
@@ -107,11 +107,15 @@ def list_tables_or_views(cur, pattern, verbose, relkinds):
 
 
 def list_tables(cur, pattern, verbose):
-    return list_tables_or_views(cur, pattern, verbose, ['r', ''])
+    return list_objects(cur, pattern, verbose, ['r', ''])
 
 
 def list_views(cur, pattern, verbose):
-    return list_tables_or_views(cur, pattern, verbose, ['v', 's', ''])
+    return list_objects(cur, pattern, verbose, ['v', 's', ''])
+
+
+def list_indexes(cur, pattern, verbose):
+    return list_objects(cur, pattern, verbose, ['i', 's', ''])
 
 
 def describe_table_details(cur, pattern, verbose):
@@ -852,19 +856,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\\x': (expanded_output, ['\\x', 'Toggle expanded output.']),
             '\\timing': (toggle_timing, ['\\timing', 'Toggle timing of commands.']),
             '\dt': (list_tables, ['\dt', 'list tables.']),
-            '\di': ('''SELECT n.nspname as "Schema", c.relname as "Name", CASE
-            c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN
-            'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence'
-            WHEN 's' THEN 'special' WHEN 'f' THEN 'foreign table' END as
-            "Type", pg_catalog.pg_get_userbyid(c.relowner) as "Owner",
-            c2.relname as "Table" FROM pg_catalog.pg_class c LEFT JOIN
-            pg_catalog.pg_namespace n ON n.oid = c.relnamespace LEFT JOIN
-            pg_catalog.pg_index i ON i.indexrelid = c.oid LEFT JOIN
-            pg_catalog.pg_class c2 ON i.indrelid = c2.oid WHERE c.relkind
-            IN ('i','') AND n.nspname <> 'pg_catalog' AND
-            n.nspname <> 'information_schema' AND n.nspname !~ '^pg_toast'
-            AND pg_catalog.pg_table_is_visible(c.oid)
-            ORDER BY 1,2;''', ['\di', 'list indexes.']),
+            '\di': (list_indexes, ['\di', 'list indexes.']),
             '\dv': (list_views, ['\dv', 'list views.']),
             }
 
