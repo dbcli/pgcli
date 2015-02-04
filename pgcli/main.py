@@ -24,7 +24,7 @@ from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
 import pgcli.packages.pgspecial as pgspecial
 from .pgcompleter import PGCompleter
 from .pgtoolbar import PGToolbar
-from .pgstyle import PGStyle
+from .pgstyle import style_factory
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
 from .config import write_default_config, load_config
@@ -63,6 +63,7 @@ class PGCli(object):
         self.multi_line = c.getboolean('main', 'multi_line')
         pgspecial.TIMING_ENABLED = c.getboolean('main', 'timing')
         self.table_format = c.get('main', 'table_format')
+        self.syntax_style = c.get('main', 'syntax_style')
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
@@ -171,7 +172,8 @@ class PGCli(object):
 
         buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
                 history=FileHistory(os.path.expanduser('~/.pgcli-history')))
-        cli = CommandLineInterface(style=PGStyle, layout=layout, buffer=buf,
+        cli = CommandLineInterface(style=style_factory(self.syntax_style),
+                layout=layout, buffer=buf,
                 key_bindings_registry=pgcli_bindings())
 
         try:
