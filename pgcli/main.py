@@ -220,8 +220,7 @@ class PGCli(object):
                             if not click.confirm('Do you want to continue?'):
                                 click.secho("Aborted!", err=True, fg='red')
                                 break
-                        output.extend(format_output(cur, map(utf8tounicode,
-                            headers), status, self.table_format))
+                        output.extend(format_output(cur, headers, status, self.table_format))
                         end = time()
                         total += end - start
                         mutating = mutating or is_mutating(status)
@@ -334,6 +333,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
 def format_output(cur, headers, status, table_format):
     output = []
     if cur:
+        headers = map(utf8tounicode, headers)
         if is_expanded_output():
             output.append(expanded_table(cur, headers))
         else:
