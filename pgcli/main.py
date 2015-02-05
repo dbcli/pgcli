@@ -333,7 +333,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
 def format_output(cur, headers, status, table_format):
     output = []
     if cur:
-        headers = map(utf8tounicode, headers)
+        headers = [utf8tounicode(x) for x in headers]
         if is_expanded_output():
             output.append(expanded_table(cur, headers))
         else:
