@@ -1,9 +1,15 @@
 from pygments.token import Token
 from pygments.style import Style
+from pygments.util import ClassNotFound
 import pygments.styles
 
 
 def style_factory(name):
+    try:
+        style = pygments.styles.get_style_by_name(name)
+    except ClassNotFound:
+        style = pygments.styles.get_style_by_name('native')
+
     class PGStyle(Style):
         styles = {
                 Token.Menu.Completions.Completion.Current: 'bg:#00aaaa #000000',
@@ -18,7 +24,6 @@ def style_factory(name):
                 Token.Toolbar.Status.Off: 'bg:#222222 #888888',
                 Token.Toolbar.Status.On: 'bg:#222222 #ffffff',
                 }
-        style = pygments.styles.get_style_by_name(name)
         styles.update(style.styles)
 
     return PGStyle
