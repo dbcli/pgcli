@@ -220,8 +220,8 @@ class PGCli(object):
                             if not click.confirm('Do you want to continue?'):
                                 click.secho("Aborted!", err=True, fg='red')
                                 break
-                        output.extend(format_output(cur, headers, status,
-                            self.table_format))
+                        output.extend(format_output(cur, map(utf8tounicode,
+                            headers), status, self.table_format))
                         end = time()
                         total += end - start
                         mutating = mutating or is_mutating(status)
