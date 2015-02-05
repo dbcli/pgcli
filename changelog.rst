@@ -10,6 +10,7 @@ Bug Fixes:
 ----------
 * Treat boolean values as strings instead of ints.
 * Make \di, \dv and \dt to be schema aware. (Thanks: darikg_)
+* Make column name display unicode compatible. 
 
 0.14.0
 ======
