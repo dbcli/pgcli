@@ -85,7 +85,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         if p.token_first().value.lower() == 'select':
             # If the lparen is preceeded by a space chances are we're about to
             # do a sub-select.
-            if last_word(text_before_cursor, 'all_punctuations').startswith('('):
+            if last_word(text_before_cursor,
+                    'all_punctuations').startswith('('):
                 return [{'type': 'keyword'}]
 
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
@@ -95,7 +96,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
     elif token_v.lower() in ('select', 'where', 'having'):
         return [{'type': 'column', 'tables': extract_tables(full_text)},
                 {'type': 'function'}]
-    elif token_v.lower() in ('from', 'update', 'into', 'describe', 'join', 'table'):
+    elif token_v.lower() in ('copy', 'from', 'update', 'into', 'describe',
+            'join', 'table'):
         return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
     elif token_v.lower() == 'on':
         tables = extract_tables(full_text)  # [(schema, table, alias), ...]

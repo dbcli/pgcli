@@ -1,11 +1,15 @@
 Current
 =======
 
+Features:
+---------
+* Add syntax color styles to config.
+* Add auto-completion for COPY statements.
+
 Bug Fixes:
 ----------
 * Treat boolean values as strings instead of ints.
 * Make \di, \dv and \dt to be schema aware. (Thanks: darikg_)
-
 
 0.14.0
 ======
