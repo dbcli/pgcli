@@ -892,8 +892,8 @@ def execute(cur, sql):
             return [(None, None, cur.statusmessage)]
 
 if __name__ == '__main__':
-    import psycopg2
-    con = psycopg2.connect(database='misago_testforum')
+    import psycopg2cffi
+    con = psycopg2cffi.connect(database='misago_testforum')
     cur = con.cursor()
     table = sys.argv[1]
     for rows, headers, status in describe_table_details(cur, table, False):

@@ -1,7 +1,7 @@
 import logging
-import psycopg2
-import psycopg2.extras
-import psycopg2.extensions as ext
+import psycopg2cffi
+import psycopg2cffi.extras
+import psycopg2cffi.extensions as ext
 import sqlparse
 from .packages import pgspecial
 from .encodingutils import unicode2utf8
@@ -10,19 +10,19 @@ _logger = logging.getLogger(__name__)
 
 # Cast all database input to unicode automatically.
 # See http://initd.org/psycopg/docs/usage.html#unicode-handling for more info.
-ext.register_type(psycopg2.extensions.UNICODE)
-ext.register_type(psycopg2.extensions.UNICODEARRAY)
+ext.register_type(psycopg2cffi.extensions.UNICODE)
+ext.register_type(psycopg2cffi.extensions.UNICODEARRAY)
 ext.register_type(ext.new_type((705,), "UNKNOWN", ext.UNICODE))
 ext.register_type(ext.new_type((51766,), "HSTORE", ext.UNICODE))
 
 # Cast bytea fields to text. By default, this will render as hex strings with
 # Postgres 9+ and as escaped binary in earlier versions.
-psycopg2.extensions.register_type(
-    psycopg2.extensions.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
+psycopg2cffi.extensions.register_type(
+    psycopg2cffi.extensions.new_type((17,), 'BYTEA_TEXT', psycopg2cffi.STRING))
 
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
-psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
+psycopg2cffi.extensions.set_wait_callback(psycopg2cffi.extras.wait_select)
 
 class PGExecute(object):
 
@@ -89,7 +89,7 @@ class PGExecute(object):
         password = unicode2utf8(password or self.password)
         host = unicode2utf8(host or self.host)
         port = unicode2utf8(port or self.port)
-        conn = psycopg2.connect(database=db, user=user, password=password,
+        conn = psycopg2cffi.connect(database=db, user=user, password=password,
                 host=host, port=port)
         if hasattr(self, 'conn'):
             self.conn.close()
