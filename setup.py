@@ -27,7 +27,7 @@ setup(
             'Pygments >= 2.0',  # Pygments has to be Capitalcased. WTF?
             'jedi == 0.8.1',    # Temporary fix for installation woes.
             'prompt_toolkit==0.26',
-            'psycopg2cffi >= 2.6.1',
+            'psycopg2 >= 2.5.4',
             'sqlparse >= 0.1.14'
             ],
         entry_points='''
