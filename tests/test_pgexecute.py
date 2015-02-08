@@ -1,7 +1,7 @@
 # coding=UTF-8
 
 import pytest
-import psycopg2cffi
+import psycopg2
 from textwrap import dedent
 from utils import run, dbtest
 
@@ -54,13 +54,13 @@ def test_database_list(executor):
 
 @dbtest
 def test_invalid_syntax(executor):
-    with pytest.raises(psycopg2cffi.ProgrammingError) as excinfo:
+    with pytest.raises(psycopg2.ProgrammingError) as excinfo:
         run(executor, 'invalid syntax!')
     assert 'syntax error at or near "invalid"' in str(excinfo.value)
 
 @dbtest
 def test_invalid_column_name(executor):
-    with pytest.raises(psycopg2cffi.ProgrammingError) as excinfo:
+    with pytest.raises(psycopg2.ProgrammingError) as excinfo:
         run(executor, 'select invalid command')
     assert 'column "invalid" does not exist' in str(excinfo.value)
 
@@ -89,7 +89,7 @@ def test_multiple_queries_same_line(executor):
 
 @dbtest
 def test_multiple_queries_same_line_syntaxerror(executor):
-    with pytest.raises(psycopg2cffi.ProgrammingError) as excinfo:
+    with pytest.raises(psycopg2.ProgrammingError) as excinfo:
         run(executor, "select 'foo'; invalid syntax")
     assert 'syntax error at or near "invalid"' in str(excinfo.value)
 

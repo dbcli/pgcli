@@ -1,5 +1,5 @@
 import pytest
-import psycopg2cffi
+import psycopg2
 from pgcli.main import format_output
 
 # TODO: should this be somehow be divined from environment?
@@ -7,7 +7,7 @@ POSTGRES_USER, POSTGRES_HOST = 'postgres', 'localhost'
 
 
 def db_connection(dbname=None):
-    conn = psycopg2cffi.connect(user=POSTGRES_USER, host=POSTGRES_HOST, dbname=dbname)
+    conn = psycopg2.connect(user=POSTGRES_USER, host=POSTGRES_HOST, dbname=dbname)
     conn.autocommit = True
     return conn
 

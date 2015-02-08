@@ -37,7 +37,7 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 from getpass import getuser
-from psycopg2cffi import OperationalError
+from psycopg2 import OperationalError
 
 from collections import namedtuple
 
