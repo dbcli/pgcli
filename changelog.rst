@@ -5,6 +5,8 @@ Features:
 ---------
 * Add syntax color styles to config.
 * Add auto-completion for COPY statements.
+* Change Postgres adapter to psycopg2cffi, to make it PyPy compatible. 
+  Now pgcli can be run by PyPy.
 
 Bug Fixes:
 ----------
