@@ -1,4 +1,12 @@
-Current
+0.15.3
+======
+* Override the LESS options completely instead of appending to it. 
+
+0.15.2
+=======
+* Revert back to using psycopg2 as the postgres adapter. psycopg2cffi fails for some tests in Python 3. 
+
+0.15.0
 =======
 
 Features:

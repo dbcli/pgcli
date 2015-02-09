@@ -267,13 +267,12 @@ class PGCli(object):
     def adjust_less_opts(self):
         less_opts = os.environ.get('LESS', '')
         self.logger.debug('Original value for LESS env var: %r', less_opts)
-        if not less_opts:
-            os.environ['LESS'] = '-RXF'
+        os.environ['LESS'] = '-RXF'
 
-        if 'X' not in less_opts:
-            os.environ['LESS'] += 'X'
-        if 'F' not in less_opts:
-            os.environ['LESS'] += 'F'
+        #if 'X' not in less_opts:
+            #os.environ['LESS'] += 'X'
+        #if 'F' not in less_opts:
+            #os.environ['LESS'] += 'F'
 
         return less_opts
 
