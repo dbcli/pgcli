@@ -81,16 +81,19 @@ def list_objects(cur, pattern, verbose, relkinds):
             FROM    pg_catalog.pg_class c
                     LEFT JOIN pg_catalog.pg_namespace n
                       ON n.oid = c.relnamespace
-            WHERE   c.relkind = ANY(%s)
-                    AND n.nspname <> 'pg_catalog'
-                    AND n.nspname <> 'information_schema'
-                    AND n.nspname !~ '^pg_toast' '''
+            WHERE   c.relkind = ANY(%s) '''
 
     params = [relkinds]
 
     if schema_pattern:
         sql += ' AND n.nspname ~ %s'
         params.append(schema_pattern)
+    else:
+        sql += '''
+            AND n.nspname <> 'pg_catalog'
+            AND n.nspname <> 'information_schema'
+            AND n.nspname !~ '^pg_toast'
+            AND pg_catalog.pg_table_is_visible(c.oid) '''
 
     if table_pattern:
         sql += ' AND c.relname ~ %s'
