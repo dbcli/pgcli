@@ -96,7 +96,11 @@ class PGCompleter(Completer):
         # dbmetadata['schema_name']['table_name'] should be a list of column
         # names. Default to an asterisk
         for schema, table in table_data:
-            self.dbmetadata[schema][table] = ['*']
+            try:
+                self.dbmetadata[schema][table] = ['*']
+            except AttributeError:
+                _logger.error('Table %r listed in unrecognized schema %r',
+                              table, schema)
 
         self.all_completions.update(t[1] for t in table_data)
 
