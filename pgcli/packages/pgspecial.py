@@ -113,6 +113,8 @@ def list_tables(cur, pattern, verbose):
 def list_views(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['v', 's', ''])
 
+def list_sequences(cur, pattern, verbose):
+    return list_objects(cur, pattern, verbose, ['S', 's', ''])
 
 def list_indexes(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['i', 's', ''])
@@ -858,6 +860,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\\dt': (list_tables, ['\\dt[+] [pattern]', 'list tables.']),
             '\\di': (list_indexes, ['\\di[+] [pattern]', 'list indexes.']),
             '\\dv': (list_views, ['\\dv[+] [pattern]', 'list views.']),
+            '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'list sequences.']),
             }
 
 NON_CASE_SENSITIVE_COMMANDS = {
