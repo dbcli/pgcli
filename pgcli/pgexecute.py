@@ -43,8 +43,8 @@ class PGExecute(object):
                 LEFT JOIN pg_catalog.pg_namespace n
                     ON n.oid = c.relnamespace
         WHERE 	c.relkind IN ('r','v', 'm') -- table, view, materialized view
-                AND n.nspname !~ '^pg_toast'
-                AND n.nspname NOT IN ('information_schema', 'pg_catalog')
+                AND n.nspname !~ '^pg_'
+                AND nspname <> 'information_schema'
         ORDER BY 1,2;'''
 
     columns_query = '''
