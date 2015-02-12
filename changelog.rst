@@ -1,6 +1,14 @@
 0.16.0
 ======
+
+Features:
+---------
 * Add \ds special command to show sequences. 
+
+Bug Fixes:
+----------
+* Fix a rare crash caused by adding new schemas to a database. (Thanks: darikg_)
+* Make \dt command honor the explicit schema specified in the arg. (Thanks: darikg_)
 
 0.15.4
 ======
