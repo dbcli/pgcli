@@ -1,3 +1,11 @@
+0.16.0
+======
+* Add \ds special command to show sequences. 
+
+0.15.4
+======
+* Dummy version to replace accidental PyPI entry deletion.
+
 0.15.3
 ======
 * Override the LESS options completely instead of appending to it. 
