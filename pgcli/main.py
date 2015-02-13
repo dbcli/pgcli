@@ -61,6 +61,7 @@ class PGCli(object):
         # Load config.
         c = self.config = load_config('~/.pgclirc', default_config)
         self.multi_line = c.getboolean('main', 'multi_line')
+        self.vi_mode = c.getboolean('main', 'vi')
         pgspecial.TIMING_ENABLED = c.getboolean('main', 'timing')
         self.table_format = c.get('main', 'table_format')
         self.syntax_style = c.get('main', 'syntax_style')
@@ -174,7 +175,7 @@ class PGCli(object):
                 history=FileHistory(os.path.expanduser('~/.pgcli-history')))
         cli = CommandLineInterface(style=style_factory(self.syntax_style),
                 layout=layout, buffer=buf,
-                key_bindings_registry=pgcli_bindings())
+                key_bindings_registry=pgcli_bindings(self.vi_mode))
 
         try:
             while True:
