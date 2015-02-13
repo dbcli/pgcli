@@ -4,6 +4,7 @@
 Features:
 ---------
 * Add \ds special command to show sequences. 
+* Add Vi mode for keybindings. (Thanks: `Jay Zeng`_)
 
 Bug Fixes:
 ----------
@@ -129,3 +130,4 @@ Improvements:
 .. _darikg: https://github.com/darikg
 .. _`Iryna Cherniavska`: https://github.com/j-bennet
 .. _`Daniel Rocco`: https://github.com/drocco007 
+.. _`Jay Zeng`:  https://github.com/jayzeng 
