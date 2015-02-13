@@ -14,6 +14,7 @@ if python_version_tuple()[0] < "3":
     from functools import partial
     _none_type = type(None)
     _int_type = int
+    _long_type = long
     _float_type = float
     _text_type = unicode
     _binary_type = str
@@ -26,6 +27,7 @@ else:
     from functools import reduce, partial
     _none_type = type(None)
     _int_type = int
+    _long_type = int
     _float_type = float
     _text_type = str
     _binary_type = bytes
@@ -302,7 +304,7 @@ def _isint(string):
     >>> _isint("123.45")
     False
     """
-    return type(string) is int or type(string) is long or \
+    return type(string) is _int_type or type(string) is _long_type or \
            (isinstance(string, _binary_type) or isinstance(string, _text_type)) and \
            _isconvertible(int, string)
 
