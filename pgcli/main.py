@@ -164,18 +164,18 @@ class PGCli(object):
         logger = self.logger
         original_less_opts = self.adjust_less_opts()
 
-        layout = Layout(before_input=DefaultPrompt(prompt),
-            menus=[CompletionsMenu(max_height=10)],
-            lexer=SqlLexer, bottom_toolbars=[PGToolbar()])
-
         completer = self.completer
         self.refresh_completions()
+        key_binding_manager = pgcli_bindings(self.vi_mode)
 
+        layout = Layout(before_input=DefaultPrompt(prompt),
+            menus=[CompletionsMenu(max_height=10)],
+            lexer=SqlLexer, bottom_toolbars=[PGToolbar(key_binding_manager)])
         buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
                 history=FileHistory(os.path.expanduser('~/.pgcli-history')))
         cli = CommandLineInterface(style=style_factory(self.syntax_style),
                 layout=layout, buffer=buf,
-                key_bindings_registry=pgcli_bindings(self.vi_mode))
+                key_bindings_registry=key_binding_manager.registry)
 
         try:
             while True:

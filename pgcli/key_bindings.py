@@ -4,7 +4,7 @@ from prompt_toolkit.key_binding.manager import KeyBindingManager
 
 _logger = logging.getLogger(__name__)
 
-def pgcli_bindings(vi_mode = False):
+def pgcli_bindings(vi_mode=False):
     """
     Custom key bindings for pgcli.
     """
@@ -28,6 +28,14 @@ def pgcli_bindings(vi_mode = False):
         buf = event.cli.current_buffer
         buf.always_multiline = not buf.always_multiline
 
+    @key_binding_manager.registry.add_binding(Keys.F4)
+    def _(event):
+        """
+        Toggle between Vi and Emacs mode.
+        """
+        _logger.debug('Detected F4 key.')
+        key_binding_manager.enable_vi_mode = not key_binding_manager.enable_vi_mode
+
     @key_binding_manager.registry.add_binding(Keys.ControlSpace)
     def _(event):
         """
@@ -36,4 +44,4 @@ def pgcli_bindings(vi_mode = False):
         _logger.debug('Detected <C-Space> key.')
         event.cli.current_buffer.complete_next()
 
-    return key_binding_manager.registry
+    return key_binding_manager
