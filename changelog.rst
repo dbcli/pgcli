@@ -10,6 +10,7 @@ Bug Fixes:
 ----------
 * Fix a rare crash caused by adding new schemas to a database. (Thanks: darikg_)
 * Make \dt command honor the explicit schema specified in the arg. (Thanks: darikg_)
+* Print BIGSERIAL type as Integer instead of Float.
 
 0.15.4
 ======
