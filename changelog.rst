@@ -5,6 +5,7 @@ Features:
 ---------
 * Add \ds special command to show sequences. 
 * Add Vi mode for keybindings. (Thanks: `Jay Zeng`_)
+* Add a -v/--version flag to pgcli.
 
 Bug Fixes:
 ----------
