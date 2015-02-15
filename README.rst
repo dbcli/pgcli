@@ -9,9 +9,9 @@ in Python.
 Looking for ptpython, the Python REPL?
 **************************************
 
-Are you looking for the interactive Python Shell? We moved the ``ptpython``
-source code in a separate repository This way we are sure not to pollute the
-``prompt_toolkit`` library with any ``ptpython`` specific stuff and
+Are you looking for ``ptpython``, the interactive Python Shell? We moved the
+``ptpython`` source code to a separate repository. This way we are sure not to
+pollute the ``prompt_toolkit`` library with any ``ptpython``-specific stuff and
 ``ptpython`` can be developed independently. You will now have to install it
 through::
 
