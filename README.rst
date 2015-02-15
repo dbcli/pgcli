@@ -89,10 +89,10 @@ The most simple example of the library would look like this:
         answer = get_input('Give me some input: ')
         print('You said: %s' % answer)
 
-For more complex examples, have a look in the examples directory. All examples
-are choosen to demonstrate only one thing. Also, don't be afraid to look at the
-source code. The implementation of the ``get_input`` function could be a good
-start.
+For more complex examples, have a look in the ``examples`` directory. All
+examples are chosen to demonstrate only one thing. Also, don't be afraid to
+look at the source code. The implementation of the ``get_input`` function could
+be a good start.
 
 
 Projects using prompt-toolkit
@@ -102,7 +102,7 @@ Projects using prompt-toolkit
 - `ptpdb <http://github.com/jonathanslenders/ptpdb/>`_: Python debugger (pdb replacement)
 - `pgcli <http://pgcli.com/>`_: Postgres Shell
 
-(Want you own project to be listed here? Please create a GitHub issue.)
+(Want your own project to be listed here? Please create a GitHub issue.)
 
 
 Philosophy
