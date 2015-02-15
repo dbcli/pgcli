@@ -3,7 +3,7 @@ Python Prompt Toolkit
 
 |Build Status|  |PyPI|
 
-``prompt_toolkit`` is a Library for building powerful interactive command lines
+``prompt_toolkit`` is a library for building powerful interactive command lines
 in Python.
 
 Looking for ptpython, the Python REPL?
