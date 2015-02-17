@@ -43,7 +43,7 @@ class PGCompleter(Completer):
 
         self.special_commands = []
         self.databases = []
-        self.dbmetadata = {'tables': {}}
+        self.dbmetadata = {'tables': {}, 'functions': {}}
         self.search_path = []
 
         self.all_completions = set(self.keywords + self.functions)
@@ -87,6 +87,11 @@ class PGCompleter(Completer):
         for schema in schemata:
             metadata[schema] = {}
 
+        # dbmetadata.values() are the 'tables' and 'functions' dicts
+        for metadata in self.dbmetadata.values():
+            for schema in schemata:
+                metadata[schema] = {}
+
         self.all_completions.update(schemata)
 
     def extend_tables(self, table_data):
@@ -116,13 +121,27 @@ class PGCompleter(Completer):
 
         self.all_completions.update(t[2] for t in column_data)
 
+    def extend_functions(self, func_data):
+
+        # func_data is an iterator of (schema_name, function_name)
+
+        # dbmetadata['functions']['schema_name']['function_name'] should return
+        # function metadata -- right now we're not storing any further metadata
+        # so just default to None as a placeholder
+        metadata = self.dbmetadata['functions']
+        
+        for f in func_data:
+            schema, func = self.escaped_names(f)
+            metadata[schema][func] = None
+            self.all_completions.add(func)
+
     def set_search_path(self, search_path):
         self.search_path = self.escaped_names(search_path)
 
     def reset_completions(self):
         self.databases = []
         self.search_path = []
-        self.dbmetadata = {'tables': {}}
+        self.dbmetadata = {'tables': {}, 'functions': {}}
         self.all_completions = set(self.keywords)
 
     @staticmethod

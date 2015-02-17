@@ -288,6 +288,7 @@ class PGCli(object):
         completer.extend_schemata(pgexecute.schemata())
         completer.extend_tables(pgexecute.tables())
         completer.extend_columns(pgexecute.columns())
+        completer.extend_functions(pgexecute.functions())
         completer.extend_database_names(pgexecute.databases())
 
     def get_completions(self, text, cursor_positition):

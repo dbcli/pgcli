@@ -63,6 +63,16 @@ class PGExecute(object):
                 AND att.attnum  > 0
         ORDER BY 1, 2, 3'''
 
+    functions_query = '''
+        SELECT 	DISTINCT  --multiple dispatch means possible duplicates
+                n.nspname schema_name,
+                p.proname func_name
+        FROM 	pg_catalog.pg_proc p
+                INNER JOIN pg_catalog.pg_namespace n
+                    ON n.oid = p.pronamespace
+        WHERE 	n.nspname NOT IN ('pg_catalog', 'information_schema')
+        ORDER BY 1, 2'''
+
 
     databases_query = """SELECT d.datname as "Name",
        pg_catalog.pg_get_userbyid(d.datdba) as "Owner",
@@ -186,3 +196,12 @@ class PGExecute(object):
             _logger.debug('Databases Query. sql: %r', self.databases_query)
             cur.execute(self.databases_query)
             return [x[0] for x in cur.fetchall()]
+
+    def functions(self):
+        """Yields tuples of (schema_name, function_name)"""
+
+        with self.conn.cursor() as cur:
+            _logger.debug('Functions Query. sql: %r', self.functions_query)
+            cur.execute(self.functions_query)
+            for row in cur:
+                yield row
