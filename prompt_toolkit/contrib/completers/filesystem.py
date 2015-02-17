@@ -59,26 +59,15 @@ class PathCompleter(Completer):
                 completion = filename[len(prefix):]
                 full_name = os.path.join(directory, filename)
 
-                if not os.path.isdir(full_name):
+                if os.path.isdir(full_name):
+                    # For directories, add a slash to the filename.
+                    # (We don't add them to the `completion`. Users can type it
+                    # to trigger the autocompletion themself.)
+                    filename += '/'
+                else:
                     if self.only_directories or not self.file_filter(full_name):
                         continue
 
-                yield Completion(completion, 0, display=filename,
-                                 get_display_meta=self._create_meta_getter(full_name))
+                yield Completion(completion, 0, display=filename)
         except OSError:
             pass
-
-    def _create_meta_getter(self, full_name):
-        """
-        Create lazy meta getter.
-        """
-        def getter():
-            if os.path.isdir(full_name):
-                return 'Directory'
-            elif os.path.isfile(full_name):
-                return 'File'
-            elif os.path.islink(full_name):
-                return 'Link'
-            else:
-                return ''
-        return getter
