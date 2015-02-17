@@ -3,16 +3,20 @@ from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
 metadata = {
-            'public':   {
-                            'users': ['id', 'email', 'first_name', 'last_name'],
-                            'orders': ['id', 'ordered_date', 'status'],
-                            'select': ['id', 'insert', 'ABC']
-                        },
-            'custom':   {
-                            'users': ['id', 'phone_number'],
-                            'products': ['id', 'product_name', 'price'],
-                            'shipments': ['id', 'address', 'user_id']
-                        }
+            'tables': {
+                'public':   {
+                                'users': ['id', 'email', 'first_name', 'last_name'],
+                                'orders': ['id', 'ordered_date', 'status'],
+                                'select': ['id', 'insert', 'ABC']
+                            },
+                'custom':   {
+                                'users': ['id', 'phone_number'],
+                                'products': ['id', 'product_name', 'price'],
+                                'shipments': ['id', 'address', 'user_id']
+                            }},
+            'functions': {
+                'public':   ['func1', 'func2'],
+                'custom':   ['func3', 'func4']}
             }
 
 @pytest.fixture
@@ -23,16 +27,21 @@ def completer():
 
     schemata, tables, columns = [], [], []
 
-    for schema, tbls in metadata.items():
+    for schema, tbls in metadata['tables'].items():
         schemata.append(schema)
 
         for table, cols in tbls.items():
             tables.append((schema, table))
             columns.extend([(schema, table, col) for col in cols])
 
+    functions = [(schema, func)
+                    for schema, funcs in metadata['functions'].items()
+                    for func in funcs]
+
     comp.extend_schemata(schemata)
     comp.extend_tables(tables)
     comp.extend_columns(columns)
+    comp.extend_functions(functions)
     comp.set_search_path(['public'])
 
     return comp
@@ -70,7 +79,9 @@ def test_suggested_column_names_from_shadowed_visible_table(completer, complete_
         Completion(text='id', start_position=0),
         Completion(text='email', start_position=0),
         Completion(text='first_name', start_position=0),
-        Completion(text='last_name', start_position=0)] +
+        Completion(text='last_name', start_position=0),
+        Completion(text='func1', start_position=0),
+        Completion(text='func2', start_position=0)] +
         list(map(Completion, completer.functions)))
 
 def test_suggested_column_names_from_qualified_shadowed_table(completer, complete_event):
@@ -82,7 +93,9 @@ def test_suggested_column_names_from_qualified_shadowed_table(completer, complet
     assert set(result) == set([
         Completion(text='*', start_position=0),
         Completion(text='id', start_position=0),
-        Completion(text='phone_number', start_position=0)] +
+        Completion(text='phone_number', start_position=0),
+        Completion(text='func1', start_position=0),
+        Completion(text='func2', start_position=0)] +
         list(map(Completion, completer.functions)))
 
 def test_suggested_column_names_from_schema_qualifed_table(completer, complete_event):
@@ -100,7 +113,9 @@ def test_suggested_column_names_from_schema_qualifed_table(completer, complete_e
         Completion(text='*', start_position=0),
         Completion(text='id', start_position=0),
         Completion(text='product_name', start_position=0),
-        Completion(text='price', start_position=0)] +
+        Completion(text='price', start_position=0),
+        Completion(text='func1', start_position=0),
+        Completion(text='func2', start_position=0)] +
         list(map(Completion, completer.functions)))
 
 def test_suggested_column_names_in_function(completer, complete_event):
@@ -130,7 +145,9 @@ def test_suggested_table_names_with_schema_dot(completer, complete_event):
     assert set(result) == set([
         Completion(text='users', start_position=0),
         Completion(text='products', start_position=0),
-        Completion(text='shipments', start_position=0)])
+        Completion(text='shipments', start_position=0),
+        Completion(text='func3', start_position=0),
+        Completion(text='func4', start_position=0)])
 
 def test_suggested_column_names_with_qualified_alias(completer, complete_event):
     """
@@ -167,7 +184,9 @@ def test_suggested_multiple_column_names(completer, complete_event):
         Completion(text='*', start_position=0),
         Completion(text='id', start_position=0),
         Completion(text='product_name', start_position=0),
-        Completion(text='price', start_position=0)] +
+        Completion(text='price', start_position=0),
+        Completion(text='func1', start_position=0),
+        Completion(text='func2', start_position=0)] +
         list(map(Completion, completer.functions)))
 
 def test_suggested_multiple_column_names_with_alias(completer, complete_event):
@@ -223,5 +242,11 @@ def test_table_names_after_from(completer, complete_event):
         Completion(text='"select"', start_position=0),
         ])
 
-
-
+def test_schema_qualified_function_name(completer, complete_event):
+    text = 'SELECT custom.func'
+    postion = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=postion), complete_event))
+    assert result == set([
+        Completion(text='func3', start_position=-len('func')),
+        Completion(text='func4', start_position=-len('func'))])

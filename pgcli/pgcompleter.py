@@ -177,7 +177,14 @@ class PGCompleter(Completer):
                 completions.extend(cols)
 
             elif suggestion['type'] == 'function':
-                funcs = self.find_matches(word_before_cursor, self.functions)
+                funcs = self.populate_schema_objects(
+                    suggestion['schema'], 'functions')
+
+                if not suggestion['schema']:
+                    # also suggest hardcoded functions
+                    funcs.extend(self.functions)
+
+                funcs = self.find_matches(word_before_cursor, funcs)
                 completions.extend(funcs)
 
             elif suggestion['type'] == 'schema':
@@ -186,22 +193,11 @@ class PGCompleter(Completer):
                 completions.extend(schema_names)
 
             elif suggestion['type'] == 'table':
-
-                metadata = self.dbmetadata['tables']
-
-                if suggestion['schema']:
-                    try:
-                        tables = metadata[suggestion['schema']].keys()
-                    except KeyError:
-                        #schema doesn't exist
-                        tables = []
-                else:
-                    schemas = self.search_path
-                    tables = [tbl for schema in schemas
-                                    for tbl in metadata[schema].keys()]
-
+                tables = self.populate_schema_objects(
+                    suggestion['schema'], 'tables')
                 tables = self.find_matches(word_before_cursor, tables)
                 completions.extend(tables)
+
             elif suggestion['type'] == 'alias':
                 aliases = suggestion['aliases']
                 aliases = self.find_matches(word_before_cursor, aliases)
@@ -247,6 +243,24 @@ class PGCompleter(Completer):
                         pass
 
         return columns
+
+    def populate_schema_objects(self, schema, obj_type):
+        """Returns list of tables or functions for a (optional) schema"""
+
+        metadata = self.dbmetadata[obj_type]
+
+        if schema:
+            try:
+                objects = metadata[schema].keys()
+            except KeyError:
+                #schema doesn't exist
+                objects = []
+        else:
+            schemas = self.search_path
+            objects = [obj for schema in schemas
+                           for obj in metadata[schema].keys()]
+
+        return objects
 
 
 
