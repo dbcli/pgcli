@@ -43,7 +43,7 @@ class PGCompleter(Completer):
 
         self.special_commands = []
         self.databases = []
-        self.dbmetadata = {}
+        self.dbmetadata = {'tables': {}, 'functions': {}}
         self.search_path = []
 
         self.all_completions = set(self.keywords + self.functions)
@@ -81,10 +81,16 @@ class PGCompleter(Completer):
 
     def extend_schemata(self, schemata):
 
-        # data is a DataFrame with columns [schema]
+        # schemata is a list of schema names
         schemata = self.escaped_names(schemata)
+        metadata = self.dbmetadata['tables']
         for schema in schemata:
-            self.dbmetadata[schema] = {}
+            metadata[schema] = {}
+
+        # dbmetadata.values() are the 'tables' and 'functions' dicts
+        for metadata in self.dbmetadata.values():
+            for schema in schemata:
+                metadata[schema] = {}
 
         self.all_completions.update(schemata)
 
@@ -93,11 +99,12 @@ class PGCompleter(Completer):
         # table_data is a list of (schema_name, table_name) tuples
         table_data = [self.escaped_names(d) for d in table_data]
 
-        # dbmetadata['schema_name']['table_name'] should be a list of column
-        # names. Default to an asterisk
+        # dbmetadata['tables']['schema_name']['table_name'] should be a list of
+        # column names. Default to an asterisk
+        metadata = self.dbmetadata['tables']
         for schema, table in table_data:
             try:
-                self.dbmetadata[schema][table] = ['*']
+                metadata[schema][table] = ['*']
             except AttributeError:
                 _logger.error('Table %r listed in unrecognized schema %r',
                               table, schema)
@@ -108,11 +115,25 @@ class PGCompleter(Completer):
 
         # column_data is a list of (schema_name, table_name, column_name) tuples
         column_data = [self.escaped_names(d) for d in column_data]
-
+        metadata = self.dbmetadata['tables']
         for schema, table, column in column_data:
-            self.dbmetadata[schema][table].append(column)
+            metadata[schema][table].append(column)
 
         self.all_completions.update(t[2] for t in column_data)
+
+    def extend_functions(self, func_data):
+
+        # func_data is an iterator of (schema_name, function_name)
+
+        # dbmetadata['functions']['schema_name']['function_name'] should return
+        # function metadata -- right now we're not storing any further metadata
+        # so just default to None as a placeholder
+        metadata = self.dbmetadata['functions']
+        
+        for f in func_data:
+            schema, func = self.escaped_names(f)
+            metadata[schema][func] = None
+            self.all_completions.add(func)
 
     def set_search_path(self, search_path):
         self.search_path = self.escaped_names(search_path)
@@ -120,7 +141,7 @@ class PGCompleter(Completer):
     def reset_completions(self):
         self.databases = []
         self.search_path = []
-        self.dbmetadata = {}
+        self.dbmetadata = {'tables': {}, 'functions': {}}
         self.all_completions = set(self.keywords)
 
     @staticmethod
@@ -156,30 +177,27 @@ class PGCompleter(Completer):
                 completions.extend(cols)
 
             elif suggestion['type'] == 'function':
-                funcs = self.find_matches(word_before_cursor, self.functions)
+                funcs = self.populate_schema_objects(
+                    suggestion['schema'], 'functions')
+
+                if not suggestion['schema']:
+                    # also suggest hardcoded functions
+                    funcs.extend(self.functions)
+
+                funcs = self.find_matches(word_before_cursor, funcs)
                 completions.extend(funcs)
 
             elif suggestion['type'] == 'schema':
-                schema_names = self.dbmetadata.keys()
+                schema_names = self.dbmetadata['tables'].keys()
                 schema_names = self.find_matches(word_before_cursor, schema_names)
                 completions.extend(schema_names)
 
             elif suggestion['type'] == 'table':
-
-                if suggestion['schema']:
-                    try:
-                        tables = self.dbmetadata[suggestion['schema']].keys()
-                    except KeyError:
-                        #schema doesn't exist
-                        tables = []
-                else:
-                    schemas = self.search_path
-                    meta = self.dbmetadata
-                    tables = [tbl for schema in schemas
-                                    for tbl in meta[schema].keys()]
-
+                tables = self.populate_schema_objects(
+                    suggestion['schema'], 'tables')
                 tables = self.find_matches(word_before_cursor, tables)
                 completions.extend(tables)
+
             elif suggestion['type'] == 'alias':
                 aliases = suggestion['aliases']
                 aliases = self.find_matches(word_before_cursor, aliases)
@@ -202,7 +220,7 @@ class PGCompleter(Completer):
         """
 
         columns = []
-        meta = self.dbmetadata
+        meta = self.dbmetadata['tables']
 
         for tbl in scoped_tbls:
             if tbl[0]:
@@ -225,6 +243,24 @@ class PGCompleter(Completer):
                         pass
 
         return columns
+
+    def populate_schema_objects(self, schema, obj_type):
+        """Returns list of tables or functions for a (optional) schema"""
+
+        metadata = self.dbmetadata[obj_type]
+
+        if schema:
+            try:
+                objects = metadata[schema].keys()
+            except KeyError:
+                #schema doesn't exist
+                objects = []
+        else:
+            schemas = self.search_path
+            objects = [obj for schema in schemas
+                           for obj in metadata[schema].keys()]
+
+        return objects
 
 
 

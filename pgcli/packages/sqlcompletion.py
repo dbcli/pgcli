@@ -95,10 +95,13 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
     elif token_v.lower() in ('select', 'where', 'having'):
         return [{'type': 'column', 'tables': extract_tables(full_text)},
-                {'type': 'function'}]
+                {'type': 'function', 'schema': []}]
     elif token_v.lower() in ('copy', 'from', 'update', 'into', 'describe',
             'join', 'table'):
         return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
+    elif token_v.lower() == 'function':
+        # E.g. 'DROP FUNCTION <funcname>'
+        return [{'type': 'schema'}, {'type': 'function', 'schema': []}]
     elif token_v.lower() == 'on':
         tables = extract_tables(full_text)  # [(schema, table, alias), ...]
 
@@ -140,7 +143,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         suggestions.append({'type': 'column', 'tables': tables})
 
         # SCHEMA.<suggestion>
-        suggestions.append({'type': 'table', 'schema': identifier})
+        suggestions.extend([{'type': 'table', 'schema': identifier},
+                            {'type': 'function', 'schema': identifier}])
 
         return suggestions
 

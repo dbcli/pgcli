@@ -48,6 +48,17 @@ def test_schemata_table_and_columns_query(executor):
     assert executor.search_path() == ['public']
 
 @dbtest
+def test_functions_query(executor):
+    run(executor, '''create function func1() returns int
+                     language sql as $$select 1$$''')
+    run(executor, 'create schema schema1')
+    run(executor, '''create function schema1.func2() returns int
+                     language sql as $$select 2$$''')
+
+    funcs = list(executor.functions())
+    assert funcs == [('public', 'func1'), ('schema1', 'func2')]
+
+@dbtest
 def test_database_list(executor):
     databases = executor.databases()
     assert '_test_db' in databases
