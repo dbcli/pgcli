@@ -21,7 +21,7 @@ from .layout import Window
 from .layout.controls import BufferControl
 from .renderer import Renderer
 from .utils import EventHook, DummyContext
-from .filters import AlwaysOff, AlwaysOn
+from .filters import Filter, AlwaysOff, AlwaysOn
 
 from pygments.styles.default import DefaultStyle
 from types import GeneratorType
@@ -66,8 +66,8 @@ class CommandLineInterface(object):
     :param stdout: Output stream, by default sys.stdout
     :param layout: :class:`Layout` instance.
     :param style: :class:`Layout` instance.
-    :param create_async_autocompleters: Boolean. If True, autocompletions will
-        be generated asynchronously while you type.
+    :param complete_while_typing: Filter instance. Decide whether or not to do
+                                  asynchronous autocompleting while typing.
     """
     def __init__(self, stdin=None, stdout=None,
                  layout=None,
@@ -76,17 +76,18 @@ class CommandLineInterface(object):
                  style=None,
                  key_bindings_registry=None,
                  clipboard=None,
-                 create_async_autocompleters=True,
+                 complete_while_typing=AlwaysOn(),
                  renderer=None,
                  initial_focussed_buffer='default'):
 
         assert buffer is None or isinstance(buffer, Buffer)
         assert buffers is None or isinstance(buffers, dict)
+        assert isinstance(complete_while_typing, Filter)
 
         self.stdin = stdin or sys.__stdin__
         self.stdout = stdout or sys.__stdout__
         self.style = style or DefaultStyle
-        self.create_async_autocompleters = create_async_autocompleters
+        self.complete_while_typing = complete_while_typing
 
         # Events
 
@@ -144,10 +145,9 @@ class CommandLineInterface(object):
         self.input_processor = InputProcessor(key_bindings_registry, weakref.ref(self))
 
         # Handle events.
-        if self.create_async_autocompleters:
-            for b in self.buffers.values():
-                if b.completer:
-                    b.onTextInsert += self._create_async_completer(b)
+        for b in self.buffers.values():
+            if b.completer:
+                b.onTextInsert += self._create_async_completer(b)
 
         self._reset()
 
@@ -178,9 +178,8 @@ class CommandLineInterface(object):
         """
         self.buffers[name] = buffer
 
-        if self.create_async_autocompleters:
-            if buffer.completer:
-                buffer.onTextInsert += self._create_async_completer(buffer)
+        if buffer.completer:
+            buffer.onTextInsert += self._create_async_completer(buffer)
 
         if focus:
             self.focus_stack.replace(name)
@@ -491,6 +490,10 @@ class CommandLineInterface(object):
 
         def async_completer():
             document = buffer.document
+
+            # Don't complete when "complete_while_typing" is disabled.
+            if not self.complete_while_typing(self):
+                return
 
             # Don't start two threads at the same time.
             if complete_thread_running[0]:
