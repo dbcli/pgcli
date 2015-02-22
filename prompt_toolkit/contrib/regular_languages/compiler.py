@@ -78,7 +78,8 @@ class _CompiledGrammar(object):
         self._re_prefix_patterns = list(self._transform_prefix(root_node, create_group_func))
 
         # Compile the regex itself.
-        flags = re.MULTILINE | re.DOTALL
+        flags = re.DOTALL  # Note that we don't need re.MULTILINE! (^ and $
+                           # still represent the start and end of input text.)
         self._re = re.compile(self._re_pattern, flags)
         self._re_prefix = [re.compile(t, flags) for t in self._re_prefix_patterns]
 
