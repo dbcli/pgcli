@@ -372,23 +372,39 @@ class Document(object):
         except StopIteration:
             pass
 
-    def find_next_matching_line(self, match_func):
+    def find_next_matching_line(self, match_func, count=1):
         """
         Look downwards for empty lines.
         Return the line index, relative to the current line.
         """
+        result = None
+
         for index, line in enumerate(self.lines[self.cursor_position_row + 1:]):
             if match_func(line):
-                return 1 + index
+                result = 1 + index
+                count -= 1
 
-    def find_previous_matching_line(self, match_func):
+            if count == 0:
+                break
+
+        return result
+
+    def find_previous_matching_line(self, match_func, count=1):
         """
         Look upwards for empty lines.
         Return the line index, relative to the current line.
         """
+        result = None
+
         for index, line in enumerate(self.lines[:self.cursor_position_row][::-1]):
             if match_func(line):
-                return -1 - index
+                result = -1 - index
+                count -= 1
+
+            if count == 0:
+                break
+
+        return result
 
     def get_cursor_left_position(self, count=1):
         """

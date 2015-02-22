@@ -775,14 +775,15 @@ def load_vi_bindings(registry, vi_state, filter=None):
                                  ('[', ']'), ('<', '>'), ('{', '}'), ('(', ')')]:
             create_ci_ca_handles(ci_start, ci_end, inner)
 
-    @change_delete_move_yank_handler('{')  # TODO: implement 'arg'
+    @change_delete_move_yank_handler('{')
     def _(event):
         """
         Move to previous blank-line separated section.
         Implements '{', 'c{', 'd{', 'y{'
         """
+        match_func = lambda text: not text or text.isspace()
         line_index = event.current_buffer.document.find_previous_matching_line(
-            lambda text: not text or text.isspace())
+            match_func=match_func, count=event.arg)
 
         if line_index:
             index = event.current_buffer.document.get_cursor_up_position(count=-line_index)
@@ -790,14 +791,15 @@ def load_vi_bindings(registry, vi_state, filter=None):
             index = 0
         return CursorRegion(index)
 
-    @change_delete_move_yank_handler('}')  # TODO: implement 'arg'
+    @change_delete_move_yank_handler('}')
     def _(event):
         """
         Move to next blank-line separated section.
         Implements '}', 'c}', 'd}', 'y}'
         """
+        match_func = lambda text: not text or text.isspace()
         line_index = event.current_buffer.document.find_next_matching_line(
-            lambda text: not text or text.isspace())
+            match_func=match_func, count=event.arg)
 
         if line_index:
             index = event.current_buffer.document.get_cursor_down_position(count=line_index)
