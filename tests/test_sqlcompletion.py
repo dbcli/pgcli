@@ -238,3 +238,18 @@ def test_create_db_with_template():
                                'create database foo with template ')
 
     assert sorted_dicts(suggestions) == sorted_dicts([{'type': 'database'}])
+
+
+@pytest.mark.parametrize('initial_text', ['', '    ', '\t \t'])
+def test_specials_included_for_initial_completion(initial_text):
+    suggestions = suggest_type(initial_text, initial_text)
+
+    assert sorted_dicts(suggestions) == \
+        sorted_dicts([{'type': 'keyword'}, {'type': 'special'}])
+
+
+def test_specials_not_included_after_initial_token():
+    suggestions = suggest_type('create table foo (dt d',
+                               'create table foo (dt d')
+
+    assert sorted_dicts(suggestions) == sorted_dicts([{'type': 'keyword'}])

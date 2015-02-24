@@ -80,7 +80,9 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         else:
             token_v = token.value
 
-    if token_v.lower().endswith('('):
+    if not token:
+        return [{'type': 'keyword'}, {'type': 'special'}]
+    elif token_v.lower().endswith('('):
         p = sqlparse.parse(text_before_cursor)[0]
         if p.token_first().value.lower() == 'select':
             # If the lparen is preceeded by a space chances are we're about to
@@ -90,8 +92,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
                 return [{'type': 'keyword'}]
 
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
-
-    if token_v.lower() in ('set', 'by', 'distinct'):
+    elif token_v.lower() in ('set', 'by', 'distinct'):
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
     elif token_v.lower() in ('select', 'where', 'having'):
         return [{'type': 'column', 'tables': extract_tables(full_text)},
@@ -149,8 +150,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
                             {'type': 'function', 'schema': identifier}])
 
         return suggestions
-
-    return [{'type': 'keyword'}]
+    else:
+        return [{'type': 'keyword'}]
 
 
 def identifies(id, schema, table, alias):

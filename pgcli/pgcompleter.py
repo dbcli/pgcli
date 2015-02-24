@@ -204,14 +204,19 @@ class PGCompleter(Completer):
                 aliases = suggestion['aliases']
                 aliases = self.find_matches(word_before_cursor, aliases)
                 completions.extend(aliases)
+
             elif suggestion['type'] == 'database':
                 dbs = self.find_matches(word_before_cursor, self.databases)
                 completions.extend(dbs)
 
             elif suggestion['type'] == 'keyword':
-                keywords = self.keywords + self.special_commands
-                keywords = self.find_matches(word_before_cursor, keywords)
+                keywords = self.find_matches(word_before_cursor, self.keywords)
                 completions.extend(keywords)
+
+            elif suggestion['type'] == 'special':
+                special = self.find_matches(word_before_cursor,
+                                            self.special_commands)
+                completions.extend(special)
 
         return completions
 
