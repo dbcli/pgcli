@@ -124,7 +124,9 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
                 return [{'type': 'table', 'schema': identifiers[0]}]
         else:
             return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
-    elif token_v.lower() in ('c', 'use'):  # \c
+    elif token_v.lower() in ('c', 'use', 'database', 'template'):
+        # "\c <db", "use <db>", "DROP DATABASE <db>",
+        # "CREATE DATABASE <newdb> WITH TEMPLATE <db>"
         return [{'type': 'database'}]
     elif token_v.endswith(',') or token_v == '=':
         prev_keyword = find_prev_keyword(text_before_cursor)
