@@ -10,24 +10,26 @@ _logger = logging.getLogger(__name__)
 
 class PGCompleter(Completer):
     keywords = ['ACCESS', 'ADD', 'ALL', 'ALTER TABLE', 'AND', 'ANY', 'AS',
-            'ASC', 'AUDIT', 'BETWEEN', 'BY', 'CASE', 'CHAR', 'CHECK',
-            'CLUSTER', 'COLUMN', 'COMMENT', 'COMPRESS', 'CONNECT', 'COPY',
-            'CREATE', 'CURRENT', 'DATE', 'DECIMAL', 'DEFAULT', 'DELETE FROM',
-            'DESC', 'DESCRIBE', 'DISTINCT', 'DROP', 'ELSE', 'EXCLUSIVE',
-            'EXISTS', 'FILE', 'FLOAT', 'FOR', 'FROM', 'FULL', 'GRANT',
-            'GROUP BY', 'HAVING', 'IDENTIFIED', 'IMMEDIATE', 'IN', 'INCREMENT',
-            'INDEX', 'INITIAL', 'INSERT INTO', 'INTEGER', 'INTERSECT', 'INTO',
-            'IS', 'JOIN', 'LEFT', 'LEVEL', 'LIKE', 'LIMIT', 'LOCK', 'LONG',
-            'MAXEXTENTS', 'MINUS', 'MLSLABEL', 'MODE', 'MODIFY', 'NOAUDIT',
-            'NOCOMPRESS', 'NOT', 'NOWAIT', 'NULL', 'NUMBER', 'OF', 'OFFLINE',
-            'ON', 'ONLINE', 'OPTION', 'OR', 'ORDER BY', 'OUTER', 'PCTFREE',
-            'PRIMARY', 'PRIOR', 'PRIVILEGES', 'RAW', 'RENAME', 'RESOURCE',
-            'REVOKE', 'RIGHT', 'ROW', 'ROWID', 'ROWNUM', 'ROWS', 'SELECT',
-            'SESSION', 'SET', 'SHARE', 'SIZE', 'SMALLINT', 'START',
-            'SUCCESSFUL', 'SYNONYM', 'SYSDATE', 'TABLE', 'THEN', 'TO',
-            'TRIGGER', 'UID', 'UNION', 'UNIQUE', 'UPDATE', 'USE', 'USER',
-            'VALIDATE', 'VALUES', 'VARCHAR', 'VARCHAR2', 'VIEW', 'WHEN',
-            'WHENEVER', 'WHERE', 'WITH', ]
+                'ASC', 'AUDIT', 'BETWEEN', 'BY', 'CASE', 'CHAR', 'CHECK',
+                'CLUSTER', 'COLUMN', 'COMMENT', 'COMPRESS', 'CONNECT',
+                'COPY', 'CREATE', 'CURRENT', 'DATABASE', 'DATE', 'DECIMAL',
+                'DEFAULT', 'DELETE FROM', 'DESC', 'DESCRIBE', 'DISTINCT',
+                'DROP', 'ELSE', 'EXCLUSIVE', 'EXISTS', 'FILE', 'FLOAT',
+                'FOR', 'FROM', 'FULL', 'GRANT', 'GROUP BY', 'HAVING',
+                'IDENTIFIED', 'IMMEDIATE', 'IN', 'INCREMENT', 'INDEX',
+                'INITIAL', 'INSERT INTO', 'INTEGER', 'INTERSECT', 'INTO',
+                'IS', 'JOIN', 'LEFT', 'LEVEL', 'LIKE', 'LIMIT', 'LOCK',
+                'LONG', 'MAXEXTENTS', 'MINUS', 'MLSLABEL', 'MODE', 'MODIFY',
+                'NOAUDIT', 'NOCOMPRESS', 'NOT', 'NOWAIT', 'NULL', 'NUMBER',
+                'OF', 'OFFLINE', 'ON', 'ONLINE', 'OPTION', 'OR', 'ORDER BY',
+                'OUTER', 'PCTFREE', 'PRIMARY', 'PRIOR', 'PRIVILEGES', 'RAW',
+                'RENAME', 'RESOURCE', 'REVOKE', 'RIGHT', 'ROW', 'ROWID',
+                'ROWNUM', 'ROWS', 'SELECT', 'SESSION', 'SET', 'SHARE',
+                'SIZE', 'SMALLINT', 'START', 'SUCCESSFUL', 'SYNONYM',
+                'SYSDATE', 'TABLE', 'TEMPLATE', 'THEN', 'TO', 'TRIGGER',
+                'UID', 'UNION', 'UNIQUE', 'UPDATE', 'USE', 'USER',
+                'VALIDATE', 'VALUES', 'VARCHAR', 'VARCHAR2', 'VIEW', 'WHEN',
+                'WHENEVER', 'WHERE', 'WITH', ]
 
     functions = ['AVG', 'COUNT', 'DISTINCT', 'FIRST', 'FORMAT', 'LAST',
             'LCASE', 'LEN', 'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP',
@@ -129,7 +131,7 @@ class PGCompleter(Completer):
         # function metadata -- right now we're not storing any further metadata
         # so just default to None as a placeholder
         metadata = self.dbmetadata['functions']
-        
+
         for f in func_data:
             schema, func = self.escaped_names(f)
             metadata[schema][func] = None
@@ -202,14 +204,19 @@ class PGCompleter(Completer):
                 aliases = suggestion['aliases']
                 aliases = self.find_matches(word_before_cursor, aliases)
                 completions.extend(aliases)
+
             elif suggestion['type'] == 'database':
                 dbs = self.find_matches(word_before_cursor, self.databases)
                 completions.extend(dbs)
 
             elif suggestion['type'] == 'keyword':
-                keywords = self.keywords + self.special_commands
-                keywords = self.find_matches(word_before_cursor, keywords)
+                keywords = self.find_matches(word_before_cursor, self.keywords)
                 completions.extend(keywords)
+
+            elif suggestion['type'] == 'special':
+                special = self.find_matches(word_before_cursor,
+                                            self.special_commands)
+                completions.extend(special)
 
         return completions
 
