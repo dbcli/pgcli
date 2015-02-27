@@ -99,6 +99,14 @@ def test_multiple_queries_same_line(executor):
     assert "bar" in result[2]
 
 @dbtest
+def test_multiple_queries_with_special_command_same_line(executor):
+    result = run(executor, "select 'foo'; \d")
+    assert len(result) == 4  # 2 * (output+status)
+    assert "foo" in result[0]
+    # This is a lame check. :(
+    assert "Schema" in result[2]
+
+@dbtest
 def test_multiple_queries_same_line_syntaxerror(executor):
     with pytest.raises(psycopg2.ProgrammingError) as excinfo:
         run(executor, "select 'foo'; invalid syntax")
