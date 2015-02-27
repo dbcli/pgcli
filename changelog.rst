@@ -6,12 +6,15 @@ Features:
 * Add \ds special command to show sequences. 
 * Add Vi mode for keybindings. (Thanks: `Jay Zeng`_)
 * Add a -v/--version flag to pgcli.
+* Add completion for TEMPLATE keyword and smart-completion for 
+  'CREATE DATABASE blah WITH TEMPLATE <tab>'. (Thanks: `Daniel Rocco`_)
 
 Bug Fixes:
 ----------
 * Fix a rare crash caused by adding new schemas to a database. (Thanks: darikg_)
 * Make \dt command honor the explicit schema specified in the arg. (Thanks: darikg_)
 * Print BIGSERIAL type as Integer instead of Float.
+* Show completions for special commands at the beginning of a statement. (Thanks: `Daniel Rocco`_)
 
 0.15.4
 ======
