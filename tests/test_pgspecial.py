@@ -11,6 +11,14 @@ def test_slash_d_suggests_special():
     assert sorted_dicts(suggestions) == sorted_dicts(
         [{'type': 'special'}])
 
+def test_dn_suggests_schemata():
+    suggestions = suggest_type('\\dn ', '\\dn ')
+    assert suggestions == [{'type': 'schema'}]
+
+    suggestions = suggest_type('\\dn xxx', '\\dn xxx')
+    assert suggestions == [{'type': 'schema'}]
+
+
 def test_d_suggests_tables_and_schemas():
     suggestions = suggest_type('\d ', '\d ')
     assert sorted_dicts(suggestions) == sorted_dicts([

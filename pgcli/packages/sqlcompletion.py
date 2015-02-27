@@ -86,6 +86,9 @@ def suggest_special(text):
     if cmd == '\\c':
         return [{'type': 'database'}]
 
+    if cmd == '\\dn':
+        return [{'type': 'schema'}]
+
     if arg:
         # Try to distinguish "\d name" from "\d schema.name"
         # Note that this will fail to obtain a schema name if wildcards are
