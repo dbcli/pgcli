@@ -106,45 +106,44 @@ class PGExecute(object):
         self.conn = conn
         self.conn.autocommit = True
 
-    def run(self, sql):
+    def run(self, statement):
         """Execute the sql in the database and return the results. The results
         are a list of tuples. Each tuple has 3 values (rows, headers, status).
         """
 
         # Remove spaces and EOL
-        sql = sql.strip()
-        if not sql:  # Empty string
-            return [(None, None, None)]
+        statement = statement.strip()
+        if not statement:  # Empty string
+            yield (None, None, None)
 
-        # Remove spaces, eol and semi-colons.
-        sql = sql.rstrip(';')
+        # Split the sql into separate queries and run each one.
+        for sql in sqlparse.split(statement):
+            # Remove spaces, eol and semi-colons.
+            sql = sql.rstrip(';')
 
-        # Check if the command is a \c or 'use'. This is a special exception
-        # that cannot be offloaded to `pgspecial` lib. Because we have to
-        # change the database connection that we're connected to.
-        if sql.startswith('\c') or sql.lower().startswith('use'):
-            _logger.debug('Database change command detected.')
-            try:
-                dbname = sql.split()[1]
-            except:
-                _logger.debug('Database name missing.')
-                raise RuntimeError('Database name missing.')
-            self.connect(database=dbname)
-            self.dbname = dbname
-            _logger.debug('Successfully switched to DB: %r', dbname)
-            return [(None, None, 'You are now connected to database "%s" as '
-                    'user "%s"' % (self.dbname, self.user))]
+            # Check if the command is a \c or 'use'. This is a special
+            # exception that cannot be offloaded to `pgspecial` lib. Because we
+            # have to change the database connection that we're connected to.
+            if sql.startswith('\c') or sql.lower().startswith('use'):
+                _logger.debug('Database change command detected.')
+                try:
+                    dbname = sql.split()[1]
+                except:
+                    _logger.debug('Database name missing.')
+                    raise RuntimeError('Database name missing.')
+                self.connect(database=dbname)
+                self.dbname = dbname
+                _logger.debug('Successfully switched to DB: %r', dbname)
+                yield (None, None, 'You are now connected to database "%s" as '
+                        'user "%s"' % (self.dbname, self.user))
 
-        try:   # Special command
-            _logger.debug('Trying a pgspecial command. sql: %r', sql)
-            cur = self.conn.cursor()
-            return pgspecial.execute(cur, sql)
-        except KeyError:  # Regular SQL
-            # Split the sql into separate queries and run each one. If any
-            # single query fails, the rest of them are not run and no results
-            # are shown.
-            queries = sqlparse.split(sql)
-            return [self.execute_normal_sql(query) for query in queries]
+            try:   # Special command
+                _logger.debug('Trying a pgspecial command. sql: %r', sql)
+                cur = self.conn.cursor()
+                for result in pgspecial.execute(cur, sql):
+                    yield result
+            except KeyError:  # Regular SQL
+                yield self.execute_normal_sql(sql)
 
     def execute_normal_sql(self, split_sql):
         _logger.debug('Regular sql statement. sql: %r', split_sql)
