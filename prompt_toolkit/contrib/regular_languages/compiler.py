@@ -129,10 +129,11 @@ class _CompiledGrammar(object):
 
             # `Repeat`.
             elif isinstance(node, Repeat):
-                return '(?:%s){%i,%s}' % (
+                return '(?:%s){%i,%s}%s' % (
                     transform(node.childnode), node.min_repeat,
-                    ('' if node.max_repeat is None else str(node.max_repeat)))
-
+                    ('' if node.max_repeat is None else str(node.max_repeat)),
+                    ('' if node.greedy else '?')
+                )
             else:
                 raise TypeError('Got %r' % (node, ))
 
@@ -202,7 +203,11 @@ class _CompiledGrammar(object):
                         repeat_sign = '{,%i}' % (node.max_repeat - 1)
                     else:
                         repeat_sign = '*'
-                    yield '(?:%s)%s(?:%s)?' % (prefix, repeat_sign, c)
+                    yield '(?:%s)%s%s(?:%s)?' % (
+                        prefix,
+                        repeat_sign,
+                        ('' if node.greedy else '?'),
+                        c)
 
             else:
                 raise TypeError('Got %r' % node)

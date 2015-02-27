@@ -113,10 +113,11 @@ class Variable(Node):
 
 
 class Repeat(Node):
-    def __init__(self, childnode, min_repeat=0, max_repeat=None):
+    def __init__(self, childnode, min_repeat=0, max_repeat=None, greedy=True):
         self.childnode = childnode
         self.min_repeat = min_repeat
         self.max_repeat = max_repeat
+        self.greedy = greedy
 
     def __repr__(self):
         return 'Repeat(childnode=%r)' % (self.childnode, )
@@ -144,8 +145,8 @@ def tokenize_regex(input):
         \(?P=[a-zA-Z]+\)         | # Back reference to named group
         \)                       | # End of group.
         \{[^{}]*\}               | # Repetition
-        \* | \+ | \?             | # Repetition
         \*\? | \+\? | \?\?\      | # Non greedy repetition.
+        \* | \+ | \?             | # Repetition
         \#.*\n                   | # Comment
         \\. |
 
@@ -204,17 +205,20 @@ def parse_regex(regex_tokens):
                 variable = Variable(_parse(), varname=t[4:-1])
                 result.append(variable)
 
-            elif t == '*':
-                result[-1] = Repeat(result[-1])
+            elif t in ('*', '*?'):
+                greedy = (t == '*')
+                result[-1] = Repeat(result[-1], greedy=greedy)
 
-            elif t == '+':
-                result[-1] = Repeat(result[-1], min_repeat=1)
+            elif t in ('+', '+?'):
+                greedy = (t == '+')
+                result[-1] = Repeat(result[-1], min_repeat=1, greedy=greedy)
 
-            elif t == '?':
+            elif t in ('?', '??'):
                 if result == []:
                     raise Exception('Nothing to repeat.' + repr(tokens))
                 else:
-                    result[-1] = Repeat(result[-1], min_repeat=0, max_repeat=1)
+                    greedy = (t == '?')
+                    result[-1] = Repeat(result[-1], min_repeat=0, max_repeat=1, greedy=greedy)
 
             elif t == '|':
                 or_list.append(result)
