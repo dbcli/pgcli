@@ -3,6 +3,7 @@ import sys
 import sqlparse
 from sqlparse.sql import Comparison
 from .parseutils import last_word, extract_tables, find_prev_keyword
+from .pgspecial import parse_special_command
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
@@ -30,7 +31,8 @@ def suggest_type(full_text, text_before_cursor):
     # partially typed string which renders the smart completion useless because
     # it will always return the list of keywords as completion.
     if word_before_cursor:
-        if word_before_cursor[-1] in ('(', '.'):
+        if (word_before_cursor[-1] in ('(', '.')
+                or word_before_cursor[0] == '\\'):
             parsed = sqlparse.parse(text_before_cursor)
         else:
             parsed = sqlparse.parse(
@@ -61,9 +63,49 @@ def suggest_type(full_text, text_before_cursor):
         # The empty string
         statement = None
 
+    # Check for special commands and handle those separately
+    if statement:
+        # Be careful here because trivial whitespace is parsed as a statement,
+        # but the statement won't have a first token
+        tok1 = statement.token_first()
+        if tok1 and tok1.value == '\\':
+            return suggest_special(text_before_cursor)
+
     last_token = statement and statement.token_prev(len(statement.tokens)) or ''
 
     return suggest_based_on_last_token(last_token, text_before_cursor, full_text)
+
+
+def suggest_special(text):
+    cmd, _, arg = parse_special_command(text)
+
+    if cmd == text:
+        # Trying to complete the special command itself
+        return [{'type': 'special'}]
+
+    if cmd == '\\c':
+        return [{'type': 'database'}]
+
+    if arg:
+        # Try to distinguish "\d name" from "\d schema.name"
+        # Note that this will fail to obtain a schema name if wildcards are
+        # used, e.g. "\d schema???.name"
+        parsed = sqlparse.parse(arg)[0].tokens[0]
+        try:
+            schema = parsed.get_parent_name()
+        except AttributeError:
+            schema = None
+    else:
+        schema = None
+
+    if cmd[1:] in ('d', 'dt', 'dv'):
+        if schema:
+            return [{'type': 'table', 'schema': schema}]
+        else:
+            return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
+
+    return [{'type': 'keyword'}, {'type': 'special'}]
+
 
 def suggest_based_on_last_token(token, text_before_cursor, full_text):
     if isinstance(token, string_types):
@@ -111,20 +153,6 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
 
         return [{'type': 'alias', 'aliases': alias}]
 
-    elif token_v in ('d',):  # \d
-        # Apparently "\d <other>" is parsed by sqlparse as
-        # Identifer('d', Whitespace, '<other>')
-        if len(token.tokens) > 2:
-            other = token.tokens[-1].value
-            identifiers = other.split('.')
-            if len(identifiers) == 1:
-                # "\d table" or "\d schema"
-                return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
-            elif len(identifiers) == 2:
-                # \d schema.table
-                return [{'type': 'table', 'schema': identifiers[0]}]
-        else:
-            return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
     elif token_v.lower() in ('c', 'use', 'database', 'template'):
         # "\c <db", "use <db>", "DROP DATABASE <db>",
         # "CREATE DATABASE <newdb> WITH TEMPLATE <db>"
