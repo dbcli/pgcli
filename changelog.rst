@@ -15,6 +15,8 @@ Bug Fixes:
 * Make \dt command honor the explicit schema specified in the arg. (Thanks: darikg_)
 * Print BIGSERIAL type as Integer instead of Float.
 * Show completions for special commands at the beginning of a statement. (Thanks: `Daniel Rocco`_)
+* Allow special commands to work in a multi-statement case where multiple sql
+  statements are separated by semi-colon in the same line. 
 
 0.15.4
 ======
