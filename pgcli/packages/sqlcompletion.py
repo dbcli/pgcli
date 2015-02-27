@@ -103,6 +103,11 @@ def suggest_special(text):
             return [{'type': 'table', 'schema': schema}]
         else:
             return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
+    elif cmd[1:] == 'df':
+        if schema:
+            return [{'type': 'function', 'schema': schema}]
+        else:
+            return [{'type': 'schema'}, {'type': 'function', 'schema': []}]
 
     return [{'type': 'keyword'}, {'type': 'special'}]
 
