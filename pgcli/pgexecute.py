@@ -10,19 +10,18 @@ _logger = logging.getLogger(__name__)
 
 # Cast all database input to unicode automatically.
 # See http://initd.org/psycopg/docs/usage.html#unicode-handling for more info.
-ext.register_type(psycopg2.extensions.UNICODE)
-ext.register_type(psycopg2.extensions.UNICODEARRAY)
+ext.register_type(ext.UNICODE)
+ext.register_type(ext.UNICODEARRAY)
 ext.register_type(ext.new_type((705,), "UNKNOWN", ext.UNICODE))
 ext.register_type(ext.new_type((51766,), "HSTORE", ext.UNICODE))
 
 # Cast bytea fields to text. By default, this will render as hex strings with
 # Postgres 9+ and as escaped binary in earlier versions.
-psycopg2.extensions.register_type(
-    psycopg2.extensions.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
+ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
-psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
+ext.set_wait_callback(psycopg2.extras.wait_select)
 
 class PGExecute(object):
 
