@@ -123,6 +123,71 @@ def list_indexes(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['i', 's', ''])
 
 
+def list_functions(cur, pattern, verbose):
+
+    if verbose:
+        verbose_columns = '''
+            ,CASE
+                 WHEN p.provolatile = 'i' THEN 'immutable'
+                 WHEN p.provolatile = 's' THEN 'stable'
+                 WHEN p.provolatile = 'v' THEN 'volatile'
+            END as "Volatility",
+            pg_catalog.pg_get_userbyid(p.proowner) as "Owner",
+          l.lanname as "Language",
+          p.prosrc as "Source code",
+          pg_catalog.obj_description(p.oid, 'pg_proc') as "Description" '''
+
+        verbose_table = ''' LEFT JOIN pg_catalog.pg_language l
+                                ON l.oid = p.prolang'''
+    else:
+        verbose_columns = verbose_table = ''
+
+    sql = '''
+        SELECT  n.nspname as "Schema",
+                p.proname as "Name",
+                pg_catalog.pg_get_function_result(p.oid)
+                  as "Result data type",
+                pg_catalog.pg_get_function_arguments(p.oid)
+                  as "Argument data types",
+                 CASE
+                    WHEN p.proisagg THEN 'agg'
+                    WHEN p.proiswindow THEN 'window'
+                    WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype
+                        THEN 'trigger'
+                    ELSE 'normal'
+                END as "Type" ''' + verbose_columns + '''
+        FROM    pg_catalog.pg_proc p
+                LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+                        ''' + verbose_table + '''
+        WHERE  '''
+
+    schema_pattern, func_pattern = sql_name_pattern(pattern)
+    params = []
+
+    if schema_pattern:
+        sql += ' n.nspname ~ %s '
+        params.append(schema_pattern)
+    else:
+        sql += ' pg_catalog.pg_function_is_visible(p.oid) '
+
+    if func_pattern:
+        sql += ' AND p.proname ~ %s '
+        params.append(func_pattern)
+
+    if not (schema_pattern or func_pattern):
+        sql += ''' AND n.nspname <> 'pg_catalog'
+                   AND n.nspname <> 'information_schema' '''
+
+    sql = cur.mogrify(sql + ' ORDER BY 1, 2, 4', params)
+
+    log.debug(sql)
+    cur.execute(sql)
+
+    if cur.description:
+        headers = [x[0] for x in cur.description]
+        return [(cur, headers, cur.statusmessage)]
+
+
 def describe_table_details(cur, pattern, verbose):
     """
     Returns (rows, headers, status)
@@ -864,6 +929,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\\di': (list_indexes, ['\\di[+] [pattern]', 'list indexes.']),
             '\\dv': (list_views, ['\\dv[+] [pattern]', 'list views.']),
             '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'list sequences.']),
+            '\\df': (list_functions, ['\\df[+] [pattern]', 'list functions.'])
             }
 
 NON_CASE_SENSITIVE_COMMANDS = {
