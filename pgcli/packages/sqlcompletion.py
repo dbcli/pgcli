@@ -1,7 +1,7 @@
 from __future__ import print_function
 import sys
 import sqlparse
-from sqlparse.sql import Comparison
+from sqlparse.sql import Comparison, Identifier
 from .parseutils import last_word, extract_tables, find_prev_keyword
 from .pgspecial import parse_special_command
 
@@ -23,7 +23,9 @@ def suggest_type(full_text, text_before_cursor):
     """
 
     word_before_cursor = last_word(text_before_cursor,
-            include='most_punctuations')
+            include='many_punctuations')
+
+    identifier = None
 
     # If we've partially typed a word then word_before_cursor won't be an empty
     # string. In that case we want to remove the partially typed string before
@@ -31,12 +33,18 @@ def suggest_type(full_text, text_before_cursor):
     # partially typed string which renders the smart completion useless because
     # it will always return the list of keywords as completion.
     if word_before_cursor:
-        if (word_before_cursor[-1] in ('(', '.')
-                or word_before_cursor[0] == '\\'):
+        if word_before_cursor[-1] == '(' or word_before_cursor[0] == '\\':
             parsed = sqlparse.parse(text_before_cursor)
         else:
             parsed = sqlparse.parse(
                     text_before_cursor[:-len(word_before_cursor)])
+
+            # word_before_cursor may include a schema qualification, like
+            # "schema_name.partial_name" or "schema_name.", so parse it
+            # separately
+            p = sqlparse.parse(word_before_cursor)[0]
+            if p.tokens and isinstance(p.tokens[0], Identifier):
+                identifier = p.tokens[0]
     else:
         parsed = sqlparse.parse(text_before_cursor)
 
@@ -73,7 +81,8 @@ def suggest_type(full_text, text_before_cursor):
 
     last_token = statement and statement.token_prev(len(statement.tokens)) or ''
 
-    return suggest_based_on_last_token(last_token, text_before_cursor, full_text)
+    return suggest_based_on_last_token(last_token, text_before_cursor,
+                                       full_text, identifier)
 
 
 def suggest_special(text):
@@ -116,7 +125,7 @@ def suggest_special(text):
     return [{'type': 'keyword'}, {'type': 'special'}]
 
 
-def suggest_based_on_last_token(token, text_before_cursor, full_text):
+def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier):
     if isinstance(token, string_types):
         token_v = token
     else:
@@ -146,21 +155,49 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
     elif token_v.lower() in ('set', 'by', 'distinct'):
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
     elif token_v.lower() in ('select', 'where', 'having'):
-        return [{'type': 'column', 'tables': extract_tables(full_text)},
-                {'type': 'function', 'schema': []}]
+        # Check for a table alias or schema qualification
+        parent = (identifier and identifier.get_parent_name()) or []
+
+        if parent:
+            tables = extract_tables(full_text)
+            tables = [t for t in tables if identifies(parent, *t)]
+            return [{'type': 'column', 'tables': tables},
+                    {'type': 'table', 'schema': parent},
+                    {'type': 'function', 'schema': parent}]
+        else:
+            return [{'type': 'column', 'tables': extract_tables(full_text)},
+                    {'type': 'function', 'schema': []}]
     elif token_v.lower() in ('copy', 'from', 'update', 'into', 'describe',
-            'join', 'table'):
-        return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
+                             'join', 'table'):
+        schema = (identifier and identifier.get_parent_name()) or []
+        if schema:
+            # If already schema-qualified, suggest only tables
+            return [{'type': 'table', 'schema': schema}]
+        else:
+            # Suggest schemas OR public tables
+            return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
     elif token_v.lower() == 'function':
         # E.g. 'DROP FUNCTION <funcname>'
-        return [{'type': 'schema'}, {'type': 'function', 'schema': []}]
+        schema = (identifier and identifier.get_parent_name()) or []
+        if schema:
+            return [{'type': 'function', 'schema': schema}]
+        else:
+            return [{'type': 'schema'}, {'type': 'function', 'schema': []}]
     elif token_v.lower() == 'on':
         tables = extract_tables(full_text)  # [(schema, table, alias), ...]
-
-        # Use table alias if there is one, otherwise the table name
-        alias = [t[2] or t[1] for t in tables]
-
-        return [{'type': 'alias', 'aliases': alias}]
+        parent = (identifier and identifier.get_parent_name()) or []
+        if parent:
+            # "ON parent.<suggestion>"
+            # parent can be either a schema name or table alias
+            tables = [t for t in tables if identifies(parent, *t)]
+            return [{'type': 'column', 'tables': tables},
+                    {'type': 'table', 'schema': parent},
+                    {'type': 'function', 'schema': parent}]
+        else:
+            # ON <suggestion>
+            # Use table alias if there is one, otherwise the table name
+            aliases = [t[2] or t[1] for t in tables]
+            return [{'type': 'alias', 'aliases': aliases}]
 
     elif token_v.lower() in ('c', 'use', 'database', 'template'):
         # "\c <db", "use <db>", "DROP DATABASE <db>",
@@ -170,23 +207,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text):
         prev_keyword = find_prev_keyword(text_before_cursor)
         if prev_keyword:
             return suggest_based_on_last_token(
-                prev_keyword, text_before_cursor, full_text)
-    elif token_v.endswith('.'):
-
-        suggestions = []
-
-        identifier = last_word(token_v[:-1], 'all_punctuations')
-
-        # TABLE.<suggestion> or SCHEMA.TABLE.<suggestion>
-        tables = extract_tables(full_text)
-        tables = [t for t in tables if identifies(identifier, *t)]
-        suggestions.append({'type': 'column', 'tables': tables})
-
-        # SCHEMA.<suggestion>
-        suggestions.extend([{'type': 'table', 'schema': identifier},
-                            {'type': 'function', 'schema': identifier}])
-
-        return suggestions
+                prev_keyword, text_before_cursor, full_text, identifier)
     else:
         return [{'type': 'keyword'}]
 
