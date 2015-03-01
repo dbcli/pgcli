@@ -31,6 +31,7 @@ from .pgbuffer import PGBuffer
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
+from .__init__ import __version__
 
 
 try:
@@ -168,6 +169,11 @@ class PGCli(object):
         completer = self.completer
         self.refresh_completions()
         key_binding_manager = pgcli_bindings(self.vi_mode)
+        print('Version:', __version__)
+        print('Questions?\n'
+              'Chat: https://gitter.im/amjith/pgcli\n'
+              'Mail: https://groups.google.com/forum/#!forum/pgcli')
+        print('http://pgcli.com')
 
         layout = Layout(before_input=DefaultPrompt(prompt),
             menus=[CompletionsMenu(max_height=10)],
@@ -316,7 +322,6 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
         username, version):
 
     if version:
-        from .__init__ import __version__
         print('Version:', __version__)
         sys.exit(0)
 
