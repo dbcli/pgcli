@@ -3,7 +3,7 @@
 import pytest
 import psycopg2
 from textwrap import dedent
-from utils import run, dbtest
+from utils import run, dbtest, requires_json, requires_jsonb
 
 @dbtest
 def test_conn(executor):
@@ -125,6 +125,25 @@ def test_bytea_field_support_in_output(executor):
 
     assert u'\\xdeadbeef' in run(executor, "select * from binarydata", join=True)
 
+
 @dbtest
 def test_unicode_support_in_unknown_type(executor):
     assert u'日本語' in run(executor, "SELECT '日本語' AS japanese;", join=True)
+
+
+@requires_json
+def test_json_renders_without_u_prefix(executor, expanded):
+    run(executor, "create table jsontest(d json)")
+    run(executor, """insert into jsontest (d) values ('{"name": "Éowyn"}')""")
+    result = run(executor, "SELECT d FROM jsontest LIMIT 1", join=True)
+
+    assert u'{"name": "Éowyn"}' in result
+
+
+@requires_jsonb
+def test_jsonb_renders_without_u_prefix(executor, expanded):
+    run(executor, "create table jsonbtest(d jsonb)")
+    run(executor, """insert into jsonbtest (d) values ('{"name": "Éowyn"}')""")
+    result = run(executor, "SELECT d FROM jsonbtest LIMIT 1", join=True)
+
+    assert u'{"name": "Éowyn"}' in result

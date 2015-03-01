@@ -23,6 +23,34 @@ ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
 ext.set_wait_callback(psycopg2.extras.wait_select)
 
+
+def register_json_typecasters(conn, loads_fn):
+    """Set the function for converting JSON data for a connection.
+
+    Use the supplied function to decode JSON data returned from the database
+    via the given connection. The function should accept a single argument of
+    the data as a string encoded in the database's character encoding.
+    psycopg2's default handler for JSON data is json.loads.
+    http://initd.org/psycopg/docs/extras.html#json-adaptation
+
+    This function attempts to register the typecaster for both JSON and JSONB
+    types.
+
+    Returns a set that is a subset of {'json', 'jsonb'} indicating which types
+    (if any) were successfully registered.
+    """
+    available = set()
+
+    for name in ['json', 'jsonb']:
+        try:
+            psycopg2.extras.register_json(conn, loads=loads_fn, name=name)
+            available.add(name)
+        except psycopg2.ProgrammingError:
+            pass
+
+    return available
+
+
 class PGExecute(object):
 
     search_path_query = '''
@@ -104,6 +132,18 @@ class PGExecute(object):
             self.conn.close()
         self.conn = conn
         self.conn.autocommit = True
+        register_json_typecasters(self.conn, self._json_typecaster)
+
+    def _json_typecaster(self, json_data):
+        """Interpret incoming JSON data as a string.
+
+        The raw data is decoded using the connection's encoding, which defaults
+        to the database's encoding.
+
+        See http://initd.org/psycopg/docs/connection.html#connection.encoding
+        """
+
+        return json_data.decode(self.conn.encoding)
 
     def run(self, statement):
         """Execute the sql in the database and return the results. The results
