@@ -4,7 +4,7 @@
 Features:
 ---------
 * Add \ds special command to show sequences. 
-* Add Vi mode for keybindings. (Thanks: `Jay Zeng`_)
+* Add Vi mode for keybindings. This can be enabled by adding 'vi = True' in ~/.pgclirc. (Thanks: `Jay Zeng`_)
 * Add a -v/--version flag to pgcli.
 * Add completion for TEMPLATE keyword and smart-completion for 
   'CREATE DATABASE blah WITH TEMPLATE <tab>'. (Thanks: `Daniel Rocco`_)
