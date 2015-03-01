@@ -7,6 +7,8 @@ from sqlparse.tokens import Keyword, DML, Punctuation
 cleanup_regex = {
         # This matches only alphanumerics and underscores.
         'alphanum_underscore': re.compile(r'(\w+)$'),
+        # This matches everything except spaces, parens, and comma
+        'many_punctuations': re.compile(r'([^(),\s]+)$'),
         # This matches everything except spaces, parens, comma, and period
         'most_punctuations': re.compile(r'([^\.(),\s]+)$'),
         # This matches everything except a space.
