@@ -12,6 +12,7 @@ Features:
   removes the unicode prefix (eg: u'Éowyn') in the output. (Thanks: `Daniel Rocco`_)
 * Add \df special command to show functions. (Thanks: darikg_)
 * Make suggestions for special commands smarter. eg: \dn - only suggests schemas. (Thanks: darikg_)
+* Print out the version and other meta info about pgcli at startup.
 
 Bug Fixes:
 ----------
