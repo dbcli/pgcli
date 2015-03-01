@@ -8,6 +8,10 @@ Features:
 * Add a -v/--version flag to pgcli.
 * Add completion for TEMPLATE keyword and smart-completion for 
   'CREATE DATABASE blah WITH TEMPLATE <tab>'. (Thanks: `Daniel Rocco`_)
+* Add custom decoders to json/jsonb to emulate the behavior of psql. This
+  removes the unicode prefix (eg: u'Éowyn') in the output. (Thanks: `Daniel Rocco`_)
+* Add \df special command to show functions. (Thanks: darikg_)
+* Make suggestions for special commands smarter. eg: \dn - only suggests schemas. (Thanks: darikg_)
 
 Bug Fixes:
 ----------
