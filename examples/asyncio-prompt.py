@@ -18,7 +18,7 @@ possible. ::
     sys.stdout = cli.stdout_proxy()
 """
 from __future__ import unicode_literals
-from prompt_toolkit import AbortAction, Exit, Abort
+from prompt_toolkit import AbortAction
 from prompt_toolkit.contrib.shortcuts import create_cli
 
 from pygments.style import Style
@@ -68,7 +68,7 @@ def interactive_shell():
                 on_exit=AbortAction.RAISE_EXCEPTION,
                 on_abort=AbortAction.RAISE_EXCEPTION)
             print('You said: "%s"' % result.text)
-        except (Exit, Abort):
+        except (EOFError, KeyboardInterrupt):
             loop.stop()
             print('Qutting event loop. Bye.')
             return
