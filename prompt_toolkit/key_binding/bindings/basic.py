@@ -167,17 +167,6 @@ def load_basic_bindings(registry, filter=None):
         # executing.
         event.cli.call_from_executor(feed)
 
-    @handle(Keys.Escape, Keys.ControlM)
-    def _(event):
-        """
-        Transform Esc-ControlM into Esc-ControlJ.
-        """
-        def feed():
-            event.cli.input_processor.feed_key(KeyPress(Keys.Escape, ''))
-            event.cli.input_processor.feed_key(KeyPress(Keys.ControlJ, ''))
-
-        event.cli.call_from_executor(feed)
-
     @handle(Keys.ControlJ, filter= ~has_selection)
     def _(event):
         """

@@ -147,6 +147,21 @@ def load_emacs_bindings(registry, filter=None):
         if event._arg is None:
             event.append_to_arg_count('-')
 
+    @handle(Keys.Escape, Keys.ControlM)
+    def _(event):
+        """
+        Transform Esc-ControlM into Esc-ControlJ.
+        """
+        # NOTE: Don't put this handler in base.py. We don't want this binding
+        # to be active in Vi mode. (Esc needs to be handled immediately in
+        # Vi mode, and therefor, we cannot have any other key bindings starting
+        # with escape.)
+        def feed():
+            event.cli.input_processor.feed_key(KeyPress(Keys.Escape, ''))
+            event.cli.input_processor.feed_key(KeyPress(Keys.ControlJ, ''))
+
+        event.cli.call_from_executor(feed)
+
     @handle(Keys.Escape, Keys.ControlJ, filter= ~has_selection)
     def _(event):
         """
