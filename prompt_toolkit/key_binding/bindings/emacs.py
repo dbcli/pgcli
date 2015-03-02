@@ -110,6 +110,10 @@ def load_emacs_bindings(registry, filter=None):
     def _(event):
         """
         Quoted insert.
+
+        For vt100 terminals, you have to disable flow control by running
+        ``stty -ixon``, otherwise Ctrl-Q and Ctrl-S are captured by the
+        terminal.
         """
         event.current_buffer.insert_text(event.data, overwrite=False)
 
