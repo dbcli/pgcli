@@ -45,7 +45,7 @@ class PGCompleter(Completer):
 
         self.special_commands = []
         self.databases = []
-        self.dbmetadata = {'tables': {}, 'functions': {}}
+        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
         self.search_path = []
 
         self.all_completions = set(self.keywords + self.functions)
@@ -96,30 +96,40 @@ class PGCompleter(Completer):
 
         self.all_completions.update(schemata)
 
-    def extend_tables(self, table_data):
+    def extend_relations(self, data, kind):
+        """ extend metadata for tables or views
 
-        # table_data is a list of (schema_name, table_name) tuples
-        table_data = [self.escaped_names(d) for d in table_data]
+        :param data: list of (schema_name, rel_name) tuples
+        :param kind: either 'tables' or 'views'
+        :return:
+        """
+
+        data = [self.escaped_names(d) for d in data]
 
         # dbmetadata['tables']['schema_name']['table_name'] should be a list of
         # column names. Default to an asterisk
-        metadata = self.dbmetadata['tables']
-        for schema, table in table_data:
+        metadata = self.dbmetadata[kind]
+        for schema, relname in data:
             try:
-                metadata[schema][table] = ['*']
+                metadata[schema][relname] = ['*']
             except AttributeError:
-                _logger.error('Table %r listed in unrecognized schema %r',
-                              table, schema)
+                _logger.error('%r %r listed in unrecognized schema %r',
+                              kind, relname, schema)
 
         self.all_completions.update(t[1] for t in table_data)
 
-    def extend_columns(self, column_data):
+    def extend_columns(self, column_data, kind):
+        """ extend column metadata
 
-        # column_data is a list of (schema_name, table_name, column_name) tuples
+        :param column_data: list of (schema_name, rel_name, column_name) tuples
+        :param kind: either 'tables' or 'views'
+        :return:
+        """
+
         column_data = [self.escaped_names(d) for d in column_data]
-        metadata = self.dbmetadata['tables']
-        for schema, table, column in column_data:
-            metadata[schema][table].append(column)
+        metadata = self.dbmetadata[kind]
+        for schema, relname, column in column_data:
+            metadata[schema][relname].append(column)
 
         self.all_completions.update(t[2] for t in column_data)
 
@@ -143,8 +153,8 @@ class PGCompleter(Completer):
     def reset_completions(self):
         self.databases = []
         self.search_path = []
-        self.dbmetadata = {'tables': {}, 'functions': {}}
-        self.all_completions = set(self.keywords)
+        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
+        self.all_completions = set(self.keywords + self.functions)
 
     @staticmethod
     def find_matches(text, collection):
