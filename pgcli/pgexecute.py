@@ -82,7 +82,7 @@ class PGExecute(object):
         FROM 	pg_catalog.pg_class c
                 LEFT JOIN pg_catalog.pg_namespace n
                     ON n.oid = c.relnamespace
-        WHERE 	c.relkind IN ('r','v', 'm') -- table, view, materialized view
+        WHERE 	c.relkind = ANY(%s)
                 AND n.nspname !~ '^pg_'
                 AND nspname <> 'information_schema'
         ORDER BY 1,2;'''
@@ -96,7 +96,7 @@ class PGExecute(object):
                     ON att.attrelid = cls.oid
                 INNER JOIN pg_catalog.pg_namespace nsp
                     ON cls.relnamespace = nsp.oid
-        WHERE 	cls.relkind IN ('r', 'v', 'm')
+        WHERE 	cls.relkind = ANY(%s)
                 AND nsp.nspname !~ '^pg_'
                 AND nsp.nspname <> 'information_schema'
                 AND NOT att.attisdropped
@@ -231,21 +231,60 @@ class PGExecute(object):
             cur.execute(self.schemata_query)
             return [x[0] for x in cur.fetchall()]
 
+    def _relations(self, kinds=('r', 'v', 'm')):
+        """Get table or view name metadata
+
+        :param kinds: list of postgres relkind filters:
+                'r' - table
+                'v' - view
+                'm' - materialized view
+        :return: (schema_name, rel_name) tuples
+        """
+
+        with self.conn.cursor() as cur:
+            sql = cur.mogrify(self.tables_query, [kinds])
+            _logger.debug('Tables Query. sql: %r', sql)
+            cur.execute(sql)
+            for row in cur:
+                yield row
+
     def tables(self):
-        """Returns a list of (schema_name, table_name) tuples """
+        """Yields (schema_name, table_name) tuples"""
+        for row in self._relations(kinds=['r']):
+            yield row
+
+    def views(self):
+        """Yields (schema_name, view_name) tuples.
+
+            Includes both views and and materialized views
+        """
+        for row in self._relations(kinds=['v', 'm']):
+            yield row
+
+    def _columns(self, kinds=('r', 'v', 'm')):
+        """Get column metadata for tables and views
+
+        :param kinds: kinds: list of postgres relkind filters:
+                'r' - table
+                'v' - view
+                'm' - materialized view
+        :return: list of (schema_name, relation_name, column_name) tuples
+        """
 
         with self.conn.cursor() as cur:
-            _logger.debug('Tables Query. sql: %r', self.tables_query)
-            cur.execute(self.tables_query)
-            return cur.fetchall()
+            sql = cur.mogrify(self.columns_query, [kinds])
+            _logger.debug('Columns Query. sql: %r', sql)
+            cur.execute(sql)
+            for row in cur:
+                yield row
 
-    def columns(self):
-        """Returns a list of (schema_name, table_name, column_name) tuples"""
+    def table_columns(self):
+        for row in self._columns(kinds=['r']):
+            yield row
 
-        with self.conn.cursor() as cur:
-            _logger.debug('Columns Query. sql: %r', self.columns_query)
-            cur.execute(self.columns_query)
-            return cur.fetchall()
+    def view_columns(self):
+        for row in self._columns(kinds=['v', 'm']):
+            yield row
 
     def databases(self):
         with self.conn.cursor() as cur:
