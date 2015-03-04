@@ -175,14 +175,14 @@ class PGExecute(object):
                 _logger.debug('Successfully switched to DB: %r', dbname)
                 yield (None, None, 'You are now connected to database "%s" as '
                         'user "%s"' % (self.dbname, self.user))
-
-            try:   # Special command
-                _logger.debug('Trying a pgspecial command. sql: %r', sql)
-                cur = self.conn.cursor()
-                for result in pgspecial.execute(cur, sql):
-                    yield result
-            except KeyError:  # Regular SQL
-                yield self.execute_normal_sql(sql)
+            else:
+                try:   # Special command
+                    _logger.debug('Trying a pgspecial command. sql: %r', sql)
+                    cur = self.conn.cursor()
+                    for result in pgspecial.execute(cur, sql):
+                        yield result
+                except KeyError:  # Regular SQL
+                    yield self.execute_normal_sql(sql)
 
     def execute_normal_sql(self, split_sql):
         _logger.debug('Regular sql statement. sql: %r', split_sql)
