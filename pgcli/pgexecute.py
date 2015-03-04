@@ -13,7 +13,6 @@ _logger = logging.getLogger(__name__)
 ext.register_type(ext.UNICODE)
 ext.register_type(ext.UNICODEARRAY)
 ext.register_type(ext.new_type((705,), "UNKNOWN", ext.UNICODE))
-ext.register_type(ext.new_type((51766,), "HSTORE", ext.UNICODE))
 
 # Cast bytea fields to text. By default, this will render as hex strings with
 # Postgres 9+ and as escaped binary in earlier versions.
@@ -50,6 +49,20 @@ def register_json_typecasters(conn, loads_fn):
 
     return available
 
+def register_hstore_typecaster(conn):
+    """
+    Instead of using register_hstore() which converts hstore into a python
+    dict, we query the 'oid' of hstore which will be different for each
+    database and register a type caster that converts it to unicode.
+    http://initd.org/psycopg/docs/extras.html#psycopg2.extras.register_hstore
+    """
+    with conn.cursor() as cur:
+        try:
+            cur.execute("SELECT 'hstore'::regtype::oid")
+            oid = cur.fetchone()[0]
+            ext.register_type(ext.new_type((oid,), "HSTORE", ext.UNICODE))
+        except Exception:
+            pass
 
 class PGExecute(object):
 
@@ -133,6 +146,7 @@ class PGExecute(object):
         self.conn = conn
         self.conn.autocommit = True
         register_json_typecasters(self.conn, self._json_typecaster)
+        register_hstore_typecaster(self.conn)
 
     def _json_typecaster(self, json_data):
         """Interpret incoming JSON data as a string.
