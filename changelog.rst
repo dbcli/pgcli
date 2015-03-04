@@ -1,3 +1,10 @@
+0.16.1
+======
+Bug Fixes:
+----------
+* Fix unicode issues with hstore.
+* Fix a silent error when database is changed using \\c.
+
 0.16.0
 ======
 
