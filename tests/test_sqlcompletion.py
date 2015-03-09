@@ -253,3 +253,9 @@ def test_specials_not_included_after_initial_token():
                                'create table foo (dt d')
 
     assert sorted_dicts(suggestions) == sorted_dicts([{'type': 'keyword'}])
+
+
+def test_drop_schema_qualified_table_suggests_only_tables():
+    text = 'DROP TABLE schema_name.table_name'
+    suggestions = suggest_type(text, text)
+    assert suggestions == [{'type': 'table', 'schema': 'schema_name'}]
