@@ -1,5 +1,16 @@
+0.16.2
+======
+
+Bug Fixes:
+----------
+* Fix the bug where the schema qualifier was ignored by the auto-completion.
+  This now results in better suggestions for tables vs functions. (Thanks: darikg_)
+* Add the FUNCTION keyword to auto-completion.
+
+
 0.16.1
 ======
+
 Bug Fixes:
 ----------
 * Fix unicode issues with hstore.
