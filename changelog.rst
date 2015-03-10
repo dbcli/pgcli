@@ -3,10 +3,10 @@
 
 Bug Fixes:
 ----------
-* Fix the bug where the schema qualifier was ignored by the auto-completion.
-  This now results in better suggestions for tables vs functions. (Thanks: darikg_)
+* Fix a bug where the schema qualifier was ignored by the auto-completion.
+  As a result the suggestions for tables vs functions are cleaner. (Thanks: darikg_)
 * Add the FUNCTION keyword to auto-completion.
-
+* Display NULL values as <null> instead of empty strings. 
 
 0.16.1
 ======
