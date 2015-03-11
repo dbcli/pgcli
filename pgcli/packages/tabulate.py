@@ -5,6 +5,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 from collections import namedtuple
+from decimal import Decimal
 from platform import python_version_tuple
 import re
 
@@ -331,7 +332,7 @@ def _type(string, has_invisible=True):
 
     if string is None:
         return _none_type
-    if isinstance(string, bool):
+    if isinstance(string, (bool, Decimal,)):
         return _text_type
     elif hasattr(string, "isoformat"):  # datetime.datetime, date, and time
         return _text_type
