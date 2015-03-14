@@ -350,7 +350,8 @@ def format_output(cur, headers, status, table_format):
         if is_expanded_output():
             output.append(expanded_table(cur, headers))
         else:
-            output.append(tabulate(cur, headers, tablefmt=table_format, missingval='<null>'))
+            output.append(tabulate(cur, headers, tablefmt=table_format,
+                missingval='<null>'))
     if status:  # Only print the status if it's not None.
         output.append(status)
     return output
@@ -361,8 +362,8 @@ def need_completion_refresh(queries):
     for query in sqlparse.split(queries):
         try:
             first_token = query.split()[0]
-            return first_token.lower() in ('alter', 'create', 'use', '\c',
-                    'drop')
+            return first_token.lower() in ('alter', 'create', 'use', '\\c',
+                    '\\connect', 'drop')
         except Exception:
             return False
 
