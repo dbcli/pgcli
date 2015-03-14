@@ -7,6 +7,7 @@ Bug Fixes:
   As a result the suggestions for tables vs functions are cleaner. (Thanks: darikg_)
 * Add the FUNCTION keyword to auto-completion.
 * Display NULL values as <null> instead of empty strings. 
+* Fix the completion refresh when ``\connect`` is executed.
 
 0.16.1
 ======
