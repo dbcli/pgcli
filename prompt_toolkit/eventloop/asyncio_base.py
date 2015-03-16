@@ -1,69 +1,46 @@
 """
 Eventloop for integration with Python3 asyncio.
 
-Windows notes:
-- Somehow it doesn't seem to work with the 'ProactorEventLoop'.
-
 Note that we can't use "yield from", because the package should be installable
 under Python 2.6 as well, and it should contain syntactically valid Python 2.6
 code.
 """
 from __future__ import unicode_literals
 
-from codecs import getincrementaldecoder
-
-from .base import BaseEventLoop
-
-import asyncio
-
 __all__ = (
-    'BaseAsyncioEventLoop',
+    'AsyncioTimeout',
 )
 
 
-class BaseAsyncioEventLoop(BaseEventLoop):
-    stdin_decoder_cls = getincrementaldecoder('utf-8')
+class AsyncioTimeout(object):
+    """
+    Call the `timeout` function when the timeout expires.
+    Every call of the `reset` method, resets the timeout and starts a new
+    timer.
+    """
+    def __init__(self, timeout, callback, loop):
+        self.timeout = timeout
+        self.callback = callback
+        self.loop = loop
 
-    def __init__(self, input_processor, stdin, loop=None):
-        super(BaseAsyncioEventLoop, self).__init__(input_processor, stdin)
+        self.counter = 0
+        self.running = True
 
-        self.loop = loop or asyncio.get_event_loop()
-
-    def wait_for_input(self, f_ready):
-        raise NotImplementedError('')
-
-    @asyncio.coroutine
-    def loop_coroutine(self):
+    def reset(self):
         """
-        The input 'event loop'.
+        Reset the timeout. Starts a new timer.
         """
-        if self.closed:
-            raise Exception('Event loop already closed.')
+        self.counter += 1
+        local_counter = self.counter
 
-        f_ready = asyncio.Future()
-        self.wait_for_input(f_ready)
+        def timer_timeout():
+            if self.counter == local_counter and self.running:
+                self.callback()
 
-        # Start a timeout coroutine.
-        @asyncio.coroutine
-        def timeout():
-            for f in asyncio.sleep(self.input_timeout, loop=self.loop):
-                yield f
+        self.loop.call_later(self.timeout, timer_timeout)
 
-            # Only fire timeout event when no input data was returned yet.
-            if not f_ready.done():
-                self.onInputTimeout.fire()
-        asyncio.async(timeout(), loop=self.loop)
-
-        # Return when there is input ready.
-        for f in f_ready:
-            yield f
-
-    def run_in_executor(self, callback):
-        self.loop.run_in_executor(None, callback)
-
-    def call_from_executor(self, callback):
+    def stop(self):
         """
-        Call this function in the main event loop.
-        Similar to Twisted's ``callFromThread``.
+        Ignore timeout. Don't call the callback anymore.
         """
-        self.loop.call_soon(callback)
+        self.running = False

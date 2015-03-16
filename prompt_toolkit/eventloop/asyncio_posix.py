@@ -1,63 +1,99 @@
 """
-Win32 asyncio event loop.
-
-Windows notes:
-- Somehow it doesn't seem to work with the 'ProactorEventLoop'.
+Posix asyncio event loop.
 """
 from __future__ import unicode_literals
 
-from .asyncio_base import BaseAsyncioEventLoop
 from ..terminal.vt100_input import InputStream
+from .asyncio_base import AsyncioTimeout
+from .base import EventLoop, INPUT_TIMEOUT
+from .callbacks import EventLoopCallbacks
+from .posix_utils import PosixStdinReader
 
-import os
-
+import asyncio
+import signal
 
 __all__ = (
-    'Win32AsyncioEventLoop',
+    'PosixAsyncioEventLoop',
 )
 
 
-class PosixAsyncioEventLoop(BaseAsyncioEventLoop):
-    def __init__(self, input_processor, stdin, loop=None):
-        super(PosixAsyncioEventLoop, self).__init__(input_processor, stdin)
+class PosixAsyncioEventLoop(EventLoop):
+    def __init__(self, stdin, loop=None):
+        self.stdin = stdin
+        self.loop = loop or asyncio.get_event_loop()
+        self.closed = False
 
-        self._inputstream = InputStream(self.input_processor)
+        # Create reader class.
+        self._stdin_reader = PosixStdinReader(stdin)
 
-        # Create incremental decoder for decoding stdin.
-        # We can not just do `os.read(stdin.fileno(), 1024).decode('utf-8')`, because
-        # it could be that we are in the middle of a utf-8 byte sequence.
-        self._stdin_decoder = self.stdin_decoder_cls()
+        self._stopped_f = asyncio.Future()
 
-    def wait_for_input(self, f_ready):
-        def stdin_ready():
-            data = self._read_from_stdin()
-            self._inputstream.feed_and_flush(data)
+    @asyncio.coroutine
+    def run_as_coroutine(self, callbacks):
+        """
+        The input 'event loop'.
+        """
+        assert isinstance(callbacks, EventLoopCallbacks)
 
-            f_ready.set_result(None)  # Quit coroutine
+        if self.closed:
+            raise Exception('Event loop already closed.')
+
+        inputstream = InputStream(callbacks.feed_key)
+
+        try:
+            # Create a new Future every time.
+            self._stopped_f = asyncio.Future()
+
+            # Handle input timouts
+            def timeout_handler():
+                """
+                When no input has been received for INPUT_TIMEOUT seconds,
+                flush the input stream and fire the timeout event.
+                """
+                inputstream.flush()
+                callbacks.input_timeout()
+
+            timeout = AsyncioTimeout(INPUT_TIMEOUT, timeout_handler, self.loop)
+
+            # Catch sigwinch
+            def received_winch():
+                self.call_from_executor(callbacks.terminal_size_changed)
+
+            self.loop.add_signal_handler(signal.SIGWINCH, received_winch)
+
+            # Read input data.
+            def stdin_ready():
+                data = self._stdin_reader.read()
+                inputstream.feed(data)
+                timeout.reset()
+
+            self.loop.add_reader(self.stdin.fileno(), stdin_ready)
+
+            # Block this coroutine until stop() has been called.
+            for f in self._stopped_f:
+                yield f
+
+        finally:
+            # Clean up.
             self.loop.remove_reader(self.stdin.fileno())
+            self.loop.remove_signal_handler(signal.SIGWINCH)
 
-        self.loop.add_reader(self.stdin.fileno(), stdin_ready)
+            # Don't trigger any timeout events anymore.
+            timeout.stop()
 
-    def _read_from_stdin(self):
+    def stop(self):
+        # Trigger the 'Stop' future.
+        self._stopped_f.set_result(True)
+
+    def close(self):
+        self.closed = True
+
+    def run_in_executor(self, callback):
+        self.loop.run_in_executor(None, callback)
+
+    def call_from_executor(self, callback):
         """
-        Read the input and return it.
+        Call this function in the main event loop.
+        Similar to Twisted's ``callFromThread``.
         """
-        # Note: the following works better than wrapping `self.stdin` like
-        #       `codecs.getreader('utf-8')(stdin)` and doing `read(1)`.
-        #       Somehow that causes some latency when the escape
-        #       character is pressed. (Especially on combination with the `select`.
-        try:
-            bytes = os.read(self.stdin.fileno(), 1024)
-        except OSError:
-            # In case of SIGWINCH
-            bytes = b''
-
-        try:
-            return self._stdin_decoder.decode(bytes)
-        except UnicodeDecodeError:
-            # When it's not possible to decode this bytes, reset the decoder.
-            # The only occurence of this that I had was when using iTerm2 on OS
-            # X, with "Option as Meta" checked (You should choose "Option as
-            # +Esc".)
-            self._stdin_decoder = self.stdin_decoder_cls()
-            return ''
+        self.loop.call_soon(callback)

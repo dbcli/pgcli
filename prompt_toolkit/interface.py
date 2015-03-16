@@ -20,19 +20,20 @@ from .key_binding.registry import Registry
 from .layout import Window
 from .layout.controls import BufferControl
 from .renderer import Renderer
-from .utils import EventHook, DummyContext
+from .utils import EventHook
 from .filters import Filter, AlwaysOff, AlwaysOn
+from .eventloop.callbacks import EventLoopCallbacks
+from .eventloop.base import EventLoop
 
 from pygments.styles.default import DefaultStyle
 from types import GeneratorType
 
 if sys.platform == 'win32':
     from .terminal.win32_input import raw_mode, cooked_mode
-    from .eventloop.win32 import Win32EventLoop as EventLoop
+    from .eventloop.win32 import Win32EventLoop as DefaultEventLoop
 else:
     from .terminal.vt100_input import raw_mode, cooked_mode
-    from .eventloop.posix import PosixEventLoop as EventLoop
-    from .eventloop.posix import call_on_sigwinch
+    from .eventloop.posix import PosixEventLoop as DefaultEventLoop
 
 
 __all__ = (
@@ -227,7 +228,7 @@ class CommandLineInterface(object):
 
         :param callback: The callable that should run in the executor.
         """
-        self.eventloop.run_in_executor(callback)
+        self.eventloop.run_in_executor(callback)  # TODO: what if eventloop is None??
 
     def call_from_executor(self, callback):
         """
@@ -245,64 +246,79 @@ class CommandLineInterface(object):
     def _on_resize(self):
         """
         When the window size changes, we erase the current output and request
-        again the cursor position. We the CPR answer arrives, the output is
+        again the cursor position. When the CPR answer arrives, the output is
         drawn again.
-        (We do it asynchronously, because writing to the output from inside the
-        signal handler causes easily reentrant calls, giving runtime errors.)
         """
         assert self.eventloop
 
-        def do_in_event_loop():
-            # Erase, request position (when cursor is at the start position)
-            # and redraw again. -- The order is important.
-            self.renderer.erase()
-            self.renderer.request_absolute_cursor_position()
-            self._redraw()
-        self.call_from_executor(do_in_event_loop)
+        # Erase, request position (when cursor is at the start position)
+        # and redraw again. -- The order is important.
+        self.renderer.erase()
+        self.renderer.request_absolute_cursor_position()
+        self._redraw()
 
-    def read_input(self, on_abort=AbortAction.RAISE_EXCEPTION, on_exit=AbortAction.RAISE_EXCEPTION):
+    def read_input(self, on_abort=AbortAction.RAISE_EXCEPTION, on_exit=AbortAction.RAISE_EXCEPTION,
+                   eventloop=None):
         """
         Read input string from command line.
 
         :param on_abort: :class:`AbortAction` value. What to do when Ctrl-C has been pressed.
         :param on_exit:  :class:`AbortAction` value. What to do when Ctrl-D has been pressed.
         """
-        eventloop = EventLoop(self.input_processor, self.stdin)
-        g = self._read_input(on_abort=on_abort,
-                             on_exit=on_exit,
-                             eventloop=eventloop,
-                             return_corountine=False)
+        if eventloop is None:
+            eventloop2 = DefaultEventLoop(self.stdin)
 
-        # Return result from `_read_input`.
         try:
-            while True:
-                next(g)
-        except StopIteration as e:
-            # Clean up renderer. (This will leave the alternate screen, if we
-            # use that.)
-            self.renderer.reset()
+            g = self._read_input(on_abort=on_abort,
+                                 on_exit=on_exit,
+                                 eventloop=eventloop or eventloop2,
+                                 return_corountine=False)
 
-            # Return result.
-            return e.args[0]
+            # Return result from `_read_input`.
+            try:
+                while True:
+                    next(g)
+            except StopIteration as e:
+                # Clean up renderer. (This will leave the alternate screen, if we
+                # use that.)
+                self.renderer.reset()
+
+                # Return result.
+                return e.args[0]
+        finally:
+            # If we created the eventloop here, also close it.
+            if eventloop is None:
+                eventloop2.close()
 
     def read_input_async(self,
-                         on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE):
+                         on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
+                         eventloop=None):
         """
         Same as `read_input`, but this returns an asyncio coroutine.
 
         Warning: this will only work on Python >3.3
         """
-        # Inline import, to make sure the rest doesn't break on Python 2
-        if sys.platform == 'win32':
-            from prompt_toolkit.eventloop.asyncio_win32 import Win32AsyncioEventLoop as AsyncioEventLoop
-        else:
-            from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop
+        if eventloop is None:
+            # Inline import, to make sure the rest doesn't break on Python 2
+            if sys.platform == 'win32':
+                from prompt_toolkit.eventloop.asyncio_win32 import Win32AsyncioEventLoop as AsyncioEventLoop
+            else:
+                from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop
 
-        eventloop = AsyncioEventLoop(self.input_processor, self.stdin)
-        return self._read_input(on_abort=on_abort,
-                                on_exit=on_exit,
-                                eventloop=eventloop,
-                                return_corountine=True)
+            eventloop2 = AsyncioEventLoop(self.stdin)
+
+        try:
+            g = self._read_input(on_abort=on_abort,
+                                    on_exit=on_exit,
+                                    eventloop=eventloop or eventloop2,
+                                    return_corountine=True)
+            while True:
+                yield next(g)
+        except StopIteration as e:
+            raise StopIteration(e.args[0])
+        finally:
+            if eventloop is None:
+                eventloop2.close()
 
     def _read_input(self, on_abort, on_exit,
                     eventloop, return_corountine):
@@ -312,92 +328,102 @@ class CommandLineInterface(object):
         delegate all the futures from ``eventloop.loop_coroutine``. In both
         cases it returns the result through ``StopIteration``.
         """
+        assert isinstance(eventloop, EventLoop)
+
         # Set `is_reading_input` flag.
         if self.is_reading_input:
             raise Exception('Already reading input. Read_input is not thread safe.')
 
         # Create new event loop.
         self.eventloop = eventloop
-        self.eventloop.onInputTimeout += lambda: self.onInputTimeout.fire()
+
+        # Reset state.
+        self._reset()
 
         try:
-            def reset():
-                self._reset()
-            reset()
-
-            # Trigger onReadInputStart event.
-            self.onReadInputStart.fire()
-
             with raw_mode(self.stdin.fileno()):
-                self.renderer.request_absolute_cursor_position()
-                self._redraw()
+                self.onReadInputStart.fire()
 
-                with (DummyContext() if sys.platform == 'win32' else
-                      call_on_sigwinch(self._on_resize)):
-                    while True:
-                        if return_corountine:
-                            loop_result = self.eventloop.loop_coroutine()
-                            assert isinstance(loop_result, GeneratorType)
+                while True:
+                    self.renderer.request_absolute_cursor_position()
+                    self._redraw()
 
-                            for future in loop_result:
-                                yield future
-                        else:
-                            loop_result = self.eventloop.loop()
-                            assert not isinstance(loop_result, GeneratorType)
+                    callbacks = self.create_eventloop_callbacks()
 
-                        # If the exit flag has been set.
-                        if self._exit_flag:
-                            self.current_buffer.reset()
-                            if on_exit != AbortAction.IGNORE:
-                                self._redraw()
-                                self.current_buffer.reset()
+                    if return_corountine:
+                        loop_result = self.eventloop.run_as_coroutine(callbacks)
+                        assert isinstance(loop_result, GeneratorType)
 
-                            if on_exit == AbortAction.RAISE_EXCEPTION:
-                                raise EOFError()
-                            elif on_exit == AbortAction.RETURN_NONE:
-                                raise StopIteration(None)
-                            elif on_exit == AbortAction.RETRY:
-                                reset()
-                                self.renderer.request_absolute_cursor_position()
+                        for future in loop_result:
+                            yield future
+                    else:
+                        loop_result = self.eventloop.run(callbacks)
+                        assert loop_result is None
+                        assert not isinstance(loop_result, GeneratorType)
 
-                        # If the abort flag has been set.
-                        if self._abort_flag:
-                            if on_abort != AbortAction.IGNORE:
-                                self._redraw()
-                                self.current_buffer.reset()
+                    # run_as_coroutine() and run() return when the eventloop stops.
+                    # This happens when an exit/abort/return flag has been set.
 
-                            if on_abort == AbortAction.RAISE_EXCEPTION:
-                                raise KeyboardInterrupt()
-                            elif on_abort == AbortAction.RETURN_NONE:
-                                raise StopIteration(None)
-                            elif on_abort == AbortAction.RETRY:
-                                reset()
-                                self.renderer.request_absolute_cursor_position()
-
-                        # If a return value has been set.
-                        if self._return_value is not None:
+                    # If the exit flag has been set.
+                    if self._exit_flag:
+                        self.current_buffer.reset()
+                        if on_exit != AbortAction.IGNORE:
                             self._redraw()
                             self.current_buffer.reset()
-                            raise StopIteration(self._return_value)
 
-                        # Now render the current layout to the output.
+                        if on_exit == AbortAction.RAISE_EXCEPTION:
+                            raise EOFError()
+                        elif on_exit == AbortAction.RETURN_NONE:
+                            raise StopIteration(None)
+                        elif on_exit == AbortAction.RETRY:
+                            self._reset()
+                            self.renderer.request_absolute_cursor_position()
+
+                    # If the abort flag has been set.
+                    if self._abort_flag:
+                        if on_abort != AbortAction.IGNORE:
+                            self._redraw()
+                            self.current_buffer.reset()
+
+                        if on_abort == AbortAction.RAISE_EXCEPTION:
+                            raise KeyboardInterrupt()
+                        elif on_abort == AbortAction.RETURN_NONE:
+                            raise StopIteration(None)
+                        elif on_abort == AbortAction.RETRY:
+                            self._reset()
+                            self.renderer.request_absolute_cursor_position()
+
+                    # If a return value has been set.
+                    if self._return_value is not None:
                         self._redraw()
+                        self.current_buffer.reset()
+                        raise StopIteration(self._return_value)
+
+                    # Now render the current layout to the output.
+                    self._redraw()
         finally:
-            # Close event loop
-            self.eventloop.close()
+            # Unset event loop
             self.eventloop = None
 
-            # Trigger onReadInputEnd event.
             self.onReadInputEnd.fire()
 
     def set_exit(self):
         self._exit_flag = True
 
+        if self.eventloop:
+            self.eventloop.stop()
+
     def set_abort(self):
         self._abort_flag = True
 
+        if self.eventloop:
+            self.eventloop.stop()
+
     def set_return_value(self, document):
         self._return_value = document
+
+        if self.eventloop:
+            self.eventloop.stop()
 
     def run_in_terminal(self, func):
         """
@@ -553,6 +579,29 @@ class CommandLineInterface(object):
         that it doesn't destroy the output from the renderer.
         """
         return _PatchStdoutContext(self.stdout_proxy())
+
+    def create_eventloop_callbacks(self):
+        return _InterfaceEventLoopCallbacks(self)
+
+
+class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
+    """
+    Callbacks on the ``CommandLineInterface`` object, to which an eventloop can
+    talk.
+    """
+    def __init__(self, cli):
+        self.cli = cli
+
+    def terminal_size_changed(self):
+        self.cli._on_resize()
+
+    def input_timeout(self):
+        self.cli.onInputTimeout.fire()
+
+    def feed_key(self, key_press):
+        # Feed the key and redraw.
+        self.cli.input_processor.feed_key(key_press)
+        self.cli._redraw()
 
 
 class _PatchStdoutContext(object):

@@ -95,6 +95,8 @@ class ConsoleInputReader(object):
     def read(self):
         """
         Read from the Windows console and return a list of `KeyPress` instances.
+        It can return an empty list when there was nothing to read. (This
+        function doesn't block.)
 
         http://msdn.microsoft.com/en-us/library/windows/desktop/ms684961(v=vs.85).aspx
         """
@@ -106,21 +108,21 @@ class ConsoleInputReader(object):
         arrtype = INPUT_RECORD * max_count
         input_records = arrtype()
 
-        while not result:
-            # Get next batch of input event.
-            windll.kernel32.ReadConsoleInputA(self.handle, pointer(input_records), max_count, pointer(read))
+        # Get next batch of input event.
+        windll.kernel32.ReadConsoleInputA(self.handle, pointer(input_records), max_count, pointer(read))
 
-            for i in range(read.value):
-                ir = input_records[i]
+        for i in range(read.value):
+            ir = input_records[i]
 
-                ev = getattr(ir.Event, EventTypes[ir.EventType])
+            ev = getattr(ir.Event, EventTypes[ir.EventType])
 
-                # Process if this is a key event. (We also have mouse, menu and
-                # focus events.)
-                if type(ev) == KEY_EVENT_RECORD and ev.KeyDown:
-                    key_presses = self._event_to_key_presses(ev)
-                    if key_presses:
-                        result.extend(key_presses)
+            # Process if this is a key event. (We also have mouse, menu and
+            # focus events.)
+            if type(ev) == KEY_EVENT_RECORD and ev.KeyDown:
+                key_presses = self._event_to_key_presses(ev)
+                if key_presses:
+                    result.extend(key_presses)
+
         return result
 
     def _event_to_key_presses(self, ev):

@@ -1,46 +1,61 @@
 from __future__ import unicode_literals
-
-from ..utils import EventHook
-import threading
+from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 
 __all__ = (
-    'BaseEventLoop',
+    'EventLoop',
+    'INPUT_TIMEOUT',
 )
 
 
-class BaseEventLoop(object):
-    #: When to trigger the `onInputTimeout` event.
-    input_timeout = .5
+#: When to trigger the `onInputTimeout` event.
+INPUT_TIMEOUT = .5
 
-    def __init__(self, input_processor, stdin):
-        self.stdin = stdin
-        self.input_processor = input_processor
 
-        #: Called when there is no input for x seconds.
-        #:   At this event, you can for instance start a background thread to
-        #:   generate information about the input. E.g. get the code signature
-        #:   of the function below the cursor position in the case of a REPL.
-        self.onInputTimeout = EventHook()
+class EventLoop(with_metaclass(ABCMeta, object)):
+    """
+    Eventloop interface.
+    """
+    def run(self, callbacks):
+        """
+        Run the eventloop until stop() is called. Report all
+        input/timeout/terminal-resize events to the callbacks.
 
-        self.closed = False
-
-    def loop(self):
+        :param callbacks: EventLoopCallback instance.
+        """
         raise NotImplementedError
 
-    def loop_coroutine(self):
+    def run_as_coroutine(self, callbacks):
+        """
+        Similar to `run`, but this is a coroutine. (For asyncio integration.)
+        """
         raise NotImplementedError
 
+    @abstractmethod
+    def stop(self):
+        """
+        Stop the `loop` call. (Normally called by the command line interface,
+        when a result is available, or Abort/Quit has been called.)
+        """
+
+    @abstractmethod
     def close(self):
-        self.closed = True
+        """
+        Clean up of resources. Eventloop cannot be reused a second time after
+        this call.
+        """
 
+    @abstractmethod
     def run_in_executor(self, callback):
         """
-        Run a long running function in a background thread.
-        (This is recommended for code that could block the `read_input` event
-        loop.)
+        Run a long running function in a background thread.  (This is
+        recommended for code that could block the `read_input` event loop.)
         Similar to Twisted's ``deferToThread``.
         """
-        threading.Thread(target=callback).start()
 
+    @abstractmethod
     def call_from_executor(self, callback):
-        raise NotImplementedError
+        """
+        Call this function in the main event loop. Similar to Twisted's
+        ``callFromThread``.
+        """

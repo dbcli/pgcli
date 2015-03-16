@@ -47,8 +47,9 @@ class InputStream(object):
 
     ::
 
-        h = InputStreamHandler()
-        i = InputStream(h)
+        def callback(key):
+            pass
+        i = InputStream(callback)
         i.feed('data\x01...')
 
     :attr input_processor: :class:`~prompt_toolkit.key_binding.InputProcessor` instance.
@@ -163,8 +164,10 @@ class InputStream(object):
         '\x1b[1;3B': (Keys.Escape, Keys.Down),
     }
 
-    def __init__(self, input_processor):
-        self._input_processor = input_processor
+    def __init__(self, feed_key_callback):
+        assert callable(feed_key_callback)
+
+        self.feed_key_callback = feed_key_callback
         self.reset()
 
         if _DEBUG_RENDERER_INPUT:
@@ -263,7 +266,7 @@ class InputStream(object):
             for k in key:
                 self._call_handler(k, insert_text)
         else:
-            self._input_processor.feed_key(KeyPress(key, insert_text))
+            self.feed_key_callback(KeyPress(key, insert_text))
 
     def feed(self, data):
         """

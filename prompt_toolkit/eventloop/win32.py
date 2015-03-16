@@ -1,12 +1,19 @@
+"""
+Win32 asyncio event loop.
+
+Windows notes:
+    - Somehow it doesn't seem to work with the 'ProactorEventLoop'.
+"""
 from __future__ import unicode_literals
 
 from ..terminal.win32_input import ConsoleInputReader
 from ..win32_types import SECURITY_ATTRIBUTES
-from .base import BaseEventLoop
+from .base import EventLoop, INPUT_TIMEOUT
 
 from ctypes import windll, pointer, c_long
 from ctypes.wintypes import DWORD, BOOL
 
+import threading
 
 __all__ = (
     'Win32EventLoop',
@@ -15,47 +22,68 @@ __all__ = (
 WAIT_TIMEOUT = 0x00000102
 
 
-class Win32EventLoop(BaseEventLoop):
-    def __init__(self, input_processor, stdin):
-        super(Win32EventLoop, self).__init__(input_processor, stdin)
+class Win32EventLoop(EventLoop):
+    def __init__(self, stdin):
+        self.stdin = stdin
+
         self._event = _create_event()
         self._console_input_reader = ConsoleInputReader()
         self._calls_from_executor = []
+
+        self.closed = False
+        self._running = False
 
         # XXX: There is still one bug here. When input has been read from the
         #      ConsoleInputReader, `_wait_for_handles` never returns the Event
         #      as signalled anymore.
 
-    def loop(self):
+    def run(self, callbacks):
         if self.closed:
             raise Exception('Event loop already closed.')
 
-        timeout = int(1000 * self.input_timeout)
+        timeout = int(1000 * INPUT_TIMEOUT)
+        current_timeout = timeout
+        self._running = True
 
-        while True:
-            handle = _wait_for_handles([self._event, self._console_input_reader.handle], timeout)
+        while self._running:
+            # Wait for the next event.
+            handle = _wait_for_handles([self._event, self._console_input_reader.handle],
+                                       current_timeout)
 
             if handle == self._event:
+                # When the Windows Event has been trigger, process the messages in the queue.
                 windll.kernel32.ResetEvent(self._event)
                 self._process_queued_calls_from_executor()
-                return
 
             elif handle == self._console_input_reader.handle:
+                # When stdin is ready, read input and reset timeout timer.
                 keys = self._console_input_reader.read()
                 for k in keys:
-                    self.input_processor.feed_key(k)
-                return
+                    callbacks.feed_key(k)
+                current_timeout = timeout
 
             else:
                 # Fire input timeout event.
-                self.onInputTimeout.fire()
-                timeout = -1
+                callbacks.input_timeout()
+                current_timeout = -1
+
+    def stop(self):
+        self._running = False
 
     def close(self):
-        super(Win32EventLoop, self).close()
+        self.closed = True
 
         # Clean up Event object.
         windll.kernel32.CloseHandle(self._event)
+
+    def run_in_executor(self, callback):
+        """
+        Run a long running function in a background thread.
+        (This is recommended for code that could block the `read_input` event
+        loop.)
+        Similar to Twisted's ``deferToThread``.
+        """
+        threading.Thread(target=callback).start()
 
     def call_from_executor(self, callback):
         """
@@ -78,6 +106,7 @@ class Win32EventLoop(BaseEventLoop):
 def _wait_for_handles(handles, timeout=-1):
     """
     Waits for multiple handles. (Similar to 'select') Returns the handle which is ready.
+    Returns `None` on timeout.
 
     http://msdn.microsoft.com/en-us/library/windows/desktop/ms687025(v=vs.85).aspx
     """
