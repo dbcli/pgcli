@@ -15,15 +15,15 @@ __all__ = ('Document',)
 # characters a word, but also a group of special characters a word, as long as
 # it doesn't contain a space.)
 # (This is a 'word' in Vi.)
-_FIND_WORD_RE = re.compile('([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
-_FIND_CURRENT_WORD_RE = re.compile('^([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
-_FIND_CURRENT_WORD_INCLUDE_TRAILING_WHITESPACE_RE = re.compile('^(([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)\s*)')
+_FIND_WORD_RE = re.compile(r'([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
+_FIND_CURRENT_WORD_RE = re.compile(r'^([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)')
+_FIND_CURRENT_WORD_INCLUDE_TRAILING_WHITESPACE_RE = re.compile(r'^(([a-zA-Z0-9_]+|[^a-zA-Z0-9_\s]+)\s*)')
 
 # Regex for finding "WORDS" in documents.
 # (This is a 'WORD in Vi.)
-_FIND_BIG_WORD_RE = re.compile('([^\s]+)')
-_FIND_CURRENT_BIG_WORD_RE = re.compile('^([^\s]+)')
-_FIND_CURRENT_BIG_WORD_INCLUDE_TRAILING_WHITESPACE_RE = re.compile('^([^\s]+\s*)')
+_FIND_BIG_WORD_RE = re.compile(r'([^\s]+)')
+_FIND_CURRENT_BIG_WORD_RE = re.compile(r'^([^\s]+)')
+_FIND_CURRENT_BIG_WORD_INCLUDE_TRAILING_WHITESPACE_RE = re.compile(r'^([^\s]+\s*)')
 
 
 class Document(object):
