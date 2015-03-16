@@ -52,10 +52,6 @@ class CompletionState(object):
         """
         return CompletionState(self.original_document, self.current_completions, complete_index=index)
 
-    @property
-    def original_cursor_position(self):
-        self.original_document.cursor_position
-
     def new_text_and_position(self):
         """
         Return (new_text, new_cursor_position) for this completion.
