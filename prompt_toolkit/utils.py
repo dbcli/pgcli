@@ -1,8 +1,5 @@
 from __future__ import unicode_literals
 
-import six
-from collections import defaultdict
-
 try:
     from wcwidth import wcwidth
 except ImportError:

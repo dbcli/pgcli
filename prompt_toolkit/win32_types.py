@@ -1,4 +1,3 @@
-from ctypes import windll
 from ctypes import byref, Structure, c_char, c_short, c_uint32, c_ushort, c_ulong
 from ctypes import windll, Union, pointer, c_int, c_long
 from ctypes.wintypes import DWORD, BOOL, LPVOID, WORD
