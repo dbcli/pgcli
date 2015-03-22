@@ -22,10 +22,10 @@ In that case, study the code in this file and build your own
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit import CommandLineInterface, AbortAction
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.filters import IsDone, HasFocus
 from prompt_toolkit.history import History
+from prompt_toolkit.interface import CommandLineInterface, AbortAction, AcceptAction
 from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
@@ -109,8 +109,14 @@ def create_cli(message='',
                style=None,
                history=None,
                get_bottom_toolbar_tokens=None,
-               key_bindings_registry=None):
-
+               key_bindings_registry=None,
+               output=None,
+               on_abort=AbortAction.RAISE_EXCEPTION,
+               on_exit=AbortAction.RAISE_EXCEPTION,
+               on_accept=AcceptAction.RETURN_DOCUMENT):
+    """
+    Create a `CommandLineInterface` instance.
+    """
     # Create history instance.
     if history is None:
         history = History()
@@ -134,12 +140,16 @@ def create_cli(message='',
             completer=completer,
         ),
         key_bindings_registry=key_bindings_registry,
-        style=style)
+        style=style,
+        output=output,
+        on_abort=on_abort,
+        on_exit=on_exit)
 
 
 def get_input(message='',
               on_abort=AbortAction.RAISE_EXCEPTION,
               on_exit=AbortAction.RAISE_EXCEPTION,
+              on_accept=AcceptAction.RETURN_DOCUMENT,
               multiline=False,
               is_password=False,
               vi_mode=False,
@@ -192,10 +202,13 @@ def get_input(message='',
         style=style,
         history=history,
         get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
-        key_bindings_registry=key_bindings_registry)
+        key_bindings_registry=key_bindings_registry,
+        on_abort=on_abort,
+        on_exit=on_exit,
+        on_accept=on_accept)
 
     # Read input and return it.
-    document = cli.read_input(on_abort=on_abort, on_exit=on_exit)
+    document = cli.read_input()
 
     if document:
         return document.text

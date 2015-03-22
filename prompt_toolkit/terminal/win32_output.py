@@ -2,9 +2,10 @@ from __future__ import unicode_literals
 
 from ctypes import windll, byref, ArgumentError, c_char, c_long, c_ulong
 from ctypes.wintypes import DWORD
+
 from ..win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, COORD, SMALL_RECT
 
-import sys
+from prompt_toolkit.renderer.output import Output
 
 __all__ = (
     'Win32Output',
@@ -36,7 +37,7 @@ _DEBUG_RENDER_OUTPUT = False
 _DEBUG_RENDER_OUTPUT_FILENAME = r'prompt-toolkit-windows-output.log'
 
 
-class Win32Output(object):
+class Win32Output(Output):
     """
     """
     def __init__(self, stdout, use_complete_width=False):

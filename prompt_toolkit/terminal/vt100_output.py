@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from pygments.formatters.terminal256 import Terminal256Formatter, EscapeSequence
 
 from prompt_toolkit.layout.screen import Size
+from prompt_toolkit.renderer import Output
 
 import array
 import fcntl
@@ -41,14 +42,28 @@ def _get_size(fileno):
     return buf[0], buf[1]
 
 
-class Vt100_Output(object):
-    def __init__(self, stdout):
+class Vt100_Output(Output):
+    """
+    :param get_size: A callable which returns the `Size` of the output terminal.
+    :param stdout: Any object with has a `write` and `flush` method.
+    """
+    def __init__(self, stdout, get_size):
         self._buffer = []
         self.stdout = stdout
+        self.get_size = get_size
 
-    def get_size(self):
-        rows, columns = _get_size(self.stdout.fileno())
-        return Size(rows=rows, columns=columns)
+    @classmethod
+    def from_pty(cls, stdout):
+        """
+        Create an Output class from a pseudo terminal.
+        (This will take the dimensions by reading the pseudo
+        terminal attributes.)
+        """
+        def get_size():
+            rows, columns = _get_size(stdout.fileno())
+            return Size(rows=rows, columns=columns)
+
+        return cls(stdout, get_size)
 
     def write(self, data):
         self._buffer.append(data)
@@ -166,3 +181,10 @@ class Vt100_Output(object):
                 raise
 
         self._buffer = []
+
+    def ask_for_cpr(self):
+        """
+        Asks for a cursor position report (CPR).
+        """
+        self.write('\x1b[6n')
+        self.flush()

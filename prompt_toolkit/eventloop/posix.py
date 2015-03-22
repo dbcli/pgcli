@@ -28,9 +28,6 @@ class PosixEventLoop(EventLoop):
         self._schedule_pipe = os.pipe()
         fcntl.fcntl(self._schedule_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
 
-        # Create reader class.
-        self._stdin_reader = PosixStdinReader(stdin)
-
         self._running = False
 
     def run(self, callbacks):
@@ -46,6 +43,9 @@ class PosixEventLoop(EventLoop):
 
         inputstream = InputStream(callbacks.feed_key)
         timeout = INPUT_TIMEOUT
+
+        # Create reader class.
+        stdin_reader = PosixStdinReader(self.stdin)
 
         def received_winch():
             """
@@ -63,7 +63,7 @@ class PosixEventLoop(EventLoop):
                 # none, it means we got a repaint request.
                 if self.stdin in r:
                     # Feed input text.
-                    data = self._stdin_reader.read()
+                    data = stdin_reader.read()
                     inputstream.feed(data)
 
                     # Set timeout again.

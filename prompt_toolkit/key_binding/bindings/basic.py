@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from prompt_toolkit.keys import Keys
 import prompt_toolkit.filters as filters
 
-from ..input_processor import KeyPress
 from .utils import create_handle_decorator
 
 
@@ -151,21 +150,6 @@ def load_basic_bindings(registry, filter=None):
         Shift+Tab: go to previous completion.
         """
         event.current_buffer.complete_previous()
-
-    @handle(Keys.ControlM)
-    def _(event):
-        """
-        Transform ControlM (\r) by default into ControlJ (\n).
-        (This way it is sufficient for other key bindings to handle only ControlJ.)
-        Windows sends \r instead of \n when pressing enter.
-        """
-        def feed():
-            event.cli.input_processor.feed_key(KeyPress(Keys.ControlJ, ''))
-
-        # We use `call_from_executor`, to schedule this for later execution,
-        # otherwise, we're sending data into a generator which is already
-        # executing.
-        event.cli.call_from_executor(feed)
 
     @handle(Keys.ControlJ, filter= ~has_selection)
     def _(event):

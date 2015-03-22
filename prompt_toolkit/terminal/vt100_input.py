@@ -279,6 +279,10 @@ class InputStream(object):
             self.LOG.flush()
 
         for c in data:
+            # Replace \r by \n. (Some clients send \r instead of \n when enter
+            # is pressed. E.g. telnet and some other terminals.)
+            if c == '\r':
+                c = '\n'
             self._input_parser.send(c)
 
     def flush(self):

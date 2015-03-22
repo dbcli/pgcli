@@ -30,7 +30,9 @@ class ConsoleInputReader(object):
         b'\x0a': Keys.ControlJ,  # Control-J (10) (Identical to '\n')
         b'\x0b': Keys.ControlK,  # Control-K (delete until end of line; vertical tab)
         b'\x0c': Keys.ControlL,  # Control-L (clear; form feed)
-        b'\x0d': Keys.ControlM,  # Control-M (13) (Identical to '\r')
+        b'\x0d': Keys.ControlJ,  # Control-J NOTE: Windows sends \r instead of
+                                 #   \n when pressing enter. We turn it into \n
+                                 #   to be compatible with other platforms.
         b'\x0e': Keys.ControlN,  # Control-N (14) (history forward)
         b'\x0f': Keys.ControlO,  # Control-O (15)
         b'\x10': Keys.ControlP,  # Control-P (16) (history back)
@@ -146,16 +148,16 @@ class ConsoleInputReader(object):
         if (ev.ControlKeyState & self.LEFT_CTRL_PRESSED or
                 ev.ControlKeyState & self.RIGHT_CTRL_PRESSED) and result:
             if result.key == Keys.Left:
-                 result.key = Keys.ControlLeft
+                result.key = Keys.ControlLeft
 
             if result.key == Keys.Right:
-                 result.key = Keys.ControlRight
+                result.key = Keys.ControlRight
 
             if result.key == Keys.Up:
-                 result.key = Keys.ControlUp
+                result.key = Keys.ControlUp
 
             if result.key == Keys.Down:
-                 result.key = Keys.ControlDown
+                result.key = Keys.ControlDown
 
         # Turn 'Tab' into 'BackTab' when shift was pressed.
         if ev.ControlKeyState & self.SHIFT_PRESSED and result:

@@ -40,11 +40,11 @@ def main():
         # instance.
         def run():
             # Send every second a redraw request.
-            while cli.is_reading_input:
+            while cli.eventloop is not None:
                 time.sleep(1)
                 cli.request_redraw()
 
-        cli.run_in_executor(run)
+        cli.eventloop.run_in_executor(run)
     cli.onReadInputStart += on_read_start
 
     code_obj = cli.read_input()

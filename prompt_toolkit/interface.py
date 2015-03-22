@@ -19,7 +19,7 @@ from .key_binding.input_processor import InputProcessor
 from .key_binding.registry import Registry
 from .layout import Window
 from .layout.controls import BufferControl
-from .renderer import Renderer
+from .renderer import Renderer, Output
 from .utils import EventHook
 from .filters import Filter, AlwaysOff, AlwaysOn
 from .eventloop.callbacks import EventLoopCallbacks
@@ -31,9 +31,11 @@ from types import GeneratorType
 if sys.platform == 'win32':
     from .terminal.win32_input import raw_mode, cooked_mode
     from .eventloop.win32 import Win32EventLoop as DefaultEventLoop
+    from .terminal.win32_output import Win32Output
 else:
     from .terminal.vt100_input import raw_mode, cooked_mode
     from .eventloop.posix import PosixEventLoop as DefaultEventLoop
+    from .terminal.vt100_output import Vt100_Output
 
 
 __all__ = (
@@ -50,6 +52,27 @@ class AbortAction:
     RETRY = 'retry'
     RAISE_EXCEPTION = 'raise-exception'
     RETURN_NONE = 'return-none'
+
+
+class AcceptAction(object):
+    """
+    What to do when the input is accepted by the user.
+    (When Enter was pressed in the command line.)
+
+    :param handler: (optional) A callable which accepts a `Document' that is
+                    called when the user accepts input.
+    :param return_document: Set this return value. The eventloop will
+                                   deliver it to the application that called
+                                   the event loop.
+    """
+    def __init__(self, handler=None, return_document=False):
+        assert handler or return_document
+        assert handler is None or callable(handler)
+
+        self.handler = handler
+        self.return_document = return_document
+
+AcceptAction.RETURN_DOCUMENT = AcceptAction(return_document=True)
 
 
 class CommandLineInterface(object):
@@ -79,17 +102,28 @@ class CommandLineInterface(object):
                  clipboard=None,
                  complete_while_typing=AlwaysOn(),
                  renderer=None,
-                 initial_focussed_buffer='default'):
+                 output=None,
+                 initial_focussed_buffer='default',
+                 on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
+                 on_accept=AcceptAction.RETURN_DOCUMENT):
 
         assert buffer is None or isinstance(buffer, Buffer)
         assert buffers is None or isinstance(buffers, dict)
         assert key_bindings_registry is None or isinstance(key_bindings_registry, Registry)
+        assert output is None or isinstance(output, Output)
         assert isinstance(complete_while_typing, Filter)
+
+        assert renderer is None or output is None  # Never expect both.
+        assert isinstance(on_accept, AcceptAction)
 
         self.stdin = stdin or sys.__stdin__
         self.stdout = stdout or sys.__stdout__
         self.style = style or DefaultStyle
         self.complete_while_typing = complete_while_typing
+
+        self.on_abort = on_abort
+        self.on_exit = on_exit
+        self.on_accept = on_accept
 
         # Events
 
@@ -136,8 +170,13 @@ class CommandLineInterface(object):
 
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
-        self.renderer = renderer or Renderer(stdout=self.stdout)
-        assert self.renderer.stdout == self.stdout
+        def default_output():
+            if sys.platform == 'win32':
+                return Win32Output(self.stdout)
+            else:
+                return Vt100_Output.from_pty(self.stdout)
+
+        self.renderer = renderer or Renderer(output or default_output())
 
         if key_bindings_registry is None:
             key_bindings_registry = Registry()
@@ -151,14 +190,30 @@ class CommandLineInterface(object):
             if b.completer:
                 b.onTextInsert += self._create_async_completer(b)
 
-        self._reset()
+        self.reset()
 
-        # Event loop.
-        self.eventloop = None
+        # Event loop reference. (weakref, because the eventloop will also have
+        # pointers back to the CommandLineInterface.)
+        self._eventloop_ref = None
 
     @property
-    def is_reading_input(self):
-        return bool(self.eventloop)
+    def eventloop(self):
+        """
+        Get the eventloop.
+        """
+        if self._eventloop_ref is not None:
+            return self._eventloop_ref()
+
+    @eventloop.setter
+    def eventloop(self, value):
+        """
+        Set the eventloop.
+        """
+        if value is None:
+            self._eventloop_ref = None
+        else:
+            assert isinstance(value, EventLoop)
+            self._eventloop_ref = weakref.ref(value)
 
     @property
     def current_buffer_name(self):
@@ -186,7 +241,7 @@ class CommandLineInterface(object):
         if focus:
             self.focus_stack.replace(name)
 
-    def _reset(self):
+    def reset(self):
         """
         Reset everything, for reading the next input.
         """
@@ -197,6 +252,7 @@ class CommandLineInterface(object):
 
         self._exit_flag = False
         self._abort_flag = False
+
         self._return_value = None
 
         self.renderer.reset()
@@ -210,8 +266,8 @@ class CommandLineInterface(object):
         """
         Thread safe way of sending a repaint trigger to the input event loop.
         """
-        if self.is_reading_input:
-            self.call_from_executor(self._redraw)
+        if self.eventloop is not None:
+            self.eventloop.call_from_executor(self._redraw)
 
     def _redraw(self):
         """
@@ -220,46 +276,19 @@ class CommandLineInterface(object):
         """
         self.renderer.render(self, self.layout, self.style)
 
-    def run_in_executor(self, callback):
-        """
-        Run a long running function in a background thread.
-        (This is recommended for code that could block the `read_input` event
-        loop.)
-        Similar to Twisted's ``deferToThread``.
-
-        :param callback: The callable that should run in the executor.
-        """
-        self.eventloop.run_in_executor(callback)  # TODO: what if eventloop is None??
-
-    def call_from_executor(self, callback):
-        """
-        Call this function in the main event loop.
-        Similar to Twisted's ``callFromThread``.
-
-        :param callback: The callable that should run in the main event loop.
-        """
-        if self.eventloop:
-            self.eventloop.call_from_executor(callback)
-            return True
-        else:
-            return False
-
     def _on_resize(self):
         """
         When the window size changes, we erase the current output and request
         again the cursor position. When the CPR answer arrives, the output is
         drawn again.
         """
-        assert self.eventloop
-
         # Erase, request position (when cursor is at the start position)
         # and redraw again. -- The order is important.
         self.renderer.erase()
         self.renderer.request_absolute_cursor_position()
         self._redraw()
 
-    def read_input(self, on_abort=AbortAction.RAISE_EXCEPTION, on_exit=AbortAction.RAISE_EXCEPTION,
-                   eventloop=None):
+    def read_input(self, eventloop=None):
         """
         Read input string from command line.
 
@@ -270,29 +299,28 @@ class CommandLineInterface(object):
             eventloop2 = DefaultEventLoop(self.stdin)
 
         try:
-            g = self._read_input(on_abort=on_abort,
-                                 on_exit=on_exit,
-                                 eventloop=eventloop or eventloop2,
+            g = self._read_input(eventloop=eventloop or eventloop2,
                                  return_corountine=False)
 
-            # Return result from `_read_input`.
+            # Consume generator.
             try:
                 while True:
                     next(g)
-            except StopIteration as e:
-                # Clean up renderer. (This will leave the alternate screen, if we
-                # use that.)
-                self.renderer.reset()
+            except StopIteration:
+                pass
 
-                # Return result.
-                return e.args[0]
+            # Clean up renderer. (This will leave the alternate screen, if we
+            # use that.)
+            self.renderer.reset()
+
+            # Return result.
+            return self.return_value()
         finally:
             # If we created the eventloop here, also close it.
             if eventloop is None:
                 eventloop2.close()
 
-    def read_input_async(self,
-                         on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
+    def read_input_async(self, on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
                          eventloop=None):
         """
         Same as `read_input`, but this returns an asyncio coroutine.
@@ -309,20 +337,16 @@ class CommandLineInterface(object):
             eventloop2 = AsyncioEventLoop(self.stdin)
 
         try:
-            g = self._read_input(on_abort=on_abort,
-                                    on_exit=on_exit,
-                                    eventloop=eventloop or eventloop2,
-                                    return_corountine=True)
+            g = self._read_input(eventloop=eventloop or eventloop2, return_corountine=True)
             while True:
                 yield next(g)
-        except StopIteration as e:
-            raise StopIteration(e.args[0])
+        except StopIteration:
+            raise StopIteration(self.return_value())
         finally:
             if eventloop is None:
                 eventloop2.close()
 
-    def _read_input(self, on_abort, on_exit,
-                    eventloop, return_corountine):
+    def _read_input(self, eventloop, return_corountine):
         """
         The implementation of ``read_input`` which can be called both
         synchronously and asynchronously. When called as coroutine it will
@@ -331,77 +355,37 @@ class CommandLineInterface(object):
         """
         assert isinstance(eventloop, EventLoop)
 
-        # Set `is_reading_input` flag.
-        if self.is_reading_input:
-            raise Exception('Already reading input. Read_input is not thread safe.')
+        # Create event loop.
+        if self.eventloop:
+            raise Exception('Eventloop already set. Read_input is not thread safe.')
 
-        # Create new event loop.
         self.eventloop = eventloop
 
         # Reset state.
-        self._reset()
+        self.reset()
+        self.current_buffer.reset()
 
         try:
             with raw_mode(self.stdin.fileno()):
                 self.onReadInputStart.fire()
 
-                while True:
-                    self.renderer.request_absolute_cursor_position()
-                    self._redraw()
+                self.renderer.request_absolute_cursor_position()
+                self._redraw()
 
-                    callbacks = self.create_eventloop_callbacks()
+                callbacks = self.create_eventloop_callbacks()
 
-                    if return_corountine:
-                        loop_result = self.eventloop.run_as_coroutine(callbacks)
-                        assert isinstance(loop_result, GeneratorType)
+                if return_corountine:
+                    loop_result = self.eventloop.run_as_coroutine(callbacks)
+                    assert isinstance(loop_result, GeneratorType)
 
-                        for future in loop_result:
-                            yield future
-                    else:
-                        loop_result = self.eventloop.run(callbacks)
-                        assert loop_result is None
-                        assert not isinstance(loop_result, GeneratorType)
+                    for future in loop_result:
+                        yield future
+                else:
+                    loop_result = self.eventloop.run(callbacks)
+                    assert loop_result is None
 
                     # run_as_coroutine() and run() return when the eventloop stops.
                     # This happens when an exit/abort/return flag has been set.
-
-                    # If the exit flag has been set.
-                    if self._exit_flag:
-                        self.current_buffer.reset()
-                        if on_exit != AbortAction.IGNORE:
-                            self._redraw()
-                            self.current_buffer.reset()
-
-                        if on_exit == AbortAction.RAISE_EXCEPTION:
-                            raise EOFError()
-                        elif on_exit == AbortAction.RETURN_NONE:
-                            raise StopIteration(None)
-                        elif on_exit == AbortAction.RETRY:
-                            self._reset()
-                            self.renderer.request_absolute_cursor_position()
-
-                    # If the abort flag has been set.
-                    if self._abort_flag:
-                        if on_abort != AbortAction.IGNORE:
-                            self._redraw()
-                            self.current_buffer.reset()
-
-                        if on_abort == AbortAction.RAISE_EXCEPTION:
-                            raise KeyboardInterrupt()
-                        elif on_abort == AbortAction.RETURN_NONE:
-                            raise StopIteration(None)
-                        elif on_abort == AbortAction.RETRY:
-                            self._reset()
-                            self.renderer.request_absolute_cursor_position()
-
-                    # If a return value has been set.
-                    if self._return_value is not None:
-                        self._redraw()
-                        self.current_buffer.reset()
-                        raise StopIteration(self._return_value)
-
-                    # Now render the current layout to the output.
-                    self._redraw()
         finally:
             # Unset event loop
             self.eventloop = None
@@ -409,24 +393,74 @@ class CommandLineInterface(object):
             self.onReadInputEnd.fire()
 
     def set_exit(self):
+        """
+        Set exit. When Control-D has been pressed.
+        """
         self._exit_flag = True
+        on_exit = self.on_exit
 
-        if self.eventloop:
-            self.eventloop.stop()
+        if on_exit != AbortAction.IGNORE:
+            self._redraw()
+            self.current_buffer.reset()
+
+        if on_exit == AbortAction.RAISE_EXCEPTION:
+            def eof_error():
+                raise EOFError()
+            self._set_return_callable(eof_error)
+
+        elif on_exit == AbortAction.RETURN_NONE:
+            self.set_return_value(None)
+
+        elif on_exit == AbortAction.RETRY:
+            self.reset()
+            self.renderer.request_absolute_cursor_position()
 
     def set_abort(self):
+        """
+        Set abort. When Control-C has been pressed.
+        """
         self._abort_flag = True
+        on_abort = self.on_abort
 
-        if self.eventloop:
-            self.eventloop.stop()
+        if on_abort != AbortAction.IGNORE:
+            self._redraw()
+            self.current_buffer.reset()
+
+        if on_abort == AbortAction.RAISE_EXCEPTION:
+            def keyboard_interrupt():
+                raise KeyboardInterrupt()
+            self._set_return_callable(keyboard_interrupt)
+
+        elif on_abort == AbortAction.RETURN_NONE:
+            self.set_return_value(None)
+
+        elif on_abort == AbortAction.RETRY:
+            self.reset()
+            self.renderer.request_absolute_cursor_position()
 
     def set_return_value(self, document):
-        self._return_value = document
+        """
+        Set a return value.
+
+        Depending on the action defined by on_accept, this will either set a
+        return value to be retrieved by the eventloop, or this will call the
+        handler.
+        """
+        self._redraw()
+
+        if self.on_accept.return_document:
+            self._set_return_callable(lambda: document)
+        else:
+            self.on_accept.handler(document)
+
+    def _set_return_callable(self, value):
+        assert callable(value)
+        self._return_value = value
 
         if self.eventloop:
             self.eventloop.stop()
 
-    def run_in_terminal(self, func):
+    def run_in_terminal(self, func):  # XXX: no reason to make this thread safe, ... I think...
         """
         Run function on the terminal above the prompt.
 
@@ -439,17 +473,18 @@ class CommandLineInterface(object):
         callable will be scheduled in the eventloop of this
         :class:`CommandLineInterface`.
         """
-        self.call_from_executor(lambda: self._run_in_terminal(func))
+        self.eventloop.call_from_executor(lambda: self._run_in_terminal(func))
 
     def _run_in_terminal(self, func):
         """ Blocking, not thread safe version of ``run_in_terminal``. """
-        assert self.is_reading_input, 'Should be called while reading input.'
+#        #assert self.is_reading_input, 'Should be called while reading input.'
         self.renderer.erase()
 
         # Run system command.
         with cooked_mode(self.stdin.fileno()):
             func()
 
+        # Redraw interface again.
         self.renderer.reset()
         self.renderer.request_absolute_cursor_position()
         self._redraw()
@@ -503,6 +538,15 @@ class CommandLineInterface(object):
         ``True`` when a return value has been set.
         """
         return self._return_value is not None
+
+    def return_value(self):
+        """
+        Get the return value. Not that this method can throw an exception.
+        """
+        # Note that it's a method, not a property, because it can throw
+        # exceptions.
+        if self._return_value:
+            return self._return_value()
 
     @property
     def is_done(self):
@@ -559,9 +603,11 @@ class CommandLineInterface(object):
                     else:
                         # Otherwise, restart thread.
                         async_completer()
-                self.call_from_executor(callback)
 
-            self.run_in_executor(run)
+                if self.eventloop:
+                    self.eventloop.call_from_executor(callback)
+
+            self.eventloop.run_in_executor(run)
         return async_completer
 
     def stdout_proxy(self):
@@ -591,15 +637,22 @@ class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
     talk.
     """
     def __init__(self, cli):
+        assert isinstance(cli, CommandLineInterface)
         self.cli = cli
 
     def terminal_size_changed(self):
+        """
+        Report terminal size change. This will trigger a redraw.
+        """
         self.cli._on_resize()
 
     def input_timeout(self):
         self.cli.onInputTimeout.fire()
 
     def feed_key(self, key_press):
+        """
+        Feed a key press to the CommandLineInterface.
+        """
         # Feed the key and redraw.
         self.cli.input_processor.feed_key(key_press)
         self.cli._redraw()
@@ -627,7 +680,7 @@ class _StdoutProxy(object):
         self._buffer = []
 
     def _do(self, func):
-        if self._cli.is_reading_input:
+        if self._cli.eventloop:
             self._cli.run_in_terminal(func)
         else:
             func()

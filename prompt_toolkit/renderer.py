@@ -4,19 +4,16 @@ Renders the command line on the console.
 """
 from __future__ import unicode_literals
 import sys
-import errno
+from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 
 from pygments.style import Style
 from pygments.token import Token
 from prompt_toolkit.layout.screen import Point, Screen, Char, WritePosition
 
-if sys.platform == 'win32':
-    from .terminal.win32_output import Win32Output as Output
-else:
-    from .terminal.vt100_output import Vt100_Output as Output
-
 __all__ = (
     'Renderer',
+    'Output',
 )
 
 
@@ -186,13 +183,13 @@ class Renderer(object):
         r = Renderer(sys.stdout)
         r.render(cli, layout=..., style=...)
     """
-    def __init__(self, stdout=None, use_alternate_screen=False):  # XXX: implement alternate screen for Windows.
-        self.stdout = stdout or sys.stdout
+    def __init__(self, output, use_alternate_screen=False):  # XXX: implement alternate screen for Windows.
+        assert isinstance(output, Output)
+
+        self.output = output
         self.use_alternate_screen = use_alternate_screen
 
         self._in_alternate_screen = False
-
-        self.output = Output(self.stdout)
 
         self.reset()
 
@@ -233,22 +230,6 @@ class Renderer(object):
         return self.use_alternate_screen or self._min_available_height > 0 or \
             sys.platform == 'win32'  # On Windows, we don't have to wait for a CPR.
 
-    def _write_and_flush(self, data):
-        """
-        Write to output stream and flush.
-        """
-        try:
-            self.stdout.write(data)
-            self.stdout.flush()
-        except IOError as e:
-            if e.args and e.args[0] == errno.EINTR:
-                # Interrupted system call. Can happpen in case of a window
-                # resize signal. (Just ignore. The resize handler will render
-                # again anyway.)
-                pass
-            else:
-                raise
-
     def request_absolute_cursor_position(self):
         """
         Get current cursor position.
@@ -268,7 +249,7 @@ class Renderer(object):
                 self._min_available_height = self.output.get_size().rows
             else:
                 # Asks for a cursor position report (CPR).
-                self._write_and_flush('\x1b[6n')
+                self.output.ask_for_cpr()
 
     def report_absolute_cursor_row(self, row):
         """
@@ -359,3 +340,99 @@ class Renderer(object):
         output.flush()
 
         self.request_absolute_cursor_position()
+
+
+class Output(with_metaclass(ABCMeta, object)):
+    """
+    Base class defining the Output interface for a renderer.
+    """
+    @abstractmethod
+    def write(self, data):
+        pass
+
+    @abstractmethod
+    def flush(self):
+        """
+        Write to output stream and flush.
+        """
+
+    @abstractmethod
+    def erase_screen(self):
+        """
+        Erases the screen with the background colour and moves the cursor to
+        home.
+        """
+
+    @abstractmethod
+    def enter_alternate_screen(self):
+        pass
+
+    @abstractmethod
+    def quit_alternate_screen(self):
+        pass
+
+    @abstractmethod
+    def erase_end_of_line(self):
+        """
+        Erases from the current cursor position to the end of the current line.
+        """
+
+    @abstractmethod
+    def erase_down(self):
+        """
+        Erases the screen from the current line down to the bottom of the
+        screen.
+        """
+
+    @abstractmethod
+    def newline(self):
+        pass
+
+    @abstractmethod
+    def carriage_return(self):
+        pass
+
+    @abstractmethod
+    def reset_attributes(self):
+        pass
+
+    @abstractmethod
+    def set_attributes(self, fgcolor=None, bgcolor=None, bold=False, underline=False):
+        """
+        Create new style and output.
+        """
+        pass
+
+    @abstractmethod
+    def disable_autowrap(self):
+        pass
+
+    @abstractmethod
+    def enable_autowrap(self):
+        pass
+
+    @abstractmethod
+    def cursor_goto(self, row=0, column=0):
+        """ Move cursor position. """
+
+    @abstractmethod
+    def cursor_up(self, amount):
+        pass
+
+    @abstractmethod
+    def cursor_down(self, amount):
+        pass
+
+    @abstractmethod
+    def cursor_forward(self, amount):
+        pass
+
+    @abstractmethod
+    def cursor_backward(self, amount):
+        pass
+
+    def ask_for_cpr(self):
+        """
+        Asks for a cursor position report (CPR).
+        (VT100 only.)
+        """
