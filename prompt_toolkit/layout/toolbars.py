@@ -12,7 +12,7 @@ from .dimension import LayoutDimension
 from .controls import BufferControl, TokenListControl, UIControl
 from .utils import token_list_len
 from .screen import Screen
-from prompt_toolkit.filters import HasFocus, HasArg, HasCompletions, HasValidationError, HasSearch, AlwaysOff, AlwaysOn, IsDone
+from prompt_toolkit.filters import HasFocus, HasArg, HasCompletions, HasValidationError, HasSearch, Never, Always, IsDone
 
 
 __all__ = (
@@ -37,7 +37,7 @@ class SystemToolbarControl(BufferControl):
         super(SystemToolbarControl, self).__init__(
             lexer=BashLexer,
             buffer_name='system',
-            show_line_numbers=AlwaysOff(),
+            show_line_numbers=Never(),
             input_processors=[BeforeInput.static('Shell command: ', Token.Toolbar.System.Prefix)],)
 
 
@@ -155,7 +155,7 @@ class CompletionsToolbarControl(UIControl):
 
 
 class CompletionsToolbar(Window):
-    def __init__(self, extra_filter=AlwaysOn()):
+    def __init__(self, extra_filter=Always()):
         super(CompletionsToolbar, self).__init__(
             CompletionsToolbarControl(),
             height=LayoutDimension.exact(1),

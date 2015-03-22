@@ -13,7 +13,7 @@ from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.layout.processors import AfterInput
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.completion import Completion, Completer
-from prompt_toolkit.filters import AlwaysOn
+from prompt_toolkit.filters import Always
 
 from pygments.style import Style
 from pygments.styles.default import DefaultStyle
@@ -84,7 +84,7 @@ def main():
             Window(width=D.exact(1),
                    content=FillControl('|', token=Token.Line)),
             Window(content=BufferControl(lexer=PythonLexer,
-                                         show_line_numbers=AlwaysOn(),
+                                         show_line_numbers=Always(),
                                          input_processors=[
                                                 DefaultPrompt('python> '),
                                                 AfterInput.static(' <python', token=Token.AfterInput),

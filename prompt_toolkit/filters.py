@@ -1,7 +1,7 @@
 """
 Filters decide whether something is active or not, given the state of the
-CommandLineInterface. This can be used to enable/disable key bindings, as well
-as to hide/show parts of the layout.
+CommandLineInterface. This is used to enable/disable features, like key
+bindings or parts of the layout.
 
 When Filter.__call__ returns True for a centain key, this is considered active.
 
@@ -15,8 +15,8 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
 __all__ = (
-    'AlwaysOff',
-    'AlwaysOn',
+    'Never',
+    'Always',
     'Condition',
     'HasArg',
     'HasCompletions',
@@ -33,8 +33,8 @@ __all__ = (
 
 class Filter(with_metaclass(ABCMeta, object)):
     """
-    Filter to activate/deactivate a key binding, depending on a condition.
-    The return value of ``__call__`` will tell if the key binding should be active.
+    Filter to activate/deactivate a feature, depending on a condition.
+    The return value of ``__call__`` will tell if the feature should be active.
     """
     @abstractmethod
     def __call__(self, cli):
@@ -200,17 +200,17 @@ class Condition(Filter):
         return self.func(cli)
 
 
-class AlwaysOn(Filter):
+class Always(Filter):
     """
-    Always enable key binding.
+    Always enable feature.
     """
     def __call__(self, cli):
         return True
 
 
-class AlwaysOff(Filter):
+class Never(Filter):
     """
-    Always disable key binding.
+    Never enable feature.
     """
     def __call__(self, cli):
         return False

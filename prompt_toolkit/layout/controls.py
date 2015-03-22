@@ -7,7 +7,7 @@ from pygments.token import Token
 from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 
-from prompt_toolkit.filters import AlwaysOff, Filter
+from prompt_toolkit.filters import Never, Filter
 from .processors import Processor
 from .screen import Screen, Char, Point
 from .utils import token_list_width
@@ -143,7 +143,7 @@ class BufferControl(UIControl):
     def __init__(self,
                  input_processors=None,
                  lexer=None,
-                 show_line_numbers=AlwaysOff(),
+                 show_line_numbers=Never(),
                  buffer_name='default',
                  default_token=Token,
                  menu_position=None):

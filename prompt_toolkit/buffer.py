@@ -12,7 +12,7 @@ from .selection import SelectionType, SelectionState
 from .utils import EventHook
 from .validation import ValidationError
 from .clipboard import ClipboardData
-from .filters import AlwaysOn
+from .filters import Always
 
 import os
 import six
@@ -110,7 +110,7 @@ class Buffer(object):
                         returns either True or False,
     """
     def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='',
-                 is_multiline=None, initial_document=None, focussable=AlwaysOn(), returnable=AlwaysOn()):
+                 is_multiline=None, initial_document=None, focussable=Always(), returnable=Always()):
         assert is_multiline is None or callable(is_multiline) or isinstance(is_multiline, bool)
 
         self.completer = completer

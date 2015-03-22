@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from ..filters import AlwaysOn, Filter
+from ..filters import Always, Filter
 from ..utils import EventHook
 
 __all__ = (
@@ -41,7 +41,7 @@ class Registry(object):
         """
         Decorator for annotating key bindings.
         """
-        filter = kwargs.pop('filter', None) or AlwaysOn()
+        filter = kwargs.pop('filter', None) or Always()
         assert not kwargs
         assert keys
         assert isinstance(filter, Filter), 'Expected Filter instance, got %r' % filter

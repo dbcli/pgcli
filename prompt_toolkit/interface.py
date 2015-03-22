@@ -21,7 +21,7 @@ from .layout import Window
 from .layout.controls import BufferControl
 from .renderer import Renderer, Output
 from .utils import EventHook
-from .filters import Filter, AlwaysOff, AlwaysOn
+from .filters import Filter, Always, Never
 from .eventloop.callbacks import EventLoopCallbacks
 from .eventloop.base import EventLoop
 
@@ -100,7 +100,7 @@ class CommandLineInterface(object):
                  style=None,
                  key_bindings_registry=None,
                  clipboard=None,
-                 complete_while_typing=AlwaysOn(),
+                 complete_while_typing=Always(),
                  renderer=None,
                  output=None,
                  initial_focussed_buffer='default',
@@ -144,9 +144,9 @@ class CommandLineInterface(object):
             # that window-focus changing functionality is disabled for these.
             # (See prompt_toolkit.key_binding.bindings.utils.focus_next_buffer.)
             # Also, 'returable' is False, in order to block normal Enter/ControlC behaviour.
-            'default': (buffer or Buffer(returnable=AlwaysOn())),
-            'search': Buffer(history=History(), focussable=AlwaysOff(), returnable=AlwaysOff()),
-            'system': Buffer(history=History(), focussable=AlwaysOff(), returnable=AlwaysOff()),
+            'default': (buffer or Buffer(returnable=Always())),
+            'search': Buffer(history=History(), focussable=Never(), returnable=Never()),
+            'system': Buffer(history=History(), focussable=Never(), returnable=Never()),
         }
         if buffers:
             self.buffers.update(buffers)

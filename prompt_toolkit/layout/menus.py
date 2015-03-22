@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from pygments.token import Token
-from prompt_toolkit.filters import HasCompletions, IsDone, AlwaysOn
+from prompt_toolkit.filters import HasCompletions, IsDone, Always
 from .controls import UIControl
 from .containers import Window
 from .dimension import LayoutDimension
@@ -149,7 +149,7 @@ class CompletionsMenuControl(UIControl):
 
 
 class CompletionsMenu(Window):
-    def __init__(self, max_height=None, extra_filter=AlwaysOn()):
+    def __init__(self, max_height=None, extra_filter=Always()):
         super(CompletionsMenu, self).__init__(
             content=CompletionsMenuControl(),
             width=LayoutDimension(min=8),
