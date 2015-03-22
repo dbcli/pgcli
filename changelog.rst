@@ -5,6 +5,7 @@ Bug Fixes:
 ----------
 * Fix a bug where the schema qualifier was ignored by the auto-completion.
   As a result the suggestions for tables vs functions are cleaner. (Thanks: darikg_)
+* Remove scientific notation when formatting large numbers. (Thanks: `Daniel Rocco`_)
 * Add the FUNCTION keyword to auto-completion.
 * Display NULL values as <null> instead of empty strings. 
 * Fix the completion refresh when ``\connect`` is executed.
