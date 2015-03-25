@@ -21,13 +21,14 @@ class PGCompleter(Completer):
             'LIKE', 'LIMIT', 'LOCK', 'LONG', 'MAXEXTENTS', 'MINUS', 'MLSLABEL',
             'MODE', 'MODIFY', 'NOAUDIT', 'NOCOMPRESS', 'NOT', 'NOWAIT', 'NULL',
             'NUMBER', 'OF', 'OFFLINE', 'ON', 'ONLINE', 'OPTION', 'OR',
-            'ORDER BY', 'OUTER', 'PCTFREE', 'PRIMARY', 'PRIOR', 'PRIVILEGES',
-            'RAW', 'RENAME', 'RESOURCE', 'REVOKE', 'RIGHT', 'ROW', 'ROWID',
-            'ROWNUM', 'ROWS', 'SELECT', 'SESSION', 'SET', 'SHARE', 'SIZE',
-            'SMALLINT', 'START', 'SUCCESSFUL', 'SYNONYM', 'SYSDATE', 'TABLE',
-            'TEMPLATE', 'THEN', 'TO', 'TRIGGER', 'UID', 'UNION', 'UNIQUE',
-            'UPDATE', 'USE', 'USER', 'VALIDATE', 'VALUES', 'VARCHAR',
-            'VARCHAR2', 'VIEW', 'WHEN', 'WHENEVER', 'WHERE', 'WITH', ]
+            'ORDER BY', 'OUTER', 'OWNER', 'PCTFREE', 'PRIMARY', 'PRIOR',
+            'PRIVILEGES', 'RAW', 'RENAME', 'RESOURCE', 'REVOKE', 'RIGHT',
+            'ROW', 'ROWID', 'ROWNUM', 'ROWS', 'SELECT', 'SESSION', 'SET',
+            'SHARE', 'SIZE', 'SMALLINT', 'START', 'SUCCESSFUL', 'SYNONYM',
+            'SYSDATE', 'TABLE', 'TEMPLATE', 'THEN', 'TO', 'TRIGGER', 'UID',
+            'UNION', 'UNIQUE', 'UPDATE', 'USE', 'USER', 'VALIDATE', 'VALUES',
+            'VARCHAR', 'VARCHAR2', 'VIEW', 'WHEN', 'WHENEVER', 'WHERE', 'WITH',
+            ]
 
     functions = ['AVG', 'COUNT', 'DISTINCT', 'FIRST', 'FORMAT', 'LAST',
             'LCASE', 'LEN', 'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP',
