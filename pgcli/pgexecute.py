@@ -167,7 +167,7 @@ class PGExecute(object):
         # Remove spaces and EOL
         statement = statement.strip()
         if not statement:  # Empty string
-            yield (None, None, None)
+            yield (None, None, None, None)
 
         # Split the sql into separate queries and run each one.
         for sql in sqlparse.split(statement):
@@ -187,7 +187,7 @@ class PGExecute(object):
                 self.connect(database=dbname)
                 self.dbname = dbname
                 _logger.debug('Successfully switched to DB: %r', dbname)
-                yield (None, None, 'You are now connected to database "%s" as '
+                yield (None, None, None, 'You are now connected to database "%s" as '
                         'user "%s"' % (self.dbname, self.user))
             else:
                 try:   # Special command
@@ -202,14 +202,18 @@ class PGExecute(object):
         _logger.debug('Regular sql statement. sql: %r', split_sql)
         cur = self.conn.cursor()
         cur.execute(split_sql)
+        try:
+            title = self.conn.notices.pop()
+        except IndexError:
+            title = None
         # cur.description will be None for operations that do not return
         # rows.
         if cur.description:
             headers = [x[0] for x in cur.description]
-            return (cur, headers, cur.statusmessage)
+            return (title, cur, headers, cur.statusmessage)
         else:
             _logger.debug('No rows in result.')
-            return (None, None, cur.statusmessage)
+            return (title, None, None, cur.statusmessage)
 
     def search_path(self):
         """Returns the current search path as a list of schema names"""

@@ -214,7 +214,7 @@ class PGCli(object):
                     successful = True
                     output = []
                     total = 0
-                    for cur, headers, status in res:
+                    for title, cur, headers, status in res:
                         logger.debug("headers: %r", headers)
                         logger.debug("rows: %r", cur)
                         logger.debug("status: %r", status)
@@ -227,7 +227,8 @@ class PGCli(object):
                             if not click.confirm('Do you want to continue?'):
                                 click.secho("Aborted!", err=True, fg='red')
                                 break
-                        output.extend(format_output(cur, headers, status, self.table_format))
+                        output.extend(format_output(title, cur, headers,
+                            status, self.table_format))
                         end = time()
                         total += end - start
                         mutating = mutating or is_mutating(status)
@@ -343,8 +344,10 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
 
     pgcli.run_cli()
 
-def format_output(cur, headers, status, table_format):
+def format_output(title, cur, headers, status, table_format):
     output = []
+    if title:  # Only print the title if it's not None.
+        output.append(title)
     if cur:
         headers = [utf8tounicode(x) for x in headers]
         if is_expanded_output():

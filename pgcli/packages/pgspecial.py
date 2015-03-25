@@ -48,7 +48,7 @@ def list_schemas(cur, pattern, verbose):
     cur.execute(sql)
     if cur.description:
         headers = [x[0] for x in cur.description]
-        return [(cur, headers, cur.statusmessage)]
+        return [(None, cur, headers, cur.statusmessage)]
 
 def list_objects(cur, pattern, verbose, relkinds):
     """
@@ -106,7 +106,7 @@ def list_objects(cur, pattern, verbose, relkinds):
 
     if cur.description:
         headers = [x[0] for x in cur.description]
-        return [(cur, headers, cur.statusmessage)]
+        return [(None, cur, headers, cur.statusmessage)]
 
 
 def list_tables(cur, pattern, verbose):
@@ -185,7 +185,7 @@ def list_functions(cur, pattern, verbose):
 
     if cur.description:
         headers = [x[0] for x in cur.description]
-        return [(cur, headers, cur.statusmessage)]
+        return [(None, cur, headers, cur.statusmessage)]
 
 
 def describe_table_details(cur, pattern, verbose):
@@ -218,7 +218,7 @@ def describe_table_details(cur, pattern, verbose):
         cur.execute(sql)
         if cur.description:
             headers = [x[0] for x in cur.description]
-            return [(cur, headers, cur.statusmessage)]
+            return [(None, cur, headers, cur.statusmessage)]
 
     # This is a \d <tablename> command. A royal pain in the ass.
     schema, relname = sql_name_pattern(pattern)
@@ -248,7 +248,7 @@ def describe_table_details(cur, pattern, verbose):
     log.debug(sql)
     cur.execute(sql)
     if not (cur.rowcount > 0):
-        return [(None, None, 'Did not find any relation named %s.' % pattern)]
+        return [(None, None, None, 'Did not find any relation named %s.' % pattern)]
 
     results = []
     for oid, nspname, relname in cur.fetchall():
@@ -282,7 +282,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
     if (cur.rowcount > 0):
         tableinfo = TableInfo._make(cur.fetchone())
     else:
-        return (None, None, 'Did not find any relation with OID %s.' % oid)
+        return (None, None, None, 'Did not find any relation with OID %s.' % oid)
 
     # If it's a seq, fetch it's value and store it for later.
     if tableinfo.relkind == 'S':
@@ -291,7 +291,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
         log.debug(sql)
         cur.execute(sql)
         if not (cur.rowcount > 0):
-            return (None, None, 'Something went wrong.')
+            return (None, None, None, 'Something went wrong.')
 
         seq_values = cur.fetchone()
 
@@ -839,7 +839,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
     if (verbose and tableinfo.reloptions):
         status.append("Options: %s\n" % tableinfo.reloptions)
 
-    return (cells, headers, "".join(status))
+    return (None, cells, headers, "".join(status))
 
 def sql_name_pattern(pattern):
     """
@@ -898,7 +898,7 @@ def show_help(cur, arg, verbose):  # All the parameters are ignored.
     for command, value in sorted(CASE_SENSITIVE_COMMANDS.items()):
         if value[1]:
             result.append(value[1])
-    return [(result, headers, None)]
+    return [(None, result, headers, None)]
 
 def change_db(cur, arg, verbose):
     raise NotImplementedError
@@ -908,14 +908,14 @@ def expanded_output(cur, arg, verbose):
     use_expanded_output = not use_expanded_output
     message = u"Expanded display is "
     message += u"on." if use_expanded_output else u"off."
-    return [(None, None, message)]
+    return [(None, None, None, message)]
 
 def toggle_timing(cur, arg, verbose):
     global TIMING_ENABLED
     TIMING_ENABLED = not TIMING_ENABLED
     message = "Timing is "
     message += "on." if TIMING_ENABLED else "off."
-    return [(None, None, message)]
+    return [(None, None, None, message)]
 
 CASE_SENSITIVE_COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
@@ -959,9 +959,9 @@ def execute(cur, sql):
         cur.execute(command_executor)
         if cur.description:
             headers = [x[0] for x in cur.description]
-            return [(cur, headers, cur.statusmessage)]
+            return [(None, cur, headers, cur.statusmessage)]
         else:
-            return [(None, None, cur.statusmessage)]
+            return [(None, None, None, cur.statusmessage)]
 
 if __name__ == '__main__':
     import psycopg2

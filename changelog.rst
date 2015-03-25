@@ -1,3 +1,11 @@
+0.16.3
+======
+
+Bug Fixes:
+----------
+* Add more SQL keywords for auto-complete suggestion.
+* Notice messages raised as part of stored procedures are no longer ignored.
+
 0.16.2
 ======
 
