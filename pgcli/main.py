@@ -16,7 +16,7 @@ from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.history import FileHistory
-from pygments.lexers.sql import SqlLexer
+from pygments.lexers.sql import PostgresLexer
 
 from .packages.tabulate import tabulate
 from .packages.expanded import expanded_table
@@ -176,7 +176,8 @@ class PGCli(object):
 
         layout = Layout(before_input=DefaultPrompt(prompt),
             menus=[CompletionsMenu(max_height=10)],
-            lexer=SqlLexer, bottom_toolbars=[PGToolbar(key_binding_manager)])
+            lexer=PostgresLexer,
+            bottom_toolbars=[PGToolbar(key_binding_manager)])
         buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
                 history=FileHistory(os.path.expanduser('~/.pgcli-history')))
         cli = CommandLineInterface(style=style_factory(self.syntax_style),
