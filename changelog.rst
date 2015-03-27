@@ -5,6 +5,7 @@ Bug Fixes:
 ----------
 * Add more SQL keywords for auto-complete suggestion.
 * Notice messages raised as part of stored procedures are no longer ignored.
+* Use postgres flavored syntax highlighting instead of generic ANSI SQL.
 
 0.16.2
 ======
