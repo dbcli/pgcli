@@ -39,8 +39,8 @@ def main():
 
     # Read input.
     print('Say something')
-    code_obj = get_input(key_bindings_registry=key_bindings_manager.registry)
-    print('You said: %s' % code_obj)
+    text = get_input(key_bindings_registry=key_bindings_manager.registry)
+    print('You said: %s' % text)
 
 
 if __name__ == '__main__':

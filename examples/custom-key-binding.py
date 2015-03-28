@@ -2,7 +2,7 @@
 """
 Example of adding a custom key binding to a prompt.
 """
-from prompt_toolkit import CommandLineInterface
+from prompt_toolkit.contrib.shortcuts import get_input
 from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.keys import Keys
 
@@ -32,13 +32,10 @@ def main():
         """
         event.cli.current_buffer.insert_text('z')
 
-    # Create a CLI with the key bindings registry of this manager.
-    cli = CommandLineInterface(key_bindings_registry=key_bindings_manager.registry)
-
     # Read input.
     print('Press F4 to insert "hello world", type "xy" to insert "z":')
-    code_obj = cli.read_input()
-    print('You said: %s' % code_obj.text)
+    text = get_input(key_bindings_registry=key_bindings_manager.registry)
+    print('You said: %s' % text)
 
 
 if __name__ == '__main__':
