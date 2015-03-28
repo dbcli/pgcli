@@ -509,7 +509,7 @@ def load_emacs_search_bindings(registry, filter=None, search_buffer_name='search
         """
         search_line = event.cli.buffers[search_buffer_name]
 
-        event.current_buffer.exit_isearch(restore_original_line=True)
+        event.cli.buffers[event.cli.focus_stack.previous].exit_isearch(restore_original_line=True)
         search_line.reset()
         event.cli.focus_stack.pop()
 
