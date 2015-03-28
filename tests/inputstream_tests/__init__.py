@@ -16,7 +16,7 @@ class InputStreamTest(unittest.TestCase):
                 self.keys.append(key_press)
 
         self.processor = _ProcessorMock()
-        self.stream = InputStream(self.processor)
+        self.stream = InputStream(self.processor.feed_key)
 
     def test_control_keys(self):
         self.stream.feed('\x01\x02\x10')
