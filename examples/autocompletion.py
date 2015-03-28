@@ -12,9 +12,6 @@ from __future__ import unicode_literals
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.contrib.shortcuts import get_input
 
-from pygments.token import Token
-from pygments.style import Style
-
 
 animal_completer = WordCompleter([
     'alligator',
@@ -52,17 +49,8 @@ animal_completer = WordCompleter([
 ], ignore_case=True)
 
 
-class AnimalStyle(Style):
-    styles = {
-        Token.Menu.Completions.Completion.Current: 'bg:#00aaaa #000000',
-        Token.Menu.Completions.Completion:         'bg:#008888 #ffffff',
-        Token.Menu.Completions.ProgressButton:     'bg:#003333',
-        Token.Menu.Completions.ProgressBar:        'bg:#00aaaa',
-    }
-
-
 def main():
-    text = get_input('Give some animals: ', completer=animal_completer, style=AnimalStyle)
+    text = get_input('Give some animals: ', completer=animal_completer)
     print('You said: %s' % text)
 
 

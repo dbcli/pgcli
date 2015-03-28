@@ -49,22 +49,22 @@ def _get_isearch_tokens(isearch_state):
         else:
             text = 'i-search'
 
-        return [(Token.Prompt.ISearch, '(%s)`' % text)]
+        return [(Token.Prompt.Search, '(%s)`' % text)]
 
     def text():
         index = isearch_state.no_match_from_index
         text = isearch_state.isearch_text
 
         if index is None:
-            return [(Token.Prompt.ISearch.Text, text)]
+            return [(Token.Prompt.Search.Text, text)]
         else:
             return [
-                (Token.Prompt.ISearch.Text, text[:index]),
-                (Token.Prompt.ISearch.Text.NoMatch, text[index:])
+                (Token.Prompt.Search.Text, text[:index]),
+                (Token.Prompt.Search.Text.NoMatch, text[index:])
             ]
 
     def after():
-        return [(Token.Prompt.ISearch, '`: ')]
+        return [(Token.Prompt.Search, '`: ')]
 
     return before() + text() + after()
 

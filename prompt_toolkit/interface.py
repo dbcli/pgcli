@@ -12,6 +12,9 @@ import weakref
 from .buffer import Buffer
 from .clipboard import Clipboard
 from .completion import CompleteEvent
+from .eventloop.base import EventLoop
+from .eventloop.callbacks import EventLoopCallbacks
+from .filters import Filter, Always, Never
 from .focus_stack import FocusStack
 from .history import History
 from .key_binding.bindings.emacs import load_emacs_bindings
@@ -20,12 +23,9 @@ from .key_binding.registry import Registry
 from .layout import Window
 from .layout.controls import BufferControl
 from .renderer import Renderer, Output
+from .styles import DefaultStyle
 from .utils import EventHook
-from .filters import Filter, Always, Never
-from .eventloop.callbacks import EventLoopCallbacks
-from .eventloop.base import EventLoop
 
-from pygments.styles.default import DefaultStyle
 from types import GeneratorType
 
 if sys.platform == 'win32':
