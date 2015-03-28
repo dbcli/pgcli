@@ -133,7 +133,7 @@ class CompletionsToolbarControl(UIControl):
                 tokens.append((self.token, ' '))
 
             # Extend/strip until the content width.
-            tokens.append((self.token, ' ' * (content_width - len(tokens))))
+            tokens.append((self.token, ' ' * (content_width - token_list_len(tokens))))
             tokens = tokens[:content_width]
 
             # Return tokens
