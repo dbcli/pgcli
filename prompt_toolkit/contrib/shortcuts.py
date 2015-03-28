@@ -108,16 +108,19 @@ def create_cli(message='',
                completer=None,
                style=None,
                history=None,
-               get_bottom_toolbar_tokens=None):
+               get_bottom_toolbar_tokens=None,
+               key_bindings_registry=None):
 
     # Create history instance.
     if history is None:
         history = History()
 
-    # Load all key bindings.
-    manager = KeyBindingManager(enable_vi_mode=vi_mode,
-                                enable_system_prompt=enable_system_prompt,
-                                enable_open_in_editor=enable_open_in_editor)
+    # Use default registry from KeyBindingManager if none was given.
+    if key_bindings_registry is None:
+        key_bindings_registry = KeyBindingManager(
+            enable_vi_mode=vi_mode,
+            enable_system_prompt=enable_system_prompt,
+            enable_open_in_editor=enable_open_in_editor).registry
 
     # Create interface.
     return CommandLineInterface(
@@ -130,7 +133,7 @@ def create_cli(message='',
             validator=validator,
             completer=completer,
         ),
-        key_bindings_registry=manager.registry,
+        key_bindings_registry=key_bindings_registry,
         style=style)
 
 
@@ -147,7 +150,8 @@ def get_input(message='',
               enable_system_prompt=False,
               enable_open_in_editor=False,
               history=None,
-              get_bottom_toolbar_tokens=None):
+              get_bottom_toolbar_tokens=None,
+              key_bindings_registry=None):
     """
     Get input from the user and return it. This wrapper builds the most obvious
     configuration of a `CommandLineInterface`. This can be a replacement for
@@ -187,7 +191,8 @@ def get_input(message='',
         completer=completer,
         style=style,
         history=history,
-        get_bottom_toolbar_tokens=get_bottom_toolbar_tokens)
+        get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
+        key_bindings_registry=key_bindings_registry)
 
     # Read input and return it.
     document = cli.read_input(on_abort=on_abort, on_exit=on_exit)

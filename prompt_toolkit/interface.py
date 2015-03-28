@@ -83,6 +83,7 @@ class CommandLineInterface(object):
 
         assert buffer is None or isinstance(buffer, Buffer)
         assert buffers is None or isinstance(buffers, dict)
+        assert key_bindings_registry is None or isinstance(key_bindings_registry, Registry)
         assert isinstance(complete_while_typing, Filter)
 
         self.stdin = stdin or sys.__stdin__
