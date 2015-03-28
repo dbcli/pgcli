@@ -6,8 +6,12 @@ from pygments.token import Token
 from .utils import token_list_len, explode_tokens
 
 __all__ = (
+    'HighlightSearchProcessor',
+    'HighlightSelectionProcessor',
     'PasswordProcessor',
     'BracketsMismatchProcessor',
+    'BeforeInput',
+    'AfterInput',
 )
 
 
@@ -21,6 +25,62 @@ class Processor(with_metaclass(ABCMeta, object)):
 
     def invalidation_hash(self, cli, buffer):
         return None
+
+
+class HighlightSearchProcessor(Processor):
+    """
+    Processor that highlights search matches in the document.
+    """
+    def run(self, cli, buffer, tokens):
+        isearch_state = buffer.isearch_state
+
+        if isearch_state:
+            # For each search match, replace the Token.
+            for index in buffer.document.find_all(isearch_state.isearch_text):
+                if index == buffer.cursor_position:
+                    token = Token.SearchMatch.Current
+                else:
+                    token = Token.SearchMatch
+
+                for x in range(index, index + len(isearch_state.isearch_text)):
+                    tokens[x] = (token, tokens[x][1])
+
+        return tokens, lambda i: i
+
+    def invalidation_hash(self, cli, buffer):
+        # When the search state changes, highlighting will be different.
+        return (
+            buffer.isearch_state,
+            (buffer.isearch_state and buffer.isearch_state.isearch_text),
+
+            # When we search for text, and the cursor position changes. The
+            # processor has to be applied every time again, because the current match is highlighted
+            # in another color.
+            (buffer.isearch_state and buffer.isearch_state.isearch_text and buffer.cursor_position)
+        )
+
+
+class HighlightSelectionProcessor(Processor):
+    """
+    Processor that highlights the selection in the document.
+    """
+    def run(self, cli, buffer, tokens):
+        # In case of selection, highlight all matches.
+        selection_range = buffer.document.selection_range()
+
+        if selection_range:
+            from_, to = selection_range
+
+            for i in range(from_, to):
+                tokens[i] = (Token.SelectedText, tokens[i][1])
+
+        return tokens, lambda i: i
+
+    def invalidation_hash(self, cli, buffer):
+        # When the search state changes, highlighting will be different.
+        return (
+            buffer.document.selection_range(),
+        )
 
 
 class PasswordProcessor(Processor):

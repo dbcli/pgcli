@@ -206,6 +206,12 @@ class BufferControl(UIControl):
             else:
                 tokens = [(self.default_token, buffer.text)]
 
+            # 'Explode' tokens in characters.
+            # (Some input processors -- like search/selection highlighter --
+            # rely on that each item in the tokens array only contains one
+            # character.)
+            tokens = [(token, c) for token, text in tokens for c in text]
+
             # Run all processors over the input.
             # (They can transform both the tokens and the cursor position.)
             cursor_transform_functions = []
@@ -219,45 +225,11 @@ class BufferControl(UIControl):
         key = (
             buffer.text,
 
-            # When the search state changes, highlighting will be different.
-            # TODO: maybe use a `Processor` for the highlighting!
-            buffer.isearch_state,
-            buffer.isearch_state and buffer.isearch_state.isearch_text,
-
             # Include invalidation_hashes from all processors.
             tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),
         )
 
         return self._token_lru_cache.get(key, get)
-
-    def _get_highlighted_characters(self, buffer):
-        """
-        Return a dictionary that maps the index of input string characters to
-        their Token in case of highlighting.
-        """
-        highlighted_characters = {}
-
-        # In case of incremental search, highlight all matches.
-        if buffer.isearch_state:
-            for index in buffer.document.find_all(buffer.isearch_state.isearch_text):
-                if index == buffer.cursor_position:
-                    token = Token.SearchMatch.Current
-                else:
-                    token = Token.SearchMatch
-
-                highlighted_characters.update(dict([
-                    (x, token) for x in range(index, index + len(buffer.isearch_state.isearch_text))
-                ]))
-
-        # In case of selection, highlight all matches.
-        selection_range = buffer.document.selection_range()
-        if selection_range:
-            from_, to = selection_range
-
-            for i in range(from_, to):
-                highlighted_characters[i] = Token.SelectedText
-
-        return highlighted_characters
 
     def _margin(self, cli, buffer):
         """
@@ -290,17 +262,6 @@ class BufferControl(UIControl):
             #       the cursor can also be.
             input_tokens, cursor_transform_functions = self._get_input_tokens(cli, buffer)
             input_tokens += [(Token, ' ')]
-
-            # 'Explode' tokens in characters.
-            input_tokens = [(token, c) for token, text in input_tokens for c in text]
-
-            # Apply highlighting.
-            # XXX: not correct -> should go before input transforms!!!
-            if not (cli.is_exiting or cli.is_aborting or cli.is_returning):
-                highlighted_characters = self._get_highlighted_characters(buffer)
-
-                for index, token in highlighted_characters.items():
-                    input_tokens[index] = (token, input_tokens[index][1])
 
             indexes_to_pos = screen.write_at_position(
                 input_tokens,
@@ -336,14 +297,6 @@ class BufferControl(UIControl):
 
             # When line numbers are enabled/disabled.
             self.show_line_numbers(cli),
-
-            # When the search state changes, highlighting will be different.
-            # TODO: maybe use a `Processor` for the highlighting!
-            buffer.isearch_state,
-            buffer.isearch_state and buffer.isearch_state.isearch_text,
-
-            # When the selection changes, and the selection is highlighted.
-            buffer.document.selection_range(),  # XXX: also use a processor for that one.
 
             # Include invalidation_hashes from all processors.
             tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),

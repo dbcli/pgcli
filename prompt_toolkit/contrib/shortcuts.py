@@ -31,7 +31,7 @@ from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.dimension import LayoutDimension
 from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.layout.processors import PasswordProcessor
+from prompt_toolkit.layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor
 from prompt_toolkit.layout.prompt import DefaultPrompt
 from prompt_toolkit.layout.screen import Char
 from prompt_toolkit.layout.toolbars import ValidationToolbar, SystemToolbar
@@ -54,10 +54,11 @@ def create_default_layout(message='', lexer=None, is_password=False,
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
 
     # Create processors list.
+    input_processors = [HighlightSearchProcessor(), HighlightSelectionProcessor()]
     if is_password:
-        input_processors = [PasswordProcessor(), DefaultPrompt(message)]
+        input_processors.extend([PasswordProcessor(), DefaultPrompt(message)])
     else:
-        input_processors = [DefaultPrompt(message)]
+        input_processors.append(DefaultPrompt(message))
 
     # Create bottom toolbar.
     if get_bottom_toolbar_tokens:
