@@ -105,7 +105,8 @@ class CommandLineInterface(object):
                  output=None,
                  initial_focussed_buffer='default',
                  on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
-                 on_accept=AcceptAction.RETURN_DOCUMENT):
+                 on_accept=AcceptAction.RETURN_DOCUMENT,
+                 use_alternate_screen=False):
 
         assert buffer is None or isinstance(buffer, Buffer)
         assert buffers is None or isinstance(buffers, dict)
@@ -176,7 +177,8 @@ class CommandLineInterface(object):
             else:
                 return Vt100_Output.from_pty(self.stdout)
 
-        self.renderer = renderer or Renderer(output or default_output())
+        self.renderer = renderer or Renderer(output or default_output(),
+                                             use_alternate_screen=use_alternate_screen)
 
         if key_bindings_registry is None:
             key_bindings_registry = Registry()
@@ -288,7 +290,7 @@ class CommandLineInterface(object):
         self.renderer.request_absolute_cursor_position()
         self._redraw()
 
-    def read_input(self, eventloop=None):
+    def read_input(self, eventloop=None, reset_current_buffer=True):
         """
         Read input string from command line.
 
@@ -300,7 +302,8 @@ class CommandLineInterface(object):
 
         try:
             g = self._read_input(eventloop=eventloop or eventloop2,
-                                 return_corountine=False)
+                                 return_corountine=False,
+                                 reset_current_buffer=reset_current_buffer)
 
             # Consume generator.
             try:
@@ -320,8 +323,7 @@ class CommandLineInterface(object):
             if eventloop is None:
                 eventloop2.close()
 
-    def read_input_async(self, on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
-                         eventloop=None):
+    def read_input_async(self, eventloop=None, reset_current_buffer=True):
         """
         Same as `read_input`, but this returns an asyncio coroutine.
 
@@ -337,7 +339,9 @@ class CommandLineInterface(object):
             eventloop2 = AsyncioEventLoop(self.stdin)
 
         try:
-            g = self._read_input(eventloop=eventloop or eventloop2, return_corountine=True)
+            g = self._read_input(eventloop=eventloop or eventloop2,
+                                 return_corountine=True,
+                                 reset_current_buffer=reset_current_buffer)
             while True:
                 yield next(g)
         except StopIteration:
@@ -346,7 +350,7 @@ class CommandLineInterface(object):
             if eventloop is None:
                 eventloop2.close()
 
-    def _read_input(self, eventloop, return_corountine):
+    def _read_input(self, eventloop, return_corountine, reset_current_buffer=True):
         """
         The implementation of ``read_input`` which can be called both
         synchronously and asynchronously. When called as coroutine it will
@@ -363,7 +367,8 @@ class CommandLineInterface(object):
 
         # Reset state.
         self.reset()
-        self.current_buffer.reset()
+        if reset_current_buffer:
+            self.current_buffer.reset()
 
         try:
             with raw_mode(self.stdin.fileno()):
