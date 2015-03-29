@@ -98,11 +98,21 @@ class Screen(object):
         #: written to the screen.
         self.current_height = 1
 
+        #: Mapping of buffer lines to input lines.
+        self.buffer_line_to_input_line = {}
+
     def write_at_position(self, data, width, margin=None):  # XXX: rename to write_data()
         """
         Write data at :class:`WritePosition`.
+
+        :param data: List of Token tuples to write to the buffer.
+        :param width: Width of the screen.
+        :param margin: Callable that takes a line number or None (in case of a
+                       line continuation) and returns a list of Token tuples.
         """
         buffer = self._buffer
+        buffer_line_to_input_line = self.buffer_line_to_input_line
+
         x = 0
         y = 0
         max_x = x + width
@@ -115,7 +125,16 @@ class Screen(object):
             """
             Insert left margin. (line numbering or whatever provider by the
             'margin' function.)
+
+            :param x: Current 'x' position in `bufer`.
+            :param number: Line number or None if this is a continuation of the
+                           previous line.
             """
+            # Save mapping between lines in the buffer and lines in the input.
+            if number is not None:
+                buffer_line_to_input_line[y] = number
+
+            # Insert margin.
             if margin is not None:
                 for token, text in margin(number):
                     for char in text:

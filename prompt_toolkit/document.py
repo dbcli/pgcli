@@ -158,8 +158,9 @@ class Document(object):
         """
         result = len('\n'.join(self.lines[:row])) + (len('\n') if row > 0 else 0) + col
 
-        # Keep in range.
-        result = max(0, min(result, len(self.text) - 1))
+        # Keep in range. (len(self.text) is included, because the cursor can be
+        # right after the end of the text as well.)
+        result = max(0, min(result, len(self.text)))
         return result
 
     @property

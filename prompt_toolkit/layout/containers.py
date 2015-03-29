@@ -308,6 +308,65 @@ class Float(object):
         self.content = content
 
 
+class WindowRenderInfo(object):
+    """
+    Render information, for the last render time of this control.
+    It stores mapping information between the input buffers (in case of a
+    BufferControl) and the actual render position on the output screen.
+
+    (Could be used for implementation of the Vi 'H' and 'L' key bindings as
+    well as implementing mouse support.)
+
+    :param original_screen: The original full screen instance that contains the
+                            whole input, without clipping. (temp_screen)
+    :param vertical_scroll: The vertical scroll of the `Window` instance.
+    :param rendered_height: The height that was used for the rendering.
+    """
+    def __init__(self, original_screen, vertical_scroll, rendered_height):
+        self.original_screen = original_screen
+        self.vertical_scroll = vertical_scroll
+        self.rendered_height = rendered_height
+
+    @property
+    def buffer_line_to_input_line(self):
+        """
+        Return the dictionary mapping the line numbers of the input buffer to
+        the lines of the screen.
+        """
+        return self.original_screen.buffer_line_to_input_line
+
+    @property
+    def first_visible_line(self):
+        """
+        Return the line number (0 based) of the input document that corresponds
+        with the first visible line.
+        """
+        # Note that we can't just do vertical_scroll+height because some input
+        # lines could be wrapped and span several lines in the screen.
+        screen = self.original_screen
+        height = self.rendered_height
+
+        for y in range(self.vertical_scroll, self.vertical_scroll + height):
+            if y in screen.buffer_line_to_input_line:
+                return screen.buffer_line_to_input_line[y]
+
+        return 0
+
+    @property
+    def last_visible_line(self):
+        """
+        Like `first_visible_line`, but for the last visible line.
+        """
+        screen = self.original_screen
+        height = self.rendered_height
+
+        for y in range(self.vertical_scroll + height - 1, self.vertical_scroll, -1):
+            if y in screen.buffer_line_to_input_line:
+                return screen.buffer_line_to_input_line[y]
+
+        return 0
+
+
 class Window(Layout):
     """
     Layout that holds a control.
@@ -352,6 +411,10 @@ class Window(Layout):
 
         #: Vertical scrolling position of the main content.
         self.vertical_scroll = 0
+
+        #: Keep render information (mappings between buffer input and render
+        #: output.)
+        self.render_info = None
 
     def _visible(self, cli):
         return self.filter is None or self.filter(cli)
@@ -411,7 +474,6 @@ class Window(Layout):
         """
         xpos = write_position.xpos
         ypos = write_position.ypos
-        width = write_position.width
         height = write_position.height
 
         columns = temp_screen.width
@@ -445,8 +507,11 @@ class Window(Layout):
             new_screen.menu_position = Point(y=temp_screen.menu_position.y + ypos - self.vertical_scroll,
                                              x=temp_screen.menu_position.x + xpos)
 
-        # Update height of this screen.
+        # Update height of the output screen.
         new_screen.current_height = max(new_screen.current_height, ypos + y + 1)
+
+        # Remember render info.
+        self.render_info = WindowRenderInfo(temp_screen, self.vertical_scroll, height)
 
     def _scroll(self, temp_screen, height):
         """
