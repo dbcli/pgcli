@@ -108,8 +108,10 @@ def load_basic_bindings(registry, filter=None):
 
     @handle(Keys.ControlC)
     def _(event):
-        if event.current_buffer.returnable(event.cli):
-            event.cli.set_abort()
+        """
+        Abort when Control-C has been pressed.
+        """
+        event.cli.set_abort()
 
     @handle(Keys.ControlD)  # XXX: this is emacs behaviour.
     def _(event):
@@ -156,14 +158,13 @@ def load_basic_bindings(registry, filter=None):
         """
         Newline/Enter. (Or return input.)
         """
-        buffer = event.current_buffer
+        b = event.current_buffer
 
-        if buffer.is_multiline:
-            buffer.newline()
+        if b.is_multiline:
+            b.newline()
         else:
-            if event.current_buffer.returnable(event.cli) and buffer.validate():
-                event.current_buffer.add_to_history()
-                event.cli.set_return_value(buffer.document)
+            if b.accept_action.is_returnable:
+                b.accept_action.validate_and_handle(event.cli, b)
 
     @handle(Keys.ControlK, filter= ~has_selection)
     def _(event):

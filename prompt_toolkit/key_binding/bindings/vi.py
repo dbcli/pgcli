@@ -217,9 +217,8 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         b = event.current_buffer
 
-        if b.returnable(event.cli) and b.validate():
-            b.add_to_history()
-            event.cli.set_return_value(b.document)
+        if b.accept_action.is_returnable:
+            b.accept_action.validate_and_handle(event.cli, b)
 
         # Not returnable, but multiline.
         elif b.is_multiline:

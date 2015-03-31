@@ -9,7 +9,7 @@ import six
 import sys
 import weakref
 
-from .buffer import Buffer
+from .buffer import Buffer, AcceptAction
 from .clipboard import Clipboard
 from .completion import CompleteEvent
 from .eventloop.base import EventLoop
@@ -51,28 +51,6 @@ class AbortAction:
     IGNORE = 'ignore'
     RETRY = 'retry'
     RAISE_EXCEPTION = 'raise-exception'
-    RETURN_NONE = 'return-none'
-
-
-class AcceptAction(object):
-    """
-    What to do when the input is accepted by the user.
-    (When Enter was pressed in the command line.)
-
-    :param handler: (optional) A callable which accepts a `Document' that is
-                    called when the user accepts input.
-    :param return_document: Set this return value. The eventloop will
-                                   deliver it to the application that called
-                                   the event loop.
-    """
-    def __init__(self, handler=None, return_document=False):
-        assert handler or return_document
-        assert handler is None or callable(handler)
-
-        self.handler = handler
-        self.return_document = return_document
-
-AcceptAction.RETURN_DOCUMENT = AcceptAction(return_document=True)
 
 
 class CommandLineInterface(object):
@@ -105,7 +83,6 @@ class CommandLineInterface(object):
                  output=None,
                  initial_focussed_buffer='default',
                  on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
-                 on_accept=AcceptAction.RETURN_DOCUMENT,
                  use_alternate_screen=False):
 
         assert buffer is None or isinstance(buffer, Buffer)
@@ -115,7 +92,6 @@ class CommandLineInterface(object):
         assert isinstance(complete_while_typing, Filter)
 
         assert renderer is None or output is None  # Never expect both.
-        assert isinstance(on_accept, AcceptAction)
 
         self.stdin = stdin or sys.__stdin__
         self.stdout = stdout or sys.__stdout__
@@ -124,7 +100,6 @@ class CommandLineInterface(object):
 
         self.on_abort = on_abort
         self.on_exit = on_exit
-        self.on_accept = on_accept
 
         # Events
 
@@ -145,9 +120,9 @@ class CommandLineInterface(object):
             # that window-focus changing functionality is disabled for these.
             # (See prompt_toolkit.key_binding.bindings.utils.focus_next_buffer.)
             # Also, 'returable' is False, in order to block normal Enter/ControlC behaviour.
-            'default': (buffer or Buffer(returnable=Always())),
-            'search': Buffer(history=History(), focussable=Never(), returnable=Never()),
-            'system': Buffer(history=History(), focussable=Never(), returnable=Never()),
+            'default': (buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)),
+            'search': Buffer(history=History(), focussable=Never(), accept_action=AcceptAction.IGNORE),
+            'system': Buffer(history=History(), focussable=Never(), accept_action=AcceptAction.IGNORE),
         }
         if buffers:
             self.buffers.update(buffers)
@@ -413,9 +388,6 @@ class CommandLineInterface(object):
                 raise EOFError()
             self._set_return_callable(eof_error)
 
-        elif on_exit == AbortAction.RETURN_NONE:
-            self.set_return_value(None)
-
         elif on_exit == AbortAction.RETRY:
             self.reset()
             self.renderer.request_absolute_cursor_position()
@@ -436,27 +408,17 @@ class CommandLineInterface(object):
                 raise KeyboardInterrupt()
             self._set_return_callable(keyboard_interrupt)
 
-        elif on_abort == AbortAction.RETURN_NONE:
-            self.set_return_value(None)
-
         elif on_abort == AbortAction.RETRY:
             self.reset()
             self.renderer.request_absolute_cursor_position()
 
     def set_return_value(self, document):
         """
-        Set a return value.
-
-        Depending on the action defined by on_accept, this will either set a
-        return value to be retrieved by the eventloop, or this will call the
-        handler.
+        Set a return value. The eventloop can retrieve the result it by calling
+        `return_value`.
         """
         self._redraw()
-
-        if self.on_accept.return_document:
-            self._set_return_callable(lambda: document)
-        else:
-            self.on_accept.handler(document)
+        self._set_return_callable(lambda: document)
 
     def _set_return_callable(self, value):
         assert callable(value)

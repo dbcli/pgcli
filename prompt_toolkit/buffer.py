@@ -20,10 +20,52 @@ import subprocess
 import tempfile
 
 __all__ = (
+    'AcceptAction',
     'Buffer',
     'indent',
     'unindent',
 )
+
+
+class AcceptAction(object):
+    """
+    What to do when the input is accepted by the user.
+    (When Enter was pressed in the command line.)
+
+    :param handler: (optional) A callable which accepts a `Document' that is
+                    called when the user accepts input.
+    :param return_document: Set this return value. The eventloop will
+                                   deliver it to the application that called
+                                   the event loop.
+    """
+    def __init__(self, handler=None, return_document=False):
+        assert not (handler and return_document)  # We cannot have both.
+        assert handler is None or callable(handler)
+
+        self.handler = handler
+        self.return_document = return_document
+
+    @property
+    def is_returnable(self):
+        """
+        True when there is something handling accept.
+        """
+        return bool(self.handler or self.return_document)
+
+    def validate_and_handle(self, cli, buffer):
+        """
+        Validate buffer and handle the accept action.
+        """
+        if buffer.validate():
+            if self.return_document:
+                cli.set_return_value(buffer.document)
+            elif self.handler:
+                self.handler(cli, buffer)
+
+            buffer.add_to_history()
+
+AcceptAction.RETURN_DOCUMENT = AcceptAction(return_document=True)
+AcceptAction.IGNORE = AcceptAction(handler=None, return_document=False)
 
 
 class CompletionState(object):
@@ -110,14 +152,15 @@ class Buffer(object):
                         returns either True or False,
     """
     def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='',
-                 is_multiline=None, initial_document=None, focussable=Always(), returnable=Always()):
+                 is_multiline=None, initial_document=None, focussable=Always(),
+                 accept_action=AcceptAction.RETURN_DOCUMENT):
         assert is_multiline is None or callable(is_multiline) or isinstance(is_multiline, bool)
 
         self.completer = completer
         self.validator = validator
         self.tempfile_suffix = tempfile_suffix
         self.focussable = focussable
-        self.returnable = returnable
+        self.accept_action = accept_action
 
         # Is multiline. (can be dynamic or static.)
         if is_multiline is not None:
