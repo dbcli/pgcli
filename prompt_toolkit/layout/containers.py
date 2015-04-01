@@ -268,6 +268,10 @@ class FloatContainer(Layout):
                 xpos = cursor_position.x
                 if xpos + width > write_position.width:
                     xpos = max(0, write_position.width - width)
+            # Only width given -> center horizontally.
+            elif fl.width:
+                xpos = int((write_position.width - fl.width) / 2)
+                width = fl.width
             else:
                 xpos = 0
                 width = write_position.width
@@ -296,6 +300,10 @@ class FloatContainer(Layout):
                 # extended_height when the content requires it.)
                 if height > write_position.extended_height - ypos:
                     height = write_position.extended_height - ypos
+            # Only height given -> center vertically.
+            elif fl.width:
+                ypos = int((write_position.height - fl.height) / 2)
+                height = fl.height
             else:
                 ypos = 0
                 height = write_position.height
@@ -337,6 +345,9 @@ class Float(object):
         self.ycursor = ycursor
 
         self.content = content
+
+    def __repr__(self):
+        return 'Float(content=%r)' % self.content
 
 
 class WindowRenderInfo(object):
