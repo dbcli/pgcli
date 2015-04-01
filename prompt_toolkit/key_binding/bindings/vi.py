@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
-from prompt_toolkit.enums import IncrementalSearchDirection
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.buffer import ClipboardData, indent, unindent
-from prompt_toolkit.selection import SelectionType
-from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
+from prompt_toolkit.enums import IncrementalSearchDirection
 from prompt_toolkit.filters import Filter
+from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.layout.utils import find_window_for_buffer_name
+from prompt_toolkit.selection import SelectionType
 
 from .basic import load_basic_bindings
 from .utils import create_handle_decorator, focus_next_buffer
@@ -34,6 +35,7 @@ class ViStateFilter(Filter):
 class CursorRegion(object):
     """
     Return struct for functions wrapped in ``change_delete_move_yank_handler``.
+    Bot `start` and `end` are relative to the current cursor position.
     """
     def __init__(self, start, end=0):
         self.start = start
@@ -893,16 +895,60 @@ def load_vi_bindings(registry, vi_state, filter=None):
 
     @change_delete_move_yank_handler('H')
     def _(event):
-        """ Implements 'cH', 'dH', 'H'. """
-        # Vi moves to the start of the visible region.
-        # cursor position 0 is okay for us.
-        return CursorRegion(-len(event.current_buffer.document.text_before_cursor))
+        """
+        Moves to the start of the visible region.
+        Implements 'cH', 'dH', 'H'.
+        """
+        w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+        b = event.current_buffer
+
+        if w:
+            # When we find a Window that has BufferControl showing this window,
+            # move to the start of the visible area.
+            pos = (b.document.translate_row_col_to_index(w.render_info.first_visible_line, 0) -
+                   b.cursor_position)
+
+        else:
+            # Otherwise, move to the start of the input.
+            pos = -len(b.document.text_before_cursor)
+        return CursorRegion(pos)
 
     @change_delete_move_yank_handler('L')
     def _(event):
-        # Vi moves to the end of the visible region.
-        # cursor position 0 is okay for us.
-        return CursorRegion(len(event.current_buffer.document.text_after_cursor))
+        """
+        Moves to the end of the visible region.
+        """
+        w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+        b = event.current_buffer
+
+        if w:
+            # When we find a Window that has BufferControl showing this window,
+            # move to the end of the visible area.
+            pos = (b.document.translate_row_col_to_index(w.render_info.last_visible_line, 0) -
+                   b.cursor_position)
+
+        else:
+            # Otherwise, move to the end of the input.
+            pos = len(b.document.text_after_cursor)
+        return CursorRegion(pos)
+
+    @handle('z', 'z')
+    def center_vertically_around_cursor(event):
+        """
+        Center Window vertically around cursor.
+        """
+        w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+        b = event.cli.current_buffer
+
+        if w and w.render_info:
+            # Calculate the offset that we need in order to position the row
+            # containing the cursor in the center.
+            cursor_position_row = b.document.cursor_position_row
+
+            for render_row, input_row in w.render_info.buffer_line_to_input_line.items():
+                if input_row == cursor_position_row:
+                    w.vertical_scroll = max(0, render_row - w.render_info.rendered_height / 2)
+                    break
 
     @change_delete_move_yank_handler('%')
     def _(event):

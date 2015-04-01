@@ -6,6 +6,7 @@ __all__ = (
     'token_list_len',
     'token_list_width',
     'explode_tokens',
+    'find_window_for_buffer_name',
 )
 
 
@@ -42,3 +43,17 @@ def explode_tokens(tokenlist):
             result.append((token, c))
 
     return result
+
+
+def find_window_for_buffer_name(layout, buffer_name):
+    """
+    Look for a Window in the Layout that contains the BufferControl for the
+    given buffer and return it. If no such Window is found, return None.
+    """
+    from .containers import Window
+    from .controls import BufferControl
+
+    for l in layout.walk():
+        if isinstance(l, Window) and isinstance(l.content, BufferControl):
+            if l.content.buffer_name == buffer_name:
+                return l
