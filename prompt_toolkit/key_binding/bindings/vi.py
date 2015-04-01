@@ -222,10 +222,6 @@ def load_vi_bindings(registry, vi_state, filter=None):
         if b.accept_action.is_returnable:
             b.accept_action.validate_and_handle(event.cli, b)
 
-        # Not returnable, but multiline.
-        elif b.is_multiline:
-            b.insert_text('\n')
-
     # ** In navigation mode **
 
     # List of navigation commands: http://hea-www.harvard.edu/~fine/Tech/vi.html
