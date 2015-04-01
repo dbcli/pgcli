@@ -163,7 +163,7 @@ class CompletionsToolbar(Window):
 
 
 class ValidationToolbarControl(TokenListControl):
-    def __init__(self):
+    def __init__(self, show_position=False):
         token = Token.Toolbar.Validation
 
         def get_tokens(cli):
@@ -173,8 +173,12 @@ class ValidationToolbarControl(TokenListControl):
                 row, column = buffer.document.translate_index_to_position(
                     buffer.validation_error.index)
 
-                text = '%s (line=%s column=%s)' % (
-                    buffer.validation_error.message, row, column)
+                if show_position:
+                    text = '%s (line=%s column=%s)' % (
+                        buffer.validation_error.message, row, column)
+                else:
+                    text = buffer.validation_error.message
+
                 return [(token, text)]
             else:
                 return []
@@ -183,8 +187,8 @@ class ValidationToolbarControl(TokenListControl):
 
 
 class ValidationToolbar(Window):
-    def __init__(self):
+    def __init__(self, show_position=False):
         super(ValidationToolbar, self).__init__(
-            ValidationToolbarControl(),
+            ValidationToolbarControl(show_position=show_position),
             height=LayoutDimension.exact(1),
             filter=HasValidationError() & ~IsDone())
