@@ -43,6 +43,12 @@ class Layout(with_metaclass(ABCMeta, object)):
     def write_to_screen(self, cli, screen, write_position):
         pass
 
+    @abstractmethod
+    def walk(self):
+        """
+        Walk through all the layout nodes (and their children) and yield them.
+        """
+
 
 class HSplit(Layout):
     """
@@ -105,6 +111,13 @@ class HSplit(Layout):
         for s, c in zip(sizes, self.children):
             c.write_to_screen(cli, screen, WritePosition(xpos, ypos, width, s))
             ypos += s
+
+    def walk(self):
+        """ Walk through children. """
+        yield self
+        for c in self.children:
+            for i in c.walk():
+                yield i
 
 
 class VSplit(Layout):
@@ -180,6 +193,13 @@ class VSplit(Layout):
         for s, c in zip(sizes, self.children):
             c.write_to_screen(cli, screen, WritePosition(xpos, ypos, s, height))
             xpos += s
+
+    def walk(self):
+        """ Walk through children. """
+        yield self
+        for c in self.children:
+            for i in c.walk():
+                yield i
 
 
 class FloatContainer(Layout):
@@ -286,6 +306,17 @@ class FloatContainer(Layout):
                                    ypos=ypos + write_position.ypos,
                                    width=width, height=height)
                 fl.content.write_to_screen(cli, screen, wp)
+
+    def walk(self):
+        """ Walk through children. """
+        yield self
+
+        for i in self.content.walk():
+            yield i
+
+        for f in self.floats:
+            for i in f.content.walk():
+                yield i
 
 
 class Float(object):
@@ -528,3 +559,7 @@ class Window(Layout):
         # Scroll down if cursor is after visible part.
         if self.vertical_scroll <= temp_screen.cursor_position.y - height:
             self.vertical_scroll = (temp_screen.cursor_position.y + 1) - height
+
+    def walk(self):
+        # Only yield self. A window doesn't have children.
+        yield self
