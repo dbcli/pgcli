@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from prompt_toolkit.buffer import ClipboardData, indent, unindent
 from prompt_toolkit.enums import IncrementalSearchDirection
-from prompt_toolkit.filters import Filter
+from prompt_toolkit.filters import Filter, Condition
 from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
@@ -1180,8 +1180,13 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
         buffer = event.cli.buffers[event.cli.focus_stack.previous]
         buffer.set_search_text(event.cli.current_buffer.text)
 
+    def search_buffer_is_empty(cli):
+        """ Returns True when the search buffer is empty. """
+        return cli.buffers[search_buffer_name].text == ''
+
     @handle(Keys.Escape, filter=has_focus)
     @handle(Keys.ControlC, filter=has_focus)
+    @handle(Keys.Backspace, filter=has_focus & Condition(search_buffer_is_empty))
     def _(event):
         """
         Cancel search.
@@ -1192,21 +1197,3 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
         event.current_buffer.exit_isearch(restore_original_line=True)
 
         event.cli.buffers[search_buffer_name].reset()
-
-# TODO: Maybe handle insert/backspace through Change event.
-
-#    @handle(Keys.Backspace, filter=has_focus)
-#    def _(event):
-#        """
-#        Backspace at the vi-search prompt.
-#        """
-#        search_line = event.cli.buffers['search']
-#
-#        if search_line.text:
-#            search_line.delete_before_cursor()
-#            event.current_buffer.set_search_text(search_line.text)
-#        else:
-#            # If no text after the prompt, cancel search.
-#            event.current_buffer.exit_isearch(restore_original_line=True)
-#            search_line.reset()
-#            event.input_processor.pop_input_mode()
