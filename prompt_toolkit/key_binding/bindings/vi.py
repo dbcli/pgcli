@@ -943,7 +943,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
 
             for render_row, input_row in w.render_info.buffer_line_to_input_line.items():
                 if input_row == cursor_position_row:
-                    w.vertical_scroll = max(0, render_row - w.render_info.rendered_height / 2)
+                    w.vertical_scroll = max(0, int(render_row - w.render_info.rendered_height / 2))
                     break
 
     @change_delete_move_yank_handler('%')
