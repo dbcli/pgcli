@@ -94,12 +94,6 @@ class Vt100_Output(Output):
         """
         self.write('\x1b[J')
 
-    def newline(self):
-        self.write('\n')
-
-    def carriage_return(self):
-        self.write('\r')
-
     def reset_attributes(self):
         self.write('\x1b[0m')
 

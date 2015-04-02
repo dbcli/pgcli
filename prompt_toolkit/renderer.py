@@ -385,14 +385,6 @@ class Output(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def newline(self):
-        pass
-
-    @abstractmethod
-    def carriage_return(self):
-        pass
-
-    @abstractmethod
     def reset_attributes(self):
         pass
 

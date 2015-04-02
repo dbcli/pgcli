@@ -5,7 +5,7 @@ from ctypes.wintypes import DWORD
 
 from ..win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, COORD, SMALL_RECT
 
-from prompt_toolkit.renderer.output import Output
+from prompt_toolkit.renderer import Output
 
 __all__ = (
     'Win32Output',
@@ -234,6 +234,12 @@ class Win32Output(Output):
         # Scroll API
         success = self._winapi(windll.kernel32.SetConsoleWindowInfo,
                                self.hconsole, True, byref(result))
+
+    def enter_alternate_screen(self):
+        pass  # XXX: not implemented yet.
+
+    def quit_alternate_screen(self):
+        pass
 
 
 class FOREGROUND_COLOR:
