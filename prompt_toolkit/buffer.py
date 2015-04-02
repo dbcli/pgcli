@@ -633,8 +633,14 @@ class Buffer(object):
         """
         return self.copy_selection(_cut=True)
 
-    def newline(self):
-        self.insert_text('\n')
+    def newline(self, copy_margin=True):
+        """
+        Insert a line ending at the current position.
+        """
+        if copy_margin:
+            self.insert_text('\n' + self.document.leading_whitespace_in_current_line)
+        else:
+            self.insert_text('\n')
 
     def insert_line_above(self, copy_margin=True):
         """
