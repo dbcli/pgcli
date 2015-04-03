@@ -24,9 +24,37 @@ def parse_special_command(sql):
     command = command.strip().replace('+', '')
     return (command, verbose, arg.strip())
 
+def list_roles(cur, pattern, verbose):
+    """
+    Returns (title, rows, headers, status)
+    """
+    sql = '''SELECT r.rolname, r.rolsuper, r.rolinherit,
+    r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,
+    r.rolconnlimit, r.rolvaliduntil,
+    ARRAY(SELECT b.rolname
+    FROM pg_catalog.pg_auth_members m
+    JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)
+    WHERE m.member = r.oid) as memberof''' + (''',
+    pg_catalog.shobj_description(r.oid, 'pg_authid') AS description'''
+    if verbose else '') + """, r.rolreplication
+    FROM pg_catalog.pg_roles r """
+
+    params = []
+    if pattern:
+        _, schema = sql_name_pattern(pattern)
+        sql += 'WHERE r.rolname ~ %s'
+        params.append(schema)
+    sql = cur.mogrify(sql + " ORDER BY 1", params)
+
+    log.debug(sql)
+    cur.execute(sql)
+    if cur.description:
+        headers = [x[0] for x in cur.description]
+        return [(None, cur, headers, cur.statusmessage)]
+
 def list_schemas(cur, pattern, verbose):
     """
-    Returns (rows, headers, status)
+    Returns (title, rows, headers, status)
     """
 
     sql = '''SELECT n.nspname AS "Name",
@@ -52,7 +80,7 @@ def list_schemas(cur, pattern, verbose):
 
 def list_objects(cur, pattern, verbose, relkinds):
     """
-        Returns (rows, header, status)
+        Returns (title, rows, header, status)
 
         This method is used by list_tables, list_views, and list_indexes
 
@@ -190,7 +218,7 @@ def list_functions(cur, pattern, verbose):
 
 def describe_table_details(cur, pattern, verbose):
     """
-    Returns (rows, headers, status)
+    Returns (title, rows, headers, status)
     """
 
     # This is a simple \d command. No table name to follow.
@@ -923,6 +951,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'list databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'list or describe tables, views and sequences.']),
             '\dn': (list_schemas, ['\dn[+] [pattern]', 'list schemas']),
+            '\du': (list_roles, ['\du[+] [pattern]', 'list roles']),
             '\\x': (expanded_output, ['\\x', 'Toggle expanded output.']),
             '\\timing': (toggle_timing, ['\\timing', 'Toggle timing of commands.']),
             '\\dt': (list_tables, ['\\dt[+] [pattern]', 'list tables.']),
