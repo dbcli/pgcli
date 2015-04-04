@@ -110,6 +110,7 @@ class CommandLineInterface(object):
         self.onReadInputStart = EventHook()
         self.onReadInputEnd = EventHook()
         self.onReset = EventHook()
+        self.onBufferChanged = EventHook()  # Called when any buffer changes.
 
         # Focus stack.
         self.focus_stack = FocusStack(initial=initial_focussed_buffer)
@@ -166,6 +167,7 @@ class CommandLineInterface(object):
         for b in self.buffers.values():
             if b.completer:
                 b.onTextInsert += self._create_async_completer(b)
+                b.onTextChanged += lambda: self.onBufferChanged.fire()
 
         self.reset()
 
@@ -215,6 +217,7 @@ class CommandLineInterface(object):
 
         if buffer.completer:
             buffer.onTextInsert += self._create_async_completer(buffer)
+            buffer.onTextChanged += lambda: self.onBufferChanged.fire()
 
         if focus:
             self.focus_stack.replace(name)
