@@ -803,7 +803,7 @@ class Buffer(object):
         :returns: (bool) True if something was found.
         """
         if not self.isearch_state:
-            self.start_isearch()
+            self.start_isearch(direction)
 
         found = False
         self.isearch_state.isearch_direction = direction

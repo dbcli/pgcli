@@ -210,6 +210,7 @@ class CommandLineInterface(object):
         """
         Insert a new buffer.
         """
+        assert isinstance(buffer, Buffer)
         self.buffers[name] = buffer
 
         if buffer.completer:
@@ -396,10 +397,10 @@ class CommandLineInterface(object):
         """
         Set abort. When Control-C has been pressed.
         """
-        self._abort_flag = True
         on_abort = self.on_abort
 
         if on_abort != AbortAction.IGNORE:
+            self._abort_flag = True
             self._redraw()
             self.current_buffer.reset()
 
