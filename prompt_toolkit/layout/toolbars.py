@@ -69,7 +69,10 @@ class ArgToolbar(Window):
 
 
 class SearchToolbarControl(BufferControl):
-    def __init__(self):
+    """
+    :param vi_mode: Display '/' and '?' instead of I-search.
+    """
+    def __init__(self, vi_mode=False):
         token = Token.Toolbar.Search
 
         def get_before_input(cli, buffer):
@@ -78,9 +81,9 @@ class SearchToolbarControl(BufferControl):
             if buffer.isearch_state is None:
                 text = ''
             elif buffer.isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
-                text = 'I-search backward: '
+                text = ('?' if vi_mode else 'I-search backward: ')
             else:
-                text = 'I-search: '
+                text = ('/' if vi_mode else 'I-search: ')
 
             return [(token, text)]
 
@@ -91,9 +94,9 @@ class SearchToolbarControl(BufferControl):
 
 
 class SearchToolbar(Window):
-    def __init__(self):
+    def __init__(self, vi_mode=False):
         super(SearchToolbar, self).__init__(
-            SearchToolbarControl(),
+            SearchToolbarControl(vi_mode=vi_mode),
             height=LayoutDimension.exact(1),
             filter=HasSearch() & ~IsDone())
 
