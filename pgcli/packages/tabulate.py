@@ -23,6 +23,8 @@ if python_version_tuple()[0] < "3":
     def _is_file(f):
         return isinstance(f, file)
 
+    import __builtin__ as builtins
+
 else:
     from itertools import zip_longest as izip_longest
     from functools import reduce, partial
@@ -37,6 +39,14 @@ else:
     def _is_file(f):
         return isinstance(f, io.IOBase)
 
+    import builtins
+
+def len(lst):
+    """rewrite `len`, compute the visible length of _text_type"""
+    if isinstance(lst, _text_type):
+        return lst.encode('gbk').__len__()
+    else:
+        return builtins.len(lst)
 
 __all__ = ["tabulate", "tabulate_formats", "simple_separated_format"]
 __version__ = "0.7.4"
@@ -380,9 +390,8 @@ def _padleft(width, s, has_invisible=True):
     True
 
     """
-    iwidth = width + len(s) - len(_strip_invisible(s)) if has_invisible else width
-    fmt = "{0:>%ds}" % iwidth
-    return fmt.format(s)
+    lwidth = width - len(_strip_invisible(s) if has_invisible else s)
+    return ' ' * lwidth + s
 
 
 def _padright(width, s, has_invisible=True):
@@ -392,9 +401,8 @@ def _padright(width, s, has_invisible=True):
     True
 
     """
-    iwidth = width + len(s) - len(_strip_invisible(s)) if has_invisible else width
-    fmt = "{0:<%ds}" % iwidth
-    return fmt.format(s)
+    rwidth = width - len(_strip_invisible(s) if has_invisible else s)
+    return s + ' ' * rwidth
 
 
 def _padboth(width, s, has_invisible=True):
@@ -404,9 +412,10 @@ def _padboth(width, s, has_invisible=True):
     True
 
     """
-    iwidth = width + len(s) - len(_strip_invisible(s)) if has_invisible else width
-    fmt = "{0:^%ds}" % iwidth
-    return fmt.format(s)
+    xwidth = width - len(_strip_invisible(s) if has_invisible else s)
+    lwidth = xwidth // 2
+    rwidth =  0 if xwidth <= 0 else lwidth + xwidth % 2
+    return ' ' * lwidth + s + ' ' * rwidth
 
 
 def _strip_invisible(s):
