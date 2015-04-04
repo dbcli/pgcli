@@ -3,7 +3,8 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
 from pygments.token import Token
-from .utils import token_list_len, explode_tokens
+from .utils import token_list_len
+from prompt_toolkit.document import Document
 
 __all__ = (
     'HighlightSearchProcessor',
@@ -95,6 +96,56 @@ class PasswordProcessor(Processor):
         return [(token, self.char * len(text)) for token, text in tokens], lambda i: i
 
 
+class HighlightMatchingBracketProcessor(Processor):
+    """
+    When the cursor is on or right after a bracket, it highlights the matching
+    bracket.
+    """
+    _closing_braces = '])}>'
+
+    def __init__(self, chars='[](){}<>'):
+        self.chars = chars
+
+    def run(self, cli, buffer, tokens):
+        def replace_token(pos):
+            """ Replace token in list of tokens. """
+            tokens[pos] = (Token.MatchingBracket, tokens[pos][1])
+
+        def apply_for_document(document):
+            """ Find and replace matching tokens. """
+            if document.current_char in self.chars:
+                pos = document.matching_bracket_position
+
+                if pos:
+                    replace_token(document.cursor_position)
+                    replace_token(document.cursor_position + pos)
+                    return True
+
+        # Apply for character below cursor.
+        d = buffer.document
+        applied = apply_for_document(d)
+
+        # Otherwise, apply for character before cursor.
+        if not applied and d.cursor_position > 0 and d.char_before_cursor in self._closing_braces:
+            apply_for_document(Document(d.text, d.cursor_position - 1))
+
+        return tokens, lambda i: i
+
+    def invalidation_hash(self, cli, buffer):
+        on_brace = buffer.document.current_char in self.chars
+        after_brace = buffer.document.char_before_cursor in self.chars
+
+        if on_brace:
+            return (True, buffer.cursor_position)
+        elif after_brace and buffer.document.char_before_cursor in self._closing_braces:
+            return (True, buffer.cursor_position - 1)
+        else:
+            # Don't include the cursor position in the hash if we are not *on*
+            # a brace. We don't have to rerender the output, because it will be
+            # the same anyway.
+            return False
+
+
 class BracketsMismatchProcessor(Processor):
     """
     Processor that replaces the token type of bracket mismatches by an Error.
@@ -102,8 +153,6 @@ class BracketsMismatchProcessor(Processor):
     error_token = Token.Error
 
     def run(self, cli, buffer, tokens):
-        tokens = explode_tokens(tokens)
-
         stack = []  # Pointers to the result array
 
         for index, (token, text) in enumerate(tokens):
