@@ -79,7 +79,7 @@ class TokenListControl(UIControl):
     def __init__(self, get_tokens, default_char=None, align_right=False):
         assert default_char is None or isinstance(default_char, Char)
         self.get_tokens = get_tokens
-        self.default_char = default_char
+        self.default_char = default_char or Char(' ', Token)
         self.align_right = align_right
 
     def __repr__(self):
