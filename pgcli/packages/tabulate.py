@@ -24,8 +24,6 @@ if python_version_tuple()[0] < "3":
     def _is_file(f):
         return isinstance(f, file)
 
-    import __builtin__ as builtins
-
 else:
     from itertools import zip_longest as izip_longest
     from functools import reduce, partial
@@ -39,8 +37,6 @@ else:
     import io
     def _is_file(f):
         return isinstance(f, io.IOBase)
-
-    import builtins
 
 
 __all__ = ["tabulate", "tabulate_formats", "simple_separated_format"]
