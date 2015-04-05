@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from decimal import Decimal
 from platform import python_version_tuple
+from wcwidth import wcswidth
 import re
 
 
@@ -380,9 +381,8 @@ def _padleft(width, s, has_invisible=True):
     True
 
     """
-    iwidth = width + len(s) - len(_strip_invisible(s)) if has_invisible else width
-    fmt = "{0:>%ds}" % iwidth
-    return fmt.format(s)
+    lwidth = width - wcswidth(_strip_invisible(s) if has_invisible else s)
+    return ' ' * lwidth + s
 
 
 def _padright(width, s, has_invisible=True):
@@ -392,9 +392,8 @@ def _padright(width, s, has_invisible=True):
     True
 
     """
-    iwidth = width + len(s) - len(_strip_invisible(s)) if has_invisible else width
-    fmt = "{0:<%ds}" % iwidth
-    return fmt.format(s)
+    rwidth = width - wcswidth(_strip_invisible(s) if has_invisible else s)
+    return s + ' ' * rwidth
 
 
 def _padboth(width, s, has_invisible=True):
@@ -404,9 +403,10 @@ def _padboth(width, s, has_invisible=True):
     True
 
     """
-    iwidth = width + len(s) - len(_strip_invisible(s)) if has_invisible else width
-    fmt = "{0:^%ds}" % iwidth
-    return fmt.format(s)
+    xwidth = width - wcswidth(_strip_invisible(s) if has_invisible else s)
+    lwidth = xwidth // 2
+    rwidth =  0 if xwidth <= 0 else lwidth + xwidth % 2
+    return ' ' * lwidth + s + ' ' * rwidth
 
 
 def _strip_invisible(s):
@@ -425,9 +425,9 @@ def _visible_width(s):
 
     """
     if isinstance(s, _text_type) or isinstance(s, _binary_type):
-        return len(_strip_invisible(s))
+        return wcswidth(_strip_invisible(s))
     else:
-        return len(_text_type(s))
+        return wcswidth(_text_type(s))
 
 
 def _align_column(strings, alignment, minwidth=0, has_invisible=True):
@@ -461,7 +461,7 @@ def _align_column(strings, alignment, minwidth=0, has_invisible=True):
     if has_invisible:
         width_fn = _visible_width
     else:
-        width_fn = len
+        width_fn = wcswidth
 
     maxwidth = max(max(map(width_fn, strings)), minwidth)
     padded_strings = [padfn(maxwidth, s, has_invisible) for s in strings]
@@ -892,7 +892,7 @@ def tabulate(tabular_data, headers=[], tablefmt="simple",
     if has_invisible:
         width_fn = _visible_width
     else:
-        width_fn = len
+        width_fn = wcswidth
 
     # format rows and columns, convert numeric values to strings
     cols = list(zip(*list_of_lists))
