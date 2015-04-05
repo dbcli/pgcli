@@ -152,9 +152,11 @@ def test_sub_select_dot_col_name_completion():
         {'type': 'view', 'schema': 't'},
         {'type': 'function', 'schema': 't'}])
 
-def test_join_suggests_tables_and_schemas():
-    suggestion = suggest_type('SELECT * FROM abc a JOIN ',
-            'SELECT * FROM abc a JOIN ')
+@pytest.mark.parametrize('join_type', ['', 'INNER', 'LEFT', 'RIGHT OUTER'])
+@pytest.mark.parametrize('tbl_alias', ['', 'foo'])
+def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
+    text = 'SELECT * FROM abc {0} {1} JOIN '.format(tbl_alias, join_type)
+    suggestion = suggest_type(text, text)
     assert sorted_dicts(suggestion) == sorted_dicts([
         {'type': 'table', 'schema': []},
         {'type': 'view', 'schema': []},
