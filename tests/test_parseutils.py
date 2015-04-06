@@ -1,6 +1,6 @@
 import pytest
 from pgcli.packages.parseutils import extract_tables
-
+from pgcli.packages.parseutils import find_prev_keyword
 
 def test_empty_string():
     tables = extract_tables('')
@@ -84,3 +84,7 @@ def test_join_as_table():
     tables = extract_tables('SELECT * FROM my_table AS m WHERE m.a > 5')
     assert tables == [(None, 'my_table', 'm')]
 
+def test_find_prev_keyword_using():
+    q = 'select * from tbl1 inner join tbl2 using (col1, '
+    kw, q2 = find_prev_keyword(q)
+    assert kw == '(' and q2 == 'select * from tbl1 inner join tbl2 using ('

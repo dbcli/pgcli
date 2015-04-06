@@ -152,12 +152,22 @@ def extract_tables(sql):
     return list(extract_table_identifiers(stream))
 
 def find_prev_keyword(sql):
-    if not sql.strip():
-        return None
+    """ Find the last sql keyword in an SQL statement
 
-    for t in reversed(list(sqlparse.parse(sql)[0].flatten())):
+    Returns the value of the last keyword, and the text of the query with
+    everything after the last keyword stripped
+    """
+    if not sql.strip():
+        return None, ''
+
+    parsed = sqlparse.parse(sql)[0]
+    for t in reversed(list(parsed.flatten())):
         if t.is_keyword or t.value == '(':
-            return t.value
+            idx = parsed.token_index(t)
+            text = ''.join(tok.value for tok in parsed.tokens[:idx+1])
+            return t.value, text
+
+    return None, ''
 
 if __name__ == '__main__':
     sql = 'select * from (select t. from tabl t'

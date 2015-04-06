@@ -217,7 +217,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         # "CREATE DATABASE <newdb> WITH TEMPLATE <db>"
         return [{'type': 'database'}]
     elif token_v.endswith(',') or token_v == '=':
-        prev_keyword = find_prev_keyword(text_before_cursor)
+        prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
         if prev_keyword:
             return suggest_based_on_last_token(
                 prev_keyword, text_before_cursor, full_text, identifier)
