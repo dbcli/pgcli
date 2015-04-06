@@ -45,7 +45,7 @@ class PGCompleter(Completer):
 
         self.special_commands = []
         self.databases = []
-        self.dbmetadata = {'tables': {}, 'functions': {}}
+        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
         self.search_path = []
 
         self.all_completions = set(self.keywords + self.functions)
@@ -96,30 +96,40 @@ class PGCompleter(Completer):
 
         self.all_completions.update(schemata)
 
-    def extend_tables(self, table_data):
+    def extend_relations(self, data, kind):
+        """ extend metadata for tables or views
 
-        # table_data is a list of (schema_name, table_name) tuples
-        table_data = [self.escaped_names(d) for d in table_data]
+        :param data: list of (schema_name, rel_name) tuples
+        :param kind: either 'tables' or 'views'
+        :return:
+        """
+
+        data = [self.escaped_names(d) for d in data]
 
         # dbmetadata['tables']['schema_name']['table_name'] should be a list of
         # column names. Default to an asterisk
-        metadata = self.dbmetadata['tables']
-        for schema, table in table_data:
+        metadata = self.dbmetadata[kind]
+        for schema, relname in data:
             try:
-                metadata[schema][table] = ['*']
+                metadata[schema][relname] = ['*']
             except AttributeError:
-                _logger.error('Table %r listed in unrecognized schema %r',
-                              table, schema)
+                _logger.error('%r %r listed in unrecognized schema %r',
+                              kind, relname, schema)
 
-        self.all_completions.update(t[1] for t in table_data)
+        self.all_completions.update(t[1] for t in data)
 
-    def extend_columns(self, column_data):
+    def extend_columns(self, column_data, kind):
+        """ extend column metadata
 
-        # column_data is a list of (schema_name, table_name, column_name) tuples
+        :param column_data: list of (schema_name, rel_name, column_name) tuples
+        :param kind: either 'tables' or 'views'
+        :return:
+        """
+
         column_data = [self.escaped_names(d) for d in column_data]
-        metadata = self.dbmetadata['tables']
-        for schema, table, column in column_data:
-            metadata[schema][table].append(column)
+        metadata = self.dbmetadata[kind]
+        for schema, relname, column in column_data:
+            metadata[schema][relname].append(column)
 
         self.all_completions.update(t[2] for t in column_data)
 
@@ -143,8 +153,8 @@ class PGCompleter(Completer):
     def reset_completions(self):
         self.databases = []
         self.search_path = []
-        self.dbmetadata = {'tables': {}, 'functions': {}}
-        self.all_completions = set(self.keywords)
+        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
+        self.all_completions = set(self.keywords + self.functions)
 
     @staticmethod
     def find_matches(text, collection):
@@ -200,6 +210,12 @@ class PGCompleter(Completer):
                 tables = self.find_matches(word_before_cursor, tables)
                 completions.extend(tables)
 
+            elif suggestion['type'] == 'view':
+                views = self.populate_schema_objects(
+                    suggestion['schema'], 'views')
+                views = self.find_matches(word_before_cursor, views)
+                completions.extend(views)
+
             elif suggestion['type'] == 'alias':
                 aliases = suggestion['aliases']
                 aliases = self.find_matches(word_before_cursor, aliases)
@@ -227,24 +243,46 @@ class PGCompleter(Completer):
         """
 
         columns = []
-        meta = self.dbmetadata['tables']
+        meta = self.dbmetadata
 
         for tbl in scoped_tbls:
             if tbl[0]:
-                # A fully qualified schema.table reference
+                # A fully qualified schema.relname reference
                 schema = self.escape_name(tbl[0])
-                table = self.escape_name(tbl[1])
+                relname = self.escape_name(tbl[1])
+
+                # We don't know if schema.relname is a table or view. Since
+                # tables and views cannot share the same name, we can check one
+                # at a time
                 try:
-                    # Get columns from the corresponding schema.table
-                    columns.extend(meta[schema][table])
+                    columns.extend(meta['tables'][schema][relname])
+
+                    # Table exists, so don't bother checking for a view
+                    continue
                 except KeyError:
-                    # Either the schema or table doesn't exist
                     pass
+
+                try:
+                    columns.extend(meta['views'][schema][relname])
+                except KeyError:
+                    pass
+
             else:
+                # Schema not specified, so traverse the search path looking for
+                # a table or view that matches. Note that in order to get proper
+                # shadowing behavior, we need to check both views and tables for
+                # each schema before checking the next schema
                 for schema in self.search_path:
-                    table = self.escape_name(tbl[1])
+                    relname = self.escape_name(tbl[1])
+
                     try:
-                        columns.extend(meta[schema][table])
+                        columns.extend(meta['tables'][schema][relname])
+                        break
+                    except KeyError:
+                        pass
+
+                    try:
+                        columns.extend(meta['views'][schema][relname])
                         break
                     except KeyError:
                         pass

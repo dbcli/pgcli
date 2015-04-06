@@ -111,16 +111,22 @@ def suggest_special(text):
     else:
         schema = None
 
-    if cmd[1:] in ('d', 'dt', 'dv'):
+    if cmd[1:] == 'd':
+        # \d can descibe tables or views
         if schema:
-            return [{'type': 'table', 'schema': schema}]
+            return [{'type': 'table', 'schema': schema},
+                    {'type': 'view', 'schema': schema}]
         else:
-            return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
-    elif cmd[1:] == 'df':
+            return [{'type': 'schema'},
+                    {'type': 'table', 'schema': []},
+                    {'type': 'view', 'schema': []}]
+    elif cmd[1:] in ('dt', 'dv', 'df'):
+        rel_type = {'dt': 'table', 'dv': 'view', 'df': 'function'}[cmd[1:]]
         if schema:
-            return [{'type': 'function', 'schema': schema}]
+            return [{'type': rel_type, 'schema': schema}]
         else:
-            return [{'type': 'schema'}, {'type': 'function', 'schema': []}]
+            return [{'type': 'schema'},
+                    {'type': rel_type, 'schema': []}]
 
     return [{'type': 'keyword'}, {'type': 'special'}]
 
@@ -163,26 +169,31 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             tables = [t for t in tables if identifies(parent, *t)]
             return [{'type': 'column', 'tables': tables},
                     {'type': 'table', 'schema': parent},
+                    {'type': 'view', 'schema': parent},
                     {'type': 'function', 'schema': parent}]
         else:
             return [{'type': 'column', 'tables': extract_tables(full_text)},
                     {'type': 'function', 'schema': []}]
     elif token_v.lower() in ('copy', 'from', 'update', 'into', 'describe',
-                             'join', 'table'):
+                             'join'):
         schema = (identifier and identifier.get_parent_name()) or []
         if schema:
-            # If already schema-qualified, suggest only tables
-            return [{'type': 'table', 'schema': schema}]
+            # If already schema-qualified, suggest only tables/views
+            return [{'type': 'table', 'schema': schema},
+                    {'type': 'view', 'schema': schema}]
         else:
-            # Suggest schemas OR public tables
-            return [{'type': 'schema'}, {'type': 'table', 'schema': []}]
-    elif token_v.lower() == 'function':
-        # E.g. 'DROP FUNCTION <funcname>'
-        schema = (identifier and identifier.get_parent_name()) or []
+            # Suggest schemas OR public tables/views
+            return [{'type': 'schema'},
+                    {'type': 'table', 'schema': []},
+                    {'type': 'view', 'schema': []}]
+    elif token_v.lower() in ('table', 'view', 'function'):
+        # E.g. 'DROP FUNCTION <funcname>', 'ALTER TABLE <tablname>'
+        rel_type = token_v.lower()
+        schema = (identifier and identifier.get_parent_name()) or []        
         if schema:
-            return [{'type': 'function', 'schema': schema}]
+            return [{'type': rel_type, 'schema': schema}]
         else:
-            return [{'type': 'schema'}, {'type': 'function', 'schema': []}]
+            return [{'type': 'schema'}, {'type': rel_type, 'schema': []}]
     elif token_v.lower() == 'on':
         tables = extract_tables(full_text)  # [(schema, table, alias), ...]
         parent = (identifier and identifier.get_parent_name()) or []
@@ -192,6 +203,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             tables = [t for t in tables if identifies(parent, *t)]
             return [{'type': 'column', 'tables': tables},
                     {'type': 'table', 'schema': parent},
+                    {'type': 'view', 'schema': parent},
                     {'type': 'function', 'schema': parent}]
         else:
             # ON <suggestion>

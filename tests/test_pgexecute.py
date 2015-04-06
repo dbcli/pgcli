@@ -30,22 +30,32 @@ def test_bools_are_treated_as_strings(executor):
         SELECT 1""")
 
 @dbtest
-def test_schemata_table_and_columns_query(executor):
+def test_schemata_table_views_and_columns_query(executor):
     run(executor, "create table a(x text, y text)")
     run(executor, "create table b(z text)")
+    run(executor, "create view d as select 1 as e")
     run(executor, "create schema schema1")
     run(executor, "create table schema1.c (w text)")
     run(executor, "create schema schema2")
 
+    # schemata
     assert executor.schemata() == ['public', 'schema1', 'schema2']
-    assert executor.tables() == [
+    assert executor.search_path() == ['public']
+
+    # tables
+    assert list(executor.tables()) == [
         ('public', 'a'), ('public', 'b'), ('schema1', 'c')]
 
-    assert executor.columns() == [
+    assert list(executor.table_columns()) == [
         ('public', 'a', 'x'), ('public', 'a', 'y'),
         ('public', 'b', 'z'), ('schema1', 'c', 'w')]
 
-    assert executor.search_path() == ['public']
+    # views
+    assert list(executor.views()) == [
+        ('public', 'd')]
+
+    assert list(executor.view_columns()) == [
+        ('public', 'd', 'e')]
 
 @dbtest
 def test_functions_query(executor):

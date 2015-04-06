@@ -7,6 +7,8 @@ metadata = {
                     'users': ['id', 'email', 'first_name', 'last_name'],
                     'orders': ['id', 'ordered_date', 'status'],
                     'select': ['id', 'insert', 'ABC']},
+                'views': {
+                    'user_emails': ['id', 'email']},
                 'functions': ['custom_func1', 'custom_func2']
             }
 
@@ -17,18 +19,30 @@ def completer():
     comp = pgcompleter.PGCompleter(smart_completion=True)
 
     schemata = ['public']
-    tables, columns = [], []
+    comp.extend_schemata(schemata)
 
+    # tables
+    tables, columns = [], []
     for table, cols in metadata['tables'].items():
         tables.append(('public', table))
         columns.extend([('public', table, col) for col in cols])
 
-    functions = [('public', func) for func in metadata['functions']]
+    comp.extend_relations(tables, kind='tables')
+    comp.extend_columns(columns, kind='tables')
 
-    comp.extend_schemata(schemata)
-    comp.extend_tables(tables)
-    comp.extend_columns(columns)
+    # views
+    views, columns = [], []
+    for view, cols in metadata['views'].items():
+        views.append(('public', view))
+        columns.extend([('public', view, col) for col in cols])
+
+    comp.extend_relations(views, kind='views')
+    comp.extend_columns(columns, kind='views')
+
+    # functions
+    functions = [('public', func) for func in metadata['functions']]
     comp.extend_functions(functions)
+
     comp.set_search_path(['public'])
 
     return comp
@@ -64,7 +78,8 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     assert set(result) == set([Completion(text='public', start_position=0),
                                Completion(text='users', start_position=0),
                                Completion(text='"select"', start_position=0),
-                               Completion(text='orders', start_position=0)])
+                               Completion(text='orders', start_position=0),
+                               Completion(text='user_emails', start_position=0)])
 
 
 def test_builtin_function_name_completion(completer, complete_event):
@@ -277,6 +292,7 @@ def test_table_names_after_from(completer, complete_event):
         Completion(text='users', start_position=0),
         Completion(text='orders', start_position=0),
         Completion(text='"select"', start_position=0),
+        Completion(text='user_emails', start_position=0),
         ])
 
 def test_auto_escaped_col_names(completer, complete_event):

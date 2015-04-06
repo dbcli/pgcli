@@ -39,8 +39,8 @@ def completer():
                     for func in funcs]
 
     comp.extend_schemata(schemata)
-    comp.extend_tables(tables)
-    comp.extend_columns(columns)
+    comp.extend_relations(tables, kind='tables')
+    comp.extend_columns(columns, kind='tables')
     comp.extend_functions(functions)
     comp.set_search_path(['public'])
 

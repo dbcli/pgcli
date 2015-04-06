@@ -18,21 +18,27 @@ def test_dn_suggests_schemata():
     suggestions = suggest_type('\\dn xxx', '\\dn xxx')
     assert suggestions == [{'type': 'schema'}]
 
-def test_d_suggests_tables_and_schemas():
+def test_d_suggests_tables_views_and_schemas():
     suggestions = suggest_type('\d ', '\d ')
     assert sorted_dicts(suggestions) == sorted_dicts([
-            {'type': 'schema'}, {'type': 'table', 'schema': []}])
+            {'type': 'schema'},
+            {'type': 'table', 'schema': []},
+            {'type': 'view', 'schema': []}])
 
     suggestions = suggest_type('\d xxx', '\d xxx')
     assert sorted_dicts(suggestions) == sorted_dicts([
-            {'type': 'schema'}, {'type': 'table', 'schema': []}])
+            {'type': 'schema'},
+            {'type': 'table', 'schema': []},
+            {'type': 'view', 'schema': []}])
 
-def test_d_dot_suggests_schema_qualified_tables():
+def test_d_dot_suggests_schema_qualified_tables_or_views():
     suggestions = suggest_type('\d myschema.', '\d myschema.')
-    assert suggestions == [{'type': 'table', 'schema': 'myschema'}]
+    assert suggestions == [{'type': 'table', 'schema': 'myschema'},
+                           {'type': 'view', 'schema': 'myschema'}]
 
     suggestions = suggest_type('\d myschema.xxx', '\d myschema.xxx')
-    assert suggestions == [{'type': 'table', 'schema': 'myschema'}]
+    assert suggestions == [{'type': 'table', 'schema': 'myschema'},
+                           {'type': 'view', 'schema': 'myschema'}]
 
 def test_df_suggests_schema_or_function():
     suggestions = suggest_type('\\df xxx', '\\df xxx')
