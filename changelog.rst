@@ -4,12 +4,12 @@
 Features:
 ---------
 
-*
+* Add support for auto-completing view names. (Thanks: darikg_)
 
 Bug Fixes:
 ----------
 
-* 
+* Fix the table formatting while printing multi-byte characters (Chinese, Japanese etc). (Thanks: `蔡佳男`_)
 
 0.16.3
 ======
@@ -185,3 +185,4 @@ Improvements:
 .. _`Iryna Cherniavska`: https://github.com/j-bennet
 .. _`Daniel Rocco`: https://github.com/drocco007 
 .. _`Jay Zeng`:  https://github.com/jayzeng 
+.. _`蔡佳男`: https://github.com/xalley
