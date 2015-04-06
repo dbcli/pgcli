@@ -931,7 +931,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
         return CursorRegion(pos)
 
     @handle('z', 'z')
-    def center_vertically_around_cursor(event):
+    def _(event):
         """
         Center Window vertically around cursor.
         """
@@ -943,10 +943,9 @@ def load_vi_bindings(registry, vi_state, filter=None):
             # containing the cursor in the center.
             cursor_position_row = b.document.cursor_position_row
 
-            for render_row, input_row in w.render_info.buffer_line_to_input_line.items():
-                if input_row == cursor_position_row:
-                    w.vertical_scroll = max(0, int(render_row - w.render_info.rendered_height / 2))
-                    break
+            render_row = w.render_info.input_line_to_screen_line(cursor_position_row)
+            if render_row is not None:
+                w.vertical_scroll = max(0, int(render_row - w.render_info.rendered_height / 2))
 
     @change_delete_move_yank_handler('%')
     def _(event):

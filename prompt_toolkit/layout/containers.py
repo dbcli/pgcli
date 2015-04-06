@@ -369,13 +369,26 @@ class WindowRenderInfo(object):
         self.vertical_scroll = vertical_scroll
         self.rendered_height = rendered_height
 
+    def input_line_to_screen_line(self, lineno):
+        """
+        Return the line number on the screen, for this line of the input.
+        Setting the `vertical_scroll` to this number should make sure that
+        `lineno` appears at the top.
+        """
+        input_to_screen = dict((v, k) for k, v in
+                               self.original_screen.screen_line_to_input_line.items())
+        try:
+            return input_to_screen[lineno]
+        except KeyError:
+            return None
+
     @property
-    def buffer_line_to_input_line(self):
+    def screen_line_to_input_line(self):
         """
         Return the dictionary mapping the line numbers of the input buffer to
         the lines of the screen.
         """
-        return self.original_screen.buffer_line_to_input_line
+        return self.original_screen.screen_line_to_input_line
 
     @property
     def first_visible_line(self):
@@ -389,8 +402,8 @@ class WindowRenderInfo(object):
         height = self.rendered_height
 
         for y in range(self.vertical_scroll, self.vertical_scroll + height):
-            if y in screen.buffer_line_to_input_line:
-                return screen.buffer_line_to_input_line[y]
+            if y in screen.screen_line_to_input_line:
+                return screen.screen_line_to_input_line[y]
 
         return 0
 
@@ -403,8 +416,8 @@ class WindowRenderInfo(object):
         height = self.rendered_height
 
         for y in range(self.vertical_scroll + height - 1, self.vertical_scroll, -1):
-            if y in screen.buffer_line_to_input_line:
-                return screen.buffer_line_to_input_line[y]
+            if y in screen.screen_line_to_input_line:
+                return screen.screen_line_to_input_line[y]
 
         return 0
 

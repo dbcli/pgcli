@@ -99,7 +99,7 @@ class Screen(object):
         self.current_height = 1
 
         #: Mapping of buffer lines to input lines.
-        self.buffer_line_to_input_line = {}
+        self.screen_line_to_input_line = {}
 
     def write_at_position(self, data, width, margin=None):  # XXX: rename to write_data()
         """
@@ -111,7 +111,7 @@ class Screen(object):
                        line continuation) and returns a list of Token tuples.
         """
         buffer = self._buffer
-        buffer_line_to_input_line = self.buffer_line_to_input_line
+        screen_line_to_input_line = self.screen_line_to_input_line
 
         x = 0
         y = 0
@@ -132,7 +132,7 @@ class Screen(object):
             """
             # Save mapping between lines in the buffer and lines in the input.
             if number is not None:
-                buffer_line_to_input_line[y] = number
+                screen_line_to_input_line[y] = number
 
             # Insert margin.
             if margin is not None:
