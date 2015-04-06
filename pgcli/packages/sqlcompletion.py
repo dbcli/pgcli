@@ -151,13 +151,23 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         return [{'type': 'keyword'}, {'type': 'special'}]
     elif token_v.lower().endswith('('):
         p = sqlparse.parse(text_before_cursor)[0]
-        if p.token_first().value.lower() == 'select':
+
+        # Get the token before the parens
+        prev_tok = p.token_prev(len(p.tokens) - 1)
+        if prev_tok and prev_tok.value and prev_tok.value.lower() == 'using':
+            # tbl1 INNER JOIN tbl2 USING (col1, col2)
+            tables = extract_tables(full_text)
+
+            # suggest columns that are present in more than one table
+            return [{'type': 'column', 'tables': tables, 'drop_unique': True}]
+        elif p.token_first().value.lower() == 'select':
             # If the lparen is preceeded by a space chances are we're about to
             # do a sub-select.
             if last_word(text_before_cursor,
                     'all_punctuations').startswith('('):
                 return [{'type': 'keyword'}]
 
+        # We're probably in a function argument list
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
     elif token_v.lower() in ('set', 'by', 'distinct'):
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
