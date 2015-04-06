@@ -626,6 +626,12 @@ class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
         """
         # Feed the key and redraw.
         self.cli.input_processor.feed_key(key_press)
+
+    def redraw(self):
+        """
+        Redraw the interface. (Should probably be called after each
+        `feed_key`.)
+        """
         self.cli._redraw()
 
 

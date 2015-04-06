@@ -65,6 +65,7 @@ class PosixAsyncioEventLoop(EventLoop):
             def stdin_ready():
                 data = self._stdin_reader.read()
                 inputstream.feed(data)
+                callbacks.redraw()
                 timeout.reset()
 
             self.loop.add_reader(self.stdin.fileno(), stdin_ready)

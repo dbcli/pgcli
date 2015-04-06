@@ -65,6 +65,7 @@ class PosixEventLoop(EventLoop):
                     # Feed input text.
                     data = stdin_reader.read()
                     inputstream.feed(data)
+                    callbacks.redraw()
 
                     # Set timeout again.
                     timeout = INPUT_TIMEOUT

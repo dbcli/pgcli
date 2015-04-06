@@ -26,3 +26,7 @@ class EventLoopCallbacks(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def feed_key(self, key):
         pass
+
+    @abstractmethod
+    def redraw(self):
+        pass
