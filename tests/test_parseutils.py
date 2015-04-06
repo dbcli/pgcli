@@ -70,8 +70,10 @@ def test_simple_update_table():
     tables = extract_tables('update abc.def set id = 1')
     assert tables == [('abc', 'def', None)]
 
-def test_join_table():
-    tables = extract_tables('SELECT * FROM abc a JOIN def d ON a.id = d.num')
+@pytest.mark.parametrize('join_type', ['', 'INNER', 'LEFT', 'RIGHT OUTER'])
+def test_join_table(join_type):
+    sql = 'SELECT * FROM abc a {0} JOIN def d ON a.id = d.num'.format(join_type)
+    tables = extract_tables(sql)
     assert sorted(tables) == [(None, 'abc', 'a'), (None, 'def', 'd')]
 
 def test_join_table_schema_qualified():

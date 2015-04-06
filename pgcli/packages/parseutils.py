@@ -85,8 +85,11 @@ def extract_from_part(parsed, stop_at_punctuation=True):
             # StopIteration. So we need to ignore the keyword if the keyword
             # FROM.
             # Also 'SELECT * FROM abc JOIN def' will trigger this elif
-            # condition. So we need to ignore the keyword JOIN.
-            elif item.ttype is Keyword and item.value.upper() not in ('FROM', 'JOIN'):
+            # condition. So we need to ignore the keyword JOIN and its variants
+            # INNER JOIN, FULL OUTER JOIN, etc.
+            elif item.ttype is Keyword and (
+                    not item.value.upper() == 'FROM') and (
+                    not item.value.upper().endswith('JOIN')):
                 raise StopIteration
             else:
                 yield item
