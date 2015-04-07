@@ -268,7 +268,7 @@ class PGCli(object):
                 self.query_history.append(query)
 
         except Exit:
-            print ('GoodBye!')
+            print ('Goodbye!')
         finally:  # Reset the less opts back to original.
             logger.debug('Restoring env var LESS to %r.', original_less_opts)
             os.environ['LESS'] = original_less_opts
