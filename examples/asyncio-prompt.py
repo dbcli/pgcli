@@ -64,9 +64,7 @@ def interactive_shell():
     # Run echo loop. Read text from stdin, and reply it back.
     while True:
         try:
-            result = yield from cli.read_input_async(
-                on_exit=AbortAction.RAISE_EXCEPTION,
-                on_abort=AbortAction.RAISE_EXCEPTION)
+            result = yield from cli.read_input_async()
             print('You said: "%s"' % result.text)
         except (EOFError, KeyboardInterrupt):
             loop.stop()
