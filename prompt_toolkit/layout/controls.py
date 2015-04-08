@@ -8,6 +8,7 @@ from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 
 from prompt_toolkit.filters import Never, Filter
+from prompt_toolkit.utils import get_cwidth
 from .processors import Processor
 from .screen import Screen, Char, Point
 from .utils import token_list_width
@@ -86,7 +87,13 @@ class TokenListControl(UIControl):
         return 'TokenListControl(%r)' % self.get_tokens
 
     def preferred_width(self, cli):
-        return token_list_width(self.get_tokens(cli))
+        """
+        Return the preferred width for this control.
+        That is the width of the longest line.
+        """
+        text = ''.join(t[1] for t in self.get_tokens(cli))
+        line_lengths = [get_cwidth(l) for l in text.split('\n')]
+        return max(line_lengths)
 
     def preferred_height(self, cli, width):
         screen = self.create_screen(cli, width, None)
