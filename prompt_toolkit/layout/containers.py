@@ -272,9 +272,16 @@ class FloatContainer(Layout):
             elif fl.width:
                 xpos = int((write_position.width - fl.width) / 2)
                 width = fl.width
+            # Otherwise, take preferred width from content.
             else:
-                xpos = 0
-                width = write_position.width
+                width = fl.content.width(cli).preferred
+
+                if fl.left is not None:
+                    xpos = fl.left
+                elif fl.right is not None:
+                    xpos = max(0, write_position.width - width - fl.right)
+                else:  # Center horizontally.
+                    xpos = int((write_position.width - width) / 2)
 
             # Top & height given.
             if fl.top is not None and fl.height is not None:
@@ -304,9 +311,16 @@ class FloatContainer(Layout):
             elif fl.width:
                 ypos = int((write_position.height - fl.height) / 2)
                 height = fl.height
+            # Otherwise, take preferred height from content.
             else:
-                ypos = 0
-                height = write_position.height
+                height = fl.content.height(cli, width).preferred
+
+                if fl.top is not None:
+                    ypos = fl.top
+                elif fl.bottom is not None:
+                    ypos = max(0, write_position.height - height - fl.bottom)
+                else:  # Center vertically.
+                    ypos = int((write_position.height - height) / 2)
 
             # Write float.
             if xpos >= 0 and ypos >= 0 and height > 0 and width > 0:
