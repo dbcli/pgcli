@@ -121,28 +121,36 @@ class HighlightMatchingBracketProcessor(Processor):
                     replace_token(document.cursor_position + pos)
                     return True
 
-        # Apply for character below cursor.
-        d = buffer.document
-        applied = apply_for_document(d)
+        if self._has_to_be_applied(cli, buffer):
+            # Apply for character below cursor.
+            d = buffer.document
+            applied = apply_for_document(d)
 
-        # Otherwise, apply for character before cursor.
-        if not applied and d.cursor_position > 0 and d.char_before_cursor in self._closing_braces:
-            apply_for_document(Document(d.text, d.cursor_position - 1))
+            # Otherwise, apply for character before cursor.
+            if not applied and d.cursor_position > 0 and d.char_before_cursor in self._closing_braces:
+                apply_for_document(Document(d.text, d.cursor_position - 1))
 
         return tokens, lambda i: i
+
+    def _has_to_be_applied(self, cli, buffer):
+        """
+        Returns True when we have to apply this processor.
+        """
+        return not cli.is_returning and cli.current_buffer == buffer
 
     def invalidation_hash(self, cli, buffer):
         on_brace = buffer.document.current_char in self.chars
         after_brace = buffer.document.char_before_cursor in self.chars
+        applied = self._has_to_be_applied(cli, buffer)
 
-        if on_brace:
+        if applied and on_brace:
             return (True, buffer.cursor_position)
-        elif after_brace and buffer.document.char_before_cursor in self._closing_braces:
+        elif applied and after_brace and buffer.document.char_before_cursor in self._closing_braces:
             return (True, buffer.cursor_position - 1)
         else:
             # Don't include the cursor position in the hash if we are not *on*
-            # a brace. We don't have to rerender the output, because it will be
-            # the same anyway.
+            # a brace or when this processor was not applied. We don't have to
+            # rerender the output, because it will be the same anyway.
             return False
 
 
