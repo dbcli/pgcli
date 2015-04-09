@@ -3,8 +3,11 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
 from pygments.token import Token
-from .utils import token_list_len
+
 from prompt_toolkit.document import Document
+from prompt_toolkit.filters import Filter
+
+from .utils import token_list_len
 
 __all__ = (
     'HighlightSearchProcessor',
@@ -13,6 +16,7 @@ __all__ = (
     'BracketsMismatchProcessor',
     'BeforeInput',
     'AfterInput',
+    'ConditionalProcessor',
 )
 
 
@@ -224,3 +228,41 @@ class AfterInput(Processor):
         def get_static_tokens(cli, buffer):
             return [(token, text)]
         return cls(get_static_tokens)
+
+
+class ConditionalProcessor(Processor):
+    """
+    Processor that applies another processor, according to a certain condition.
+    Example:
+
+        # Create a function that returns whether or not the processor should
+        # currently be applied.
+        def highlight_enabled(cli):
+            return true_or_false
+
+        # Wrapt it in a `ConditionalProcessor` for usage in a `BufferControl`.
+        BufferControl(input_processors=[
+            ConditionalProcessor(HighlightSearchProcessor(),
+                                 Condition(highlight_enabled))])
+    """
+    def __init__(self, processor, filter):
+        assert isinstance(processor, Processor)
+        assert isinstance(filter, Filter)
+
+        self.processor = processor
+        self.filter = filter
+
+    def run(self, cli, buffer, tokens):
+        # Run processor when enabled.
+        if self.filter(cli):
+            return self.processor.run(cli, buffer, tokens)
+        else:
+            return tokens, lambda i: i
+
+    def invalidation_hash(self, cli, buffer):
+        # When enabled, use the hash of the processor. Otherwise, just use
+        # False.
+        if self.filter(cli):
+            return (True, self.processor.invalidation_hash(cli, buffer))
+        else:
+            return False
