@@ -177,7 +177,8 @@ class PGExecute(object):
             # Check if the command is a \c or 'use'. This is a special
             # exception that cannot be offloaded to `pgspecial` lib. Because we
             # have to change the database connection that we're connected to.
-            if sql.startswith('\c') or sql.lower().startswith('use'):
+            command = sql.split()[0]
+            if command == '\c' or command == '\connect' or command.lower() == 'use':
                 _logger.debug('Database change command detected.')
                 try:
                     dbname = sql.split()[1]
