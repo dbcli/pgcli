@@ -66,8 +66,10 @@ def register_hstore_typecaster(conn):
 
 class PGExecute(object):
 
+    # The boolean argument to the current_schemas function indicates whether
+    # implicit schemas, e.g. pg_catalog
     search_path_query = '''
-        SELECT * FROM unnest(current_schemas(false))'''
+        SELECT * FROM unnest(current_schemas(true))'''
 
     schemata_query = '''
         SELECT  nspname
