@@ -201,18 +201,37 @@ class PGCompleter(Completer):
 
             elif suggestion['type'] == 'schema':
                 schema_names = self.dbmetadata['tables'].keys()
+
+                # Unless we're sure the user really wants them, hide schema
+                # names starting with pg_, which are mostly temporary schemas
+                if not word_before_cursor.startswith('pg_'):
+                    schema_names = [s for s in schema_names
+                                      if not s.startswith('pg_')]
+
                 schema_names = self.find_matches(word_before_cursor, schema_names)
                 completions.extend(schema_names)
 
             elif suggestion['type'] == 'table':
                 tables = self.populate_schema_objects(
                     suggestion['schema'], 'tables')
+
+                # Unless we're sure the user really wants them, don't suggest
+                # the pg_catalog tables that are implicitly on the search path
+                if not suggestion['schema'] and (
+                        not word_before_cursor.startswith('pg_')):
+                    tables = [t for t in tables if not t.startswith('pg_')]
+
                 tables = self.find_matches(word_before_cursor, tables)
                 completions.extend(tables)
 
             elif suggestion['type'] == 'view':
                 views = self.populate_schema_objects(
                     suggestion['schema'], 'views')
+
+                if not suggestion['schema'] and (
+                        not word_before_cursor.startswith('pg_')):
+                    views = [v for v in views if not v.startswith('pg_')]
+
                 views = self.find_matches(word_before_cursor, views)
                 completions.extend(views)
 
