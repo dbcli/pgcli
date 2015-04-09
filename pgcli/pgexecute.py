@@ -72,8 +72,6 @@ class PGExecute(object):
     schemata_query = '''
         SELECT  nspname
         FROM    pg_catalog.pg_namespace
-        WHERE   nspname !~ '^pg_'
-                AND nspname <> 'information_schema'
         ORDER BY 1 '''
 
     tables_query = '''
@@ -83,8 +81,6 @@ class PGExecute(object):
                 LEFT JOIN pg_catalog.pg_namespace n
                     ON n.oid = c.relnamespace
         WHERE 	c.relkind = ANY(%s)
-                AND n.nspname !~ '^pg_'
-                AND nspname <> 'information_schema'
         ORDER BY 1,2;'''
 
     columns_query = '''
@@ -97,8 +93,6 @@ class PGExecute(object):
                 INNER JOIN pg_catalog.pg_namespace nsp
                     ON cls.relnamespace = nsp.oid
         WHERE 	cls.relkind = ANY(%s)
-                AND nsp.nspname !~ '^pg_'
-                AND nsp.nspname <> 'information_schema'
                 AND NOT att.attisdropped
                 AND att.attnum  > 0
         ORDER BY 1, 2, 3'''
