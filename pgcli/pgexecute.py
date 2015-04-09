@@ -178,7 +178,7 @@ class PGExecute(object):
             # exception that cannot be offloaded to `pgspecial` lib. Because we
             # have to change the database connection that we're connected to.
             command = sql.split()[0]
-            if command == '\c' or command.lower() == 'use':
+            if command == '\c' or command == '\connect' or command.lower() == 'use':
                 _logger.debug('Database change command detected.')
                 try:
                     dbname = sql.split()[1]
