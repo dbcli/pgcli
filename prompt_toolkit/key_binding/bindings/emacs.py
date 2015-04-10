@@ -177,7 +177,7 @@ def load_emacs_bindings(registry, filter=None):
             b.accept_action.validate_and_handle(event.cli, b)
 
         # Not returnable, but multiline.
-        elif b.is_multiline:
+        elif b.is_multiline(event.cli):
             b.insert_text('\n')
 
     @handle(Keys.ControlSquareClose, Keys.Any)

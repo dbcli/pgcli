@@ -160,7 +160,7 @@ def load_basic_bindings(registry, filter=None):
         """
         b = event.current_buffer
 
-        if b.is_multiline:
+        if b.is_multiline(event.cli):
             b.newline()
         else:
             if b.accept_action.is_returnable:

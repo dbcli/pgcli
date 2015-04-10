@@ -126,7 +126,7 @@ class IsMultiline(Filter):
     Enable in multiline mode.
     """
     def __call__(self, cli):
-        return cli.current_buffer.is_multiline
+        return cli.current_buffer.is_multiline(cli)
 
 
 class HasValidationError(Filter):

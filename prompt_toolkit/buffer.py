@@ -12,7 +12,7 @@ from .selection import SelectionType, SelectionState
 from .utils import EventHook
 from .validation import ValidationError
 from .clipboard import ClipboardData
-from .filters import Always
+from .filters import Filter, Always, Never
 
 import os
 import six
@@ -143,33 +143,23 @@ class Buffer(object):
 
     :attr tempfile_suffix: Suffix to be appended to the tempfile for the 'open
                            in editor' function.
-    :attr is_multiline: Boolean to indicate whether we should consider this
-                        buffer a multiline input. If so, the `InputStreamHandler`
-                        can decide to insert newlines when pressing [Enter].
+    :attr is_multiline: Filter to indicate whether we should consider this
+                        buffer a multiline input. If so, key bindings can
+                        decide to insert newlines when pressing [Enter].
                         (Instead of accepting the input.)
-
-                        This can also be a callable that takes a `Document` and
-                        returns either True or False,
     """
     def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='',
-                 is_multiline=None, initial_document=None, focussable=Always(),
+                 is_multiline=Never(), initial_document=None, focussable=Always(),
                  accept_action=AcceptAction.RETURN_DOCUMENT):
-        assert is_multiline is None or callable(is_multiline) or isinstance(is_multiline, bool)
+        assert isinstance(is_multiline, Filter)
+        assert isinstance(focussable, Filter)
 
         self.completer = completer
         self.validator = validator
         self.tempfile_suffix = tempfile_suffix
         self.focussable = focussable
         self.accept_action = accept_action
-
-        # Is multiline. (can be dynamic or static.)
-        if is_multiline is not None:
-            if callable(is_multiline):
-                self._is_multiline = is_multiline
-            elif isinstance(is_multiline, bool):
-                self._is_multiline = lambda document: is_multiline
-        else:
-            self._is_multiline = lambda document: False
+        self.is_multiline = is_multiline
 
         #: The command buffer history.
         # Note that we shouldn't use a lazy 'or' here. bool(history) could be
@@ -184,10 +174,6 @@ class Buffer(object):
         self.onCursorPositionChanged = EventHook()
 
         self.reset(initial_document=initial_document)
-
-    @property
-    def is_multiline(self):
-        return self._is_multiline(self.document)
 
     def reset(self, initial_document=None, append_to_history=False):
         """

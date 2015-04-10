@@ -131,7 +131,7 @@ def main():
     cli = CommandLineInterface(layout=layout,
                                style=TestStyle,
                                key_bindings_registry=manager.registry,
-                               buffer=Buffer(is_multiline=True, completer=TestCompleter()))
+                               buffer=Buffer(is_multiline=Always(), completer=TestCompleter()))
     cli.read_input()
 
 

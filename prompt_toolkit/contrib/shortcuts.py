@@ -23,7 +23,7 @@ In that case, study the code in this file and build your own
 from __future__ import unicode_literals
 
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.filters import IsDone, HasFocus
+from prompt_toolkit.filters import IsDone, HasFocus, Always, Never
 from prompt_toolkit.history import History
 from prompt_toolkit.interface import CommandLineInterface, AbortAction, AcceptAction
 from prompt_toolkit.key_binding.manager import KeyBindingManager
@@ -135,7 +135,7 @@ def create_cli(message='',
                                      reserve_space_for_menu=(completer is not None),
                                      get_bottom_toolbar_tokens=get_bottom_toolbar_tokens),
         buffer=Buffer(
-            is_multiline=multiline,
+            is_multiline=(Always() if multiline else Never()),
             history=history,
             validator=validator,
             completer=completer,
