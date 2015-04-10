@@ -440,11 +440,8 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Change selection (cut and go to insert mode).
         """
-        buffer = event.current_buffer
-
-        selection_type = buffer.selection_state.type
-        deleted = buffer.cut_selection()
-        event.cli.clipboard.set_data(ClipboardData(deleted, selection_type))
+        clipboard_data = event.current_buffer.cut_selection()
+        event.cli.clipboard.set_data(clipboard_data)
         vi_state.input_mode = InputMode.INSERT
 
     @handle('y', filter=selection_mode)
