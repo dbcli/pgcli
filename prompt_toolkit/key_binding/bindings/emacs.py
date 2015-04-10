@@ -408,7 +408,7 @@ def load_emacs_bindings(registry, filter=None):
         """
         buffer = event.current_buffer
         buffer.cursor_position += buffer.document.find_next_word_beginning(count=event.arg) or \
-            buffer.document.end_position
+            buffer.document.get_end_of_document_position()
 
     @handle(Keys.Escape, '/', filter= ~has_selection)
     def _(event):

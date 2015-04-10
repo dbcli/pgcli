@@ -96,13 +96,13 @@ def load_basic_bindings(registry, filter=None):
 
     @handle(Keys.Home)
     def _(event):
-        buffer = event.current_buffer
-        buffer.cursor_position += buffer.document.home_position
+        b = event.current_buffer
+        b.cursor_position += b.document.get_start_of_line_position()
 
     @handle(Keys.End)
     def _(event):
-        buffer = event.current_buffer
-        buffer.cursor_position += buffer.document.end_position
+        b = event.current_buffer
+        b.cursor_position += b.document.get_end_of_line_position()
 
     # CTRL keys.
 

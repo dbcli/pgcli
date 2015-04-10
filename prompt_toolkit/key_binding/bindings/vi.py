@@ -695,13 +695,13 @@ def load_vi_bindings(registry, vi_state, filter=None):
     def _(event):
         """ 'word' forward. 'cw', 'dw', 'w': Delete/change/move one word.  """
         return CursorRegion(event.current_buffer.document.find_next_word_beginning(count=event.arg) or
-                            event.current_buffer.document.end_position)
+                            event.current_buffer.document.get_end_of_document_position())
 
     @change_delete_move_yank_handler('W')
     def _(event):
         """ 'WORD' forward. 'cW', 'dW', 'W': Delete/change/move one WORD.  """
         return CursorRegion(event.current_buffer.document.find_next_word_beginning(count=event.arg, WORD=True) or
-                            event.current_buffer.document.end_position)
+                            event.current_buffer.document.get_end_of_document_position())
 
     @change_delete_move_yank_handler('e')
     def _(event):
@@ -981,7 +981,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Implements 'gg', 'cgg', 'ygg'
         """
         # Move to the top of the input.
-        return CursorRegion(event.current_buffer.document.home_position)
+        return CursorRegion(event.current_buffer.document.get_start_of_document_position())
 
     @change_delete_move_yank_handler('g', '_')
     def _(event):

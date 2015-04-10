@@ -502,13 +502,11 @@ class Document(object):
 
         return 0
 
-    @property
-    def home_position(self):
+    def get_start_of_document_position(self):
         """ Relative position for the start of the document. """
         return - self.cursor_position
 
-    @property
-    def end_position(self):
+    def get_end_of_document_position(self):
         """ Relative position for the end of the document. """
         return len(self.text) - self.cursor_position
 
