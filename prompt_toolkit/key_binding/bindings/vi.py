@@ -536,7 +536,8 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Open line above and enter insertion mode
         """
-        event.current_buffer.insert_line_above()
+        event.current_buffer.insert_line_above(
+                copy_margin=not event.cli.in_paste_mode)
         vi_state.input_mode = InputMode.INSERT
 
     @handle('o', filter=navigation_mode)
@@ -544,7 +545,8 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Open line below and enter insertion mode
         """
-        event.current_buffer.insert_line_below()
+        event.current_buffer.insert_line_below(
+                copy_margin=not event.cli.in_paste_mode)
         vi_state.input_mode = InputMode.INSERT
 
     @handle('~', filter=navigation_mode)

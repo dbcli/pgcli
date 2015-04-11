@@ -161,7 +161,7 @@ def load_basic_bindings(registry, filter=None):
         b = event.current_buffer
 
         if b.is_multiline(event.cli):
-            b.newline()
+            b.newline(copy_margin=not event.cli.in_paste_mode)
         else:
             if b.accept_action.is_returnable:
                 b.accept_action.validate_and_handle(event.cli, b)

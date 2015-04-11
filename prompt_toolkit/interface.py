@@ -70,6 +70,8 @@ class CommandLineInterface(object):
     :param style: :class:`Layout` instance.
     :param complete_while_typing: Filter instance. Decide whether or not to do
                                   asynchronous autocompleting while typing.
+    :attr paste_mode: Filter to indicate that we are in "paste mode". When
+                      enabled, inserting newlines will never insert a margin.
     """
     def __init__(self, stdin=None, stdout=None,
                  layout=None,
@@ -78,11 +80,12 @@ class CommandLineInterface(object):
                  style=None,
                  key_bindings_registry=None,
                  clipboard=None,
-                 complete_while_typing=Always(),
                  renderer=None,
                  output=None,
                  initial_focussed_buffer='default',
                  on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
+                 complete_while_typing=Always(),
+                 paste_mode=Never(),
                  use_alternate_screen=False):
 
         assert buffer is None or isinstance(buffer, Buffer)
@@ -90,6 +93,7 @@ class CommandLineInterface(object):
         assert key_bindings_registry is None or isinstance(key_bindings_registry, Registry)
         assert output is None or isinstance(output, Output)
         assert isinstance(complete_while_typing, Filter)
+        assert isinstance(paste_mode, Filter)
 
         assert renderer is None or output is None  # Never expect both.
 
@@ -97,6 +101,7 @@ class CommandLineInterface(object):
         self.stdout = stdout or sys.__stdout__
         self.style = style or DefaultStyle
         self.complete_while_typing = complete_while_typing
+        self._paste_mode = paste_mode
 
         self.on_abort = on_abort
         self.on_exit = on_exit
@@ -242,6 +247,11 @@ class CommandLineInterface(object):
 
         # Trigger reset event.
         self.onReset.fire()
+
+    @property
+    def in_paste_mode(self):
+        """ True when we are in paste mode. """
+        return self._paste_mode(self)
 
     def request_redraw(self):
         """
