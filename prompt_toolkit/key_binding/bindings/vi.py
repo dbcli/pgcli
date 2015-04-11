@@ -388,7 +388,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
         event.cli.clipboard.set_text(text)
         vi_state.input_mode = InputMode.INSERT
 
-    @handle('u', filter=navigation_mode)
+    @handle('u', filter=navigation_mode, save_before=False)
     def _(event):
         for i in range(event.arg):
             event.current_buffer.undo()

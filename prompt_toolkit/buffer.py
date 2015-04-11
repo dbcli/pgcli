@@ -200,8 +200,9 @@ class Buffer(object):
         # State of complete browser
         self.complete_state = None  # For interactive completion through Ctrl-N/Ctrl-P.
 
-        # Undo stack
+        # Undo/redo stacks
         self._undo_stack = []  # Stack of (text, cursor_position)
+        self._redo_stack = []
 
         #: The working lines. Similar to history, except that this can be
         #: modified. The user can press arrow_up and edit previous entries.
@@ -284,7 +285,7 @@ class Buffer(object):
         self.cursor_position = value.cursor_position
         self.text = value.text
 
-    def save_to_undo_stack(self):
+    def save_to_undo_stack(self, clear_redo_stack=True):
         """
         Safe current state (input text and cursor position), so that we can
         restore it by calling undo.
@@ -295,6 +296,10 @@ class Buffer(object):
             self._undo_stack[-1] = (self._undo_stack[-1][0], self.cursor_position)
         else:
             self._undo_stack.append((self.text, self.cursor_position))
+
+        # Saving anything to the undo stack, clears the redo stack.
+        if clear_redo_stack:
+            self._redo_stack = []
 
     def transform_lines(self, line_index_iterator, transform_callback):
         """
@@ -729,15 +734,29 @@ class Buffer(object):
     def undo(self):
         # Pop from the undo-stack until we find a text that if different from
         # the current text. (The current logic of `save_to_undo_stack` will
-        # make sure that the top of the undo stack is usually the same as the
+        # cause that the top of the undo stack is usually the same as the
         # current text, so in that case we have to pop twice.)
         while self._undo_stack:
             text, pos = self._undo_stack.pop()
 
             if text != self.text:
+                # Push current text to redo stack.
+                self._redo_stack.append((self.text, self.cursor_position))
+
+                # Set new text.
                 self.text = text
                 self.cursor_position = pos
-                return
+                break
+
+    def redo(self):
+        if self._redo_stack:
+            # Copy current state on undo stack.
+            self.save_to_undo_stack(clear_redo_stack=False)
+
+            # Pop state from redo stack.
+            text, pos = self._redo_stack.pop()
+            self.text = text
+            self.cursor_position = pos
 
     def validate(self):
         """
