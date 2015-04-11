@@ -5,6 +5,8 @@ A REPL for Postgres
 
 This is a postgres client that does auto-completion and syntax highlighting.
 
+MySQL Equivalent: http://mysql-cli.com
+
 .. image:: screenshots/image02.png
 .. image:: screenshots/image01.png
 
