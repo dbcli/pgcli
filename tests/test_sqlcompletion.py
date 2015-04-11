@@ -279,3 +279,10 @@ def test_drop_schema_qualified_table_suggests_only_tables():
     text = 'DROP TABLE schema_name.table_name'
     suggestions = suggest_type(text, text)
     assert suggestions == [{'type': 'table', 'schema': 'schema_name'}]
+
+
+@pytest.mark.parametrize('text', [',', '  ,', 'sel ,'])
+def test_handle_pre_completion_comma_gracefully(text):
+    suggestions = suggest_type(text, text)
+
+    assert iter(suggestions)
