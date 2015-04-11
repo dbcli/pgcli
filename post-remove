@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo "Removing symlink to pgcli"
+rm /usr/local/bin/pgcli

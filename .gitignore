@@ -57,3 +57,10 @@ target/
 # PyCharm
 .idea/
 *.iml
+
+# Vagrant
+.vagrant/
+
+# Generated Packages
+*.deb
+*.rpm
