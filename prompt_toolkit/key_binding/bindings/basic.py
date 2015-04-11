@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.keys import Keys
-import prompt_toolkit.filters as filters
+from prompt_toolkit.filters import Filter, Always, HasSelection
 
 from .utils import create_handle_decorator
 
@@ -11,9 +11,11 @@ __all__ = (
 )
 
 
-def load_basic_bindings(registry, filter=None):
+def load_basic_bindings(registry, filter=Always()):
+    assert isinstance(filter, Filter)
+
     handle = create_handle_decorator(registry, filter)
-    has_selection = filters.HasSelection()
+    has_selection = HasSelection()
 
     @handle(Keys.ControlA)
     @handle(Keys.ControlB)

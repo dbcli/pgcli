@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.enums import IncrementalSearchDirection
+from prompt_toolkit.filters import Filter, Always
 
 from .basic import load_basic_bindings
 from .utils import create_handle_decorator, focus_next_buffer
@@ -15,12 +16,14 @@ __all__ = (
 )
 
 
-def load_emacs_bindings(registry, filter=None):
+def load_emacs_bindings(registry, filter=Always()):
     """
     Some e-macs extensions.
     """
     # Overview of Readline emacs commands:
     # http://www.catonmat.net/download/readline-emacs-editing-mode-cheat-sheet.pdf
+
+    assert isinstance(filter, Filter)
 
     load_basic_bindings(registry, filter)
 
