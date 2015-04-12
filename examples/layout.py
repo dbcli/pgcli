@@ -2,18 +2,19 @@
 """
 Simple example of a layout with a horizontal split.
 """
+from prompt_toolkit import CommandLineInterface
+from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.completion import Completion, Completer
+from prompt_toolkit.contrib.shortcuts import create_eventloop
+from prompt_toolkit.filters import Always
+from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.layout import Window, VSplit, HSplit, Float, FloatContainer
 from prompt_toolkit.layout.controls import TokenListControl, FillControl, BufferControl
 from prompt_toolkit.layout.dimension import LayoutDimension
-from prompt_toolkit.layout.toolbars  import SystemToolbar, ArgToolbar, CompletionsToolbar, SearchToolbar
-from prompt_toolkit.layout.prompt import DefaultPrompt
-from prompt_toolkit.buffer import Buffer
-from prompt_toolkit import CommandLineInterface
-from prompt_toolkit.key_binding.manager import KeyBindingManager
-from prompt_toolkit.layout.processors import AfterInput
 from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.completion import Completion, Completer
-from prompt_toolkit.filters import Always
+from prompt_toolkit.layout.processors import AfterInput
+from prompt_toolkit.layout.prompt import DefaultPrompt
+from prompt_toolkit.layout.toolbars  import SystemToolbar, ArgToolbar, CompletionsToolbar, SearchToolbar
 
 from pygments.style import Style
 from pygments.styles.default import DefaultStyle
@@ -128,11 +129,14 @@ def main():
         ]
     )
 
-    cli = CommandLineInterface(layout=layout,
+    eventloop = create_eventloop()
+    cli = CommandLineInterface(eventloop=eventloop,
+                               layout=layout,
                                style=TestStyle,
                                key_bindings_registry=manager.registry,
                                buffer=Buffer(is_multiline=Always(), completer=TestCompleter()))
     cli.read_input()
+    eventloop.close()
 
 
 if __name__ == '__main__':

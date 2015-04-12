@@ -19,7 +19,7 @@ possible. ::
 """
 from __future__ import unicode_literals
 from prompt_toolkit import AbortAction
-from prompt_toolkit.contrib.shortcuts import create_cli
+from prompt_toolkit.contrib.shortcuts import create_cli, create_asyncio_eventloop
 
 from pygments.style import Style
 from pygments.token import Token
@@ -54,8 +54,12 @@ def interactive_shell():
     """
     Coroutine that shows the interactive command line.
     """
+    # Create an asyncio `EventLoop` object. This is a wrapper around the
+    # asyncio loop that can be passed into prompt_toolkit.
+    eventloop = create_asyncio_eventloop()
+
     # Create interface. (style/layout is only for demonstration.)
-    cli = create_cli('Say something inside the event loop: ')
+    cli = create_cli(eventloop, 'Say something inside the event loop: ')
 
     # Patch stdout in something that will always print *above* the prompt when
     # something is written to stdout.

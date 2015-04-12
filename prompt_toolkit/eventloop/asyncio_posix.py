@@ -18,22 +18,21 @@ __all__ = (
 
 
 class PosixAsyncioEventLoop(EventLoop):
-    def __init__(self, stdin, loop=None):
-        self.stdin = stdin
+    def __init__(self, loop=None):
         self.loop = loop or asyncio.get_event_loop()
         self.closed = False
-
-        # Create reader class.
-        self._stdin_reader = PosixStdinReader(stdin)
 
         self._stopped_f = asyncio.Future()
 
     @asyncio.coroutine
-    def run_as_coroutine(self, callbacks):
+    def run_as_coroutine(self, stdin, callbacks):
         """
         The input 'event loop'.
         """
         assert isinstance(callbacks, EventLoopCallbacks)
+
+        # Create reader class.
+        stdin_reader = PosixStdinReader(stdin)
 
         if self.closed:
             raise Exception('Event loop already closed.')
@@ -63,12 +62,12 @@ class PosixAsyncioEventLoop(EventLoop):
 
             # Read input data.
             def stdin_ready():
-                data = self._stdin_reader.read()
+                data = stdin_reader.read()
                 inputstream.feed(data)
                 callbacks.redraw()
                 timeout.reset()
 
-            self.loop.add_reader(self.stdin.fileno(), stdin_ready)
+            self.loop.add_reader(stdin.fileno(), stdin_ready)
 
             # Block this coroutine until stop() has been called.
             for f in self._stopped_f:
@@ -76,7 +75,7 @@ class PosixAsyncioEventLoop(EventLoop):
 
         finally:
             # Clean up.
-            self.loop.remove_reader(self.stdin.fileno())
+            self.loop.remove_reader(stdin.fileno())
             self.loop.remove_signal_handler(signal.SIGWINCH)
 
             # Don't trigger any timeout events anymore.
@@ -87,6 +86,8 @@ class PosixAsyncioEventLoop(EventLoop):
         self._stopped_f.set_result(True)
 
     def close(self):
+        # Note: we should not close the asyncio loop itself, because that one
+        # was not created here.
         self.closed = True
 
     def run_in_executor(self, callback):

@@ -30,11 +30,9 @@ from types import GeneratorType
 
 if sys.platform == 'win32':
     from .terminal.win32_input import raw_mode, cooked_mode
-    from .eventloop.win32 import Win32EventLoop as DefaultEventLoop
     from .terminal.win32_output import Win32Output
 else:
     from .terminal.vt100_input import raw_mode, cooked_mode
-    from .eventloop.posix import PosixEventLoop as DefaultEventLoop
     from .terminal.vt100_output import Vt100_Output
 
 
@@ -59,21 +57,27 @@ class CommandLineInterface(object):
 
     Typical usage::
 
-        cli = CommandLineInterface()
+        cli = CommandLineInterface(eventloop)
         while True:
             result = cli.read_input()
             print(result)
 
+    :param eventloop: The `EventLoop` to be used when `read_input` is called.
+                      (Further, this allows callbacks to know where to find the
+                      `run_in_executor`.) It can be `None` as well, when no
+                      eventloop is used/exposed.
     :param stdin: Input stream, by default sys.stdin
     :param stdout: Output stream, by default sys.stdout
     :param layout: :class:`Layout` instance.
     :param style: :class:`Layout` instance.
+    :param on_abort: :class:`AbortAction` value. What to do when Ctrl-C has
+                     been pressed.
     :param complete_while_typing: Filter instance. Decide whether or not to do
                                   asynchronous autocompleting while typing.
     :attr paste_mode: Filter to indicate that we are in "paste mode". When
                       enabled, inserting newlines will never insert a margin.
     """
-    def __init__(self, stdin=None, stdout=None,
+    def __init__(self, eventloop, stdin=None, stdout=None,
                  layout=None,
                  buffer=None,
                  buffers=None,
@@ -94,6 +98,7 @@ class CommandLineInterface(object):
         assert output is None or isinstance(output, Output)
         assert isinstance(complete_while_typing, Filter)
         assert isinstance(paste_mode, Filter)
+        assert eventloop is None or isinstance(eventloop, EventLoop)
 
         assert renderer is None or output is None  # Never expect both.
 
@@ -105,6 +110,9 @@ class CommandLineInterface(object):
 
         self.on_abort = on_abort
         self.on_exit = on_exit
+
+        # Remember eventloop.
+        self.eventloop = eventloop
 
         # Events
 
@@ -176,29 +184,6 @@ class CommandLineInterface(object):
 
         self.reset()
 
-        # Event loop reference. (weakref, because the eventloop will also have
-        # pointers back to the CommandLineInterface.)
-        self._eventloop_ref = None
-
-    @property
-    def eventloop(self):
-        """
-        Get the eventloop.
-        """
-        if self._eventloop_ref is not None:
-            return self._eventloop_ref()
-
-    @eventloop.setter
-    def eventloop(self, value):
-        """
-        Set the eventloop.
-        """
-        if value is None:
-            self._eventloop_ref = None
-        else:
-            assert isinstance(value, EventLoop)
-            self._eventloop_ref = weakref.ref(value)
-
     @property
     def current_buffer_name(self):
         """
@@ -227,9 +212,11 @@ class CommandLineInterface(object):
         if focus:
             self.focus_stack.replace(name)
 
-    def reset(self):
+    def reset(self, reset_current_buffer=False):
         """
         Reset everything, for reading the next input.
+
+        :param reset_current_buffer: If True, also reset the focussed buffer.
         """
         # Notice that we don't reset the buffers. (This happens just before
         # returning, and when we have multiple buffers, we clearly want the
@@ -244,6 +231,9 @@ class CommandLineInterface(object):
         self.renderer.reset()
         self.input_processor.reset()
         self.layout.reset()
+
+        if reset_current_buffer:
+            self.current_buffer.reset()
 
         # Trigger reset event.
         self.onReset.fire()
@@ -279,111 +269,54 @@ class CommandLineInterface(object):
         self.renderer.request_absolute_cursor_position()
         self._redraw()
 
-    def read_input(self, eventloop=None, reset_current_buffer=True):
+    def read_input(self, reset_current_buffer=True):
         """
-        Read input string from command line.
-
-        :param on_abort: :class:`AbortAction` value. What to do when Ctrl-C has been pressed.
-        :param on_exit:  :class:`AbortAction` value. What to do when Ctrl-D has been pressed.
+        Read input from the command line.
+        This runs the eventloop until a return value has been set.
         """
-        if eventloop is None:
-            eventloop2 = DefaultEventLoop(self.stdin)
-
         try:
-            g = self._read_input(eventloop=eventloop or eventloop2,
-                                 return_corountine=False,
-                                 reset_current_buffer=reset_current_buffer)
+            self.onReadInputStart.fire()
+            self.reset(reset_current_buffer=reset_current_buffer)
 
-            # Consume generator.
-            try:
-                while True:
-                    next(g)
-            except StopIteration:
-                pass
-
-            # Clean up renderer. (This will leave the alternate screen, if we
-            # use that.)
-            self.renderer.reset()
-
-            # Return result.
-            return self.return_value()
-        finally:
-            # If we created the eventloop here, also close it.
-            if eventloop is None:
-                eventloop2.close()
-
-    def read_input_async(self, eventloop=None, reset_current_buffer=True):
-        """
-        Same as `read_input`, but this returns an asyncio coroutine.
-
-        Warning: this will only work on Python >3.3
-        """
-        if eventloop is None:
-            # Inline import, to make sure the rest doesn't break on Python 2
-            if sys.platform == 'win32':
-                from prompt_toolkit.eventloop.asyncio_win32 import Win32AsyncioEventLoop as AsyncioEventLoop
-            else:
-                from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop
-
-            eventloop2 = AsyncioEventLoop(self.stdin)
-
-        try:
-            g = self._read_input(eventloop=eventloop or eventloop2,
-                                 return_corountine=True,
-                                 reset_current_buffer=reset_current_buffer)
-            while True:
-                yield next(g)
-        except StopIteration:
-            raise StopIteration(self.return_value())
-        finally:
-            if eventloop is None:
-                eventloop2.close()
-
-    def _read_input(self, eventloop, return_corountine, reset_current_buffer=True):
-        """
-        The implementation of ``read_input`` which can be called both
-        synchronously and asynchronously. When called as coroutine it will
-        delegate all the futures from ``eventloop.loop_coroutine``. In both
-        cases it returns the result through ``StopIteration``.
-        """
-        assert isinstance(eventloop, EventLoop)
-
-        # Create event loop.
-        if self.eventloop:
-            raise Exception('Eventloop already set. Read_input is not thread safe.')
-
-        self.eventloop = eventloop
-
-        # Reset state.
-        self.reset()
-        if reset_current_buffer:
-            self.current_buffer.reset()
-
-        try:
+            # Run eventloop in raw mode.
             with raw_mode(self.stdin.fileno()):
-                self.onReadInputStart.fire()
-
                 self.renderer.request_absolute_cursor_position()
                 self._redraw()
 
-                callbacks = self.create_eventloop_callbacks()
-
-                if return_corountine:
-                    loop_result = self.eventloop.run_as_coroutine(callbacks)
-                    assert isinstance(loop_result, GeneratorType)
-
-                    for future in loop_result:
-                        yield future
-                else:
-                    loop_result = self.eventloop.run(callbacks)
-                    assert loop_result is None
-
-                    # run_as_coroutine() and run() return when the eventloop stops.
-                    # This happens when an exit/abort/return flag has been set.
+                self.eventloop.run(self.stdin, self.create_eventloop_callbacks())
         finally:
-            # Unset event loop
-            self.eventloop = None
+            # Clean up renderer. (This will leave the alternate screen, if we use
+            # that.)
+            self.renderer.reset()
+            self.onReadInputEnd.fire()
 
+        # Return result.
+        return self.return_value()
+
+    def read_input_async(self, reset_current_buffer=True):
+        """
+        Same as `read_input`, but this returns a coroutine.
+
+        This is mostly for Python >3.3, with asyncio.
+        """
+        try:
+            self.onReadInputStart.fire()
+            self.reset(reset_current_buffer=reset_current_buffer)
+
+            with raw_mode(self.stdin.fileno()):
+                self.renderer.request_absolute_cursor_position()
+                self._redraw()
+
+                g = self.eventloop.run_as_coroutine(
+                        self.stdin, self.create_eventloop_callbacks())
+                assert isinstance(g, GeneratorType)
+
+                while True:
+                    yield next(g)
+        except StopIteration:
+            raise StopIteration(self.return_value())
+        finally:
+            self.renderer.reset()
             self.onReadInputEnd.fire()
 
     def set_exit(self):
@@ -458,7 +391,6 @@ class CommandLineInterface(object):
 
     def _run_in_terminal(self, func):
         """ Blocking, not thread safe version of ``run_in_terminal``. """
-#        #assert self.is_reading_input, 'Should be called while reading input.'
         self.renderer.erase()
 
         # Run system command.

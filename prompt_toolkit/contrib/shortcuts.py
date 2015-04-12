@@ -23,6 +23,7 @@ In that case, study the code in this file and build your own
 from __future__ import unicode_literals
 
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.eventloop.base import EventLoop
 from prompt_toolkit.filters import IsDone, HasFocus, Always, Never
 from prompt_toolkit.history import History
 from prompt_toolkit.interface import CommandLineInterface, AbortAction, AcceptAction
@@ -38,12 +39,45 @@ from prompt_toolkit.layout.toolbars import ValidationToolbar, SystemToolbar
 
 from pygments.token import Token
 
+import sys
 
 __all__ = (
     'get_input',
     'create_cli',
     'create_default_layout',
 )
+
+
+def create_eventloop():
+    """
+    Create and return a normal `EventLoop` instance for a
+    `CommandLineInterface`.
+    """
+    if sys.platform == 'win32':
+        from prompt_toolkit.eventloop.win32 import Win32EventLoop as Loop
+    else:
+        from prompt_toolkit.eventloop.posix import PosixEventLoop as Loop
+
+    return Loop()
+
+
+def create_asyncio_eventloop(loop=None):
+    """
+    Returns an asyncio `Eventloop` instance for usage in a
+    `CommandLineInterface`. It is a wrapper around an asyncio loop.
+
+    :param loop: The asyncio eventloop (or `None` if the default asyncioloop
+                 should be used.)
+    """
+    # Inline import, to make sure the rest doesn't break on Python 2. (Where
+    # asyncio is not available.)
+    if sys.platform == 'win32':
+        from prompt_toolkit.eventloop.asyncio_win32 import Win32AsyncioEventLoop as AsyncioEventLoop
+    else:
+        from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop
+
+    return AsyncioEventLoop(loop)
+
 
 
 def create_default_layout(message='', lexer=None, is_password=False,
@@ -98,7 +132,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
     ] + toolbars)
 
 
-def create_cli(message='',
+def create_cli(eventloop, message='',
                multiline=False,
                is_password=False,
                vi_mode=False,
@@ -118,6 +152,8 @@ def create_cli(message='',
     """
     Create a `CommandLineInterface` instance.
     """
+    assert isinstance(eventloop, EventLoop)
+
     # Create history instance.
     if history is None:
         history = History()
@@ -131,6 +167,7 @@ def create_cli(message='',
 
     # Create interface.
     return CommandLineInterface(
+        eventloop=eventloop,
         layout=create_default_layout(message=message, lexer=lexer, is_password=is_password,
                                      reserve_space_for_menu=(completer is not None),
                                      get_bottom_toolbar_tokens=get_bottom_toolbar_tokens),
@@ -190,7 +227,10 @@ def get_input(message='',
         :class:`CommandLineInterface` and returns a list of tokens for the
         bottom toolbar.
     """
+    eventloop = create_eventloop()
+
     cli = create_cli(
+        eventloop,
         message=message,
         multiline=multiline,
         is_password=is_password,
@@ -209,7 +249,10 @@ def get_input(message='',
         on_accept=on_accept)
 
     # Read input and return it.
-    document = cli.read_input()
+    try:
+        document = cli.read_input()
 
-    if document:
-        return document.text
+        if document:
+            return document.text
+    finally:
+        eventloop.close()

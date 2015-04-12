@@ -17,8 +17,7 @@ __all__ = (
 
 
 class PosixEventLoop(EventLoop):
-    def __init__(self, stdin):
-        self.stdin = stdin
+    def __init__(self):
         self.running = False
         self.closed = False
 
@@ -30,7 +29,7 @@ class PosixEventLoop(EventLoop):
 
         self._running = False
 
-    def run(self, callbacks):
+    def run(self, stdin, callbacks):
         """
         The input 'event loop'.
         """
@@ -45,7 +44,7 @@ class PosixEventLoop(EventLoop):
         timeout = INPUT_TIMEOUT
 
         # Create reader class.
-        stdin_reader = PosixStdinReader(self.stdin)
+        stdin_reader = PosixStdinReader(stdin)
 
         def received_winch():
             """
@@ -57,11 +56,11 @@ class PosixEventLoop(EventLoop):
 
         with call_on_sigwinch(received_winch):
             while self._running:
-                r, _, _ = _select([self.stdin, self._schedule_pipe[0]], [], [], timeout)
+                r, _, _ = _select([stdin, self._schedule_pipe[0]], [], [], timeout)
 
                 # If we got a character, feed it to the input stream. If we got
                 # none, it means we got a repaint request.
-                if self.stdin in r:
+                if stdin in r:
                     # Feed input text.
                     data = stdin_reader.read()
                     inputstream.feed(data)

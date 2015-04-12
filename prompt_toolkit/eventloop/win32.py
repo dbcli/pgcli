@@ -23,9 +23,7 @@ WAIT_TIMEOUT = 0x00000102
 
 
 class Win32EventLoop(EventLoop):
-    def __init__(self, stdin):
-        self.stdin = stdin
-
+    def __init__(self):
         self._event = _create_event()
         self._console_input_reader = ConsoleInputReader()
         self._calls_from_executor = []
@@ -33,11 +31,7 @@ class Win32EventLoop(EventLoop):
         self.closed = False
         self._running = False
 
-        # XXX: There is still one bug here. When input has been read from the
-        #      ConsoleInputReader, `_wait_for_handles` never returns the Event
-        #      as signalled anymore.
-
-    def run(self, callbacks):
+    def run(self, stdin, callbacks):
         if self.closed:
             raise Exception('Event loop already closed.')
 

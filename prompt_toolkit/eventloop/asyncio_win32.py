@@ -19,14 +19,14 @@ __all__ = (
 
 
 class Win32AsyncioEventLoop(EventLoop):
-    def __init__(self, stdin, loop=None):
+    def __init__(self, loop=None):
         self._console_input_reader = ConsoleInputReader()
         self.running = False
         self.closed = False
         self.loop = loop or asyncio.get_event_loop()
 
     @asyncio.coroutine
-    def run_as_coroutine(self, callbacks):
+    def run_as_coroutine(self, stdin, callbacks):
         """
         The input 'event loop'.
         """
@@ -63,6 +63,8 @@ class Win32AsyncioEventLoop(EventLoop):
         self.running = False
 
     def close(self):
+        # Note: we should not close the asyncio loop itself, because that one
+        # was not created here.
         self.closed = True
 
     def run_in_executor(self, callback):

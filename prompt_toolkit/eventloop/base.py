@@ -16,16 +16,17 @@ class EventLoop(with_metaclass(ABCMeta, object)):
     """
     Eventloop interface.
     """
-    def run(self, callbacks):
+    def run(self, stdin, callbacks):
         """
         Run the eventloop until stop() is called. Report all
         input/timeout/terminal-resize events to the callbacks.
 
+        :param stdin: The input stream to be used for the interface.
         :param callbacks: EventLoopCallback instance.
         """
         raise NotImplementedError
 
-    def run_as_coroutine(self, callbacks):
+    def run_as_coroutine(self, stdin, callbacks):
         """
         Similar to `run`, but this is a coroutine. (For asyncio integration.)
         """

@@ -7,6 +7,7 @@ from prompt_toolkit.layout import Window
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.processors import Processor
 from prompt_toolkit.layout.utils import token_list_len
+from prompt_toolkit.contrib.shortcuts import create_eventloop
 from pygments.token import Token
 
 import datetime
@@ -28,7 +29,11 @@ class ClockPrompt(Processor):
 
 
 def main():
-    cli = CommandLineInterface(layout=Window(BufferControl(input_processors=[ClockPrompt()])))
+    eventloop = create_eventloop()
+
+    cli = CommandLineInterface(layout=Window(BufferControl(input_processors=[ClockPrompt()])),
+                               eventloop=eventloop)
+    done = [False]  # Non local
 
     def on_read_start():
         """
@@ -40,15 +45,22 @@ def main():
         # instance.
         def run():
             # Send every second a redraw request.
-            while cli.eventloop is not None:
+            while not done[0]:
                 time.sleep(1)
                 cli.request_redraw()
 
         cli.eventloop.run_in_executor(run)
+
+    def on_read_end():
+        done[0] = True
+
     cli.onReadInputStart += on_read_start
+    cli.onReadInputEnd += on_read_end
 
     code_obj = cli.read_input()
     print('You said: %s' % code_obj.text)
+
+    eventloop.close()
 
 
 if __name__ == '__main__':

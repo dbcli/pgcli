@@ -27,19 +27,24 @@ class AnimalStyle(Style):
 
 
 class ExampleApplication(TelnetApplication):
-    def create_cli(self, telnet_connection):
+    def create_cli(self, eventloop, telnet_connection):
         """
         Return the new CommandLineInterface to be used for an incoming
         connection.
         """
         animal_completer = WordCompleter([ 'alligator', 'ant',])
-        return create_cli(message='Say something: ', lexer=HtmlLexer, style=AnimalStyle, completer=animal_completer)
+        return create_cli(eventloop,
+                          message='Say something: ',
+                          lexer=HtmlLexer,
+                          style=AnimalStyle,
+                          completer=animal_completer)
 
     def client_connected(self, telnet_connection):
         # When a client is connected, erase the screen from the client and say
         # Hello.
         telnet_connection.vt100_output.erase_screen()
         telnet_connection.vt100_output.cursor_goto(0, 0)
+
         telnet_connection.send('Welcome!\n')
 
     def handle_command(self, telnet_connection, document):

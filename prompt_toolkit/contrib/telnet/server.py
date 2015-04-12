@@ -4,9 +4,9 @@ Telnet server.
 Example usage::
 
     class MyTelnetApplication(TelnetApplication):
-        def create_cli(self, telnet_connection):
+        def create_cli(self, eventloop, telnet_connection):
             # Create simple prompt.
-            return create_cli(message='$ ')
+            return create_cli(eventloop, message='$ ')
 
         def handle_command(self, telnet_connection, document):
             # When the client enters a command, just reply.
@@ -111,17 +111,15 @@ class TelnetConnection(object):
         self.stdout = _ConnectionStdout(conn, encoding=encoding)
         self.vt100_output = Vt100_Output(self.stdout, get_size)
 
+        # Create an eventloop (adaptor) for the CommandLineInterface.
+        eventloop = _TelnetEventLoopInterface(server)
+
         # Create CommandLineInterface instance.
-        self.cli = application.create_cli(self)
+        self.cli = application.create_cli(eventloop, self)
 
         # Replace the renderer by a renderer that outputs over the telnet
         # connection.
         self.cli.renderer = Renderer(output=self.vt100_output)
-
-        # Assign eventloop to CommandLineInterface, (we keep a reference here,
-        # because CommandLineInterface only saves a weakref.)
-        self.eventloop = _TelnetEventLoopInterface(server)
-        self.cli.eventloop = self.eventloop
 
         # Input decoder for stdin. (Required when working with multibyte
         # characters, like chinese input.)
@@ -150,11 +148,11 @@ class TelnetConnection(object):
 
         self.parser = TelnetProtocolParser(data_received, size_received)
 
-        # Render again.
-        self.cli._redraw()
-
         # Call client_connected
         application.client_connected(self)
+
+        # Render again.
+        self.cli._redraw()
 
     def feed(self, data):
         """
