@@ -89,6 +89,18 @@ def test_builtin_function_name_completion(completer, complete_event):
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([Completion(text='MAX', start_position=-2)])
 
+
+def test_builtin_function_matches_only_at_start(completer, complete_event):
+    text = 'SELECT IN'
+    position = len('SELECT IN')
+    document = Document(text=text, cursor_position=position)
+
+    result = [c.text for c in
+              completer.get_completions(document, complete_event)]
+
+    assert 'MIN' not in result
+
+
 def test_user_function_name_completion(completer, complete_event):
     text = 'SELECT cu'
     position = len('SELECT cu')
@@ -97,6 +109,18 @@ def test_user_function_name_completion(completer, complete_event):
     assert set(result) == set([
         Completion(text='custom_func1', start_position=-2),
         Completion(text='custom_func2', start_position=-2)])
+
+
+def test_user_function_name_completion_matches_anywhere(completer,
+                                                        complete_event):
+    text = 'SELECT om'
+    position = len('SELECT om')
+    result = completer.get_completions(
+        Document(text=text, cursor_position=position), complete_event)
+    assert set(result) == set([
+        Completion(text='custom_func1', start_position=-2),
+        Completion(text='custom_func2', start_position=-2)])
+
 
 def test_suggested_column_names_from_visible_table(completer, complete_event):
     """
