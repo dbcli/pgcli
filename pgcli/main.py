@@ -239,6 +239,8 @@ class PGCli(object):
                     pgexecute.connect()
                     logger.debug("cancelled query, sql: %r", document.text)
                     click.secho("cancelled query", err=True, fg='red')
+                except NotImplementedError:
+                    click.secho('Sorry, this feature is not implemented yet.', fg="yellow")
                 except Exception as e:
                     logger.error("sql: %r, error: %r", document.text, e)
                     logger.error("traceback: %r", traceback.format_exc())
