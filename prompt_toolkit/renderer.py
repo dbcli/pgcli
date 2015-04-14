@@ -204,6 +204,8 @@ class Renderer(object):
         self._last_screen = None
         self._last_size = None
         self._last_char = None
+        self._last_style = None  # When the style changes, we have to do a full
+                                 # redraw as well.
 
         #: Space from the top of the layout, until the bottom of the terminal.
         #: We don't know this until a `report_absolute_cursor_row` call.
@@ -270,6 +272,12 @@ class Renderer(object):
         """
         style = style or Style
         output = self.output
+
+        # When we render using another style, do a full repaint. (Forget about
+        # the previous rendered screen.)
+        if style != self._last_style:
+            self._last_screen = None
+        self._last_style = style
 
         # Enter alternate screen.
         if self.use_alternate_screen and not self._in_alternate_screen:
