@@ -931,6 +931,12 @@ def show_help(cur, arg, verbose):  # All the parameters are ignored.
 def change_db(cur, arg, verbose):
     raise NotImplementedError
 
+def in_progress(cur, arg, verbose):
+    """
+    Stub method to signal about commands being under development.
+    """
+    raise NotImplementedError
+
 def expanded_output(cur, arg, verbose):
     global use_expanded_output
     use_expanded_output = not use_expanded_output
@@ -958,7 +964,15 @@ CASE_SENSITIVE_COMMANDS = {
             '\\di': (list_indexes, ['\\di[+] [pattern]', 'list indexes.']),
             '\\dv': (list_views, ['\\dv[+] [pattern]', 'list views.']),
             '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'list sequences.']),
-            '\\df': (list_functions, ['\\df[+] [pattern]', 'list functions.'])
+            '\\df': (list_functions, ['\\df[+] [pattern]', 'list functions.']),
+            '\e': (in_progress, ['\e [file] [line]', 'Not yet implemented.']),
+            '\ef': (in_progress, ['\ef [funcname [line]]', 'Not yet implemented.']),
+            '\sf': (in_progress, ['\sf[+] funcname', 'Not yet implemented.']),
+            '\z': (in_progress, ['\z [pattern]', 'Not yet implemented.']),
+            '\do': (in_progress, ['\do[S] [pattern]', 'Not yet implemented.']),
+            'dT': (in_progress, ['\dT[S+] [pattern]', 'Not yet implemented.']),
+            '\copy': (in_progress, ['\copy ...', 'Not yet implemented.']),
+            '\watch': (in_progress, ['\watch [sec]', 'Not yet implemented.'])
             }
 
 NON_CASE_SENSITIVE_COMMANDS = {
