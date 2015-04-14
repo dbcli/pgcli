@@ -8,11 +8,12 @@ from pygments.styles.default import DefaultStyle as PygmentsDefaultStyle
 from pygments.token import Token
 
 __all__ = (
+    'default_style_extensions',
     'DefaultStyle',
 )
 
 
-_default_style_extensions = {
+default_style_extensions = {
     # Highlighting of search matches in document.
     Token.SearchMatch:                            '#ffffff bg:#000000',
     Token.SearchMatch.Current:                    '#ffffff bg:#aa4444',
@@ -67,5 +68,5 @@ _default_style_extensions = {
 class DefaultStyle(PygmentsDefaultStyle):
     background_color = None
     styles = {}
-    styles.update(_default_style_extensions)
+    styles.update(default_style_extensions)
     styles.update(PygmentsDefaultStyle.styles)
