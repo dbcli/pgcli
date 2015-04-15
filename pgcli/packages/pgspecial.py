@@ -931,6 +931,12 @@ def show_help(cur, arg, verbose):  # All the parameters are ignored.
 def change_db(cur, arg, verbose):
     raise NotImplementedError
 
+def in_progress(cur, arg, verbose):
+    """
+    Stub method to signal about commands being under development.
+    """
+    raise NotImplementedError
+
 def expanded_output(cur, arg, verbose):
     global use_expanded_output
     use_expanded_output = not use_expanded_output
@@ -948,17 +954,23 @@ def toggle_timing(cur, arg, verbose):
 CASE_SENSITIVE_COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
             '\c': (change_db, ['\c database_name', 'Connect to a new database.']),
-            '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'list databases.']),
-            '\d': (describe_table_details, ['\d [pattern]', 'list or describe tables, views and sequences.']),
-            '\dn': (list_schemas, ['\dn[+] [pattern]', 'list schemas']),
-            '\du': (list_roles, ['\du[+] [pattern]', 'list roles']),
+            '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'List databases.']),
+            '\d': (describe_table_details, ['\d [pattern]', 'List or describe tables, views and sequences.']),
+            '\dn': (list_schemas, ['\dn[+] [pattern]', 'List schemas.']),
+            '\du': (list_roles, ['\du[+] [pattern]', 'List roles.']),
             '\\x': (expanded_output, ['\\x', 'Toggle expanded output.']),
             '\\timing': (toggle_timing, ['\\timing', 'Toggle timing of commands.']),
-            '\\dt': (list_tables, ['\\dt[+] [pattern]', 'list tables.']),
-            '\\di': (list_indexes, ['\\di[+] [pattern]', 'list indexes.']),
-            '\\dv': (list_views, ['\\dv[+] [pattern]', 'list views.']),
-            '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'list sequences.']),
-            '\\df': (list_functions, ['\\df[+] [pattern]', 'list functions.'])
+            '\\dt': (list_tables, ['\\dt[+] [pattern]', 'List tables.']),
+            '\\di': (list_indexes, ['\\di[+] [pattern]', 'List indexes.']),
+            '\\dv': (list_views, ['\\dv[+] [pattern]', 'List views.']),
+            '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'List sequences.']),
+            '\\df': (list_functions, ['\\df[+] [pattern]', 'List functions.']),
+            '\e': (in_progress, ['\e [file] [line]', 'Not yet implemented.']),
+            '\ef': (in_progress, ['\ef [funcname [line]]', 'Not yet implemented.']),
+            '\sf': (in_progress, ['\sf[+] funcname', 'Not yet implemented.']),
+            '\z': (in_progress, ['\z [pattern]', 'Not yet implemented.']),
+            '\do': (in_progress, ['\do[S] [pattern]', 'Not yet implemented.']),
+            'dT': (in_progress, ['\dT[S+] [pattern]', 'Not yet implemented.'])
             }
 
 NON_CASE_SENSITIVE_COMMANDS = {
