@@ -5,11 +5,13 @@ Features:
 ---------
 
 * Add support for auto-completing view names. (Thanks: darikg_)
+* Add support for building RPM and DEB packages. (Thanks: dp_)
 
 Bug Fixes:
 ----------
 
 * Fix the table formatting while printing multi-byte characters (Chinese, Japanese etc). (Thanks: `蔡佳男`_)
+* Fix a crash when pg_catalog was present in search path. (Thanks: darikg_)
 
 0.16.3
 ======
@@ -186,3 +188,4 @@ Improvements:
 .. _`Daniel Rocco`: https://github.com/drocco007 
 .. _`Jay Zeng`:  https://github.com/jayzeng 
 .. _`蔡佳男`: https://github.com/xalley
+.. _dp: https://github.com/ceocoder
