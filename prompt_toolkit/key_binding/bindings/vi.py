@@ -175,12 +175,17 @@ def load_vi_bindings(registry, vi_state, filter=None):
 
     @handle(Keys.ControlN, filter=insert_mode)
     def _(event):
-        event.current_buffer.complete_next()
+        b = event.current_buffer
+
+        if b.complete_state:
+            b.complete_next()
+        else:
+            event.cli.start_completion(select_first=True)
 
     @handle(Keys.ControlN, filter=navigation_mode)
     def _(event):
         """
-        Control-N: Next completion.
+        Control-N: Next line.
         """
         event.current_buffer.auto_down()
 
@@ -189,7 +194,12 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Control-P: To previous completion.
         """
-        event.current_buffer.complete_previous()
+        b = event.current_buffer
+
+        if b.complete_state:
+            b.complete_previous()
+        else:
+            event.cli.start_completion(select_last=True)
 
     @handle(Keys.ControlY, filter=insert_mode)
     def _(event):

@@ -25,6 +25,7 @@ from .layout.controls import BufferControl
 from .renderer import Renderer, Output
 from .styles import DefaultStyle
 from .utils import EventHook
+from .completion import get_common_complete_suffix
 
 from types import GeneratorType
 
@@ -176,13 +177,58 @@ class CommandLineInterface(object):
         #: The `InputProcessor` instance.
         self.input_processor = InputProcessor(key_bindings_registry, weakref.ref(self))
 
-        # Handle events.
-        for b in self.buffers.values():
-            if b.completer:
-                b.onTextInsert += self._create_async_completer(b)
-                b.onTextChanged += lambda: self.onBufferChanged.fire()
+        self._async_completers = {}  # Map buffer name to completer function.
+
+        # Call `add_buffer` for each buffer.
+        for name, b in self.buffers.items():
+            self.add_buffer(name, b)
 
         self.reset()
+
+    def add_buffer(self, name, buffer, focus=False):
+        """
+        Insert a new buffer.
+        """
+        assert isinstance(buffer, Buffer)
+        self.buffers[name] = buffer
+
+        def create_while_typing_completer(completer):
+            """
+            Wrapper around the asynchronous completer, that ensures that it's
+            only called while typing if the `complete_while_typing` filter is
+            enabled.
+            """
+            def complete_while_typing():
+                # Only complete when "complete_while_typing" is enabled.
+                if self.complete_while_typing(self):
+                    completer()
+            return complete_while_typing
+
+        # Create asynchronous completer.
+        if buffer.completer:
+            completer_function = self._create_async_completer(buffer)
+            self._async_completers[name] = completer_function
+            buffer.onTextInsert += create_while_typing_completer(completer_function)
+
+        # Throw onTextChanged when text in this buffer changes.
+        buffer.onTextChanged += lambda: self.onBufferChanged.fire()
+
+        if focus:
+            self.focus_stack.replace(name)
+
+    def start_completion(self, buffer_name=None, select_first=False,
+                         select_last=False, insert_common_part=False):
+        """
+        Start asynchronous autocompletion of this buffer.
+        (This will do nothing if a previous completion was still in progress.)
+        """
+        buffer_name = buffer_name or self.current_buffer_name
+        completer = self._async_completers.get(buffer_name)
+
+        if completer:
+            completer(select_first=select_first,
+                      select_last=select_last,
+                      insert_common_part=insert_common_part)
 
     @property
     def current_buffer_name(self):
@@ -197,20 +243,6 @@ class CommandLineInterface(object):
         The current focussed :class:`Buffer`.
         """
         return self.buffers[self.focus_stack.current]
-
-    def add_buffer(self, name, buffer, focus=False):
-        """
-        Insert a new buffer.
-        """
-        assert isinstance(buffer, Buffer)
-        self.buffers[name] = buffer
-
-        if buffer.completer:
-            buffer.onTextInsert += self._create_async_completer(buffer)
-            buffer.onTextChanged += lambda: self.onBufferChanged.fire()
-
-        if focus:
-            self.focus_stack.replace(name)
 
     def reset(self, reset_current_buffer=False):
         """
@@ -467,17 +499,14 @@ class CommandLineInterface(object):
 
     def _create_async_completer(self, buffer):
         """
-        Create function for asynchronous autocompletion while typing.
+        Create function for asynchronous autocompletion.
         (Autocomplete in other thread.)
         """
         complete_thread_running = [False]  # By ref.
 
-        def async_completer():
+        def async_completer(select_first=False, select_last=False,
+                            insert_common_part=False):
             document = buffer.document
-
-            # Don't complete when "complete_while_typing" is disabled.
-            if not self.complete_while_typing(self):
-                return
 
             # Don't start two threads at the same time.
             if complete_thread_running[0]:
@@ -511,7 +540,22 @@ class CommandLineInterface(object):
                     if buffer.text == document.text and \
                             buffer.cursor_position == document.cursor_position and \
                             not buffer.complete_state:
-                        buffer._start_complete(go_to_first=False, completions=completions)
+                        set_completions = True
+
+                        # When the commond part has to be inserted, and there
+                        # is a common part.
+                        if insert_common_part:
+                            common_part = get_common_complete_suffix(document, completions)
+                            if common_part:
+                                # Insert + run completer again.
+                                buffer.insert_text(common_part)
+                                async_completer()
+                                set_completions = False
+
+                        if set_completions:
+                            buffer.set_completions(completions=completions,
+                                                   go_to_first=select_first,
+                                                   go_to_last=select_last)
                         self._redraw()
                     else:
                         # Otherwise, restart thread.

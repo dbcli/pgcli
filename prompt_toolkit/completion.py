@@ -95,13 +95,10 @@ class Completer(with_metaclass(ABCMeta, object)):
             yield
 
 
-def get_common_complete_suffix(completer, document, complete_event):
+def get_common_complete_suffix(document, completions):
     """
-    return one `Completion` instance or None.
+    Return the common prefix for all completions.
     """
-    # If there is one completion, return that.
-    completions = list(completer.get_completions(document, complete_event))
-
     # Take only completions that don't change the text before the cursor.
     def doesnt_change_before_cursor(completion):
         end = completion.text[:-completion.start_position]

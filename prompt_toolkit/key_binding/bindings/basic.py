@@ -133,20 +133,20 @@ def load_basic_bindings(registry, filter=Always()):
         Traditional tab-completion, where the first tab completes the common
         suffix and the second tab lists all the completions.
         """
-        buffer = event.current_buffer
+        b = event.current_buffer
 
         def second_tab():
-            buffer.complete_next(start_at_first=False)
+            if b.complete_state:
+                b.complete_next()
+            else:
+                event.cli.start_completion(select_first=True)
 
         # On the second tab-press, or when already navigating through
         # completions.
-        if event.second_press or (buffer.complete_state and buffer.complete_state.complete_index is not None):
+        if event.second_press or b.complete_state:
             second_tab()
         else:
-            # On the first tab press, only complete the common parts of all completions.
-            has_common = buffer.complete_common()
-            if not has_common:
-                second_tab()
+            event.cli.start_completion(insert_common_part=True)
 
     @handle(Keys.BackTab, filter= ~has_selection)
     def _(event):

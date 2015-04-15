@@ -4,7 +4,7 @@ It holds the text, cursor position, history, etc...
 """
 from __future__ import unicode_literals
 
-from .completion import Completion, CompleteEvent, get_common_complete_suffix
+from .completion import Completion, CompleteEvent
 from .document import Document
 from .enums import IncrementalSearchDirection
 from .history import History
@@ -441,34 +441,12 @@ class Buffer(object):
             self.working_index = index
             self.cursor_position = len(self.text)
 
-    def complete_common(self):
+    def complete_next(self, count=1):
         """
-        Autocomplete. This appends the common part of all the possible completions.
-        Returns true if there was a completion.
+        Browse to the next completions.
+        (Does nothing if there are no completion.)
         """
-        # On the first tab press, try to find one completion and complete.
-        if self.completer:
-            result = get_common_complete_suffix(
-                self.completer, self.document,
-                CompleteEvent(completion_requested=True))
-
-            if result:
-                self.insert_text(result)
-                return True
-            else:
-                return False
-        else:
-            return False
-
-    def complete_next(self, count=1, start_at_first=True):
-        """
-        Enter complete mode and browse through the completions.
-
-        :param start_at_first: If True, immediately insert the first completion.
-        """
-        if not self.complete_state:
-            self._start_complete(go_to_first=start_at_first)
-        else:
+        if self.complete_state:
             completions_count = len(self.complete_state.current_completions)
 
             if self.complete_state.complete_index is None:
@@ -481,11 +459,9 @@ class Buffer(object):
 
     def complete_previous(self, count=1):
         """
-        Enter complete mode and browse through the completions.
+        Browse to the previous completions.
+        (Does nothing if there are no completion.)
         """
-        if not self.complete_state:
-            self._start_complete()
-
         if self.complete_state:
             if self.complete_state.complete_index == 0:
                 index = None
@@ -504,10 +480,12 @@ class Buffer(object):
             self._go_to_completion(None)
             self.complete_state = None
 
-    def _start_complete(self, go_to_first=True, completions=None):
+    def set_completions(self, completions, go_to_first=True, go_to_last=False):
         """
         Start completions. (Generate list of completions and initialize.)
         """
+        assert not (go_to_first and go_to_last)
+
         # Generate list of all completions.
         if completions is None:
             if self.completer:
@@ -525,6 +503,8 @@ class Buffer(object):
                 current_completions=completions)
             if go_to_first:
                 self._go_to_completion(0)
+            elif go_to_last:
+                self._go_to_completion(len(completions) - 1)
             else:
                 self._go_to_completion(None)
 
@@ -561,7 +541,7 @@ class Buffer(object):
                             start_position=-len(current_line),
                             display_meta=display_meta))
 
-        self._start_complete(completions=completions[::-1])
+        self.set_completions(completions=completions[::-1])
 
     def _go_to_completion(self, index):
         """

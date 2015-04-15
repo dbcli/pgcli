@@ -418,7 +418,11 @@ def load_emacs_bindings(registry, filter=Always()):
         """
         M-/: Complete.
         """
-        event.current_buffer.complete_next()
+        b = event.current_buffer
+        if b.complete_state:
+            b.complete_next()
+        else:
+            event.cli.start_completion(select_first=True)
 
     @handle(Keys.ControlC, '>', filter=has_selection)
     def _(event):
