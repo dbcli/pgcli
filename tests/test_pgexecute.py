@@ -39,23 +39,26 @@ def test_schemata_table_views_and_columns_query(executor):
     run(executor, "create schema schema2")
 
     # schemata
-    assert executor.schemata() == ['public', 'schema1', 'schema2']
-    assert executor.search_path() == ['public']
+    # don't enforce all members of the schemas since they may include postgres
+    # temporary schemas
+    assert set(executor.schemata()) >= set([
+        'public', 'pg_catalog', 'information_schema', 'schema1', 'schema2'])
+    assert executor.search_path() == ['pg_catalog', 'public']
 
     # tables
-    assert list(executor.tables()) == [
-        ('public', 'a'), ('public', 'b'), ('schema1', 'c')]
+    assert set(executor.tables()) >= set([
+        ('public', 'a'), ('public', 'b'), ('schema1', 'c')])
 
-    assert list(executor.table_columns()) == [
+    assert set(executor.table_columns()) >= set([
         ('public', 'a', 'x'), ('public', 'a', 'y'),
-        ('public', 'b', 'z'), ('schema1', 'c', 'w')]
+        ('public', 'b', 'z'), ('schema1', 'c', 'w')])
 
     # views
-    assert list(executor.views()) == [
-        ('public', 'd')]
+    assert set(executor.views()) >= set([
+        ('public', 'd')])
 
-    assert list(executor.view_columns()) == [
-        ('public', 'd', 'e')]
+    assert set(executor.view_columns()) >= set([
+        ('public', 'd', 'e')])
 
 @dbtest
 def test_functions_query(executor):
