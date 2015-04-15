@@ -31,9 +31,8 @@ class PGCompleter(Completer):
             'UPDATE', 'USE', 'USER', 'VALIDATE', 'VALUES', 'VARCHAR',
             'VARCHAR2', 'VIEW', 'WHEN', 'WHENEVER', 'WHERE', 'WITH', ]
 
-    functions = ['AVG', 'COUNT', 'DISTINCT', 'FIRST', 'FORMAT', 'LAST',
-            'LCASE', 'LEN', 'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP',
-            'UCASE']
+    functions = ['AVG', 'COUNT', 'FIRST', 'FORMAT', 'LAST', 'LCASE', 'LEN',
+                 'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP', 'UCASE']
 
     def __init__(self, smart_completion=True):
         super(self.__class__, self).__init__()
@@ -157,11 +156,29 @@ class PGCompleter(Completer):
         self.all_completions = set(self.keywords + self.functions)
 
     @staticmethod
-    def find_matches(text, collection):
-        text = last_word(text, include='most_punctuations')
+    def find_matches(text, collection, start_only=False):
+        """Find completion matches for the given text.
+
+        Given the user's input text and a collection of available
+        completions, find completions matching the last word of the
+        text.
+
+        If `start_only` is True, the text will match an available
+        completion only at the beginning. Otherwise, a completion is
+        considered a match if the text appears anywhere within it.
+
+        yields prompt_toolkit Completion instances for any matches found
+        in the collection of available completions.
+
+        """
+
+        text = last_word(text, include='most_punctuations').lower()
+
         for item in sorted(collection):
-            if (item.startswith(text) or item.startswith(text.upper()) or
-                    item.startswith(text.lower())):
+            match_end_limit = len(text) if start_only else None
+            match_point = item.lower().find(text, 0, match_end_limit)
+
+            if match_point >= 0:
                 yield Completion(item, -len(text))
 
     def get_completions(self, document, complete_event, smart_completion=None):
@@ -172,7 +189,8 @@ class PGCompleter(Completer):
         # If smart_completion is off then match any word that starts with
         # 'word_before_cursor'.
         if not smart_completion:
-            return self.find_matches(word_before_cursor, self.all_completions)
+            return self.find_matches(word_before_cursor, self.all_completions,
+                                     start_only=True)
 
         completions = []
         suggestions = suggest_type(document.text, document.text_before_cursor)
@@ -189,15 +207,19 @@ class PGCompleter(Completer):
                 completions.extend(cols)
 
             elif suggestion['type'] == 'function':
+                # suggest user-defined functions using substring matching
                 funcs = self.populate_schema_objects(
                     suggestion['schema'], 'functions')
+                user_funcs = self.find_matches(word_before_cursor, funcs)
+                completions.extend(user_funcs)
 
                 if not suggestion['schema']:
-                    # also suggest hardcoded functions
-                    funcs.extend(self.functions)
-
-                funcs = self.find_matches(word_before_cursor, funcs)
-                completions.extend(funcs)
+                    # also suggest hardcoded functions using startswith
+                    # matching
+                    predefined_funcs = self.find_matches(word_before_cursor,
+                                                         self.functions,
+                                                         start_only=True)
+                    completions.extend(predefined_funcs)
 
             elif suggestion['type'] == 'schema':
                 schema_names = self.dbmetadata['tables'].keys()
@@ -245,12 +267,14 @@ class PGCompleter(Completer):
                 completions.extend(dbs)
 
             elif suggestion['type'] == 'keyword':
-                keywords = self.find_matches(word_before_cursor, self.keywords)
+                keywords = self.find_matches(word_before_cursor, self.keywords,
+                                             start_only=True)
                 completions.extend(keywords)
 
             elif suggestion['type'] == 'special':
                 special = self.find_matches(word_before_cursor,
-                                            self.special_commands)
+                                            self.special_commands,
+                                            start_only=True)
                 completions.extend(special)
 
         return completions
