@@ -10,7 +10,8 @@ Features:
   a table name if it started with the partially typed word. Now completions
   will match even if the partially typed word is in the middle of a suggestion.
   eg: When you type 'mig', 'django_migrations' will be suggested. (Thanks: `Daniel Rocco`_)
-* Completion for built-in tables and temporary tables are suggested after entering a prefix of `pg_`. (Thanks: darikg_)
+* Completion for built-in tables and temporary tables are suggested after entering a prefix of ``pg_``. (Thanks: darikg_)
+* Add place holder doc strings for special commands that are planned for implementation. (Thanks: `Iryna Cherniavska`_)
 
 Bug Fixes:
 ----------
