@@ -44,7 +44,7 @@ Vagrant.configure(2) do |config|
         --after-remove /pgcli/post-remove \
         --url https://github.com/amjith/pgcli \
         --description "#{pgcli_description}" \
-        --license '??? #TODO(amjith)'
+        --license 'BSD'
     SHELL
   end
 
@@ -85,7 +85,7 @@ Vagrant.configure(2) do |config|
         --after-remove /pgcli/post-remove \
         --url https://github.com/amjith/pgcli \
         --description "#{pgcli_description}" \
-        --license '??? #TODO(amjith)'
+        --license 'BSD'
     SHELL
   end
 
