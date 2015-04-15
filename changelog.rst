@@ -6,6 +6,11 @@ Features:
 
 * Add support for auto-completing view names. (Thanks: darikg_)
 * Add support for building RPM and DEB packages. (Thanks: dp_)
+* Add subsequence matching for completion. Previously completions only matched
+  a table name if it started with the partially typed word. Now completions
+  will match even if the partially typed word is in the middle of a suggestion.
+  eg: When you type 'mig', 'django_migrations' will be suggested. (Thanks: `Daniel Rocco`_)
+* Completion for built-in tables and temporary tables are suggested after entering a prefix of `pg_`. (Thanks: darikg_)
 
 Bug Fixes:
 ----------
