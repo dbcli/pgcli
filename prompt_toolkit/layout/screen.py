@@ -18,6 +18,11 @@ Size = namedtuple('Size', 'rows columns')
 
 
 class Char(object):
+    """
+    Represent a single character in a `Screen.`
+
+    This should be considered immutable.
+    """
     __slots__ = ('char', 'token', 'width')
 
     # If we end up having one of these special control sequences in the input string,
@@ -69,8 +74,27 @@ class Char(object):
         # as a member for performance.)
         self.width = get_cwidth(char)
 
+    def __eq__(self, other):
+        return self.char == other.char and self.token == other.token
+
     def __repr__(self):
         return 'Char(%r, %r)' % (self.char, self.token)
+
+
+class CharCache(dict):
+    """
+    Cache of Char instances.
+    Mapping of (character, Token) tuples to Char instances.
+
+    (Char instances should be considered immutable.)
+    """
+    def __missing__(self, key):
+        c = Char(*key)
+        self[key] = c
+        return c
+
+
+_CHAR_CACHE = CharCache()
 
 
 class Screen(object):
@@ -78,10 +102,10 @@ class Screen(object):
     Two dimentional buffer for the output.
     """
     def __init__(self, width, default_char=None):
-        if default_char:
-            self._buffer = defaultdict(lambda: defaultdict(lambda: default_char))
-        else:
-            self._buffer = defaultdict(lambda: defaultdict(Char))
+        if default_char is None:
+            default_char = Char()
+
+        self._buffer = defaultdict(lambda: defaultdict(lambda: default_char))
 
         self.width = width
 
@@ -101,7 +125,7 @@ class Screen(object):
         #: Mapping of buffer lines to input lines.
         self.screen_line_to_input_line = {}
 
-    def write_at_position(self, data, width, margin=None):  # XXX: rename to write_data()
+    def write_data(self, data, width, margin=None):
         """
         Write data at :class:`WritePosition`.
 
@@ -138,7 +162,7 @@ class Screen(object):
             if margin is not None:
                 for token, text in margin(number):
                     for char in text:
-                        char_obj = Char(char, token)
+                        char_obj = _CHAR_CACHE[char, token]
                         char_width = char_obj.width
                         buffer[y][x] = char_obj
 
@@ -157,7 +181,7 @@ class Screen(object):
                     x = do_line_feed(x, line_number)
                     requires_line_feed = False
 
-                char_obj = Char(char, token)
+                char_obj = _CHAR_CACHE[char, token]
                 char_width = char_obj.width
 
                 # In case there is no more place left at this line, go first to the
@@ -197,6 +221,16 @@ class Screen(object):
         self.current_height = max(self.current_height, y+1)
 
         return indexes_to_pos
+
+    def replace_all_tokens(self, token):
+        """
+        For all the characters in the screen. Set the token to the given `token`.
+        """
+        b = self._buffer
+
+        for y, row in b.items():
+            for x, char in row.items():
+                b[y][x] = _CHAR_CACHE[char.char, token]
 
 
 class WritePosition(object):

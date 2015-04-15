@@ -9,7 +9,7 @@ from six import with_metaclass
 
 from pygments.style import Style
 from pygments.token import Token
-from prompt_toolkit.layout.screen import Point, Screen, Char, WritePosition
+from prompt_toolkit.layout.screen import Point, Screen, WritePosition
 
 __all__ = (
     'Renderer',
@@ -18,7 +18,7 @@ __all__ = (
 
 
 def output_screen_diff(output, screen, current_pos, previous_screen=None, last_char=None,
-                       is_done=False, style=None, grayed=False):  # XXX: drop is_done and grayed!!
+                       is_done=False, style=None):  # XXX: drop is_done
     """
     Create diff of this screen with the previous screen.
     """
@@ -57,31 +57,15 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         return new
 
     def get_style_for_token(token):
-        """
-        Get style
-        """
-        # If grayed, replace token
-        if grayed:
-            token = Token.Aborted
-
+        """ Get style. """
         try:
             return style.style_for_token(token)
         except KeyError:
             return None
 
-    def chars_are_equal(new_char, old_char):
-        """
-        Test whether two `Char` instances are equal if printed.
-        """
-        if grayed:
-            new_char = Char(new_char.char, token=Token.Aborted)
-
-        # We ignore z-index, that does not matter if things get painted.
-        return new_char.char == old_char.char and new_char.token == old_char.token
-
     def output_char(char):
         """
-        Write the output of this charact.r
+        Write the output of this character.
         """
         # If the last printed character has the same token, it also has the
         # same style, so we don't output it.
@@ -139,7 +123,7 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         while c < new_max_line_len + 1:
             char_width = (new_row[c].width or 1)
 
-            if not chars_are_equal(new_row[c], previous_row[c]):
+            if new_row[c] != previous_row[c]:
                 current_pos = move_cursor(Point(y=y, x=c))
                 output_char(new_row[c])
                 current_pos = current_pos._replace(x=current_pos.x + char_width)
@@ -296,7 +280,7 @@ class Renderer(object):
 
         # When te size changes, don't consider the previous screen.
         if self._last_size != size:
-            self._last_screen=None
+            self._last_screen = None
 
         layout.write_to_screen(cli, screen, WritePosition(
             xpos=0,
@@ -306,11 +290,15 @@ class Renderer(object):
             extended_height=size.rows,
         ))
 
+        # When grayed. Replace all tokens in the new screen.
+        if cli.is_aborting or cli.is_exiting:
+            screen.replace_all_tokens(Token.Aborted)
+
         # Process diff and write to output.
         self._cursor_pos, self._last_char = output_screen_diff(
             output, screen, self._cursor_pos,
             self._last_screen, self._last_char, cli.is_done,
-            style=style, grayed=(cli.is_aborting or cli.is_exiting),
+            style=style,
             )
         self._last_screen = screen
         self._last_size = size

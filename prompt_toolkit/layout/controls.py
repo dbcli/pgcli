@@ -111,7 +111,7 @@ class TokenListControl(UIControl):
             available_width = width - used_width
             tokens = [(self.default_char.token, ' ' * available_width)] + tokens
 
-        screen.write_at_position(tokens, width)
+        screen.write_data(tokens, width)
         return screen
 
     @classmethod
@@ -144,6 +144,34 @@ class FillControl(UIControl):
         screen = Screen(width, char)
         screen.current_height = height
         return screen
+
+
+class _NumberedMarginTokenCache(dict):
+    """
+    Cache for numbered margins.
+    Maps (width, line_number) to a list of tokens.
+    """
+    def __missing__(self, key):
+        width, line_number = key
+
+        if line_number is not None:
+            tokens = [(Token.LineNumber, u'%%%si ' % width % (line_number + 1))]
+        else:
+            tokens = [(Token.LineNumber, ' ' * (width + 1))]
+
+        self[key] = tokens
+        return tokens
+
+_NUMBERED_MARGIN_TOKEN_CACHE = _NumberedMarginTokenCache()
+
+
+def _create_numbered_margin(decimals):
+    """
+    Return a function that for a line, gives the margin tokens.
+    """
+    def margin(line_number):
+        return _NUMBERED_MARGIN_TOKEN_CACHE[decimals, line_number]
+    return margin
 
 
 class BufferControl(UIControl):
@@ -242,19 +270,12 @@ class BufferControl(UIControl):
         """
         Return a function that fills in the margin.
         """
-        decimals = max(3, len('%s' % buffer.document.line_count))
-
-        def numberred_margin(line_number):
-            if line_number is not None:
-                return [(Token.LineNumber, u'%%%si ' % decimals % (line_number + 1))]
-            else:
-                return [(Token.LineNumber, ' ' * (decimals + 1))]
-
         def no_margin(line_number):
             return []
 
         if self.show_line_numbers(cli):
-            return numberred_margin
+            decimals = max(3, len('%s' % buffer.document.line_count))
+            return _create_numbered_margin(decimals)
         else:
             return no_margin
 
@@ -270,7 +291,7 @@ class BufferControl(UIControl):
             input_tokens, cursor_transform_functions = self._get_input_tokens(cli, buffer)
             input_tokens += [(Token, ' ')]
 
-            indexes_to_pos = screen.write_at_position(
+            indexes_to_pos = screen.write_data(
                 input_tokens,
                 screen.width,
                 margin=self._margin(cli, buffer))

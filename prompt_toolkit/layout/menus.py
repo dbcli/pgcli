@@ -94,7 +94,7 @@ class CompletionsMenuControl(UIControl):
                                if show_meta else []) +
                            [(button_token, ' '), ])
 
-            screen.write_at_position(tokens, width)
+            screen.write_data(tokens, width)
 
         return screen
 

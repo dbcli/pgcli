@@ -153,7 +153,7 @@ class CompletionsToolbarControl(UIControl):
             all_tokens = []
 
         screen = Screen(width)
-        screen.write_at_position(all_tokens, width)
+        screen.write_data(all_tokens, width)
         return screen
 
 
