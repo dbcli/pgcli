@@ -970,9 +970,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\sf': (in_progress, ['\sf[+] funcname', 'Not yet implemented.']),
             '\z': (in_progress, ['\z [pattern]', 'Not yet implemented.']),
             '\do': (in_progress, ['\do[S] [pattern]', 'Not yet implemented.']),
-            'dT': (in_progress, ['\dT[S+] [pattern]', 'Not yet implemented.']),
-            '\copy': (in_progress, ['\copy ...', 'Not yet implemented.']),
-            '\watch': (in_progress, ['\watch [sec]', 'Not yet implemented.'])
+            'dT': (in_progress, ['\dT[S+] [pattern]', 'Not yet implemented.'])
             }
 
 NON_CASE_SENSITIVE_COMMANDS = {
