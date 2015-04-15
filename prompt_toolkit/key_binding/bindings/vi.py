@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from prompt_toolkit.buffer import ClipboardData, indent, unindent
 from prompt_toolkit.enums import IncrementalSearchDirection
-from prompt_toolkit.filters import Filter, Condition
+from prompt_toolkit.filters import Filter, Condition, HasArg
 from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
@@ -296,22 +296,6 @@ def load_vi_bindings(registry, vi_state, filter=None):
 
         # Set clipboard data
         event.cli.clipboard.set_data(ClipboardData(deleted, SelectionType.LINES))
-
-    @handle('G', filter=navigation_mode)
-    def _(event):
-        """
-        If an argument is given, move to this line in the  history. (for
-        example, 15G) Otherwise, go the the last line of the current string.
-        """
-        buffer = event.current_buffer
-
-        # If an arg has been given explicitely.
-        if event._arg:
-            buffer.go_to_history(event.arg - 1)
-
-        # Otherwise this goes to the last line of the file.
-        else:
-            buffer.cursor_position = len(buffer.text)
 
     @handle('i', filter=navigation_mode)
     def _(event):
@@ -1009,6 +993,21 @@ def load_vi_bindings(registry, vi_state, filter=None):
         return CursorRegion(
             event.current_buffer.document.find_start_of_previous_word(
                 count=event.arg, WORD=True) or 0)
+
+    @change_delete_move_yank_handler('G')
+    def _(event):
+        """
+        Go to the end of the document. (If no arg has been given.)
+        """
+        return CursorRegion(len(event.current_buffer.document.text_after_cursor))
+
+    @handle('G', filter=HasArg())
+    def _(event):
+        """
+        If an argument is given, move to this line in the  history. (for
+        example, 15G)
+        """
+        event.current_buffer.go_to_history(event.arg - 1)
 
     @handle(Keys.Any, filter=navigation_mode)
     @handle(Keys.Any, filter=selection_mode)
