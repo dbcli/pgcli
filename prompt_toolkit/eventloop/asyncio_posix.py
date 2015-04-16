@@ -50,6 +50,8 @@ class PosixAsyncioEventLoop(EventLoop):
                 flush the input stream and fire the timeout event.
                 """
                 inputstream.flush()
+                callbacks.redraw()
+
                 callbacks.input_timeout()
 
             timeout = AsyncioTimeout(INPUT_TIMEOUT, timeout_handler, self.loop)

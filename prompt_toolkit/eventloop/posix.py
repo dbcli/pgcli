@@ -80,7 +80,11 @@ class PosixEventLoop(EventLoop):
                     for c in calls_from_executor:
                         c()
                 else:
+                    # Flush all pending keys on a timeout and redraw. (This is
+                    # most important to flush the vt100 escape key early when
+                    # nothing else follows.)
                     inputstream.flush()
+                    callbacks.redraw()
 
                     # Fire input timeout event.
                     callbacks.input_timeout()
