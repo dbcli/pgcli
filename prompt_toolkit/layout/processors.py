@@ -39,7 +39,7 @@ class HighlightSearchProcessor(Processor):
     def run(self, cli, buffer, tokens):
         isearch_state = buffer.isearch_state
 
-        if isearch_state:
+        if isearch_state and not cli.is_returning:
             # For each search match, replace the Token.
             for index in buffer.document.find_all(isearch_state.isearch_text):
                 if index == buffer.cursor_position:
@@ -56,6 +56,7 @@ class HighlightSearchProcessor(Processor):
         # When the search state changes, highlighting will be different.
         return (
             buffer.isearch_state,
+            cli.is_returning,
             (buffer.isearch_state and buffer.isearch_state.isearch_text),
 
             # When we search for text, and the cursor position changes. The
