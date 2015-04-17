@@ -134,7 +134,7 @@ def suggest_special(text):
 
 def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier):
     if isinstance(token, string_types):
-        token_v = token
+        token_v = token.lower()
     else:
         # If 'token' is a Comparison type such as
         # 'select * FROM abc a JOIN def d ON a.id = d.'. Then calling
@@ -143,13 +143,13 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         # both sides of the comparison and pick the last token out of that
         # list.
         if isinstance(token, Comparison):
-            token_v = token.tokens[-1].value
+            token_v = token.tokens[-1].value.lower()
         else:
-            token_v = token.value
+            token_v = token.value.lower()
 
     if not token:
         return [{'type': 'keyword'}, {'type': 'special'}]
-    elif token_v.lower().endswith('('):
+    elif token_v.endswith('('):
         p = sqlparse.parse(text_before_cursor)[0]
 
         # Get the token before the parens
@@ -169,9 +169,9 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
 
         # We're probably in a function argument list
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
-    elif token_v.lower() in ('set', 'by', 'distinct'):
+    elif token_v in ('set', 'by', 'distinct'):
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
-    elif token_v.lower() in ('select', 'where', 'having'):
+    elif token_v in ('select', 'where', 'having'):
         # Check for a table alias or schema qualification
         parent = (identifier and identifier.get_parent_name()) or []
 
@@ -185,8 +185,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         else:
             return [{'type': 'column', 'tables': extract_tables(full_text)},
                     {'type': 'function', 'schema': []}]
-    elif token_v.lower() in ('copy', 'from', 'update', 'into', 'describe') or (
-            token_v.lower().endswith('join') and token.ttype in Keyword):
+    elif token_v in ('copy', 'from', 'update', 'into', 'describe') or (
+            token_v.endswith('join') and token.ttype in Keyword):
         schema = (identifier and identifier.get_parent_name()) or []
         if schema:
             # If already schema-qualified, suggest only tables/views
@@ -197,15 +197,15 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             return [{'type': 'schema'},
                     {'type': 'table', 'schema': []},
                     {'type': 'view', 'schema': []}]
-    elif token_v.lower() in ('table', 'view', 'function'):
+    elif token_v in ('table', 'view', 'function'):
         # E.g. 'DROP FUNCTION <funcname>', 'ALTER TABLE <tablname>'
-        rel_type = token_v.lower()
+        rel_type = token_v
         schema = (identifier and identifier.get_parent_name()) or []
         if schema:
             return [{'type': rel_type, 'schema': schema}]
         else:
             return [{'type': 'schema'}, {'type': rel_type, 'schema': []}]
-    elif token_v.lower() == 'on':
+    elif token_v == 'on':
         tables = extract_tables(full_text)  # [(schema, table, alias), ...]
         parent = (identifier and identifier.get_parent_name()) or []
         if parent:
@@ -222,7 +222,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             aliases = [t[2] or t[1] for t in tables]
             return [{'type': 'alias', 'aliases': aliases}]
 
-    elif token_v.lower() in ('c', 'use', 'database', 'template'):
+    elif token_v in ('c', 'use', 'database', 'template'):
         # "\c <db", "use <db>", "DROP DATABASE <db>",
         # "CREATE DATABASE <newdb> WITH TEMPLATE <db>"
         return [{'type': 'database'}]
