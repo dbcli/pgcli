@@ -29,11 +29,12 @@ import fcntl
 from six import int2byte, string_types, binary_type
 from codecs import getincrementaldecoder
 
+from prompt_toolkit.enums import DEFAULT_BUFFER
+from prompt_toolkit.eventloop.base import EventLoop
+from prompt_toolkit.layout.screen import Size
+from prompt_toolkit.renderer import Renderer
 from prompt_toolkit.terminal.vt100_input import InputStream
 from prompt_toolkit.terminal.vt100_output import Vt100_Output
-from prompt_toolkit.layout.screen import Size
-from prompt_toolkit.eventloop.base import EventLoop
-from prompt_toolkit.renderer import Renderer
 
 from .log import logger
 from .protocol import IAC, DO, LINEMODE, SB, MODE, SE, WILL, ECHO, NAWS
@@ -183,7 +184,7 @@ class TelnetConnection(object):
             # the application could have called TelnetConnection.close()
             if not self.closed:
                 self.cli.reset()
-                self.cli.buffers['default'].reset()
+                self.cli.buffers[DEFAULT_BUFFER].reset()
                 self.cli._redraw()
 
     def send(self, data):

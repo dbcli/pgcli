@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
 
 from pygments.token import Token
-from ..enums import IncrementalSearchDirection
+
+from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER
+
 from .utils import token_list_len
 from .processors import Processor
 
@@ -38,7 +40,7 @@ class DefaultPrompt(Processor):
         return (
             cli.input_processor.arg,
             cli.is_searching,
-            cli.buffers['search'].text,
+            cli.buffers[SEARCH_BUFFER].text,
         )
 
 
@@ -52,7 +54,7 @@ def _get_isearch_tokens(cli):
         return [(Token.Prompt.Search, '(%s)`' % text)]
 
     def text():
-        return [(Token.Prompt.Search.Text, cli.buffers['search'].text)]
+        return [(Token.Prompt.Search.Text, cli.buffers[SEARCH_BUFFER].text)]
 
     def after():
         return [(Token.Prompt.Search, '`: ')]

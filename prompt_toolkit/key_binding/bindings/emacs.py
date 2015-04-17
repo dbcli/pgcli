@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
 from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.enums import IncrementalSearchDirection
+from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import Filter, Always
+from prompt_toolkit.search_state import SearchState
 
 from .basic import load_basic_bindings
 from .utils import create_handle_decorator
@@ -461,16 +462,16 @@ def load_emacs_open_in_editor_bindings(registry, filter=None):
         event.current_buffer.open_in_editor()
 
 
-def load_emacs_system_bindings(registry, filter=None, system_buffer_name='system'):
+def load_emacs_system_bindings(registry, filter=None):
     handle = create_handle_decorator(registry, filter)
-    has_focus = filters.HasFocus(system_buffer_name)
+    has_focus = filters.HasFocus(SYSTEM_BUFFER)
 
     @handle(Keys.Escape, '!', filter= ~has_focus)
     def _(event):
         """
         M-'!' opens the system prompt.
         """
-        event.cli.focus_stack.push(system_buffer_name)
+        event.cli.focus_stack.push(SYSTEM_BUFFER)
 
     @handle(Keys.Escape, filter=has_focus)
     @handle(Keys.ControlG, filter=has_focus)
@@ -479,7 +480,7 @@ def load_emacs_system_bindings(registry, filter=None, system_buffer_name='system
         """
         Cancel system prompt.
         """
-        event.cli.buffers[system_buffer_name].reset()
+        event.cli.buffers[SYSTEM_BUFFER].reset()
         event.cli.focus_stack.pop()
 
     @handle(Keys.ControlJ, filter=has_focus)
@@ -487,7 +488,7 @@ def load_emacs_system_bindings(registry, filter=None, system_buffer_name='system
         """
         Run system command.
         """
-        system_line = event.cli.buffers[system_buffer_name]
+        system_line = event.cli.buffers[SYSTEM_BUFFER]
         event.cli.run_system_command(system_line.text)
         system_line.reset(append_to_history=True)
 
@@ -495,9 +496,9 @@ def load_emacs_system_bindings(registry, filter=None, system_buffer_name='system
         event.cli.focus_stack.pop()
 
 
-def load_emacs_search_bindings(registry, filter=None, search_buffer_name='search'):
+def load_emacs_search_bindings(registry, filter=None):
     handle = create_handle_decorator(registry, filter)
-    has_focus = filters.HasFocus(search_buffer_name)
+    has_focus = filters.HasFocus(SEARCH_BUFFER)
 
     @handle(Keys.ControlG, filter=has_focus)
     @handle(Keys.ControlC, filter=has_focus)
@@ -507,7 +508,7 @@ def load_emacs_search_bindings(registry, filter=None, search_buffer_name='search
         """
         Abort an incremental search and restore the original line.
         """
-        search_buffer = event.cli.buffers[search_buffer_name]
+        search_buffer = event.cli.buffers[SEARCH_BUFFER]
 
         search_buffer.reset()
         event.cli.focus_stack.pop()
@@ -519,14 +520,14 @@ def load_emacs_search_bindings(registry, filter=None, search_buffer_name='search
         isearch would be too complicated.)
         """
         input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        search_buffer = event.cli.buffers[search_buffer_name]
+        search_buffer = event.cli.buffers[SEARCH_BUFFER]
 
         # Update search state.
         if search_buffer.text:
             event.cli.search_state.text = search_buffer.text
 
         # Apply search.
-        input_buffer.apply_search(event.cli.search_state, include_current_position=False)
+        input_buffer.apply_search(event.cli.search_state)
 
         # Add query to history of search line.
         search_buffer.add_to_history()
@@ -538,25 +539,31 @@ def load_emacs_search_bindings(registry, filter=None, search_buffer_name='search
     @handle(Keys.ControlR, filter= ~has_focus)
     def _(event):
         event.cli.search_state.direction = IncrementalSearchDirection.BACKWARD
-        event.cli.focus_stack.push(search_buffer_name)
+        event.cli.focus_stack.push(SEARCH_BUFFER)
 
     @handle(Keys.ControlS, filter= ~has_focus)
     def _(event):
         event.cli.search_state.direction = IncrementalSearchDirection.FORWARD
-        event.cli.focus_stack.push(search_buffer_name)
+        event.cli.focus_stack.push(SEARCH_BUFFER)
 
     @handle(Keys.ControlR, filter=has_focus)
     @handle(Keys.Up, filter=has_focus)
     def _(event):
-        event.cli.search_state.direction = IncrementalSearchDirection.BACKWARD
+        # Create new search_state.
+        event.cli.search_state = SearchState(event.cli.buffers[SEARCH_BUFFER].text,
+                    direction=IncrementalSearchDirection.BACKWARD)
 
+        # Apply search to current buffer.
         input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        input_buffer.apply_search(event.cli.search_state, include_current_position=False)
+        input_buffer.apply_search(event.cli.search_state)
 
     @handle(Keys.ControlS, filter=has_focus)
     @handle(Keys.Down, filter=has_focus)
     def _(event):
-        event.cli.search_state.direction = IncrementalSearchDirection.FORWARD
+        # Create new search_state.
+        event.cli.search_state = SearchState(event.cli.buffers[SEARCH_BUFFER].text,
+                    direction=IncrementalSearchDirection.FORWARD)
 
+        # Apply search to current buffer.
         input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        input_buffer.apply_search(event.cli.search_state, include_current_position=False)
+        input_buffer.apply_search(event.cli.search_state)

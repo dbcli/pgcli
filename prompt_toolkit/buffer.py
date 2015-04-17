@@ -725,7 +725,7 @@ class Buffer(object):
         if self.text and (not len(self._history) or self._history[-1] != self.text):
             self._history.append(self.text)
 
-    def _search(self, search_state, include_current_position=False):
+    def _search(self, search_state):
         """
         Execute search. Return (working_index, cursor_position) tuple when this
         search is applied. Returns `None` when this text cannot be found.
@@ -736,8 +736,7 @@ class Buffer(object):
 
         if direction == IncrementalSearchDirection.FORWARD:
             # Try find at the current input.
-            new_index = self.document.find(
-                text, include_current_position=include_current_position)
+            new_index = self.document.find(text, include_current_position=False)
 
             if new_index is not None:
                 return (self.working_index, self.cursor_position + new_index)
@@ -762,26 +761,26 @@ class Buffer(object):
                     if new_index is not None:
                         return (i, len(document.text) + new_index)
 
-    def document_for_search(self, search_state, include_current_position=False):
+    def document_for_search(self, search_state):
         """
         Return a `Document` instance that has the text/cursor position for this
         search, if we would apply it.
         """
-        search_result = self._search(search_state,
-                                     include_current_position=include_current_position)
+        search_result = self._search(search_state)
+
         if search_result is None:
             return self.document
         else:
             working_index, cursor_position = search_result
             return Document(self._working_lines[working_index], cursor_position)
 
-    def apply_search(self, search_state, include_current_position=False):
+    def apply_search(self, search_state):
         """
         Return a `Document` instance that has the text/cursor position for this
         search, if we would apply it.
         """
-        search_result = self._search(search_state,
-                                     include_current_position=include_current_position)
+        search_result = self._search(search_state)
+
         if search_result is not None:
             working_index, cursor_position = search_result
             self.working_index = working_index

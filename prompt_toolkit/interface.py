@@ -27,6 +27,7 @@ from .renderer import Renderer, Output
 from .search_state import SearchState
 from .styles import DefaultStyle
 from .utils import EventHook
+from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, SYSTEM_BUFFER
 
 from types import GeneratorType
 
@@ -88,7 +89,7 @@ class CommandLineInterface(object):
                  clipboard=None,
                  renderer=None,
                  output=None,
-                 initial_focussed_buffer='default',
+                 initial_focussed_buffer=DEFAULT_BUFFER,
                  on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
                  complete_while_typing=Always(),
                  paste_mode=Never(),
@@ -132,11 +133,11 @@ class CommandLineInterface(object):
 
         #: The input buffers.
         self.buffers = {
-            # For the 'search' and 'system' buffers, 'returable' is False, in
+            # For the 'search' and 'system' buffers, 'returnable' is False, in
             # order to block normal Enter/ControlC behaviour.
-            'default': (buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)),
-            'search': Buffer(history=History(), accept_action=AcceptAction.IGNORE),
-            'system': Buffer(history=History(), accept_action=AcceptAction.IGNORE),
+            DEFAULT_BUFFER: (buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)),
+            SEARCH_BUFFER: Buffer(history=History(), accept_action=AcceptAction.IGNORE),
+            SYSTEM_BUFFER: Buffer(history=History(), accept_action=AcceptAction.IGNORE),
         }
         if buffers:
             self.buffers.update(buffers)
@@ -240,7 +241,7 @@ class CommandLineInterface(object):
         """
         True when we are searching.
         """
-        return self.current_buffer_name == 'search'
+        return self.current_buffer_name == SEARCH_BUFFER
 
     @property
     def search_text(self):
@@ -524,10 +525,6 @@ class CommandLineInterface(object):
 
             # Don't complete when we already have completions.
             if buffer.complete_state:
-                return
-
-            # Don't automatically complete on empty inputs.
-            if not buffer.text:
                 return
 
             # Otherwise, get completions in other thread.

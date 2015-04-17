@@ -10,6 +10,8 @@ from abc import ABCMeta, abstractmethod
 from prompt_toolkit.filters import Never, Filter
 from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.search_state import SearchState
+from prompt_toolkit.enums import DEFAULT_BUFFER
+
 from .processors import Processor
 from .screen import Screen, Char, Point
 from .utils import token_list_width
@@ -181,7 +183,7 @@ class BufferControl(UIControl):
                  lexer=None,
                  show_line_numbers=Never(),
                  preview_search=Never(),
-                 buffer_name='default',
+                 buffer_name=DEFAULT_BUFFER,
                  default_token=Token,
                  menu_position=None):
         assert input_processors is None or all(isinstance(i, Processor) for i in input_processors)
@@ -261,7 +263,7 @@ class BufferControl(UIControl):
             cursor_transform_functions = []
 
             for p in self.input_processors:
-                tokens, f = p.run(cli, buffer, tokens)
+                tokens, f = p.run(cli, document, tokens)
                 cursor_transform_functions.append(f)
 
             return tokens, cursor_transform_functions
@@ -270,7 +272,7 @@ class BufferControl(UIControl):
             buffer.text,
 
             # Include invalidation_hashes from all processors.
-            tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),
+            tuple(p.invalidation_hash(cli, document) for p in self.input_processors),
         )
 
         return self._token_lru_cache.get(key, get)
@@ -351,7 +353,7 @@ class BufferControl(UIControl):
             self.show_line_numbers(cli),
 
             # Include invalidation_hashes from all processors.
-            tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),
+            tuple(p.invalidation_hash(cli, document) for p in self.input_processors),
         )
 
         # Get from cache, or create if this doesn't exist yet.

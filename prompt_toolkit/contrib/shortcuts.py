@@ -23,6 +23,7 @@ In that case, study the code in this file and build your own
 from __future__ import unicode_literals
 
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.eventloop.base import EventLoop
 from prompt_toolkit.filters import IsDone, HasFocus, Always, Never
 from prompt_toolkit.history import History
@@ -120,14 +121,14 @@ def create_default_layout(message='', lexer=None, is_password=False,
                     lexer=lexer,
                     # Enable preview_search, we want to have immediate feedback
                     # in reverse-i-search mode.
-                    preview_search=Never()),
+                    preview_search=Always()),
                 get_height=get_height,
             ),
             [
                 Float(xcursor=True,
                       ycursor=True,
                       content=CompletionsMenu(max_height=16,
-                                              extra_filter=HasFocus('default')))
+                                              extra_filter=HasFocus(DEFAULT_BUFFER)))
             ]
         ),
         ValidationToolbar(),

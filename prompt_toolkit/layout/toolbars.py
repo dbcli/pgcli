@@ -13,6 +13,7 @@ from .controls import BufferControl, TokenListControl, UIControl
 from .utils import token_list_len
 from .screen import Screen
 from prompt_toolkit.filters import HasFocus, HasArg, HasCompletions, HasValidationError, HasSearch, Never, Always, IsDone
+from prompt_toolkit.enums import SEARCH_BUFFER, SYSTEM_BUFFER
 
 
 __all__ = (
@@ -36,7 +37,7 @@ class SystemToolbarControl(BufferControl):
     def __init__(self):
         super(SystemToolbarControl, self).__init__(
             lexer=BashLexer,
-            buffer_name='system',
+            buffer_name=SYSTEM_BUFFER,
             show_line_numbers=Never(),
             input_processors=[BeforeInput.static('Shell command: ', Token.Toolbar.System.Prefix)],)
 
@@ -46,7 +47,7 @@ class SystemToolbar(Window):
         super(SystemToolbar, self).__init__(
             SystemToolbarControl(),
             height=LayoutDimension.exact(1),
-            filter=HasFocus('system') & ~IsDone())
+            filter=HasFocus(SYSTEM_BUFFER) & ~IsDone())
 
 
 class ArgToolbarControl(TokenListControl):
@@ -75,7 +76,7 @@ class SearchToolbarControl(BufferControl):
     def __init__(self, vi_mode=False):
         token = Token.Toolbar.Search
 
-        def get_before_input(cli, buffer):
+        def get_before_input(cli):
             if not cli.is_searching:
                 text = ''
             elif cli.search_state.direction == IncrementalSearchDirection.BACKWARD:
@@ -86,7 +87,7 @@ class SearchToolbarControl(BufferControl):
             return [(token, text)]
 
         super(SearchToolbarControl, self).__init__(
-            buffer_name='search',
+            buffer_name=SEARCH_BUFFER,
             input_processors=[BeforeInput(get_before_input)],
         )
 
