@@ -33,7 +33,7 @@ class PGCompleter(Completer):
             'ROWNUM', 'ROWS', 'SELECT', 'SESSION', 'SET', 'SHARE', 'SIZE',
             'SMALLINT', 'START', 'SUCCESSFUL', 'SYNONYM', 'SYSDATE', 'TABLE',
             'TEMPLATE', 'THEN', 'TO', 'TRIGGER', 'UID', 'UNION', 'UNIQUE',
-            'UPDATE', 'USE', 'USER', 'VALIDATE', 'VALUES', 'VARCHAR',
+            'UPDATE', 'USE', 'USER', 'USING', 'VALIDATE', 'VALUES', 'VARCHAR',
             'VARCHAR2', 'VIEW', 'WHEN', 'WHENEVER', 'WHERE', 'WITH', ]
 
     functions = ['AVG', 'COUNT', 'FIRST', 'FORMAT', 'LAST', 'LCASE', 'LEN',
