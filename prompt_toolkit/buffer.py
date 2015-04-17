@@ -12,7 +12,7 @@ from .selection import SelectionType, SelectionState
 from .utils import EventHook
 from .validation import ValidationError
 from .clipboard import ClipboardData
-from .filters import Filter, Always, Never
+from .filters import Filter, Never
 
 import os
 import six
@@ -149,15 +149,13 @@ class Buffer(object):
                         (Instead of accepting the input.)
     """
     def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='',
-                 is_multiline=Never(), initial_document=None, focussable=Always(),
+                 is_multiline=Never(), initial_document=None,
                  accept_action=AcceptAction.RETURN_DOCUMENT):
         assert isinstance(is_multiline, Filter)
-        assert isinstance(focussable, Filter)
 
         self.completer = completer
         self.validator = validator
         self.tempfile_suffix = tempfile_suffix
-        self.focussable = focussable
         self.accept_action = accept_action
         self.is_multiline = is_multiline
 

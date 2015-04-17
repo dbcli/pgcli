@@ -131,13 +131,11 @@ class CommandLineInterface(object):
 
         #: The input buffers.
         self.buffers = {
-            # We don't make the 'search' and 'system' focussable, that means
-            # that window-focus changing functionality is disabled for these.
-            # (See prompt_toolkit.key_binding.bindings.utils.focus_next_buffer.)
-            # Also, 'returable' is False, in order to block normal Enter/ControlC behaviour.
+            # For the 'search' and 'system' buffers, 'returable' is False, in
+            # order to block normal Enter/ControlC behaviour.
             'default': (buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)),
-            'search': Buffer(history=History(), focussable=Never(), accept_action=AcceptAction.IGNORE),
-            'system': Buffer(history=History(), focussable=Never(), accept_action=AcceptAction.IGNORE),
+            'search': Buffer(history=History(), accept_action=AcceptAction.IGNORE),
+            'system': Buffer(history=History(), accept_action=AcceptAction.IGNORE),
         }
         if buffers:
             self.buffers.update(buffers)

@@ -5,7 +5,7 @@ from prompt_toolkit.enums import IncrementalSearchDirection
 from prompt_toolkit.filters import Filter, Always
 
 from .basic import load_basic_bindings
-from .utils import create_handle_decorator, focus_next_buffer
+from .utils import create_handle_decorator
 
 import prompt_toolkit.filters as filters
 
@@ -319,13 +319,6 @@ def load_emacs_bindings(registry, filter=Always()):
     @handle(Keys.ControlX, Keys.ControlU, save_before=False, filter= ~has_selection)
     def _(event):
         event.current_buffer.undo()
-
-    @handle(Keys.ControlX, 'o')
-    def _(event):
-        """
-        Focus next buffer.
-        """
-        focus_next_buffer(event.cli)
 
     @handle(Keys.ControlX, Keys.ControlX)
     def _(event):

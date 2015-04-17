@@ -8,7 +8,7 @@ from prompt_toolkit.layout.utils import find_window_for_buffer_name
 from prompt_toolkit.selection import SelectionType
 
 from .basic import load_basic_bindings
-from .utils import create_handle_decorator, focus_next_buffer
+from .utils import create_handle_decorator
 
 import prompt_toolkit.filters as filters
 import codecs
@@ -1066,13 +1066,6 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         # TODO
         pass
-
-    @handle(Keys.ControlW, Keys.ControlW, filter=navigation_mode)
-    def _(event):
-        """
-        Focus next buffer.
-        """
-        focus_next_buffer(event.cli)
 
 
 def load_vi_open_in_editor_bindings(registry, vi_state, filter=None):
