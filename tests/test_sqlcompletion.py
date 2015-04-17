@@ -152,9 +152,11 @@ def test_sub_select_dot_col_name_completion():
         {'type': 'view', 'schema': 't'},
         {'type': 'function', 'schema': 't'}])
 
-def test_join_suggests_tables_and_schemas():
-    suggestion = suggest_type('SELECT * FROM abc a JOIN ',
-            'SELECT * FROM abc a JOIN ')
+@pytest.mark.parametrize('join_type', ['', 'INNER', 'LEFT', 'RIGHT OUTER'])
+@pytest.mark.parametrize('tbl_alias', ['', 'foo'])
+def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
+    text = 'SELECT * FROM abc {0} {1} JOIN '.format(tbl_alias, join_type)
+    suggestion = suggest_type(text, text)
     assert sorted_dicts(suggestion) == sorted_dicts([
         {'type': 'table', 'schema': []},
         {'type': 'view', 'schema': []},
@@ -201,6 +203,16 @@ def test_on_suggests_tables_right_side():
         'select abc.x, bcd.y from abc join bcd on ',
         'select abc.x, bcd.y from abc join bcd on ')
     assert suggestions == [{'type': 'alias', 'aliases': ['abc', 'bcd']}]
+
+
+@pytest.mark.parametrize('col_list', ['', 'col1, '])
+def test_join_using_suggests_common_columns(col_list):
+    text = 'select * from abc inner join def using (' + col_list
+    assert suggest_type(text, text) == [
+        {'type': 'column',
+         'tables': [(None, 'abc', None), (None, 'def', None)],
+         'drop_unique': True}]
+
 
 def test_2_statements_2nd_current():
     suggestions = suggest_type('select * from a; select * from ',

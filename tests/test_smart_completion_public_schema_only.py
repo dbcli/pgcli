@@ -305,6 +305,15 @@ def test_suggested_tables_after_on_right_side(completer, complete_event):
         Completion(text='users', start_position=0),
         Completion(text='orders', start_position=0)])
 
+def test_join_using_suggests_common_columns(completer, complete_event):
+    text = 'SELECT * FROM users INNER JOIN orders USING ('
+    pos = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=pos), complete_event))
+    assert set(result) == set([
+        Completion(text='id', start_position=0)])
+
+
 def test_table_names_after_from(completer, complete_event):
     text = 'SELECT * FROM '
     position = len('SELECT * FROM ')
