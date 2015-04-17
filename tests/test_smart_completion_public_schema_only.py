@@ -5,7 +5,7 @@ from prompt_toolkit.document import Document
 metadata = {
                 'tables': {
                     'users': ['id', 'email', 'first_name', 'last_name'],
-                    'orders': ['id', 'ordered_date', 'status'],
+                    'orders': ['id', 'ordered_date', 'status', 'email'],
                     'select': ['id', 'insert', 'ABC']},
                 'views': {
                     'user_emails': ['id', 'email']},
@@ -311,8 +311,19 @@ def test_join_using_suggests_common_columns(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event))
     assert set(result) == set([
-        Completion(text='id', start_position=0)])
+        Completion(text='id', start_position=0),
+        Completion(text='email', start_position=0),
+        ])
 
+def test_join_using_suggests_columns_after_first_column(completer, complete_event):
+    text = 'SELECT * FROM users INNER JOIN orders USING (id,'
+    pos = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=pos), complete_event))
+    assert set(result) == set([
+        Completion(text='id', start_position=0),
+        Completion(text='email', start_position=0),
+        ])
 
 def test_table_names_after_from(completer, complete_event):
     text = 'SELECT * FROM '
