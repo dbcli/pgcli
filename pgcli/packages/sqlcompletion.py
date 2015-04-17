@@ -185,18 +185,24 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         else:
             return [{'type': 'column', 'tables': extract_tables(full_text)},
                     {'type': 'function', 'schema': []}]
-    elif token_v in ('copy', 'from', 'update', 'into', 'describe') or (
-            token_v.endswith('join') and token.ttype in Keyword):
+    elif (token_v.endswith('join') and token.ttype in Keyword) or (token_v in
+            ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
         schema = (identifier and identifier.get_parent_name()) or []
-        if schema:
-            # If already schema-qualified, suggest only tables/views
-            return [{'type': 'table', 'schema': schema},
-                    {'type': 'view', 'schema': schema}]
-        else:
-            # Suggest schemas OR public tables/views
-            return [{'type': 'schema'},
-                    {'type': 'table', 'schema': []},
-                    {'type': 'view', 'schema': []}]
+
+        # Suggest tables from either the currently-selected schema or the
+        # public schema if no schema has been specified
+        suggest = [{'type': 'table', 'schema': schema}]
+
+        if not schema:
+            # Suggest schemas
+            suggest.insert(0, {'type': 'schema'})
+
+        # Only tables can be TRUNCATED, otherwise suggest views
+        if token_v != 'truncate':
+            suggest.append({'type': 'view', 'schema': schema})
+
+        return suggest
+
     elif token_v in ('table', 'view', 'function'):
         # E.g. 'DROP FUNCTION <funcname>', 'ALTER TABLE <tablname>'
         rel_type = token_v
