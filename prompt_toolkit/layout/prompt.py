@@ -20,8 +20,8 @@ class DefaultPrompt(Processor):
 
     def run(self, cli, buffer, tokens):
         # Get text before cursor.
-        if buffer.isearch_state:
-            before = _get_isearch_tokens(buffer.isearch_state)
+        if cli.is_searching:
+            before = _get_isearch_tokens(cli)
 
         elif cli.input_processor.arg is not None:
             before = _get_arg_tokens(cli)
@@ -37,14 +37,14 @@ class DefaultPrompt(Processor):
     def invalidation_hash(self, cli, buffer):
         return (
             cli.input_processor.arg,
-            buffer.isearch_state,
-            buffer.isearch_state and buffer.isearch_state.isearch_text,
+            cli.is_searching,
+            cli.buffers['search'].text,
         )
 
 
-def _get_isearch_tokens(isearch_state):
+def _get_isearch_tokens(cli):
     def before():
-        if isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
+        if cli.search_state.direction == IncrementalSearchDirection.BACKWARD:
             text = 'reverse-i-search'
         else:
             text = 'i-search'
@@ -52,16 +52,7 @@ def _get_isearch_tokens(isearch_state):
         return [(Token.Prompt.Search, '(%s)`' % text)]
 
     def text():
-        index = isearch_state.no_match_from_index
-        text = isearch_state.isearch_text
-
-        if index is None:
-            return [(Token.Prompt.Search.Text, text)]
-        else:
-            return [
-                (Token.Prompt.Search.Text, text[:index]),
-                (Token.Prompt.Search.Text.NoMatch, text[index:])
-            ]
+        return [(Token.Prompt.Search.Text, cli.buffers['search'].text)]
 
     def after():
         return [(Token.Prompt.Search, '`: ')]

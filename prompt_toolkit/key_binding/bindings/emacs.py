@@ -500,16 +500,16 @@ def load_emacs_search_bindings(registry, filter=None, search_buffer_name='search
     has_focus = filters.HasFocus(search_buffer_name)
 
     @handle(Keys.ControlG, filter=has_focus)
+    @handle(Keys.ControlC, filter=has_focus)
     # NOTE: the reason for not also binding Escape to this one, is that we want
     #       Alt+Enter to accept input directly in incremental search mode.
     def _(event):
         """
         Abort an incremental search and restore the original line.
         """
-        search_line = event.cli.buffers[search_buffer_name]
+        search_buffer = event.cli.buffers[search_buffer_name]
 
-        event.cli.buffers[event.cli.focus_stack.previous].exit_isearch(restore_original_line=True)
-        search_line.reset()
+        search_buffer.reset()
         event.cli.focus_stack.pop()
 
     @handle(Keys.ControlJ, filter=has_focus)
@@ -518,34 +518,45 @@ def load_emacs_search_bindings(registry, filter=None, search_buffer_name='search
         When enter pressed in isearch, quit isearch mode. (Multiline
         isearch would be too complicated.)
         """
-        search_line = event.cli.buffers[search_buffer_name]
-        search_line.reset()
+        input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
+        search_buffer = event.cli.buffers[search_buffer_name]
 
-        event.cli.buffers[event.cli.focus_stack.previous].exit_isearch()
+        # Update search state.
+        if search_buffer.text:
+            event.cli.search_state.text = search_buffer.text
+
+        # Apply search.
+        input_buffer.apply_search(event.cli.search_state, include_current_position=False)
+
+        # Add query to history of search line.
+        search_buffer.add_to_history()
+        search_buffer.reset()
+
+        # Focus previous document again.
         event.cli.focus_stack.pop()
 
     @handle(Keys.ControlR, filter= ~has_focus)
     def _(event):
+        event.cli.search_state.direction = IncrementalSearchDirection.BACKWARD
         event.cli.focus_stack.push(search_buffer_name)
-
-        buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        buffer.incremental_search(IncrementalSearchDirection.BACKWARD)
 
     @handle(Keys.ControlS, filter= ~has_focus)
     def _(event):
+        event.cli.search_state.direction = IncrementalSearchDirection.FORWARD
         event.cli.focus_stack.push(search_buffer_name)
-
-        buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        buffer.incremental_search(IncrementalSearchDirection.FORWARD)
 
     @handle(Keys.ControlR, filter=has_focus)
     @handle(Keys.Up, filter=has_focus)
     def _(event):
-        buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        buffer.incremental_search(IncrementalSearchDirection.BACKWARD)
+        event.cli.search_state.direction = IncrementalSearchDirection.BACKWARD
+
+        input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
+        input_buffer.apply_search(event.cli.search_state, include_current_position=False)
 
     @handle(Keys.ControlS, filter=has_focus)
     @handle(Keys.Down, filter=has_focus)
     def _(event):
-        buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        buffer.incremental_search(IncrementalSearchDirection.FORWARD)
+        event.cli.search_state.direction = IncrementalSearchDirection.FORWARD
+
+        input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
+        input_buffer.apply_search(event.cli.search_state, include_current_position=False)

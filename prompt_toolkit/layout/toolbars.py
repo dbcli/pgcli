@@ -76,11 +76,9 @@ class SearchToolbarControl(BufferControl):
         token = Token.Toolbar.Search
 
         def get_before_input(cli, buffer):
-            buffer = cli.buffers[cli.focus_stack.previous]
-
-            if buffer.isearch_state is None:
+            if not cli.is_searching:
                 text = ''
-            elif buffer.isearch_state.isearch_direction == IncrementalSearchDirection.BACKWARD:
+            elif cli.search_state.direction == IncrementalSearchDirection.BACKWARD:
                 text = ('?' if vi_mode else 'I-search backward: ')
             else:
                 text = ('/' if vi_mode else 'I-search: ')

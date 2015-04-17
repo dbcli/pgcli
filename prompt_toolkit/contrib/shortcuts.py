@@ -117,7 +117,10 @@ def create_default_layout(message='', lexer=None, is_password=False,
             Window(
                 BufferControl(
                     input_processors=input_processors,
-                    lexer=lexer),
+                    lexer=lexer,
+                    # Enable preview_search, we want to have immediate feedback
+                    # in reverse-i-search mode.
+                    preview_search=Never()),
                 get_height=get_height,
             ),
             [

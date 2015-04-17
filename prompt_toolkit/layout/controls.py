@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractmethod
 
 from prompt_toolkit.filters import Never, Filter
 from prompt_toolkit.utils import get_cwidth
+from prompt_toolkit.search_state import SearchState
 from .processors import Processor
 from .screen import Screen, Char, Point
 from .utils import token_list_width
@@ -179,15 +180,18 @@ class BufferControl(UIControl):
                  input_processors=None,
                  lexer=None,
                  show_line_numbers=Never(),
+                 preview_search=Never(),
                  buffer_name='default',
                  default_token=Token,
                  menu_position=None):
         assert input_processors is None or all(isinstance(i, Processor) for i in input_processors)
         assert isinstance(show_line_numbers, Filter)
+        assert isinstance(preview_search, Filter)
         assert menu_position is None or callable(menu_position)
 
         self.input_processors = input_processors or []
         self.show_line_numbers = show_line_numbers
+        self.preview_search = preview_search
         self.buffer_name = buffer_name
         self.default_token = default_token
         self.menu_position = menu_position
@@ -230,16 +234,21 @@ class BufferControl(UIControl):
         screen = self.create_screen(cli, width, None)
         return screen.current_height
 
-    def _get_input_tokens(self, cli, buffer):
+    def _get_input_tokens(self, cli, buffer, document):
         """
         Tokenize input text for highlighting.
         Return (tokens, cursor_transform_functions) tuple.
+
+        :param buffer: The Buffer instance.
+        :param document: The document to be shown. This can be `buffer.document`
+                         but could as well be a different one, in case we are
+                         searching through the history.
         """
         def get():
             if self.lexer:
-                tokens = list(self.lexer.get_tokens(buffer.text))
+                tokens = list(self.lexer.get_tokens(document.text))
             else:
-                tokens = [(self.default_token, buffer.text)]
+                tokens = [(self.default_token, document.text)]
 
             # 'Explode' tokens in characters.
             # (Some input processors -- like search/selection highlighter --
@@ -282,13 +291,28 @@ class BufferControl(UIControl):
     def create_screen(self, cli, width, height):
         buffer = self._buffer(cli)
 
+        # Get the document to be shown. If we are currently searching (the
+        # search buffer has focus, and the preview_search filter is enabled),
+        # then use the search document, which has possibly a different
+        # text/cursor position.)
+        def preview_now():
+            """ True when we should preview a search. """
+            return bool(self.preview_search(cli) and
+                    cli.is_searching and cli.current_buffer.text)
+
+        if preview_now():
+            document = buffer.document_for_search(SearchState(
+                cli.current_buffer.text, direction=cli.search_state.direction))
+        else:
+            document = buffer.document
+
         def _create_screen():
             screen = Screen(width)
 
             # Get tokens
             # Note: we add the space character at the end, because that's where
             #       the cursor can also be.
-            input_tokens, cursor_transform_functions = self._get_input_tokens(cli, buffer)
+            input_tokens, cursor_transform_functions = self._get_input_tokens(cli, buffer, document)
             input_tokens += [(Token, ' ')]
 
             indexes_to_pos = screen.write_data(
@@ -317,7 +341,7 @@ class BufferControl(UIControl):
         # have to recreate a new screen.
         key = (
             # When the text changes, we obviously have to recreate a new screen.
-            buffer.text,
+            document.text,
 
             # When the width changes, line wrapping will be different.
             # TODO: allow to disable line wrapping. + in that case, remove 'width'
@@ -333,7 +357,7 @@ class BufferControl(UIControl):
         # Get from cache, or create if this doesn't exist yet.
         screen, cursor_position_to_xy = self._screen_lru_cache.get(key, _create_screen)
 
-        x, y = cursor_position_to_xy(buffer.cursor_position)
+        x, y = cursor_position_to_xy(document.cursor_position)
         screen.cursor_position = Point(y=y, x=x)
 
         # If there is an auto completion going on, use that start point for a

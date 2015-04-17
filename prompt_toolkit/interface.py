@@ -12,6 +12,7 @@ import weakref
 from .buffer import Buffer, AcceptAction
 from .clipboard import Clipboard
 from .completion import CompleteEvent
+from .completion import get_common_complete_suffix
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
 from .filters import Filter, Always, Never
@@ -23,9 +24,9 @@ from .key_binding.registry import Registry
 from .layout import Window
 from .layout.controls import BufferControl
 from .renderer import Renderer, Output
+from .search_state import SearchState
 from .styles import DefaultStyle
 from .utils import EventHook
-from .completion import get_common_complete_suffix
 
 from types import GeneratorType
 
@@ -140,16 +141,8 @@ class CommandLineInterface(object):
         if buffers:
             self.buffers.update(buffers)
 
-        # When the text in the search buffer changes, set search string in
-        # other buffers.
-        def search_text_changed():
-            search_text = self.buffers['search'].text
-
-            for name, b in self.buffers.items():
-                if name != 'search':
-                    b.set_search_text(search_text)
-
-        self.buffers['search'].onTextChanged += search_text_changed
+        # Search state. (Does also remember what has to be highlighted.)
+        self.search_state = SearchState()
 
         #: The `Layout` instance.
         self.layout = layout or Window(BufferControl())
@@ -241,6 +234,25 @@ class CommandLineInterface(object):
         The current focussed :class:`Buffer`.
         """
         return self.buffers[self.focus_stack.current]
+
+    @property
+    def is_searching(self):
+        """
+        True when we are searching.
+        """
+        return self.current_buffer_name == 'search'
+
+    @property
+    def search_text(self):
+        """
+        The text we are searching for.
+        """
+        # When the search buffer has focus, take that text.
+        if self.is_searching and self.current_buffer.text:
+            return self.current_buffer.text
+        # Otherwise, take the text of the last active search.
+        else:
+            return self.search_state.text
 
     def reset(self, reset_current_buffer=False):
         """

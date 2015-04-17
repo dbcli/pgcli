@@ -37,17 +37,17 @@ class HighlightSearchProcessor(Processor):
     Processor that highlights search matches in the document.
     """
     def run(self, cli, buffer, tokens):
-        isearch_state = buffer.isearch_state
+        search_text = cli.search_text
 
-        if isearch_state and not cli.is_returning:
+        if search_text and not cli.is_returning:
             # For each search match, replace the Token.
-            for index in buffer.document.find_all(isearch_state.isearch_text):
+            for index in buffer.document.find_all(search_text):
                 if index == buffer.cursor_position:
                     token = Token.SearchMatch.Current
                 else:
                     token = Token.SearchMatch
 
-                for x in range(index, index + len(isearch_state.isearch_text)):
+                for x in range(index, index + len(search_text)):
                     tokens[x] = (token, tokens[x][1])
 
         return tokens, lambda i: i
@@ -55,14 +55,13 @@ class HighlightSearchProcessor(Processor):
     def invalidation_hash(self, cli, buffer):
         # When the search state changes, highlighting will be different.
         return (
-            buffer.isearch_state,
+            cli.search_text,
             cli.is_returning,
-            (buffer.isearch_state and buffer.isearch_state.isearch_text),
 
             # When we search for text, and the cursor position changes. The
             # processor has to be applied every time again, because the current match is highlighted
             # in another color.
-            (buffer.isearch_state and buffer.isearch_state.isearch_text and buffer.cursor_position)
+            (cli.search_text and buffer.cursor_position)
         )
 
 

@@ -150,7 +150,7 @@ class HasSearch(Filter):
     Incremental search is active.
     """
     def __call__(self, cli):
-        return cli.focus_stack.current == 'search'
+        return cli.is_searching
 
 
 class IsReturning(Filter):

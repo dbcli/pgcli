@@ -5,6 +5,7 @@ from prompt_toolkit.filters import Filter, Condition, HasArg
 from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
+from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
 
 from .basic import load_basic_bindings
@@ -326,17 +327,14 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Search next.
         """
-        event.current_buffer.incremental_search(vi_state.search_direction)
+        event.current_buffer.apply_search(event.cli.search_state)
 
     @handle('N', filter=navigation_mode)
     def _(event):  # TODO: use `change_delete_move_yank_handler` and implement 'arg'
         """
         Search previous.
         """
-        if vi_state.search_direction == IncrementalSearchDirection.BACKWARD:
-            event.current_buffer.incremental_search(IncrementalSearchDirection.FORWARD)
-        else:
-            event.current_buffer.incremental_search(IncrementalSearchDirection.BACKWARD)
+        event.current_buffer.apply_search(~event.cli.search_state)
 
     @handle('p', filter=navigation_mode)
     def _(event):
@@ -561,9 +559,13 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Go to previous occurence of this word.
         """
         b = event.cli.current_buffer
+        search_text = b.document.get_word_under_cursor()
 
-        b.set_search_text(b.document.get_word_under_cursor())
-        b.incremental_search(IncrementalSearchDirection.BACKWARD)
+        search_state = SearchState(
+                search_text, IncrementalSearchDirection.BACKWARD)
+
+        event.cli.search_state = search_state
+        b.apply_search(search_state, include_current_position=False)
 
     @handle('*', filter=navigation_mode)
     def _(event):
@@ -571,9 +573,13 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Go to next occurence of this word.
         """
         b = event.cli.current_buffer
+        search_text = b.document.get_word_under_cursor()
 
-        b.set_search_text(b.document.get_word_under_cursor())
-        b.incremental_search(IncrementalSearchDirection.FORWARD)
+        search_state = SearchState(
+                search_text, IncrementalSearchDirection.FORWARD)
+
+        event.cli.search_state = search_state
+        b.apply_search(search_state, include_current_position=False)
 
     @handle('(', filter=navigation_mode)
     def _(event):
@@ -1134,13 +1140,12 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
         """
         Vi-style forward search.
         """
-        vi_state.search_direction = direction = IncrementalSearchDirection.FORWARD
+        # Set the ViState.
+        event.cli.search_state.direction = IncrementalSearchDirection.FORWARD
         vi_state.input_mode = InputMode.INSERT
 
-        if event.cli.focus_stack.current != search_buffer_name:
-            event.cli.focus_stack.push(search_buffer_name)
-
-        event.cli.buffers[event.cli.focus_stack.previous].incremental_search(direction)
+        # Focus search buffer.
+        event.cli.focus_stack.push(search_buffer_name)
 
     @handle('?', filter=navigation_mode)
     @handle(Keys.ControlR)
@@ -1148,27 +1153,34 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
         """
         Vi-style backward search.
         """
-        vi_state.search_direction = direction = IncrementalSearchDirection.BACKWARD
+        # Set the ViState.
+        event.cli.search_state.direction = IncrementalSearchDirection.BACKWARD
+
+        # Focus search buffer.
+        event.cli.focus_stack.push(search_buffer_name)
         vi_state.input_mode = InputMode.INSERT
-
-        if event.cli.focus_stack.current != search_buffer_name:
-            event.cli.focus_stack.push(search_buffer_name)
-
-        event.cli.buffers[event.cli.focus_stack.previous].incremental_search(direction)
 
     @handle(Keys.ControlJ, filter=has_focus)
     def _(event):
         """
-        Enter at the / or ? prompt.
+        Apply the search. (At the / or ? prompt.)
         """
+        input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
         search_buffer = event.cli.buffers[search_buffer_name]
-        vi_state.input_mode = InputMode.NAVIGATION
+
+        # Update search state.
+        if search_buffer.text:
+            event.cli.search_state.text = search_buffer.text
+
+        # Apply search.
+        input_buffer.apply_search(event.cli.search_state, include_current_position=False)
 
         # Add query to history of search line.
         search_buffer.add_to_history()
         search_buffer.reset()
 
         # Focus previous document again.
+        vi_state.input_mode = InputMode.NAVIGATION
         event.cli.focus_stack.pop()
 
     @handle(Keys.Any, filter=has_focus)
@@ -1177,10 +1189,6 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
         Insert text after the / or ? prompt.
         """
         event.cli.current_buffer.insert_text(event.data)
-
-        # Set current search search text as line search text.
-        buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        buffer.set_search_text(event.cli.current_buffer.text)
 
     def search_buffer_is_empty(cli):
         """ Returns True when the search buffer is empty. """
@@ -1196,6 +1204,4 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
         vi_state.input_mode = InputMode.NAVIGATION
 
         event.cli.focus_stack.pop()
-        event.current_buffer.exit_isearch(restore_original_line=True)
-
         event.cli.buffers[search_buffer_name].reset()

@@ -29,8 +29,6 @@ class ViState(object):
         #: search in Vi mode, by pressing the 'n' or 'N' in navigation mode.)
         self.last_character_find = None
 
-        self.search_direction = IncrementalSearchDirection.FORWARD
-
         #: The Vi mode we're currently in to.
         self.input_mode = InputMode.INSERT
 

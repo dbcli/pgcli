@@ -13,6 +13,7 @@ from .utils import EventHook
 from .validation import ValidationError
 from .clipboard import ClipboardData
 from .filters import Filter, Never
+from .search_state import SearchState
 
 import os
 import six
@@ -115,27 +116,11 @@ class CompletionState(object):
             return new_text, new_cursor_position
 
 
-class _IncrementalSearchState(object):  # XXX: make immutable.
-    def __init__(self, original_cursor_position, original_working_index, direction,
-                 isearch_text='', no_match_from_index=None):
-        self.isearch_text = isearch_text
-
-        self.original_working_index = original_working_index
-        self.original_cursor_position = original_cursor_position
-
-        #: From this character index, we didn't found any more matches.
-        #: This flag is updated every time we search for a new string.
-        self.no_match_from_index = no_match_from_index
-
-        self.isearch_direction = direction
-
-
 class Buffer(object):
     """
     The core data structure that holds the text and cursor position of the
     current input line and implements all text manupulations on top of it. It
-    also implements the history, undo stack, reverse search and the completion
-    state.
+    also implements the history, undo stack and the completion state.
 
     :attr completer : :class:`~prompt_toolkit.completion.Completer` instance.
     :attr history: :class:`~prompt_toolkit.history.History` instance.
@@ -188,9 +173,6 @@ class Buffer(object):
 
         # `ValidationError` instance. (Will be set when the input is wrong.)
         self.validation_error = None
-
-        # State of Incremental-search
-        self.isearch_state = None
 
         # State of the selection.
         self.selection_state = None
@@ -636,33 +618,6 @@ class Buffer(object):
         self.cursor_position += self.document.get_end_of_line_position()
         self.insert_text(insert)
 
-    def set_search_text(self, text):
-        if not self.isearch_state:
-            self.start_isearch()
-
-        # When backspace has been pressed.
-        if self.isearch_state.no_match_from_index and \
-                self.isearch_state.isearch_text.startswith(text):
-            if len(text) < self.isearch_state.no_match_from_index:
-                self.isearch_state.no_match_from_index = None
-
-        # When not appending text.
-        # (When `text` is not a suffix of the search string that we had.)
-        elif not text.startswith(self.isearch_state.isearch_text):
-            self.isearch_state.no_match_from_index = None
-
-            self.working_index = self.isearch_state.original_working_index
-            self.cursor_position = self.isearch_state.original_cursor_position
-
-        self.isearch_state.isearch_text = text
-
-        if not self.document.has_match_at_current_position(self.isearch_state.isearch_text):
-            found = self.incremental_search(self.isearch_state.isearch_direction)
-
-            # When this suffix is not found, remember that in `no_match_from_index`.
-            if not found and self.isearch_state.no_match_from_index is None:
-                self.isearch_state.no_match_from_index = len(self.isearch_state.isearch_text) - 1
-
     def insert_text(self, data, overwrite=False, move_cursor=True):
         """
         Insert characters at cursor position.
@@ -681,7 +636,7 @@ class Buffer(object):
         if move_cursor:
             self.cursor_position += len(data)
 
-        # fire 'onTextInsert' event.
+        # Fire 'onTextInsert' event.
         self.onTextInsert.fire()
 
     def paste_clipboard_data(self, data, before=False, count=1):
@@ -770,80 +725,67 @@ class Buffer(object):
         if self.text and (not len(self._history) or self._history[-1] != self.text):
             self._history.append(self.text)
 
-    def start_isearch(self, direction=IncrementalSearchDirection.FORWARD):
+    def _search(self, search_state, include_current_position=False):
         """
-        Start incremental search.
-        Take the current position as the start position for the search.
+        Execute search. Return (working_index, cursor_position) tuple when this
+        search is applied. Returns `None` when this text cannot be found.
         """
-        self.isearch_state = _IncrementalSearchState(
-            original_cursor_position=self.cursor_position,
-            original_working_index=self.working_index,
-            direction=direction)
+        assert isinstance(search_state, SearchState)
+        text = search_state.text
+        direction = search_state.direction
 
-    def incremental_search(self, direction):
-        """
-        Search for the next string.
-        :returns: (bool) True if something was found.
-        """
-        if not self.isearch_state:
-            self.start_isearch(direction)
-
-        found = False
-        self.isearch_state.isearch_direction = direction
-
-        isearch_text = self.isearch_state.isearch_text
-
-        if direction == IncrementalSearchDirection.BACKWARD:
+        if direction == IncrementalSearchDirection.FORWARD:
             # Try find at the current input.
-            new_index = self.document.find_backwards(isearch_text)
+            new_index = self.document.find(
+                text, include_current_position=include_current_position)
 
             if new_index is not None:
-                self.cursor_position += new_index
-                found = True
-            else:
-                # No match, go back in the history.
-                for i in range(self.working_index - 1, -1, -1):
-                    document = Document(self._working_lines[i], len(self._working_lines[i]))
-                    new_index = document.find_backwards(isearch_text)
-                    if new_index is not None:
-                        self.working_index = i
-                        self.cursor_position = len(self._working_lines[i]) + new_index
-                        self.isearch_state.no_match_from_index = None
-                        found = True
-                        break
-        else:
-            # Try find at the current input.
-            new_index = self.document.find(isearch_text)
-
-            if new_index is not None:
-                self.cursor_position += new_index
-                found = True
+                return (self.working_index, self.cursor_position + new_index)
             else:
                 # No match, go forward in the history.
                 for i in range(self.working_index + 1, len(self._working_lines)):
                     document = Document(self._working_lines[i], 0)
-                    new_index = document.find(isearch_text, include_current_position=True)
+                    new_index = document.find(text, include_current_position=True)
                     if new_index is not None:
-                        self.working_index = i
-                        self.cursor_position = new_index
-                        self.isearch_state.no_match_from_index = None
-                        found = True
-                        break
-                else:
-                    # If no break: we didn't found a match.
-                    found = False
+                        return (i, new_index)
+        else:
+            # Try find at the current input.
+            new_index = self.document.find_backwards(text)
 
-        return found
+            if new_index is not None:
+                return (self.working_index, self.cursor_position + new_index)
+            else:
+                # No match, go back in the history.
+                for i in range(self.working_index - 1, -1, -1):
+                    document = Document(self._working_lines[i], len(self._working_lines[i]))
+                    new_index = document.find_backwards(text)
+                    if new_index is not None:
+                        return (i, len(document.text) + new_index)
 
-    def exit_isearch(self, restore_original_line=False):
+    def document_for_search(self, search_state, include_current_position=False):
         """
-        Exit i-search mode.
+        Return a `Document` instance that has the text/cursor position for this
+        search, if we would apply it.
         """
-        if restore_original_line and self.isearch_state:
-            self.working_index = self.isearch_state.original_working_index
-            self.cursor_position = self.isearch_state.original_cursor_position
+        search_result = self._search(search_state,
+                                     include_current_position=include_current_position)
+        if search_result is None:
+            return self.document
+        else:
+            working_index, cursor_position = search_result
+            return Document(self._working_lines[working_index], cursor_position)
 
-        self.isearch_state = None
+    def apply_search(self, search_state, include_current_position=False):
+        """
+        Return a `Document` instance that has the text/cursor position for this
+        search, if we would apply it.
+        """
+        search_result = self._search(search_state,
+                                     include_current_position=include_current_position)
+        if search_result is not None:
+            working_index, cursor_position = search_result
+            self.working_index = working_index
+            self.cursor_position = cursor_position
 
     def exit_selection(self):
         self.selection_state = None

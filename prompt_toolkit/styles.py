@@ -29,12 +29,10 @@ default_style_extensions = {
     Token.Prompt.Arg:                             '',
     Token.Prompt.Search:                          '',
     Token.Prompt.Search.Text:                     'bold',
-    Token.Prompt.Search.Text.NoMatch:             'bg:#550000 #ffffff',
 
     # Search toolbar.
     Token.Toolbar.Search:                         '#22aaaa noinherit',
     Token.Toolbar.Search.Text:                    'noinherit',
-    Token.Toolbar.Search.Text.NoMatch:            'bg:#aa4444 #ffffff',
 
     # System toolbar
     Token.Toolbar.System.Prefix:                  'bg:#000000 #ffffff bold',
