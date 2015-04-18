@@ -141,8 +141,7 @@ class PGExecute(object):
             self.conn.close()
         self.conn = conn
         self.conn.autocommit = True
-        if PY2:
-            register_json_typecasters(self.conn, self._json_typecaster)
+        register_json_typecasters(self.conn, self._json_typecaster)
         register_hstore_typecaster(self.conn)
 
     def _json_typecaster(self, json_data):
@@ -154,7 +153,10 @@ class PGExecute(object):
         See http://initd.org/psycopg/docs/connection.html#connection.encoding
         """
 
-        return json_data.decode(self.conn.encoding)
+        if PY2:
+            return json_data.decode(self.conn.encoding)
+        else:
+            return json_data
 
     def run(self, statement):
         """Execute the sql in the database and return the results. The results
