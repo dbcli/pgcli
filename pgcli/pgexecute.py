@@ -4,7 +4,7 @@ import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 from .packages import pgspecial
-from .encodingutils import unicode2utf8
+from .encodingutils import unicode2utf8, PY2, PY3
 
 _logger = logging.getLogger(__name__)
 
@@ -141,7 +141,8 @@ class PGExecute(object):
             self.conn.close()
         self.conn = conn
         self.conn.autocommit = True
-        register_json_typecasters(self.conn, self._json_typecaster)
+        if PY2:
+            register_json_typecasters(self.conn, self._json_typecaster)
         register_hstore_typecaster(self.conn)
 
     def _json_typecaster(self, json_data):
