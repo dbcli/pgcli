@@ -35,12 +35,45 @@ def test_select_suggests_cols_and_funcs():
          {'type': 'column', 'tables': []},
          {'type': 'function', 'schema': []}])
 
-def test_from_suggests_tables_and_schemas():
-    suggestions = suggest_type('SELECT * FROM ', 'SELECT * FROM ')
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM ',
+    'INSERT INTO ',
+    'COPY ',
+    'UPDATE ',
+    'DESCRIBE ',
+    'SELECT * FROM foo JOIN ',
+])
+def test_expression_suggests_tables_views_and_schemas(expression):
+    suggestions = suggest_type(expression, expression)
     assert sorted_dicts(suggestions) == sorted_dicts([
         {'type': 'table', 'schema': []},
         {'type': 'view', 'schema': []},
         {'type': 'schema'}])
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM sch.',
+    'INSERT INTO sch.',
+    'COPY sch.',
+    'UPDATE sch.',
+    'DESCRIBE sch.',
+    'SELECT * FROM foo JOIN sch.',
+])
+def test_expression_suggests_qualified_tables_views_and_schemas(expression):
+    suggestions = suggest_type(expression, expression)
+    assert sorted_dicts(suggestions) == sorted_dicts([
+        {'type': 'table', 'schema': 'sch'},
+        {'type': 'view', 'schema': 'sch'}])
+
+def test_truncate_suggests_tables_and_schemas():
+    suggestions = suggest_type('TRUNCATE ', 'TRUNCATE ')
+    assert sorted_dicts(suggestions) == sorted_dicts([
+        {'type': 'table', 'schema': []},
+        {'type': 'schema'}])
+
+def test_truncate_suggests_qualified_tables():
+    suggestions = suggest_type('TRUNCATE sch.', 'TRUNCATE sch.')
+    assert sorted_dicts(suggestions) == sorted_dicts([
+        {'type': 'table', 'schema': 'sch'}])
 
 def test_distinct_suggests_cols():
     suggestions = suggest_type('SELECT DISTINCT ', 'SELECT DISTINCT ')
