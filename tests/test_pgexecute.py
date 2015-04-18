@@ -126,8 +126,10 @@ def test_multiple_queries_same_line_syntaxerror(executor):
     assert 'syntax error at or near "invalid"' in str(excinfo.value)
 
 @dbtest
-def test_special_command(executor):
-    run(executor, '\\?')
+def test_special_command_help(executor):
+    result = run(executor, '\\?')[0].split('|')
+    assert(result[1].find(u'Command') != -1)
+    assert(result[2].find(u'Description') != -1)
 
 
 @dbtest
