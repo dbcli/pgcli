@@ -15,8 +15,8 @@ class ValidationError(Exception):
         self.message = message
 
     def __repr__(self):
-        return 'ValidationError(index=%r, message=%r)' % (
-            self.index, self.message)
+        return '%s(index=%r, message=%r)' % (
+            self.__class__.__name__, self.index, self.message)
 
 
 class Validator(with_metaclass(ABCMeta, object)):

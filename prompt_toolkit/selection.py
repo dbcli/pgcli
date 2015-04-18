@@ -30,5 +30,6 @@ class SelectionState(object):
         self.type = type
 
     def __repr__(self):
-        return 'SelectionState(original_cursor_position=%r, type=%r)' % (
+        return '%s(original_cursor_position=%r, type=%r)' % (
+            self.__class__.__name__,
             self.original_cursor_position, self.type)

@@ -87,7 +87,7 @@ class TokenListControl(UIControl):
         self.align_right = align_right
 
     def __repr__(self):
-        return 'TokenListControl(%r)' % self.get_tokens
+        return '%s(%r)' % (self.__class__.__name__, self.get_tokens)
 
     def preferred_width(self, cli):
         """
@@ -134,7 +134,8 @@ class FillControl(UIControl):
         self.character = character
 
     def __repr__(self):
-        return 'FillControl(character=%r, token=%r)' % (self.character, self.token)
+        return '%s(character=%r, token=%r)' % (
+            self.__class__.__name__, self.character, self.token)
 
     def reset(self):
         pass

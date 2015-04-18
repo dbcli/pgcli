@@ -1,5 +1,4 @@
 from __future__ import unicode_literals
-from ..enums import IncrementalSearchDirection
 
 __all__ = (
     'InputMode',

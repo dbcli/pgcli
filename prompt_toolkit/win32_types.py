@@ -19,7 +19,8 @@ class COORD(Structure):
     ]
 
     def __repr__(self):
-        return 'COORD(X=%r, Y=%r, type_x=%r, type_y=%r)' % (self.X, self.Y, type(self.X), type(self.Y))
+        return '%s(X=%r, Y=%r, type_x=%r, type_y=%r)' % (
+            self.__class__.__name__, self.X, self.Y, type(self.X), type(self.Y))
 
 
 class KEY_EVENT_RECORD(Structure):

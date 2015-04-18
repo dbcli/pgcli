@@ -54,7 +54,7 @@ class Document(object):
         self.selection = selection
 
     def __repr__(self):
-        return 'Document(%r, %r)' % (self.text, self.cursor_position)
+        return '%s(%r, %r)' % (self.__class__.__name__, self.text, self.cursor_position)
 
     @property
     def current_char(self):

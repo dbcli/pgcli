@@ -18,7 +18,8 @@ class FocusStack(object):
         self.reset()
 
     def __repr__(self):
-        return 'FocusStack(initial=%r, _stack=%r)' % (self._initial, self._stack)
+        return '%s(initial=%r, _stack=%r)' % (
+            self.__class__.__name__, self._initial, self._stack)
 
     def reset(self):
         self._stack = [self._initial]

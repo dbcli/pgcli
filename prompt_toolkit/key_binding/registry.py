@@ -17,7 +17,8 @@ class _Binding(object):
         return self._callable(event)
 
     def __repr__(self):
-        return '_Binding(keys=%r, callable=%r)' % (self.keys, self._callable)
+        return '%s(keys=%r, callable=%r)' % (
+            self.__class__.__name__, self.keys, self._callable)
 
 
 class Registry(object):

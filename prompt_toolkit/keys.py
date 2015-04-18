@@ -14,7 +14,7 @@ class Key(object):
         self.name = name
 
     def __repr__(self):
-        return 'Key(%s)' % self.name
+        return '%s(%r)' % (self.__class__.__name__, self.name)
 
 
 class Keys(object):

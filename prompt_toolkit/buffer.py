@@ -86,7 +86,8 @@ class CompletionState(object):
         self.complete_index = complete_index  # Position in the `_completions` array.
 
     def __repr__(self):
-        return 'CompletionState(%r, <%r> completions, index=%r)' % (
+        return '%s(%r, <%r> completions, index=%r)' % (
+            self.__class__.__name__,
             self.original_document, len(self.current_completions), self.complete_index)
 
     def go_to_index(self, index):

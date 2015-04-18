@@ -28,7 +28,8 @@ class KeyPress(object):
         self.data = data
 
     def __repr__(self):
-        return 'KeyPress(key=%r, data=%r)' % (self.key, self.data)
+        return '%s(key=%r, data=%r)' % (
+            self.__class__.__name__, self.key, self.data)
 
     def __eq__(self, other):
         return self.key == other.key and self.data == other.data

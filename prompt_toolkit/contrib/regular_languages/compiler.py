@@ -307,7 +307,8 @@ class Variables(object):
         self._tuples = tuples
 
     def __repr__(self):
-        return 'Variables(%s)' % ', '.join('%s=%r' % (k, v) for k, v, _ in self._tuples)
+        return '%s(%s)' % (
+            self.__class__.__name__, ', '.join('%s=%r' % (k, v) for k, v, _ in self._tuples))
 
     def get(self, key, default=None):
         items = self.getall(key)
@@ -345,7 +346,7 @@ class MatchVariable(object):
         self.stop = self.slice[1]
 
     def __repr__(self):
-        return 'MatchVariable(%r, %r)' % (self.varname, self.value)
+        return '%s(%r, %r)' % (self.__class__.__name__, self.varname, self.value)
 
 
 def compile(expression, escape_funcs=None, unescape_funcs=None):
