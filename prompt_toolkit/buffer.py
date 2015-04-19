@@ -235,8 +235,9 @@ class Buffer(object):
 
     @working_index.setter
     def working_index(self, value):
-        self.__working_index = value
-        self._text_changed()
+        if self.__working_index != value:
+            self.__working_index = value
+            self._text_changed()
 
     def _text_changed(self):
         # Remove any validation errors and complete state.
