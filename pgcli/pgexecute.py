@@ -4,7 +4,7 @@ import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 from .packages import pgspecial
-from .encodingutils import unicode2utf8
+from .encodingutils import unicode2utf8, PY2, PY3
 
 _logger = logging.getLogger(__name__)
 
@@ -153,7 +153,10 @@ class PGExecute(object):
         See http://initd.org/psycopg/docs/connection.html#connection.encoding
         """
 
-        return json_data.decode(self.conn.encoding)
+        if PY2:
+            return json_data.decode(self.conn.encoding)
+        else:
+            return json_data
 
     def run(self, statement):
         """Execute the sql in the database and return the results. The results
