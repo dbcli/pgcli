@@ -449,6 +449,37 @@ class WindowRenderInfo(object):
 
         return 0
 
+    @property
+    def full_height_visible(self):
+        """
+        True when the full height is visible (There is no vertical scroll.
+        """
+        return self.rendered_height >= self.original_screen.current_height
+
+    @property
+    def top_visible(self):
+        """
+        True when the top of the buffer is visible.
+        """
+        return self.vertical_scroll == 0
+
+    @property
+    def bottom_visible(self):
+        """
+        True when the bottom of the buffer is visible.
+        """
+        return self.vertical_scroll >= \
+            self.original_screen.current_height - self.rendered_height
+
+    @property
+    def vertical_scroll_percentage(self):
+        """
+        Vertical scroll as a percentage. (0 means: the top is visible,
+        100 means: the bottom is visible.)
+        """
+        return (100 * self.vertical_scroll //
+                (self.original_screen.current_height - self.rendered_height))
+
 
 class Window(Layout):
     """
