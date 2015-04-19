@@ -6,7 +6,7 @@ GitHub Workflow
 ------------
 
 If you're interested in contributing to pgcli, first of all my heart felt
-thanks. `Fork the project <https://github.com/amjith/pgcli>`_ in github.  Then
+thanks. `Fork the project <https://github.com/dbcli/pgcli>`_ in github.  Then
 clone your fork into your computer (``git clone <url-for-your-fork>``).  Make
 the changes and create the commits in your local machine. Then push those
 changes to your fork. Then click on the pull request icon on github and create
@@ -20,7 +20,7 @@ repo.
 
 :: 
 
-   $ git remote add upstream git@github.com:amjith/pgcli.git
+   $ git remote add upstream git@github.com:dbcli/pgcli.git
 
 Once the 'upstream' end point is added you can then periodically do a ``git
 pull upstream master`` to update your local copy and then do a ``git push
