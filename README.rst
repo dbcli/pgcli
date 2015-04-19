@@ -1,9 +1,11 @@
 A REPL for Postgres 
 -------------------
 
-|Build Status|  |PyPI|
+|Build Status|  |PyPI| |Gitter|
 
 This is a postgres client that does auto-completion and syntax highlighting.
+
+MySQL Equivalent: http://mysql-cli.com
 
 .. image:: screenshots/image02.png
 .. image:: screenshots/image01.png
@@ -83,7 +85,8 @@ Detailed Installation Instructions:
 OS X:
 =====
 
-Easiest way to install pgcli is using brew. 
+Easiest way to install pgcli is using brew. Please be aware that this will
+install postgres via brew if it wasn't installed via brew.
 
 ::
 
@@ -91,9 +94,15 @@ Easiest way to install pgcli is using brew.
 
 Done!
 
+If you have postgres installed via a different means (such as PostgresApp), you
+can ``brew install --build-from-source pgcli`` which will skip installing
+postgres via brew if postgres is available in the path.
+
 Alternatively, you can install ``pgcli`` as a python package using a package
 manager called called ``pip``. You will need postgres installed on your system
-for this to work.  Check if ``pip`` is installed on the system.  
+for this to work. 
+
+In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/installing.html.
 
 :: 
 
@@ -122,6 +131,8 @@ If pip is not installed check if easy_install is available on the system.
 
 Linux:
 ======
+
+In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/installing.html.
 
 Check if pip is already available in your system.
 
@@ -189,3 +200,12 @@ Thanks to all the beta testers and contributors for your time and patience. :)
 .. |PyPI| image:: https://pypip.in/version/pgcli/badge.svg
     :target: https://pypi.python.org/pypi/pgcli/
     :alt: Latest Version
+
+.. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
+    :target: https://gitter.im/amjith/pgcli?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+    :alt: Gitter Chat
+
+
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/dbcli/pgcli
+   :target: https://gitter.im/dbcli/pgcli?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
