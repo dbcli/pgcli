@@ -200,10 +200,13 @@ class PGCli(object):
                 # and print out the result. We have to extend our output and
                 # continue typing in SQL / commands.
                 if editor_command(document.text):
-                    sql = list(pgexecute.run(document.text))[0][0]
-                    document = cli.read_input(
-                        initial_document=Document(sql, cursor_position=len(sql)),
-                        on_exit=AbortAction.RAISE_EXCEPTION)
+                    sql, _, _, message = list(pgexecute.run(document.text))[0]
+                    if sql or not message:
+                        # We either have some SQL, or no SQL, but no error
+                        # message either.
+                        document = cli.read_input(
+                            initial_document=Document(sql, cursor_position=len(sql)),
+                            on_exit=AbortAction.RAISE_EXCEPTION)
 
                 # Keep track of whether or not the query is mutating. In case
                 # of a multi-statement query, the overall query is considered

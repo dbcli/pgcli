@@ -939,18 +939,27 @@ def open_external_editor(cur, arg, verbose):
     :return: list with one tuple, query as first element.
     """
 
+    message = None
     filename = arg.strip().split(' ', 1)[0] if arg else None
 
     MARKER = '# Type your query above this line.\n'
     query = click.edit('\n\n' + MARKER, filename=filename)
 
     if filename:
-        with open(filename, "r") as f:
-            query = f.read()
+        try:
+            with open(filename, "r") as f:
+                query = f.read()
+        except IOError:
+            message = 'Error reading file: %s.' % filename
 
     if query is not None:
         query = query.split(MARKER, 1)[0].rstrip('\n')
-    return [(query, None, None, None)]
+    else:
+        # Don't return None for the caller to deal with.
+        # Empty string is ok.
+        query = ''
+
+    return [(query, None, None, message)]
 
 def in_progress(cur, arg, verbose):
     """
