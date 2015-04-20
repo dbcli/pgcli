@@ -42,7 +42,7 @@ Vagrant.configure(2) do |config|
         -p /pgcli/ \
         --after-install /pgcli/post-install \
         --after-remove /pgcli/post-remove \
-        --url https://github.com/amjith/pgcli \
+        --url https://github.com/dbcli/pgcli \
         --description "#{pgcli_description}" \
         --license 'BSD'
     SHELL
@@ -83,7 +83,7 @@ Vagrant.configure(2) do |config|
         -p /pgcli/ \
         --after-install /pgcli/post-install \
         --after-remove /pgcli/post-remove \
-        --url https://github.com/amjith/pgcli \
+        --url https://github.com/dbcli/pgcli \
         --description "#{pgcli_description}" \
         --license 'BSD'
     SHELL

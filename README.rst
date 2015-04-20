@@ -26,7 +26,7 @@ If you already know how to install python packages, then you can simply do:
 If you don't know how to install python packages, please check the 
 `detailed instructions`__.
 
-__ https://github.com/amjith/pgcli#detailed-installation-instructions 
+__ https://github.com/dbcli/pgcli#detailed-installation-instructions 
 
 Usage
 -----
@@ -74,7 +74,7 @@ If you're interested in contributing to this project, first of all I would like
 to extend my heartfelt gratitude. I've written a small doc to describe how to
 get this running in a development setup.
 
-https://github.com/amjith/pgcli/blob/master/DEVELOP.rst
+https://github.com/dbcli/pgcli/blob/master/DEVELOP.rst
 
 Please feel free to reach out to me if you need help. 
 My email: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
@@ -194,13 +194,13 @@ interface to Postgres database.
 Thanks to all the beta testers and contributors for your time and patience. :)
 
 
-.. |Build Status| image:: https://api.travis-ci.org/amjith/pgcli.svg?branch=master
-    :target: https://travis-ci.org/amjith/pgcli
+.. |Build Status| image:: https://api.travis-ci.org/dbcli/pgcli.svg?branch=master
+    :target: https://travis-ci.org/dbcli/pgcli
 
 .. |PyPI| image:: https://pypip.in/version/pgcli/badge.svg
     :target: https://pypi.python.org/pypi/pgcli/
     :alt: Latest Version
 
 .. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
-    :target: https://gitter.im/amjith/pgcli?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+    :target: https://gitter.im/dbcli/pgcli?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
     :alt: Gitter Chat

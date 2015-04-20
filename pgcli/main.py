@@ -170,7 +170,7 @@ class PGCli(object):
         self.refresh_completions()
         key_binding_manager = pgcli_bindings(self.vi_mode)
         print('Version:', __version__)
-        print('Chat: https://gitter.im/amjith/pgcli')
+        print('Chat: https://gitter.im/dbcli/pgcli')
         print('Mail: https://groups.google.com/forum/#!forum/pgcli')
         print('Home: http://pgcli.com')
 
