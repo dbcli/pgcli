@@ -196,6 +196,18 @@ class PGCli(object):
                 if quit_command(document.text):
                     raise Exit
 
+                # Editor command is a special case. We don't have to execute it
+                # and print out the result. We have to extend our output and
+                # continue typing in SQL / commands.
+                if editor_command(document.text):
+                    sql, _, _, message = list(pgexecute.run(document.text))[0]
+                    if sql or not message:
+                        # We either have some SQL, or no SQL, but no error
+                        # message either.
+                        document = cli.read_input(
+                            initial_document=Document(sql, cursor_position=len(sql)),
+                            on_exit=AbortAction.RAISE_EXCEPTION)
+
                 # Keep track of whether or not the query is mutating. In case
                 # of a multi-statement query, the overall query is considered
                 # mutating if any one of the component statements is mutating
@@ -417,6 +429,9 @@ def is_select(status):
     if not status:
         return False
     return status.split(None, 1)[0].lower() == 'select'
+
+def editor_command(sql):
+    return sql.strip().startswith('\e')
 
 def quit_command(sql):
     return (sql.strip().lower() == 'exit'

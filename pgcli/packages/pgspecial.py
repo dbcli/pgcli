@@ -1,6 +1,7 @@
 from __future__ import print_function
 import sys
 import logging
+import click
 from collections import namedtuple
 from .tabulate import tabulate
 
@@ -931,6 +932,35 @@ def show_help(cur, arg, verbose):  # All the parameters are ignored.
 def change_db(cur, arg, verbose):
     raise NotImplementedError
 
+def open_external_editor(cur, arg, verbose):
+    """
+    Open external editor, wait for the user to type in his query,
+    return the query.
+    :return: list with one tuple, query as first element.
+    """
+
+    message = None
+    filename = arg.strip().split(' ', 1)[0] if arg else None
+
+    MARKER = '# Type your query above this line.\n'
+    query = click.edit('\n\n' + MARKER, filename=filename)
+
+    if filename:
+        try:
+            with open(filename, "r") as f:
+                query = f.read()
+        except IOError:
+            message = 'Error reading file: %s.' % filename
+
+    if query is not None:
+        query = query.split(MARKER, 1)[0].rstrip('\n')
+    else:
+        # Don't return None for the caller to deal with.
+        # Empty string is ok.
+        query = ''
+
+    return [(query, None, None, message)]
+
 def in_progress(cur, arg, verbose):
     """
     Stub method to signal about commands being under development.
@@ -965,7 +995,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\\dv': (list_views, ['\\dv[+] [pattern]', 'List views.']),
             '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'List sequences.']),
             '\\df': (list_functions, ['\\df[+] [pattern]', 'List functions.']),
-            '\e': (in_progress, ['\e [file] [line]', 'Not yet implemented.']),
+            '\e': (open_external_editor, ['\e [file]', 'Edit the query buffer (or file) with external editor.']),
             '\ef': (in_progress, ['\ef [funcname [line]]', 'Not yet implemented.']),
             '\sf': (in_progress, ['\sf[+] funcname', 'Not yet implemented.']),
             '\z': (in_progress, ['\z [pattern]', 'Not yet implemented.']),
