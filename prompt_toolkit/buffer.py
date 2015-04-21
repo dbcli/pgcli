@@ -362,12 +362,7 @@ class Buffer(object):
         elif self.document.cursor_position_row < self.document.line_count - 1:
             self.cursor_position += self.document.get_cursor_down_position(count=count)
         elif not self.selection_state:
-            old_index = self.working_index
             self.history_forward(count=count)
-
-            # If we moved to the next line, place the cursor at the beginning.
-            if old_index != self.working_index:
-                self.cursor_position = 0
 
     def delete_before_cursor(self, count=1):  # TODO: unittest return type
         """
