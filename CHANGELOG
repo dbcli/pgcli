@@ -1,6 +1,74 @@
 CHANGELOG
 =========
 
+0.32: 2015-04-22
+----------------
+
+New features:
+- Implemented repeat arg for '{' and '}' vi key binding.
+- Added autocorrection example.
+- first experimental telnet interface added.
+- Added contrib.validators.SentenceValidator.
+- Added Layout.walk generator to traverse the layout.
+- Improved 'L' and 'H' Vi key bindings.
+- Implemented Vi 'zz' key binding.
+- ValidationToolbar got a show_position parameter.
+- When only width or hight are given for a float, the control is centered in
+  the parent.
+- Added beforeKeyPress and afterKeyPress events.
+- Added HighlightMatchingBracketProcessor.
+- SearchToolbar got a vi_mode option to show '?' and '/' instead of 'I-search'.
+- Implemented vi '*' binding.
+- Added onBufferChanged event to CommandLineInterface.
+- Many performance improvements: some caching and not rendering after every
+  single key stroke.
+- Added ConditionalProcessor.
+- Floating menus are now shown above the cursor, when below is not enough
+  space, but above is enough space.
+- Improved vi 'G' key binding.
+- WindowRenderInfo got a full_height_visible, top_visible, and a few other
+  attributes.
+- PathCompleter got an expanduser option to do tilde expansion.
+
+Fixed:
+- Always insert indentation when pressing enter.
+- vertical_srcoll should be an int instead of a float.
+- Some bug fixes in renderer.Output.
+- Pressing backspace in an empty search in Vi mode now goes back to navigation
+  mode.
+- Bug fix in TokenListControl (Correctly calculate hight for multiline
+  content.)
+- Only apply HighlightMatchingBracketProcessor when editing buffer.
+- Ensure that floating layouts never go out of bounds.
+- Home/End now go to the start and end of the line.
+- Fixed vi 'c' key binding.
+- Redraw the whole output when the style changes.
+- Don't trigger onTextInsert when working_index doesn't change.
+- Searching now wraps around the start/end of buffer/history.
+- Don't go to the start of the line when moving forward in history.
+
+Changes:
+- Don't show directory/file/link in the meta information of PathCompleter anymore.
+- Complete refactoring of the event loops.
+- Refactoring of the Renderer and CommandLineInterface class.
+- CommandLineInterface now accepts an optional Output argument.
+- CommandLineInterface now accepts a use_alternate_screen parameter.
+- Moved highlighting code for search/selection from BufferControl to processors.
+- Completers are now always run asynchronously.
+- Complete refactoring of the search. (Most responsibility move out of Buffer
+  class. CommandLineInterface now got a search_state attribute.)
+
+Backwards incompatible changes:
+- get_input does now have a history attribute instead of history_filename.
+- EOFError and KeyboardInterrupt is raised for abort and exit instead of custom
+  exceptions.
+- CommandLineInterface does no longer have a property 'is_reading_input'.
+- filters.AlwaysOn/AlwaysOff have been renamed to Always/Never.
+- AcceptAction has been moved from CommandLineInterface to Buffer. Now every
+  buffer can define its own accept action.
+- CommandLineInterface now expects an Eventloop instance in __init__.
+
+
 0.31: 2015-01-30
 ----------------
 
