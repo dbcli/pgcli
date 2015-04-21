@@ -142,9 +142,6 @@ class CommandLineInterface(object):
         if buffers:
             self.buffers.update(buffers)
 
-        # Search state. (Does also remember what has to be highlighted.)
-        self.search_state = SearchState()
-
         #: The `Layout` instance.
         self.layout = layout or Window(BufferControl())
 
@@ -277,6 +274,10 @@ class CommandLineInterface(object):
 
         if reset_current_buffer:
             self.current_buffer.reset()
+
+        # Search new search state. (Does also remember what has to be
+        # highlighted.)
+        self.search_state = SearchState()
 
         # Trigger reset event.
         self.onReset.fire()
