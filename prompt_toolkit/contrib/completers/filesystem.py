@@ -20,15 +20,17 @@ class PathCompleter(Completer):
     :param min_input_len: Don't do autocompletion when the input string is shorter.
     """
     def __init__(self, only_directories=False, get_paths=None, file_filter=None,
-                 min_input_len=0):
+                 min_input_len=0, expanduser=False):
         assert get_paths is None or callable(get_paths)
         assert file_filter is None or callable(file_filter)
         assert isinstance(min_input_len, int)
+        assert isinstance(expanduser, bool)
 
         self.only_directories = only_directories
         self.get_paths = get_paths or (lambda: ['.'])
         self.file_filter = file_filter or (lambda _: True)
         self.min_input_len = min_input_len
+        self.expanduser = expanduser
 
     def get_completions(self, document, complete_event):
         text = document.text_before_cursor
@@ -47,6 +49,11 @@ class PathCompleter(Completer):
             # Get all filenames.
             filenames = []
             for directory in directories:
+                # Do tilde expansion.
+                if self.expanduser:
+                    directory = os.path.expanduser(directory)
+
+                # Look for matches in this directory.
                 for filename in os.listdir(directory):
                     if filename.startswith(prefix):
                         filenames.append((directory, filename))
