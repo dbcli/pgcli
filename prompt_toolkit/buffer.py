@@ -743,8 +743,10 @@ class Buffer(object):
             if new_index is not None:
                 return (self.working_index, self.cursor_position + new_index)
             else:
-                # No match, go forward in the history.
-                for i in range(self.working_index + 1, len(self._working_lines)):
+                # No match, go forward in the history. (Include len+1 to wrap around.)
+                for i in range(self.working_index + 1, len(self._working_lines) + 1):
+                    i %= len(self._working_lines)
+
                     document = Document(self._working_lines[i], 0)
                     new_index = document.find(text, include_current_position=True)
                     if new_index is not None:
@@ -756,8 +758,10 @@ class Buffer(object):
             if new_index is not None:
                 return (self.working_index, self.cursor_position + new_index)
             else:
-                # No match, go back in the history.
-                for i in range(self.working_index - 1, -1, -1):
+                # No match, go back in the history. (Include -1 to wrap around.)
+                for i in range(self.working_index - 1, -2, -1):
+                    i %= len(self._working_lines)
+
                     document = Document(self._working_lines[i], len(self._working_lines[i]))
                     new_index = document.find_backwards(text)
                     if new_index is not None:
