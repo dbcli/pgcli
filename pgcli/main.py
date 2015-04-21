@@ -23,6 +23,7 @@ from .packages.expanded import expanded_table
 from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
         NON_CASE_SENSITIVE_COMMANDS, is_expanded_output)
 import pgcli.packages.pgspecial as pgspecial
+import pgcli.packages.iospecial as iospecial
 from .pgcompleter import PGCompleter
 from .pgtoolbar import PGToolbar
 from .pgstyle import style_factory
@@ -199,7 +200,7 @@ class PGCli(object):
                 # Editor command is a special case. We don't have to execute it
                 # and print out the result. We have to extend our output and
                 # continue typing in SQL / commands.
-                if editor_command(document.text):
+                if iospecial.editor_command(document.text):
                     sql, _, _, message = list(pgexecute.run(document.text))[0]
                     if sql or not message:
                         # We either have some SQL, or no SQL, but no error
@@ -429,9 +430,6 @@ def is_select(status):
     if not status:
         return False
     return status.split(None, 1)[0].lower() == 'select'
-
-def editor_command(sql):
-    return sql.strip().startswith('\e')
 
 def quit_command(sql):
     return (sql.strip().lower() == 'exit'

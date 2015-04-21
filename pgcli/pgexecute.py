@@ -4,6 +4,7 @@ import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 from .packages import pgspecial
+from .packages import iospecial
 from .encodingutils import unicode2utf8, PY2, PY3
 
 _logger = logging.getLogger(__name__)
@@ -160,7 +161,7 @@ class PGExecute(object):
 
     def run(self, statement):
         """Execute the sql in the database and return the results. The results
-        are a list of tuples. Each tuple has 3 values (rows, headers, status).
+        are a list of tuples. Each tuple has 4 values (title, rows, headers, status).
         """
 
         # Remove spaces and EOL
@@ -189,6 +190,11 @@ class PGExecute(object):
                 _logger.debug('Successfully switched to DB: %r', dbname)
                 yield (None, None, None, 'You are now connected to database "%s" as '
                         'user "%s"' % (self.dbname, self.user))
+            elif iospecial.editor_command(command):
+                tokens = sql.split(' ', 2)
+                filename = tokens[1] if len(tokens) > 1 and tokens[1] else None
+                for result in iospecial.open_external_editor(filename=filename):
+                    yield result
             else:
                 try:   # Special command
                     _logger.debug('Trying a pgspecial command. sql: %r', sql)

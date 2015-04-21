@@ -1,7 +1,6 @@
 from __future__ import print_function
 import sys
 import logging
-import click
 from collections import namedtuple
 from .tabulate import tabulate
 
@@ -929,37 +928,15 @@ def show_help(cur, arg, verbose):  # All the parameters are ignored.
             result.append(value[1])
     return [(None, result, headers, None)]
 
-def change_db(cur, arg, verbose):
+
+def dummy_command(cur, arg, verbose):
+    """
+    Used by commands that are actually handled elsewhere.
+    But we want to keep their docstrings in the same list
+    as all the rest of commands.
+    """
     raise NotImplementedError
 
-def open_external_editor(cur, arg, verbose):
-    """
-    Open external editor, wait for the user to type in his query,
-    return the query.
-    :return: list with one tuple, query as first element.
-    """
-
-    message = None
-    filename = arg.strip().split(' ', 1)[0] if arg else None
-
-    MARKER = '# Type your query above this line.\n'
-    query = click.edit('\n\n' + MARKER, filename=filename)
-
-    if filename:
-        try:
-            with open(filename, "r") as f:
-                query = f.read()
-        except IOError:
-            message = 'Error reading file: %s.' % filename
-
-    if query is not None:
-        query = query.split(MARKER, 1)[0].rstrip('\n')
-    else:
-        # Don't return None for the caller to deal with.
-        # Empty string is ok.
-        query = ''
-
-    return [(query, None, None, message)]
 
 def in_progress(cur, arg, verbose):
     """
@@ -983,7 +960,7 @@ def toggle_timing(cur, arg, verbose):
 
 CASE_SENSITIVE_COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
-            '\c': (change_db, ['\c database_name', 'Connect to a new database.']),
+            '\c': (dummy_command, ['\c database_name', 'Connect to a new database.']),
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'List databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'List or describe tables, views and sequences.']),
             '\dn': (list_schemas, ['\dn[+] [pattern]', 'List schemas.']),
@@ -995,7 +972,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\\dv': (list_views, ['\\dv[+] [pattern]', 'List views.']),
             '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'List sequences.']),
             '\\df': (list_functions, ['\\df[+] [pattern]', 'List functions.']),
-            '\e': (open_external_editor, ['\e [file]', 'Edit the query buffer (or file) with external editor.']),
+            '\e': (dummy_command, ['\e [file]', 'Edit the query buffer (or file) with external editor.']),
             '\ef': (in_progress, ['\ef [funcname [line]]', 'Not yet implemented.']),
             '\sf': (in_progress, ['\sf[+] funcname', 'Not yet implemented.']),
             '\z': (in_progress, ['\z [pattern]', 'Not yet implemented.']),
