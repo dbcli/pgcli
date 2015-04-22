@@ -5,7 +5,7 @@ import psycopg2.extensions as ext
 import sqlparse
 from .packages import pgspecial
 from .packages import iospecial
-from .encodingutils import unicode2utf8, PY2, PY3
+from .encodingutils import unicode2utf8, PY2
 
 _logger = logging.getLogger(__name__)
 
@@ -190,10 +190,12 @@ class PGExecute(object):
                 _logger.debug('Successfully switched to DB: %r', dbname)
                 yield (None, None, None, 'You are now connected to database "%s" as '
                         'user "%s"' % (self.dbname, self.user))
-            elif iospecial.editor_command(command):
-                tokens = sql.split(' ', 2)
-                filename = tokens[1] if len(tokens) > 1 and tokens[1] else None
-                for result in iospecial.open_external_editor(filename=filename):
+            elif iospecial.editor_command(sql):
+                filename = None
+                if sql.startswith('\e'):
+                    tokens = sql.split(' ', 2)
+                    filename = tokens[1] if len(tokens) > 1 and tokens[1] else None
+                for result in iospecial.open_external_editor(filename=filename, sql=sql):
                     yield result
             else:
                 try:   # Special command

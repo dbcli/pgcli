@@ -12,10 +12,12 @@ def editor_command(command):
     Is this an external editor command?
     :param command: string
     """
-    return command.strip().startswith('\e')
+    # It is possible to have `\e filename` or `SELECT * FROM \e`. So we check
+    # for both conditions.
+    return command.strip().endswith('\e') or command.strip().startswith('\e')
 
 
-def open_external_editor(filename=None):
+def open_external_editor(filename=None, sql=''):
     """
     Open external editor, wait for the user to type in his query,
     return the query.
@@ -26,7 +28,11 @@ def open_external_editor(filename=None):
     filename = filename.strip().split(' ', 1)[0] if filename else None
 
     MARKER = '# Type your query above this line.\n'
-    query = click.edit('\n\n' + MARKER, filename=filename)
+
+    # Populate the editor buffer with the partial sql (if available) and a
+    # placeholder comment.
+    query = click.edit(sql.strip().strip('\e') + '\n\n' + MARKER,
+            filename=filename)
 
     if filename:
         try:
