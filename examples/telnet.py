@@ -7,23 +7,12 @@ from prompt_toolkit.contrib.telnet.application import TelnetApplication
 from prompt_toolkit.contrib.telnet.server import TelnetServer
 
 from pygments.lexers import HtmlLexer
-from pygments.style import Style
-from pygments.token import Token
 
 import logging
 
 # Set up logging
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
-
-
-class AnimalStyle(Style):
-    styles = {
-        Token.Menu.Completions.Completion.Current: 'bg:#00aaaa #000000',
-        Token.Menu.Completions.Completion:         'bg:#008888 #ffffff',
-        Token.Menu.Completions.ProgressButton:     'bg:#003333',
-        Token.Menu.Completions.ProgressBar:        'bg:#00aaaa',
-    }
 
 
 class ExampleApplication(TelnetApplication):
@@ -36,7 +25,6 @@ class ExampleApplication(TelnetApplication):
         return create_cli(eventloop,
                           message='Say something: ',
                           lexer=HtmlLexer,
-                          style=AnimalStyle,
                           completer=animal_completer)
 
     def client_connected(self, telnet_connection):
