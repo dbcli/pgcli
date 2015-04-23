@@ -4,7 +4,6 @@ import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 from .packages import pgspecial
-from .packages import iospecial
 from .encodingutils import unicode2utf8, PY2
 
 _logger = logging.getLogger(__name__)
