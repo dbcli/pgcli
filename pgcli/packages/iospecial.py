@@ -14,8 +14,12 @@ def editor_command(command):
     """
     # It is possible to have `\e filename` or `SELECT * FROM \e`. So we check
     # for both conditions.
-    return command.strip().endswith('\e') or command.strip().startswith('\e')
+    return command.strip().endswith('\\e') or command.strip().startswith('\\e')
 
+def get_filename(sql):
+    if sql.strip().startswith('\\e'):
+        command, _, filename = sql.partition(' ')
+        return filename.strip() or None
 
 def open_external_editor(filename=None, sql=''):
     """
@@ -49,4 +53,4 @@ def open_external_editor(filename=None, sql=''):
         # Empty string is ok.
         query = sql
 
-    yield (query, None, None, message)
+    return (query, message)

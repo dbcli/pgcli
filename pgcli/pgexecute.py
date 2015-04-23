@@ -190,14 +190,6 @@ class PGExecute(object):
                 _logger.debug('Successfully switched to DB: %r', dbname)
                 yield (None, None, None, 'You are now connected to database "%s" as '
                         'user "%s"' % (self.dbname, self.user))
-            elif iospecial.editor_command(sql):
-                filename = None
-                # If the query starts with \e then it can be followed by a filename.
-                if sql.startswith('\e'):
-                    tokens = sql.split(' ', 2)
-                    filename = tokens[1] if len(tokens) > 1 and tokens[1] else None
-                for result in iospecial.open_external_editor(filename=filename, sql=sql):
-                    yield result
             else:
                 try:   # Special command
                     _logger.debug('Trying a pgspecial command. sql: %r', sql)
