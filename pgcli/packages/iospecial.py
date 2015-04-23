@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-
+import re
 import logging
 import click
 
@@ -28,7 +28,15 @@ def open_external_editor(filename=None, sql=''):
     :return: list with one tuple, query as first element.
     """
 
-    sql = sql.strip().strip('\\e')
+    sql = sql.strip()
+
+    # The reason we can't simply do .strip('\e') is that it strips characters,
+    # not a substring. So it'll strip "e" in the end of the sql also!
+    # Ex: "select * from style\e" -> "select * from styl".
+    pattern = re.compile('(^\\\e|\\\e$)')
+    while pattern.search(sql):
+        sql = pattern.sub('', sql)
+
     message = None
     filename = filename.strip().split(' ', 1)[0] if filename else None
 
