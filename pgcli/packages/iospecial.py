@@ -24,6 +24,7 @@ def open_external_editor(filename=None, sql=''):
     :return: list with one tuple, query as first element.
     """
 
+    sql = sql.strip().strip('\\e')
     message = None
     filename = filename.strip().split(' ', 1)[0] if filename else None
 
@@ -31,7 +32,7 @@ def open_external_editor(filename=None, sql=''):
 
     # Populate the editor buffer with the partial sql (if available) and a
     # placeholder comment.
-    query = click.edit(sql.strip().strip('\e') + '\n\n' + MARKER,
+    query = click.edit(sql + '\n\n' + MARKER,
             filename=filename)
 
     if filename:
@@ -46,6 +47,6 @@ def open_external_editor(filename=None, sql=''):
     else:
         # Don't return None for the caller to deal with.
         # Empty string is ok.
-        query = ''
+        query = sql
 
     yield (query, None, None, message)
