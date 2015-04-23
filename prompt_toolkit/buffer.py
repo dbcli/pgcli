@@ -133,17 +133,25 @@ class Buffer(object):
                         buffer a multiline input. If so, key bindings can
                         decide to insert newlines when pressing [Enter].
                         (Instead of accepting the input.)
+    :param complete_while_typing: Filter instance. Decide whether or not to do
+                                  asynchronous autocompleting while typing.
     """
     def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='',
-                 is_multiline=Never(), initial_document=None,
+                 is_multiline=Never(), complete_while_typing=Never(),
+                 enable_history_search=Never(), initial_document=None,
                  accept_action=AcceptAction.RETURN_DOCUMENT):
         assert isinstance(is_multiline, Filter)
+        assert isinstance(complete_while_typing, Filter)
 
         self.completer = completer
         self.validator = validator
         self.tempfile_suffix = tempfile_suffix
         self.accept_action = accept_action
+
+        # Filters. (Usually, used by the key bindings to drive the buffer.)
         self.is_multiline = is_multiline
+        self.complete_while_typing = complete_while_typing
+        self.enable_history_search = enable_history_search
 
         #: The command buffer history.
         # Note that we shouldn't use a lazy 'or' here. bool(history) could be
@@ -181,6 +189,10 @@ class Buffer(object):
         # State of complete browser
         self.complete_state = None  # For interactive completion through Ctrl-N/Ctrl-P.
 
+        # The history search text. (Used for filtering the history when we
+        # browse through it.)
+        self.history_search_text = None
+
         # Undo/redo stacks
         self._undo_stack = []  # Stack of (text, cursor_position)
         self._redo_stack = []
@@ -208,6 +220,9 @@ class Buffer(object):
 
         if value != original_value:
             self._text_changed()
+
+            # Reset history search text.
+            self.history_search_text = None
 
     @property
     def cursor_position(self):
@@ -340,31 +355,31 @@ class Buffer(object):
         """ (for multiline edit). Move cursor to the next line.  """
         self.cursor_position += self.document.get_cursor_down_position(count=count)
 
-    def auto_up(self, count=1):
+    def auto_up(self, count=1, history_search=False):
         """
         If we're not on the first line (of a multiline input) go a line up,
         otherwise go back in history. (If nothing is selected.)
         """
         if self.complete_state:
-            self.complete_previous()
+            self.complete_previous(count=count)
         elif self.document.cursor_position_row > 0:
             self.cursor_position += self.document.get_cursor_up_position(count=count)
         elif not self.selection_state:
-            self.history_backward(count=count)
+            self.history_backward(count=count, history_search=history_search)
 
-    def auto_down(self, count=1):
+    def auto_down(self, count=1, history_search=False):
         """
         If we're not on the last line (of a multiline input) go a line down,
         otherwise go forward in history. (If nothing is selected.)
         """
         if self.complete_state:
-            self.complete_next()
+            self.complete_next(count=count)
         elif self.document.cursor_position_row < self.document.line_count - 1:
             self.cursor_position += self.document.get_cursor_down_position(count=count)
         elif not self.selection_state:
-            self.history_forward(count=count)
+            self.history_forward(count=count, history_search=history_search)
 
-    def delete_before_cursor(self, count=1):  # TODO: unittest return type
+    def delete_before_cursor(self, count=1):
         """
         Delete character before cursor, return deleted character.
         """
@@ -378,7 +393,7 @@ class Buffer(object):
 
         return deleted
 
-    def delete(self, count=1):  # TODO: unittest `count`
+    def delete(self, count=1):
         """
         Delete one character. Return deleted character.
         """
@@ -535,16 +550,66 @@ class Buffer(object):
         # (changing text/cursor position will unset complete_state.)
         self.complete_state = state
 
-    def history_forward(self, count=1):
-        if self.working_index < len(self._working_lines) - count:
-            # Go forward in history, and update cursor_position.
-            self.working_index += count
-            self.cursor_position = len(self.text)
+    def _set_history_search(self, enable=False):
+        """ Set `history_search_text`. """
+        if enable:
+            if self.history_search_text is None:
+                self.history_search_text = self.text
+        else:
+            self.history_search_text = None
 
-    def history_backward(self, count=1):
-        if self.working_index - count >= 0:
-            # Go back in history, and update cursor_position.
-            self.working_index -= count
+    def _history_matches(self, i):
+        """
+        True when the current entry matches the history search.
+        (when we don't have history search, it's also True.)
+        """
+        return (self.history_search_text is None or
+                self._working_lines[i].startswith(self.history_search_text))
+
+    def history_forward(self, count=1, history_search=False):
+        """
+        Move forwards through the history.
+
+        :param count: Amount of items to move forward.
+        :param history_search: When True, filter history using self.history_search_text.
+        """
+        self._set_history_search(history_search)
+
+        # Go forward in history.
+        found_something = False
+
+        for i in range(self.working_index + 1, len(self._working_lines)):
+            if self._history_matches(i):
+                self.working_index = i
+                count -= 1
+                found_something = True
+            if count == 0:
+                break
+
+        # If we found an entry, move cursor to the end of the first line.
+        if found_something:
+            self.cursor_position = 0
+            self.cursor_position += self.document.get_end_of_line_position()
+
+    def history_backward(self, count=1, history_search=False):
+        """
+        Move backwards through history.
+        """
+        self._set_history_search(history_search)
+
+        # Go back in history.
+        found_something = False
+
+        for i in range(self.working_index - 1, -1, -1):
+            if self._history_matches(i):
+                self.working_index = i
+                count -= 1
+                found_something = True
+            if count == 0:
+                break
+
+        # If we move to another entry, move cursor to the end of the line.
+        if found_something:
             self.cursor_position = len(self.text)
 
     def start_selection(self, selection_type=SelectionType.CHARACTERS):

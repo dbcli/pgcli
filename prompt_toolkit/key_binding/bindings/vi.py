@@ -117,20 +117,6 @@ def load_vi_bindings(registry, vi_state, filter=None):
         if bool(buffer.selection_state):
             buffer.exit_selection()
 
-    @handle('k', filter=navigation_mode)
-    def _(event):
-        """
-        Arrow up in navigation mode.
-        """
-        event.current_buffer.auto_up(count=event.arg)
-
-    @handle('j', filter=navigation_mode)
-    def _(event):
-        """
-        Arrow down in navigation mode.
-        """
-        event.current_buffer.auto_down(count=event.arg)
-
     @handle('k', filter=selection_mode)
     def _(event):
         """
@@ -145,19 +131,25 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         event.current_buffer.cursor_down(count=event.arg)
 
+    @handle('k', filter=navigation_mode)
     @handle(Keys.Up, filter=navigation_mode)
+    @handle(Keys.ControlP, filter=navigation_mode)
     def _(event):
         """
-        Arrow up in navigation mode.
+        Arrow up and ControlP in navigation mode go up.
         """
-        event.current_buffer.auto_up(count=event.arg)
+        b = event.current_buffer
+        b.auto_up(count=event.arg, history_search=b.enable_history_search(event.cli))
 
+    @handle('j', filter=navigation_mode)
     @handle(Keys.Down, filter=navigation_mode)
+    @handle(Keys.ControlN, filter=navigation_mode)
     def _(event):
         """
-        Arrow down in navigation mode.
+        Arrow down and Control-N in navigation mode.
         """
-        event.current_buffer.auto_down(count=event.arg)
+        b = event.current_buffer
+        b.auto_down(count=event.arg, history_search=b.enable_history_search(event.cli))
 
     @handle(Keys.Backspace, filter=navigation_mode)
     def _(event):
@@ -182,13 +174,6 @@ def load_vi_bindings(registry, vi_state, filter=None):
             b.complete_next()
         else:
             event.cli.start_completion(select_first=True)
-
-    @handle(Keys.ControlN, filter=navigation_mode)
-    def _(event):
-        """
-        Control-N: Next line.
-        """
-        event.current_buffer.auto_down()
 
     @handle(Keys.ControlP, filter=insert_mode)
     def _(event):
@@ -215,13 +200,6 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Cancel completion. Go back to originally typed text.
         """
         event.current_buffer.cancel_completion()
-
-    @handle(Keys.ControlP, filter=navigation_mode)
-    def _(event):
-        """
-        CtrlP in navigation mode goes up.
-        """
-        event.current_buffer.auto_up()
 
     @handle(Keys.ControlJ, filter=navigation_mode)
     def _(event):

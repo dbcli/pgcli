@@ -15,7 +15,7 @@ from .completion import CompleteEvent
 from .completion import get_common_complete_suffix
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
-from .filters import Filter, Always, Never
+from .filters import Filter, Never
 from .focus_stack import FocusStack
 from .history import History
 from .key_binding.bindings.emacs import load_emacs_bindings
@@ -75,8 +75,6 @@ class CommandLineInterface(object):
     :param style: :class:`Layout` instance.
     :param on_abort: :class:`AbortAction` value. What to do when Ctrl-C has
                      been pressed.
-    :param complete_while_typing: Filter instance. Decide whether or not to do
-                                  asynchronous autocompleting while typing.
     :attr paste_mode: Filter to indicate that we are in "paste mode". When
                       enabled, inserting newlines will never insert a margin.
     """
@@ -91,7 +89,6 @@ class CommandLineInterface(object):
                  output=None,
                  initial_focussed_buffer=DEFAULT_BUFFER,
                  on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
-                 complete_while_typing=Always(),
                  paste_mode=Never(),
                  use_alternate_screen=False):
 
@@ -99,7 +96,6 @@ class CommandLineInterface(object):
         assert buffers is None or isinstance(buffers, dict)
         assert key_bindings_registry is None or isinstance(key_bindings_registry, Registry)
         assert output is None or isinstance(output, Output)
-        assert isinstance(complete_while_typing, Filter)
         assert isinstance(paste_mode, Filter)
         assert eventloop is None or isinstance(eventloop, EventLoop)
 
@@ -108,7 +104,6 @@ class CommandLineInterface(object):
         self.stdin = stdin or sys.__stdin__
         self.stdout = stdout or sys.__stdout__
         self.style = style or DefaultStyle
-        self.complete_while_typing = complete_while_typing
         self._paste_mode = paste_mode
 
         self.on_abort = on_abort
@@ -189,7 +184,7 @@ class CommandLineInterface(object):
             """
             def complete_while_typing():
                 # Only complete when "complete_while_typing" is enabled.
-                if self.complete_while_typing(self):
+                if buffer.complete_while_typing(self):
                     completer()
             return complete_while_typing
 
