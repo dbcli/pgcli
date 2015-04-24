@@ -928,8 +928,15 @@ def show_help(cur, arg, verbose):  # All the parameters are ignored.
             result.append(value[1])
     return [(None, result, headers, None)]
 
-def change_db(cur, arg, verbose):
+
+def dummy_command(cur, arg, verbose):
+    """
+    Used by commands that are actually handled elsewhere.
+    But we want to keep their docstrings in the same list
+    as all the rest of commands.
+    """
     raise NotImplementedError
+
 
 def in_progress(cur, arg, verbose):
     """
@@ -953,7 +960,7 @@ def toggle_timing(cur, arg, verbose):
 
 CASE_SENSITIVE_COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
-            '\c': (change_db, ['\c database_name', 'Connect to a new database.']),
+            '\c': (dummy_command, ['\c database_name', 'Connect to a new database.']),
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'List databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'List or describe tables, views and sequences.']),
             '\dn': (list_schemas, ['\dn[+] [pattern]', 'List schemas.']),
@@ -965,7 +972,7 @@ CASE_SENSITIVE_COMMANDS = {
             '\\dv': (list_views, ['\\dv[+] [pattern]', 'List views.']),
             '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'List sequences.']),
             '\\df': (list_functions, ['\\df[+] [pattern]', 'List functions.']),
-            '\e': (in_progress, ['\e [file] [line]', 'Not yet implemented.']),
+            '\e': (dummy_command, ['\e [file]', 'Edit the query buffer (or file) with external editor.']),
             '\ef': (in_progress, ['\ef [funcname [line]]', 'Not yet implemented.']),
             '\sf': (in_progress, ['\sf[+] funcname', 'Not yet implemented.']),
             '\z': (in_progress, ['\z [pattern]', 'Not yet implemented.']),

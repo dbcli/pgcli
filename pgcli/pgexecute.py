@@ -4,7 +4,7 @@ import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 from .packages import pgspecial
-from .encodingutils import unicode2utf8, PY2, PY3
+from .encodingutils import unicode2utf8, PY2
 
 _logger = logging.getLogger(__name__)
 
@@ -160,7 +160,7 @@ class PGExecute(object):
 
     def run(self, statement):
         """Execute the sql in the database and return the results. The results
-        are a list of tuples. Each tuple has 3 values (rows, headers, status).
+        are a list of tuples. Each tuple has 4 values (title, rows, headers, status).
         """
 
         # Remove spaces and EOL

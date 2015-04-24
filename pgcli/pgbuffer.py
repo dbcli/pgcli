@@ -9,6 +9,7 @@ class PGBuffer(Buffer):
 def _multiline_exception(text):
     text = text.strip()
     return (text.startswith('\\') or   # Special Command
+            text.endswith('\e') or     # Ended with \e which should launch the editor.
             text.endswith(';') or      # Ended with a semi-colon
             (text == 'exit') or        # Exit doesn't need semi-colon
             (text == 'quit') or        # Quit doesn't need semi-colon

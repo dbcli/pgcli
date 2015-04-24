@@ -23,6 +23,7 @@ from .packages.expanded import expanded_table
 from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
         NON_CASE_SENSITIVE_COMMANDS, is_expanded_output)
 import pgcli.packages.pgspecial as pgspecial
+import pgcli.packages.iospecial as iospecial
 from .pgcompleter import PGCompleter
 from .pgtoolbar import PGToolbar
 from .pgstyle import style_factory
@@ -160,6 +161,32 @@ class PGCli(object):
 
         self.pgexecute = pgexecute
 
+    def handle_editor_command(self, cli, document):
+        """
+        Editor command is any query that is prefixed or suffixed
+        by a '\e'. The reason for a while loop is because a user
+        might edit a query multiple times.
+        For eg:
+        "select * from \e"<enter> to edit it in vim, then come
+        back to the prompt with the edited query "select * from
+        blah where q = 'abc'\e" to edit it again.
+        :param cli: CommandLineInterface
+        :param document: Document
+        :return: Document
+        """
+        while iospecial.editor_command(document.text):
+            filename = iospecial.get_filename(document.text)
+            sql, message = iospecial.open_external_editor(filename,
+                                                          sql=document.text)
+            if message:
+                # Something went wrong. Raise an exception and bail.
+                raise RuntimeError(message)
+            document = cli.read_input(
+                initial_document=Document(sql, cursor_position=len(sql)),
+                on_exit=AbortAction.RAISE_EXCEPTION)
+            continue
+        return document
+
     def run_cli(self):
         pgexecute = self.pgexecute
         prompt = '%s> ' % pgexecute.dbname
@@ -195,6 +222,14 @@ class PGCli(object):
                 # statement.
                 if quit_command(document.text):
                     raise Exit
+
+                try:
+                    document = self.handle_editor_command(cli, document)
+                except RuntimeError as e:
+                    logger.error("sql: %r, error: %r", document.text, e)
+                    logger.error("traceback: %r", traceback.format_exc())
+                    click.secho(str(e), err=True, fg='red')
+                    continue
 
                 # Keep track of whether or not the query is mutating. In case
                 # of a multi-statement query, the overall query is considered
