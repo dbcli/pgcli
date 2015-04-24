@@ -5,6 +5,7 @@ from six import with_metaclass
 from pygments.token import Token
 
 from prompt_toolkit.document import Document
+from prompt_toolkit.enums import SEARCH_BUFFER
 from prompt_toolkit.filters import Filter, Never
 
 from .utils import token_list_len
@@ -49,8 +50,8 @@ class HighlightSearchProcessor(Processor):
         The text we are searching for.
         """
         # When the search buffer has focus, take that text.
-        if self.preview_search(cli) and cli.is_searching and cli.current_buffer.text:
-            return cli.current_buffer.text
+        if self.preview_search(cli) and cli.is_searching and cli.buffers[SEARCH_BUFFER].text:
+            return cli.buffers[SEARCH_BUFFER].text
         # Otherwise, take the text of the last active search.
         else:
             return cli.search_state.text
@@ -73,6 +74,7 @@ class HighlightSearchProcessor(Processor):
 
     def invalidation_hash(self, cli, document):
         search_text = self._get_search_text(cli)
+
         # When the search state changes, highlighting will be different.
         return (
             search_text,
@@ -81,7 +83,7 @@ class HighlightSearchProcessor(Processor):
             # When we search for text, and the cursor position changes. The
             # processor has to be applied every time again, because the current
             # match is highlighted in another color.
-            (search_text and document.cursor_position)
+            (search_text and document.cursor_position),
         )
 
 
@@ -223,6 +225,10 @@ class BeforeInput(Processor):
             return [(token, text)]
         return cls(get_static_tokens)
 
+    def __repr__(self):
+        return '%s(get_tokens=%r)' % (
+            self.__class__.__name__, self.get_tokens)
+
 
 class AfterInput(Processor):
     """
@@ -240,6 +246,10 @@ class AfterInput(Processor):
         def get_static_tokens(cli):
             return [(token, text)]
         return cls(get_static_tokens)
+
+    def __repr__(self):
+        return '%s(get_tokens=%r)' % (
+            self.__class__.__name__, self.get_tokens)
 
 
 class ConditionalProcessor(Processor):
@@ -278,3 +288,7 @@ class ConditionalProcessor(Processor):
             return (True, self.processor.invalidation_hash(cli, document))
         else:
             return False
+
+    def __repr__(self):
+        return '%s(processor=%r, filter=%r)' % (
+            self.__class__.__name__, self.processor, self.filter)
