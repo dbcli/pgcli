@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import re
 import logging
+from codecs import open
 import click
 
 _logger = logging.getLogger(__name__)
@@ -44,12 +45,12 @@ def open_external_editor(filename=None, sql=''):
 
     # Populate the editor buffer with the partial sql (if available) and a
     # placeholder comment.
-    query = click.edit(sql + '\n\n' + MARKER,
-            filename=filename)
+    query = click.edit(sql + '\n\n' + MARKER, filename=filename,
+            extension='.sql')
 
     if filename:
         try:
-            with open(filename, "r") as f:
+            with open(filename, encoding='utf-8') as f:
                 query = f.read()
         except IOError:
             message = 'Error reading file: %s.' % filename
