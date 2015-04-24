@@ -237,7 +237,7 @@ class BufferControl(UIControl):
         screen = self.create_screen(cli, width, None)
         return screen.current_height
 
-    def _get_input_tokens(self, cli, buffer, document):
+    def _get_input_tokens(self, cli, document):
         """
         Tokenize input text for highlighting.
         Return (tokens, cursor_transform_functions) tuple.
@@ -270,7 +270,7 @@ class BufferControl(UIControl):
             return tokens, cursor_transform_functions
 
         key = (
-            buffer.text,
+            document.text,
 
             # Include invalidation_hashes from all processors.
             tuple(p.invalidation_hash(cli, document) for p in self.input_processors),
@@ -315,7 +315,7 @@ class BufferControl(UIControl):
             # Get tokens
             # Note: we add the space character at the end, because that's where
             #       the cursor can also be.
-            input_tokens, cursor_transform_functions = self._get_input_tokens(cli, buffer, document)
+            input_tokens, cursor_transform_functions = self._get_input_tokens(cli, document)
             input_tokens += [(Token, ' ')]
 
             indexes_to_pos = screen.write_data(
