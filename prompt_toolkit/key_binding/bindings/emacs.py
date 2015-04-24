@@ -3,7 +3,6 @@ from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import Filter, Always
-from prompt_toolkit.search_state import SearchState
 
 from .basic import load_basic_bindings
 from .utils import create_handle_decorator
@@ -551,9 +550,10 @@ def load_emacs_search_bindings(registry, filter=None):
     @handle(Keys.ControlR, filter=has_focus)
     @handle(Keys.Up, filter=has_focus)
     def _(event):
-        # Create new search_state.
-        event.cli.search_state = SearchState(event.cli.buffers[SEARCH_BUFFER].text,
-                    direction=IncrementalSearchDirection.BACKWARD)
+        # Update search_state.
+        search_state = event.cli.search_state
+        search_state.text = event.cli.buffers[SEARCH_BUFFER].text
+        search_state.direction = IncrementalSearchDirection.BACKWARD
 
         # Apply search to current buffer.
         input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
@@ -562,9 +562,10 @@ def load_emacs_search_bindings(registry, filter=None):
     @handle(Keys.ControlS, filter=has_focus)
     @handle(Keys.Down, filter=has_focus)
     def _(event):
-        # Create new search_state.
-        event.cli.search_state = SearchState(event.cli.buffers[SEARCH_BUFFER].text,
-                    direction=IncrementalSearchDirection.FORWARD)
+        # Update search_state.
+        search_state = event.cli.search_state
+        search_state.text = event.cli.buffers[SEARCH_BUFFER].text
+        search_state.direction = IncrementalSearchDirection.FORWARD
 
         # Apply search to current buffer.
         input_buffer = event.cli.buffers[event.cli.focus_stack.previous]

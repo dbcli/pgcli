@@ -6,13 +6,19 @@ __all__ = (
 
 
 class SearchState(object):
-    def __init__(self, text='', direction=IncrementalSearchDirection.FORWARD):
+    """
+    A search 'query'.
+    """
+    __slots__ = ('text', 'direction', 'ignore_case')
+
+    def __init__(self, text='', direction=IncrementalSearchDirection.FORWARD, ignore_case=False):
          self.text = text
          self.direction = direction
+         self.ignore_case = ignore_case
 
     def __repr__(self):
-        return '%s(%r, direction=%r)' % (
-            self.__class__.__name__, self.text, self.direction)
+        return '%s(%r, direction=%r, ignore_case=%r)' % (
+            self.__class__.__name__, self.text, self.direction, self.ignore_case)
 
     def __invert__(self):
         """

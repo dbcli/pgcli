@@ -305,7 +305,9 @@ class BufferControl(UIControl):
 
         if preview_now():
             document = buffer.document_for_search(SearchState(
-                cli.current_buffer.text, direction=cli.search_state.direction))
+                text=cli.current_buffer.text,
+                direction=cli.search_state.direction,
+                ignore_case=cli.search_state.ignore_case))
         else:
             document = buffer.document
 

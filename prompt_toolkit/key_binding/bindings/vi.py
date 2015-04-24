@@ -5,7 +5,6 @@ from prompt_toolkit.filters import Filter, Condition, HasArg
 from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
-from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
 
 from .basic import load_basic_bindings
@@ -537,12 +536,11 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Go to previous occurence of this word.
         """
         b = event.cli.current_buffer
-        search_text = b.document.get_word_under_cursor()
 
-        search_state = SearchState(
-                search_text, IncrementalSearchDirection.BACKWARD)
+        search_state = event.cli.search_state
+        search_state.text = b.document.get_word_under_cursor()
+        search_state.direction = IncrementalSearchDirection.BACKWARD
 
-        event.cli.search_state = search_state
         b.apply_search(search_state)
 
     @handle('*', filter=navigation_mode)
@@ -551,12 +549,11 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Go to next occurence of this word.
         """
         b = event.cli.current_buffer
-        search_text = b.document.get_word_under_cursor()
 
-        search_state = SearchState(
-                search_text, IncrementalSearchDirection.FORWARD)
+        search_state = event.cli.search_state
+        search_state.text = b.document.get_word_under_cursor()
+        search_state.direction = IncrementalSearchDirection.FORWARD
 
-        event.cli.search_state = search_state
         b.apply_search(search_state)
 
     @handle('(', filter=navigation_mode)

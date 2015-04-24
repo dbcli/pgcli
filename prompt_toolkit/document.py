@@ -183,7 +183,8 @@ class Document(object):
         """
         return self.text[self.cursor_position:].find(sub) == 0
 
-    def find(self, sub, in_current_line=False, include_current_position=False, count=1):  # TODO: rename to `find_forwards`
+    def find(self, sub, in_current_line=False, include_current_position=False,
+            ignore_case=False, count=1):
         """
         Find `text` after the cursor, return position relative to the cursor
         position. Return `None` if nothing was found.
@@ -201,7 +202,8 @@ class Document(object):
             else:
                 text = text[1:]
 
-        iterator = re.finditer(re.escape(sub), text)
+        flags = re.IGNORECASE if ignore_case else 0
+        iterator = re.finditer(re.escape(sub), text, flags)
 
         try:
             for i, match in enumerate(iterator):
@@ -213,14 +215,15 @@ class Document(object):
         except StopIteration:
             pass
 
-    def find_all(self, sub):
+    def find_all(self, sub, ignore_case=False):
         """
         Find all occurances of the substring. Return a list of absolute
         positions in the document.
         """
-        return [a.start() for a in re.finditer(re.escape(sub), self.text)]
+        flags = re.IGNORECASE if ignore_case else 0
+        return [a.start() for a in re.finditer(re.escape(sub), self.text, flags)]
 
-    def find_backwards(self, sub, in_current_line=False, count=1):
+    def find_backwards(self, sub, in_current_line=False, ignore_case=False, count=1):
         """
         Find `text` before the cursor, return position relative to the cursor
         position. Return `None` if nothing was found.
@@ -232,7 +235,8 @@ class Document(object):
         else:
             before_cursor = self.text_before_cursor[::-1]
 
-        iterator = re.finditer(re.escape(sub[::-1]), before_cursor)
+        flags = re.IGNORECASE if ignore_case else 0
+        iterator = re.finditer(re.escape(sub[::-1]), before_cursor, flags)
 
         try:
             for i, match in enumerate(iterator):
