@@ -907,7 +907,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
             pos = len(b.document.text_after_cursor)
         return CursorRegion(pos)
 
-    @handle('z', 'z')
+    @handle('z', 'z', filter=navigation_mode)
     def _(event):
         """
         Center Window vertically around cursor.
