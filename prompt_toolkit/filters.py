@@ -41,14 +41,14 @@ class Filter(with_metaclass(ABCMeta, object)):
         return True
 
     def __and__(self, other):
-        if other is None:
+        if other is None or isinstance(other, Always):
             return self
         else:
             assert isinstance(other, Filter), 'Expecting filter, got %r' % other
             return _AndList([self, other])
 
     def __or__(self, other):
-        if other is None:
+        if other is None or isinstance(other, Never):
             return self
         else:
             assert isinstance(other, Filter), 'Expecting filter, got %r' % other
@@ -61,7 +61,13 @@ class Filter(with_metaclass(ABCMeta, object)):
 class _AndList(Filter):
     """ Result of &-operation between several filters. """
     def __init__(self, filters):
-        self.filters = filters
+        self.filters = []
+
+        for f in filters:
+            if isinstance(f, _AndList):
+                self.filters.extend(f.filters)
+            else:
+                self.filters.append(f)
 
     def __call__(self, cli):
         return all(f(cli) for f in self.filters)
@@ -73,7 +79,13 @@ class _AndList(Filter):
 class _OrList(Filter):
     """ Result of |-operation between several filters. """
     def __init__(self, filters):
-        self.filters = filters
+        self.filters = []
+
+        for f in filters:
+            if isinstance(f, _OrList):
+                self.filters.extend(f.filters)
+            else:
+                self.filters.append(f)
 
     def __call__(self, cli):
         return any(f(cli) for f in self.filters)
