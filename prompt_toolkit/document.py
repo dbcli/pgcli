@@ -511,7 +511,7 @@ class Document(object):
         return len(self.text) - self.cursor_position
 
     def get_start_of_line_position(self, after_whitespace=False):
-        """ Relative position for the end of this line. """
+        """ Relative position for the start of this line. """
         if after_whitespace:
             current_line = self.current_line
             return len(current_line) - len(current_line.lstrip()) - self.cursor_position_col

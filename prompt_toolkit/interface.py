@@ -235,18 +235,6 @@ class CommandLineInterface(object):
         """
         return self.current_buffer_name == SEARCH_BUFFER
 
-    @property
-    def search_text(self):
-        """
-        The text we are searching for.
-        """
-        # When the search buffer has focus, take that text.
-        if self.is_searching and self.current_buffer.text:
-            return self.current_buffer.text
-        # Otherwise, take the text of the last active search.
-        else:
-            return self.search_state.text
-
     def reset(self, reset_current_buffer=False):
         """
         Reset everything, for reading the next input.

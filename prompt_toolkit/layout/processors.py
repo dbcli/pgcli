@@ -5,7 +5,7 @@ from six import with_metaclass
 from pygments.token import Token
 
 from prompt_toolkit.document import Document
-from prompt_toolkit.filters import Filter
+from prompt_toolkit.filters import Filter, Never
 
 from .utils import token_list_len
 
@@ -35,9 +35,28 @@ class Processor(with_metaclass(ABCMeta, object)):
 class HighlightSearchProcessor(Processor):
     """
     Processor that highlights search matches in the document.
+
+    :param preview_search: A Filter; when active it indicates that we take
+        the search text in real time while the user is typing, instead of the
+        last active search state.
     """
+    def __init__(self, preview_search=Never()):
+        assert isinstance(preview_search, Filter)
+        self.preview_search = preview_search
+
+    def _get_search_text(self, cli):
+        """
+        The text we are searching for.
+        """
+        # When the search buffer has focus, take that text.
+        if self.preview_search(cli) and cli.is_searching and cli.current_buffer.text:
+            return cli.current_buffer.text
+        # Otherwise, take the text of the last active search.
+        else:
+            return cli.search_state.text
+
     def run(self, cli, document, tokens):
-        search_text = cli.search_text
+        search_text = self._get_search_text(cli)
 
         if search_text and not cli.is_returning:
             # For each search match, replace the Token.
@@ -53,15 +72,16 @@ class HighlightSearchProcessor(Processor):
         return tokens, lambda i: i
 
     def invalidation_hash(self, cli, document):
+        search_text = self._get_search_text(cli)
         # When the search state changes, highlighting will be different.
         return (
-            cli.search_text,
+            search_text,
             cli.is_returning,
 
             # When we search for text, and the cursor position changes. The
-            # processor has to be applied every time again, because the current match is highlighted
-            # in another color.
-            (cli.search_text and document.cursor_position)
+            # processor has to be applied every time again, because the current
+            # match is highlighted in another color.
+            (search_text and document.cursor_position)
         )
 
 
