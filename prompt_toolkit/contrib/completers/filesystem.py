@@ -54,9 +54,10 @@ class PathCompleter(Completer):
                     directory = os.path.expanduser(directory)
 
                 # Look for matches in this directory.
-                for filename in os.listdir(directory):
-                    if filename.startswith(prefix):
-                        filenames.append((directory, filename))
+                if os.path.isdir(directory):
+                    for filename in os.listdir(directory):
+                        if filename.startswith(prefix):
+                            filenames.append((directory, filename))
 
             # Sort
             filenames = sorted(filenames, key=lambda k: k[1])
