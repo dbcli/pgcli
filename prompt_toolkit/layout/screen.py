@@ -77,6 +77,11 @@ class Char(object):
     def __eq__(self, other):
         return self.char == other.char and self.token == other.token
 
+    def __ne__(self, other):
+        # Not equal: We don't do `not char.__eq__` here, because of the
+        # performance of calling yet another function.
+        return self.char != other.char or self.token != other.token
+
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.char, self.token)
 
