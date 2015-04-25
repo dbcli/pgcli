@@ -191,6 +191,8 @@ class Document(object):
 
         :param count: Find the n-th occurance.
         """
+        assert isinstance(ignore_case, bool)
+
         if in_current_line:
             text = self.current_line_after_cursor
         else:

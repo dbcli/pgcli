@@ -1,4 +1,5 @@
 from .enums import IncrementalSearchDirection
+from .filters import SimpleFilter, Never
 
 __all__ = (
     'SearchState',
@@ -11,10 +12,12 @@ class SearchState(object):
     """
     __slots__ = ('text', 'direction', 'ignore_case')
 
-    def __init__(self, text='', direction=IncrementalSearchDirection.FORWARD, ignore_case=False):
-         self.text = text
-         self.direction = direction
-         self.ignore_case = ignore_case
+    def __init__(self, text='', direction=IncrementalSearchDirection.FORWARD, ignore_case=Never()):
+        assert isinstance(ignore_case, SimpleFilter)
+
+        self.text = text
+        self.direction = direction
+        self.ignore_case = ignore_case
 
     def __repr__(self):
         return '%s(%r, direction=%r, ignore_case=%r)' % (
@@ -30,4 +33,4 @@ class SearchState(object):
         else:
             direction = IncrementalSearchDirection.BACKWARD
 
-        return SearchState(text=self.text, direction=direction)
+        return SearchState(text=self.text, direction=direction, ignore_case=self.ignore_case)

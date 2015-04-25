@@ -58,10 +58,11 @@ class HighlightSearchProcessor(Processor):
 
     def run(self, cli, document, tokens):
         search_text = self._get_search_text(cli)
+        ignore_case = cli.is_ignoring_case
 
         if search_text and not cli.is_returning:
             # For each search match, replace the Token.
-            for index in document.find_all(search_text):
+            for index in document.find_all(search_text, ignore_case=ignore_case):
                 if index == document.cursor_position:
                     token = Token.SearchMatch.Current
                 else:

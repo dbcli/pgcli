@@ -795,11 +795,12 @@ class Buffer(object):
         assert isinstance(search_state, SearchState)
         text = search_state.text
         direction = search_state.direction
+        ignore_case = search_state.ignore_case()
 
         if direction == IncrementalSearchDirection.FORWARD:
             # Try find at the current input.
             new_index = self.document.find(text, include_current_position=False,
-                                           ignore_case=search_state.ignore_case)
+                                           ignore_case=ignore_case)
 
             if new_index is not None:
                 return (self.working_index, self.cursor_position + new_index)
@@ -810,13 +811,13 @@ class Buffer(object):
 
                     document = Document(self._working_lines[i], 0)
                     new_index = document.find(text, include_current_position=True,
-                                              ignore_case=search_state.ignore_case)
+                                              ignore_case=ignore_case)
                     if new_index is not None:
                         return (i, new_index)
         else:
             # Try find at the current input.
             new_index = self.document.find_backwards(
-                text, ignore_case=search_state.ignore_case)
+                text, ignore_case=ignore_case)
 
             if new_index is not None:
                 return (self.working_index, self.cursor_position + new_index)
@@ -827,7 +828,7 @@ class Buffer(object):
 
                     document = Document(self._working_lines[i], len(self._working_lines[i]))
                     new_index = document.find_backwards(
-                        text, ignore_case=search_state.ignore_case)
+                        text, ignore_case=ignore_case)
                     if new_index is not None:
                         return (i, len(document.text) + new_index)
 

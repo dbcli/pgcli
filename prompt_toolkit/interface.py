@@ -15,7 +15,7 @@ from .completion import CompleteEvent
 from .completion import get_common_complete_suffix
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
-from .filters import CLIFilter, Never
+from .filters import CLIFilter, Never, Condition
 from .focus_stack import FocusStack
 from .history import History
 from .key_binding.bindings.emacs import load_emacs_bindings
@@ -70,13 +70,14 @@ class CommandLineInterface(object):
                       `run_in_executor`.) It can be `None` as well, when no
                       eventloop is used/exposed.
     :param stdin: Input stream, by default sys.stdin
-    :param stdout: Output stream, by default sys.stdout
-    :param layout: :class:`Layout` instance.
+    :param stdout: Output stream, by default sys.stdout :param layout: :class:`Layout` instance.
     :param style: :class:`Layout` instance.
     :param on_abort: :class:`AbortAction` value. What to do when Ctrl-C has
                      been pressed.
     :attr paste_mode: Filter to indicate that we are in "paste mode". When
                       enabled, inserting newlines will never insert a margin.
+    :attr ignore_case: Filter to indicate that searching/highlighting is done
+                       case insensitive.
     """
     def __init__(self, eventloop, stdin=None, stdout=None,
                  layout=None,
@@ -90,6 +91,7 @@ class CommandLineInterface(object):
                  initial_focussed_buffer=DEFAULT_BUFFER,
                  on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
                  paste_mode=Never(),
+                 ignore_case=Never(),
                  use_alternate_screen=False):
 
         assert buffer is None or isinstance(buffer, Buffer)
@@ -105,6 +107,7 @@ class CommandLineInterface(object):
         self.stdout = stdout or sys.__stdout__
         self.style = style or DefaultStyle
         self._paste_mode = paste_mode
+        self._ignore_case = ignore_case
 
         self.on_abort = on_abort
         self.on_exit = on_exit
@@ -260,7 +263,7 @@ class CommandLineInterface(object):
 
         # Search new search state. (Does also remember what has to be
         # highlighted.)
-        self.search_state = SearchState()
+        self.search_state = SearchState(ignore_case=Condition(lambda: self.is_ignoring_case))
 
         # Trigger reset event.
         self.onReset.fire()
@@ -269,6 +272,11 @@ class CommandLineInterface(object):
     def in_paste_mode(self):
         """ True when we are in paste mode. """
         return self._paste_mode(self)
+
+    @property
+    def is_ignoring_case(self):
+        """ True when we currently ignore casing. """
+        return self._ignore_case(self)
 
     def request_redraw(self):
         """
