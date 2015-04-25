@@ -79,6 +79,10 @@ class CompleteEvent(object):
         #: Used explicitely requested completion by pressing 'tab'.
         self.completion_requested = completion_requested
 
+    def __repr__(self):
+        return '%s(text_inserted=%r, completion_requested=%r)' % (
+            self.__class__.__name__, self.text_inserted, self.completion_requested)
+
 
 class Completer(with_metaclass(ABCMeta, object)):
     """
