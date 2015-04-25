@@ -121,11 +121,16 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         # Loop over the columns.
         c = 0
         while c < new_max_line_len + 1:
-            char_width = (new_row[c].width or 1)
+            new_char = new_row[c]
+            old_char = previous_row[c]
+            char_width = (new_char.width or 1)
 
-            if new_row[c] != previous_row[c]:
+            # When the old and new character at this position are different,
+            # draw the output. (Because of the performance, we don't call
+            # `Char.__ne__`, but inline the same expression.)
+            if new_char.char != old_char.char or new_char.token != old_char.token:
                 current_pos = move_cursor(Point(y=y, x=c))
-                output_char(new_row[c])
+                output_char(new_char)
                 current_pos = current_pos._replace(x=current_pos.x + char_width)
 
             c += char_width
