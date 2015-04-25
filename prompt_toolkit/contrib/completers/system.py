@@ -54,8 +54,9 @@ class SystemCompleter(GrammarCompleter):
                 'executable': PathCompleter(only_directories=False,
                                             min_input_len=1,
                                             get_paths=lambda: os.environ.get('PATH', '').split(os.pathsep),
-                                            file_filter=lambda name: os.access(name, os.X_OK)),
-                'filename': PathCompleter(only_directories=False),
-                'double_quoted_filename': PathCompleter(only_directories=False),
-                'single_quoted_filename': PathCompleter(only_directories=False),
+                                            file_filter=lambda name: os.access(name, os.X_OK),
+                                            expanduser=True),
+                'filename': PathCompleter(only_directories=False, expanduser=True),
+                'double_quoted_filename': PathCompleter(only_directories=False, expanduser=True),
+                'single_quoted_filename': PathCompleter(only_directories=False, expanduser=True),
             })
