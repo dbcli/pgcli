@@ -450,7 +450,7 @@ class CommandLineInterface(object):
             else:
                 os.system(command.encode('utf-8'))
 
-            (input if six.PY3 else raw_input)('\nPress ENTER to continue...')
+            six.moves.input('\nPress ENTER to continue...')
 
         self.run_in_terminal(run)
 
