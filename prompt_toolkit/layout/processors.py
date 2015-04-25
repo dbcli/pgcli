@@ -6,7 +6,7 @@ from pygments.token import Token
 
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SEARCH_BUFFER
-from prompt_toolkit.filters import Filter, Never
+from prompt_toolkit.filters import CLIFilter, Never
 
 from .utils import token_list_len
 
@@ -42,7 +42,7 @@ class HighlightSearchProcessor(Processor):
         last active search state.
     """
     def __init__(self, preview_search=Never()):
-        assert isinstance(preview_search, Filter)
+        assert isinstance(preview_search, CLIFilter)
         self.preview_search = preview_search
 
     def _get_search_text(self, cli):
@@ -269,7 +269,7 @@ class ConditionalProcessor(Processor):
     """
     def __init__(self, processor, filter):
         assert isinstance(processor, Processor)
-        assert isinstance(filter, Filter)
+        assert isinstance(filter, CLIFilter)
 
         self.processor = processor
         self.filter = filter

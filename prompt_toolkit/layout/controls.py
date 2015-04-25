@@ -7,7 +7,7 @@ from pygments.token import Token
 from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 
-from prompt_toolkit.filters import Never, Filter
+from prompt_toolkit.filters import Never, CLIFilter
 from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.enums import DEFAULT_BUFFER
@@ -188,8 +188,8 @@ class BufferControl(UIControl):
                  default_token=Token,
                  menu_position=None):
         assert input_processors is None or all(isinstance(i, Processor) for i in input_processors)
-        assert isinstance(show_line_numbers, Filter)
-        assert isinstance(preview_search, Filter)
+        assert isinstance(show_line_numbers, CLIFilter)
+        assert isinstance(preview_search, CLIFilter)
         assert menu_position is None or callable(menu_position)
 
         self.input_processors = input_processors or []

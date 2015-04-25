@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from ..filters import Always, Filter
+from ..filters import Always, CLIFilter
 from ..utils import EventHook
 
 __all__ = (
@@ -42,10 +42,11 @@ class Registry(object):
         """
         Decorator for annotating key bindings.
         """
-        filter = kwargs.pop('filter', None) or Always()
+        filter = kwargs.pop('filter', Always())
+
         assert not kwargs
         assert keys
-        assert isinstance(filter, Filter), 'Expected Filter instance, got %r' % filter
+        assert isinstance(filter, CLIFilter), 'Expected Filter instance, got %r' % filter
 
         def decorator(func):
             self.key_bindings.append(_Binding(keys, func, filter=filter))

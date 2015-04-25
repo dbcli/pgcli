@@ -15,7 +15,7 @@ from .completion import CompleteEvent
 from .completion import get_common_complete_suffix
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
-from .filters import Filter, Never
+from .filters import CLIFilter, Never
 from .focus_stack import FocusStack
 from .history import History
 from .key_binding.bindings.emacs import load_emacs_bindings
@@ -96,7 +96,7 @@ class CommandLineInterface(object):
         assert buffers is None or isinstance(buffers, dict)
         assert key_bindings_registry is None or isinstance(key_bindings_registry, Registry)
         assert output is None or isinstance(output, Output)
-        assert isinstance(paste_mode, Filter)
+        assert isinstance(paste_mode, CLIFilter)
         assert eventloop is None or isinstance(eventloop, EventLoop)
 
         assert renderer is None or output is None  # Never expect both.
@@ -184,7 +184,7 @@ class CommandLineInterface(object):
             """
             def complete_while_typing():
                 # Only complete when "complete_while_typing" is enabled.
-                if buffer.complete_while_typing(self):
+                if buffer.complete_while_typing():
                     completer()
             return complete_while_typing
 

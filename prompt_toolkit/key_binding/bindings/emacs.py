@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
-from prompt_toolkit.filters import Filter, Always
+from prompt_toolkit.filters import CLIFilter, Always
 
 from .basic import load_basic_bindings
 from .utils import create_handle_decorator
@@ -23,7 +23,7 @@ def load_emacs_bindings(registry, filter=Always()):
     # Overview of Readline emacs commands:
     # http://www.catonmat.net/download/readline-emacs-editing-mode-cheat-sheet.pdf
 
-    assert isinstance(filter, Filter)
+    assert isinstance(filter, CLIFilter)
 
     load_basic_bindings(registry, filter)
 
@@ -182,7 +182,7 @@ def load_emacs_bindings(registry, filter=Always()):
             b.accept_action.validate_and_handle(event.cli, b)
 
         # Not returnable, but multiline.
-        elif b.is_multiline(event.cli):
+        elif b.is_multiline():
             b.insert_text('\n')
 
     @handle(Keys.ControlSquareClose, Keys.Any)

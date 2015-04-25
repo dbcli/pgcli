@@ -10,7 +10,7 @@ from abc import ABCMeta, abstractmethod
 from .screen import Point, WritePosition
 from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
 from .controls import UIControl
-from prompt_toolkit.filters import Filter
+from prompt_toolkit.filters import CLIFilter
 
 __all__ = (
     'HSplit',
@@ -506,7 +506,7 @@ class Window(Layout):
         assert get_height is None or callable(get_height)
         assert width is None or get_width is None
         assert height is None or get_height is None
-        assert filter is None or isinstance(filter, Filter)
+        assert filter is None or isinstance(filter, CLIFilter)
 
         self.content = content
         self.filter = filter

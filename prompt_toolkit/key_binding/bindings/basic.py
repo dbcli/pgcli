@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.filters import Filter, Always, HasSelection
+from prompt_toolkit.filters import CLIFilter, Always, HasSelection
 
 from .utils import create_handle_decorator
 
@@ -12,7 +12,7 @@ __all__ = (
 
 
 def load_basic_bindings(registry, filter=Always()):
-    assert isinstance(filter, Filter)
+    assert isinstance(filter, CLIFilter)
 
     handle = create_handle_decorator(registry, filter)
     has_selection = HasSelection()
@@ -162,7 +162,7 @@ def load_basic_bindings(registry, filter=Always()):
         """
         b = event.current_buffer
 
-        if b.is_multiline(event.cli):
+        if b.is_multiline():
             b.newline(copy_margin=not event.cli.in_paste_mode)
         else:
             if b.accept_action.is_returnable:

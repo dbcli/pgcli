@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from functools import wraps
-from prompt_toolkit.filters import Filter, Always
+from prompt_toolkit.filters import CLIFilter, Always
 
 
 def create_handle_decorator(registry, filter=Always()):
@@ -10,7 +10,7 @@ def create_handle_decorator(registry, filter=Always()):
     saved to the undo stack of the `Buffer` object before every key press
     event.
     """
-    assert isinstance(filter, Filter)
+    assert isinstance(filter, CLIFilter)
 
     def handle(*keys, **kw):
         safe_before = kw.pop('save_before', True)

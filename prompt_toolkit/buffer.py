@@ -12,7 +12,7 @@ from .selection import SelectionType, SelectionState
 from .utils import EventHook
 from .validation import ValidationError
 from .clipboard import ClipboardData
-from .filters import Filter, Never
+from .filters import SimpleFilter, Never
 from .search_state import SearchState
 
 import os
@@ -129,8 +129,8 @@ class Buffer(object):
 
     :attr tempfile_suffix: Suffix to be appended to the tempfile for the 'open
                            in editor' function.
-    :attr is_multiline: Filter to indicate whether we should consider this
-                        buffer a multiline input. If so, key bindings can
+    :attr is_multiline: SimpleFilter to indicate whether we should consider
+                        this buffer a multiline input. If so, key bindings can
                         decide to insert newlines when pressing [Enter].
                         (Instead of accepting the input.)
     :param complete_while_typing: Filter instance. Decide whether or not to do
@@ -140,8 +140,8 @@ class Buffer(object):
                  is_multiline=Never(), complete_while_typing=Never(),
                  enable_history_search=Never(), initial_document=None,
                  accept_action=AcceptAction.RETURN_DOCUMENT):
-        assert isinstance(is_multiline, Filter)
-        assert isinstance(complete_while_typing, Filter)
+        assert isinstance(is_multiline, SimpleFilter)
+        assert isinstance(complete_while_typing, SimpleFilter)
 
         self.completer = completer
         self.validator = validator
