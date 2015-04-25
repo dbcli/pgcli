@@ -45,7 +45,8 @@ class Document(object):
 
         # Check cursor position. It can also be right after the end. (Where we
         # insert text.)
-        assert cursor_position is None or cursor_position <= len(text)
+        assert cursor_position is None or cursor_position <= len(text), AssertionError(
+                'cursor_position=%r, len_text=%r' % (cursor_position, len(text)))
 
         # By default, if no cursor position was given, make sure to put the
         # cursor position is at the end of the document. This is what makes

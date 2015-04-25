@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from prompt_toolkit.buffer import ClipboardData, indent, unindent
+from prompt_toolkit.document import Document
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import Filter, Condition, HasArg
 from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
@@ -277,10 +278,11 @@ def load_vi_bindings(registry, vi_state, filter=None):
         if before and after:
             before = before + '\n'
 
-        buffer.text = before + after
-
-        # Set cursor position. (At the start of the first 'after' line, after the leading whitespace.)
-        buffer.cursor_position = len(before) + len(after) - len(after.lstrip(' '))
+        # Set text and cursor position.
+        buffer.document = Document(
+            text=before + after,
+            # Cursor At the start of the first 'after' line, after the leading whitespace.
+            cursor_position = len(before) + len(after) - len(after.lstrip(' ')))
 
         # Set clipboard data
         event.cli.clipboard.set_data(ClipboardData(deleted, SelectionType.LINES))

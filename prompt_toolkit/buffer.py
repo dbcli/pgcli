@@ -178,7 +178,7 @@ class Buffer(object):
 
         initial_document = initial_document or Document()
 
-        self.cursor_position = initial_document.cursor_position
+        self.__cursor_position = initial_document.cursor_position
 
         # `ValidationError` instance. (Will be set when the input is wrong.)
         self.validation_error = None
@@ -208,17 +208,37 @@ class Buffer(object):
 
     # <getters/setters>
 
+    def _set_text(self, value):
+        """ set text at current working_index. Return whether it changed. """
+        original_value = self._working_lines[self.working_index]
+        self._working_lines[self.working_index] = value
+
+        return value != original_value
+
+    def _set_cursor_position(self, value):
+        """ Set cursor position. Return whether it changed. """
+        original_position = self.__cursor_position
+        self.__cursor_position = max(0, value)
+
+        return value != original_position
+
     @property
     def text(self):
         return self._working_lines[self.working_index]
 
     @text.setter
     def text(self, value):
+        """
+        Setting text. (When doing this, make sure that the cursor_position is
+        valid for this text. text/cursor_position should be consistent at any time,
+        otherwise set a Document instead.)
+        """
         assert isinstance(value, six.text_type), 'Got %r' % value
-        original_value = self._working_lines[self.working_index]
-        self._working_lines[self.working_index] = value
+        assert self.cursor_position <= len(value)
 
-        if value != original_value:
+        changed = self._set_text(value)
+
+        if changed:
             self._text_changed()
 
             # Reset history search text.
@@ -230,19 +250,16 @@ class Buffer(object):
 
     @cursor_position.setter
     def cursor_position(self, value):
-        original_position = self.__cursor_position
-        self.__cursor_position = max(0, value)
+        """
+        Setting cursor position.
+        """
+        assert isinstance(value, int)
+        assert value <= len(self.text)
 
-        if value != original_position:
-            # Remove any validation errors and complete state.
-            self.validation_error = None
-            self.complete_state = None
+        changed = self._set_cursor_position(value)
 
-            # Note that the cursor position can change if we have a selection the
-            # new position of the cursor determines the end of the selection.
-
-            # fire 'onCursorPositionChanged' event.
-            self.onCursorPositionChanged.fire()
+        if changed:
+            self._cursor_position_changed()
 
     @property
     def working_index(self):
@@ -263,7 +280,16 @@ class Buffer(object):
         # fire 'onTextChanged' event.
         self.onTextChanged.fire()
 
-    # End of <getters/setters>
+    def _cursor_position_changed(self):
+        # Remove any validation errors and complete state.
+        self.validation_error = None
+        self.complete_state = None
+
+        # Note that the cursor position can change if we have a selection the
+        # new position of the cursor determines the end of the selection.
+
+        # fire 'onCursorPositionChanged' event.
+        self.onCursorPositionChanged.fire()
 
     @property
     def document(self):
@@ -277,10 +303,25 @@ class Buffer(object):
     def document(self, value):
         """
         Set :class:`Document` instance.
+
+        This will set both the text and cursor position at the same time, but
+        atomically. (Change events will be triggered only after both have been set.)
         """
         assert isinstance(value, Document)
-        self.cursor_position = value.cursor_position
-        self.text = value.text
+
+        # Set text and cursor position first.
+        text_changed = self._set_text(value.text)
+        cursor_position_changed = self._set_cursor_position(value.cursor_position)
+
+        # Now handle change events. (We do this when text/cursor position is
+        # both set and consistent.)
+        if text_changed:
+            self._text_changed()
+
+        if cursor_position_changed:
+            self._cursor_position_changed()
+
+    # End of <getters/setters>
 
     def save_to_undo_stack(self, clear_redo_stack=True):
         """
@@ -306,11 +347,13 @@ class Buffer(object):
 
         To uppercase some lines::
 
-            transform_lines(range(5,10), lambda text: text.upper())
+            new_text = transform_lines(range(5,10), lambda text: text.upper())
 
         :param line_index_iterator: Iterator of line numbers (int)
         :param transform_callback: callable that takes the original text of a
                                    line, and return the new text for this line.
+
+        :returns: The new text.
         """
         # Split lines
         lines = self.text.split('\n')
@@ -322,7 +365,7 @@ class Buffer(object):
             except IndexError:
                 pass
 
-        self.text = '\n'.join(lines)
+        return '\n'.join(lines)
 
     def transform_region(self, from_, to, transform_callback):
         """
@@ -388,8 +431,12 @@ class Buffer(object):
 
         if self.cursor_position > 0:
             deleted = self.text[self.cursor_position - count:self.cursor_position]
-            self.text = self.text[:self.cursor_position - count] + self.text[self.cursor_position:]
-            self.cursor_position -= len(deleted)
+
+            new_text = self.text[:self.cursor_position - count] + self.text[self.cursor_position:]
+            new_cursor_position = self.cursor_position - len(deleted)
+
+            # Set new Document atomically.
+            self.document = Document(new_text, new_cursor_position)
 
         return deleted
 
@@ -545,7 +592,8 @@ class Buffer(object):
         state = self.complete_state.go_to_index(index)
 
         # Set text/cursor position
-        self.text, self.cursor_position = state.new_text_and_position()
+        new_text, new_cursor_position = state.new_text_and_position()
+        self.document = Document(new_text, new_cursor_position)
 
         # (changing text/cursor position will unset complete_state.)
         self.complete_state = state
@@ -632,8 +680,8 @@ class Buffer(object):
 
             # If cutting, remove the text and set the new cursor position.
             if _cut:
-                self.text = self.text[:from_] + self.text[to + 1:]
-                self.cursor_position = min(from_, to)
+                self.document = Document(text=self.text[:from_] + self.text[to + 1:],
+                                         cursor_position=min(from_, to))
 
             self.selection_state = None
             return ClipboardData(copied_text, type)
@@ -738,9 +786,8 @@ class Buffer(object):
                 # Push current text to redo stack.
                 self._redo_stack.append((self.text, self.cursor_position))
 
-                # Set new text.
-                self.text = text
-                self.cursor_position = pos
+                # Set new text/cursor_position.
+                self.document = Document(text, cursor_position=pos)
                 break
 
     def redo(self):
@@ -750,8 +797,7 @@ class Buffer(object):
 
             # Pop state from redo stack.
             text, pos = self._redo_stack.pop()
-            self.text = text
-            self.cursor_position = pos
+            self.document = Document(text, cursor_position=pos)
 
     def validate(self):
         """
@@ -874,8 +920,9 @@ class Buffer(object):
 
         # Read content again.
         with open(filename, 'rb') as f:
-            self.text = f.read().decode('utf-8')
-        self.cursor_position = len(self.text)
+            self.document = Document(
+                text=f.read().decode('utf-8'),
+                cursor_position=len(self.text))
 
         # Clean up temp file.
         os.remove(filename)
@@ -915,9 +962,11 @@ def indent(buffer, from_row, to_row, count=1):
     current_row = buffer.document.cursor_position_row
     line_range = range(from_row, to_row)
 
-    buffer.transform_lines(line_range, lambda l: '    ' * count + l)
+    # Apply transformation.
+    new_text = buffer.transform_lines(line_range, lambda l: '    ' * count + l)
+    buffer.document = Document(new_text, buffer.document.translate_row_col_to_index(current_row, 0))
 
-    buffer.cursor_position = buffer.document.translate_row_col_to_index(current_row, 0)
+    # Go to the start of the line.
     buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=True)
 
 
@@ -935,7 +984,9 @@ def unindent(buffer, from_row, to_row, count=1):
         else:
             return text.lstrip()
 
-    buffer.transform_lines(line_range, transform)
+    # Apply transformation.
+    new_text = buffer.transform_lines(line_range, transform)
+    buffer.document = Document(new_text, buffer.document.translate_row_col_to_index(current_row, 0))
 
-    buffer.cursor_position = buffer.document.translate_row_col_to_index(current_row, 0)
+    # Go to the start of the line.
     buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=True)
