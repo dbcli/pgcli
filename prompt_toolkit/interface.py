@@ -539,7 +539,9 @@ class CommandLineInterface(object):
                     if buffer.text == document.text and \
                             buffer.cursor_position == document.cursor_position and \
                             not buffer.complete_state:
+
                         set_completions = True
+                        select_first_anyway = False
 
                         # When the commond part has to be inserted, and there
                         # is a common part.
@@ -550,11 +552,21 @@ class CommandLineInterface(object):
                                 buffer.insert_text(common_part)
                                 async_completer()
                                 set_completions = False
+                            else:
+                                # When we were asked to insert the "common"
+                                # prefix, but there was no common suffix but
+                                # still exactly one match, then select the
+                                # first. (It could be that we have a completion
+                                # which does * expension, like '*.py', with
+                                # exactly one match.)
+                                if len(completions) == 1:
+                                    select_first_anyway = True
 
                         if set_completions:
-                            buffer.set_completions(completions=completions,
-                                                   go_to_first=select_first,
-                                                   go_to_last=select_last)
+                            buffer.set_completions(
+                                completions=completions,
+                                go_to_first=select_first or select_first_anyway,
+                                go_to_last=select_last)
                         self._redraw()
                     else:
                         # Otherwise, restart thread.
