@@ -14,7 +14,7 @@ long_description = open(
 setup(
     name='prompt_toolkit',
     author='Jonathan Slenders',
-    version='0.32',
+    version='0.33',
     license='LICENSE.txt',
     url='https://github.com/jonathanslenders/python-prompt-toolkit',
     description='Library for building powerful interactive command lines in Python',

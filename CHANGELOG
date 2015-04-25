@@ -1,6 +1,27 @@
 CHANGELOG
 =========
 
+0.33: 2015-04-25
+----------------
+
+Bug fixes:
+- Crash fixed in SystemCompleter when some directiories didn't exist.
+- Made text/cursor_position in Document more atomic.
+- Fixed Char.__ne__, improves performance.
+- Better performance of the filter module.
+- Refactoring of the filter module.
+- Bugfix in BufferControl, caching was not done correctly.
+- fixed 'zz' Vi key binding.
+
+New features:
+- Do tilde expansion for system commands.
+- Added ignore_case option for CommandLineInterface.
+
+Backwards incompatible changes:
+- complete_while_typing parameter has been moved from CommandLineInterface to
+  Buffer.
+
+
 0.32: 2015-04-22
 ----------------
 
