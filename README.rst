@@ -101,6 +101,7 @@ Projects using prompt-toolkit
 - `ptpython <http://github.com/jonathanslenders/ptpython/>`_: Python REPL
 - `ptpdb <http://github.com/jonathanslenders/ptpdb/>`_: Python debugger (pdb replacement)
 - `pgcli <http://pgcli.com/>`_: Postgres Shell
+- `pyvim <http://github.com/jonathanslenders/pyvim/>`_: A Vim clone in pure Python
 
 (Want your own project to be listed here? Please create a GitHub issue.)
 
