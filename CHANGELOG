@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+0.34: 2015-04-26
+----------------
+
+Bug fixes:
+- Correct display of multi width characters in completion menu.
+
+Backwards incompatible changes:
+- Renamed Buffer.add_to_history to Buffer.append_to_history.
+
 0.33: 2015-04-25
 ----------------
 
