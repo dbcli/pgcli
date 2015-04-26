@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 
 from pygments.token import Token
 from prompt_toolkit.filters import HasCompletions, IsDone, Always
+from prompt_toolkit.utils import get_cwidth
+
 from .controls import UIControl
 from .containers import Window
 from .dimension import LayoutDimension
@@ -108,14 +110,16 @@ class CompletionsMenuControl(UIControl):
         """
         Return the width of the main column.
         """
-        return min(max_width, max(len(c.display) for c in complete_state.current_completions) + 2)
+        return min(max_width, max(get_cwidth(c.display)
+                   for c in complete_state.current_completions) + 2)
 
     def _get_menu_meta_width(self, max_width, complete_state):
         """
         Return the width of the meta column.
         """
         if self._show_meta(complete_state):
-            return min(max_width, max(len(c.display_meta) for c in complete_state.current_completions) + 2)
+            return min(max_width, max(get_cwidth(c.display_meta)
+                       for c in complete_state.current_completions) + 2)
         else:
             return 0
 
@@ -125,8 +129,9 @@ class CompletionsMenuControl(UIControl):
         else:
             token = self.token.Completion
 
-        text = self._trim_text(completion.display, width - 2)
-        return [(token, ' %%-%is ' % (width - 2) % text)]
+        text, tw = self._trim_text(completion.display, width - 2)
+        padding = ' ' * (width - 2 - tw)
+        return [(token, ' %s%s ' % (text, padding))]
 
     def _get_menu_item_meta_tokens(self, completion, is_current_completion, width):
         if is_current_completion:
@@ -134,18 +139,36 @@ class CompletionsMenuControl(UIControl):
         else:
             token = self.token.Meta
 
-        text = self._trim_text(completion.display_meta, width - 2)
-        return [(token, ' %%-%is ' % (width - 2) % text or 'none')]
+        text, tw = self._trim_text(completion.display_meta, width - 2)
+        padding = ' ' * (width - 2 - tw)
+        return [(token, ' %s%s ' % (text or 'none', padding))]
 
     def _trim_text(self, text, max_width):
         """
         Trim the text to `max_width`, append dots when the text is too long.
+        Returns (text, width) tuple.
         """
-        # TODO: support for double width characters.
-        if len(text) > max_width:
-            return (text[:max(1, max_width-3)] + '...')[:max_width]
+        width = get_cwidth(text)
+
+        # When the text is too wide, trim it.
+        if width > max_width:
+            # When there are no double width characters, just use slice operation.
+            if len(text) == width:
+                trimmed_text = (text[:max(1, max_width-3)] + '...')[:max_width]
+                return trimmed_text, len(trimmed_text)
+
+            # Otherwise, loop until we have the desired width. (Rather
+            # inefficient, but ok for now.)
+            else:
+                trimmed_text = ''
+                for c in text:
+                    if get_cwidth(trimmed_text + c) <= max_width - 3:
+                        trimmed_text += c
+                trimmed_text += '...'
+
+                return (trimmed_text, get_cwidth(trimmed_text))
         else:
-            return text
+            return text, width
 
 
 class CompletionsMenu(Window):

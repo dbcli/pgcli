@@ -264,6 +264,7 @@ class FloatContainer(Layout):
                 width = fl.width
                 if width is None:
                     width = fl.content.width(cli).preferred
+                    width = min(write_position.width, width)
 
                 xpos = cursor_position.x
                 if xpos + width > write_position.width:
@@ -272,7 +273,7 @@ class FloatContainer(Layout):
             elif fl.width:
                 xpos = int((write_position.width - fl.width) / 2)
                 width = fl.width
-            # Otherwise, take preferred width from content.
+            # Otherwise, take preferred width from float content.
             else:
                 width = fl.content.width(cli).preferred
 
