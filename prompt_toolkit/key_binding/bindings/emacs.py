@@ -531,7 +531,7 @@ def load_emacs_search_bindings(registry, filter=None):
         input_buffer.apply_search(event.cli.search_state)
 
         # Add query to history of search line.
-        search_buffer.add_to_history()
+        search_buffer.append_to_history()
         search_buffer.reset()
 
         # Focus previous document again.

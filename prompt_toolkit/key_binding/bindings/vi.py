@@ -1153,7 +1153,7 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
         input_buffer.apply_search(event.cli.search_state)
 
         # Add query to history of search line.
-        search_buffer.add_to_history()
+        search_buffer.append_to_history()
         search_buffer.reset()
 
         # Focus previous document again.

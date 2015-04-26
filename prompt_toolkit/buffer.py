@@ -63,7 +63,7 @@ class AcceptAction(object):
             elif self.handler:
                 self.handler(cli, buffer)
 
-            buffer.add_to_history()
+            buffer.append_to_history()
 
 AcceptAction.RETURN_DOCUMENT = AcceptAction(return_document=True)
 AcceptAction.IGNORE = AcceptAction(handler=None, return_document=False)
@@ -174,7 +174,7 @@ class Buffer(object):
         assert initial_document is None or isinstance(initial_document, Document)
 
         if append_to_history:
-            self.add_to_history()
+            self.append_to_history()
 
         initial_document = initial_document or Document()
 
@@ -819,7 +819,7 @@ class Buffer(object):
 
         return True
 
-    def add_to_history(self):  # TODO: Rename to `append_to_history`
+    def append_to_history(self):
         """
         Append the current input to the history.
         (Only if valid input.)
