@@ -430,7 +430,7 @@ class Document(object):
         """
         return min(count, len(self.current_line_after_cursor))
 
-    def get_cursor_up_position(self, count=1):  # TODO: implement `count`
+    def get_cursor_up_position(self, count=1):
         """
         Return the relative cursor position (character index) where we would be if the
         user pressed the arrow-up button.
