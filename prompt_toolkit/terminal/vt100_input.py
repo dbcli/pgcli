@@ -38,6 +38,136 @@ class _Flush(object):
     pass
 
 
+# Mapping of vt100 escape codes to Keys.
+ANSI_SEQUENCES = {
+    '\x1b': Keys.Escape,
+
+    '\x00': Keys.ControlSpace,  # Control-Space (Also for Ctrl-@)
+    '\x01': Keys.ControlA,  # Control-A (home)
+    '\x02': Keys.ControlB,  # Control-B (emacs cursor left)
+    '\x03': Keys.ControlC,  # Control-C (interrupt)
+    '\x04': Keys.ControlD,  # Control-D (exit)
+    '\x05': Keys.ControlE,  # Contrel-E (end)
+    '\x06': Keys.ControlF,  # Control-F (cursor forward)
+    '\x07': Keys.ControlG,  # Control-G
+    '\x08': Keys.ControlH,  # Control-H (8) (Identical to '\b')
+    '\x09': Keys.ControlI,  # Control-I (9) (Identical to '\t')
+    '\x0a': Keys.ControlJ,  # Control-J (10) (Identical to '\n')
+    '\x0b': Keys.ControlK,  # Control-K (delete until end of line; vertical tab)
+    '\x0c': Keys.ControlL,  # Control-L (clear; form feed)
+    '\x0d': Keys.ControlM,  # Control-M (13) (Identical to '\r')
+    '\x0e': Keys.ControlN,  # Control-N (14) (history forward)
+    '\x0f': Keys.ControlO,  # Control-O (15)
+    '\x10': Keys.ControlP,  # Control-P (16) (history back)
+    '\x11': Keys.ControlQ,  # Control-Q
+    '\x12': Keys.ControlR,  # Control-R (18) (reverse search)
+    '\x13': Keys.ControlS,  # Control-S (19) (forward search)
+    '\x14': Keys.ControlT,  # Control-T
+    '\x15': Keys.ControlU,  # Control-U
+    '\x16': Keys.ControlV,  # Control-V
+    '\x17': Keys.ControlW,  # Control-W
+    '\x18': Keys.ControlX,  # Control-X
+    '\x19': Keys.ControlY,  # Control-Y (25)
+    '\x1a': Keys.ControlZ,  # Control-Z
+
+    '\x1c': Keys.ControlBackslash,  # Both Control-\ and Ctrl-|
+    '\x1d': Keys.ControlSquareClose,  # Control-]
+    '\x1e': Keys.ControlCircumflex,  # Control-^
+    '\x1f': Keys.ControlUnderscore,  # Control-underscore (Also for Ctrl-hypen.)
+    '\x7f': Keys.Backspace,  # (127) Backspace
+    '\x1b[A': Keys.Up,
+    '\x1b[B': Keys.Down,
+    '\x1b[C': Keys.Right,
+    '\x1b[D': Keys.Left,
+    '\x1b[H': Keys.Home,
+    '\x1bOH': Keys.Home,
+    '\x1b[F': Keys.End,
+    '\x1bOF': Keys.End,
+    '\x1b[3~': Keys.Delete,
+    '\x1b[3;2~': Keys.ShiftDelete,  # xterm, gnome-terminal.
+    '\x1b[1~': Keys.Home,  # tmux
+    '\x1b[4~': Keys.End,  # tmux
+    '\x1b[5~': Keys.PageUp,
+    '\x1b[6~': Keys.PageDown,
+    '\x1b[7~': Keys.Home,  # xrvt
+    '\x1b[8~': Keys.End,  # xrvt
+    '\x1b[Z': Keys.BackTab,  # shift + tab
+
+    '\x1bOP': Keys.F1,
+    '\x1bOQ': Keys.F2,
+    '\x1bOR': Keys.F3,
+    '\x1bOS': Keys.F4,
+    '\x1b[11~': Keys.F1,  # rxvt-unicode
+    '\x1b[12~': Keys.F2,  # rxvt-unicode
+    '\x1b[13~': Keys.F3,  # rxvt-unicode
+    '\x1b[14~': Keys.F4,  # rxvt-unicode
+    '\x1b[15~': Keys.F5,
+    '\x1b[17~': Keys.F6,
+    '\x1b[18~': Keys.F7,
+    '\x1b[19~': Keys.F8,
+    '\x1b[20~': Keys.F9,
+    '\x1b[21~': Keys.F10,
+    '\x1b[23~': Keys.F11,
+    '\x1b[24~': Keys.F12,
+    '\x1b[25~': Keys.F13,
+    '\x1b[26~': Keys.F14,
+    '\x1b[28~': Keys.F15,
+    '\x1b[29~': Keys.F16,
+    '\x1b[31~': Keys.F17,
+    '\x1b[32~': Keys.F18,
+    '\x1b[33~': Keys.F19,
+    '\x1b[34~': Keys.F20,
+    '\x1b[1;5A': Keys.ControlUp,     # Cursor Mode
+    '\x1b[1;5B': Keys.ControlDown,   # Cursor Mode
+    '\x1b[1;5C': Keys.ControlRight,  # Cursor Mode
+    '\x1b[1;5D': Keys.ControlLeft,   # Cursor Mode
+    '\x1bOA': Keys.ControlUp,       # Application Mode (tmux)
+    '\x1bOB': Keys.ControlDown,     # Application Mode (tmux)
+    '\x1bOC': Keys.ControlRight,    # Application Mode (tmux)
+    '\x1bOD': Keys.ControlLeft,     # Application Mode (tmux)
+
+    '\x1b[5A': Keys.ControlUp,
+    '\x1b[5B': Keys.ControlDown,
+    '\x1b[5C': Keys.ControlRight,
+    '\x1b[5D': Keys.ControlLeft,
+
+    # Meta + arrow keys. Several terminals handle this differently.
+    # The following sequences are for xterm and gnome-terminal.
+    #     (Iterm sends ESC followed by the normal arrow_up/down/left/right
+    #     sequences, and the OSX Terminal sends ESCb and ESCf for "alt
+    #     arrow_left" and "alt arrow_right." We don't handle these
+    #     explicitely, in here, because would could not distinguesh between
+    #     pressing ESC (to go to Vi navigation mode), followed by just the
+    #     'b' or 'f' key. These combinations are handled in
+    #     the input processor.)
+    '\x1b[1;3D': (Keys.Escape, Keys.Left),
+    '\x1b[1;3C': (Keys.Escape, Keys.Right),
+    '\x1b[1;3A': (Keys.Escape, Keys.Up),
+    '\x1b[1;3B': (Keys.Escape, Keys.Down),
+}
+
+
+class _IsPrefixOfLongerMatchCache(dict):
+    """
+    Dictiory that maps input sequences to a boolean indicating whether there is
+    any key that start with this characters.
+    """
+    def __missing__(self, prefix):
+        # (hard coded) If this could be a prefix of a CPR response, return
+        # True.
+        if _cpr_response_prefix_re.match(prefix):
+            result = True
+        else:
+            # If this could be a prefix of anything else, also return True.
+            result = any(v for k, v in ANSI_SEQUENCES.items() if k.startswith(prefix) and k != prefix)
+
+        self[prefix] = result
+        return result
+
+
+_IS_PREFIX_OF_LONGER_MATCH_CACHE = _IsPrefixOfLongerMatchCache()
+
+
 class InputStream(object):
     """
     Parser for VT100 input stream.
@@ -57,113 +187,6 @@ class InputStream(object):
     # Lookup table of ANSI escape sequences for a VT100 terminal
     # Hint: in order to know what sequences your terminal writes to stdin, run
     #       "od -c" and start typing.
-    mappings = {
-        '\x1b': Keys.Escape,
-
-        '\x00': Keys.ControlSpace,  # Control-Space (Also for Ctrl-@)
-        '\x01': Keys.ControlA,  # Control-A (home)
-        '\x02': Keys.ControlB,  # Control-B (emacs cursor left)
-        '\x03': Keys.ControlC,  # Control-C (interrupt)
-        '\x04': Keys.ControlD,  # Control-D (exit)
-        '\x05': Keys.ControlE,  # Contrel-E (end)
-        '\x06': Keys.ControlF,  # Control-F (cursor forward)
-        '\x07': Keys.ControlG,  # Control-G
-        '\x08': Keys.ControlH,  # Control-H (8) (Identical to '\b')
-        '\x09': Keys.ControlI,  # Control-I (9) (Identical to '\t')
-        '\x0a': Keys.ControlJ,  # Control-J (10) (Identical to '\n')
-        '\x0b': Keys.ControlK,  # Control-K (delete until end of line; vertical tab)
-        '\x0c': Keys.ControlL,  # Control-L (clear; form feed)
-        '\x0d': Keys.ControlM,  # Control-M (13) (Identical to '\r')
-        '\x0e': Keys.ControlN,  # Control-N (14) (history forward)
-        '\x0f': Keys.ControlO,  # Control-O (15)
-        '\x10': Keys.ControlP,  # Control-P (16) (history back)
-        '\x11': Keys.ControlQ,  # Control-Q
-        '\x12': Keys.ControlR,  # Control-R (18) (reverse search)
-        '\x13': Keys.ControlS,  # Control-S (19) (forward search)
-        '\x14': Keys.ControlT,  # Control-T
-        '\x15': Keys.ControlU,  # Control-U
-        '\x16': Keys.ControlV,  # Control-V
-        '\x17': Keys.ControlW,  # Control-W
-        '\x18': Keys.ControlX,  # Control-X
-        '\x19': Keys.ControlY,  # Control-Y (25)
-        '\x1a': Keys.ControlZ,  # Control-Z
-
-        '\x1c': Keys.ControlBackslash,  # Both Control-\ and Ctrl-|
-        '\x1d': Keys.ControlSquareClose,  # Control-]
-        '\x1e': Keys.ControlCircumflex,  # Control-^
-        '\x1f': Keys.ControlUnderscore,  # Control-underscore (Also for Ctrl-hypen.)
-        '\x7f': Keys.Backspace,  # (127) Backspace
-        '\x1b[A': Keys.Up,
-        '\x1b[B': Keys.Down,
-        '\x1b[C': Keys.Right,
-        '\x1b[D': Keys.Left,
-        '\x1b[H': Keys.Home,
-        '\x1bOH': Keys.Home,
-        '\x1b[F': Keys.End,
-        '\x1bOF': Keys.End,
-        '\x1b[3~': Keys.Delete,
-        '\x1b[3;2~': Keys.ShiftDelete,  # xterm, gnome-terminal.
-        '\x1b[1~': Keys.Home,  # tmux
-        '\x1b[4~': Keys.End,  # tmux
-        '\x1b[5~': Keys.PageUp,
-        '\x1b[6~': Keys.PageDown,
-        '\x1b[7~': Keys.Home,  # xrvt
-        '\x1b[8~': Keys.End,  # xrvt
-        '\x1b[Z': Keys.BackTab,  # shift + tab
-
-        '\x1bOP': Keys.F1,
-        '\x1bOQ': Keys.F2,
-        '\x1bOR': Keys.F3,
-        '\x1bOS': Keys.F4,
-        '\x1b[11~': Keys.F1,  # rxvt-unicode
-        '\x1b[12~': Keys.F2,  # rxvt-unicode
-        '\x1b[13~': Keys.F3,  # rxvt-unicode
-        '\x1b[14~': Keys.F4,  # rxvt-unicode
-        '\x1b[15~': Keys.F5,
-        '\x1b[17~': Keys.F6,
-        '\x1b[18~': Keys.F7,
-        '\x1b[19~': Keys.F8,
-        '\x1b[20~': Keys.F9,
-        '\x1b[21~': Keys.F10,
-        '\x1b[23~': Keys.F11,
-        '\x1b[24~': Keys.F12,
-        '\x1b[25~': Keys.F13,
-        '\x1b[26~': Keys.F14,
-        '\x1b[28~': Keys.F15,
-        '\x1b[29~': Keys.F16,
-        '\x1b[31~': Keys.F17,
-        '\x1b[32~': Keys.F18,
-        '\x1b[33~': Keys.F19,
-        '\x1b[34~': Keys.F20,
-        '\x1b[1;5A': Keys.ControlUp,     # Cursor Mode
-        '\x1b[1;5B': Keys.ControlDown,   # Cursor Mode
-        '\x1b[1;5C': Keys.ControlRight,  # Cursor Mode
-        '\x1b[1;5D': Keys.ControlLeft,   # Cursor Mode
-        '\x1bOA': Keys.ControlUp,       # Application Mode (tmux)
-        '\x1bOB': Keys.ControlDown,     # Application Mode (tmux)
-        '\x1bOC': Keys.ControlRight,    # Application Mode (tmux)
-        '\x1bOD': Keys.ControlLeft,     # Application Mode (tmux)
-
-        '\x1b[5A': Keys.ControlUp,
-        '\x1b[5B': Keys.ControlDown,
-        '\x1b[5C': Keys.ControlRight,
-        '\x1b[5D': Keys.ControlLeft,
-
-        # Meta + arrow keys. Several terminals handle this differently.
-        # The following sequences are for xterm and gnome-terminal.
-        #     (Iterm sends ESC followed by the normal arrow_up/down/left/right
-        #     sequences, and the OSX Terminal sends ESCb and ESCf for "alt
-        #     arrow_left" and "alt arrow_right." We don't handle these
-        #     explicitely, in here, because would could not distinguesh between
-        #     pressing ESC (to go to Vi navigation mode), followed by just the
-        #     'b' or 'f' key. These combinations are handled in
-        #     the input processor.)
-        '\x1b[1;3D': (Keys.Escape, Keys.Left),
-        '\x1b[1;3C': (Keys.Escape, Keys.Right),
-        '\x1b[1;3A': (Keys.Escape, Keys.Up),
-        '\x1b[1;3B': (Keys.Escape, Keys.Down),
-    }
-
     def __init__(self, feed_key_callback):
         assert callable(feed_key_callback)
 
@@ -183,30 +206,21 @@ class InputStream(object):
         self._input_parser = self._input_parser_generator()
         self._input_parser.send(None)
 
-    def _get_matches(self, prefix):
+    def _get_match(self, prefix):
         """
-        Return the keys that map to this prefix.
+        Return the key that maps to this prefix.
         """
         # (hard coded) If we match a CPR response, return Keys.CPRResponse.
-        # (This one doesn't fit in the mappings, because it contains
+        # (This one doesn't fit in the ANSI_SEQUENCES, because it contains
         # integer variables.)
         if _cpr_response_re.match(prefix):
-            return [Keys.CPRResponse]
+            return Keys.CPRResponse
 
         # Otherwise, use the mappings.
-        return [v for k, v in self.mappings.items() if k == prefix]
-
-    def _is_prefix_of_longer_match(self, prefix):
-        """
-        True when there is any key that start with this characters.
-        """
-        # (hard coded) If this could be a prefix of a CPR response, return
-        # True.
-        if _cpr_response_prefix_re.match(prefix):
-            return True
-
-        # If this could be a prefix of anything else, also return True.
-        return any(v for k, v in self.mappings.items() if k.startswith(prefix) and k != prefix)
+        try:
+            return ANSI_SEQUENCES[prefix]
+        except KeyError:
+            return None
 
     def _input_parser_generator(self):
         """
@@ -232,25 +246,25 @@ class InputStream(object):
 
             # If we have some data, check for matches.
             if prefix:
-                is_prefix_of_longer_match = self._is_prefix_of_longer_match(prefix)
-                matches = self._get_matches(prefix)
+                is_prefix_of_longer_match = _IS_PREFIX_OF_LONGER_MATCH_CACHE[prefix]
+                match = self._get_match(prefix)
 
                 # Exact matches found, call handlers..
-                if (flush or not is_prefix_of_longer_match) and matches:
-                    self._call_handler(matches[0], prefix)
+                if (flush or not is_prefix_of_longer_match) and match:
+                    self._call_handler(match, prefix)
                     prefix = ''
 
-                # No exact matches found.
-                elif (flush or not is_prefix_of_longer_match) and not matches:
+                # No exact match found.
+                elif (flush or not is_prefix_of_longer_match) and not match:
                     found = False
                     retry = True
 
                     # Loop over the input, try the longest match first and
                     # shift.
                     for i in range(len(prefix), 0, -1):
-                        matches = self._get_matches(prefix[:i])
-                        if matches:
-                            self._call_handler(matches[0], prefix[:i])
+                        match= self._get_match(prefix[:i])
+                        if match:
+                            self._call_handler(match, prefix[:i])
                             prefix = prefix[i:]
                             found = True
 
