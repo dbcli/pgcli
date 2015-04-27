@@ -582,8 +582,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
         #  See: :help motion.txt
         def decorator(func):
             if not no_move_handler:
-                @handle(*keys, filter=navigation_mode)
-                @handle(*keys, filter=selection_mode)
+                @handle(*keys, filter=navigation_mode|selection_mode)
                 def move(event):
                     """ Create move handler. """
                     region = func(event)
@@ -906,7 +905,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
             pos = len(b.document.text_after_cursor)
         return CursorRegion(pos)
 
-    @handle('z', 'z', filter=navigation_mode)
+    @handle('z', 'z', filter=navigation_mode|selection_mode)
     def _(event):
         """
         Center Window vertically around cursor.
