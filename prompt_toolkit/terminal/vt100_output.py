@@ -10,6 +10,10 @@ import six
 import termios
 import errno
 
+__all__ = (
+    'Vt100_Output',
+)
+
 
 # Global variable to keep the colour table in memory.
 _tf = Terminal256Formatter()
@@ -19,6 +23,25 @@ _tf = Terminal256Formatter()
 #: than required.)
 _DEBUG_RENDER_OUTPUT = False
 _DEBUG_RENDER_OUTPUT_FILENAME = '/tmp/prompt-toolkit-render-output'
+
+
+class _EscapeCodeCache(dict):
+    """
+    Cache for VT100 escape codes. It maps
+    (fgcolor, bgcolor, bold, underline) tuples to VT100 escape sequences.
+    """
+    def __missing__(self, key):
+        fgcolor, bgcolor, bold, underline = key
+
+        fg = _tf._color_index(fgcolor) if fgcolor else None
+        bg = _tf._color_index(bgcolor) if bgcolor else None
+
+        e = EscapeSequence(fg=fg, bg=bg, bold=bold, underline=underline).color_string()
+
+        self[key] = e
+        return e
+
+_ESCAPE_CODE_CACHE = _EscapeCodeCache()
 
 
 def _get_size(fileno):
@@ -101,13 +124,10 @@ class Vt100_Output(Output):
         """
         Create new style and output.
         """
-        fg = _tf._color_index(fgcolor) if fgcolor else None
-        bg = _tf._color_index(bgcolor) if bgcolor else None
-
-        e = EscapeSequence(fg=fg, bg=bg, bold=bold, underline=underline)
+        escape_code = _ESCAPE_CODE_CACHE[fgcolor, bgcolor, bold, underline]
 
         self.reset_attributes()
-        self.write(e.color_string())
+        self.write(escape_code)
 
     def disable_autowrap(self):
         self.write('\x1b[?7l')
