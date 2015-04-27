@@ -17,6 +17,23 @@ __all__ = (
 )
 
 
+class _StyleForTokenCache(dict):
+    """
+    A cache structure that maps Pygments Tokens to their style objects.
+    """
+    def __init__(self, style):
+        self.style = style
+
+    def __missing__(self, token):
+        try:
+            result = self.style.style_for_token(token)
+        except KeyError:
+            result = None
+
+        self[token] = result
+        return result
+
+
 def output_screen_diff(output, screen, current_pos, previous_screen=None, last_char=None,
                        is_done=False, style=None):  # XXX: drop is_done
     """
@@ -56,12 +73,7 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
 
         return new
 
-    def get_style_for_token(token):
-        """ Get style. """
-        try:
-            return style.style_for_token(token)
-        except KeyError:
-            return None
+    style_for_token = _StyleForTokenCache(style)
 
     def output_char(char):
         """
@@ -72,7 +84,7 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         if last_char[0] and last_char[0].token == char.token:
             write(char.char)
         else:
-            style = get_style_for_token(char.token)
+            style = style_for_token[char.token]
 
             if style:
                 output.set_attributes(style['color'], style['bgcolor'],
