@@ -36,12 +36,13 @@ def pgcli_bindings(vi_mode=False):
         _logger.debug('Detected F4 key.')
         key_binding_manager.enable_vi_mode = not key_binding_manager.enable_vi_mode
 
+    @key_binding_manager.registry.add_binding(Keys.Tab)
     @key_binding_manager.registry.add_binding(Keys.ControlSpace)
     def _(event):
         """
         Force autocompletion at cursor.
         """
-        _logger.debug('Detected <C-Space> key.')
+        _logger.debug('Detected <C-Space>/<Tab> key.')
         event.cli.current_buffer.complete_next()
 
     return key_binding_manager
