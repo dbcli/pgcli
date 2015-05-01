@@ -26,7 +26,7 @@ __all__ = (
 
 
 class TokenListToolbar(Window):
-    def __init__(self, get_tokens, default_char=None, filter=None):
+    def __init__(self, get_tokens, default_char=None, filter=Always()):
         super(TokenListToolbar, self).__init__(
             TokenListControl(get_tokens, default_char=default_char),
             height=LayoutDimension.exact(1),

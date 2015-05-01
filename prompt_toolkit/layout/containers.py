@@ -10,7 +10,7 @@ from abc import ABCMeta, abstractmethod
 from .screen import Point, WritePosition
 from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
 from .controls import UIControl
-from prompt_toolkit.filters import CLIFilter, Never
+from prompt_toolkit.filters import CLIFilter, Always, Never
 
 __all__ = (
     'HSplit',
@@ -518,7 +518,7 @@ class Window(Layout):
                           top part of the body is hidden.
     """
     def __init__(self, content, width=None, height=None, get_width=None,
-                 get_height=None, filter=None, dont_extend_width=False,
+                 get_height=None, filter=Always(), dont_extend_width=False,
                  dont_extend_height=False, scroll_offset=0, allow_scroll_beyond_bottom=Never()):
         assert isinstance(content, UIControl)
         assert width is None or isinstance(width, LayoutDimension)
@@ -527,7 +527,7 @@ class Window(Layout):
         assert get_height is None or callable(get_height)
         assert width is None or get_width is None
         assert height is None or get_height is None
-        assert filter is None or isinstance(filter, CLIFilter)
+        assert isinstance(filter, CLIFilter)
         assert isinstance(allow_scroll_beyond_bottom, CLIFilter)
 
         self.content = content
@@ -555,7 +555,7 @@ class Window(Layout):
         self.render_info = None
 
     def _visible(self, cli):
-        return self.filter is None or self.filter(cli)
+        return self.filter(cli)
 
     def width(self, cli):
         if self._visible(cli):
