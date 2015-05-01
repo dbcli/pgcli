@@ -737,12 +737,15 @@ def load_vi_bindings(registry, vi_state, filter=None):
         @change_delete_move_yank_handler('ai'[inner], ci_start, no_move_handler=True)
         @change_delete_move_yank_handler('ai'[inner], ci_end, no_move_handler=True)
         def _(event):
-            start = event.current_buffer.document.find_backwards(ci_start, in_current_line=True)
-            end = event.current_buffer.document.find(ci_end, in_current_line=True)
+            start = event.current_buffer.document.find_backwards(ci_start, in_current_line=False)
+            end = event.current_buffer.document.find(ci_end, in_current_line=False)
 
             if start is not None and end is not None:
                 offset = 0 if inner else 1
                 return CursorRegion(start + 1 - offset, end + offset)
+            else:
+                # Nothing found.
+                return CursorRegion(0)
 
     for inner in (False, True):
         for ci_start, ci_end in [('"', '"'), ("'", "'"), ("`", "`"),
