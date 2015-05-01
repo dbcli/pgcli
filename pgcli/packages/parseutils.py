@@ -151,6 +151,7 @@ def extract_tables(sql):
     stream = extract_from_part(parsed[0], stop_at_punctuation=insert_stmt)
     return list(extract_table_identifiers(stream))
 
+
 def find_prev_keyword(sql):
     """ Find the last sql keyword in an SQL statement
 
@@ -161,10 +162,26 @@ def find_prev_keyword(sql):
         return None, ''
 
     parsed = sqlparse.parse(sql)[0]
-    for t in reversed(list(parsed.flatten())):
-        if t.is_keyword or t.value == '(':
-            idx = parsed.token_index(t)
-            text = ''.join(tok.value for tok in parsed.tokens[:idx+1])
+    flattened = list(parsed.flatten())
+
+    trivial_keywords = ('AND', 'OR', 'NOT', 'BETWEEN')
+
+    for t in reversed(flattened):
+        if t.value == '(' or (t.is_keyword and (
+                              t.value.upper() not in trivial_keywords)):
+            # Find the location of token t in the original parsed statement
+            # We can't use parsed.token_index(t) because t may be a child token
+            # inside a TokenList, in which case token_index thows an error
+            # Minimal example:
+            #   p = sqlparse.parse('select * from foo where bar')
+            #   t = list(p.flatten())[-3]  # The "Where" token
+            #   p.token_index(t)  # Throws ValueError: not in list
+            idx = flattened.index(t)
+
+            # Combine the string values of all tokens in the original list
+            # up to and including the target keyword token t, to produce a
+            # query string with everything after the keyword token removed
+            text = ''.join(tok.value for tok in flattened[:idx+1])
             return t.value, text
 
     return None, ''
