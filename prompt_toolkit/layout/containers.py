@@ -10,6 +10,7 @@ from abc import ABCMeta, abstractmethod
 from .screen import Point, WritePosition
 from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
 from .controls import UIControl
+from prompt_toolkit.reactive import Integer
 from prompt_toolkit.filters import CLIFilter, Always, Never
 
 __all__ = (
@@ -528,6 +529,7 @@ class Window(Layout):
         assert width is None or get_width is None
         assert height is None or get_height is None
         assert isinstance(filter, CLIFilter)
+        assert isinstance(scroll_offset, Integer)
         assert isinstance(allow_scroll_beyond_bottom, CLIFilter)
 
         self.content = content
@@ -651,8 +653,8 @@ class Window(Layout):
         # Remember render info.
         self.render_info = WindowRenderInfo(temp_screen, self.vertical_scroll, height,
                                             new_screen.cursor_position,
-                                            self.scroll_offset,
-                                            applied_scroll_offsets[0], applied_scroll_offsets[1])
+                                            applied_scroll_offsets[0],
+                                            applied_scroll_offsets[1], applied_scroll_offsets[2])
 
     def _scroll(self, temp_screen, height, cli):
         """
@@ -660,11 +662,13 @@ class Window(Layout):
         requested scroll offset.
         Return the applied scroll offsets.
         """
+        scroll_offset = int(self.scroll_offset)  # Resolve int-value. (In case this is reactive.)
+
         # Calculate the scroll offset to apply.
         # This can obviously never be more than have the screen size. Also, when the
         # cursor appears at the top or bottom, we don't apply the offset.
-        scroll_offset_top = int(min(self.scroll_offset, height / 2, temp_screen.cursor_position.y))
-        scroll_offset_bottom = int(min(self.scroll_offset, height / 2,
+        scroll_offset_top = int(min(scroll_offset, height / 2, temp_screen.cursor_position.y))
+        scroll_offset_bottom = int(min(scroll_offset, height / 2,
                                        temp_screen.current_height - 1 - temp_screen.cursor_position.y))
 
         # Prevent negative scroll offsets.
@@ -688,7 +692,7 @@ class Window(Layout):
         scroll_offset_top = max(0, min(self.vertical_scroll, scroll_offset_top))
         scroll_offset_bottom = max(0, min(temp_screen.current_height - self.vertical_scroll - height, scroll_offset_bottom))
 
-        return scroll_offset_top, scroll_offset_bottom
+        return scroll_offset, scroll_offset_top, scroll_offset_bottom
 
     def walk(self):
         # Only yield self. A window doesn't have children.
