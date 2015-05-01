@@ -869,7 +869,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
     @change_delete_move_yank_handler('H')
     def _(event):
         """
-        Moves to the start of the visible region.
+        Moves to the start of the visible region. (Below the scroll offset.)
         Implements 'cH', 'dH', 'H'.
         """
         w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
@@ -878,7 +878,8 @@ def load_vi_bindings(registry, vi_state, filter=None):
         if w:
             # When we find a Window that has BufferControl showing this window,
             # move to the start of the visible area.
-            pos = (b.document.translate_row_col_to_index(w.render_info.first_visible_line, 0) -
+            pos = (b.document.translate_row_col_to_index(
+                       w.render_info.first_visible_line(after_scroll_offset=True), 0) -
                    b.cursor_position)
 
         else:
@@ -889,7 +890,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
     @change_delete_move_yank_handler('L')
     def _(event):
         """
-        Moves to the end of the visible region.
+        Moves to the end of the visible region. (Above the scroll offset.)
         """
         w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
         b = event.current_buffer
@@ -897,7 +898,8 @@ def load_vi_bindings(registry, vi_state, filter=None):
         if w:
             # When we find a Window that has BufferControl showing this window,
             # move to the end of the visible area.
-            pos = (b.document.translate_row_col_to_index(w.render_info.last_visible_line, 0) -
+            pos = (b.document.translate_row_col_to_index(
+                       w.render_info.last_visible_line(before_scroll_offset=True), 0) -
                    b.cursor_position)
 
         else:
