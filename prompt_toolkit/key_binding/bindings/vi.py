@@ -574,6 +574,9 @@ def load_vi_bindings(registry, vi_state, filter=None):
         The decorated function should return a ``CursorRegion``.
         This decorator will create both the 'change', 'delete' and move variants,
         based on that ``CursorRegion``.
+
+        When there is nothing selected yet, this will also handle the "visual"
+        binding. E.g. 'viw' should select the current word.
         """
         no_move_handler = kw.pop('no_move_handler', False)
 
@@ -619,6 +622,19 @@ def load_vi_bindings(registry, vi_state, filter=None):
 
                 if substring:
                     event.cli.clipboard.set_text(substring)
+
+            @handle('v', *keys, filter=navigation_mode)
+            def visual_handler(event):
+                """ Create visual handler. """
+                region = func(event)
+                buffer = event.current_buffer
+
+                start, end = region.sorted()
+                end += buffer.cursor_position - 1
+
+                buffer.cursor_position += start
+                buffer.start_selection()
+                buffer.cursor_position = end
 
             def create(delete_only):
                 """ Create delete and change handlers. """
