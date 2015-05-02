@@ -964,7 +964,9 @@ def indent(buffer, from_row, to_row, count=1):
 
     # Apply transformation.
     new_text = buffer.transform_lines(line_range, lambda l: '    ' * count + l)
-    buffer.document = Document(new_text, buffer.document.translate_row_col_to_index(current_row, 0))
+    buffer.document = Document(
+        new_text,
+        Document(new_text).translate_row_col_to_index(current_row, 0))
 
     # Go to the start of the line.
     buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=True)
@@ -986,7 +988,9 @@ def unindent(buffer, from_row, to_row, count=1):
 
     # Apply transformation.
     new_text = buffer.transform_lines(line_range, transform)
-    buffer.document = Document(new_text, buffer.document.translate_row_col_to_index(current_row, 0))
+    buffer.document = Document(
+        new_text,
+        Document(new_text).translate_row_col_to_index(current_row, 0))
 
     # Go to the start of the line.
     buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=True)
