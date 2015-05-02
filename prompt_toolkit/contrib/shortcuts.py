@@ -89,7 +89,8 @@ def create_default_layout(message='', lexer=None, is_password=False,
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
 
     # Create processors list.
-    input_processors = [HighlightSearchProcessor(), HighlightSelectionProcessor()]
+    input_processors = [HighlightSearchProcessor(preview_search=Always()),
+                        HighlightSelectionProcessor()]
     if is_password:
         input_processors.extend([PasswordProcessor(), DefaultPrompt(message)])
     else:
