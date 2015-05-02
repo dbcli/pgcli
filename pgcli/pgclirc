@@ -29,7 +29,7 @@ table_format = psql
 # Syntax Style. Possible values: manni, igor, xcode, vim, autumn, vs, rrt,
 # native, perldoc, borland, tango, emacs, friendly, monokai, paraiso-dark,
 # colorful, murphy, bw, pastie, paraiso-light, trac, default, fruity
-syntax_style = native
+syntax_style = default
 
 # Enables vi-mode
 vi = False
