@@ -398,7 +398,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
         event.cli.clipboard.set_text(text)
 
     @handle('x', filter=selection_mode)
-    @handle('d', 'd', filter=selection_mode)
+    @handle('d', filter=selection_mode)
     def _(event):
         """
         Cut selection.
