@@ -2,7 +2,6 @@ from __future__ import print_function
 import sys
 import sqlparse
 from sqlparse.sql import Comparison, Identifier
-from sqlparse.tokens import Keyword
 from .parseutils import last_word, extract_tables, find_prev_keyword
 from .pgspecial import parse_special_command
 
@@ -185,7 +184,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         else:
             return [{'type': 'column', 'tables': extract_tables(full_text)},
                     {'type': 'function', 'schema': []}]
-    elif (token_v.endswith('join') and token.ttype in Keyword) or (token_v in
+    elif (token_v.endswith('join') and token.is_keyword) or (token_v in
             ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
         schema = (identifier and identifier.get_parent_name()) or []
 
