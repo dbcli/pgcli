@@ -21,6 +21,9 @@ default_style_extensions = {
     # Highlighting of select text in document.
     Token.SelectedText:                           '#ffffff bg:#666666',
 
+    # Highlighting of matching brackets.
+    Token.MatchingBracket:                        'bg:#aaaaff #000000',
+
     # Line numbers.
     Token.LineNumber:                             '#888888',
 
