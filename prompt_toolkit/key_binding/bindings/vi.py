@@ -298,8 +298,14 @@ def load_vi_bindings(registry, vi_state, filter=None):
 
     @handle('J', filter=navigation_mode)
     def _(event):
+        """ Join lines. """
         for i in range(event.arg):
             event.current_buffer.join_next_line()
+
+    @handle('J', filter=selection_mode)
+    def _(event):
+        """ Join selected lines. """
+        event.current_buffer.join_selected_lines()
 
     @handle('n', filter=navigation_mode)
     def _(event):  # XXX: use `change_delete_move_yank_handler` and implement 'arg'

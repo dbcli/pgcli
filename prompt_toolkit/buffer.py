@@ -465,6 +465,26 @@ class Buffer(object):
             self.text = (self.document.text_before_cursor + ' ' +
                          self.document.text_after_cursor.lstrip(' '))
 
+    def join_selected_lines(self):
+        """
+        Join the selected lines.
+        """
+        assert self.selection_state
+
+        # Get lines.
+        from_, to = self.document.selection_range()
+
+        before = self.text[:from_]
+        lines = self.text[from_:to].splitlines()
+        after = self.text[to:]
+
+        # Replace leading spaces with just one space.
+        lines = [l.lstrip(' ') + ' ' for l in lines]
+
+        # Set new document.
+        self.document = Document(text=before + ''.join(lines) + after,
+                                 cursor_position=len(before + ''.join(lines[:-1])) - 1)
+
     def swap_characters_before_cursor(self):
         """
         Swap the last two characters before the cursor.
