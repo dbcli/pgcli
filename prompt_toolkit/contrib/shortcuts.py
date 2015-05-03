@@ -82,15 +82,20 @@ def create_asyncio_eventloop(loop=None):
 
 
 def create_default_layout(message='', lexer=None, is_password=False,
-                          reserve_space_for_menu=False, get_bottom_toolbar_tokens=None):
+                          reserve_space_for_menu=False, get_bottom_toolbar_tokens=None,
+                          extra_input_processors=None):
     """
     Generate default layout.
     """
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
 
     # Create processors list.
+    # (DefaultPrompt should always be at the end.)
     input_processors = [HighlightSearchProcessor(preview_search=Always()),
                         HighlightSelectionProcessor()]
+    if extra_input_processors:
+        input_processors.extend(extra_input_processors)
+
     if is_password:
         input_processors.extend([PasswordProcessor(), DefaultPrompt(message)])
     else:
