@@ -457,8 +457,13 @@ class Buffer(object):
         Join the next line to the current one by deleting the line ending after
         the current line.
         """
-        self.cursor_position += self.document.get_end_of_line_position()
-        self.delete()
+        if not self.document.on_last_line:
+            self.cursor_position += self.document.get_end_of_line_position()
+            self.delete()
+
+            # Remove spaces.
+            self.text = (self.document.text_before_cursor + ' ' +
+                         self.document.text_after_cursor.lstrip(' '))
 
     def swap_characters_before_cursor(self):
         """

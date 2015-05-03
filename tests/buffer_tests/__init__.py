@@ -77,7 +77,7 @@ class BufferTest(unittest.TestCase):
         self.buffer.cursor_up()
         self.buffer.join_next_line()
 
-        self.assertEqual(self.buffer.text, 'line1\nline2line3')
+        self.assertEqual(self.buffer.text, 'line1\nline2 line3')
 
         # Test when there is no '\n' in the text
         self.buffer.reset()

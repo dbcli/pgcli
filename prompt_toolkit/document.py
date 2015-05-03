@@ -132,6 +132,20 @@ class Document(object):
             return ''
 
     @property
+    def on_first_line(self):
+        """
+        True when we are at the first line.
+        """
+        return self.cursor_position_row == 0
+
+    @property
+    def on_last_line(self):
+        """
+        True when we are at the last line.
+        """
+        return self.cursor_position_row == self.line_count - 1
+
+    @property
     def cursor_position_row(self):
         """
         Current row. (0-based.)
