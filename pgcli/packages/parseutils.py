@@ -164,11 +164,11 @@ def find_prev_keyword(sql):
     parsed = sqlparse.parse(sql)[0]
     flattened = list(parsed.flatten())
 
-    trivial_keywords = ('AND', 'OR', 'NOT', 'BETWEEN')
+    logical_operators = ('AND', 'OR', 'NOT', 'BETWEEN')
 
     for t in reversed(flattened):
         if t.value == '(' or (t.is_keyword and (
-                              t.value.upper() not in trivial_keywords)):
+                              t.value.upper() not in logical_operators)):
             # Find the location of token t in the original parsed statement
             # We can't use parsed.token_index(t) because t may be a child token
             # inside a TokenList, in which case token_index thows an error

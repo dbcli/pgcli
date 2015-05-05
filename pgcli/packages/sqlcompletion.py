@@ -190,9 +190,9 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
                 # Technically, we should suggest columns AND keywords, as
                 # per case 4. However, IN is different from ANY, SOME, ALL
                 # in that it can accept a *list* of columns, or a subquery.
-                # Because of the way lists of columns are reduced in this
-                # function, "SELECT * FROM foo WHERE bar IN (baz, qux, " would
-                # also suggest keywords, which is kinda gross.
+                # But suggesting keywords for , "SELECT * FROM foo WHERE bar IN
+                # (baz, qux, " would be overwhelming. So we special case 'IN'
+                # to not suggest keywords.
                 return column_suggestions
             else:
                 return column_suggestions
