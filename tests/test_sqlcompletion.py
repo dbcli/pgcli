@@ -331,3 +331,26 @@ def test_handle_pre_completion_comma_gracefully(text):
     suggestions = suggest_type(text, text)
 
     assert iter(suggestions)
+
+
+@pytest.mark.parametrize('prefix', ['add', 'as', 'in', 'is', 'row', 'to',])
+def test_second_column_with_keyword_prefix_is_legal(prefix):
+    text = 'select 1, {0}'.format(prefix)
+    suggestions = suggest_type(text, text)
+
+    assert suggestions == \
+        [{'tables': [], 'type': 'column'}, {'schema': [], 'type': 'function'}]
+
+
+def test_as_can_create_column_alias():
+    text = 'select 1 as solo,'
+    suggestions = suggest_type(text, text)
+
+    assert iter(suggestions)
+
+
+def test_as_can_create_cte_alias():
+    text = 'with f as (SELECT 1'
+    suggestions = suggest_type(text, text)
+
+    assert iter(suggestions)
