@@ -151,6 +151,30 @@ def extract_tables(sql):
     stream = extract_from_part(parsed[0], stop_at_punctuation=insert_stmt)
     return list(extract_table_identifiers(stream))
 
+
+def is_free_keyword(token):
+    """Does this token represent a keyword that is not part of an identifier?
+
+    For example, in the fragment `SELECT 1, in`, `SELECT` is a free keyword but
+    `in` is not since it appears as part of an identifier (the column list).
+
+    `AS` is never considered to be a free keyword, nor are any tokens that are
+    not keywords (that is, for which `token.is_keyword` is False).
+
+    Returns True if `token` represents a keyword outside of an identifier,
+    False otherwise.
+
+    """
+
+    # sqlparse doesn't set the AS keyword's parent for some reason, so checking
+    # token.within() doesn't work. Since AS always appears within an identifier
+    # we treat it as a special case.
+    if token.value.upper() == 'AS':
+        return False
+    else:
+        return token.is_keyword and not token.within(IdentifierList)
+
+
 def find_prev_keyword(sql):
     """ Find the last sql keyword in an SQL statement
 
@@ -162,7 +186,7 @@ def find_prev_keyword(sql):
 
     parsed = sqlparse.parse(sql)[0]
     for t in reversed(list(parsed.flatten())):
-        if t.is_keyword or t.value == '(':
+        if is_free_keyword(t) or t.value == '(':
             idx = parsed.token_index(t)
             text = ''.join(tok.value for tok in parsed.tokens[:idx+1])
             return t.value, text
