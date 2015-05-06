@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.eventloop.base import EventLoop
-from prompt_toolkit.filters import IsDone, HasFocus, Always, Never
+from prompt_toolkit.filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown
 from prompt_toolkit.history import History
 from prompt_toolkit.interface import CommandLineInterface, AbortAction, AcceptAction
 from prompt_toolkit.key_binding.manager import KeyBindingManager
@@ -80,12 +80,12 @@ def create_asyncio_eventloop(loop=None):
     return AsyncioEventLoop(loop)
 
 
-
 def create_default_layout(message='', lexer=None, is_password=False,
                           reserve_space_for_menu=False, get_bottom_toolbar_tokens=None,
                           extra_input_processors=None):
     """
     Generate default layout.
+    Returns a ``Layout`` instance.
     """
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
 
@@ -106,7 +106,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
         toolbars = [Window(TokenListControl(get_bottom_toolbar_tokens,
                                             default_char=Char(' ', Token.Toolbar)),
                            height=LayoutDimension.exact(1),
-                           filter=~IsDone())]
+                           filter=~IsDone() & RendererHeightIsKnown())]
     else:
         toolbars = []
 
