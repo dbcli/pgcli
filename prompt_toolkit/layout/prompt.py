@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from pygments.token import Token
+from six import text_type
 
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER
 
@@ -16,9 +17,33 @@ class DefaultPrompt(Processor):
     """
     Default prompt. This one shows the 'arg' and reverse search like
     Bash/readline normally do.
+
+    There are two ways to instantiate a ``DefaultPrompt``. For a prompt
+    with a static message, do for instance::
+
+        prompt = DefaultPrompt.from_message('prompt> ')
+
+    For a dynamic prompt, generated from a token list function::
+
+        def get_tokens(cli):
+            return [(Token.A, 'text'), (Token.B, 'text2')]
+
+        prompt = DefaultPrompt(get_tokens)
     """
-    def __init__(self, prompt='> '):
-        self.prompt = prompt
+    def __init__(self, get_tokens):
+        assert callable(get_tokens)
+        self.get_tokens = get_tokens
+
+    @classmethod
+    def from_message(cls, message='> '):
+        """
+        Create a default prompt with a static message text.
+        """
+        assert isinstance(message, text_type)
+
+        def get_message_tokens(cli):
+            return [(Token.Prompt, message)]
+        return cls(get_message_tokens)
 
     def run(self, cli, buffer, tokens):
         # Get text before cursor.
@@ -29,7 +54,7 @@ class DefaultPrompt(Processor):
             before = _get_arg_tokens(cli)
 
         else:
-            before = [(Token.Prompt, self.prompt)]
+            before = self.get_tokens(cli)
 
         # Insert before buffer text.
         shift_position = token_list_len(before)

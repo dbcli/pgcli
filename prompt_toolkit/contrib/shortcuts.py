@@ -97,9 +97,9 @@ def create_default_layout(message='', lexer=None, is_password=False,
         input_processors.extend(extra_input_processors)
 
     if is_password:
-        input_processors.extend([PasswordProcessor(), DefaultPrompt(message)])
+        input_processors.extend([PasswordProcessor(), DefaultPrompt.from_message(message)])
     else:
-        input_processors.append(DefaultPrompt(message))
+        input_processors.append(DefaultPrompt.from_message(message))
 
     # Create bottom toolbar.
     if get_bottom_toolbar_tokens:
