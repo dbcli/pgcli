@@ -21,7 +21,7 @@ class ExampleApplication(TelnetApplication):
         Return the new CommandLineInterface to be used for an incoming
         connection.
         """
-        animal_completer = WordCompleter([ 'alligator', 'ant',])
+        animal_completer = WordCompleter(['alligator', 'ant'])
         return create_cli(eventloop,
                           message='Say something: ',
                           lexer=HtmlLexer,
@@ -30,9 +30,7 @@ class ExampleApplication(TelnetApplication):
     def client_connected(self, telnet_connection):
         # When a client is connected, erase the screen from the client and say
         # Hello.
-        telnet_connection.vt100_output.erase_screen()
-        telnet_connection.vt100_output.cursor_goto(0, 0)
-
+        telnet_connection.erase_screen()
         telnet_connection.send('Welcome!\n')
 
     def handle_command(self, telnet_connection, document):

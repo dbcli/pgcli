@@ -98,6 +98,8 @@ class TelnetConnection(object):
         self.addr = addr
         self.application = application
         self.closed = False
+        self.handling_command = False
+        self.server = server
         self.encoding = encoding
 
         # Create "Output" object.
@@ -114,6 +116,9 @@ class TelnetConnection(object):
 
         # Create an eventloop (adaptor) for the CommandLineInterface.
         eventloop = _TelnetEventLoopInterface(server)
+
+        # Call client_connected
+        application.client_connected(self)
 
         # Create CommandLineInterface instance.
         self.cli = application.create_cli(eventloop, self)
@@ -149,9 +154,6 @@ class TelnetConnection(object):
 
         self.parser = TelnetProtocolParser(data_received, size_received)
 
-        # Call client_connected
-        application.client_connected(self)
-
         # Render again.
         self.cli._redraw()
 
@@ -177,15 +179,42 @@ class TelnetConnection(object):
                 return
 
             # Handle CLI command
-            logger.info('Handle command %r', return_value)
-            self.application.handle_command(self, return_value)
+            self._handle_command(return_value)
+
+    def _handle_command(self, command):
+        """
+        Handle command. This will run in a separate thread, in order not
+        to block the event loop.
+        """
+        logger.info('Handle command %r', command)
+
+        def in_executor():
+            self.handling_command = True
+            try:
+                self.application.handle_command(self, command)
+            finally:
+                self.server.call_from_executor(done)
+
+        def done():
+            self.handling_command = False
 
             # Reset state and draw again. (If the connection is still open --
             # the application could have called TelnetConnection.close()
             if not self.closed:
                 self.cli.reset()
                 self.cli.buffers[DEFAULT_BUFFER].reset()
+                self.cli.renderer.request_absolute_cursor_position()
                 self.cli._redraw()
+
+        self.server.run_in_executor(in_executor)
+
+    def erase_screen(self):
+        """
+        Erase output screen.
+        """
+        self.vt100_output.erase_screen()
+        self.vt100_output.cursor_goto(0, 0)
+        self.vt100_output.flush()
 
     def send(self, data):
         """
@@ -295,10 +324,13 @@ class TelnetServer(object):
                 # Removed closed connections.
                 self.connections = {c for c in self.connections if not c.closed}
 
+                # Ignore connections handling commands.
+                connections = { c for c in self.connections if not c.handling_command}
+
                 # Wait for next event.
                 read_list = (
                     [listen_socket, self._schedule_pipe[0]] +
-                    [c.conn for c in self.connections])
+                    [c.conn for c in connections])
 
                 read, _, _ = select.select(read_list, [], [])
 

@@ -16,18 +16,18 @@ class TelnetApplication(with_metaclass(ABCMeta, object)):
     An instance of this class has to be passed to `TelnetServer`.
     """
     @abstractmethod
+    def client_connected(self, telnet_connection):
+        """
+        Called when a new client was connected.
+        """
+
+    @abstractmethod
     def create_cli(self, telnet_connection):
         """
         Return a new CommandLineInterface instance from here. This method is
         called for every new connection.
 
         Hint: Use the following shortcut: `prompt_toolkit.shortcuts.create_cli`
-        """
-
-    @abstractmethod
-    def client_connected(self, telnet_connection):
-        """
-        Called when a new client was connected.
         """
 
     @abstractmethod
