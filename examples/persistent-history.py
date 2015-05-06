@@ -4,6 +4,7 @@ Simple example of a CLI that keeps a persistent history of all the entered
 strings in a file. When you run this script for a second time, pressing
 arrow-up will go back in history.
 """
+from __future__ import unicode_literals
 from prompt_toolkit.contrib.shortcuts import get_input
 from prompt_toolkit.history import FileHistory
 

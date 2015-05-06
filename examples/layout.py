@@ -2,6 +2,7 @@
 """
 Simple example of a layout with a horizontal split.
 """
+from __future__ import unicode_literals
 from prompt_toolkit import CommandLineInterface
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.completion import Completion, Completer
@@ -14,7 +15,7 @@ from prompt_toolkit.layout.dimension import LayoutDimension
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.processors import AfterInput
 from prompt_toolkit.layout.prompt import DefaultPrompt
-from prompt_toolkit.layout.toolbars  import SystemToolbar, ArgToolbar, CompletionsToolbar, SearchToolbar
+from prompt_toolkit.layout.toolbars import SystemToolbar, ArgToolbar, CompletionsToolbar, SearchToolbar
 
 from pygments.style import Style
 from pygments.styles.default import DefaultStyle

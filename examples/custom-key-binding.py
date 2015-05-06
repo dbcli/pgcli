@@ -2,6 +2,7 @@
 """
 Example of adding a custom key binding to a prompt.
 """
+from __future__ import unicode_literals
 from prompt_toolkit.contrib.shortcuts import get_input
 from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.keys import Keys
