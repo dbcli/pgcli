@@ -5,7 +5,7 @@ Simple example of input validation.
 from __future__ import unicode_literals
 
 from prompt_toolkit.validation import Validator, ValidationError
-from prompt_toolkit.contrib.shortcuts import get_input
+from prompt_toolkit.shortcuts import get_input
 
 
 class EmailValidator(Validator):

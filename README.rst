@@ -83,7 +83,7 @@ The most simple example of the library would look like this:
 
 .. code:: python
 
-    from prompt_toolkit.contrib.shortcuts import get_input
+    from prompt_toolkit.shortcuts import get_input
 
     if __name__ == '__main__':
         answer = get_input('Give me some input: ')

@@ -3,7 +3,7 @@
 Simple example showing a bottom toolbar.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.contrib.shortcuts import get_input
+from prompt_toolkit.shortcuts import get_input
 from pygments.token import Token
 from pygments.style import Style
 

@@ -19,7 +19,7 @@ possible. ::
 """
 from __future__ import unicode_literals
 from prompt_toolkit import AbortAction
-from prompt_toolkit.contrib.shortcuts import create_cli, create_asyncio_eventloop
+from prompt_toolkit.shortcuts import create_cli, create_asyncio_eventloop
 
 from pygments.style import Style
 from pygments.token import Token

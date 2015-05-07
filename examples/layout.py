@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from prompt_toolkit import CommandLineInterface
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.completion import Completion, Completer
-from prompt_toolkit.contrib.shortcuts import create_eventloop
+from prompt_toolkit.shortcuts import create_eventloop
 from prompt_toolkit.filters import Always
 from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.layout import Window, VSplit, HSplit, Float, FloatContainer

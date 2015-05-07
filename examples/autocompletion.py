@@ -10,7 +10,7 @@ Press [Tab] to complete the current word.
 from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.contrib.shortcuts import get_input
+from prompt_toolkit.shortcuts import get_input
 
 
 animal_completer = WordCompleter([

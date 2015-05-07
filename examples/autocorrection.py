@@ -6,7 +6,7 @@ The word "impotr" will be corrected when the user types a space afterwards.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.key_binding.manager import KeyBindingManager
-from prompt_toolkit.contrib.shortcuts import get_input
+from prompt_toolkit.shortcuts import get_input
 
 # Database of words to be replaced by typing.
 corrections = {

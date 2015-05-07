@@ -22,7 +22,7 @@ Let's get started!
 
    .. code:: python
 
-       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.shortcuts import get_input
 
        def main():
            text = get_input("> ")
@@ -40,7 +40,7 @@ Let's get started!
 
    .. code:: python
 
-       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.shortcuts import get_input
        from prompt_toolkit.history import History
 
        def main():
@@ -67,7 +67,7 @@ Let's get started!
 
    .. code:: python
 
-       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.shortcuts import get_input
        from prompt_toolkit.history import History
        from pygments.lexers import SqlLexer
 
@@ -97,7 +97,7 @@ Let's get started!
 
    .. code:: python
 
-       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.shortcuts import get_input
        from prompt_toolkit.history import History
        from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
@@ -131,7 +131,7 @@ Let's get started!
 
    .. code:: python
 
-       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.shortcuts import get_input
        from prompt_toolkit.history import History
        from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
@@ -180,7 +180,7 @@ Let's get started!
        import sys
        import sqlite3
 
-       from prompt_toolkit.contrib.shortcuts import get_input
+       from prompt_toolkit.shortcuts import get_input
        from prompt_toolkit.history import History
        from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer

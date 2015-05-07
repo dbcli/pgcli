@@ -2,9 +2,9 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.contrib.shortcuts import create_cli
 from prompt_toolkit.contrib.telnet.application import TelnetApplication
 from prompt_toolkit.contrib.telnet.server import TelnetServer
+from prompt_toolkit.shortcuts import create_cli
 
 from pygments.lexers import HtmlLexer
 
