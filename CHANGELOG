@@ -1,6 +1,28 @@
 CHANGELOG
 =========
 
+0.35: 2015-05-07
+----------------
+
+New features:
+- WORD parameter for WordCompleter.
+- DefaultPrompt.from_message constructor.
+- Added reactive.py for simple integer data binding.
+- Implemented scroll_offset and scroll_beyond_bottom for Window.
+- Some performance improvements.
+
+Bug fixes:
+- Handling of relative path in PathCompleter.
+- unicode_literals for all examples.
+- Visibility of bottom toolbar in create_default_layout shortcut.
+- Correctly handle 'J' vi key binding.
+- Fix in indent/unindent.
+- Better Vi bindings in visual mode.
+
+Backwards incompatible changes:
+- Moved prompt_toolkit.contrib.shortcuts to prompt_toolkit.shortcuts.
+- Refactoring of contrib.telnet.
+
 0.34: 2015-04-26
 ----------------
 
