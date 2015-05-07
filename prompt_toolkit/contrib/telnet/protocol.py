@@ -113,6 +113,8 @@ class TelnetProtocolParser(object):
         Got negotiate data.
         """
         command, bytes = data[0], data[1:]
+        command = int2byte(command)
+
         if command == NAWS:
             self.naws(bytes)
         else:
