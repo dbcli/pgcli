@@ -35,15 +35,22 @@ class PathCompleter(Completer):
     def get_completions(self, document, complete_event):
         text = document.text_before_cursor
 
-        # Complete only when we have at least the  minimal input length,
+        # Complete only when we have at least the minimal input length,
         # otherwise, we can too many results and autocompletion will become too
         # heavy.
         if len(text) < self.min_input_len:
             return
 
         try:
+            # Directories where to look.
             dirname = os.path.dirname(text)
-            directories = [os.path.dirname(text)] if dirname else self.get_paths()
+            if dirname:
+                directories = [os.path.dirname(os.path.join(p, text))
+                               for p in self.get_paths()]
+            else:
+                directories = self.get_paths()
+
+            # Start of current file.
             prefix = os.path.basename(text)
 
             # Get all filenames.
