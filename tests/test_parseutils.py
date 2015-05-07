@@ -88,3 +88,12 @@ def test_find_prev_keyword_using():
     q = 'select * from tbl1 inner join tbl2 using (col1, '
     kw, q2 = find_prev_keyword(q)
     assert kw == '(' and q2 == 'select * from tbl1 inner join tbl2 using ('
+
+@pytest.mark.parametrize('sql', [
+    'select * from foo where bar',
+    'select * from foo where bar = 1 and baz or ',
+    'select * from foo where bar = 1 and baz between qux and ',
+])
+def test_find_prev_keyword_where(sql):
+    kw, stripped = find_prev_keyword(sql)
+    assert kw == 'where' and stripped == 'select * from foo where'

@@ -17,12 +17,42 @@ def test_select_suggests_cols_with_qualified_table_scope():
             {'type': 'column', 'tables': [('sch', 'tabl', None)]},
             {'type': 'function', 'schema': []}])
 
-def test_where_suggests_columns_functions():
-    suggestions = suggest_type('SELECT * FROM tabl WHERE ',
-            'SELECT * FROM tabl WHERE ')
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM tabl WHERE ',
+    'SELECT * FROM tabl WHERE (',
+    'SELECT * FROM tabl WHERE foo = ',
+    'SELECT * FROM tabl WHERE bar OR ',
+    'SELECT * FROM tabl WHERE foo = 1 AND ',
+    'SELECT * FROM tabl WHERE (bar > 10 AND ',
+    'SELECT * FROM tabl WHERE (bar AND (baz OR (qux AND (',
+    'SELECT * FROM tabl WHERE 10 < ',
+    'SELECT * FROM tabl WHERE foo BETWEEN ',
+    'SELECT * FROM tabl WHERE foo BETWEEN foo AND ',
+])
+def test_where_suggests_columns_functions(expression):
+    suggestions = suggest_type(expression, expression)
     assert sorted_dicts(suggestions) == sorted_dicts([
             {'type': 'column', 'tables': [(None, 'tabl', None)]},
             {'type': 'function', 'schema': []}])
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM tabl WHERE foo IN (',
+    'SELECT * FROM tabl WHERE foo IN (bar, ',
+])
+def test_where_in_suggests_columns(expression):
+    suggestions = suggest_type(expression, expression)
+    assert sorted_dicts(suggestions) == sorted_dicts([
+            {'type': 'column', 'tables': [(None, 'tabl', None)]},
+            {'type': 'function', 'schema': []}])
+
+def test_where_equals_any_suggests_columns_or_keywords():
+    text = 'SELECT * FROM tabl WHERE foo = ANY('
+    suggestions = suggest_type(text, text)
+    assert sorted_dicts(suggestions) == sorted_dicts([
+            {'type': 'column', 'tables': [(None, 'tabl', None)]},
+            {'type': 'function', 'schema': []},
+            {'type': 'keyword'}])
 
 def test_lparen_suggests_cols():
     suggestion = suggest_type('SELECT MAX( FROM tbl', 'SELECT MAX(')
@@ -145,17 +175,40 @@ def test_dot_col_comma_suggests_cols_or_schema_qualified_table():
         {'type': 'view', 'schema': 't2'},
         {'type': 'function', 'schema': 't2'}])
 
-def test_sub_select_suggests_keyword():
-    suggestion = suggest_type('SELECT * FROM (', 'SELECT * FROM (')
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM (',
+    'SELECT * FROM foo WHERE EXISTS (',
+    'SELECT * FROM foo WHERE bar AND NOT EXISTS (',
+])
+def test_sub_select_suggests_keyword(expression):
+    suggestion = suggest_type(expression, expression)
     assert suggestion == [{'type': 'keyword'}]
 
-def test_sub_select_partial_text_suggests_keyword():
-    suggestion = suggest_type('SELECT * FROM (S', 'SELECT * FROM (S')
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM (S',
+    'SELECT * FROM foo WHERE EXISTS (S',
+    'SELECT * FROM foo WHERE bar AND NOT EXISTS (S',
+])
+def test_sub_select_partial_text_suggests_keyword(expression):
+    suggestion = suggest_type(expression, expression)
     assert suggestion == [{'type': 'keyword'}]
 
-def test_sub_select_table_name_completion():
-    suggestion = suggest_type('SELECT * FROM (SELECT * FROM ',
-            'SELECT * FROM (SELECT * FROM ')
+def test_outer_table_reference_in_exists_subquery_suggests_columns():
+    q = 'SELECT * FROM foo f WHERE EXISTS (SELECT 1 FROM bar WHERE f.'
+    suggestions = suggest_type(q, q)
+    assert suggestions == [
+        {'type': 'column', 'tables': [(None, 'foo', 'f')]},
+        {'type': 'table', 'schema': 'f'},
+        {'type': 'view', 'schema': 'f'},
+        {'type': 'function', 'schema': 'f'}]
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM (SELECT * FROM ',
+    'SELECT * FROM foo WHERE EXISTS (SELECT * FROM ',
+    'SELECT * FROM foo WHERE bar AND NOT EXISTS (SELECT * FROM ',
+])
+def test_sub_select_table_name_completion(expression):
+    suggestion = suggest_type(expression, expression)
     assert sorted_dicts(suggestion) == sorted_dicts([
         {'type': 'table', 'schema': []},
         {'type': 'view', 'schema': []},

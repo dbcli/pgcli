@@ -1,8 +1,7 @@
 from __future__ import print_function
 import sys
 import sqlparse
-from sqlparse.sql import Comparison, Identifier
-from sqlparse.tokens import Keyword
+from sqlparse.sql import Comparison, Identifier, Where
 from .parseutils import last_word, extract_tables, find_prev_keyword
 from .pgspecial import parse_special_command
 
@@ -135,22 +134,68 @@ def suggest_special(text):
 def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier):
     if isinstance(token, string_types):
         token_v = token.lower()
-    else:
+    elif isinstance(token, Comparison):
         # If 'token' is a Comparison type such as
         # 'select * FROM abc a JOIN def d ON a.id = d.'. Then calling
         # token.value on the comparison type will only return the lhs of the
         # comparison. In this case a.id. So we need to do token.tokens to get
         # both sides of the comparison and pick the last token out of that
         # list.
-        if isinstance(token, Comparison):
-            token_v = token.tokens[-1].value.lower()
-        else:
-            token_v = token.value.lower()
+        token_v = token.tokens[-1].value.lower()
+    elif isinstance(token, Where):
+        # sqlparse groups all tokens from the where clause into a single token
+        # list. This means that token.value may be something like
+        # 'where foo > 5 and '. We need to look "inside" token.tokens to handle
+        # suggestions in complicated where clauses correctly
+        prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
+        return suggest_based_on_last_token(prev_keyword, text_before_cursor,
+                                           full_text, identifier)
+    else:
+        token_v = token.value.lower()
 
     if not token:
         return [{'type': 'keyword'}, {'type': 'special'}]
     elif token_v.endswith('('):
         p = sqlparse.parse(text_before_cursor)[0]
+
+        if p.tokens and isinstance(p.tokens[-1], Where):
+            # Four possibilities:
+            #  1 - Parenthesized clause like "WHERE foo AND ("
+            #        Suggest columns/functions
+            #  2 - Function call like "WHERE foo("
+            #        Suggest columns/functions
+            #  3 - Subquery expression like "WHERE EXISTS ("
+            #        Suggest keywords, in order to do a subquery
+            #  4 - Subquery OR array comparison like "WHERE foo = ANY("
+            #        Suggest columns/functions AND keywords. (If we wanted to be
+            #        really fancy, we could suggest only array-typed columns)
+
+            column_suggestions = suggest_based_on_last_token('where',
+                                    text_before_cursor, full_text, identifier)
+
+            # Check for a subquery expression (cases 3 & 4)
+            where = p.tokens[-1]
+            prev_tok = where.token_prev(len(where.tokens) - 1)
+
+            if isinstance(prev_tok, Comparison):
+                # e.g. "SELECT foo FROM bar WHERE foo = ANY("
+                prev_tok = prev_tok.tokens[-1]
+
+            prev_tok = prev_tok.value.lower()
+            if prev_tok == 'exists':
+                return [{'type': 'keyword'}]
+            elif prev_tok in ('any', 'some', 'all'):
+                return column_suggestions + [{'type': 'keyword'}]
+            elif prev_tok == 'in':
+                # Technically, we should suggest columns AND keywords, as
+                # per case 4. However, IN is different from ANY, SOME, ALL
+                # in that it can accept a *list* of columns, or a subquery.
+                # But suggesting keywords for , "SELECT * FROM foo WHERE bar IN
+                # (baz, qux, " would be overwhelming. So we special case 'IN'
+                # to not suggest keywords.
+                return column_suggestions
+            else:
+                return column_suggestions
 
         # Get the token before the parens
         prev_tok = p.token_prev(len(p.tokens) - 1)
@@ -185,7 +230,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         else:
             return [{'type': 'column', 'tables': extract_tables(full_text)},
                     {'type': 'function', 'schema': []}]
-    elif (token_v.endswith('join') and token.ttype in Keyword) or (token_v in
+    elif (token_v.endswith('join') and token.is_keyword) or (token_v in
             ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
         schema = (identifier and identifier.get_parent_name()) or []
 
