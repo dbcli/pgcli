@@ -16,22 +16,20 @@ logging.getLogger().setLevel(logging.INFO)
 
 
 class ExampleApplication(TelnetApplication):
-    def create_cli(self, eventloop, telnet_connection):
-        """
-        Return the new CommandLineInterface to be used for an incoming
-        connection.
-        """
-        animal_completer = WordCompleter(['alligator', 'ant'])
-        return create_cli(eventloop,
-                          message='Say something: ',
-                          lexer=HtmlLexer,
-                          completer=animal_completer)
-
     def client_connected(self, telnet_connection):
         # When a client is connected, erase the screen from the client and say
         # Hello.
         telnet_connection.erase_screen()
         telnet_connection.send('Welcome!\n')
+
+        # Set CommandLineInterface.
+        animal_completer = WordCompleter(['alligator', 'ant'])
+        telnet_connection.set_cli(
+            create_cli(telnet_connection.eventloop,
+                       message='Say something: ',
+                       lexer=HtmlLexer,
+                       completer=animal_completer),
+            self.handle_command)
 
     def handle_command(self, telnet_connection, document):
         # When the client enters a command, just reply.

@@ -19,21 +19,10 @@ class TelnetApplication(with_metaclass(ABCMeta, object)):
     def client_connected(self, telnet_connection):
         """
         Called when a new client was connected.
-        """
 
-    @abstractmethod
-    def create_cli(self, telnet_connection):
-        """
-        Return a new CommandLineInterface instance from here. This method is
-        called for every new connection.
-
+        Probably you want to call `telnet_connection.set_cli` here to set a
+        the CommandLineInterface instance to be used.
         Hint: Use the following shortcut: `prompt_toolkit.shortcuts.create_cli`
-        """
-
-    @abstractmethod
-    def handle_command(self, telnet_connection, document):
-        """
-        Called when the user accepted input on the command line.
         """
 
     @abstractmethod

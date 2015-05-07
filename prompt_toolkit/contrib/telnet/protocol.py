@@ -112,11 +112,11 @@ class TelnetProtocolParser(object):
         """
         Got negotiate data.
         """
-        command, bytes = data[0], data[1:]
-        command = int2byte(command)
+        command, payload = data[0:1], data[1:]
+        assert isinstance(command, bytes)
 
         if command == NAWS:
-            self.naws(bytes)
+            self.naws(payload)
         else:
             logger.info('Negotiate (%r got bytes)', len(data))
 

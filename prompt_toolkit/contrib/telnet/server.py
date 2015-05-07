@@ -4,9 +4,10 @@ Telnet server.
 Example usage::
 
     class MyTelnetApplication(TelnetApplication):
-        def create_cli(self, eventloop, telnet_connection):
-            # Create simple prompt.
-            return create_cli(eventloop, message='$ ')
+        def client_connected(self, telnet_connection):
+            # Set CLI with simple prompt.
+            telnet_connection.set_cli(
+                telnet_connection.create_cli(...))
 
         def handle_command(self, telnet_connection, document):
             # When the client enters a command, just reply.
@@ -31,6 +32,7 @@ from codecs import getincrementaldecoder
 
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.eventloop.base import EventLoop
+from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.layout.screen import Size
 from prompt_toolkit.renderer import Renderer
 from prompt_toolkit.terminal.vt100_input import InputStream
@@ -98,9 +100,10 @@ class TelnetConnection(object):
         self.addr = addr
         self.application = application
         self.closed = False
-        self.handling_command = False
+        self.handling_command = True
         self.server = server
         self.encoding = encoding
+        self.callback = None  # Function that handles the CLI result.
 
         # Create "Output" object.
         self.size = Size(rows=40, columns=79)
@@ -115,36 +118,66 @@ class TelnetConnection(object):
         self.vt100_output = Vt100_Output(self.stdout, get_size)
 
         # Create an eventloop (adaptor) for the CommandLineInterface.
-        eventloop = _TelnetEventLoopInterface(server)
+        self.eventloop = _TelnetEventLoopInterface(server)
+
+        # Set default CommandLineInterface.
+        self.set_cli(self.create_cli())
 
         # Call client_connected
         application.client_connected(self)
 
-        # Create CommandLineInterface instance.
-        self.cli = application.create_cli(eventloop, self)
+        # Draw for the first time.
+        self.handling_command = False
+        self.cli._redraw()
 
-        # Replace the renderer by a renderer that outputs over the telnet
-        # connection.
-        self.cli.renderer = Renderer(output=self.vt100_output)
+    def create_cli(self, *a, **kw):
+        """
+        Create a `CommandLineInterface` instance. But use a
+        renderer that outputs over the telnet connection, and use
+        the eventloop of the telnet server.
 
-        # Input decoder for stdin. (Required when working with multibyte
-        # characters, like chinese input.)
-        stdin_decoder_cls = getincrementaldecoder(encoding)
-        self._stdin_decoder = stdin_decoder_cls()
+        All parameters are send to ``CommandLineInterface.__init__``.
+        """
+        kw['renderer'] = Renderer(output=self.vt100_output)
+        return CommandLineInterface(self.eventloop, *a, **kw)
+
+    def set_cli(self, cli, callback=None):
+        """
+        Set ``CommandLineInterface`` instance for this connection.
+        (This can be replaced any time.)
+
+        :param cli: CommandLineInterface instance.
+        :param callback: Callable that takes the result of the CLI.
+        """
+        assert isinstance(cli, CommandLineInterface)
+        assert callback is None or callable(callback)
+
+        self.cli = cli
+        self.callback = callback
+
+        # Replace the eventloop and renderer to integrate with the
+        # telnet server.
+        cli.eventloop = self.eventloop
+        cli.renderer = Renderer(output=self.vt100_output)
 
         # Create a parser, and parser callbacks.
         cb = self.cli.create_eventloop_callbacks()
         inputstream = InputStream(cb.feed_key)
+
+        # Input decoder for stdin. (Required when working with multibyte
+        # characters, like chinese input.)
+        stdin_decoder_cls = getincrementaldecoder(self.encoding)
+        stdin_decoder = [stdin_decoder_cls()]  # nonlocal
 
         def data_received(data):
             """ TelnetProtocolParser 'data_received' callback """
             assert isinstance(data, binary_type)
 
             try:
-                result = self._stdin_decoder.decode(data)
+                result = stdin_decoder[0].decode(data)
                 inputstream.feed(result)
             except UnicodeDecodeError:
-                self._stdin_decoder = stdin_decoder_cls()
+                stdin_decoder[0] = stdin_decoder_cls()
                 return ''
 
         def size_received(rows, columns):
@@ -153,9 +186,6 @@ class TelnetConnection(object):
             cb.terminal_size_changed()
 
         self.parser = TelnetProtocolParser(data_received, size_received)
-
-        # Render again.
-        self.cli._redraw()
 
     def feed(self, data):
         """
@@ -191,7 +221,8 @@ class TelnetConnection(object):
         def in_executor():
             self.handling_command = True
             try:
-                self.application.handle_command(self, command)
+                if self.callback is not None:
+                    self.callback(self, command)
             finally:
                 self.server.call_from_executor(done)
 
@@ -204,6 +235,7 @@ class TelnetConnection(object):
                 self.cli.reset()
                 self.cli.buffers[DEFAULT_BUFFER].reset()
                 self.cli.renderer.request_absolute_cursor_position()
+                self.vt100_output.flush()
                 self.cli._redraw()
 
         self.server.run_in_executor(in_executor)
