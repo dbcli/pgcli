@@ -40,7 +40,7 @@ class PGCompleter(Completer):
                  'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP', 'UCASE']
 
     def __init__(self, smart_completion=True):
-        super(self.__class__, self).__init__()
+        super(PGCompleter, self).__init__()
         self.smart_completion = smart_completion
         self.reserved_words = set()
         for x in self.keywords:

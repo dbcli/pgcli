@@ -6,7 +6,7 @@ class PGToolbar(Toolbar):
     def __init__(self, key_binding_manager, token=None):
         self.key_binding_manager = key_binding_manager
         token = token or Token.Toolbar.Status
-        super(self.__class__, self).__init__(token=token)
+        super(PGToolbar, self).__init__(token=token)
 
     def get_tokens(self, cli, width):
         result = TokenList()
