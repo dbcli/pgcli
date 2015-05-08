@@ -37,11 +37,11 @@ def last_word(text, include='alphanum_underscore'):
     ''
     >>> last_word('bac $def')
     'def'
-    >>> last_word('bac $def', True)
+    >>> last_word('bac $def', include='most_punctuations')
     '$def'
-    >>> last_word('bac \def', True)
+    >>> last_word('bac \def', include='most_punctuations')
     '\\\\def'
-    >>> last_word('bac \def;', True)
+    >>> last_word('bac \def;', include='most_punctuations')
     '\\\\def;'
     """
 
