@@ -39,6 +39,7 @@ from prompt_toolkit.layout.screen import Char
 from prompt_toolkit.layout.toolbars import ValidationToolbar, SystemToolbar
 
 from pygments.token import Token
+from six import text_type
 
 import sys
 
@@ -81,25 +82,43 @@ def create_asyncio_eventloop(loop=None):
 
 
 def create_default_layout(message='', lexer=None, is_password=False,
-                          reserve_space_for_menu=False, get_bottom_toolbar_tokens=None,
+                          reserve_space_for_menu=False,
+                          get_prompt_tokens=None, get_bottom_toolbar_tokens=None,
                           extra_input_processors=None):
     """
     Generate default layout.
     Returns a ``Layout`` instance.
+
+    :param message: Text to be used as prompt.
+    :param lexer: Pygments lexer to be used for the highlighting.
+    :param is_password: When True, display input as '*'.
+    :param reserve_space_for_menu: When True, make sure that a minimal height is
+        allocated in the terminal, in order to display the completion menu.
+    :param get_prompt_tokens: An optional callable that returns the tokens to be
+        shown in the menu. (To be used instead of a `message`.)
+    :param get_bottom_toolbar_tokens: An optional callable that returns the
+        tokens for a toolbar at the bottom.
     """
+    assert isinstance(message, text_type)
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
+    assert get_prompt_tokens is None or callable(get_prompt_tokens)
+    assert not (message and get_prompt_tokens)
 
     # Create processors list.
     # (DefaultPrompt should always be at the end.)
     input_processors = [HighlightSearchProcessor(preview_search=Always()),
                         HighlightSelectionProcessor()]
+
+    if is_password:
+        input_processors.append(PasswordProcessor())
+
     if extra_input_processors:
         input_processors.extend(extra_input_processors)
 
-    if is_password:
-        input_processors.extend([PasswordProcessor(), DefaultPrompt.from_message(message)])
-    else:
+    if message:
         input_processors.append(DefaultPrompt.from_message(message))
+    else:
+        input_processors.append(DefaultPrompt(get_prompt_tokens))
 
     # Create bottom toolbar.
     if get_bottom_toolbar_tokens:
@@ -153,6 +172,7 @@ def create_cli(eventloop, message='',
                completer=None,
                style=None,
                history=None,
+               get_prompt_tokens=None,
                get_bottom_toolbar_tokens=None,
                extra_input_processors=None,
                key_bindings_registry=None,
@@ -181,6 +201,7 @@ def create_cli(eventloop, message='',
         eventloop=eventloop,
         layout=create_default_layout(message=message, lexer=lexer, is_password=is_password,
                                      reserve_space_for_menu=(completer is not None),
+                                     get_prompt_tokens=get_prompt_tokens,
                                      get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
                                      extra_input_processors=extra_input_processors),
         buffer=Buffer(
