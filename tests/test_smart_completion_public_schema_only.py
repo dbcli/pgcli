@@ -354,3 +354,15 @@ def test_auto_escaped_col_names(completer, complete_event):
         Completion(text='custom_func1', start_position=0),
         Completion(text='custom_func2', start_position=0)] +
         list(map(Completion, completer.functions)))
+
+
+@pytest.mark.parametrize('text', [
+    'SELECT 1::DOU',
+    'CREATE TABLE foo (bar DOU',
+    'CREATE FUNCTION foo (bar INT, baz DOU',
+])
+def test_suggest_datatype(text, completer, complete_event):
+    pos = len(text)
+    result = completer.get_completions(
+        Document(text=text, cursor_position=pos), complete_event)
+    assert result == [Completion(text='DOUBLE PRECISION', start_position=-3)]

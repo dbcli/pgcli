@@ -39,6 +39,9 @@ class PGCompleter(Completer):
     functions = ['AVG', 'COUNT', 'FIRST', 'FORMAT', 'LAST', 'LCASE', 'LEN',
                  'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP', 'UCASE']
 
+    datatypes = ['BIGINT', 'BOOLEAN', 'CHAR', 'DATE', 'DOUBLE PRECISION', 'INT',
+                 'INTEGER', 'NUMERIC', 'REAL', 'TEXT', 'VARCHAR']
+
     def __init__(self, smart_completion=True):
         super(PGCompleter, self).__init__()
         self.smart_completion = smart_completion
@@ -288,6 +291,11 @@ class PGCompleter(Completer):
                                             self.special_commands,
                                             start_only=True)
                 completions.extend(special)
+
+            elif suggestion['type'] == 'datatype':
+                datatypes = self.find_matches(word_before_cursor,
+                                              self.datatypes, start_only=True)
+                completions.extend(datatypes)
 
         return completions
 
