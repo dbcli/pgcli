@@ -28,9 +28,9 @@ default_style_extensions = {
     Token.LineNumber:                             '#888888',
 
     # Default prompt.
-    Token.Prompt:                                 '',
-    Token.Prompt.Arg:                             '',
-    Token.Prompt.Search:                          '',
+    Token.Prompt:                                 'bold',
+    Token.Prompt.Arg:                             'noinherit',
+    Token.Prompt.Search:                          'noinherit',
     Token.Prompt.Search.Text:                     'bold',
 
     # Search toolbar.
