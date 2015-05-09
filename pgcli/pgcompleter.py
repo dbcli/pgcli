@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 import logging
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type

@@ -10,13 +10,15 @@ from time import time
 
 import click
 import sqlparse
-from prompt_toolkit import CommandLineInterface, AbortAction, Exit
+from prompt_toolkit import CommandLineInterface, AbortAction
+from prompt_toolkit.shortcuts import create_default_layout, create_eventloop
 from prompt_toolkit.document import Document
-from prompt_toolkit.layout import Layout
+from prompt_toolkit.filters import Always
+from prompt_toolkit.layout.processors import HighlightMatchingBracketProcessor
 from prompt_toolkit.layout.prompt import DefaultPrompt
-from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.history import FileHistory
 from pygments.lexers.sql import PostgresLexer
+from pygments.token import Token
 
 from .packages.tabulate import tabulate
 from .packages.expanded import expanded_table
@@ -25,7 +27,7 @@ from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
 import pgcli.packages.pgspecial as pgspecial
 import pgcli.packages.iospecial as iospecial
 from .pgcompleter import PGCompleter
-from .pgtoolbar import PGToolbar
+from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
@@ -183,13 +185,12 @@ class PGCli(object):
                 raise RuntimeError(message)
             document = cli.read_input(
                 initial_document=Document(sql, cursor_position=len(sql)),
-                on_exit=AbortAction.RAISE_EXCEPTION)
+              )
             continue
         return document
 
     def run_cli(self):
         pgexecute = self.pgexecute
-        prompt = '%s> ' % pgexecute.dbname
         logger = self.logger
         original_less_opts = self.adjust_less_opts()
 
@@ -201,27 +202,36 @@ class PGCli(object):
         print('Mail: https://groups.google.com/forum/#!forum/pgcli')
         print('Home: http://pgcli.com')
 
-        layout = Layout(before_input=DefaultPrompt(prompt),
-            menus=[CompletionsMenu(max_height=10)],
-            lexer=PostgresLexer,
-            bottom_toolbars=[PGToolbar(key_binding_manager)])
+        def prompt_tokens(cli):
+            return [(Token.Prompt,  '%s> ' % pgexecute.dbname)]
+
+        get_toolbar_tokens = create_toolbar_tokens_func(key_binding_manager)
+        layout = create_default_layout(lexer=PostgresLexer,
+                                       reserve_space_for_menu=True,
+                                       get_prompt_tokens=prompt_tokens,
+                                       get_bottom_toolbar_tokens=get_toolbar_tokens,
+                                       extra_input_processors=[
+                                           HighlightMatchingBracketProcessor(),
+                                       ])
         buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
-                history=FileHistory(os.path.expanduser('~/.pgcli-history')))
-        cli = CommandLineInterface(style=style_factory(self.syntax_style),
+                history=FileHistory(os.path.expanduser('~/.pgcli-history')),
+                complete_while_typing=Always())
+        cli = CommandLineInterface(create_eventloop(),
+                style=style_factory(self.syntax_style),
                 layout=layout, buffer=buf,
-                key_bindings_registry=key_binding_manager.registry)
+                key_bindings_registry=key_binding_manager.registry,
+                on_exit=AbortAction.RAISE_EXCEPTION)
 
         try:
             while True:
-                cli.layout.before_input = DefaultPrompt(prompt)
-                document = cli.read_input(on_exit=AbortAction.RAISE_EXCEPTION)
+                document = cli.read_input()
 
                 # The reason we check here instead of inside the pgexecute is
                 # because we want to raise the Exit exception which will be
                 # caught by the try/except block that wraps the pgexecute.run()
                 # statement.
                 if quit_command(document.text):
-                    raise Exit
+                    raise EOFError
 
                 try:
                     document = self.handle_editor_command(cli, document)
@@ -319,7 +329,7 @@ class PGCli(object):
                 query = Query(document.text, successful, mutating)
                 self.query_history.append(query)
 
-        except Exit:
+        except EOFError:
             print ('Goodbye!')
         finally:  # Reset the less opts back to original.
             logger.debug('Restoring env var LESS to %r.', original_less_opts)

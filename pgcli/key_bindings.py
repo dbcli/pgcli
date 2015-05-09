@@ -42,7 +42,11 @@ def pgcli_bindings(vi_mode=False):
         Force autocompletion at cursor.
         """
         _logger.debug('Detected <Tab> key.')
-        event.cli.current_buffer.complete_next()
+        b = event.cli.current_buffer
+        if b.complete_state:
+            b.complete_next()
+        else:
+            event.cli.start_completion(select_first=True)
 
     @key_binding_manager.registry.add_binding(Keys.ControlSpace)
     def _(event):
@@ -55,6 +59,11 @@ def pgcli_bindings(vi_mode=False):
         If the menu is showing, select the next completion.
         """
         _logger.debug('Detected <C-Space> key.')
-        event.cli.current_buffer.complete_next(start_at_first=False)
+
+        b = event.cli.current_buffer
+        if b.complete_state:
+            b.complete_next()
+        else:
+            event.cli.start_completion(select_first=False)
 
     return key_binding_manager
