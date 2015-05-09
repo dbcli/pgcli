@@ -27,7 +27,7 @@ import threading
 import os
 import fcntl
 
-from six import int2byte, string_types, binary_type
+from six import int2byte, text_type, binary_type
 from codecs import getincrementaldecoder
 
 from prompt_toolkit.enums import DEFAULT_BUFFER
@@ -73,7 +73,7 @@ class _ConnectionStdout(object):
         self._buffer = []
 
     def write(self, data):
-        assert isinstance(data, string_types)
+        assert isinstance(data, text_type)
         self._buffer.append(data.encode(self._encoding))
         self.flush()
 
@@ -94,7 +94,7 @@ class TelnetConnection(object):
         assert isinstance(addr, tuple)  # (addr, port) tuple
         assert isinstance(application, TelnetApplication)
         assert isinstance(server, TelnetServer)
-        assert isinstance(encoding, string_types)  # e.g. 'utf-8'
+        assert isinstance(encoding, text_type)  # e.g. 'utf-8'
 
         self.conn = conn
         self.addr = addr
@@ -252,7 +252,7 @@ class TelnetConnection(object):
         """
         Send text to the client.
         """
-        assert isinstance(data, string_types)
+        assert isinstance(data, text_type)
 
         # When data is send back to the client, we should replace the line
         # endings. (We didn't allocate a real pseudo terminal, and the telnet
@@ -295,10 +295,10 @@ class TelnetServer(object):
     Telnet server implementation.
     """
     def __init__(self, host='127.0.0.1', port=23, application=None, encoding='utf-8'):
-        assert isinstance(host, string_types)
+        assert isinstance(host, text_type)
         assert isinstance(port, int)
         assert isinstance(application, TelnetApplication)
-        assert isinstance(encoding, string_types)
+        assert isinstance(encoding, text_type)
 
         self.host = host
         self.port = port
