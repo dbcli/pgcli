@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+0.36: 2015-05-09
+----------------
+
+New features:
+- Added get_prompt_tokens paramter to create_default_layout.
+- Show prompt in bold by default.
+
+Bug fixes:
+- Correct cache invalidation of DefaultPrompt.
+- Using text_type assertions in contrib.telnet.
+- Removed contrib.shortcuts completely. (The .pyc files still
+  appeared incorrectly in the wheel.)
+
 0.35: 2015-05-07
 ----------------
 
