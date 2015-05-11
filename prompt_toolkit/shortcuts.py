@@ -115,7 +115,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
     if extra_input_processors:
         input_processors.extend(extra_input_processors)
 
-    if message:
+    if get_prompt_tokens is None:
         input_processors.append(DefaultPrompt.from_message(message))
     else:
         input_processors.append(DefaultPrompt(get_prompt_tokens))
