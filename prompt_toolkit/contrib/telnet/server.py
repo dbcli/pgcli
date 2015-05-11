@@ -39,7 +39,7 @@ from prompt_toolkit.terminal.vt100_input import InputStream
 from prompt_toolkit.terminal.vt100_output import Vt100_Output
 
 from .log import logger
-from .protocol import IAC, DO, LINEMODE, SB, MODE, SE, WILL, ECHO, NAWS
+from .protocol import IAC, DO, LINEMODE, SB, MODE, SE, WILL, ECHO, NAWS, SUPPRESS_GO_AHEAD
 from .protocol import TelnetProtocolParser
 from .application import TelnetApplication
 
@@ -49,8 +49,14 @@ __all__ = (
 
 
 def _initialize_telnet(connection):
+    logger.info('Initializing telnet connection')
+
     # Iac Do Linemode
     connection.send(IAC + DO + LINEMODE)
+
+    # Suppress Go Ahead. (This seems important for Putty to do correct echoing.)
+    # This will allow bi-directional operation.
+    connection.send(IAC + WILL + SUPPRESS_GO_AHEAD)
 
     # Iac sb
     connection.send(IAC + SB + LINEMODE + MODE + int2byte(0) + IAC + SE)

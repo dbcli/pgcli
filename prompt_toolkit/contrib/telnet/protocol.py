@@ -31,6 +31,7 @@ SE       = int2byte(240)
 ECHO     = int2byte(1)
 NAWS     = int2byte(31)
 LINEMODE = int2byte(34)
+SUPPRESS_GO_AHEAD = int2byte(3)
 
 DM       = int2byte(242)
 BRK      = int2byte(243)
@@ -96,7 +97,7 @@ class TelnetProtocolParser(object):
             self.wont_received(data)
 
         else:
-            logger.info('command received %r %r', (command, data))
+            logger.info('command received %r %r', command, data)
 
     def naws(self, data):
         """
