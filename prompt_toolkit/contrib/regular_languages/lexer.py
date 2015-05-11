@@ -27,13 +27,14 @@ class GrammarLexer(object):
                    regular grammar to the lexers that should be used for this part.
                    (This can call other lexer classes recursively.)
     """
-    def __init__(self, compiled_grammar, tokens=None, lexers=None):
+    def __init__(self, compiled_grammar, tokens=None, default_token=None, lexers=None):
         assert isinstance(compiled_grammar, _CompiledGrammar)
         assert lexers is None or isinstance(lexers, dict)
         assert tokens is None or isinstance(tokens, dict)
 
         self.compiled_grammar = compiled_grammar
         self.tokens = tokens
+        self.default_token = default_token or Token
         self.lexers = dict((name, lexer(stripnl=False, stripall=False, ensurenl=False))
                            for name, lexer in (lexers or {}).items())
 
@@ -48,7 +49,7 @@ class GrammarLexer(object):
         m = self.compiled_grammar.match_prefix(text)
 
         if m:
-            characters = [[Token, c] for c in text]
+            characters = [[self.default_token, c] for c in text]
 
             for v in m.variables():
                 # If we have a Pygmenst lexer for this part of the input.
@@ -61,14 +62,21 @@ class GrammarLexer(object):
                     i = v.start
                     for t, s in lexer_tokens:
                         for c in s:
-                            if characters[i][0] == Token:
+                            if characters[i][0] == self.default_token:
                                 characters[i][0] = t
                             i += 1
 
                 elif token:
                     for i in range(v.start, v.stop):
-                        if characters[i][0] == Token:
+                        if characters[i][0] == self.default_token:
                             characters[i][0] = token
+
+            # Highlight trailing input.
+            trailing_input = m.trailing_input()
+            if trailing_input:
+                for i in range(trailing_input.start, trailing_input.stop):
+                    characters[i][0] = Token.TrailingInput
+
             return characters
         else:
             return [(Token, text)]

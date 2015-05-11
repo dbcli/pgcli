@@ -19,8 +19,8 @@ from prompt_toolkit.contrib.regular_languages.compiler import compile
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
 from prompt_toolkit.shortcuts import get_input
+from prompt_toolkit.styles import DefaultStyle
 
-from pygments.style import Style
 from pygments.token import Token
 
 import math
@@ -37,24 +37,15 @@ def create_grammar():
     """)
 
 
-class ExampleStyle(Style):
-    background_color = None
-    styles = {
-        Token.Placeholder: "#888888",
-        Token.Placeholder.Variable: "#888888",
-        Token.Placeholder.Bracket: "bold #ff7777",
-        Token.Placeholder.Separator: "#ee7777",
-        Token.Aborted:    '#aaaaaa',
-        Token.Prompt.BeforeInput: 'bold',
-
+class ExampleStyle(DefaultStyle):
+    styles = {}
+    styles.update(DefaultStyle.styles)
+    styles.update({
         Token.Operator:       '#33aa33 bold',
         Token.Number:         '#aa3333 bold',
 
-        Token.Menu.Completions.Completion.Current: 'bg:#00aaaa #000000',
-        Token.Menu.Completions.Completion:         'bg:#008888 #ffffff',
-        Token.Menu.Completions.ProgressButton:     'bg:#003333',
-        Token.Menu.Completions.ProgressBar:        'bg:#00aaaa',
-    }
+        Token.TrailingInput: 'bg:#662222 #ffffff',
+    })
 
 
 if __name__ == '__main__':

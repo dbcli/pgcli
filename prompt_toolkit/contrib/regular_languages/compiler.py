@@ -49,6 +49,12 @@ __all__ = (
 )
 
 
+# Name of the named group in the regex, matching trailing input.
+# (Trailing input is when the input contains characters after the end of the
+# expression has been matched.)
+_INVALID_TRAILING_INPUT = 'invalid_trailing'
+
+
 class _CompiledGrammar(object):
     """
     Compiles a grammar. This will take the parse tree of a regular expression
@@ -82,6 +88,13 @@ class _CompiledGrammar(object):
                            # still represent the start and end of input text.)
         self._re = re.compile(self._re_pattern, flags)
         self._re_prefix = [re.compile(t, flags) for t in self._re_prefix_patterns]
+
+        # We compile one more set of regexes, similar to `_re_prefix`, but accept any trailing
+        # input. This will ensure that we can still highlight the input correctly, even when the
+        # input contains some additional characters at the end that don't match the grammar.)
+        self._re_prefix_with_trailing_input = [
+            re.compile(r'(?:%s)(?P<%s>.*?)$' % (t.rstrip('$'), _INVALID_TRAILING_INPUT), flags)
+            for t in self._re_prefix_patterns]
 
     def escape(self, varname, value):
         """
@@ -235,11 +248,14 @@ class _CompiledGrammar(object):
 
         :param string: The input string.
         """
-        matches = [(r, r.match(string)) for r in self._re_prefix]
-        matches = [(r, m) for r, m in matches if m]
+        # First try to match using `_re_prefix`. If nothing is found, use the patterns that
+        # also accept trailing characters.
+        for patterns in [self._re_prefix, self._re_prefix_with_trailing_input]:
+            matches = [(r, r.match(string)) for r in patterns]
+            matches = [(r, m) for r, m in matches if m]
 
-        if matches != []:
-            return Match(string, matches, self._group_names_to_nodes, self.unescape_funcs)
+            if matches != []:
+                return Match(string, matches, self._group_names_to_nodes, self.unescape_funcs)
 
 
 class Match(object):
@@ -261,9 +277,10 @@ class Match(object):
         def get_tuples():
             for r, re_match in self._re_matches:
                 for group_name, group_index in r.groupindex.items():
-                    reg = re_match.regs[group_index]
-                    node = self._group_names_to_nodes[group_name]
-                    yield (node, reg)
+                    if group_name != _INVALID_TRAILING_INPUT:
+                        reg = re_match.regs[group_index]
+                        node = self._group_names_to_nodes[group_name]
+                        yield (node, reg)
 
         return list(get_tuples())
 
@@ -288,6 +305,27 @@ class Match(object):
         Returns :class:`Variables` instance.
         """
         return Variables([(k, self._unescape(k, v), sl) for k, v, sl in self._nodes_to_values()])
+
+    def trailing_input(self):
+        """
+        Get the `MatchVariable` instance, representing trailing input, if there is any.
+        "Trailing input" is input at the end that does not match the grammar anymore, but
+        when this is removed from the end of the input, the input would be a valid string.
+        """
+        slices = []
+
+        # Find all regex group for the name _INVALID_TRAILING_INPUT.
+        for r, re_match in self._re_matches:
+            for group_name, group_index in r.groupindex.items():
+                if group_name == _INVALID_TRAILING_INPUT:
+                    slices.append(re_match.regs[group_index])
+
+        # Take the smallest part. (Smaller trailing text means that a larger input has
+        # been matched, so that is better.)
+        if slices:
+            slice = [max(i[0] for i in slices), max(i[1] for i in slices)]
+            value = self.string[slice[0]:slice[1]]
+            return MatchVariable('<trailing_input>', value, slice)
 
     def end_nodes(self):
         """
