@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+0.37: 2015-05-11
+----------------
+
+New features:
+- Handling of trailing input in contrib.regular_languages.
+
+Bug fixes:
+- Default message in shortcuts.get_input.
+- Windows compatibility for contrib.telnet.
+- OS X bugfix in contrib.telnet.
+
 0.36: 2015-05-09
 ----------------
 
