@@ -71,6 +71,14 @@ def test_functions_query(executor):
     funcs = list(executor.functions())
     assert funcs == [('public', 'func1'), ('schema1', 'func2')]
 
+
+@dbtest
+def test_datatypes_query(executor):
+    run(executor, 'create type foo AS (a int, b text)')
+
+    types = list(executor.datatypes())
+    assert types == [('public', 'foo')]
+
 @dbtest
 def test_database_list(executor):
     databases = executor.databases()
