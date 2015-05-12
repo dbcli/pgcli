@@ -231,7 +231,7 @@ class _CompiledGrammar(object):
     def match(self, string):
         """
         Match the string with the grammar.
-        Returns a :class:`Match` instance.
+        Returns a :class:`Match` instance or `None` when the input doesn't match the grammar.
 
         :param string: The input string.
         """
@@ -244,7 +244,8 @@ class _CompiledGrammar(object):
         """
         Do a partial match of the string with the grammar. The returned
         :class:`Match` instance can contain multiple representations of the
-        match.
+        match. This will never return `None`. If it doesn't match at all, the "trailing input"
+        part will capture all of the input.
 
         :param string: The input string.
         """

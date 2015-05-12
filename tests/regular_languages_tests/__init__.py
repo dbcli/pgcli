@@ -68,10 +68,12 @@ class GrammarTest(unittest.TestCase):
         self.assertTrue(isinstance(m, Match))
 
         m = g.match_prefix('no-match')
-        self.assertEqual(m, None)
+        self.assertEqual(m.trailing_input().start, 0)
+        self.assertEqual(m.trailing_input().stop, len('no-match'))
 
-        m = g.match_prefix('ello')
-        self.assertEqual(m, None)
+        m = g.match_prefix('hellotest')
+        self.assertEqual(m.trailing_input().start, len('hello'))
+        self.assertEqual(m.trailing_input().stop, len('hellotest'))
 
     def test_completer(self):
         class completer1(Completer):
