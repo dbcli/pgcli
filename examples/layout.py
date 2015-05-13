@@ -88,7 +88,7 @@ def main():
             Window(content=BufferControl(lexer=PythonLexer,
                                          show_line_numbers=Always(),
                                          input_processors=[
-                                                DefaultPrompt('python> '),
+                                                DefaultPrompt.from_message('python> '),
                                                 AfterInput.static(' <python', token=Token.AfterInput),
                                          ]),
             ),
