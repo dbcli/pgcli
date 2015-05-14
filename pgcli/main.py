@@ -311,13 +311,17 @@ class PGCli(object):
                         print('Command Time:', duration)
                         print('Format Time:', total)
                 finally:
-                    for cur, _, _ in res:
-                        if hasattr(cur, 'close'):
-                            cur.close()
+                    # Ignore any errors thrown when consuming the generator
+                    # 'res'.
+                    try:
+                        for title, cur, _, _ in res:
+                            if hasattr(cur, 'close'):
+                                cur.close()
+                    except Exception:
+                        pass
 
                 # Refresh the table names and column names if necessary.
                 if need_completion_refresh(document.text):
-                    prompt = '%s> ' % pgexecute.dbname
                     self.refresh_completions()
 
                 # Refresh search_path to set default schema.
