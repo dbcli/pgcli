@@ -119,8 +119,7 @@ class PGCompleter(Completer):
             except AttributeError:
                 _logger.error('%r %r listed in unrecognized schema %r',
                               kind, relname, schema)
-
-        self.all_completions.update(t[1] for t in data)
+            self.all_completions.add(relname)
 
     def extend_columns(self, column_data, kind):
         """ extend column metadata
@@ -134,8 +133,7 @@ class PGCompleter(Completer):
         metadata = self.dbmetadata[kind]
         for schema, relname, column in column_data:
             metadata[schema][relname].append(column)
-
-        self.all_completions.update(t[2] for t in column_data)
+            self.all_completions.add(column)
 
     def extend_functions(self, func_data):
 
@@ -210,9 +208,9 @@ class PGCompleter(Completer):
                 scoped_cols = self.populate_scoped_cols(tables)
 
                 if suggestion.get('drop_unique'):
-                    # drop_unique is used for 'tb11 JOIN tbl2 USING (...'
-                    # which should suggest only columns that appear in more than
-                    # one table
+                    # drop_unique is used for 'tb11 JOIN tbl2 USING (...' which
+                    # should suggest only columns that appear in more than one
+                    # table
                     scoped_cols = [col for (col, count)
                                          in Counter(scoped_cols).items()
                                            if count > 1 and col != '*']
@@ -363,6 +361,3 @@ class PGCompleter(Completer):
                            for obj in metadata[schema].keys()]
 
         return objects
-
-
-
