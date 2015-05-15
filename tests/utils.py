@@ -9,7 +9,7 @@ POSTGRES_USER, POSTGRES_HOST = 'postgres', 'localhost'
 
 
 def db_connection(dbname=None):
-    conn = psycopg2.connect(user=POSTGRES_USER, host=POSTGRES_HOST, dbname=dbname)
+    conn = psycopg2.connect(user=POSTGRES_USER, host=POSTGRES_HOST, database=dbname)
     conn.autocommit = True
     return conn
 
