@@ -781,7 +781,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
                     if triggerpos >= 0:
                         tgdef = triggerpos + 9;
 
-                    status.append("    %s\n" % tgdef);
+                    status.append("    %s\n" % row[1][tgdef:])
 
     #/*
     #* Finish printing the footer information about a table.
