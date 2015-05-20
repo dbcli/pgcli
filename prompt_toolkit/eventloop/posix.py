@@ -93,11 +93,21 @@ class PosixEventLoop(EventLoop):
     def run_in_executor(self, callback):
         """
         Run a long running function in a background thread.
-        (This is recommended for code that could block the `read_input` event
-        loop.)
+        (This is recommended for code that could block the event loop.)
         Similar to Twisted's ``deferToThread``.
         """
-        threading.Thread(target=callback).start()
+        # Wait until the main thread is idle.
+        # We start the thread by using `call_from_executor`. The event loop
+        # favours processing input over `calls_from_executor`, so the thread
+        # will not start until there is no more input to process and the main
+        # thread becomes idle for an instant. This is good, because Python
+        # threading favours CPU over I/O -- an autocompletion thread in the
+        # background would cause a significantly slow down of the main thread.
+        # It is mostly noticable when pasting large portions of text while
+        # having real time autocompletion while typing on.
+        def start_executor():
+            threading.Thread(target=callback).start()
+        self.call_from_executor(start_executor)
 
     def call_from_executor(self, callback):
         """

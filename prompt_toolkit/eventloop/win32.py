@@ -44,18 +44,18 @@ class Win32EventLoop(EventLoop):
             handle = _wait_for_handles([self._event, self._console_input_reader.handle],
                                        current_timeout)
 
-            if handle == self._event:
-                # When the Windows Event has been trigger, process the messages in the queue.
-                windll.kernel32.ResetEvent(self._event)
-                self._process_queued_calls_from_executor()
-
-            elif handle == self._console_input_reader.handle:
+            if handle == self._console_input_reader.handle:
                 # When stdin is ready, read input and reset timeout timer.
                 keys = self._console_input_reader.read()
                 for k in keys:
                     callbacks.feed_key(k)
                 callbacks.redraw()
                 current_timeout = timeout
+
+            elif handle == self._event:
+                # When the Windows Event has been trigger, process the messages in the queue.
+                windll.kernel32.ResetEvent(self._event)
+                self._process_queued_calls_from_executor()
 
             else:
                 # Fire input timeout event.
@@ -74,11 +74,15 @@ class Win32EventLoop(EventLoop):
     def run_in_executor(self, callback):
         """
         Run a long running function in a background thread.
-        (This is recommended for code that could block the `read_input` event
-        loop.)
+        (This is recommended for code that could block the event loop.)
         Similar to Twisted's ``deferToThread``.
         """
-        threading.Thread(target=callback).start()
+        # Wait until the main thread is idle for an instant before starting the
+        # executor. (Like in eventloop/posix.py, we start the executor using
+        # `call_from_executor`.)
+        def start_executor():
+            threading.Thread(target=callback).start()
+        self.call_from_executor(start_executor)
 
     def call_from_executor(self, callback):
         """
