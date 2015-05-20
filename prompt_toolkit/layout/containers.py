@@ -463,6 +463,16 @@ class WindowRenderInfo(object):
 
         return 0
 
+    def center_visible_line(self, before_scroll_offset=False,
+            after_scroll_offset=False):
+        """
+        Like `first_visible_line`, but for the center visible line.
+        """
+        return (self.first_visible_line(after_scroll_offset) +
+                (self.last_visible_line(before_scroll_offset) -
+                    self.first_visible_line(after_scroll_offset))/2
+                )
+
     @property
     def full_height_visible(self):
         """

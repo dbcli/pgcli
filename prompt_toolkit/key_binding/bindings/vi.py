@@ -912,6 +912,27 @@ def load_vi_bindings(registry, vi_state, filter=None):
             pos = -len(b.document.text_before_cursor)
         return CursorRegion(pos)
 
+    @change_delete_move_yank_handler('M')
+    def _(event):
+        """
+        Moves cursor to the vertical center of the visible region.
+        Implements 'cM', 'dM', 'M'.
+        """
+        w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+        b = event.current_buffer
+
+        if w:
+            # When we find a Window that has BufferControl showing this window,
+            # move to the center of the visible area.
+            pos = (b.document.translate_row_col_to_index(
+                       w.render_info.center_visible_line(), 0) -
+                   b.cursor_position)
+
+        else:
+            # Otherwise, move to the start of the input.
+            pos = -len(b.document.text_before_cursor)
+        return CursorRegion(pos)
+
     @change_delete_move_yank_handler('L')
     def _(event):
         """
