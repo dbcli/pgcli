@@ -2,19 +2,28 @@ from __future__ import unicode_literals
 from ..filters import Always, CLIFilter
 from ..utils import EventHook
 
+from collections import defaultdict
+
 __all__ = (
     'Registry',
 )
 
 
 class _Binding(object):
-    def __init__(self, keys, callable, filter=None):
+    """
+    (Immutable binding class.)
+    """
+    def __init__(self, keys, handler, filter=None):
+        assert isinstance(keys, tuple)
+        assert callable(handler)
+        assert isinstance(filter, CLIFilter)
+
         self.keys = keys
-        self._callable = callable
+        self._handler = handler
         self.filter = filter
 
     def call(self, event):
-        return self._callable(event)
+        return self._handler(event)
 
     def __repr__(self):
         return '%s(keys=%r, callable=%r)' % (
@@ -36,6 +45,13 @@ class Registry(object):
     """
     def __init__(self):
         self.key_bindings = []
+
+        #: (tuple of keys) -> [list of bindings handling this sequence].
+        self._keys_to_bindings = defaultdict(list)
+
+        #: (tuple of keys) -> [list of bindings handling suffixes of this sequence].
+        self._keys_to_bindings_suffixes = defaultdict(list)
+
         self.onHandlerCalled = EventHook()
 
     def add_binding(self, *keys, **kwargs):
@@ -49,6 +65,34 @@ class Registry(object):
         assert isinstance(filter, CLIFilter), 'Expected Filter instance, got %r' % filter
 
         def decorator(func):
-            self.key_bindings.append(_Binding(keys, func, filter=filter))
+            binding = _Binding(keys, func, filter=filter)
+
+            self.key_bindings.append(binding)
+            self._keys_to_bindings[keys].append(binding)
+
+            for i in range(1, len(keys)):
+                self._keys_to_bindings_suffixes[keys[:i]].append(binding)
+
             return func
         return decorator
+
+    def get_bindings_for_keys(self, keys):
+        """
+        Return a list of key bindings that can handle this key.
+        (This return also inactive bindings, so the `filter` still has to be
+        called, for checking it.)
+
+        :param keys: tuple of keys.
+        """
+        return self._keys_to_bindings[keys]
+
+    def get_bindings_starting_with_keys(self, keys):
+        """
+        Return a list of key bindings that handle a key sequence starting with
+        `keys`. (It does only return bindings for which the sequences are
+        longer than `keys`. And like `get_bindings_for_keys`, it also includes
+        inactive bindings.)
+
+        :param keys: tuple of keys.
+        """
+        return self._keys_to_bindings_suffixes[keys]

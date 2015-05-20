@@ -80,17 +80,17 @@ class InputProcessor(object):
         that would handle this.
         """
         keys = tuple(k.key for k in key_presses)
-        bindings = self._registry.key_bindings
+        cli = self._cli_ref()
 
         # Try match, with mode flag
-        with_mode = [b for b in bindings if b.keys == keys and b.filter(self._cli_ref())]
+        with_mode = [b for b in self._registry.get_bindings_for_keys(keys) if b.filter(cli)]
         if with_mode:
             return with_mode
 
         # Try match, where the last key is replaced with 'Any', with mode.
         keys_any = tuple(keys[:-1] + (Keys.Any,))
 
-        with_mode_any = [b for b in bindings if b.keys == keys_any and b.filter(self._cli_ref())]
+        with_mode_any = [b for b in self._registry.get_bindings_for_keys(keys_any) if b.filter(cli)]
         if with_mode_any:
             return with_mode_any
 
@@ -101,16 +101,23 @@ class InputProcessor(object):
         For a list of :class:`KeyPress` instances. Return True if there is any
         handler that is bound to a suffix of this keys.
         """
-        keys = [k.key for k in key_presses]
+        keys = tuple(k.key for k in key_presses)
+        cli = self._cli_ref()
 
-        for b in self._registry.key_bindings:
-            if b.filter(self._cli_ref()):
-                if len(b.keys) > len(keys) and list(b.keys[:len(key_presses)]) == keys:
-                    return True
+        # Get the filters for all the key bindings that have a longer match.
+        # Note that we transform it into a `set`, because we don't care about
+        # the actual bindings and executing it more than once doesn't make
+        # sense. (Many key bindings share the same filter.)
+        filters = {b.filter for b in self._registry.get_bindings_starting_with_keys(keys)}
 
-        return False
+        # When any key binding is active, return True.
+        return any(f(cli) for f in filters)
 
     def _process(self):
+        """
+        Coroutine implementing the key match algorithm. Key strokes are sent
+        into this generator, and it calls the appropriate handlers.
+        """
         buffer = []
         retry = False
 
