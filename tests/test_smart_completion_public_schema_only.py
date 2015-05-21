@@ -10,7 +10,8 @@ metadata = {
                     'select': ['id', 'insert', 'ABC']},
                 'views': {
                     'user_emails': ['id', 'email']},
-                'functions': ['custom_func1', 'custom_func2']
+                'functions': ['custom_func1', 'custom_func2'],
+                'datatypes': ['custom_type1', 'custom_type2'],
             }
 
 @pytest.fixture
@@ -43,6 +44,10 @@ def completer():
     # functions
     functions = [('public', func) for func in metadata['functions']]
     comp.extend_functions(functions)
+
+    # types
+    datatypes = [('public', typ) for typ in metadata['datatypes']]
+    comp.extend_datatypes(datatypes)
 
     comp.set_search_path(['public'])
 
@@ -357,12 +362,25 @@ def test_auto_escaped_col_names(completer, complete_event):
 
 
 @pytest.mark.parametrize('text', [
-    'SELECT 1::DOU',
-    'CREATE TABLE foo (bar DOU',
-    'CREATE FUNCTION foo (bar INT, baz DOU',
+    'SELECT 1::',
+    'CREATE TABLE foo (bar ',
+    'CREATE FUNCTION foo (bar INT, baz ',
+    'ALTER TABLE foo ALTER COLUMN bar TYPE ',
 ])
 def test_suggest_datatype(text, completer, complete_event):
     pos = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event)
-    assert result == [Completion(text='DOUBLE PRECISION', start_position=-3)]
+    assert set(result) == set(
+        [Completion(t) for t in [
+            # Custom types
+            'custom_type1', 'custom_type2',
+
+            # Tables
+            'public', 'users', 'orders', '"select"',
+
+            # Built-in datatypes
+            ] + completer.datatypes
+        ])
+
+

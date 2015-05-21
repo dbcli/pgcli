@@ -306,8 +306,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
     elif token_v in ('type', '::'):
         #   ALTER TABLE foo SET DATA TYPE bar
         #   SELECT foo::bar
-        # Note that tables are a form of composite type in postgresql, so they
-        # are be suggested here as well
+        # Note that tables are a form of composite type in postgresql, so
+        # they're suggested here as well
         schema = (identifier and identifier.get_parent_name()) or []
         suggestions = [{'type': 'datatype', 'schema': schema},
                        {'type': 'table', 'schema': schema}]

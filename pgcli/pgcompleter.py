@@ -307,9 +307,17 @@ class PGCompleter(Completer):
                 completions.extend(special)
 
             elif suggestion['type'] == 'datatype':
-                datatypes = self.find_matches(word_before_cursor,
+                # suggest custom datatypes
+                types = self.populate_schema_objects(
+                    suggestion['schema'], 'datatypes')
+                types = self.find_matches(word_before_cursor, types)
+                completions.extend(types)
+
+                if not suggestion['schema']:
+                    # Also suggest hardcoded types
+                    types = self.find_matches(word_before_cursor,
                                               self.datatypes, start_only=True)
-                completions.extend(datatypes)
+                    completions.extend(types)
 
         return completions
 
