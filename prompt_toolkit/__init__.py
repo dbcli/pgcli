@@ -11,6 +11,7 @@ Description: prompt_toolkit is a Library for building powerful interactive
 See the examples directory to learn about the usage.
 
 Probably, to get started, you meight also want to have a lookt at
-`prompt_toolkit.contrib.shortcuts.get_input`.
+`prompt_toolkit.shortcuts.get_input`.
 """
-from .interface import AbortAction, CommandLineInterface
+from .interface import CommandLineInterface
+from .application import AbortAction, Application

@@ -18,8 +18,8 @@ possible. ::
     sys.stdout = cli.stdout_proxy()
 """
 from __future__ import unicode_literals
-from prompt_toolkit import AbortAction
-from prompt_toolkit.shortcuts import create_cli, create_asyncio_eventloop
+from prompt_toolkit.interface import CommandLineInterface
+from prompt_toolkit.shortcuts import create_default_application, create_asyncio_eventloop
 
 from pygments.style import Style
 from pygments.token import Token
@@ -29,12 +29,6 @@ import sys
 
 
 loop = asyncio.get_event_loop()
-
-
-class TestStyle(Style):
-    styles = {
-        Token.Prompt.BeforeInput: 'bg:#aa2266 #ffffff',
-    }
 
 
 @asyncio.coroutine
@@ -58,8 +52,10 @@ def interactive_shell():
     # asyncio loop that can be passed into prompt_toolkit.
     eventloop = create_asyncio_eventloop()
 
-    # Create interface. (style/layout is only for demonstration.)
-    cli = create_cli(eventloop, 'Say something inside the event loop: ')
+    # Create interface.
+    cli = CommandLineInterface(
+        application=create_default_application('Say something inside the event loop: '),
+        eventloop=eventloop)
 
     # Patch stdout in something that will always print *above* the prompt when
     # something is written to stdout.
@@ -68,8 +64,8 @@ def interactive_shell():
     # Run echo loop. Read text from stdin, and reply it back.
     while True:
         try:
-            result = yield from cli.read_input_async()
-            print('You said: "%s"' % result.text)
+            result = yield from cli.run_async()
+            print('You said: "%s"\n' % result.text)
         except (EOFError, KeyboardInterrupt):
             loop.stop()
             print('Qutting event loop. Bye.')

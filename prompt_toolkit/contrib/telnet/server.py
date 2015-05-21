@@ -6,8 +6,8 @@ Example usage::
     class MyTelnetApplication(TelnetApplication):
         def client_connected(self, telnet_connection):
             # Set CLI with simple prompt.
-            telnet_connection.set_cli(
-                telnet_connection.create_cli(...))
+            telnet_connection.set_application(
+                telnet_connection.create_default_application(...))
 
         def handle_command(self, telnet_connection, document):
             # When the client enters a command, just reply.
@@ -32,9 +32,9 @@ from codecs import getincrementaldecoder
 
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.eventloop.base import EventLoop
-from prompt_toolkit.interface import CommandLineInterface
+from prompt_toolkit.interface import CommandLineInterface, Application
 from prompt_toolkit.layout.screen import Size
-from prompt_toolkit.renderer import Renderer
+from prompt_toolkit.shortcuts import create_default_application
 from prompt_toolkit.terminal.vt100_input import InputStream
 from prompt_toolkit.terminal.vt100_output import Vt100_Output
 
@@ -127,7 +127,7 @@ class TelnetConnection(object):
         self.eventloop = _TelnetEventLoopInterface(server)
 
         # Set default CommandLineInterface.
-        self.set_cli(self.create_cli())
+        self.set_application(create_default_application())
 
         # Call client_connected
         application.client_connected(self)
@@ -136,18 +136,7 @@ class TelnetConnection(object):
         self.handling_command = False
         self.cli._redraw()
 
-    def create_cli(self, *a, **kw):
-        """
-        Create a `CommandLineInterface` instance. But use a
-        renderer that outputs over the telnet connection, and use
-        the eventloop of the telnet server.
-
-        All parameters are send to ``CommandLineInterface.__init__``.
-        """
-        kw['renderer'] = Renderer(output=self.vt100_output)
-        return CommandLineInterface(self.eventloop, *a, **kw)
-
-    def set_cli(self, cli, callback=None):
+    def set_application(self, app, callback=None):
         """
         Set ``CommandLineInterface`` instance for this connection.
         (This can be replaced any time.)
@@ -155,16 +144,14 @@ class TelnetConnection(object):
         :param cli: CommandLineInterface instance.
         :param callback: Callable that takes the result of the CLI.
         """
-        assert isinstance(cli, CommandLineInterface)
+        assert isinstance(app, Application)
         assert callback is None or callable(callback)
 
-        self.cli = cli
+        self.cli = CommandLineInterface(
+            application=app,
+            eventloop=self.eventloop,
+            output=self.vt100_output)
         self.callback = callback
-
-        # Replace the eventloop and renderer to integrate with the
-        # telnet server.
-        cli.eventloop = self.eventloop
-        cli.renderer = Renderer(output=self.vt100_output)
 
         # Create a parser, and parser callbacks.
         cb = self.cli.create_eventloop_callbacks()

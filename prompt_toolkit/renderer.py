@@ -4,16 +4,14 @@ Renders the command line on the console.
 """
 from __future__ import unicode_literals
 import sys
-from abc import ABCMeta, abstractmethod
-from six import with_metaclass
 
 from pygments.style import Style
 from pygments.token import Token
 from prompt_toolkit.layout.screen import Point, Screen, WritePosition
+from prompt_toolkit.output import Output
 
 __all__ = (
     'Renderer',
-    'Output',
 )
 
 
@@ -267,9 +265,12 @@ class Renderer(object):
         # Set the
         self._min_available_height = rows_below_cursor
 
-    def render(self, cli, layout, style=None):
+    def render(self, cli, layout, style=None, is_done=False):
         """
         Render the current interface to the output.
+
+        :param is_done: When True, put the cursor at the end of the interface. We
+                won't print any changes to this part.
         """
         style = style or Style
         output = self.output
@@ -289,7 +290,7 @@ class Renderer(object):
         size = output.get_size()
         screen = Screen(size.columns)
 
-        if cli.is_done:
+        if is_done:
             height = 0  # When we are done, we don't necessary want to fill up until the bottom.
         else:
             height = self._last_screen.current_height if self._last_screen else 0
@@ -314,7 +315,7 @@ class Renderer(object):
         # Process diff and write to output.
         self._cursor_pos, self._last_char = output_screen_diff(
             output, screen, self._cursor_pos,
-            self._last_screen, self._last_char, cli.is_done,
+            self._last_screen, self._last_char, is_done,
             style=style,
             )
         self._last_screen = screen
@@ -353,91 +354,3 @@ class Renderer(object):
         output.flush()
 
         self.request_absolute_cursor_position()
-
-
-class Output(with_metaclass(ABCMeta, object)):
-    """
-    Base class defining the Output interface for a renderer.
-    """
-    @abstractmethod
-    def write(self, data):
-        pass
-
-    @abstractmethod
-    def flush(self):
-        """
-        Write to output stream and flush.
-        """
-
-    @abstractmethod
-    def erase_screen(self):
-        """
-        Erases the screen with the background colour and moves the cursor to
-        home.
-        """
-
-    @abstractmethod
-    def enter_alternate_screen(self):
-        pass
-
-    @abstractmethod
-    def quit_alternate_screen(self):
-        pass
-
-    @abstractmethod
-    def erase_end_of_line(self):
-        """
-        Erases from the current cursor position to the end of the current line.
-        """
-
-    @abstractmethod
-    def erase_down(self):
-        """
-        Erases the screen from the current line down to the bottom of the
-        screen.
-        """
-
-    @abstractmethod
-    def reset_attributes(self):
-        pass
-
-    @abstractmethod
-    def set_attributes(self, fgcolor=None, bgcolor=None, bold=False, underline=False):
-        """
-        Create new style and output.
-        """
-        pass
-
-    @abstractmethod
-    def disable_autowrap(self):
-        pass
-
-    @abstractmethod
-    def enable_autowrap(self):
-        pass
-
-    @abstractmethod
-    def cursor_goto(self, row=0, column=0):
-        """ Move cursor position. """
-
-    @abstractmethod
-    def cursor_up(self, amount):
-        pass
-
-    @abstractmethod
-    def cursor_down(self, amount):
-        pass
-
-    @abstractmethod
-    def cursor_forward(self, amount):
-        pass
-
-    @abstractmethod
-    def cursor_backward(self, amount):
-        pass
-
-    def ask_for_cpr(self):
-        """
-        Asks for a cursor position report (CPR).
-        (VT100 only.)
-        """

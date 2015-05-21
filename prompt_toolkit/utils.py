@@ -7,36 +7,66 @@ except ImportError:
 
 
 __all__ = (
-    'EventHook',
+    'Callback',
     'DummyContext',
 )
 
 
-class EventHook(object):
+class Callback(object):
     """
-    Event hook::
+    Callbacks wrapper. Used for event propagation.
 
-        e = EventHook()
-        e += handler_function  # Add event handler.
-        e.fire()  # Fire event.
+    There are two ways of using it. The first way is to create a callback
+    instance from a callable and pass it to the code that's going to fire it.
+    (This can also be used as a decorator.)
+    ::
 
-    Thanks to Michael Foord:
-    http://www.voidspace.org.uk/python/weblog/arch_d7_2007_02_03.shtml#e616
+        c = Callback(function)
+        c.fire()
+
+    The second way is that the code who's going to fire the callback, already
+    created an Callback instance. Then handlers can be attached using the
+    ``+=`` operator::
+
+        c = Callback()
+        c += handler_function  # Add event handler.
+        c.fire()  # Fire event.
     """
-    def __init__(self):
-        self.__handlers = []
+    def __init__(self, func=None):
+        assert func is None or callable(func)
+        self._handlers = [func] if func else []
+
+    def fire(self, *args, **kwargs):
+        """
+        Trigger callback.
+        """
+        for handler in self._handlers:
+            handler(*args, **kwargs)
 
     def __iadd__(self, handler):
-        self.__handlers.append(handler)
+        """
+        Add another handler to this callback.
+        """
+        self._handlers.append(handler)
         return self
 
     def __isub__(self, handler):
-        self.__handlers.remove(handler)
+        """
+        Remove a handler from this callback.
+        """
+        self._handlers.remove(handler)
         return self
 
-    def fire(self, *args, **keywargs):
-        for handler in self.__handlers:
-            handler(*args, **keywargs)
+    def __or__(self, other):
+        """
+        Chain two callbacks, using the | operator.
+        """
+        assert isinstance(other, Callback)
+
+        def call_both():
+            self.fire() and other.fire()
+
+        return Callback(call_both)
 
 
 class DummyContext(object):

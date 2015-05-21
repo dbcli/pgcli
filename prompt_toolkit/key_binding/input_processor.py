@@ -8,7 +8,7 @@ correct callbacks when new key presses are feed through `feed_key`.
 """
 from __future__ import unicode_literals
 from ..keys import Keys
-from ..utils import EventHook
+from ..utils import Callback
 
 import weakref
 
@@ -59,8 +59,8 @@ class InputProcessor(object):
         self._cli_ref = cli_ref
         self.reset()
 
-        self.beforeKeyPress = EventHook()
-        self.afterKeyPress = EventHook()
+        self.beforeKeyPress = Callback()
+        self.afterKeyPress = Callback()
 
 #        print(' '.join(set(''.join(map(str, kb.keys)) for kb in registry.key_bindings if all(isinstance(X, unicode) for X in kb.keys))))
 
@@ -174,7 +174,7 @@ class InputProcessor(object):
         event = Event(weakref.ref(self), arg=arg, key_sequence=key_sequence,
                       previous_key_sequence=self._previous_key_sequence)
         handler.call(event)
-        self._registry.onHandlerCalled.fire(event)
+        self._registry.on_handler_called.fire(event)
 
         self._previous_key_sequence = key_sequence
 

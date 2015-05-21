@@ -22,31 +22,39 @@ In that case, study the code in this file and build your own
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.enums import DEFAULT_BUFFER
-from prompt_toolkit.eventloop.base import EventLoop
-from prompt_toolkit.filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown
-from prompt_toolkit.history import History
-from prompt_toolkit.interface import CommandLineInterface, AbortAction, AcceptAction
-from prompt_toolkit.key_binding.manager import KeyBindingManager
-from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
-from prompt_toolkit.layout.controls import BufferControl, TokenListControl
-from prompt_toolkit.layout.dimension import LayoutDimension
-from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor
-from prompt_toolkit.layout.prompt import DefaultPrompt
-from prompt_toolkit.layout.screen import Char
-from prompt_toolkit.layout.toolbars import ValidationToolbar, SystemToolbar
+from .buffer import Buffer
+from .enums import DEFAULT_BUFFER
+from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown
+from .history import History
+from .interface import CommandLineInterface, Application, AbortAction, AcceptAction
+from .key_binding.manager import KeyBindingManager
+from .layout import Window, HSplit, FloatContainer, Float
+from .layout.controls import BufferControl, TokenListControl
+from .layout.dimension import LayoutDimension
+from .layout.menus import CompletionsMenu
+from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor
+from .layout.prompt import DefaultPrompt
+from .layout.screen import Char
+from .layout.toolbars import ValidationToolbar, SystemToolbar
+from .styles import DefaultStyle
 
 from pygments.token import Token
 from six import text_type
 
 import sys
 
+if sys.platform == 'win32':
+    from .terminal.win32_output import Win32Output
+else:
+    from .terminal.vt100_output import Vt100_Output
+
+
 __all__ = (
-    'get_input',
-    'create_cli',
+    'create_eventloop',
+    'create_default_output',
     'create_default_layout',
+    'create_default_application',
+    'get_input',
 )
 
 
@@ -61,6 +69,18 @@ def create_eventloop():
         from prompt_toolkit.eventloop.posix import PosixEventLoop as Loop
 
     return Loop()
+
+
+def create_default_output(stdout=None):
+    """
+    Return an `Output` instance for the command line.
+    """
+    stdout = stdout or sys.__stdout__
+
+    if sys.platform == 'win32':
+        return Win32Output(stdout)
+    else:
+        return Vt100_Output.from_pty(stdout)
 
 
 def create_asyncio_eventloop(loop=None):
@@ -161,87 +181,29 @@ def create_default_layout(message='', lexer=None, is_password=False,
     ] + toolbars)
 
 
-def create_cli(eventloop, message='',
-               multiline=False,
-               is_password=False,
-               vi_mode=False,
-               lexer=None,
-               enable_system_prompt=False,
-               enable_open_in_editor=False,
-               validator=None,
-               completer=None,
-               style=None,
-               history=None,
-               get_prompt_tokens=None,
-               get_bottom_toolbar_tokens=None,
-               extra_input_processors=None,
-               key_bindings_registry=None,
-               output=None,
-               on_abort=AbortAction.RAISE_EXCEPTION,
-               on_exit=AbortAction.RAISE_EXCEPTION,
-               on_accept=AcceptAction.RETURN_DOCUMENT):
+def create_default_application(
+        message='',
+        multiline=False,
+        is_password=False,
+        vi_mode=False,
+        lexer=None,
+        enable_system_prompt=False,
+        enable_open_in_editor=False,
+        validator=None,
+        completer=None,
+        style=None,
+        history=None,
+        get_prompt_tokens=None,
+        get_bottom_toolbar_tokens=None,
+        extra_input_processors=None,
+        key_bindings_registry=None,
+        on_abort=AbortAction.RAISE_EXCEPTION,
+        on_exit=AbortAction.RAISE_EXCEPTION,
+        accept_action=AcceptAction.RETURN_DOCUMENT):
     """
-    Create a `CommandLineInterface` instance.
-    """
-    assert isinstance(eventloop, EventLoop)
-
-    # Create history instance.
-    if history is None:
-        history = History()
-
-    # Use default registry from KeyBindingManager if none was given.
-    if key_bindings_registry is None:
-        key_bindings_registry = KeyBindingManager(
-            enable_vi_mode=vi_mode,
-            enable_system_prompt=enable_system_prompt,
-            enable_open_in_editor=enable_open_in_editor).registry
-
-    # Create interface.
-    return CommandLineInterface(
-        eventloop=eventloop,
-        layout=create_default_layout(message=message, lexer=lexer, is_password=is_password,
-                                     reserve_space_for_menu=(completer is not None),
-                                     get_prompt_tokens=get_prompt_tokens,
-                                     get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
-                                     extra_input_processors=extra_input_processors),
-        buffer=Buffer(
-            is_multiline=(Always() if multiline else Never()),
-            history=history,
-            validator=validator,
-            completer=completer,
-        ),
-        key_bindings_registry=key_bindings_registry,
-        style=style,
-        output=output,
-        on_abort=on_abort,
-        on_exit=on_exit)
-
-
-def get_input(message='',
-              on_abort=AbortAction.RAISE_EXCEPTION,
-              on_exit=AbortAction.RAISE_EXCEPTION,
-              on_accept=AcceptAction.RETURN_DOCUMENT,
-              multiline=False,
-              is_password=False,
-              vi_mode=False,
-              lexer=None,
-              validator=None,
-              completer=None,
-              style=None,
-              enable_system_prompt=False,
-              enable_open_in_editor=False,
-              history=None,
-              get_bottom_toolbar_tokens=None,
-              key_bindings_registry=None):
-    """
-    Get input from the user and return it. This wrapper builds the most obvious
-    configuration of a `CommandLineInterface`. This can be a replacement for
-    `raw_input`. (or GNU readline.)
-
-    This returns `None` when Ctrl-D was pressed.
-
-    If you want to keep your history across several ``get_input`` calls, you
-    have to create a :class:`History` instance and pass it every time.
+    Create a default `Aplication` instance.
+    It is meant to cover 90% of the use cases, where no extreme customization
+    is required.
 
     :param message: Text to be shown before the prompt.
     :param mulitiline: Allow multiline input. Pressing enter will insert a
@@ -260,30 +222,54 @@ def get_input(message='',
         :class:`CommandLineInterface` and returns a list of tokens for the
         bottom toolbar.
     """
-    eventloop = create_eventloop()
+    if key_bindings_registry is None:
+        key_bindings_registry = KeyBindingManager(
+            enable_vi_mode=vi_mode,
+            enable_system_prompt=enable_system_prompt,
+            enable_open_in_editor=enable_open_in_editor).registry
 
-    cli = create_cli(
-        eventloop,
-        message=message,
-        multiline=multiline,
-        is_password=is_password,
-        vi_mode=vi_mode,
-        lexer=lexer,
-        enable_system_prompt=enable_system_prompt,
-        enable_open_in_editor=enable_open_in_editor,
-        validator=validator,
-        completer=completer,
-        style=style,
-        history=history,
-        get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
+    return Application(
+        layout=create_default_layout(
+                message=message,
+                lexer=lexer,
+                is_password=is_password,
+                reserve_space_for_menu=(completer is not None),
+                get_prompt_tokens=get_prompt_tokens,
+                get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
+                extra_input_processors=extra_input_processors),
+        buffer=Buffer(
+                is_multiline=(Always() if multiline else Never()),
+                history=(history or History()),
+                validator=validator,
+                completer=completer,
+                accept_action=accept_action,
+            ),
+        style=style or DefaultStyle,
         key_bindings_registry=key_bindings_registry,
         on_abort=on_abort,
-        on_exit=on_exit,
-        on_accept=on_accept)
+        on_exit=on_exit)
+
+
+def get_input(message='', **kwargs):
+    """
+    Get input from the user and return it. This wrapper builds the most obvious
+    configuration of a `CommandLineInterface`. This can be a replacement for
+    `raw_input`. (or GNU readline.)
+
+    If you want to keep your history across several ``get_input`` calls, you
+    have to create a :class:`History` instance and pass it every time.
+    """
+    eventloop = create_eventloop()
+
+    # Create CommandLineInterface
+    cli = CommandLineInterface(
+        application=create_default_application(message, **kwargs),
+        eventloop=eventloop,
+        output=create_default_output())
 
     # Read input and return it.
     try:
-        document = cli.read_input()
+        document = cli.run()
 
         if document:
             return document.text

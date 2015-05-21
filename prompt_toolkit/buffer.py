@@ -4,12 +4,12 @@ It holds the text, cursor position, history, etc...
 """
 from __future__ import unicode_literals
 
-from .completion import Completion, CompleteEvent
+from .completion import Completer, Completion, CompleteEvent
 from .document import Document
 from .enums import IncrementalSearchDirection
 from .history import History
 from .selection import SelectionType, SelectionState
-from .utils import EventHook
+from .utils import Callback
 from .validation import ValidationError
 from .clipboard import ClipboardData
 from .filters import SimpleFilter, Never
@@ -33,40 +33,52 @@ class AcceptAction(object):
     What to do when the input is accepted by the user.
     (When Enter was pressed in the command line.)
 
-    :param handler: (optional) A callable which accepts a `Document' that is
-                    called when the user accepts input.
-    :param return_document: Set this return value. The eventloop will
-                                   deliver it to the application that called
-                                   the event loop.
+    :param handler: (optional) A callable which accepts a CLI and `Document'
+                    that is called when the user accepts input.
+    :param render_cli_done: When using a handler, first render the CLI in the
+                    'done' state, then call the handler. This
     """
-    def __init__(self, handler=None, return_document=False):
-        assert not (handler and return_document)  # We cannot have both.
+    def __init__(self, handler=None):
         assert handler is None or callable(handler)
-
         self.handler = handler
-        self.return_document = return_document
+
+    @classmethod
+    def run_in_terminal(cls, handler, render_cli_done=False):
+        """
+        Create an `AcceptAction` that runs the given handler in the terminal.
+
+        :param render_cli_done: When True, render the interface in the 'Done'
+                state first, then execute the function. If False, erase the
+                interface instead.
+        """
+        def _handler(cli, buffer):
+            cli.run_in_terminal(lambda: handler(cli, buffer), render_cli_done=render_cli_done)
+        return AcceptAction(handler=_handler)
 
     @property
     def is_returnable(self):
         """
         True when there is something handling accept.
         """
-        return bool(self.handler or self.return_document)
+        return bool(self.handler)
 
     def validate_and_handle(self, cli, buffer):
         """
         Validate buffer and handle the accept action.
         """
         if buffer.validate():
-            if self.return_document:
-                cli.set_return_value(buffer.document)
-            elif self.handler:
+            if self.handler:
                 self.handler(cli, buffer)
 
             buffer.append_to_history()
 
-AcceptAction.RETURN_DOCUMENT = AcceptAction(return_document=True)
-AcceptAction.IGNORE = AcceptAction(handler=None, return_document=False)
+
+def _return_document_handler(cli, buffer):
+    cli.set_return_value(buffer.document)
+
+
+AcceptAction.RETURN_DOCUMENT = AcceptAction(_return_document_handler)
+AcceptAction.IGNORE = AcceptAction(handler=None)
 
 
 class CompletionState(object):
@@ -135,13 +147,24 @@ class Buffer(object):
                         (Instead of accepting the input.)
     :param complete_while_typing: Filter instance. Decide whether or not to do
                                   asynchronous autocompleting while typing.
+
+    :param on_text_changed: Callback instance or None.
+    :param on_text_insert: Callback instance or None.
+    :param on_cursor_position_changed: Callback instance or None.
     """
     def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='',
                  is_multiline=Never(), complete_while_typing=Never(),
                  enable_history_search=Never(), initial_document=None,
-                 accept_action=AcceptAction.RETURN_DOCUMENT):
+                 accept_action=AcceptAction.RETURN_DOCUMENT,
+                 on_text_changed=None, on_text_insert=None, on_cursor_position_changed=None):
+
+        assert completer is None or isinstance(completer, Completer)
+        assert history is None or isinstance(history, History)
         assert isinstance(is_multiline, SimpleFilter)
         assert isinstance(complete_while_typing, SimpleFilter)
+        assert on_text_changed is None or isinstance(on_text_changed, Callback)
+        assert on_text_insert is None or isinstance(on_text_insert, Callback)
+        assert on_cursor_position_changed is None or isinstance(on_cursor_position_changed, Callback)
 
         self.completer = completer
         self.validator = validator
@@ -161,9 +184,9 @@ class Buffer(object):
         self.__cursor_position = 0
 
         # Events
-        self.onTextChanged = EventHook()
-        self.onTextInsert = EventHook()
-        self.onCursorPositionChanged = EventHook()
+        self.on_text_changed = on_text_changed or Callback()
+        self.on_text_insert = on_text_insert or Callback()
+        self.on_cursor_position_changed = on_cursor_position_changed or Callback()
 
         self.reset(initial_document=initial_document)
 
@@ -277,8 +300,8 @@ class Buffer(object):
         self.complete_state = None
         self.selection_state = None
 
-        # fire 'onTextChanged' event.
-        self.onTextChanged.fire()
+        # fire 'on_text_changed' event.
+        self.on_text_changed.fire()
 
     def _cursor_position_changed(self):
         # Remove any validation errors and complete state.
@@ -288,8 +311,8 @@ class Buffer(object):
         # Note that the cursor position can change if we have a selection the
         # new position of the cursor determines the end of the selection.
 
-        # fire 'onCursorPositionChanged' event.
-        self.onCursorPositionChanged.fire()
+        # fire 'on_cursor_position_changed' event.
+        self.on_cursor_position_changed.fire()
 
     @property
     def document(self):
@@ -771,8 +794,8 @@ class Buffer(object):
         if move_cursor:
             self.cursor_position += len(data)
 
-        # Fire 'onTextInsert' event.
-        self.onTextInsert.fire()
+        # Fire 'on_text_insert' event.
+        self.on_text_insert.fire()
 
     def paste_clipboard_data(self, data, before=False, count=1):
         """

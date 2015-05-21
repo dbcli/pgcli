@@ -9,49 +9,29 @@ import six
 import sys
 import weakref
 
+from .application import Application, AbortAction
 from .buffer import Buffer, AcceptAction
-from .clipboard import Clipboard
 from .completion import CompleteEvent
 from .completion import get_common_complete_suffix
+from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, SYSTEM_BUFFER
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
-from .filters import CLIFilter, Never, Condition
+from .filters import Condition
 from .focus_stack import FocusStack
 from .history import History
-from .key_binding.bindings.emacs import load_emacs_bindings
+from .input import StdinInput, Input
 from .key_binding.input_processor import InputProcessor
-from .key_binding.registry import Registry
-from .layout import Window
-from .layout.controls import BufferControl
-from .renderer import Renderer, Output
+from .output import Output
+from .renderer import Renderer
 from .search_state import SearchState
-from .styles import DefaultStyle
-from .utils import EventHook
-from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, SYSTEM_BUFFER
 
 from types import GeneratorType
-
-if sys.platform == 'win32':
-    from .terminal.win32_input import raw_mode, cooked_mode
-    from .terminal.win32_output import Win32Output
-else:
-    from .terminal.vt100_input import raw_mode, cooked_mode
-    from .terminal.vt100_output import Vt100_Output
 
 
 __all__ = (
     'AbortAction',
     'CommandLineInterface',
 )
-
-
-class AbortAction:
-    """
-    Actions to take on an Exit or Abort exception.
-    """
-    IGNORE = 'ignore'
-    RETRY = 'retry'
-    RAISE_EXCEPTION = 'raise-exception'
 
 
 class CommandLineInterface(object):
@@ -62,107 +42,56 @@ class CommandLineInterface(object):
 
         cli = CommandLineInterface(eventloop)
         while True:
-            result = cli.read_input()
+            result = cli.run()
             print(result)
 
-    :param eventloop: The `EventLoop` to be used when `read_input` is called.
+    :param eventloop: The `EventLoop` to be used when `run` is called.
                       (Further, this allows callbacks to know where to find the
                       `run_in_executor`.) It can be `None` as well, when no
                       eventloop is used/exposed.
-    :param stdin: Input stream, by default sys.stdin
-    :param stdout: Output stream, by default sys.stdout :param layout: :class:`Layout` instance.
-    :param style: :class:`Layout` instance.
-    :param on_abort: :class:`AbortAction` value. What to do when Ctrl-C has
-                     been pressed.
-    :attr paste_mode: Filter to indicate that we are in "paste mode". When
-                      enabled, inserting newlines will never insert a margin.
-    :attr ignore_case: Filter to indicate that searching/highlighting is done
-                       case insensitive.
+    :param application: `Application` .
+    :param input: :class:`Input` class.
+    :param output: :class:`Output` instance. (Probably Vt100_Output or Win32Output.)
     """
-    def __init__(self, eventloop, stdin=None, stdout=None,
-                 layout=None,
-                 buffer=None,
-                 buffers=None,
-                 style=None,
-                 key_bindings_registry=None,
-                 clipboard=None,
-                 renderer=None,
-                 output=None,
-                 initial_focussed_buffer=DEFAULT_BUFFER,
-                 on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
-                 paste_mode=Never(),
-                 ignore_case=Never(),
-                 use_alternate_screen=False):
-
-        assert buffer is None or isinstance(buffer, Buffer)
-        assert buffers is None or isinstance(buffers, dict)
-        assert key_bindings_registry is None or isinstance(key_bindings_registry, Registry)
-        assert output is None or isinstance(output, Output)
-        assert isinstance(paste_mode, CLIFilter)
+    def __init__(self, application, eventloop=None, input=None, output=None):
+        assert isinstance(application, Application)
         assert eventloop is None or isinstance(eventloop, EventLoop)
+        assert output is None or isinstance(output, Output)
+        assert input is None or isinstance(input, Input)
 
-        assert renderer is None or output is None  # Never expect both.
+        from .shortcuts import create_default_output, create_eventloop
 
-        self.stdin = stdin or sys.__stdin__
-        self.stdout = stdout or sys.__stdout__
-        self.style = style or DefaultStyle
-        self._paste_mode = paste_mode
-        self._ignore_case = ignore_case
+        self.application = application
+        self.eventloop = eventloop or create_eventloop
+        self._is_running = False
 
-        self.on_abort = on_abort
-        self.on_exit = on_exit
+        # Inputs and outputs.
+        self.output = output or create_default_output()
+        self.input = input or StdinInput(sys.stdin)
 
-        # Remember eventloop.
-        self.eventloop = eventloop
-
-        # Events
-
-        #: Called when there is no input for x seconds.
-        #: (Fired when any eventloop.onInputTimeout is fired.)
-        self.onInputTimeout = EventHook()
-
-        self.onReadInputStart = EventHook()
-        self.onReadInputEnd = EventHook()
-        self.onReset = EventHook()
-        self.onBufferChanged = EventHook()  # Called when any buffer changes.
+        # Create layout and clipboard only once.
+        self.layout = application.layout
+        self.clipboard = application.clipboard
 
         # Focus stack.
-        self.focus_stack = FocusStack(initial=initial_focussed_buffer)
+        self.focus_stack = FocusStack(initial=application.initial_focussed_buffer)
 
         #: The input buffers.
         self.buffers = {
             # For the 'search' and 'system' buffers, 'returnable' is False, in
             # order to block normal Enter/ControlC behaviour.
-            DEFAULT_BUFFER: (buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)),
+            DEFAULT_BUFFER: (application.buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)),
             SEARCH_BUFFER: Buffer(history=History(), accept_action=AcceptAction.IGNORE),
             SYSTEM_BUFFER: Buffer(history=History(), accept_action=AcceptAction.IGNORE),
         }
-        if buffers:
-            self.buffers.update(buffers)
-
-        #: The `Layout` instance.
-        self.layout = layout or Window(BufferControl())
-
-        #: The clipboard instance
-        self.clipboard = clipboard or Clipboard()
+        self.buffers.update(application.buffers)
 
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
-        def default_output():
-            if sys.platform == 'win32':
-                return Win32Output(self.stdout)
-            else:
-                return Vt100_Output.from_pty(self.stdout)
-
-        self.renderer = renderer or Renderer(output or default_output(),
-                                             use_alternate_screen=use_alternate_screen)
-
-        if key_bindings_registry is None:
-            key_bindings_registry = Registry()
-            load_emacs_bindings(key_bindings_registry)
+        self.renderer = Renderer(self.output, use_alternate_screen=application.use_alternate_screen)
 
         #: The `InputProcessor` instance.
-        self.input_processor = InputProcessor(key_bindings_registry, weakref.ref(self))
+        self.input_processor = InputProcessor(application.key_bindings_registry, weakref.ref(self))
 
         self._async_completers = {}  # Map buffer name to completer function.
 
@@ -171,6 +100,9 @@ class CommandLineInterface(object):
             self.add_buffer(name, b)
 
         self.reset()
+
+        # Trigger initialize callback.
+        self.application.on_initialize.fire(self)
 
     def add_buffer(self, name, buffer, focus=False):
         """
@@ -195,10 +127,10 @@ class CommandLineInterface(object):
         if buffer.completer:
             completer_function = self._create_async_completer(buffer)
             self._async_completers[name] = completer_function
-            buffer.onTextInsert += create_while_typing_completer(completer_function)
+            buffer.on_text_insert += create_while_typing_completer(completer_function)
 
-        # Throw onTextChanged when text in this buffer changes.
-        buffer.onTextChanged += lambda: self.onBufferChanged.fire()
+        # Trigger on_buffer_changed when text in this buffer changes.
+        buffer.on_text_changed += lambda: self.application.on_buffer_changed.fire(self)
 
         if focus:
             self.focus_stack.replace(name)
@@ -247,7 +179,7 @@ class CommandLineInterface(object):
         # Notice that we don't reset the buffers. (This happens just before
         # returning, and when we have multiple buffers, we clearly want the
         # content in the other buffers to remain unchanged between several
-        # calls of `read_input`. (And the same is true for the `focus_stack`.)
+        # calls of `run`. (And the same is true for the `focus_stack`.)
 
         self._exit_flag = False
         self._abort_flag = False
@@ -266,17 +198,17 @@ class CommandLineInterface(object):
         self.search_state = SearchState(ignore_case=Condition(lambda: self.is_ignoring_case))
 
         # Trigger reset event.
-        self.onReset.fire()
+        self.application.on_reset.fire(self)
 
     @property
     def in_paste_mode(self):
         """ True when we are in paste mode. """
-        return self._paste_mode(self)
+        return self.application.paste_mode(self)
 
     @property
     def is_ignoring_case(self):
         """ True when we currently ignore casing. """
-        return self._ignore_case(self)
+        return self.application.ignore_case(self)
 
     def request_redraw(self):
         """
@@ -290,7 +222,8 @@ class CommandLineInterface(object):
         Render the command line again. (Not thread safe!)
         (From other threads, or if unsure, use `request_redraw`.)
         """
-        self.renderer.render(self, self.layout, self.style)
+        self.renderer.render(self, self.layout, self.application.style,
+                             is_done=self.is_done)
 
     def _on_resize(self):
         """
@@ -304,46 +237,51 @@ class CommandLineInterface(object):
         self.renderer.request_absolute_cursor_position()
         self._redraw()
 
-    def read_input(self, reset_current_buffer=True):
+    def run(self, reset_current_buffer=True):
         """
         Read input from the command line.
         This runs the eventloop until a return value has been set.
         """
         try:
-            self.onReadInputStart.fire()
+            self._is_running = True
+
+            self.application.on_start.fire(self)
             self.reset(reset_current_buffer=reset_current_buffer)
 
             # Run eventloop in raw mode.
-            with raw_mode(self.stdin.fileno()):
+            with self.input.raw_mode():
                 self.renderer.request_absolute_cursor_position()
                 self._redraw()
 
-                self.eventloop.run(self.stdin, self.create_eventloop_callbacks())
+                self.eventloop.run(self.input, self.create_eventloop_callbacks())
         finally:
             # Clean up renderer. (This will leave the alternate screen, if we use
             # that.)
             self.renderer.reset()
-            self.onReadInputEnd.fire()
+            self.application.on_stop.fire(self)
+            self._is_running = False
 
         # Return result.
         return self.return_value()
 
-    def read_input_async(self, reset_current_buffer=True):
+    def run_async(self, reset_current_buffer=True):
         """
-        Same as `read_input`, but this returns a coroutine.
+        Same as `run`, but this returns a coroutine.
 
         This is mostly for Python >3.3, with asyncio.
         """
         try:
-            self.onReadInputStart.fire()
+            self._is_running = True
+
+            self.application.on_start.fire(self)
             self.reset(reset_current_buffer=reset_current_buffer)
 
-            with raw_mode(self.stdin.fileno()):
+            with self.input.raw_mode():
                 self.renderer.request_absolute_cursor_position()
                 self._redraw()
 
                 g = self.eventloop.run_as_coroutine(
-                        self.stdin, self.create_eventloop_callbacks())
+                        self.input, self.create_eventloop_callbacks())
                 assert isinstance(g, GeneratorType)
 
                 while True:
@@ -352,14 +290,15 @@ class CommandLineInterface(object):
             raise StopIteration(self.return_value())
         finally:
             self.renderer.reset()
-            self.onReadInputEnd.fire()
+            self.application.on_stop.fire(self)
+            self._is_running = False
 
     def set_exit(self):
         """
         Set exit. When Control-D has been pressed.
         """
         self._exit_flag = True
-        on_exit = self.on_exit
+        on_exit = self.application.on_exit
 
         if on_exit != AbortAction.IGNORE:
             self._redraw()
@@ -374,11 +313,14 @@ class CommandLineInterface(object):
             self.reset()
             self.renderer.request_absolute_cursor_position()
 
+        elif on_exit == AbortAction.RETURN_NONE:
+            self.set_return_value(None)
+
     def set_abort(self):
         """
         Set abort. When Control-C has been pressed.
         """
-        on_abort = self.on_abort
+        on_abort = self.application.on_abort
 
         if on_abort != AbortAction.IGNORE:
             self._abort_flag = True
@@ -393,6 +335,9 @@ class CommandLineInterface(object):
         elif on_abort == AbortAction.RETRY:
             self.reset()
             self.renderer.request_absolute_cursor_position()
+
+        elif on_abort == AbortAction.RETURN_NONE:
+            self.set_return_value(None)
 
     def set_return_value(self, document):
         """
@@ -409,7 +354,7 @@ class CommandLineInterface(object):
         if self.eventloop:
             self.eventloop.stop()
 
-    def run_in_terminal(self, func):  # XXX: no reason to make this thread safe, ... I think...
+    def run_in_terminal(self, func, render_cli_done=False):
         """
         Run function on the terminal above the prompt.
 
@@ -418,19 +363,22 @@ class CommandLineInterface(object):
         prompt which causes the output of this function to scroll above the
         prompt.
 
-        This function is thread safe. It will return immediately and the
-        callable will be scheduled in the eventloop of this
-        :class:`CommandLineInterface`.
+        :param func: The callable to execute.
+        :param render_cli_done: When True, render the interface in the
+                'Done' state first, then execute the function. If False,
+                erase the interface first.
         """
-        self.eventloop.call_from_executor(lambda: self._run_in_terminal(func))
-
-    def _run_in_terminal(self, func):
-        """ Blocking, not thread safe version of ``run_in_terminal``. """
-        self.renderer.erase()
+        # Draw interface in 'done' state, or erase.
+        if render_cli_done:
+            self._return_value = True
+            self._redraw()
+        else:
+            self.renderer.erase()
 
         # Run system command.
-        with cooked_mode(self.stdin.fileno()):
+        with self.input.cooked_mode():
             func()
+        self._return_value = None
 
         # Redraw interface again.
         self.renderer.reset()
@@ -615,7 +563,7 @@ class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
         self.cli._on_resize()
 
     def input_timeout(self):
-        self.cli.onInputTimeout.fire()
+        self.cli.application.on_input_timeout.fire(self.cli)
 
     def feed_key(self, key_press):
         """
@@ -653,8 +601,11 @@ class _StdoutProxy(object):
         self._cli = cli
         self._buffer = []
 
+        self.errors = sys.__stdout__.errors
+        self.encoding = sys.__stdout__.encoding
+
     def _do(self, func):
-        if self._cli.eventloop:
+        if self._cli._is_running:
             self._cli.run_in_terminal(func)
         else:
             func()
@@ -678,7 +629,7 @@ class _StdoutProxy(object):
 
             def run():
                 for s in to_write:
-                    self._cli.stdout.write(s)
+                    self._cli.output.write(s)
             self._do(run)
         else:
             # Otherwise, cache in buffer.
@@ -690,10 +641,7 @@ class _StdoutProxy(object):
         """
         def run():
             for s in self._buffer:
-                self._cli.stdout.write(s)
+                self._cli.output.write(s)
             self._buffer = []
-            self._cli.stdout.flush()
+            self._cli.output.flush()
         self._do(run)
-
-    def __getattr__(self, name):
-        return getattr(self._cli.stdout, name)

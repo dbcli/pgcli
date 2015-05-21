@@ -3,12 +3,14 @@
 Example of a 'dynamic' prompt. On that shows the current time in the prompt.
 """
 from __future__ import unicode_literals
-from prompt_toolkit import CommandLineInterface
+from prompt_toolkit.interface import CommandLineInterface
+from prompt_toolkit.application import Application
 from prompt_toolkit.layout import Window
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.processors import Processor
 from prompt_toolkit.layout.utils import token_list_len
 from prompt_toolkit.shortcuts import create_eventloop
+from prompt_toolkit.utils import Callback
 from pygments.token import Token
 
 import datetime
@@ -31,12 +33,9 @@ class ClockPrompt(Processor):
 
 def main():
     eventloop = create_eventloop()
-
-    cli = CommandLineInterface(layout=Window(BufferControl(input_processors=[ClockPrompt()])),
-                               eventloop=eventloop)
     done = [False]  # Non local
 
-    def on_read_start():
+    def on_read_start(cli):
         """
         This function is called when we start reading at the input.
         (Actually the start of the read-input event loop.)
@@ -52,13 +51,17 @@ def main():
 
         cli.eventloop.run_in_executor(run)
 
-    def on_read_end():
+    def on_read_end(cli):
         done[0] = True
 
-    cli.onReadInputStart += on_read_start
-    cli.onReadInputEnd += on_read_end
+    app = Application(
+        layout=Window(BufferControl(input_processors=[ClockPrompt()])),
+        on_start=Callback(on_read_start),
+        on_stop=Callback(on_read_end))
 
-    code_obj = cli.read_input()
+    cli = CommandLineInterface(application=app, eventloop=eventloop)
+
+    code_obj = cli.run()
     print('You said: %s' % code_obj.text)
 
     eventloop.close()

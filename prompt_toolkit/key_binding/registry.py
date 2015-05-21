@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from ..filters import Always, CLIFilter
-from ..utils import EventHook
+from ..utils import Callback
 
 from collections import defaultdict
 
@@ -52,7 +52,7 @@ class Registry(object):
         #: (tuple of keys) -> [list of bindings handling suffixes of this sequence].
         self._keys_to_bindings_suffixes = defaultdict(list)
 
-        self.onHandlerCalled = EventHook()
+        self.on_handler_called = Callback()
 
     def add_binding(self, *keys, **kwargs):
         """

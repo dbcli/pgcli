@@ -100,7 +100,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
                 len(buffer.document.current_line) > 0):
             buffer.cursor_position -= 1
 
-    registry.onHandlerCalled += check_cursor_position
+    registry.on_handler_called += check_cursor_position
 
     @handle(Keys.Escape)
     def _(event):

@@ -24,13 +24,13 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         :param stdin: The input stream to be used for the interface.
         :param callbacks: EventLoopCallback instance.
         """
-        raise NotImplementedError
+        raise NotImplementedError("This eventloop doesn't implement synchronous 'run()'.")
 
     def run_as_coroutine(self, stdin, callbacks):
         """
         Similar to `run`, but this is a coroutine. (For asyncio integration.)
         """
-        raise NotImplementedError
+        raise NotImplementedError("This eventloop doesn't implement 'run_as_coroutine()'.")
 
     @abstractmethod
     def stop(self):
@@ -49,8 +49,8 @@ class EventLoop(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def run_in_executor(self, callback):
         """
-        Run a long running function in a background thread.  (This is
-        recommended for code that could block the `read_input` event loop.)
+        Run a long running function in a background thread. (This is
+        recommended for code that could block the event loop.)
         Similar to Twisted's ``deferToThread``.
         """
 
