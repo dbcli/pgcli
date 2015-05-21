@@ -108,7 +108,7 @@ class InputProcessor(object):
         # Note that we transform it into a `set`, because we don't care about
         # the actual bindings and executing it more than once doesn't make
         # sense. (Many key bindings share the same filter.)
-        filters = {b.filter for b in self._registry.get_bindings_starting_with_keys(keys)}
+        filters = set(b.filter for b in self._registry.get_bindings_starting_with_keys(keys))
 
         # When any key binding is active, return True.
         return any(f(cli) for f in filters)
