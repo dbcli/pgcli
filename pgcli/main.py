@@ -363,6 +363,9 @@ class PGCli(object):
         # functions
         completer.extend_functions(pgexecute.functions())
 
+        # types
+        completer.extend_datatypes(pgexecute.datatypes())
+
         # databases
         completer.extend_database_names(pgexecute.databases())
 

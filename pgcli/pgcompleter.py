@@ -52,7 +52,8 @@ class PGCompleter(Completer):
 
         self.special_commands = []
         self.databases = []
-        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
+        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
+                           'datatypes': {}}
         self.search_path = []
 
         self.all_completions = set(self.keywords + self.functions)
@@ -152,13 +153,26 @@ class PGCompleter(Completer):
             metadata[schema][func] = None
             self.all_completions.add(func)
 
+    def extend_datatypes(self, type_data):
+
+        # dbmetadata['datatypes'][schema_name][type_name] should store type
+        # metadata, such as composite type field names. Currently, we're not
+        # storing any metadata beyond typename, so just store None
+        meta = self.dbmetadata['datatypes']
+
+        for t in type_data:
+            schema, type_name = self.escaped_names(t)
+            meta[schema][type_name] = None
+            self.all_completions.add(type_name)
+
     def set_search_path(self, search_path):
         self.search_path = self.escaped_names(search_path)
 
     def reset_completions(self):
         self.databases = []
         self.search_path = []
-        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
+        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
+                           'datatypes': {}}
         self.all_completions = set(self.keywords + self.functions)
 
     @staticmethod
