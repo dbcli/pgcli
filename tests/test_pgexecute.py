@@ -180,3 +180,14 @@ def test_large_numbers_render_directly(executor, value):
         "insert into numbertest (a) values ({0})".format(value))
 
     assert value in run(executor, "select * from numbertest", join=True)
+
+
+@dbtest
+@pytest.mark.parametrize('command', ['di', 'dv', 'ds', 'df', 'dT'])
+@pytest.mark.parametrize('verbose', ['', '+'])
+@pytest.mark.parametrize('pattern', ['', 'x', '*.*', 'x.y', 'x.*', '*.y'])
+def test_describe_special(executor, command, verbose, pattern):
+    # We don't have any tests for the output of any of the special commands,
+    # but we can at least make sure they run without error
+    sql = r'\{command}{verbose} {pattern}'.format(**locals())
+    executor.run(sql)
