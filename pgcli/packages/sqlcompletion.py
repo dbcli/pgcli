@@ -277,6 +277,9 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         # "\c <db", "use <db>", "DROP DATABASE <db>",
         # "CREATE DATABASE <newdb> WITH TEMPLATE <db>"
         return [{'type': 'database'}]
+    elif token_v == 'schema':
+        # DROP SCHEMA schema_name
+        return [{'type': 'schema'}]
     elif token_v.endswith(',') or token_v == '=':
         prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
         if prev_keyword:

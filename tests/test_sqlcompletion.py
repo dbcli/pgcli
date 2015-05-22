@@ -384,3 +384,8 @@ def test_handle_pre_completion_comma_gracefully(text):
     suggestions = suggest_type(text, text)
 
     assert iter(suggestions)
+
+
+def test_drop_schema_suggests_schemas():
+    sql = 'DROP SCHEMA '
+    assert suggest_type(sql, sql) == [{'type': 'schema'}]
