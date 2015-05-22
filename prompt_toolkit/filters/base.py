@@ -35,7 +35,7 @@ class Filter(with_metaclass(ABCMeta, object)):
             return other
         else:
             assert isinstance(other, Filter), 'Expecting filter, got %r' % other
-            return _AndList([self, other])
+            return _and(self, other)
 
     def __or__(self, other):
         """
@@ -47,7 +47,7 @@ class Filter(with_metaclass(ABCMeta, object)):
             return other
         else:
             assert isinstance(other, Filter), 'Expecting filter, got %r' % other
-            return _OrList([self, other])
+            return _or(self, other)
 
     def __invert__(self):
         """
@@ -73,6 +73,47 @@ class Filter(with_metaclass(ABCMeta, object)):
         """
         return inspect.getargspec(self.__call__)
 
+
+class _AndCache(dict):
+    """
+    Cache for And operation between filters.
+    (Filter classes are stateless, so we can reuse them.)
+
+    Note: This could be a memory leak if we keep creating filters at runtime.
+          If that is True, the filters should be weakreffed (not the tuple of
+          filters), and tuples should be removed when one of these filters is
+          removed. In practise however, there is a finite amount of filters.
+    """
+    def __missing__(self, filters):
+        result = _AndList(filters)
+        self[filters] = result
+        return result
+
+
+class _OrCache(dict):
+    """ Cache for Or operation between filters. """
+    def __missing__(self, filters):
+        result = _OrList(filters)
+        self[filters] = result
+        return result
+
+
+_and_cache = _AndCache()
+_or_cache = _OrCache()
+
+
+def _and(filter1, filter2):
+    """
+    And operation between two filters.
+    """
+    return _and_cache[filter1, filter2]
+
+
+def _or(filter1, filter2):
+    """
+    Or operation between two filters.
+    """
+    return _or_cache[filter1, filter2]
 
 
 class _AndList(Filter):
