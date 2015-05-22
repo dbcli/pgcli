@@ -216,6 +216,73 @@ def list_functions(cur, pattern, verbose):
         return [(None, cur, headers, cur.statusmessage)]
 
 
+def list_datatypes(cur, pattern, verbose):
+    assert True
+    sql = '''SELECT n.nspname as "Schema",
+                    pg_catalog.format_type(t.oid, NULL) AS "Name", '''
+
+    if verbose:
+        sql += r''' t.typname AS "Internal name",
+                    CASE
+                        WHEN t.typrelid != 0
+                            THEN CAST('tuple' AS pg_catalog.text)
+                        WHEN t.typlen < 0
+                            THEN CAST('var' AS pg_catalog.text)
+                        ELSE CAST(t.typlen AS pg_catalog.text)
+                    END AS "Size",
+                    pg_catalog.array_to_string(
+                        ARRAY(
+                              SELECT e.enumlabel
+                              FROM pg_catalog.pg_enum e
+                              WHERE e.enumtypid = t.oid
+                              ORDER BY e.enumsortorder
+                          ), E'\n') AS "Elements",
+                    pg_catalog.array_to_string(t.typacl, E'\n')
+                        AS "Access privileges",
+                    pg_catalog.obj_description(t.oid, 'pg_type')
+                        AS "Description"'''
+    else:
+        sql += '''  pg_catalog.obj_description(t.oid, 'pg_type')
+                        as "Description" '''
+
+    sql += '''  FROM    pg_catalog.pg_type t
+                        LEFT JOIN pg_catalog.pg_namespace n
+                          ON n.oid = t.typnamespace
+                WHERE   (t.typrelid = 0 OR
+                          ( SELECT c.relkind = 'c'
+                            FROM pg_catalog.pg_class c
+                            WHERE c.oid = t.typrelid))
+                        AND NOT EXISTS(
+                            SELECT 1
+                            FROM pg_catalog.pg_type el
+                            WHERE el.oid = t.typelem
+                                  AND el.typarray = t.oid) '''
+
+    schema_pattern, type_pattern = sql_name_pattern(pattern)
+    params = []
+
+    if schema_pattern:
+        sql += ' AND n.nspname ~ %s '
+        params.append(schema_pattern)
+    else:
+        sql += ' AND pg_catalog.pg_type_is_visible(t.oid) '
+
+    if type_pattern:
+        sql += ''' AND (t.typname ~ %s
+                        OR pg_catalog.format_type(t.oid, NULL) ~ %s) '''
+        params.extend(2 * [type_pattern])
+
+    if not (schema_pattern or type_pattern):
+        sql += ''' AND n.nspname <> 'pg_catalog'
+                   AND n.nspname <> 'information_schema' '''
+
+    sql = cur.mogrify(sql + ' ORDER BY 1, 2', params)
+    log.debug(sql)
+    cur.execute(sql)
+    if cur.description:
+        headers = [x[0] for x in cur.description]
+        return [(None, cur, headers, cur.statusmessage)]
+
 def describe_table_details(cur, pattern, verbose):
     """
     Returns (title, rows, headers, status)
@@ -972,12 +1039,12 @@ CASE_SENSITIVE_COMMANDS = {
             '\\dv': (list_views, ['\\dv[+] [pattern]', 'List views.']),
             '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'List sequences.']),
             '\\df': (list_functions, ['\\df[+] [pattern]', 'List functions.']),
+            '\\dT': (list_datatypes, ['\dT[S+] [pattern]', 'List data types']),
             '\e': (dummy_command, ['\e [file]', 'Edit the query buffer (or file) with external editor.']),
             '\ef': (in_progress, ['\ef [funcname [line]]', 'Not yet implemented.']),
             '\sf': (in_progress, ['\sf[+] funcname', 'Not yet implemented.']),
             '\z': (in_progress, ['\z [pattern]', 'Not yet implemented.']),
             '\do': (in_progress, ['\do[S] [pattern]', 'Not yet implemented.']),
-            'dT': (in_progress, ['\dT[S+] [pattern]', 'Not yet implemented.'])
             }
 
 NON_CASE_SENSITIVE_COMMANDS = {

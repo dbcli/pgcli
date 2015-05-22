@@ -120,8 +120,12 @@ def suggest_special(text):
             return [{'type': 'schema'},
                     {'type': 'table', 'schema': []},
                     {'type': 'view', 'schema': []}]
-    elif cmd[1:] in ('dt', 'dv', 'df'):
-        rel_type = {'dt': 'table', 'dv': 'view', 'df': 'function'}[cmd[1:]]
+    elif cmd[1:] in ('dt', 'dv', 'df', 'dT'):
+        rel_type = {'dt': 'table',
+                    'dv': 'view',
+                    'df': 'function',
+                    'dT': 'datatype',
+                    }[cmd[1:]]
         if schema:
             return [{'type': rel_type, 'schema': schema}]
         else:

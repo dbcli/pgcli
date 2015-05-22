@@ -53,3 +53,18 @@ def test_leading_whitespace_ok():
     whitespace = '   '
     suggestions = suggest_type(whitespace + cmd, whitespace + cmd)
     assert suggestions == suggest_type(cmd, cmd)
+
+
+def test_dT_suggests_schema_or_datatypes():
+    text = '\\dT '
+    suggestions = suggest_type(text, text)
+    assert sorted_dicts(suggestions) == sorted_dicts(
+        [{'type': 'schema'},
+         {'type': 'datatype', 'schema': []},
+        ])
+
+def test_schema_qualified_dT_suggests_datatypes():
+    text = '\\dT foo.'
+    suggestions = suggest_type(text, text)
+    assert sorted_dicts(suggestions) == sorted_dicts(
+        [{'type': 'datatype', 'schema': 'foo'}])
