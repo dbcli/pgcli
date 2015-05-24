@@ -97,3 +97,12 @@ def test_find_prev_keyword_using():
 def test_find_prev_keyword_where(sql):
     kw, stripped = find_prev_keyword(sql)
     assert kw == 'where' and stripped == 'select * from foo where'
+
+
+@pytest.mark.parametrize('sql', [
+    'create table foo (bar int, baz ',
+    'select * from foo() as bar (baz '
+])
+def test_find_prev_keyword_open_parens(sql):
+    kw, _ = find_prev_keyword(sql)
+    assert kw == '('

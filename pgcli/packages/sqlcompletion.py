@@ -120,8 +120,12 @@ def suggest_special(text):
             return [{'type': 'schema'},
                     {'type': 'table', 'schema': []},
                     {'type': 'view', 'schema': []}]
-    elif cmd[1:] in ('dt', 'dv', 'df'):
-        rel_type = {'dt': 'table', 'dv': 'view', 'df': 'function'}[cmd[1:]]
+    elif cmd[1:] in ('dt', 'dv', 'df', 'dT'):
+        rel_type = {'dt': 'table',
+                    'dv': 'view',
+                    'df': 'function',
+                    'dT': 'datatype',
+                    }[cmd[1:]]
         if schema:
             return [{'type': rel_type, 'schema': schema}]
         else:
@@ -150,6 +154,22 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
         return suggest_based_on_last_token(prev_keyword, text_before_cursor,
                                            full_text, identifier)
+    elif isinstance(token, Identifier):
+        # If the previous token is an identifier, we can suggest datatypes if
+        # we're in a parenthesized column/field list, e.g.:
+        #       CREATE TABLE foo (Identifier <CURSOR>
+        #       CREATE FUNCTION foo (Identifier <CURSOR>
+        # If we're not in a parenthesized list, the most likely scenario is the
+        # user is about to specify an alias, e.g.:
+        #       SELECT Identifier <CURSOR>
+        #       SELECT foo FROM Identifier <CURSOR>
+        prev_keyword, _ = find_prev_keyword(text_before_cursor)
+        if prev_keyword == '(':
+            # Suggest datatypes
+            return suggest_based_on_last_token('type', text_before_cursor,
+                                           full_text, identifier)
+        else:
+            return [{'type': 'keyword'}]
     else:
         token_v = token.value.lower()
 
@@ -287,6 +307,17 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
                 prev_keyword, text_before_cursor, full_text, identifier)
         else:
             return []
+    elif token_v in ('type', '::'):
+        #   ALTER TABLE foo SET DATA TYPE bar
+        #   SELECT foo::bar
+        # Note that tables are a form of composite type in postgresql, so
+        # they're suggested here as well
+        schema = (identifier and identifier.get_parent_name()) or []
+        suggestions = [{'type': 'datatype', 'schema': schema},
+                       {'type': 'table', 'schema': schema}]
+        if not schema:
+            suggestions.append({'type': 'schema'})
+        return suggestions
     else:
         return [{'type': 'keyword'}]
 

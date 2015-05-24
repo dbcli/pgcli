@@ -16,8 +16,13 @@ metadata = {
                                 'shipments': ['id', 'address', 'user_id']
                             }},
             'functions': {
-                'public':   ['func1', 'func2'],
-                'custom':   ['func3', 'func4']}
+                            'public':   ['func1', 'func2'],
+                            'custom':   ['func3', 'func4'],
+                         },
+            'datatypes': {
+                            'public':   ['typ1', 'typ2'],
+                            'custom':   ['typ3', 'typ4'],
+                         },
             }
 
 @pytest.fixture
@@ -39,10 +44,15 @@ def completer():
                     for schema, funcs in metadata['functions'].items()
                     for func in funcs]
 
+    datatypes = [(schema, datatype)
+                    for schema, datatypes in metadata['datatypes'].items()
+                    for datatype in datatypes]
+
     comp.extend_schemata(schemata)
     comp.extend_relations(tables, kind='tables')
     comp.extend_columns(columns, kind='tables')
     comp.extend_functions(functions)
+    comp.extend_datatypes(datatypes)
     comp.set_search_path(['public'])
 
     return comp
@@ -249,3 +259,22 @@ def test_schema_qualified_function_name(completer, complete_event):
     assert result == set([
         Completion(text='func3', start_position=-len('func')),
         Completion(text='func4', start_position=-len('func'))])
+
+
+@pytest.mark.parametrize('text', [
+    'SELECT 1::custom.',
+    'CREATE TABLE foo (bar custom.',
+    'CREATE FUNCTION foo (bar INT, baz custom.',
+    'ALTER TABLE foo ALTER COLUMN bar TYPE custom.',
+])
+def test_schema_qualified_type_name(text, completer, complete_event):
+    pos = len(text)
+    result = completer.get_completions(
+        Document(text=text, cursor_position=pos), complete_event)
+    assert set(result) == set([
+        Completion(text='typ3'),
+        Completion(text='typ4'),
+        Completion(text='users'),
+        Completion(text='products'),
+        Completion(text='shipments'),
+        ])

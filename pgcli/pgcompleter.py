@@ -39,6 +39,9 @@ class PGCompleter(Completer):
     functions = ['AVG', 'COUNT', 'FIRST', 'FORMAT', 'LAST', 'LCASE', 'LEN',
                  'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP', 'UCASE']
 
+    datatypes = ['BIGINT', 'BOOLEAN', 'CHAR', 'DATE', 'DOUBLE PRECISION', 'INT',
+                 'INTEGER', 'NUMERIC', 'REAL', 'TEXT', 'VARCHAR']
+
     def __init__(self, smart_completion=True):
         super(PGCompleter, self).__init__()
         self.smart_completion = smart_completion
@@ -49,7 +52,8 @@ class PGCompleter(Completer):
 
         self.special_commands = []
         self.databases = []
-        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
+        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
+                           'datatypes': {}}
         self.search_path = []
 
         self.all_completions = set(self.keywords + self.functions)
@@ -149,13 +153,26 @@ class PGCompleter(Completer):
             metadata[schema][func] = None
             self.all_completions.add(func)
 
+    def extend_datatypes(self, type_data):
+
+        # dbmetadata['datatypes'][schema_name][type_name] should store type
+        # metadata, such as composite type field names. Currently, we're not
+        # storing any metadata beyond typename, so just store None
+        meta = self.dbmetadata['datatypes']
+
+        for t in type_data:
+            schema, type_name = self.escaped_names(t)
+            meta[schema][type_name] = None
+            self.all_completions.add(type_name)
+
     def set_search_path(self, search_path):
         self.search_path = self.escaped_names(search_path)
 
     def reset_completions(self):
         self.databases = []
         self.search_path = []
-        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
+        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
+                           'datatypes': {}}
         self.all_completions = set(self.keywords + self.functions)
 
     @staticmethod
@@ -288,6 +305,19 @@ class PGCompleter(Completer):
                                             self.special_commands,
                                             start_only=True)
                 completions.extend(special)
+
+            elif suggestion['type'] == 'datatype':
+                # suggest custom datatypes
+                types = self.populate_schema_objects(
+                    suggestion['schema'], 'datatypes')
+                types = self.find_matches(word_before_cursor, types)
+                completions.extend(types)
+
+                if not suggestion['schema']:
+                    # Also suggest hardcoded types
+                    types = self.find_matches(word_before_cursor,
+                                              self.datatypes, start_only=True)
+                    completions.extend(types)
 
         return completions
 

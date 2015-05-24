@@ -366,13 +366,6 @@ def test_specials_included_for_initial_completion(initial_text):
         sorted_dicts([{'type': 'keyword'}, {'type': 'special'}])
 
 
-def test_specials_not_included_after_initial_token():
-    suggestions = suggest_type('create table foo (dt d',
-                               'create table foo (dt d')
-
-    assert sorted_dicts(suggestions) == sorted_dicts([{'type': 'keyword'}])
-
-
 def test_drop_schema_qualified_table_suggests_only_tables():
     text = 'DROP TABLE schema_name.table_name'
     suggestions = suggest_type(text, text)
@@ -389,3 +382,68 @@ def test_handle_pre_completion_comma_gracefully(text):
 def test_drop_schema_suggests_schemas():
     sql = 'DROP SCHEMA '
     assert suggest_type(sql, sql) == [{'type': 'schema'}]
+    
+
+@pytest.mark.parametrize('text', [
+    'SELECT x::',
+    'SELECT x::y',
+    'SELECT (x + y)::',
+])
+def test_cast_operator_suggests_types(text):
+    assert sorted_dicts(suggest_type(text, text)) == sorted_dicts([
+        {'type': 'datatype', 'schema': []},
+        {'type': 'table', 'schema': []},
+        {'type': 'schema'}])
+
+
+@pytest.mark.parametrize('text', [
+    'SELECT foo::bar.',
+    'SELECT foo::bar.baz',
+    'SELECT (x + y)::bar.',
+])
+def test_cast_operator_suggests_schema_qualified_types(text):
+    assert sorted_dicts(suggest_type(text, text)) == sorted_dicts([
+        {'type': 'datatype', 'schema': 'bar'},
+        {'type': 'table', 'schema': 'bar'}])
+
+
+def test_alter_column_type_suggests_types():
+    q = 'ALTER TABLE foo ALTER COLUMN bar TYPE '
+    assert sorted_dicts(suggest_type(q, q)) == sorted_dicts([
+        {'type': 'datatype', 'schema': []},
+        {'type': 'table', 'schema': []},
+        {'type': 'schema'}])
+
+
+@pytest.mark.parametrize('text', [
+    'CREATE TABLE foo (bar ',
+    'CREATE TABLE foo (bar DOU',
+    'CREATE TABLE foo (bar INT, baz ',
+    'CREATE TABLE foo (bar INT, baz TEXT, qux ',
+    'CREATE FUNCTION foo (bar ',
+    'CREATE FUNCTION foo (bar INT, baz ',
+    'SELECT * FROM foo() AS bar (baz ',
+    'SELECT * FROM foo() AS bar (baz INT, qux ',
+
+    # make sure this doesnt trigger special completion
+    'CREATE TABLE foo (dt d',
+])
+def test_identifier_suggests_types_in_parentheses(text):
+    assert sorted_dicts(suggest_type(text, text)) == sorted_dicts([
+        {'type': 'datatype', 'schema': []},
+        {'type': 'table', 'schema': []},
+        {'type': 'schema'}])
+
+
+@pytest.mark.parametrize('text', [
+    'SELECT foo ',
+    'SELECT foo FROM bar ',
+    'SELECT foo AS bar ',
+    'SELECT foo bar ',
+    'SELECT * FROM foo AS bar ',
+    'SELECT * FROM foo bar ',
+    'SELECT foo FROM (SELECT bar '
+])
+def test_alias_suggests_keywords(text):
+    suggestions = suggest_type(text, text)
+    assert suggestions == [{'type': 'keyword'}]
