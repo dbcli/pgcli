@@ -183,9 +183,8 @@ class PGCli(object):
             if message:
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
-            document = cli.read_input(
-                initial_document=Document(sql, cursor_position=len(sql)),
-              )
+            cli.current_buffer.document = Document(sql, cursor_position=len(sql))
+            document = cli.read_input(False)
             continue
         return document
 
