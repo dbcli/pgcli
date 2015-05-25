@@ -4,20 +4,34 @@
 Features:
 ---------
 
-* Add support for auto-completing view names. (Thanks: darikg_)
+* Add support for auto-completing view names. (Thanks: `Darik Gamble`_)
 * Add support for building RPM and DEB packages. (Thanks: dp_)
-* Add subsequence matching for completion. Previously completions only matched
-  a table name if it started with the partially typed word. Now completions
-  will match even if the partially typed word is in the middle of a suggestion.
-  eg: When you type 'mig', 'django_migrations' will be suggested. (Thanks: `Daniel Rocco`_)
-* Completion for built-in tables and temporary tables are suggested after entering a prefix of ``pg_``. (Thanks: darikg_)
+* Add subsequence matching for completion. (Thanks: `Daniel Rocco`_)
+  Previously completions only matched a table name if it started with the
+  partially typed word. Now completions will match even if the partially typed
+  word is in the middle of a suggestion.
+  eg: When you type 'mig', 'django_migrations' will be suggested. 
+* Completion for built-in tables and temporary tables are suggested after entering a prefix of ``pg_``. (Thanks: `Darik Gamble`_)
 * Add place holder doc strings for special commands that are planned for implementation. (Thanks: `Iryna Cherniavska`_)
+* Updated version of prompt_toolkit, now matching braces are highlighted. (Thanks: `Jonathan Slenders`)
+* Added support of ``\\e`` command. Queries can be edited in an external editor. (Thanks: `Iryna Cherniavska`_)
+  eg: When you type ``SELECT * FROM \e`` it will be opened in an external editor.
+* Add special command ``\dT`` to show datatypes. (Thanks: `Darik Gamble`_)
+* Add auto-completion support for datatypes in CREATE, SELECT etc. (Thanks: `Darik Gamble`_) 
+* Improve the auto-completion in WHERE clause with logical operators. (Thanks: `Darik Gamble`_)
+* 
 
 Bug Fixes:
 ----------
 
 * Fix the table formatting while printing multi-byte characters (Chinese, Japanese etc). (Thanks: `蔡佳男`_)
-* Fix a crash when pg_catalog was present in search path. (Thanks: darikg_)
+* Fix a crash when pg_catalog was present in search path. (Thanks: `Darik Gamble`_)
+* Fixed a bug that broke `\\e` when prompt_tookit was updated. (Thanks: `François Pietka`_)
+* Fix the display of triggers as shown in the ``\d`` output. (Thanks: `Dimitar Roustchev`_)
+* Fix broken auto-completion for INNER JOIN, LEFT JOIN etc. (Thanks: `Darik Gamble`_)
+* Fix incorrect super() calls in pgbuffer, pgtoolbar and pgcompleter. No change in functionality but protects against future problems. (Thanks: `Daniel Rocco`_)
+* Add missing schema completion for CREATE and DROP statements. (Thanks: `Darik Gamble`_)
+* Minor fixes around cursor cleanup.
 
 0.16.3
 ======
@@ -34,7 +48,7 @@ Bug Fixes:
 Bug Fixes:
 ----------
 * Fix a bug where the schema qualifier was ignored by the auto-completion.
-  As a result the suggestions for tables vs functions are cleaner. (Thanks: darikg_)
+  As a result the suggestions for tables vs functions are cleaner. (Thanks: `Darik Gamble`_)
 * Remove scientific notation when formatting large numbers. (Thanks: `Daniel Rocco`_)
 * Add the FUNCTION keyword to auto-completion.
 * Display NULL values as <null> instead of empty strings. 
@@ -60,14 +74,14 @@ Features:
   'CREATE DATABASE blah WITH TEMPLATE <tab>'. (Thanks: `Daniel Rocco`_)
 * Add custom decoders to json/jsonb to emulate the behavior of psql. This
   removes the unicode prefix (eg: u'Éowyn') in the output. (Thanks: `Daniel Rocco`_)
-* Add \df special command to show functions. (Thanks: darikg_)
-* Make suggestions for special commands smarter. eg: \dn - only suggests schemas. (Thanks: darikg_)
+* Add \df special command to show functions. (Thanks: `Darik Gamble`_)
+* Make suggestions for special commands smarter. eg: \dn - only suggests schemas. (Thanks: `Darik Gamble`_)
 * Print out the version and other meta info about pgcli at startup.
 
 Bug Fixes:
 ----------
-* Fix a rare crash caused by adding new schemas to a database. (Thanks: darikg_)
-* Make \dt command honor the explicit schema specified in the arg. (Thanks: darikg_)
+* Fix a rare crash caused by adding new schemas to a database. (Thanks: `Darik Gamble`_)
+* Make \dt command honor the explicit schema specified in the arg. (Thanks: `Darik Gamble`_)
 * Print BIGSERIAL type as Integer instead of Float.
 * Show completions for special commands at the beginning of a statement. (Thanks: `Daniel Rocco`_)
 * Allow special commands to work in a multi-statement case where multiple sql
@@ -98,7 +112,7 @@ Features:
 Bug Fixes:
 ----------
 * Treat boolean values as strings instead of ints.
-* Make \di, \dv and \dt to be schema aware. (Thanks: darikg_)
+* Make \di, \dv and \dt to be schema aware. (Thanks: `Darik Gamble`_)
 * Make column name display unicode compatible. 
 
 0.14.0
@@ -108,7 +122,7 @@ Features:
 ---------
 * Add alias completion support to ON keyword. (Thanks: `Iryna Cherniavska`_)
 * Add LIMIT keyword to completion. 
-* Auto-completion for Postgres schemas. (Thanks: darikg_)
+* Auto-completion for Postgres schemas. (Thanks: `Darik Gamble`_)
 * Better unicode handling for datatypes, dbname and roles. 
 * Add \timing command to time the sql commands. 
   This can be set via config file (~/.pgclirc) using `timing = True`.
@@ -123,7 +137,7 @@ Bug Fixes:
 * Cast bytea files to text while displaying. (Thanks: `Daniel Rocco`_)
 * Added a list of reserved words that should be auto-escaped.
 * Auto-completion is now case-insensitive.
-* Fix the broken completion for multiple sql statements. (Thanks: darikg_)
+* Fix the broken completion for multiple sql statements. (Thanks: `Darik Gamble`_)
 
 0.13.0
 ======
@@ -140,7 +154,7 @@ Bug Fixes:
 ----------
 * Fix the crash when \c fails.
 * Fix the error thrown by \d when triggers are present.
-* Fix broken behavior on \?. (Thanks: darikg_)
+* Fix broken behavior on \?. (Thanks: `Darik Gamble`_)
 
 0.12.0
 ======
@@ -151,7 +165,7 @@ Features:
 * Upgrade to prompt_toolkit version 0.26 (Thanks: https://github.com/macobo) 
   * Adds Ctrl-left/right to move the cursor one word left/right respectively.
   * Internal API changes.
-* IPython integration through `ipython-sql`_ (Thanks: https://github.com/darikg)
+* IPython integration through `ipython-sql`_ (Thanks: `Darik Gamble`_)
   * Add an ipython magic extension to embed pgcli inside ipython. 
   * Results from a pgcli query are sent back to ipython. 
 * Multiple sql statments in the same line separated by semi-colon. (Thanks: https://github.com/macobo)
@@ -177,7 +191,7 @@ Features:
 * Auto-escape special column/table names. (Thanks: https://github.com/qwesda)
 * Cancel a command using Ctrl+C. (Thanks: https://github.com/macobo)
 * Faster startup by reading all columns and tables in a single query. (Thanks: https://github.com/macobo)
-* Improved psql compliance with env vars and password prompting. (Thanks: https://github.com/darikg)
+* Improved psql compliance with env vars and password prompting. (Thanks: `Darik Gamble`_)
 
 Bug Fixes:
 ----------
@@ -189,9 +203,12 @@ Improvements:
 * Faster test runs on TravisCI. (Thanks: https://github.com/macobo)
 * Integration tests with Postgres!! (Thanks: https://github.com/macobo)
 
-.. _darikg: https://github.com/darikg
+.. _`Darik Gamble`: https://github.com/darikg
 .. _`Iryna Cherniavska`: https://github.com/j-bennet
 .. _`Daniel Rocco`: https://github.com/drocco007 
 .. _`Jay Zeng`:  https://github.com/jayzeng 
 .. _`蔡佳男`: https://github.com/xalley
 .. _dp: https://github.com/ceocoder
+.. _`Jonathan Slenders`: https://github.com/jonathanslenders
+.. _`Dimitar Roustchev`: https://github.com/droustchev
+.. _`François Pietka`: https://github.com/fpietka
