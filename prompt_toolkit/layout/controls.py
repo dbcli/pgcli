@@ -375,7 +375,14 @@ class BufferControl(UIControl):
                 x, y = cursor_position_to_xy(menu_position)
                 screen.menu_position = Point(y=y, x=x)
             elif buffer.complete_state:
-                x, y = cursor_position_to_xy(buffer.complete_state.original_document.cursor_position)
+                # Position for completion menu.
+                # Note: We use 'min', because the original cursor position could be
+                #       behind the input string when the actual completion is for
+                #       some reason shorter than the text we had before. (A completion
+                #       can change and shorten the input.)
+                x, y = cursor_position_to_xy(
+                    min(buffer.cursor_position,
+                        buffer.complete_state.original_document.cursor_position))
                 screen.menu_position = Point(y=y, x=x)
             else:
                 screen.menu_position = None
