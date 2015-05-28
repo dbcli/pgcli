@@ -65,11 +65,11 @@ class PGCli(object):
 
         # Load config.
         c = self.config = load_config('~/.pgclirc', default_config)
-        self.multi_line = c.as_bool('main', 'multi_line')
-        self.vi_mode = c.as_bool('main', 'vi')
-        pgspecial.TIMING_ENABLED = c.as_bool('main', 'timing')
-        self.table_format = c.get('main', 'table_format')
-        self.syntax_style = c.get('main', 'syntax_style')
+        self.multi_line = c['main'].as_bool('multi_line')
+        self.vi_mode = c['main'].as_bool('vi')
+        pgspecial.TIMING_ENABLED = c['main'].as_bool('timing')
+        self.table_format = c['main']['table_format']
+        self.syntax_style = c['main']['syntax_style']
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
@@ -77,7 +77,7 @@ class PGCli(object):
         self.query_history = []
 
         # Initialize completer
-        smart_completion = c.as_bool('main', 'smart_completion')
+        smart_completion = c['main'].as_bool('smart_completion')
         completer = PGCompleter(smart_completion)
         completer.extend_special_commands(CASE_SENSITIVE_COMMANDS.keys())
         completer.extend_special_commands(NON_CASE_SENSITIVE_COMMANDS.keys())
