@@ -1,23 +1,17 @@
 import shutil
 from os.path import expanduser, exists
-try:
-    from ConfigParser import SafeConfigParser as ConfigParser
-except ImportError:
-    from configparser import ConfigParser
+from configobj import ConfigObj
 # from prompt_toolkit.contrib.pdb import set_trace
 
 
 def load_config(filename, default_filename=None):
     filename = expanduser(filename)
-    parser = ConfigParser()
+    config = ConfigObj(filename, interpolation=False)
 
-    # parser.read will not fail in case of IOError,
-    # so let's not try/except here.
     if default_filename:
-        parser.read(default_filename)
+        config.merge(load_config(default_filename))
 
-    parser.read(filename)
-    return parser
+    return config
 
 
 def write_default_config(source, destination, overwrite=False):
