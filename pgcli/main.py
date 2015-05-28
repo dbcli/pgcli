@@ -85,8 +85,8 @@ class PGCli(object):
 
     def initialize_logging(self):
 
-        log_file = self.config.get('main', 'log_file')
-        log_level = self.config.get('main', 'log_level')
+        log_file = self.config['main']['log_file']
+        log_level = self.config['main']['log_level']
 
         level_map = {'CRITICAL': logging.CRITICAL,
                      'ERROR': logging.ERROR,
