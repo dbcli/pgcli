@@ -758,8 +758,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
 
                         # /* Everything after "CREATE RULE" is echoed verbatim */
                         ruledef = row[1]
-                        ruledef += 12
-                        status.append("    %s", ruledef)
+                        status.append("    %s" % ruledef)
 
     if (view_def):
         #/* Footer information about a view */
@@ -779,9 +778,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
                 for row in cur:
                     #/* Everything after "CREATE RULE" is echoed verbatim */
                     ruledef = row[1]
-                    ruledef += 12;
-
-                    status.append(" %s\n", ruledef)
+                    status.append(" %s\n" % ruledef)
 
 
     #/*
