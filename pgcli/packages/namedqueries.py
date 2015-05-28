@@ -4,10 +4,9 @@ from ..config import load_config
 class NamedQueries:
 
     section_name = 'named queries'
-    filename = '~/.pgclirc'
 
-    def __init__(self):
-        self.filename = expanduser('~/.pgclirc')
+    def __init__(self, filename):
+        self.filename = expanduser(filename)
         self.config = load_config(self.filename)
 
     def list(self):
@@ -36,4 +35,4 @@ class NamedQueries:
 
 
 
-namedqueries = NamedQueries()
+namedqueries = NamedQueries('~/.pgclirc')
