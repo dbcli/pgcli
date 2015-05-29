@@ -1035,11 +1035,15 @@ def list_named_queries(cur, arg, verbose):
 
 def save_named_query(cur, arg, verbose):
     """Returns (title, rows, headers, status)"""
+    if ' ' not in arg:
+        return [(None, None, None, "Invalid argument.")]
     name, query = arg.split(' ', 1)
     namedqueries.save(name, query)
     return [(None, None, None, "Saved.")]
 
 def delete_named_query(cur, arg, verbose):
+    if len(arg) == 0:
+        return [(None, None, None, "Invalid argument.")]
     namedqueries.delete(arg)
     return [(None, None, None, "Deleted.")]
 
