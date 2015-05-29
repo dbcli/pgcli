@@ -27,7 +27,8 @@ setup(
             'Pygments >= 2.0',  # Pygments has to be Capitalcased. WTF?
             'prompt_toolkit==0.37',
             'psycopg2 >= 2.5.4',
-            'sqlparse == 0.1.14'
+            'sqlparse == 0.1.14',
+            'configobj >= 5.0.6'
             ],
         entry_points='''
             [console_scripts]
