@@ -9,7 +9,9 @@ def load_config(filename, default_filename=None):
     config = ConfigObj(filename, interpolation=False)
 
     if default_filename:
-        config.merge(load_config(default_filename))
+        default = load_config(default_filename)
+        default.merge(config)
+        return default
 
     return config
 
