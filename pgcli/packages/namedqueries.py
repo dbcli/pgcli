@@ -1,7 +1,6 @@
-from os.path import expanduser
 from ..config import load_config
 
-class NamedQueries:
+class NamedQueries(object):
 
     section_name = 'named queries'
 
