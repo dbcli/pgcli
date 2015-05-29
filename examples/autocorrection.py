@@ -29,12 +29,11 @@ def main():
         """
         b = event.cli.current_buffer
         w = b.document.get_word_before_cursor()
-        replace_by = corrections.get(w)
 
         if w is not None:
             if w in corrections:
                 b.delete_before_cursor(count=len(w))
-                b.insert_text(replace_by)
+                b.insert_text(corrections[w])
 
         b.insert_text(' ')
 
