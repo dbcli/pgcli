@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from ..filters import Always, CLIFilter
+from ..filters import Always, CLIFilter, Never
 from ..utils import Callback
 
 from collections import defaultdict
@@ -65,13 +65,18 @@ class Registry(object):
         assert isinstance(filter, CLIFilter), 'Expected Filter instance, got %r' % filter
 
         def decorator(func):
-            binding = _Binding(keys, func, filter=filter)
+            # When a filter is Never, it will always stay disabled, so in that case
+            # don't bother putting it in the registry. It will slow down every key
+            # press otherwise. (This happens for instance when a KeyBindingManager
+            # is used, but some set of bindings are always disabled.)
+            if not isinstance(filter, Never):
+                binding = _Binding(keys, func, filter=filter)
 
-            self.key_bindings.append(binding)
-            self._keys_to_bindings[keys].append(binding)
+                self.key_bindings.append(binding)
+                self._keys_to_bindings[keys].append(binding)
 
-            for i in range(1, len(keys)):
-                self._keys_to_bindings_suffixes[keys[:i]].append(binding)
+                for i in range(1, len(keys)):
+                    self._keys_to_bindings_suffixes[keys[:i]].append(binding)
 
             return func
         return decorator
