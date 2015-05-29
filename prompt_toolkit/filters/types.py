@@ -10,6 +10,9 @@ __all__ = (
 
 class _FilterTypeMeta(type):
     def __instancecheck__(cls, instance):
+        if not hasattr(instance, 'getargspec'):
+            return False
+
         arguments = _drop_self(instance.getargspec())
         return arguments.args == cls.arguments_list or arguments.varargs is not None
 

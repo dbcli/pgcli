@@ -29,9 +29,9 @@ class Filter(with_metaclass(ABCMeta, object)):
         """
         Chaining of filters using the & operator.
         """
-        if other is None or isinstance(other, Always):
+        if isinstance(other, Always) or isinstance(self, Never):
             return self
-        elif isinstance(other, Never):
+        elif isinstance(other, Never) or isinstance(self, Always):
             return other
         else:
             assert isinstance(other, Filter), 'Expecting filter, got %r' % other
@@ -41,10 +41,10 @@ class Filter(with_metaclass(ABCMeta, object)):
         """
         Chaining of filters using the | operator.
         """
-        if other is None or isinstance(other, Never):
-            return self
-        elif isinstance(other, Always):
+        if isinstance(other, Always) or isinstance(self, Never):
             return other
+        elif isinstance(other, Never) or isinstance(self, Always):
+            return self
         else:
             assert isinstance(other, Filter), 'Expecting filter, got %r' % other
             return _or(self, other)
