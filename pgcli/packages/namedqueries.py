@@ -6,33 +6,24 @@ class NamedQueries:
     section_name = 'named queries'
 
     def __init__(self, filename):
-        self.filename = expanduser(filename)
-        self.config = load_config(self.filename)
+        self.config = load_config(filename)
 
     def list(self):
-        if self.config.has_section(self.section_name):
-            return self.config.options(self.section_name)
-        return []
+        return self.config.get(self.section_name, [])
 
     def get(self, name):
-        if not self.config.has_section(self.section_name):
-            return None
-        return self.config.get(self.section_name, name)
+        return self.config.get(self.section_name, {}).get(name, None)
 
     def save(self, name, query):
-        if not self.config.has_section(self.section_name):
-            self.config.add_section(self.section_name)
-        self.config.set(self.section_name, name, query)
-        self._write()
+        if self.section_name not in self.config:
+            self.config[self.section_name] = {}
+        self.config[self.section_name][name] = query
+        self.config.write()
 
     def delete(self, name):
-        self.config.remove_option(self.section_name, name)
-        self._write()
-
-    def _write(self):
-        with open(self.filename, 'w') as f:
-            self.config.write(f)
-
+        if self.section_name in self.config and name in self.config[self.section_name]:
+            del self.config[self.section_name][name]
+            self.config.write()
 
 
 namedqueries = NamedQueries('~/.pgclirc')
