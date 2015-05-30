@@ -33,3 +33,7 @@ syntax_style = default
 
 # Enables vi-mode
 vi = False
+
+# Named queries are queries you can rexecute by name
+[named queries]
+

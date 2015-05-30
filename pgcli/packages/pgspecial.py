@@ -3,6 +3,7 @@ import sys
 import logging
 from collections import namedtuple
 from .tabulate import tabulate
+from .namedqueries import namedqueries
 
 TableInfo = namedtuple("TableInfo", ['checks', 'relkind', 'hasindex',
 'hasrules', 'hastriggers', 'hasoids', 'tablespace', 'reloptions', 'reloftype',
@@ -1022,6 +1023,48 @@ def toggle_timing(cur, arg, verbose):
     message += "on." if TIMING_ENABLED else "off."
     return [(None, None, None, message)]
 
+def list_named_queries(cur, arg, verbose):
+    """Returns (title, rows, headers, status)"""
+    if not verbose:
+        rows = [[r] for r in namedqueries.list()]
+        headers = ["Name"]
+    else:
+        headers = ["Name", "Query"]
+        rows = [[r, namedqueries.get(r)] for r in namedqueries.list()]
+    return [('', rows, headers, "")]
+
+def save_named_query(cur, arg, verbose):
+    """Returns (title, rows, headers, status)"""
+    if ' ' not in arg:
+        return [(None, None, None, "Invalid argument.")]
+    name, query = arg.split(' ', 1)
+    namedqueries.save(name, query)
+    return [(None, None, None, "Saved.")]
+
+def delete_named_query(cur, arg, verbose):
+    if len(arg) == 0:
+        return [(None, None, None, "Invalid argument.")]
+    namedqueries.delete(arg)
+    return [(None, None, None, "Deleted.")]
+
+def execute_named_query(cur, arg, verbose):
+    """Returns (title, rows, headers, status)"""
+    if arg == '':
+        return list_named_queries(cur, arg, verbose)
+
+    query = namedqueries.get(arg)
+    title = '> {}'.format(query)
+    if query is None:
+        message = "No named query: {}".format(arg)
+        return [(None, None, None, message)]
+    cur.execute(query)
+    if cur.description:
+        headers = [x[0] for x in cur.description]
+        return [(title, cur, headers, cur.statusmessage)]
+    else:
+        return [(title, None, None, cur.statusmessage)]
+
+
 CASE_SENSITIVE_COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
             '\c': (dummy_command, ['\c database_name', 'Connect to a new database.']),
@@ -1042,6 +1085,9 @@ CASE_SENSITIVE_COMMANDS = {
             '\sf': (in_progress, ['\sf[+] funcname', 'Not yet implemented.']),
             '\z': (in_progress, ['\z [pattern]', 'Not yet implemented.']),
             '\do': (in_progress, ['\do[S] [pattern]', 'Not yet implemented.']),
+            '\\n': (execute_named_query, ['\\n[+] [name]', 'List or execute named queries.']),
+            '\\ns': (save_named_query, ['\\ns [name [query]]', 'Save a named query.']),
+            '\\nd': (delete_named_query, ['\\nd [name]', 'Delete a named query.']),
             }
 
 NON_CASE_SENSITIVE_COMMANDS = {
