@@ -1,20 +1,13 @@
 import shutil
 from os.path import expanduser, exists
 from configobj import ConfigObj
-# from prompt_toolkit.contrib.pdb import set_trace
 
+def load_config(usr_cfg, def_cfg=None):
+    cfg = ConfigObj()
+    cfg.merge(ConfigObj(def_cfg, interpolation=False))
+    cfg.merge(ConfigObj(expanduser(usr_cfg), interpolation=False))
 
-def load_config(filename, default_filename=None):
-    filename = expanduser(filename)
-    config = ConfigObj(filename, interpolation=False)
-
-    if default_filename:
-        default = load_config(default_filename)
-        default.merge(config)
-        return default
-
-    return config
-
+    return cfg
 
 def write_default_config(source, destination, overwrite=False):
     destination = expanduser(destination)
