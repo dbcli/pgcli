@@ -410,12 +410,15 @@ class CommandLineInterface(object):
         (Not thread safe -- to be called from inside the key bindings.)
         Suspend process.
         """
-        def run():
-            # Send `SIGSTP` to own process.
-            # This will cause it to suspend.
-            os.kill(os.getpid(), signal.SIGTSTP)
+        # Only suspend when the opperating system supports it.
+        # (Not on Windows.)
+        if hasattr(signal, 'SIGTSTP'):
+            def run():
+                # Send `SIGSTP` to own process.
+                # This will cause it to suspend.
+                os.kill(os.getpid(), signal.SIGTSTP)
 
-        self.run_in_terminal(run)
+            self.run_in_terminal(run)
 
     @property
     def is_exiting(self):
