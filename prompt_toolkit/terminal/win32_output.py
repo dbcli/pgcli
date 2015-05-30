@@ -7,6 +7,9 @@ from ..win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, COORD, 
 
 from prompt_toolkit.renderer import Output
 
+import six
+import sys
+
 __all__ = (
     'Win32Output',
 )
@@ -201,8 +204,13 @@ class Win32Output(Output):
             self.LOG.flush()
 
         # Write to output
-        self.stdout.write(data)
-        self.stdout.flush()
+        # (We encode ourself, because that way we can replace characters that
+        # don't exist in the character set, avoiding UnicodeEncodeError
+        # crashes. E.g. the 'umlaut' does not exist in the cp437 encoding.)
+        out = self.stdout.buffer if six.PY3 else self.stdout
+
+        out.write(data.encode(sys.stdout.encoding, 'replace'))
+        out.flush()
 
         self._buffer = []
 

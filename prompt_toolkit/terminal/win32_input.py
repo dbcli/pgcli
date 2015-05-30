@@ -5,6 +5,8 @@ from prompt_toolkit.key_binding.input_processor import KeyPress
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.win32_types import EventTypes, KEY_EVENT_RECORD, INPUT_RECORD, STD_INPUT_HANDLE
 
+import sys
+
 __all__ = (
     'ConsoleInputReader',
     'raw_mode',
@@ -105,13 +107,13 @@ class ConsoleInputReader(object):
         max_count = 1024  # Read max 1024 events at the same time.
         result = []
 
-        read = c_int(0)
+        read = DWORD(0)
 
         arrtype = INPUT_RECORD * max_count
         input_records = arrtype()
 
         # Get next batch of input event.
-        windll.kernel32.ReadConsoleInputA(self.handle, pointer(input_records), max_count, pointer(read))
+        windll.kernel32.ReadConsoleInputW(self.handle, pointer(input_records), max_count, pointer(read))
 
         for i in range(read.value):
             ir = input_records[i]
@@ -139,10 +141,11 @@ class ConsoleInputReader(object):
             if ev.VirtualKeyCode in self.keycodes:
                 result = KeyPress(self.keycodes[ev.VirtualKeyCode], '')
         else:
+            enc = sys.stdin.encoding
             if ev.AsciiChar in self.mappings:
-                result = KeyPress(self.mappings[ev.AsciiChar], ev.AsciiChar.decode('ascii'))
+                result = KeyPress(self.mappings[ev.AsciiChar], ev.AsciiChar.decode(enc))
             else:
-                result = KeyPress(ev.AsciiChar.decode('ascii'), ev.AsciiChar.decode('ascii'))
+                result = KeyPress(ev.AsciiChar.decode(enc), ev.AsciiChar.decode(enc))
 
         # Correctly handle Control-Arrow keys.
         if (ev.ControlKeyState & self.LEFT_CTRL_PRESSED or
