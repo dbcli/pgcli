@@ -964,19 +964,24 @@ class Buffer(object):
         os.close(descriptor)
 
         # Open in editor
-        self._open_file_in_editor(filename)
+        succes = self._open_file_in_editor(filename)
 
         # Read content again.
-        with open(filename, 'rb') as f:
-            self.document = Document(
-                text=f.read().decode('utf-8'),
-                cursor_position=len(self.text))
+        if succes:
+            with open(filename, 'rb') as f:
+                self.document = Document(
+                    text=f.read().decode('utf-8'),
+                    cursor_position=len(self.text))
 
         # Clean up temp file.
         os.remove(filename)
 
     def _open_file_in_editor(self, filename):
-        """ Call editor executable. """
+        """
+        Call editor executable.
+
+        Return True when we received a zero return code.
+        """
         # If the 'EDITOR' environment variable has been set, use that one.
         # Otherwise, fall back to the first available editor that we can find.
         editor = os.environ.get('EDITOR')
@@ -995,12 +1000,14 @@ class Buffer(object):
         for e in editors:
             if e:
                 try:
-                    subprocess.call([e, filename])
-                    return
+                    returncode = subprocess.call([e, filename])
+                    return returncode == 0
 
                 except OSError:
                     # Executable does not exist, try the next one.
                     pass
+
+        return False
 
 
 def indent(buffer, from_row, to_row, count=1):
