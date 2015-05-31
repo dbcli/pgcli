@@ -5,5 +5,5 @@ from prompt_toolkit.shortcuts import get_input
 
 if __name__ == '__main__':
     print('If you press meta-! or esc-! at the following prompt, you can enter system commands.')
-    answer = get_input('Give me some input: ', enable_system_prompt=True)
+    answer = get_input('Give me some input: ', enable_system_prompt=Always())
     print('You said: %s' % answer)

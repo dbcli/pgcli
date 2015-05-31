@@ -75,7 +75,7 @@ class TestStyle(Style):
 
 
 def main():
-    manager = KeyBindingManager(enable_system_prompt=True)
+    manager = KeyBindingManager(enable_system_prompt=Always())
 
     D = LayoutDimension
     layout = HSplit([
