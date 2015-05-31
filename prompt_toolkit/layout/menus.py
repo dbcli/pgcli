@@ -141,7 +141,7 @@ class CompletionsMenuControl(UIControl):
 
         text, tw = self._trim_text(completion.display_meta, width - 2)
         padding = ' ' * (width - 2 - tw)
-        return [(token, ' %s%s ' % (text or 'none', padding))]
+        return [(token, ' %s%s ' % (text, padding))]
 
     def _trim_text(self, text, max_width):
         """
