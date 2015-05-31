@@ -187,7 +187,7 @@ def create_default_application(
         is_password=False,
         vi_mode=Never(),
         lexer=None,
-        enable_system_prompt=Never(),
+        enable_system_bindings=Never(),
         enable_open_in_editor=Never(),
         validator=None,
         completer=None,
@@ -214,7 +214,7 @@ def create_default_application(
     :param validator: `Validator` instance for input validation.
     :param completer: `Completer` instance for input completion.
     :param style: Pygments style class for the color scheme.
-    :param enable_system_prompt: Pressing Meta+'!' will show a system prompt.
+    :param enable_system_bindings: Pressing Meta+'!' will show a system prompt.
     :param enable_open_in_editor: Pressing 'v' in Vi mode or C-X C-E in emacs
                                   mode will open an external editor.
     :param history: `History` instance. (e.g. `FileHistory`)
@@ -225,7 +225,7 @@ def create_default_application(
     if key_bindings_registry is None:
         key_bindings_registry = KeyBindingManager(
             enable_vi_mode=vi_mode,
-            enable_system_prompt=enable_system_prompt,
+            enable_system_bindings=enable_system_bindings,
             enable_open_in_editor=enable_open_in_editor).registry
 
     return Application(

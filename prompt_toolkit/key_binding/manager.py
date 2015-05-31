@@ -26,12 +26,12 @@ __all__ = (
 
 class KeyBindingManager(object):
     def __init__(self, registry=None, enable_vi_mode=Never(),
-                 enable_system_prompt=Never(), enable_search=Always(),
+                 enable_system_bindings=Never(), enable_search=Always(),
                  enable_open_in_editor=Never()):
 
         assert registry is None or isinstance(registry, Registry)
         assert isinstance(enable_vi_mode, CLIFilter)
-        assert isinstance(enable_system_prompt, CLIFilter)
+        assert isinstance(enable_system_bindings, CLIFilter)
         assert isinstance(enable_open_in_editor, CLIFilter)
 
         self.registry = registry or Registry()
@@ -44,7 +44,7 @@ class KeyBindingManager(object):
 
         # Load basic bindings.
         load_basic_bindings(self.registry)
-        load_basic_system_bindings(self.registry, enable_system_prompt)
+        load_basic_system_bindings(self.registry, enable_system_bindings)
 
         # Load emacs bindings.
         load_emacs_bindings(self.registry, enable_emacs_mode)
@@ -56,7 +56,7 @@ class KeyBindingManager(object):
             self.registry, enable_emacs_mode & enable_search)
 
         load_emacs_system_bindings(
-            self.registry, enable_emacs_mode & enable_system_prompt)
+            self.registry, enable_emacs_mode & enable_system_bindings)
 
         # Load Vi bindings.
         load_vi_bindings(self.registry, self.vi_state, enable_vi_mode)
@@ -71,7 +71,7 @@ class KeyBindingManager(object):
 
         load_vi_system_bindings(
             self.registry, self.vi_state,
-            enable_vi_mode & enable_system_prompt)
+            enable_vi_mode & enable_system_bindings)
 
     def reset(self):
         self.vi_state.reset()
