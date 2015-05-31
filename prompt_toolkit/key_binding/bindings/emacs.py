@@ -4,7 +4,6 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import CLIFilter, Always
 
-from .basic import load_basic_bindings
 from .utils import create_handle_decorator
 
 import prompt_toolkit.filters as filters
@@ -24,8 +23,6 @@ def load_emacs_bindings(registry, filter=Always()):
     # http://www.catonmat.net/download/readline-emacs-editing-mode-cheat-sheet.pdf
 
     assert isinstance(filter, CLIFilter)
-
-    load_basic_bindings(registry, filter)
 
     handle = create_handle_decorator(registry, filter)
     has_selection = filters.HasSelection()

@@ -8,7 +8,6 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
 from prompt_toolkit.selection import SelectionType
 
-from .basic import load_basic_bindings
 from .utils import create_handle_decorator
 
 import prompt_toolkit.filters as filters
@@ -61,7 +60,6 @@ def load_vi_bindings(registry, vi_state, filter=None):
     """
     assert isinstance(vi_state, ViState)
 
-    load_basic_bindings(registry, filter)
     handle = create_handle_decorator(registry, filter)
 
     insert_mode = ViStateFilter(vi_state, InputMode.INSERT) & ~ filters.HasSelection()

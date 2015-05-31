@@ -8,6 +8,7 @@ from .utils import create_handle_decorator
 
 __all__ = (
     'load_basic_bindings',
+    'load_basic_system_bindings',
 )
 
 
@@ -272,6 +273,14 @@ def load_basic_bindings(registry, filter=Always()):
 
         # Report absolute cursor position to the renderer.
         event.cli.renderer.report_absolute_cursor_row(row)
+
+
+def load_basic_system_bindings(registry, filter=Always()):
+    """
+    Basic system bindings (For both Emacs and Vi mode.)
+    """
+    assert isinstance(filter, CLIFilter)
+    handle = create_handle_decorator(registry, filter)
 
     @handle(Keys.ControlZ)
     def _(event):

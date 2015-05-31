@@ -14,6 +14,7 @@ Usage::
 from __future__ import unicode_literals
 from prompt_toolkit.key_binding.registry import Registry
 from prompt_toolkit.key_binding.vi_state import ViState
+from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_basic_system_bindings
 from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_system_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings
 from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_system_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings
 from prompt_toolkit.filters import CLIFilter, Never, Always
@@ -40,6 +41,10 @@ class KeyBindingManager(object):
 
         # Vi state. (Object to keep track of in which Vi mode we are.)
         self.vi_state = ViState()
+
+        # Load basic bindings.
+        load_basic_bindings(self.registry)
+        load_basic_system_bindings(self.registry, enable_system_prompt)
 
         # Load emacs bindings.
         load_emacs_bindings(self.registry, enable_emacs_mode)
