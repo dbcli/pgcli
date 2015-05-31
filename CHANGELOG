@@ -1,6 +1,28 @@
 CHANGELOG
 =========
 
+0.38: 2015-05-31
+----------------
+
+New features:
+- Improved performance significantly for processing key bindings.
+  (Pasting text will be a lot faster.)
+- Added 'M' Vi key binding.
+- Added 'z-' and 'z+' and 'z-[Enter]' Vi keybindings.
+- Correctly handle input and output encodings on Windows.
+
+Bug fixes:
+- Fix bug when completion cursor position is outside range of current text.
+- Don't crash Control-D is pressed while waiting for ENTER press (in run_system_command.)
+- On Ctrl-Z, don't suspend on Windows, where we don't have SIGTSTP.
+- Ignore result when open_in_editor received a nonzero return code.
+- Bug fix in displaying of menu meta information. Don't show 'None'.
+
+Backwards incompatible changes:
+- Refactoring of the I/O layer.  Separation of the CommandLineInterface
+  and Application class.
+- Renamed enable_system_prompt to enable_system_bindings.
+
 0.37: 2015-05-11
 ----------------
 
