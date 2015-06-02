@@ -179,7 +179,8 @@ class Renderer(object):
 
     ::
 
-        r = Renderer(sys.stdout)
+        output = Vt100_Output.from_pty(sys.stdout)
+        r = Renderer(output)
         r.render(cli, layout=..., style=...)
     """
     def __init__(self, output, use_alternate_screen=False):  # XXX: implement alternate screen for Windows.
