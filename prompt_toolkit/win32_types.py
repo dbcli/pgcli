@@ -1,11 +1,10 @@
-from ctypes import byref, Structure, c_char, c_short, c_uint32, c_ushort, c_ulong
-from ctypes import windll, Union, pointer, c_int, c_long
-from ctypes.wintypes import DWORD, BOOL, LPVOID, WORD
+from ctypes import Union, Structure, c_char, c_short, c_long
+from ctypes.wintypes import DWORD, BOOL, LPVOID, WORD, HANDLE
 
 
-STD_INPUT_HANDLE = c_ulong(-10)
-STD_OUTPUT_HANDLE = c_ulong(-11)
-STD_ERROR_HANDLE = c_ulong(-12)
+STD_INPUT_HANDLE = HANDLE(-10)
+STD_OUTPUT_HANDLE = HANDLE(-11)
+STD_ERROR_HANDLE = HANDLE(-12)
 
 
 class COORD(Structure):
