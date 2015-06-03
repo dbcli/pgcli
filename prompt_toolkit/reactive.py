@@ -34,7 +34,7 @@ class Integer(with_metaclass(ABCMeta, object)):
         return True
 
     @classmethod
-    def from_callable(self, func):
+    def from_callable(cls, func):
         """
         Create an Integer-like object that calls the given function when it is
         resolved to an int.

@@ -778,7 +778,9 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Move to previous blank-line separated section.
         Implements '{', 'c{', 'd{', 'y{'
         """
-        match_func = lambda text: not text or text.isspace()
+        def match_func(text):
+            return not text or text.isspace()
+
         line_index = event.current_buffer.document.find_previous_matching_line(
             match_func=match_func, count=event.arg)
 
@@ -794,7 +796,9 @@ def load_vi_bindings(registry, vi_state, filter=None):
         Move to next blank-line separated section.
         Implements '}', 'c}', 'd}', 'y}'
         """
-        match_func = lambda text: not text or text.isspace()
+        def match_func(text):
+            return not text or text.isspace()
+
         line_index = event.current_buffer.document.find_next_matching_line(
             match_func=match_func, count=event.arg)
 
