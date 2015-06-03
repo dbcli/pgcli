@@ -22,6 +22,7 @@ Let's get started!
 
    .. code:: python
 
+       from __future__ import unicode_literals
        from prompt_toolkit.shortcuts import get_input
 
        def main():
@@ -40,6 +41,7 @@ Let's get started!
 
    .. code:: python
 
+       from __future__ import unicode_literals
        from prompt_toolkit.shortcuts import get_input
        from prompt_toolkit.history import History
 
@@ -67,6 +69,7 @@ Let's get started!
 
    .. code:: python
 
+       from __future__ import unicode_literals
        from prompt_toolkit.shortcuts import get_input
        from prompt_toolkit.history import History
        from pygments.lexers import SqlLexer
@@ -97,6 +100,7 @@ Let's get started!
 
    .. code:: python
 
+       from __future__ import unicode_literals
        from prompt_toolkit.shortcuts import get_input
        from prompt_toolkit.history import History
        from prompt_toolkit.contrib.completers import WordCompleter
@@ -131,6 +135,7 @@ Let's get started!
 
    .. code:: python
 
+       from __future__ import unicode_literals
        from prompt_toolkit.shortcuts import get_input
        from prompt_toolkit.history import History
        from prompt_toolkit.contrib.completers import WordCompleter
@@ -177,6 +182,7 @@ Let's get started!
 
    .. code:: python
 
+       from __future__ import unicode_literals
        import sys
        import sqlite3
 
