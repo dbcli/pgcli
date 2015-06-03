@@ -22,6 +22,15 @@ class History(object):
     def __len__(self):
         return len(self.strings)
 
+    def __bool__(self):
+        """
+        Don't evaluate to False, even when the history is empty.
+        (Python calls __len__ if __bool__ is not implemented.)
+        """
+        return True
+
+    __nonzero__ = __bool__  # For Python 2.
+
 
 class FileHistory(History):
     """
