@@ -55,7 +55,7 @@ class Filter(with_metaclass(ABCMeta, object)):
         """
         return _Invert(self)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """
         By purpose, we don't allow bool(...) operations directly on a filter,
         because because the meaning is ambigue.
@@ -65,6 +65,8 @@ class Filter(with_metaclass(ABCMeta, object)):
         instead of for instance ``filter1 or Always()``.
         """
         raise TypeError
+
+    __nonzero__ = __bool__  # For Python 2.
 
     def getargspec(self):
         """
