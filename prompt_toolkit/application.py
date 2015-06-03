@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from .buffer import Buffer, AcceptAction
 from .clipboard import Clipboard
 from .filters import CLIFilter, Never
+from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
 from .key_binding.registry import Registry
 from .layout import Window
@@ -100,6 +101,7 @@ class Application(object):
 
         if key_bindings_registry is None:
             key_bindings_registry = Registry()
+            load_basic_bindings(key_bindings_registry)
             load_emacs_bindings(key_bindings_registry)
 
         self.key_bindings_registry = key_bindings_registry
