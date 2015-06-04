@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+0.39: 2015-06-04
+----------------
+
+Fixes:
+- Fixed layout.py example.
+- Fixed eventloop for Python 64bit on Windows.
+- Fix in history.
+- Fix in key bindings.
+
+
 0.38: 2015-05-31
 ----------------
 
