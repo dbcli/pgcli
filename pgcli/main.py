@@ -15,17 +15,16 @@ from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.shortcuts import create_default_layout, create_eventloop
 from prompt_toolkit.document import Document
 from prompt_toolkit.filters import Always, HasFocus, IsDone
-from prompt_toolkit.layout.processors import HighlightMatchingBracketProcessor, ConditionalProcessor
+from prompt_toolkit.layout.processors import (ConditionalProcessor,
+                                        HighlightMatchingBracketProcessor)
 from prompt_toolkit.history import FileHistory
 from pygments.lexers.sql import PostgresLexer
 from pygments.token import Token
 
 from .packages.tabulate import tabulate
 from .packages.expanded import expanded_table
-from .packages.pgspecial import (CASE_SENSITIVE_COMMANDS,
-        NON_CASE_SENSITIVE_COMMANDS, is_expanded_output)
-import pgcli.packages.pgspecial as pgspecial
-import pgcli.packages.iospecial as iospecial
+from .packages.pgspecial.main import (COMMANDS, HIDDEN_COMMANDS)
+import pgcli.packages.pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory
@@ -67,7 +66,7 @@ class PGCli(object):
         c = self.config = load_config('~/.pgclirc', default_config)
         self.multi_line = c['main'].as_bool('multi_line')
         self.vi_mode = c['main'].as_bool('vi')
-        pgspecial.TIMING_ENABLED = c['main'].as_bool('timing')
+        special.TIMING_ENABLED = c['main'].as_bool('timing')
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
 
@@ -79,8 +78,8 @@ class PGCli(object):
         # Initialize completer
         smart_completion = c['main'].as_bool('smart_completion')
         completer = PGCompleter(smart_completion)
-        completer.extend_special_commands(CASE_SENSITIVE_COMMANDS.keys())
-        completer.extend_special_commands(NON_CASE_SENSITIVE_COMMANDS.keys())
+        completer.extend_special_commands(COMMANDS.keys())
+        completer.extend_special_commands(HIDDEN_COMMANDS.keys())
         self.completer = completer
 
     def initialize_logging(self):
@@ -176,9 +175,9 @@ class PGCli(object):
         :param document: Document
         :return: Document
         """
-        while iospecial.editor_command(document.text):
-            filename = iospecial.get_filename(document.text)
-            sql, message = iospecial.open_external_editor(filename,
+        while special.editor_command(document.text):
+            filename = special.get_filename(document.text)
+            sql, message = special.open_external_editor(filename,
                                                           sql=document.text)
             if message:
                 # Something went wrong. Raise an exception and bail.
@@ -433,7 +432,7 @@ def format_output(title, cur, headers, status, table_format):
         output.append(title)
     if cur:
         headers = [utf8tounicode(x) for x in headers]
-        if is_expanded_output():
+        if special.is_expanded_output():
             output.append(expanded_table(cur, headers))
         else:
             output.append(tabulate(cur, headers, tablefmt=table_format,

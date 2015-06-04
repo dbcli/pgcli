@@ -3,7 +3,7 @@ import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
-from .packages import pgspecial
+from .packages import pgspecial as special
 from .encodingutils import unicode2utf8, PY2
 
 _logger = logging.getLogger(__name__)
@@ -214,7 +214,7 @@ class PGExecute(object):
                 try:   # Special command
                     _logger.debug('Trying a pgspecial command. sql: %r', sql)
                     cur = self.conn.cursor()
-                    for result in pgspecial.execute(cur, sql):
+                    for result in special.execute(cur, sql):
                         yield result
                 except KeyError:  # Regular SQL
                     yield self.execute_normal_sql(sql)
