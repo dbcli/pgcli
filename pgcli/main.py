@@ -10,12 +10,12 @@ from time import time
 
 import click
 import sqlparse
-from prompt_toolkit import CommandLineInterface, AbortAction
+from prompt_toolkit import CommandLineInterface, Application, AbortAction
+from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.shortcuts import create_default_layout, create_eventloop
 from prompt_toolkit.document import Document
-from prompt_toolkit.filters import Always
-from prompt_toolkit.layout.processors import HighlightMatchingBracketProcessor
-from prompt_toolkit.layout.prompt import DefaultPrompt
+from prompt_toolkit.filters import Always, HasFocus, IsDone
+from prompt_toolkit.layout.processors import HighlightMatchingBracketProcessor, ConditionalProcessor
 from prompt_toolkit.history import FileHistory
 from pygments.lexers.sql import PostgresLexer
 from pygments.token import Token
@@ -184,7 +184,7 @@ class PGCli(object):
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
             cli.current_buffer.document = Document(sql, cursor_position=len(sql))
-            document = cli.read_input(False)
+            document = cli.run(False)
             continue
         return document
 
@@ -195,7 +195,14 @@ class PGCli(object):
 
         completer = self.completer
         self.refresh_completions()
-        key_binding_manager = pgcli_bindings(self.vi_mode)
+
+        def set_vi_mode(value):
+            self.vi_mode = value
+
+        key_binding_manager = pgcli_bindings(
+            get_vi_mode_enabled=lambda: self.vi_mode,
+            set_vi_mode_enabled=set_vi_mode)
+
         print('Version:', __version__)
         print('Chat: https://gitter.im/dbcli/pgcli')
         print('Mail: https://groups.google.com/forum/#!forum/pgcli')
@@ -204,26 +211,31 @@ class PGCli(object):
         def prompt_tokens(cli):
             return [(Token.Prompt,  '%s> ' % pgexecute.dbname)]
 
-        get_toolbar_tokens = create_toolbar_tokens_func(key_binding_manager)
+        get_toolbar_tokens = create_toolbar_tokens_func(lambda: self.vi_mode)
         layout = create_default_layout(lexer=PostgresLexer,
                                        reserve_space_for_menu=True,
                                        get_prompt_tokens=prompt_tokens,
                                        get_bottom_toolbar_tokens=get_toolbar_tokens,
                                        extra_input_processors=[
-                                           HighlightMatchingBracketProcessor(),
+                                           # Highlight matching brackets while editing.
+                                           ConditionalProcessor(
+                                               processor=HighlightMatchingBracketProcessor(chars='[](){}'),
+                                               filter=HasFocus(DEFAULT_BUFFER) & ~IsDone()),
                                        ])
         buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
                 history=FileHistory(os.path.expanduser('~/.pgcli-history')),
                 complete_while_typing=Always())
-        cli = CommandLineInterface(create_eventloop(),
-                style=style_factory(self.syntax_style),
-                layout=layout, buffer=buf,
-                key_bindings_registry=key_binding_manager.registry,
-                on_exit=AbortAction.RAISE_EXCEPTION)
+
+        application = Application(style=style_factory(self.syntax_style),
+                                  layout=layout, buffer=buf,
+                                  key_bindings_registry=key_binding_manager.registry,
+                                  on_exit=AbortAction.RAISE_EXCEPTION)
+        cli = CommandLineInterface(application=application,
+                                   eventloop=create_eventloop())
 
         try:
             while True:
-                document = cli.read_input()
+                document = cli.run()
 
                 # The reason we check here instead of inside the pgexecute is
                 # because we want to raise the Exit exception which will be
