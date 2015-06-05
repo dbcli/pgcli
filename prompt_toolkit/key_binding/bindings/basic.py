@@ -175,10 +175,6 @@ def load_basic_bindings(registry, filter=Always()):
         deleted = buffer.delete(count=buffer.document.get_end_of_line_position())
         event.cli.clipboard.set_text(deleted)
 
-    @handle(Keys.ControlL)
-    def _(event):
-        event.cli.renderer.clear()
-
     @handle(Keys.ControlT, filter= ~has_selection)
     def _(event):
         event.current_buffer.swap_characters_before_cursor()
@@ -262,7 +258,14 @@ def load_basic_bindings(registry, filter=Always()):
         """
         event.current_buffer.insert_text(event.data * event.arg)
 
-    @handle(Keys.CPRResponse)
+    # Global bindings. These are never disabled and don't include the default filter.
+
+    @registry.add_binding(Keys.ControlL)
+    def _(event):
+        " Clear whole screen and redraw. "
+        event.cli.renderer.clear()
+
+    @registry.add_binding(Keys.CPRResponse)
     def _(event):
         """
         Handle incoming Cursor-Position-Request response.

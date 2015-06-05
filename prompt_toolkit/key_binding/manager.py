@@ -9,7 +9,6 @@ Usage::
 
     manager = KeyBindingManager()
     cli = CommandLineInterface(key_bindings_registry=manager.registry)
-    manager.enable_vi_mode = True
 """
 from __future__ import unicode_literals
 from prompt_toolkit.key_binding.registry import Registry
@@ -25,14 +24,27 @@ __all__ = (
 
 
 class KeyBindingManager(object):
+    """
+    Utility for loading all key bindings into memory.
+
+    :param registry: Optional `Registry` instance.
+    :param enable_vi_mode: Filter to enable Vi-mode.
+    :param enable_system_bindings: Filter to enable the system bindings
+            (meta-! prompt and Control-Z suspension.)
+    :param enable_search: Filter to enable the search bindings.
+    :param enable_open_in_editor: Filter to enable open-in-editor.
+    :param enable_open_in_editor: Filter to enable open-in-editor.
+    :param enable_all: Filter to enable (or disable) all bindings.
+    """
     def __init__(self, registry=None, enable_vi_mode=Never(),
                  enable_system_bindings=Never(), enable_search=Always(),
-                 enable_open_in_editor=Never()):
+                 enable_open_in_editor=Never(), enable_all=Always()):
 
         assert registry is None or isinstance(registry, Registry)
         assert isinstance(enable_vi_mode, CLIFilter)
         assert isinstance(enable_system_bindings, CLIFilter)
         assert isinstance(enable_open_in_editor, CLIFilter)
+        assert isinstance(enable_all, CLIFilter)
 
         self.registry = registry or Registry()
 
@@ -43,35 +55,37 @@ class KeyBindingManager(object):
         self.vi_state = ViState()
 
         # Load basic bindings.
-        load_basic_bindings(self.registry)
-        load_basic_system_bindings(self.registry, enable_system_bindings)
+        load_basic_bindings(self.registry, enable_all)
+
+        load_basic_system_bindings(self.registry,
+            enable_system_bindings & enable_all)
 
         # Load emacs bindings.
-        load_emacs_bindings(self.registry, enable_emacs_mode)
+        load_emacs_bindings(self.registry, enable_emacs_mode & enable_all)
 
         load_emacs_open_in_editor_bindings(
-            self.registry, enable_emacs_mode & enable_open_in_editor)
+            self.registry, enable_emacs_mode & enable_open_in_editor & enable_all)
 
         load_emacs_search_bindings(
-            self.registry, enable_emacs_mode & enable_search)
+            self.registry, enable_emacs_mode & enable_search & enable_all)
 
         load_emacs_system_bindings(
-            self.registry, enable_emacs_mode & enable_system_bindings)
+            self.registry, enable_emacs_mode & enable_system_bindings & enable_all)
 
         # Load Vi bindings.
-        load_vi_bindings(self.registry, self.vi_state, enable_vi_mode)
+        load_vi_bindings(self.registry, self.vi_state, enable_vi_mode & enable_all)
 
         load_vi_open_in_editor_bindings(
             self.registry, self.vi_state,
-            enable_vi_mode & enable_open_in_editor)
+            enable_vi_mode & enable_open_in_editor & enable_all)
 
         load_vi_search_bindings(
             self.registry, self.vi_state,
-            enable_vi_mode & enable_search)
+            enable_vi_mode & enable_search & enable_all)
 
         load_vi_system_bindings(
             self.registry, self.vi_state,
-            enable_vi_mode & enable_system_bindings)
+            enable_vi_mode & enable_system_bindings & enable_all)
 
     def reset(self):
         self.vi_state.reset()
