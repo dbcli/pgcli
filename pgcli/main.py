@@ -118,12 +118,11 @@ class PGCli(object):
     def connect(self, database='', host='', user='', port='', passwd=''):
         # Connect to the database.
 
+        if not user:
+            user = getuser()
+
         if not database:
-            if user:
-                database = user
-            else:
-                # default to current OS username just like psql
-                database = user = getuser()
+            database = user
 
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a

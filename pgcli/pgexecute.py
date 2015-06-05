@@ -162,6 +162,11 @@ class PGExecute(object):
             self.conn.close()
         self.conn = conn
         self.conn.autocommit = True
+        self.dbname = db
+        self.user = user
+        self.password = password
+        self.host = host
+        self.port = port
         register_json_typecasters(self.conn, self._json_typecaster)
         register_hstore_typecaster(self.conn)
 
@@ -194,30 +199,13 @@ class PGExecute(object):
             # Remove spaces, eol and semi-colons.
             sql = sql.rstrip(';')
 
-            # Check if the command is a \c or 'use'. This is a special
-            # exception that cannot be offloaded to `pgspecial` lib. Because we
-            # have to change the database connection that we're connected to.
-            command = sql.split()[0]
-            if command == '\c' or command == '\connect' or command.lower() == 'use':
-                _logger.debug('Database change command detected.')
-                try:
-                    dbname = sql.split()[1]
-                except:
-                    _logger.debug('Database name missing.')
-                    raise RuntimeError('Database name missing.')
-                self.connect(database=dbname)
-                self.dbname = dbname
-                _logger.debug('Successfully switched to DB: %r', dbname)
-                yield (None, None, None, 'You are now connected to database "%s" as '
-                        'user "%s"' % (self.dbname, self.user))
-            else:
-                try:   # Special command
-                    _logger.debug('Trying a pgspecial command. sql: %r', sql)
-                    cur = self.conn.cursor()
-                    for result in special.execute(cur, sql):
-                        yield result
-                except KeyError:  # Regular SQL
-                    yield self.execute_normal_sql(sql)
+            try:   # Special command
+                _logger.debug('Trying a pgspecial command. sql: %r', sql)
+                cur = self.conn.cursor()
+                for result in special.execute(cur, sql, self):
+                    yield result
+            except KeyError:  # Regular SQL
+                yield self.execute_normal_sql(sql)
 
     def execute_normal_sql(self, split_sql):
         _logger.debug('Regular sql statement. sql: %r', split_sql)

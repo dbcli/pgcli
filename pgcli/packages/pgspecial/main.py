@@ -2,7 +2,7 @@ from . import export
 from .iocommands import *
 from .dbcommands import *
 
-def show_help(*args):  # All the parameters are ignored.
+def show_help(**kwargs):  # All the parameters are ignored.
     headers = ['Command', 'Description']
     result = []
 
@@ -27,7 +27,7 @@ def in_progress(*args):
 
 COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
-            '\c': (change_db, ['\c database_name', 'Connect to a new database.']),
+            '\c': (change_db, ['\c[onnect] database_name', 'Connect to a new database.']),
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'List databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'List or describe tables, views and sequences.']),
             '\dn': (list_schemas, ['\dn[+] [pattern]', 'List schemas.']),
@@ -53,6 +53,8 @@ COMMANDS = {
 # Commands not shown via help.
 HIDDEN_COMMANDS = {
             'describe': (describe_table_details, ['DESCRIBE [pattern]', '']),
+            'use': (change_db, ['\c database_name', 'Connect to a new database.']),
+            '\connect': (change_db, ['\c database_name', 'Connect to a new database.']),
             }
 
 @export
@@ -80,7 +82,7 @@ def execute(cur=None, sql='', db_obj=None):
     # If the command executor is a function, then call the function with the
     # args. If it's a string, then assume it's an SQL command and run it.
     if callable(command_executor):
-        return command_executor(cur, arg, verbose)
+        return command_executor(cur=cur, pattern=arg, verbose=verbose, db_obj=db_obj)
     elif isinstance(command_executor, str):
         cur.execute(command_executor)
         if cur.description:

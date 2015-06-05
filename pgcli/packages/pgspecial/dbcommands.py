@@ -8,16 +8,16 @@ TableInfo = namedtuple("TableInfo", ['checks', 'relkind', 'hasindex',
 
 log = logging.getLogger(__name__)
 
-def change_db(cur, arg, verbose, db_obj):
-    if arg is None:
+def change_db(cur, pattern, verbose, db_obj):
+    if pattern is None:
         db_obj.connect()
     else:
-        db_obj.connect(database=arg)
+        db_obj.connect(database=pattern)
 
     yield (None, None, None, 'You are now connected to database "%s" as '
             'user "%s"' % (db_obj.dbname, db_obj.user))
 
-def list_roles(cur, pattern, verbose):
+def list_roles(cur, pattern, verbose, **kwargs):
     """
     Returns (title, rows, headers, status)
     """
@@ -45,7 +45,7 @@ def list_roles(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(None, cur, headers, cur.statusmessage)]
 
-def list_schemas(cur, pattern, verbose):
+def list_schemas(cur, pattern, verbose, **kwargs):
     """
     Returns (title, rows, headers, status)
     """
@@ -130,21 +130,21 @@ def list_objects(cur, pattern, verbose, relkinds):
         return [(None, cur, headers, cur.statusmessage)]
 
 
-def list_tables(cur, pattern, verbose):
+def list_tables(cur, pattern, verbose, **kwargs):
     return list_objects(cur, pattern, verbose, ['r', ''])
 
 
-def list_views(cur, pattern, verbose):
+def list_views(cur, pattern, verbose, **kwargs):
     return list_objects(cur, pattern, verbose, ['v', 's', ''])
 
-def list_sequences(cur, pattern, verbose):
+def list_sequences(cur, pattern, verbose, **kwargs):
     return list_objects(cur, pattern, verbose, ['S', 's', ''])
 
-def list_indexes(cur, pattern, verbose):
+def list_indexes(cur, pattern, verbose, **kwargs):
     return list_objects(cur, pattern, verbose, ['i', 's', ''])
 
 
-def list_functions(cur, pattern, verbose):
+def list_functions(cur, pattern, verbose, **kwargs):
 
     if verbose:
         verbose_columns = '''
@@ -209,7 +209,7 @@ def list_functions(cur, pattern, verbose):
         return [(None, cur, headers, cur.statusmessage)]
 
 
-def list_datatypes(cur, pattern, verbose):
+def list_datatypes(cur, pattern, verbose, **kwargs):
     assert True
     sql = '''SELECT n.nspname as "Schema",
                     pg_catalog.format_type(t.oid, NULL) AS "Name", '''
@@ -276,7 +276,7 @@ def list_datatypes(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(None, cur, headers, cur.statusmessage)]
 
-def describe_table_details(cur, pattern, verbose):
+def describe_table_details(cur, pattern, verbose, **kwargs):
     """
     Returns (title, rows, headers, status)
     """
