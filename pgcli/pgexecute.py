@@ -151,13 +151,17 @@ class PGExecute(object):
     def connect(self, database=None, user=None, password=None, host=None,
             port=None):
 
-        db = unicode2utf8(database or self.dbname)
-        user = unicode2utf8(user or self.user)
-        password = unicode2utf8(password or self.password)
-        host = unicode2utf8(host or self.host)
-        port = unicode2utf8(port or self.port)
-        conn = psycopg2.connect(database=db, user=user, password=password,
-                host=host, port=port)
+        db = (database or self.dbname)
+        user = (user or self.user)
+        password = (password or self.password)
+        host = (host or self.host)
+        port = (port or self.port)
+        conn = psycopg2.connect(
+                database=unicode2utf8(db),
+                user=unicode2utf8(user),
+                password=unicode2utf8(password),
+                host=unicode2utf8(host),
+                port=unicode2utf8(port))
         if hasattr(self, 'conn'):
             self.conn.close()
         self.conn = conn
