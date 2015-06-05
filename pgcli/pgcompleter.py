@@ -3,7 +3,7 @@ import logging
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
-from re import compile
+from re import compile, escape
 
 try:
     from collections import Counter
@@ -176,7 +176,7 @@ class PGCompleter(Completer):
         self.all_completions = set(self.keywords + self.functions)
 
     @staticmethod
-    def find_matches(text, collection, start_only=False):
+    def find_matches(text, collection, start_only=False, fuzzy=True):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -194,12 +194,22 @@ class PGCompleter(Completer):
 
         text = last_word(text, include='most_punctuations').lower()
 
-        for item in sorted(collection):
-            match_end_limit = len(text) if start_only else None
-            match_point = item.lower().find(text, 0, match_end_limit)
+        completions = []
 
-            if match_point >= 0:
-                yield Completion(item, -len(text))
+        if fuzzy:
+            pat = compile(''.join([escape(c) + r'.*' for c in text]))
+            for item in sorted(collection):
+                r = pat.search(item)
+                if r:
+                    completions.append((r.start(), item))
+        else:
+            match_end_limit = len(text) if start_only else None
+            for item in sorted(collection):
+                match_point = item.lower().find(text, 0, match_end_limit)
+                if match_point >= 0:
+                    completions.append((match_point, item))
+
+        return (Completion(y, -len(text)) for x, y in sorted(completions))
 
     def get_completions(self, document, complete_event, smart_completion=None):
         word_before_cursor = document.get_word_before_cursor(WORD=True)
@@ -210,7 +220,7 @@ class PGCompleter(Completer):
         # 'word_before_cursor'.
         if not smart_completion:
             return self.find_matches(word_before_cursor, self.all_completions,
-                                     start_only=True)
+                                     start_only=True, fuzzy=False)
 
         completions = []
         suggestions = suggest_type(document.text, document.text_before_cursor)
@@ -247,7 +257,8 @@ class PGCompleter(Completer):
                     # matching
                     predefined_funcs = self.find_matches(word_before_cursor,
                                                          self.functions,
-                                                         start_only=True)
+                                                         start_only=True,
+                                                         fuzzy=False)
                     completions.extend(predefined_funcs)
 
             elif suggestion['type'] == 'schema':
@@ -297,13 +308,15 @@ class PGCompleter(Completer):
 
             elif suggestion['type'] == 'keyword':
                 keywords = self.find_matches(word_before_cursor, self.keywords,
-                                             start_only=True)
+                                             start_only=True,
+                                             fuzzy=False)
                 completions.extend(keywords)
 
             elif suggestion['type'] == 'special':
                 special = self.find_matches(word_before_cursor,
                                             self.special_commands,
-                                            start_only=True)
+                                            start_only=True,
+                                            fuzzy=False)
                 completions.extend(special)
 
             elif suggestion['type'] == 'datatype':
@@ -316,7 +329,8 @@ class PGCompleter(Completer):
                 if not suggestion['schema']:
                     # Also suggest hardcoded types
                     types = self.find_matches(word_before_cursor,
-                                              self.datatypes, start_only=True)
+                                              self.datatypes, start_only=True,
+                                              fuzzy=False)
                     completions.extend(types)
 
         return completions
@@ -383,7 +397,7 @@ class PGCompleter(Completer):
             try:
                 objects = metadata[schema].keys()
             except KeyError:
-                #schema doesn't exist
+                # schema doesn't exist
                 objects = []
         else:
             schemas = self.search_path
