@@ -276,12 +276,6 @@ class Renderer(object):
         style = style or Style
         output = self.output
 
-        # When we render using another style, do a full repaint. (Forget about
-        # the previous rendered screen.)
-        if style != self._last_style:
-            self._last_screen = None
-        self._last_style = style
-
         # Enter alternate screen.
         if self.use_alternate_screen and not self._in_alternate_screen:
             self._in_alternate_screen = True
@@ -300,6 +294,13 @@ class Renderer(object):
         # When te size changes, don't consider the previous screen.
         if self._last_size != size:
             self._last_screen = None
+
+        # When we render using another style, do a full repaint. (Forget about
+        # the previous rendered screen.)
+        # (But note that we still use _last_screen to calculate the height.)
+        if style != self._last_style:
+            self._last_screen = None
+        self._last_style = style
 
         layout.write_to_screen(cli, screen, WritePosition(
             xpos=0,
