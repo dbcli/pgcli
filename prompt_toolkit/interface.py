@@ -222,7 +222,7 @@ class CommandLineInterface(object):
         Render the command line again. (Not thread safe!)
         (From other threads, or if unsure, use `request_redraw`.)
         """
-        self.renderer.render(self, self.layout, self.application.style,
+        self.renderer.render(self, self.layout, self.application.get_style(),
                              is_done=self.is_done)
 
     def _on_resize(self):

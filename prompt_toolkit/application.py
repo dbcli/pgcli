@@ -67,7 +67,8 @@ class Application(object):
     :param on_initialize: Called after the `CommandLineInterface` initializes.
     """
     def __init__(self, layout=None, buffer=None, buffers=None,
-                 initial_focussed_buffer=DEFAULT_BUFFER, style=None,
+                 initial_focussed_buffer=DEFAULT_BUFFER,
+                 style=None, get_style=None,
                  key_bindings_registry=None, clipboard=None,
                  on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
                  use_alternate_screen=False,
@@ -92,12 +93,19 @@ class Application(object):
         assert on_reset is None or isinstance(on_reset, Callback)
         assert on_buffer_changed is None or isinstance(on_buffer_changed, Callback)
         assert on_initialize is None or isinstance(on_initialize, Callback)
+        assert not (style and get_style)
 
         self.layout = layout or Window(BufferControl())
         self.buffer = buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)
         self.buffers = buffers or {}
         self.initial_focussed_buffer = initial_focussed_buffer
-        self.style = style or DefaultStyle
+
+        if style:
+            self.get_style = lambda: style
+        elif get_style:
+            self.get_style = get_style
+        else:
+            self.get_style = lambda: DefaultStyle
 
         if key_bindings_registry is None:
             key_bindings_registry = Registry()
