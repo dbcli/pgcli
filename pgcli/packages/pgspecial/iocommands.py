@@ -16,14 +16,14 @@ use_expanded_output = False
 def is_expanded_output():
     return use_expanded_output
 
-def toggle_expanded_output(cur, arg, verbose, **kwargs):
+def toggle_expanded_output(cur, pattern, verbose, **kwargs):
     global use_expanded_output
     use_expanded_output = not use_expanded_output
     message = u"Expanded display is "
     message += u"on." if use_expanded_output else u"off."
     return [(None, None, None, message)]
 
-def toggle_timing(cur, arg, verbose, **kwargs):
+def toggle_timing(cur, pattern, verbose, **kwargs):
     global TIMING_ENABLED
     TIMING_ENABLED = not TIMING_ENABLED
     message = "Timing is "
@@ -89,15 +89,15 @@ def open_external_editor(filename=None, sql=''):
 
     return (query, message)
 
-def execute_named_query(cur, arg, verbose, **kwargs):
+def execute_named_query(cur, pattern, verbose, **kwargs):
     """Returns (title, rows, headers, status)"""
-    if arg == '':
-        return list_named_queries(cur, arg, verbose)
+    if pattern == '':
+        return list_named_queries(cur, pattern, verbose)
 
-    query = namedqueries.get(arg)
+    query = namedqueries.get(pattern)
     title = '> {}'.format(query)
     if query is None:
-        message = "No named query: {}".format(arg)
+        message = "No named query: {}".format(pattern)
         return [(None, None, None, message)]
     cur.execute(query)
     if cur.description:
@@ -106,7 +106,7 @@ def execute_named_query(cur, arg, verbose, **kwargs):
     else:
         return [(title, None, None, cur.statusmessage)]
 
-def list_named_queries(cur, arg, verbose, **kwargs):
+def list_named_queries(cur, pattern, verbose, **kwargs):
     """List of all named queries.
     Returns (title, rows, headers, status)"""
     if not verbose:
@@ -117,19 +117,19 @@ def list_named_queries(cur, arg, verbose, **kwargs):
         rows = [[r, namedqueries.get(r)] for r in namedqueries.list()]
     return [('', rows, headers, "")]
 
-def save_named_query(cur, arg, verbose, **kwargs):
+def save_named_query(cur, pattern, verbose, **kwargs):
     """Save a new named query.
     Returns (title, rows, headers, status)"""
-    if ' ' not in arg:
+    if ' ' not in pattern:
         return [(None, None, None, "Invalid argument.")]
-    name, query = arg.split(' ', 1)
+    name, query = pattern.split(' ', 1)
     namedqueries.save(name, query)
     return [(None, None, None, "Saved.")]
 
-def delete_named_query(cur, arg, verbose, **kwargs):
+def delete_named_query(cur, pattern, verbose, **kwargs):
     """Delete an existing named query.
     """
-    if len(arg) == 0:
+    if len(pattern) == 0:
         return [(None, None, None, "Invalid argument.")]
-    namedqueries.delete(arg)
+    namedqueries.delete(pattern)
     return [(None, None, None, "Deleted.")]
