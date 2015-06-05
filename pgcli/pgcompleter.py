@@ -197,19 +197,21 @@ class PGCompleter(Completer):
         completions = []
 
         if fuzzy:
-            pat = compile(''.join([escape(c) + r'.*' for c in text]))
+            #pat = compile(''.join([escape(c) + r'.*' for c in text]))
+            regex = '.*'.join(map(escape, text))
+            pat = compile('(%s)' % regex)
             for item in sorted(collection):
                 r = pat.search(item)
                 if r:
-                    completions.append((r.start(), item))
+                    completions.append((len(r.group()), r.start(), item))
         else:
             match_end_limit = len(text) if start_only else None
             for item in sorted(collection):
                 match_point = item.lower().find(text, 0, match_end_limit)
                 if match_point >= 0:
-                    completions.append((match_point, item))
+                    completions.append((match_point, 0, item))
 
-        return (Completion(y, -len(text)) for x, y in sorted(completions))
+        return (Completion(z, -len(text)) for x, y, z in sorted(completions))
 
     def get_completions(self, document, complete_event, smart_completion=None):
         word_before_cursor = document.get_word_before_cursor(WORD=True)
