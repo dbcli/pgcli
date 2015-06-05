@@ -97,16 +97,14 @@ def load_emacs_bindings(registry, filter=Always()):
         """
         Previous line.
         """
-        b = event.current_buffer
-        b.auto_up(count=event.arg, history_search=b.enable_history_search(event.cli))
+        event.current_buffer.auto_up(count=event.arg)
 
     @handle(Keys.ControlP, filter=has_selection)
     def _(event):
         """
         Previous line.
         """
-        b = event.current_buffer
-        b.auto_down(count=event.arg, history_search=b.enable_history_search(event.cli))
+        event.current_buffer.cursor_up(count=event.arg)
 
     @handle(Keys.ControlQ, Keys.Any, filter= ~has_selection)
     def _(event):

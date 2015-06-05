@@ -221,8 +221,7 @@ def load_basic_bindings(registry, filter=Always()):
 
     @handle(Keys.Up, filter= ~has_selection)
     def _(event):
-        b = event.current_buffer
-        b.auto_up(count=event.arg, history_search=b.enable_history_search(event.cli))
+        event.current_buffer.auto_up(count=event.arg)
 
     @handle(Keys.Up, filter=has_selection)
     def _(event):
@@ -230,8 +229,7 @@ def load_basic_bindings(registry, filter=Always()):
 
     @handle(Keys.Down, filter= ~has_selection)
     def _(event):
-        b = event.current_buffer
-        b.auto_down(count=event.arg, history_search=b.enable_history_search(event.cli))
+        event.current_buffer.auto_down(count=event.arg)
 
     @handle(Keys.Down, filter=has_selection)
     def _(event):
