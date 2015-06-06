@@ -1041,8 +1041,14 @@ def load_vi_bindings(registry, vi_state, filter=None):
         """
         Implements 'gg', 'cgg', 'ygg'
         """
-        # Move to the top of the input.
-        return CursorRegion(event.current_buffer.document.get_start_of_document_position())
+        d = event.current_buffer.document
+
+        if event._arg:
+            # Move to the given line.
+            return CursorRegion(d.translate_row_col_to_index(event.arg - 1, 0) - d.cursor_position)
+        else:
+            # Move to the top of the input.
+            return CursorRegion(d.get_start_of_document_position())
 
     @change_delete_move_yank_handler('g', '_')
     def _(event):
