@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.filters import CLIFilter, Always, HasSelection
+from prompt_toolkit.filters import CLIFilter, Always, HasSelection, Condition
+from prompt_toolkit.enums import DEFAULT_BUFFER
 
 from .utils import create_handle_decorator
 
@@ -116,15 +117,21 @@ def load_basic_bindings(registry, filter=Always()):
         """
         event.cli.set_abort()
 
-    @handle(Keys.ControlD)  # XXX: this is emacs behaviour.
+    @handle(Keys.ControlD, filter=Condition(lambda cli: cli.current_buffer.text))
     def _(event):
-        buffer = event.current_buffer
+        """
+        Delete text before cursor.
+        """
+        event.current_buffer.delete(event.arg)
 
-        # When there is text, act as delete, otherwise call exit.
-        if buffer.text:
-            buffer.delete()
-        else:
-            event.cli.set_exit()
+    @handle(Keys.ControlD, filter=Condition(lambda cli:
+        cli.current_buffer_name == DEFAULT_BUFFER and
+        not cli.current_buffer.text))
+    def _(event):
+        """
+        Exit on Control-D when the input is empty.
+        """
+        event.cli.set_exit()
 
     @handle(Keys.ControlI, filter= ~has_selection)
     def _(event):
