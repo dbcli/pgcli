@@ -1,3 +1,4 @@
+# pylint: disable=function-redefined
 from __future__ import unicode_literals
 
 from prompt_toolkit.keys import Keys

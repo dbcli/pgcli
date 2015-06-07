@@ -1,3 +1,4 @@
+# pylint: disable=function-redefined
 from __future__ import unicode_literals
 from prompt_toolkit.buffer import ClipboardData, indent, unindent
 from prompt_toolkit.document import Document

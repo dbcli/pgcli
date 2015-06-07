@@ -149,7 +149,7 @@ class Win32Output(Output):
     def reset_attributes(self):
         self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole, 15)  # White
 
-    def set_attributes(self, fgcolor, bgcolor, bold=False, underline=False):
+    def set_attributes(self, fgcolor=None, bgcolor=None, bold=False, underline=False):
         i = self.color_lookup_table.lookup_color(fgcolor, bgcolor)
         self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole, i)
 
@@ -282,7 +282,8 @@ class ColorLookupTable(object):
         self._win32_colors = self._build_color_table()
         self.best_match = {}  # Cache
 
-    def _build_color_table(self):
+    @staticmethod
+    def _build_color_table():
         """
         Build an RGB-to-256 color conversion table
         """

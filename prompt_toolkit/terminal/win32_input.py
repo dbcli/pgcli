@@ -1,4 +1,4 @@
-from ctypes import windll, pointer, c_int
+from ctypes import windll, pointer
 from ctypes.wintypes import DWORD
 
 from prompt_toolkit.key_binding.input_processor import KeyPress

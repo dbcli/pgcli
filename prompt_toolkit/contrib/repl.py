@@ -3,7 +3,7 @@ DEPRECATED.
 """
 from __future__ import unicode_literals
 
-__all__ = ('PythonRepl', 'embed')
+__all__ = ('embed', )
 
 
 # We have this for compatibility with older versions of:

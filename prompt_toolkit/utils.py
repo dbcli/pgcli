@@ -64,7 +64,8 @@ class Callback(object):
         assert isinstance(other, Callback)
 
         def call_both():
-            self.fire() and other.fire()
+            self.fire()
+            other.fire()
 
         return Callback(call_both)
 
