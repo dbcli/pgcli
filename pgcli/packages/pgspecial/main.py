@@ -6,7 +6,7 @@ from .dbcommands import *
 
 log = logging.getLogger(__name__)
 
-def show_help(**kwargs):  # All the parameters are ignored.
+def show_help(**_):  # All the parameters are ignored.
     headers = ['Command', 'Description']
     result = []
 
@@ -15,7 +15,7 @@ def show_help(**kwargs):  # All the parameters are ignored.
             result.append(value[1])
     return [(None, result, headers, None)]
 
-def dummy_command(*args):
+def dummy_command(**_):
     """
     Used by commands that are actually handled elsewhere.
     But we want to keep their docstrings in the same list
@@ -23,7 +23,7 @@ def dummy_command(*args):
     """
     raise NotImplementedError
 
-def in_progress(*args):
+def in_progress(**_):
     """
     Stub method to signal about commands being under development.
     """
