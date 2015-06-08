@@ -22,7 +22,7 @@ from .history import History
 from .input import StdinInput, Input
 from .key_binding.input_processor import InputProcessor
 from .output import Output
-from .renderer import Renderer
+from .renderer import Renderer, print_tokens
 from .search_state import SearchState
 
 from types import GeneratorType
@@ -419,6 +419,16 @@ class CommandLineInterface(object):
                 os.kill(os.getpid(), signal.SIGTSTP)
 
             self.run_in_terminal(run)
+
+    def print_tokens(self, tokens, style=None):
+        """
+        Print a list of (Token, text) tuples to the output.
+        (When the UI is running, this method has to be called through
+        `run_in_terminal`, otherwise it will destroy the UI.)
+
+        :param style: Style class to use. Defaults to the active style in the CLI.
+        """
+        print_tokens(self.output, tokens, style or self.application.get_style())
 
     @property
     def is_exiting(self):
