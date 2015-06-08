@@ -81,8 +81,15 @@ class PGCli(object):
         completer.extend_special_commands(COMMANDS.keys())
         completer.extend_special_commands(HIDDEN_COMMANDS.keys())
         self.completer = completer
+        self.register_special_commands()
+
+    def register_special_commands(self):
         special.register_special_command('\c', self.change_db,
                 '\c[onnect] database_name', 'Change to a new database.')
+        special.register_special_command('use', self.change_db,
+                '\c[onnect] database_name', 'Change to a new database.', True)
+        special.register_special_command('\connect', self.change_db,
+                '\c[onnect] database_name', 'Change to a new database.', True)
 
     def change_db(self, pattern, **_):
         if pattern is None:

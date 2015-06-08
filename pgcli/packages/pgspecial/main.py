@@ -31,7 +31,6 @@ def in_progress(**_):
 
 COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
-            #'\c': (change_db, ['\c[onnect] database_name', 'Connect to a new database.']),
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'List databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'List or describe tables, views and sequences.']),
             '\dn': (list_schemas, ['\dn[+] [pattern]', 'List schemas.']),
@@ -57,8 +56,6 @@ COMMANDS = {
 # Commands not shown via help.
 HIDDEN_COMMANDS = {
             'describe': (describe_table_details, ['DESCRIBE [pattern]', '']),
-            #'use': (change_db, ['\c database_name', 'Connect to a new database.']),
-            #'\connect': (change_db, ['\c database_name', 'Connect to a new database.']),
             }
 
 @export
