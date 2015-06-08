@@ -1,6 +1,10 @@
+import logging
+
 from . import export
 from .iocommands import *
 from .dbcommands import *
+
+log = logging.getLogger(__name__)
 
 def show_help(**kwargs):  # All the parameters are ignored.
     headers = ['Command', 'Description']
@@ -27,7 +31,7 @@ def in_progress(*args):
 
 COMMANDS = {
             '\?': (show_help, ['\?', 'Help on pgcli commands.']),
-            '\c': (change_db, ['\c[onnect] database_name', 'Connect to a new database.']),
+            #'\c': (change_db, ['\c[onnect] database_name', 'Connect to a new database.']),
             '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'List databases.']),
             '\d': (describe_table_details, ['\d [pattern]', 'List or describe tables, views and sequences.']),
             '\dn': (list_schemas, ['\dn[+] [pattern]', 'List schemas.']),
@@ -53,8 +57,8 @@ COMMANDS = {
 # Commands not shown via help.
 HIDDEN_COMMANDS = {
             'describe': (describe_table_details, ['DESCRIBE [pattern]', '']),
-            'use': (change_db, ['\c database_name', 'Connect to a new database.']),
-            '\connect': (change_db, ['\c database_name', 'Connect to a new database.']),
+            #'use': (change_db, ['\c database_name', 'Connect to a new database.']),
+            #'\connect': (change_db, ['\c database_name', 'Connect to a new database.']),
             }
 
 @export
@@ -66,7 +70,7 @@ def parse_special_command(sql):
     return (command, verbose, arg.strip())
 
 @export
-def execute(cur=None, sql='', db_obj=None):
+def execute(cur=None, sql=''):
     """Execute a special command and return the results. If the special command
     is not supported a KeyError will be raised.
     """
@@ -82,7 +86,7 @@ def execute(cur=None, sql='', db_obj=None):
     # If the command executor is a function, then call the function with the
     # args. If it's a string, then assume it's an SQL command and run it.
     if callable(command_executor):
-        return command_executor(cur=cur, pattern=arg, verbose=verbose, db_obj=db_obj)
+        return command_executor(cur=cur, pattern=arg, verbose=verbose)
     elif isinstance(command_executor, str):
         cur.execute(command_executor)
         if cur.description:
@@ -90,3 +94,18 @@ def execute(cur=None, sql='', db_obj=None):
             return [(None, cur, headers, cur.statusmessage)]
         else:
             return [(None, None, None, cur.statusmessage)]
+
+@export
+def register_special_command(name, handler, syntax, description, hidden=False):
+    global COMMANDS
+    global HIDDEN_COMMANDS
+    if hidden:
+        cmd = HIDDEN_COMMANDS
+    else:
+        cmd = COMMANDS
+
+    if cmd.get(name):
+        log.info('Overriding existing special command %r.', name)
+    else:
+        log.debug('Registering special command %r.', name)
+    cmd[name] = (handler, [syntax, description])

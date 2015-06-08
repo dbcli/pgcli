@@ -206,7 +206,7 @@ class PGExecute(object):
             try:   # Special command
                 _logger.debug('Trying a pgspecial command. sql: %r', sql)
                 cur = self.conn.cursor()
-                for result in special.execute(cur, sql, self):
+                for result in special.execute(cur, sql):
                     yield result
             except KeyError:  # Regular SQL
                 yield self.execute_normal_sql(sql)

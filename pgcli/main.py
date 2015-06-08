@@ -81,6 +81,16 @@ class PGCli(object):
         completer.extend_special_commands(COMMANDS.keys())
         completer.extend_special_commands(HIDDEN_COMMANDS.keys())
         self.completer = completer
+        special.register_special_command('\c', self.change_db, '\c databasename', 'Change Database.')
+
+    def change_db(self, pattern, **_):
+        if pattern is None:
+            self.pgexecute.connect()
+        else:
+            self.pgexecute.connect(database=pattern)
+
+        yield (None, None, None, 'You are now connected to database "%s" as '
+                'user "%s"' % (self.pgexecute.dbname, self.pgexecute.user))
 
     def initialize_logging(self):
 
