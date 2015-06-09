@@ -13,6 +13,7 @@ class ValidationError(Exception):
     def __init__(self, index=0, message=''):
         super(ValidationError, self).__init__(message)
         self.index = index
+        self.message = message
 
     def __repr__(self):
         return '%s(index=%r, message=%r)' % (
