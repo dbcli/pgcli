@@ -37,6 +37,9 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
                        is_done=False, style=None):  # XXX: drop is_done
     """
     Create diff of this screen with the previous screen.
+
+    This is some performance-critical code which is heavily optimized.
+    Don't change things without profiling first.
     """
     #: Remember the last printed character.
     last_char = [last_char]  # nonlocal
@@ -45,7 +48,21 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     #: Variable for capturing the output.
     write = output.write
 
+    # Create locals for the most used output methods.
+    # (Save expensive attribute lookups.)
+    _output_set_attributes = output.set_attributes
+    _output_reset_attributes = output.reset_attributes
+    _output_cursor_forward = output.cursor_forward
+    _output_cursor_up = output.cursor_up
+    _output_cursor_backward = output.cursor_backward
+
+    def reset_attributes():
+        " Wrapper around Output.reset_attributes. "
+        _output_reset_attributes()
+        last_char[0] = None  # Forget last char after resetting attributes.
+
     def move_cursor(new):
+        " Move cursor to this `new` point. Returns the given Point. "
         current_x, current_y = current_pos.x, current_pos.y
 
         if new.y > current_y:
@@ -53,22 +70,21 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
             # CURSOR_DOWN will never create new lines at the bottom.
             # Also reset attributes, otherwise the newline could draw a
             # background color.
-            output.reset_attributes()
+            reset_attributes()
             write('\r\n' * (new.y - current_y))
             current_x = 0
-            output.cursor_forward(new.x)
-            last_char[0] = None  # Forget last char after resetting attributes.
+            _output_cursor_forward(new.x)
             return new
         elif new.y < current_y:
-            output.cursor_up(current_y - new.y)
+            _output_cursor_up(current_y - new.y)
 
         if current_x >= screen.width - 1:
             write('\r')
-            output.cursor_forward(new.x)
+            _output_cursor_forward(new.x)
         elif new.x < current_x or current_x >= screen.width - 1:
-            output.cursor_backward(current_x - new.x)
+            _output_cursor_backward(current_x - new.x)
         elif new.x > current_x:
-            output.cursor_forward(new.x - current_x)
+            _output_cursor_forward(new.x - current_x)
 
         return new
 
@@ -86,15 +102,15 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
             style = style_for_token[char.token]
 
             if style:
-                output.set_attributes(style['color'], style['bgcolor'],
-                                      bold=style.get('bold', False),
-                                      underline=style.get('underline', False))
+                _output_set_attributes(style['color'], style['bgcolor'],
+                                       bold=style.get('bold', False),
+                                       underline=style.get('underline', False))
 
                 # If we print something with a background color, remember that.
                 background_turned_on[0] = bool(style['bgcolor'])
             else:
                 # Reset previous style and output.
-                output.reset_attributes()
+                reset_attributes()
 
             write(char.char)
 
@@ -103,13 +119,13 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     # Disable autowrap
     if not previous_screen:
         output.disable_autowrap()
-        output.reset_attributes()
+        reset_attributes()
 
     # When the previous screen has a different size, redraw everything anyway.
     # Also when we are done. (We meight take up less rows, so clearing is important.)
     if is_done or not previous_screen or previous_screen.width != screen.width:  # XXX: also consider height??
         current_pos = move_cursor(Point(0, 0))
-        output.reset_attributes()
+        reset_attributes()
         output.erase_down()
 
         previous_screen = Screen(screen.width)
@@ -149,9 +165,8 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         # If the new line is shorter, trim it
         if previous_screen and new_max_line_len < previous_max_line_len:
             current_pos = move_cursor(Point(y=y, x=new_max_line_len+1))
-            output.reset_attributes()
+            reset_attributes()
             output.erase_end_of_line()
-            last_char[0] = None  # Forget last char after resetting attributes.
 
     # Move cursor:
     if is_done:
@@ -161,15 +176,14 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         current_pos = move_cursor(screen.cursor_position)
 
     if is_done:
-        output.reset_attributes()
+        reset_attributes()
         output.enable_autowrap()
 
     # If the last printed character has a background color, always reset.
     # (Many terminals give weird artifacs on resize events when there is an
     # active background color.)
     if background_turned_on[0]:
-        output.reset_attributes()
-        last_char[0] = None
+        reset_attributes()
 
     return current_pos, last_char[0]
 
