@@ -334,7 +334,7 @@ class PGCli(object):
                     click.secho(str(e), err=True, fg='red')
                 else:
                     click.echo_via_pager('\n'.join(output))
-                    if pgspecial.TIMING_ENABLED:
+                    if special.TIMING_ENABLED:
                         print('Command Time: %0.03fs' % duration)
                         print('Format Time: %0.03fs' % total)
 
