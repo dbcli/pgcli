@@ -16,14 +16,14 @@ use_expanded_output = False
 def is_expanded_output():
     return use_expanded_output
 
-def toggle_expanded_output(*_):
+def toggle_expanded_output(**_):
     global use_expanded_output
     use_expanded_output = not use_expanded_output
     message = u"Expanded display is "
     message += u"on." if use_expanded_output else u"off."
     return [(None, None, None, message)]
 
-def toggle_timing(*_):
+def toggle_timing(**_):
     global TIMING_ENABLED
     TIMING_ENABLED = not TIMING_ENABLED
     message = "Timing is "
@@ -92,7 +92,7 @@ def open_external_editor(filename=None, sql=''):
 def execute_named_query(cur, pattern, verbose):
     """Returns (title, rows, headers, status)"""
     if pattern == '':
-        return list_named_queries(cur, pattern, verbose)
+        return list_named_queries(verbose)
 
     query = namedqueries.get(pattern)
     title = '> {}'.format(query)
@@ -106,7 +106,7 @@ def execute_named_query(cur, pattern, verbose):
     else:
         return [(title, None, None, cur.statusmessage)]
 
-def list_named_queries(cur, pattern, verbose):
+def list_named_queries(verbose):
     """List of all named queries.
     Returns (title, rows, headers, status)"""
     if not verbose:
@@ -117,7 +117,7 @@ def list_named_queries(cur, pattern, verbose):
         rows = [[r, namedqueries.get(r)] for r in namedqueries.list()]
     return [('', rows, headers, "")]
 
-def save_named_query(cur, pattern, verbose):
+def save_named_query(pattern, **_):
     """Save a new named query.
     Returns (title, rows, headers, status)"""
     if ' ' not in pattern:
@@ -126,7 +126,7 @@ def save_named_query(cur, pattern, verbose):
     namedqueries.save(name, query)
     return [(None, None, None, "Saved.")]
 
-def delete_named_query(cur, pattern, verbose):
+def delete_named_query(pattern, **_):
     """Delete an existing named query.
     """
     if len(pattern) == 0:

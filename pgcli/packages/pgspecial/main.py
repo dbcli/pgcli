@@ -10,7 +10,7 @@ def show_help(**_):  # All the parameters are ignored.
     headers = ['Command', 'Description']
     result = []
 
-    for command, value in sorted(COMMANDS.items()):
+    for _, value in sorted(COMMANDS.items()):
         if value[1]:
             result.append(value[1])
     return [(None, result, headers, None)]
