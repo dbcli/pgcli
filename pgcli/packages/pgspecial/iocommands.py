@@ -16,14 +16,14 @@ use_expanded_output = False
 def is_expanded_output():
     return use_expanded_output
 
-def toggle_expanded_output(cur, pattern, verbose):
+def toggle_expanded_output(*_):
     global use_expanded_output
     use_expanded_output = not use_expanded_output
     message = u"Expanded display is "
     message += u"on." if use_expanded_output else u"off."
     return [(None, None, None, message)]
 
-def toggle_timing(cur, pattern, verbose):
+def toggle_timing(*_):
     global TIMING_ENABLED
     TIMING_ENABLED = not TIMING_ENABLED
     message = "Timing is "
