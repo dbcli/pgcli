@@ -1,11 +1,9 @@
-from ..config import load_config
-
 class NamedQueries(object):
 
     section_name = 'named queries'
 
-    def __init__(self, filename):
-        self.config = load_config(filename)
+    def __init__(self, config):
+        self.config = config
 
     def list(self):
         return self.config.get(self.section_name, [])
@@ -24,5 +22,5 @@ class NamedQueries(object):
             del self.config[self.section_name][name]
             self.config.write()
 
-
-namedqueries = NamedQueries('~/.pgclirc')
+from ...config import load_config
+namedqueries = NamedQueries(load_config('~/.pgclirc'))
