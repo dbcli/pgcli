@@ -66,7 +66,7 @@ class PGCli(object):
         c = self.config = load_config('~/.pgclirc', default_config)
         self.multi_line = c['main'].as_bool('multi_line')
         self.vi_mode = c['main'].as_bool('vi')
-        special.TIMING_ENABLED = c['main'].as_bool('timing')
+        special.set_timing(c['main'].as_bool('timing'))
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
 
@@ -334,7 +334,7 @@ class PGCli(object):
                     click.secho(str(e), err=True, fg='red')
                 else:
                     click.echo_via_pager('\n'.join(output))
-                    if special.TIMING_ENABLED:
+                    if special.get_timing():
                         print('Command Time: %0.03fs' % duration)
                         print('Format Time: %0.03fs' % total)
 

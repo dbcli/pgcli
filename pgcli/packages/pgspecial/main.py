@@ -6,7 +6,7 @@ from .dbcommands import *
 
 log = logging.getLogger(__name__)
 
-def show_help(**_):  # All the parameters are ignored.
+def show_help(**_):
     headers = ['Command', 'Description']
     result = []
 
@@ -73,8 +73,9 @@ def execute(cur=None, sql=''):
     """
     command, verbose, arg = parse_special_command(sql)
 
-    # Look up the command in the case-sensitive dict, if it's not there look in
-    # non-case-sensitive dict. If not there either, throw a KeyError exception.
+    # Look up the command in the COMMANDS dict, if it's not there look in
+    # HIDDEN_COMMANDS dict. If it's not there either, throw a KeyError
+    # exception.
     try:
         command_executor = COMMANDS[command][0]
     except KeyError:

@@ -31,6 +31,16 @@ def toggle_timing(**_):
     return [(None, None, None, message)]
 
 @export
+def set_timing(enable=True):
+    global TIMING_ENABLED
+    TIMING_ENABLED = enable
+
+@export
+def get_timing():
+    return TIMING_ENABLED
+
+
+@export
 def editor_command(command):
     """
     Is this an external editor command?
