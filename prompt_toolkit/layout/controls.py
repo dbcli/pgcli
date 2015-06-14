@@ -80,14 +80,33 @@ class _SimpleLRUCache(object):
 
 
 class TokenListControl(UIControl):
-    def __init__(self, get_tokens, default_char=None, align_right=False):
+    """
+    Control that displays a list of (Token, text) tuples.
+
+    :param get_tokens: Callable that takes a `CommandLineInterface` instance
+        and returns the list of (Token, text) tuples to be displayed right now.
+    :param default_char: default `Char` (character and Token) to use for the
+        background when there is more space available than `get_tokens` returns.
+    :param has_focus: `CLIFilter`, when this evaluates to `True`, this UI control
+        will take the focus. The cursor will be shown in the upper left corner of
+        this control, unless `get_token` returns a `Token.SetCursorPosition` token
+        somewhere in the token list, then the cursor will be shown there.
+    """
+    def __init__(self, get_tokens, default_char=None, align_right=False,
+                 has_focus=Never()):
         assert default_char is None or isinstance(default_char, Char)
+        assert isinstance(has_focus, CLIFilter)
+
         self.get_tokens = get_tokens
         self.default_char = default_char or Char(' ', Token)
         self.align_right = align_right
+        self._has_focus_filter = has_focus
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.get_tokens)
+
+    def has_focus(self, cli):
+        return self._has_focus_filter(cli)
 
     def preferred_width(self, cli):
         """

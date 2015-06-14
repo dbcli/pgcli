@@ -133,6 +133,8 @@ class Screen(object):
     def write_data(self, data, width, margin=None):
         """
         Write data at :class:`WritePosition`.
+        When one of the tokens in the token list is Token.SetCursorPosition,
+        this will set the cursor position.
 
         :param data: List of Token tuples to write to the buffer.
         :param width: Width of the screen.
@@ -149,6 +151,7 @@ class Screen(object):
         line_number = 0
         requires_line_feed = True
         indexes_to_pos = {}  # Map input positions to (x, y) coordinates.
+        set_cursor_position = Token.SetCursorPosition
 
         def do_line_feed(x, number):
             """
@@ -180,6 +183,9 @@ class Screen(object):
             return x
 
         for token, text in data:
+            if token == set_cursor_position:
+                self.cursor_position = Point(y=y, x=x)
+
             for char in text:
                 # Line feed.
                 if requires_line_feed:
