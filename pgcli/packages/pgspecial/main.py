@@ -33,7 +33,6 @@ def special_command(command, syntax, description, arg_type=PARSED_QUERY,
 @export
 def register_special_command(handler, command, syntax, description,
         arg_type=PARSED_QUERY, hidden=False, case_sensitive=True):
-    global COMMANDS
     cmd = command.lower() if not case_sensitive else command
     COMMANDS[cmd] = SpecialCommand(handler, syntax, description, arg_type,
                                    hidden, case_sensitive)
@@ -68,7 +67,6 @@ def show_help():
 @special_command('\\e', '\\e [file]', 'Edit the query with external editor.', arg_type=NO_QUERY)
 def doc_only():
     raise RuntimeError
-    pass
 
 @special_command('\\ef', '\\ef [funcname [line]]', 'Edit the contents of the query buffer.', arg_type=NO_QUERY, hidden=True)
 @special_command('\\sf', '\\sf[+] FUNCNAME', 'Show a function\'s definition.', arg_type=NO_QUERY, hidden=True)
@@ -77,4 +75,3 @@ def doc_only():
 @special_command('\\z', '\\z [pattern]', 'Same as \\dp.', arg_type=NO_QUERY, hidden=True)
 def place_holder():
     raise NotImplementedError
-    pass

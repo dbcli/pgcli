@@ -1,4 +1,3 @@
-from __future__ import print_function
 import logging
 from collections import namedtuple
 from .main import special_command, RAW_QUERY
