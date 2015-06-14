@@ -23,7 +23,7 @@ from pygments.token import Token
 
 from .packages.tabulate import tabulate
 from .packages.expanded import expanded_table
-from .packages.pgspecial.main import (COMMANDS, HIDDEN_COMMANDS)
+from .packages.pgspecial.main import (COMMANDS)
 import pgcli.packages.pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
@@ -79,17 +79,18 @@ class PGCli(object):
         smart_completion = c['main'].as_bool('smart_completion')
         completer = PGCompleter(smart_completion)
         completer.extend_special_commands(COMMANDS.keys())
-        completer.extend_special_commands(HIDDEN_COMMANDS.keys())
         self.completer = completer
         self.register_special_commands()
 
     def register_special_commands(self):
-        special.register_special_command('\c', self.change_db,
+        special.register_special_command(self.change_db, '\c',
                 '\c[onnect] database_name', 'Change to a new database.')
-        special.register_special_command('use', self.change_db,
-                '\c[onnect] database_name', 'Change to a new database.', True)
-        special.register_special_command('\connect', self.change_db,
-                '\c[onnect] database_name', 'Change to a new database.', True)
+        special.register_special_command(self.change_db, 'use',
+                '\c[onnect] database_name', 'Change to a new database.',
+                hidden=True)
+        special.register_special_command(self.change_db, '\connect',
+                '\c[onnect] database_name', 'Change to a new database.',
+                hidden=True)
 
     def change_db(self, pattern, **_):
         if pattern is None:

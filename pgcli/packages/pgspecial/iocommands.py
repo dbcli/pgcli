@@ -5,6 +5,7 @@ import logging
 from codecs import open
 import click
 from .namedqueries import namedqueries
+from .main import special_command, NO_QUERY
 from . import export
 
 _logger = logging.getLogger(__name__)
@@ -16,14 +17,16 @@ use_expanded_output = False
 def is_expanded_output():
     return use_expanded_output
 
-def toggle_expanded_output(**_):
+@special_command('\\x', '\\x', 'Toggle expanded output.', arg_type=NO_QUERY)
+def toggle_expanded_output():
     global use_expanded_output
     use_expanded_output = not use_expanded_output
     message = u"Expanded display is "
     message += u"on." if use_expanded_output else u"off."
     return [(None, None, None, message)]
 
-def toggle_timing(**_):
+@special_command('\\timing', '\\timing', 'Toggle timing of commands.', arg_type=NO_QUERY)
+def toggle_timing():
     global TIMING_ENABLED
     TIMING_ENABLED = not TIMING_ENABLED
     message = "Timing is "
@@ -99,6 +102,7 @@ def open_external_editor(filename=None, sql=''):
 
     return (query, message)
 
+@special_command('\\n', '\\n[+] [name]', 'List or execute named queries.')
 def execute_named_query(cur, pattern, verbose):
     """Returns (title, rows, headers, status)"""
     if pattern == '':
@@ -127,6 +131,7 @@ def list_named_queries(verbose):
         rows = [[r, namedqueries.get(r)] for r in namedqueries.list()]
     return [('', rows, headers, "")]
 
+@special_command('\\ns', '\\ns [name [query]]', 'Save a named query.')
 def save_named_query(pattern, **_):
     """Save a new named query.
     Returns (title, rows, headers, status)"""
@@ -136,6 +141,7 @@ def save_named_query(pattern, **_):
     namedqueries.save(name, query)
     return [(None, None, None, "Saved.")]
 
+@special_command('\\nd', '\\nd [name [query]]', 'Delete a named query.')
 def delete_named_query(pattern, **_):
     """Delete an existing named query.
     """

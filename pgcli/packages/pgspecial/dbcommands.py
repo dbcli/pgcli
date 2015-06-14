@@ -1,6 +1,7 @@
 from __future__ import print_function
 import logging
 from collections import namedtuple
+from .main import special_command, RAW_QUERY
 
 TableInfo = namedtuple("TableInfo", ['checks', 'relkind', 'hasindex',
 'hasrules', 'hastriggers', 'hasoids', 'tablespace', 'reloptions', 'reloftype',
@@ -8,6 +9,17 @@ TableInfo = namedtuple("TableInfo", ['checks', 'relkind', 'hasindex',
 
 log = logging.getLogger(__name__)
 
+@special_command('\\l', '\\l', 'List databases.', arg_type=RAW_QUERY)
+def list_databases(cur, **_):
+    query = 'SELECT datname FROM pg_database;'
+    cur.execute(query)
+    if cur.description:
+        headers = [x[0] for x in cur.description]
+        return [(None, cur, headers, cur.statusmessage)]
+    else:
+        return [(None, None, None, cur.statusmessage)]
+
+@special_command('\\du', '\\du[+] [pattern]', 'List roles.')
 def list_roles(cur, pattern, verbose):
     """
     Returns (title, rows, headers, status)
@@ -36,6 +48,7 @@ def list_roles(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(None, cur, headers, cur.statusmessage)]
 
+@special_command('\\dn', '\\dn[+] [pattern]', 'List schemas.')
 def list_schemas(cur, pattern, verbose):
     """
     Returns (title, rows, headers, status)
@@ -121,20 +134,24 @@ def list_objects(cur, pattern, verbose, relkinds):
         return [(None, cur, headers, cur.statusmessage)]
 
 
+@special_command('\\dt', '\\dt[+] [pattern]', 'List tables.')
 def list_tables(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['r', ''])
 
 
+@special_command('\\dv', '\\dv[+] [pattern]', 'List views.')
 def list_views(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['v', 's', ''])
 
+@special_command('\\ds', '\\ds[+] [pattern]', 'List sequences.')
 def list_sequences(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['S', 's', ''])
 
+@special_command('\\di', '\\di[+] [pattern]', 'List indexes.')
 def list_indexes(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['i', 's', ''])
 
-
+@special_command('\\df', '\\df[+] [pattern]', 'List functions.')
 def list_functions(cur, pattern, verbose):
 
     if verbose:
@@ -199,7 +216,7 @@ def list_functions(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(None, cur, headers, cur.statusmessage)]
 
-
+@special_command('\\dT', '\\dT[S+] [pattern]', 'List data types')
 def list_datatypes(cur, pattern, verbose):
     assert True
     sql = '''SELECT n.nspname as "Schema",
@@ -267,6 +284,8 @@ def list_datatypes(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(None, cur, headers, cur.statusmessage)]
 
+@special_command('describe', 'DESCRIBE [pattern]', '', hidden=True, case_sensitive=False)
+@special_command('\\d', '\\d [pattern]', 'List or describe tables, views and sequences.')
 def describe_table_details(cur, pattern, verbose):
     """
     Returns (title, rows, headers, status)
