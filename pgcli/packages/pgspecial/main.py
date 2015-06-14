@@ -55,7 +55,7 @@ def execute(cur, sql):
     elif special_cmd.arg_type == RAW_QUERY:
         return special_cmd.handler(cur=cur, query=sql)
 
-@special_command('\?', '\?', 'Show Help.', arg_type=NO_QUERY)
+@special_command('\\?', '\\?', 'Show Help.', arg_type=NO_QUERY)
 def show_help():
     headers = ['Command', 'Description']
     result = []
@@ -65,31 +65,16 @@ def show_help():
             result.append((value.syntax, value.description))
     return [(None, result, headers, None)]
 
-#COMMANDS = {
-#            '\?': (show_help, ['\?', 'Help on pgcli commands.']),
-#            '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'List databases.']),
-#            '\d': (describe_table_details, ['\d [pattern]', 'List or describe tables, views and sequences.']),
-#            '\dn': (list_schemas, ['\dn[+] [pattern]', 'List schemas.']),
-#            '\du': (list_roles, ['\du[+] [pattern]', 'List roles.']),
-#            '\\x': (toggle_expanded_output, ['\\x', 'Toggle expanded output.']),
-#            '\\timing': (toggle_timing, ['\\timing', 'Toggle timing of commands.']),
-#            '\\dt': (list_tables, ['\\dt[+] [pattern]', 'List tables.']),
-#            '\\di': (list_indexes, ['\\di[+] [pattern]', 'List indexes.']),
-#            '\\dv': (list_views, ['\\dv[+] [pattern]', 'List views.']),
-#            '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'List sequences.']),
-#            '\\df': (list_functions, ['\\df[+] [pattern]', 'List functions.']),
-#            '\\dT': (list_datatypes, ['\dT[S+] [pattern]', 'List data types']),
-#            '\e': (dummy_command, ['\e [file]', 'Edit the query buffer (or file) with external editor.']),
-#            '\ef': (in_progress, ['\ef [funcname [line]]', 'Not yet implemented.']),
-#            '\sf': (in_progress, ['\sf[+] funcname', 'Not yet implemented.']),
-#            '\z': (in_progress, ['\z [pattern]', 'Not yet implemented.']),
-#            '\do': (in_progress, ['\do[S] [pattern]', 'Not yet implemented.']),
-#            '\\n': (execute_named_query, ['\\n[+] [name]', 'List or execute named queries.']),
-#            '\\ns': (save_named_query, ['\\ns [name [query]]', 'Save a named query.']),
-#            '\\nd': (delete_named_query, ['\\nd [name]', 'Delete a named query.']),
-#            }
+@special_command('\\e', '\\e [file]', 'Edit the query with external editor.', arg_type=NO_QUERY)
+def doc_only():
+    raise RuntimeError
+    pass
 
-## Commands not shown via help.
-#HIDDEN_COMMANDS = {
-#            'describe': (describe_table_details, ['DESCRIBE [pattern]', '']),
-#            }
+@special_command('\\ef', '\\ef [funcname [line]]', 'Edit the contents of the query buffer.', arg_type=NO_QUERY, hidden=True)
+@special_command('\\sf', '\\sf[+] FUNCNAME', 'Show a function\'s definition.', arg_type=NO_QUERY, hidden=True)
+@special_command('\\do', '\\do[S] [pattern]', 'List operators.', arg_type=NO_QUERY, hidden=True)
+@special_command('\\dp', '\\dp [pattern]', 'List table, view, and sequence access privileges.', arg_type=NO_QUERY, hidden=True)
+@special_command('\\z', '\\z [pattern]', 'Same as \\dp.', arg_type=NO_QUERY, hidden=True)
+def place_holder():
+    raise NotImplementedError
+    pass
