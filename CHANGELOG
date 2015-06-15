@@ -1,6 +1,26 @@
 CHANGELOG
 =========
 
+0.40: 2015-06-15
+----------------
+
+Fixes:
+- Fix in output_screen_diff: reset correctly.
+- Ignore flush errors in vt100_output.
+- Implemented <num>gg Vi key binding.
+- Bug fix in the renderer when the style changes.
+
+New features:
+- TokenListControl can now display the cursor somewhere.
+- Added SwitchableValidator class.
+- print_tokens function added.
+- get_style argument for Application added.
+- KeyBindingManager got an enable_all argument.
+
+Backwards incompatible changes:
+- history_search is now a SimpleFilter instance.
+
+
 0.39: 2015-06-04
 ----------------
 
