@@ -1,9 +1,9 @@
 from __future__ import print_function, unicode_literals
 import logging
+import re
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
-from re import compile, escape
 
 try:
     from collections import Counter
@@ -48,7 +48,7 @@ class PGCompleter(Completer):
         self.reserved_words = set()
         for x in self.keywords:
             self.reserved_words.update(x.split())
-        self.name_pattern = compile("^[_a-z][_a-z0-9\$]*$")
+        self.name_pattern = re.compile("^[_a-z][_a-z0-9\$]*$")
 
         self.special_commands = []
         self.databases = []
@@ -175,8 +175,7 @@ class PGCompleter(Completer):
                            'datatypes': {}}
         self.all_completions = set(self.keywords + self.functions)
 
-    @staticmethod
-    def find_matches(text, collection, start_only=False, fuzzy=True):
+    def find_matches(self, text, collection, start_only=False, fuzzy=True):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -197,11 +196,10 @@ class PGCompleter(Completer):
         completions = []
 
         if fuzzy:
-            #pat = compile(''.join([escape(c) + r'.*' for c in text]))
-            regex = '.*'.join(map(escape, text))
-            pat = compile('(%s)' % regex)
+            regex = '.*?'.join(map(re.escape, text))
+            pat = re.compile('(%s)' % regex)
             for item in sorted(collection):
-                r = pat.search(item)
+                r = pat.search(self.unescape_name(item))
                 if r:
                     completions.append((len(r.group()), r.start(), item))
         else:
