@@ -378,6 +378,7 @@ def print_tokens(output, tokens, style):
     Print a list of (Token, text) tuples in the given style to the output.
     """
     assert isinstance(output, Output)
+    assert style
 
     # Reset first.
     output.reset_attributes()
@@ -389,10 +390,12 @@ def print_tokens(output, tokens, style):
     for token, text in tokens:
         style = style_for_token[token]
 
-        output.reset_attributes()
-        output.set_attributes(style['color'], style['bgcolor'],
-                              bold=style.get('bold', False),
-                              underline=style.get('underline', False))
+        if style:
+            output.set_attributes(style['color'], style['bgcolor'],
+                                  bold=style.get('bold', False),
+                                  underline=style.get('underline', False))
+        else:
+            output.reset_attributes()
 
         output.write(text)
 
