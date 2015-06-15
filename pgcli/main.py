@@ -84,7 +84,7 @@ class PGCli(object):
     def register_special_commands(self):
         special.register_special_command(self.change_db, '\\c',
                 '\\c[onnect] database_name', 'Change to a new database.',
-                aliases=('use', '\\connect'))
+                aliases=('use', '\\connect', 'USE'))
 
     def change_db(self, pattern, **_):
         if pattern is None:
