@@ -78,19 +78,13 @@ class PGCli(object):
         # Initialize completer
         smart_completion = c['main'].as_bool('smart_completion')
         completer = PGCompleter(smart_completion)
-        completer.extend_special_commands(COMMANDS.keys())
         self.completer = completer
         self.register_special_commands()
 
     def register_special_commands(self):
-        special.register_special_command(self.change_db, '\c',
-                '\c[onnect] database_name', 'Change to a new database.')
-        special.register_special_command(self.change_db, 'use',
-                '\c[onnect] database_name', 'Change to a new database.',
-                hidden=True)
-        special.register_special_command(self.change_db, '\connect',
-                '\c[onnect] database_name', 'Change to a new database.',
-                hidden=True)
+        special.register_special_command(self.change_db, '\\c',
+                '\\c[onnect] database_name', 'Change to a new database.',
+                aliases=('use', '\\connect'))
 
     def change_db(self, pattern, **_):
         if pattern is None:
@@ -396,6 +390,9 @@ class PGCli(object):
 
         # databases
         completer.extend_database_names(pgexecute.databases())
+
+        # special commands
+        completer.extend_special_commands(COMMANDS.keys())
 
     def get_completions(self, text, cursor_positition):
         return self.completer.get_completions(

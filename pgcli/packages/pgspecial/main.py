@@ -24,19 +24,25 @@ def parse_special_command(sql):
 
 @export
 def special_command(command, syntax, description, arg_type=PARSED_QUERY,
-        hidden=False, case_sensitive=True):
+        hidden=False, case_sensitive=True, aliases=()):
     def wrapper(wrapped):
         register_special_command(wrapped, command, syntax, description,
-                arg_type, hidden, case_sensitive)
+                arg_type, hidden, case_sensitive, aliases)
         return wrapped
     return wrapper
 
 @export
 def register_special_command(handler, command, syntax, description,
-        arg_type=PARSED_QUERY, hidden=False, case_sensitive=True):
+        arg_type=PARSED_QUERY, hidden=False, case_sensitive=True, aliases=()):
     cmd = command.lower() if not case_sensitive else command
     COMMANDS[cmd] = SpecialCommand(handler, syntax, description, arg_type,
                                    hidden, case_sensitive)
+    for alias in aliases:
+        cmd = alias.lower() if not case_sensitive else alias
+        COMMANDS[cmd] = SpecialCommand(handler, syntax, description, arg_type,
+                                       case_sensitive=case_sensitive,
+                                       hidden=True)
+
 
 @export
 def execute(cur, sql):
