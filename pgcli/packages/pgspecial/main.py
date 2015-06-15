@@ -22,6 +22,7 @@ def parse_special_command(sql):
     command = command.strip().replace('+', '')
     return (command, verbose, arg.strip())
 
+@export
 def special_command(command, syntax, description, arg_type=PARSED_QUERY,
         hidden=False, case_sensitive=True):
     def wrapper(wrapped):
