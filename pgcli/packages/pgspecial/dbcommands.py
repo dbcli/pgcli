@@ -1,30 +1,24 @@
-from __future__ import print_function
-import sys
 import logging
 from collections import namedtuple
-from .tabulate import tabulate
-from .namedqueries import namedqueries
+from .main import special_command, RAW_QUERY
 
 TableInfo = namedtuple("TableInfo", ['checks', 'relkind', 'hasindex',
 'hasrules', 'hastriggers', 'hasoids', 'tablespace', 'reloptions', 'reloftype',
 'relpersistence'])
 
-
 log = logging.getLogger(__name__)
 
-use_expanded_output = False
-def is_expanded_output():
-    return use_expanded_output
+@special_command('\\l', '\\l', 'List databases.', arg_type=RAW_QUERY)
+def list_databases(cur, **_):
+    query = 'SELECT datname FROM pg_database;'
+    cur.execute(query)
+    if cur.description:
+        headers = [x[0] for x in cur.description]
+        return [(None, cur, headers, cur.statusmessage)]
+    else:
+        return [(None, None, None, cur.statusmessage)]
 
-TIMING_ENABLED = False
-
-def parse_special_command(sql):
-    command, _, arg = sql.partition(' ')
-    verbose = '+' in command
-
-    command = command.strip().replace('+', '')
-    return (command, verbose, arg.strip())
-
+@special_command('\\du', '\\du[+] [pattern]', 'List roles.')
 def list_roles(cur, pattern, verbose):
     """
     Returns (title, rows, headers, status)
@@ -53,6 +47,7 @@ def list_roles(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(None, cur, headers, cur.statusmessage)]
 
+@special_command('\\dn', '\\dn[+] [pattern]', 'List schemas.')
 def list_schemas(cur, pattern, verbose):
     """
     Returns (title, rows, headers, status)
@@ -138,20 +133,24 @@ def list_objects(cur, pattern, verbose, relkinds):
         return [(None, cur, headers, cur.statusmessage)]
 
 
+@special_command('\\dt', '\\dt[+] [pattern]', 'List tables.')
 def list_tables(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['r', ''])
 
 
+@special_command('\\dv', '\\dv[+] [pattern]', 'List views.')
 def list_views(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['v', 's', ''])
 
+@special_command('\\ds', '\\ds[+] [pattern]', 'List sequences.')
 def list_sequences(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['S', 's', ''])
 
+@special_command('\\di', '\\di[+] [pattern]', 'List indexes.')
 def list_indexes(cur, pattern, verbose):
     return list_objects(cur, pattern, verbose, ['i', 's', ''])
 
-
+@special_command('\\df', '\\df[+] [pattern]', 'List functions.')
 def list_functions(cur, pattern, verbose):
 
     if verbose:
@@ -216,7 +215,7 @@ def list_functions(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(None, cur, headers, cur.statusmessage)]
 
-
+@special_command('\\dT', '\\dT[S+] [pattern]', 'List data types')
 def list_datatypes(cur, pattern, verbose):
     assert True
     sql = '''SELECT n.nspname as "Schema",
@@ -284,6 +283,8 @@ def list_datatypes(cur, pattern, verbose):
         headers = [x[0] for x in cur.description]
         return [(None, cur, headers, cur.statusmessage)]
 
+@special_command('describe', 'DESCRIBE [pattern]', '', hidden=True, case_sensitive=False)
+@special_command('\\d', '\\d [pattern]', 'List or describe tables, views and sequences.')
 def describe_table_details(cur, pattern, verbose):
     """
     Returns (title, rows, headers, status)
@@ -983,149 +984,3 @@ def sql_name_pattern(pattern):
         schema = '^(' + schema + ')$'
 
     return schema, relname
-
-def show_help(cur, arg, verbose):  # All the parameters are ignored.
-    headers = ['Command', 'Description']
-    result = []
-
-    for command, value in sorted(CASE_SENSITIVE_COMMANDS.items()):
-        if value[1]:
-            result.append(value[1])
-    return [(None, result, headers, None)]
-
-
-def dummy_command(cur, arg, verbose):
-    """
-    Used by commands that are actually handled elsewhere.
-    But we want to keep their docstrings in the same list
-    as all the rest of commands.
-    """
-    raise NotImplementedError
-
-
-def in_progress(cur, arg, verbose):
-    """
-    Stub method to signal about commands being under development.
-    """
-    raise NotImplementedError
-
-def expanded_output(cur, arg, verbose):
-    global use_expanded_output
-    use_expanded_output = not use_expanded_output
-    message = u"Expanded display is "
-    message += u"on." if use_expanded_output else u"off."
-    return [(None, None, None, message)]
-
-def toggle_timing(cur, arg, verbose):
-    global TIMING_ENABLED
-    TIMING_ENABLED = not TIMING_ENABLED
-    message = "Timing is "
-    message += "on." if TIMING_ENABLED else "off."
-    return [(None, None, None, message)]
-
-def list_named_queries(cur, arg, verbose):
-    """Returns (title, rows, headers, status)"""
-    if not verbose:
-        rows = [[r] for r in namedqueries.list()]
-        headers = ["Name"]
-    else:
-        headers = ["Name", "Query"]
-        rows = [[r, namedqueries.get(r)] for r in namedqueries.list()]
-    return [('', rows, headers, "")]
-
-def save_named_query(cur, arg, verbose):
-    """Returns (title, rows, headers, status)"""
-    if ' ' not in arg:
-        return [(None, None, None, "Invalid argument.")]
-    name, query = arg.split(' ', 1)
-    namedqueries.save(name, query)
-    return [(None, None, None, "Saved.")]
-
-def delete_named_query(cur, arg, verbose):
-    if len(arg) == 0:
-        return [(None, None, None, "Invalid argument.")]
-    namedqueries.delete(arg)
-    return [(None, None, None, "Deleted.")]
-
-def execute_named_query(cur, arg, verbose):
-    """Returns (title, rows, headers, status)"""
-    if arg == '':
-        return list_named_queries(cur, arg, verbose)
-
-    query = namedqueries.get(arg)
-    title = '> {}'.format(query)
-    if query is None:
-        message = "No named query: {}".format(arg)
-        return [(None, None, None, message)]
-    cur.execute(query)
-    if cur.description:
-        headers = [x[0] for x in cur.description]
-        return [(title, cur, headers, cur.statusmessage)]
-    else:
-        return [(title, None, None, cur.statusmessage)]
-
-
-CASE_SENSITIVE_COMMANDS = {
-            '\?': (show_help, ['\?', 'Help on pgcli commands.']),
-            '\c': (dummy_command, ['\c database_name', 'Connect to a new database.']),
-            '\l': ('''SELECT datname FROM pg_database;''', ['\l', 'List databases.']),
-            '\d': (describe_table_details, ['\d [pattern]', 'List or describe tables, views and sequences.']),
-            '\dn': (list_schemas, ['\dn[+] [pattern]', 'List schemas.']),
-            '\du': (list_roles, ['\du[+] [pattern]', 'List roles.']),
-            '\\x': (expanded_output, ['\\x', 'Toggle expanded output.']),
-            '\\timing': (toggle_timing, ['\\timing', 'Toggle timing of commands.']),
-            '\\dt': (list_tables, ['\\dt[+] [pattern]', 'List tables.']),
-            '\\di': (list_indexes, ['\\di[+] [pattern]', 'List indexes.']),
-            '\\dv': (list_views, ['\\dv[+] [pattern]', 'List views.']),
-            '\\ds': (list_sequences, ['\\ds[+] [pattern]', 'List sequences.']),
-            '\\df': (list_functions, ['\\df[+] [pattern]', 'List functions.']),
-            '\\dT': (list_datatypes, ['\dT[S+] [pattern]', 'List data types']),
-            '\e': (dummy_command, ['\e [file]', 'Edit the query buffer (or file) with external editor.']),
-            '\ef': (in_progress, ['\ef [funcname [line]]', 'Not yet implemented.']),
-            '\sf': (in_progress, ['\sf[+] funcname', 'Not yet implemented.']),
-            '\z': (in_progress, ['\z [pattern]', 'Not yet implemented.']),
-            '\do': (in_progress, ['\do[S] [pattern]', 'Not yet implemented.']),
-            '\\n': (execute_named_query, ['\\n[+] [name]', 'List or execute named queries.']),
-            '\\ns': (save_named_query, ['\\ns [name [query]]', 'Save a named query.']),
-            '\\nd': (delete_named_query, ['\\nd [name]', 'Delete a named query.']),
-            }
-
-NON_CASE_SENSITIVE_COMMANDS = {
-            'describe': (describe_table_details, ['DESCRIBE [pattern]', '']),
-            }
-
-def execute(cur, sql):
-    """Execute a special command and return the results. If the special command
-    is not supported a KeyError will be raised.
-    """
-    command, verbose, arg = parse_special_command(sql)
-
-    # Look up the command in the case-sensitive dict, if it's not there look in
-    # non-case-sensitive dict. If not there either, throw a KeyError exception.
-    global CASE_SENSITIVE_COMMANDS
-    global NON_CASE_SENSITIVE_COMMANDS
-    try:
-        command_executor = CASE_SENSITIVE_COMMANDS[command][0]
-    except KeyError:
-        command_executor = NON_CASE_SENSITIVE_COMMANDS[command.lower()][0]
-
-    # If the command executor is a function, then call the function with the
-    # args. If it's a string, then assume it's an SQL command and run it.
-    if callable(command_executor):
-        return command_executor(cur, arg, verbose)
-    elif isinstance(command_executor, str):
-        cur.execute(command_executor)
-        if cur.description:
-            headers = [x[0] for x in cur.description]
-            return [(None, cur, headers, cur.statusmessage)]
-        else:
-            return [(None, None, None, cur.statusmessage)]
-
-if __name__ == '__main__':
-    import psycopg2
-    con = psycopg2.connect(database='misago_testforum')
-    cur = con.cursor()
-    table = sys.argv[1]
-    for rows, headers, status in describe_table_details(cur, table, False):
-        print(tabulate(rows, headers, tablefmt='psql'))
-        print(status)
