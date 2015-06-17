@@ -23,7 +23,7 @@ from pygments.token import Token
 
 from .packages.tabulate import tabulate
 from .packages.expanded import expanded_table
-from .packages.pgspecial.main import (COMMANDS)
+from .packages.pgspecial.main import (COMMANDS, NO_QUERY)
 import pgcli.packages.pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
@@ -85,6 +85,8 @@ class PGCli(object):
         special.register_special_command(self.change_db, '\\c',
                 '\\c[onnect] database_name', 'Change to a new database.',
                 aliases=('use', '\\connect', 'USE'))
+        special.register_special_command(self.refresh_completions, '\\#',
+                '\\#', 'Refresh auto-completions.', arg_type=NO_QUERY)
 
     def change_db(self, pattern, **_):
         if pattern is None:
@@ -357,11 +359,6 @@ class PGCli(object):
         self.logger.debug('Original value for LESS env var: %r', less_opts)
         os.environ['LESS'] = '-RXF'
 
-        #if 'X' not in less_opts:
-            #os.environ['LESS'] += 'X'
-        #if 'F' not in less_opts:
-            #os.environ['LESS'] += 'F'
-
         return less_opts
 
     def refresh_completions(self):
@@ -393,6 +390,8 @@ class PGCli(object):
 
         # special commands
         completer.extend_special_commands(COMMANDS.keys())
+
+        return [(None, None, None, 'Auto-completions refreshed.')]
 
     def get_completions(self, text, cursor_positition):
         return self.completer.get_completions(
