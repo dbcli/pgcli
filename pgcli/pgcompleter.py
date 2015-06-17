@@ -82,6 +82,7 @@ class PGCompleter(Completer):
         self.special_commands.extend(special_commands)
 
     def extend_database_names(self, databases):
+        databases = self.escaped_names(databases)
         self.databases.extend(databases)
 
     def extend_keywords(self, additional_keywords):

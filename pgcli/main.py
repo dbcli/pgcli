@@ -87,10 +87,12 @@ class PGCli(object):
                 aliases=('use', '\\connect', 'USE'))
 
     def change_db(self, pattern, **_):
+        db = pattern[1:-1] if pattern[0] == pattern[-1] == '"' else pattern
+
         if pattern is None:
             self.pgexecute.connect()
         else:
-            self.pgexecute.connect(database=pattern)
+            self.pgexecute.connect(database=db)
 
         yield (None, None, None, 'You are now connected to database "%s" as '
                 'user "%s"' % (self.pgexecute.dbname, self.pgexecute.user))
