@@ -1,3 +1,69 @@
+0.18.0
+======
+
+Features:
+---------
+
+* Add fuzzy matching for the table names and column names. 
+
+  Matching very long table/column names are now easier with fuzzy matching. The
+  fuzzy match works like the fuzzy open in SublimeText or Vim's Ctrl-P plugin. 
+
+  eg: Typing ``djmv`` will match `django_migration_views` since it is able to
+  match parts of the input to the full table name.
+
+* Change the timing information to seconds. 
+  
+  The ``Command Time`` and ``Format Time`` are now displayed in seconds instead
+  of a unitless number displayed in scientific notation.
+
+* Support for named queries (favorite queries). (Thanks: `Brett Atoms`_)
+
+  Frequently typed queries can now be saved and recalled using a name using
+  newly added special commands (``\n[+]``, ``\ns``, ``\nd``).
+
+  eg: 
+
+::
+
+    # Save a query
+    pgcli> \ns simple select * from foo
+    saved
+
+    # List all saved queries
+    pgcli> \n+
+
+    # Execute a saved query
+    pgcli> \n simple
+
+    # Delete a saved query
+    pgcli> \nd simple
+
+* Pasting queries into the pgcli repl is orders of magnitude faster. (Thanks: `Jonathan Slenders`_)
+
+* Add support for PGPASSWORD environment variable to pass the password for the
+  postgres database. (Thanks: `Iryna Cherniavska`_)
+
+* Add the ability to manually refresh autocompletions by typing ``\#`` or
+  ``\refresh``. This is useful if the database was updated by an external means
+  and you'd like to refresh the auto-completions to pick up the new change.
+
+Bug Fixes:
+----------
+
+* Fix an error when running ``\d table_name`` when running on a table with rules. (Thanks: `Ali Kargın`_)
+* Fix a pgcli crash when entering non-ascii characters in Windows. (Thanks: `Darik Gamble`_, `Jonathan Slenders`_)
+* Faster rendering of expanded mode output by making the horizontal separator a fixed length string. 
+* Completion suggestions for the ``\c`` command are not auto-escaped by default. 
+
+Internal Changes:
+-----------------
+
+* Complete refactor of handling the back-slash commands. 
+* Upgrade prompt_toolkit to 0.42. (Thanks: `Jonathan Slenders`_)
+* Change the config file management to use ConfigObj.(Thanks: `Brett Atoms`_)
+* Add integration tests using ``behave``. (Thanks: `Iryna Cherniavska`_)
+ 
 0.17.0
 ======
 
@@ -212,3 +278,5 @@ Improvements:
 .. _`Jonathan Slenders`: https://github.com/jonathanslenders
 .. _`Dimitar Roustchev`: https://github.com/droustchev
 .. _`François Pietka`: https://github.com/fpietka
+.. _`Ali Kargın`: https://github.com/sancopanco
+.. _`Brett Atoms`: https://github.com/brettatoms 
