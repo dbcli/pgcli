@@ -185,7 +185,21 @@ def load_basic_bindings(registry, filter=Always()):
 
     @handle(Keys.ControlT, filter= ~has_selection)
     def _(event):
-        event.current_buffer.swap_characters_before_cursor()
+        """
+        Emulate Emacs transpose-char behavior: at the beginning of the buffer,
+        do nothing.  At the end of a line or buffer, swap the characters before
+        the cursor.  Otherwise, move the cursor right, and then swap the
+        characters before the cursor.
+        """
+        b = event.current_buffer
+        p = b.cursor_position
+        if p == 0:
+            return
+        elif p == len(b.text) or b.text[p] == '\n':
+            b.swap_characters_before_cursor()
+        else:
+            b.cursor_position += b.document.get_cursor_right_position()
+            b.swap_characters_before_cursor()
 
     @handle(Keys.ControlU, filter= ~has_selection)
     def _(event):
