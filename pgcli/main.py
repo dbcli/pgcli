@@ -87,6 +87,8 @@ class PGCli(object):
                 aliases=('use', '\\connect', 'USE'))
         special.register_special_command(self.refresh_completions, '\\#',
                 '\\#', 'Refresh auto-completions.', arg_type=NO_QUERY)
+        special.register_special_command(self.refresh_completions, '\\refresh',
+                '\\refresh', 'Refresh auto-completions.', arg_type=NO_QUERY)
 
     def change_db(self, pattern, **_):
         if pattern is None:
