@@ -170,6 +170,7 @@ class PGCompleter(Completer):
 
     def reset_completions(self):
         self.databases = []
+        self.special_commands = []
         self.search_path = []
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
                            'datatypes': {}}
