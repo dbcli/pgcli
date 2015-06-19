@@ -344,10 +344,19 @@ class ColorLookupTable(object):
         return indexes
 
     def lookup_color(self, fg_color, bg_color):
+        """
+        Return the color for use in the
+        `windll.kernel32.SetConsoleTextAttribute` API call.
+
+        :param fg_color: Foreground as text. E.g. 'ffffff'
+        :param bg_color: Background as text. E.g. 'ffffff'
+        """
+        # Take white as the default foreground color.
+        # (otherwise many things will be invisible.)
+        if fg_color is None:
+            fg_color = 'ffffff'
+
         fg_index = self._color_indexes(fg_color)[0]
         bg_index = self._color_indexes(bg_color)[1]
-
-        if fg_index == 0:
-            fg_index = FOREGROUND_COLOR.GREY
 
         return fg_index | bg_index
