@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 
 from .buffer import Buffer
 from .enums import DEFAULT_BUFFER
-from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown
+from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown, to_simple_filter
 from .history import History
 from .interface import CommandLineInterface, Application, AbortAction, AcceptAction
 from .key_binding.manager import KeyBindingManager
@@ -123,6 +123,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
     assert get_prompt_tokens is None or callable(get_prompt_tokens)
     assert not (message and get_prompt_tokens)
+    assert isinstance(is_password, bool)
 
     # Create processors list.
     # (DefaultPrompt should always be at the end.)
@@ -186,6 +187,8 @@ def create_default_application(
         multiline=False,
         is_password=False,
         vi_mode=Never(),
+        complete_while_typing=Always(),
+        enable_history_search=Never(),
         lexer=None,
         enable_system_bindings=Never(),
         enable_open_in_editor=Never(),
@@ -210,6 +213,8 @@ def create_default_application(
                        newline. (This requires Meta+Enter to accept the input.)
     :param is_password: Show asterisks instead of the actual typed characters.
     :param vi_mode: If True, use Vi key bindings.
+    :param complete_while_typing: Enable autocompletion while typing.
+    :param enable_history_search: Enable up-arrow parting string matching.
     :param lexer: Pygments lexer to be used for the syntax highlighting.
     :param validator: `Validator` instance for input validation.
     :param completer: `Completer` instance for input completion.
@@ -228,6 +233,15 @@ def create_default_application(
             enable_system_bindings=enable_system_bindings,
             enable_open_in_editor=enable_open_in_editor).registry
 
+    # Make sure that complete_while_typing is disabled when enable_history_search
+    # is enabled. (First convert to SimpleFilter, to avoid doing bitwise operations
+    # on bool objects.)
+    complete_while_typing = to_simple_filter(complete_while_typing)
+    enable_history_search = to_simple_filter(enable_history_search)
+
+    complete_while_typing = complete_while_typing & ~enable_history_search
+
+    # Create application
     return Application(
         layout=create_default_layout(
                 message=message,
@@ -238,6 +252,8 @@ def create_default_application(
                 get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
                 extra_input_processors=extra_input_processors),
         buffer=Buffer(
+                enable_history_search=enable_history_search,
+                complete_while_typing=complete_while_typing,
                 is_multiline=(Always() if multiline else Never()),
                 history=(history or History()),
                 validator=validator,

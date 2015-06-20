@@ -7,7 +7,7 @@ from pygments.token import Token
 from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 
-from prompt_toolkit.filters import Never, CLIFilter
+from prompt_toolkit.filters import Never, to_cli_filter
 from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.enums import DEFAULT_BUFFER
@@ -87,20 +87,20 @@ class TokenListControl(UIControl):
         and returns the list of (Token, text) tuples to be displayed right now.
     :param default_char: default `Char` (character and Token) to use for the
         background when there is more space available than `get_tokens` returns.
-    :param has_focus: `CLIFilter`, when this evaluates to `True`, this UI control
-        will take the focus. The cursor will be shown in the upper left corner of
-        this control, unless `get_token` returns a `Token.SetCursorPosition` token
-        somewhere in the token list, then the cursor will be shown there.
+    :param has_focus: `bool` or `CLIFilter`, when this evaluates to `True`,
+        this UI control will take the focus. The cursor will be shown in the
+        upper left corner of this control, unless `get_token` returns a
+        `Token.SetCursorPosition` token somewhere in the token list, then the
+        cursor will be shown there.
     """
     def __init__(self, get_tokens, default_char=None, align_right=False,
-                 has_focus=Never()):
+                 has_focus=False):
         assert default_char is None or isinstance(default_char, Char)
-        assert isinstance(has_focus, CLIFilter)
 
         self.get_tokens = get_tokens
         self.default_char = default_char or Char(' ', Token)
         self.align_right = align_right
-        self._has_focus_filter = has_focus
+        self._has_focus_filter = to_cli_filter(has_focus)
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.get_tokens)
@@ -198,22 +198,32 @@ def _create_numbered_margin(decimals):
 
 
 class BufferControl(UIControl):
+    """
+    Control for visualising the content of a `Buffer`.
+
+    :param input_processors: list of `InputProcessor.
+    :param lexer: Pygments lexer class.
+    :param show_line_numbers: `bool` or `CLIFilter`: show line numbers when
+        we have several lines.
+    :param preview_search: `bool` or `CLIFilter`: Show search while typing.
+    :param buffer_name: String representing the name of the buffer to display.
+    :param default_token: Pygments token to use for the background.
+    """
     def __init__(self,
                  input_processors=None,
                  lexer=None,
-                 show_line_numbers=Never(),
-                 preview_search=Never(),
+                 show_line_numbers=False,
+                 preview_search=False,
                  buffer_name=DEFAULT_BUFFER,
                  default_token=Token,
                  menu_position=None):
         assert input_processors is None or all(isinstance(i, Processor) for i in input_processors)
-        assert isinstance(show_line_numbers, CLIFilter)
-        assert isinstance(preview_search, CLIFilter)
         assert menu_position is None or callable(menu_position)
 
+        self.show_line_numbers = to_cli_filter(show_line_numbers)
+        self.preview_search = to_cli_filter(preview_search)
+
         self.input_processors = input_processors or []
-        self.show_line_numbers = show_line_numbers
-        self.preview_search = preview_search
         self.buffer_name = buffer_name
         self.default_token = default_token
         self.menu_position = menu_position

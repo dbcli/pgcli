@@ -12,7 +12,7 @@ from .selection import SelectionType, SelectionState
 from .utils import Callback
 from .validation import ValidationError
 from .clipboard import ClipboardData
-from .filters import SimpleFilter, Never
+from .filters import Never, to_simple_filter
 from .search_state import SearchState
 
 import os
@@ -151,6 +151,11 @@ class Buffer(object):
     :param on_text_changed: Callback instance or None.
     :param on_text_insert: Callback instance or None.
     :param on_cursor_position_changed: Callback instance or None.
+    :param enable_history_search: SimpleFilter to indicate when up-arrow partial
+        string matching is enabled. It is adviced to not enable this at the
+        same time as `complete_while_typing`, because when there is an
+        autocompletion found, the up arrows usually browse through the
+        completions, rather than through the history.
     """
     def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='',
                  is_multiline=Never(), complete_while_typing=Never(),
@@ -158,11 +163,14 @@ class Buffer(object):
                  accept_action=AcceptAction.RETURN_DOCUMENT,
                  on_text_changed=None, on_text_insert=None, on_cursor_position_changed=None):
 
+        # Accept both filters and booleans as input.
+        enable_history_search = to_simple_filter(enable_history_search)
+        is_multiline = to_simple_filter(is_multiline)
+        complete_while_typing = to_simple_filter(complete_while_typing)
+
+        # Validate input.
         assert completer is None or isinstance(completer, Completer)
         assert history is None or isinstance(history, History)
-        assert isinstance(is_multiline, SimpleFilter)
-        assert isinstance(complete_while_typing, SimpleFilter)
-        assert isinstance(enable_history_search, SimpleFilter)
         assert on_text_changed is None or isinstance(on_text_changed, Callback)
         assert on_text_insert is None or isinstance(on_text_insert, Callback)
         assert on_cursor_position_changed is None or isinstance(on_cursor_position_changed, Callback)

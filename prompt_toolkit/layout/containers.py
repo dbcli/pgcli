@@ -11,7 +11,7 @@ from .screen import Point, WritePosition
 from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
 from .controls import UIControl
 from prompt_toolkit.reactive import Integer
-from prompt_toolkit.filters import CLIFilter, Always, Never
+from prompt_toolkit.filters import to_cli_filter, Always, Never
 
 __all__ = (
     'HSplit',
@@ -514,23 +514,24 @@ class Window(Layout):
     :param height: `LayoutDimension` instance.
     :param get_width: callable which takes a `CommandLineInterface` and returns a `LayoutDimension`.
     :param get_height: callable which takes a `CommandLineInterface` and returns a `LayoutDimension`.
-    :param filter: `Filter` which decides about the visibility.
+    :param filter: `bool` or `Filter` which decides about the visibility.
     :param dont_extend_width: When `True`, don't take up more width then the
                               preferred width reported by the control.
     :param dont_extend_height: When `True`, don't take up more width then the
                                preferred height reported by the control.
-    :param scroll_offset: Number (integer) representing the preferred amount of lines to be
-                          always visible before and after the cursor. When this is a very high
-                          number, the cursor will be centered vertically most of the time.
-    :param allow_scroll_beyond_bottom: A `Filter` instance. When True, allow scrolling so far,
-                          that the top part of the content is not visible anymore, while there
-                          is still empty space available at the bottom of the window. In the Vi
-                          editor for instance, this is possible. You will see tildes while the
-                          top part of the body is hidden.
+    :param scroll_offset: Number (integer) representing the preferred amount of
+        lines to be always visible before and after the cursor. When this is a
+        very high number, the cursor will be centered vertically most of the
+        time.
+    :param allow_scroll_beyond_bottom: A `bool` or `Filter` instance. When
+         True, allow scrolling so far, that the top part of the content is not
+         visible anymore, while there is still empty space available at the
+         bottom of the window. In the Vi editor for instance, this is possible.
+         You will see tildes while the top part of the body is hidden.
     """
     def __init__(self, content, width=None, height=None, get_width=None,
-                 get_height=None, filter=Always(), dont_extend_width=False,
-                 dont_extend_height=False, scroll_offset=0, allow_scroll_beyond_bottom=Never()):
+                 get_height=None, filter=True, dont_extend_width=False,
+                 dont_extend_height=False, scroll_offset=0, allow_scroll_beyond_bottom=False):
         assert isinstance(content, UIControl)
         assert width is None or isinstance(width, LayoutDimension)
         assert height is None or isinstance(height, LayoutDimension)
@@ -538,16 +539,15 @@ class Window(Layout):
         assert get_height is None or callable(get_height)
         assert width is None or get_width is None
         assert height is None or get_height is None
-        assert isinstance(filter, CLIFilter)
         assert isinstance(scroll_offset, Integer)
-        assert isinstance(allow_scroll_beyond_bottom, CLIFilter)
+
+        self.filter = to_cli_filter(filter)
+        self.allow_scroll_beyond_bottom = to_cli_filter(allow_scroll_beyond_bottom)
 
         self.content = content
-        self.filter = filter
         self.dont_extend_width = dont_extend_width
         self.dont_extend_height = dont_extend_height
         self.scroll_offset = scroll_offset
-        self.allow_scroll_beyond_bottom = allow_scroll_beyond_bottom
         self._width = get_width or (lambda cli: width)
         self._height = get_height or (lambda cli: height)
 

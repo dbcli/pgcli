@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from .buffer import Buffer, AcceptAction
 from .clipboard import Clipboard
-from .filters import CLIFilter, Never
+from .filters import CLIFilter, Never, to_cli_filter
 from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
 from .key_binding.registry import Registry
@@ -77,6 +77,9 @@ class Application(object):
 
                  on_input_timeout=None, on_start=None, on_stop=None,
                  on_reset=None, on_initialize=None, on_buffer_changed=None):
+
+        paste_mode = to_cli_filter(paste_mode)
+        ignore_case = to_cli_filter(ignore_case)
 
         assert layout is None or isinstance(layout, Layout)
         assert buffer is None or isinstance(buffer, Buffer)

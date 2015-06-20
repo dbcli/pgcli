@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from ..filters import Always, CLIFilter, Never
+from ..filters import CLIFilter, to_cli_filter, Never
 from ..utils import Callback
 
 from collections import defaultdict
@@ -58,11 +58,10 @@ class Registry(object):
         """
         Decorator for annotating key bindings.
         """
-        filter = kwargs.pop('filter', Always())
+        filter = to_cli_filter(kwargs.pop('filter', True))
 
         assert not kwargs
         assert keys
-        assert isinstance(filter, CLIFilter), 'Expected Filter instance, got %r' % filter
 
         def decorator(func):
             # When a filter is Never, it will always stay disabled, so in that case

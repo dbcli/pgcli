@@ -16,7 +16,7 @@ from prompt_toolkit.key_binding.vi_state import ViState
 from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_basic_system_bindings
 from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_system_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings
 from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_system_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings
-from prompt_toolkit.filters import CLIFilter, Never, Always
+from prompt_toolkit.filters import Never, Always, to_cli_filter
 
 __all__ = (
     'KeyBindingManager',
@@ -40,12 +40,14 @@ class KeyBindingManager(object):
                  enable_system_bindings=Never(), enable_search=Always(),
                  enable_open_in_editor=Never(), enable_all=Always()):
 
-        assert registry is None or isinstance(registry, Registry)
-        assert isinstance(enable_vi_mode, CLIFilter)
-        assert isinstance(enable_system_bindings, CLIFilter)
-        assert isinstance(enable_open_in_editor, CLIFilter)
-        assert isinstance(enable_all, CLIFilter)
+        # Accept both Filters and booleans as input.
+        enable_vi_mode = to_cli_filter(enable_vi_mode)
+        enable_system_bindings = to_cli_filter(enable_system_bindings)
+        enable_open_in_editor = to_cli_filter(enable_open_in_editor)
+        enable_all = to_cli_filter(enable_all)
 
+        # Create registry.
+        assert registry is None or isinstance(registry, Registry)
         self.registry = registry or Registry()
 
         # Emacs mode filter is the opposite of Vi mode.
