@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+0.41: 2015-06-20
+----------------
+
+Fixes:
+- Emacs Control-T key binding.
+- Color fix for Windows consoles.
+
+New features:
+- Allow both booleans and Filters in many places.
+- `password` can be a Filter now.
+
+
 0.40: 2015-06-15
 ----------------
 
