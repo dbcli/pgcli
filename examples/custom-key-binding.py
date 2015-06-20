@@ -35,7 +35,7 @@ def main():
 
     # Read input.
     print('Press F4 to insert "hello world", type "xy" to insert "z":')
-    text = get_input(key_bindings_registry=key_bindings_manager.registry)
+    text = get_input('> ', key_bindings_registry=key_bindings_manager.registry)
     print('You said: %s' % text)
 
 

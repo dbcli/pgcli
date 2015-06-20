@@ -38,8 +38,7 @@ def main():
         b.insert_text(' ')
 
     # Read input.
-    print('Say something')
-    text = get_input(key_bindings_registry=key_bindings_manager.registry)
+    text = get_input('Say something: ', key_bindings_registry=key_bindings_manager.registry)
     print('You said: %s' % text)
 
 
