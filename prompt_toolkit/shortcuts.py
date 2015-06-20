@@ -32,7 +32,7 @@ from .layout import Window, HSplit, FloatContainer, Float
 from .layout.controls import BufferControl, TokenListControl
 from .layout.dimension import LayoutDimension
 from .layout.menus import CompletionsMenu
-from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor
+from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, ConditionalProcessor
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar
@@ -111,7 +111,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
 
     :param message: Text to be used as prompt.
     :param lexer: Pygments lexer to be used for the highlighting.
-    :param is_password: When True, display input as '*'.
+    :param is_password: `bool` or `CLIFilter`. When True, display input as '*'.
     :param reserve_space_for_menu: When True, make sure that a minimal height is
         allocated in the terminal, in order to display the completion menu.
     :param get_prompt_tokens: An optional callable that returns the tokens to be
@@ -123,15 +123,12 @@ def create_default_layout(message='', lexer=None, is_password=False,
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
     assert get_prompt_tokens is None or callable(get_prompt_tokens)
     assert not (message and get_prompt_tokens)
-    assert isinstance(is_password, bool)
 
     # Create processors list.
     # (DefaultPrompt should always be at the end.)
     input_processors = [HighlightSearchProcessor(preview_search=Always()),
-                        HighlightSelectionProcessor()]
-
-    if is_password:
-        input_processors.append(PasswordProcessor())
+                        HighlightSelectionProcessor(),
+                        ConditionalProcessor(PasswordProcessor(), is_password)]
 
     if extra_input_processors:
         input_processors.extend(extra_input_processors)
