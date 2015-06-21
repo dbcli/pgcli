@@ -337,7 +337,7 @@ class PGCompleter(Completer):
 
             elif suggestion['type'] == 'namedquery':
                 queries = self.find_matches(word_before_cursor, namedqueries.list(),
-                                            start_only=True, fuzzy=False)
+                                            start_only=False, fuzzy=True)
                 completions.extend(queries)
 
         return completions
