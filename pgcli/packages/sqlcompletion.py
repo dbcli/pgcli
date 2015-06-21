@@ -132,6 +132,9 @@ def suggest_special(text):
             return [{'type': 'schema'},
                     {'type': rel_type, 'schema': []}]
 
+    if cmd in ['\\n', '\\ns', '\\nd']:
+        return [{'type': 'namedquery'}]
+
     return [{'type': 'keyword'}, {'type': 'special'}]
 
 

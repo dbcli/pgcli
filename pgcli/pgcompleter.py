@@ -4,6 +4,7 @@ import re
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
+from .packages.pgspecial.namedqueries import namedqueries
 
 try:
     from collections import Counter
@@ -333,6 +334,11 @@ class PGCompleter(Completer):
                                               self.datatypes, start_only=True,
                                               fuzzy=False)
                     completions.extend(types)
+
+            elif suggestion['type'] == 'namedquery':
+                queries = self.find_matches(word_before_cursor, namedqueries.list(),
+                                            start_only=True, fuzzy=False)
+                completions.extend(queries)
 
         return completions
 
