@@ -4,10 +4,10 @@ import pytest
 def test_expanded_table_renders():
     input = [("hello", 123),("world", 456)]
 
-    expected = """-[ RECORD 0 ]
+    expected = """-[ RECORD 0 ]-------------------------
 name | hello
 age  | 123
--[ RECORD 1 ]
+-[ RECORD 1 ]-------------------------
 name | world
 age  | 456
 """
