@@ -51,7 +51,7 @@ def create_cn(hostname, password, username, dbname):
 
 
 def drop_db(hostname='localhost', username=None, password=None,
-              dbname=None):
+            dbname=None):
     """
     Drop database.
     :param hostname: string

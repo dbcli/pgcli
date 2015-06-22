@@ -41,7 +41,8 @@ def before_all(context):
         del os.environ['PGPASS']
 
     context.cn = dbutils.create_db(context.conf['host'], context.conf['user'],
-                                   context.conf['pass'], context.conf['dbname'])
+                                   context.conf['pass'],
+                                   context.conf['dbname'])
 
 
 def after_all(context):
