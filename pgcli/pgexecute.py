@@ -208,7 +208,7 @@ class PGExecute(object):
                 cur = self.conn.cursor()
                 for result in special.execute(cur, sql):
                     yield result
-            except KeyError:  # Regular SQL
+            except special.CommandNotFound:  # Regular SQL
                 yield self.execute_normal_sql(sql)
 
     def execute_normal_sql(self, split_sql):
