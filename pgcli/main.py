@@ -91,10 +91,11 @@ class PGCli(object):
                 '\\refresh', 'Refresh auto-completions.', arg_type=NO_QUERY)
 
     def change_db(self, pattern, **_):
-        if pattern is None:
-            self.pgexecute.connect()
+        if pattern:
+            db = pattern[1:-1] if pattern[0] == pattern[-1] == '"' else pattern
+            self.pgexecute.connect(database=db)
         else:
-            self.pgexecute.connect(database=pattern)
+            self.pgexecute.connect()
 
         yield (None, None, None, 'You are now connected to database "%s" as '
                 'user "%s"' % (self.pgexecute.dbname, self.pgexecute.user))
