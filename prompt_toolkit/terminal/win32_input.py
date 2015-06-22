@@ -118,14 +118,19 @@ class ConsoleInputReader(object):
         for i in range(read.value):
             ir = input_records[i]
 
-            ev = getattr(ir.Event, EventTypes[ir.EventType])
+            # Get the right EventType from the EVENT_RECORD.
+            # (For some reason the Windows console application 'cmder'
+            # [http://gooseberrycreative.com/cmder/] can return '0' for
+            # ir.EventType. -- Just ignore that.)
+            if ir.EventType in EventTypes:
+                ev = getattr(ir.Event, EventTypes[ir.EventType])
 
-            # Process if this is a key event. (We also have mouse, menu and
-            # focus events.)
-            if type(ev) == KEY_EVENT_RECORD and ev.KeyDown:
-                key_presses = self._event_to_key_presses(ev)
-                if key_presses:
-                    result.extend(key_presses)
+                # Process if this is a key event. (We also have mouse, menu and
+                # focus events.)
+                if type(ev) == KEY_EVENT_RECORD and ev.KeyDown:
+                    key_presses = self._event_to_key_presses(ev)
+                    if key_presses:
+                        result.extend(key_presses)
 
         return result
 
