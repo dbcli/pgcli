@@ -5,14 +5,17 @@ from __future__ import print_function
 import os
 import pexpect
 import db_utils as dbutils
+import fixture_utils as fixutils
 
 
 def before_all(context):
     """
     Set env parameters.
     """
-    os.environ['LINES'] = "50"
-    os.environ['COLUMNS'] = "120"
+    os.environ['LINES'] = "100"
+    os.environ['COLUMNS'] = "100"
+    os.environ['PAGER'] = 'cat'
+
     context.exit_sent = False
 
     # Store get params from config.
@@ -43,6 +46,8 @@ def before_all(context):
     context.cn = dbutils.create_db(context.conf['host'], context.conf['user'],
                                    context.conf['pass'],
                                    context.conf['dbname'])
+
+    context.fixture_data = fixutils.read_fixture_files()
 
 
 def after_all(context):

@@ -68,7 +68,7 @@ def drop_db(hostname='localhost', username=None, password=None,
     with cn.cursor() as cr:
         cr.execute('drop database %s', (AsIs(dbname),))
 
-    cn.close()
+    close_cn(cn)
 
 
 def close_cn(cn=None):

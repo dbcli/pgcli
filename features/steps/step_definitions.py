@@ -46,6 +46,14 @@ def step_ctrl_d(context):
     context.exit_sent = True
 
 
+@when('we send "\?" command')
+def step_send_help(context):
+    """
+    Send \? to see help.
+    """
+    context.cli.sendline('\?')
+
+
 @then('pgcli exits')
 def step_wait_exit(context):
     """
@@ -60,3 +68,9 @@ def step_see_prompt(context):
     Wait to see the prompt.
     """
     context.cli.expect('{0}> '.format(context.conf['dbname']))
+
+
+@then('we see help output')
+def step_see_help(context):
+    for expected_line in context.fixture_data['help.txt']:
+        context.cli.expect_exact(expected_line)

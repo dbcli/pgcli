@@ -7,6 +7,13 @@ Feature: run the cli,
       when we run pgcli
       then we see pgcli prompt
 
+  Scenario: run "\?" command
+     Given we have pgcli installed
+      when we run pgcli
+      and we wait for prompt
+      and we send "\?" command
+      then we see help output
+
   Scenario: run the cli and exit
      Given we have pgcli installed
       when we run pgcli
