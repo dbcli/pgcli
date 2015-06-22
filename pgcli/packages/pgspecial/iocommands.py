@@ -101,10 +101,10 @@ def open_external_editor(filename=None, sql=''):
     return (query, message)
 
 @special_command('\\n', '\\n[+] [name]', 'List or execute named queries.')
-def execute_named_query(cur, pattern, verbose):
+def execute_named_query(cur, pattern, **_):
     """Returns (title, rows, headers, status)"""
     if pattern == '':
-        return list_named_queries(verbose)
+        return list_named_queries(True)
 
     query = namedqueries.get(pattern)
     title = '> {}'.format(query)
@@ -127,23 +127,40 @@ def list_named_queries(verbose):
     else:
         headers = ["Name", "Query"]
         rows = [[r, namedqueries.get(r)] for r in namedqueries.list()]
-    return [('', rows, headers, "")]
 
-@special_command('\\ns', '\\ns [name [query]]', 'Save a named query.')
+    if not rows:
+        status = namedqueries.usage
+    else:
+        status = ''
+    return [('', rows, headers, status)]
+
+@special_command('\\ns', '\\ns name query', 'Save a named query.')
 def save_named_query(pattern, **_):
     """Save a new named query.
     Returns (title, rows, headers, status)"""
-    if ' ' not in pattern:
-        return [(None, None, None, "Invalid argument.")]
-    name, query = pattern.split(' ', 1)
+
+    usage = 'Syntax: \\ns name query.\n\n' + namedqueries.usage
+    if not pattern:
+        return [(None, None, None, usage)]
+
+    name, _, query = pattern.partition(' ')
+
+    # If either name or query is missing then print the usage and complain.
+    if (not name) or (not query):
+        return [(None, None, None,
+            usage + 'Err: Both name and query are required.')]
+
     namedqueries.save(name, query)
     return [(None, None, None, "Saved.")]
 
-@special_command('\\nd', '\\nd [name [query]]', 'Delete a named query.')
+@special_command('\\nd', '\\nd [name]', 'Delete a named query.')
 def delete_named_query(pattern, **_):
     """Delete an existing named query.
     """
-    if len(pattern) == 0:
-        return [(None, None, None, "Invalid argument.")]
-    namedqueries.delete(pattern)
-    return [(None, None, None, "Deleted.")]
+    usage = 'Syntax: \\nd name.\n\n' + namedqueries.usage
+    if not pattern:
+        return [(None, None, None, usage)]
+
+    status = namedqueries.delete(pattern)
+
+    return [(None, None, None, status)]
