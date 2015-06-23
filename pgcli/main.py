@@ -142,6 +142,11 @@ class PGCli(object):
         if not database:
             database = user
 
+        # If password prompt is not forced but no password is provided, try
+        # getting it from environment variable.
+        if not self.force_passwd_prompt and not passwd:
+            passwd = os.environ.get('PGPASSWORD', '')
+
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
         # no-password exception.
