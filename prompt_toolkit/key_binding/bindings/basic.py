@@ -1,9 +1,10 @@
 # pylint: disable=function-redefined
 from __future__ import unicode_literals
 
-from prompt_toolkit.keys import Keys
-from prompt_toolkit.filters import CLIFilter, Always, HasSelection, Condition
 from prompt_toolkit.enums import DEFAULT_BUFFER
+from prompt_toolkit.filters import CLIFilter, Always, HasSelection, Condition
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.utils import suspend_to_background_supported
 
 from .utils import create_handle_decorator
 
@@ -285,6 +286,19 @@ def load_basic_bindings(registry, filter=Always()):
         " Clear whole screen and redraw. "
         event.cli.renderer.clear()
 
+    @handle(Keys.ControlZ)
+    def _(event):
+        """
+        By default, control-Z should literally insert Ctrl-Z.
+        (Ansi Ctrl-Z, code 26 in MSDOS means End-Of-File.
+        In a Python REPL for instance, it's possible to type
+        Control-Z followed by enter to quit.)
+
+        When the system bindings are loaded and suspend-to-background is
+        supported, that will override this binding.
+        """
+        event.current_buffer.insert_text(event.data)
+
     @registry.add_binding(Keys.CPRResponse)
     def _(event):
         """
@@ -305,7 +319,10 @@ def load_basic_system_bindings(registry, filter=Always()):
     assert isinstance(filter, CLIFilter)
     handle = create_handle_decorator(registry, filter)
 
-    @handle(Keys.ControlZ)
+    suspend_supported = Condition(
+        lambda cli: suspend_to_background_supported())
+
+    @handle(Keys.ControlZ, filter=suspend_supported)
     def _(event):
         """
         Suspend process to background.

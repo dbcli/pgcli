@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import signal
 
 try:
     from wcwidth import wcwidth
@@ -9,6 +10,8 @@ except ImportError:
 __all__ = (
     'Callback',
     'DummyContext',
+    'get_cwidth',
+    'suspend_to_background_supported',
 )
 
 
@@ -107,3 +110,11 @@ def get_cwidth(string):
     Return width of a string. Wrapper around ``wcwidth``.
     """
     return _CHAR_SIZES_CACHE[string]
+
+
+def suspend_to_background_supported():
+    """
+    Returns `True` when the Python implementation supports
+    suspend-to-background. This is typically `False' on Windows systems.
+    """
+    return hasattr(signal, 'SIGTSTP')
