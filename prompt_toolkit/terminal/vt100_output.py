@@ -88,37 +88,46 @@ class Vt100_Output(Output):
 
         return cls(stdout, get_size)
 
-    def write(self, data):
+    def _write(self, data):
+        """
+        Write raw data to output.
+        """
         self._buffer.append(data)
+
+    def write(self, data):
+        """
+        Write text to output.
+        """
+        self._write(data.replace('\x1b', ''))
 
     def erase_screen(self):
         """
         Erases the screen with the background colour and moves the cursor to
         home.
         """
-        self.write('\x1b[2J')
+        self._write('\x1b[2J')
 
     def enter_alternate_screen(self):
-        self.write('\x1b[?1049h\x1b[H')
+        self._write('\x1b[?1049h\x1b[H')
 
     def quit_alternate_screen(self):
-        self.write('\x1b[?1049l')
+        self._write('\x1b[?1049l')
 
     def erase_end_of_line(self):
         """
         Erases from the current cursor position to the end of the current line.
         """
-        self.write('\x1b[K')
+        self._write('\x1b[K')
 
     def erase_down(self):
         """
         Erases the screen from the current line down to the bottom of the
         screen.
         """
-        self.write('\x1b[J')
+        self._write('\x1b[J')
 
     def reset_attributes(self):
-        self.write('\x1b[0m')
+        self._write('\x1b[0m')
 
     def set_attributes(self, fgcolor=None, bgcolor=None, bold=False, underline=False):
         """
@@ -127,51 +136,51 @@ class Vt100_Output(Output):
         escape_code = _ESCAPE_CODE_CACHE[fgcolor, bgcolor, bold, underline]
 
         self.reset_attributes()
-        self.write(escape_code)
+        self._write(escape_code)
 
     def disable_autowrap(self):
-        self.write('\x1b[?7l')
+        self._write('\x1b[?7l')
 
     def enable_autowrap(self):
-        self.write('\x1b[?7h')
+        self._write('\x1b[?7h')
 
     def cursor_goto(self, row=0, column=0):
         """ Move cursor position. """
-        self.write('\x1b[%i;%iH' % (row, column))
+        self._write('\x1b[%i;%iH' % (row, column))
 
     def cursor_up(self, amount):
         if amount == 0:
-            self.write('')
+            self._write('')
         elif amount == 1:
-            self.write('\x1b[A')
+            self._write('\x1b[A')
         else:
-            self.write('\x1b[%iA' % amount)
+            self._write('\x1b[%iA' % amount)
 
     def cursor_down(self, amount):
         if amount == 0:
-            self.write('')
+            self._write('')
         elif amount == 1:
             # Note: Not the same as '\n', '\n' can cause the window content to
             #       scroll.
-            self.write('\x1b[B')
+            self._write('\x1b[B')
         else:
-            self.write('\x1b[%iB' % amount)
+            self._write('\x1b[%iB' % amount)
 
     def cursor_forward(self, amount):
         if amount == 0:
-            self.write('')
+            self._write('')
         elif amount == 1:
-            self.write('\x1b[C')
+            self._write('\x1b[C')
         else:
-            self.write('\x1b[%iC' % amount)
+            self._write('\x1b[%iC' % amount)
 
     def cursor_backward(self, amount):
         if amount == 0:
-            self.write('')
+            self._write('')
         elif amount == 1:
-            self.write('\b')  # '\x1b[D'
+            self._write('\b')  # '\x1b[D'
         else:
-            self.write('\x1b[%iD' % amount)
+            self._write('\x1b[%iD' % amount)
 
     def flush(self):
         """
@@ -208,5 +217,5 @@ class Vt100_Output(Output):
         """
         Asks for a cursor position report (CPR).
         """
-        self.write('\x1b[6n')
+        self._write('\x1b[6n')
         self.flush()
