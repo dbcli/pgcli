@@ -1,5 +1,5 @@
 from ctypes import Union, Structure, c_char, c_short, c_long
-from ctypes.wintypes import DWORD, BOOL, LPVOID, WORD, HANDLE
+from ctypes.wintypes import DWORD, BOOL, LPVOID, WORD, HANDLE, WCHAR
 
 
 STD_INPUT_HANDLE = HANDLE(-10)
@@ -22,6 +22,13 @@ class COORD(Structure):
             self.__class__.__name__, self.X, self.Y, type(self.X), type(self.Y))
 
 
+class UNICODE_OR_ASCII(Union):
+    _fields_ = [
+        ('AsciiChar', c_char),
+        ('UnicodeChar', WCHAR),
+    ]
+
+
 class KEY_EVENT_RECORD(Structure):
     """
     http://msdn.microsoft.com/en-us/library/windows/desktop/ms684166(v=vs.85).aspx
@@ -31,7 +38,7 @@ class KEY_EVENT_RECORD(Structure):
         ('RepeatCount', c_short),  # word
         ('VirtualKeyCode', c_short),  # word
         ('VirtualScanCode', c_short),  # word
-        ('AsciiChar', c_char),  # ascii or unicode?
+        ('uChar', UNICODE_OR_ASCII),  # Unicode or ASCII.
         ('ControlKeyState', c_long)  # double word
     ]
 

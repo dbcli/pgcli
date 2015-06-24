@@ -142,15 +142,17 @@ class ConsoleInputReader(object):
 
         result = None
 
-        if ev.AsciiChar == b'\0':
+        u_char = ev.uChar.UnicodeChar
+        ascii_char = ev.uChar.AsciiChar
+
+        if u_char == '\x00':
             if ev.VirtualKeyCode in self.keycodes:
                 result = KeyPress(self.keycodes[ev.VirtualKeyCode], '')
         else:
-            enc = sys.stdin.encoding
-            if ev.AsciiChar in self.mappings:
-                result = KeyPress(self.mappings[ev.AsciiChar], ev.AsciiChar.decode(enc))
+            if ascii_char in self.mappings:
+                result = KeyPress(self.mappings[ascii_char], u_char)
             else:
-                result = KeyPress(ev.AsciiChar.decode(enc), ev.AsciiChar.decode(enc))
+                result = KeyPress(u_char, u_char)
 
         # Correctly handle Control-Arrow keys.
         if (ev.ControlKeyState & self.LEFT_CTRL_PRESSED or

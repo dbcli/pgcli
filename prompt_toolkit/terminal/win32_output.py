@@ -3,12 +3,9 @@ from __future__ import unicode_literals
 from ctypes import windll, byref, ArgumentError, c_char, c_long, c_ulong, c_uint
 from ctypes.wintypes import DWORD
 
-from ..win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, COORD, SMALL_RECT
-
 from prompt_toolkit.renderer import Output
+from prompt_toolkit.win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, COORD, SMALL_RECT
 
-import six
-import sys
 
 __all__ = (
     'Win32Output',
@@ -42,6 +39,8 @@ _DEBUG_RENDER_OUTPUT_FILENAME = r'prompt-toolkit-windows-output.log'
 
 class Win32Output(Output):
     """
+    I/O abstraction for rendering to Windows consoles.
+    (cmd.exe and similar.)
     """
     def __init__(self, stdout, use_complete_width=False):
         self.use_complete_width = use_complete_width
@@ -70,7 +69,7 @@ class Win32Output(Output):
         else:
             width = info.srWindow.Right - info.srWindow.Left
 
-        height = info.srWindow.Bottom - info.srWindow.Top
+        height = info.srWindow.Bottom - info.srWindow.Top + 1
 
         # We avoid the right margin, windows will wrap otherwise.
         maxwidth = info.dwSize.X - 1
@@ -163,25 +162,22 @@ class Win32Output(Output):
 
     def cursor_goto(self, row=0, column=0):
         pos = COORD(x=column, y=row)
-        self._winapi(windll.kernel32.SetConsoleCursorPosition,
-                     self.hconsole, _coord_byval(pos))
+        self._winapi(windll.kernel32.SetConsoleCursorPosition, self.hconsole, _coord_byval(pos))
 
     def cursor_up(self, amount):
         sr = self._screen_buffer_info().dwCursorPosition
         pos = COORD(sr.X, sr.Y - amount)
-        success = self._winapi(windll.kernel32.SetConsoleCursorPosition,
-                               self.hconsole, _coord_byval(pos))
+        self._winapi(windll.kernel32.SetConsoleCursorPosition, self.hconsole, _coord_byval(pos))
 
     def cursor_down(self, amount):
         self.cursor_up(-amount)
 
     def cursor_forward(self, amount):
         sr = self._screen_buffer_info().dwCursorPosition
-        assert sr.X + amount >= 0, 'Negative cursor position: x=%r amount=%r' % (sr.X, amount)
+#        assert sr.X + amount >= 0, 'Negative cursor position: x=%r amount=%r' % (sr.X, amount)
 
         pos = COORD(max(0, sr.X + amount), sr.Y)
-        success = self._winapi(windll.kernel32.SetConsoleCursorPosition,
-                               self.hconsole, _coord_byval(pos))
+        self._winapi(windll.kernel32.SetConsoleCursorPosition, self.hconsole, _coord_byval(pos))
 
     def cursor_backward(self, amount):
         self.cursor_forward(-amount)
@@ -203,20 +199,20 @@ class Win32Output(Output):
             self.LOG.write(('%r' % data).encode('utf-8') + b'\n')
             self.LOG.flush()
 
-        # Write to output
-        # (We encode ourself, because that way we can replace characters that
-        # don't exist in the character set, avoiding UnicodeEncodeError
-        # crashes. E.g. the 'umlaut' does not exist in the cp437 encoding.)
-        out = self.stdout.buffer if six.PY3 else self.stdout
+        # Print characters one by one. This appears to be the best soluton
+        # in oder to avoid traces of vertical lines when the completion
+        # menu disappears.
+        for b in data:
+            written = DWORD()
 
-        out.write(data.encode(sys.stdout.encoding, 'replace'))
-        out.flush()
+            retval = windll.kernel32.WriteConsoleW(self.hconsole, b, 1, byref(written), None)
+            assert retval != 0
 
         self._buffer = []
 
     def get_rows_below_cursor_position(self):
         info = self._screen_buffer_info()
-        return info.srWindow.Bottom - info.dwCursorPosition.Y  # - 1
+        return info.srWindow.Bottom - info.dwCursorPosition.Y + 1
 
     def scroll_buffer_to_prompt(self):
         """
@@ -240,14 +236,28 @@ class Win32Output(Output):
         result.Top = result.Bottom - win_height
 
         # Scroll API
-        success = self._winapi(windll.kernel32.SetConsoleWindowInfo,
-                               self.hconsole, True, byref(result))
+        self._winapi(windll.kernel32.SetConsoleWindowInfo, self.hconsole, True, byref(result))
 
     def enter_alternate_screen(self):
-        pass  # XXX: not implemented yet.
+        """
+        Go to alternate screen buffer.
+        """
+        GENERIC_READ = 0x80000000
+        GENERIC_WRITE = 0x40000000
+
+        # Create a new console buffer and activate that one.
+        handle = self._winapi(windll.kernel32.CreateConsoleScreenBuffer, GENERIC_READ|GENERIC_WRITE,
+                              DWORD(0), None, DWORD(1), None)
+
+        self._winapi(windll.kernel32.SetConsoleActiveScreenBuffer, handle)
+        self.hconsole = handle
 
     def quit_alternate_screen(self):
-        pass
+        """
+        Make stdout again the active buffer.
+        """
+        stdout = self._winapi(windll.kernel32.GetStdHandle, STD_OUTPUT_HANDLE)
+        self._winapi(windll.kernel32.SetConsoleActiveScreenBuffer, stdout)
 
     @classmethod
     def win32_refresh_window(cls):
