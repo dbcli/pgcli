@@ -195,6 +195,7 @@ def create_default_application(
         history=None,
         get_prompt_tokens=None,
         get_bottom_toolbar_tokens=None,
+        get_title=None,
         extra_input_processors=None,
         key_bindings_registry=None,
         on_abort=AbortAction.RAISE_EXCEPTION,
@@ -223,6 +224,8 @@ def create_default_application(
     :param get_bottom_toolbar_tokens: Optional callable which takes a
         :class:`CommandLineInterface` and returns a list of tokens for the
         bottom toolbar.
+    :param get_title: Callable that returns the title to be displayed in the
+        terminal.
     """
     if key_bindings_registry is None:
         key_bindings_registry = KeyBindingManager(
@@ -259,6 +262,7 @@ def create_default_application(
             ),
         style=style or DefaultStyle,
         key_bindings_registry=key_bindings_registry,
+        get_title=get_title,
         on_abort=on_abort,
         on_exit=on_exit)
 

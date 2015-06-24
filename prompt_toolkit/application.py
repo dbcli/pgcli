@@ -50,6 +50,7 @@ class Application(object):
     :param on_abort: What to do when Control-C is pressed.
     :param on_exit: What to do when Control-D is pressed.
     :param use_alternate_screen: When True, run the application on the alternate screen buffer.
+    :param get_title: Callable that returns the current title to be displayed in the terminal.
 
     Filters:
 
@@ -72,6 +73,7 @@ class Application(object):
                  key_bindings_registry=None, clipboard=None,
                  on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
                  use_alternate_screen=False,
+                 get_title=None,
 
                  paste_mode=Never(), ignore_case=Never(),
 
@@ -89,6 +91,7 @@ class Application(object):
         assert on_abort in AbortAction._all
         assert on_exit in AbortAction._all
         assert isinstance(use_alternate_screen, bool)
+        assert get_title is None or callable(get_title)
         assert isinstance(paste_mode, CLIFilter)
         assert isinstance(ignore_case, CLIFilter)
         assert on_start is None or isinstance(on_start, Callback)
@@ -115,11 +118,15 @@ class Application(object):
             load_basic_bindings(key_bindings_registry)
             load_emacs_bindings(key_bindings_registry)
 
+        if get_title is None:
+            get_title = lambda: None
+
         self.key_bindings_registry = key_bindings_registry
         self.clipboard = clipboard or Clipboard()
         self.on_abort = on_abort
         self.on_exit = on_exit
         self.use_alternate_screen = use_alternate_screen
+        self.get_title = get_title
 
         self.paste_mode = paste_mode
         self.ignore_case = ignore_case

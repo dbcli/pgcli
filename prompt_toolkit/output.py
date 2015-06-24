@@ -22,10 +22,16 @@ class Output(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
+    def set_title(self, title):
+        " Set terminal title. "
+
+    @abstractmethod
+    def clear_title(self):
+        " Clear title again. (or restore previous title.) "
+
+    @abstractmethod
     def flush(self):
-        """
-        Write to output stream and flush.
-        """
+        " Write to output stream and flush. "
 
     @abstractmethod
     def erase_screen(self):

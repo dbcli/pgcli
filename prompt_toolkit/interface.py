@@ -164,6 +164,19 @@ class CommandLineInterface(object):
         return self.buffers[self.focus_stack.current]
 
     @property
+    def terminal_title(self):
+        """
+        Return the current title to be displayed in the terminal.
+        When this in `None`, the terminal title remains the original.
+        """
+        result = self.application.get_title()
+
+        # Make sure that this function returns a unicode object,
+        # and not a byte string.
+        assert result is None or isinstance(result, six.text_type)
+        return result
+
+    @property
     def is_searching(self):
         """
         True when we are searching.

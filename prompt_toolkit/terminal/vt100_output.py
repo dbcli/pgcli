@@ -100,6 +100,15 @@ class Vt100_Output(Output):
         """
         self._write(data.replace('\x1b', ''))
 
+    def set_title(self, title):
+        """
+        Set terminal title.
+        """
+        self._write('\x1b]2;%s\x07' % title.replace('\x1b', ''))
+
+    def clear_title(self):
+        self.set_title('')
+
     def erase_screen(self):
         """
         Erases the screen with the background colour and moves the cursor to

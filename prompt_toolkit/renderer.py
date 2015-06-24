@@ -222,6 +222,9 @@ class Renderer(object):
         self._last_style = None  # When the style changes, we have to do a full
                                  # redraw as well.
 
+        # Remember the last title. Only set the title when it changes.
+        self._last_title = None
+
         #: Space from the top of the layout, until the bottom of the terminal.
         #: We don't know this until a `report_absolute_cursor_row` call.
         self._min_available_height = 0
@@ -338,6 +341,16 @@ class Renderer(object):
         self._last_screen = screen
         self._last_size = size
 
+        # Write title if it changed.
+        new_title = cli.terminal_title
+
+        if new_title != self._last_title:
+            if new_title is None:
+                self.output.clear_title()
+            else:
+                self.output.set_title(new_title)
+            self._last_title = new_title
+
         output.flush()
 
     def erase(self):
@@ -353,6 +366,10 @@ class Renderer(object):
         output.erase_down()
         output.reset_attributes()
         output.flush()
+
+        # Erase title.
+        if self._last_title:
+            output.clear_title()
 
         self.reset()
 

@@ -6,6 +6,7 @@ from ctypes.wintypes import DWORD
 from prompt_toolkit.renderer import Output
 from prompt_toolkit.win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, COORD, SMALL_RECT
 
+import six
 
 __all__ = (
     'Win32Output',
@@ -105,6 +106,16 @@ class Win32Output(Output):
                                self.hconsole, byref(sbinfo))
         if success:
             return sbinfo
+
+    def set_title(self, title):
+        """
+        Set terminal title.
+        """
+        assert isinstance(title, six.text_type)
+        self._winapi(windll.kernel32.SetConsoleTitleW, title)
+
+    def clear_title(self):
+        self._winapi(windll.kernel32.SetConsoleTitleW, '')
 
     def erase_screen(self):
         start = COORD(0, 0)
