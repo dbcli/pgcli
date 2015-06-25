@@ -448,13 +448,13 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
 
     pgcli.run_cli()
 
-def format_output(title, cur, headers, status, table_format):
+def format_output(title, cur, headers, status, table_format, expanded=False):
     output = []
     if title:  # Only print the title if it's not None.
         output.append(title)
     if cur:
         headers = [utf8tounicode(x) for x in headers]
-        if special.is_expanded_output():
+        if expanded:
             output.append(expanded_table(cur, headers))
         else:
             output.append(tabulate(cur, headers, tablefmt=table_format,

@@ -96,13 +96,11 @@ def test_invalid_column_name(executor):
         run(executor, 'select invalid command')
     assert 'column "invalid" does not exist' in str(excinfo.value)
 
-@pytest.yield_fixture(params=[True, False])
-def expanded(request, executor):
-    if request.param:
-        run(executor, '\\x')
-    yield request.param
-    if request.param:
-        run(executor, '\\x')
+
+@pytest.fixture(params=[True, False])
+def expanded(request):
+    return request.param
+
 
 @dbtest
 def test_unicode_support_in_output(executor, expanded):
@@ -110,7 +108,9 @@ def test_unicode_support_in_output(executor, expanded):
     run(executor, "insert into unicodechars (t) values ('é')")
 
     # See issue #24, this raises an exception without proper handling
-    assert u'é' in run(executor, "select * from unicodechars", join=True)
+    assert u'é' in run(executor, "select * from unicodechars",
+                       join=True, expanded=expanded)
+
 
 @dbtest
 def test_multiple_queries_same_line(executor):
@@ -158,7 +158,8 @@ def test_unicode_support_in_unknown_type(executor):
 def test_json_renders_without_u_prefix(executor, expanded):
     run(executor, "create table jsontest(d json)")
     run(executor, """insert into jsontest (d) values ('{"name": "Éowyn"}')""")
-    result = run(executor, "SELECT d FROM jsontest LIMIT 1", join=True)
+    result = run(executor, "SELECT d FROM jsontest LIMIT 1",
+                 join=True, expanded=expanded)
 
     assert u'{"name": "Éowyn"}' in result
 
@@ -167,7 +168,8 @@ def test_json_renders_without_u_prefix(executor, expanded):
 def test_jsonb_renders_without_u_prefix(executor, expanded):
     run(executor, "create table jsonbtest(d jsonb)")
     run(executor, """insert into jsonbtest (d) values ('{"name": "Éowyn"}')""")
-    result = run(executor, "SELECT d FROM jsonbtest LIMIT 1", join=True)
+    result = run(executor, "SELECT d FROM jsonbtest LIMIT 1",
+                 join=True, expanded=expanded)
 
     assert u'{"name": "Éowyn"}' in result
 
