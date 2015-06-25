@@ -18,6 +18,32 @@ COMMANDS = {}
 class CommandNotFound(Exception):
     pass
 
+
+@export
+class PGSpecial(object):
+    def __init__(self):
+        self.timing_enabled = True
+
+        self.commands = COMMANDS.copy()
+        self.register(self.show_help, '\\?', '\\?', 'Show Help.',
+                      arg_type=NO_QUERY)
+
+    def register(self, *args, **kwargs):
+        register_special_command(*args, command_dict=self.commands, **kwargs)
+
+    def execute(self, cur, sql):
+        return execute(cur, sql, self.commands)
+
+    def show_help(self):
+        headers = ['Command', 'Description']
+        result = []
+
+        for _, value in sorted(self.commands.items()):
+            if not value.hidden:
+                result.append((value.syntax, value.description))
+        return [(None, result, headers, None)]
+
+
 @export
 def parse_special_command(sql):
     command, _, arg = sql.partition(' ')
@@ -25,6 +51,7 @@ def parse_special_command(sql):
 
     command = command.strip().replace('+', '')
     return (command, verbose, arg.strip())
+
 
 @export
 def special_command(command, syntax, description, arg_type=PARSED_QUERY,
@@ -35,30 +62,34 @@ def special_command(command, syntax, description, arg_type=PARSED_QUERY,
         return wrapped
     return wrapper
 
-@export
+
 def register_special_command(handler, command, syntax, description,
-        arg_type=PARSED_QUERY, hidden=False, case_sensitive=True, aliases=()):
+        arg_type=PARSED_QUERY, hidden=False, case_sensitive=True, aliases=(),
+        command_dict=None):
+
+    command_dict = command_dict or COMMANDS
+
     cmd = command.lower() if not case_sensitive else command
-    COMMANDS[cmd] = SpecialCommand(handler, syntax, description, arg_type,
+    command_dict[cmd] = SpecialCommand(handler, syntax, description, arg_type,
                                    hidden, case_sensitive)
     for alias in aliases:
         cmd = alias.lower() if not case_sensitive else alias
-        COMMANDS[cmd] = SpecialCommand(handler, syntax, description, arg_type,
+        command_dict[cmd] = SpecialCommand(handler, syntax, description, arg_type,
                                        case_sensitive=case_sensitive,
                                        hidden=True)
 
-
 @export
-def execute(cur, sql):
+def execute(cur, sql, commands=None):
+    commands = commands or COMMANDS
     command, verbose, pattern = parse_special_command(sql)
 
-    if (command not in COMMANDS) and (command.lower() not in COMMANDS):
+    if (command not in commands) and (command.lower() not in commands):
         raise CommandNotFound
 
     try:
-        special_cmd = COMMANDS[command]
+        special_cmd = commands[command]
     except KeyError:
-        special_cmd = COMMANDS[command.lower()]
+        special_cmd = commands[command.lower()]
         if special_cmd.case_sensitive:
             raise CommandNotFound('Command not found: %s' % command)
 
@@ -69,15 +100,7 @@ def execute(cur, sql):
     elif special_cmd.arg_type == RAW_QUERY:
         return special_cmd.handler(cur=cur, query=sql)
 
-@special_command('\\?', '\\?', 'Show Help.', arg_type=NO_QUERY)
-def show_help():
-    headers = ['Command', 'Description']
-    result = []
 
-    for _, value in sorted(COMMANDS.items()):
-        if not value.hidden:
-            result.append((value.syntax, value.description))
-    return [(None, result, headers, None)]
 
 @special_command('\\e', '\\e [file]', 'Edit the query with external editor.', arg_type=NO_QUERY)
 def doc_only():

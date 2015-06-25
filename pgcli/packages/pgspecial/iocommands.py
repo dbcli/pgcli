@@ -8,38 +8,6 @@ from . import export
 
 _logger = logging.getLogger(__name__)
 
-TIMING_ENABLED = True
-use_expanded_output = False
-
-@export
-def is_expanded_output():
-    return use_expanded_output
-
-@special_command('\\x', '\\x', 'Toggle expanded output.', arg_type=NO_QUERY)
-def toggle_expanded_output():
-    global use_expanded_output
-    use_expanded_output = not use_expanded_output
-    message = u"Expanded display is "
-    message += u"on." if use_expanded_output else u"off."
-    return [(None, None, None, message)]
-
-@special_command('\\timing', '\\timing', 'Toggle timing of commands.', arg_type=NO_QUERY)
-def toggle_timing():
-    global TIMING_ENABLED
-    TIMING_ENABLED = not TIMING_ENABLED
-    message = "Timing is "
-    message += "on." if TIMING_ENABLED else "off."
-    return [(None, None, None, message)]
-
-@export
-def set_timing(enable=True):
-    global TIMING_ENABLED
-    TIMING_ENABLED = enable
-
-@export
-def get_timing():
-    return TIMING_ENABLED
-
 
 @export
 def editor_command(command):
