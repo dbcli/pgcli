@@ -69,10 +69,6 @@ class CommandLineInterface(object):
         self.output = output or create_default_output()
         self.input = input or StdinInput(sys.stdin)
 
-        # Create layout and clipboard only once.
-        self.layout = application.layout
-        self.clipboard = application.clipboard
-
         # Focus stack.
         self.focus_stack = FocusStack(initial=application.initial_focussed_buffer)
 
@@ -103,6 +99,14 @@ class CommandLineInterface(object):
 
         # Trigger initialize callback.
         self.application.on_initialize.fire(self)
+
+    @property
+    def layout(self):
+        return self.application.layout
+
+    @property
+    def clipboard(self):
+        return self.application.clipboard
 
     def add_buffer(self, name, buffer, focus=False):
         """
