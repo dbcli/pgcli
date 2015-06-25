@@ -5,8 +5,6 @@ from prompt_toolkit.key_binding.input_processor import KeyPress
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.win32_types import EventTypes, KEY_EVENT_RECORD, INPUT_RECORD, STD_INPUT_HANDLE
 
-import sys
-
 __all__ = (
     'ConsoleInputReader',
     'raw_mode',
@@ -178,6 +176,13 @@ class ConsoleInputReader(object):
         if (ev.ControlKeyState & self.LEFT_CTRL_PRESSED or
                 ev.ControlKeyState & self.RIGHT_CTRL_PRESSED) and result and result.data == ' ':
             result = KeyPress(Keys.ControlSpace, ' ')
+
+        # Turn Control-Enter into META-Enter. (On a vt100 terminal, we cannot
+        # detect this combination. But it's really practical on Windows.)
+        if (ev.ControlKeyState & self.LEFT_CTRL_PRESSED or
+                ev.ControlKeyState & self.RIGHT_CTRL_PRESSED) and result and \
+                result.key == Keys.ControlJ:
+            return [KeyPress(Keys.Escape, ''), result]
 
         # Return result. If alt was pressed, prefix the result with an
         # 'Escape' key, just like unix VT100 terminals do.
