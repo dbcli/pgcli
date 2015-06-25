@@ -1,6 +1,21 @@
 CHANGELOG
 =========
 
+0.42: 2015-06-25
+----------------
+
+Fixes:
+- Support for Windows cmder and conemu consoles.
+- Correct handling of unicode input and output on Windows.
+
+New features:
+- Support terminal titles.
+- Handle Control-Enter as Meta-Enter on Windows.
+- Control-Z key binding for Windows.
+- Implemented alternate screen buffer on Windows.
+- Clipboard became an ABC and InMemoryClipboard default implementation.
+
+
 0.41: 2015-06-20
 ----------------
 
