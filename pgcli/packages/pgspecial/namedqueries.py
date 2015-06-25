@@ -11,7 +11,7 @@ Examples:
     > \\ns simple select * from abc where a is not Null;
 
     # List all named queries.
-    > \\n+
+    > \\n
     ╒════════╤═══════════════════════════════════════╕
     │ Name   │ Query                                 │
     ╞════════╪═══════════════════════════════════════╡
