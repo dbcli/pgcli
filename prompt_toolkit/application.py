@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from .buffer import Buffer, AcceptAction
-from .clipboard import Clipboard
+from .clipboard import Clipboard, InMemoryClipboard
 from .filters import CLIFilter, Never, to_cli_filter
 from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
@@ -122,7 +122,7 @@ class Application(object):
             get_title = lambda: None
 
         self.key_bindings_registry = key_bindings_registry
-        self.clipboard = clipboard or Clipboard()
+        self.clipboard = clipboard or InMemoryClipboard()
         self.on_abort = on_abort
         self.on_exit = on_exit
         self.use_alternate_screen = use_alternate_screen

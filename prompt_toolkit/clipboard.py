@@ -2,6 +2,8 @@
 Clipboard for command line interface.
 """
 from __future__ import unicode_literals
+from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 import six
 
 from .selection import SelectionType
@@ -9,6 +11,7 @@ from .selection import SelectionType
 __all__ = (
     'Clipboard',
     'ClipboardData',
+    'InMemoryClipboard',
 )
 
 
@@ -27,29 +30,45 @@ class ClipboardData(object):
         self.type = type
 
 
-class Clipboard(object):
+class Clipboard(with_metaclass(ABCMeta, object)):
     """
-    Clipboard for command line interface.
+    Abstract baseclass for clipboards.
+    (An implementation can be in memory, it can share the X11 or Windows
+    keyboard, or can be persistent.)
     """
-    def __init__(self):
-        self._data = None
-
+    @abstractmethod
     def set_data(self, data):
         """
         Set data to the clipboard.
 
         :param data: :class:`~.ClipboardData` instance.
         """
-        assert isinstance(data, ClipboardData)
 
-        if data.text:
-            self._data = data
-
-    def set_text(self, text):
+    def set_text(self, text):  # Not abstract.
+        """
+        Shortcut for setting plain text on clipboard.
+        """
         assert isinstance(text, six.string_types)
+        self.set_data(ClipboardData(text))
 
-        if text:
-            self._data = ClipboardData(text)
+    @abstractmethod
+    def get_data(self):
+        """
+        Return clipboard data.
+        """
+
+
+class InMemoryClipboard(Clipboard):
+    """
+    Default clipboard implementation.
+    Just keep the data in memory.
+    """
+    def __init__(self):
+        self._data = None
+
+    def set_data(self, data):
+        assert isinstance(data, ClipboardData)
+        self._data = data
 
     def get_data(self):
         return self._data or ClipboardData()
