@@ -101,6 +101,9 @@ examples are chosen to demonstrate only one thing. Also, don't be afraid to
 look at the source code. The implementation of the ``get_input`` function could
 be a good start.
 
+Note: For Python 2, you need to add ``from __future__ import unicode_literals``
+to the above example. All strings are expected to be unicode strings.
+
 
 Projects using prompt-toolkit
 *****************************
