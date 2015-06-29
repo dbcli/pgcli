@@ -276,13 +276,20 @@ def get_input(message='', **kwargs):
     If you want to keep your history across several ``get_input`` calls, you
     have to create a :class:`History` instance and pass it every time.
     """
-    eventloop = create_eventloop()
+    eventloop = kwargs.pop('eventloop', None) or create_eventloop()
+    patch_stdout = kwargs.pop('patch_stdout', False)
 
     # Create CommandLineInterface
     cli = CommandLineInterface(
         application=create_default_application(message, **kwargs),
         eventloop=eventloop,
         output=create_default_output())
+
+    # Replace stdout.
+    original_stdout = sys.stdout
+
+    if patch_stdout:
+        sys.stdout = cli.stdout_proxy()
 
     # Read input and return it.
     try:
@@ -292,3 +299,4 @@ def get_input(message='', **kwargs):
             return document.text
     finally:
         eventloop.close()
+        sys.stdout = original_stdout
