@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from ..terminal.win32_input import ConsoleInputReader
 from ..win32_types import SECURITY_ATTRIBUTES
 from .base import EventLoop, INPUT_TIMEOUT
+from .inputhook import InputHookContext
 
 from ctypes import windll, pointer
 from ctypes.wintypes import DWORD, BOOL, HANDLE
@@ -23,13 +24,18 @@ WAIT_TIMEOUT = 0x00000102
 
 
 class Win32EventLoop(EventLoop):
-    def __init__(self):
+    def __init__(self, inputhook=None):
+        assert inputhook is None or callable(inputhook)
+
         self._event = _create_event()
         self._console_input_reader = ConsoleInputReader()
         self._calls_from_executor = []
 
         self.closed = False
         self._running = False
+
+        # Create inputhook context.
+        self._inputhook_context = InputHookContext(inputhook) if inputhook else None
 
     def run(self, stdin, callbacks):
         if self.closed:
@@ -40,9 +46,15 @@ class Win32EventLoop(EventLoop):
         self._running = True
 
         while self._running:
+            # Call inputhook.
+            if self._inputhook_context:
+                def ready(wait):
+                    " True when there is input ready. The inputhook should return control. "
+                    return bool(self._ready_for_reading(-1 if wait else 0))
+                self._inputhook_context.call_inputhook(ready)
+
             # Wait for the next event.
-            handle = _wait_for_handles([self._event, self._console_input_reader.handle],
-                                       current_timeout)
+            handle = self._ready_for_reading(current_timeout)
 
             if handle == self._console_input_reader.handle:
                 # When stdin is ready, read input and reset timeout timer.
@@ -62,6 +74,13 @@ class Win32EventLoop(EventLoop):
                 callbacks.input_timeout()
                 current_timeout = -1
 
+    def _ready_for_reading(self, timeout=None):
+        """
+        Return the handle that is ready for reading or `None` on timeout.
+        """
+        return _wait_for_handles([self._event, self._console_input_reader.handle],
+                                   timeout)
+
     def stop(self):
         self._running = False
 
@@ -70,6 +89,9 @@ class Win32EventLoop(EventLoop):
 
         # Clean up Event object.
         windll.kernel32.CloseHandle(self._event)
+
+        if self._inputhook_context:
+            self._inputhook_context.close()
 
     def run_in_executor(self, callback):
         """

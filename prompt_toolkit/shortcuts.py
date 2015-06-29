@@ -58,7 +58,7 @@ __all__ = (
 )
 
 
-def create_eventloop():
+def create_eventloop(inputhook=None):
     """
     Create and return a normal `EventLoop` instance for a
     `CommandLineInterface`.
@@ -68,7 +68,7 @@ def create_eventloop():
     else:
         from prompt_toolkit.eventloop.posix import PosixEventLoop as Loop
 
-    return Loop()
+    return Loop(inputhook=inputhook)
 
 
 def create_default_output(stdout=None):

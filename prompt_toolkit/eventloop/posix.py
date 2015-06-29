@@ -9,6 +9,7 @@ import threading
 from ..terminal.vt100_input import InputStream
 from .base import EventLoop, INPUT_TIMEOUT
 from .callbacks import EventLoopCallbacks
+from .inputhook import InputHookContext
 from .posix_utils import PosixStdinReader
 
 __all__ = (
@@ -17,9 +18,12 @@ __all__ = (
 
 
 class PosixEventLoop(EventLoop):
-    def __init__(self):
+    def __init__(self, inputhook=None):
+        assert inputhook is None or callable(inputhook)
+
         self.running = False
         self.closed = False
+        self._running = False
 
         self._calls_from_executor = []
 
@@ -27,7 +31,8 @@ class PosixEventLoop(EventLoop):
         self._schedule_pipe = os.pipe()
         fcntl.fcntl(self._schedule_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
 
-        self._running = False
+        # Create inputhook context.
+        self._inputhook_context = InputHookContext(inputhook) if inputhook else None
 
     def run(self, stdin, callbacks):
         """
@@ -56,7 +61,15 @@ class PosixEventLoop(EventLoop):
 
         with call_on_sigwinch(received_winch):
             while self._running:
-                r, _, _ = _select([stdin, self._schedule_pipe[0]], [], [], timeout)
+                # Call inputhook.
+                if self._inputhook_context:
+                    def ready(wait):
+                        " True when there is input ready. The inputhook should return control. "
+                        return self._ready_for_reading(stdin, None if wait else 0) != []
+                    self._inputhook_context.call_inputhook(ready)
+
+                # Wait until input is ready.
+                r = self._ready_for_reading(stdin, timeout)
 
                 # If we got a character, feed it to the input stream. If we got
                 # none, it means we got a repaint request.
@@ -89,6 +102,13 @@ class PosixEventLoop(EventLoop):
                     # Fire input timeout event.
                     callbacks.input_timeout()
                     timeout = None
+
+    def _ready_for_reading(self, stdin, timeout=None):
+        """
+        Return the file descriptors that are ready for reading.
+        """
+        r, _, _ =_select([stdin, self._schedule_pipe[0]], [], [], timeout)
+        return r
 
     def run_in_executor(self, callback):
         """
@@ -132,6 +152,9 @@ class PosixEventLoop(EventLoop):
         if schedule_pipe:
             os.close(schedule_pipe[0])
             os.close(schedule_pipe[1])
+
+        if self._inputhook_context:
+            self._inputhook_context.close()
 
 
 def _select(*args, **kwargs):
