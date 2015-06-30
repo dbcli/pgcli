@@ -12,8 +12,6 @@ RAW_QUERY = 2
 SpecialCommand = namedtuple('SpecialCommand',
         ['handler', 'syntax', 'description', 'arg_type', 'hidden', 'case_sensitive'])
 
-COMMANDS = {}
-
 @export
 class CommandNotFound(Exception):
     pass
@@ -21,10 +19,15 @@ class CommandNotFound(Exception):
 
 @export
 class PGSpecial(object):
+
+    # Default static commands that don't rely on PGSpecial state are registered
+    # via the special_command decorator and stored in default_commands
+    default_commands = {}
+
     def __init__(self):
         self.timing_enabled = True
 
-        self.commands = COMMANDS.copy()
+        self.commands = self.default_commands.copy()
 
         self.timing_enabled = False
         self.expanded_output = False
@@ -93,12 +96,14 @@ def parse_special_command(sql):
     return (command, verbose, arg.strip())
 
 
-@export
 def special_command(command, syntax, description, arg_type=PARSED_QUERY,
         hidden=False, case_sensitive=True, aliases=()):
+    """A decorator used internally for static special commands"""
+
     def wrapper(wrapped):
         register_special_command(wrapped, command, syntax, description,
-                arg_type, hidden, case_sensitive, aliases)
+                arg_type, hidden, case_sensitive, aliases,
+                command_dict=PGSpecial.default_commands)
         return wrapped
     return wrapper
 
@@ -106,8 +111,6 @@ def special_command(command, syntax, description, arg_type=PARSED_QUERY,
 def register_special_command(handler, command, syntax, description,
         arg_type=PARSED_QUERY, hidden=False, case_sensitive=True, aliases=(),
         command_dict=None):
-
-    command_dict = command_dict or COMMANDS
 
     cmd = command.lower() if not case_sensitive else command
     command_dict[cmd] = SpecialCommand(handler, syntax, description, arg_type,
