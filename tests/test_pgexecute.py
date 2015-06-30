@@ -2,6 +2,7 @@
 
 import pytest
 import psycopg2
+from pgcli.packages.pgspecial import PGSpecial
 from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
 
@@ -120,8 +121,8 @@ def test_multiple_queries_same_line(executor):
     assert "bar" in result[2]
 
 @dbtest
-def test_multiple_queries_with_special_command_same_line(executor):
-    result = run(executor, "select 'foo'; \d")
+def test_multiple_queries_with_special_command_same_line(executor, pgspecial):
+    result = run(executor, "select 'foo'; \d", pgspecial=pgspecial)
     assert len(result) == 4  # 2 * (output+status)
     assert "foo" in result[0]
     # This is a lame check. :(
@@ -133,9 +134,15 @@ def test_multiple_queries_same_line_syntaxerror(executor):
         run(executor, "select 'foo'; invalid syntax")
     assert 'syntax error at or near "invalid"' in str(excinfo.value)
 
+
+@pytest.fixture
+def pgspecial():
+    return PGSpecial()
+
+
 @dbtest
-def test_special_command_help(executor):
-    result = run(executor, '\\?')[0].split('|')
+def test_special_command_help(executor, pgspecial):
+    result = run(executor, '\\?', pgspecial=pgspecial)[0].split('|')
     assert(result[1].find(u'Command') != -1)
     assert(result[2].find(u'Description') != -1)
 

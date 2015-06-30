@@ -188,9 +188,12 @@ class PGExecute(object):
         else:
             return json_data
 
-    def run(self, statement):
-        """Execute the sql in the database and return the results. The results
-        are a list of tuples. Each tuple has 4 values (title, rows, headers, status).
+    def run(self, statement, pgspecial=None):
+        """Execute the sql in the database and return the results.
+
+        :param statement: A string containing one or more sql statements
+        :param pgspecial: PGSpecial object
+        :return: List of tuples containing (title, rows, headers, status)
         """
 
         # Remove spaces and EOL
@@ -203,13 +206,18 @@ class PGExecute(object):
             # Remove spaces, eol and semi-colons.
             sql = sql.rstrip(';')
 
-            try:   # Special command
-                _logger.debug('Trying a pgspecial command. sql: %r', sql)
-                cur = self.conn.cursor()
-                for result in special.execute(cur, sql):
-                    yield result
-            except special.CommandNotFound:  # Regular SQL
-                yield self.execute_normal_sql(sql)
+            if pgspecial:
+                # First try to run each query as special
+                try:
+                    _logger.debug('Trying a pgspecial command. sql: %r', sql)
+                    cur = self.conn.cursor()
+                    for result in pgspecial.execute(cur, sql):
+                        yield result
+                    return
+                except special.CommandNotFound:
+                    pass
+
+            yield self.execute_normal_sql(sql)
 
     def execute_normal_sql(self, split_sql):
         _logger.debug('Regular sql statement. sql: %r', split_sql)
