@@ -62,15 +62,13 @@ class PGCli(object):
         default_config = os.path.join(package_root, 'pgclirc')
         write_default_config(default_config, '~/.pgclirc')
 
-        self.use_expanded_output = False
-
         self.pgspecial = PGSpecial()
 
         # Load config.
         c = self.config = load_config('~/.pgclirc', default_config)
         self.multi_line = c['main'].as_bool('multi_line')
         self.vi_mode = c['main'].as_bool('vi')
-        self.timing_enabled = c['main'].as_bool('timing')
+        self.pgspecial.timing_enabled = c['main'].as_bool('timing')
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
 
@@ -95,12 +93,6 @@ class PGCli(object):
                               'Refresh auto-completions.', arg_type=NO_QUERY)
         self.pgspecial.register(self.refresh_completions, '\\refresh', '\\refresh',
                               'Refresh auto-completions.', arg_type=NO_QUERY)
-
-        self.pgspecial.register(self.toggle_expanded_output, '\\x', '\\x',
-                              'Toggle expanded output.', arg_type=NO_QUERY)
-
-        self.pgspecial.register(self.toggle_timing, '\\timing', '\\timing',
-                      'Toggle timing of commands.', arg_type=NO_QUERY)
 
     def change_db(self, pattern, **_):
         if pattern:
@@ -320,7 +312,7 @@ class PGCli(object):
 
                         formatted = format_output(title, cur, headers, status,
                                                   self.table_format,
-                                                  self.use_expanded_output)
+                                                  self.pgspecial.expanded_output)
                         output.extend(formatted)
                         end = time()
                         total += end - start
@@ -354,7 +346,7 @@ class PGCli(object):
                     click.secho(str(e), err=True, fg='red')
                 else:
                     click.echo_via_pager('\n'.join(output))
-                    if self.timing_enabled:
+                    if self.pgspecial.timing_enabled:
                         print('Command Time: %0.03fs' % duration)
                         print('Format Time: %0.03fs' % total)
 
@@ -420,18 +412,6 @@ class PGCli(object):
         return self.completer.get_completions(
             Document(text=text, cursor_position=cursor_positition), None)
 
-    def toggle_expanded_output(self):
-        """Callback for the \\x special command"""
-        self.use_expanded_output = not self.use_expanded_output
-        message = u"Expanded display is "
-        message += u"on." if self.use_expanded_output else u"off."
-        return [(None, None, None, message)]
-
-    def toggle_timing(self):
-        self.timing_enabled = not self.timing_enabled
-        message = "Timing is "
-        message += "on." if self.timing_enabled else "off."
-        return [(None, None, None, message)]
 
 @click.command()
 # Default host is '' so psycopg2 can default to either localhost or unix socket

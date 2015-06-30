@@ -25,8 +25,18 @@ class PGSpecial(object):
         self.timing_enabled = True
 
         self.commands = COMMANDS.copy()
+
+        self.timing_enabled = False
+        self.expanded_output = False
+
         self.register(self.show_help, '\\?', '\\?', 'Show Help.',
                       arg_type=NO_QUERY)
+
+        self.register(self.toggle_expanded_output, '\\x', '\\x',
+                      'Toggle expanded output.', arg_type=NO_QUERY)
+
+        self.register(self.toggle_timing, '\\timing', '\\timing',
+                      'Toggle timing of commands.', arg_type=NO_QUERY)
 
     def register(self, *args, **kwargs):
         register_special_command(*args, command_dict=self.commands, **kwargs)
@@ -42,6 +52,18 @@ class PGSpecial(object):
             if not value.hidden:
                 result.append((value.syntax, value.description))
         return [(None, result, headers, None)]
+
+    def toggle_expanded_output(self):
+        self.expanded_output = not self.expanded_output
+        message = u"Expanded display is "
+        message += u"on." if self.expanded_output else u"off."
+        return [(None, None, None, message)]
+
+    def toggle_timing(self):
+        self.timing_enabled = not self.timing_enabled
+        message = "Timing is "
+        message += "on." if self.timing_enabled else "off."
+        return [(None, None, None, message)]
 
 
 @export
