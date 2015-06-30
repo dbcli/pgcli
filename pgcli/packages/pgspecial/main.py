@@ -42,7 +42,25 @@ class PGSpecial(object):
         register_special_command(*args, command_dict=self.commands, **kwargs)
 
     def execute(self, cur, sql):
-        return execute(cur, sql, self.commands)
+        commands = self.commands
+        command, verbose, pattern = parse_special_command(sql)
+
+        if (command not in commands) and (command.lower() not in commands):
+            raise CommandNotFound
+
+        try:
+            special_cmd = commands[command]
+        except KeyError:
+            special_cmd = commands[command.lower()]
+            if special_cmd.case_sensitive:
+                raise CommandNotFound('Command not found: %s' % command)
+
+        if special_cmd.arg_type == NO_QUERY:
+            return special_cmd.handler()
+        elif special_cmd.arg_type == PARSED_QUERY:
+            return special_cmd.handler(cur=cur, pattern=pattern, verbose=verbose)
+        elif special_cmd.arg_type == RAW_QUERY:
+            return special_cmd.handler(cur=cur, query=sql)
 
     def show_help(self):
         headers = ['Command', 'Description']
@@ -99,29 +117,6 @@ def register_special_command(handler, command, syntax, description,
         command_dict[cmd] = SpecialCommand(handler, syntax, description, arg_type,
                                        case_sensitive=case_sensitive,
                                        hidden=True)
-
-@export
-def execute(cur, sql, commands=None):
-    commands = commands or COMMANDS
-    command, verbose, pattern = parse_special_command(sql)
-
-    if (command not in commands) and (command.lower() not in commands):
-        raise CommandNotFound
-
-    try:
-        special_cmd = commands[command]
-    except KeyError:
-        special_cmd = commands[command.lower()]
-        if special_cmd.case_sensitive:
-            raise CommandNotFound('Command not found: %s' % command)
-
-    if special_cmd.arg_type == NO_QUERY:
-        return special_cmd.handler()
-    elif special_cmd.arg_type == PARSED_QUERY:
-        return special_cmd.handler(cur=cur, pattern=pattern, verbose=verbose)
-    elif special_cmd.arg_type == RAW_QUERY:
-        return special_cmd.handler(cur=cur, query=sql)
-
 
 
 @special_command('\\e', '\\e [file]', 'Edit the query with external editor.', arg_type=NO_QUERY)
