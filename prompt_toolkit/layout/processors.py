@@ -18,6 +18,8 @@ __all__ = (
     'BeforeInput',
     'AfterInput',
     'ConditionalProcessor',
+    'ShowLeadingWhiteSpaceProcessor',
+    'ShowTrailingWhiteSpaceProcessor',
 )
 
 
@@ -250,6 +252,56 @@ class AfterInput(Processor):
     def __repr__(self):
         return '%s(get_tokens=%r)' % (
             self.__class__.__name__, self.get_tokens)
+
+
+class ShowLeadingWhiteSpaceProcessor(Processor):
+    """
+    Make leading whitespace visible.
+    """
+    def __init__(self, token=Token.LeadingWhiteSpace, char='\xb7'):
+        self.token = token
+        self.char = char
+
+    def run(self, cli, document, tokens):
+        # Walk through all te tokens.
+        t = (self.token, self.char)
+        is_start_of_line = True
+
+        for i in range(len(tokens)):
+            char = tokens[i][1]
+            if is_start_of_line and char == ' ':
+                tokens[i] = t
+            elif char == '\n':
+                is_start_of_line = True
+            else:
+                is_start_of_line = False
+
+        return tokens, lambda i: i
+
+
+class ShowTrailingWhiteSpaceProcessor(Processor):
+    """
+    Make trailing whitespace visible.
+    """
+    def __init__(self, token=Token.TrailingWhiteSpace, char='\xb7'):
+        self.token = token
+        self.char = char
+
+    def run(self, cli, document, tokens):
+        # Walk backwards through all te tokens.
+        t = (self.token, self.char)
+        is_end_of_line = True
+
+        for i in range(len(tokens) - 1, -1, -1):
+            char = tokens[i][1]
+            if is_end_of_line and char == ' ':
+                tokens[i] = t
+            elif char == '\n':
+                is_end_of_line = True
+            else:
+                is_end_of_line = False
+
+        return tokens, lambda i: i
 
 
 class ConditionalProcessor(Processor):
