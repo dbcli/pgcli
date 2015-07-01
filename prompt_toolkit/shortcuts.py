@@ -181,7 +181,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
 
 def create_default_application(
         message='',
-        multiline=False,
+        multiline=Never(),
         is_password=False,
         vi_mode=Never(),
         complete_while_typing=Always(),
@@ -238,6 +238,7 @@ def create_default_application(
     # on bool objects.)
     complete_while_typing = to_simple_filter(complete_while_typing)
     enable_history_search = to_simple_filter(enable_history_search)
+    multiline = to_simple_filter(multiline)
 
     complete_while_typing = complete_while_typing & ~enable_history_search
 
@@ -254,7 +255,7 @@ def create_default_application(
         buffer=Buffer(
                 enable_history_search=enable_history_search,
                 complete_while_typing=complete_while_typing,
-                is_multiline=(Always() if multiline else Never()),
+                is_multiline=multiline,
                 history=(history or History()),
                 validator=validator,
                 completer=completer,
