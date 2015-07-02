@@ -58,11 +58,12 @@ def drop_tables(conn):
             DROP SCHEMA IF EXISTS schema2 CASCADE''')
 
 
-def run(executor, sql, join=False):
+def run(executor, sql, join=False, expanded=False, pgspecial=None):
     " Return string output for the sql to be run "
     result = []
-    for title, rows, headers, status in executor.run(sql):
-        result.extend(format_output(title, rows, headers, status, 'psql'))
+    for title, rows, headers, status in executor.run(sql, pgspecial):
+        result.extend(format_output(title, rows, headers, status, 'psql',
+                                    expanded=expanded))
     if join:
         result = '\n'.join(result)
     return result

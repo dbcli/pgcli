@@ -1,6 +1,6 @@
 import pytest
 from dbutils import (create_db, db_connection, setup_db, teardown_db)
-from pgcli.packages.pgspecial.main import execute
+from pgcli.packages.pgspecial import PGSpecial
 
 
 @pytest.yield_fixture(scope='module')
@@ -23,10 +23,11 @@ def cursor(connection):
 @pytest.fixture
 def executor(connection):
     cur = connection.cursor()
+    pgspecial = PGSpecial()
 
     def query_runner(sql):
         results = []
-        for title, rows, headers, status in execute(cur=cur, sql=sql):
+        for title, rows, headers, status in pgspecial.execute(cur=cur, sql=sql):
             results.extend((title, list(rows), headers, status))
         return results
     return query_runner

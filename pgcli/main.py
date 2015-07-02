@@ -23,7 +23,7 @@ from pygments.token import Token
 
 from .packages.tabulate import tabulate
 from .packages.expanded import expanded_table
-from .packages.pgspecial.main import (COMMANDS, NO_QUERY)
+from .packages.pgspecial.main import (PGSpecial, NO_QUERY)
 import pgcli.packages.pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
@@ -62,11 +62,13 @@ class PGCli(object):
         default_config = os.path.join(package_root, 'pgclirc')
         write_default_config(default_config, '~/.pgclirc')
 
+        self.pgspecial = PGSpecial()
+
         # Load config.
         c = self.config = load_config('~/.pgclirc', default_config)
         self.multi_line = c['main'].as_bool('multi_line')
         self.vi_mode = c['main'].as_bool('vi')
-        special.set_timing(c['main'].as_bool('timing'))
+        self.pgspecial.timing_enabled = c['main'].as_bool('timing')
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
 
@@ -82,13 +84,15 @@ class PGCli(object):
         self.register_special_commands()
 
     def register_special_commands(self):
-        special.register_special_command(self.change_db, '\\c',
-                '\\c[onnect] database_name', 'Change to a new database.',
-                aliases=('use', '\\connect', 'USE'))
-        special.register_special_command(self.refresh_completions, '\\#',
-                '\\#', 'Refresh auto-completions.', arg_type=NO_QUERY)
-        special.register_special_command(self.refresh_completions, '\\refresh',
-                '\\refresh', 'Refresh auto-completions.', arg_type=NO_QUERY)
+
+        self.pgspecial.register(self.change_db, '\\c',
+                              '\\c[onnect] database_name',
+                              'Change to a new database.',
+                              aliases=('use', '\\connect', 'USE'))
+        self.pgspecial.register(self.refresh_completions, '\\#', '\\#',
+                              'Refresh auto-completions.', arg_type=NO_QUERY)
+        self.pgspecial.register(self.refresh_completions, '\\refresh', '\\refresh',
+                              'Refresh auto-completions.', arg_type=NO_QUERY)
 
     def change_db(self, pattern, **_):
         if pattern:
@@ -287,7 +291,7 @@ class PGCli(object):
                     res = []
                     start = time()
                     # Run the query.
-                    res = pgexecute.run(document.text)
+                    res = pgexecute.run(document.text, self.pgspecial)
                     duration = time() - start
                     successful = True
                     output = []
@@ -305,8 +309,11 @@ class PGCli(object):
                             if not click.confirm('Do you want to continue?'):
                                 click.secho("Aborted!", err=True, fg='red')
                                 break
-                        output.extend(format_output(title, cur, headers,
-                            status, self.table_format))
+
+                        formatted = format_output(title, cur, headers, status,
+                                                  self.table_format,
+                                                  self.pgspecial.expanded_output)
+                        output.extend(formatted)
                         end = time()
                         total += end - start
                         mutating = mutating or is_mutating(status)
@@ -339,7 +346,7 @@ class PGCli(object):
                     click.secho(str(e), err=True, fg='red')
                 else:
                     click.echo_via_pager('\n'.join(output))
-                    if special.get_timing():
+                    if self.pgspecial.timing_enabled:
                         print('Command Time: %0.03fs' % duration)
                         print('Format Time: %0.03fs' % total)
 
@@ -397,13 +404,14 @@ class PGCli(object):
         completer.extend_database_names(pgexecute.databases())
 
         # special commands
-        completer.extend_special_commands(COMMANDS.keys())
+        completer.extend_special_commands(self.pgspecial.commands.keys())
 
         return [(None, None, None, 'Auto-completions refreshed.')]
 
     def get_completions(self, text, cursor_positition):
         return self.completer.get_completions(
             Document(text=text, cursor_position=cursor_positition), None)
+
 
 @click.command()
 # Default host is '' so psycopg2 can default to either localhost or unix socket
@@ -448,13 +456,13 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
 
     pgcli.run_cli()
 
-def format_output(title, cur, headers, status, table_format):
+def format_output(title, cur, headers, status, table_format, expanded=False):
     output = []
     if title:  # Only print the title if it's not None.
         output.append(title)
     if cur:
         headers = [utf8tounicode(x) for x in headers]
-        if special.is_expanded_output():
+        if expanded:
             output.append(expanded_table(cur, headers))
         else:
             output.append(tabulate(cur, headers, tablefmt=table_format,
