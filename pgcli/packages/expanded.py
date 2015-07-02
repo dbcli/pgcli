@@ -3,22 +3,11 @@ from .tabulate import _text_type
 def pad(field, total, char=u" "):
     return field + (char * (total - len(field)))
 
-def get_separator(num, header_len, data_len):
-    total_len = header_len + data_len + 1
-
-    sep = u"-[ RECORD {0} ]".format(num)
-    if len(sep) < header_len:
-        sep = pad(sep, header_len - 1, u"-") + u"+"
-
-    if len(sep) < total_len:
-        sep = pad(sep, total_len, u"-")
-
-    return sep + u"\n"
-
 def expanded_table(rows, headers):
     header_len = max([len(x) for x in headers])
     max_row_len = 0
     results = []
+    sep = u"-[ RECORD {0} ]-------------------------\n"
 
     padded_headers = [pad(x, header_len) + u" |" for x in headers]
     header_len += 2
@@ -36,7 +25,7 @@ def expanded_table(rows, headers):
 
     output = []
     for i, result in enumerate(results):
-        output.append(get_separator(i, header_len, max_row_len))
+        output.append(sep.format(i))
         output.append(result)
         output.append('\n')
 
