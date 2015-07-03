@@ -72,5 +72,5 @@ def step_see_prompt(context):
 
 @then('we see help output')
 def step_see_help(context):
-    for expected_line in context.fixture_data['help.txt']:
+    for expected_line in context.fixture_data['help_commands.txt']:
         context.cli.expect_exact(expected_line)

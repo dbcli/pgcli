@@ -1,0 +1,21 @@
+Command
+\#
+\?
+\c[onnect] database_name
+\d [pattern]
+\dT[S+] [pattern]
+\df[+] [pattern]
+\di[+] [pattern]
+\dn[+] [pattern]
+\ds[+] [pattern]
+\dt[+] [pattern]
+\du[+] [pattern]
+\dv[+] [pattern]
+\e [file]
+\l
+\n[+] [name]
+\nd [name [query]]
+\ns [name [query]]
+\refresh
+\timing
+\x
