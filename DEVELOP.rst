@@ -122,3 +122,33 @@ The rpm package can be installed as follows:
 ::
 
     $ sudo yum install pgcli*.rpm
+
+Running the integration tests
+-----------------------------
+
+Integration tests use `behave package http://pythonhosted.org/behave/`_.
+Configuration settings for this package are provided via ``behave.ini`` file
+in root directory.
+
+The database user (``pg_test_user = postgres`` in .ini file) has to have
+permissions to create and drop test database. Dafault user is ``postgres``
+at ``localhost``, without the password (authentication mode trust).
+
+First, install the requirements for testing:
+
+::
+
+    $ pip install -r requirements-dev.txt
+
+After that, tests can be run with:
+
+::
+
+    $ behave
+
+To see stdout/stderr, use the following command:
+
+::
+
+    $ behave --no-capture
+
