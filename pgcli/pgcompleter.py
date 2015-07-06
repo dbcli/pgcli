@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 import logging
 import re
+import itertools
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
@@ -177,7 +178,8 @@ class PGCompleter(Completer):
                            'datatypes': {}}
         self.all_completions = set(self.keywords + self.functions)
 
-    def find_matches(self, text, collection, start_only=False, fuzzy=True):
+    def find_matches(self, text, collection, start_only=False, fuzzy=True,
+                     meta=None, meta_collection=None):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -195,23 +197,42 @@ class PGCompleter(Completer):
 
         text = last_word(text, include='most_punctuations').lower()
 
-        completions = []
-
+        # Construct a `_match` function for either fuzzy or non-fuzzy matching
+        # The match function returns a 2-tuple used for sorting the matches,
+        # or None if the item doesn't match
         if fuzzy:
             regex = '.*?'.join(map(re.escape, text))
             pat = re.compile('(%s)' % regex)
-            for item in sorted(collection):
+
+            def _match(item):
                 r = pat.search(self.unescape_name(item))
                 if r:
-                    completions.append((len(r.group()), r.start(), item))
+                    return len(r.group()), r.start()
         else:
             match_end_limit = len(text) if start_only else None
-            for item in sorted(collection):
+
+            def _match(item):
                 match_point = item.lower().find(text, 0, match_end_limit)
                 if match_point >= 0:
-                    completions.append((match_point, 0, item))
+                    return match_point, 0
 
-        return (Completion(z, -len(text)) for x, y, z in sorted(completions))
+        if meta_collection:
+            # Each possible completion in the collection has a corresponding
+            # meta-display string
+            collection = zip(collection, meta_collection)
+        else:
+            # All completions have an identical meta
+            collection = zip(collection, itertools.repeat(meta))
+
+        completions = []
+        for item, meta in collection:
+            sort_key = _match(item)
+            if sort_key:
+                completions.append((sort_key, item, meta))
+
+        return [Completion(item, -len(text), display_meta=meta)
+                for sort_key, item, meta in sorted(completions)]
+
 
     def get_completions(self, document, complete_event, smart_completion=None):
         word_before_cursor = document.get_word_before_cursor(WORD=True)
