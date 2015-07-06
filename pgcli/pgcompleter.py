@@ -44,15 +44,16 @@ class PGCompleter(Completer):
     datatypes = ['BIGINT', 'BOOLEAN', 'CHAR', 'DATE', 'DOUBLE PRECISION', 'INT',
                  'INTEGER', 'NUMERIC', 'REAL', 'TEXT', 'VARCHAR']
 
-    def __init__(self, smart_completion=True):
+    def __init__(self, smart_completion=True, pgspecial=None):
         super(PGCompleter, self).__init__()
         self.smart_completion = smart_completion
+        self.pgspecial = pgspecial
+
         self.reserved_words = set()
         for x in self.keywords:
             self.reserved_words.update(x.split())
         self.name_pattern = re.compile("^[_a-z][_a-z0-9\$]*$")
 
-        self.special_commands = []
         self.databases = []
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
                            'datatypes': {}}
@@ -77,11 +78,6 @@ class PGCompleter(Completer):
 
     def escaped_names(self, names):
         return [self.escape_name(name) for name in names]
-
-    def extend_special_commands(self, special_commands):
-        # Special commands are not part of all_completions since they can only
-        # be at the beginning of a line.
-        self.special_commands.extend(special_commands)
 
     def extend_database_names(self, databases):
         databases = self.escaped_names(databases)
@@ -346,8 +342,11 @@ class PGCompleter(Completer):
                 completions.extend(keywords)
 
             elif suggestion['type'] == 'special':
+                if not self.pgspecial:
+                    continue
+
                 special = self.find_matches(word_before_cursor,
-                                            self.special_commands,
+                                            self.pgspecial.commands.keys(),
                                             start_only=True,
                                             fuzzy=False,
                                             meta='special command')

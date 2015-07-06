@@ -79,7 +79,7 @@ class PGCli(object):
 
         # Initialize completer
         smart_completion = c['main'].as_bool('smart_completion')
-        completer = PGCompleter(smart_completion)
+        completer = PGCompleter(smart_completion, pgspecial=self.pgspecial)
         self.completer = completer
         self.register_special_commands()
 
@@ -402,9 +402,6 @@ class PGCli(object):
 
         # databases
         completer.extend_database_names(pgexecute.databases())
-
-        # special commands
-        completer.extend_special_commands(self.pgspecial.commands.keys())
 
         return [(None, None, None, 'Auto-completions refreshed.')]
 
