@@ -265,14 +265,16 @@ class PGCompleter(Completer):
                                          in Counter(scoped_cols).items()
                                            if count > 1 and col != '*']
 
-                cols = self.find_matches(word_before_cursor, scoped_cols)
+                cols = self.find_matches(word_before_cursor, scoped_cols,
+                                         meta='column')
                 completions.extend(cols)
 
             elif suggestion['type'] == 'function':
                 # suggest user-defined functions using substring matching
                 funcs = self.populate_schema_objects(
                     suggestion['schema'], 'functions')
-                user_funcs = self.find_matches(word_before_cursor, funcs)
+                user_funcs = self.find_matches(word_before_cursor, funcs,
+                                               meta='function')
                 completions.extend(user_funcs)
 
                 if not suggestion['schema']:
@@ -281,7 +283,8 @@ class PGCompleter(Completer):
                     predefined_funcs = self.find_matches(word_before_cursor,
                                                          self.functions,
                                                          start_only=True,
-                                                         fuzzy=False)
+                                                         fuzzy=False,
+                                                         meta='function')
                     completions.extend(predefined_funcs)
 
             elif suggestion['type'] == 'schema':
@@ -293,7 +296,9 @@ class PGCompleter(Completer):
                     schema_names = [s for s in schema_names
                                       if not s.startswith('pg_')]
 
-                schema_names = self.find_matches(word_before_cursor, schema_names)
+                schema_names = self.find_matches(word_before_cursor,
+                                                 schema_names,
+                                                 meta='schema')
                 completions.extend(schema_names)
 
             elif suggestion['type'] == 'table':
@@ -306,7 +311,8 @@ class PGCompleter(Completer):
                         not word_before_cursor.startswith('pg_')):
                     tables = [t for t in tables if not t.startswith('pg_')]
 
-                tables = self.find_matches(word_before_cursor, tables)
+                tables = self.find_matches(word_before_cursor, tables,
+                                           meta='table')
                 completions.extend(tables)
 
             elif suggestion['type'] == 'view':
@@ -317,48 +323,55 @@ class PGCompleter(Completer):
                         not word_before_cursor.startswith('pg_')):
                     views = [v for v in views if not v.startswith('pg_')]
 
-                views = self.find_matches(word_before_cursor, views)
+                views = self.find_matches(word_before_cursor, views,
+                                          meta='view')
                 completions.extend(views)
 
             elif suggestion['type'] == 'alias':
                 aliases = suggestion['aliases']
-                aliases = self.find_matches(word_before_cursor, aliases)
+                aliases = self.find_matches(word_before_cursor, aliases,
+                                            meta='table alias')
                 completions.extend(aliases)
 
             elif suggestion['type'] == 'database':
-                dbs = self.find_matches(word_before_cursor, self.databases)
+                dbs = self.find_matches(word_before_cursor, self.databases,
+                                        meta='database')
                 completions.extend(dbs)
 
             elif suggestion['type'] == 'keyword':
                 keywords = self.find_matches(word_before_cursor, self.keywords,
                                              start_only=True,
-                                             fuzzy=False)
+                                             fuzzy=False,
+                                             meta='keyword')
                 completions.extend(keywords)
 
             elif suggestion['type'] == 'special':
                 special = self.find_matches(word_before_cursor,
                                             self.special_commands,
                                             start_only=True,
-                                            fuzzy=False)
+                                            fuzzy=False,
+                                            meta='special command')
                 completions.extend(special)
 
             elif suggestion['type'] == 'datatype':
                 # suggest custom datatypes
                 types = self.populate_schema_objects(
                     suggestion['schema'], 'datatypes')
-                types = self.find_matches(word_before_cursor, types)
+                types = self.find_matches(word_before_cursor, types,
+                                          meta='datatype')
                 completions.extend(types)
 
                 if not suggestion['schema']:
                     # Also suggest hardcoded types
                     types = self.find_matches(word_before_cursor,
                                               self.datatypes, start_only=True,
-                                              fuzzy=False)
+                                              fuzzy=False, meta='datatype')
                     completions.extend(types)
 
             elif suggestion['type'] == 'namedquery':
                 queries = self.find_matches(word_before_cursor, namedqueries.list(),
-                                            start_only=False, fuzzy=True)
+                                            start_only=False, fuzzy=True,
+                                            meta='named query')
                 completions.extend(queries)
 
         return completions
