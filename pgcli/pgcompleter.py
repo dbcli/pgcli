@@ -345,11 +345,15 @@ class PGCompleter(Completer):
                 if not self.pgspecial:
                     continue
 
-                special = self.find_matches(word_before_cursor,
-                                            self.pgspecial.commands.keys(),
+                commands = self.pgspecial.commands
+                cmd_names = commands.keys()
+                desc = [commands[cmd].description for cmd in cmd_names]
+
+                special = self.find_matches(word_before_cursor, cmd_names,
                                             start_only=True,
                                             fuzzy=False,
-                                            meta='special command')
+                                            meta_collection=desc)
+
                 completions.extend(special)
 
             elif suggestion['type'] == 'datatype':
