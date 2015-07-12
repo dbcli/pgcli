@@ -72,7 +72,13 @@ class InputHookContext(object):
         self.inputhook(self)
 
         # Flush the read end of the pipe.
-        os.read(self._r, 1024)
+        try:
+            os.read(self._r, 1024)
+        except OSError:
+            # This happens when the window resizes and a SIGWINCH was received.
+            # We get 'Error: [Errno 4] Interrupted system call'
+            # Just ignore.
+            pass
         self._input_is_ready = None
 
     def close(self):
