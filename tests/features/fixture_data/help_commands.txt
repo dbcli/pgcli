@@ -14,8 +14,8 @@ Command
 \e [file]
 \l
 \n[+] [name]
-\nd [name [query]]
-\ns [name [query]]
+\nd [name]
+\ns name query
 \refresh
 \timing
 \x

@@ -23,6 +23,7 @@ def create_db(hostname='localhost', username=None, password=None,
     cn.set_isolation_level(0)
 
     with cn.cursor() as cr:
+        cr.execute('drop database if exists %s', (AsIs(dbname),))
         cr.execute('create database %s', (AsIs(dbname),))
 
     cn.close()
@@ -66,7 +67,7 @@ def drop_db(hostname='localhost', username=None, password=None,
     cn.set_isolation_level(0)
 
     with cn.cursor() as cr:
-        cr.execute('drop database %s', (AsIs(dbname),))
+        cr.execute('drop database if exists %s', (AsIs(dbname),))
 
     close_cn(cn)
 

@@ -13,7 +13,7 @@ def read_fixture_lines(filename):
     :return: list of strings
     """
     lines = []
-    for line in codecs.open(filename, 'r', encoding='utf-8'):
+    for line in codecs.open(filename, 'rb', encoding='utf-8'):
         lines.append(line.strip())
     return lines
 
