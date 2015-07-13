@@ -7,7 +7,7 @@ from pygments.token import Token
 from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 
-from prompt_toolkit.filters import Never, to_cli_filter
+from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.enums import DEFAULT_BUFFER
@@ -31,7 +31,7 @@ class UIControl(with_metaclass(ABCMeta, object)):
         # Default reset. (Doesn't have to be implemented.)
         pass
 
-    def preferred_width(self, cli):
+    def preferred_width(self, cli, max_available_width):
         return None
 
     def preferred_height(self, cli, width):
@@ -108,7 +108,7 @@ class TokenListControl(UIControl):
     def has_focus(self, cli):
         return self._has_focus_filter(cli)
 
-    def preferred_width(self, cli):
+    def preferred_width(self, cli, max_available_width):
         """
         Return the preferred width for this control.
         That is the width of the longest line.
@@ -256,7 +256,7 @@ class BufferControl(UIControl):
     def has_focus(self, cli):
         return cli.focus_stack.current == self.buffer_name
 
-    def preferred_width(self, cli):
+    def preferred_width(self, cli, max_available_width):
         # Return the length of the longest line.
         return max(map(len, self._buffer(cli).document.lines))
 

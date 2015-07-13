@@ -1,13 +1,16 @@
 from __future__ import unicode_literals
 
-from pygments.token import Token
+from itertools import izip_longest
 from prompt_toolkit.filters import HasCompletions, IsDone, Always
 from prompt_toolkit.utils import get_cwidth
+from pygments.token import Token
 
 from .controls import UIControl
 from .containers import Window
 from .dimension import LayoutDimension
 from .screen import Screen
+
+import math
 
 __all__ = (
     'CompletionsMenu',
@@ -24,7 +27,7 @@ class CompletionsMenuControl(UIControl):
     def has_focus(self, cli):
         return False
 
-    def preferred_width(self, cli):
+    def preferred_width(self, cli, max_available_width):
         complete_state = cli.current_buffer.complete_state
         if complete_state:
             menu_width = self._get_menu_width(500, complete_state)
@@ -129,7 +132,7 @@ class CompletionsMenuControl(UIControl):
         else:
             token = self.token.Completion
 
-        text, tw = self._trim_text(completion.display, width - 2)
+        text, tw = _trim_text(completion.display, width - 2)
         padding = ' ' * (width - 2 - tw)
         return [(token, ' %s%s ' % (text, padding))]
 
@@ -139,36 +142,37 @@ class CompletionsMenuControl(UIControl):
         else:
             token = self.token.Meta
 
-        text, tw = self._trim_text(completion.display_meta, width - 2)
+        text, tw = _trim_text(completion.display_meta, width - 2)
         padding = ' ' * (width - 2 - tw)
         return [(token, ' %s%s ' % (text, padding))]
 
-    def _trim_text(self, text, max_width):
-        """
-        Trim the text to `max_width`, append dots when the text is too long.
-        Returns (text, width) tuple.
-        """
-        width = get_cwidth(text)
 
-        # When the text is too wide, trim it.
-        if width > max_width:
-            # When there are no double width characters, just use slice operation.
-            if len(text) == width:
-                trimmed_text = (text[:max(1, max_width-3)] + '...')[:max_width]
-                return trimmed_text, len(trimmed_text)
+def _trim_text(text, max_width):
+    """
+    Trim the text to `max_width`, append dots when the text is too long.
+    Returns (text, width) tuple.
+    """
+    width = get_cwidth(text)
 
-            # Otherwise, loop until we have the desired width. (Rather
-            # inefficient, but ok for now.)
-            else:
-                trimmed_text = ''
-                for c in text:
-                    if get_cwidth(trimmed_text + c) <= max_width - 3:
-                        trimmed_text += c
-                trimmed_text += '...'
+    # When the text is too wide, trim it.
+    if width > max_width:
+        # When there are no double width characters, just use slice operation.
+        if len(text) == width:
+            trimmed_text = (text[:max(1, max_width-3)] + '...')[:max_width]
+            return trimmed_text, len(trimmed_text)
 
-                return (trimmed_text, get_cwidth(trimmed_text))
+        # Otherwise, loop until we have the desired width. (Rather
+        # inefficient, but ok for now.)
         else:
-            return text, width
+            trimmed_text = ''
+            for c in text:
+                if get_cwidth(trimmed_text + c) <= max_width - 3:
+                    trimmed_text += c
+            trimmed_text += '...'
+
+            return (trimmed_text, get_cwidth(trimmed_text))
+    else:
+        return text, width
 
 
 class CompletionsMenu(Window):

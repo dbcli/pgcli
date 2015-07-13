@@ -11,7 +11,7 @@ from .screen import Point, WritePosition
 from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
 from .controls import UIControl
 from prompt_toolkit.reactive import Integer
-from prompt_toolkit.filters import to_cli_filter, Always, Never
+from prompt_toolkit.filters import to_cli_filter
 
 __all__ = (
     'HSplit',
@@ -28,21 +28,30 @@ class Layout(with_metaclass(ABCMeta, object)):
     """
     @abstractmethod
     def reset(self):
-        pass
+        """
+        Reset the state of this container and all the children.
+        (E.g. reset scroll offsets, etc...)
+        """
 
     @abstractmethod
-    def width(self, cli):  # XXX: rename to preferred_width
-        # Should return a LayoutDimension
-        pass
+    def preferred_width(self, cli, max_available_width):
+        """
+        Return a `LayoutDimension` that represents the desired width for this
+        container.
+        """
 
-    @abstractmethod  # XXX: rename to preferred_height
-    def height(self, cli, width):
-        # Should return a LayoutDimension
-        pass
+    @abstractmethod
+    def preferred_height(self, cli, width):
+        """
+        Return a `LayoutDimension` that represents the desired height for this
+        container.
+        """
 
     @abstractmethod
     def write_to_screen(self, cli, screen, write_position):
-        pass
+        """
+        Write the actual content to the screen.
+        """
 
     @abstractmethod
     def walk(self):
@@ -59,12 +68,12 @@ class HSplit(Layout):
         assert all(isinstance(c, Layout) for c in children)
         self.children = children
 
-    def width(self, cli):
-        dimensions = [c.width(cli) for c in self.children]
+    def preferred_width(self, cli, max_available_width):
+        dimensions = [c.preferred_width(cli, max_available_width) for c in self.children]
         return max_layout_dimensions(dimensions)
 
-    def height(self, cli, width):
-        dimensions = [c.height(cli, width) for c in self.children]
+    def preferred_height(self, cli, width):
+        dimensions = [c.preferred_height(cli, width) for c in self.children]
         return sum_layout_dimensions(dimensions)
 
     def reset(self):
@@ -78,7 +87,7 @@ class HSplit(Layout):
         :param screen: The :class:`Screen` class into which we write the output.
         """
         # Calculate heights.
-        dimensions = [c.height(cli, write_position.width) for c in self.children]
+        dimensions = [c.preferred_height(cli, write_position.width) for c in self.children]
         sum_dimensions = sum_layout_dimensions(dimensions)
 
         # If there is not enough space for both.
@@ -129,16 +138,17 @@ class VSplit(Layout):
         assert all(isinstance(c, Layout) for c in children)
         self.children = children
 
-    def width(self, cli):
-        dimensions = [c.width(cli) for c in self.children]
+    def preferred_width(self, cli, max_available_width):
+        dimensions = [c.preferred_width(cli, max_available_width) for c in self.children]
         return sum_layout_dimensions(dimensions)
 
-    def height(self, cli, width):
+    def preferred_height(self, cli, width):
         sizes = self._divide_widths(cli, width)
         if sizes is None:
             return LayoutDimension()
         else:
-            dimensions = [c.height(cli, s) for s, c in zip(sizes, self.children)]
+            dimensions = [c.preferred_height(cli, s)
+                          for s, c in zip(sizes, self.children)]
             return max_layout_dimensions(dimensions)
 
     def reset(self):
@@ -151,7 +161,7 @@ class VSplit(Layout):
         Or None when there is not enough space.
         """
         # Calculate widths.
-        dimensions = [c.width(cli) for c in self.children]
+        dimensions = [c.preferred_width(cli, width) for c in self.children]
         sum_dimensions = sum_layout_dimensions(dimensions)
 
         # If there is not enough space for both.
@@ -178,13 +188,17 @@ class VSplit(Layout):
 
         :param screen: The :class:`Screen` class into which we write the output.
         """
+        if not self.children:
+            return
+
         sizes = self._divide_widths(cli, write_position.width)
 
         if sizes is None:
             return
 
         # Calculate heights, take the largest possible, but not larger than write_position.extended_height.
-        heights = [child.height(cli, width).preferred for width, child in zip(sizes, self.children)]
+        heights = [child.preferred_height(cli, width).preferred
+                   for width, child in zip(sizes, self.children)]
         height = max(write_position.height, min(write_position.extended_height, max(heights)))
 
         # Draw child panes.
@@ -227,16 +241,19 @@ class FloatContainer(Layout):
     def reset(self):
         self.content.reset()
 
-    def width(self, cli):
-        return self.content.width(cli)
+        for f in self.floats:
+            f.content.reset()
 
-    def height(self, cli, width):
+    def preferred_width(self, cli, write_position):
+        return self.content.preferred_width(cli, write_position)
+
+    def preferred_height(self, cli, width):
         """
         Return the preferred height of the float container.
         (We don't care about the height of the floats, they should always fit
         into the dimensions provided by the container.)
         """
-        return self.content.height(cli, width)
+        return self.content.preferred_height(cli, width)
 
     def write_to_screen(self, cli, screen, write_position):
         self.content.write_to_screen(cli, screen, write_position)
@@ -264,7 +281,7 @@ class FloatContainer(Layout):
             elif fl.xcursor:
                 width = fl.width
                 if width is None:
-                    width = fl.content.width(cli).preferred
+                    width = fl.content.preferred_width(cli, write_position.width).preferred
                     width = min(write_position.width, width)
 
                 xpos = cursor_position.x
@@ -276,7 +293,7 @@ class FloatContainer(Layout):
                 width = fl.width
             # Otherwise, take preferred width from float content.
             else:
-                width = fl.content.width(cli).preferred
+                width = fl.content.preferred_width(cli, write_position.width).preferred
 
                 if fl.left is not None:
                     xpos = fl.left
@@ -306,7 +323,7 @@ class FloatContainer(Layout):
 
                 height = fl.height
                 if height is None:
-                    height = fl.content.height(cli, width).preferred
+                    height = fl.content.preferred_height(cli, width).preferred
 
                 # Reduce height if not enough space. (We can use the
                 # extended_height when the content requires it.)
@@ -326,7 +343,7 @@ class FloatContainer(Layout):
                 height = fl.height
             # Otherwise, take preferred height from content.
             else:
-                height = fl.content.height(cli, width).preferred
+                height = fl.content.preferred_height(cli, width).preferred
 
                 if fl.top is not None:
                     ypos = fl.top
@@ -569,10 +586,10 @@ class Window(Layout):
     def _visible(self, cli):
         return self.filter(cli)
 
-    def width(self, cli):
+    def preferred_width(self, cli, max_available_width):
         if self._visible(cli):
             width = self._width(cli) or LayoutDimension()
-            preferred_width = self.content.preferred_width(cli)
+            preferred_width = self.content.preferred_width(cli, max_available_width)
 
             if preferred_width is None:
                 return width
@@ -588,7 +605,7 @@ class Window(Layout):
         else:
             return LayoutDimension.exact(0)
 
-    def height(self, cli, width):
+    def preferred_height(self, cli, width):
         if self._visible(cli):
             height = self._height(cli) or LayoutDimension()
             preferred_height = self.content.preferred_height(cli, width)
@@ -608,8 +625,6 @@ class Window(Layout):
             return LayoutDimension.exact(0)
 
     def write_to_screen(self, cli, screen, write_position):
-                        # XXX: Show window too small messsage...
-
         # Only write when visible.
         if self._visible(cli):
             # Set position.

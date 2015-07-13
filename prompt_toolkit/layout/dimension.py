@@ -33,7 +33,7 @@ class LayoutDimension(object):
 
     @classmethod
     def exact(cls, amount):
-        return cls(min=amount, max=amount, preferred=0)
+        return cls(min=amount, max=amount, preferred=amount)
 
     def __repr__(self):
         return 'LayoutDimension(min=%r, max=%r, preferred=%r)' % (self.min, self.max, self.preferred)
