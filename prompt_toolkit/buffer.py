@@ -128,6 +128,15 @@ class CompletionState(object):
             new_cursor_position = len(before) + len(c.text)
             return new_text, new_cursor_position
 
+    @property
+    def current_completion(self):
+        """
+        Return the current completion, or return `None` when no completion is
+        selected.
+        """
+        if self.complete_index is not None:
+            return self.current_completions[self.complete_index]
+
 
 class Buffer(object):
     """
