@@ -144,6 +144,7 @@ After that, tests can be run with:
 
 ::
 
+    $ cd tests
     $ behave
 
 To see stdout/stderr, use the following command:

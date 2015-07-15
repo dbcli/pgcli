@@ -17,7 +17,7 @@
 | \l                       | List databases.                               |
 | \n[+] [name]             | List or execute named queries.                |
 | \nd [name [query]]       | Delete a named query.                         |
-| \ns [name [query]]       | Save a named query.                           |
+| \ns name query           | Save a named query.                           |
 | \refresh                 | Refresh auto-completions.                     |
 | \timing                  | Toggle timing of commands.                    |
 | \x                       | Toggle expanded output.                       |
