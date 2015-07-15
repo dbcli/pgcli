@@ -24,14 +24,14 @@ from __future__ import unicode_literals
 
 from .buffer import Buffer
 from .enums import DEFAULT_BUFFER
-from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown, to_simple_filter
+from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown, to_simple_filter, to_cli_filter
 from .history import History
 from .interface import CommandLineInterface, Application, AbortAction, AcceptAction
 from .key_binding.manager import KeyBindingManager
 from .layout import Window, HSplit, FloatContainer, Float
 from .layout.controls import BufferControl, TokenListControl
 from .layout.dimension import LayoutDimension
-from .layout.menus import CompletionsMenu
+from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
 from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, ConditionalProcessor
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
@@ -104,6 +104,7 @@ def create_asyncio_eventloop(loop=None):
 def create_default_layout(message='', lexer=None, is_password=False,
                           reserve_space_for_menu=False,
                           get_prompt_tokens=None, get_bottom_toolbar_tokens=None,
+                          display_completions_in_columns=False,
                           extra_input_processors=None):
     """
     Generate default layout.
@@ -118,11 +119,15 @@ def create_default_layout(message='', lexer=None, is_password=False,
         shown in the menu. (To be used instead of a `message`.)
     :param get_bottom_toolbar_tokens: An optional callable that returns the
         tokens for a toolbar at the bottom.
+    :param display_completions_in_columns: `bool` or `CLIFilter`. Display the
+        completions in multiple columns.
     """
     assert isinstance(message, text_type)
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
     assert get_prompt_tokens is None or callable(get_prompt_tokens)
     assert not (message and get_prompt_tokens)
+
+    display_completions_in_columns = to_cli_filter(display_completions_in_columns)
 
     # Create processors list.
     # (DefaultPrompt should always be at the end.)
@@ -170,8 +175,15 @@ def create_default_layout(message='', lexer=None, is_password=False,
             [
                 Float(xcursor=True,
                       ycursor=True,
-                      content=CompletionsMenu(max_height=16,
-                                              extra_filter=HasFocus(DEFAULT_BUFFER)))
+                      content=CompletionsMenu(
+                          max_height=16,
+                          extra_filter=HasFocus(DEFAULT_BUFFER) &
+                                       ~display_completions_in_columns)),
+                Float(xcursor=True,
+                      ycursor=True,
+                      content=MultiColumnCompletionsMenu(
+                          extra_filter=HasFocus(DEFAULT_BUFFER) &
+                                       display_completions_in_columns)),
             ]
         ),
         ValidationToolbar(),
@@ -195,6 +207,7 @@ def create_default_application(
         history=None,
         get_prompt_tokens=None,
         get_bottom_toolbar_tokens=None,
+        display_completions_in_columns=False,
         get_title=None,
         extra_input_processors=None,
         key_bindings_registry=None,
@@ -224,6 +237,8 @@ def create_default_application(
     :param get_bottom_toolbar_tokens: Optional callable which takes a
         :class:`CommandLineInterface` and returns a list of tokens for the
         bottom toolbar.
+    :param display_completions_in_columns: `bool` or `CLIFilter`. Display the
+        completions in multiple columns.
     :param get_title: Callable that returns the title to be displayed in the
         terminal.
     """
@@ -251,6 +266,7 @@ def create_default_application(
                 reserve_space_for_menu=(completer is not None),
                 get_prompt_tokens=get_prompt_tokens,
                 get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
+                display_completions_in_columns=display_completions_in_columns,
                 extra_input_processors=extra_input_processors),
         buffer=Buffer(
                 enable_history_search=enable_history_search,
