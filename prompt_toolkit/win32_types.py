@@ -1,10 +1,13 @@
-from ctypes import Union, Structure, c_char, c_short, c_long
-from ctypes.wintypes import DWORD, BOOL, LPVOID, WORD, HANDLE, WCHAR
+from ctypes import Union, Structure, c_char, c_short, c_long, c_ulong
+from ctypes.wintypes import DWORD, BOOL, LPVOID, WORD, WCHAR
 
 
-STD_INPUT_HANDLE = HANDLE(-10)
-STD_OUTPUT_HANDLE = HANDLE(-11)
-STD_ERROR_HANDLE = HANDLE(-12)
+# Input/Output standard device numbers. Note that these are not handle objects.
+# It's the `windll.kernel32.GetStdHandle` system call that turns them into a
+# real handle object.
+STD_INPUT_HANDLE = c_ulong(-10)
+STD_OUTPUT_HANDLE = c_ulong(-11)
+STD_ERROR_HANDLE = c_ulong(-12)
 
 
 class COORD(Structure):
