@@ -1,6 +1,27 @@
 CHANGELOG
 =========
 
+0.43: 2015-07-15
+----------------
+
+Fixes:
+- Windows bug fix. STD_INPUT_HANDLE should be c_ulong instead of HANDLE.
+  (This caused crashes on some systems.)
+
+New features:
+- Added eventloop and patch_stdout parameters to get_input.
+- Inputhook support added.
+- Added ShowLeadingWhiteSpaceProcessor and ShowTrailingWhiteSpaceProcessor
+  processors.
+- Accept Filter as multiline parameter in 'shortcuts'.
+- MultiColumnCompletionsMenu + display_completions_in_columns parameter
+  in shortcuts.
+
+Backwards incompatible changes:
+- Layout.width was renamed to preferred_width and now receives a
+  max_available_width parameter.
+
+
 0.42: 2015-06-25
 ----------------
 
