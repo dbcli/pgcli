@@ -224,8 +224,10 @@ class PGCompleter(Completer):
         for item, meta in collection:
             sort_key = _match(item)
             if sort_key:
-                # Truncate meta-text to 50 characters, if necessary
-                meta = meta if len(meta) <= 50 else meta[:47] + u'...'
+                if meta and len(meta) > 50:
+                    # Truncate meta-text to 50 characters, if necessary
+                    meta = meta[:47] + u'...'
+
                 completions.append((sort_key, item, meta))
 
         return [Completion(item, -len(text), display_meta=meta)
