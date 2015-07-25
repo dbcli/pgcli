@@ -24,6 +24,7 @@ from .key_binding.input_processor import InputProcessor
 from .output import Output
 from .renderer import Renderer, print_tokens
 from .search_state import SearchState
+from .utils import is_windows
 
 from types import GeneratorType
 
@@ -410,7 +411,7 @@ class CommandLineInterface(object):
         :param command: Shell command to be executed.
         """
         def run():
-            if sys.platform == 'win32':
+            if is_windows():
                 os.system(command)  # Needs to be unicode for win32
             else:
                 os.system(command.encode('utf-8'))

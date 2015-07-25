@@ -9,6 +9,7 @@ from pygments.style import Style
 from pygments.token import Token
 from prompt_toolkit.layout.screen import Point, Screen, WritePosition
 from prompt_toolkit.output import Output
+from prompt_toolkit.utils import is_windows
 
 __all__ = (
     'Renderer',
@@ -231,7 +232,7 @@ class Renderer(object):
 
         # In case of Windown, also make sure to scroll to the current cursor
         # position.
-        if sys.platform == 'win32':
+        if is_windows():
             self.output.scroll_buffer_to_prompt()
 
         # Quit alternate screen.
@@ -248,7 +249,7 @@ class Renderer(object):
         is known, in order to avoid flickering when the CPR response arrives.)
         """
         return self.use_alternate_screen or self._min_available_height > 0 or \
-            sys.platform == 'win32'  # On Windows, we don't have to wait for a CPR.
+            is_windows()  # On Windows, we don't have to wait for a CPR.
 
     def request_absolute_cursor_position(self):
         """
@@ -262,7 +263,7 @@ class Renderer(object):
 
         # For Win32, we have an API call to get the number of rows below the
         # cursor.
-        if sys.platform == 'win32':
+        if is_windows():
             self._min_available_height = self.output.get_rows_below_cursor_position()
         else:
             if self.use_alternate_screen:

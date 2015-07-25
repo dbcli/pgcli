@@ -37,14 +37,14 @@ from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar
 from .styles import DefaultStyle
-from .utils import is_conemu_ansi
+from .utils import is_conemu_ansi, is_windows
 
 from pygments.token import Token
 from six import text_type
 
 import sys
 
-if sys.platform == 'win32':
+if is_windows():
     from .terminal.win32_output import Win32Output
     from .terminal.conemu_output import ConEmuOutput
 else:
@@ -65,7 +65,7 @@ def create_eventloop(inputhook=None):
     Create and return a normal `EventLoop` instance for a
     `CommandLineInterface`.
     """
-    if sys.platform == 'win32':
+    if is_windows():
         from prompt_toolkit.eventloop.win32 import Win32EventLoop as Loop
     else:
         from prompt_toolkit.eventloop.posix import PosixEventLoop as Loop
@@ -79,7 +79,7 @@ def create_default_output(stdout=None):
     """
     stdout = stdout or sys.__stdout__
 
-    if sys.platform == 'win32':
+    if is_windows():
         if is_conemu_ansi():
             return ConEmuOutput(stdout)
         else:
@@ -98,7 +98,7 @@ def create_asyncio_eventloop(loop=None):
     """
     # Inline import, to make sure the rest doesn't break on Python 2. (Where
     # asyncio is not available.)
-    if sys.platform == 'win32':
+    if is_windows():
         from prompt_toolkit.eventloop.asyncio_win32 import Win32AsyncioEventLoop as AsyncioEventLoop
     else:
         from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop

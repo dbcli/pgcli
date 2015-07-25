@@ -3,14 +3,14 @@ Abstraction of CLI Input.
 """
 from __future__ import unicode_literals
 
-from .utils import DummyContext
+from .utils import DummyContext, is_windows
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
 import os
 import sys
 
-if sys.platform == 'win32':
+if is_windows():
     from .terminal.win32_input import raw_mode, cooked_mode
 else:
     from .terminal.vt100_input import raw_mode, cooked_mode
