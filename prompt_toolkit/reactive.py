@@ -31,7 +31,7 @@ class Integer(with_metaclass(ABCMeta, object)):
     """
     @abstractmethod
     def __int__(self):
-        return True
+        return 0
 
     @classmethod
     def from_callable(cls, func):
