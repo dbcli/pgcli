@@ -600,7 +600,8 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
         log.debug(sql)
         cur.execute(sql)
         result = cur.fetchone()
-        status.append("Owned by: %s" % result[0])
+        if result:
+            status.append("Owned by: %s" % result[0])
 
         #/*
          #* If we get no rows back, don't show anything (obviously). We should
