@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
+import os
 import signal
+import sys
 
 try:
     from wcwidth import wcwidth
@@ -12,6 +14,8 @@ __all__ = (
     'DummyContext',
     'get_cwidth',
     'suspend_to_background_supported',
+    'is_conemu_ansi',
+    'is_windows',
 )
 
 
@@ -118,3 +122,17 @@ def suspend_to_background_supported():
     suspend-to-background. This is typically `False' on Windows systems.
     """
     return hasattr(signal, 'SIGTSTP')
+
+
+def is_windows():
+    """
+    True when we are using Windows.
+    """
+    return 'win' in sys.platform
+
+
+def is_conemu_ansi():
+    """
+    True when the ConEmu Windows console is used.
+    """
+    return is_windows() and os.environ.get('ConEmuANSI', 'OFF') == 'ON'

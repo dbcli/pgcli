@@ -37,6 +37,7 @@ from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar
 from .styles import DefaultStyle
+from .utils import is_conemu_ansi
 
 from pygments.token import Token
 from six import text_type
@@ -45,6 +46,7 @@ import sys
 
 if sys.platform == 'win32':
     from .terminal.win32_output import Win32Output
+    from .terminal.conemu_output import ConEmuOutput
 else:
     from .terminal.vt100_output import Vt100_Output
 
@@ -78,7 +80,10 @@ def create_default_output(stdout=None):
     stdout = stdout or sys.__stdout__
 
     if sys.platform == 'win32':
-        return Win32Output(stdout)
+        if is_conemu_ansi():
+            return ConEmuOutput(stdout)
+        else:
+            return Win32Output(stdout)
     else:
         return Vt100_Output.from_pty(stdout)
 

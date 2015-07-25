@@ -5,10 +5,8 @@ from prompt_toolkit.layout.screen import Size
 from prompt_toolkit.renderer import Output
 
 import array
-import fcntl
-import six
-import termios
 import errno
+import six
 
 __all__ = (
     'Vt100_Output',
@@ -53,7 +51,10 @@ def _get_size(fileno):
     :param fileno: stdout.fileno()
     :returns: A (rows, cols) tuple.
     """
-#    assert stdout.isatty()
+    # Inline imports, because these modules are not available on Windows.
+    # (This file is used by ConEmuOutput, which is used on Windows.)
+    import fcntl
+    import termios
 
     # Buffer for the C call
     buf = array.array(u'h' if six.PY3 else b'h', [0, 0, 0, 0])
