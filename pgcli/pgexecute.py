@@ -162,6 +162,7 @@ class PGExecute(object):
                 password=unicode2utf8(password),
                 host=unicode2utf8(host),
                 port=unicode2utf8(port))
+        conn.set_client_encoding('utf8')
         if hasattr(self, 'conn'):
             self.conn.close()
         self.conn = conn
