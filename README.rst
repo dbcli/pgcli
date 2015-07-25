@@ -58,21 +58,12 @@ different event loop (``WaitForMultipleObjects`` instead of ``select``), and
 another input and output system. (Win32 APIs instead of pseudo-terminals and
 VT100.)
 
-That should work fine, however the library is currently more tested on Linux
-and Mac OS X systems. So, if you find any bugs in the Windows implementation,
-or you have an idea how to make the experience better, please create a Github
-issue.
-
 It's worth noting that the implementation is a "best effort of what is
 possible". Both Unix and Windows terminals have their limitations. But in
 general, the Unix experience will still be a little better.
 
-For Windows, it's highly recommended to use either `cmder
-<http://gooseberrycreative.com/cmder/>`_ or `conemu <https://conemu.github.io/>`_
-in order to avoid some glitches with redrawing completion menus. (``cmd.exe``
-leaves traces of vertical lines when the completion menu disappears and
-sending a repaint message to the whole window is the only way to get rid of
-that.)
+For Windows, it's recommended to use either `cmder
+<http://gooseberrycreative.com/cmder/>`_ or `conemu <https://conemu.github.io/>`_.
 
 
 Installation
