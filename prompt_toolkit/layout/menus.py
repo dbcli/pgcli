@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from six.moves import zip_longest
 from prompt_toolkit.filters import HasCompletions, IsDone, Always
+from prompt_toolkit.reactive import Integer
 from prompt_toolkit.utils import get_cwidth
 from pygments.token import Token
 
@@ -21,9 +22,21 @@ __all__ = (
 class CompletionsMenuControl(UIControl):
     """
     Helper for drawing the complete menu to the screen.
+
+    :param scroll_offset: Number (integer) representing the preferred amount of
+        completions to be displayed before and after the current one. When this
+        is a very high number, the current completion will be shown in the
+        middle most of the time.
     """
-    def __init__(self):
+    def __init__(self, scroll_offset=0):
+        assert isinstance(scroll_offset, Integer)
+
         self.token = Token.Menu.Completions
+        self.scroll_offset = scroll_offset
+        self.scroll = 0
+
+    def reset(self):
+        self.scroll = 0
 
     def has_focus(self, cli):
         return False
@@ -64,15 +77,16 @@ class CompletionsMenuControl(UIControl):
             if menu_width + menu_meta_width + 1 < width:
                 menu_width += width - (menu_width + menu_meta_width + 1)
 
-            # Decide which slice of completions to show.
-            if len(completions) > height and (index or 0) > height / 2:
-                slice_from = min(
-                    (index or 0) - height // 2,  # In the middle.
-                    len(completions) - height  # At the bottom.
-                )
-            else:
-                slice_from = 0
+            # Update the scroll offset.
+            scroll_offset = min(height // 2, int(self.scroll_offset))
 
+            self.scroll = min(self.scroll, (index or 0) - scroll_offset)
+            self.scroll = max(self.scroll, (index or 0) - height + 1 + scroll_offset)
+            self.scroll = min(self.scroll, len(completions) - height)  # Never go out of range.
+            self.scroll = max(self.scroll, 0)  # Never go negative.
+
+            # Decide which slice of completions to show.
+            slice_from = self.scroll
             slice_to = min(slice_from + height, len(completions))
 
             # Create a function which decides at which positions the scroll button should be shown.
@@ -177,9 +191,9 @@ def _trim_text(text, max_width):
 
 
 class CompletionsMenu(Window):
-    def __init__(self, max_height=None, extra_filter=Always()):
+    def __init__(self, max_height=None, scroll_offset=0, extra_filter=Always()):
         super(CompletionsMenu, self).__init__(
-            content=CompletionsMenuControl(),
+            content=CompletionsMenuControl(scroll_offset=scroll_offset),
             width=LayoutDimension(min=8),
             height=LayoutDimension(min=1, max=max_height),
             # Show when there are completions but not at the point we are
@@ -210,10 +224,10 @@ class MultiColumnCompletionMenuControl(UIControl):
 
         self.token = Token.Menu.Completions
         self.min_rows = min_rows
-        self.scroll_offset = 0
+        self.scroll = 0
 
     def reset(self):
-        self.scroll_offset = 0
+        self.scroll = 0
 
     def has_focus(self, cli):
         return False
@@ -271,7 +285,7 @@ class MultiColumnCompletionMenuControl(UIControl):
 
             # Make sure the current completion is always visible: update scroll offset.
             selected_column = (complete_state.complete_index or 0) // height
-            self.scroll_offset = min(selected_column, max(self.scroll_offset, selected_column - visible_columns + 1))
+            self.scroll = min(selected_column, max(self.scroll, selected_column - visible_columns + 1))
 
             # Write completions to screen.
             tokens = []
@@ -280,11 +294,11 @@ class MultiColumnCompletionMenuControl(UIControl):
                 middle_row = row_index == len(rows_) // 2
 
                 # Draw left arrow if we have hidden completions on the left.
-                if self.scroll_offset > 0:
+                if self.scroll > 0:
                     tokens += [(self.token.ProgressBar, '<' if middle_row else ' ')]
 
                 # Draw row content.
-                for column_index, c in enumerate(row[self.scroll_offset:][:visible_columns]):
+                for column_index, c in enumerate(row[self.scroll:][:visible_columns]):
                     if c is not None:
                         tokens += self._get_menu_item_tokens(c, is_current_completion(c), column_width)
                     else:
@@ -294,7 +308,7 @@ class MultiColumnCompletionMenuControl(UIControl):
                 tokens += [(self.token.Completion, ' ')]
 
                 # Draw right arrow if we have hidden completions on the right.
-                if self.scroll_offset < len(rows_[0]) - visible_columns:
+                if self.scroll < len(rows_[0]) - visible_columns:
                     tokens += [(self.token.ProgressBar, '>' if middle_row else ' ')]
 
                 # Newline.

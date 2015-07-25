@@ -177,6 +177,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
                       ycursor=True,
                       content=CompletionsMenu(
                           max_height=16,
+                          scroll_offset=1,
                           extra_filter=HasFocus(DEFAULT_BUFFER) &
                                        ~display_completions_in_columns)),
                 Float(xcursor=True,
