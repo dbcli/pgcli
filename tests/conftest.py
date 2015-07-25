@@ -1,3 +1,10 @@
+try:
+    from psycopg2cffi import compat
+except ImportError:
+    pass
+else:
+    compat.register()
+
 import pytest
 from utils import (POSTGRES_HOST, POSTGRES_USER, create_db, db_connection,
 drop_tables)
