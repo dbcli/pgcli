@@ -6,9 +6,13 @@ python:
   - "3.4"
 
 install: 
-  - pip install . pytest mock
+  - pip install . pytest mock codecov
 
-script: py.test
+script:
+  - coverage run --source pgcli -m py.test
+
+after_success:
+  - codecov
 
 notifications:
   webhooks:
