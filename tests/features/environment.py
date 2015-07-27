@@ -21,7 +21,7 @@ def before_all(context):
     # Store get params from config.
     context.conf = {
         'host': context.config.userdata.get('pg_test_host', 'localhost'),
-        'user': context.config.userdata.get('pg_test_user', 'root'),
+        'user': context.config.userdata.get('pg_test_user', 'postgres'),
         'pass': context.config.userdata.get('pg_test_pass', None),
         'dbname': context.config.userdata.get('pg_test_db', None),
     }
@@ -38,10 +38,14 @@ def before_all(context):
     os.environ['PGDATABASE'] = context.conf['dbname']
     os.environ['PGUSER'] = context.conf['user']
     os.environ['PGHOST'] = context.conf['host']
+
     if context.conf['pass']:
         os.environ['PGPASS'] = context.conf['pass']
-    elif 'PGPASS' in os.environ:
-        del os.environ['PGPASS']
+    else:
+        if 'PGPASS' in os.environ:
+            del os.environ['PGPASS']
+        if 'PGHOST' in os.environ:
+            del os.environ['PGHOST']
 
     context.cn = dbutils.create_db(context.conf['host'], context.conf['user'],
                                    context.conf['pass'],

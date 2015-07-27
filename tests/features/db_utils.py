@@ -45,7 +45,7 @@ def create_cn(hostname, password, username, dbname):
         cn = connect(host=hostname, user=username, database=dbname,
                      password=password)
     else:
-        cn = connect(host=hostname, user=username, database=dbname)
+        cn = connect(user=username, database=dbname)
 
     print('Created connection: {0}.'.format(cn.dsn))
     return cn

@@ -54,6 +54,42 @@ def step_send_help(context):
     context.cli.sendline('\?')
 
 
+@when('we send "create database" command')
+def step_db_create(context):
+    """
+    Send create database.
+    """
+    context.cli.sendline('create database pgcli_behave_tmp;')
+    context.response = {
+        'database_name': 'pgcli_behave_tmp'
+    }
+
+
+@when('we send "drop database" command')
+def step_db_drop(context):
+    """
+    Send drop database.
+    """
+    context.cli.sendline('drop database pgcli_behave_tmp;')
+
+
+@when('we connect to test database')
+def step_db_connect_test(context):
+    """
+    Send connect to database.
+    """
+    db_name = context.config.userdata.get('pg_test_db', None)
+    context.cli.sendline('\connect {0}'.format(db_name))
+
+
+@when('we connect to postgres')
+def step_db_connect_postgres(context):
+    """
+    Send connect to database.
+    """
+    context.cli.sendline('\connect postgres')
+
+
 @then('pgcli exits')
 def step_wait_exit(context):
     """
@@ -77,3 +113,27 @@ def step_see_help(context):
             context.cli.expect_exact(expected_line, timeout=1)
         except Exception:
             raise Exception('Expected: ' + expected_line.strip() + '!')
+
+
+@then('we see database created')
+def step_see_db_created(context):
+    """
+    Wait to see create database output.
+    """
+    context.cli.expect_exact('CREATE DATABASE', timeout=2)
+
+
+@then('we see database dropped')
+def step_see_db_dropped(context):
+    """
+    Wait to see drop database output.
+    """
+    context.cli.expect_exact('DROP DATABASE', timeout=2)
+
+
+@then('we see database connected')
+def step_see_db_connected(context):
+    """
+    Wait to see drop database output.
+    """
+    context.cli.expect_exact('You are now connected to database', timeout=2)
