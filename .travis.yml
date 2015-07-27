@@ -6,8 +6,7 @@ python:
   - "3.4"
 
 install: 
-  - pip install codecov
-  - pip install -e .
+  - pip install . pytest mock codecov
 
 script:
   - coverage run --source pgcli -m py.test
