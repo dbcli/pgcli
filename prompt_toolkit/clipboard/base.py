@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 import six
 
-from .selection import SelectionType
+from prompt_toolkit.selection import SelectionType
 
 __all__ = (
     'Clipboard',
@@ -56,19 +56,3 @@ class Clipboard(with_metaclass(ABCMeta, object)):
         """
         Return clipboard data.
         """
-
-
-class InMemoryClipboard(Clipboard):
-    """
-    Default clipboard implementation.
-    Just keep the data in memory.
-    """
-    def __init__(self):
-        self._data = None
-
-    def set_data(self, data):
-        assert isinstance(data, ClipboardData)
-        self._data = data
-
-    def get_data(self):
-        return self._data or ClipboardData()
