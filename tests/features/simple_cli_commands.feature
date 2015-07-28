@@ -21,7 +21,7 @@ Feature: run the cli,
       and we send "ctrl + d"
       then pgcli exits
 
-  Scenario: run the cli, create and drop database, exit
+  Scenario: create and drop temporary database
      Given we have pgcli installed
       when we run pgcli
       and we wait for prompt
@@ -32,8 +32,7 @@ Feature: run the cli,
       when we send "ctrl + d"
       then pgcli exits
 
-  @wip
-  Scenario: run the cli, connect and disconnect from test database, exit
+  Scenario: connect and disconnect from test database
      Given we have pgcli installed
       when we run pgcli
       and we wait for prompt
@@ -43,3 +42,14 @@ Feature: run the cli,
       then we see database connected
       when we send "ctrl + d"
       then pgcli exits
+
+#  Scenario: create, insert, select from, update, drop table
+#     Given we have pgcli installed
+#      when we run pgcli
+#      and we wait for prompt
+#      and we connect to test database
+#      then we see database connected
+#      when we send "create table"
+#      then we see table created
+#      when we send "ctrl + d"
+#      then pgcli exits

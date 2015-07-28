@@ -73,6 +73,54 @@ def step_db_drop(context):
     context.cli.sendline('drop database pgcli_behave_tmp;')
 
 
+@when('we send "create table" command')
+def step_create_table(context):
+    """
+    Send create table.
+    """
+    context.cli.sendline('create table a(x text);')
+
+
+@when('we insert values into table')
+def step_insert_into_table(context):
+    """
+    Send insert into table.
+    """
+    context.cli.sendline('''insert into a(x) values('xxx');''')
+
+
+@when('we update values in table')
+def step_update_table(context):
+    """
+    Send insert into table.
+    """
+    context.cli.sendline('''update a set x = 'yyy' where x = 'xxx';''')
+
+
+@when('we select from table')
+def step_select_from_table(context):
+    """
+    Send select from table.
+    """
+    context.cli.sendline('select * from a;')
+
+
+@when('we delete from table')
+def step_delete_from_table(context):
+    """
+    Send deete from table.
+    """
+    context.cli.sendline('''delete from a where x = 'yyy';''')
+
+
+@when('we send "drop table" command')
+def step_drop_table(context):
+    """
+    Send drop table.
+    """
+    context.cli.sendline('drop table a;')
+
+
 @when('we connect to test database')
 def step_db_connect_test(context):
     """
