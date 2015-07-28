@@ -19,6 +19,8 @@ def style_factory(name):
         styles.update({
             Token.Menu.Completions.Completion.Current: 'bg:#00aaaa #000000',
             Token.Menu.Completions.Completion: 'bg:#008888 #ffffff',
+            Token.Menu.Completions.Meta.Current: 'bg:#44aaaa #000000',
+            Token.Menu.Completions.Meta: 'bg:#448888 #ffffff',
             Token.Menu.Completions.ProgressButton: 'bg:#003333',
             Token.Menu.Completions.ProgressBar: 'bg:#00aaaa',
             Token.SelectedText: '#ffffff bg:#6666aa',
