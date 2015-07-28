@@ -54,7 +54,7 @@ def step_send_help(context):
     context.cli.sendline('\?')
 
 
-@when('we send "create database" command')
+@when('we create database')
 def step_db_create(context):
     """
     Send create database.
@@ -65,7 +65,7 @@ def step_db_create(context):
     }
 
 
-@when('we send "drop database" command')
+@when('we drop database')
 def step_db_drop(context):
     """
     Send drop database.
@@ -73,7 +73,7 @@ def step_db_drop(context):
     context.cli.sendline('drop database pgcli_behave_tmp;')
 
 
-@when('we send "create table" command')
+@when('we create table')
 def step_create_table(context):
     """
     Send create table.
@@ -81,7 +81,7 @@ def step_create_table(context):
     context.cli.sendline('create table a(x text);')
 
 
-@when('we insert values into table')
+@when('we insert into table')
 def step_insert_into_table(context):
     """
     Send insert into table.
@@ -89,7 +89,7 @@ def step_insert_into_table(context):
     context.cli.sendline('''insert into a(x) values('xxx');''')
 
 
-@when('we update values in table')
+@when('we update table')
 def step_update_table(context):
     """
     Send insert into table.
@@ -113,7 +113,7 @@ def step_delete_from_table(context):
     context.cli.sendline('''delete from a where x = 'yyy';''')
 
 
-@when('we send "drop table" command')
+@when('we drop table')
 def step_drop_table(context):
     """
     Send drop table.
@@ -185,3 +185,52 @@ def step_see_db_connected(context):
     Wait to see drop database output.
     """
     context.cli.expect_exact('You are now connected to database', timeout=2)
+
+
+@then('we see table created')
+def step_see_table_created(context):
+    """
+    Wait to see create table output.
+    """
+    context.cli.expect_exact('CREATE TABLE', timeout=2)
+
+
+@then('we see record inserted')
+def step_see_record_inserted(context):
+    """
+    Wait to see insert output.
+    """
+    context.cli.expect_exact('INSERT 0 1', timeout=2)
+
+
+@then('we see record updated')
+def step_see_record_updated(context):
+    """
+    Wait to see update output.
+    """
+    context.cli.expect_exact('UPDATE 1', timeout=2)
+
+
+@then('we see data selected')
+def step_see_data_selected(context):
+    """
+    Wait to see select output.
+    """
+    context.cli.expect_exact('yyy', timeout=1)
+    context.cli.expect_exact('SELECT 1', timeout=1)
+
+
+@then('we see record deleted')
+def step_see_data_deleted(context):
+    """
+    Wait to see delete output.
+    """
+    context.cli.expect_exact('DELETE 1', timeout=2)
+
+
+@then('we see table dropped')
+def step_see_table_dropped(context):
+    """
+    Wait to see drop output.
+    """
+    context.cli.expect_exact('DROP TABLE', timeout=2)
