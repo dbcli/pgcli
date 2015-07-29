@@ -1,6 +1,7 @@
 import re
 import logging
 from codecs import open
+from os.path import expanduser
 import click
 from .namedqueries import namedqueries
 from .main import special_command, NO_QUERY
@@ -54,8 +55,7 @@ def open_external_editor(filename=None, sql=''):
 
     if filename:
         try:
-            with open(filename, encoding='utf-8') as f:
-                query = f.read()
+            query = read_from_file(filename)
         except IOError:
             message = 'Error reading file: %s.' % filename
 
@@ -68,13 +68,11 @@ def open_external_editor(filename=None, sql=''):
 
     return (query, message)
 
-
 @special_command('\\i', '\\i file', 'List or execute named queries.')
 def execute_from_file(cur, pattern, **_):
     if pattern != '':
         try:
-            with open(pattern, encoding='utf-8') as f:
-                query = f.read()
+            query = read_from_file(pattern)
         except IOError, e:
             message = 'Error reading file: %s' % pattern
             message = message + ' Error was: ' + str(e)
@@ -88,6 +86,11 @@ def execute_from_file(cur, pattern, **_):
         return [(None, cur, headers, cur.statusmessage)]
     else:
         return [(None, None, None, cur.statusmessage)]
+
+def read_from_file(path):
+    with open(expanduser(path), encoding='utf-8') as f:
+        contents = f.read()
+    return contents
 
 @special_command('\\n', '\\n[+] [name]', 'List or execute named queries.')
 def execute_named_query(cur, pattern, **_):
