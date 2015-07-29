@@ -68,6 +68,27 @@ def open_external_editor(filename=None, sql=''):
 
     return (query, message)
 
+
+@special_command('\\i', '\\i file', 'List or execute named queries.')
+def execute_from_file(cur, pattern, **_):
+    if pattern != '':
+        try:
+            with open(pattern, encoding='utf-8') as f:
+                query = f.read()
+        except IOError, e:
+            message = 'Error reading file: %s' % pattern
+            message = message + ' Error was: ' + str(e)
+            return [(None, None, None, message)]
+    else:
+        message = '\\i: missing required argument'
+        return [(None, None, None, message)]
+    cur.execute(query)
+    if cur.description:
+        headers = [x[0] for x in cur.description]
+        return [(None, cur, headers, cur.statusmessage)]
+    else:
+        return [(None, None, None, cur.statusmessage)]
+
 @special_command('\\n', '\\n[+] [name]', 'List or execute named queries.')
 def execute_named_query(cur, pattern, **_):
     """Returns (title, rows, headers, status)"""
