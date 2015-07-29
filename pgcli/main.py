@@ -247,8 +247,9 @@ class PGCli(object):
                                                processor=HighlightMatchingBracketProcessor(chars='[](){}'),
                                                filter=HasFocus(DEFAULT_BUFFER) & ~IsDone()),
                                        ])
+        history_file = self.config['main']['history_file']
         buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
-                history=FileHistory(os.path.expanduser('~/.pgcli-history')),
+                history=FileHistory(os.path.expanduser(history_file)),
                 complete_while_typing=Always())
 
         application = Application(style=style_factory(self.syntax_style),

@@ -14,6 +14,9 @@ multi_line = False
 # log_file location.
 log_file = ~/.pgcli.log
 
+# history_file location.
+history_file = ~/.pgcli-history
+
 # Default log level. Possible values: "CRITICAL", "ERROR", "WARNING", "INFO"
 # and "DEBUG".
 log_level = INFO
