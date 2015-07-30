@@ -102,6 +102,7 @@ Projects using prompt-toolkit
 - `ptpython <http://github.com/jonathanslenders/ptpython/>`_: Python REPL
 - `ptpdb <http://github.com/jonathanslenders/ptpdb/>`_: Python debugger (pdb replacement)
 - `pgcli <http://pgcli.com/>`_: Postgres Shell
+- `mycli <mycli.net>`_: MySql client.
 - `pyvim <http://github.com/jonathanslenders/pyvim/>`_: A Vim clone in pure Python
 - `dockercli <http://dockercli.com/>`_: A Docker command line.
 
