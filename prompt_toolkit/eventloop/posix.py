@@ -11,6 +11,7 @@ from .base import EventLoop, INPUT_TIMEOUT
 from .callbacks import EventLoopCallbacks
 from .inputhook import InputHookContext
 from .posix_utils import PosixStdinReader
+from .utils import TimeIt
 
 __all__ = (
     'PosixEventLoop',
@@ -46,7 +47,7 @@ class PosixEventLoop(EventLoop):
         self._running = True
 
         inputstream = InputStream(callbacks.feed_key)
-        timeout = INPUT_TIMEOUT
+        current_timeout = INPUT_TIMEOUT
 
         # Create reader class.
         stdin_reader = PosixStdinReader(stdin)
@@ -62,14 +63,21 @@ class PosixEventLoop(EventLoop):
         with call_on_sigwinch(received_winch):
             while self._running:
                 # Call inputhook.
-                if self._inputhook_context:
-                    def ready(wait):
-                        " True when there is input ready. The inputhook should return control. "
-                        return self._ready_for_reading(stdin, None if wait else 0) != []
-                    self._inputhook_context.call_inputhook(ready)
+                with TimeIt() as inputhook_timer:
+                    if self._inputhook_context:
+                        def ready(wait):
+                            " True when there is input ready. The inputhook should return control. "
+                            return self._ready_for_reading(stdin, current_timeout if wait else 0) != []
+                        self._inputhook_context.call_inputhook(ready)
+
+                # Calculate remaining timeout. (The inputhook consumed some of the time.)
+                if current_timeout is None:
+                    remaining_timeout = None
+                else:
+                    remaining_timeout = max(0, current_timeout - inputhook_timer.duration)
 
                 # Wait until input is ready.
-                r = self._ready_for_reading(stdin, timeout)
+                r = self._ready_for_reading(stdin, remaining_timeout)
 
                 # If we got a character, feed it to the input stream. If we got
                 # none, it means we got a repaint request.
@@ -80,7 +88,7 @@ class PosixEventLoop(EventLoop):
                     callbacks.redraw()
 
                     # Set timeout again.
-                    timeout = INPUT_TIMEOUT
+                    current_timeout = INPUT_TIMEOUT
 
                 # If we receive something on our "call_from_executor" pipe, process
                 # these callbacks in a thread safe way.
@@ -101,7 +109,7 @@ class PosixEventLoop(EventLoop):
 
                     # Fire input timeout event.
                     callbacks.input_timeout()
-                    timeout = None
+                    current_timeout = None
 
     def _ready_for_reading(self, stdin, timeout=None):
         """

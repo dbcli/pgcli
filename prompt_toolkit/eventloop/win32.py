@@ -10,6 +10,7 @@ from ..terminal.win32_input import ConsoleInputReader
 from ..win32_types import SECURITY_ATTRIBUTES
 from .base import EventLoop, INPUT_TIMEOUT
 from .inputhook import InputHookContext
+from .utils import TimeIt
 
 from ctypes import windll, pointer
 from ctypes.wintypes import DWORD, BOOL, HANDLE
@@ -21,6 +22,7 @@ __all__ = (
 )
 
 WAIT_TIMEOUT = 0x00000102
+INPUT_TIMEOUT_MS = int(1000 * INPUT_TIMEOUT)
 
 
 class Win32EventLoop(EventLoop):
@@ -41,20 +43,26 @@ class Win32EventLoop(EventLoop):
         if self.closed:
             raise Exception('Event loop already closed.')
 
-        timeout = int(1000 * INPUT_TIMEOUT)
-        current_timeout = timeout
+        current_timeout = INPUT_TIMEOUT_MS
         self._running = True
 
         while self._running:
             # Call inputhook.
-            if self._inputhook_context:
-                def ready(wait):
-                    " True when there is input ready. The inputhook should return control. "
-                    return bool(self._ready_for_reading(-1 if wait else 0))
-                self._inputhook_context.call_inputhook(ready)
+            with TimeIt() as inputhook_timer:
+                if self._inputhook_context:
+                    def ready(wait):
+                        " True when there is input ready. The inputhook should return control. "
+                        return bool(self._ready_for_reading(current_timeout if wait else 0))
+                    self._inputhook_context.call_inputhook(ready)
+
+            # Calculate remaining timeout. (The inputhook consumed some of the time.)
+            if current_timeout == -1:
+                remaining_timeout = -1
+            else:
+                remaining_timeout = max(0, current_timeout - int(1000 * inputhook_timer.duration))
 
             # Wait for the next event.
-            handle = self._ready_for_reading(current_timeout)
+            handle = self._ready_for_reading(remaining_timeout)
 
             if handle == self._console_input_reader.handle:
                 # When stdin is ready, read input and reset timeout timer.
@@ -62,7 +70,7 @@ class Win32EventLoop(EventLoop):
                 for k in keys:
                     callbacks.feed_key(k)
                 callbacks.redraw()
-                current_timeout = timeout
+                current_timeout = INPUT_TIMEOUT_MS
 
             elif handle == self._event:
                 # When the Windows Event has been trigger, process the messages in the queue.
