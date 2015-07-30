@@ -68,12 +68,12 @@ def open_external_editor(filename=None, sql=''):
 
     return (query, message)
 
-@special_command('\\i', '\\i file', 'List or execute named queries.')
+@special_command('\\i', '\\i file', 'Execute commands from file.')
 def execute_from_file(cur, pattern, **_):
-    if pattern != '':
+    if pattern:
         try:
             query = read_from_file(pattern)
-        except IOError, e:
+        except IOError as e:
             message = 'Error reading file: %s' % pattern
             message = message + ' Error was: ' + str(e)
             return [(None, None, None, message)]
