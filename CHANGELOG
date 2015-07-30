@@ -1,6 +1,21 @@
 CHANGELOG
 =========
 
+0.44: 2015-07-30
+----------------
+
+Fixes:
+- Fixed bug in eventloops: handle timeout correctly, even when there is an eventhook.
+- Bug fix in open-in-editor: set correct cursor position.
+
+New features:
+- CompletionsMenu got a scroll_offset.
+- Use 256 colors and ANSI sequences when ConEmu ANSI support has been detected.
+- Added PyperclipClipboard for synchronisation with the system clipboard.
+  and clipboard parameter in shortcut functions.
+- Filter for enabling/disabling handling of Vi 'v' binding.
+
+
 0.43: 2015-07-15
 ----------------
 
