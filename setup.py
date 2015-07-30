@@ -1,5 +1,7 @@
+import platform
 import re
 import ast
+
 from setuptools import setup, find_packages
 
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
@@ -10,6 +12,10 @@ with open('pgcli/__init__.py', 'rb') as f:
 
 description = 'CLI for Postgres Database. With auto-completion and syntax highlighting.'
 
+if platform.python_implementation() == 'PyPy':
+    psycopg2_dependency = 'psycopg2cffi>=2.7.1'
+else:
+    psycopg2_dependency = 'psycopg2 >= 2.5.4'
 
 setup(
         name='pgcli',
@@ -26,7 +32,7 @@ setup(
             'click >= 3.2',
             'Pygments >= 2.0',  # Pygments has to be Capitalcased. WTF?
             'prompt_toolkit==0.42',
-            'psycopg2 >= 2.5.4',
+            psycopg2_dependency,
             'sqlparse == 0.1.14',
             'configobj >= 5.0.6'
             ],
