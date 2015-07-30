@@ -211,6 +211,7 @@ def create_default_application(
         completer=None,
         style=None,
         history=None,
+        clipboard=None,
         get_prompt_tokens=None,
         get_bottom_toolbar_tokens=None,
         display_completions_in_columns=False,
@@ -240,6 +241,7 @@ def create_default_application(
     :param enable_open_in_editor: Pressing 'v' in Vi mode or C-X C-E in emacs
                                   mode will open an external editor.
     :param history: `History` instance. (e.g. `FileHistory`)
+    :param clipboard: `Clipboard` instance. (e.g. `InMemoryClipboard`)
     :param get_bottom_toolbar_tokens: Optional callable which takes a
         :class:`CommandLineInterface` and returns a list of tokens for the
         bottom toolbar.
@@ -284,6 +286,7 @@ def create_default_application(
                 accept_action=accept_action,
             ),
         style=style or DefaultStyle,
+        clipboard=clipboard,
         key_bindings_registry=key_bindings_registry,
         get_title=get_title,
         on_abort=on_abort,
