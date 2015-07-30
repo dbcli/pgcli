@@ -128,7 +128,7 @@ def is_windows():
     """
     True when we are using Windows.
     """
-    return 'win' in sys.platform
+    return sys.platform.startswith('win')  # E.g. 'win32', not 'darwin' or 'linux2'
 
 
 def is_conemu_ansi():
