@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import ClipboardData, indent, unindent
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
-from prompt_toolkit.filters import Filter, Condition, HasArg
+from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter
 from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
@@ -52,14 +52,18 @@ class CursorRegion(object):
             return self.end, self.start
 
 
-def load_vi_bindings(registry, vi_state, filter=None):
+def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None):
     """
     Vi extensions.
 
     # Overview of Readline Vi commands:
     # http://www.catonmat.net/download/bash-vi-editing-mode-cheat-sheet.pdf
+
+    :param enable_visual_key: Filter to enable lowercase 'v' bindings. A reason to disable these
+         are to support open-in-editor functionality. These key bindings conflict.
     """
     assert isinstance(vi_state, ViState)
+    enable_visual_key = to_cli_filter(enable_visual_key)
 
     handle = create_handle_decorator(registry, filter)
 
@@ -369,13 +373,6 @@ def load_vi_bindings(registry, vi_state, filter=None):
         for i in range(event.arg):
             event.current_buffer.undo()
 
-    @handle('v', filter=navigation_mode)
-    def _(event):
-        """
-        Start characters selection.
-        """
-        event.current_buffer.start_selection(selection_type=SelectionType.CHARACTERS)
-
     @handle('V', filter=navigation_mode)
     def _(event):
         """
@@ -628,9 +625,9 @@ def load_vi_bindings(registry, vi_state, filter=None):
                 if substring:
                     event.cli.clipboard.set_text(substring)
 
-            @handle('v', *keys, filter=navigation_mode)
+            @handle('v', *keys, filter=navigation_mode & enable_visual_key)
             def visual_handler(event):
-                """ Create visual handler. """
+                """ Create visual handler. (Enter character selection mode.) """
                 region = func(event)
                 buffer = event.current_buffer
 
@@ -638,7 +635,7 @@ def load_vi_bindings(registry, vi_state, filter=None):
                 end += buffer.cursor_position - 1
 
                 buffer.cursor_position += start
-                buffer.start_selection()
+                buffer.start_selection(selection_type=SelectionType.CHARACTERS)
                 buffer.cursor_position = end
 
             def create(delete_only):

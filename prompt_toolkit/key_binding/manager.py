@@ -75,7 +75,8 @@ class KeyBindingManager(object):
             self.registry, enable_emacs_mode & enable_system_bindings & enable_all)
 
         # Load Vi bindings.
-        load_vi_bindings(self.registry, self.vi_state, enable_vi_mode & enable_all)
+        load_vi_bindings(self.registry, self.vi_state, enable_visual_key=~enable_open_in_editor,
+                         filter=enable_vi_mode & enable_all)
 
         load_vi_open_in_editor_bindings(
             self.registry, self.vi_state,
