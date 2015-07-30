@@ -3,7 +3,6 @@ Renders the command line on the console.
 (Redraws parts of the input line that were changed.)
 """
 from __future__ import unicode_literals
-import sys
 
 from pygments.style import Style
 from pygments.token import Token
