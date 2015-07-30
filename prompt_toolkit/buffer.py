@@ -987,9 +987,16 @@ class Buffer(object):
         # Read content again.
         if succes:
             with open(filename, 'rb') as f:
+                text = f.read().decode('utf-8')
+
+                # Drop trailing newline. (Editors are supposed to add it at the
+                # end, but we don't need it.)
+                if text.endswith('\n'):
+                    text = text[:-1]
+
                 self.document = Document(
-                    text=f.read().decode('utf-8'),
-                    cursor_position=len(self.text))
+                    text=text,
+                    cursor_position=len(text))
 
         # Clean up temp file.
         os.remove(filename)
