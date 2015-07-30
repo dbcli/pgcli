@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.45: 2015-07-30
+----------------
+
+Fixes:
+- Bug fix on OS X: correctly detect platform as not Windows.
+
+
 0.44: 2015-07-30
 ----------------
 
