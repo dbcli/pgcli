@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import os
+import sys
 import pexpect
 import db_utils as dbutils
 import fixture_utils as fixutils
@@ -18,12 +19,17 @@ def before_all(context):
 
     context.exit_sent = False
 
+    vi = sys.version_info
+    db_name = context.config.userdata.get('pg_test_db', None)
+    db_name_full = '{0}_{1}_{2}_{3}'.format(
+        db_name, vi.major, vi.minor, vi.micro)
+
     # Store get params from config.
     context.conf = {
         'host': context.config.userdata.get('pg_test_host', 'localhost'),
         'user': context.config.userdata.get('pg_test_user', 'postgres'),
         'pass': context.config.userdata.get('pg_test_pass', None),
-        'dbname': context.config.userdata.get('pg_test_db', None),
+        'dbname': db_name_full,
     }
 
     # Store old env vars.

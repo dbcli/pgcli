@@ -126,7 +126,7 @@ def step_db_connect_test(context):
     """
     Send connect to database.
     """
-    db_name = context.config.userdata.get('pg_test_db', None)
+    db_name = context.conf['dbname']
     context.cli.sendline('\connect {0}'.format(db_name))
 
 
