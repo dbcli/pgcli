@@ -10,6 +10,8 @@ install:
 
 script:
   - coverage run --source pgcli -m py.test
+  - cd tests
+  - behave
 
 after_success:
   - codecov
