@@ -19,10 +19,9 @@ def before_all(context):
 
     context.exit_sent = False
 
-    vi = sys.version_info
+    vi = '_'.join([str(x) for x in sys.version_info[:3]])
     db_name = context.config.userdata.get('pg_test_db', None)
-    db_name_full = '{0}_{1}_{2}_{3}'.format(
-        db_name, vi.major, vi.minor, vi.micro)
+    db_name_full = '{0}_{1}'.format(db_name, vi)
 
     # Store get params from config.
     context.conf = {
