@@ -1,13 +1,13 @@
 from __future__ import unicode_literals
 
 from six.moves import zip_longest
-from prompt_toolkit.filters import HasCompletions, IsDone, Always
+from prompt_toolkit.filters import HasCompletions, IsDone, Always, Condition
 from prompt_toolkit.reactive import Integer
 from prompt_toolkit.utils import get_cwidth
 from pygments.token import Token
 
+from .containers import Window, HSplit
 from .controls import UIControl
-from .containers import Window
 from .dimension import LayoutDimension
 from .screen import Screen
 
@@ -336,12 +336,69 @@ class MultiColumnCompletionMenuControl(UIControl):
         return [(token, ' %s%s' % (text, padding))]
 
 
-class MultiColumnCompletionsMenu(Window):
-    def __init__(self, min_rows=3, extra_filter=Always()):
-        super(MultiColumnCompletionsMenu, self).__init__(
+class MultiColumnCompletionsMenu(HSplit):
+    """
+    Container that displays the completions in several columns.
+    When `show_meta` (a CLIFilter) evaluates to True, it shows
+    the meta information at the bottom.
+    """
+    def __init__(self, min_rows=3, show_meta=Always(), extra_filter=Always()):
+        # Display filter: show when there are completions but not at the point
+        # we are returning the input.
+        full_filter = HasCompletions() & ~IsDone() & extra_filter
+
+        any_completion_has_meta = Condition(lambda cli:
+                any(c.display_meta for c in cli.current_buffer.complete_state.current_completions))
+
+        # Create child windows.
+        completions_window = Window(
             content=MultiColumnCompletionMenuControl(min_rows=min_rows),
             width=LayoutDimension(min=8),
             height=LayoutDimension(min=1),
-            # Show when there are completions but not at the point we are
-            # returning the input.
-            filter=HasCompletions() & ~IsDone() & extra_filter)
+            filter=full_filter)
+
+        meta_window = Window(
+            content=_SelectedCompletionMetaControl(),
+            filter=show_meta & full_filter & any_completion_has_meta)
+
+        # Initialise split.
+        super(MultiColumnCompletionsMenu, self).__init__([
+            completions_window,
+            meta_window
+        ])
+
+
+class _SelectedCompletionMetaControl(UIControl):
+    """
+    Control that shows the meta information of the selected token.
+    """
+    def preferred_width(self, cli, max_available_width):
+        """
+        Report the width of the longest meta text as the preferred width of this control.
+
+        It could be that we use less width, but this way, we're sure that the
+        layout doesn't change when we select another completion (E.g. that
+        completions are suddenly shown in more or fewer columns.)
+        """
+        if cli.current_buffer.complete_state:
+            state = cli.current_buffer.complete_state
+            return 2 + max(get_cwidth(c.display_meta) for c in state.current_completions)
+        else:
+            return 0
+
+    def preferred_height(self, cli, width):
+        return 1
+
+    def create_screen(self, cli, width, height):
+        screen = Screen(width)
+        screen.write_data(self._get_tokens(cli), width)
+        return screen
+
+    def _get_tokens(self, cli):
+        token = Token.Menu.Completions.Meta.Current
+        state = cli.current_buffer.complete_state
+
+        if state and state.current_completion and state.current_completion.display_meta:
+            return [(token, ' %s ' % state.current_completion.display_meta)]
+
+        return []

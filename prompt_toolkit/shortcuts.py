@@ -189,7 +189,8 @@ def create_default_layout(message='', lexer=None, is_password=False,
                       ycursor=True,
                       content=MultiColumnCompletionsMenu(
                           extra_filter=HasFocus(DEFAULT_BUFFER) &
-                                       display_completions_in_columns)),
+                                       display_completions_in_columns,
+                          show_meta=Always()))
             ]
         ),
         ValidationToolbar(),
