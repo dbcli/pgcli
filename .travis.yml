@@ -6,10 +6,12 @@ python:
   - "3.4"
 
 install: 
-  - pip install . pytest mock codecov
+  - pip install . pytest mock codecov behave pexpect
 
 script:
   - coverage run --source pgcli -m py.test
+  - cd tests
+  - behave
 
 after_success:
   - codecov

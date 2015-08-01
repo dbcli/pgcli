@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import os
+import sys
 import pexpect
 import db_utils as dbutils
 import fixture_utils as fixutils
@@ -18,12 +19,16 @@ def before_all(context):
 
     context.exit_sent = False
 
+    vi = '_'.join([str(x) for x in sys.version_info[:3]])
+    db_name = context.config.userdata.get('pg_test_db', None)
+    db_name_full = '{0}_{1}'.format(db_name, vi)
+
     # Store get params from config.
     context.conf = {
         'host': context.config.userdata.get('pg_test_host', 'localhost'),
-        'user': context.config.userdata.get('pg_test_user', 'root'),
+        'user': context.config.userdata.get('pg_test_user', 'postgres'),
         'pass': context.config.userdata.get('pg_test_pass', None),
-        'dbname': context.config.userdata.get('pg_test_db', None),
+        'dbname': db_name_full,
     }
 
     # Store old env vars.
@@ -38,10 +43,14 @@ def before_all(context):
     os.environ['PGDATABASE'] = context.conf['dbname']
     os.environ['PGUSER'] = context.conf['user']
     os.environ['PGHOST'] = context.conf['host']
+
     if context.conf['pass']:
         os.environ['PGPASS'] = context.conf['pass']
-    elif 'PGPASS' in os.environ:
-        del os.environ['PGPASS']
+    else:
+        if 'PGPASS' in os.environ:
+            del os.environ['PGPASS']
+        if 'PGHOST' in os.environ:
+            del os.environ['PGHOST']
 
     context.cn = dbutils.create_db(context.conf['host'], context.conf['user'],
                                    context.conf['pass'],
