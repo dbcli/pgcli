@@ -1,7 +1,7 @@
 A REPL for Postgres 
 -------------------
 
-|Build Status|  |PyPI| |Gitter|
+|Build Status|  |PyPI| |Gitter| |Codehunt|
 
 This is a postgres client that does auto-completion and syntax highlighting.
 
@@ -206,3 +206,7 @@ Thanks to all the beta testers and contributors for your time and patience. :)
 .. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
     :target: https://gitter.im/dbcli/pgcli?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
     :alt: Gitter Chat
+  
+.. |Codehunt| image:: https://img.shields.io/badge/vote-codehunt.io-02AFD1.svg
+    :target: http://codehunt.io/sub/pgcli/?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+    :alt: Vote on CodeHunt.io
