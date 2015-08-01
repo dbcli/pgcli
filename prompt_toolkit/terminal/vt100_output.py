@@ -202,7 +202,17 @@ class Vt100_Output(Output):
         data = ''.join(self._buffer)
 
         try:
-            self.stdout.write(data)
+            # (We try to encode ourself, because that way we can replace
+            # characters that don't exist in the character set, avoiding
+            # UnicodeEncodeError crashes. E.g. u'\xb7' does not appear in 'ascii'.)
+            # My Arch Linux installation of july 2015 reported 'ANSI_X3.4-1968'
+            # for sys.stdout.encoding in xterm.
+            if hasattr(self.stdout, 'encoding'):
+                out = self.stdout.buffer if six.PY3 else self.stdout
+                out.write(data.encode(self.stdout.encoding, 'replace'))
+            else:
+                self.stdout.write(data)
+
             self.stdout.flush()
         except IOError as e:
             if e.args and e.args[0] == errno.EINTR:
