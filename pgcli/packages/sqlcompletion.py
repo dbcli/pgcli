@@ -167,7 +167,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         #       SELECT Identifier <CURSOR>
         #       SELECT foo FROM Identifier <CURSOR>
         prev_keyword, _ = find_prev_keyword(text_before_cursor)
-        if prev_keyword == '(':
+        if prev_keyword.value == '(':
             # Suggest datatypes
             return suggest_based_on_last_token('type', text_before_cursor,
                                            full_text, identifier)
