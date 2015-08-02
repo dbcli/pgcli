@@ -345,7 +345,10 @@ class PGCli(object):
                     logger.error("traceback: %r", traceback.format_exc())
                     click.secho(str(e), err=True, fg='red')
                 else:
-                    click.echo_via_pager('\n'.join(output))
+                    try:
+                        click.echo_via_pager('\n'.join(output))
+                    except KeyboardInterrupt:
+                        pass
                     if self.pgspecial.timing_enabled:
                         print('Command Time: %0.03fs' % duration)
                         print('Format Time: %0.03fs' % total)
