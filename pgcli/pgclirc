@@ -5,6 +5,10 @@
 # possible completions will be listed.
 smart_completion = True
 
+# Display the completions in several columns. (More completions will be
+# visible.)
+display_completions_in_columns = False
+
 # Multi-line mode allows breaking up the sql statements into multiple lines. If
 # this is set to True, then the end of the statements must have a semi-colon.
 # If this is set to False then sql statements can't be split into multiple

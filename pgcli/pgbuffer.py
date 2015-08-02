@@ -10,7 +10,8 @@ class PGBuffer(Buffer):
             doc = self.document
             return self.always_multiline and not _multiline_exception(doc.text)
 
-        super(self.__class__, self).__init__(*args, is_multiline=is_multiline, **kwargs)
+        super(self.__class__, self).__init__(*args, is_multiline=is_multiline,
+                                             tempfile_suffix='.sql', **kwargs)
 
 def _multiline_exception(text):
     text = text.strip()

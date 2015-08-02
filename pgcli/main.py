@@ -71,6 +71,7 @@ class PGCli(object):
         self.pgspecial.timing_enabled = c['main'].as_bool('timing')
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
+        self.display_completions_in_columns = c['main'].as_bool('display_completions_in_columns')
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
@@ -241,6 +242,7 @@ class PGCli(object):
                                        reserve_space_for_menu=True,
                                        get_prompt_tokens=prompt_tokens,
                                        get_bottom_toolbar_tokens=get_toolbar_tokens,
+                                       display_completions_in_columns=self.display_completions_in_columns,
                                        extra_input_processors=[
                                            # Highlight matching brackets while editing.
                                            ConditionalProcessor(
