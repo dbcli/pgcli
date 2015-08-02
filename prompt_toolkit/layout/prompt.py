@@ -61,6 +61,16 @@ class DefaultPrompt(Processor):
 
         return before + tokens, lambda i: i + shift_position
 
+    def has_focus(self, cli):
+        # Obtain focus when the CLI is searching.
+
+        # Usually, when using this `DefaultPrompt`, we don't have a
+        # `BufferControl` instance that displays the content of the search
+        # buffer. Instead the search text is displayed before the current text.
+        # So, we can still show the cursor here, while it's actually not this
+        # buffer that's focussed.
+        return cli.is_searching
+
     def invalidation_hash(self, cli, buffer):
         return (
             cli.input_processor.arg,

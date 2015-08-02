@@ -31,6 +31,13 @@ class Processor(with_metaclass(ABCMeta, object)):
     def run(self, cli, document, tokens):
         return tokens, lambda i: i
 
+    def has_focus(self, cli):
+        """
+        Processors can override the focus.
+        (Used for the reverse-i-search prefix in DefaultPrompt.)
+        """
+        return False
+
     def invalidation_hash(self, cli, document):
         return None
 

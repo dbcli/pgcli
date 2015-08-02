@@ -254,7 +254,13 @@ class BufferControl(UIControl):
         return cli.buffers[self.buffer_name]
 
     def has_focus(self, cli):
-        return cli.focus_stack.current == self.buffer_name
+        # This control gets the focussed if the actual `Buffer` instance has the
+        # focus or when any of the `InputProcessor` classes tells us that it
+        # wants the focus. (E.g. in case of a reverse-search, where the actual
+        # search buffer may not be displayed, but the "reverse-i-search" text
+        # should get the focus.)
+        return cli.focus_stack.current == self.buffer_name or \
+            any(i.has_focus(cli) for i in self.input_processors)
 
     def preferred_width(self, cli, max_available_width):
         # Return the length of the longest line.
