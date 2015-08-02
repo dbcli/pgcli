@@ -248,6 +248,14 @@ def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
         {'type': 'view', 'schema': []},
         {'type': 'schema'}])
 
+def test_left_join_with_comma():
+    text = 'select * from foo f left join bar b,'
+    suggestions = suggest_type(text, text)
+    assert sorted_dicts(suggestions) == sorted_dicts([
+         {'type': 'table', 'schema': []},
+         {'type': 'view', 'schema': []},
+         {'type': 'schema'}])
+
 def test_join_alias_dot_suggests_cols1():
     suggestions = suggest_type('SELECT * FROM abc a JOIN def d ON a.',
             'SELECT * FROM abc a JOIN def d ON a.')
@@ -289,7 +297,6 @@ def test_on_suggests_tables_right_side():
         'select abc.x, bcd.y from abc join bcd on ',
         'select abc.x, bcd.y from abc join bcd on ')
     assert suggestions == [{'type': 'alias', 'aliases': ['abc', 'bcd']}]
-
 
 @pytest.mark.parametrize('col_list', ['', 'col1, '])
 def test_join_using_suggests_common_columns(col_list):
@@ -382,7 +389,7 @@ def test_handle_pre_completion_comma_gracefully(text):
 def test_drop_schema_suggests_schemas():
     sql = 'DROP SCHEMA '
     assert suggest_type(sql, sql) == [{'type': 'schema'}]
-    
+
 
 @pytest.mark.parametrize('text', [
     'SELECT x::',

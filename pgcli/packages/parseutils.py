@@ -184,7 +184,7 @@ def find_prev_keyword(sql):
             # up to and including the target keyword token t, to produce a
             # query string with everything after the keyword token removed
             text = ''.join(tok.value for tok in flattened[:idx+1])
-            return t.value, text
+            return t, text
 
     return None, ''
 
