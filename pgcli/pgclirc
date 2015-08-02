@@ -38,7 +38,10 @@ table_format = psql
 # colorful, murphy, bw, pastie, paraiso-light, trac, default, fruity
 syntax_style = default
 
-# Enables vi-mode
+# Keybindings: 
+# When Vi mode is enabled you can use modal editing features offered by Vi in the REPL.
+# When Vi mode is disabled emacs keybindings such as Ctrl-A for home and Ctrl-E
+# for end are available in the REPL.
 vi = False
 
 # Named queries are queries you can rexecute by name
