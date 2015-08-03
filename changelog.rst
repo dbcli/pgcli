@@ -26,7 +26,7 @@ BugFixes:
 
 * Always use utf-8 for database encoding regardless of the default encoding used by the database.
 * Fix for None dereference on ``\d schemaname.`` with sequence. (Thanks: `Nathan Jhaveri`_)
-* Fix a crashing bug in the autocompletion enginer for some ``JOIN`` queries.
+* Fix a crashing bug in the autocompletion engine for some ``JOIN`` queries.
 * Handle KeyboardInterrupt in pager and not quit pgcli as a consequence.
 
 Internal Changes:
