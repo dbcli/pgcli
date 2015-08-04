@@ -43,7 +43,7 @@ def create_source_tarball():
     subprocess.check_output(cmd)
 
 def push_to_github():
-    cmd = ['git', 'push', 'origin']
+    cmd = ['git', 'push', 'origin', 'master']
     print(' '.join(cmd))
     subprocess.check_output(cmd)
 
