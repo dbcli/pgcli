@@ -1,3 +1,11 @@
+0.19.1
+======
+
+BugFixe:
+---------
+
+* Fix an autocompletion bug that was crashing the completion engine when unknown keyword is entered. (Thanks: `Darik Gamble`_)
+
 0.19.0
 ======
 
