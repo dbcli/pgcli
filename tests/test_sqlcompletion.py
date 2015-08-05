@@ -454,3 +454,10 @@ def test_identifier_suggests_types_in_parentheses(text):
 def test_alias_suggests_keywords(text):
     suggestions = suggest_type(text, text)
     assert suggestions == [{'type': 'keyword'}]
+
+
+def test_invalid_sql():
+    # issue 317
+    text = 'selt *'
+    suggestions = suggest_type(text, text)
+    assert suggestions == [{'type': 'keyword'}]
