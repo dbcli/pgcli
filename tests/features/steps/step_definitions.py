@@ -34,7 +34,7 @@ def step_wait_prompt(context):
     """
     Make sure prompt is displayed.
     """
-    context.cli.expect('{0}> '.format(context.conf['dbname']))
+    context.cli.expect('{0}> '.format(context.conf['dbname']), timeout=5)
 
 
 @when('we send "ctrl + d"')
@@ -59,9 +59,11 @@ def step_db_create(context):
     """
     Send create database.
     """
-    context.cli.sendline('create database pgcli_behave_tmp;')
+    context.cli.sendline('create database {0};'.format(
+        context.conf['dbname_tmp']))
+
     context.response = {
-        'database_name': 'pgcli_behave_tmp'
+        'database_name': context.conf['dbname_tmp']
     }
 
 
@@ -70,7 +72,8 @@ def step_db_drop(context):
     """
     Send drop database.
     """
-    context.cli.sendline('drop database pgcli_behave_tmp;')
+    context.cli.sendline('drop database {0};'.format(
+        context.conf['dbname_tmp']))
 
 
 @when('we create table')
@@ -143,7 +146,7 @@ def step_wait_exit(context):
     """
     Make sure the cli exits.
     """
-    context.cli.expect(pexpect.EOF)
+    context.cli.expect(pexpect.EOF, timeout=5)
 
 
 @then('we see pgcli prompt')
@@ -151,7 +154,7 @@ def step_see_prompt(context):
     """
     Wait to see the prompt.
     """
-    context.cli.expect('{0}> '.format(context.conf['dbname']))
+    context.cli.expect('{0}> '.format(context.conf['dbname']), timeout=5)
 
 
 @then('we see help output')
