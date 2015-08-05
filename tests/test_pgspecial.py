@@ -1,3 +1,4 @@
+import pytest
 from pgcli.packages.sqlcompletion import suggest_type
 from test_sqlcompletion import sorted_dicts
 
@@ -68,3 +69,9 @@ def test_schema_qualified_dT_suggests_datatypes():
     suggestions = suggest_type(text, text)
     assert sorted_dicts(suggestions) == sorted_dicts(
         [{'type': 'datatype', 'schema': 'foo'}])
+
+
+@pytest.mark.parametrize('command', ['\\c ', '\\connect '])
+def test_c_suggests_databases(command):
+    suggestions = suggest_type(command, command)
+    assert suggestions == [{'type': 'database'}]

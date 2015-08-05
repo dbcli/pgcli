@@ -93,7 +93,7 @@ def suggest_special(text):
         # Trying to complete the special command itself
         return [{'type': 'special'}]
 
-    if cmd == '\\c':
+    if cmd in ('\\c', '\\connect'):
         return [{'type': 'database'}]
 
     if cmd == '\\dn':
