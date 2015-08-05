@@ -24,18 +24,19 @@ from __future__ import unicode_literals
 
 from .buffer import Buffer
 from .enums import DEFAULT_BUFFER
-from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown, to_simple_filter, to_cli_filter
+from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown, to_simple_filter, to_cli_filter, Condition
 from .history import History
 from .interface import CommandLineInterface, Application, AbortAction, AcceptAction
 from .key_binding.manager import KeyBindingManager
-from .layout import Window, HSplit, FloatContainer, Float
+from .layout import Window, HSplit, VSplit, FloatContainer, Float
+from .layout.containers import ConditionalContainer
 from .layout.controls import BufferControl, TokenListControl
 from .layout.dimension import LayoutDimension
 from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
-from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, ConditionalProcessor
+from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, ConditionalProcessor, ConditionalProcessor
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
-from .layout.toolbars import ValidationToolbar, SystemToolbar
+from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
 from .styles import DefaultStyle
 from .utils import is_conemu_ansi, is_windows
 
@@ -110,7 +111,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
                           reserve_space_for_menu=False,
                           get_prompt_tokens=None, get_bottom_toolbar_tokens=None,
                           display_completions_in_columns=False,
-                          extra_input_processors=None):
+                          extra_input_processors=None, multiline=False):
     """
     Generate default layout.
     Returns a ``Layout`` instance.
@@ -133,6 +134,11 @@ def create_default_layout(message='', lexer=None, is_password=False,
     assert not (message and get_prompt_tokens)
 
     display_completions_in_columns = to_cli_filter(display_completions_in_columns)
+    multiline = to_simple_filter(multiline)
+    multiline_cli_filter = Condition(lambda cli: multiline())
+
+    if get_prompt_tokens is None:
+        get_prompt_tokens = lambda _: [(Token.Prompt, message)]
 
     # Create processors list.
     # (DefaultPrompt should always be at the end.)
@@ -143,10 +149,11 @@ def create_default_layout(message='', lexer=None, is_password=False,
     if extra_input_processors:
         input_processors.extend(extra_input_processors)
 
-    if get_prompt_tokens is None:
-        input_processors.append(DefaultPrompt.from_message(message))
-    else:
-        input_processors.append(DefaultPrompt(get_prompt_tokens))
+    # Show the prompt before the input (using the DefaultPrompt processor.
+    # This also replaces it with reverse-i-search and 'arg' when required.
+    # (Only for single line mode.)
+    input_processors.append(ConditionalProcessor(
+        DefaultPrompt(get_prompt_tokens), ~multiline_cli_filter))
 
     # Create bottom toolbar.
     if get_bottom_toolbar_tokens:
@@ -167,34 +174,47 @@ def create_default_layout(message='', lexer=None, is_password=False,
 
     # Create and return Layout instance.
     return HSplit([
-        FloatContainer(
+        VSplit([
+            # In multiline mode, the prompt is displayed in a left pane.
             Window(
-                BufferControl(
-                    input_processors=input_processors,
-                    lexer=lexer,
-                    # Enable preview_search, we want to have immediate feedback
-                    # in reverse-i-search mode.
-                    preview_search=Always()),
-                get_height=get_height,
+                TokenListControl(get_prompt_tokens),
+                dont_extend_width=True,
+                filter=multiline_cli_filter,
             ),
-            [
-                Float(xcursor=True,
-                      ycursor=True,
-                      content=CompletionsMenu(
-                          max_height=16,
-                          scroll_offset=1,
-                          extra_filter=HasFocus(DEFAULT_BUFFER) &
-                                       ~display_completions_in_columns)),
-                Float(xcursor=True,
-                      ycursor=True,
-                      content=MultiColumnCompletionsMenu(
-                          extra_filter=HasFocus(DEFAULT_BUFFER) &
-                                       display_completions_in_columns,
-                          show_meta=Always()))
-            ]
-        ),
+            # The main input, with completion menus floating on top of it.
+            FloatContainer(
+                Window(
+                    BufferControl(
+                        input_processors=input_processors,
+                        lexer=lexer,
+                        # Enable preview_search, we want to have immediate feedback
+                        # in reverse-i-search mode.
+                        preview_search=Always()),
+                    get_height=get_height,
+                ),
+                [
+                    Float(xcursor=True,
+                          ycursor=True,
+                          content=CompletionsMenu(
+                              max_height=16,
+                              scroll_offset=1,
+                              extra_filter=HasFocus(DEFAULT_BUFFER) &
+                                           ~display_completions_in_columns)),
+                    Float(xcursor=True,
+                          ycursor=True,
+                          content=MultiColumnCompletionsMenu(
+                              extra_filter=HasFocus(DEFAULT_BUFFER) &
+                                           display_completions_in_columns,
+                              show_meta=Always()))
+                ]
+            ),
+        ]),
         ValidationToolbar(),
         SystemToolbar(),
+
+        # In multiline mode, we use two toolbars for 'arg' and 'search'.
+        ConditionalContainer(ArgToolbar(), multiline_cli_filter),
+        ConditionalContainer(SearchToolbar(), multiline_cli_filter),
     ] + toolbars)
 
 
@@ -273,6 +293,7 @@ def create_default_application(
                 lexer=lexer,
                 is_password=is_password,
                 reserve_space_for_menu=(completer is not None),
+                multiline=multiline,
                 get_prompt_tokens=get_prompt_tokens,
                 get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
                 display_completions_in_columns=display_completions_in_columns,
