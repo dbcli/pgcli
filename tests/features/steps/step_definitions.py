@@ -34,7 +34,7 @@ def step_wait_prompt(context):
     """
     Make sure prompt is displayed.
     """
-    context.cli.expect('{0}> '.format(context.conf['dbname']))
+    context.cli.expect('{0}> '.format(context.conf['dbname']), timeout=5)
 
 
 @when('we send "ctrl + d"')
@@ -146,7 +146,7 @@ def step_wait_exit(context):
     """
     Make sure the cli exits.
     """
-    context.cli.expect(pexpect.EOF)
+    context.cli.expect(pexpect.EOF, timeout=5)
 
 
 @then('we see pgcli prompt')
@@ -154,7 +154,7 @@ def step_see_prompt(context):
     """
     Wait to see the prompt.
     """
-    context.cli.expect('{0}> '.format(context.conf['dbname']))
+    context.cli.expect('{0}> '.format(context.conf['dbname']), timeout=5)
 
 
 @then('we see help output')
