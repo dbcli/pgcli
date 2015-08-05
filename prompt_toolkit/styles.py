@@ -34,8 +34,8 @@ default_style_extensions = {
     Token.Prompt.Search.Text:                     'bold',
 
     # Search toolbar.
-    Token.Toolbar.Search:                         '#22aaaa noinherit',
-    Token.Toolbar.Search.Text:                    'noinherit',
+    Token.Toolbar.Search:                         '',
+    Token.Toolbar.Search.Text:                    'noinherit bold',
 
     # System toolbar
     Token.Toolbar.System.Prefix:                  'bg:#000000 #ffffff bold',
