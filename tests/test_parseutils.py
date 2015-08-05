@@ -14,9 +14,25 @@ def test_simple_select_single_table_schema_qualified():
     tables = extract_tables('select * from abc.def')
     assert tables == [('abc', 'def', None)]
 
+def test_simple_select_single_table_double_quoted():
+    tables = extract_tables('select * from "Abc"')
+    assert tables == [(None, 'Abc', None)]
+
 def test_simple_select_multiple_tables():
     tables = extract_tables('select * from abc, def')
     assert sorted(tables) == [(None, 'abc', None), (None, 'def', None)]
+
+def test_simple_select_multiple_tables_double_quoted():
+    tables = extract_tables('select * from "Abc", "Def"')
+    assert tables == [(None, 'Abc', None), (None, 'Def', None)]
+
+def test_simple_select_single_table_deouble_quoted_aliased():
+    tables = extract_tables('select * from "Abc" a')
+    assert tables == [(None, 'Abc', 'a')]
+
+def test_simple_select_multiple_tables_deouble_quoted_aliased():
+    tables = extract_tables('select * from "Abc" a, "Def" d')
+    assert tables == [(None, 'Abc', 'a'), (None, 'Def', 'd')]
 
 def test_simple_select_multiple_tables_schema_qualified():
     tables = extract_tables('select * from abc.def, ghi.jkl')

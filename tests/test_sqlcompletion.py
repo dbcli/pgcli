@@ -157,14 +157,36 @@ def test_dot_suggests_cols_of_a_table_or_schema_qualified_table():
         {'type': 'view', 'schema': 'tabl'},
         {'type': 'function', 'schema': 'tabl'}])
 
-def test_dot_suggests_cols_of_an_alias():
-    suggestions = suggest_type('SELECT t1. FROM tabl1 t1, tabl2 t2',
-            'SELECT t1.')
+
+@pytest.mark.parametrize('sql', [
+    'SELECT t1. FROM tabl1 t1',
+    'SELECT t1. FROM tabl1 t1, tabl2 t2',
+    'SELECT t1. FROM "tabl1" t1',
+    'SELECT t1. FROM "tabl1" t1, "tabl2" t2',
+    ])
+def test_dot_suggests_cols_of_an_alias(sql):
+    suggestions = suggest_type(sql, 'SELECT t1.')
     assert sorted_dicts(suggestions) == sorted_dicts([
         {'type': 'table', 'schema': 't1'},
         {'type': 'view', 'schema': 't1'},
         {'type': 'column', 'tables': [(None, 'tabl1', 't1')]},
         {'type': 'function', 'schema': 't1'}])
+
+
+@pytest.mark.parametrize('sql', [
+    'SELECT * FROM tabl1 t1 WHERE t1.',
+    'SELECT * FROM tabl1 t1, tabl2 t2 WHERE t1.',
+    'SELECT * FROM "tabl1" t1 WHERE t1.',
+    'SELECT * FROM "tabl1" t1, tabl2 t2 WHERE t1.',
+    ])
+def test_dot_suggests_cols_of_an_alias_where(sql):
+    suggestions = suggest_type(sql, sql)
+    assert sorted_dicts(suggestions) == sorted_dicts([
+        {'type': 'table', 'schema': 't1'},
+        {'type': 'view', 'schema': 't1'},
+        {'type': 'column', 'tables': [(None, 'tabl1', 't1')]},
+        {'type': 'function', 'schema': 't1'}])
+
 
 def test_dot_col_comma_suggests_cols_or_schema_qualified_table():
     suggestions = suggest_type('SELECT t1.a, t2. FROM tabl1 t1, tabl2 t2',
