@@ -386,3 +386,14 @@ def test_suggest_datatype(text, completer, complete_event):
         list(map(lambda f: Completion(f, display_meta='datatype'), completer.datatypes)))
 
 
+def test_suggest_columns_from_escaped_table_alias(completer, complete_event):
+    sql = 'select * from "select" s where s.'
+    pos = len(sql)
+    result = completer.get_completions(Document(text=sql, cursor_position=pos),
+                                       complete_event)
+    assert set(result) == set([
+        Completion(text='*', start_position=0, display_meta='column'),
+        Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='"insert"', start_position=0, display_meta='column'),
+        Completion(text='"ABC"', start_position=0, display_meta='column'),
+    ])
