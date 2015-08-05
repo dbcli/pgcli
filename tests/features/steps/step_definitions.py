@@ -59,9 +59,11 @@ def step_db_create(context):
     """
     Send create database.
     """
-    context.cli.sendline('create database pgcli_behave_tmp;')
+    context.cli.sendline('create database {0};'.format(
+        context.conf['dbname_tmp']))
+
     context.response = {
-        'database_name': 'pgcli_behave_tmp'
+        'database_name': context.conf['dbname_tmp']
     }
 
 
@@ -70,7 +72,8 @@ def step_db_drop(context):
     """
     Send drop database.
     """
-    context.cli.sendline('drop database pgcli_behave_tmp;')
+    context.cli.sendline('drop database {0};'.format(
+        context.conf['dbname_tmp']))
 
 
 @when('we create table')

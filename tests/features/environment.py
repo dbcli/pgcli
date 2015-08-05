@@ -29,6 +29,7 @@ def before_all(context):
         'user': context.config.userdata.get('pg_test_user', 'postgres'),
         'pass': context.config.userdata.get('pg_test_pass', None),
         'dbname': db_name_full,
+        'dbname_tmp': db_name_full + '_tmp',
     }
 
     # Store old env vars.
