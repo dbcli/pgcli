@@ -347,10 +347,10 @@ class TelnetServer(object):
         try:
             while True:
                 # Removed closed connections.
-                self.connections = {c for c in self.connections if not c.closed}
+                self.connections = set([c for c in self.connections if not c.closed])
 
                 # Ignore connections handling commands.
-                connections = { c for c in self.connections if not c.handling_command}
+                connections = set([c for c in self.connections if not c.handling_command])
 
                 # Wait for next event.
                 read_list = (
