@@ -35,14 +35,14 @@ default_style_extensions = {
 
     # Search toolbar.
     Token.Toolbar.Search:                         '',
-    Token.Toolbar.Search.Text:                    'noinherit bold',
+    Token.Toolbar.Search.Text:                    'bold',
 
     # System toolbar
     Token.Toolbar.System.Prefix:                  'bg:#000000 #ffffff bold',
 
     # "arg" toolbar.
     Token.Toolbar.Arg:                            '',
-    Token.Toolbar.Arg.Text:                       'noinherit bold',
+    Token.Toolbar.Arg.Text:                       'bold',
 
     # Validation toolbar.
     Token.Toolbar.Validation:                     'bg:#550000 #ffffff',

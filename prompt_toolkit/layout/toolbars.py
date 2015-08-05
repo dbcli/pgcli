@@ -89,6 +89,7 @@ class SearchToolbarControl(BufferControl):
         super(SearchToolbarControl, self).__init__(
             buffer_name=SEARCH_BUFFER,
             input_processors=[BeforeInput(get_before_input)],
+            default_token=token.Text
         )
 
 
