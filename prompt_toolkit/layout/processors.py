@@ -339,6 +339,12 @@ class ConditionalProcessor(Processor):
         else:
             return tokens, lambda i: i
 
+    def has_focus(self, cli):
+        if self.filter(cli):
+            return self.processor.has_focus(cli)
+        else:
+            return False
+
     def invalidation_hash(self, cli, document):
         # When enabled, use the hash of the processor. Otherwise, just use
         # False.
