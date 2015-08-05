@@ -19,6 +19,7 @@ __all__ = (
     'FloatContainer',
     'Float',
     'Window',
+    'ConditionalContainer',
 )
 
 
@@ -520,6 +521,44 @@ class WindowRenderInfo(object):
         """
         return (100 * self.vertical_scroll //
                 (self.original_screen.current_height - self.rendered_height))
+
+
+class ConditionalContainer(Layout):
+    """
+    Wrapper around any other container that can change the visibility. The
+    received `filter` determines whether the given container should be
+    displayed or not.
+
+    :param container: `Container` instance.
+    :param filter: `CLIFilter` instance.
+    """
+    def __init__(self, container, filter):
+        assert isinstance(container, Layout)
+
+        self.container = container
+        self.filter = to_cli_filter(filter)
+
+    def reset(self):
+        self.container.reset()
+
+    def preferred_width(self, cli, max_available_width):
+        if self.filter(cli):
+            return self.container.preferred_width(cli, max_available_width)
+        else:
+            return LayoutDimension.exact(0)
+
+    def preferred_height(self, cli, width):
+        if self.filter(cli):
+            return self.container.preferred_height(cli, width)
+        else:
+            return LayoutDimension.exact(0)
+
+    def write_to_screen(self, cli, screen, write_position):
+        if self.filter(cli):
+            return self.container.write_to_screen(cli, screen, write_position)
+
+    def walk(self):
+        return self.container.walk()
 
 
 class Window(Layout):
