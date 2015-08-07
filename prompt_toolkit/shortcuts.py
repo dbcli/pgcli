@@ -33,7 +33,7 @@ from .layout.containers import ConditionalContainer
 from .layout.controls import BufferControl, TokenListControl
 from .layout.dimension import LayoutDimension
 from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
-from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, ConditionalProcessor, ConditionalProcessor
+from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, ConditionalProcessor
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
@@ -127,6 +127,10 @@ def create_default_layout(message='', lexer=None, is_password=False,
         tokens for a toolbar at the bottom.
     :param display_completions_in_columns: `bool` or `CLIFilter`. Display the
         completions in multiple columns.
+    :param multiline: `bool` or `CLIFilter`. When True, prefer a layout that is
+        more adapted for multiline input. Text after newlines is automatically
+        indented, and search/arg input is shown below the input, instead of
+        replacing the prompt.
     """
     assert isinstance(message, text_type)
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
@@ -134,8 +138,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
     assert not (message and get_prompt_tokens)
 
     display_completions_in_columns = to_cli_filter(display_completions_in_columns)
-    multiline = to_simple_filter(multiline)
-    multiline_cli_filter = Condition(lambda cli: multiline())
+    multiline = to_cli_filter(multiline)
 
     if get_prompt_tokens is None:
         get_prompt_tokens = lambda _: [(Token.Prompt, message)]
@@ -153,7 +156,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
     # This also replaces it with reverse-i-search and 'arg' when required.
     # (Only for single line mode.)
     input_processors.append(ConditionalProcessor(
-        DefaultPrompt(get_prompt_tokens), ~multiline_cli_filter))
+        DefaultPrompt(get_prompt_tokens), ~multiline))
 
     # Create bottom toolbar.
     if get_bottom_toolbar_tokens:
@@ -179,7 +182,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
             Window(
                 TokenListControl(get_prompt_tokens),
                 dont_extend_width=True,
-                filter=multiline_cli_filter,
+                filter=multiline,
             ),
             # The main input, with completion menus floating on top of it.
             FloatContainer(
@@ -213,8 +216,8 @@ def create_default_layout(message='', lexer=None, is_password=False,
         SystemToolbar(),
 
         # In multiline mode, we use two toolbars for 'arg' and 'search'.
-        ConditionalContainer(ArgToolbar(), multiline_cli_filter),
-        ConditionalContainer(SearchToolbar(), multiline_cli_filter),
+        ConditionalContainer(ArgToolbar(), multiline),
+        ConditionalContainer(SearchToolbar(), multiline),
     ] + toolbars)
 
 
@@ -293,7 +296,7 @@ def create_default_application(
                 lexer=lexer,
                 is_password=is_password,
                 reserve_space_for_menu=(completer is not None),
-                multiline=multiline,
+                multiline=Condition(lambda cli: multiline()),
                 get_prompt_tokens=get_prompt_tokens,
                 get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
                 display_completions_in_columns=display_completions_in_columns,
