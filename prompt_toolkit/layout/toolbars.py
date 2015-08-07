@@ -7,9 +7,9 @@ from ..enums import IncrementalSearchDirection
 
 from .processors import BeforeInput
 
-from . import Window
 from .dimension import LayoutDimension
 from .controls import BufferControl, TokenListControl, UIControl
+from .containers import Window, ConditionalContainer
 from .utils import token_list_len
 from .screen import Screen
 from prompt_toolkit.filters import HasFocus, HasArg, HasCompletions, HasValidationError, HasSearch, Never, Always, IsDone
@@ -25,11 +25,12 @@ __all__ = (
 )
 
 
-class TokenListToolbar(Window):
+class TokenListToolbar(ConditionalContainer):
     def __init__(self, get_tokens, default_char=None, filter=Always()):
         super(TokenListToolbar, self).__init__(
-            TokenListControl(get_tokens, default_char=default_char),
-            height=LayoutDimension.exact(1),
+            content=Window(
+                TokenListControl(get_tokens, default_char=default_char),
+                height=LayoutDimension.exact(1)),
             filter=filter)
 
 
@@ -42,11 +43,12 @@ class SystemToolbarControl(BufferControl):
             input_processors=[BeforeInput.static('Shell command: ', Token.Toolbar.System)],)
 
 
-class SystemToolbar(Window):
+class SystemToolbar(ConditionalContainer):
     def __init__(self):
         super(SystemToolbar, self).__init__(
-            SystemToolbarControl(),
-            height=LayoutDimension.exact(1),
+            content=Window(
+                SystemToolbarControl(),
+                height=LayoutDimension.exact(1)),
             filter=HasFocus(SYSTEM_BUFFER) & ~IsDone())
 
 
@@ -61,11 +63,12 @@ class ArgToolbarControl(TokenListControl):
         super(ArgToolbarControl, self).__init__(get_tokens)
 
 
-class ArgToolbar(Window):
+class ArgToolbar(ConditionalContainer):
     def __init__(self):
         super(ArgToolbar, self).__init__(
-            ArgToolbarControl(),
-            height=LayoutDimension.exact(1),
+            content=Window(
+                ArgToolbarControl(),
+                height=LayoutDimension.exact(1)),
             filter=HasArg())
 
 
@@ -93,11 +96,12 @@ class SearchToolbarControl(BufferControl):
         )
 
 
-class SearchToolbar(Window):
+class SearchToolbar(ConditionalContainer):
     def __init__(self, vi_mode=False):
         super(SearchToolbar, self).__init__(
-            SearchToolbarControl(vi_mode=vi_mode),
-            height=LayoutDimension.exact(1),
+            content=Window(
+                SearchToolbarControl(vi_mode=vi_mode),
+                height=LayoutDimension.exact(1)),
             filter=HasSearch() & ~IsDone())
 
 
@@ -157,11 +161,12 @@ class CompletionsToolbarControl(UIControl):
         return screen
 
 
-class CompletionsToolbar(Window):
+class CompletionsToolbar(ConditionalContainer):
     def __init__(self, extra_filter=Always()):
         super(CompletionsToolbar, self).__init__(
-            CompletionsToolbarControl(),
-            height=LayoutDimension.exact(1),
+            content=Window(
+                CompletionsToolbarControl(),
+                height=LayoutDimension.exact(1)),
             filter=HasCompletions() & ~IsDone() & extra_filter)
 
 
@@ -189,9 +194,10 @@ class ValidationToolbarControl(TokenListControl):
         super(ValidationToolbarControl, self).__init__(get_tokens)
 
 
-class ValidationToolbar(Window):
+class ValidationToolbar(ConditionalContainer):
     def __init__(self, show_position=False):
         super(ValidationToolbar, self).__init__(
-            ValidationToolbarControl(show_position=show_position),
-            height=LayoutDimension.exact(1),
+            content=Window(
+                ValidationToolbarControl(show_position=show_position),
+                height=LayoutDimension.exact(1)),
             filter=HasValidationError() & ~IsDone())

@@ -48,5 +48,5 @@ And one prepared menu:
 """
 from __future__ import unicode_literals
 
-from .containers import Float, FloatContainer, HSplit, VSplit, Window
+from .containers import Float, FloatContainer, HSplit, VSplit, Window, ConditionalContainer
 from .controls import TokenListControl, FillControl, BufferControl

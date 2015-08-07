@@ -532,7 +532,6 @@ class Window(Layout):
     :param height: `LayoutDimension` instance.
     :param get_width: callable which takes a `CommandLineInterface` and returns a `LayoutDimension`.
     :param get_height: callable which takes a `CommandLineInterface` and returns a `LayoutDimension`.
-    :param filter: `bool` or `Filter` which decides about the visibility.
     :param dont_extend_width: When `True`, don't take up more width then the
                               preferred width reported by the control.
     :param dont_extend_height: When `True`, don't take up more width then the
@@ -548,7 +547,7 @@ class Window(Layout):
          You will see tildes while the top part of the body is hidden.
     """
     def __init__(self, content, width=None, height=None, get_width=None,
-                 get_height=None, filter=True, dont_extend_width=False,
+                 get_height=None, dont_extend_width=False,
                  dont_extend_height=False, scroll_offset=0, allow_scroll_beyond_bottom=False):
         assert isinstance(content, UIControl)
         assert width is None or isinstance(width, LayoutDimension)
@@ -559,7 +558,6 @@ class Window(Layout):
         assert height is None or get_height is None
         assert isinstance(scroll_offset, Integer)
 
-        self.filter = to_cli_filter(filter)
         self.allow_scroll_beyond_bottom = to_cli_filter(allow_scroll_beyond_bottom)
 
         self.content = content
@@ -584,54 +582,42 @@ class Window(Layout):
         #: output.)
         self.render_info = None
 
-    def _visible(self, cli):
-        return self.filter(cli)
-
     def preferred_width(self, cli, max_available_width):
-        if self._visible(cli):
-            width = self._width(cli) or LayoutDimension()
-            preferred_width = self.content.preferred_width(cli, max_available_width)
+        width = self._width(cli) or LayoutDimension()
+        preferred_width = self.content.preferred_width(cli, max_available_width)
 
-            if preferred_width is None:
-                return width
-            else:
-                # When 'dont_extend_width' has been given. Don't use more than
-                # the preferred width of the control. (But also don't go below
-                # the minimum.)
-                if self.dont_extend_width:
-                    max_width = max(width.min, min(preferred_width, width.max))
-                else:
-                    max_width = width.max
-                return LayoutDimension(min=width.min, max=max_width, preferred=preferred_width)
+        if preferred_width is None:
+            return width
         else:
-            return LayoutDimension.exact(0)
+            # When 'dont_extend_width' has been given. Don't use more than
+            # the preferred width of the control. (But also don't go below
+            # the minimum.)
+            if self.dont_extend_width:
+                max_width = max(width.min, min(preferred_width, width.max))
+            else:
+                max_width = width.max
+            return LayoutDimension(min=width.min, max=max_width, preferred=preferred_width)
 
     def preferred_height(self, cli, width):
-        if self._visible(cli):
-            height = self._height(cli) or LayoutDimension()
-            preferred_height = self.content.preferred_height(cli, width)
+        height = self._height(cli) or LayoutDimension()
+        preferred_height = self.content.preferred_height(cli, width)
 
-            if preferred_height is None:
-                return height
-            else:
-                # When 'dont_extend_height' has been given. Don't use more than
-                # the preferred height of the control. (But also don't go below
-                # the minimum.)
-                if self.dont_extend_height:
-                    max_height = max(height.min, min(preferred_height, height.max))
-                else:
-                    max_height = height.max
-                return LayoutDimension(min=height.min, max=max_height, preferred=preferred_height)
+        if preferred_height is None:
+            return height
         else:
-            return LayoutDimension.exact(0)
+            # When 'dont_extend_height' has been given. Don't use more than
+            # the preferred height of the control. (But also don't go below
+            # the minimum.)
+            if self.dont_extend_height:
+                max_height = max(height.min, min(preferred_height, height.max))
+            else:
+                max_height = height.max
+            return LayoutDimension(min=height.min, max=max_height, preferred=preferred_height)
 
     def write_to_screen(self, cli, screen, write_position):
-        # Only write when visible.
-        if self._visible(cli):
-            # Set position.
-            temp_screen = self.content.create_screen(cli, write_position.width, write_position.height)
-            applied_scroll_offsets = self._scroll(temp_screen, write_position.height, cli)
-            self._copy(cli, temp_screen, screen, write_position, applied_scroll_offsets)
+        temp_screen = self.content.create_screen(cli, write_position.width, write_position.height)
+        applied_scroll_offsets = self._scroll(temp_screen, write_position.height, cli)
+        self._copy(cli, temp_screen, screen, write_position, applied_scroll_offsets)
 
     def _copy(self, cli, temp_screen, new_screen, write_position, applied_scroll_offsets):
         """
@@ -731,35 +717,33 @@ class ConditionalContainer(Layout):
     received `filter` determines whether the given container should be
     displayed or not.
 
-    :param container: `Container` instance.
+    :param content: `Container` instance.
     :param filter: `CLIFilter` instance.
     """
-    def __init__(self, container, filter):
-        assert isinstance(container, Layout)
+    def __init__(self, content, filter):
+        assert isinstance(content, Layout)
 
-        self.container = container
+        self.content = content
         self.filter = to_cli_filter(filter)
 
     def reset(self):
-        self.container.reset()
+        self.content.reset()
 
     def preferred_width(self, cli, max_available_width):
         if self.filter(cli):
-            return self.container.preferred_width(cli, max_available_width)
+            return self.content.preferred_width(cli, max_available_width)
         else:
             return LayoutDimension.exact(0)
 
     def preferred_height(self, cli, width):
         if self.filter(cli):
-            return self.container.preferred_height(cli, width)
+            return self.content.preferred_height(cli, width)
         else:
             return LayoutDimension.exact(0)
 
     def write_to_screen(self, cli, screen, write_position):
         if self.filter(cli):
-            return self.container.write_to_screen(cli, screen, write_position)
+            return self.content.write_to_screen(cli, screen, write_position)
 
     def walk(self):
-        return self.container.walk()
-
-
+        return self.content.walk()

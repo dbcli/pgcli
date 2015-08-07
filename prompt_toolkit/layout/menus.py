@@ -6,7 +6,7 @@ from prompt_toolkit.reactive import Integer
 from prompt_toolkit.utils import get_cwidth
 from pygments.token import Token
 
-from .containers import Window, HSplit
+from .containers import Window, HSplit, ConditionalContainer
 from .controls import UIControl
 from .dimension import LayoutDimension
 from .screen import Screen
@@ -190,12 +190,13 @@ def _trim_text(text, max_width):
         return text, width
 
 
-class CompletionsMenu(Window):
+class CompletionsMenu(ConditionalContainer):
     def __init__(self, max_height=None, scroll_offset=0, extra_filter=Always()):
         super(CompletionsMenu, self).__init__(
-            content=CompletionsMenuControl(scroll_offset=scroll_offset),
-            width=LayoutDimension(min=8),
-            height=LayoutDimension(min=1, max=max_height),
+            content=Window(
+                content=CompletionsMenuControl(scroll_offset=scroll_offset),
+                width=LayoutDimension(min=8),
+                height=LayoutDimension(min=1, max=max_height)),
             # Show when there are completions but not at the point we are
             # returning the input.
             filter=HasCompletions() & ~IsDone() & extra_filter)
@@ -351,14 +352,15 @@ class MultiColumnCompletionsMenu(HSplit):
                 any(c.display_meta for c in cli.current_buffer.complete_state.current_completions))
 
         # Create child windows.
-        completions_window = Window(
-            content=MultiColumnCompletionMenuControl(min_rows=min_rows),
-            width=LayoutDimension(min=8),
-            height=LayoutDimension(min=1),
+        completions_window = ConditionalContainer(
+            content=Window(
+                content=MultiColumnCompletionMenuControl(min_rows=min_rows),
+                width=LayoutDimension(min=8),
+                height=LayoutDimension(min=1)),
             filter=full_filter)
 
-        meta_window = Window(
-            content=_SelectedCompletionMetaControl(),
+        meta_window = ConditionalContainer(
+            content=Window(content=_SelectedCompletionMetaControl()),
             filter=show_meta & full_filter & any_completion_has_meta)
 
         # Initialise split.
