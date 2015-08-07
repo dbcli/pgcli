@@ -73,6 +73,7 @@ class PGCli(object):
         self.pgspecial.timing_enabled = c['main'].as_bool('timing')
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
+        self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
 
         self.logger = logging.getLogger(__name__)
@@ -256,7 +257,7 @@ class PGCli(object):
                 history=FileHistory(os.path.expanduser(history_file)),
                 complete_while_typing=Always())
 
-        application = Application(style=style_factory(self.syntax_style),
+        application = Application(style=style_factory(self.syntax_style, self.cli_style),
                                   layout=layout, buffer=buf,
                                   key_bindings_registry=key_binding_manager.registry,
                                   on_exit=AbortAction.RAISE_EXCEPTION)
