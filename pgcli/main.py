@@ -48,9 +48,11 @@ from collections import namedtuple
 # Query tuples are used for maintaining history
 Query = namedtuple('Query', ['query', 'successful', 'mutating'])
 
+
 class PGCli(object):
+
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
-                 pgexecute=None):
+                 pgexecute=None, pgclirc_file=None):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
@@ -60,12 +62,12 @@ class PGCli(object):
         package_root = os.path.dirname(package_root)
 
         default_config = os.path.join(package_root, 'pgclirc')
-        write_default_config(default_config, '~/.pgclirc')
+        write_default_config(default_config, pgclirc_file)
 
         self.pgspecial = PGSpecial()
 
         # Load config.
-        c = self.config = load_config('~/.pgclirc', default_config)
+        c = self.config = load_config(pgclirc_file, default_config)
         self.multi_line = c['main'].as_bool('multi_line')
         self.vi_mode = c['main'].as_bool('vi')
         self.pgspecial.timing_enabled = c['main'].as_bool('timing')
@@ -431,16 +433,18 @@ class PGCli(object):
 @click.option('-v', '--version', is_flag=True, help='Version of pgcli.')
 @click.option('-d', '--dbname', default='', envvar='PGDATABASE',
         help='database name to connect to.')
+@click.option('--pgclirc', default='~/.pgclirc', envvar='PGCLIRC',
+        help='Location of .pgclirc file.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
-        username, version):
+        username, version, pgclirc):
 
     if version:
         print('Version:', __version__)
         sys.exit(0)
 
-    pgcli = PGCli(prompt_passwd, never_prompt)
+    pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc)
 
     # Choose which ever one has a valid value.
     database = database or dbname
