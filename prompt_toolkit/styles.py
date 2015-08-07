@@ -34,15 +34,15 @@ default_style_extensions = {
     Token.Prompt.Search.Text:                     'bold',
 
     # Search toolbar.
-    Token.Toolbar.Search:                         '',
-    Token.Toolbar.Search.Text:                    'bold',
+    Token.Toolbar.Search:                         'bold',
+    Token.Toolbar.Search.Text:                    'nobold',
 
     # System toolbar
-    Token.Toolbar.System.Prefix:                  'bg:#000000 #ffffff bold',
+    Token.Toolbar.System:                         'bold',
 
     # "arg" toolbar.
-    Token.Toolbar.Arg:                            '',
-    Token.Toolbar.Arg.Text:                       'bold',
+    Token.Toolbar.Arg:                            'bold',
+    Token.Toolbar.Arg.Text:                       'nobold',
 
     # Validation toolbar.
     Token.Toolbar.Validation:                     'bg:#550000 #ffffff',
@@ -58,6 +58,7 @@ default_style_extensions = {
     Token.Menu.Completions.Completion.Current:    'bg:#888888 #ffffff',
     Token.Menu.Completions.Meta:                  'bg:#999999 #000000',
     Token.Menu.Completions.Meta.Current:          'bg:#aaaaaa #000000',
+    Token.Menu.Completions.MultiColumnMeta:       'bg:#aaaaaa #000000',
     Token.Menu.Completions.ProgressBar:           'bg:#aaaaaa',
     Token.Menu.Completions.ProgressButton:        'bg:#000000',
 

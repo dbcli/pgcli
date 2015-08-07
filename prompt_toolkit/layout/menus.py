@@ -395,7 +395,7 @@ class _SelectedCompletionMetaControl(UIControl):
         return screen
 
     def _get_tokens(self, cli):
-        token = Token.Menu.Completions.Meta.Current
+        token = Token.Menu.Completions.MultiColumnMeta
         state = cli.current_buffer.complete_state
 
         if state and state.current_completion and state.current_completion.display_meta:

@@ -39,7 +39,7 @@ class SystemToolbarControl(BufferControl):
             lexer=BashLexer,
             buffer_name=SYSTEM_BUFFER,
             show_line_numbers=Never(),
-            input_processors=[BeforeInput.static('Shell command: ', Token.Toolbar.System.Prefix)],)
+            input_processors=[BeforeInput.static('Shell command: ', Token.Toolbar.System)],)
 
 
 class SystemToolbar(Window):
