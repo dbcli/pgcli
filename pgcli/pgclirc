@@ -44,6 +44,22 @@ syntax_style = default
 # for end are available in the REPL.
 vi = False
 
-# Named queries are queries you can rexecute by name
+
+# Custom colors for the completion menu, toolbar, etc. 
+[colors]
+Token.Menu.Completions.Completion.Current = 'bg:#ffffff #000000'
+Token.Menu.Completions.Completion = 'bg:#008888 #ffffff'
+Token.Menu.Completions.Meta.Current = 'bg:#44aaaa #000000'
+Token.Menu.Completions.Meta = 'bg:#448888 #ffffff'
+Token.Menu.Completions.ProgressButton = 'bg:#003333'
+Token.Menu.Completions.ProgressBar = 'bg:#00aaaa'
+Token.SelectedText = '#ffffff bg:#6666aa'
+Token.IncrementalSearchMatch = '#ffffff bg:#4444aa'
+Token.IncrementalSearchMatch.Current = '#ffffff bg:#44aa44'
+Token.Toolbar = 'bg:#222222 #aaaaaa'
+Token.Toolbar.Off = 'bg:#222222 #888888'
+Token.Toolbar.On = 'bg:#222222 #ffffff'
+
+# Named queries are queries you can execute by name.
 [named queries]
 
