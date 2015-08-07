@@ -42,6 +42,7 @@ except ImportError:
     from urllib.parse import urlparse
 from getpass import getuser
 from psycopg2 import OperationalError
+from configobj import ConfigObj, ConfigObjError
 
 from collections import namedtuple
 
@@ -51,12 +52,16 @@ Query = namedtuple('Query', ['query', 'successful', 'mutating'])
 
 class PGCli(object):
 
+    # Files lower in list override higher ones.
+    cnf_files = None
+
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
                  pgexecute=None, pgclirc_file=None):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
+        self.cnf_files = self.find_config_files()
 
         from pgcli import __file__ as package_root
         package_root = os.path.dirname(package_root)
@@ -86,6 +91,52 @@ class PGCli(object):
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial)
         self.completer = completer
         self.register_special_commands()
+
+    def find_config_files(self):
+        """
+        Look for pg_service.conf files in system or user dir.
+        """
+        cnf_files = []
+
+        cfg_path = os.environ.get('PGSYSCONFDIR', None)
+        if cfg_path:
+            cfg_path = os.path.expanduser(
+                os.path.join(cfg_path, 'pg_service.conf'))
+            if os.path.isfile(cfg_path):
+                cnf_files.append(cfg_path)
+
+        if os.path.isfile(os.path.expanduser('~/.pg_service.conf')):
+            cnf_files.append(os.path.expanduser('~/.pg_service.conf'))
+
+        return cnf_files
+
+    def read_ini_files(self, files, sections, keys):
+        """
+        Reads a list of config files and merges them. The last one will win.
+        :param files: list of files to read
+        :param keys: list of sections to parse
+        :param keys: list of keys to retrieve
+        :returns: dict, with None for missing keys.
+        """
+        cnf = ConfigObj()
+        for filename in files:
+            try:
+                cnf.merge(ConfigObj(
+                    os.path.expanduser(filename), interpolation=False))
+            except ConfigObjError as e:
+                self.logger.error('Error parsing %r.', filename)
+                self.logger.error('Recovering partially parsed config values.')
+                cnf.merge(e.config)
+                pass
+
+        def get(key):
+            result = None
+            for sect in sections:
+                if sect in cnf and key in cnf[sect]:
+                    result = cnf[sect][key]
+            return result
+
+        return dict([(x, get(x)) for x in keys])
 
     def register_special_commands(self):
 
@@ -436,10 +487,12 @@ class PGCli(object):
         help='database name to connect to.')
 @click.option('--pgclirc', default='~/.pgclirc', envvar='PGCLIRC',
         help='Location of .pgclirc file.')
+@click.option('--service', default=None, envvar='PGSERVICE',
+        help='Service name to read connection parameters for.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
-        username, version, pgclirc):
+        username, version, pgclirc, service):
 
     if version:
         print('Version:', __version__)
@@ -450,6 +503,18 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
     # Choose which ever one has a valid value.
     database = database or dbname
     user = username or user
+
+    # User wants to connect with specified service parameters.
+    # Read those from config files if any.
+    if service and pgcli.cnf_files:
+
+        cnf_values = pgcli.read_ini_files(
+            pgcli.cnf_files,
+            [service],
+            ['dbname', 'user', 'host', 'port'])
+
+        database, user, host, port = cnf_values['dbname'], \
+            cnf_values['user'], cnf_values['host'], cnf_values['port']
 
     if '://' in database:
         pgcli.connect_uri(database)
