@@ -899,7 +899,7 @@ class Buffer(object):
         if self.text and (not len(self._history) or self._history[-1] != self.text):
             self._history.append(self.text)
 
-    def _search(self, search_state):
+    def _search(self, search_state, include_current_position=False):
         """
         Execute search. Return (working_index, cursor_position) tuple when this
         search is applied. Returns `None` when this text cannot be found.
@@ -911,13 +911,16 @@ class Buffer(object):
 
         if direction == IncrementalSearchDirection.FORWARD:
             # Try find at the current input.
-            new_index = self.document.find(text, include_current_position=False,
-                                           ignore_case=ignore_case)
+            new_index = self.document.find(
+               text, include_current_position=include_current_position,
+               ignore_case=ignore_case)
 
             if new_index is not None:
                 return (self.working_index, self.cursor_position + new_index)
             else:
                 # No match, go forward in the history. (Include len+1 to wrap around.)
+                # (Here we should always include all cursor positions, because
+                # it's a different line.)
                 for i in range(self.working_index + 1, len(self._working_lines) + 1):
                     i %= len(self._working_lines)
 
@@ -949,7 +952,7 @@ class Buffer(object):
         Return a `Document` instance that has the text/cursor position for this
         search, if we would apply it.
         """
-        search_result = self._search(search_state)
+        search_result = self._search(search_state, include_current_position=True)
 
         if search_result is None:
             return self.document
@@ -957,12 +960,13 @@ class Buffer(object):
             working_index, cursor_position = search_result
             return Document(self._working_lines[working_index], cursor_position)
 
-    def apply_search(self, search_state):
+    def apply_search(self, search_state, include_current_position=True):
         """
         Return a `Document` instance that has the text/cursor position for this
         search, if we would apply it.
         """
-        search_result = self._search(search_state)
+        search_result = self._search(search_state,
+            include_current_position=include_current_position)
 
         if search_result is not None:
             working_index, cursor_position = search_result

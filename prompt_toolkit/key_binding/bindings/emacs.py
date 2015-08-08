@@ -505,7 +505,7 @@ def load_emacs_search_bindings(registry, filter=None):
             event.cli.search_state.text = search_buffer.text
 
         # Apply search.
-        input_buffer.apply_search(event.cli.search_state)
+        input_buffer.apply_search(event.cli.search_state, include_current_position=True)
 
         # Add query to history of search line.
         search_buffer.append_to_history()
@@ -529,21 +529,27 @@ def load_emacs_search_bindings(registry, filter=None):
     def _(event):
         # Update search_state.
         search_state = event.cli.search_state
+        direction_changed = search_state.direction != IncrementalSearchDirection.BACKWARD
+
         search_state.text = event.cli.buffers[SEARCH_BUFFER].text
         search_state.direction = IncrementalSearchDirection.BACKWARD
 
         # Apply search to current buffer.
-        input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        input_buffer.apply_search(event.cli.search_state)
+        if not direction_changed:
+            input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
+            input_buffer.apply_search(event.cli.search_state, include_current_position=False)
 
     @handle(Keys.ControlS, filter=has_focus)
     @handle(Keys.Down, filter=has_focus)
     def _(event):
         # Update search_state.
         search_state = event.cli.search_state
+        direction_changed = search_state.direction != IncrementalSearchDirection.FORWARD
+
         search_state.text = event.cli.buffers[SEARCH_BUFFER].text
         search_state.direction = IncrementalSearchDirection.FORWARD
 
         # Apply search to current buffer.
-        input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
-        input_buffer.apply_search(event.cli.search_state)
+        if not direction_changed:
+            input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
+            input_buffer.apply_search(event.cli.search_state, include_current_position=False)

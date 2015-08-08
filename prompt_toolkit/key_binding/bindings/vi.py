@@ -315,14 +315,16 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         Search next.
         """
-        event.current_buffer.apply_search(event.cli.search_state)
+        event.current_buffer.apply_search(
+            event.cli.search_state, include_current_position=False)
 
     @handle('N', filter=navigation_mode)
     def _(event):  # TODO: use `change_delete_move_yank_handler` and implement 'arg'
         """
         Search previous.
         """
-        event.current_buffer.apply_search(~event.cli.search_state)
+        event.current_buffer.apply_search(
+            ~event.cli.search_state, include_current_position=False)
 
     @handle('p', filter=navigation_mode)
     def _(event):
