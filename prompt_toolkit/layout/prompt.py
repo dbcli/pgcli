@@ -75,6 +75,7 @@ class DefaultPrompt(Processor):
         return (
             cli.input_processor.arg,
             cli.is_searching,
+            cli.is_searching and cli.search_state.direction,
             cli.buffers[SEARCH_BUFFER].text,
             self.get_tokens(cli),
         )
