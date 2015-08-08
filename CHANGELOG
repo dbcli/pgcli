@@ -1,6 +1,31 @@
 CHANGELOG
 =========
 
+0.46: 2015-08-08
+----------------
+
+New features:
+- By default, in shortcuts, only show search highlighting when the search is
+  the current input buffer.
+- Accept 'count' for all search operations. (For repetition.)
+- `shortcuts.create_default_layout` accepts a `multiline` parameter.
+- Show meta display text for completions also in multi-column mode.
+
+Fixes:
+- Correct invalidation of DefaultPrompt when search direction changes.
+- Correctly include/exclude current cursor position in search.
+- More consistency in styles.
+- Fix in ConditionalProcessor.has_focus.
+- Python 2.6 compatibility fix.
+- Show cursor at the correct position during reverse-i-search.
+- Fixed stdout encoding bug for vt100 output.
+
+Backwards-incompatible changes:
+- Use of `ConditionalContainer` everywhere. The `Window` class no longer
+  accepts a `filter` argument to decide about the visibility. Instead
+  wrapping inside a `ConditionalContainer` class is required.
+
+
 0.45: 2015-07-30
 ----------------
 
