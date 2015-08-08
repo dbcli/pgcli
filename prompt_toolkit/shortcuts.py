@@ -23,7 +23,7 @@ In that case, study the code in this file and build your own
 from __future__ import unicode_literals
 
 from .buffer import Buffer
-from .enums import DEFAULT_BUFFER
+from .enums import DEFAULT_BUFFER, SEARCH_BUFFER
 from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown, to_simple_filter, to_cli_filter, Condition
 from .history import History
 from .interface import CommandLineInterface, Application, AbortAction, AcceptAction
@@ -145,7 +145,14 @@ def create_default_layout(message='', lexer=None, is_password=False,
 
     # Create processors list.
     # (DefaultPrompt should always be at the end.)
-    input_processors = [HighlightSearchProcessor(preview_search=Always()),
+    input_processors = [ConditionalProcessor(
+                            # By default, only highlight search when the search
+                            # input has the focus. (Note that this doesn't mean
+                            # there is no search: the Vi 'n' binding for instance
+                            # still allows to jump to the next match in
+                            # navigation mode.)
+                            HighlightSearchProcessor(preview_search=Always()),
+                            HasFocus(SEARCH_BUFFER)),
                         HighlightSelectionProcessor(),
                         ConditionalProcessor(PasswordProcessor(), is_password)]
 
