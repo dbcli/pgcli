@@ -311,20 +311,22 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         event.current_buffer.join_selected_lines()
 
     @handle('n', filter=navigation_mode)
-    def _(event):  # XXX: use `change_delete_move_yank_handler` and implement 'arg'
+    def _(event):  # XXX: use `change_delete_move_yank_handler`
         """
         Search next.
         """
         event.current_buffer.apply_search(
-            event.cli.search_state, include_current_position=False)
+            event.cli.search_state, include_current_position=False,
+            count=event.arg)
 
     @handle('N', filter=navigation_mode)
-    def _(event):  # TODO: use `change_delete_move_yank_handler` and implement 'arg'
+    def _(event):  # TODO: use `change_delete_move_yank_handler`
         """
         Search previous.
         """
         event.current_buffer.apply_search(
-            ~event.cli.search_state, include_current_position=False)
+            ~event.cli.search_state, include_current_position=False,
+            count=event.arg)
 
     @handle('p', filter=navigation_mode)
     def _(event):
@@ -547,7 +549,8 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         search_state.text = b.document.get_word_under_cursor()
         search_state.direction = IncrementalSearchDirection.BACKWARD
 
-        b.apply_search(search_state)
+        b.apply_search(search_state, count=event.arg,
+                       include_current_position=False)
 
     @handle('*', filter=navigation_mode)
     def _(event):
@@ -560,7 +563,8 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         search_state.text = b.document.get_word_under_cursor()
         search_state.direction = IncrementalSearchDirection.FORWARD
 
-        b.apply_search(search_state)
+        b.apply_search(search_state, count=event.arg,
+                       include_current_position=False)
 
     @handle('(', filter=navigation_mode)
     def _(event):

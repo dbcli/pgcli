@@ -899,53 +899,74 @@ class Buffer(object):
         if self.text and (not len(self._history) or self._history[-1] != self.text):
             self._history.append(self.text)
 
-    def _search(self, search_state, include_current_position=False):
+    def _search(self, search_state, include_current_position=False, count=1):
         """
         Execute search. Return (working_index, cursor_position) tuple when this
         search is applied. Returns `None` when this text cannot be found.
         """
         assert isinstance(search_state, SearchState)
+        assert isinstance(count, int) and count > 0
+
         text = search_state.text
         direction = search_state.direction
         ignore_case = search_state.ignore_case()
 
-        if direction == IncrementalSearchDirection.FORWARD:
-            # Try find at the current input.
-            new_index = self.document.find(
-               text, include_current_position=include_current_position,
-               ignore_case=ignore_case)
+        def search_once(working_index, document):
+            """
+            Do search one time.
+            Return (working_index, document) or `None`
+            """
+            if direction == IncrementalSearchDirection.FORWARD:
+                # Try find at the current input.
+                new_index = document.find(
+                   text, include_current_position=include_current_position,
+                   ignore_case=ignore_case)
 
-            if new_index is not None:
-                return (self.working_index, self.cursor_position + new_index)
+                if new_index is not None:
+                    return (working_index,
+                            Document(document.text, document.cursor_position + new_index))
+                else:
+                    # No match, go forward in the history. (Include len+1 to wrap around.)
+                    # (Here we should always include all cursor positions, because
+                    # it's a different line.)
+                    for i in range(working_index + 1, len(self._working_lines) + 1):
+                        i %= len(self._working_lines)
+
+                        document = Document(self._working_lines[i], 0)
+                        new_index = document.find(text, include_current_position=True,
+                                                  ignore_case=ignore_case)
+                        if new_index is not None:
+                            return (i, Document(document.text, new_index))
             else:
-                # No match, go forward in the history. (Include len+1 to wrap around.)
-                # (Here we should always include all cursor positions, because
-                # it's a different line.)
-                for i in range(self.working_index + 1, len(self._working_lines) + 1):
-                    i %= len(self._working_lines)
+                # Try find at the current input.
+                new_index = document.find_backwards(
+                    text, ignore_case=ignore_case)
 
-                    document = Document(self._working_lines[i], 0)
-                    new_index = document.find(text, include_current_position=True,
-                                              ignore_case=ignore_case)
-                    if new_index is not None:
-                        return (i, new_index)
-        else:
-            # Try find at the current input.
-            new_index = self.document.find_backwards(
-                text, ignore_case=ignore_case)
+                if new_index is not None:
+                    return (working_index,
+                            Document(document.text, document.cursor_position + new_index))
+                else:
+                    # No match, go back in the history. (Include -1 to wrap around.)
+                    for i in range(working_index - 1, -2, -1):
+                        i %= len(self._working_lines)
 
-            if new_index is not None:
-                return (self.working_index, self.cursor_position + new_index)
+                        document = Document(self._working_lines[i], len(self._working_lines[i]))
+                        new_index = document.find_backwards(
+                            text, ignore_case=ignore_case)
+                        if new_index is not None:
+                            return (i, Document(document.text, len(document.text) + new_index))
+
+        # Do 'count' search iterations.
+        working_index = self.working_index
+        document = self.document
+        for i in range(count):
+            result = search_once(working_index, document)
+            if result is None:
+                return # Nothing found.
             else:
-                # No match, go back in the history. (Include -1 to wrap around.)
-                for i in range(self.working_index - 1, -2, -1):
-                    i %= len(self._working_lines)
+                working_index, document = result
 
-                    document = Document(self._working_lines[i], len(self._working_lines[i]))
-                    new_index = document.find_backwards(
-                        text, ignore_case=ignore_case)
-                    if new_index is not None:
-                        return (i, len(document.text) + new_index)
+        return (working_index, document.cursor_position)
 
     def document_for_search(self, search_state):
         """
@@ -960,13 +981,13 @@ class Buffer(object):
             working_index, cursor_position = search_result
             return Document(self._working_lines[working_index], cursor_position)
 
-    def apply_search(self, search_state, include_current_position=True):
+    def apply_search(self, search_state, include_current_position=True, count=1):
         """
         Return a `Document` instance that has the text/cursor position for this
         search, if we would apply it.
         """
         search_result = self._search(search_state,
-            include_current_position=include_current_position)
+            include_current_position=include_current_position, count=count)
 
         if search_result is not None:
             working_index, cursor_position = search_result

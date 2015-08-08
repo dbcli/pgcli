@@ -537,7 +537,8 @@ def load_emacs_search_bindings(registry, filter=None):
         # Apply search to current buffer.
         if not direction_changed:
             input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
-            input_buffer.apply_search(event.cli.search_state, include_current_position=False)
+            input_buffer.apply_search(event.cli.search_state,
+                                      include_current_position=False, count=event.arg)
 
     @handle(Keys.ControlS, filter=has_focus)
     @handle(Keys.Down, filter=has_focus)
@@ -552,4 +553,5 @@ def load_emacs_search_bindings(registry, filter=None):
         # Apply search to current buffer.
         if not direction_changed:
             input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
-            input_buffer.apply_search(event.cli.search_state, include_current_position=False)
+            input_buffer.apply_search(event.cli.search_state,
+                                      include_current_position=False, count=event.arg)
