@@ -30,7 +30,7 @@ from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
-from .config import write_default_config, load_config
+from .config import write_default_config, load_config, read_config_files
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
 from .__init__ import __version__
@@ -42,7 +42,6 @@ except ImportError:
     from urllib.parse import urlparse
 from getpass import getuser
 from psycopg2 import OperationalError
-from configobj import ConfigObj, ConfigObjError
 
 from collections import namedtuple
 
@@ -109,34 +108,6 @@ class PGCli(object):
             cnf_files.append(os.path.expanduser('~/.pg_service.conf'))
 
         return cnf_files
-
-    def read_ini_files(self, files, sections, keys):
-        """
-        Reads a list of config files and merges them. The last one will win.
-        :param files: list of files to read
-        :param keys: list of sections to parse
-        :param keys: list of keys to retrieve
-        :returns: dict, with None for missing keys.
-        """
-        cnf = ConfigObj()
-        for filename in files:
-            try:
-                cnf.merge(ConfigObj(
-                    os.path.expanduser(filename), interpolation=False))
-            except ConfigObjError as e:
-                self.logger.error('Error parsing %r.', filename)
-                self.logger.error('Recovering partially parsed config values.')
-                cnf.merge(e.config)
-                pass
-
-        def get(key):
-            result = None
-            for sect in sections:
-                if sect in cnf and key in cnf[sect]:
-                    result = cnf[sect][key]
-            return result
-
-        return dict([(x, get(x)) for x in keys])
 
     def register_special_commands(self):
 
@@ -508,10 +479,11 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
     # Read those from config files if any.
     if service and pgcli.cnf_files:
 
-        cnf_values = pgcli.read_ini_files(
+        cnf_values = read_config_files(
             pgcli.cnf_files,
             [service],
-            ['dbname', 'user', 'host', 'port'])
+            ['dbname', 'user', 'host', 'port'],
+            pgcli.logger.error)
 
         database, user, host, port = cnf_values['dbname'], \
             cnf_values['user'], cnf_values['host'], cnf_values['port']
