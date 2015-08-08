@@ -160,10 +160,11 @@ def create_default_layout(message='', lexer=None, is_password=False,
 
     # Create bottom toolbar.
     if get_bottom_toolbar_tokens:
-        toolbars = [Window(TokenListControl(get_bottom_toolbar_tokens,
-                                            default_char=Char(' ', Token.Toolbar)),
-                           height=LayoutDimension.exact(1),
-                           filter=~IsDone() & RendererHeightIsKnown())]
+        toolbars = [ConditionalContainer(
+            Window(TokenListControl(get_bottom_toolbar_tokens,
+                                    default_char=Char(' ', Token.Toolbar)),
+                                    height=LayoutDimension.exact(1)),
+            filter=~IsDone() & RendererHeightIsKnown())]
     else:
         toolbars = []
 
@@ -179,9 +180,11 @@ def create_default_layout(message='', lexer=None, is_password=False,
     return HSplit([
         VSplit([
             # In multiline mode, the prompt is displayed in a left pane.
-            Window(
-                TokenListControl(get_prompt_tokens),
-                dont_extend_width=True,
+            ConditionalContainer(
+                Window(
+                    TokenListControl(get_prompt_tokens),
+                    dont_extend_width=True,
+                ),
                 filter=multiline,
             ),
             # The main input, with completion menus floating on top of it.
