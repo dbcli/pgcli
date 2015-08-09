@@ -39,6 +39,12 @@ def read_config_files(files, sections, keys, error_logger=None):
             cnf.merge(e.config)
             pass
 
+    section_found = any([s for s in sections if s in cnf])
+
+    if not section_found:
+        raise Exception(
+            'Configuration does not exist for: {0}.'.format(', '.join(sections)))
+
     def get(key):
         result = None
         for sect in sections:

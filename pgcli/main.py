@@ -479,14 +479,21 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
     # Read those from config files if any.
     if service and pgcli.cnf_files:
 
-        cnf_values = read_config_files(
-            pgcli.cnf_files,
-            [service],
-            ['dbname', 'user', 'host', 'port'],
-            pgcli.logger.error)
+        try:
+            cnf_values = read_config_files(
+                pgcli.cnf_files,
+                [service],
+                ['dbname', 'user', 'host', 'port'],
+                pgcli.logger.error)
 
-        database, user, host, port = cnf_values['dbname'], \
-            cnf_values['user'], cnf_values['host'], cnf_values['port']
+            database, user, host, port = cnf_values['dbname'], \
+                cnf_values['user'], cnf_values['host'], cnf_values['port']
+        except:
+            # Exception would only be raised if config section does not exist
+            click.secho(
+                'Definition of service "{0}" was not found.'.format(service),
+                color='red')
+            sys.exit(1)
 
     if '://' in database:
         pgcli.connect_uri(database)
