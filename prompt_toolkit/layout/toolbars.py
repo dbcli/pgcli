@@ -39,7 +39,6 @@ class SystemToolbarControl(BufferControl):
         super(SystemToolbarControl, self).__init__(
             lexer=BashLexer,
             buffer_name=SYSTEM_BUFFER,
-            show_line_numbers=Never(),
             input_processors=[BeforeInput.static('Shell command: ', Token.Toolbar.System)],)
 
 

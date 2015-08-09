@@ -13,6 +13,7 @@ from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.enums import DEFAULT_BUFFER
 
 from .processors import Processor
+from .margins import Margin, NoMargin
 from .screen import Screen, Char, Point
 from .utils import token_list_width
 
@@ -169,64 +170,37 @@ class FillControl(UIControl):
         return screen
 
 
-class _NumberedMarginTokenCache(dict):
-    """
-    Cache for numbered margins.
-    Maps (width, line_number) to a list of tokens.
-    """
-    def __missing__(self, key):
-        width, line_number = key
-
-        if line_number is not None:
-            tokens = [(Token.LineNumber, u'%%%si ' % width % (line_number + 1))]
-        else:
-            tokens = [(Token.LineNumber, ' ' * (width + 1))]
-
-        self[key] = tokens
-        return tokens
-
-_NUMBERED_MARGIN_TOKEN_CACHE = _NumberedMarginTokenCache()
-
-
-def _create_numbered_margin(decimals):
-    """
-    Return a function that for a line, gives the margin tokens.
-    """
-    def margin(line_number):
-        return _NUMBERED_MARGIN_TOKEN_CACHE[decimals, line_number]
-    return margin
-
-
 class BufferControl(UIControl):
     """
     Control for visualising the content of a `Buffer`.
 
     :param input_processors: list of `InputProcessor.
     :param lexer: Pygments lexer class.
-    :param show_line_numbers: `bool` or `CLIFilter`: show line numbers when
-        we have several lines.
     :param preview_search: `bool` or `CLIFilter`: Show search while typing.
     :param buffer_name: String representing the name of the buffer to display.
     :param default_token: Pygments token to use for the background.
+    :param margin: `Margin` instance. for instance: `NumberredMargin` in order
+        to show line numbers.
     """
     def __init__(self,
                  input_processors=None,
                  lexer=None,
-                 show_line_numbers=False,
                  preview_search=False,
                  buffer_name=DEFAULT_BUFFER,
                  default_token=Token,
-                 menu_position=None):
+                 menu_position=None,
+                 margin=None):
         assert input_processors is None or all(isinstance(i, Processor) for i in input_processors)
         assert menu_position is None or callable(menu_position)
+        assert margin is None or isinstance(margin, Margin)
 
-        self.show_line_numbers = to_cli_filter(show_line_numbers)
         self.preview_search = to_cli_filter(preview_search)
 
         self.input_processors = input_processors or []
         self.buffer_name = buffer_name
         self.default_token = default_token
         self.menu_position = menu_position
+        self.margin = margin or NoMargin()
 
         if lexer:
             self.lexer = lexer(
@@ -313,19 +287,6 @@ class BufferControl(UIControl):
 
         return self._token_lru_cache.get(key, get)
 
-    def _margin(self, cli, buffer):
-        """
-        Return a function that fills in the margin.
-        """
-        def no_margin(line_number):
-            return []
-
-        if self.show_line_numbers(cli):
-            decimals = max(3, len('%s' % buffer.document.line_count))
-            return _create_numbered_margin(decimals)
-        else:
-            return no_margin
-
     def create_screen(self, cli, width, height):
         buffer = self._buffer(cli)
 
@@ -358,7 +319,7 @@ class BufferControl(UIControl):
             indexes_to_pos = screen.write_data(
                 input_tokens,
                 screen.width,
-                margin=self._margin(cli, buffer))
+                margin=self.margin.create_handler(cli, buffer.document))
 
             def cursor_position_to_xy(cursor_position):
                 # First get the real token position by applying all
@@ -387,8 +348,9 @@ class BufferControl(UIControl):
             # TODO: allow to disable line wrapping. + in that case, remove 'width'
             width,
 
-            # When line numbers are enabled/disabled.
-            self.show_line_numbers(cli),
+            # When line numbers are enabled/disabled. (Or whatever parameters
+            # the margin has.)
+            self.margin.invalidation_hash(cli, document),
 
             # Include invalidation_hashes from all processors.
             tuple(p.invalidation_hash(cli, document) for p in self.input_processors),
