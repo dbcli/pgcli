@@ -1,7 +1,7 @@
 0.19.1
 ======
 
-BugFixe:
+BugFixes:
 ---------
 
 * Fix an autocompletion bug that was crashing the completion engine when unknown keyword is entered. (Thanks: `Darik Gamble`_)
