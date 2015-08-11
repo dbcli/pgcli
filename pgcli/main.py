@@ -246,6 +246,7 @@ class PGCli(object):
                                        get_prompt_tokens=prompt_tokens,
                                        get_bottom_toolbar_tokens=get_toolbar_tokens,
                                        display_completions_in_columns=self.wider_completion_menu,
+                                       multiline=True,
                                        extra_input_processors=[
                                            # Highlight matching brackets while editing.
                                            ConditionalProcessor(
@@ -260,7 +261,8 @@ class PGCli(object):
         application = Application(style=style_factory(self.syntax_style, self.cli_style),
                                   layout=layout, buffer=buf,
                                   key_bindings_registry=key_binding_manager.registry,
-                                  on_exit=AbortAction.RAISE_EXCEPTION)
+                                  on_exit=AbortAction.RAISE_EXCEPTION,
+                                  ignore_case=True)
         cli = CommandLineInterface(application=application,
                                    eventloop=create_eventloop())
 
