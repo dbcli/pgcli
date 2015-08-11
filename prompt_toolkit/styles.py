@@ -15,8 +15,8 @@ __all__ = (
 
 default_style_extensions = {
     # Highlighting of search matches in document.
-    Token.SearchMatch:                            '#ffffff bg:#000000',
-    Token.SearchMatch.Current:                    '#ffffff bg:#aa4444',
+    Token.SearchMatch:                            '#000000 bg:#888888',
+    Token.SearchMatch.Current:                    '#ffffff bg:#aa8888 underline',
 
     # Highlighting of select text in document.
     Token.SelectedText:                           '#ffffff bg:#666666',
