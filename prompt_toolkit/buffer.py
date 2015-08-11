@@ -21,11 +21,15 @@ import subprocess
 import tempfile
 
 __all__ = (
+    'EditReadOnlyBuffer',
     'AcceptAction',
     'Buffer',
     'indent',
     'unindent',
 )
+
+class EditReadOnlyBuffer(Exception):
+    " Attempt editing of read-only buffer. "
 
 
 class AcceptAction(object):
@@ -169,13 +173,14 @@ class Buffer(object):
     def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='',
                  is_multiline=Never(), complete_while_typing=Never(),
                  enable_history_search=Never(), initial_document=None,
-                 accept_action=AcceptAction.RETURN_DOCUMENT,
+                 accept_action=AcceptAction.RETURN_DOCUMENT, read_only=False,
                  on_text_changed=None, on_text_insert=None, on_cursor_position_changed=None):
 
         # Accept both filters and booleans as input.
         enable_history_search = to_simple_filter(enable_history_search)
         is_multiline = to_simple_filter(is_multiline)
         complete_while_typing = to_simple_filter(complete_while_typing)
+        read_only = to_simple_filter(read_only)
 
         # Validate input.
         assert completer is None or isinstance(completer, Completer)
@@ -193,6 +198,7 @@ class Buffer(object):
         self.is_multiline = is_multiline
         self.complete_while_typing = complete_while_typing
         self.enable_history_search = enable_history_search
+        self.read_only = read_only
 
         #: The command buffer history.
         # Note that we shouldn't use a lazy 'or' here. bool(history) could be
@@ -277,6 +283,10 @@ class Buffer(object):
         assert isinstance(value, six.text_type), 'Got %r' % value
         assert self.cursor_position <= len(value)
 
+        # Don't allow editing of read-only buffers.
+        if self.read_only():
+            raise EditReadOnlyBuffer()
+
         changed = self._set_text(value)
 
         if changed:
@@ -349,6 +359,10 @@ class Buffer(object):
         atomically. (Change events will be triggered only after both have been set.)
         """
         assert isinstance(value, Document)
+
+        # Don't allow editing of read-only buffers.
+        if self.read_only():
+            raise EditReadOnlyBuffer()
 
         # Set text and cursor position first.
         text_changed = self._set_text(value.text)
@@ -1001,6 +1015,9 @@ class Buffer(object):
         """
         Open code in editor.
         """
+        if self.read_only():
+            raise EditReadOnlyBuffer()
+
         # Write to temporary file
         descriptor, filename = tempfile.mkstemp(self.tempfile_suffix)
         os.write(descriptor, self.text.encode('utf-8'))

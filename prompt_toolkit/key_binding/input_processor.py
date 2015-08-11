@@ -9,6 +9,7 @@ correct callbacks when new key presses are feed through `feed_key`.
 from __future__ import unicode_literals
 from ..keys import Keys
 from ..utils import Callback
+from prompt_toolkit.buffer import EditReadOnlyBuffer
 
 import weakref
 
@@ -171,10 +172,16 @@ class InputProcessor(object):
         arg = self.arg
         self.arg = None
 
-        event = Event(weakref.ref(self), arg=arg, key_sequence=key_sequence,
-                      previous_key_sequence=self._previous_key_sequence)
-        handler.call(event)
-        self._registry.on_handler_called.fire(event)
+        try:
+            event = Event(weakref.ref(self), arg=arg, key_sequence=key_sequence,
+                          previous_key_sequence=self._previous_key_sequence)
+            handler.call(event)
+            self._registry.on_handler_called.fire(event)
+
+        except EditReadOnlyBuffer:
+            # When a key binding does an attempt to change a buffer which is read-only,
+            # we can just silently ignore that.
+            pass
 
         self._previous_key_sequence = key_sequence
 
