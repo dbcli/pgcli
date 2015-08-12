@@ -104,7 +104,7 @@ Projects using prompt-toolkit
 - `pgcli <http://pgcli.com/>`_: Postgres client.
 - `mycli <http://mycli.net>`_: MySql client.
 - `pyvim <http://github.com/jonathanslenders/pyvim/>`_: A Vim clone in pure Python
-- `dockercli <http://cli4docker.com/>`_: A Docker command line.
+- `wharfee <http://wharfee.com/>`_: A Docker command line.
 
 (Want your own project to be listed here? Please create a GitHub issue.)
 
