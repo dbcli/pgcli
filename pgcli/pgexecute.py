@@ -140,28 +140,35 @@ class PGExecute(object):
               AND n.nspname <> 'information_schema'
         ORDER BY 1, 2;'''
 
-    def __init__(self, database, user, password, host, port):
+    def __init__(self, database, user, password, host, port, dsn):
         self.dbname = database
         self.user = user
         self.password = password
         self.host = host
         self.port = port
+        self.dsn = dsn
         self.connect()
 
     def connect(self, database=None, user=None, password=None, host=None,
-            port=None):
+            port=None, dsn=None):
 
         db = (database or self.dbname)
         user = (user or self.user)
         password = (password or self.password)
         host = (host or self.host)
         port = (port or self.port)
-        conn = psycopg2.connect(
-                database=unicode2utf8(db),
-                user=unicode2utf8(user),
-                password=unicode2utf8(password),
-                host=unicode2utf8(host),
-                port=unicode2utf8(port))
+        dsn = (dsn or self.dsn)
+        if dsn:
+            if password:
+                dsn = "{0} password={1}".format(dsn, password)
+            conn = psycopg2.connect(dsn=unicode2utf8(dsn))
+        else:
+            conn = psycopg2.connect(
+                    database=unicode2utf8(db),
+                    user=unicode2utf8(user),
+                    password=unicode2utf8(password),
+                    host=unicode2utf8(host),
+                    port=unicode2utf8(port))
         conn.set_client_encoding('utf8')
         if hasattr(self, 'conn'):
             self.conn.close()

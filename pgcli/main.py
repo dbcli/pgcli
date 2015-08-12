@@ -60,7 +60,6 @@ class PGCli(object):
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
-        self.cnf_files = self.find_config_files()
 
         from pgcli import __file__ as package_root
         package_root = os.path.dirname(package_root)
@@ -157,13 +156,17 @@ class PGCli(object):
         root_logger.debug('Initializing pgcli logging.')
         root_logger.debug('Log file %r.', log_file)
 
+    def connect_dsn(self, dsn):
+        self.connect(dsn=dsn)
+
     def connect_uri(self, uri):
         uri = urlparse(uri)
         database = uri.path[1:]  # ignore the leading fwd slash
         self.connect(database, uri.hostname, uri.username,
                      uri.port, uri.password)
 
-    def connect(self, database='', host='', user='', port='', passwd=''):
+    def connect(self, database='', host='', user='', port='', passwd='',
+                dsn=''):
         # Connect to the database.
 
         if not user:
@@ -196,13 +199,14 @@ class PGCli(object):
         # a password (no -w flag), prompt for a passwd and try again.
         try:
             try:
-                pgexecute = PGExecute(database, user, passwd, host, port)
+                pgexecute = PGExecute(database, user, passwd, host, port, dsn)
             except OperationalError as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
                         auto_passwd_prompt):
                     passwd = click.prompt('Password', hide_input=True,
                                           show_default=False, type=str)
-                    pgexecute = PGExecute(database, user, passwd, host, port)
+                    pgexecute = PGExecute(database, user, passwd, host, port,
+                                          dsn)
                 else:
                     raise e
 
@@ -458,12 +462,10 @@ class PGCli(object):
         help='database name to connect to.')
 @click.option('--pgclirc', default='~/.pgclirc', envvar='PGCLIRC',
         help='Location of .pgclirc file.')
-@click.option('--service', default=None, envvar='PGSERVICE',
-        help='Service name to read connection parameters for.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
-        username, version, pgclirc, service):
+        username, version, pgclirc):
 
     if version:
         print('Version:', __version__)
@@ -475,33 +477,10 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
     database = database or dbname
     user = username or user
 
-    # User wants to connect with specified service parameters.
-    # Read those from config files if any.
-    if service:
-        def service_not_found():
-            click.secho(
-                'Definition of service "{0}" was not found.'.format(service),
-                color='red')
-            sys.exit(1)
-
-        if pgcli.cnf_files:
-            try:
-                cnf_values = read_config_files(
-                    pgcli.cnf_files,
-                    [service],
-                    ['dbname', 'user', 'host', 'port'],
-                    pgcli.logger.error)
-
-                database, user, host, port = cnf_values['dbname'], \
-                    cnf_values['user'], cnf_values['host'], cnf_values['port']
-            except:
-                # Exception would be raised if config section does not exist
-                service_not_found()
-        else:
-            service_not_found()
-
     if '://' in database:
         pgcli.connect_uri(database)
+    elif "=" in database:
+        pgcli.connect_dsn(database)
     else:
         pgcli.connect(database, host, user, port)
 
