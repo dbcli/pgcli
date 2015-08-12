@@ -1,41 +1,80 @@
 Reference
 =========
 
-Inputstream
+Application
 -----------
 
-.. automodule:: prompt_toolkit.inputstream
+.. automodule:: prompt_toolkit.application
     :members:
 
-Inputstream handler
--------------------
-
-.. automodule:: prompt_toolkit.inputstream_handler
-    :members:
-
-Line
-----
-
-.. automodule:: prompt_toolkit.line
-    :members:
-
-Code
-----
-
-.. automodule:: prompt_toolkit.code
-    :members:
-
-Prompt
+Buffer
 ------
 
-.. automodule:: prompt_toolkit.prompt
+.. automodule:: prompt_toolkit.buffer
+    :members:
+
+Clipboard
+---------
+
+.. automodule:: prompt_toolkit.clipboard
+    :members:
+
+Auto completion
+---------------
+
+.. automodule:: prompt_toolkit.completion
+    :members:
+
+Document
+--------
+
+.. automodule:: prompt_toolkit.document
+    :members:
+
+Enums
+-----
+
+.. automodule:: prompt_toolkit.enums
+    :members:
+
+History
+-------
+
+.. automodule:: prompt_toolkit.history
+    :members:
+
+Interface
+---------
+
+.. automodule:: prompt_toolkit.interface
+    :members:
+
+Keys
+----
+
+.. automodule:: prompt_toolkit.keys
+    :members:
+
+Reactive
+--------
+
+.. automodule:: prompt_toolkit.reactive
+    :members:
+
+Shortcuts
+---------
+
+.. automodule:: prompt_toolkit.shortcuts
+    :members:
+
+Validation
+----------
+
+.. automodule:: prompt_toolkit.validation
     :members:
 
 Renderer
 --------
 
 .. automodule:: prompt_toolkit.renderer
-    :members:
-
-.. automodule:: prompt_toolkit.render_context
     :members:
