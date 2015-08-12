@@ -1,3 +1,4 @@
+import os
 import logging
 from collections import namedtuple
 
@@ -31,6 +32,7 @@ class PGSpecial(object):
 
         self.timing_enabled = False
         self.expanded_output = False
+        self.pager = os.environ.get('PAGER', '')
 
         self.register(self.show_help, '\\?', '\\?', 'Show Help.',
                       arg_type=NO_QUERY)
@@ -40,6 +42,10 @@ class PGSpecial(object):
 
         self.register(self.toggle_timing, '\\timing', '\\timing',
                       'Toggle timing of commands.', arg_type=NO_QUERY)
+
+        self.register(self.set_pager, '\\pager', '\\pager [command]',
+                      'Set PAGER. Pring the query results via PAGER.',
+                      arg_type=PARSED_QUERY)
 
     def register(self, *args, **kwargs):
         register_special_command(*args, command_dict=self.commands, **kwargs)
@@ -86,6 +92,19 @@ class PGSpecial(object):
         message += "on." if self.timing_enabled else "off."
         return [(None, None, None, message)]
 
+    def set_pager(self, pattern, **_):
+        if not pattern:
+            if not self.pager:
+                os.environ.pop('PAGER', None)
+                msg = 'Pager reset to system default.'
+            else:
+                os.environ['PAGER'] = self.pager
+                msg = 'Reset pager back to default. Default: %s' % self.pager
+        else:
+            os.environ['PAGER'] = pattern
+            msg = 'PAGER set to %s.' % pattern
+
+        return [(None, None, None, msg)]
 
 @export
 def parse_special_command(sql):
