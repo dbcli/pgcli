@@ -14,6 +14,7 @@ __all__ = (
     'IsAborting',
     'IsDone',
     'IsMultiline',
+    'IsReadOnly',
     'IsReturning',
     'RendererHeightIsKnown',
 )
@@ -64,6 +65,17 @@ class IsMultiline(Filter):
 
     def __repr__(self):
         return 'IsMultiline()'
+
+
+class IsReadOnly(Filter):
+    """
+    True when the current buffer is read only.
+    """
+    def __call__(self, cli):
+        return cli.current_buffer.read_only()
+
+    def __repr__(self):
+        return 'IsReadOnly()'
 
 
 class HasValidationError(Filter):
