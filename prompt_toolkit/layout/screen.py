@@ -100,6 +100,7 @@ class CharCache(dict):
 
 
 _CHAR_CACHE = CharCache()
+Transparent = Token.Transparent
 
 
 class Screen(object):
@@ -108,7 +109,7 @@ class Screen(object):
     """
     def __init__(self, width, default_char=None):
         if default_char is None:
-            default_char = Char()
+            default_char = Char(token=Transparent)
 
         self._buffer = defaultdict(lambda: defaultdict(lambda: default_char))
 

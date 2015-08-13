@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 from six import with_metaclass
 from abc import ABCMeta, abstractmethod
+from pygments.token import Token
 
 from .screen import Point, WritePosition
 from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
@@ -21,6 +22,8 @@ __all__ = (
     'Window',
     'ConditionalContainer',
 )
+
+Transparent = Token.Transparent
 
 
 class Layout(with_metaclass(ABCMeta, object)):
@@ -655,8 +658,13 @@ class Window(Layout):
                 break
             else:
                 temp_row = temp_buffer[y + self.vertical_scroll]
+
+                # Copy row content, except for transparent tokens.
+                # (This is useful in case of floats.)
                 for x in range(0, columns):
-                    new_row[x + xpos] = temp_row[x]
+                    cell = temp_row[x]
+                    if cell.token != Transparent:
+                        new_row[x + xpos] = cell
 
         if self.content.has_focus(cli):
             new_screen.cursor_position = Point(y=temp_screen.cursor_position.y + ypos - self.vertical_scroll,
