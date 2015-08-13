@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import ClipboardData, indent, unindent
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
-from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter
+from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter, IsReadOnly
 from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
@@ -62,6 +62,15 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
     :param enable_visual_key: Filter to enable lowercase 'v' bindings. A reason to disable these
          are to support open-in-editor functionality. These key bindings conflict.
     """
+    # Note: Some key bindings have the "~IsReadOnly()" filter added. This
+    #       prevents the handler to be executed when the focus is on a
+    #       read-only buffer.
+    #       This is however only required for those that change the ViState to
+    #       INSERT mode. The `Buffer` class itself throws the
+    #       `EditReadOnlyBuffer` exception for any text operations which is
+    #       handled correctly. There is no need to add "~IsReadOnly" to all key
+    #       bindings that do text manipulation.
+
     assert isinstance(vi_state, ViState)
     enable_visual_key = to_cli_filter(enable_visual_key)
 
@@ -218,17 +227,19 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
 
     # List of navigation commands: http://hea-www.harvard.edu/~fine/Tech/vi.html
 
-    @handle('a', filter=navigation_mode)
+    @handle('a', filter=navigation_mode & ~IsReadOnly())
+            # ~IsReadOnly, because we want to stay in navigation mode for
+            # read-only buffers.
     def _(event):
         event.current_buffer.cursor_position += event.current_buffer.document.get_cursor_right_position()
         vi_state.input_mode = InputMode.INSERT
 
-    @handle('A', filter=navigation_mode)
+    @handle('A', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         event.current_buffer.cursor_position += event.current_buffer.document.get_end_of_line_position()
         vi_state.input_mode = InputMode.INSERT
 
-    @handle('C', filter=navigation_mode)
+    @handle('C', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         """
         # Change to end of line.
@@ -240,8 +251,8 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         event.cli.clipboard.set_text(deleted)
         vi_state.input_mode = InputMode.INSERT
 
-    @handle('c', 'c', filter=navigation_mode)
-    @handle('S', filter=navigation_mode)
+    @handle('c', 'c', filter=navigation_mode & ~IsReadOnly())
+    @handle('S', filter=navigation_mode & ~IsReadOnly())
     def _(event):  # TODO: implement 'arg'
         """
         Change current line
@@ -290,11 +301,11 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         # Set clipboard data
         event.cli.clipboard.set_data(ClipboardData(deleted, SelectionType.LINES))
 
-    @handle('i', filter=navigation_mode)
+    @handle('i', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         vi_state.input_mode = InputMode.INSERT
 
-    @handle('I', filter=navigation_mode)
+    @handle('I', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         vi_state.input_mode = InputMode.INSERT
         event.current_buffer.cursor_position += event.current_buffer.document.get_start_of_line_position(after_whitespace=True)
@@ -362,7 +373,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         vi_state.input_mode = InputMode.REPLACE
 
-    @handle('s', filter=navigation_mode)
+    @handle('s', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         """
         Substitute with new text
@@ -412,7 +423,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         clipboard_data = event.current_buffer.cut_selection()
         event.cli.clipboard.set_data(clipboard_data)
 
-    @handle('c', filter=selection_mode)
+    @handle('c', filter=selection_mode & ~IsReadOnly())
     def _(event):
         """
         Change selection (cut and go to insert mode).
@@ -508,7 +519,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
 
             unindent(buffer, from_ - 1, to, count=event.arg)
 
-    @handle('O', filter=navigation_mode)
+    @handle('O', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         """
         Open line above and enter insertion mode
@@ -517,7 +528,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
                 copy_margin=not event.cli.in_paste_mode)
         vi_state.input_mode = InputMode.INSERT
 
-    @handle('o', filter=navigation_mode)
+    @handle('o', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         """
         Open line below and enter insertion mode
@@ -646,8 +657,8 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
 
             def create(delete_only):
                 """ Create delete and change handlers. """
-                @handle('cd'[delete_only], *keys, filter=navigation_mode)
-                @handle('cd'[delete_only], *keys, filter=navigation_mode)
+                @handle('cd'[delete_only], *keys, filter=navigation_mode & ~IsReadOnly())
+                @handle('cd'[delete_only], *keys, filter=navigation_mode & ~IsReadOnly())
                 def _(event):
                     region = func(event)
                     deleted = ''
