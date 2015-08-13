@@ -13,14 +13,16 @@ class _Binding(object):
     """
     (Immutable binding class.)
     """
-    def __init__(self, keys, handler, filter=None):
+    def __init__(self, keys, handler, filter=None, eager=None):
         assert isinstance(keys, tuple)
         assert callable(handler)
         assert isinstance(filter, CLIFilter)
+        assert isinstance(eager, CLIFilter)
 
         self.keys = keys
         self._handler = handler
         self.filter = filter
+        self.eager = eager
 
     def call(self, event):
         return self._handler(event)
@@ -57,8 +59,16 @@ class Registry(object):
     def add_binding(self, *keys, **kwargs):
         """
         Decorator for annotating key bindings.
+
+        :param filter: `CLIFilter` to determine when this key binding is active.
+        :param eager: `CLIFilter` or `bool`. When True, ignore potential longer
+                      matches when this key binding is hit. E.g. when there is an
+                      active eager key binding for Ctrl-X, execute the handler
+                      immediately and ignore the key binding for Ctrl-X Ctrl-E
+                      of which it is a prefix.
         """
         filter = to_cli_filter(kwargs.pop('filter', True))
+        eager = to_cli_filter(kwargs.pop('eager', False))
 
         assert not kwargs
         assert keys
@@ -69,7 +79,7 @@ class Registry(object):
             # press otherwise. (This happens for instance when a KeyBindingManager
             # is used, but some set of bindings are always disabled.)
             if not isinstance(filter, Never):
-                binding = _Binding(keys, func, filter=filter)
+                binding = _Binding(keys, func, filter=filter, eager=eager)
 
                 self.key_bindings.append(binding)
                 self._keys_to_bindings[keys].append(binding)

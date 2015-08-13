@@ -133,6 +133,11 @@ class InputProcessor(object):
                 is_prefix_of_longer_match = self._is_prefix_of_longer_match(buffer)
                 matches = self._get_matches(buffer)
 
+                # When longer matches were found, but the current match is
+                # 'eager', ignore all the longer matches.
+                if matches and matches[-1].eager(self._cli_ref()):
+                    is_prefix_of_longer_match = False
+
                 # Exact matches found, call handler.
                 if not is_prefix_of_longer_match and matches:
                     self._call_handler(matches[-1], key_sequence=buffer)
