@@ -13,7 +13,7 @@ from .application import Application, AbortAction
 from .buffer import Buffer, AcceptAction
 from .completion import CompleteEvent
 from .completion import get_common_complete_suffix
-from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, SYSTEM_BUFFER
+from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, SYSTEM_BUFFER, DUMMY_BUFFER
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
 from .filters import Condition
@@ -80,6 +80,7 @@ class CommandLineInterface(object):
             DEFAULT_BUFFER: (application.buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)),
             SEARCH_BUFFER: Buffer(history=History(), accept_action=AcceptAction.IGNORE),
             SYSTEM_BUFFER: Buffer(history=History(), accept_action=AcceptAction.IGNORE),
+            DUMMY_BUFFER: Buffer(read_only=True),
         }
         self.buffers.update(application.buffers)
 
@@ -157,7 +158,7 @@ class CommandLineInterface(object):
     @property
     def current_buffer_name(self):
         """
-        The name of the current  :class:`Buffer`.
+        The name of the current  :class:`Buffer`. (Or `None`.)
         """
         return self.focus_stack.current
 
@@ -165,8 +166,16 @@ class CommandLineInterface(object):
     def current_buffer(self):
         """
         The current focussed :class:`Buffer`.
+
+        (This returns a dummy `Buffer` when none of the actual buffers has the
+        focus. In this case, it's really not practical to check for `None`
+        values or catch exceptions every time.)
         """
-        return self.buffers[self.focus_stack.current]
+        name = self.focus_stack.current
+        if name is not None:
+            return self.buffers[self.focus_stack.current]
+        else:
+            return self.buffers[DUMMY_BUFFER]
 
     @property
     def terminal_title(self):

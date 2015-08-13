@@ -39,7 +39,7 @@ class HasSelection(Filter):
     Enable when the current buffer has a selection.
     """
     def __call__(self, cli):
-        return bool(cli.buffers[cli.focus_stack.current].selection_state)
+        return bool(cli.current_buffer.selection_state)
 
     def __repr__(self):
         return 'HasSelection()'

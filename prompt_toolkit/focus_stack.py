@@ -1,6 +1,9 @@
 """
 Push/pop stack of buffer names. The top buffer of the stack is the one that
 currently has the focus.
+
+Note that the stack can contain `None` values. This means that none of the
+buffers has the focus.
 """
 from __future__ import unicode_literals
 from six import string_types
@@ -31,12 +34,14 @@ class FocusStack(object):
             raise Exception('Cannot pop last item from the focus stack.')
 
     def replace(self, buffer_name):
-        assert isinstance(buffer_name, string_types)
+        assert buffer_name == None or isinstance(buffer_name, string_types)
+
         self._stack.pop()
         self._stack.append(buffer_name)
 
     def push(self, buffer_name):
-        assert isinstance(buffer_name, string_types)
+        assert buffer_name == None or isinstance(buffer_name, string_types)
+
         self._stack.append(buffer_name)
 
     @property
