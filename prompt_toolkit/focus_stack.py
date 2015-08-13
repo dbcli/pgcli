@@ -31,7 +31,7 @@ class FocusStack(object):
         if len(self._stack) > 1:
             self._stack.pop()
         else:
-            raise Exception('Cannot pop last item from the focus stack.')
+            raise IndexError('Cannot pop last item from the focus stack.')
 
     def replace(self, buffer_name):
         assert buffer_name == None or isinstance(buffer_name, string_types)
