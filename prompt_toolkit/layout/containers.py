@@ -583,36 +583,43 @@ class Window(Layout):
         self.render_info = None
 
     def preferred_width(self, cli, max_available_width):
-        width = self._width(cli) or LayoutDimension()
-        preferred_width = self.content.preferred_width(cli, max_available_width)
-
-        if preferred_width is None:
-            return width
-        else:
-            # When 'dont_extend_width' has been given. Don't use more than
-            # the preferred width of the control. (But also don't go below
-            # the minimum.)
-            if self.dont_extend_width:
-                max_width = max(width.min, min(preferred_width, width.max))
-            else:
-                max_width = width.max
-            return LayoutDimension(min=width.min, max=max_width, preferred=preferred_width)
+        return self._merge_dimensions(
+            dimension=self._width(cli),
+            preferred=self.content.preferred_width(cli, max_available_width),
+            dont_extend=self.dont_extend_width)
 
     def preferred_height(self, cli, width):
-        height = self._height(cli) or LayoutDimension()
-        preferred_height = self.content.preferred_height(cli, width)
+        return self._merge_dimensions(
+            dimension=self._height(cli),
+            preferred=self.content.preferred_height(cli, width),
+            dont_extend=self.dont_extend_height)
 
-        if preferred_height is None:
-            return height
+    @staticmethod
+    def _merge_dimensions(dimension, preferred=None, dont_extend=False):
+        """
+        Take the LayoutDimension from this `Window` class and the received
+        preferred size from the `UIControl` and return a `LayoutDimension` to
+        report to the parent container.
+        """
+        dimension = dimension or LayoutDimension()
+
+        # When a 'preferred' dimension is given by the UIControl, make sure
+        # that it stays within the bounds of the Window.
+        if preferred is not None:
+            if dimension.max:
+                preferred = min(preferred, dimension.max)
+
+            if dimension.min:
+                preferred = max(preferred, dimension.min)
+
+        # When a `dont_extend` flag has been given, use the preferred dimension
+        # also as the max demension.
+        if dont_extend and preferred is not None:
+            max_= min(dimension.max, preferred)
         else:
-            # When 'dont_extend_height' has been given. Don't use more than
-            # the preferred height of the control. (But also don't go below
-            # the minimum.)
-            if self.dont_extend_height:
-                max_height = max(height.min, min(preferred_height, height.max))
-            else:
-                max_height = height.max
-            return LayoutDimension(min=height.min, max=max_height, preferred=preferred_height)
+            max_ = dimension.max
+
+        return LayoutDimension(min=dimension.min, max=max_, preferred=preferred)
 
     def write_to_screen(self, cli, screen, write_position):
         temp_screen = self.content.create_screen(cli, write_position.width, write_position.height)
