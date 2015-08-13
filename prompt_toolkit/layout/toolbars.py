@@ -12,9 +12,8 @@ from .controls import BufferControl, TokenListControl, UIControl
 from .containers import Window, ConditionalContainer
 from .utils import token_list_len
 from .screen import Screen
-from prompt_toolkit.filters import HasFocus, HasArg, HasCompletions, HasValidationError, HasSearch, Never, Always, IsDone
+from prompt_toolkit.filters import HasFocus, HasArg, HasCompletions, HasValidationError, HasSearch, Always, IsDone
 from prompt_toolkit.enums import SEARCH_BUFFER, SYSTEM_BUFFER
-
 
 __all__ = (
     'ArgToolbar',
