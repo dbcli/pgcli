@@ -30,7 +30,7 @@ from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
-from .config import write_default_config, load_config, read_config_files
+from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
 from .__init__ import __version__
@@ -50,9 +50,6 @@ Query = namedtuple('Query', ['query', 'successful', 'mutating'])
 
 
 class PGCli(object):
-
-    # Files lower in list override higher ones.
-    cnf_files = None
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
                  pgexecute=None, pgclirc_file=None):
@@ -89,24 +86,6 @@ class PGCli(object):
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial)
         self.completer = completer
         self.register_special_commands()
-
-    def find_config_files(self):
-        """
-        Look for pg_service.conf files in system or user dir.
-        """
-        cnf_files = []
-
-        cfg_path = os.environ.get('PGSYSCONFDIR', None)
-        if cfg_path:
-            cfg_path = os.path.expanduser(
-                os.path.join(cfg_path, 'pg_service.conf'))
-            if os.path.isfile(cfg_path):
-                cnf_files.append(cfg_path)
-
-        if os.path.isfile(os.path.expanduser('~/.pg_service.conf')):
-            cnf_files.append(os.path.expanduser('~/.pg_service.conf'))
-
-        return cnf_files
 
     def register_special_commands(self):
 
@@ -481,6 +460,8 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
         pgcli.connect_uri(database)
     elif "=" in database:
         pgcli.connect_dsn(database)
+    elif os.environ.get('PGSERVICE', None):
+        pgcli.connect_dsn('service={0}'.format(os.environ['PGSERVICE']))
     else:
         pgcli.connect(database, host, user, port)
 

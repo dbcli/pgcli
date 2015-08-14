@@ -162,6 +162,13 @@ class PGExecute(object):
             if password:
                 dsn = "{0} password={1}".format(dsn, password)
             conn = psycopg2.connect(dsn=unicode2utf8(dsn))
+            cursor = conn.cursor()
+            # When we connect using a DSN, we don't really know what db,
+            # user, etc. we connected to. Let's read it.
+            db = self._select_one(cursor, 'select current_database()')
+            user = self._select_one(cursor, 'select current_user')
+            host = self._select_one(cursor, 'select inet_server_addr()')
+            port = self._select_one(cursor, 'select inet_server_port()')
         else:
             conn = psycopg2.connect(
                     database=unicode2utf8(db),
@@ -181,6 +188,16 @@ class PGExecute(object):
         self.port = port
         register_json_typecasters(self.conn, self._json_typecaster)
         register_hstore_typecaster(self.conn)
+
+    def _select_one(self, cur, sql):
+        """
+        Helper method to run a select and retrieve a single field value
+        :param cur: cursor
+        :param sql: string
+        :return: string
+        """
+        cur.execute(sql)
+        return cur.fetchall()[0][0]
 
     def _json_typecaster(self, json_data):
         """Interpret incoming JSON data as a string.
