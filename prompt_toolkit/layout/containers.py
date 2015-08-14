@@ -95,7 +95,7 @@ class HSplit(Layout):
         sum_dimensions = sum_layout_dimensions(dimensions)
 
         # If there is not enough space for both.
-        # Don't do anything. (TODO: show window to small message.)
+        # Don't do anything. (TODO: show window too small message.)
         if sum_dimensions.min > write_position.extended_height:
             return
 
@@ -605,6 +605,11 @@ class Window(Layout):
         report to the parent container.
         """
         dimension = dimension or LayoutDimension()
+
+        # When a preferred dimension was explicitely given to the Window,
+        # ignore the UIControl.
+        if dimension.preferred_specified:
+            preferred = dimension.preferred
 
         # When a 'preferred' dimension is given by the UIControl, make sure
         # that it stays within the bounds of the Window.

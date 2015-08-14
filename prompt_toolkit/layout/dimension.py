@@ -13,6 +13,10 @@ __all__ = (
 
 class LayoutDimension(object):
     def __init__(self, min=None, max=None, preferred=None):
+        self.min_specified = min is not None
+        self.max_specified = max is not None
+        self.preferred_specified = preferred is not None
+
         if min is None:  # 0-values are allowed, so use "is None"
             min = 1
         if max is None:
