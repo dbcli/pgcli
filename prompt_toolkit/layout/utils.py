@@ -29,6 +29,21 @@ def token_list_width(tokenlist):
     return sum(get_cwidth(c) for k, word in tokenlist for c in word)
 
 
+def iter_token_lines(tokenlist):
+    """
+    Iterator that yields tokenlists for each line.
+    """
+    line = []
+    for token, c in explode_tokens(tokenlist):
+        line.append((token, c))
+
+        if c == '\n':
+            yield line
+            line = []
+
+    yield line
+
+
 def explode_tokens(tokenlist):
     """
     Turn a list of (token, text) tuples into another list where each string is
