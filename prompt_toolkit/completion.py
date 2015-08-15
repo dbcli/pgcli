@@ -86,10 +86,7 @@ class CompleteEvent(object):
 
 class Completer(with_metaclass(ABCMeta, object)):
     """
-    Base class for Code implementations.
-
-    The methods in here are methods that are expected to exist for the `Buffer`
-    and `Renderer` classes.
+    Base class for completer implementations.
     """
     @abstractmethod
     def get_completions(self, document, complete_event):
