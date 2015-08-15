@@ -12,8 +12,9 @@ from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.enums import DEFAULT_BUFFER
 
-from .processors import Processor
+from .lexers import Lexer, SimpleLexer
 from .margins import Margin, NoMargin
+from .processors import Processor
 from .screen import Screen, Char, Point
 from .utils import token_list_width
 
@@ -178,7 +179,6 @@ class BufferControl(UIControl):
     :param lexer: Pygments lexer class.
     :param preview_search: `bool` or `CLIFilter`: Show search while typing.
     :param buffer_name: String representing the name of the buffer to display.
-    :param default_token: Pygments token to use for the background.
     :param margin: `Margin` instance. for instance: `NumberredMargin` in order
         to show line numbers.
     """
@@ -187,28 +187,20 @@ class BufferControl(UIControl):
                  lexer=None,
                  preview_search=False,
                  buffer_name=DEFAULT_BUFFER,
-                 default_token=Token,
                  menu_position=None,
                  margin=None):
         assert input_processors is None or all(isinstance(i, Processor) for i in input_processors)
         assert menu_position is None or callable(menu_position)
         assert margin is None or isinstance(margin, Margin)
+        assert lexer is None or isinstance(lexer, Lexer)
 
         self.preview_search = to_cli_filter(preview_search)
 
         self.input_processors = input_processors or []
         self.buffer_name = buffer_name
-        self.default_token = default_token
         self.menu_position = menu_position
         self.margin = margin or NoMargin()
-
-        if lexer:
-            self.lexer = lexer(
-                stripnl=False,
-                stripall=False,
-                ensurenl=False)
-        else:
-            self.lexer = None
+        self.lexer = lexer or SimpleLexer()
 
         #: LRU cache for the lexer.
         #: Often, due to cursor movement, undo/redo and window resizing
@@ -257,10 +249,8 @@ class BufferControl(UIControl):
                          searching through the history.
         """
         def get():
-            if self.lexer:
-                tokens = list(self.lexer.get_tokens(document.text))
-            else:
-                tokens = [(self.default_token, document.text)]
+            # Call lexer.
+            tokens = list(self.lexer.get_tokens(cli, document.text))
 
             # 'Explode' tokens in characters.
             # (Some input processors -- like search/selection highlighter --

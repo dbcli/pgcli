@@ -13,6 +13,8 @@ from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.layout import Window, VSplit, HSplit, Float, FloatContainer
 from prompt_toolkit.layout.controls import TokenListControl, FillControl, BufferControl
 from prompt_toolkit.layout.dimension import LayoutDimension
+from prompt_toolkit.layout.lexers import PygmentsLexer
+from prompt_toolkit.layout.margins import NumberredMargin
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.processors import AfterInput
 from prompt_toolkit.layout.prompt import DefaultPrompt
@@ -87,8 +89,8 @@ def main():
             Window(content=TokenListControl.static([(Token.HelloWorld, lipsum)])),
             Window(width=D.exact(1),
                    content=FillControl('|', token=Token.Line)),
-            Window(content=BufferControl(lexer=PythonLexer,
-                                         show_line_numbers=Always(),
+            Window(content=BufferControl(lexer=PygmentsLexer(PythonLexer),
+                                         margin=NumberredMargin(),
                                          input_processors=[
                                                 DefaultPrompt.from_message('python> '),
                                                 AfterInput.static(' <python', token=Token.AfterInput),

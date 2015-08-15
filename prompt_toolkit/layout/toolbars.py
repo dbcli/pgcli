@@ -7,6 +7,7 @@ from ..enums import IncrementalSearchDirection
 
 from .processors import BeforeInput
 
+from .lexers import PygmentsLexer, SimpleLexer
 from .dimension import LayoutDimension
 from .controls import BufferControl, TokenListControl, UIControl
 from .containers import Window, ConditionalContainer
@@ -36,7 +37,7 @@ class TokenListToolbar(ConditionalContainer):
 class SystemToolbarControl(BufferControl):
     def __init__(self):
         super(SystemToolbarControl, self).__init__(
-            lexer=BashLexer,
+            lexer=PygmentsLexer(BashLexer),
             buffer_name=SYSTEM_BUFFER,
             input_processors=[BeforeInput.static('Shell command: ', Token.Toolbar.System)],)
 
@@ -90,7 +91,7 @@ class SearchToolbarControl(BufferControl):
         super(SearchToolbarControl, self).__init__(
             buffer_name=SEARCH_BUFFER,
             input_processors=[BeforeInput(get_before_input)],
-            default_token=token.Text
+            lexer=SimpleLexer(default_token=token.Text),
         )
 
 

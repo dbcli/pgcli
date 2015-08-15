@@ -4,6 +4,7 @@ the input using a regular grammar with token annotations.
 """
 from __future__ import unicode_literals
 from pygments.token import Token
+from prompt_toolkit.layout.lexers import Lexer
 
 from .compiler import _CompiledGrammar
 
@@ -12,7 +13,7 @@ __all__ = (
 )
 
 
-class GrammarLexer(object):
+class GrammarLexer(Lexer):
     """
     Lexer which can be used for highlighting of tokens according to variables in the grammar.
 
@@ -29,14 +30,14 @@ class GrammarLexer(object):
     """
     def __init__(self, compiled_grammar, tokens=None, default_token=None, lexers=None):
         assert isinstance(compiled_grammar, _CompiledGrammar)
+        assert lexers is None or all(isinstance(v, Lexer) for k, v in lexers.items())
         assert lexers is None or isinstance(lexers, dict)
         assert tokens is None or isinstance(tokens, dict)
 
         self.compiled_grammar = compiled_grammar
         self.tokens = tokens
         self.default_token = default_token or Token
-        self.lexers = dict((name, lexer(stripnl=False, stripall=False, ensurenl=False))
-                           for name, lexer in (lexers or {}).items())
+        self.lexers = lexers or {}
 
     def __call__(self, stripnl=False, stripall=False, ensurenl=False):
         """
@@ -45,20 +46,20 @@ class GrammarLexer(object):
         """
         return self
 
-    def get_tokens(self, text):
+    def get_tokens(self, cli, text):
         m = self.compiled_grammar.match_prefix(text)
 
         if m:
             characters = [[self.default_token, c] for c in text]
 
             for v in m.variables():
-                # If we have a Pygmenst lexer for this part of the input.
+                # If we have a `Lexer` instance for this part of the input.
                 # Tokenize recursively and apply tokens.
                 lexer = self.lexers.get(v.varname)
                 token = self.tokens.get(v.varname)
 
                 if lexer:
-                    lexer_tokens = lexer.get_tokens(text[v.start:v.stop])
+                    lexer_tokens = lexer.get_tokens(cli, text[v.start:v.stop])
                     i = v.start
                     for t, s in lexer_tokens:
                         for c in s:
