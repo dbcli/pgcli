@@ -238,6 +238,10 @@ class BeforeInput(Processor):
         return '%s(get_tokens=%r)' % (
             self.__class__.__name__, self.get_tokens)
 
+    def invalidation_hash(self, cli, document):
+        # Redraw when the given tokens change.
+        return tuple(self.get_tokens(cli))
+
 
 class AfterInput(Processor):
     """
@@ -259,6 +263,10 @@ class AfterInput(Processor):
     def __repr__(self):
         return '%s(get_tokens=%r)' % (
             self.__class__.__name__, self.get_tokens)
+
+    def invalidation_hash(self, cli, document):
+        # Redraw when the given tokens change.
+        return tuple(self.get_tokens(cli))
 
 
 class ShowLeadingWhiteSpaceProcessor(Processor):
