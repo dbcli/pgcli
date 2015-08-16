@@ -135,13 +135,17 @@ class PGCli(object):
         root_logger.debug('Initializing pgcli logging.')
         root_logger.debug('Log file %r.', log_file)
 
+    def connect_dsn(self, dsn):
+        self.connect(dsn=dsn)
+
     def connect_uri(self, uri):
         uri = urlparse(uri)
         database = uri.path[1:]  # ignore the leading fwd slash
         self.connect(database, uri.hostname, uri.username,
                      uri.port, uri.password)
 
-    def connect(self, database='', host='', user='', port='', passwd=''):
+    def connect(self, database='', host='', user='', port='', passwd='',
+                dsn=''):
         # Connect to the database.
 
         if not user:
@@ -174,13 +178,14 @@ class PGCli(object):
         # a password (no -w flag), prompt for a passwd and try again.
         try:
             try:
-                pgexecute = PGExecute(database, user, passwd, host, port)
+                pgexecute = PGExecute(database, user, passwd, host, port, dsn)
             except OperationalError as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
                         auto_passwd_prompt):
                     passwd = click.prompt('Password', hide_input=True,
                                           show_default=False, type=str)
-                    pgexecute = PGExecute(database, user, passwd, host, port)
+                    pgexecute = PGExecute(database, user, passwd, host, port,
+                                          dsn)
                 else:
                     raise e
 
@@ -455,6 +460,10 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
 
     if '://' in database:
         pgcli.connect_uri(database)
+    elif "=" in database:
+        pgcli.connect_dsn(database)
+    elif os.environ.get('PGSERVICE', None):
+        pgcli.connect_dsn('service={0}'.format(os.environ['PGSERVICE']))
     else:
         pgcli.connect(database, host, user, port)
 
