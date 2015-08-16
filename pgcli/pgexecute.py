@@ -197,7 +197,7 @@ class PGExecute(object):
         :return: string
         """
         cur.execute(sql)
-        return cur.fetchall()[0][0]
+        return cur.fetchone()
 
     def _json_typecaster(self, json_data):
         """Interpret incoming JSON data as a string.
