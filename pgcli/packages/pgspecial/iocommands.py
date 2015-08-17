@@ -1,11 +1,9 @@
 import re
 import logging
-from codecs import open
-from os.path import expanduser
 import click
 from .namedqueries import namedqueries
-from .main import special_command, NO_QUERY
 from . import export
+from .main import special_command
 
 _logger = logging.getLogger(__name__)
 
@@ -67,30 +65,6 @@ def open_external_editor(filename=None, sql=''):
         query = sql
 
     return (query, message)
-
-@special_command('\\i', '\\i file', 'Execute commands from file.')
-def execute_from_file(cur, pattern, **_):
-    if pattern:
-        try:
-            query = read_from_file(pattern)
-        except IOError as e:
-            message = 'Error reading file: %s' % pattern
-            message = message + ' Error was: ' + str(e)
-            return [(None, None, None, message)]
-    else:
-        message = '\\i: missing required argument'
-        return [(None, None, None, message)]
-    cur.execute(query)
-    if cur.description:
-        headers = [x[0] for x in cur.description]
-        return [(None, cur, headers, cur.statusmessage)]
-    else:
-        return [(None, None, None, cur.statusmessage)]
-
-def read_from_file(path):
-    with open(expanduser(path), encoding='utf-8') as f:
-        contents = f.read()
-    return contents
 
 @special_command('\\n', '\\n[+] [name]', 'List or execute named queries.')
 def execute_named_query(cur, pattern, **_):

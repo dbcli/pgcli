@@ -7,6 +7,7 @@ import sys
 import traceback
 import logging
 from time import time
+from codecs import open
 
 import click
 import sqlparse
@@ -97,6 +98,8 @@ class PGCli(object):
                               'Refresh auto-completions.', arg_type=NO_QUERY)
         self.pgspecial.register(self.refresh_completions, '\\refresh', '\\refresh',
                               'Refresh auto-completions.', arg_type=NO_QUERY)
+        self.pgspecial.register(self.execute_from_file, '\\i', '\\i filename',
+                              'Execute commands from file.')
 
     def change_db(self, pattern, **_):
         if pattern:
@@ -107,6 +110,18 @@ class PGCli(object):
 
         yield (None, None, None, 'You are now connected to database "%s" as '
                 'user "%s"' % (self.pgexecute.dbname, self.pgexecute.user))
+
+    def execute_from_file(self, pattern, **_):
+        if not pattern:
+            message = '\\i: missing required argument'
+            return [(None, None, None, message)]
+        try:
+            with open(os.path.expanduser(pattern), encoding='utf-8') as f:
+                query = f.read()
+        except IOError as e:
+            return [(None, None, None, str(e))]
+
+        return self.pgexecute.run(query, self.pgspecial)
 
     def initialize_logging(self):
 
