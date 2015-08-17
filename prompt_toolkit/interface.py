@@ -264,16 +264,26 @@ class CommandLineInterface(object):
         self.renderer.request_absolute_cursor_position()
         self._redraw()
 
-    def run(self, reset_current_buffer=True):
+    def run(self, reset_current_buffer=True, pre_run=None):
         """
         Read input from the command line.
         This runs the eventloop until a return value has been set.
+
+        :param reset_current_buffer: Reset content of current buffer.
+        :param pre_run: Callable that is called right after the reset has taken
+            place. This allows custom initialisation.
         """
+        assert pre_run is None or callable(pre_run)
+
         try:
             self._is_running = True
 
             self.application.on_start.fire(self)
             self.reset(reset_current_buffer=reset_current_buffer)
+
+            # Call pre_run.
+            if pre_run:
+                pre_run()
 
             # Run eventloop in raw mode.
             with self.input.raw_mode():
@@ -291,17 +301,23 @@ class CommandLineInterface(object):
         # Return result.
         return self.return_value()
 
-    def run_async(self, reset_current_buffer=True):
+    def run_async(self, reset_current_buffer=True, pre_run=None):
         """
         Same as `run`, but this returns a coroutine.
 
         This is mostly for Python >3.3, with asyncio.
         """
+        assert pre_run is None or callable(pre_run)
+
         try:
             self._is_running = True
 
             self.application.on_start.fire(self)
             self.reset(reset_current_buffer=reset_current_buffer)
+
+            # Call pre_run.
+            if pre_run:
+                pre_run()
 
             with self.input.raw_mode():
                 self.renderer.request_absolute_cursor_position()
