@@ -808,9 +808,12 @@ class Buffer(object):
         self.cursor_position += self.document.get_end_of_line_position()
         self.insert_text(insert)
 
-    def insert_text(self, data, overwrite=False, move_cursor=True):
+    def insert_text(self, data, overwrite=False, move_cursor=True, fire_event=True):
         """
         Insert characters at cursor position.
+
+        :param fire_event: Fire `on_text_insert` event. This is mainly used to
+            trigger autocompletion while typing.
         """
         # In insert/text mode.
         if overwrite:
@@ -827,7 +830,8 @@ class Buffer(object):
             self.cursor_position += len(data)
 
         # Fire 'on_text_insert' event.
-        self.on_text_insert.fire()
+        if fire_event:
+            self.on_text_insert.fire()
 
     def paste_clipboard_data(self, data, before=False, count=1):
         """
@@ -840,7 +844,7 @@ class Buffer(object):
                 self.insert_text(data.text * count)
             else:
                 self.cursor_right()
-                self.insert_text(data.text * count)
+                self.insert_text(data.text * count, fire_event=False)
                 self.cursor_left()
 
         elif data.type == SelectionType.LINES:
@@ -849,7 +853,7 @@ class Buffer(object):
                 self.insert_text((data.text + '\n') * count, move_cursor=False)
             else:
                 self.cursor_position += self.document.get_end_of_line_position()
-                self.insert_text(('\n' + data.text) * count, move_cursor=False)
+                self.insert_text(('\n' + data.text) * count, move_cursor=False, fire_event=False)
                 self.cursor_down()
 
             self.cursor_position += self.document.get_start_of_line_position(after_whitespace=True)
