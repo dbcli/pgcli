@@ -87,15 +87,13 @@ def test_database_list(executor):
 
 @dbtest
 def test_invalid_syntax(executor):
-    with pytest.raises(psycopg2.ProgrammingError) as excinfo:
-        run(executor, 'invalid syntax!')
-    assert 'syntax error at or near "invalid"' in str(excinfo.value)
+    result = run(executor, 'invalid syntax!')
+    assert 'syntax error at or near "invalid"' in result[0]
 
 @dbtest
 def test_invalid_column_name(executor):
-    with pytest.raises(psycopg2.ProgrammingError) as excinfo:
-        run(executor, 'select invalid command')
-    assert 'column "invalid" does not exist' in str(excinfo.value)
+    result = run(executor, 'select invalid command')
+    assert 'column "invalid" does not exist' in result[0]
 
 
 @pytest.fixture(params=[True, False])
@@ -130,9 +128,9 @@ def test_multiple_queries_with_special_command_same_line(executor, pgspecial):
 
 @dbtest
 def test_multiple_queries_same_line_syntaxerror(executor):
-    with pytest.raises(psycopg2.ProgrammingError) as excinfo:
-        run(executor, "select 'foo'; invalid syntax")
-    assert 'syntax error at or near "invalid"' in str(excinfo.value)
+    result = run(executor, "select 'foo'; invalid syntax")
+    assert 'foo' in result[0]
+    assert 'syntax error at or near "invalid"' in result[-1]
 
 
 @pytest.fixture
