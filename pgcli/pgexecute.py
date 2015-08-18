@@ -5,7 +5,7 @@ import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 from .packages import pgspecial as special
-from .encodingutils import unicode2utf8, PY2
+from .encodingutils import unicode2utf8, PY2, utf8tounicode
 import click
 
 _logger = logging.getLogger(__name__)
@@ -254,7 +254,7 @@ class PGExecute(object):
         except psycopg2.ProgrammingError as e:
             _logger.error("sql: %r, error: %r", split_sql, e)
             _logger.error("traceback: %r", traceback.format_exc())
-            return (None, None, None, click.style(str(e), fg='red'))
+            return (None, None, None, click.style(utf8tounicode(str(e)), fg='red'))
 
         try:
             title = self.conn.notices.pop()

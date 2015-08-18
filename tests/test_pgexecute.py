@@ -1,7 +1,6 @@
 # coding=UTF-8
 
 import pytest
-import psycopg2
 from pgcli.packages.pgspecial import PGSpecial
 from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
@@ -128,8 +127,8 @@ def test_multiple_queries_with_special_command_same_line(executor, pgspecial):
 
 @dbtest
 def test_multiple_queries_same_line_syntaxerror(executor):
-    result = run(executor, "select 'foo'; invalid syntax")
-    assert 'foo' in result[0]
+    result = run(executor, u"select 'fooé'; invalid syntax é")
+    assert u'fooé' in result[0]
     assert 'syntax error at or near "invalid"' in result[-1]
 
 
