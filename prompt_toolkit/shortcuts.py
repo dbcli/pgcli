@@ -32,6 +32,7 @@ from .layout import Window, HSplit, VSplit, FloatContainer, Float
 from .layout.containers import ConditionalContainer
 from .layout.controls import BufferControl, TokenListControl
 from .layout.dimension import LayoutDimension
+from .layout.lexers import PygmentsLexer
 from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
 from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, ConditionalProcessor
 from .layout.prompt import DefaultPrompt
@@ -43,6 +44,7 @@ from .utils import is_conemu_ansi, is_windows
 from pygments.token import Token
 from six import text_type
 
+import pygments.lexer
 import sys
 
 if is_windows():
@@ -117,7 +119,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
     Returns a ``Layout`` instance.
 
     :param message: Text to be used as prompt.
-    :param lexer: Pygments lexer to be used for the highlighting.
+    :param lexer: Lexer to be used for the highlighting.
     :param is_password: `bool` or `CLIFilter`. When True, display input as '*'.
     :param reserve_space_for_menu: When True, make sure that a minimal height is
         allocated in the terminal, in order to display the completion menu.
@@ -142,6 +144,15 @@ def create_default_layout(message='', lexer=None, is_password=False,
 
     if get_prompt_tokens is None:
         get_prompt_tokens = lambda _: [(Token.Prompt, message)]
+
+    # `lexer` is supposed to be a `Lexer` instance. But if a Pygments lexer
+    # class is given, turn it into a PygmentsLexer. (Important for
+    # backwards-compatibility.)
+    try:
+        if issubclass(lexer, pygments.lexer.Lexer):
+            lexer = PygmentsLexer(lexer)
+    except TypeError: # Happens when lexer is `None` or an instance of something else.
+        pass
 
     # Create processors list.
     # (DefaultPrompt should always be at the end.)
@@ -267,7 +278,7 @@ def create_default_application(
     :param vi_mode: If True, use Vi key bindings.
     :param complete_while_typing: Enable autocompletion while typing.
     :param enable_history_search: Enable up-arrow parting string matching.
-    :param lexer: Pygments lexer to be used for the syntax highlighting.
+    :param lexer: Lexer to be used for the syntax highlighting.
     :param validator: `Validator` instance for input validation.
     :param completer: `Completer` instance for input completion.
     :param style: Pygments style class for the color scheme.
