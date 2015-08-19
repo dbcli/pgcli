@@ -36,11 +36,13 @@ from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
 from .__init__ import __version__
 
+click.disable_unicode_literals_warning = True
 
 try:
     from urlparse import urlparse
 except ImportError:
     from urllib.parse import urlparse
+
 from getpass import getuser
 from psycopg2 import OperationalError
 
