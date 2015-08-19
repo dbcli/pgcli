@@ -1,10 +1,12 @@
+import traceback
 import logging
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 from .packages import pgspecial as special
-from .encodingutils import unicode2utf8, PY2
+from .encodingutils import unicode2utf8, PY2, utf8tounicode
+import click
 
 _logger = logging.getLogger(__name__)
 
@@ -247,7 +249,13 @@ class PGExecute(object):
     def execute_normal_sql(self, split_sql):
         _logger.debug('Regular sql statement. sql: %r', split_sql)
         cur = self.conn.cursor()
-        cur.execute(split_sql)
+        try:
+            cur.execute(split_sql)
+        except psycopg2.ProgrammingError as e:
+            _logger.error("sql: %r, error: %r", split_sql, e)
+            _logger.error("traceback: %r", traceback.format_exc())
+            return (None, None, None, click.style(utf8tounicode(str(e)), fg='red'))
+
         try:
             title = self.conn.notices.pop()
         except IndexError:
