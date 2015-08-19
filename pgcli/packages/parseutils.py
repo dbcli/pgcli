@@ -213,8 +213,11 @@ def _parsed_is_open_quote(parsed):
         elif (tok.ttype in Token.Name.Builtin
                 and dollar_quote_regex.match(tok.value)):
             # Find the matching closing dollar quote sign
-            for (i, tok2) in enumerate(tokens[i+1:], i+1):
+            for (j, tok2) in enumerate(tokens[i+1:], i+1):
                 if tok2.match(Token.Name.Builtin, tok.value):
+                    # Found the matching closing quote - continue our scan for
+                    # open quotes thereafter
+                    i = j
                     break
             else:
                 # No matching dollar sign quote
