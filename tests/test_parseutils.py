@@ -1,6 +1,6 @@
 import pytest
 from pgcli.packages.parseutils import extract_tables
-from pgcli.packages.parseutils import find_prev_keyword
+from pgcli.packages.parseutils import find_prev_keyword, is_open_quote
 
 def test_empty_string():
     tables = extract_tables('')
@@ -122,3 +122,31 @@ def test_find_prev_keyword_where(sql):
 def test_find_prev_keyword_open_parens(sql):
     kw, _ = find_prev_keyword(sql)
     assert kw.value == '('
+
+
+@pytest.mark.parametrize('sql', [
+    '',
+    '$$ foo $$',
+    "$$ 'foo' $$",
+    '$$ "foo" $$',
+    '$$ $a$ $$',
+    '$a$ $$ $a$',
+    'foo bar $$ baz $$',
+])
+def test_is_open_quote__closed(sql):
+    assert not is_open_quote(sql)
+
+
+@pytest.mark.parametrize('sql', [
+    '$$',
+    ';;;$$',
+    'foo $$ bar $$; foo $$',
+    '$$ foo $a$',
+    "foo 'bar baz",
+    "$a$ foo ",
+    '$$ "foo" ',
+    '$$ $a$ ',
+    'foo bar $$ baz',
+])
+def test_is_open_quote__open(sql):
+    assert is_open_quote(sql)

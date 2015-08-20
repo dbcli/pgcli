@@ -2,7 +2,7 @@ from __future__ import print_function
 import re
 import sqlparse
 from sqlparse.sql import IdentifierList, Identifier, Function
-from sqlparse.tokens import Keyword, DML, Punctuation
+from sqlparse.tokens import Keyword, DML, Punctuation, Token
 
 cleanup_regex = {
         # This matches only alphanumerics and underscores.
@@ -187,6 +187,46 @@ def find_prev_keyword(sql):
             return t, text
 
     return None, ''
+
+
+# Postgresql dollar quote signs look like `$$` or `$tag$`
+dollar_quote_regex = re.compile(r'^\$[^$]*\$$')
+
+
+def is_open_quote(sql):
+    """Returns true if the query contains an unclosed quote"""
+
+    # parsed can contain one or more semi-colon separated commands
+    parsed = sqlparse.parse(sql)
+    return any(_parsed_is_open_quote(p) for p in parsed)
+
+
+def _parsed_is_open_quote(parsed):
+    tokens = list(parsed.flatten())
+
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok.match(Token.Error, "'"):
+            # An unmatched single quote
+            return True
+        elif (tok.ttype in Token.Name.Builtin
+                and dollar_quote_regex.match(tok.value)):
+            # Find the matching closing dollar quote sign
+            for (j, tok2) in enumerate(tokens[i+1:], i+1):
+                if tok2.match(Token.Name.Builtin, tok.value):
+                    # Found the matching closing quote - continue our scan for
+                    # open quotes thereafter
+                    i = j
+                    break
+            else:
+                # No matching dollar sign quote
+                return True
+
+        i += 1
+
+    return False
+
 
 if __name__ == '__main__':
     sql = 'select * from (select t. from tabl t'
