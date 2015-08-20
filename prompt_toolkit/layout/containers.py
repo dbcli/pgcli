@@ -332,7 +332,7 @@ class FloatContainer(Layout):
                 # Reduce height if not enough space. (We can use the
                 # extended_height when the content requires it.)
                 if height > write_position.extended_height - ypos:
-                    if write_position.extended_height - ypos > ypos:
+                    if write_position.extended_height - ypos + 1 >= ypos:
                         # When the space below the cursor is more than
                         # the space above, just reduce the height.
                         height = write_position.extended_height - ypos
