@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 from .completion import Completer, Completion, CompleteEvent
 from .document import Document
 from .enums import IncrementalSearchDirection
-from .history import History
+from .history import History, InMemoryHistory
 from .selection import SelectionType, SelectionState
 from .utils import Callback
 from .validation import ValidationError
@@ -203,7 +203,7 @@ class Buffer(object):
         #: The command buffer history.
         # Note that we shouldn't use a lazy 'or' here. bool(history) could be
         # False when empty.
-        self._history = History() if history is None else history
+        self._history = InMemoryHistory() if history is None else history
 
         self.__cursor_position = 0
 

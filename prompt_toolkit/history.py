@@ -1,14 +1,49 @@
 from __future__ import unicode_literals
+from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 
 import datetime
 import os
 
-__all__ = ('History', 'FileHistory')
+__all__ = (
+    'FileHistory',
+    'History',
+    'InMemoryHistory',
+)
 
 
-class History(object):
+class History(with_metaclass(ABCMeta, object)):
     """
-    Base ``History`` class that keeps a list of all strings in memory.
+    Base ``History`` interface.
+    """
+    @abstractmethod
+    def append(self, string):
+        " Append string to history. "
+
+    @abstractmethod
+    def __getitem__(self, key):
+        " Return one item of the history. It should be accessible like a `list`. "
+
+    @abstractmethod
+    def __len__(self):
+        " Return the length of the history.  "
+
+    def __bool__(self):
+        """
+        Never evaluate to False, even when the history is empty.
+        (Python calls __len__ if __bool__ is not implemented.)
+        This is mainly to allow lazy evaluation::
+
+            x = history or InMemoryHistory()
+        """
+        return True
+
+    __nonzero__ = __bool__  # For Python 2.
+
+
+class InMemoryHistory(History):
+    """
+    ``History`` class that keeps a list of all strings in memory.
     """
     def __init__(self):
         self.strings = []
@@ -22,22 +57,13 @@ class History(object):
     def __len__(self):
         return len(self.strings)
 
-    def __bool__(self):
-        """
-        Don't evaluate to False, even when the history is empty.
-        (Python calls __len__ if __bool__ is not implemented.)
-        """
-        return True
-
-    __nonzero__ = __bool__  # For Python 2.
-
 
 class FileHistory(History):
     """
     ``History`` class that stores all strings in a file.
     """
     def __init__(self, filename):
-        super(FileHistory, self).__init__()
+        self.strings = []
         self.filename = filename
 
         self._load()
@@ -66,7 +92,7 @@ class FileHistory(History):
                 add()
 
     def append(self, string):
-        super(FileHistory, self).append(string)
+        self.strings.append(string)
 
         # Save to file.
         with open(self.filename, 'ab') as f:
@@ -75,3 +101,9 @@ class FileHistory(History):
             write('\n# %s\n' % datetime.datetime.now())
             for line in string.split('\n'):
                 write('+%s\n' % line)
+
+    def __getitem__(self, key):
+        return self.strings[key]
+
+    def __len__(self):
+        return len(self.strings)

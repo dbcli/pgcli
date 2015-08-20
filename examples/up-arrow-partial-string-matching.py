@@ -7,14 +7,14 @@ history on the items starting with the given input text.
 """
 from __future__ import unicode_literals, print_function
 from prompt_toolkit.shortcuts import get_input
-from prompt_toolkit.history import History
+from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.filters import Always
 from prompt_toolkit.interface import AbortAction
 
 
 def main():
     # Create some history first. (Easy for testing.)
-    history = History()
+    history = InMemoryHistory()
     history.append('import os')
     history.append('print("hello")')
     history.append('print("world")')

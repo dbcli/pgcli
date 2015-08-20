@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 from .buffer import Buffer
 from .enums import DEFAULT_BUFFER, SEARCH_BUFFER
 from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown, to_simple_filter, to_cli_filter, Condition
-from .history import History
+from .history import InMemoryHistory
 from .interface import CommandLineInterface, Application, AbortAction, AcceptAction
 from .key_binding.manager import KeyBindingManager
 from .layout import Window, HSplit, VSplit, FloatContainer, Float
@@ -326,7 +326,7 @@ def create_default_application(
                 enable_history_search=enable_history_search,
                 complete_while_typing=complete_while_typing,
                 is_multiline=multiline,
-                history=(history or History()),
+                history=(history or InMemoryHistory()),
                 validator=validator,
                 completer=completer,
                 accept_action=accept_action,

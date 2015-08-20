@@ -18,7 +18,7 @@ from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
 from .filters import Condition
 from .focus_stack import FocusStack
-from .history import History
+from .history import InMemoryHistory
 from .input import StdinInput, Input
 from .key_binding.input_processor import InputProcessor
 from .output import Output
@@ -78,8 +78,8 @@ class CommandLineInterface(object):
             # For the 'search' and 'system' buffers, 'returnable' is False, in
             # order to block normal Enter/ControlC behaviour.
             DEFAULT_BUFFER: (application.buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)),
-            SEARCH_BUFFER: Buffer(history=History(), accept_action=AcceptAction.IGNORE),
-            SYSTEM_BUFFER: Buffer(history=History(), accept_action=AcceptAction.IGNORE),
+            SEARCH_BUFFER: Buffer(history=InMemoryHistory(), accept_action=AcceptAction.IGNORE),
+            SYSTEM_BUFFER: Buffer(history=InMemoryHistory(), accept_action=AcceptAction.IGNORE),
             DUMMY_BUFFER: Buffer(read_only=True),
         }
         self.buffers.update(application.buffers)
