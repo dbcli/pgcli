@@ -1,6 +1,37 @@
 CHANGELOG
 =========
 
+0.47: 2015-08-19
+----------------
+
+New features:
+- Added `prompt_toolkit.layout.utils.iter_token_lines`.
+- Allow `None` values on the focus stack.
+- Buffers can be readonly. Added `IsReadOnly` filter.
+- `eager` behaviour for key bindings. When a key binding is eager it will be
+  executed as soon as it's matched, even when there is another binding that
+  starts with this key sequence.
+- Custom margins for BufferControl.
+
+Fixes:
+- Don't trigger autocompletion on paste.
+- Added `pre_run` parameter to CommandLineInterface.
+- Correct invalidation of BeforeInput and AfterInput.
+- Correctly handle transparancy. (For floats.)
+- Small change in the algorithm to determine Window dimensions: keep in the
+  bounds of the Window dimensions.
+
+Backwards-incompatible changes:
+- There a now a `Lexer` abstract base class. Every lexer should be an instance
+  of that class, and Pygments lexers should be wrapped in a `PygmentsLexer`
+  class. `prompt_toolkit.shortcuts` still accepts Pygments lexers directly for
+  backwards-compatibilty.
+- BufferControl no longer has a `show_line_numbers` argument. Pass a
+  `NumberredMargin` instance instead.
+- The `History` class became an abstract base class and only defines an
+  interface. The default history class is now called `InMemoryHistory`.
+
+
 0.46: 2015-08-08
 ----------------
 
