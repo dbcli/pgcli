@@ -154,6 +154,13 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         # list. This means that token.value may be something like
         # 'where foo > 5 and '. We need to look "inside" token.tokens to handle
         # suggestions in complicated where clauses correctly
+
+        # Check to see if the last token in the where clause is an identifier
+        token = token.token_prev(len(token.tokens))
+        if isinstance(token, Identifier):
+            # SELECT * FROM foo WHERE bar <autosuggest>
+            return [{'type': 'keyword'}]
+
         prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
         return suggest_based_on_last_token(prev_keyword, text_before_cursor,
                                            full_text, identifier)

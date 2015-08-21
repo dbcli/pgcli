@@ -483,3 +483,10 @@ def test_invalid_sql():
     text = 'selt *'
     suggestions = suggest_type(text, text)
     assert suggestions == [{'type': 'keyword'}]
+
+
+def test_suggest_where_like():
+    # https://github.com/dbcli/mycli/issues/135
+    text = 'select * from foo where bar '
+    suggestions = suggest_type(text, text)
+    assert suggestions == [{'type': 'keyword'}]
