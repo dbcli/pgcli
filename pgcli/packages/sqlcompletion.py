@@ -252,7 +252,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
                     {'type': 'function', 'schema': parent}]
         else:
             return [{'type': 'column', 'tables': extract_tables(full_text)},
-                    {'type': 'function', 'schema': []}]
+                    {'type': 'function', 'schema': []},
+                    {'type': 'keyword'}]
     elif (token_v.endswith('join') and token.is_keyword) or (token_v in
             ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
         schema = (identifier and identifier.get_parent_name()) or []
