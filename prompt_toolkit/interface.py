@@ -410,6 +410,8 @@ class CommandLineInterface(object):
         :param render_cli_done: When True, render the interface in the
                 'Done' state first, then execute the function. If False,
                 erase the interface first.
+
+        :returns: the result of `func`.
         """
         # Draw interface in 'done' state, or erase.
         if render_cli_done:
@@ -420,13 +422,15 @@ class CommandLineInterface(object):
 
         # Run system command.
         with self.input.cooked_mode():
-            func()
+            result = func()
         self._return_value = None
 
         # Redraw interface again.
         self.renderer.reset()
         self.renderer.request_absolute_cursor_position()
         self._redraw()
+
+        return result
 
     def run_system_command(self, command):
         """
