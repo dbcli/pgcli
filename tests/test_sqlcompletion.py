@@ -1,9 +1,11 @@
 from pgcli.packages.sqlcompletion import suggest_type
 import pytest
 
+
 def sorted_dicts(dicts):
     """input is a list of dicts"""
     return sorted(tuple(x.items()) for x in dicts)
+
 
 def test_select_suggests_cols_with_visible_table_scope():
     suggestions = suggest_type('SELECT  FROM tabl', 'SELECT ')
@@ -12,6 +14,7 @@ def test_select_suggests_cols_with_visible_table_scope():
             {'type': 'function', 'schema': []},
             {'type': 'keyword'}
             ])
+
 
 def test_select_suggests_cols_with_qualified_table_scope():
     suggestions = suggest_type('SELECT  FROM sch.tabl', 'SELECT ')
@@ -42,6 +45,7 @@ def test_where_suggests_columns_functions(expression):
             {'type': 'keyword'}
             ])
 
+
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM tabl WHERE foo IN (',
     'SELECT * FROM tabl WHERE foo IN (bar, ',
@@ -54,6 +58,7 @@ def test_where_in_suggests_columns(expression):
             {'type': 'keyword'}
             ])
 
+
 def test_where_equals_any_suggests_columns_or_keywords():
     text = 'SELECT * FROM tabl WHERE foo = ANY('
     suggestions = suggest_type(text, text)
@@ -62,10 +67,12 @@ def test_where_equals_any_suggests_columns_or_keywords():
             {'type': 'function', 'schema': []},
             {'type': 'keyword'}])
 
+
 def test_lparen_suggests_cols():
     suggestion = suggest_type('SELECT MAX( FROM tbl', 'SELECT MAX(')
     assert suggestion == [
         {'type': 'column', 'tables': [(None, 'tbl', None)]}]
+
 
 def test_select_suggests_cols_and_funcs():
     suggestions = suggest_type('SELECT ', 'SELECT ')
@@ -74,6 +81,7 @@ def test_select_suggests_cols_and_funcs():
          {'type': 'function', 'schema': []},
          {'type': 'keyword'}
          ])
+
 
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM ',
@@ -90,6 +98,7 @@ def test_expression_suggests_tables_views_and_schemas(expression):
         {'type': 'view', 'schema': []},
         {'type': 'schema'}])
 
+
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM sch.',
     'INSERT INTO sch.',
@@ -104,20 +113,24 @@ def test_expression_suggests_qualified_tables_views_and_schemas(expression):
         {'type': 'table', 'schema': 'sch'},
         {'type': 'view', 'schema': 'sch'}])
 
+
 def test_truncate_suggests_tables_and_schemas():
     suggestions = suggest_type('TRUNCATE ', 'TRUNCATE ')
     assert sorted_dicts(suggestions) == sorted_dicts([
         {'type': 'table', 'schema': []},
         {'type': 'schema'}])
 
+
 def test_truncate_suggests_qualified_tables():
     suggestions = suggest_type('TRUNCATE sch.', 'TRUNCATE sch.')
     assert sorted_dicts(suggestions) == sorted_dicts([
         {'type': 'table', 'schema': 'sch'}])
 
+
 def test_distinct_suggests_cols():
     suggestions = suggest_type('SELECT DISTINCT ', 'SELECT DISTINCT ')
     assert suggestions == [{'type': 'column', 'tables': []}]
+
 
 def test_col_comma_suggests_cols():
     suggestions = suggest_type('SELECT a, b, FROM tbl', 'SELECT a, b,')
@@ -127,6 +140,7 @@ def test_col_comma_suggests_cols():
         {'type': 'keyword'}
         ])
 
+
 def test_table_comma_suggests_tables_and_schemas():
     suggestions = suggest_type('SELECT a, b FROM tbl1, ',
             'SELECT a, b FROM tbl1, ')
@@ -135,6 +149,7 @@ def test_table_comma_suggests_tables_and_schemas():
         {'type': 'view', 'schema': []},
         {'type': 'schema'}])
 
+
 def test_into_suggests_tables_and_schemas():
     suggestion = suggest_type('INSERT INTO ', 'INSERT INTO ')
     assert sorted_dicts(suggestion) == sorted_dicts([
@@ -142,17 +157,21 @@ def test_into_suggests_tables_and_schemas():
         {'type': 'view', 'schema': []},
         {'type': 'schema'}])
 
+
 def test_insert_into_lparen_suggests_cols():
     suggestions = suggest_type('INSERT INTO abc (', 'INSERT INTO abc (')
     assert suggestions == [{'type': 'column', 'tables': [(None, 'abc', None)]}]
+
 
 def test_insert_into_lparen_partial_text_suggests_cols():
     suggestions = suggest_type('INSERT INTO abc (i', 'INSERT INTO abc (i')
     assert suggestions == [{'type': 'column', 'tables': [(None, 'abc', None)]}]
 
+
 def test_insert_into_lparen_comma_suggests_cols():
     suggestions = suggest_type('INSERT INTO abc (id,', 'INSERT INTO abc (id,')
     assert suggestions == [{'type': 'column', 'tables': [(None, 'abc', None)]}]
+
 
 def test_partially_typed_col_name_suggests_col_names():
     suggestions = suggest_type('SELECT * FROM tabl WHERE col_n',
@@ -162,6 +181,7 @@ def test_partially_typed_col_name_suggests_col_names():
         {'type': 'function', 'schema': []},
         {'type': 'keyword'}
         ])
+
 
 def test_dot_suggests_cols_of_a_table_or_schema_qualified_table():
     suggestions = suggest_type('SELECT tabl. FROM tabl', 'SELECT tabl.')
@@ -211,6 +231,7 @@ def test_dot_col_comma_suggests_cols_or_schema_qualified_table():
         {'type': 'view', 'schema': 't2'},
         {'type': 'function', 'schema': 't2'}])
 
+
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM (',
     'SELECT * FROM foo WHERE EXISTS (',
@@ -219,6 +240,7 @@ def test_dot_col_comma_suggests_cols_or_schema_qualified_table():
 def test_sub_select_suggests_keyword(expression):
     suggestion = suggest_type(expression, expression)
     assert suggestion == [{'type': 'keyword'}]
+
 
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM (S',
@@ -229,6 +251,7 @@ def test_sub_select_partial_text_suggests_keyword(expression):
     suggestion = suggest_type(expression, expression)
     assert suggestion == [{'type': 'keyword'}]
 
+
 def test_outer_table_reference_in_exists_subquery_suggests_columns():
     q = 'SELECT * FROM foo f WHERE EXISTS (SELECT 1 FROM bar WHERE f.'
     suggestions = suggest_type(q, q)
@@ -237,6 +260,7 @@ def test_outer_table_reference_in_exists_subquery_suggests_columns():
         {'type': 'table', 'schema': 'f'},
         {'type': 'view', 'schema': 'f'},
         {'type': 'function', 'schema': 'f'}]
+
 
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM (SELECT * FROM ',
@@ -250,6 +274,7 @@ def test_sub_select_table_name_completion(expression):
         {'type': 'view', 'schema': []},
         {'type': 'schema'}])
 
+
 def test_sub_select_col_name_completion():
     suggestions = suggest_type('SELECT * FROM (SELECT  FROM abc',
             'SELECT * FROM (SELECT ')
@@ -258,6 +283,7 @@ def test_sub_select_col_name_completion():
         {'type': 'function', 'schema': []},
         {'type': 'keyword'}
         ])
+
 
 @pytest.mark.xfail
 def test_sub_select_multiple_col_name_completion():
@@ -269,6 +295,7 @@ def test_sub_select_multiple_col_name_completion():
         {'type': 'keyword'}
         ])
 
+
 def test_sub_select_dot_col_name_completion():
     suggestions = suggest_type('SELECT * FROM (SELECT t. FROM tabl t',
             'SELECT * FROM (SELECT t.')
@@ -277,6 +304,7 @@ def test_sub_select_dot_col_name_completion():
         {'type': 'table', 'schema': 't'},
         {'type': 'view', 'schema': 't'},
         {'type': 'function', 'schema': 't'}])
+
 
 @pytest.mark.parametrize('join_type', ['', 'INNER', 'LEFT', 'RIGHT OUTER'])
 @pytest.mark.parametrize('tbl_alias', ['', 'foo'])
@@ -288,6 +316,7 @@ def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
         {'type': 'view', 'schema': []},
         {'type': 'schema'}])
 
+
 def test_left_join_with_comma():
     text = 'select * from foo f left join bar b,'
     suggestions = suggest_type(text, text)
@@ -295,6 +324,7 @@ def test_left_join_with_comma():
          {'type': 'table', 'schema': []},
          {'type': 'view', 'schema': []},
          {'type': 'schema'}])
+
 
 def test_join_alias_dot_suggests_cols1():
     suggestions = suggest_type('SELECT * FROM abc a JOIN def d ON a.',
@@ -305,6 +335,7 @@ def test_join_alias_dot_suggests_cols1():
         {'type': 'view', 'schema': 'a'},
         {'type': 'function', 'schema': 'a'}])
 
+
 def test_join_alias_dot_suggests_cols2():
     suggestion = suggest_type('SELECT * FROM abc a JOIN def d ON a.',
             'SELECT * FROM abc a JOIN def d ON a.id = d.')
@@ -314,11 +345,13 @@ def test_join_alias_dot_suggests_cols2():
         {'type': 'view', 'schema': 'd'},
         {'type': 'function', 'schema': 'd'}])
 
+
 def test_on_suggests_aliases():
     suggestions = suggest_type(
         'select a.x, b.y from abc a join bcd b on ',
         'select a.x, b.y from abc a join bcd b on ')
     assert suggestions == [{'type': 'alias', 'aliases': ['a', 'b']}]
+
 
 def test_on_suggests_tables():
     suggestions = suggest_type(
@@ -326,17 +359,20 @@ def test_on_suggests_tables():
         'select abc.x, bcd.y from abc join bcd on ')
     assert suggestions == [{'type': 'alias', 'aliases': ['abc', 'bcd']}]
 
+
 def test_on_suggests_aliases_right_side():
     suggestions = suggest_type(
         'select a.x, b.y from abc a join bcd b on a.id = ',
         'select a.x, b.y from abc a join bcd b on a.id = ')
     assert suggestions == [{'type': 'alias', 'aliases': ['a', 'b']}]
 
+
 def test_on_suggests_tables_right_side():
     suggestions = suggest_type(
         'select abc.x, bcd.y from abc join bcd on ',
         'select abc.x, bcd.y from abc join bcd on ')
     assert suggestions == [{'type': 'alias', 'aliases': ['abc', 'bcd']}]
+
 
 @pytest.mark.parametrize('col_list', ['', 'col1, '])
 def test_join_using_suggests_common_columns(col_list):
@@ -371,6 +407,7 @@ def test_2_statements_2nd_current():
          {'type': 'view', 'schema': []},
          {'type': 'schema'}])
 
+
 def test_2_statements_1st_current():
     suggestions = suggest_type('select * from ; select * from b',
                                'select * from ')
@@ -386,6 +423,7 @@ def test_2_statements_1st_current():
             {'type': 'function', 'schema': []},
             {'type': 'keyword'}
             ])
+
 
 def test_3_statements_2nd_current():
     suggestions = suggest_type('select * from a; select * from ; select * from c',
@@ -519,3 +557,20 @@ def test_suggest_where_keyword(text):
                            {'schema': [], 'type': 'function'},
                            {'type': 'keyword'}
                            ]
+
+@pytest.mark.parametrize('text, before, expected', [
+    ('SELECT ', 'SELECT ', [
+        {'type': 'column', 'tables': []},
+        {'type': 'function', 'schema': []}
+    ]),
+    ('SELECT foo ', 'SELECT foo ', [{'type': 'keyword'}]),
+    ('SELECT t1. FROM tabl1 t1', 'SELECT t1.', [
+        {'type': 'table', 'schema': 't1'},
+        {'type': 'view', 'schema': 't1'},
+        {'type': 'column', 'tables': [(None, 'tabl1', 't1')]},
+        {'type': 'function', 'schema': 't1'}
+    ])
+])
+def test_named_query_completion(text, before, expected):
+    suggestions = suggest_type(text, before)
+    assert sorted_dicts(expected) == sorted_dicts(suggestions)
