@@ -437,7 +437,7 @@ def load_emacs_open_in_editor_bindings(registry, filter=None):
         """
         Open editor.
         """
-        event.current_buffer.open_in_editor()
+        event.current_buffer.open_in_editor(event.cli)
 
 
 def load_emacs_system_bindings(registry, filter=None):

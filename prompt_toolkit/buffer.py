@@ -1015,9 +1015,11 @@ class Buffer(object):
     def exit_selection(self):
         self.selection_state = None
 
-    def open_in_editor(self):
+    def open_in_editor(self, cli):
         """
         Open code in editor.
+
+        :param cli: `CommandLineInterface` instance.
         """
         if self.read_only():
             raise EditReadOnlyBuffer()
@@ -1028,7 +1030,10 @@ class Buffer(object):
         os.close(descriptor)
 
         # Open in editor
-        succes = self._open_file_in_editor(filename)
+        # (We need to use `cli.run_in_terminal`, because not all editors go to
+        # the alternate screen buffer, and some could influence the cursor
+        # position.)
+        succes = cli.run_in_terminal(lambda: self._open_file_in_editor(filename))
 
         # Read content again.
         if succes:

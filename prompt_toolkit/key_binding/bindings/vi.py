@@ -1166,7 +1166,7 @@ def load_vi_open_in_editor_bindings(registry, vi_state, filter=None):
 
     @handle('v', filter=navigation_mode)
     def _(event):
-        event.current_buffer.open_in_editor()
+        event.current_buffer.open_in_editor(event.cli)
 
 
 def load_vi_system_bindings(registry, vi_state, filter=None):
