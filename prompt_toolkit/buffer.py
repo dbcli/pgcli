@@ -203,7 +203,7 @@ class Buffer(object):
         #: The command buffer history.
         # Note that we shouldn't use a lazy 'or' here. bool(history) could be
         # False when empty.
-        self._history = InMemoryHistory() if history is None else history
+        self.history = InMemoryHistory() if history is None else history
 
         self.__cursor_position = 0
 
@@ -249,7 +249,7 @@ class Buffer(object):
         #: Ctrl-C should reset this, and copy the whole history back in here.
         #: Enter should process the current command and append to the real
         #: history.
-        self._working_lines = self._history.strings[:]
+        self._working_lines = self.history.strings[:]
         self._working_lines.append(initial_document.text)
         self.__working_index = len(self._working_lines) - 1
 
@@ -914,8 +914,8 @@ class Buffer(object):
 
         # Save at the tail of the history. (But don't if the last entry the
         # history is already the same.)
-        if self.text and (not len(self._history) or self._history[-1] != self.text):
-            self._history.append(self.text)
+        if self.text and (not len(self.history) or self.history[-1] != self.text):
+            self.history.append(self.text)
 
     def _search(self, search_state, include_current_position=False, count=1):
         """
