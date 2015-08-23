@@ -204,8 +204,8 @@ def test_suggested_multiple_column_names(completer, complete_event):
         Completion(text='price', start_position=0, display_meta='column'),
         Completion(text='func1', start_position=0, display_meta='function'),
         Completion(text='func2', start_position=0, display_meta='function')] +
-        map(lambda f: Completion(f, display_meta='function'), completer.functions) +
-        map(lambda x: Completion(x, display_meta='keyword'), completer.keywords)
+        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
+        list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
         )
 
 def test_suggested_multiple_column_names_with_alias(completer, complete_event):
