@@ -93,6 +93,9 @@ class CommandLineInterface(object):
 
         self._async_completers = {}  # Map buffer name to completer function.
 
+        # Pointer to sub CLI. (In chain of CLI instances.)
+        self._sub_cli = None  # None or other CommandLineInterface instance.
+
         # Call `add_buffer` for each buffer.
         for name, b in self.buffers.items():
             self.add_buffer(name, b)
@@ -249,8 +252,10 @@ class CommandLineInterface(object):
         Render the command line again. (Not thread safe!)
         (From other threads, or if unsure, use `request_redraw`.)
         """
-        self.renderer.render(self, self.layout, self.application.get_style(),
-                             is_done=self.is_done)
+        # Only draw when no sub application was started.
+        if self._sub_cli is None:
+            self.renderer.render(self, self.layout, self.application.get_style(),
+                                 is_done=self.is_done)
 
     def _on_resize(self):
         """
@@ -335,6 +340,56 @@ class CommandLineInterface(object):
             self.renderer.reset()
             self.application.on_stop.fire(self)
             self._is_running = False
+
+    def run_sub_application(self, application, done_callback=None):
+        """
+        Run a sub `Application`.
+
+        This will suspend the main application and display the sub application
+        until that one returns a value. The value is returned by calling
+        `done_callback` with the result.
+
+        The sub application will share the same I/O of the main application.
+        That means, it uses the same input and output channels and it shares
+        the same event loop. [1]
+
+        [1] Techincally, it gets another Eventloop instance, but that is only a
+            proxy to our main event loop. The reason is that calling 'stop'
+            --which returns the result of an application when it's done-- is
+            handled differently.
+        """
+        assert isinstance(application, Application)
+        assert done_callback is None or callable(done_callback)
+
+        if self._sub_cli is not None:
+            raise RuntimeError('Another sub application started already.')
+
+        # Erase current application.
+        self.renderer.erase()
+
+        # Callback when the sub app is done.
+        def done():
+            # Redraw sub app in done state.
+            sub_cli._redraw()
+
+            self._sub_cli = None
+
+            # Restore main application.
+            self.renderer.request_absolute_cursor_position()
+            self._redraw()
+
+            # Deliver result.
+            if done_callback:
+                done_callback(sub_cli.return_value())
+
+        # Create sub CommandLineInterface.
+        sub_cli = CommandLineInterface(
+            application=application,
+            eventloop=_SubApplicationEventLoop(self, done),
+            input=self.input,
+            output=self.output)
+
+        self._sub_cli = sub_cli
 
     def set_exit(self):
         """
@@ -619,28 +674,42 @@ class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
         assert isinstance(cli, CommandLineInterface)
         self.cli = cli
 
+    @property
+    def _active_cli(self):
+        """
+        Return the active `CommandLineInterface`.
+        """
+        cli = self.cli
+
+        # If there is a sub CLI. That one is always active.
+        while cli._sub_cli:
+            cli = cli._sub_cli
+
+        return cli
+
     def terminal_size_changed(self):
         """
         Report terminal size change. This will trigger a redraw.
         """
-        self.cli._on_resize()
+        self._active_cli._on_resize()
 
     def input_timeout(self):
-        self.cli.application.on_input_timeout.fire(self.cli)
+        cli = self._active_cli
+        cli.application.on_input_timeout.fire(cli)
 
     def feed_key(self, key_press):
         """
         Feed a key press to the CommandLineInterface.
         """
         # Feed the key and redraw.
-        self.cli.input_processor.feed_key(key_press)
+        self._active_cli.input_processor.feed_key(key_press)
 
     def redraw(self):
         """
         Redraw the interface. (Should probably be called after each
         `feed_key`.)
         """
-        self.cli._redraw()
+        self._active_cli._redraw()
 
 
 class _PatchStdoutContext(object):
@@ -708,3 +777,40 @@ class _StdoutProxy(object):
             self._buffer = []
             self._cli.output.flush()
         self._do(run)
+
+
+class _SubApplicationEventLoop(EventLoop):
+    """
+    Eventloop used by sub applications.
+
+    A sub application is an `Application` that is "spawned" by a parent
+    application. The parent application is suspended temporarily and the sub
+    application is displayed instead.
+
+    It doesn't need it's own event loop. The `EventLoopCallbacks` from the
+    parent application are redirected to the sub application. So if the event
+    loop that is run by the parent application detects input, the callbacks
+    will make sure that it's forwarded to the sub application.
+
+    When the sub application has a return value set, it will terminate
+    by calling the `stop` method of this event loop. This is used to
+    transfer control back to the parent application.
+    """
+    def __init__(self, cli, stop_callback):
+        assert isinstance(cli, CommandLineInterface)
+        assert callable(stop_callback)
+
+        self.cli = cli
+        self.stop_callback = stop_callback
+
+    def stop(self):
+        self.stop_callback()
+
+    def close(self):
+        pass
+
+    def run_in_executor(self, callback):
+        self.cli.run_in_executor(callback)
+
+    def call_from_executor(self, callback):
+        self.cli.call_from_executor(callback)
