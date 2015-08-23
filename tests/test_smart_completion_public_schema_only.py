@@ -96,8 +96,9 @@ def test_builtin_function_name_completion(completer, complete_event):
     position = len('SELECT MA')
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set([Completion(text='MAX', start_position=-2,
-                                          display_meta='function')])
+    assert set(result) == set([Completion(text='MAX', start_position=-2, display_meta='function'),
+                               Completion(text='MAXEXTENTS', start_position=-2, display_meta='keyword'),
+                              ])
 
 
 def test_builtin_function_matches_only_at_start(completer, complete_event):
@@ -118,7 +119,9 @@ def test_user_function_name_completion(completer, complete_event):
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([
         Completion(text='custom_func1', start_position=-2, display_meta='function'),
-        Completion(text='custom_func2', start_position=-2, display_meta='function')])
+        Completion(text='custom_func2', start_position=-2, display_meta='function'),
+        Completion(text='CURRENT', start_position=-2, display_meta='keyword'),
+        ])
 
 
 def test_user_function_name_completion_matches_anywhere(completer,
@@ -152,7 +155,9 @@ def test_suggested_column_names_from_visible_table(completer, complete_event):
         Completion(text='last_name', start_position=0, display_meta='column'),
         Completion(text='custom_func1', start_position=0, display_meta='function'),
         Completion(text='custom_func2', start_position=0, display_meta='function')] +
-        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)))
+        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
+        list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
+        )
 
 
 def test_suggested_column_names_in_function(completer, complete_event):
@@ -234,7 +239,9 @@ def test_suggested_multiple_column_names(completer, complete_event):
         Completion(text='last_name', start_position=0, display_meta='column'),
         Completion(text='custom_func1', start_position=0, display_meta='function'),
         Completion(text='custom_func2', start_position=0, display_meta='function')] +
-        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)))
+        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
+        list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
+        )
 
 def test_suggested_multiple_column_names_with_alias(completer, complete_event):
     """
@@ -363,7 +370,9 @@ def test_auto_escaped_col_names(completer, complete_event):
         Completion(text='"ABC"', start_position=0, display_meta='column'),
         Completion(text='custom_func1', start_position=0, display_meta='function'),
         Completion(text='custom_func2', start_position=0, display_meta='function')] +
-        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)))
+        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
+        list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
+        )
 
 
 @pytest.mark.parametrize('text', [

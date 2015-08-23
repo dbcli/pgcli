@@ -207,16 +207,6 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             prev_tok = prev_tok.value.lower()
             if prev_tok == 'exists':
                 return [{'type': 'keyword'}]
-            elif prev_tok in ('any', 'some', 'all'):
-                return column_suggestions + [{'type': 'keyword'}]
-            elif prev_tok == 'in':
-                # Technically, we should suggest columns AND keywords, as
-                # per case 4. However, IN is different from ANY, SOME, ALL
-                # in that it can accept a *list* of columns, or a subquery.
-                # But suggesting keywords for , "SELECT * FROM foo WHERE bar IN
-                # (baz, qux, " would be overwhelming. So we special case 'IN'
-                # to not suggest keywords.
-                return column_suggestions
             else:
                 return column_suggestions
 

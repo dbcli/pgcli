@@ -86,6 +86,7 @@ def test_suggested_column_names_from_shadowed_visible_table(completer, complete_
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
+
     assert set(result) == set([
         Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
@@ -94,7 +95,9 @@ def test_suggested_column_names_from_shadowed_visible_table(completer, complete_
         Completion(text='last_name', start_position=0, display_meta='column'),
         Completion(text='func1', start_position=0, display_meta='function'),
         Completion(text='func2', start_position=0, display_meta='function')] +
-        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)))
+        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
+        list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
+        )
 
 def test_suggested_column_names_from_qualified_shadowed_table(completer, complete_event):
     text = 'SELECT  from custom.users'
@@ -108,7 +111,9 @@ def test_suggested_column_names_from_qualified_shadowed_table(completer, complet
         Completion(text='phone_number', start_position=0, display_meta='column'),
         Completion(text='func1', start_position=0, display_meta='function'),
         Completion(text='func2', start_position=0, display_meta='function')] +
-        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)))
+        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
+        list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
+        )
 
 def test_suggested_column_names_from_schema_qualifed_table(completer, complete_event):
     """
@@ -128,7 +133,9 @@ def test_suggested_column_names_from_schema_qualifed_table(completer, complete_e
         Completion(text='price', start_position=0, display_meta='column'),
         Completion(text='func1', start_position=0, display_meta='function'),
         Completion(text='func2', start_position=0, display_meta='function')] +
-        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)))
+        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
+        list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
+        )
 
 def test_suggested_column_names_in_function(completer, complete_event):
     """
@@ -197,7 +204,9 @@ def test_suggested_multiple_column_names(completer, complete_event):
         Completion(text='price', start_position=0, display_meta='column'),
         Completion(text='func1', start_position=0, display_meta='function'),
         Completion(text='func2', start_position=0, display_meta='function')] +
-        list(map(lambda f: Completion(f, display_meta='function'), completer.functions)))
+        map(lambda f: Completion(f, display_meta='function'), completer.functions) +
+        map(lambda x: Completion(x, display_meta='keyword'), completer.keywords)
+        )
 
 def test_suggested_multiple_column_names_with_alias(completer, complete_event):
     """
