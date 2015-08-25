@@ -27,6 +27,7 @@ def step_run_cli(context):
     Run the process using pexpect.
     """
     context.cli = pexpect.spawnu('pgcli')
+    context.exit_sent = False
 
 
 @when('we wait for prompt')

@@ -11,8 +11,6 @@ Feature: manipulate databases:
       then we see database dropped
       when we connect to postgres
       then we see database connected
-      when we send "ctrl + d"
-      then pgcli exits
 
   Scenario: connect and disconnect from test database
      Given we have pgcli installed
@@ -22,5 +20,3 @@ Feature: manipulate databases:
       then we see database connected
       when we connect to postgres
       then we see database connected
-      when we send "ctrl + d"
-      then pgcli exits
