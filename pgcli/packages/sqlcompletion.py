@@ -29,9 +29,14 @@ def suggest_type(full_text, text_before_cursor):
     identifier = None
 
     def strip_named_query(txt):
-        pattern = re.compile(r'\\(n|nd|ns\s+[a-z]+)\s+')
+        """
+        This will strip "save named query" command in the beginning of the line:
+        '\ns zzz SELECT * FROM abc'   -> 'SELECT * FROM abc'
+        '  \ns zzz SELECT * FROM abc' -> 'SELECT * FROM abc'
+        """
+        pattern = re.compile(r'^\s*\\ns\s+[a-z0-9\-_]+\s+')
         if pattern.match(txt):
-            txt = pattern.sub('', txt, 1)
+            txt = pattern.sub('', txt)
         return txt
 
     full_text = strip_named_query(full_text)
