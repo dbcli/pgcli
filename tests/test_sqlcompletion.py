@@ -507,3 +507,15 @@ def test_invalid_sql():
     text = 'selt *'
     suggestions = suggest_type(text, text)
     assert suggestions == [{'type': 'keyword'}]
+
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM foo where created > now() - ',
+    'select * from foo where bar ',
+])
+def test_suggest_where_keyword(text):
+    # https://github.com/dbcli/mycli/issues/135
+    suggestions = suggest_type(text, text)
+    assert suggestions == [{'tables': [(None, 'foo', None)], 'type': 'column'},
+                           {'schema': [], 'type': 'function'},
+                           {'type': 'keyword'}
+                           ]
