@@ -34,7 +34,7 @@ def suggest_type(full_text, text_before_cursor):
         '\ns zzz SELECT * FROM abc'   -> 'SELECT * FROM abc'
         '  \ns zzz SELECT * FROM abc' -> 'SELECT * FROM abc'
         """
-        pattern = re.compile(r'^\s*\\ns\s+[a-z0-9\-_]+\s+')
+        pattern = re.compile(r'^\s*\\ns\s+[A-z0-9\-_]+\s+')
         if pattern.match(txt):
             txt = pattern.sub('', txt)
         return txt
