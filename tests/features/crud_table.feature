@@ -1,7 +1,6 @@
 Feature: manipulate tables:
   create, insert, update, select, delete from, drop
 
-  @wip
   Scenario: create, insert, select from, update, drop table
      Given we have pgcli installed
       when we run pgcli

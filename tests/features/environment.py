@@ -16,6 +16,7 @@ def before_all(context):
     os.environ['LINES'] = "100"
     os.environ['COLUMNS'] = "100"
     os.environ['PAGER'] = 'cat'
+    os.environ['EDITOR'] = 'nano'
 
     context.exit_sent = False
 
@@ -30,6 +31,7 @@ def before_all(context):
         'pass': context.config.userdata.get('pg_test_pass', None),
         'dbname': db_name_full,
         'dbname_tmp': db_name_full + '_tmp',
+        'vi': vi
     }
 
     # Store old env vars.
@@ -84,4 +86,4 @@ def after_scenario(context, _):
     if hasattr(context, 'cli') and not context.exit_sent:
         # Send Ctrl + D into cli
         context.cli.sendcontrol('d')
-        context.cli.expect(pexpect.EOF)
+        context.cli.expect(pexpect.EOF, timeout=5)

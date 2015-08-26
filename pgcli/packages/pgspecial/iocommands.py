@@ -1,6 +1,8 @@
 import re
 import logging
 import click
+import io
+from os.path import expanduser
 from .namedqueries import namedqueries
 from . import export
 from .main import special_command
@@ -65,6 +67,11 @@ def open_external_editor(filename=None, sql=''):
         query = sql
 
     return (query, message)
+
+def read_from_file(path):
+    with io.open(expanduser(path), encoding='utf-8') as f:
+        contents = f.read()
+    return contents
 
 @special_command('\\n', '\\n[+] [name]', 'List or execute named queries.')
 def execute_named_query(cur, pattern, **_):
