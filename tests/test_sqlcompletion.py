@@ -559,12 +559,13 @@ def test_suggest_where_keyword(text):
                            ]
 
 @pytest.mark.parametrize('text, before, expected', [
-    ('SELECT ', 'SELECT ', [
+    ('\\ns abc SELECT ', 'SELECT ', [
         {'type': 'column', 'tables': []},
-        {'type': 'function', 'schema': []}
+        {'type': 'function', 'schema': []},
+        {'type': 'keyword'}
     ]),
-    ('SELECT foo ', 'SELECT foo ', [{'type': 'keyword'}]),
-    ('SELECT t1. FROM tabl1 t1', 'SELECT t1.', [
+    ('\\ns abc SELECT foo ', 'SELECT foo ', [{'type': 'keyword'}]),
+    ('\\ns abc SELECT t1. FROM tabl1 t1', 'SELECT t1.', [
         {'type': 'table', 'schema': 't1'},
         {'type': 'view', 'schema': 't1'},
         {'type': 'column', 'tables': [(None, 'tabl1', 't1')]},
