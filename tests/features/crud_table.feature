@@ -21,5 +21,3 @@ Feature: manipulate tables:
       then we see table dropped
       when we connect to postgres
       then we see database connected
-      when we send "ctrl + d"
-      then pgcli exits

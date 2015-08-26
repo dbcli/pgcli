@@ -1,5 +1,6 @@
 from __future__ import print_function
 import sys
+import re
 import sqlparse
 from sqlparse.sql import Comparison, Identifier, Where
 from .parseutils import last_word, extract_tables, find_prev_keyword
@@ -26,6 +27,20 @@ def suggest_type(full_text, text_before_cursor):
             include='many_punctuations')
 
     identifier = None
+
+    def strip_named_query(txt):
+        """
+        This will strip "save named query" command in the beginning of the line:
+        '\ns zzz SELECT * FROM abc'   -> 'SELECT * FROM abc'
+        '  \ns zzz SELECT * FROM abc' -> 'SELECT * FROM abc'
+        """
+        pattern = re.compile(r'^\s*\\ns\s+[A-z0-9\-_]+\s+')
+        if pattern.match(txt):
+            txt = pattern.sub('', txt)
+        return txt
+
+    full_text = strip_named_query(full_text)
+    text_before_cursor = strip_named_query(text_before_cursor)
 
     # If we've partially typed a word then word_before_cursor won't be an empty
     # string. In that case we want to remove the partially typed string before
