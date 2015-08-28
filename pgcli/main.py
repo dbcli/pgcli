@@ -6,6 +6,7 @@ import os
 import sys
 import traceback
 import logging
+import threading
 from time import time
 from codecs import open
 
@@ -410,6 +411,11 @@ class PGCli(object):
         return less_opts
 
     def refresh_completions(self):
+        t = threading.Thread(target=self.background_refresh, name='completion_refresh')
+        t.start()
+        return [(None, None, None, 'Auto-completion refresh has started in the background.')]
+
+    def background_refresh(self):
         completer = self.completer
         completer.reset_completions()
 
@@ -435,8 +441,6 @@ class PGCli(object):
 
         # databases
         completer.extend_database_names(pgexecute.databases())
-
-        return [(None, None, None, 'Auto-completions refreshed.')]
 
     def get_completions(self, text, cursor_positition):
         return self.completer.get_completions(
