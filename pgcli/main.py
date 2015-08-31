@@ -412,14 +412,16 @@ class PGCli(object):
 
     def refresh_completions(self):
         t = threading.Thread(target=self.background_refresh, name='completion_refresh')
+        t.setDaemon(True)
         t.start()
-        return [(None, None, None, 'Auto-completion refresh has started in the background.')]
+        return [(None, None, None, 'Auto-completion refresh started in the background.')]
 
     def background_refresh(self):
         completer = self.completer
         completer.reset_completions()
 
-        pgexecute = self.pgexecute
+        e = self.pgexecute
+        pgexecute = PGExecute(e.dbname, e.user, e.password, e.host, e.port, e.dsn)
 
         # schemata
         completer.set_search_path(pgexecute.search_path())
