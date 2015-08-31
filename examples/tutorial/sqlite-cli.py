@@ -6,7 +6,7 @@ import sqlite3
 from prompt_toolkit import AbortAction
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.shortcuts import get_input
-from prompt_toolkit.history import History
+from prompt_toolkit.history import InMemoryHistory
 
 from pygments.lexers import SqlLexer
 from pygments.style import Style
@@ -26,7 +26,7 @@ class DocumentStyle(Style):
     styles.update(DefaultStyle.styles)
 
 def main(database):
-    history = History()
+    history = InMemoryHistory()
     connection = sqlite3.connect(database)
 
     while True:

@@ -37,16 +37,16 @@ Let's get started!
 #. Loop The REPL
 
    Now we call the ``get_input`` method in a loop while keeeping the line
-   history in our ``History`` object.
+   history in our ``InMemoryHistory`` object.
 
    .. code:: python
 
        from __future__ import unicode_literals
        from prompt_toolkit.shortcuts import get_input
-       from prompt_toolkit.history import History
+       from prompt_toolkit.history import InMemoryHistory
 
        def main():
-           history = History()
+           history = InMemoryHistory()
 
            while True:
                text = get_input("> ", history=history)
@@ -71,11 +71,11 @@ Let's get started!
 
        from __future__ import unicode_literals
        from prompt_toolkit.shortcuts import get_input
-       from prompt_toolkit.history import History
+       from prompt_toolkit.history import InMemoryHistory
        from pygments.lexers import SqlLexer
 
        def main():
-           history = History()
+           history = InMemoryHistory()
 
            while True:
                text = get_input('> ', lexer=SqlLexer, history=history)
@@ -102,7 +102,7 @@ Let's get started!
 
        from __future__ import unicode_literals
        from prompt_toolkit.shortcuts import get_input
-       from prompt_toolkit.history import History
+       from prompt_toolkit.history import InMemoryHistory
        from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
 
@@ -111,7 +111,7 @@ Let's get started!
 
 
        def main():
-           history = History()
+           history = InMemoryHistory()
 
            while True:
                text = get_input('> ', lexer=SqlLexer, completer=sql_completer, history=history)
@@ -137,7 +137,7 @@ Let's get started!
 
        from __future__ import unicode_literals
        from prompt_toolkit.shortcuts import get_input
-       from prompt_toolkit.history import History
+       from prompt_toolkit.history import InMemoryHistory
        from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
        from pygments.style import Style
@@ -157,7 +157,7 @@ Let's get started!
            styles.update(DefaultStyle.styles)
 
        def main():
-           history = History()
+           history = InMemoryHistory()
 
            while True:
                text = get_input('> ', lexer=SqlLexer, completer=sql_completer, style=DocumentStyle, history=history)
@@ -187,7 +187,7 @@ Let's get started!
        import sqlite3
 
        from prompt_toolkit.shortcuts import get_input
-       from prompt_toolkit.history import History
+       from prompt_toolkit.history import InMemoryHistory
        from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
        from pygments.style import Style
@@ -207,7 +207,7 @@ Let's get started!
            styles.update(DefaultStyle.styles)
 
        def main(database):
-           history = History()
+           history = InMemoryHistory()
            connection = sqlite3.connect(database)
 
            while True:
