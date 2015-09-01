@@ -89,6 +89,7 @@ class PGCli(object):
         smart_completion = c['main'].as_bool('smart_completion')
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial)
         self.completer = completer
+        self._completer_lock = threading.Lock()
         self.register_special_commands()
 
     def register_special_commands(self):
@@ -277,21 +278,22 @@ class PGCli(object):
                                                filter=HasFocus(DEFAULT_BUFFER) & ~IsDone()),
                                        ])
         history_file = self.config['main']['history_file']
-        buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
-                history=FileHistory(os.path.expanduser(history_file)),
-                complete_while_typing=Always())
+        with self._completer_lock:
+            buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
+                    history=FileHistory(os.path.expanduser(history_file)),
+                    complete_while_typing=Always())
 
-        application = Application(style=style_factory(self.syntax_style, self.cli_style),
-                                  layout=layout, buffer=buf,
-                                  key_bindings_registry=key_binding_manager.registry,
-                                  on_exit=AbortAction.RAISE_EXCEPTION,
-                                  ignore_case=True)
-        cli = CommandLineInterface(application=application,
-                                   eventloop=create_eventloop())
+            application = Application(style=style_factory(self.syntax_style, self.cli_style),
+                                      layout=layout, buffer=buf,
+                                      key_bindings_registry=key_binding_manager.registry,
+                                      on_exit=AbortAction.RAISE_EXCEPTION,
+                                      ignore_case=True)
+            self.cli = CommandLineInterface(application=application,
+                                       eventloop=create_eventloop())
 
         try:
             while True:
-                document = cli.run()
+                document = self.cli.run()
 
                 # The reason we check here instead of inside the pgexecute is
                 # because we want to raise the Exit exception which will be
@@ -301,7 +303,7 @@ class PGCli(object):
                     raise EOFError
 
                 try:
-                    document = self.handle_editor_command(cli, document)
+                    document = self.handle_editor_command(self.cli, document)
                 except RuntimeError as e:
                     logger.error("sql: %r, error: %r", document.text, e)
                     logger.error("traceback: %r", traceback.format_exc())
@@ -391,7 +393,8 @@ class PGCli(object):
                 # Refresh search_path to set default schema.
                 if need_search_path_refresh(document.text):
                     logger.debug('Refreshing search path')
-                    completer.set_search_path(pgexecute.search_path())
+                    with self._completer_lock:
+                        completer.set_search_path(pgexecute.search_path())
                     logger.debug('Search path: %r', completer.search_path)
 
                 query = Query(document.text, successful, mutating)
@@ -417,8 +420,7 @@ class PGCli(object):
         return [(None, None, None, 'Auto-completion refresh started in the background.')]
 
     def background_refresh(self):
-        completer = self.completer
-        completer.reset_completions()
+        completer = PGCompleter(smart_completion=True, pgspecial=self.pgspecial)
 
         e = self.pgexecute
         pgexecute = PGExecute(e.dbname, e.user, e.password, e.host, e.port, e.dsn)
@@ -444,9 +446,19 @@ class PGCli(object):
         # databases
         completer.extend_database_names(pgexecute.databases())
 
+        # Swap out the completer object in cli with the newly created completer.
+        with self._completer_lock:
+            self.completer = completer
+            # When pgcli is first launched we call refresh_completions before
+            # instantiating the cli object. So it is necessary to check if cli
+            # exists before trying the replace the completer object in cli.
+            if hasattr(self, 'cli'):
+                self.cli.current_buffer.completer = completer
+
     def get_completions(self, text, cursor_positition):
-        return self.completer.get_completions(
-            Document(text=text, cursor_position=cursor_positition), None)
+        with self._completer_lock:
+            return self.completer.get_completions(
+                Document(text=text, cursor_position=cursor_positition), None)
 
 
 @click.command()
