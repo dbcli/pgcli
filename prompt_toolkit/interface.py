@@ -370,7 +370,10 @@ class CommandLineInterface(object):
         # Callback when the sub app is done.
         def done():
             # Redraw sub app in done state.
+            # and reset the renderer. (This reset will also quit the alternate
+            # screen, if the sub application used that.)
             sub_cli._redraw()
+            sub_cli.renderer.reset()
 
             self._sub_cli = None
 
