@@ -25,6 +25,10 @@ class History(with_metaclass(ABCMeta, object)):
         " Return one item of the history. It should be accessible like a `list`. "
 
     @abstractmethod
+    def __iter__(self):
+        " Iterate through all the items of the history. Cronologically. "
+
+    @abstractmethod
     def __len__(self):
         " Return the length of the history.  "
 
@@ -53,6 +57,9 @@ class InMemoryHistory(History):
 
     def __getitem__(self, key):
         return self.strings[key]
+
+    def __iter__(self):
+        return iter(self.strings)
 
     def __len__(self):
         return len(self.strings)
@@ -104,6 +111,9 @@ class FileHistory(History):
 
     def __getitem__(self, key):
         return self.strings[key]
+
+    def __iter__(self):
+        return iter(self.strings)
 
     def __len__(self):
         return len(self.strings)
