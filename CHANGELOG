@@ -1,6 +1,31 @@
 CHANGELOG
 =========
 
+0.48: 2015-09-02
+----------------
+
+New features:
+- run_in_terminal now returns the result of the called function.
+- Made history attribute of Buffer class public.
+- Added support for sub CommandLineInterfaces.
+- Accept optional vi_state parameter in KeyBindingManager.
+
+Fixes:
+- Pop-up menu positioning. The menu was shown too often above instead of below
+  the cursor.
+- Fix in Control-W key binding. When there is only whitespace before the
+  cursor, delete the whitespace.
+- Rendering bug fix in open_in_editor: run editor using cli.run_in_terminal.
+- Fix in renderer. Correctly reserve the vertical space as required by the
+  layout.
+- Small fix in Margin ABC.
+- Added __iter__ to History ABC.
+- Small bugfix in CommandLineInterface: create correct eventloop when no
+  eventloop was given.
+- Never schedule a second repaint operation when a previous was not yet
+  executed.
+
+
 0.47: 2015-08-19
 ----------------
 
