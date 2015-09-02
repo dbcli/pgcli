@@ -17,6 +17,7 @@ from prompt_toolkit.filters import HasFocus, HasArg, HasCompletions, HasValidati
 from prompt_toolkit.enums import SEARCH_BUFFER, SYSTEM_BUFFER
 
 __all__ = (
+    'TokenListToolbar',
     'ArgToolbar',
     'CompletionsToolbar',
     'SearchToolbar',
