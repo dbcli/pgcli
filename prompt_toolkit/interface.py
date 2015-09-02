@@ -88,6 +88,9 @@ class CommandLineInterface(object):
         # Make sure that the same stdout is used, when a custom renderer has been passed.
         self.renderer = Renderer(self.output, use_alternate_screen=application.use_alternate_screen)
 
+        # Invalidate flag. When 'True', a repaint has been scheduled.
+        self._invalidated = False
+
         #: The `InputProcessor` instance.
         self.input_processor = InputProcessor(application.key_bindings_registry, weakref.ref(self))
 
@@ -245,7 +248,19 @@ class CommandLineInterface(object):
         Thread safe way of sending a repaint trigger to the input event loop.
         """
         if self.eventloop is not None:
-            self.eventloop.call_from_executor(self._redraw)
+            # Never schedule a second redraw, when a previous one has not yet been
+            # executed. (This should protect against other threads calling
+            # 'request_redraw' many times, resulting in 100% CPU.)
+            if self._invalidated:
+                return
+
+            self._invalidated = True
+
+            def redraw():
+                self._invalidated = False
+                self._redraw()
+
+            self.eventloop.call_from_executor(redraw)
 
     def _redraw(self):
         """
