@@ -63,7 +63,7 @@ class CommandLineInterface(object):
         from .shortcuts import create_default_output, create_eventloop
 
         self.application = application
-        self.eventloop = eventloop or create_eventloop
+        self.eventloop = eventloop or create_eventloop()
         self._is_running = False
 
         # Inputs and outputs.
