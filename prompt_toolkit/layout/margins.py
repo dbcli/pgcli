@@ -51,6 +51,7 @@ class Margin(with_metaclass(ABCMeta, object)):
         """
         def margin(line_number):
             return []
+        return margin
 
     def invalidation_hash(self, cli, document):
         return None
