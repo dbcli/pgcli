@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 import logging
 import re
 import itertools
+import operator
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
@@ -41,6 +42,7 @@ class PGCompleter(Completer):
 
     functions = ['AVG', 'COUNT', 'FIRST', 'FORMAT', 'LAST', 'LCASE', 'LEN',
                  'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP', 'UCASE']
+
 
     datatypes = ['BIGINT', 'BOOLEAN', 'CHAR', 'DATE', 'DOUBLE PRECISION', 'INT',
                  'INTEGER', 'NUMERIC', 'REAL', 'TEXT', 'VARCHAR']
@@ -277,14 +279,19 @@ class PGCompleter(Completer):
                 completions.extend(cols)
 
             elif suggestion['type'] == 'function':
-                # suggest user-defined functions using substring matching
-                funcs = self.populate_schema_objects(
-                    suggestion['schema'], 'functions')
-                user_funcs = self.find_matches(word_before_cursor, funcs,
-                                               meta='function')
-                completions.extend(user_funcs)
+                if suggestion.get('filter') == 'is_set_returning':
+                    # Only suggest set-returning functions
+                    filt = operator.attrgetter('is_set_returning')
+                    funcs = self.populate_functions(suggestion['schema'], filt)
+                else:
+                    funcs = self.populate_schema_objects(
+                        suggestion['schema'], 'functions')
 
-                if not suggestion['schema']:
+                funcs = self.find_matches(word_before_cursor, funcs,
+                                          meta='function')
+                completions.extend(funcs)
+
+                if not suggestion['schema'] and 'filter' not in suggestion:
                     # also suggest hardcoded functions using startswith
                     # matching
                     predefined_funcs = self.find_matches(word_before_cursor,
@@ -460,3 +467,32 @@ class PGCompleter(Completer):
                            for obj in metadata[schema].keys()]
 
         return objects
+
+    def populate_functions(self, schema, filter_func):
+        """Returns a list of function names
+
+        filter_func is a function that accepts a FunctionMetadata namedtuple
+        and returns a boolean indicating whether that function should be
+        kept or discarded
+        """
+
+        metadata = self.dbmetadata['functions']
+
+        # Because of multiple dispatch, we can have multiple functions
+        # with the same name, which is why `for meta in metas` is necessary
+        # in the comprehensions below
+        if schema:
+            try:
+                return [func for (func, metas) in metadata[schema].items()
+                                for meta in metas
+                                    if filter_func(meta)]
+            except KeyError:
+                return []
+        else:
+            return [func for schema in self.search_path
+                            for (func, metas) in metadata[schema].items()
+                                for meta in metas
+                                    if filter_func(meta)]
+
+
+

@@ -17,8 +17,12 @@ metadata = {
                                 'shipments': ['id', 'address', 'user_id']
                             }},
             'functions': {
-                            'public':   ['func1', 'func2'],
-                            'custom':   ['func3', 'func4'],
+                            'public': [
+                                ['func1', '', '', False, False, False],
+                                ['func2', '', '', False, False, False]],
+                            'custom': [
+                                ['func3', '', '', False, False, False],
+                                ['set_returning_func', '', '', False, False, True]],
                          },
             'datatypes': {
                             'public':   ['typ1', 'typ2'],
@@ -41,9 +45,9 @@ def completer():
             tables.append((schema, table))
             columns.extend([(schema, table, col) for col in cols])
 
-    functions = [FunctionMetadata(schema, func, '', '', False, False, False)
+    functions = [FunctionMetadata(schema, *func_meta)
                     for schema, funcs in metadata['functions'].items()
-                    for func in funcs]
+                    for func_meta in funcs]
 
     datatypes = [(schema, datatype)
                     for schema, datatypes in metadata['datatypes'].items()
@@ -165,8 +169,9 @@ def test_suggested_table_names_with_schema_dot(completer, complete_event):
     assert set(result) == set([
         Completion(text='users', start_position=0, display_meta='table'),
         Completion(text='products', start_position=0, display_meta='table'),
-        Completion(text='shipments', start_position=0, display_meta='table')])
-
+        Completion(text='shipments', start_position=0, display_meta='table'),
+        Completion(text='set_returning_func', start_position=0, display_meta='function'),
+    ])
 def test_suggested_column_names_with_qualified_alias(completer, complete_event):
     """
     Suggest column names on table alias and dot
@@ -269,7 +274,7 @@ def test_schema_qualified_function_name(completer, complete_event):
         Document(text=text, cursor_position=postion), complete_event))
     assert result == set([
         Completion(text='func3', start_position=-len('func'), display_meta='function'),
-        Completion(text='func4', start_position=-len('func'), display_meta='function')])
+        Completion(text='set_returning_func', start_position=-len('func'), display_meta='function')])
 
 
 @pytest.mark.parametrize('text', [

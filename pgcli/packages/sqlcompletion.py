@@ -261,6 +261,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
                     {'type': 'keyword'}]
     elif (token_v.endswith('join') and token.is_keyword) or (token_v in
             ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
+        
         schema = (identifier and identifier.get_parent_name()) or []
 
         # Suggest tables from either the currently-selected schema or the
@@ -274,6 +275,11 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         # Only tables can be TRUNCATED, otherwise suggest views
         if token_v != 'truncate':
             suggest.append({'type': 'view', 'schema': schema})
+            
+        # Suggest set-returning functions in the FROM clause
+        if token_v == 'from' or (token_v.endswith('join') and token.is_keyword):
+            suggest.append({'type': 'function', 'schema': schema,
+                            'filter': 'is_set_returning'})
 
         return suggest
 
