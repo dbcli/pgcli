@@ -139,17 +139,23 @@ class PGCompleter(Completer):
             self.all_completions.add(column)
 
     def extend_functions(self, func_data):
+        
+        # func_data is a list of function metadata namedtuples
+        # with fields schema_name, func_name, arg_list, result,
+        # is_aggregate, is_window, is_set_returning
 
-        # func_data is an iterator of (schema_name, function_name)
-
-        # dbmetadata['functions']['schema_name']['function_name'] should return
-        # function metadata -- right now we're not storing any further metadata
-        # so just default to None as a placeholder
+        # dbmetadata['schema_name']['functions']['function_name'] should return
+        # the function metadata namedtuple for the corresponding function
         metadata = self.dbmetadata['functions']
 
         for f in func_data:
-            schema, func = self.escaped_names(f)
-            metadata[schema][func] = None
+            schema, func = self.escaped_names([f.schema_name, f.func_name])
+            
+            if func in metadata[schema]:
+                metadata[schema][func].append(f)
+            else:
+                metadata[schema][func] = [f]
+
             self.all_completions.add(func)
 
     def extend_datatypes(self, type_data):

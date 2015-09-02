@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import pytest
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
+from pgcli.pgexecute import FunctionMetadata
 
 metadata = {
             'tables': {
@@ -40,7 +41,7 @@ def completer():
             tables.append((schema, table))
             columns.extend([(schema, table, col) for col in cols])
 
-    functions = [(schema, func)
+    functions = [FunctionMetadata(schema, func, '', '', False, False, False)
                     for schema, funcs in metadata['functions'].items()
                     for func in funcs]
 

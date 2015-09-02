@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import pytest
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
+from pgcli.pgexecute import FunctionMetadata
 
 metadata = {
                 'tables': {
@@ -42,7 +43,8 @@ def completer():
     comp.extend_columns(columns, kind='views')
 
     # functions
-    functions = [('public', func) for func in metadata['functions']]
+    functions = [FunctionMetadata('public', func, '', '', False, False, False)
+                 for func in metadata['functions']]
     comp.extend_functions(functions)
 
     # types
