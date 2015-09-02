@@ -36,9 +36,18 @@ class KeyBindingManager(object):
     :param enable_open_in_editor: Filter to enable open-in-editor.
     :param enable_all: Filter to enable (or disable) all bindings.
     """
-    def __init__(self, registry=None, enable_vi_mode=Never(),
+    def __init__(self, registry=None, enable_vi_mode=Never(), vi_state=None,
                  enable_system_bindings=Never(), enable_search=Always(),
                  enable_open_in_editor=Never(), enable_all=Always()):
+
+        assert registry is None or isinstance(registry, Registry)
+        assert vi_state is None or isinstance(vi_state, ViState)
+
+        # Create registry.
+        self.registry = registry or Registry()
+
+        # Vi state. (Object to keep track of in which Vi mode we are.)
+        self.vi_state = vi_state or ViState()
 
         # Accept both Filters and booleans as input.
         enable_vi_mode = to_cli_filter(enable_vi_mode)
@@ -46,15 +55,8 @@ class KeyBindingManager(object):
         enable_open_in_editor = to_cli_filter(enable_open_in_editor)
         enable_all = to_cli_filter(enable_all)
 
-        # Create registry.
-        assert registry is None or isinstance(registry, Registry)
-        self.registry = registry or Registry()
-
         # Emacs mode filter is the opposite of Vi mode.
         enable_emacs_mode = ~enable_vi_mode
-
-        # Vi state. (Object to keep track of in which Vi mode we are.)
-        self.vi_state = ViState()
 
         # Load basic bindings.
         load_basic_bindings(self.registry, enable_all)
