@@ -21,30 +21,20 @@ class GrammarLexer(Lexer):
     with the Pygments lexer class.)
 
     :param compiled_grammar: Grammar as returned by the `compile()` function.
-    :param tokens: (optionally) Dictionary mapping variable names of the
-                   regular grammar to the Pygments Token that should be used
-                   for this part.
-    :param lexers: (optionally) Dictionary mapping variable names of the
-                   regular grammar to the lexers that should be used for this part.
-                   (This can call other lexer classes recursively.)
+    :param lexers: Dictionary mapping variable names of the regular grammar to
+                   the lexers that should be used for this part. (This can
+                   call other lexers recursively.) If you wish a part of the
+                   grammar to just get one token, use a
+                   `prompt_toolkit.layout.lexers.SimpleLexer`.
     """
-    def __init__(self, compiled_grammar, tokens=None, default_token=None, lexers=None):
+    def __init__(self, compiled_grammar, default_token=None, lexers=None):
         assert isinstance(compiled_grammar, _CompiledGrammar)
         assert lexers is None or all(isinstance(v, Lexer) for k, v in lexers.items())
         assert lexers is None or isinstance(lexers, dict)
-        assert tokens is None or isinstance(tokens, dict)
 
         self.compiled_grammar = compiled_grammar
-        self.tokens = tokens
         self.default_token = default_token or Token
         self.lexers = lexers or {}
-
-    def __call__(self, stripnl=False, stripall=False, ensurenl=False):
-        """
-        For compatibility with Pygments lexers.
-        (Signature of Pygments Lexer.__init__)
-        """
-        return self
 
     def get_tokens(self, cli, text):
         m = self.compiled_grammar.match_prefix(text)
@@ -56,7 +46,6 @@ class GrammarLexer(Lexer):
                 # If we have a `Lexer` instance for this part of the input.
                 # Tokenize recursively and apply tokens.
                 lexer = self.lexers.get(v.varname)
-                token = self.tokens.get(v.varname)
 
                 if lexer:
                     lexer_tokens = lexer.get_tokens(cli, text[v.start:v.stop])
@@ -66,11 +55,6 @@ class GrammarLexer(Lexer):
                             if characters[i][0] == self.default_token:
                                 characters[i][0] = t
                             i += 1
-
-                elif token:
-                    for i in range(v.start, v.stop):
-                        if characters[i][0] == self.default_token:
-                            characters[i][0] = token
 
             # Highlight trailing input.
             trailing_input = m.trailing_input()
