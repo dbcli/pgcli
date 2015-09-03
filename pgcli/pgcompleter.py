@@ -287,6 +287,10 @@ class PGCompleter(Completer):
                     funcs = self.populate_schema_objects(
                         suggestion['schema'], 'functions')
 
+                # Function overloading means we way have multiple functions
+                # of the same name at this point, so keep unique names only
+                funcs = set(funcs)
+
                 funcs = self.find_matches(word_before_cursor, funcs,
                                           meta='function')
                 completions.extend(funcs)
