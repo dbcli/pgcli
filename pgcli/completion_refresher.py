@@ -1,5 +1,8 @@
 import threading
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from .packages import OrderedDict
 
 from .pgcompleter import PGCompleter
 from .pgexecute import PGExecute
