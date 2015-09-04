@@ -1,0 +1,3 @@
+include *rst LICENSE CHANGELOG
+recursive-include examples *.py
+prune examples/sample?/build
