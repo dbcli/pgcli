@@ -265,7 +265,9 @@ class PGCli(object):
         def prompt_tokens(cli):
             return [(Token.Prompt,  '%s> ' % pgexecute.dbname)]
 
-        get_toolbar_tokens = create_toolbar_tokens_func(lambda: self.vi_mode)
+        get_toolbar_tokens = create_toolbar_tokens_func(lambda: self.vi_mode,
+                                                        lambda: self.completion_refresher.is_refreshing())
+
         layout = create_default_layout(lexer=PostgresLexer,
                                        reserve_space_for_menu=True,
                                        get_prompt_tokens=prompt_tokens,
