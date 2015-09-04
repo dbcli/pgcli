@@ -249,7 +249,6 @@ class PGCli(object):
         logger = self.logger
         original_less_opts = self.adjust_less_opts()
 
-        completer = self.completer
         self.refresh_completions()
 
         def set_vi_mode(value):
@@ -282,7 +281,7 @@ class PGCli(object):
                                        ])
         history_file = self.config['main']['history_file']
         with self._completer_lock:
-            buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
+            buf = PGBuffer(always_multiline=self.multi_line, completer=self.completer,
                     history=FileHistory(os.path.expanduser(history_file)),
                     complete_while_typing=Always())
 
@@ -397,8 +396,8 @@ class PGCli(object):
                 if need_search_path_refresh(document.text):
                     logger.debug('Refreshing search path')
                     with self._completer_lock:
-                        completer.set_search_path(pgexecute.search_path())
-                    logger.debug('Search path: %r', completer.search_path)
+                        self.completer.set_search_path(pgexecute.search_path())
+                    logger.debug('Search path: %r', self.completer.search_path)
 
                 query = Query(document.text, successful, mutating)
                 self.query_history.append(query)
@@ -422,16 +421,16 @@ class PGCli(object):
         return [(None, None, None,
                 'Auto-completion refresh started in the background.')]
 
-    def _swap_completer_objects(self, completer):
+    def _swap_completer_objects(self, new_completer):
         """Swap the completer object in cli with the newly created completer.
         """
         with self._completer_lock:
-            self.completer = completer
+            self.completer = new_completer
             # When pgcli is first launched we call refresh_completions before
             # instantiating the cli object. So it is necessary to check if cli
             # exists before trying the replace the completer object in cli.
             if hasattr(self, 'cli'):
-                self.cli.current_buffer.completer = completer
+                self.cli.current_buffer.completer = new_completer
 
     def get_completions(self, text, cursor_positition):
         with self._completer_lock:
