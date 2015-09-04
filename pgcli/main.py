@@ -32,6 +32,7 @@ from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
+from .completion_refresher import CompletionRefresher
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
@@ -79,6 +80,7 @@ class PGCli(object):
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
+        self.completion_refresher = CompletionRefresher()
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
@@ -89,7 +91,6 @@ class PGCli(object):
         smart_completion = c['main'].as_bool('smart_completion')
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial)
         self.completer = completer
-        self._completer_thread = None
         self._completer_lock = threading.Lock()
         self._restart_completion = threading.Event()
         self.register_special_commands()
@@ -416,79 +417,21 @@ class PGCli(object):
         return less_opts
 
     def refresh_completions(self):
+        self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
+                                          self._swap_completer_objects)
+        return [(None, None, None,
+                'Auto-completion refresh started in the background.')]
 
-        if self._completer_thread and self._completer_thread.is_alive():
-            self._restart_completion.set()
-            return [(None, None, None, 'Auto-completion refresh restarted.')]
-        else:
-            self._completer_thread = threading.Thread(target=self.background_refresh, name='completion_refresh')
-            self._completer_thread.setDaemon(True)
-            self._completer_thread.start()
-            return [(None, None, None, 'Auto-completion refresh started in the background.')]
-
-    def background_refresh(self):
-        completer = PGCompleter(smart_completion=True, pgspecial=self.pgspecial)
-
-        # Create a new pgexecute method to popoulate the completions.
-        e = self.pgexecute
-        pgexecute = PGExecute(e.dbname, e.user, e.password, e.host, e.port, e.dsn)
-
-        while (1):
-            # schemata
-            completer.set_search_path(pgexecute.search_path())
-            completer.extend_schemata(pgexecute.schemata())
-
-            if self._restart_completion.is_set():
-                self._restart_completion.clear()
-                continue
-
-            # tables
-            completer.extend_relations(pgexecute.tables(), kind='tables')
-            completer.extend_columns(pgexecute.table_columns(), kind='tables')
-
-            if self._restart_completion.is_set():
-                self._restart_completion.clear()
-                continue
-
-            # views
-            completer.extend_relations(pgexecute.views(), kind='views')
-            completer.extend_columns(pgexecute.view_columns(), kind='views')
-
-            if self._restart_completion.is_set():
-                self._restart_completion.clear()
-                continue
-
-            # functions
-            completer.extend_functions(pgexecute.functions())
-
-            if self._restart_completion.is_set():
-                self._restart_completion.clear()
-                continue
-
-            # types
-            completer.extend_datatypes(pgexecute.datatypes())
-
-            if self._restart_completion.is_set():
-                self._restart_completion.clear()
-                continue
-
-            # databases
-            completer.extend_database_names(pgexecute.databases())
-
-            if self._restart_completion.is_set():
-                self._restart_completion.clear()
-                continue
-
-            # Swap the completer object in cli with the newly created completer.
-            with self._completer_lock:
-                self.completer = completer
-                # When pgcli is first launched we call refresh_completions before
-                # instantiating the cli object. So it is necessary to check if cli
-                # exists before trying the replace the completer object in cli.
-                if hasattr(self, 'cli'):
-                    self.cli.current_buffer.completer = completer
-
-            break
+    def _swap_completer_objects(self, completer):
+        """Swap the completer object in cli with the newly created completer.
+        """
+        with self._completer_lock:
+            self.completer = completer
+            # When pgcli is first launched we call refresh_completions before
+            # instantiating the cli object. So it is necessary to check if cli
+            # exists before trying the replace the completer object in cli.
+            if hasattr(self, 'cli'):
+                self.cli.current_buffer.completer = completer
 
     def get_completions(self, text, cursor_positition):
         with self._completer_lock:
