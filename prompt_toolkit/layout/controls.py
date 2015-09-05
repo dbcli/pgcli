@@ -191,6 +191,8 @@ class BufferControl(UIControl):
     :param buffer_name: String representing the name of the buffer to display.
     :param margin: `Margin` instance. for instance: `NumberredMargin` in order
         to show line numbers.
+    :param default_char: `Char` instance to use to fill the background. This is
+        transparent by default.
     """
     def __init__(self,
                  input_processors=None,
@@ -198,7 +200,8 @@ class BufferControl(UIControl):
                  preview_search=False,
                  buffer_name=DEFAULT_BUFFER,
                  menu_position=None,
-                 margin=None):
+                 margin=None,
+                 default_char=None):
         assert input_processors is None or all(isinstance(i, Processor) for i in input_processors)
         assert menu_position is None or callable(menu_position)
         assert margin is None or isinstance(margin, Margin)
@@ -211,6 +214,7 @@ class BufferControl(UIControl):
         self.menu_position = menu_position
         self.margin = margin or NoMargin()
         self.lexer = lexer or SimpleLexer()
+        self.default_char = default_char or Char(token=Token.Transparent)
 
         #: LRU cache for the lexer.
         #: Often, due to cursor movement, undo/redo and window resizing
@@ -308,7 +312,7 @@ class BufferControl(UIControl):
             document = buffer.document
 
         def _create_screen():
-            screen = Screen(width)
+            screen = Screen(width, self.default_char)
 
             # Get tokens
             # Note: we add the space character at the end, because that's where
