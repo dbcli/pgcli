@@ -6,6 +6,7 @@ from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYST
 from prompt_toolkit.filters import CLIFilter, Always
 
 from .utils import create_handle_decorator
+from .scroll import scroll_page_up, scroll_page_down
 
 import prompt_toolkit.filters as filters
 
@@ -13,6 +14,7 @@ __all__ = (
     'load_emacs_bindings',
     'load_emacs_search_bindings',
     'load_emacs_system_bindings',
+    'load_extra_emacs_page_navigation_bindings',
 )
 
 
@@ -555,3 +557,16 @@ def load_emacs_search_bindings(registry, filter=None):
             input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
             input_buffer.apply_search(event.cli.search_state,
                                       include_current_position=False, count=event.arg)
+
+
+def load_extra_emacs_page_navigation_bindings(registry, filter=None):
+    """
+    Key bindings, for scrolling up and down through pages.
+    This are separate bindings, because GNU readline doesn't have them.
+    """
+    handle = create_handle_decorator(registry, filter)
+
+    handle(Keys.ControlV)(scroll_page_down)
+    handle(Keys.PageDown)(scroll_page_down)
+    handle(Keys.Escape, 'v')(scroll_page_up)
+    handle(Keys.PageUp)(scroll_page_up)

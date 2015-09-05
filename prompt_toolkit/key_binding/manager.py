@@ -14,8 +14,8 @@ from __future__ import unicode_literals
 from prompt_toolkit.key_binding.registry import Registry
 from prompt_toolkit.key_binding.vi_state import ViState
 from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_basic_system_bindings
-from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_system_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings
-from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_system_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings
+from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_system_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings, load_extra_emacs_page_navigation_bindings
+from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_system_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings, load_extra_vi_page_navigation_bindings
 from prompt_toolkit.filters import Never, Always, to_cli_filter
 
 __all__ = (
@@ -34,11 +34,14 @@ class KeyBindingManager(object):
     :param enable_search: Filter to enable the search bindings.
     :param enable_open_in_editor: Filter to enable open-in-editor.
     :param enable_open_in_editor: Filter to enable open-in-editor.
+    :param enable_extra_page_navigation: Filter for enabling extra page navigation.
+        (Bindings for up/down scrolling through long pages, like in Emacs or Vi.)
     :param enable_all: Filter to enable (or disable) all bindings.
     """
     def __init__(self, registry=None, enable_vi_mode=Never(), vi_state=None,
                  enable_system_bindings=Never(), enable_search=Always(),
-                 enable_open_in_editor=Never(), enable_all=Always()):
+                 enable_open_in_editor=Never(), enable_extra_page_navigation=Never(),
+                 enable_all=Always()):
 
         assert registry is None or isinstance(registry, Registry)
         assert vi_state is None or isinstance(vi_state, ViState)
@@ -53,6 +56,7 @@ class KeyBindingManager(object):
         enable_vi_mode = to_cli_filter(enable_vi_mode)
         enable_system_bindings = to_cli_filter(enable_system_bindings)
         enable_open_in_editor = to_cli_filter(enable_open_in_editor)
+        enable_extra_page_navigation = to_cli_filter(enable_extra_page_navigation)
         enable_all = to_cli_filter(enable_all)
 
         # Emacs mode filter is the opposite of Vi mode.
@@ -76,6 +80,10 @@ class KeyBindingManager(object):
         load_emacs_system_bindings(
             self.registry, enable_emacs_mode & enable_system_bindings & enable_all)
 
+        load_extra_emacs_page_navigation_bindings(
+            self.registry,
+            enable_emacs_mode & enable_extra_page_navigation)
+
         # Load Vi bindings.
         load_vi_bindings(self.registry, self.vi_state, enable_visual_key=~enable_open_in_editor,
                          filter=enable_vi_mode & enable_all)
@@ -91,6 +99,10 @@ class KeyBindingManager(object):
         load_vi_system_bindings(
             self.registry, self.vi_state,
             enable_vi_mode & enable_system_bindings & enable_all)
+
+        load_extra_vi_page_navigation_bindings(
+            self.registry,
+            enable_vi_mode & enable_extra_page_navigation)
 
     def reset(self):
         self.vi_state.reset()

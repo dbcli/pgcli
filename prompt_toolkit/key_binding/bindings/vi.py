@@ -10,6 +10,7 @@ from prompt_toolkit.layout.utils import find_window_for_buffer_name
 from prompt_toolkit.selection import SelectionType
 
 from .utils import create_handle_decorator
+from .scroll import scroll_forward, scroll_backward, scroll_half_page_up, scroll_half_page_down, scroll_one_line_up, scroll_one_line_down, scroll_page_up, scroll_page_down
 
 import prompt_toolkit.filters as filters
 import codecs
@@ -18,6 +19,7 @@ __all__ = (
     'load_vi_bindings',
     'load_vi_search_bindings',
     'load_vi_system_bindings',
+    'load_extra_vi_page_navigation_bindings',
 )
 
 
@@ -1281,3 +1283,20 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
 
         event.cli.focus_stack.pop()
         event.cli.buffers[search_buffer_name].reset()
+
+
+def load_extra_vi_page_navigation_bindings(registry, filter=None):
+    """
+    Key bindings, for scrolling up and down through pages.
+    This are separate bindings, because GNU readline doesn't have them.
+    """
+    handle = create_handle_decorator(registry, filter)
+
+    handle(Keys.ControlF)(scroll_forward)
+    handle(Keys.ControlB)(scroll_backward)
+    handle(Keys.ControlD)(scroll_half_page_down)
+    handle(Keys.ControlU)(scroll_half_page_up)
+    handle(Keys.ControlE)(scroll_one_line_down)
+    handle(Keys.ControlY)(scroll_one_line_up)
+    handle(Keys.PageDown)(scroll_page_down)
+    handle(Keys.PageUp)(scroll_page_up)
