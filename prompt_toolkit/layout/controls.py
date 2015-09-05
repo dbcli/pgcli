@@ -129,13 +129,17 @@ class TokenListControl(UIControl):
         # Get tokens
         tokens = self.get_tokens(cli)
 
-        # Align right
-        if self.align_right:
-            used_width = token_list_width(tokens)
-            available_width = width - used_width
-            tokens = [(self.default_char.token, ' ' * available_width)] + tokens
+        # Only call write_data when we actually have tokens.
+        # (Otherwise the screen height will go up from 0 to 1 while we don't
+        # want that. -- An empty control should not take up any space.)
+        if tokens:
+            # Align right
+            if self.align_right:
+                used_width = token_list_width(tokens)
+                available_width = width - used_width
+                tokens = [(self.default_char.token, ' ' * available_width)] + tokens
 
-        screen.write_data(tokens, width)
+            screen.write_data(tokens, width)
         return screen
 
     @classmethod

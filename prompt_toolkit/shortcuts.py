@@ -38,6 +38,7 @@ from .layout.processors import PasswordProcessor, HighlightSearchProcessor, High
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
+from .layout.utils import explode_tokens
 from .styles import DefaultStyle
 from .utils import is_conemu_ansi, is_windows
 
@@ -109,6 +110,34 @@ def create_asyncio_eventloop(loop=None):
     return AsyncioEventLoop(loop)
 
 
+def _split_multiline_prompt(get_prompt_tokens):
+    """
+    Take a `get_prompt_tokens` function. and return two new functions instead.
+    One that returns the tokens to be shown on the lines above the input, and
+    another one with the tokens to be shown at the first line of the input.
+    """
+    def before(cli):
+        result = []
+        found_nl = False
+        for token, char in reversed(explode_tokens(get_prompt_tokens(cli))):
+            if char == '\n':
+                found_nl = True
+            elif found_nl:
+                result.insert(0, (token, char))
+        return result
+
+    def first_input_line(cli):
+        result = []
+        for token, char in reversed(explode_tokens(get_prompt_tokens(cli))):
+            if char == '\n':
+                break
+            else:
+                result.insert(0, (token, char))
+        return result
+
+    return before, first_input_line
+
+
 def create_default_layout(message='', lexer=None, is_password=False,
                           reserve_space_for_menu=False,
                           get_prompt_tokens=None, get_bottom_toolbar_tokens=None,
@@ -144,6 +173,8 @@ def create_default_layout(message='', lexer=None, is_password=False,
 
     if get_prompt_tokens is None:
         get_prompt_tokens = lambda _: [(Token.Prompt, message)]
+
+    get_prompt_tokens_1, get_prompt_tokens_2 = _split_multiline_prompt(get_prompt_tokens)
 
     # `lexer` is supposed to be a `Lexer` instance. But if a Pygments lexer
     # class is given, turn it into a PygmentsLexer. (Important for
@@ -196,11 +227,17 @@ def create_default_layout(message='', lexer=None, is_password=False,
 
     # Create and return Layout instance.
     return HSplit([
+        ConditionalContainer(
+            Window(
+                TokenListControl(get_prompt_tokens_1),
+                dont_extend_height=True),
+            filter=multiline,
+        ),
         VSplit([
             # In multiline mode, the prompt is displayed in a left pane.
             ConditionalContainer(
                 Window(
-                    TokenListControl(get_prompt_tokens),
+                    TokenListControl(get_prompt_tokens_2),
                     dont_extend_width=True,
                 ),
                 filter=multiline,

@@ -126,7 +126,7 @@ class Screen(object):
 
         #: Currently used height of the screen. This will increase when data is
         #: written to the screen.
-        self.current_height = 1
+        self.current_height = 0
 
         #: Mapping of buffer lines to input lines.
         self.screen_line_to_input_line = {}

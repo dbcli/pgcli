@@ -17,9 +17,9 @@ class LayoutDimension(object):
         self.max_specified = max is not None
         self.preferred_specified = preferred is not None
 
-        if min is None:  # 0-values are allowed, so use "is None"
-            min = 1
-        if max is None:
+        if min is None:
+            min = 0  # Smallest possible value.
+        if max is None:  # 0-values are allowed, so use "is None"
             max = 1000 ** 10  # Something huge.
         if preferred is None:
             preferred = min
