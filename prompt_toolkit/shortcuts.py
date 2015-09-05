@@ -23,6 +23,7 @@ In that case, study the code in this file and build your own
 from __future__ import unicode_literals
 
 from .buffer import Buffer
+from .document import Document
 from .enums import DEFAULT_BUFFER, SEARCH_BUFFER
 from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown, to_simple_filter, to_cli_filter, Condition
 from .history import InMemoryHistory
@@ -302,7 +303,8 @@ def create_default_application(
         key_bindings_registry=None,
         on_abort=AbortAction.RAISE_EXCEPTION,
         on_exit=AbortAction.RAISE_EXCEPTION,
-        accept_action=AcceptAction.RETURN_DOCUMENT):
+        accept_action=AcceptAction.RETURN_DOCUMENT,
+        default=''):
     """
     Create a default `Aplication` instance.
     It is meant to cover 90% of the use cases, where no extreme customization
@@ -331,6 +333,8 @@ def create_default_application(
         completions in multiple columns.
     :param get_title: Callable that returns the title to be displayed in the
         terminal.
+    :param default: The default text to be shown in the input buffer. (This can
+        be edited by the user.)
     """
     if key_bindings_registry is None:
         key_bindings_registry = KeyBindingManager(
@@ -367,6 +371,7 @@ def create_default_application(
                 validator=validator,
                 completer=completer,
                 accept_action=accept_action,
+                initial_document=Document(default),
             ),
         style=style or DefaultStyle,
         clipboard=clipboard,
@@ -401,8 +406,13 @@ def get_input(message='', **kwargs):
         sys.stdout = cli.stdout_proxy()
 
     # Read input and return it.
+
+    # Note: We pass `reset_current_buffer=False`, because that way it's easy to
+    #       give DEFAULT_BUFFER a default value, without it getting erased. We
+    #       don't have to reset anyway, because this is the first and only time
+    #       that this CommandLineInterface will run.
     try:
-        document = cli.run()
+        document = cli.run(reset_current_buffer=False)
 
         if document:
             return document.text
