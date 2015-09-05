@@ -27,10 +27,10 @@ __all__ = (
 
 
 class TokenListToolbar(ConditionalContainer):
-    def __init__(self, get_tokens, default_char=None, filter=Always()):
+    def __init__(self, get_tokens, filter=Always(), **kw):
         super(TokenListToolbar, self).__init__(
             content=Window(
-                TokenListControl(get_tokens, default_char=default_char),
+                TokenListControl(get_tokens, **kw),
                 height=LayoutDimension.exact(1)),
             filter=filter)
 

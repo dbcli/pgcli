@@ -95,13 +95,14 @@ class TokenListControl(UIControl):
         `Token.SetCursorPosition` token somewhere in the token list, then the
         cursor will be shown there.
     """
-    def __init__(self, get_tokens, default_char=None, align_right=False,
+    def __init__(self, get_tokens, default_char=None, align_right=False, align_center=False,
                  has_focus=False):
         assert default_char is None or isinstance(default_char, Char)
 
         self.get_tokens = get_tokens
         self.default_char = default_char or Char(' ', Token)
-        self.align_right = align_right
+        self.align_right = to_cli_filter(align_right)
+        self.align_center = to_cli_filter(align_center)
         self._has_focus_filter = to_cli_filter(has_focus)
 
     def __repr__(self):
@@ -133,11 +134,16 @@ class TokenListControl(UIControl):
         # (Otherwise the screen height will go up from 0 to 1 while we don't
         # want that. -- An empty control should not take up any space.)
         if tokens:
-            # Align right
-            if self.align_right:
+            # Align right/center.
+            right = self.align_right(cli)
+            center = self.align_center(cli)
+
+            if right or center:
                 used_width = token_list_width(tokens)
-                available_width = width - used_width
-                tokens = [(self.default_char.token, ' ' * available_width)] + tokens
+                padding = width - used_width
+                if center:
+                    padding = int(padding / 2)
+                tokens = [(self.default_char.token, ' ' * padding)] + tokens
 
             screen.write_data(tokens, width)
         return screen
