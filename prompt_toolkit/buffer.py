@@ -358,10 +358,20 @@ class Buffer(object):
         This will set both the text and cursor position at the same time, but
         atomically. (Change events will be triggered only after both have been set.)
         """
+        self.set_document(value)
+
+    def set_document(self, value, bypass_readonly=False):
+        """
+        Set :class:`Document` instance. Like the `document` property, but
+        accept an `bypass_readonly` argument.
+
+        :param bypass_readonly: When True, don't raise an `EditReadOnlyBuffer`
+                                exception, even when the buffer is read-only.
+        """
         assert isinstance(value, Document)
 
         # Don't allow editing of read-only buffers.
-        if self.read_only():
+        if not bypass_readonly and self.read_only():
             raise EditReadOnlyBuffer()
 
         # Set text and cursor position first.
