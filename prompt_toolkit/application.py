@@ -2,16 +2,17 @@ from __future__ import unicode_literals
 
 from .buffer import Buffer, AcceptAction
 from .clipboard import Clipboard, InMemoryClipboard
+from .enums import DEFAULT_BUFFER
 from .filters import CLIFilter, Never, to_cli_filter
+from .focus_stack import FocusStack
 from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
 from .key_binding.registry import Registry
 from .layout import Window
+from .layout.containers import Layout
 from .layout.controls import BufferControl
 from .styles import DefaultStyle
 from .utils import Callback
-from .enums import DEFAULT_BUFFER
-from .layout.containers import Layout
 
 __all__ = (
     'AbortAction',
@@ -73,7 +74,7 @@ class Application(object):
                  key_bindings_registry=None, clipboard=None,
                  on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
                  use_alternate_screen=False,
-                 get_title=None,
+                 get_title=None, focus_stack=None,
 
                  paste_mode=Never(), ignore_case=Never(),
 
@@ -92,6 +93,7 @@ class Application(object):
         assert on_exit in AbortAction._all
         assert isinstance(use_alternate_screen, bool)
         assert get_title is None or callable(get_title)
+        assert focus_stack is None or isinstance(focus_stack, FocusStack)
         assert isinstance(paste_mode, CLIFilter)
         assert isinstance(ignore_case, CLIFilter)
         assert on_start is None or isinstance(on_start, Callback)
@@ -137,3 +139,5 @@ class Application(object):
         self.on_reset = on_reset or Callback()
         self.on_initialize = on_initialize or Callback()
         self.on_buffer_changed = on_buffer_changed or Callback()
+
+        self.focus_stack = focus_stack or FocusStack(initial=initial_focussed_buffer)

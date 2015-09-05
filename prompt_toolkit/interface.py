@@ -17,7 +17,6 @@ from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, SYSTEM_BUFFER, DUMMY_BUFFER
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
 from .filters import Condition
-from .focus_stack import FocusStack
 from .history import InMemoryHistory
 from .input import StdinInput, Input
 from .key_binding.input_processor import InputProcessor
@@ -70,9 +69,6 @@ class CommandLineInterface(object):
         self.output = output or create_default_output()
         self.input = input or StdinInput(sys.stdin)
 
-        # Focus stack.
-        self.focus_stack = FocusStack(initial=application.initial_focussed_buffer)
-
         #: The input buffers.
         self.buffers = {
             # For the 'search' and 'system' buffers, 'returnable' is False, in
@@ -115,6 +111,10 @@ class CommandLineInterface(object):
     @property
     def clipboard(self):
         return self.application.clipboard
+
+    @property
+    def focus_stack(self):
+        return self.application.focus_stack
 
     def add_buffer(self, name, buffer, focus=False):
         """
