@@ -368,7 +368,7 @@ class CommandLineInterface(object):
         That means, it uses the same input and output channels and it shares
         the same event loop. [1]
 
-        [1] Techincally, it gets another Eventloop instance, but that is only a
+        [1] Technically, it gets another Eventloop instance, but that is only a
             proxy to our main event loop. The reason is that calling 'stop'
             --which returns the result of an application when it's done-- is
             handled differently.
