@@ -419,8 +419,14 @@ class PGCli(object):
         return less_opts
 
     def refresh_completions(self):
+        callbacks = [self._swap_completer_objects]
+        if self.cli:
+            # After refreshing, redraw the CLI to clear the statusbar
+            # "Refreshing completions..." indicator
+            callbacks.append(lambda _: self.cli.request_redraw())
+
         self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
-                                          self._swap_completer_objects)
+                                          callbacks)
         return [(None, None, None,
                 'Auto-completion refresh started in the background.')]
 
