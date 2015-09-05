@@ -94,6 +94,8 @@ class PGCli(object):
         self._completer_lock = threading.Lock()
         self.register_special_commands()
 
+        self.cli = None
+
     def register_special_commands(self):
 
         self.pgspecial.register(self.change_db, '\\c',
@@ -430,7 +432,7 @@ class PGCli(object):
             # When pgcli is first launched we call refresh_completions before
             # instantiating the cli object. So it is necessary to check if cli
             # exists before trying the replace the completer object in cli.
-            if hasattr(self, 'cli'):
+            if self.cli:
                 self.cli.current_buffer.completer = new_completer
 
     def get_completions(self, text, cursor_positition):
