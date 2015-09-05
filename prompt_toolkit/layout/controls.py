@@ -143,7 +143,7 @@ class TokenListControl(UIControl):
                 padding = width - used_width
                 if center:
                     padding = int(padding / 2)
-                tokens = [(self.default_char.token, ' ' * padding)] + tokens
+                tokens = [(self.default_char.token, self.default_char.char * padding)] + tokens
 
             screen.write_data(tokens, width)
         return screen
