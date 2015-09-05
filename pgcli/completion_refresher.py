@@ -13,11 +13,22 @@ class CompletionRefresher(object):
 
     def __init__(self):
         self._completer_thread = None
-        self._restart_completion = threading.Event()
+        self._restart_refresh = threading.Event()
 
     def refresh(self, executor, special, callbacks):
+        """
+        Creates a PGCompleter object and populates it with the relevant
+        completion suggestions in a background thread.
+
+        executor - PGExecute object, used to extract the credentials to connect
+                   to the database.
+        special - PGSpecial object used for creating a new completion object.
+        callbacks - A function or a list of functions to call after the thread
+                    has completed the refresh. The newly created completion
+                    object will be passed in as an argument to each callback.
+        """
         if self._completer_thread and self._completer_thread.is_alive():
-            self._restart_completion.set()
+            self._restart_refresh.set()
             return [(None, None, None, 'Auto-completion refresh restarted.')]
         else:
             self._completer_thread = threading.Thread(target=self._bg_refresh,
@@ -35,14 +46,15 @@ class CompletionRefresher(object):
         e = pgexecute
         executor = PGExecute(e.dbname, e.user, e.password, e.host, e.port, e.dsn)
 
+        # If callbacks is a single function then push it into a list.
         if callable(callbacks):
             callbacks = [callbacks]
 
         while 1:
             for refresher in self.refreshers.values():
                 refresher(completer, executor)
-                if self._restart_completion.is_set():
-                    self._restart_completion.clear()
+                if self._restart_refresh.is_set():
+                    self._restart_refresh.clear()
                     break
             else:
                 # Break out of while loop if the for loop finishes natually
@@ -72,16 +84,13 @@ def refresh_schemata(completer, executor):
 
 @refresher('tables')
 def refresh_tables(completer, executor):
-    completer.extend_relations(executor.tables(),
-                                      kind='tables')
-    completer.extend_columns(executor.table_columns(),
-                                    kind='tables')
+    completer.extend_relations(executor.tables(), kind='tables')
+    completer.extend_columns(executor.table_columns(), kind='tables')
 
 @refresher('views')
 def refresh_views(completer, executor):
     completer.extend_relations(executor.views(), kind='views')
-    completer.extend_columns(executor.view_columns(),
-                                    kind='views')
+    completer.extend_columns(executor.view_columns(), kind='views')
 
 @refresher('functions')
 def refresh_functions(completer, executor):

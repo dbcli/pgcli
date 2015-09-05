@@ -92,7 +92,6 @@ class PGCli(object):
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial)
         self.completer = completer
         self._completer_lock = threading.Lock()
-        self._restart_completion = threading.Event()
         self.register_special_commands()
 
     def register_special_commands(self):
