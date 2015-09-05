@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
 from ..filters import CLIFilter, to_cli_filter, Never
+from ..keys import Key
 from ..utils import Callback
 
+from six import text_type
 from collections import defaultdict
 
 __all__ = (
@@ -72,6 +74,8 @@ class Registry(object):
 
         assert not kwargs
         assert keys
+        assert all(isinstance(k, (Key, text_type)) for k in keys), \
+            'Key bindings should consist of Key and string (unicode) instances.'
 
         def decorator(func):
             # When a filter is Never, it will always stay disabled, so in that case
