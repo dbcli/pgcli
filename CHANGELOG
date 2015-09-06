@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.50: 2015-09-06
+----------------
+
+Fix:
+- Leaving of alternate screen on Windows.
+
+
 0.49: 2015-09-06
 ----------------
 
