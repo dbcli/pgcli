@@ -27,6 +27,9 @@ class FocusStack(object):
     def reset(self):
         self._stack = [self._initial]
 
+    def __contains__(self, value):
+        return value in self._stack
+
     def pop(self):
         if len(self._stack) > 1:
             self._stack.pop()

@@ -8,6 +8,7 @@ __all__ = (
     'HasArg',
     'HasCompletions',
     'HasFocus',
+    'InFocusStack',
     'HasSearch',
     'HasSelection',
     'HasValidationError',
@@ -32,6 +33,20 @@ class HasFocus(Filter):
 
     def __repr__(self):
         return 'HasFocus(%r)' % self.buffer_name
+
+
+class InFocusStack(Filter):
+    """
+    Enable when this buffer appears on the focus stack.
+    """
+    def __init__(self, buffer_name):
+        self.buffer_name = buffer_name
+
+    def __call__(self, cli):
+        return self.buffer_name in cli.focus_stack
+
+    def __repr__(self):
+        return 'InFocusStack(%r)' % self.buffer_name
 
 
 class HasSelection(Filter):
