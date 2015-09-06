@@ -50,6 +50,8 @@ class Win32Output(Output):
         self.stdout = stdout
         self.hconsole = windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
 
+        self._in_alternate_screen = False
+
         self.color_lookup_table = ColorLookupTable()
 
         if _DEBUG_RENDER_OUTPUT:
@@ -253,22 +255,28 @@ class Win32Output(Output):
         """
         Go to alternate screen buffer.
         """
-        GENERIC_READ = 0x80000000
-        GENERIC_WRITE = 0x40000000
+        if not self._in_alternate_screen:
+            GENERIC_READ = 0x80000000
+            GENERIC_WRITE = 0x40000000
 
-        # Create a new console buffer and activate that one.
-        handle = self._winapi(windll.kernel32.CreateConsoleScreenBuffer, GENERIC_READ|GENERIC_WRITE,
-                              DWORD(0), None, DWORD(1), None)
+            # Create a new console buffer and activate that one.
+            handle = self._winapi(windll.kernel32.CreateConsoleScreenBuffer, GENERIC_READ|GENERIC_WRITE,
+                                  DWORD(0), None, DWORD(1), None)
 
-        self._winapi(windll.kernel32.SetConsoleActiveScreenBuffer, handle)
-        self.hconsole = handle
+            self._winapi(windll.kernel32.SetConsoleActiveScreenBuffer, handle)
+            self.hconsole = handle
+            self._in_alternate_screen = True
 
     def quit_alternate_screen(self):
         """
         Make stdout again the active buffer.
         """
-        stdout = self._winapi(windll.kernel32.GetStdHandle, STD_OUTPUT_HANDLE)
-        self._winapi(windll.kernel32.SetConsoleActiveScreenBuffer, stdout)
+        if self._in_alternate_screen:
+            stdout = self._winapi(windll.kernel32.GetStdHandle, STD_OUTPUT_HANDLE)
+            self._winapi(windll.kernel32.SetConsoleActiveScreenBuffer, stdout)
+            self._winapi(windll.kernel32.CloseHandle, self.hconsole)
+            self.hconsole = stdout
+            self._in_alternate_screen = False
 
     @classmethod
     def win32_refresh_window(cls):
