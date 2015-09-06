@@ -105,6 +105,7 @@ Projects using prompt-toolkit
 - `mycli <http://mycli.net>`_: MySql client.
 - `pyvim <http://github.com/jonathanslenders/pyvim/>`_: A Vim clone in pure Python
 - `wharfee <http://wharfee.com/>`_: A Docker command line.
+- `xonsh <http://xonsh.org/>`_: A Python-ish, BASHwards-compatible shell.
 
 (Want your own project to be listed here? Please create a GitHub issue.)
 
