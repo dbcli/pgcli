@@ -13,7 +13,7 @@ Usage::
 from __future__ import unicode_literals
 from prompt_toolkit.key_binding.registry import Registry
 from prompt_toolkit.key_binding.vi_state import ViState
-from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_basic_system_bindings
+from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_basic_system_bindings, load_auto_suggestion_bindings
 from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_system_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings, load_extra_emacs_page_navigation_bindings
 from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_system_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings, load_extra_vi_page_navigation_bindings
 from prompt_toolkit.filters import Never, Always, to_cli_filter
@@ -36,11 +36,13 @@ class KeyBindingManager(object):
     :param enable_open_in_editor: Filter to enable open-in-editor.
     :param enable_extra_page_navigation: Filter for enabling extra page navigation.
         (Bindings for up/down scrolling through long pages, like in Emacs or Vi.)
+    :param enable_auto_suggestion_bindings: Filter to enable fish-style suggestions.
     :param enable_all: Filter to enable (or disable) all bindings.
     """
     def __init__(self, registry=None, enable_vi_mode=Never(), vi_state=None,
                  enable_system_bindings=Never(), enable_search=Always(),
                  enable_open_in_editor=Never(), enable_extra_page_navigation=Never(),
+                 enable_auto_suggestion_bindings=Never(),
                  enable_all=Always()):
 
         assert registry is None or isinstance(registry, Registry)
@@ -57,6 +59,7 @@ class KeyBindingManager(object):
         enable_system_bindings = to_cli_filter(enable_system_bindings)
         enable_open_in_editor = to_cli_filter(enable_open_in_editor)
         enable_extra_page_navigation = to_cli_filter(enable_extra_page_navigation)
+        enable_auto_suggestion_bindings = to_cli_filter(enable_auto_suggestion_bindings)
         enable_all = to_cli_filter(enable_all)
 
         # Emacs mode filter is the opposite of Vi mode.
@@ -103,6 +106,14 @@ class KeyBindingManager(object):
         load_extra_vi_page_navigation_bindings(
             self.registry,
             enable_vi_mode & enable_extra_page_navigation)
+
+        # Suggestion bindings.
+        # (This has to come at the end, because the Vi bindings also have an
+        # implementation for the "right arrow", but we really want the
+        # suggestion binding when a suggestion is available.)
+        load_auto_suggestion_bindings(
+            self.registry,
+            enable_auto_suggestion_bindings)
 
     def reset(self):
         self.vi_state.reset()

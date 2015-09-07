@@ -4,16 +4,17 @@ It holds the text, cursor position, history, etc...
 """
 from __future__ import unicode_literals
 
+from .auto_suggest import AutoSuggest
+from .clipboard import ClipboardData
 from .completion import Completer, Completion, CompleteEvent
 from .document import Document
 from .enums import IncrementalSearchDirection
+from .filters import Never, to_simple_filter
 from .history import History, InMemoryHistory
+from .search_state import SearchState
 from .selection import SelectionType, SelectionState
 from .utils import Callback
 from .validation import ValidationError
-from .clipboard import ClipboardData
-from .filters import Never, to_simple_filter
-from .search_state import SearchState
 
 import os
 import six
@@ -170,7 +171,8 @@ class Buffer(object):
         autocompletion found, the up arrows usually browse through the
         completions, rather than through the history.
     """
-    def __init__(self, completer=None, history=None, validator=None, tempfile_suffix='',
+    def __init__(self, completer=None, auto_suggest=None, history=None,
+                 validator=None, tempfile_suffix='',
                  is_multiline=Never(), complete_while_typing=Never(),
                  enable_history_search=Never(), initial_document=None,
                  accept_action=AcceptAction.RETURN_DOCUMENT, read_only=False,
@@ -184,12 +186,14 @@ class Buffer(object):
 
         # Validate input.
         assert completer is None or isinstance(completer, Completer)
+        assert auto_suggest is None or isinstance(auto_suggest, AutoSuggest)
         assert history is None or isinstance(history, History)
         assert on_text_changed is None or isinstance(on_text_changed, Callback)
         assert on_text_insert is None or isinstance(on_text_insert, Callback)
         assert on_cursor_position_changed is None or isinstance(on_cursor_position_changed, Callback)
 
         self.completer = completer
+        self.auto_suggest = auto_suggest
         self.validator = validator
         self.tempfile_suffix = tempfile_suffix
         self.accept_action = accept_action
@@ -235,6 +239,9 @@ class Buffer(object):
 
         # State of complete browser
         self.complete_state = None  # For interactive completion through Ctrl-N/Ctrl-P.
+
+        # Current suggestion.
+        self.suggestion = None
 
         # The history search text. (Used for filtering the history when we
         # browse through it.)
@@ -327,6 +334,7 @@ class Buffer(object):
         self.validation_error = None
         self.complete_state = None
         self.selection_state = None
+        self.suggestion = None
 
         # fire 'on_text_changed' event.
         self.on_text_changed.fire()

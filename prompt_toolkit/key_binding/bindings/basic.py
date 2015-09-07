@@ -12,6 +12,7 @@ from .utils import create_handle_decorator
 __all__ = (
     'load_basic_bindings',
     'load_basic_system_bindings',
+    'load_auto_suggestion_bindings',
 )
 
 
@@ -334,3 +335,27 @@ def load_basic_system_bindings(registry, filter=Always()):
         Suspend process to background.
         """
         event.cli.suspend_to_background()
+
+
+def load_auto_suggestion_bindings(registry, filter=Always()):
+    """
+    Key bindings for accepting auto suggestion text.
+    """
+    assert isinstance(filter, CLIFilter)
+    handle = create_handle_decorator(registry, filter)
+
+    suggestion_available = Condition(
+        lambda cli:
+            cli.current_buffer.suggestion is not None and
+            cli.current_buffer.document.is_cursor_at_the_end)
+
+    @handle(Keys.ControlF, filter=suggestion_available)
+    @handle(Keys.ControlE, filter=suggestion_available)
+    @handle(Keys.Right, filter=suggestion_available)
+    def _(event):
+        " Accept suggestion. "
+        b = event.current_buffer
+        suggestion = b.suggestion
+
+        if suggestion:
+            b.insert_text(suggestion.text)

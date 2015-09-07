@@ -62,6 +62,9 @@ default_style_extensions = {
     Token.Menu.Completions.ProgressBar:           'bg:#aaaaaa',
     Token.Menu.Completions.ProgressButton:        'bg:#000000',
 
+    # Auto suggestion text.
+    Token.AutoSuggestion:                         '#666666',
+
     # When Control-C has been pressed. Grayed.
     Token.Aborted:                                '#888888',
 }

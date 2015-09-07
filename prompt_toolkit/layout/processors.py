@@ -17,6 +17,7 @@ __all__ = (
     'BracketsMismatchProcessor',
     'BeforeInput',
     'AfterInput',
+    'AppendAutoSuggestion',
     'ConditionalProcessor',
     'ShowLeadingWhiteSpaceProcessor',
     'ShowTrailingWhiteSpaceProcessor',
@@ -269,6 +270,25 @@ class AfterInput(Processor):
     def invalidation_hash(self, cli, buffer):
         # Redraw when the given tokens change.
         return tuple(self.get_tokens(cli))
+
+
+class AppendAutoSuggestion(Processor):
+    """
+    Append the auto suggestion to the input.
+    (The user can then press the right arrow the insert the suggestion.)
+    """
+    def run(self, cli, buffer, tokens):
+        if buffer.suggestion and buffer.document.is_cursor_at_the_end:
+            suggestion = buffer.suggestion.text
+        else:
+            suggestion = ''
+
+        return tokens + [(Token.AutoSuggestion, suggestion)], lambda i: i
+
+    def invalidation_hash(self, cli, buffer):
+        # Redraw when the suggestion changes.
+        if buffer.suggestion and buffer.document.is_cursor_at_the_end:
+            return buffer.suggestion.text
 
 
 class ShowLeadingWhiteSpaceProcessor(Processor):

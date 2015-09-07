@@ -35,7 +35,7 @@ from .layout.controls import BufferControl, TokenListControl
 from .layout.dimension import LayoutDimension
 from .layout.lexers import PygmentsLexer
 from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
-from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, ConditionalProcessor
+from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, ConditionalProcessor, AppendAutoSuggestion
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
@@ -197,6 +197,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
                             HighlightSearchProcessor(preview_search=Always()),
                             HasFocus(SEARCH_BUFFER)),
                         HighlightSelectionProcessor(),
+                        ConditionalProcessor(AppendAutoSuggestion(), HasFocus(DEFAULT_BUFFER)),
                         ConditionalProcessor(PasswordProcessor(), is_password)]
 
     if extra_input_processors:
@@ -292,6 +293,7 @@ def create_default_application(
         enable_open_in_editor=Never(),
         validator=None,
         completer=None,
+        auto_suggest=None,
         style=None,
         history=None,
         clipboard=None,
@@ -320,6 +322,7 @@ def create_default_application(
     :param lexer: Lexer to be used for the syntax highlighting.
     :param validator: `Validator` instance for input validation.
     :param completer: `Completer` instance for input completion.
+    :param auto_suggest: `AutoSuggest` instance for input suggestions.
     :param style: Pygments style class for the color scheme.
     :param enable_system_bindings: Pressing Meta+'!' will show a system prompt.
     :param enable_open_in_editor: Pressing 'v' in Vi mode or C-X C-E in emacs
@@ -340,7 +343,8 @@ def create_default_application(
         key_bindings_registry = KeyBindingManager(
             enable_vi_mode=vi_mode,
             enable_system_bindings=enable_system_bindings,
-            enable_open_in_editor=enable_open_in_editor).registry
+            enable_open_in_editor=enable_open_in_editor,
+            enable_auto_suggestion_bindings=True).registry
 
     # Make sure that complete_while_typing is disabled when enable_history_search
     # is enabled. (First convert to SimpleFilter, to avoid doing bitwise operations
@@ -370,6 +374,7 @@ def create_default_application(
                 history=(history or InMemoryHistory()),
                 validator=validator,
                 completer=completer,
+                auto_suggest=auto_suggest,
                 accept_action=accept_action,
                 initial_document=Document(default),
             ),

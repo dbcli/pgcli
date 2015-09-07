@@ -123,29 +123,36 @@ class CommandLineInterface(object):
         assert isinstance(buffer, Buffer)
         self.buffers[name] = buffer
 
-        def create_while_typing_completer(completer):
-            """
-            Wrapper around the asynchronous completer, that ensures that it's
-            only called while typing if the `complete_while_typing` filter is
-            enabled.
-            """
-            def complete_while_typing():
-                # Only complete when "complete_while_typing" is enabled.
-                if buffer.complete_while_typing():
-                    completer()
-            return complete_while_typing
-
-        # Create asynchronous completer.
-        if buffer.completer:
-            completer_function = self._create_async_completer(buffer)
-            self._async_completers[name] = completer_function
-            buffer.on_text_insert += create_while_typing_completer(completer_function)
-
-        # Trigger on_buffer_changed when text in this buffer changes.
-        buffer.on_text_changed += lambda: self.application.on_buffer_changed.fire(self)
-
         if focus:
             self.focus_stack.replace(name)
+
+        # Create asynchronous completer / auto suggestion.
+        auto_suggest_function = self._create_auto_suggest_function(buffer)
+        completer_function = self._create_async_completer(buffer)
+        self._async_completers[name] = completer_function
+
+        # Complete/suggest on text insert.
+        def create_on_insert_handler():
+            """
+            Wrapper around the asynchronous completer and auto suggestion, that
+            ensures that it's only called while typing if the
+            `complete_while_typing` filter is enabled.
+            """
+            def on_text_insert():
+                # Only complete when "complete_while_typing" is enabled.
+                if buffer.completer and buffer.complete_while_typing():
+                    completer_function()
+
+                # Call auto_suggest.
+                if buffer.auto_suggest:
+                    auto_suggest_function()
+
+                # Trigger on_buffer_changed when text in this buffer changes.
+                self.application.on_buffer_changed.fire(self)
+
+            return on_text_insert
+
+        buffer.on_text_insert += create_on_insert_handler()
 
     def start_completion(self, buffer_name=None, select_first=False,
                          select_last=False, insert_common_part=False):
@@ -600,7 +607,7 @@ class CommandLineInterface(object):
                 return
 
             # Don't complete when we already have completions.
-            if buffer.complete_state:
+            if buffer.complete_state or not buffer.completer:
                 return
 
             # Otherwise, get completions in other thread.
@@ -661,6 +668,49 @@ class CommandLineInterface(object):
 
             self.eventloop.run_in_executor(run)
         return async_completer
+
+    def _create_auto_suggest_function(self, buffer):
+        """
+        Create function for asynchronous auto suggestion.
+        (AutoSuggest in other thread.)
+        """
+        suggest_thread_running = [False]  # By ref.
+
+        def async_suggestor():
+            document = buffer.document
+
+            # Don't start two threads at the same time.
+            if suggest_thread_running[0]:
+                return
+
+            # Don't suggest when we already have a suggestion.
+            if buffer.suggestion or not buffer.auto_suggest:
+                return
+
+            # Otherwise, get completions in other thread.
+            suggest_thread_running[0] = True
+
+            def run():
+                suggestion = buffer.auto_suggest.get_suggestion(buffer, document)
+                suggest_thread_running[0] = False
+
+                def callback():
+                    # Set suggestion only if the text was not yet changed.
+                    if buffer.text == document.text and \
+                            buffer.cursor_position == document.cursor_position:
+
+                        # Set suggestion and redraw interface.
+                        buffer.suggestion = suggestion
+                        self._redraw()
+                    else:
+                        # Otherwise, restart thread.
+                        async_suggestor()
+
+                if self.eventloop:
+                    self.eventloop.call_from_executor(callback)
+
+            self.eventloop.run_in_executor(run)
+        return async_suggestor
 
     def stdout_proxy(self):
         """
