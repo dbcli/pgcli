@@ -217,14 +217,21 @@ class MultiColumnCompletionMenuControl(UIControl):
     This results in less completions displayed and additional scrolling.
     (It's a limitation of how the layout engine currently works: first the
     widths are calculated, then the heights.)
+
+    :param suggested_max_column_width: The suggested max width of a column.
+        The column can still be bigger than this, but if there is place for two
+        columns of this width, we will display two columns. This to avoid that
+        if there is one very wide completion, that it doesn't significantly
+        reduce the amount of columns.
     """
     _required_margin = 3  # One extra padding on the right + space for arrows.
 
-    def __init__(self, min_rows=3):
+    def __init__(self, min_rows=3, suggested_max_column_width=30):
         assert isinstance(min_rows, int) and min_rows >= 1
 
-        self.token = Token.Menu.Completions
         self.min_rows = min_rows
+        self.suggested_max_column_width = suggested_max_column_width
+        self.token = Token.Menu.Completions
         self.scroll = 0
 
     def reset(self):
@@ -277,9 +284,23 @@ class MultiColumnCompletionMenuControl(UIControl):
             " Returns True when this completion is the currently selected one. "
             return complete_state.complete_index is not None and c == complete_state.current_completion
 
+        # Space required outside of the regular columns, for displaying the
+        # left and right arrow.
+        HORIZONTAL_MARGIN_REQUIRED = 3
+
         if complete_state:
-            column_width = min(width, column_width)
-            visible_columns = (width - self._required_margin) // column_width
+            # There should be at least one column, but it cannot be wider than
+            # the available width.
+            column_width = min(width - HORIZONTAL_MARGIN_REQUIRED, column_width)
+
+            # However, when the columns tend to be very wide, because there are
+            # some very wide entries, shrink it anyway.
+            if column_width > self.suggested_max_column_width:
+                # `column_width` can still be bigger that `suggested_max_column_width`,
+                # but if there is place for two columns, we divide by two.
+                column_width //= (column_width // self.suggested_max_column_width)
+
+            visible_columns = max(1, (width - self._required_margin) // column_width)
 
             columns_ = list(grouper(height, complete_state.current_completions))
             rows_ = list(zip(*columns_))
@@ -343,7 +364,7 @@ class MultiColumnCompletionsMenu(HSplit):
     When `show_meta` (a CLIFilter) evaluates to True, it shows
     the meta information at the bottom.
     """
-    def __init__(self, min_rows=3, show_meta=Always(), extra_filter=Always()):
+    def __init__(self, min_rows=3, suggested_max_column_width=30, show_meta=Always(), extra_filter=Always()):
         # Display filter: show when there are completions but not at the point
         # we are returning the input.
         full_filter = HasCompletions() & ~IsDone() & extra_filter
@@ -354,7 +375,8 @@ class MultiColumnCompletionsMenu(HSplit):
         # Create child windows.
         completions_window = ConditionalContainer(
             content=Window(
-                content=MultiColumnCompletionMenuControl(min_rows=min_rows),
+                content=MultiColumnCompletionMenuControl(
+                    min_rows=min_rows, suggested_max_column_width=suggested_max_column_width),
                 width=LayoutDimension(min=8),
                 height=LayoutDimension(min=1)),
             filter=full_filter)
