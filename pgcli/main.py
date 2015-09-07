@@ -419,16 +419,18 @@ class PGCli(object):
         return less_opts
 
     def refresh_completions(self):
-        callbacks = [self._swap_completer_objects]
+        self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
+                                          self._on_completions_refreshed)
+        return [(None, None, None,
+                'Auto-completion refresh started in the background.')]
+
+    def _on_completions_refreshed(self, new_completer):
+        self._swap_completer_objects(new_completer)
+
         if self.cli:
             # After refreshing, redraw the CLI to clear the statusbar
             # "Refreshing completions..." indicator
-            callbacks.append(lambda _: self.cli.request_redraw())
-
-        self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
-                                          callbacks)
-        return [(None, None, None,
-                'Auto-completion refresh started in the background.')]
+            self.cli.request_redraw()
 
     def _swap_completer_objects(self, new_completer):
         """Swap the completer object in cli with the newly created completer.
