@@ -252,7 +252,7 @@ class BufferControl(UIControl):
         screen = self.create_screen(cli, width, None)
         return screen.current_height
 
-    def _get_input_tokens(self, cli, document):
+    def _get_input_tokens(self, cli, buffer):
         """
         Tokenize input text for highlighting.
         Return (tokens, cursor_transform_functions) tuple.
@@ -264,7 +264,7 @@ class BufferControl(UIControl):
         """
         def get():
             # Call lexer.
-            tokens = list(self.lexer.get_tokens(cli, document.text))
+            tokens = list(self.lexer.get_tokens(cli, buffer.document.text))
 
             # 'Explode' tokens in characters.
             # (Some input processors -- like search/selection highlighter --
@@ -277,16 +277,16 @@ class BufferControl(UIControl):
             cursor_transform_functions = []
 
             for p in self.input_processors:
-                tokens, f = p.run(cli, document, tokens)
+                tokens, f = p.run(cli, buffer, tokens)
                 cursor_transform_functions.append(f)
 
             return tokens, cursor_transform_functions
 
         key = (
-            document.text,
+            buffer.document.text,
 
             # Include invalidation_hashes from all processors.
-            tuple(p.invalidation_hash(cli, document) for p in self.input_processors),
+            tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),
         )
 
         return self._token_lru_cache.get(key, get)
@@ -317,7 +317,7 @@ class BufferControl(UIControl):
             # Get tokens
             # Note: we add the space character at the end, because that's where
             #       the cursor can also be.
-            input_tokens, cursor_transform_functions = self._get_input_tokens(cli, document)
+            input_tokens, cursor_transform_functions = self._get_input_tokens(cli, buffer)
             input_tokens += [(Token, ' ')]
 
             indexes_to_pos = screen.write_data(
@@ -357,7 +357,7 @@ class BufferControl(UIControl):
             self.margin.invalidation_hash(cli, document),
 
             # Include invalidation_hashes from all processors.
-            tuple(p.invalidation_hash(cli, document) for p in self.input_processors),
+            tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),
         )
 
         # Get from cache, or create if this doesn't exist yet.
