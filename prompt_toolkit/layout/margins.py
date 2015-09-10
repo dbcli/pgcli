@@ -1,5 +1,5 @@
 """
-Margin implementations for a `BufferControl`.
+Margin implementations for a `Window`.
 """
 from __future__ import unicode_literals
 
@@ -12,7 +12,7 @@ from pygments.token import Token
 __all__ = (
     'Margin',
     'NumberredMargin',
-    'NoMargin',
+    'ScrollbarMargin',
     'ConditionalMargin',
 )
 
@@ -26,9 +26,9 @@ class _NumberedMarginTokenCache(dict):
         width, line_number = key
 
         if line_number is not None:
-            tokens = [(Token.LineNumber, u'%%%si ' % width % (line_number + 1))]
+            tokens = (Token.LineNumber, u'%%%si ' % width % (line_number + 1))
         else:
-            tokens = [(Token.LineNumber, ' ' * (width + 1))]
+            tokens = (Token.LineNumber, ' ' * (width + 1))
 
         self[key] = tokens
         return tokens
@@ -41,32 +41,74 @@ class Margin(with_metaclass(ABCMeta, object)):
     Base interface for a margin.
     """
     @abstractmethod
-    def create_handler(self, cli, document):
+    def get_width(self, cli):
         """
-        Return a callable that takes a line number and returns the tokens to
-        be displayed in front of that line.
-
-        This function will also be called with `line_number` equal to `None`
-        after a line wrap.
+        Return the width that this margin is going to consume.
         """
-        def margin(line_number):
-            return []
-        return margin
+        return 0
 
-    def invalidation_hash(self, cli, document):
-        return None
+    @abstractmethod
+    def create_margin(self, cli, window_render_info, width, height):
+        """
+        Creates a margin.
+        This should return a list of (Token, text) tuples.
+
+        :param window_render_info: `WindowRenderInfo` instance, generated
+            after rendering and copying the visible part of the `UserControl`
+            into the `Window`.
+        :param width: The width that's available for this margin. (As reported
+            by `self.get_width`.)
+        :param height: The height that's available for this margin. (The height
+            of the `Window`.)
+        """
+        return []
 
 
 class NumberredMargin(Margin):
     """
-    Simple margin that shows the line numbers.
-    """
-    def create_handler(self, cli, document):
-        decimals = max(3, len('%s' % document.line_count))
+    Margin that displays the line numbers.
 
-        def margin(line_number):
-            return _NUMBERED_MARGIN_TOKEN_CACHE[decimals, line_number]
-        return margin
+    :param buffer_name: The name of the buffer. This is recommended if the
+        margin is used together with a `BufferControl` inside a `Window`.
+        That way, we can predict the width of this margin (the amount of
+        decimals) according to the number of lines in the buffer.
+    :param width: If no buffer name is given, width can be used to set a fixed
+        width.
+    """
+    def __init__(self, buffer_name=None, width=None, display_tildes=False):
+        assert buffer_name or width
+
+        self.buffer_name = buffer_name
+        self.width = width
+        self.display_tildes = display_tildes
+
+    def get_width(self, cli):
+        if self.width is not None:
+            # Fixed width.
+            return self.width
+        else:
+            # Width determined by the amount of lines in the buffer.
+            document = cli.buffers[self.buffer_name].document
+            return max(3, len('%s' % document.line_count) + 1)
+
+    def create_margin(self, cli, window_render_info, width, height):
+        result = []
+        visible_line_to_input_line = window_render_info.visible_line_to_input_line
+
+        for y in range(0, window_render_info.original_screen.current_height):
+            line_number = visible_line_to_input_line.get(y)
+
+            if line_number is not None:
+                result.append(_NUMBERED_MARGIN_TOKEN_CACHE[width - 1, line_number])
+            result.append((Token, '\n'))
+
+        # Add Vi-like tildes until the bottom.
+        if self.display_tildes:
+            for y in range(y, height):
+                result.append((Token.LineNumber.Tilde, '~'))
+                result.append((Token, '\n'))
+
+        return result
 
 
 class ConditionalMargin(Margin):
@@ -79,21 +121,52 @@ class ConditionalMargin(Margin):
         self.margin = margin
         self.filter = to_cli_filter(filter)
 
-    def invalidation_hash(self, cli, document):
-        return self.filter(cli)
-
-    def create_handler(self, cli, document):
+    def get_width(self, cli):
         if self.filter(cli):
-            return self.margin.create_handler(cli, document)
+            return self.margin.get_width(cli)
         else:
-            return NoMargin().create_handler(cli, document)
+            return 0
 
-
-class NoMargin(Margin):
-    """
-    Empty margin.
-    """
-    def create_handler(self, cli, document):
-        def margin(line_number):
+    def create_margin(self, cli, window_render_info, width, height):
+        if width and self.filter(cli):
+            return self.margin.create_margin(cli, window_render_info, width, height)
+        else:
             return []
-        return margin
+
+
+class ScrollbarMargin(Margin):
+    """
+    Margin displaying a scrollbar.
+    """
+    def get_width(self, cli):
+        return 1
+
+    def create_margin(self, cli, window_render_info, width, height):
+        total_height = window_render_info.content_height
+        items_per_row = float(total_height) / min(total_height, window_render_info.rendered_height - 2)
+
+        index = window_render_info.vertical_scroll
+
+        visible_lines = set(range(index, index + window_render_info.rendered_height))
+
+        def is_scroll_button(row):
+            " True if we should display a button on this row. "
+            current_row_middle = int((row + .5) * items_per_row)
+            return current_row_middle in visible_lines
+
+        # Generate tokens.
+        result = [
+            (Token.Scrollbar.Arrow, '\u25b2'),  # Up arrow.
+            (Token.Scrollbar, '\n')
+        ]
+
+        for i in range(window_render_info.rendered_height - 2):
+            if is_scroll_button(i):
+                result.append((Token.Scrollbar.Button, ' '))
+            else:
+                result.append((Token.Scrollbar, ' '))
+            result.append((Token, '\n'))
+
+        result.append((Token.Scrollbar.Arrow, '\u25bc'))  # Down arrow
+
+        return result

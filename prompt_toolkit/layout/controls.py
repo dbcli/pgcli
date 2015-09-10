@@ -13,7 +13,6 @@ from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.enums import DEFAULT_BUFFER
 
 from .lexers import Lexer, SimpleLexer
-from .margins import Margin, NoMargin
 from .processors import Processor
 from .screen import Screen, Char, Point
 from .utils import token_list_width
@@ -189,8 +188,6 @@ class BufferControl(UIControl):
     :param lexer: Pygments lexer class.
     :param preview_search: `bool` or `CLIFilter`: Show search while typing.
     :param buffer_name: String representing the name of the buffer to display.
-    :param margin: `Margin` instance. for instance: `NumberredMargin` in order
-        to show line numbers.
     :param default_char: `Char` instance to use to fill the background. This is
         transparent by default.
     """
@@ -200,11 +197,9 @@ class BufferControl(UIControl):
                  preview_search=False,
                  buffer_name=DEFAULT_BUFFER,
                  menu_position=None,
-                 margin=None,
                  default_char=None):
         assert input_processors is None or all(isinstance(i, Processor) for i in input_processors)
         assert menu_position is None or callable(menu_position)
-        assert margin is None or isinstance(margin, Margin)
         assert lexer is None or isinstance(lexer, Lexer)
 
         self.preview_search = to_cli_filter(preview_search)
@@ -212,7 +207,6 @@ class BufferControl(UIControl):
         self.input_processors = input_processors or []
         self.buffer_name = buffer_name
         self.menu_position = menu_position
-        self.margin = margin or NoMargin()
         self.lexer = lexer or SimpleLexer()
         self.default_char = default_char or Char(token=Token.Transparent)
 
@@ -301,7 +295,7 @@ class BufferControl(UIControl):
         def preview_now():
             """ True when we should preview a search. """
             return bool(self.preview_search(cli) and
-                    cli.is_searching and cli.current_buffer.text)
+                        cli.is_searching and cli.current_buffer.text)
 
         if preview_now():
             document = buffer.document_for_search(SearchState(
@@ -320,10 +314,7 @@ class BufferControl(UIControl):
             input_tokens, cursor_transform_functions = self._get_input_tokens(cli, buffer)
             input_tokens += [(Token, ' ')]
 
-            indexes_to_pos = screen.write_data(
-                input_tokens,
-                screen.width,
-                margin=self.margin.create_handler(cli, buffer.document))
+            indexes_to_pos = screen.write_data(input_tokens, screen.width)
 
             def cursor_position_to_xy(cursor_position):
                 # First get the real token position by applying all
@@ -351,10 +342,6 @@ class BufferControl(UIControl):
             # When the width changes, line wrapping will be different.
             # TODO: allow to disable line wrapping. + in that case, remove 'width'
             width,
-
-            # When line numbers are enabled/disabled. (Or whatever parameters
-            # the margin has.)
-            self.margin.invalidation_hash(cli, document),
 
             # Include invalidation_hashes from all processors.
             tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),

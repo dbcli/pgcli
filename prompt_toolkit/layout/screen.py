@@ -131,7 +131,7 @@ class Screen(object):
         #: Mapping of buffer lines to input lines.
         self.screen_line_to_input_line = {}
 
-    def write_data(self, data, width, margin=None):
+    def write_data(self, data, width):
         """
         Write data at :class:`WritePosition`.
         When one of the tokens in the token list is Token.SetCursorPosition,
@@ -139,8 +139,6 @@ class Screen(object):
 
         :param data: List of Token tuples to write to the buffer.
         :param width: Width of the screen.
-        :param margin: Callable that takes a line number or None (in case of a
-                       line continuation) and returns a list of Token tuples.
         """
         buffer = self._buffer
         screen_line_to_input_line = self.screen_line_to_input_line
@@ -154,35 +152,6 @@ class Screen(object):
         indexes_to_pos = {}  # Map input positions to (x, y) coordinates.
         set_cursor_position = Token.SetCursorPosition
 
-        def do_line_feed(x, number):
-            """
-            Insert left margin. (line numbering or whatever provider by the
-            'margin' function.)
-
-            :param x: Current 'x' position in `bufer`.
-            :param number: Line number or None if this is a continuation of the
-                           previous line.
-            """
-            # Save mapping between lines in the buffer and lines in the input.
-            if number is not None:
-                screen_line_to_input_line[y] = number
-
-            # Insert margin.
-            if margin is not None:
-                for token, text in margin(number):
-                    for char in text:
-                        char_obj = _CHAR_CACHE[char, token]
-                        char_width = char_obj.width
-                        buffer[y][x] = char_obj
-
-                        # Store '0' in the second cell of double width characters.
-                        if char_width > 1:
-                            buffer[y][x+1] = Char(six.unichr(0))
-
-                        # Move position
-                        x += char_width
-            return x
-
         for token, text in data:
             if token == set_cursor_position:
                 self.cursor_position = Point(y=y, x=x)
@@ -190,7 +159,7 @@ class Screen(object):
             for char in text:
                 # Line feed.
                 if requires_line_feed:
-                    x = do_line_feed(x, line_number)
+                    screen_line_to_input_line[y] = line_number
                     requires_line_feed = False
 
                 char_obj = _CHAR_CACHE[char, token]
@@ -201,7 +170,6 @@ class Screen(object):
                 if x + char_width > max_x and char != '\n':
                     y += 1
                     x = 0
-                    x = do_line_feed(x, None)
 
                 # Keep mapping of index to position.
                 indexes_to_pos[index] = (x, y)

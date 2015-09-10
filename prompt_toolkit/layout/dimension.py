@@ -42,6 +42,9 @@ class LayoutDimension(object):
     def __repr__(self):
         return 'LayoutDimension(min=%r, max=%r, preferred=%r)' % (self.min, self.max, self.preferred)
 
+    def __add__(self, other):
+        return sum_layout_dimensions([self, other])
+
 
 def sum_layout_dimensions(dimensions):
     """

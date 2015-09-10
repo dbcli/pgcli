@@ -10,7 +10,7 @@ from pygments.token import Token
 
 from .screen import Point, WritePosition
 from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
-from .controls import UIControl
+from .controls import UIControl, TokenListControl
 from prompt_toolkit.reactive import Integer
 from prompt_toolkit.filters import to_cli_filter
 
@@ -447,6 +447,15 @@ class WindowRenderInfo(object):
         """
         return self.original_screen.screen_line_to_input_line
 
+    @property
+    def visible_line_to_input_line(self):
+        """
+        Return a dictionary mapping the visible rows to the line numbers of the
+        input.
+        """
+        return dict((k - self.vertical_scroll, v) for
+                    k, v in self.original_screen.screen_line_to_input_line.items())
+
     def first_visible_line(self, after_scroll_offset=False):
         """
         Return the line number (0 based) of the input document that corresponds
@@ -485,7 +494,7 @@ class WindowRenderInfo(object):
         return 0
 
     def center_visible_line(self, before_scroll_offset=False,
-            after_scroll_offset=False):
+                            after_scroll_offset=False):
         """
         Like `first_visible_line`, but for the center visible line.
         """
@@ -495,9 +504,16 @@ class WindowRenderInfo(object):
                 )
 
     @property
+    def content_height(self):
+        """
+        The full height of the user control.
+        """
+        return self.original_screen.current_height
+
+    @property
     def full_height_visible(self):
         """
-        True when the full height is visible (There is no vertical scroll.
+        True when the full height is visible (There is no vertical scroll.)
         """
         return self.rendered_height >= self.original_screen.current_height
 
@@ -539,6 +555,9 @@ class Window(Layout):
                               preferred width reported by the control.
     :param dont_extend_height: When `True`, don't take up more width then the
                                preferred height reported by the control.
+    :param left_margins: A list of `Margin` instance to be displayed on the left.
+        For instance: `NumberredMargin` can be one of them in order to show line numbers.
+    :param right_margins: Like `left_margins`, but on the other side.
     :param scroll_offset: Number (integer) representing the preferred amount of
         lines to be always visible before and after the cursor. When this is a
         very high number, the cursor will be centered vertically most of the
@@ -551,6 +570,7 @@ class Window(Layout):
     """
     def __init__(self, content, width=None, height=None, get_width=None,
                  get_height=None, dont_extend_width=False,
+                 left_margins=None, right_margins=None,
                  dont_extend_height=False, scroll_offset=0, allow_scroll_beyond_bottom=False):
         assert isinstance(content, UIControl)
         assert width is None or isinstance(width, LayoutDimension)
@@ -566,6 +586,8 @@ class Window(Layout):
         self.content = content
         self.dont_extend_width = dont_extend_width
         self.dont_extend_height = dont_extend_height
+        self.left_margins = left_margins or []
+        self.right_margins = right_margins or []
         self.scroll_offset = scroll_offset
         self._width = get_width or (lambda cli: width)
         self._height = get_height or (lambda cli: height)
@@ -586,9 +608,21 @@ class Window(Layout):
         self.render_info = None
 
     def preferred_width(self, cli, max_available_width):
+        # Width of the margins.
+        total_margin_width = sum(m.get_width(cli) for m in
+                                 self.left_margins + self.right_margins)
+
+        # Window of the content.
+        preferred_width = self.content.preferred_width(
+                cli, max_available_width - total_margin_width)
+
+        if preferred_width is not None:
+            preferred_width += total_margin_width
+
+        # Merge.
         return self._merge_dimensions(
             dimension=self._width(cli),
-            preferred=self.content.preferred_width(cli, max_available_width),
+            preferred=preferred_width,
             dont_extend=self.dont_extend_width)
 
     def preferred_height(self, cli, width):
@@ -623,23 +657,66 @@ class Window(Layout):
         # When a `dont_extend` flag has been given, use the preferred dimension
         # also as the max demension.
         if dont_extend and preferred is not None:
-            max_= min(dimension.max, preferred)
+            max_ = min(dimension.max, preferred)
         else:
             max_ = dimension.max
 
         return LayoutDimension(min=dimension.min, max=max_, preferred=preferred)
 
     def write_to_screen(self, cli, screen, write_position):
-        temp_screen = self.content.create_screen(cli, write_position.width, write_position.height)
-        applied_scroll_offsets = self._scroll(temp_screen, write_position.height, cli)
-        self._copy(cli, temp_screen, screen, write_position, applied_scroll_offsets)
+        """
+        Write window to screen. This renders the user control, the margins and
+        copies everything over to the absolute position at the given screen.
+        """
+        # Render margins.
+        left_margin_widths = [m.get_width(cli) for m in self.left_margins]
+        right_margin_widths = [m.get_width(cli) for m in self.right_margins]
+        total_margin_width = sum(left_margin_widths + right_margin_widths)
 
-    def _copy(self, cli, temp_screen, new_screen, write_position, applied_scroll_offsets):
+        # Render UserControl.
+        temp_screen = self.content.create_screen(
+            cli, write_position.width - total_margin_width, write_position.height)
+
+        # Scroll content.
+        applied_scroll_offsets = self._scroll(temp_screen, write_position.height, cli)
+
+        # Write body to screen.
+        self._copy_body(cli, temp_screen, screen, write_position,
+                        sum(left_margin_widths), applied_scroll_offsets)
+
+        # Render and copy margins.
+        move_x = 0
+
+        def render_margin(m, width):
+            " Render margin. return `Screen`. "
+            control = TokenListControl(
+                lambda _: m.create_margin(cli, self.render_info, width, write_position.height))
+            return control.create_screen(cli, width + 1, write_position.height)
+
+        for m, width in zip(self.left_margins, left_margin_widths):
+            # Create screen for margin.
+            margin_screen = render_margin(m, width)
+
+            # Copy and shift X.
+            self._copy_margin(margin_screen, screen, write_position, move_x, width)
+            move_x += width
+
+        move_x = write_position.width - sum(right_margin_widths)
+
+        for m, width in zip(self.right_margins, right_margin_widths):
+            # Create screen for margin.
+            margin_screen = render_margin(m, width)
+
+            # Copy and shift X.
+            self._copy_margin(margin_screen, screen, write_position, move_x, width)
+            move_x += width
+
+    def _copy_body(self, cli, temp_screen, new_screen, write_position, move_x, applied_scroll_offsets):
         """
         Copy characters from the temp screen that we got from the `UIControl`
         to the real screen.
         """
-        xpos = write_position.xpos
+        xpos = write_position.xpos + move_x
         ypos = write_position.ypos
         height = write_position.height
 
@@ -687,6 +764,28 @@ class Window(Layout):
                                             new_screen.cursor_position,
                                             applied_scroll_offsets[0],
                                             applied_scroll_offsets[1], applied_scroll_offsets[2])
+
+    def _copy_margin(self, temp_screen, new_screen, write_position, move_x, width):
+        """
+        Copy characters from the margin screen to the real screen.
+        """
+        xpos = write_position.xpos + move_x
+        ypos = write_position.ypos
+
+        temp_buffer = temp_screen._buffer
+        new_buffer = new_screen._buffer
+
+        # Now copy the region we need to the real screen.
+        for y in range(0, write_position.height):
+            new_row = new_buffer[y + ypos]
+            temp_row = temp_buffer[y]
+
+            # Copy row content, except for transparent tokens.
+            # (This is useful in case of floats.)
+            for x in range(0, width):
+                cell = temp_row[x]
+                if cell.token != Transparent:
+                    new_row[x + xpos] = cell
 
     def _scroll(self, temp_screen, height, cli):
         """

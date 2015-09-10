@@ -90,8 +90,9 @@ class CompletionsMenuControl(UIControl):
             slice_to = min(slice_from + height, len(completions))
 
             # Create a function which decides at which positions the scroll button should be shown.
+            items_per_row = float(len(completions)) / min(len(completions), height)
+
             def is_scroll_button(row):
-                items_per_row = float(len(completions)) / min(len(completions), height)
                 items_on_this_row_from = row * items_per_row
                 items_on_this_row_to = (row + 1) * items_per_row
                 return items_on_this_row_from <= (index or 0) < items_on_this_row_to
