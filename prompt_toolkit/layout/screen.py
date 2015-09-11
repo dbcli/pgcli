@@ -107,13 +107,11 @@ class Screen(object):
     """
     Two dimentional buffer for the output.
     """
-    def __init__(self, width, default_char=None):
+    def __init__(self, default_char=None, initial_width=0, initial_height=0):
         if default_char is None:
             default_char = Char(token=Transparent)
 
         self._buffer = defaultdict(lambda: defaultdict(lambda: default_char))
-
-        self.width = width
 
         #: Position of the cursor.
         self.cursor_position = Point(y=0, x=0)
@@ -124,33 +122,37 @@ class Screen(object):
         #: completions.)
         self.menu_position = None
 
-        #: Currently used height of the screen. This will increase when data is
-        #: written to the screen.
-        self.current_height = 0
+        #: Currently used width/height of the screen. This will increase when
+        #: data is written to the screen.
+        self.width = initial_width or 0
+        self.height = initial_height or 0
 
         #: Mapping of buffer lines to input lines.
         self.screen_line_to_input_line = {}
 
-    def write_data(self, data, width):
+    def write_data(self, data, width=None):
         """
         Write data at :class:`WritePosition`.
         When one of the tokens in the token list is Token.SetCursorPosition,
         this will set the cursor position.
 
         :param data: List of Token tuples to write to the buffer.
-        :param width: Width of the screen.
+        :param width: Width of the line wrap. (Don't wrap when `width` is None.)
         """
+        if width is None:
+            width = 10 ** 100  # A very big number.
         buffer = self._buffer
         screen_line_to_input_line = self.screen_line_to_input_line
 
         x = 0
         y = 0
-        max_x = x + width
+        max_allowed_x = x + width
         index = 0
         line_number = 0
         requires_line_feed = True
         indexes_to_pos = {}  # Map input positions to (x, y) coordinates.
         set_cursor_position = Token.SetCursorPosition
+        max_x = 0
 
         for token, text in data:
             if token == set_cursor_position:
@@ -167,7 +169,8 @@ class Screen(object):
 
                 # In case there is no more place left at this line, go first to the
                 # following line. (Also in case of double-width characters.)
-                if x + char_width > max_x and char != '\n':
+                if x + char_width > max_allowed_x and char != '\n':
+                    max_x = max(max_x, x)
                     y += 1
                     x = 0
 
@@ -176,6 +179,7 @@ class Screen(object):
 
                 # Insertion of newline
                 if char == '\n':
+                    max_x = max(max_x, x)
                     y += 1
                     x = 0
                     requires_line_feed = True
@@ -198,7 +202,8 @@ class Screen(object):
 
                 index += 1
 
-        self.current_height = max(self.current_height, y+1)
+        self.height = max(self.height, y + 1)
+        self.width = max(self.width, max_x, x)
 
         return indexes_to_pos
 

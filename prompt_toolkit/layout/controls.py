@@ -121,10 +121,10 @@ class TokenListControl(UIControl):
 
     def preferred_height(self, cli, width):
         screen = self.create_screen(cli, width, None)
-        return screen.current_height
+        return screen.height
 
     def create_screen(self, cli, width, height):
-        screen = Screen(width, self.default_char)
+        screen = Screen(self.default_char, initial_width=width)
 
         # Get tokens
         tokens = self.get_tokens(cli)
@@ -175,8 +175,7 @@ class FillControl(UIControl):
 
     def create_screen(self, cli, width, height):
         char = Char(self.character, self.token)
-        screen = Screen(width, char)
-        screen.current_height = height
+        screen = Screen(char, initial_width=width)
         return screen
 
 
@@ -187,6 +186,7 @@ class BufferControl(UIControl):
     :param input_processors: list of `InputProcessor.
     :param lexer: Pygments lexer class.
     :param preview_search: `bool` or `CLIFilter`: Show search while typing.
+    :param wrap_lines: `bool` or `CLIFilter`: Wrap long lines.
     :param buffer_name: String representing the name of the buffer to display.
     :param default_char: `Char` instance to use to fill the background. This is
         transparent by default.
@@ -195,6 +195,7 @@ class BufferControl(UIControl):
                  input_processors=None,
                  lexer=None,
                  preview_search=False,
+                 wrap_lines=True,
                  buffer_name=DEFAULT_BUFFER,
                  menu_position=None,
                  default_char=None):
@@ -203,6 +204,7 @@ class BufferControl(UIControl):
         assert lexer is None or isinstance(lexer, Lexer)
 
         self.preview_search = to_cli_filter(preview_search)
+        self.wrap_lines = to_cli_filter(wrap_lines)
 
         self.input_processors = input_processors or []
         self.buffer_name = buffer_name
@@ -244,7 +246,7 @@ class BufferControl(UIControl):
         # Draw content on a screen using this width. Measure the height of the
         # result.
         screen = self.create_screen(cli, width, None)
-        return screen.current_height
+        return screen.height
 
     def _get_input_tokens(self, cli, buffer):
         """
@@ -305,8 +307,11 @@ class BufferControl(UIControl):
         else:
             document = buffer.document
 
+        # Wrap.
+        wrap_width = width if self.wrap_lines(cli) else None
+
         def _create_screen():
-            screen = Screen(width, self.default_char)
+            screen = Screen(self.default_char, initial_width=width)
 
             # Get tokens
             # Note: we add the space character at the end, because that's where
@@ -314,7 +319,7 @@ class BufferControl(UIControl):
             input_tokens, cursor_transform_functions = self._get_input_tokens(cli, buffer)
             input_tokens += [(Token, ' ')]
 
-            indexes_to_pos = screen.write_data(input_tokens, screen.width)
+            indexes_to_pos = screen.write_data(input_tokens, width=wrap_width)
 
             def cursor_position_to_xy(cursor_position):
                 # First get the real token position by applying all
@@ -340,8 +345,8 @@ class BufferControl(UIControl):
             document.text,
 
             # When the width changes, line wrapping will be different.
-            # TODO: allow to disable line wrapping. + in that case, remove 'width'
-            width,
+            # (None when disabled.)
+            wrap_width,
 
             # Include invalidation_hashes from all processors.
             tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),

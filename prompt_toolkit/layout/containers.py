@@ -11,7 +11,7 @@ from pygments.token import Token
 from .screen import Point, WritePosition
 from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
 from .controls import UIControl, TokenListControl
-from prompt_toolkit.reactive import Integer
+from .margins import Margin
 from prompt_toolkit.filters import to_cli_filter
 
 __all__ = (
@@ -21,6 +21,7 @@ __all__ = (
     'Float',
     'Window',
     'ConditionalContainer',
+    'ScrollOffsets'
 )
 
 Transparent = Token.Transparent
@@ -412,19 +413,21 @@ class WindowRenderInfo(object):
 
     :param original_screen: The original full screen instance that contains the
                             whole input, without clipping. (temp_screen)
+    :param horizontal_scroll: The horizontal scroll of the `Window` instance.
     :param vertical_scroll: The vertical scroll of the `Window` instance.
-    :param rendered_height: The height that was used for the rendering.
+    :param height: The height that was used for the rendering.
     :param cursor_position: `Point` instance. Where the cursor is currently shown.
     """
-    def __init__(self, original_screen, vertical_scroll, rendered_height, cursor_position,
-                 configured_scroll_offset, scroll_offset_top, scroll_offset_bottom):
+    def __init__(self, original_screen, horizontal_scroll, vertical_scroll,
+                 window_width, window_height, cursor_position,
+                 configured_scroll_offsets, applied_scroll_offsets):
         self.original_screen = original_screen
         self.vertical_scroll = vertical_scroll
-        self.rendered_height = rendered_height
+        self.window_width = window_width
+        self.rendered_height = window_height  # XXX: rename to window_height.
         self.cursor_position = cursor_position
-        self.configured_scroll_offset = configured_scroll_offset
-        self.scroll_offset_top = scroll_offset_top
-        self.scroll_offset_bottom = scroll_offset_bottom
+        self.configured_scroll_offsets = configured_scroll_offsets
+        self.applied_scroll_offsets = applied_scroll_offsets
 
     def input_line_to_screen_line(self, lineno):
         """
@@ -468,7 +471,7 @@ class WindowRenderInfo(object):
 
         start = self.vertical_scroll
         if after_scroll_offset:
-            start += self.scroll_offset_top
+            start += self.applied_scroll_offsets.top
 
         for y in range(start, self.vertical_scroll + height):
             if y in screen.screen_line_to_input_line:
@@ -485,7 +488,7 @@ class WindowRenderInfo(object):
 
         start = self.vertical_scroll + height - 1
         if before_scroll_offset:
-            start -= self.scroll_offset_bottom
+            start -= self.applied_scroll_offsets.bottom
 
         for y in range(start, self.vertical_scroll, -1):
             if y in screen.screen_line_to_input_line:
@@ -508,14 +511,14 @@ class WindowRenderInfo(object):
         """
         The full height of the user control.
         """
-        return self.original_screen.current_height
+        return self.original_screen.height
 
     @property
     def full_height_visible(self):
         """
         True when the full height is visible (There is no vertical scroll.)
         """
-        return self.rendered_height >= self.original_screen.current_height
+        return self.rendered_height >= self.original_screen.height
 
     @property
     def top_visible(self):
@@ -530,7 +533,7 @@ class WindowRenderInfo(object):
         True when the bottom of the buffer is visible.
         """
         return self.vertical_scroll >= \
-            self.original_screen.current_height - self.rendered_height
+            self.original_screen.height - self.rendered_height
 
     @property
     def vertical_scroll_percentage(self):
@@ -539,7 +542,20 @@ class WindowRenderInfo(object):
         100 means: the bottom is visible.)
         """
         return (100 * self.vertical_scroll //
-                (self.original_screen.current_height - self.rendered_height))
+                (self.original_screen.height - self.rendered_height))
+
+
+class ScrollOffsets(object):
+    """
+    Scroll offsets for the `Window` class.
+
+    Note that left/rigth offsets only make sense if line wrapping is disabled.
+    """
+    def __init__(self, top=0, bottom=0, left=0, right=0):
+        self.top = top
+        self.bottom = bottom
+        self.left = left
+        self.right = right
 
 
 class Window(Layout):
@@ -558,10 +574,10 @@ class Window(Layout):
     :param left_margins: A list of `Margin` instance to be displayed on the left.
         For instance: `NumberredMargin` can be one of them in order to show line numbers.
     :param right_margins: Like `left_margins`, but on the other side.
-    :param scroll_offset: Number (integer) representing the preferred amount of
-        lines to be always visible before and after the cursor. When this is a
-        very high number, the cursor will be centered vertically most of the
-        time.
+    :param scroll_offsets: `ScrollOffsets` instance, representing the preferred
+        amount of lines/columns to be always visible before/after the cursor.
+        When both top and bottom are a very high number, the cursor will be
+        centered vertically most of the time.
     :param allow_scroll_beyond_bottom: A `bool` or `Filter` instance. When
          True, allow scrolling so far, that the top part of the content is not
          visible anymore, while there is still empty space available at the
@@ -569,9 +585,9 @@ class Window(Layout):
          You will see tildes while the top part of the body is hidden.
     """
     def __init__(self, content, width=None, height=None, get_width=None,
-                 get_height=None, dont_extend_width=False,
-                 left_margins=None, right_margins=None,
-                 dont_extend_height=False, scroll_offset=0, allow_scroll_beyond_bottom=False):
+                 get_height=None, dont_extend_width=False, dont_extend_height=False,
+                 left_margins=None, right_margins=None, scroll_offsets=None,
+                 allow_scroll_beyond_bottom=False):
         assert isinstance(content, UIControl)
         assert width is None or isinstance(width, LayoutDimension)
         assert height is None or isinstance(height, LayoutDimension)
@@ -579,7 +595,9 @@ class Window(Layout):
         assert get_height is None or callable(get_height)
         assert width is None or get_width is None
         assert height is None or get_height is None
-        assert isinstance(scroll_offset, Integer)
+        assert scroll_offsets is None or isinstance(scroll_offsets, ScrollOffsets)
+        assert left_margins is None or all(isinstance(m, Margin) for m in left_margins)
+        assert right_margins is None or all(isinstance(m, Margin) for m in right_margins)
 
         self.allow_scroll_beyond_bottom = to_cli_filter(allow_scroll_beyond_bottom)
 
@@ -588,7 +606,7 @@ class Window(Layout):
         self.dont_extend_height = dont_extend_height
         self.left_margins = left_margins or []
         self.right_margins = right_margins or []
-        self.scroll_offset = scroll_offset
+        self.scroll_offsets = scroll_offsets or ScrollOffsets()
         self._width = get_width or (lambda cli: width)
         self._height = get_height or (lambda cli: height)
 
@@ -600,8 +618,9 @@ class Window(Layout):
     def reset(self):
         self.content.reset()
 
-        #: Vertical scrolling position of the main content.
+        #: Scrolling position of the main content.
         self.vertical_scroll = 0
+        self.horizontal_scroll = 0
 
         #: Keep render information (mappings between buffer input and render
         #: output.)
@@ -678,11 +697,24 @@ class Window(Layout):
             cli, write_position.width - total_margin_width, write_position.height)
 
         # Scroll content.
-        applied_scroll_offsets = self._scroll(temp_screen, write_position.height, cli)
+        applied_scroll_offsets = self._scroll(
+            temp_screen, write_position.width - total_margin_width, write_position.height, cli)
 
         # Write body to screen.
         self._copy_body(cli, temp_screen, screen, write_position,
-                        sum(left_margin_widths), applied_scroll_offsets)
+                        sum(left_margin_widths), write_position.width - total_margin_width,
+                        applied_scroll_offsets)
+
+        # Remember render info. (Set before generating the margins. They need this.)
+        self.render_info = WindowRenderInfo(
+            original_screen=temp_screen,
+            horizontal_scroll=self.horizontal_scroll,
+            vertical_scroll=self.vertical_scroll,
+            window_width=write_position.width,
+            window_height=write_position.height,
+            cursor_position=screen.cursor_position,
+            configured_scroll_offsets=self.scroll_offsets,
+            applied_scroll_offsets=applied_scroll_offsets)
 
         # Render and copy margins.
         move_x = 0
@@ -711,7 +743,7 @@ class Window(Layout):
             self._copy_margin(margin_screen, screen, write_position, move_x, width)
             move_x += width
 
-    def _copy_body(self, cli, temp_screen, new_screen, write_position, move_x, applied_scroll_offsets):
+    def _copy_body(self, cli, temp_screen, new_screen, write_position, move_x, width, applied_scroll_offsets):
         """
         Copy characters from the temp screen that we got from the `UIControl`
         to the real screen.
@@ -720,11 +752,9 @@ class Window(Layout):
         ypos = write_position.ypos
         height = write_position.height
 
-        columns = temp_screen.width
-
         temp_buffer = temp_screen._buffer
         new_buffer = new_screen._buffer
-        temp_screen_height = temp_screen.current_height
+        temp_screen_height = temp_screen.height
         y = 0
 
         # Now copy the region we need to the real screen.
@@ -743,27 +773,22 @@ class Window(Layout):
 
                 # Copy row content, except for transparent tokens.
                 # (This is useful in case of floats.)
-                for x in range(0, columns):
-                    cell = temp_row[x]
+                for x in range(0, width):
+                    cell = temp_row[x + self.horizontal_scroll]
                     if cell.token != Transparent:
                         new_row[x + xpos] = cell
 
         if self.content.has_focus(cli):
             new_screen.cursor_position = Point(y=temp_screen.cursor_position.y + ypos - self.vertical_scroll,
-                                               x=temp_screen.cursor_position.x + xpos)
+                                               x=temp_screen.cursor_position.x + xpos - self.horizontal_scroll)
 
         if not new_screen.menu_position and temp_screen.menu_position:
             new_screen.menu_position = Point(y=temp_screen.menu_position.y + ypos - self.vertical_scroll,
-                                             x=temp_screen.menu_position.x + xpos)
+                                             x=temp_screen.menu_position.x + xpos - self.horizontal_scroll)
 
-        # Update height of the output screen.
-        new_screen.current_height = max(new_screen.current_height, ypos + y + 1)
-
-        # Remember render info.
-        self.render_info = WindowRenderInfo(temp_screen, self.vertical_scroll, height,
-                                            new_screen.cursor_position,
-                                            applied_scroll_offsets[0],
-                                            applied_scroll_offsets[1], applied_scroll_offsets[2])
+        # Update height of the output screen. (new_screen.write_data is not
+        # called, so the screen is not aware of its height.)
+        new_screen.height = max(new_screen.height, ypos + y + 1)
 
     def _copy_margin(self, temp_screen, new_screen, write_position, move_x, width):
         """
@@ -787,43 +812,69 @@ class Window(Layout):
                 if cell.token != Transparent:
                     new_row[x + xpos] = cell
 
-    def _scroll(self, temp_screen, height, cli):
+    def _scroll(self, temp_screen, width, height, cli):
         """
         Scroll to make sure the cursor position is visible and that we maintain the
         requested scroll offset.
         Return the applied scroll offsets.
         """
-        scroll_offset = int(self.scroll_offset)  # Resolve int-value. (In case this is reactive.)
+        def do_scroll(current_scroll, scroll_offset_start, scroll_offset_end, cursor_pos, window_size, content_size):
+            " Scrolling algorithm. Used for both horizontal and vertical scrolling. "
+            # Calculate the scroll offset to apply.
+            # This can obviously never be more than have the screen size. Also, when the
+            # cursor appears at the top or bottom, we don't apply the offset.
+            scroll_offset_start = int(min(scroll_offset_start, window_size / 2, cursor_pos))
+            scroll_offset_end = int(min(scroll_offset_end, window_size / 2,
+                                           content_size - 1 - cursor_pos))
 
-        # Calculate the scroll offset to apply.
-        # This can obviously never be more than have the screen size. Also, when the
-        # cursor appears at the top or bottom, we don't apply the offset.
-        scroll_offset_top = int(min(scroll_offset, height / 2, temp_screen.cursor_position.y))
-        scroll_offset_bottom = int(min(scroll_offset, height / 2,
-                                       temp_screen.current_height - 1 - temp_screen.cursor_position.y))
+            # Prevent negative scroll offsets.
+            if current_scroll < 0:
+                current_scroll = 0
 
-        # Prevent negative scroll offsets.
-        if self.vertical_scroll < 0:
-            self.vertical_scroll = 0
+            # Scroll back if we scrolled to much and there's still space to show more of the document.
+            if (not self.allow_scroll_beyond_bottom(cli) and
+                    current_scroll > content_size - window_size):
+                current_scroll = max(0, content_size - window_size)
 
-        # Scroll back if we scrolled to much and there's still space to show more of the document.
-        if (not self.allow_scroll_beyond_bottom(cli) and
-                self.vertical_scroll > temp_screen.current_height - height):
-            self.vertical_scroll = max(0, temp_screen.current_height - height)
+            # Scroll up if cursor is before visible part.
+            if current_scroll > cursor_pos - scroll_offset_start:
+                current_scroll = max(0, cursor_pos - scroll_offset_start)
 
-        # Scroll up if cursor is before visible part.
-        if self.vertical_scroll > temp_screen.cursor_position.y - scroll_offset_top:
-            self.vertical_scroll = max(0, temp_screen.cursor_position.y - scroll_offset_top)
+            # Scroll down if cursor is after visible part.
+            if current_scroll < (cursor_pos + 1) - window_size + scroll_offset_end:
+                current_scroll = (cursor_pos + 1) - window_size + scroll_offset_end
 
-        # Scroll down if cursor is after visible part.
-        if self.vertical_scroll < (temp_screen.cursor_position.y + 1) - height + scroll_offset_bottom:
-            self.vertical_scroll = (temp_screen.cursor_position.y + 1) - height + scroll_offset_bottom
+            # Calculate the applied scroll offset. This value can be lower than what we had.
+            scroll_offset_start = max(0, min(current_scroll, scroll_offset_start))
+            scroll_offset_end = max(0, min(content_size - current_scroll - window_size, scroll_offset_end))
 
-        # Calculate the applied scroll offset. This value can be lower than what we had.
-        scroll_offset_top = max(0, min(self.vertical_scroll, scroll_offset_top))
-        scroll_offset_bottom = max(0, min(temp_screen.current_height - self.vertical_scroll - height, scroll_offset_bottom))
+            return current_scroll, scroll_offset_start, scroll_offset_end
 
-        return scroll_offset, scroll_offset_top, scroll_offset_bottom
+        offsets = self.scroll_offsets
+
+        self.vertical_scroll, scroll_offset_top, scroll_offset_bottom  = do_scroll(
+            current_scroll=self.vertical_scroll,
+            scroll_offset_start=offsets.top,
+            scroll_offset_end=offsets.bottom,
+            cursor_pos=temp_screen.cursor_position.y,
+            window_size=height,
+            content_size=temp_screen.height)
+
+        self.horizontal_scroll, scroll_offset_left, scroll_offset_right = do_scroll(
+            current_scroll=self.horizontal_scroll,
+            scroll_offset_start=offsets.left,
+            scroll_offset_end=offsets.right,
+            cursor_pos=temp_screen.cursor_position.x,
+            window_size=width,
+            content_size=temp_screen.width)
+
+        applied_scroll_offsets = ScrollOffsets(
+            top=scroll_offset_top,
+            bottom=scroll_offset_bottom,
+            left=scroll_offset_left,
+            right=scroll_offset_right)
+
+        return applied_scroll_offsets
 
     def walk(self):
         # Only yield self. A window doesn't have children.

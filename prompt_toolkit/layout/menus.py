@@ -62,7 +62,7 @@ class CompletionsMenuControl(UIControl):
         """
         Write the menu to the screen object.
         """
-        screen = Screen(width)
+        screen = Screen()
 
         complete_state = cli.current_buffer.complete_state
         if complete_state:
@@ -274,7 +274,7 @@ class MultiColumnCompletionMenuControl(UIControl):
         complete_state = cli.current_buffer.complete_state
         column_width = self._get_column_width(complete_state)
 
-        screen = Screen(width)
+        screen = Screen()
 
         def grouper(n, iterable, fillvalue=None):
             " grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx "
@@ -415,7 +415,7 @@ class _SelectedCompletionMetaControl(UIControl):
         return 1
 
     def create_screen(self, cli, width, height):
-        screen = Screen(width)
+        screen = Screen()
         screen.write_data(self._get_tokens(cli), width)
         return screen
 

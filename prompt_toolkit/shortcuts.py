@@ -143,7 +143,8 @@ def create_default_layout(message='', lexer=None, is_password=False,
                           reserve_space_for_menu=False,
                           get_prompt_tokens=None, get_bottom_toolbar_tokens=None,
                           display_completions_in_columns=False,
-                          extra_input_processors=None, multiline=False):
+                          extra_input_processors=None, multiline=False,
+                          wrap_lines=True):
     """
     Generate default layout.
     Returns a ``Layout`` instance.
@@ -163,6 +164,8 @@ def create_default_layout(message='', lexer=None, is_password=False,
         more adapted for multiline input. Text after newlines is automatically
         indented, and search/arg input is shown below the input, instead of
         replacing the prompt.
+    :param wrap_lines: `bool` or `CLIFilter`. When True (the default),
+        automatically wrap long lines instead of scrolling horizontally.
     """
     assert isinstance(message, text_type)
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
@@ -250,6 +253,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
                     BufferControl(
                         input_processors=input_processors,
                         lexer=lexer,
+                        wrap_lines=wrap_lines,
                         # Enable preview_search, we want to have immediate feedback
                         # in reverse-i-search mode.
                         preview_search=Always()),
@@ -284,6 +288,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
 def create_default_application(
         message='',
         multiline=Never(),
+        wrap_lines=True,
         is_password=False,
         vi_mode=Never(),
         complete_while_typing=Always(),
@@ -315,6 +320,8 @@ def create_default_application(
     :param message: Text to be shown before the prompt.
     :param mulitiline: Allow multiline input. Pressing enter will insert a
                        newline. (This requires Meta+Enter to accept the input.)
+    :param wrap_lines: `bool` or `CLIFilter`. When True (the default),
+        automatically wrap long lines instead of scrolling horizontally.
     :param is_password: Show asterisks instead of the actual typed characters.
     :param vi_mode: If True, use Vi key bindings.
     :param complete_while_typing: Enable autocompletion while typing.
@@ -366,7 +373,8 @@ def create_default_application(
                 get_prompt_tokens=get_prompt_tokens,
                 get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
                 display_completions_in_columns=display_completions_in_columns,
-                extra_input_processors=extra_input_processors),
+                extra_input_processors=extra_input_processors,
+                wrap_lines=wrap_lines),
         buffer=Buffer(
                 enable_history_search=enable_history_search,
                 complete_while_typing=complete_while_typing,

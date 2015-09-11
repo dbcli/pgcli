@@ -128,14 +128,14 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         reset_attributes()
         output.erase_down()
 
-        previous_screen = Screen(screen.width)
+        previous_screen = Screen()
 
     # Get height of the screen.
-    # (current_height changes as we loop over _buffer, so remember the current value.)
-    current_height = screen.current_height
+    # (height changes as we loop over _buffer, so remember the current value.)
+    current_height = screen.height
 
     # Loop over the rows.
-    row_count = max(screen.current_height, previous_screen.current_height)
+    row_count = max(screen.height, previous_screen.height)
     c = 0  # Column counter.
 
     for y, r in enumerate(range(0, row_count)):
@@ -178,8 +178,8 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     # the artifact of the input scrolling when the completion menu is shown.
     # (If the scrolling is actually wanted, the layout can still be build in a
     # way to behave that way by setting a dynamic height.)
-    if screen.current_height > previous_screen.current_height:
-        current_pos = move_cursor(Point(y=screen.current_height - 1, x=0))
+    if screen.height > previous_screen.height:
+        current_pos = move_cursor(Point(y=screen.height - 1, x=0))
 
     # Move cursor:
     if is_done:
@@ -314,12 +314,12 @@ class Renderer(object):
 
         # Create screen and write layout to it.
         size = output.get_size()
-        screen = Screen(size.columns)
+        screen = Screen()
 
         if is_done:
             height = 0  # When we are done, we don't necessary want to fill up until the bottom.
         else:
-            height = self._last_screen.current_height if self._last_screen else 0
+            height = self._last_screen.height if self._last_screen else 0
             height = max(self._min_available_height, height)
 
         # When te size changes, don't consider the previous screen.

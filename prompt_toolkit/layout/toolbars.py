@@ -155,7 +155,7 @@ class CompletionsToolbarControl(UIControl):
         else:
             all_tokens = []
 
-        screen = Screen(width)
+        screen = Screen(initial_width=width)
         screen.write_data(all_tokens, width)
         return screen
 
