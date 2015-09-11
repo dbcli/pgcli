@@ -3,10 +3,7 @@ import os
 import signal
 import sys
 
-try:
-    from wcwidth import wcwidth
-except ImportError:
-    from .libs.wcwidth import wcwidth
+from wcwidth import wcwidth
 
 
 __all__ = (

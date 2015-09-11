@@ -35,7 +35,6 @@ import prompt_toolkit.interface
 import prompt_toolkit.key_binding
 import prompt_toolkit.keys
 import prompt_toolkit.layout
-import prompt_toolkit.libs
 import prompt_toolkit.output
 import prompt_toolkit.reactive
 import prompt_toolkit.renderer
