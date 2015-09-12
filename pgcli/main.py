@@ -6,6 +6,7 @@ import os
 import sys
 import traceback
 import logging
+import threading
 from time import time
 from codecs import open
 
@@ -31,6 +32,7 @@ from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
+from .completion_refresher import CompletionRefresher
 from .config import write_default_config, load_config
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
@@ -78,6 +80,7 @@ class PGCli(object):
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
+        self.completion_refresher = CompletionRefresher()
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
@@ -88,7 +91,10 @@ class PGCli(object):
         smart_completion = c['main'].as_bool('smart_completion')
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial)
         self.completer = completer
+        self._completer_lock = threading.Lock()
         self.register_special_commands()
+
+        self.cli = None
 
     def register_special_commands(self):
 
@@ -244,7 +250,6 @@ class PGCli(object):
         logger = self.logger
         original_less_opts = self.adjust_less_opts()
 
-        completer = self.completer
         self.refresh_completions()
 
         def set_vi_mode(value):
@@ -262,7 +267,9 @@ class PGCli(object):
         def prompt_tokens(cli):
             return [(Token.Prompt,  '%s> ' % pgexecute.dbname)]
 
-        get_toolbar_tokens = create_toolbar_tokens_func(lambda: self.vi_mode)
+        get_toolbar_tokens = create_toolbar_tokens_func(lambda: self.vi_mode,
+                                                        lambda: self.completion_refresher.is_refreshing())
+
         layout = create_default_layout(lexer=PostgresLexer,
                                        reserve_space_for_menu=True,
                                        get_prompt_tokens=prompt_tokens,
@@ -276,21 +283,22 @@ class PGCli(object):
                                                filter=HasFocus(DEFAULT_BUFFER) & ~IsDone()),
                                        ])
         history_file = self.config['main']['history_file']
-        buf = PGBuffer(always_multiline=self.multi_line, completer=completer,
-                history=FileHistory(os.path.expanduser(history_file)),
-                complete_while_typing=Always())
+        with self._completer_lock:
+            buf = PGBuffer(always_multiline=self.multi_line, completer=self.completer,
+                    history=FileHistory(os.path.expanduser(history_file)),
+                    complete_while_typing=Always())
 
-        application = Application(style=style_factory(self.syntax_style, self.cli_style),
-                                  layout=layout, buffer=buf,
-                                  key_bindings_registry=key_binding_manager.registry,
-                                  on_exit=AbortAction.RAISE_EXCEPTION,
-                                  ignore_case=True)
-        cli = CommandLineInterface(application=application,
-                                   eventloop=create_eventloop())
+            application = Application(style=style_factory(self.syntax_style, self.cli_style),
+                                      layout=layout, buffer=buf,
+                                      key_bindings_registry=key_binding_manager.registry,
+                                      on_exit=AbortAction.RAISE_EXCEPTION,
+                                      ignore_case=True)
+            self.cli = CommandLineInterface(application=application,
+                                       eventloop=create_eventloop())
 
         try:
             while True:
-                document = cli.run()
+                document = self.cli.run()
 
                 # The reason we check here instead of inside the pgexecute is
                 # because we want to raise the Exit exception which will be
@@ -300,7 +308,7 @@ class PGCli(object):
                     raise EOFError
 
                 try:
-                    document = self.handle_editor_command(cli, document)
+                    document = self.handle_editor_command(self.cli, document)
                 except RuntimeError as e:
                     logger.error("sql: %r, error: %r", document.text, e)
                     logger.error("traceback: %r", traceback.format_exc())
@@ -390,8 +398,9 @@ class PGCli(object):
                 # Refresh search_path to set default schema.
                 if need_search_path_refresh(document.text):
                     logger.debug('Refreshing search path')
-                    completer.set_search_path(pgexecute.search_path())
-                    logger.debug('Search path: %r', completer.search_path)
+                    with self._completer_lock:
+                        self.completer.set_search_path(pgexecute.search_path())
+                    logger.debug('Search path: %r', self.completer.search_path)
 
                 query = Query(document.text, successful, mutating)
                 self.query_history.append(query)
@@ -410,37 +419,34 @@ class PGCli(object):
         return less_opts
 
     def refresh_completions(self):
-        completer = self.completer
-        completer.reset_completions()
+        self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
+                                          self._on_completions_refreshed)
+        return [(None, None, None,
+                'Auto-completion refresh started in the background.')]
 
-        pgexecute = self.pgexecute
+    def _on_completions_refreshed(self, new_completer):
+        self._swap_completer_objects(new_completer)
 
-        # schemata
-        completer.set_search_path(pgexecute.search_path())
-        completer.extend_schemata(pgexecute.schemata())
+        if self.cli:
+            # After refreshing, redraw the CLI to clear the statusbar
+            # "Refreshing completions..." indicator
+            self.cli.request_redraw()
 
-        # tables
-        completer.extend_relations(pgexecute.tables(), kind='tables')
-        completer.extend_columns(pgexecute.table_columns(), kind='tables')
-
-        # views
-        completer.extend_relations(pgexecute.views(), kind='views')
-        completer.extend_columns(pgexecute.view_columns(), kind='views')
-
-        # functions
-        completer.extend_functions(pgexecute.functions())
-
-        # types
-        completer.extend_datatypes(pgexecute.datatypes())
-
-        # databases
-        completer.extend_database_names(pgexecute.databases())
-
-        return [(None, None, None, 'Auto-completions refreshed.')]
+    def _swap_completer_objects(self, new_completer):
+        """Swap the completer object in cli with the newly created completer.
+        """
+        with self._completer_lock:
+            self.completer = new_completer
+            # When pgcli is first launched we call refresh_completions before
+            # instantiating the cli object. So it is necessary to check if cli
+            # exists before trying the replace the completer object in cli.
+            if self.cli:
+                self.cli.current_buffer.completer = new_completer
 
     def get_completions(self, text, cursor_positition):
-        return self.completer.get_completions(
-            Document(text=text, cursor_position=cursor_positition), None)
+        with self._completer_lock:
+            return self.completer.get_completions(
+                Document(text=text, cursor_position=cursor_positition), None)
 
 
 @click.command()

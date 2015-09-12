@@ -1,6 +1,5 @@
 Feature: I/O commands
 
-  @wip
   Scenario: edit sql in file with external editor
      Given we have pgcli installed
       when we run pgcli

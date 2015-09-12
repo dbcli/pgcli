@@ -179,6 +179,14 @@ def step_db_connect_postgres(context):
     context.cli.sendline('\connect postgres')
 
 
+@when('we refresh completions')
+def step_refresh_completions(context):
+    """
+    Send refresh command.
+    """
+    context.cli.sendline('\\refresh')
+
+
 @then('pgcli exits')
 def step_wait_exit(context):
     """
@@ -275,3 +283,12 @@ def step_see_table_dropped(context):
     Wait to see drop output.
     """
     context.cli.expect_exact('DROP TABLE', timeout=2)
+
+
+@then('we see completions refresh started')
+def step_see_refresh_started(context):
+    """
+    Wait to see refresh output.
+    """
+    context.cli.expect_exact(
+        'refresh started in the background', timeout=2)

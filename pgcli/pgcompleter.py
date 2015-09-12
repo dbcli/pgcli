@@ -119,7 +119,7 @@ class PGCompleter(Completer):
         for schema, relname in data:
             try:
                 metadata[schema][relname] = ['*']
-            except AttributeError:
+            except KeyError:
                 _logger.error('%r %r listed in unrecognized schema %r',
                               kind, relname, schema)
             self.all_completions.add(relname)
