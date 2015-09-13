@@ -36,7 +36,7 @@ def step_wait_prompt(context):
     """
     Make sure prompt is displayed.
     """
-    context.cli.expect('{0}> '.format(context.conf['dbname']), timeout=5)
+    _expect_exact(context, '{0}> '.format(context.conf['dbname']), timeout=5)
 
 
 @when('we send "ctrl + d"')
@@ -144,7 +144,7 @@ def step_edit_file(context):
     if os.path.exists(context.editor_file_name):
         os.remove(context.editor_file_name)
     context.cli.sendline('\e {0}'.format(context.editor_file_name))
-    context.cli.expect_exact('nano', timeout=2)
+    _expect_exact(context, 'nano', timeout=2)
 
 
 @when('we type sql in the editor')
@@ -163,7 +163,7 @@ def step_edit_quit(context):
 
 @then('we see the sql in prompt')
 def step_edit_done_sql(context):
-    context.cli.expect_exact('select * from abc', timeout=2)
+    _expect_exact(context, 'select * from abc', timeout=2)
     # Cleanup the command line.
     context.cli.sendcontrol('u')
     # Cleanup the edited file.
@@ -192,7 +192,7 @@ def step_wait_exit(context):
     """
     Make sure the cli exits.
     """
-    context.cli.expect(pexpect.EOF, timeout=5)
+    _expect_exact(context, pexpect.EOF, timeout=5)
 
 
 @then('we see pgcli prompt')
@@ -200,16 +200,13 @@ def step_see_prompt(context):
     """
     Wait to see the prompt.
     """
-    context.cli.expect('{0}> '.format(context.conf['dbname']), timeout=5)
+    _expect_exact(context, '{0}> '.format(context.conf['dbname']), timeout=5)
 
 
 @then('we see help output')
 def step_see_help(context):
     for expected_line in context.fixture_data['help_commands.txt']:
-        try:
-            context.cli.expect_exact(expected_line, timeout=1)
-        except Exception:
-            raise Exception('Expected: ' + expected_line.strip() + '!')
+        _expect_exact(context, expected_line, timeout=1)
 
 
 @then('we see database created')
@@ -217,7 +214,7 @@ def step_see_db_created(context):
     """
     Wait to see create database output.
     """
-    context.cli.expect_exact('CREATE DATABASE', timeout=2)
+    _expect_exact(context, 'CREATE DATABASE', timeout=2)
 
 
 @then('we see database dropped')
@@ -225,7 +222,7 @@ def step_see_db_dropped(context):
     """
     Wait to see drop database output.
     """
-    context.cli.expect_exact('DROP DATABASE', timeout=2)
+    _expect_exact(context, 'DROP DATABASE', timeout=2)
 
 
 @then('we see database connected')
@@ -233,7 +230,7 @@ def step_see_db_connected(context):
     """
     Wait to see drop database output.
     """
-    context.cli.expect_exact('You are now connected to database', timeout=2)
+    _expect_exact(context, 'You are now connected to database', timeout=2)
 
 
 @then('we see table created')
@@ -241,7 +238,7 @@ def step_see_table_created(context):
     """
     Wait to see create table output.
     """
-    context.cli.expect_exact('CREATE TABLE', timeout=2)
+    _expect_exact(context, 'CREATE TABLE', timeout=2)
 
 
 @then('we see record inserted')
@@ -249,7 +246,7 @@ def step_see_record_inserted(context):
     """
     Wait to see insert output.
     """
-    context.cli.expect_exact('INSERT 0 1', timeout=2)
+    _expect_exact(context, 'INSERT 0 1', timeout=2)
 
 
 @then('we see record updated')
@@ -257,7 +254,7 @@ def step_see_record_updated(context):
     """
     Wait to see update output.
     """
-    context.cli.expect_exact('UPDATE 1', timeout=2)
+    _expect_exact(context, 'UPDATE 1', timeout=2)
 
 
 @then('we see data selected')
@@ -265,8 +262,8 @@ def step_see_data_selected(context):
     """
     Wait to see select output.
     """
-    context.cli.expect_exact('yyy', timeout=1)
-    context.cli.expect_exact('SELECT 1', timeout=1)
+    _expect_exact(context, 'yyy', timeout=1)
+    _expect_exact(context, 'SELECT 1', timeout=1)
 
 
 @then('we see record deleted')
@@ -274,7 +271,7 @@ def step_see_data_deleted(context):
     """
     Wait to see delete output.
     """
-    context.cli.expect_exact('DELETE 1', timeout=2)
+    _expect_exact(context, 'DELETE 1', timeout=2)
 
 
 @then('we see table dropped')
@@ -282,7 +279,7 @@ def step_see_table_dropped(context):
     """
     Wait to see drop output.
     """
-    context.cli.expect_exact('DROP TABLE', timeout=2)
+    _expect_exact(context, 'DROP TABLE', timeout=2)
 
 
 @then('we see completions refresh started')
@@ -290,5 +287,13 @@ def step_see_refresh_started(context):
     """
     Wait to see refresh output.
     """
-    context.cli.expect_exact(
-        'refresh started in the background', timeout=2)
+    _expect_exact(context, 'refresh started in the background', timeout=2)
+
+
+def _expect_exact(context, expected, timeout):
+    try:
+        context.cli.expect_exact(expected, timeout=timeout)
+    except:
+        raise Exception('Expected:\n---\n{0}\n---\n\nActual:\n---\n{1}\n---'.format(
+            expected,
+            context.cli.before))
