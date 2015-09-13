@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 import pip
 import pexpect
 import os
+import re
 
 from behave import given, when, then
 
@@ -294,6 +295,9 @@ def _expect_exact(context, expected, timeout):
     try:
         context.cli.expect_exact(expected, timeout=timeout)
     except:
+        # Strip color codes out of the output.
+        actual = re.sub('\x1b\[[0-9;]*m', '', context.cli.before)
+        actual = re.sub('\x1b\[(.*)?.{1}', '', actual)
         raise Exception('Expected:\n---\n{0}\n---\n\nActual:\n---\n{1}\n---'.format(
             expected,
-            context.cli.before))
+            actual))
