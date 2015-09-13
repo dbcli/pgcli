@@ -470,7 +470,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
         sys.exit(0)
 
     if not os.path.exists(os.path.expanduser('~/.config/pgcli')):
-        os.mkdir(os.path.expanduser('~/.config/pgcli'))
+        os.makedirs(os.path.expanduser('~/.config/pgcli'))
         
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc)
 
