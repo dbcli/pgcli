@@ -26,6 +26,7 @@ default_style_extensions = {
 
     # Line numbers.
     Token.LineNumber:                             '#888888',
+    Token.LineNumber.Current:                     'bold',
 
     # Default prompt.
     Token.Prompt:                                 'bold',

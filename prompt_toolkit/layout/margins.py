@@ -17,25 +17,6 @@ __all__ = (
 )
 
 
-class _NumberedMarginTokenCache(dict):
-    """
-    Cache for numbered margins.
-    Maps (width, line_number) to a list of tokens.
-    """
-    def __missing__(self, key):
-        width, line_number = key
-
-        if line_number is not None:
-            tokens = (Token.LineNumber, u'%%%si ' % width % (line_number + 1))
-        else:
-            tokens = (Token.LineNumber, ' ' * (width + 1))
-
-        self[key] = tokens
-        return tokens
-
-_NUMBERED_MARGIN_TOKEN_CACHE = _NumberedMarginTokenCache()
-
-
 class Margin(with_metaclass(ABCMeta, object)):
     """
     Base interface for a margin.
@@ -74,13 +55,15 @@ class NumberredMargin(Margin):
         decimals) according to the number of lines in the buffer.
     :param width: If no buffer name is given, width can be used to set a fixed
         width.
+    :param relative: Number relative to the cursor position. Similar to the Vi
+                     'relativenumber' option.
     """
-    def __init__(self, buffer_name=None, width=None, display_tildes=False):
+    def __init__(self, buffer_name=None, width=None, relative=False):
         assert buffer_name or width
 
         self.buffer_name = buffer_name
         self.width = width
-        self.display_tildes = display_tildes
+        self.relative = to_cli_filter(relative)
 
     def get_width(self, cli):
         if self.width is not None:
@@ -92,21 +75,34 @@ class NumberredMargin(Margin):
             return max(3, len('%s' % document.line_count) + 1)
 
     def create_margin(self, cli, window_render_info, width, height):
-        result = []
         visible_line_to_input_line = window_render_info.visible_line_to_input_line
+        current_lineno = window_render_info.cursor_position.y + window_render_info.vertical_scroll
+        relative = self.relative(cli)
+
+        token = Token.LineNumber
+        token_current = Token.LineNumber.Current
+
+        result = []
 
         for y in range(0, window_render_info.original_screen.current_height):
             line_number = visible_line_to_input_line.get(y)
 
             if line_number is not None:
-                result.append(_NUMBERED_MARGIN_TOKEN_CACHE[width - 1, line_number])
-            result.append((Token, '\n'))
+                if line_number == current_lineno:
+                    # Current line.
+                    if relative:
+                        # Left align current number in relative mode.
+                        result.append((token_current, '%i' % (line_number + 1)))
+                    else:
+                        result.append((token_current, ('%i ' % (line_number + 1)).rjust(width)))
+                else:
+                    # Other lines.
+                    if relative:
+                        line_number = abs(line_number - current_lineno) - 1
 
-        # Add Vi-like tildes until the bottom.
-        if self.display_tildes:
-            for y in range(y, height):
-                result.append((Token.LineNumber.Tilde, '~'))
-                result.append((Token, '\n'))
+                    result.append((token, ('%i ' % (line_number + 1)).rjust(width)))
+
+            result.append((Token, '\n'))
 
         return result
 
