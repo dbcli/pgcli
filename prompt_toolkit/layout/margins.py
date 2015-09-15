@@ -76,12 +76,21 @@ class NumberredMargin(Margin):
 
     def create_margin(self, cli, window_render_info, width, height):
         visible_line_to_input_line = window_render_info.visible_line_to_input_line
-        current_lineno = window_render_info.cursor_position.y + window_render_info.vertical_scroll
         relative = self.relative(cli)
 
         token = Token.LineNumber
         token_current = Token.LineNumber.Current
 
+        # Get current line number.
+        if self.buffer_name:
+            # (BufferControl will only have a cursor position when the buffer
+            # has the focus, so this is a better way to know the current line.)
+            document = cli.buffers[self.buffer_name].document
+            current_lineno = document.cursor_position_row
+        else:
+            current_lineno = visible_line_to_input_line.get(window_render_info.cursor_position.y) or 0
+
+        # Construct margin.
         result = []
 
         for y in range(0, window_render_info.original_screen.current_height):
