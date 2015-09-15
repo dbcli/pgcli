@@ -721,7 +721,9 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
             if (cur.rowcount > 0):
                 status.append("Referenced by:\n")
             for row in cur:
-                status.append("    TABLE \"%s\" CONSTRAINT \"%s\" %s\n" % row)
+                status.append("    TABLE \"{table_name}\" CONSTRAINT \"{constraint_name}\" {definition}\n".format(
+                    table_name=row[1], constraint_name=row[0], definition=row[2]
+                ))
 
         # /* print rules */
         if (tableinfo.hasrules and tableinfo.relkind != 'm'):
