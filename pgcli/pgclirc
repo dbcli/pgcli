@@ -16,10 +16,10 @@ wider_completion_menu = False
 multi_line = False
 
 # log_file location.
-log_file = ~/.pgcli.log
+log_file = ~/.config/pgcli/log
 
 # history_file location.
-history_file = ~/.pgcli-history
+history_file = ~/.config/pgcli/history
 
 # Default log level. Possible values: "CRITICAL", "ERROR", "WARNING", "INFO"
 # and "DEBUG".

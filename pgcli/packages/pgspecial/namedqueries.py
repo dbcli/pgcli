@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 class NamedQueries(object):
 
     section_name = 'named queries'
@@ -55,4 +57,7 @@ Examples:
         return '%s: Deleted' % name
 
 from ...config import load_config
-namedqueries = NamedQueries(load_config('~/.pgclirc'))
+if os.path.isfile('~/.config/pgcli/config'):
+    namedqueries = NamedQueries(load_config('~/.config/pgcli/config'))
+else:
+    namedqueries = NamedQueries(load_config('~/.pgclirc'))

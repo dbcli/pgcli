@@ -464,8 +464,8 @@ class PGCli(object):
 @click.option('-v', '--version', is_flag=True, help='Version of pgcli.')
 @click.option('-d', '--dbname', default='', envvar='PGDATABASE',
         help='database name to connect to.')
-@click.option('--pgclirc', default='~/.pgclirc', envvar='PGCLIRC',
-        help='Location of .pgclirc file.')
+@click.option('--pgclirc', default='~/.config/pgcli/config', envvar='PGCLIRC',
+        help='Location of pgclirc file.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
@@ -475,6 +475,9 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
         print('Version:', __version__)
         sys.exit(0)
 
+    if not os.path.exists(os.path.expanduser('~/.config/pgcli')):
+        os.makedirs(os.path.expanduser('~/.config/pgcli'))
+        
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc)
 
     # Choose which ever one has a valid value.
