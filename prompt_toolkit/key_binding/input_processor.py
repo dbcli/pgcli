@@ -67,6 +67,7 @@ class InputProcessor(object):
 
     def reset(self):
         self._previous_key_sequence = None
+        self._previous_handler = None
 
         self._process_coroutine = self._process()
         self._process_coroutine.send(None)
@@ -177,9 +178,12 @@ class InputProcessor(object):
         arg = self.arg
         self.arg = None
 
+        is_repeat = handler == self._previous_handler
+
         try:
             event = Event(weakref.ref(self), arg=arg, key_sequence=key_sequence,
-                          previous_key_sequence=self._previous_key_sequence)
+                          previous_key_sequence=self._previous_key_sequence,
+                          is_repeat=is_repeat)
             handler.call(event)
             self._registry.on_handler_called.fire(event)
 
@@ -189,13 +193,19 @@ class InputProcessor(object):
             pass
 
         self._previous_key_sequence = key_sequence
+        self._previous_handler = handler
 
 
 class Event(object):
-    def __init__(self, input_processor_ref, arg=None, key_sequence=None, previous_key_sequence=None):
+    def __init__(self, input_processor_ref, arg=None, key_sequence=None,
+            previous_key_sequence=None, is_repeat=False):
         self._input_processor_ref = input_processor_ref
         self.key_sequence = key_sequence
         self.previous_key_sequence = previous_key_sequence
+
+        #: True when the previous key sequence was handled by the same handler.
+        self.is_repeat = is_repeat
+
         self._arg = arg
 
     @property

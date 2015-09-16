@@ -229,6 +229,12 @@ def load_basic_bindings(registry, filter=Always()):
 
         if pos:
             deleted = buffer.delete_before_cursor(count=-pos)
+
+            # If the previous key press was also Control-W, concatenate deleted
+            # text.
+            if event.is_repeat:
+                deleted += event.cli.clipboard.get_data().text
+
             event.cli.clipboard.set_text(deleted)
 
     @handle(Keys.PageUp, filter= ~has_selection)
