@@ -711,7 +711,7 @@ def describe_one_table_details(cur, schema_name, relation_name, oid, verbose):
 
         #/* print incoming foreign-key references (none if no triggers) */
         if (tableinfo.hastriggers):
-            sql = ("SELECT conname, conrelid::pg_catalog.regclass,\n"
+            sql = ("SELECT conrelid::pg_catalog.regclass, conname,\n"
                     "  pg_catalog.pg_get_constraintdef(c.oid, true) as condef\n"
                     "FROM pg_catalog.pg_constraint c\n"
                     "WHERE c.confrelid = '%s' AND c.contype = 'f' ORDER BY 1;" %
