@@ -35,7 +35,7 @@ def scroll_forward(event, half=False):
 
     if w and w.render_info:
         # Determine height to move.
-        shift = w.render_info.rendered_height
+        shift = w.render_info.window_height
         if half:
             shift = int(shift / 2)
 
@@ -56,7 +56,7 @@ def scroll_backward(event, half=False):
 
     if w and w.render_info:
         # Determine height to move.
-        shift = w.render_info.rendered_height
+        shift = w.render_info.window_height
         if half:
             shift = int(shift / 2)
 
@@ -109,7 +109,7 @@ def scroll_one_line_up(event):
         if w.render_info:
             info = w.render_info
 
-            if info.cursor_position.y >= info.rendered_height - 1 - info.configured_scroll_offset:
+            if info.cursor_position.y >= info.window_height - 1 - info.configured_scroll_offset:
                 b.cursor_position += b.document.get_cursor_up_position()
 
         # Scroll window
@@ -125,7 +125,7 @@ def scroll_page_down(event):
 
     if w and w.render_info:
         # Scroll down one page.
-        w.vertical_scroll += w.render_info.rendered_height
+        w.vertical_scroll += w.render_info.window_height
 
         # Put cursor at the top of the visible region.
         try:
@@ -146,12 +146,12 @@ def scroll_page_up(event):
 
     if w and w.render_info:
         # Scroll down one page.
-        w.vertical_scroll = max(0, w.vertical_scroll - w.render_info.rendered_height)
+        w.vertical_scroll = max(0, w.vertical_scroll - w.render_info.window_height)
 
         # Put cursor at the bottom of the visible region.
         try:
             new_document_line = w.render_info.screen_line_to_input_line[
-                w.vertical_scroll + w.render_info.rendered_height - 1]
+                w.vertical_scroll + w.render_info.window_height - 1]
         except KeyError:
             new_document_line = 0
 

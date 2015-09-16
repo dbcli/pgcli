@@ -148,11 +148,11 @@ class ScrollbarMargin(Margin):
 
     def create_margin(self, cli, window_render_info, width, height):
         total_height = window_render_info.content_height
-        items_per_row = float(total_height) / min(total_height, window_render_info.rendered_height - 2)
+        items_per_row = float(total_height) / min(total_height, window_render_info.window_height - 2)
 
         index = window_render_info.vertical_scroll
 
-        visible_lines = set(range(index, index + window_render_info.rendered_height))
+        visible_lines = set(range(index, index + window_render_info.window_height))
 
         def is_scroll_button(row):
             " True if we should display a button on this row. "
@@ -165,7 +165,7 @@ class ScrollbarMargin(Margin):
             (Token.Scrollbar, '\n')
         ]
 
-        for i in range(window_render_info.rendered_height - 2):
+        for i in range(window_render_info.window_height - 2):
             if is_scroll_button(i):
                 result.append((Token.Scrollbar.Button, ' '))
             else:

@@ -424,7 +424,7 @@ class WindowRenderInfo(object):
         self.original_screen = original_screen
         self.vertical_scroll = vertical_scroll
         self.window_width = window_width
-        self.rendered_height = window_height  # XXX: rename to window_height.
+        self.window_height = window_height
         self.cursor_position = cursor_position
         self.configured_scroll_offsets = configured_scroll_offsets
         self.applied_scroll_offsets = applied_scroll_offsets
@@ -467,7 +467,7 @@ class WindowRenderInfo(object):
         # Note that we can't just do vertical_scroll+height because some input
         # lines could be wrapped and span several lines in the screen.
         screen = self.original_screen
-        height = self.rendered_height
+        height = self.window_height
 
         start = self.vertical_scroll
         if after_scroll_offset:
@@ -484,7 +484,7 @@ class WindowRenderInfo(object):
         Like `first_visible_line`, but for the last visible line.
         """
         screen = self.original_screen
-        height = self.rendered_height
+        height = self.window_height
 
         start = self.vertical_scroll + height - 1
         if before_scroll_offset:
@@ -518,7 +518,7 @@ class WindowRenderInfo(object):
         """
         True when the full height is visible (There is no vertical scroll.)
         """
-        return self.rendered_height >= self.original_screen.height
+        return self.window_height >= self.original_screen.height
 
     @property
     def top_visible(self):
@@ -533,7 +533,7 @@ class WindowRenderInfo(object):
         True when the bottom of the buffer is visible.
         """
         return self.vertical_scroll >= \
-            self.original_screen.height - self.rendered_height
+            self.original_screen.height - self.window_height
 
     @property
     def vertical_scroll_percentage(self):
@@ -542,7 +542,7 @@ class WindowRenderInfo(object):
         100 means: the bottom is visible.)
         """
         return (100 * self.vertical_scroll //
-                (self.original_screen.height - self.rendered_height))
+                (self.original_screen.height - self.window_height))
 
 
 class ScrollOffsets(object):

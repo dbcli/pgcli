@@ -1006,7 +1006,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
 
             render_row = w.render_info.input_line_to_screen_line(cursor_position_row)
             if render_row is not None:
-                w.vertical_scroll = max(0, (render_row - w.render_info.rendered_height))
+                w.vertical_scroll = max(0, (render_row - w.render_info.window_height))
 
     @handle('z', 'z', filter=navigation_mode|selection_mode)
     def _(event):
@@ -1023,7 +1023,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
 
             render_row = w.render_info.input_line_to_screen_line(cursor_position_row)
             if render_row is not None:
-                w.vertical_scroll = max(0, int(render_row - w.render_info.rendered_height / 2))
+                w.vertical_scroll = max(0, int(render_row - w.render_info.window_height / 2))
 
     @change_delete_move_yank_handler('%')
     def _(event):
