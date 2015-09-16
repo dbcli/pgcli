@@ -557,6 +557,10 @@ class ScrollOffsets(object):
         self.left = left
         self.right = right
 
+    def __repr__(self):
+        return 'ScrollOffsets(top=%r, bottom=%r, left=%r, right=%r)' % (
+            self.top, self.bottom, self.left, self.right)
+
 
 class Window(Layout):
     """
