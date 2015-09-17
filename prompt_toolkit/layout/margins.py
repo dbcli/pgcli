@@ -93,7 +93,7 @@ class NumberredMargin(Margin):
         # Construct margin.
         result = []
 
-        for y in range(0, window_render_info.original_screen.height):
+        for y in range(window_render_info.window_height):
             line_number = visible_line_to_input_line.get(y)
 
             if line_number is not None:
