@@ -351,7 +351,7 @@ def create_default_application(
             enable_vi_mode=vi_mode,
             enable_system_bindings=enable_system_bindings,
             enable_open_in_editor=enable_open_in_editor,
-            enable_auto_suggestion_bindings=True).registry
+            enable_auto_suggest_bindings=True).registry
 
     # Make sure that complete_while_typing is disabled when enable_history_search
     # is enabled. (First convert to SimpleFilter, to avoid doing bitwise operations
