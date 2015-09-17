@@ -129,7 +129,7 @@ def load_emacs_bindings(registry, filter=Always()):
         event.current_buffer.paste_clipboard_data(
             event.cli.clipboard.get_data(), count=event.arg, before=True)
 
-    @handle(Keys.ControlUnderscore, save_before=False, filter= ~has_selection)
+    @handle(Keys.ControlUnderscore, save_before=(lambda e: False), filter= ~has_selection)
     def _(event):
         """
         Undo.
@@ -297,7 +297,7 @@ def load_emacs_bindings(registry, filter=Always()):
         `meta-*`: Insert all possible completions of the preceding text.
         """
 
-    @handle(Keys.ControlX, Keys.ControlU, save_before=False, filter= ~has_selection)
+    @handle(Keys.ControlX, Keys.ControlU, save_before=(lambda e: False), filter= ~has_selection)
     def _(event):
         event.current_buffer.undo()
 

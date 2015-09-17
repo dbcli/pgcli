@@ -15,6 +15,11 @@ __all__ = (
     'load_auto_suggestion_bindings',
 )
 
+def if_no_repeat(event):
+    """ Callable that returns True when the previous event was delivered to
+    another handler. """
+    return not event.is_repeat
+
 
 def load_basic_bindings(registry, filter=Always()):
     assert isinstance(filter, CLIFilter)
@@ -154,7 +159,7 @@ def load_basic_bindings(registry, filter=Always()):
 
         # On the second tab-press, or when already navigating through
         # completions.
-        if event.second_press or b.complete_state:
+        if event.is_repeat or b.complete_state:
             second_tab()
         else:
             event.cli.start_completion(insert_common_part=True)
@@ -271,21 +276,17 @@ def load_basic_bindings(registry, filter=Always()):
     def _(event):
         event.current_buffer.cursor_down(count=event.arg)
 
-    @handle(Keys.ControlH, filter= ~has_selection)
-    @handle(Keys.Backspace, filter= ~has_selection)
+    @handle(Keys.ControlH, filter= ~has_selection, save_before=if_no_repeat)
     def _(event):
-        buffer = event.current_buffer
-        buffer.delete_before_cursor(count=event.arg)
+        " Backspace: delete before cursor. "
+        event.current_buffer.delete_before_cursor(count=event.arg)
 
-    @handle(Keys.Delete, filter= ~has_selection)
-    def _(event):
-        event.current_buffer.delete(count=event.arg)
-
-    @handle(Keys.ShiftDelete, filter= ~has_selection)
+    @handle(Keys.Delete, filter= ~has_selection, save_before=if_no_repeat)
+    @handle(Keys.ShiftDelete, filter= ~has_selection, save_before=if_no_repeat)
     def _(event):
         event.current_buffer.delete(count=event.arg)
 
-    @handle(Keys.Any, filter= ~has_selection)
+    @handle(Keys.Any, filter= ~has_selection, save_before=if_no_repeat)
     def _(event):
         """
         Insert data at cursor position.

@@ -234,10 +234,6 @@ class Event(object):
     def arg(self):
         return self._arg or 1
 
-    @property
-    def second_press(self):
-        return self.key_sequence == self.previous_key_sequence
-
     def append_to_arg_count(self, data):
         """
         Add digit to the input argument.
