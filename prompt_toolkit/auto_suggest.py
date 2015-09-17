@@ -12,10 +12,13 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
+from .filters import to_cli_filter
+
 __all__ = (
     'Suggestion',
     'AutoSuggest',
     'AutoSuggestFromHistory',
+    'ConditionalAutoSuggest',
 )
 
 
@@ -35,7 +38,7 @@ class AutoSuggest(with_metaclass(ABCMeta, object)):
     Base class for auto suggestion implementations.
     """
     @abstractmethod
-    def get_suggestion(self, buffer, document):
+    def get_suggestion(self, cli, buffer, document):
         """
         Return `None` or a `Suggestion` instance.
         """
@@ -45,7 +48,7 @@ class AutoSuggestFromHistory(AutoSuggest):
     """
     Give suggestions based on the lines in the history.
     """
-    def get_suggestion(self, buffer, document):
+    def get_suggestion(self, cli, buffer, document):
         history = buffer.history
         text = document.text
 
@@ -57,3 +60,18 @@ class AutoSuggestFromHistory(AutoSuggest):
                 for line in reversed(string.splitlines()):
                     if line.startswith(text):
                         return Suggestion(line[len(text):])
+
+
+class ConditionalAutoSuggest(AutoSuggest):
+    """
+    Auto suggest that can be turned on and of according to a certain condition.
+    """
+    def __init__(self, auto_suggest, filter):
+        assert isinstance(auto_suggest, AutoSuggest)
+
+        self.auto_suggest = auto_suggest
+        self.filter = to_cli_filter(filter)
+
+    def get_suggestion(self, cli, buffer, document):
+        if self.filter(cli):
+            return self.auto_suggest.get_suggestion(cli, buffer, document)

@@ -691,7 +691,7 @@ class CommandLineInterface(object):
             suggest_thread_running[0] = True
 
             def run():
-                suggestion = buffer.auto_suggest.get_suggestion(buffer, document)
+                suggestion = buffer.auto_suggest.get_suggestion(self, buffer, document)
                 suggest_thread_running[0] = False
 
                 def callback():
