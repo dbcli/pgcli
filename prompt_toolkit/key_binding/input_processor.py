@@ -197,6 +197,15 @@ class InputProcessor(object):
 
 
 class Event(object):
+    """
+    Key press event, delivered to key bindings.
+
+    :param input_processor_ref: Weak reference to the `InputProcessor`.
+    :param arg: Repetition argument.
+    :param key_sequence: List of `KeyPress` instances.
+    :param previouskey_sequence: Previous list of `KeyPress` instances.
+    :param is_repeat: True when the previous event was delivered to the same handler.
+    """
     def __init__(self, input_processor_ref, arg=None, key_sequence=None,
             previous_key_sequence=None, is_repeat=False):
         self._input_processor_ref = input_processor_ref
@@ -207,6 +216,10 @@ class Event(object):
         self.is_repeat = is_repeat
 
         self._arg = arg
+
+    def __repr__(self):
+        return 'Event(arg=%r, key_sequence=%r, is_repeat=%r)' % (
+                self.arg, self.key_sequence, self.is_repeat)
 
     @property
     def data(self):
@@ -232,6 +245,9 @@ class Event(object):
 
     @property
     def arg(self):
+        """
+        Repetition argument.
+        """
         return self._arg or 1
 
     def append_to_arg_count(self, data):
