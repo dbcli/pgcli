@@ -3,13 +3,13 @@ Input validation for a `Buffer`.
 (Validators will be called before accepting input.)
 """
 from __future__ import unicode_literals
-from .filters import SimpleFilter, Always
+from .filters import to_simple_filter, Always
 
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
 __all__ = (
-    'SwitchableValidator',
+    'ConditionalValidator',
     'ValidationError',
     'Validator',
 )
@@ -36,19 +36,18 @@ class Validator(with_metaclass(ABCMeta, object)):
         pass
 
 
-class SwitchableValidator(Validator):
+class ConditionalValidator(Validator):
     """
     Validator that can be switched on/off according to
     a filter. (This wraps around another validator.)
     """
-    def __init__(self, validator, enabled=Always()):
+    def __init__(self, validator, filter=Always()):
         assert isinstance(validator, Validator)
-        assert isinstance(enabled, SimpleFilter)
 
         self.validator = validator
-        self.enabled = enabled
+        self.filter= to_simple_filter(filter)
 
     def validate(self, document):
         # Call the validator only if the filter is active.
-        if self.enabled():
+        if self.filter():
             self.validator.validate(document)
