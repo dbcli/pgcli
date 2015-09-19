@@ -330,16 +330,46 @@ def load_basic_bindings(registry, filter=Always()):
 
     @registry.add_binding(Keys.Vt100MouseEvent)
     def _(event):
-        """
-        Incoming mouse click.
-        """
-        # Parse the incoming packet. It looks like: 'Esc[M xy'.
-        x = ord(event.data[-2]) - 33
-        y = ord(event.data[-1]) - 33
-        mouse_event = event.data[-3]
+        " Incoming mouse event. "
+        MOUSE_UP = 'UP'
+        MOUSE_DOWN = 'DOWN'
+        SCROLL_UP = 'SCROLL_UP'
+        SCROLL_DOWN = 'SCROLL_DOWN'
+
+        # Parse the incoming packet. It looks like: 'Esc[<64;85;12M'.
+        # When the '<' is not present, we are not using the Xterm SGR mode, but
+        # Urxvt instead.
+        data = event.data[2:]
+        if data[:1] == '<':
+            sgr = True
+            data = data[1:]
+        else:
+            sgr = False
+
+        # Extract coordinates.
+        mouse_event, x, y = map(int, data[:-1].split(';'))
+        m = data[-1]
+        x -= 1
+        y -= 1
+
+        # Parse event type.
+        if sgr:
+            mouse_event = {
+                (0, 'M'): MOUSE_DOWN,
+                (0, 'm'): MOUSE_UP,
+                (64, 'M'): SCROLL_UP,
+                (65, 'M'): SCROLL_DOWN,
+            }.get((mouse_event, m))
+        else:
+            mouse_event = {
+                32: MOUSE_DOWN,
+                35: MOUSE_UP,
+                96: SCROLL_UP,
+                97: SCROLL_DOWN,
+                }.get(mouse_event)
 
         # Mouse click
-        if mouse_event == ' ':
+        if mouse_event == MOUSE_DOWN:
             if event.cli.renderer.height_is_known:
                 # Take region above the layout into account. The reported
                 # coordinates are absolute to the visible part of the terminal.
@@ -350,11 +380,11 @@ def load_basic_bindings(registry, filter=Always()):
                 handler(event.cli, Point(x=x, y=y))
 
         # Mouse scroll event.
-        elif mouse_event in 'a`':
+        elif mouse_event in (SCROLL_UP, SCROLL_DOWN):
             w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
 
             if w:
-                if mouse_event == 'a':
+                if mouse_event == SCROLL_DOWN:
                     scroll_one_line_down(event)
                 else:
                     scroll_one_line_up(event)

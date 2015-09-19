@@ -124,10 +124,18 @@ class Vt100_Output(Output):
         self._write('\x1b[?1049l')
 
     def enable_mouse_support(self):
-        self._write('\x1b[?9h')
+        self._write('\x1b[?1000h')
+
+        # Enable urxvt Mouse mode.
+        self._write('\x1b[?1015h')
+
+        # Also enable Xterm SGR mouse mode.
+        self._write('\x1b[?1006h')
 
     def disable_mouse_support(self):
-        self._write('\x1b[?9l')
+        self._write('\x1b[?1000l')
+        self._write('\x1b[?1015l')
+        self._write('\x1b[?1006l')
 
     def erase_end_of_line(self):
         """
