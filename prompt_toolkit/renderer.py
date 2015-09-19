@@ -279,7 +279,9 @@ class Renderer(object):
         """
         Return the number of rows visible in the terminal above the layout.
         """
-        if self._min_available_height  > 0:
+        if self._in_alternate_screen:
+            return 0
+        elif self._min_available_height  > 0:
             total_rows = self.output.get_size().rows
             last_screen_height = self._last_screen.height if self._last_screen else 0
             return total_rows - max(self._min_available_height, last_screen_height)
