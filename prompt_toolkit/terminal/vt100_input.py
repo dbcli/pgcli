@@ -27,14 +27,14 @@ _DEBUG_RENDERER_INPUT_FILENAME = 'prompt-toolkit-render-input.log'
 # newline.)
 _cpr_response_re = re.compile('^' + re.escape('\x1b[') + r'\d+;\d+R\Z')
 
-_mouse_click_re = re.compile('^' + re.escape('\x1b[') + r'M ..\Z')
+_mouse_event_re = re.compile('^' + re.escape('\x1b[') + r'M...\Z')
 
 # Regex matching any valid prefix of a CPR response.
 # (Note that it doesn't contain the last character, the 'R'. The prefix has to
 # be shorter.)
 _cpr_response_prefix_re = re.compile('^' + re.escape('\x1b[') + r'[\d;]*\Z')
 
-_mouse_click_prefix_re = re.compile('^' + re.escape('\x1b[') + r'M.{0,2}\Z')
+_mouse_event_prefix_re = re.compile('^' + re.escape('\x1b[') + r'M.{0,2}\Z')
 
 
 class _Flush(object):
@@ -161,7 +161,7 @@ class _IsPrefixOfLongerMatchCache(dict):
         # True.
         if _cpr_response_prefix_re.match(prefix):
             result = True
-        elif _mouse_click_prefix_re.match(prefix):
+        elif _mouse_event_prefix_re.match(prefix):
             result = True
         else:
             # If this could be a prefix of anything else, also return True.
@@ -222,8 +222,8 @@ class InputStream(object):
         if _cpr_response_re.match(prefix):
             return Keys.CPRResponse
 
-        elif _mouse_click_re.match(prefix):
-            return Keys.MouseClick
+        elif _mouse_event_re.match(prefix):
+            return Keys.Vt100MouseEvent
 
         # Otherwise, use the mappings.
         try:
