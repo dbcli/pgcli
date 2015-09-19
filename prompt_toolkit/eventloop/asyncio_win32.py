@@ -71,4 +71,4 @@ class Win32AsyncioEventLoop(EventLoop):
         self.loop.run_in_executor(None, callback)
 
     def call_from_executor(self, callback):
-        self.loop.call_soon(callback)
+        self.loop.call_soon_threadsafe(callback)

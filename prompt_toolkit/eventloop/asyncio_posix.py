@@ -100,4 +100,4 @@ class PosixAsyncioEventLoop(EventLoop):
         Call this function in the main event loop.
         Similar to Twisted's ``callFromThread``.
         """
-        self.loop.call_soon(callback)
+        self.loop.call_soon_threadsafe(callback)
