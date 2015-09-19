@@ -3,10 +3,12 @@ The main `CommandLineInterface` class and logic.
 """
 from __future__ import unicode_literals
 
+import functools
 import os
 import signal
 import six
 import sys
+import threading
 import weakref
 
 from .application import Application, AbortAction
@@ -801,6 +803,7 @@ class _StdoutProxy(object):
     :class:`CommandLineInterface.stdout_proxy`.
     """
     def __init__(self, cli):
+        self._lock = threading.RLock()
         self._cli = cli
         self._buffer = []
 
@@ -809,11 +812,12 @@ class _StdoutProxy(object):
 
     def _do(self, func):
         if self._cli._is_running:
-            self._cli.run_in_terminal(func)
+            run_in_terminal = functools.partial(self._cli.run_in_terminal, func)
+            self._cli.eventloop.call_from_executor(run_in_terminal)
         else:
             func()
 
-    def write(self, data):
+    def _write(self, data):
         """
         Note: print()-statements cause to multiple write calls.
               (write('line') and write('\n')). Of course we don't want to call
@@ -838,16 +842,24 @@ class _StdoutProxy(object):
             # Otherwise, cache in buffer.
             self._buffer.append(data)
 
-    def flush(self):
-        """
-        Flush buffered output.
-        """
+    def write(self, data):
+        with self._lock:
+            self._write(data)
+
+    def _flush(self):
         def run():
             for s in self._buffer:
                 self._cli.output.write(s)
             self._buffer = []
             self._cli.output.flush()
         self._do(run)
+
+    def flush(self):
+        """
+        Flush buffered output.
+        """
+        with self._lock:
+            self._flush()
 
 
 class _SubApplicationEventLoop(EventLoop):
