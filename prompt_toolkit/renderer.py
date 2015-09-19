@@ -7,8 +7,10 @@ from __future__ import unicode_literals
 from pygments.style import Style
 from pygments.token import Token
 from prompt_toolkit.layout.screen import Point, Screen, WritePosition
+from prompt_toolkit.layout.mouse_handlers import MouseHandlers
 from prompt_toolkit.output import Output
 from prompt_toolkit.utils import is_windows
+from prompt_toolkit.filters import to_cli_filter
 
 __all__ = (
     'Renderer',
@@ -211,13 +213,15 @@ class Renderer(object):
         r = Renderer(output)
         r.render(cli, layout=..., style=...)
     """
-    def __init__(self, output, use_alternate_screen=False):  # XXX: implement alternate screen for Windows.
+    def __init__(self, output, use_alternate_screen=False, mouse_support=False):
         assert isinstance(output, Output)
 
         self.output = output
         self.use_alternate_screen = use_alternate_screen
+        self.mouse_support = to_cli_filter(mouse_support)
 
         self._in_alternate_screen = False
+        self._mouse_support_enabled = False
 
         self.reset()
 
@@ -234,6 +238,9 @@ class Renderer(object):
         self._last_char = None
         self._last_style = None  # When the style changes, we have to do a full
                                  # redraw as well.
+
+        # Default MouseHandlers. (Just empty.)
+        self.mouse_handlers = MouseHandlers()
 
         # Remember the last title. Only set the title when it changes.
         self._last_title = None
@@ -253,6 +260,10 @@ class Renderer(object):
             self.output.flush()
             self._in_alternate_screen = False
 
+        # Disable mouse support.
+        self.output.disable_mouse_support()
+        self._mouse_support_enabled = False
+
     @property
     def height_is_known(self):
         """
@@ -262,6 +273,18 @@ class Renderer(object):
         """
         return self.use_alternate_screen or self._min_available_height > 0 or \
             is_windows()  # On Windows, we don't have to wait for a CPR.
+
+    @property
+    def rows_above_layout(self):
+        """
+        Return the number of rows visible in the terminal above the layout.
+        """
+        if self._min_available_height  > 0:
+            total_rows = self.output.get_size().rows
+            last_screen_height = self._last_screen.height if self._last_screen else 0
+            return total_rows - max(self._min_available_height, last_screen_height)
+        else:
+            raise Exception('Rows above layout is unknown.')
 
     def request_absolute_cursor_position(self):
         """
@@ -312,9 +335,19 @@ class Renderer(object):
             self._in_alternate_screen = True
             output.enter_alternate_screen()
 
+        # Enable/disable mouse support.
+        needs_mouse_support = self.mouse_support(cli)
+
+        if needs_mouse_support and not self._mouse_support_enabled:
+            output.enable_mouse_support()
+
+        elif not needs_mouse_support and self._mouse_support_enabled:
+            output.disable_mouse_support()
+
         # Create screen and write layout to it.
         size = output.get_size()
         screen = Screen()
+        mouse_handlers = MouseHandlers()
 
         if is_done:
             height = 0  # When we are done, we don't necessary want to fill up until the bottom.
@@ -333,7 +366,7 @@ class Renderer(object):
             self._last_screen = None
         self._last_style = style
 
-        layout.write_to_screen(cli, screen, WritePosition(
+        layout.write_to_screen(cli, screen, mouse_handlers, WritePosition(
             xpos=0,
             ypos=0,
             width=size.columns,
@@ -353,6 +386,7 @@ class Renderer(object):
             )
         self._last_screen = screen
         self._last_size = size
+        self.mouse_handlers = mouse_handlers
 
         # Write title if it changed.
         new_title = cli.terminal_title

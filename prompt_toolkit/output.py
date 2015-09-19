@@ -49,6 +49,14 @@ class Output(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
+    def enable_mouse_support(self):
+        pass
+
+    @abstractmethod
+    def disable_mouse_support(self):
+        pass
+
+    @abstractmethod
     def erase_end_of_line(self):
         """
         Erases from the current cursor position to the end of the current line.

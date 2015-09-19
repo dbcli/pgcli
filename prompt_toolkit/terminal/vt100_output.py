@@ -123,6 +123,12 @@ class Vt100_Output(Output):
     def quit_alternate_screen(self):
         self._write('\x1b[?1049l')
 
+    def enable_mouse_support(self):
+        self._write('\x1b[?9h')
+
+    def disable_mouse_support(self):
+        self._write('\x1b[?9l')
+
     def erase_end_of_line(self):
         """
         Erases from the current cursor position to the end of the current line.

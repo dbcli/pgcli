@@ -306,6 +306,7 @@ def create_default_application(
         get_bottom_toolbar_tokens=None,
         display_completions_in_columns=False,
         get_title=None,
+        mouse_support=False,
         extra_input_processors=None,
         key_bindings_registry=None,
         on_abort=AbortAction.RAISE_EXCEPTION,
@@ -343,6 +344,7 @@ def create_default_application(
         completions in multiple columns.
     :param get_title: Callable that returns the title to be displayed in the
         terminal.
+    :param mouse_support: `bool` or `CLIFilter` to enable mouse support.
     :param default: The default text to be shown in the input buffer. (This can
         be edited by the user.)
     """
@@ -390,6 +392,7 @@ def create_default_application(
         clipboard=clipboard,
         key_bindings_registry=key_bindings_registry,
         get_title=get_title,
+        mouse_support=mouse_support,
         on_abort=on_abort,
         on_exit=on_exit)
 

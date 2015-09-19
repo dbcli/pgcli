@@ -5,6 +5,7 @@ from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import CLIFilter, Always, HasSelection, Condition
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.utils import suspend_to_background_supported
+from prompt_toolkit.layout.screen import Point
 
 from .utils import create_handle_decorator
 
@@ -324,6 +325,24 @@ def load_basic_bindings(registry, filter=Always()):
 
         # Report absolute cursor position to the renderer.
         event.cli.renderer.report_absolute_cursor_row(row)
+
+    @registry.add_binding(Keys.MouseClick)
+    def _(event):
+        """
+        Incoming mouse click.
+        """
+        # Parse the incoming packet. It looks like: 'Esc[M xy'.
+        x = ord(event.data[-2]) - 33
+        y = ord(event.data[-1]) - 33
+
+        if event.cli.renderer.height_is_known:
+            # Take region above the layout into account. The reported
+            # coordinates are absolute to the visible part of the terminal.
+            y -= event.cli.renderer.rows_above_layout
+
+            # Call the mouse handler from the renderer.
+            handler = event.cli.renderer.mouse_handlers.mouse_click_handlers[x,y]
+            handler(event.cli, Point(x=x, y=y))
 
 
 def load_basic_system_bindings(registry, filter=Always()):

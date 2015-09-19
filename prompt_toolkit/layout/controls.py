@@ -48,6 +48,15 @@ class UIControl(with_metaclass(ABCMeta, object)):
         """
         pass
 
+    def mouse_click(self, cli, position):
+        """
+        Handle mouse events.
+
+        :param position: `Point` instance. (It has `x` and `y` attributes,
+                         representing relative coordinates.)
+        """
+        pass
+
 
 class _SimpleLRUCache(object):
     """
@@ -223,6 +232,8 @@ class BufferControl(UIControl):
         #: to recreate the same screen again.)
         self._screen_lru_cache = _SimpleLRUCache(maxsize=8)
 
+        self._xy_to_cursor_position = None
+
     def _buffer(self, cli):
         """
         The buffer object that contains the 'main' content.
@@ -251,7 +262,7 @@ class BufferControl(UIControl):
     def _get_input_tokens(self, cli, buffer):
         """
         Tokenize input text for highlighting.
-        Return (tokens, cursor_transform_functions) tuple.
+        Return (tokens, source_to_display, display_to_source) tuple.
 
         :param buffer: The Buffer instance.
         :param document: The document to be shown. This can be `buffer.document`
@@ -270,13 +281,30 @@ class BufferControl(UIControl):
 
             # Run all processors over the input.
             # (They can transform both the tokens and the cursor position.)
-            cursor_transform_functions = []
+            source_to_display_functions = []
+            display_to_source_functions = []
 
             for p in self.input_processors:
-                tokens, f = p.run(cli, buffer, tokens)
-                cursor_transform_functions.append(f)
+                transformation  = p.apply_transformation(cli, buffer, tokens)
+                tokens = transformation.tokens
+                source_to_display_functions.append(transformation.source_to_display)
+                display_to_source_functions.append(transformation.display_to_source)
 
-            return tokens, cursor_transform_functions
+            # Chain cursor transformation (movement) functions.
+
+            def source_to_display(cursor_position):
+                " Chained source_to_display. "
+                for f in source_to_display_functions:
+                    cursor_position = f(cursor_position)
+                return cursor_position
+
+            def display_to_source(cursor_position):
+                " Chained display_to_source. "
+                for f in reversed(display_to_source_functions):
+                    cursor_position = f(cursor_position)
+                return cursor_position
+
+            return tokens, source_to_display, display_to_source
 
         key = (
             buffer.document.text,
@@ -316,16 +344,17 @@ class BufferControl(UIControl):
             # Get tokens
             # Note: we add the space character at the end, because that's where
             #       the cursor can also be.
-            input_tokens, cursor_transform_functions = self._get_input_tokens(cli, buffer)
+            input_tokens, source_to_display, display_to_source = self._get_input_tokens(cli, buffer)
             input_tokens += [(Token, ' ')]
 
             indexes_to_pos = screen.write_data(input_tokens, width=wrap_width)
+            pos_to_indexes = dict((v, k) for k, v in indexes_to_pos.items())
 
             def cursor_position_to_xy(cursor_position):
-                # First get the real token position by applying all
-                # transformations from the input processors.
-                for f in cursor_transform_functions:
-                    cursor_position = f(cursor_position)
+                """ Turn a cursor position in the buffer into x/y coordinates
+                on the screen. """
+                # First get the real token position by applying all transformations.
+                cursor_position = source_to_display(cursor_position)
 
                 # Then look up into the table.
                 try:
@@ -336,7 +365,27 @@ class BufferControl(UIControl):
                     raise
                     # return 0, 0
 
-            return screen, cursor_position_to_xy
+            def xy_to_cursor_position(x, y):
+                """ Turn x/y screen coordinates back to the original cursor
+                position in the buffer. """
+                # Look up reverse in table.
+                while x > 0 or y > 0:
+                    try:
+                        index = pos_to_indexes[x, y]
+                        break
+                    except KeyError:
+                        # No match found -> mouse click outside of region
+                        # containing text. Look to the left or up.
+                        if x: x -= 1
+                        elif y: y -=1
+                else:
+                    # Nobreak.
+                    index = 0
+
+                # Transform.
+                return display_to_source(index)
+
+            return screen, cursor_position_to_xy, xy_to_cursor_position
 
         # Build a key for the caching. If any of these parameters changes, we
         # have to recreate a new screen.
@@ -353,7 +402,7 @@ class BufferControl(UIControl):
         )
 
         # Get from cache, or create if this doesn't exist yet.
-        screen, cursor_position_to_xy = self._screen_lru_cache.get(key, _create_screen)
+        screen, cursor_position_to_xy, self._xy_to_cursor_position = self._screen_lru_cache.get(key, _create_screen)
 
         x, y = cursor_position_to_xy(document.cursor_position)
         screen.cursor_position = Point(y=y, x=x)
@@ -381,3 +430,18 @@ class BufferControl(UIControl):
                 screen.menu_position = None
 
         return screen
+
+    def mouse_click(self, cli, position):
+        """
+        Mouse handler for this control.
+        """
+        buffer = self._buffer(cli)
+
+        if self._xy_to_cursor_position:
+            # Translate coordinates back to the cursor position of the original
+            # input.
+            pos = self._xy_to_cursor_position(position.x, position.y)
+
+            # Set the cursor position.
+            if pos <= len(buffer.text):
+                buffer.cursor_position = pos

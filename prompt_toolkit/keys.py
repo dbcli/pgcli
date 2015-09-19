@@ -98,3 +98,4 @@ class Keys(object):
 
     # Special
     CPRResponse = Key('<Cursor-Position-Response>')
+    MouseClick = Key('<Mouse-Click>')

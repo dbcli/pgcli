@@ -1,3 +1,10 @@
+"""
+Processors are little transformation blocks that transform the token list from
+a buffer before the BufferControl will render it to the screen.
+
+They can insert tokens before or after, or highlight fragments by replacing the
+token types.
+"""
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
@@ -11,6 +18,9 @@ from prompt_toolkit.filters import to_cli_filter, Never
 from .utils import token_list_len
 
 __all__ = (
+    'Processor',
+    'Transformation',
+
     'HighlightSearchProcessor',
     'HighlightSelectionProcessor',
     'PasswordProcessor',
@@ -29,8 +39,11 @@ class Processor(with_metaclass(ABCMeta, object)):
     Manipulate the tokenstream for a `BufferControl`.
     """
     @abstractmethod
-    def run(self, cli, buffer, tokens):
-        return tokens, lambda i: i
+    def apply_transformation(self, cli, buffer, tokens):
+        """
+        Apply transformation.
+        """
+        return Transformation(tokens)
 
     def has_focus(self, cli):
         """
@@ -41,6 +54,23 @@ class Processor(with_metaclass(ABCMeta, object)):
 
     def invalidation_hash(self, cli, buffer):
         return None
+
+
+class Transformation(object):
+    """
+    Transformation result, as returned by `Processor.run`.
+
+    :param tokens: The transformed tokens. To be displayed, or to pass to the
+        next processor.
+    :param source_to_display: Cursor position transformation from original string to
+        transformed string.
+    :param display_to_source: Cursor position transformed from source string to
+        original string.
+    """
+    def __init__(self, tokens, source_to_display=None, display_to_source=None):
+        self.tokens = tokens
+        self.source_to_display = source_to_display or (lambda i: i)
+        self.display_to_source = display_to_source or (lambda i: i)
 
 
 class HighlightSearchProcessor(Processor):
@@ -65,7 +95,7 @@ class HighlightSearchProcessor(Processor):
         else:
             return cli.search_state.text
 
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         search_text = self._get_search_text(cli)
         ignore_case = cli.is_ignoring_case
         document = buffer.document
@@ -81,7 +111,7 @@ class HighlightSearchProcessor(Processor):
                 for x in range(index, index + len(search_text)):
                     tokens[x] = (token, tokens[x][1])
 
-        return tokens, lambda i: i
+        return Transformation(tokens)
 
     def invalidation_hash(self, cli, buffer):
         search_text = self._get_search_text(cli)
@@ -102,7 +132,7 @@ class HighlightSelectionProcessor(Processor):
     """
     Processor that highlights the selection in the document.
     """
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         # In case of selection, highlight all matches.
         selection_range = buffer.document.selection_range()
 
@@ -112,7 +142,7 @@ class HighlightSelectionProcessor(Processor):
             for i in range(from_, to):
                 tokens[i] = (Token.SelectedText, tokens[i][1])
 
-        return tokens, lambda i: i
+        return Transformation(tokens)
 
     def invalidation_hash(self, cli, buffer):
         # When the search state changes, highlighting will be different.
@@ -128,9 +158,9 @@ class PasswordProcessor(Processor):
     def __init__(self, char='*'):
         self.char = char
 
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         # Returns (new_token_list, cursor_index_to_token_index_f)
-        return [(token, self.char * len(text)) for token, text in tokens], lambda i: i
+        return Transformation([(token, self.char * len(text)) for token, text in tokens])
 
 
 class HighlightMatchingBracketProcessor(Processor):
@@ -143,7 +173,7 @@ class HighlightMatchingBracketProcessor(Processor):
     def __init__(self, chars='[](){}<>'):
         self.chars = chars
 
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         def replace_token(pos):
             """ Replace token in list of tokens. """
             tokens[pos] = (Token.MatchingBracket, tokens[pos][1])
@@ -166,7 +196,7 @@ class HighlightMatchingBracketProcessor(Processor):
         if not applied and d.cursor_position > 0 and d.char_before_cursor in self._closing_braces:
             apply_for_document(Document(d.text, d.cursor_position - 1))
 
-        return tokens, lambda i: i
+        return Transformation(tokens)
 
     def invalidation_hash(self, cli, buffer):
         document = buffer.document
@@ -190,7 +220,7 @@ class BracketsMismatchProcessor(Processor):
     """
     error_token = Token.Error
 
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         stack = []  # Pointers to the result array
 
         for index, (token, text) in enumerate(tokens):
@@ -214,7 +244,7 @@ class BracketsMismatchProcessor(Processor):
         for index in stack:
             tokens[index] = (Token.Error, tokens[index][1])
 
-        return tokens, lambda i: i
+        return Transformation(tokens)
 
 
 class BeforeInput(Processor):
@@ -225,11 +255,14 @@ class BeforeInput(Processor):
         assert callable(get_tokens)
         self.get_tokens = get_tokens
 
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         tokens_before = self.get_tokens(cli)
         shift_position = token_list_len(tokens_before)
 
-        return tokens_before + tokens, lambda i: i + shift_position
+        return Transformation(
+                tokens=tokens_before + tokens,
+                source_to_display=lambda i: i + shift_position,
+                display_to_source=lambda i: i - shift_position)
 
     @classmethod
     def static(cls, text, token=Token):
@@ -254,8 +287,8 @@ class AfterInput(Processor):
         assert callable(get_tokens)
         self.get_tokens = get_tokens
 
-    def run(self, cli, buffer, tokens):
-        return tokens + self.get_tokens(cli), lambda i: i
+    def apply_transformation(self, cli, buffer, tokens):
+        return Transformation(tokens + self.get_tokens(cli))
 
     @classmethod
     def static(cls, text, token=Token):
@@ -277,13 +310,13 @@ class AppendAutoSuggestion(Processor):
     Append the auto suggestion to the input.
     (The user can then press the right arrow the insert the suggestion.)
     """
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         if buffer.suggestion and buffer.document.is_cursor_at_the_end:
             suggestion = buffer.suggestion.text
         else:
             suggestion = ''
 
-        return tokens + [(Token.AutoSuggestion, suggestion)], lambda i: i
+        return Transformation(tokens + [(Token.AutoSuggestion, suggestion)])
 
     def invalidation_hash(self, cli, buffer):
         # Redraw when the suggestion changes.
@@ -299,7 +332,7 @@ class ShowLeadingWhiteSpaceProcessor(Processor):
         self.token = token
         self.char = char
 
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         # Walk through all te tokens.
         t = (self.token, self.char)
         is_start_of_line = True
@@ -313,7 +346,7 @@ class ShowLeadingWhiteSpaceProcessor(Processor):
             else:
                 is_start_of_line = False
 
-        return tokens, lambda i: i
+        return Transformation(tokens)
 
 
 class ShowTrailingWhiteSpaceProcessor(Processor):
@@ -324,7 +357,7 @@ class ShowTrailingWhiteSpaceProcessor(Processor):
         self.token = token
         self.char = char
 
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         # Walk backwards through all te tokens.
         t = (self.token, self.char)
         is_end_of_line = True
@@ -338,7 +371,7 @@ class ShowTrailingWhiteSpaceProcessor(Processor):
             else:
                 is_end_of_line = False
 
-        return tokens, lambda i: i
+        return Transformation(tokens)
 
 
 class ConditionalProcessor(Processor):
@@ -362,12 +395,12 @@ class ConditionalProcessor(Processor):
         self.processor = processor
         self.filter = to_cli_filter(filter)
 
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         # Run processor when enabled.
         if self.filter(cli):
-            return self.processor.run(cli, buffer, tokens)
+            return self.processor.apply_transformation(cli, buffer, tokens)
         else:
-            return tokens, lambda i: i
+            return Transformation(tokens)
 
     def has_focus(self, cli):
         if self.filter(cli):

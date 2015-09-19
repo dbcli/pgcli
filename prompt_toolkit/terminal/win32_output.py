@@ -278,6 +278,12 @@ class Win32Output(Output):
             self.hconsole = stdout
             self._in_alternate_screen = False
 
+    def enable_mouse_support(self):
+        pass
+
+    def disable_mouse_support(self):
+        pass
+
     @classmethod
     def win32_refresh_window(cls):
         """

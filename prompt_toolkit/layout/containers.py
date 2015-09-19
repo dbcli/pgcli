@@ -53,7 +53,7 @@ class Layout(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def write_to_screen(self, cli, screen, write_position):
+    def write_to_screen(self, cli, screen, mouse_handlers, write_position):
         """
         Write the actual content to the screen.
         """
@@ -85,7 +85,7 @@ class HSplit(Layout):
         for c in self.children:
             c.reset()
 
-    def write_to_screen(self, cli, screen, write_position):
+    def write_to_screen(self, cli, screen, mouse_handlers, write_position):
         """
         Render the prompt to a `Screen` instance.
 
@@ -124,7 +124,7 @@ class HSplit(Layout):
         width = write_position.width
 
         for s, c in zip(sizes, self.children):
-            c.write_to_screen(cli, screen, WritePosition(xpos, ypos, width, s))
+            c.write_to_screen(cli, screen, mouse_handlers, WritePosition(xpos, ypos, width, s))
             ypos += s
 
     def walk(self):
@@ -187,7 +187,7 @@ class VSplit(Layout):
 
         return sizes
 
-    def write_to_screen(self, cli, screen, write_position):
+    def write_to_screen(self, cli, screen, mouse_handlers, write_position):
         """
         Render the prompt to a `Screen` instance.
 
@@ -211,7 +211,7 @@ class VSplit(Layout):
         xpos = write_position.xpos
 
         for s, c in zip(sizes, self.children):
-            c.write_to_screen(cli, screen, WritePosition(xpos, ypos, s, height))
+            c.write_to_screen(cli, screen, mouse_handlers, WritePosition(xpos, ypos, s, height))
             xpos += s
 
     def walk(self):
@@ -260,8 +260,8 @@ class FloatContainer(Layout):
         """
         return self.content.preferred_height(cli, width)
 
-    def write_to_screen(self, cli, screen, write_position):
-        self.content.write_to_screen(cli, screen, write_position)
+    def write_to_screen(self, cli, screen, mouse_handlers, write_position):
+        self.content.write_to_screen(cli, screen, mouse_handlers, write_position)
 
         # When a menu_position was given, use this instead of the cursor
         # position. (These cursor positions are absolute, translate again
@@ -365,7 +365,7 @@ class FloatContainer(Layout):
                 wp = WritePosition(xpos=xpos + write_position.xpos,
                                    ypos=ypos + write_position.ypos,
                                    width=width, height=height)
-                fl.content.write_to_screen(cli, screen, wp)
+                fl.content.write_to_screen(cli, screen, mouse_handlers, wp)
 
     def walk(self):
         """ Walk through children. """
@@ -686,7 +686,7 @@ class Window(Layout):
 
         return LayoutDimension(min=dimension.min, max=max_, preferred=preferred)
 
-    def write_to_screen(self, cli, screen, write_position):
+    def write_to_screen(self, cli, screen, mouse_handlers, write_position):
         """
         Write window to screen. This renders the user control, the margins and
         copies everything over to the absolute position at the given screen.
@@ -719,6 +719,21 @@ class Window(Layout):
             cursor_position=screen.cursor_position,
             configured_scroll_offsets=self.scroll_offsets,
             applied_scroll_offsets=applied_scroll_offsets)
+
+        # Set mouse handlers.
+        def mouse_click(cli, point):
+            """ Wrapper around the mouse_handler of the `UIControl` that turns
+            absolute coordinates into relative coordinates. """
+            self.content.mouse_click(
+                cli, Point(x=point.x - write_position.xpos - sum(left_margin_widths),
+                           y=point.y - write_position.ypos + self.vertical_scroll))
+
+        mouse_handlers.set_mouse_click_handler_for_range(
+                x_min=write_position.xpos + sum(left_margin_widths),
+                x_max=write_position.xpos + write_position.width - total_margin_width,
+                y_min=write_position.ypos,
+                y_max=write_position.ypos + write_position.height,
+                handler=mouse_click)
 
         # Render and copy margins.
         move_x = 0
@@ -915,9 +930,9 @@ class ConditionalContainer(Layout):
         else:
             return LayoutDimension.exact(0)
 
-    def write_to_screen(self, cli, screen, write_position):
+    def write_to_screen(self, cli, screen, mouse_handlers, write_position):
         if self.filter(cli):
-            return self.content.write_to_screen(cli, screen, write_position)
+            return self.content.write_to_screen(cli, screen, mouse_handlers, write_position)
 
     def walk(self):
         return self.content.walk()

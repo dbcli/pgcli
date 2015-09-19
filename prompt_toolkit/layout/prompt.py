@@ -6,7 +6,7 @@ from six import text_type
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER
 
 from .utils import token_list_len
-from .processors import Processor
+from .processors import Processor, Transformation
 
 __all__ = (
     'DefaultPrompt',
@@ -45,7 +45,7 @@ class DefaultPrompt(Processor):
             return [(Token.Prompt, message)]
         return cls(get_message_tokens)
 
-    def run(self, cli, buffer, tokens):
+    def apply_transformation(self, cli, buffer, tokens):
         # Get text before cursor.
         if cli.is_searching:
             before = _get_isearch_tokens(cli)
@@ -59,7 +59,10 @@ class DefaultPrompt(Processor):
         # Insert before buffer text.
         shift_position = token_list_len(before)
 
-        return before + tokens, lambda i: i + shift_position
+        return Transformation(
+                before + tokens,
+                source_to_display=lambda i: i + shift_position,
+                display_to_source=lambda i: i - shift_position)
 
     def has_focus(self, cli):
         # Obtain focus when the CLI is searching.

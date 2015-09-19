@@ -51,6 +51,7 @@ class Application(object):
     :param on_abort: What to do when Control-C is pressed.
     :param on_exit: What to do when Control-D is pressed.
     :param use_alternate_screen: When True, run the application on the alternate screen buffer.
+    :param mouse_support: (CLIFilter or boolean). When True, enable mouse support.
     :param get_title: Callable that returns the current title to be displayed in the terminal.
 
     Filters:
@@ -73,7 +74,7 @@ class Application(object):
                  style=None, get_style=None,
                  key_bindings_registry=None, clipboard=None,
                  on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
-                 use_alternate_screen=False,
+                 use_alternate_screen=False, mouse_support=False,
                  get_title=None, focus_stack=None,
 
                  paste_mode=Never(), ignore_case=Never(),
@@ -83,6 +84,7 @@ class Application(object):
 
         paste_mode = to_cli_filter(paste_mode)
         ignore_case = to_cli_filter(ignore_case)
+        mouse_support = to_cli_filter(mouse_support)
 
         assert layout is None or isinstance(layout, Layout)
         assert buffer is None or isinstance(buffer, Buffer)
@@ -128,6 +130,7 @@ class Application(object):
         self.on_abort = on_abort
         self.on_exit = on_exit
         self.use_alternate_screen = use_alternate_screen
+        self.mouse_support = mouse_support
         self.get_title = get_title
 
         self.paste_mode = paste_mode

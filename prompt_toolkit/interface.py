@@ -82,7 +82,10 @@ class CommandLineInterface(object):
 
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
-        self.renderer = Renderer(self.output, use_alternate_screen=application.use_alternate_screen)
+        self.renderer = Renderer(
+            self.output,
+            use_alternate_screen=application.use_alternate_screen,
+            mouse_support=application.mouse_support)
 
         # Invalidate flag. When 'True', a repaint has been scheduled.
         self._invalidated = False
