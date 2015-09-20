@@ -454,6 +454,10 @@ class BufferControl(UIControl):
 
                 elif mouse_event.event_type == MouseEventTypes.MOUSE_UP:
                     # When the cursor was moved to another place, select the text.
-                    if buffer.cursor_position != pos:
+                    # (The >1 is actually a small but acceptable workaround for
+                    # selecting text in Vi navigation mode. In navigation mode,
+                    # the cursor can never be after the text, so the cursor
+                    # will be repositioned automatically.)
+                    if abs(buffer.cursor_position - pos) > 1:
                         buffer.start_selection(selection_type=SelectionType.CHARACTERS)
                         buffer.cursor_position = pos
