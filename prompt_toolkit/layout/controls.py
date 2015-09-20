@@ -13,7 +13,7 @@ from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.enums import DEFAULT_BUFFER
 
 from .lexers import Lexer, SimpleLexer
-from .processors import Processor
+from .processors import Processor, Transformation
 from .screen import Screen, Char, Point
 from .utils import token_list_width
 
@@ -286,6 +286,8 @@ class BufferControl(UIControl):
 
             for p in self.input_processors:
                 transformation  = p.apply_transformation(cli, buffer, tokens)
+                assert isinstance(transformation, Transformation)
+
                 tokens = transformation.tokens
                 source_to_display_functions.append(transformation.source_to_display)
                 display_to_source_functions.append(transformation.display_to_source)
