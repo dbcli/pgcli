@@ -91,7 +91,8 @@ def scroll_one_line_down(event):
         # When the cursor is at the top, move to the next line. (Otherwise, only scroll.)
         if w.render_info:
             info = w.render_info
-            if info.cursor_position.y <= info.configured_scroll_offsets.bottom:
+
+            if info.cursor_position.y <= info.configured_scroll_offsets.top + 1:
                 b.cursor_position += b.document.get_cursor_down_position()
 
         w.vertical_scroll += 1
@@ -109,7 +110,7 @@ def scroll_one_line_up(event):
         if w.render_info:
             info = w.render_info
 
-            if info.cursor_position.y >= info.window_height - 1 - info.configured_scroll_offsets.top:
+            if info.cursor_position.y >= info.window_height - info.configured_scroll_offsets.bottom:
                 b.cursor_position += b.document.get_cursor_up_position()
 
         # Scroll window
