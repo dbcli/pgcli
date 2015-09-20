@@ -416,7 +416,8 @@ class WindowRenderInfo(object):
     :param horizontal_scroll: The horizontal scroll of the `Window` instance.
     :param vertical_scroll: The vertical scroll of the `Window` instance.
     :param height: The height that was used for the rendering.
-    :param cursor_position: `Point` instance. Where the cursor is currently shown.
+    :param cursor_position: `Point` instance. Where the cursor is currently
+                            shown, relative to the window.
     """
     def __init__(self, original_screen, horizontal_scroll, vertical_scroll,
                  window_width, window_height, cursor_position,
@@ -716,7 +717,8 @@ class Window(Layout):
             vertical_scroll=self.vertical_scroll,
             window_width=write_position.width,
             window_height=write_position.height,
-            cursor_position=screen.cursor_position,
+            cursor_position=Point(y=temp_screen.cursor_position.y - self.vertical_scroll,
+                                  x=temp_screen.cursor_position.x - self.horizontal_scroll),
             configured_scroll_offsets=self.scroll_offsets,
             applied_scroll_offsets=applied_scroll_offsets)
 
