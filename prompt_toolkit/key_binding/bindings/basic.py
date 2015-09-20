@@ -7,6 +7,7 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.screen import Point
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
 from prompt_toolkit.utils import suspend_to_background_supported
+from prompt_toolkit.renderer import HeightIsUnknownError
 
 from .utils import create_handle_decorator
 from .scroll import scroll_one_line_up, scroll_one_line_down
@@ -373,7 +374,10 @@ def load_basic_bindings(registry, filter=Always()):
             if event.cli.renderer.height_is_known:
                 # Take region above the layout into account. The reported
                 # coordinates are absolute to the visible part of the terminal.
-                y -= event.cli.renderer.rows_above_layout
+                try:
+                    y -= event.cli.renderer.rows_above_layout
+                except HeightIsUnknownError:
+                    return
 
                 # Call the mouse handler from the renderer.
                 handler = event.cli.renderer.mouse_handlers.mouse_click_handlers[x,y]

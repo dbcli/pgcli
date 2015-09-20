@@ -203,6 +203,10 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     return current_pos, last_char[0]
 
 
+class HeightIsUnknownError(Exception):
+    " Information unavailable. Did not yet receive the CPR response. "
+
+
 class Renderer(object):
     """
     Typical usage:
@@ -286,7 +290,7 @@ class Renderer(object):
             last_screen_height = self._last_screen.height if self._last_screen else 0
             return total_rows - max(self._min_available_height, last_screen_height)
         else:
-            raise Exception('Rows above layout is unknown.')
+            raise HeightIsUnknownError('Rows above layout is unknown.')
 
     def request_absolute_cursor_position(self):
         """
