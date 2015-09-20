@@ -27,14 +27,16 @@ _DEBUG_RENDERER_INPUT_FILENAME = 'prompt-toolkit-render-input.log'
 # newline.)
 _cpr_response_re = re.compile('^' + re.escape('\x1b[') + r'\d+;\d+R\Z')
 
-_mouse_event_re = re.compile('^' + re.escape('\x1b[') + r'<?[\d;]+[mM]\Z')
+# Mouse events:
+# Typical: "Esc[MaB*"  Urxvt: "Esc[96;14;13M" and for Xterm SGR: "Esc[<64;85;12M"
+_mouse_event_re = re.compile('^' + re.escape('\x1b[') + r'(<?[\d;]+[mM]|M...)\Z')
 
 # Regex matching any valid prefix of a CPR response.
 # (Note that it doesn't contain the last character, the 'R'. The prefix has to
 # be shorter.)
 _cpr_response_prefix_re = re.compile('^' + re.escape('\x1b[') + r'[\d;]*\Z')
 
-_mouse_event_prefix_re = re.compile('^' + re.escape('\x1b[') + r'<?[\d;]*\Z')
+_mouse_event_prefix_re = re.compile('^' + re.escape('\x1b[') + r'(<?[\d;]*|M.{0,2})\Z')
 
 
 class _Flush(object):

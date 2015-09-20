@@ -335,37 +335,55 @@ def load_basic_bindings(registry, filter=Always()):
         """
         Handling of incoming mouse event.
         """
-        # Parse the incoming packet. It looks like: 'Esc[<64;85;12M'.
-        # When the '<' is not present, we are not using the Xterm SGR mode, but
-        # Urxvt instead.
-        data = event.data[2:]
-        if data[:1] == '<':
-            sgr = True
-            data = data[1:]
-        else:
-            sgr = False
+        # Typical:   "Esc[MaB*"
+        # Urxvt:     "Esc[96;14;13M"
+        # Xterm SGR: "Esc[<64;85;12M"
 
-        # Extract coordinates.
-        mouse_event, x, y = map(int, data[:-1].split(';'))
-        m = data[-1]
-        x -= 1
-        y -= 1
-
-        # Parse event type.
-        if sgr:
-            mouse_event = {
-                (0, 'M'): MouseEventTypes.MOUSE_DOWN,
-                (0, 'm'): MouseEventTypes.MOUSE_UP,
-                (64, 'M'): MouseEventTypes.SCROLL_UP,
-                (65, 'M'): MouseEventTypes.SCROLL_DOWN,
-            }.get((mouse_event, m))
-        else:
+        # Parse incoming packet.
+        if event.data[2] == 'M':
+            # Typical.
+            mouse_event, x, y = map(ord, event.data[3:])
             mouse_event = {
                 32: MouseEventTypes.MOUSE_DOWN,
                 35: MouseEventTypes.MOUSE_UP,
                 96: MouseEventTypes.SCROLL_UP,
                 97: MouseEventTypes.SCROLL_DOWN,
-                }.get(mouse_event)
+            }.get(mouse_event)
+            x -= 32
+            y -= 32
+        else:
+            # Urxvt and Xterm SGR.
+            # When the '<' is not present, we are not using the Xterm SGR mode,
+            # but Urxvt instead.
+            data = event.data[2:]
+            if data[:1] == '<':
+                sgr = True
+                data = data[1:]
+            else:
+                sgr = False
+
+            # Extract coordinates.
+            mouse_event, x, y = map(int, data[:-1].split(';'))
+            m = data[-1]
+
+            # Parse event type.
+            if sgr:
+                mouse_event = {
+                    (0, 'M'): MouseEventTypes.MOUSE_DOWN,
+                    (0, 'm'): MouseEventTypes.MOUSE_UP,
+                    (64, 'M'): MouseEventTypes.SCROLL_UP,
+                    (65, 'M'): MouseEventTypes.SCROLL_DOWN,
+                }.get((mouse_event, m))
+            else:
+                mouse_event = {
+                    32: MouseEventTypes.MOUSE_DOWN,
+                    35: MouseEventTypes.MOUSE_UP,
+                    96: MouseEventTypes.SCROLL_UP,
+                    97: MouseEventTypes.SCROLL_DOWN,
+                    }.get(mouse_event)
+
+        x -= 1
+        y -= 1
 
         # Only handle mouse events when we know the window height.
         if event.cli.renderer.height_is_known:

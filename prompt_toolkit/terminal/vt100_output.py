@@ -126,11 +126,14 @@ class Vt100_Output(Output):
     def enable_mouse_support(self):
         self._write('\x1b[?1000h')
 
-        # Enable urxvt Mouse mode.
+        # Enable urxvt Mouse mode. (For terminals that understand this.)
         self._write('\x1b[?1015h')
 
-        # Also enable Xterm SGR mouse mode.
+        # Also enable Xterm SGR mouse mode. (For terminals that understand this.)
         self._write('\x1b[?1006h')
+
+        # Note: E.g. lxterminal understands 1000h, but not the urxvt or sgr
+        #       extensions.
 
     def disable_mouse_support(self):
         self._write('\x1b[?1000l')
