@@ -13,6 +13,7 @@ from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimens
 from .controls import UIControl, TokenListControl
 from .margins import Margin
 from prompt_toolkit.filters import to_cli_filter
+from prompt_toolkit.mouse_events import MouseEvent
 
 __all__ = (
     'HSplit',
@@ -723,19 +724,23 @@ class Window(Layout):
             applied_scroll_offsets=applied_scroll_offsets)
 
         # Set mouse handlers.
-        def mouse_click(cli, point):
+        def mouse_handler(cli, mouse_event):
             """ Wrapper around the mouse_handler of the `UIControl` that turns
             absolute coordinates into relative coordinates. """
-            self.content.mouse_click(
-                cli, Point(x=point.x - write_position.xpos - sum(left_margin_widths),
-                           y=point.y - write_position.ypos + self.vertical_scroll))
+            position = mouse_event.position
 
-        mouse_handlers.set_mouse_click_handler_for_range(
+            self.content.mouse_handler(
+                cli, MouseEvent(
+                    position=Point(x=position.x - write_position.xpos - sum(left_margin_widths),
+                                   y=position.y - write_position.ypos + self.vertical_scroll),
+                    event_type=mouse_event.event_type))
+
+        mouse_handlers.set_mouse_handler_for_range(
                 x_min=write_position.xpos + sum(left_margin_widths),
                 x_max=write_position.xpos + write_position.width - total_margin_width,
                 y_min=write_position.ypos,
                 y_max=write_position.ypos + write_position.height,
-                handler=mouse_click)
+                handler=mouse_handler)
 
         # Render and copy margins.
         move_x = 0

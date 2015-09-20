@@ -6,8 +6,9 @@ from prompt_toolkit.filters import CLIFilter, Always, HasSelection, Condition
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.screen import Point
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
-from prompt_toolkit.utils import suspend_to_background_supported
+from prompt_toolkit.mouse_events import MouseEventTypes, MouseEvent
 from prompt_toolkit.renderer import HeightIsUnknownError
+from prompt_toolkit.utils import suspend_to_background_supported
 
 from .utils import create_handle_decorator
 from .scroll import scroll_one_line_up, scroll_one_line_down
@@ -331,12 +332,9 @@ def load_basic_bindings(registry, filter=Always()):
 
     @registry.add_binding(Keys.Vt100MouseEvent)
     def _(event):
-        " Incoming mouse event. "
-        MOUSE_UP = 'UP'
-        MOUSE_DOWN = 'DOWN'
-        SCROLL_UP = 'SCROLL_UP'
-        SCROLL_DOWN = 'SCROLL_DOWN'
-
+        """
+        Handling of incoming mouse event.
+        """
         # Parse the incoming packet. It looks like: 'Esc[<64;85;12M'.
         # When the '<' is not present, we are not using the Xterm SGR mode, but
         # Urxvt instead.
@@ -356,21 +354,21 @@ def load_basic_bindings(registry, filter=Always()):
         # Parse event type.
         if sgr:
             mouse_event = {
-                (0, 'M'): MOUSE_DOWN,
-                (0, 'm'): MOUSE_UP,
-                (64, 'M'): SCROLL_UP,
-                (65, 'M'): SCROLL_DOWN,
+                (0, 'M'): MouseEventTypes.MOUSE_DOWN,
+                (0, 'm'): MouseEventTypes.MOUSE_UP,
+                (64, 'M'): MouseEventTypes.SCROLL_UP,
+                (65, 'M'): MouseEventTypes.SCROLL_DOWN,
             }.get((mouse_event, m))
         else:
             mouse_event = {
-                32: MOUSE_DOWN,
-                35: MOUSE_UP,
-                96: SCROLL_UP,
-                97: SCROLL_DOWN,
+                32: MouseEventTypes.MOUSE_DOWN,
+                35: MouseEventTypes.MOUSE_UP,
+                96: MouseEventTypes.SCROLL_UP,
+                97: MouseEventTypes.SCROLL_DOWN,
                 }.get(mouse_event)
 
         # Mouse click
-        if mouse_event == MOUSE_DOWN:
+        if mouse_event in (MouseEventTypes.MOUSE_DOWN, MouseEventTypes.MOUSE_UP):
             if event.cli.renderer.height_is_known:
                 # Take region above the layout into account. The reported
                 # coordinates are absolute to the visible part of the terminal.
@@ -380,15 +378,16 @@ def load_basic_bindings(registry, filter=Always()):
                     return
 
                 # Call the mouse handler from the renderer.
-                handler = event.cli.renderer.mouse_handlers.mouse_click_handlers[x,y]
-                handler(event.cli, Point(x=x, y=y))
+                handler = event.cli.renderer.mouse_handlers.mouse_handlers[x,y]
+                handler(event.cli, MouseEvent(position=Point(x=x, y=y),
+                                              event_type=mouse_event))
 
         # Mouse scroll event.
-        elif mouse_event in (SCROLL_UP, SCROLL_DOWN):
+        elif mouse_event in (MouseEventTypes.SCROLL_UP, MouseEventTypes.SCROLL_DOWN):
             w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
 
             if w:
-                if mouse_event == SCROLL_DOWN:
+                if mouse_event == MouseEventTypes.SCROLL_DOWN:
                     scroll_one_line_down(event)
                 else:
                     scroll_one_line_up(event)

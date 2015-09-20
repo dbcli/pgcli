@@ -7,10 +7,12 @@ from pygments.token import Token
 from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 
-from prompt_toolkit.filters import to_cli_filter
-from prompt_toolkit.utils import get_cwidth
-from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.enums import DEFAULT_BUFFER
+from prompt_toolkit.filters import to_cli_filter
+from prompt_toolkit.mouse_events import MouseEventTypes
+from prompt_toolkit.search_state import SearchState
+from prompt_toolkit.selection import SelectionType
+from prompt_toolkit.utils import get_cwidth
 
 from .lexers import Lexer, SimpleLexer
 from .processors import Processor, Transformation
@@ -48,12 +50,11 @@ class UIControl(with_metaclass(ABCMeta, object)):
         """
         pass
 
-    def mouse_click(self, cli, position):
+    def mouse_handler(self, cli, mouse_event):
         """
         Handle mouse events.
 
-        :param position: `Point` instance. (It has `x` and `y` attributes,
-                         representing relative coordinates.)
+        :param mouse_event: `MouseEvent` instance.
         """
         pass
 
@@ -433,17 +434,26 @@ class BufferControl(UIControl):
 
         return screen
 
-    def mouse_click(self, cli, position):
+    def mouse_handler(self, cli, mouse_event):
         """
         Mouse handler for this control.
         """
         buffer = self._buffer(cli)
+        position = mouse_event.position
 
         if self._xy_to_cursor_position:
-            # Translate coordinates back to the cursor position of the original
-            # input.
+            # Translate coordinates back to the cursor position of the
+            # original input.
             pos = self._xy_to_cursor_position(position.x, position.y)
 
             # Set the cursor position.
             if pos <= len(buffer.text):
-                buffer.cursor_position = pos
+                if mouse_event.event_type == MouseEventTypes.MOUSE_DOWN:
+                    buffer.exit_selection()
+                    buffer.cursor_position = pos
+
+                elif mouse_event.event_type == MouseEventTypes.MOUSE_UP:
+                    # When the cursor was moved to another place, select the text.
+                    if buffer.cursor_position != pos:
+                        buffer.start_selection(selection_type=SelectionType.CHARACTERS)
+                        buffer.cursor_position = pos
