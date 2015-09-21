@@ -54,9 +54,13 @@ class UIControl(with_metaclass(ABCMeta, object)):
         """
         Handle mouse events.
 
+        When `NotImplemented` is returned, it means that the given event is not
+        handled by the `UIControl` itself. The `Window` or key bindings can
+        decide to handle this event as scrolling or changing focus.
+
         :param mouse_event: `MouseEvent` instance.
         """
-        pass
+        return NotImplemented
 
 
 class _SimpleLRUCache(object):
@@ -461,3 +465,6 @@ class BufferControl(UIControl):
                     if abs(buffer.cursor_position - pos) > 1:
                         buffer.start_selection(selection_type=SelectionType.CHARACTERS)
                         buffer.cursor_position = pos
+                else:
+                    # Don't handle scroll events here.
+                    return NotImplemented

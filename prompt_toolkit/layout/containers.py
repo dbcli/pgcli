@@ -729,7 +729,7 @@ class Window(Layout):
             absolute coordinates into relative coordinates. """
             position = mouse_event.position
 
-            self.content.mouse_handler(
+            return self.content.mouse_handler(
                 cli, MouseEvent(
                     position=Point(x=position.x - write_position.xpos - sum(left_margin_widths),
                                    y=position.y - write_position.ypos + self.vertical_scroll),

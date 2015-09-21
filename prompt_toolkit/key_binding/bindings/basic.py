@@ -367,30 +367,32 @@ def load_basic_bindings(registry, filter=Always()):
                 97: MouseEventTypes.SCROLL_DOWN,
                 }.get(mouse_event)
 
-        # Mouse click
-        if mouse_event in (MouseEventTypes.MOUSE_DOWN, MouseEventTypes.MOUSE_UP):
-            if event.cli.renderer.height_is_known:
-                # Take region above the layout into account. The reported
-                # coordinates are absolute to the visible part of the terminal.
-                try:
-                    y -= event.cli.renderer.rows_above_layout
-                except HeightIsUnknownError:
-                    return
+        # Only handle mouse events when we know the window height.
+        if event.cli.renderer.height_is_known:
+            # Take region above the layout into account. The reported
+            # coordinates are absolute to the visible part of the terminal.
+            try:
+                y -= event.cli.renderer.rows_above_layout
+            except HeightIsUnknownError:
+                return
 
-                # Call the mouse handler from the renderer.
-                handler = event.cli.renderer.mouse_handlers.mouse_handlers[x,y]
-                handler(event.cli, MouseEvent(position=Point(x=x, y=y),
-                                              event_type=mouse_event))
+            # Call the mouse handler from the renderer.
+            handler = event.cli.renderer.mouse_handlers.mouse_handlers[x,y]
+            result = handler(event.cli, MouseEvent(position=Point(x=x, y=y),
+                                                   event_type=mouse_event))
 
-        # Mouse scroll event.
-        elif mouse_event in (MouseEventTypes.SCROLL_UP, MouseEventTypes.SCROLL_DOWN):
-            w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+            # When the handler from the `UIControl` doesn't handle this event,
+            # handle it here. -> e.g. scrolling.
+            if result == NotImplemented and mouse_event in (
+                MouseEventTypes.SCROLL_UP, MouseEventTypes.SCROLL_DOWN):
 
-            if w:
-                if mouse_event == MouseEventTypes.SCROLL_DOWN:
-                    scroll_one_line_down(event)
-                else:
-                    scroll_one_line_up(event)
+                w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+
+                if w:
+                    if mouse_event == MouseEventTypes.SCROLL_DOWN:
+                        scroll_one_line_down(event)
+                    else:
+                        scroll_one_line_up(event)
 
 
 def load_basic_system_bindings(registry, filter=Always()):

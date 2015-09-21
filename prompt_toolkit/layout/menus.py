@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from six.moves import zip_longest
 from prompt_toolkit.filters import HasCompletions, IsDone, Always, Condition
+from prompt_toolkit.mouse_events import MouseEventTypes
 from prompt_toolkit.reactive import Integer
 from prompt_toolkit.utils import get_cwidth
 from pygments.token import Token
@@ -161,6 +162,27 @@ class CompletionsMenuControl(UIControl):
         text, tw = _trim_text(completion.display_meta, width - 2)
         padding = ' ' * (width - 2 - tw)
         return [(token, ' %s%s ' % (text, padding))]
+
+    def mouse_handler(self, cli, mouse_event):
+        """
+        Handle mouse events: clicking and scrolling.
+        """
+        b = cli.current_buffer
+
+        if mouse_event.event_type == MouseEventTypes.MOUSE_UP:
+            # Select completion.
+            b.go_to_completion(self.scroll + mouse_event.position.y)
+            b.complete_state = None
+
+        elif mouse_event.event_type == MouseEventTypes.SCROLL_DOWN:
+            # Scroll up.
+            b.complete_next(count=3, disable_wrap_around=True)
+            self.scroll += 3
+
+        elif mouse_event.event_type == MouseEventTypes.SCROLL_UP:
+            # Scroll down.
+            b.complete_previous(count=3, disable_wrap_around=True)
+            self.scroll -= 3
 
 
 def _trim_text(text, max_width):

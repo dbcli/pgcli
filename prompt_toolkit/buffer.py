@@ -578,7 +578,7 @@ class Buffer(object):
             self.working_index = index
             self.cursor_position = len(self.text)
 
-    def complete_next(self, count=1):
+    def complete_next(self, count=1, disable_wrap_around=False):
         """
         Browse to the next completions.
         (Does nothing if there are no completion.)
@@ -590,11 +590,14 @@ class Buffer(object):
                 index = 0
             elif self.complete_state.complete_index == completions_count - 1:
                 index = None
+
+                if disable_wrap_around:
+                    return
             else:
                 index = min(completions_count-1, self.complete_state.complete_index + count)
-            self._go_to_completion(index)
+            self.go_to_completion(index)
 
-    def complete_previous(self, count=1):
+    def complete_previous(self, count=1, disable_wrap_around=False):
         """
         Browse to the previous completions.
         (Does nothing if there are no completion.)
@@ -602,19 +605,22 @@ class Buffer(object):
         if self.complete_state:
             if self.complete_state.complete_index == 0:
                 index = None
+
+                if disable_wrap_around:
+                    return
             elif self.complete_state.complete_index is None:
                 index = len(self.complete_state.current_completions) - 1
             else:
                 index = max(0, self.complete_state.complete_index - count)
 
-            self._go_to_completion(index)
+            self.go_to_completion(index)
 
     def cancel_completion(self):
         """
         Cancel completion, go back to the original text.
         """
         if self.complete_state:
-            self._go_to_completion(None)
+            self.go_to_completion(None)
             self.complete_state = None
 
     def set_completions(self, completions, go_to_first=True, go_to_last=False):
@@ -639,11 +645,11 @@ class Buffer(object):
                 original_document=self.document,
                 current_completions=completions)
             if go_to_first:
-                self._go_to_completion(0)
+                self.go_to_completion(0)
             elif go_to_last:
-                self._go_to_completion(len(completions) - 1)
+                self.go_to_completion(len(completions) - 1)
             else:
-                self._go_to_completion(None)
+                self.go_to_completion(None)
 
         else:
             self.complete_state = None
@@ -680,7 +686,7 @@ class Buffer(object):
 
         self.set_completions(completions=completions[::-1])
 
-    def _go_to_completion(self, index):
+    def go_to_completion(self, index):
         """
         Select a completion from the list of current completions.
         """
