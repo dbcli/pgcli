@@ -1,7 +1,7 @@
 # coding=UTF-8
 
 import pytest
-from pgcli.packages.pgspecial import PGSpecial
+from pgspecial.main import PGSpecial
 from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
 from pgcli.pgexecute import FunctionMetadata
