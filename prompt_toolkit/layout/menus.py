@@ -257,6 +257,15 @@ class MultiColumnCompletionMenuControl(UIControl):
         self.token = Token.Menu.Completions
         self.scroll = 0
 
+        # Info of last rendering.
+        self._rendered_rows = 0
+        self._rendered_columns = 0
+        self._total_columns = 0
+        self._render_pos_to_completion = {}
+        self._render_left_arrow = False
+        self._render_right_arrow = False
+        self._render_width = 0
+
     def reset(self):
         self.scroll = 0
 
@@ -295,6 +304,7 @@ class MultiColumnCompletionMenuControl(UIControl):
         """
         complete_state = cli.current_buffer.complete_state
         column_width = self._get_column_width(complete_state)
+        self._render_pos_to_completion = {}
 
         screen = Screen()
 
@@ -332,6 +342,9 @@ class MultiColumnCompletionMenuControl(UIControl):
             selected_column = (complete_state.complete_index or 0) // height
             self.scroll = min(selected_column, max(self.scroll, selected_column - visible_columns + 1))
 
+            render_left_arrow = self.scroll > 0
+            render_right_arrow = self.scroll < len(rows_[0]) - visible_columns
+
             # Write completions to screen.
             tokens = []
 
@@ -339,13 +352,17 @@ class MultiColumnCompletionMenuControl(UIControl):
                 middle_row = row_index == len(rows_) // 2
 
                 # Draw left arrow if we have hidden completions on the left.
-                if self.scroll > 0:
+                if render_left_arrow:
                     tokens += [(self.token.ProgressBar, '<' if middle_row else ' ')]
 
                 # Draw row content.
                 for column_index, c in enumerate(row[self.scroll:][:visible_columns]):
                     if c is not None:
                         tokens += self._get_menu_item_tokens(c, is_current_completion(c), column_width)
+
+                        # Remember render position for mouse click handler.
+                        for x in range(column_width):
+                            self._render_pos_to_completion[(column_index * column_width + x, row_index)] = c
                     else:
                         tokens += [(self.token.Completion, ' ' * column_width)]
 
@@ -353,13 +370,20 @@ class MultiColumnCompletionMenuControl(UIControl):
                 tokens += [(self.token.Completion, ' ')]
 
                 # Draw right arrow if we have hidden completions on the right.
-                if self.scroll < len(rows_[0]) - visible_columns:
+                if render_right_arrow:
                     tokens += [(self.token.ProgressBar, '>' if middle_row else ' ')]
 
                 # Newline.
                 tokens += [(self.token.ProgressBar, '\n')]
 
             screen.write_data(tokens, width)
+
+        self._rendered_rows = height
+        self._rendered_columns = visible_columns
+        self._total_columns = len(columns_)
+        self._render_left_arrow = render_left_arrow
+        self._render_right_arrow = render_right_arrow
+        self._render_width = column_width * visible_columns + render_left_arrow + render_right_arrow + 1
 
         return screen
 
@@ -379,6 +403,46 @@ class MultiColumnCompletionMenuControl(UIControl):
         padding = ' ' * (width - tw - 1)
 
         return [(token, ' %s%s' % (text, padding))]
+
+    def mouse_handler(self, cli, mouse_event):
+        """
+        Handle scoll and click events.
+        """
+        b = cli.current_buffer
+
+        def scroll_left():
+            b.complete_previous(count=self._rendered_rows, disable_wrap_around=True)
+            self.scroll = max(0, self.scroll - 1)
+
+        def scroll_right():
+            b.complete_next(count=self._rendered_rows, disable_wrap_around=True)
+            self.scroll = min(self._total_columns - self._rendered_columns, self.scroll + 1)
+
+        if mouse_event.event_type == MouseEventTypes.SCROLL_DOWN:
+            scroll_right()
+
+        elif mouse_event.event_type == MouseEventTypes.SCROLL_UP:
+            scroll_left()
+
+        elif mouse_event.event_type == MouseEventTypes.MOUSE_UP:
+            x = mouse_event.position.x
+            y = mouse_event.position.y
+
+            # Mouse click on left arrow.
+            if x == 0:
+                if self._render_left_arrow:
+                    scroll_left()
+
+            # Mouse click on right arrow.
+            elif x == self._render_width - 1:
+                if self._render_right_arrow:
+                    scroll_right()
+
+            # Mouse click on completion.
+            else:
+                completion = self._render_pos_to_completion.get((x, y))
+                if completion:
+                    b.apply_completion(completion)
 
 
 class MultiColumnCompletionsMenu(HSplit):

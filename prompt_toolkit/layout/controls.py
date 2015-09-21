@@ -62,6 +62,18 @@ class UIControl(with_metaclass(ABCMeta, object)):
         """
         return NotImplemented
 
+    def move_cursor_down(self, cli):
+        """
+        Request to move the cursor down.
+        This happens when scrolling down and the cursor is completely at the
+        top.
+        """
+
+    def move_cursor_up(self, cli):
+        """
+        Request to move the cursor up.
+        """
+
 
 class _SimpleLRUCache(object):
     """
@@ -468,3 +480,11 @@ class BufferControl(UIControl):
                 else:
                     # Don't handle scroll events here.
                     return NotImplemented
+
+    def move_cursor_down(self, cli):
+        b = self._buffer(cli)
+        b.cursor_position += b.document.get_cursor_down_position()
+
+    def move_cursor_up(self, cli):
+        b = self._buffer(cli)
+        b.cursor_position += b.document.get_cursor_up_position()

@@ -690,6 +690,7 @@ class Buffer(object):
         """
         Select a completion from the list of current completions.
         """
+        assert index is None or isinstance(index, int)
         assert self.complete_state
 
         # Set new completion
@@ -701,6 +702,21 @@ class Buffer(object):
 
         # (changing text/cursor position will unset complete_state.)
         self.complete_state = state
+
+    def apply_completion(self, completion):
+        """
+        Insert a given completion.
+        """
+        assert isinstance(completion, Completion)
+
+        # If there was already a completion active, cancel that one.
+        if self.complete_state:
+            self.go_to_completion(None)
+        self.complete_state = None
+
+        # Insert text from the given completion.
+        self.delete_before_cursor(-completion.start_position)
+        self.insert_text(completion.text)
 
     def _set_history_search(self):
         """ Set `history_search_text`. """

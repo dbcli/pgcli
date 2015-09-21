@@ -13,7 +13,7 @@ from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimens
 from .controls import UIControl, TokenListControl
 from .margins import Margin
 from prompt_toolkit.filters import to_cli_filter
-from prompt_toolkit.mouse_events import MouseEvent
+from prompt_toolkit.mouse_events import MouseEvent, MouseEventTypes
 
 __all__ = (
     'HSplit',
@@ -729,11 +729,18 @@ class Window(Layout):
             absolute coordinates into relative coordinates. """
             position = mouse_event.position
 
-            return self.content.mouse_handler(
+            # Call the mouse handler of the UIControl first.
+            result = self.content.mouse_handler(
                 cli, MouseEvent(
                     position=Point(x=position.x - write_position.xpos - sum(left_margin_widths),
                                    y=position.y - write_position.ypos + self.vertical_scroll),
                     event_type=mouse_event.event_type))
+
+            # If it returns NotImplemented, handle it here.
+            if result == NotImplemented:
+                return self._mouse_handler(cli, mouse_event)
+
+            return result
 
         mouse_handlers.set_mouse_handler_for_range(
                 x_min=write_position.xpos + sum(left_margin_widths),
@@ -901,6 +908,36 @@ class Window(Layout):
             right=scroll_offset_right)
 
         return applied_scroll_offsets
+
+    def _mouse_handler(self, cli, mouse_event):
+        """
+        Mouse handler. Called when the UI control doesn't handle this
+        particular event.
+        """
+        if mouse_event.event_type == MouseEventTypes.SCROLL_DOWN:
+            self._scroll_down(cli)
+        elif mouse_event.event_type == MouseEventTypes.SCROLL_UP:
+            self._scroll_up(cli)
+
+    def _scroll_down(self, cli):
+        " Scroll window down. "
+        info = self.render_info
+
+        if self.vertical_scroll < info.content_height - info.window_height:
+            if info.cursor_position.y <= info.configured_scroll_offsets.top:
+                self.content.move_cursor_down(cli)
+
+            self.vertical_scroll += 1
+
+    def _scroll_up(self, cli):
+        " Scroll window up. "
+        info = self.render_info
+
+        if info.vertical_scroll > 0:
+            if info.cursor_position.y >= info.window_height - 1 - info.configured_scroll_offsets.bottom:
+                self.content.move_cursor_up(cli)
+
+            self.vertical_scroll -= 1
 
     def walk(self):
         # Only yield self. A window doesn't have children.

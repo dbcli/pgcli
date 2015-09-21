@@ -5,13 +5,11 @@ from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import CLIFilter, Always, HasSelection, Condition
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.screen import Point
-from prompt_toolkit.layout.utils import find_window_for_buffer_name
 from prompt_toolkit.mouse_events import MouseEventTypes, MouseEvent
 from prompt_toolkit.renderer import HeightIsUnknownError
 from prompt_toolkit.utils import suspend_to_background_supported
 
 from .utils import create_handle_decorator
-from .scroll import scroll_one_line_up, scroll_one_line_down
 
 
 __all__ = (
@@ -396,21 +394,8 @@ def load_basic_bindings(registry, filter=Always()):
 
             # Call the mouse handler from the renderer.
             handler = event.cli.renderer.mouse_handlers.mouse_handlers[x,y]
-            result = handler(event.cli, MouseEvent(position=Point(x=x, y=y),
-                                                   event_type=mouse_event))
-
-            # When the handler from the `UIControl` doesn't handle this event,
-            # handle it here. -> e.g. scrolling.
-            if result == NotImplemented and mouse_event in (
-                MouseEventTypes.SCROLL_UP, MouseEventTypes.SCROLL_DOWN):
-
-                w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
-
-                if w:
-                    if mouse_event == MouseEventTypes.SCROLL_DOWN:
-                        scroll_one_line_down(event)
-                    else:
-                        scroll_one_line_up(event)
+            handler(event.cli, MouseEvent(position=Point(x=x, y=y),
+                                          event_type=mouse_event))
 
 
 def load_basic_system_bindings(registry, filter=Always()):
