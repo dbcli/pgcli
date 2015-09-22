@@ -268,6 +268,9 @@ class Renderer(object):
         self.output.disable_mouse_support()
         self._mouse_support_enabled = False
 
+        # Flush output. `disable_mouse_support` needs to write to stdout.
+        self.output.flush()
+
     @property
     def height_is_known(self):
         """
