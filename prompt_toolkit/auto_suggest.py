@@ -50,11 +50,12 @@ class AutoSuggestFromHistory(AutoSuggest):
     """
     def get_suggestion(self, cli, buffer, document):
         history = buffer.history
-        text = document.text
 
-        # Only create a suggestion when the buffer is not empty
-        # and the buffer has only one line of input.
-        if text and not '\n' in text:
+        # Consider only the last line for the suggestion.
+        text = document.text.rsplit('\n', 1)[-1]
+
+        # Only create a suggestion when this is not an empty line.
+        if text.strip():
             # Find first matching line in history.
             for string in reversed(list(history)):
                 for line in reversed(string.splitlines()):
