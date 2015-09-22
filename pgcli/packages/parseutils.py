@@ -1,6 +1,7 @@
 from __future__ import print_function
 import re
 import sqlparse
+from collections import namedtuple
 from sqlparse.sql import IdentifierList, Identifier, Function
 from sqlparse.tokens import Keyword, DML, Punctuation, Token
 
@@ -61,6 +62,9 @@ def last_word(text, include='alphanum_underscore'):
             return ''
 
 
+TableReference = namedtuple('TableReference', ['schema', 'name', 'alias'])
+
+
 # This code is borrowed from sqlparse example script.
 # <url>
 def is_subselect(parsed):
@@ -71,6 +75,7 @@ def is_subselect(parsed):
                 'UPDATE', 'CREATE', 'DELETE'):
             return True
     return False
+
 
 def extract_from_part(parsed, stop_at_punctuation=True):
     tbl_prefix_seen = False
@@ -107,8 +112,9 @@ def extract_from_part(parsed, stop_at_punctuation=True):
                     tbl_prefix_seen = True
                     break
 
+
 def extract_table_identifiers(token_stream):
-    """yields tuples of (schema_name, table_name, table_alias)"""
+    """yields tuples of TableReference namedtuples"""
 
     for item in token_stream:
         if isinstance(item, IdentifierList):
@@ -121,24 +127,26 @@ def extract_table_identifiers(token_stream):
                 except AttributeError:
                     continue
                 if real_name:
-                    yield (schema_name, real_name, identifier.get_alias())
+                    yield TableReference(schema_name, real_name,
+                                         identifier.get_alias())
         elif isinstance(item, Identifier):
             real_name = item.get_real_name()
             schema_name = item.get_parent_name()
 
             if real_name:
-                yield (schema_name, real_name, item.get_alias())
+                yield TableReference(schema_name, real_name, item.get_alias())
             else:
                 name = item.get_name()
-                yield (None, name, item.get_alias() or name)
+                yield TableReference(None, name, item.get_alias() or name)
         elif isinstance(item, Function):
-            yield (None, item.get_name(), item.get_name())
+            yield TableReference(None, item.get_name(), item.get_name())
+
 
 # extract_tables is inspired from examples in the sqlparse lib.
 def extract_tables(sql):
     """Extract the table names from an SQL statment.
 
-    Returns a list of (schema, table, alias) tuples
+    Returns a list of TableReference namedtuples
 
     """
     parsed = sqlparse.parse(sql)
