@@ -346,9 +346,11 @@ class Renderer(object):
 
         if needs_mouse_support and not self._mouse_support_enabled:
             output.enable_mouse_support()
+            self._mouse_support_enabled = True
 
         elif not needs_mouse_support and self._mouse_support_enabled:
             output.disable_mouse_support()
+            self._mouse_support_enabled = False
 
         # Create screen and write layout to it.
         size = output.get_size()
