@@ -2,9 +2,10 @@
 
 import pytest
 from pgspecial.main import PGSpecial
+from pgcli.packages.function_metadata import FunctionMetadata
 from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
-from pgcli.pgexecute import FunctionMetadata
+
 
 @dbtest
 def test_conn(executor):
