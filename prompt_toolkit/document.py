@@ -6,7 +6,7 @@ import re
 import six
 import string
 
-from .selection import SelectionType
+from .selection import SelectionType, SelectionState
 
 __all__ = ('Document',)
 
@@ -42,6 +42,7 @@ class Document(object):
 
     def __init__(self, text='', cursor_position=None, selection=None):
         assert isinstance(text, six.text_type), 'Got %r' % text
+        assert selection is None or isinstance(selection, SelectionState)
 
         # Check cursor position. It can also be right after the end. (Where we
         # insert text.)
@@ -596,3 +597,32 @@ class Document(object):
                 break
 
         return count
+
+    # Modifiers.
+
+    def insert_after(self, text):
+        """
+        Create a new document, with this text inserted after the buffer.
+        It keeps selection ranges and cursor position in sync.
+        """
+        return Document(
+                text=self.text + text,
+                cursor_position=self.cursor_position,
+                selection=self.selection)
+
+    def insert_before(self, text):
+        """
+        Create a new document, with this text inserted before the buffer.
+        It keeps selection ranges and cursor position in sync.
+        """
+        selection_state = self.selection
+
+        if selection_state:
+            selection_state = SelectionState(
+                original_cursor_position=selection_state.original_cursor_position + len(text),
+                type=selection_state.type)
+
+        return Document(
+                text=text + self.text,
+                cursor_position=self.cursor_position + len(text),
+                selection=selection_state)

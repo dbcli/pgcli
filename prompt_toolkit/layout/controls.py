@@ -276,12 +276,11 @@ class BufferControl(UIControl):
         screen = self.create_screen(cli, width, None)
         return screen.height
 
-    def _get_input_tokens(self, cli, buffer, document):
+    def _get_input_tokens(self, cli, document):
         """
         Tokenize input text for highlighting.
         Return (tokens, source_to_display, display_to_source) tuple.
 
-        :param buffer: The Buffer instance.
         :param document: The document to be shown. This can be `buffer.document`
                          but could as well be a different one, in case we are
                          searching through the history. (Buffer.document_for_search)
@@ -301,8 +300,11 @@ class BufferControl(UIControl):
             source_to_display_functions = []
             display_to_source_functions = []
 
+            d_ = document  # Each processor receives the document of the previous one.
+
             for p in self.input_processors:
-                transformation  = p.apply_transformation(cli, buffer, tokens)
+                transformation  = p.apply_transformation(cli, d_, tokens)
+                d_ = transformation.document
                 assert isinstance(transformation, Transformation)
 
                 tokens = transformation.tokens
@@ -329,7 +331,7 @@ class BufferControl(UIControl):
             document.text,
 
             # Include invalidation_hashes from all processors.
-            tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),
+            tuple(p.invalidation_hash(cli, document) for p in self.input_processors),
         )
 
         return self._token_lru_cache.get(key, get)
@@ -363,7 +365,7 @@ class BufferControl(UIControl):
             # Get tokens
             # Note: we add the space character at the end, because that's where
             #       the cursor can also be.
-            input_tokens, source_to_display, display_to_source = self._get_input_tokens(cli, buffer, document)
+            input_tokens, source_to_display, display_to_source = self._get_input_tokens(cli, document)
             input_tokens += [(Token, ' ')]
 
             indexes_to_pos = screen.write_data(input_tokens, width=wrap_width)
@@ -417,7 +419,7 @@ class BufferControl(UIControl):
             wrap_width,
 
             # Include invalidation_hashes from all processors.
-            tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),
+            tuple(p.invalidation_hash(cli, document) for p in self.input_processors),
         )
 
         # Get from cache, or create if this doesn't exist yet.
