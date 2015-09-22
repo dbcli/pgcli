@@ -276,7 +276,7 @@ class BufferControl(UIControl):
         screen = self.create_screen(cli, width, None)
         return screen.height
 
-    def _get_input_tokens(self, cli, buffer):
+    def _get_input_tokens(self, cli, buffer, document):
         """
         Tokenize input text for highlighting.
         Return (tokens, source_to_display, display_to_source) tuple.
@@ -284,11 +284,11 @@ class BufferControl(UIControl):
         :param buffer: The Buffer instance.
         :param document: The document to be shown. This can be `buffer.document`
                          but could as well be a different one, in case we are
-                         searching through the history.
+                         searching through the history. (Buffer.document_for_search)
         """
         def get():
             # Call lexer.
-            tokens = list(self.lexer.get_tokens(cli, buffer.document.text))
+            tokens = list(self.lexer.get_tokens(cli, document.text))
 
             # 'Explode' tokens in characters.
             # (Some input processors -- like search/selection highlighter --
@@ -326,7 +326,7 @@ class BufferControl(UIControl):
             return tokens, source_to_display, display_to_source
 
         key = (
-            buffer.document.text,
+            document.text,
 
             # Include invalidation_hashes from all processors.
             tuple(p.invalidation_hash(cli, buffer) for p in self.input_processors),
@@ -363,7 +363,7 @@ class BufferControl(UIControl):
             # Get tokens
             # Note: we add the space character at the end, because that's where
             #       the cursor can also be.
-            input_tokens, source_to_display, display_to_source = self._get_input_tokens(cli, buffer)
+            input_tokens, source_to_display, display_to_source = self._get_input_tokens(cli, buffer, document)
             input_tokens += [(Token, ' ')]
 
             indexes_to_pos = screen.write_data(input_tokens, width=wrap_width)

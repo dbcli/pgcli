@@ -14,6 +14,7 @@ from pygments.token import Token
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SEARCH_BUFFER
 from prompt_toolkit.filters import to_cli_filter, Never
+from prompt_toolkit.layout.utils import token_list_to_text
 
 from .utils import token_list_len
 
@@ -98,12 +99,17 @@ class HighlightSearchProcessor(Processor):
     def apply_transformation(self, cli, buffer, tokens):
         search_text = self._get_search_text(cli)
         ignore_case = cli.is_ignoring_case
-        document = buffer.document
+
+        # Create document for the received tokens. (We can't use
+        # `buffer.document` because, when search is active, `BufferControl`
+        # will give us `Buffer.document_for_search` which could contain
+        # something different.)
+        document = Document(token_list_to_text(tokens))
 
         if search_text and not cli.is_returning:
             # For each search match, replace the Token.
             for index in document.find_all(search_text, ignore_case=ignore_case):
-                if index == document.cursor_position:
+                if index == buffer.document.cursor_position:
                     token = Token.SearchMatch.Current
                 else:
                     token = Token.SearchMatch

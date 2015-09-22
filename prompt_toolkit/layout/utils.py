@@ -5,6 +5,7 @@ from prompt_toolkit.utils import get_cwidth
 __all__ = (
     'token_list_len',
     'token_list_width',
+    'token_list_to_text',
     'explode_tokens',
     'find_window_for_buffer_name',
 )
@@ -27,6 +28,13 @@ def token_list_width(tokenlist):
     :param tokenlist: List of (token, text) tuples.
     """
     return sum(get_cwidth(c) for k, word in tokenlist for c in word)
+
+
+def token_list_to_text(tokenlist):
+    """
+    Concatenate all the text parts again.
+    """
+    return ''.join(v for k, v in tokenlist)
 
 
 def iter_token_lines(tokenlist):
