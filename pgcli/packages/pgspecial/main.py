@@ -32,13 +32,14 @@ class PGSpecial(object):
 
         self.timing_enabled = False
         self.expanded_output = False
+        self.auto_expand = False
         self.pager = os.environ.get('PAGER', '')
 
         self.register(self.show_help, '\\?', '\\?', 'Show Help.',
                       arg_type=NO_QUERY)
 
         self.register(self.toggle_expanded_output, '\\x', '\\x',
-                      'Toggle expanded output.', arg_type=NO_QUERY)
+                      'Toggle expanded output.', arg_type=PARSED_QUERY)
 
         self.register(self.toggle_timing, '\\timing', '\\timing',
                       'Toggle timing of commands.', arg_type=NO_QUERY)
@@ -80,10 +81,16 @@ class PGSpecial(object):
                 result.append((value.syntax, value.description))
         return [(None, result, headers, None)]
 
-    def toggle_expanded_output(self):
-        self.expanded_output = not self.expanded_output
-        message = u"Expanded display is "
-        message += u"on." if self.expanded_output else u"off."
+    def toggle_expanded_output(self, pattern, **_):
+        if pattern.strip() == "auto":
+            self.auto_expand = True
+            self.expanded_output = False
+            message = u"Expanded display is used automatically."
+        else:
+            self.expanded_output = not (self.expanded_output or self.auto_expand)
+            self.auto_expand = self.expanded_output
+            message = u"Expanded display is "
+            message += u"on." if self.expanded_output else u"off."
         return [(None, None, None, message)]
 
     def toggle_timing(self):
@@ -105,6 +112,35 @@ class PGSpecial(object):
             msg = 'PAGER set to %s.' % pattern
 
         return [(None, None, None, msg)]
+
+@export
+def is_wider_than_terminal(row):
+    line_len = sum([len(x) for x in row]) + (len(row)*3) + 2
+    return line_len > get_terminal_width() - 4
+
+def get_terminal_width():
+# From http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
+    import os
+    env = os.environ
+    def ioctl_GWINSZ(fd):
+        try:
+            import fcntl, termios, struct, os
+            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
+                '1234'))
+        except:
+            return
+        return cr
+    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
+    if not cr:
+        try:
+            fd = os.open(os.ctermid(), os.O_RDONLY)
+            cr = ioctl_GWINSZ(fd)
+            os.close(fd)
+        except:
+            pass
+    if not cr:
+        cr = (env.get('LINES', 25), env.get('COLUMNS', 80))
+    return int(cr[1])
 
 @export
 def parse_special_command(sql):
