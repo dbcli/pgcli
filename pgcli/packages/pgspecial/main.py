@@ -82,15 +82,21 @@ class PGSpecial(object):
         return [(None, result, headers, None)]
 
     def toggle_expanded_output(self, pattern, **_):
-        if pattern.strip() == "auto":
+        flag = pattern.strip()
+        if flag == "auto":
             self.auto_expand = True
             self.expanded_output = False
-            message = u"Expanded display is used automatically."
+            return [(None, None, None, u"Expanded display is used automatically.")]
+        elif flag == "off":
+            self.expanded_output = False
+        elif flag == "on":
+            self.expanded_output = True
         else:
             self.expanded_output = not (self.expanded_output or self.auto_expand)
-            self.auto_expand = self.expanded_output
-            message = u"Expanded display is "
-            message += u"on." if self.expanded_output else u"off."
+
+        self.auto_expand = self.expanded_output
+        message = u"Expanded display is "
+        message += u"on." if self.expanded_output else u"off."
         return [(None, None, None, message)]
 
     def toggle_timing(self):
