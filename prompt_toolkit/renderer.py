@@ -227,9 +227,9 @@ class Renderer(object):
         self._in_alternate_screen = False
         self._mouse_support_enabled = False
 
-        self.reset()
+        self.reset(_scroll=True)
 
-    def reset(self):
+    def reset(self, _scroll=False):
         # Reset position
         self._cursor_pos = Point(x=0, y=0)
 
@@ -254,8 +254,8 @@ class Renderer(object):
         self._min_available_height = 0
 
         # In case of Windown, also make sure to scroll to the current cursor
-        # position.
-        if is_windows():
+        # position. (Only when rendering the first time.)
+        if is_windows() and _scroll:
             self.output.scroll_buffer_to_prompt()
 
         # Quit alternate screen.
