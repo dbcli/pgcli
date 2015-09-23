@@ -175,7 +175,7 @@ class Buffer(object):
                  validator=None, tempfile_suffix='',
                  is_multiline=Never(), complete_while_typing=Never(),
                  enable_history_search=Never(), initial_document=None,
-                 accept_action=AcceptAction.RETURN_DOCUMENT, read_only=False,
+                 accept_action=AcceptAction.IGNORE, read_only=False,
                  on_text_changed=None, on_text_insert=None, on_cursor_position_changed=None):
 
         # Accept both filters and booleans as input.
