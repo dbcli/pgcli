@@ -612,3 +612,12 @@ def test_suggest_where_keyword(text):
 def test_named_query_completion(text, before, expected):
     suggestions = suggest_type(text, before)
     assert sorted_dicts(expected) == sorted_dicts(suggestions)
+
+
+def test_select_suggests_fields_from_function():
+    suggestions = suggest_type('SELECT  FROM func()', 'SELECT ')
+    assert sorted_dicts(suggestions) == sorted_dicts([
+            {'type': 'column', 'tables': [(None, 'func', None, True)]},
+            {'type': 'function', 'schema': []},
+            {'type': 'keyword'}
+            ])
