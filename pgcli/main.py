@@ -476,9 +476,11 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
         print('Version:', __version__)
         sys.exit(0)
 
-    if not os.path.exists(os.path.expanduser('~/.config/pgcli')):
-        os.makedirs(os.path.expanduser('~/.config/pgcli'))
+    config_dir = os.path.dirname(config_location())
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
 
+    # Migrate the config file from old location.
     if os.path.exists(os.path.expanduser('~/.pgclirc')):
         if not os.path.exists(config_location()):
             shutil.move(os.path.expanduser('~/.pgclirc'), config_location())
