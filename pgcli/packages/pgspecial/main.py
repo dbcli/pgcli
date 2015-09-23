@@ -120,33 +120,12 @@ class PGSpecial(object):
         return [(None, None, None, msg)]
 
 @export
-def is_wider_than_terminal(row):
-    line_len = sum([len(x) for x in row]) + (len(row)*3) + 2
-    return line_len > get_terminal_width() - 4
-
-def get_terminal_width():
-# From http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
-    import os
-    env = os.environ
-    def ioctl_GWINSZ(fd):
-        try:
-            import fcntl, termios, struct, os
-            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-                '1234'))
-        except:
-            return
-        return cr
-    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
-    if not cr:
-        try:
-            fd = os.open(os.ctermid(), os.O_RDONLY)
-            cr = ioctl_GWINSZ(fd)
-            os.close(fd)
-        except:
-            pass
-    if not cr:
-        cr = (env.get('LINES', 25), env.get('COLUMNS', 80))
-    return int(cr[1])
+def content_exceeds_width(row, width):
+    # Account for 3 characters between each column
+    separator_space = (len(row)*3)
+    # Add 2 columns for a bit of buffer
+    line_len = sum([len(x) for x in row]) + separator_space + 2
+    return line_len > width
 
 @export
 def parse_special_command(sql):
