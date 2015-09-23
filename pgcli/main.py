@@ -25,7 +25,7 @@ from pygments.token import Token
 
 from .packages.tabulate import tabulate
 from .packages.expanded import expanded_table
-from .packages.pgspecial.main import (PGSpecial, NO_QUERY)
+from .packages.pgspecial.main import (PGSpecial, NO_QUERY, content_exceeds_width)
 import pgcli.packages.pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
@@ -348,9 +348,15 @@ class PGCli(object):
                                 click.secho("Aborted!", err=True, fg='red')
                                 break
 
+                        if self.pgspecial.auto_expand:
+                            max_width = self.cli.output.get_size().columns
+                        else:
+                            max_width = None
+
                         formatted = format_output(title, cur, headers, status,
                                                   self.table_format,
-                                                  self.pgspecial.expanded_output)
+                                                  self.pgspecial.expanded_output,
+                                                  max_width)
                         output.extend(formatted)
                         end = time()
                         total += end - start
@@ -498,7 +504,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
 
     pgcli.run_cli()
 
-def format_output(title, cur, headers, status, table_format, expanded=False):
+def format_output(title, cur, headers, status, table_format, expanded=False, max_width=None):
     output = []
     if title:  # Only print the title if it's not None.
         output.append(title)
@@ -507,8 +513,12 @@ def format_output(title, cur, headers, status, table_format, expanded=False):
         if expanded:
             output.append(expanded_table(cur, headers))
         else:
-            output.append(tabulate(cur, headers, tablefmt=table_format,
-                missingval='<null>'))
+            tabulated, rows = tabulate(cur, headers, tablefmt=table_format,
+                missingval='<null>')
+            if max_width and content_exceeds_width(rows[0], max_width):
+                output.append(expanded_table(rows, headers))
+            else:
+                output.append(tabulated)
     if status:  # Only print the status if it's not None.
         output.append(status)
     return output

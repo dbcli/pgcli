@@ -32,13 +32,14 @@ class PGSpecial(object):
 
         self.timing_enabled = False
         self.expanded_output = False
+        self.auto_expand = False
         self.pager = os.environ.get('PAGER', '')
 
         self.register(self.show_help, '\\?', '\\?', 'Show Help.',
                       arg_type=NO_QUERY)
 
         self.register(self.toggle_expanded_output, '\\x', '\\x',
-                      'Toggle expanded output.', arg_type=NO_QUERY)
+                      'Toggle expanded output.', arg_type=PARSED_QUERY)
 
         self.register(self.toggle_timing, '\\timing', '\\timing',
                       'Toggle timing of commands.', arg_type=NO_QUERY)
@@ -80,8 +81,20 @@ class PGSpecial(object):
                 result.append((value.syntax, value.description))
         return [(None, result, headers, None)]
 
-    def toggle_expanded_output(self):
-        self.expanded_output = not self.expanded_output
+    def toggle_expanded_output(self, pattern, **_):
+        flag = pattern.strip()
+        if flag == "auto":
+            self.auto_expand = True
+            self.expanded_output = False
+            return [(None, None, None, u"Expanded display is used automatically.")]
+        elif flag == "off":
+            self.expanded_output = False
+        elif flag == "on":
+            self.expanded_output = True
+        else:
+            self.expanded_output = not (self.expanded_output or self.auto_expand)
+
+        self.auto_expand = self.expanded_output
         message = u"Expanded display is "
         message += u"on." if self.expanded_output else u"off."
         return [(None, None, None, message)]
@@ -105,6 +118,14 @@ class PGSpecial(object):
             msg = 'PAGER set to %s.' % pattern
 
         return [(None, None, None, msg)]
+
+@export
+def content_exceeds_width(row, width):
+    # Account for 3 characters between each column
+    separator_space = (len(row)*3)
+    # Add 2 columns for a bit of buffer
+    line_len = sum([len(x) for x in row]) + separator_space + 2
+    return line_len > width
 
 @export
 def parse_special_command(sql):
