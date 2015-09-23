@@ -3,7 +3,8 @@ from ctypes.wintypes import DWORD
 
 from prompt_toolkit.key_binding.input_processor import KeyPress
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.win32_types import EventTypes, KEY_EVENT_RECORD, INPUT_RECORD, STD_INPUT_HANDLE
+from prompt_toolkit.mouse_events import MouseEventTypes
+from prompt_toolkit.win32_types import EventTypes, KEY_EVENT_RECORD, MOUSE_EVENT_RECORD, INPUT_RECORD, STD_INPUT_HANDLE
 
 __all__ = (
     'ConsoleInputReader',
@@ -130,6 +131,9 @@ class ConsoleInputReader(object):
                     if key_presses:
                         result.extend(key_presses)
 
+                elif type(ev) == MOUSE_EVENT_RECORD:
+                    result.extend(self._handle_mouse(ev))
+
         return result
 
     def _event_to_key_presses(self, ev):
@@ -198,6 +202,27 @@ class ConsoleInputReader(object):
         else:
             return []
 
+    def _handle_mouse(self, ev):
+        """
+        Handle mouse events. Return a list of KeyPress instances.
+        """
+        FROM_LEFT_1ST_BUTTON_PRESSED = 0x1
+
+        result = []
+
+        # Check event type.
+        if ev.ButtonState == FROM_LEFT_1ST_BUTTON_PRESSED:
+            # On a key press, generate both the mouse down and up event.
+            for event_type in [MouseEventTypes.MOUSE_DOWN, MouseEventTypes.MOUSE_UP]:
+                data = ';'.join([
+                   event_type,
+                   str(ev.MousePosition.X),
+                   str(ev.MousePosition.Y)
+                ])
+                result.append(KeyPress(Keys.WindowsMouseEvent, data))
+
+        return result
+
 
 class raw_mode(object):
     """
@@ -210,7 +235,7 @@ class raw_mode(object):
     `raw_input` method of `.vt100_input`.
     """
     def __init__(self, fileno=None):
-        self.handle = windll.kernel32.GetStdHandle(-10)  # STD_INPUT_HANDLE
+        self.handle = windll.kernel32.GetStdHandle(STD_INPUT_HANDLE)
 
     def __enter__(self):
         # Remember original mode.

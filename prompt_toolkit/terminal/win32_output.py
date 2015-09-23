@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
 
-from ctypes import windll, byref, ArgumentError, c_char, c_long, c_ulong, c_uint
+from ctypes import windll, byref, ArgumentError, c_char, c_long, c_ulong, c_uint, pointer
 from ctypes.wintypes import DWORD
 
 from prompt_toolkit.renderer import Output
-from prompt_toolkit.win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, COORD, SMALL_RECT
+from prompt_toolkit.win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, STD_INPUT_HANDLE, COORD, SMALL_RECT
 
 import six
 
@@ -62,7 +62,7 @@ class Win32Output(Output):
 
     def get_size(self):
         from prompt_toolkit.layout.screen import Size
-        info = self._screen_buffer_info()
+        info = self.get_win32_screen_buffer_info()
 
         # We take the width of the *visible* region as the size. Not the width
         # of the complete screen buffer. (Unless use_complete_width has been
@@ -99,7 +99,7 @@ class Win32Output(Output):
             if _DEBUG_RENDER_OUTPUT:
                 self.LOG.write(('    Error in %r %r %s\n' % (func.__name__, e, e)).encode('utf-8'))
 
-    def _screen_buffer_info(self):
+    def get_win32_screen_buffer_info(self):
         """
         Return Screen buffer info.
         """
@@ -121,14 +121,14 @@ class Win32Output(Output):
 
     def erase_screen(self):
         start = COORD(0, 0)
-        sbinfo = self._screen_buffer_info()
+        sbinfo = self.get_win32_screen_buffer_info()
         length = sbinfo.dwSize.X * sbinfo.dwSize.Y
 
         self.cursor_goto(row=0, column=0)
         self._erase(start, length)
 
     def erase_down(self):
-        sbinfo = self._screen_buffer_info()
+        sbinfo = self.get_win32_screen_buffer_info()
         size = sbinfo.dwSize
 
         start = sbinfo.dwCursorPosition
@@ -139,7 +139,7 @@ class Win32Output(Output):
     def erase_end_of_line(self):
         """
         """
-        sbinfo = self._screen_buffer_info()
+        sbinfo = self.get_win32_screen_buffer_info()
         start = sbinfo.dwCursorPosition
         length = sbinfo.dwSize.X - sbinfo.dwCursorPosition.X
 
@@ -153,7 +153,7 @@ class Win32Output(Output):
                      byref(chars_written))
 
         # Reset attributes.
-        sbinfo = self._screen_buffer_info()
+        sbinfo = self.get_win32_screen_buffer_info()
         self._winapi(windll.kernel32.FillConsoleOutputAttribute,
                      self.hconsole, sbinfo.wAttributes, length, _coord_byval(start),
                      byref(chars_written))
@@ -178,7 +178,7 @@ class Win32Output(Output):
         self._winapi(windll.kernel32.SetConsoleCursorPosition, self.hconsole, _coord_byval(pos))
 
     def cursor_up(self, amount):
-        sr = self._screen_buffer_info().dwCursorPosition
+        sr = self.get_win32_screen_buffer_info().dwCursorPosition
         pos = COORD(sr.X, sr.Y - amount)
         self._winapi(windll.kernel32.SetConsoleCursorPosition, self.hconsole, _coord_byval(pos))
 
@@ -186,7 +186,7 @@ class Win32Output(Output):
         self.cursor_up(-amount)
 
     def cursor_forward(self, amount):
-        sr = self._screen_buffer_info().dwCursorPosition
+        sr = self.get_win32_screen_buffer_info().dwCursorPosition
 #        assert sr.X + amount >= 0, 'Negative cursor position: x=%r amount=%r' % (sr.X, amount)
 
         pos = COORD(max(0, sr.X + amount), sr.Y)
@@ -224,7 +224,7 @@ class Win32Output(Output):
         self._buffer = []
 
     def get_rows_below_cursor_position(self):
-        info = self._screen_buffer_info()
+        info = self.get_win32_screen_buffer_info()
         return info.srWindow.Bottom - info.dwCursorPosition.Y + 1
 
     def scroll_buffer_to_prompt(self):
@@ -233,7 +233,7 @@ class Win32Output(Output):
         to left, with the cursor at the bottom (if possible).
         """
         # Get current window size
-        info = self._screen_buffer_info()
+        info = self.get_win32_screen_buffer_info()
         sr = info.srWindow
         cursor_pos = info.dwCursorPosition
 
@@ -279,10 +279,20 @@ class Win32Output(Output):
             self._in_alternate_screen = False
 
     def enable_mouse_support(self):
-        pass
+        ENABLE_MOUSE_INPUT = 0x10
+        handle = windll.kernel32.GetStdHandle(STD_INPUT_HANDLE)
+
+        original_mode = DWORD()
+        self._winapi(windll.kernel32.GetConsoleMode, handle, pointer(original_mode))
+        self._winapi(windll.kernel32.SetConsoleMode, handle, original_mode.value | ENABLE_MOUSE_INPUT)
 
     def disable_mouse_support(self):
-        pass
+        ENABLE_MOUSE_INPUT = 0x10
+        handle = windll.kernel32.GetStdHandle(STD_INPUT_HANDLE)
+
+        original_mode = DWORD()
+        self._winapi(windll.kernel32.GetConsoleMode, handle, pointer(original_mode))
+        self._winapi(windll.kernel32.SetConsoleMode, handle, original_mode.value & ~ ENABLE_MOUSE_INPUT)
 
     @classmethod
     def win32_refresh_window(cls):

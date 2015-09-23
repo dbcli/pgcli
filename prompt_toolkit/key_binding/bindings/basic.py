@@ -7,7 +7,7 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.screen import Point
 from prompt_toolkit.mouse_events import MouseEventTypes, MouseEvent
 from prompt_toolkit.renderer import HeightIsUnknownError
-from prompt_toolkit.utils import suspend_to_background_supported
+from prompt_toolkit.utils import suspend_to_background_supported, is_windows
 
 from .utils import create_handle_decorator
 
@@ -396,6 +396,28 @@ def load_basic_bindings(registry, filter=Always()):
             handler = event.cli.renderer.mouse_handlers.mouse_handlers[x,y]
             handler(event.cli, MouseEvent(position=Point(x=x, y=y),
                                           event_type=mouse_event))
+
+    @registry.add_binding(Keys.WindowsMouseEvent)
+    def _(event):
+        """
+        Handling of mouse events for Windows.
+        """
+        assert is_windows()  # This key binding should only exist for Windows.
+
+        # Parse data.
+        event_type, x, y = event.data.split(';')
+        x = int(x)
+        y = int(y)
+
+        # Make coordinates absolute to the visible part of the terminal.
+        screen_buffer_info = event.cli.renderer.output.get_win32_screen_buffer_info()
+        rows_above_cursor = screen_buffer_info.dwCursorPosition.Y - event.cli.renderer._cursor_pos.y
+        y -= rows_above_cursor
+
+        # Call the mouse event handler.
+        handler = event.cli.renderer.mouse_handlers.mouse_handlers[x,y]
+        handler(event.cli, MouseEvent(position=Point(x=x, y=y),
+                                      event_type=event_type))
 
 
 def load_basic_system_bindings(registry, filter=Always()):

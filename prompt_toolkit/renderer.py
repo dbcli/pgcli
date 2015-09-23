@@ -265,8 +265,9 @@ class Renderer(object):
             self._in_alternate_screen = False
 
         # Disable mouse support.
-        self.output.disable_mouse_support()
-        self._mouse_support_enabled = False
+        if self._mouse_support_enabled:
+            self.output.disable_mouse_support()
+            self._mouse_support_enabled = False
 
         # Flush output. `disable_mouse_support` needs to write to stdout.
         self.output.flush()
@@ -288,7 +289,7 @@ class Renderer(object):
         """
         if self._in_alternate_screen:
             return 0
-        elif self._min_available_height  > 0:
+        elif self._min_available_height > 0:
             total_rows = self.output.get_size().rows
             last_screen_height = self._last_screen.height if self._last_screen else 0
             return total_rows - max(self._min_available_height, last_screen_height)
