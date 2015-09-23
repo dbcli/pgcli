@@ -62,7 +62,8 @@ def last_word(text, include='alphanum_underscore'):
             return ''
 
 
-TableReference = namedtuple('TableReference', ['schema', 'name', 'alias'])
+TableReference = namedtuple('TableReference', ['schema', 'name', 'alias',
+                                               'is_function'])
 
 
 # This code is borrowed from sqlparse example script.
@@ -76,6 +77,9 @@ def is_subselect(parsed):
             return True
     return False
 
+
+def _identifier_is_function(identifier):
+    return any(isinstance(t, Function) for t in identifier.tokens)
 
 def extract_from_part(parsed, stop_at_punctuation=True):
     tbl_prefix_seen = False
@@ -113,7 +117,7 @@ def extract_from_part(parsed, stop_at_punctuation=True):
                     break
 
 
-def extract_table_identifiers(token_stream):
+def extract_table_identifiers(token_stream, allow_functions=True):
     """yields tuples of TableReference namedtuples"""
 
     for item in token_stream:
@@ -124,22 +128,28 @@ def extract_table_identifiers(token_stream):
                 try:
                     schema_name = identifier.get_parent_name()
                     real_name = identifier.get_real_name()
+                    is_function = (allow_functions and
+                                   _identifier_is_function(identifier))
                 except AttributeError:
                     continue
                 if real_name:
                     yield TableReference(schema_name, real_name,
-                                         identifier.get_alias())
+                                         identifier.get_alias(), is_function)
         elif isinstance(item, Identifier):
             real_name = item.get_real_name()
             schema_name = item.get_parent_name()
+            is_function = allow_functions and _identifier_is_function(item)
 
             if real_name:
-                yield TableReference(schema_name, real_name, item.get_alias())
+                yield TableReference(schema_name, real_name, item.get_alias(),
+                                     is_function)
             else:
                 name = item.get_name()
-                yield TableReference(None, name, item.get_alias() or name)
+                yield TableReference(None, name, item.get_alias() or name,
+                                     is_function)
         elif isinstance(item, Function):
-            yield TableReference(None, item.get_name(), item.get_name())
+            yield TableReference(None, item.get_real_name(), item.get_alias(),
+                                 allow_functions)
 
 
 # extract_tables is inspired from examples in the sqlparse lib.
@@ -159,7 +169,15 @@ def extract_tables(sql):
     # we'll identify abc, col1 and col2 as table names.
     insert_stmt = parsed[0].token_first().value.lower() == 'insert'
     stream = extract_from_part(parsed[0], stop_at_punctuation=insert_stmt)
-    return list(extract_table_identifiers(stream))
+
+    # Kludge: sqlparse mistakenly identifies insert statements as
+    # function calls due to the parenthesized column list, e.g. interprets
+    # "insert into foo (bar, baz)" as a function call to foo with arguments
+    # (bar, baz). So don't allow any identifiers in insert statements
+    # to have is_function=True
+    identifiers = extract_table_identifiers(stream,
+                                            allow_functions=not insert_stmt)
+    return list(identifiers)
 
 
 def find_prev_keyword(sql):
