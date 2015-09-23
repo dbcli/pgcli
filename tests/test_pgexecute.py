@@ -68,8 +68,8 @@ def test_functions_query(executor):
     run(executor, '''create function schema1.func2() returns int
                      language sql as $$select 2$$''')
 
-    funcs = list(executor.functions())
-    assert funcs == [('public', 'func1'), ('schema1', 'func2')]
+    funcs = set(executor.functions())
+    assert funcs >= set([('public', 'func1'), ('schema1', 'func2')])
 
 
 @dbtest

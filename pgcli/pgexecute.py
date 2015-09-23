@@ -108,7 +108,6 @@ class PGExecute(object):
         FROM 	pg_catalog.pg_proc p
                 INNER JOIN pg_catalog.pg_namespace n
                     ON n.oid = p.pronamespace
-        WHERE 	n.nspname NOT IN ('pg_catalog', 'information_schema')
         ORDER BY 1, 2'''
 
     databases_query = """SELECT d.datname as "Name",
