@@ -403,7 +403,7 @@ class ShowTrailingWhiteSpaceProcessor(Processor):
             else:
                 is_end_of_line = False
 
-        return Transformation(tokens)
+        return Transformation(document, tokens)
 
 
 class ConditionalProcessor(Processor):
