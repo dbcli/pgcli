@@ -353,6 +353,7 @@ def create_default_application(
             enable_vi_mode=vi_mode,
             enable_system_bindings=enable_system_bindings,
             enable_open_in_editor=enable_open_in_editor,
+            enable_abort_and_exit_bindings=True,
             enable_auto_suggest_bindings=True).registry
 
     # Make sure that complete_while_typing is disabled when enable_history_search

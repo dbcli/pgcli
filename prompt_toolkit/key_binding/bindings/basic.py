@@ -14,6 +14,7 @@ from .utils import create_handle_decorator
 
 __all__ = (
     'load_basic_bindings',
+    'load_abort_and_exit_bindings',
     'load_basic_system_bindings',
     'load_auto_suggestion_bindings',
 )
@@ -121,28 +122,12 @@ def load_basic_bindings(registry, filter=Always()):
 
     # CTRL keys.
 
-    @handle(Keys.ControlC)
-    def _(event):
-        """
-        Abort when Control-C has been pressed.
-        """
-        event.cli.set_abort()
-
     @handle(Keys.ControlD, filter=Condition(lambda cli: cli.current_buffer.text))
     def _(event):
         """
         Delete text before cursor.
         """
         event.current_buffer.delete(event.arg)
-
-    @handle(Keys.ControlD, filter=Condition(lambda cli:
-        cli.current_buffer_name == DEFAULT_BUFFER and
-        not cli.current_buffer.text))
-    def _(event):
-        """
-        Exit on Control-D when the input is empty.
-        """
-        event.cli.set_exit()
 
     @handle(Keys.ControlI, filter= ~has_selection)
     def _(event):
@@ -418,6 +403,31 @@ def load_basic_bindings(registry, filter=Always()):
         handler = event.cli.renderer.mouse_handlers.mouse_handlers[x,y]
         handler(event.cli, MouseEvent(position=Point(x=x, y=y),
                                       event_type=event_type))
+
+
+def load_abort_and_exit_bindings(registry, filter=Always()):
+    """
+    Basic bindings for abort (Ctrl-C) and exit (Ctrl-D).
+    """
+    assert isinstance(filter, CLIFilter)
+    handle = create_handle_decorator(registry, filter)
+
+    @handle(Keys.ControlC)
+    def _(event):
+        " Abort when Control-C has been pressed. "
+        event.cli.set_abort()
+
+    @Condition
+    def ctrl_d_condition(cli):
+        """ Ctrl-D binding is only active when the default buffer is selected
+        and empty. """
+        return (cli.current_buffer_name == DEFAULT_BUFFER and
+                not cli.current_buffer.text)
+
+    @handle(Keys.ControlD, filter=ctrl_d_condition)
+    def _(event):
+        " Exit on Control-D when the input is empty. "
+        event.cli.set_exit()
 
 
 def load_basic_system_bindings(registry, filter=Always()):

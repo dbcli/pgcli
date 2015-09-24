@@ -13,7 +13,7 @@ Usage::
 from __future__ import unicode_literals
 from prompt_toolkit.key_binding.registry import Registry
 from prompt_toolkit.key_binding.vi_state import ViState
-from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_basic_system_bindings, load_auto_suggestion_bindings
+from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_abort_and_exit_bindings, load_basic_system_bindings, load_auto_suggestion_bindings
 from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_system_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings, load_extra_emacs_page_navigation_bindings
 from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_system_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings, load_extra_vi_page_navigation_bindings
 from prompt_toolkit.filters import Never, Always, to_cli_filter
@@ -29,6 +29,7 @@ class KeyBindingManager(object):
 
     :param registry: Optional `Registry` instance.
     :param enable_vi_mode: Filter to enable Vi-mode.
+    :param enable_abort_and_exit_bindings: Filter to enable Ctrl-C and Ctrl-D.
     :param enable_system_bindings: Filter to enable the system bindings
             (meta-! prompt and Control-Z suspension.)
     :param enable_search: Filter to enable the search bindings.
@@ -40,6 +41,7 @@ class KeyBindingManager(object):
     :param enable_all: Filter to enable (or disable) all bindings.
     """
     def __init__(self, registry=None, enable_vi_mode=Never(), vi_state=None,
+                 enable_abort_and_exit_bindings=Never(),
                  enable_system_bindings=Never(), enable_search=Always(),
                  enable_open_in_editor=Never(), enable_extra_page_navigation=Never(),
                  enable_auto_suggest_bindings=Never(),
@@ -56,6 +58,7 @@ class KeyBindingManager(object):
 
         # Accept both Filters and booleans as input.
         enable_vi_mode = to_cli_filter(enable_vi_mode)
+        enable_abort_and_exit_bindings = to_cli_filter(enable_abort_and_exit_bindings)
         enable_system_bindings = to_cli_filter(enable_system_bindings)
         enable_open_in_editor = to_cli_filter(enable_open_in_editor)
         enable_extra_page_navigation = to_cli_filter(enable_extra_page_navigation)
@@ -67,6 +70,9 @@ class KeyBindingManager(object):
 
         # Load basic bindings.
         load_basic_bindings(self.registry, enable_all)
+
+        load_abort_and_exit_bindings(
+            self.registry, enable_abort_and_exit_bindings & enable_all)
 
         load_basic_system_bindings(self.registry,
             enable_system_bindings & enable_all)
