@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.52: 2015-09-24
+----------------
+
+Fixes:
+- Fix in auto suggestion: hide suggestion when accepting input.
+
+
 0.51: 2015-09-24
 ----------------
 
