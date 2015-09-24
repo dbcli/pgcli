@@ -73,7 +73,7 @@ class Application(object):
                  initial_focussed_buffer=DEFAULT_BUFFER,
                  style=None, get_style=None,
                  key_bindings_registry=None, clipboard=None,
-                 on_abort=AbortAction.RETRY, on_exit=AbortAction.IGNORE,
+                 on_abort=AbortAction.IGNORE, on_exit=AbortAction.IGNORE,
                  use_alternate_screen=False, mouse_support=False,
                  get_title=None, focus_stack=None,
 
