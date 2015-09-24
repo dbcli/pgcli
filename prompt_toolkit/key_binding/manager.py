@@ -85,7 +85,7 @@ class KeyBindingManager(object):
 
         load_extra_emacs_page_navigation_bindings(
             self.registry,
-            enable_emacs_mode & enable_extra_page_navigation)
+            enable_emacs_mode & enable_extra_page_navigation & enable_all)
 
         # Load Vi bindings.
         load_vi_bindings(self.registry, self.vi_state, enable_visual_key=~enable_open_in_editor,
@@ -105,7 +105,7 @@ class KeyBindingManager(object):
 
         load_extra_vi_page_navigation_bindings(
             self.registry,
-            enable_vi_mode & enable_extra_page_navigation)
+            enable_vi_mode & enable_extra_page_navigation & enable_all)
 
         # Suggestion bindings.
         # (This has to come at the end, because the Vi bindings also have an
@@ -113,7 +113,7 @@ class KeyBindingManager(object):
         # suggestion binding when a suggestion is available.)
         load_auto_suggestion_bindings(
             self.registry,
-            enable_auto_suggest_bindings)
+            enable_auto_suggest_bindings & enable_all)
 
     def reset(self):
         self.vi_state.reset()
