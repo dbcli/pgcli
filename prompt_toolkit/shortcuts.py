@@ -200,7 +200,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
                             HighlightSearchProcessor(preview_search=Always()),
                             HasFocus(SEARCH_BUFFER)),
                         HighlightSelectionProcessor(),
-                        ConditionalProcessor(AppendAutoSuggestion(), HasFocus(DEFAULT_BUFFER)),
+                        ConditionalProcessor(AppendAutoSuggestion(), HasFocus(DEFAULT_BUFFER) & ~IsDone()),
                         ConditionalProcessor(PasswordProcessor(), is_password)]
 
     if extra_input_processors:
