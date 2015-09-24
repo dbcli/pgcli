@@ -431,18 +431,14 @@ class WindowRenderInfo(object):
         self.configured_scroll_offsets = configured_scroll_offsets
         self.applied_scroll_offsets = applied_scroll_offsets
 
-    def input_line_to_screen_line(self, lineno):
+    @property
+    def input_line_to_screen_line(self):
         """
-        Return the line number on the screen, for this line of the input.
-        Setting the `vertical_scroll` to this number should make sure that
-        `lineno` appears at the top.
+        Return a dictionary mapping the line numbers of the screen to the one
+        of the input buffer.
         """
-        input_to_screen = dict((v, k) for k, v in
-                               self.original_screen.screen_line_to_input_line.items())
-        try:
-            return input_to_screen[lineno]
-        except KeyError:
-            return None
+        return dict((v, k) for k, v in
+                    self.original_screen.screen_line_to_input_line.items())
 
     @property
     def screen_line_to_input_line(self):

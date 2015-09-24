@@ -44,7 +44,7 @@ def scroll_forward(event, half=False):
             b.document.line_count - 1,
             b.document.cursor_position_row + int(shift))
         b.cursor_position = b.document.translate_row_col_to_index(new_document_line, 0)
-        w.vertical_scroll = w.render_info.input_line_to_screen_line(new_document_line)
+        w.vertical_scroll = w.render_info.input_line_to_screen_line[new_document_line]
 
 
 def scroll_backward(event, half=False):
@@ -63,7 +63,7 @@ def scroll_backward(event, half=False):
         # Scroll.
         new_document_line = max(0, b.document.cursor_position_row - int(shift))
         b.cursor_position = b.document.translate_row_col_to_index(new_document_line, 0)
-        w.vertical_scroll = w.render_info.input_line_to_screen_line(new_document_line)
+        w.vertical_scroll = w.render_info.input_line_to_screen_line[new_document_line]
 
 
 def scroll_half_page_down(event):

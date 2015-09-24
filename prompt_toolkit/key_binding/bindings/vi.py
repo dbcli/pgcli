@@ -986,7 +986,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
             # containing the cursor in the center.
             cursor_position_row = b.document.cursor_position_row
 
-            render_row = w.render_info.input_line_to_screen_line(cursor_position_row)
+            render_row = w.render_info.input_line_to_screen_line.get(cursor_position_row)
             if render_row is not None:
                 w.vertical_scroll = max(0, render_row)
 
@@ -1004,7 +1004,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
             # containing the cursor in the center.
             cursor_position_row = b.document.cursor_position_row
 
-            render_row = w.render_info.input_line_to_screen_line(cursor_position_row)
+            render_row = w.render_info.input_line_to_screen_line.get(cursor_position_row)
             if render_row is not None:
                 w.vertical_scroll = max(0, (render_row - w.render_info.window_height))
 
@@ -1021,7 +1021,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
             # containing the cursor in the center.
             cursor_position_row = b.document.cursor_position_row
 
-            render_row = w.render_info.input_line_to_screen_line(cursor_position_row)
+            render_row = w.render_info.input_line_to_screen_line.get(cursor_position_row)
             if render_row is not None:
                 w.vertical_scroll = max(0, int(render_row - w.render_info.window_height / 2))
 
