@@ -1,7 +1,6 @@
 from pygments.token import string_to_tokentype
-from pygments.style import Style
 from pygments.util import ClassNotFound
-from prompt_toolkit.styles import default_style_extensions
+from prompt_toolkit.styles import PygmentsStyle
 import pygments.styles
 
 
@@ -11,12 +10,8 @@ def style_factory(name, cli_style):
     except ClassNotFound:
         style = pygments.styles.get_style_by_name('native')
 
-    class PGStyle(Style):
-        styles = {}
+    custom_styles = dict([(string_to_tokentype(x), y)
+                            for x, y in cli_style.items()])
 
-        styles.update(style.styles)
-        styles.update(default_style_extensions)
-        custom_styles = dict([(string_to_tokentype(x), y)
-                                for x, y in cli_style.items()])
-        styles.update(custom_styles)
-    return PGStyle
+    return PygmentsStyle.from_defaults(style_dict=custom_styles,
+                                       pygments_style_cls=style)
