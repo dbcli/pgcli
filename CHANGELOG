@@ -1,6 +1,38 @@
 CHANGELOG
 =========
 
+0.51: 2015-09-24
+----------------
+
+New features:
+- Mouse support. (Scrolling and clicking for vt100 terminals. For Windows only
+  clicking.) Both the autocompletion menus and buffer controls respond to
+  scolling and clicking.
+- Added auto suggestions. (Like the fish shell.)
+- Stdout proxy become thread safe.
+- Linewrapping can now be disabled, instead we get horizontal scrolling.
+- Line numbering can now be relative. Like the vi 'relativenumber' option.
+
+Fixes:
+- Fixed excessive scrolling in Windows.
+- Bugfix in search highlighting.
+- Copy all words during repetition of Ctrl-W presses.
+- The 'libs' folder has been removed.
+- Fix in MultiColumnCompletionsMenu: don't create very big columns.
+
+Backwards-incompatible changes:
+- Disable search by default in KeyBindingManager.
+- Separated abort/exit key bindings. Disabled by default in KeyBindingManager.
+- 'Ignore' became the default on_abort action in `Application`.
+- 'Ignore' became the default accept_action in `Buffer`.
+- The layout processors have been refactored. The API is changed.
+- `SwitchableValidator` has been renamed to `ConditionalValidator`.
+- `WindowRenderInfo` has several incompatible changes.
+- Margins have been refactored completely. Now it's the window that has the
+  margin instead of `BufferControl`. Is is both much more performant and
+  flexible.
+
+
 0.50: 2015-09-06
 ----------------
 
