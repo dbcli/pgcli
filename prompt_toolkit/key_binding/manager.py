@@ -40,12 +40,12 @@ class KeyBindingManager(object):
     :param enable_auto_suggest_bindings: Filter to enable fish-style suggestions.
     :param enable_all: Filter to enable (or disable) all bindings.
     """
-    def __init__(self, registry=None, enable_vi_mode=Never(), vi_state=None,
-                 enable_abort_and_exit_bindings=Never(),
-                 enable_system_bindings=Never(), enable_search=Always(),
-                 enable_open_in_editor=Never(), enable_extra_page_navigation=Never(),
-                 enable_auto_suggest_bindings=Never(),
-                 enable_all=Always()):
+    def __init__(self, registry=None, enable_vi_mode=False, vi_state=None,
+                 enable_abort_and_exit_bindings=False,
+                 enable_system_bindings=False, enable_search=False,
+                 enable_open_in_editor=False, enable_extra_page_navigation=False,
+                 enable_auto_suggest_bindings=False,
+                 enable_all=True):
 
         assert registry is None or isinstance(registry, Registry)
         assert vi_state is None or isinstance(vi_state, ViState)
@@ -60,6 +60,7 @@ class KeyBindingManager(object):
         enable_vi_mode = to_cli_filter(enable_vi_mode)
         enable_abort_and_exit_bindings = to_cli_filter(enable_abort_and_exit_bindings)
         enable_system_bindings = to_cli_filter(enable_system_bindings)
+        enable_search = to_cli_filter(enable_search)
         enable_open_in_editor = to_cli_filter(enable_open_in_editor)
         enable_extra_page_navigation = to_cli_filter(enable_extra_page_navigation)
         enable_auto_suggest_bindings = to_cli_filter(enable_auto_suggest_bindings)

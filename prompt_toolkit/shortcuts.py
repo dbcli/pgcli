@@ -353,6 +353,7 @@ def create_default_application(
             enable_vi_mode=vi_mode,
             enable_system_bindings=enable_system_bindings,
             enable_open_in_editor=enable_open_in_editor,
+            enable_search=True,
             enable_abort_and_exit_bindings=True,
             enable_auto_suggest_bindings=True).registry
 
