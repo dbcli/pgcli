@@ -7,6 +7,7 @@ import sys
 import traceback
 import logging
 import threading
+import shutil
 from time import time
 from codecs import open
 
@@ -33,7 +34,7 @@ from .pgstyle import style_factory
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
 from .completion_refresher import CompletionRefresher
-from .config import write_default_config, load_config
+from .config import write_default_config, load_config, config_location
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
 from .__init__ import __version__
@@ -470,8 +471,8 @@ class PGCli(object):
 @click.option('-v', '--version', is_flag=True, help='Version of pgcli.')
 @click.option('-d', '--dbname', default='', envvar='PGDATABASE',
         help='database name to connect to.')
-@click.option('--pgclirc', default='~/.pgclirc', envvar='PGCLIRC',
-        help='Location of .pgclirc file.')
+@click.option('--pgclirc', default=config_location(), envvar='PGCLIRC',
+        help='Location of pgclirc file.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
@@ -480,6 +481,21 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
     if version:
         print('Version:', __version__)
         sys.exit(0)
+
+    config_dir = os.path.dirname(config_location())
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+
+    # Migrate the config file from old location.
+    if os.path.exists(os.path.expanduser('~/.pgclirc')):
+        if not os.path.exists(config_location()):
+            shutil.move(os.path.expanduser('~/.pgclirc'), config_location())
+            print ('Config file (~/.pgclirc) moved to new location',
+                    config_location())
+        else:
+            print ('Config file is now located at', config_location())
+            print ('Please move the existing config file ~/.pgclirc to',
+                    config_location())
 
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc)
 
