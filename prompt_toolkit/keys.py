@@ -68,6 +68,7 @@ class Keys(object):
     PageUp      = Key('<PageUp>')
     PageDown    = Key('<PageDown>')
     BackTab     = Key('<BackTab>')  # shift + tab
+    Insert      = Key('<Insert>')
 
     Tab         = ControlI
     Backspace   = ControlH

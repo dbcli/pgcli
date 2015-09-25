@@ -99,6 +99,7 @@ def load_basic_bindings(registry, filter=Always()):
     @handle(Keys.ControlRight)
     @handle(Keys.ControlUp)
     @handle(Keys.ControlDown)
+    @handle(Keys.Insert)
     def _(event):
         """
         First, for any of these keys, Don't do anything by default. Also don't

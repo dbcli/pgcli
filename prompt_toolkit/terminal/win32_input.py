@@ -69,6 +69,7 @@ class ConsoleInputReader(object):
         39: Keys.Right,
         40: Keys.Down,
 
+        45: Keys.Insert,
         46: Keys.Delete,
 
         # F-keys.

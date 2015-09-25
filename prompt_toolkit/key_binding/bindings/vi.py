@@ -229,6 +229,11 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
 
     # List of navigation commands: http://hea-www.harvard.edu/~fine/Tech/vi.html
 
+    @handle(Keys.Insert, filter=navigation_mode)
+    def _(event):
+        " Presing the Insert key. "
+        vi_state.input_mode = InputMode.INSERT
+
     @handle('a', filter=navigation_mode & ~IsReadOnly())
             # ~IsReadOnly, because we want to stay in navigation mode for
             # read-only buffers.

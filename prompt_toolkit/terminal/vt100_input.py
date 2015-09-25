@@ -98,6 +98,7 @@ ANSI_SEQUENCES = {
     '\x1b[7~': Keys.Home,  # xrvt
     '\x1b[8~': Keys.End,  # xrvt
     '\x1b[Z': Keys.BackTab,  # shift + tab
+    '\x1b[2~': Keys.Insert,
 
     '\x1bOP': Keys.F1,
     '\x1bOQ': Keys.F2,
