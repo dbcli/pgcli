@@ -23,7 +23,7 @@ setup(
         description=description,
         long_description=open('README.rst').read(),
         install_requires=[
-            'pgspecial>=1.0.0',
+            'pgspecial>=1.1.0',
             'click >= 4.1',
             'Pygments >= 2.0',  # Pygments has to be Capitalcased. WTF?
             'prompt_toolkit==0.46',
