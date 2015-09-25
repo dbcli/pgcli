@@ -4,8 +4,44 @@ import re
 import ast
 import subprocess
 import sys
+from optparse import OptionParser
 
 DEBUG = False
+CONFIRM_STEPS = False
+DRY_RUN = False
+
+
+def skip_step():
+    """
+    Asks for user's response whether to run a step. Default is yes.
+    :return: boolean
+    """
+    global CONFIRM_STEPS
+
+    if CONFIRM_STEPS:
+        choice = raw_input("--- Confirm step? (y/N) [y] ")
+        if choice.lower() == 'n':
+            return True
+    return False
+
+
+def run_step(*args):
+    """
+    Prints out the command and asks if it should be run.
+    If yes (default), runs it.
+    :param args: list of strings (command and args)
+    """
+    global DRY_RUN
+
+    cmd = args
+    print(' '.join(cmd))
+    if skip_step():
+        print('--- Skipping...')
+    elif DRY_RUN:
+        print('--- Pretending to run...')
+    else:
+        subprocess.check_output(cmd)
+
 
 def version(version_file):
     _version_re = re.compile(r'__version__\s+=\s+(.*)')
@@ -16,41 +52,31 @@ def version(version_file):
 
     return ver
 
+
 def commit_for_release(version_file, ver):
-    cmd = ['git', 'reset']
-    print(' '.join(cmd))
-    subprocess.check_output(cmd)
-    cmd = ['git', 'add', version_file]
-    print(' '.join(cmd))
-    subprocess.check_output(cmd)
-    cmd = ['git', 'commit', '--message', 'Releasing version %s' % ver]
-    print(' '.join(cmd))
-    subprocess.check_output(cmd)
+    run_step('git', 'reset')
+    run_step('git', 'add', version_file)
+    run_step('git', 'commit', '--message', 'Releasing version %s' % ver)
+
 
 def create_git_tag(tag_name):
-    cmd = ['git', 'tag', tag_name]
-    print(' '.join(cmd))
-    subprocess.check_output(cmd)
+    run_step('git', 'tag', tag_name)
+
 
 def register_with_pypi():
-    cmd = ['python', 'setup.py', 'register']
-    print(' '.join(cmd))
-    subprocess.check_output(cmd)
+    run_step('python', 'setup.py', 'register')
+
 
 def create_source_tarball():
-    cmd = ['python', 'setup.py', 'sdist']
-    print(' '.join(cmd))
-    subprocess.check_output(cmd)
+    run_step('python', 'setup.py', 'sdist')
+
 
 def push_to_github():
-    cmd = ['git', 'push', 'origin', 'master']
-    print(' '.join(cmd))
-    subprocess.check_output(cmd)
+    run_step('git', 'push', 'origin', 'master')
+
 
 def push_tags_to_github():
-    cmd = ['git', 'push', '--tags', 'origin']
-    print(' '.join(cmd))
-    subprocess.check_output(cmd)
+    run_step('git', 'push', '--tags', 'origin')
 
 
 if __name__ == '__main__':
@@ -59,9 +85,26 @@ if __name__ == '__main__':
 
     ver = version('pgcli/__init__.py')
     print('Releasing Version:', ver)
-    choice = raw_input('Are you sure? (y/N)')
+
+    parser = OptionParser()
+    parser.add_option(
+        "-c", "--confirm-steps", action="store_true", dest="confirm_steps",
+        default=False, help=("Confirm every step. If the step is not "
+                             "confirmed, it will be skipped.")
+    )
+    parser.add_option(
+        "-d", "--dry-run", action="store_true", dest="dry_run",
+        default=False, help="Print out, but not actually run any steps."
+    )
+
+    popts, pargs = parser.parse_args()
+    CONFIRM_STEPS = popts.confirm_steps
+    DRY_RUN = popts.dry_run
+
+    choice = raw_input('Are you sure? (y/N) [n] ')
     if choice.lower() != 'y':
         sys.exit(1)
+
     commit_for_release('pgcli/__init__.py', ver)
     create_git_tag('v%s' % ver)
     register_with_pypi()
