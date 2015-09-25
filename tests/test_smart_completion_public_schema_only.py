@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import pytest
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
+from pgcli.pgexecute import FunctionMetadata
 
 metadata = {
                 'tables': {
@@ -10,7 +11,10 @@ metadata = {
                     'select': ['id', 'insert', 'ABC']},
                 'views': {
                     'user_emails': ['id', 'email']},
-                'functions': ['custom_func1', 'custom_func2'],
+                'functions': [
+                    ['custom_func1', '', '', False, False, False],
+                    ['custom_func2', '', '', False, False, False],
+                    ['set_returning_func', '', '', False, False, True]],
                 'datatypes': ['custom_type1', 'custom_type2'],
             }
 
@@ -42,7 +46,8 @@ def completer():
     comp.extend_columns(columns, kind='views')
 
     # functions
-    functions = [('public', func) for func in metadata['functions']]
+    functions = [FunctionMetadata('public', *func_meta)
+                 for func_meta in metadata['functions']]
     comp.extend_functions(functions)
 
     # types
@@ -88,7 +93,8 @@ def test_schema_or_visible_table_completion(completer, complete_event):
         Completion(text='users', start_position=0, display_meta='table'),
         Completion(text='"select"', start_position=0, display_meta='table'),
         Completion(text='orders', start_position=0, display_meta='table'),
-        Completion(text='user_emails', start_position=0, display_meta='view')])
+        Completion(text='user_emails', start_position=0, display_meta='view'),
+        Completion(text='set_returning_func', start_position=0, display_meta='function')])
 
 
 def test_builtin_function_name_completion(completer, complete_event):
@@ -154,7 +160,8 @@ def test_suggested_column_names_from_visible_table(completer, complete_event):
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column'),
         Completion(text='custom_func1', start_position=0, display_meta='function'),
-        Completion(text='custom_func2', start_position=0, display_meta='function')] +
+        Completion(text='custom_func2', start_position=0, display_meta='function'),
+    Completion(text='set_returning_func', start_position=0, display_meta='function')] +
         list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
         list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
         )
@@ -238,7 +245,8 @@ def test_suggested_multiple_column_names(completer, complete_event):
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column'),
         Completion(text='custom_func1', start_position=0, display_meta='function'),
-        Completion(text='custom_func2', start_position=0, display_meta='function')] +
+        Completion(text='custom_func2', start_position=0, display_meta='function'),
+    Completion(text='set_returning_func', start_position=0, display_meta='function')] +
         list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
         list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
         )
@@ -355,6 +363,7 @@ def test_table_names_after_from(completer, complete_event):
         Completion(text='orders', start_position=0, display_meta='table'),
         Completion(text='"select"', start_position=0, display_meta='table'),
         Completion(text='user_emails', start_position=0, display_meta='view'),
+        Completion(text='set_returning_func', start_position=0, display_meta='function')
         ])
 
 def test_auto_escaped_col_names(completer, complete_event):
@@ -369,7 +378,8 @@ def test_auto_escaped_col_names(completer, complete_event):
         Completion(text='"insert"', start_position=0, display_meta='column'),
         Completion(text='"ABC"', start_position=0, display_meta='column'),
         Completion(text='custom_func1', start_position=0, display_meta='function'),
-        Completion(text='custom_func2', start_position=0, display_meta='function')] +
+        Completion(text='custom_func2', start_position=0, display_meta='function'),
+        Completion(text='set_returning_func', start_position=0, display_meta='function')] +
         list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
         list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
         )

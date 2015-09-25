@@ -4,6 +4,7 @@ import pytest
 from pgcli.packages.pgspecial import PGSpecial
 from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
+from pgcli.pgexecute import FunctionMetadata
 
 @dbtest
 def test_conn(executor):
@@ -68,8 +69,24 @@ def test_functions_query(executor):
     run(executor, '''create function schema1.func2() returns int
                      language sql as $$select 2$$''')
 
+    run(executor, '''create function func3()
+                     returns table(x int, y int) language sql
+                     as $$select 1, 2 from generate_series(1,5)$$;''')
+
+    run(executor, '''create function func4(x int) returns setof int language sql
+                     as $$select generate_series(1,5)$$;''')
+
     funcs = set(executor.functions())
-    assert funcs >= set([('public', 'func1'), ('schema1', 'func2')])
+    assert funcs >= set([
+        FunctionMetadata('public', 'func1', '',
+                         'integer', False, False, False),
+        FunctionMetadata('public', 'func3', '',
+                         'TABLE(x integer, y integer)', False, False, True),
+        FunctionMetadata('public', 'func4', 'x integer',
+                         'SETOF integer', False, False, True),
+        FunctionMetadata('schema1', 'func2', '',
+                         'integer', False, False, False),
+      ])
 
 
 @dbtest

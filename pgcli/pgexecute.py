@@ -4,9 +4,11 @@ import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
+from collections import namedtuple
 from .packages import pgspecial as special
 from .encodingutils import unicode2utf8, PY2, utf8tounicode
 import click
+
 
 _logger = logging.getLogger(__name__)
 
@@ -23,6 +25,10 @@ ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
 ext.set_wait_callback(psycopg2.extras.wait_select)
+
+FunctionMetadata = namedtuple('FunctionMetadata',
+                              ['schema_name', 'func_name', 'arg_list', 'result',
+                               'is_aggregate', 'is_window', 'is_set_returning'])
 
 
 def register_json_typecasters(conn, loads_fn):
@@ -102,13 +108,18 @@ class PGExecute(object):
         ORDER BY 1, 2, 3'''
 
     functions_query = '''
-        SELECT 	DISTINCT  --multiple dispatch means possible duplicates
-                n.nspname schema_name,
-                p.proname func_name
+        SELECT 	n.nspname schema_name,
+                p.proname func_name,
+                pg_catalog.pg_get_function_arguments(p.oid) arg_list,
+                pg_catalog.pg_get_function_result(p.oid) result,
+                p.proisagg is_aggregate,
+                p.proiswindow is_window,
+                p.proretset is_set_returning
         FROM 	pg_catalog.pg_proc p
                 INNER JOIN pg_catalog.pg_namespace n
                     ON n.oid = p.pronamespace
         ORDER BY 1, 2'''
+
 
     databases_query = """SELECT d.datname as "Name",
        pg_catalog.pg_get_userbyid(d.datdba) as "Owner",
@@ -346,13 +357,13 @@ class PGExecute(object):
             return [x[0] for x in cur.fetchall()]
 
     def functions(self):
-        """Yields tuples of (schema_name, function_name)"""
+        """Yields FunctionMetadata named tuples"""
 
         with self.conn.cursor() as cur:
             _logger.debug('Functions Query. sql: %r', self.functions_query)
             cur.execute(self.functions_query)
             for row in cur:
-                yield row
+                yield FunctionMetadata(*row)
 
     def datatypes(self):
         """Yields tuples of (schema_name, type_name)"""
