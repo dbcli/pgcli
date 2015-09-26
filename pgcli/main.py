@@ -296,7 +296,7 @@ class PGCli(object):
                                       key_bindings_registry=key_binding_manager.registry,
                                       on_exit=AbortAction.RAISE_EXCEPTION,
                                       on_abort=AbortAction.RETRY,
-                                      mouse_support=True,
+                                      mouse_support=False,
                                       ignore_case=True)
             self.cli = CommandLineInterface(application=application,
                                        eventloop=create_eventloop())
