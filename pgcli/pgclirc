@@ -44,6 +44,11 @@ syntax_style = default
 # for end are available in the REPL.
 vi = False
 
+# Enable Mouse: Enabling mouse support will allow clicking on a query to move
+# the cursor. This is useful when writing long queries and need to move back
+# and forth the query lines. 
+# Select text use (alt-click-drag)
+enable_mouse = True
 
 # Custom colors for the completion menu, toolbar, etc. 
 [colors]

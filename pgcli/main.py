@@ -81,6 +81,7 @@ class PGCli(object):
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
+        self.enable_mouse = c['main'].as_bool('enable_mouse')
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
         self.completion_refresher = CompletionRefresher()
 
@@ -296,7 +297,7 @@ class PGCli(object):
                                       key_bindings_registry=key_binding_manager.registry,
                                       on_exit=AbortAction.RAISE_EXCEPTION,
                                       on_abort=AbortAction.RETRY,
-                                      mouse_support=False,
+                                      mouse_support=self.enable_mouse,
                                       ignore_case=True)
             self.cli = CommandLineInterface(application=application,
                                        eventloop=create_eventloop())
