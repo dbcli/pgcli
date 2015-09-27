@@ -36,12 +36,25 @@ class _StyleForTokenCache(dict):
 
 
 def output_screen_diff(output, screen, current_pos, previous_screen=None, last_char=None,
-                       is_done=False, style=None):  # XXX: drop is_done
+                       is_done=False, style=None, width=0, previous_width=0):  # XXX: drop is_done
     """
-    Create diff of this screen with the previous screen.
+    Render the diff between this screen and the previous screen.
+
+    This takes two `Screen` instances. The one that represents the output like
+    it was during the last rendering and one that represents the current
+    output raster. Looking at these two `Screen` instances, this function will
+    render the difference by calling the appropriate methods of the `Output`
+    object that only paint the changes to the terminal.
 
     This is some performance-critical code which is heavily optimized.
     Don't change things without profiling first.
+
+    :param current_pos: Current cursor position.
+    :param last_char: `Char` instance that represents the output attributes of
+            the last drawn character. (Color/attributes.)
+    :param style: Pygments stylesheet.
+    :param width: The width of the terminal.
+    :param prevous_width: The width of the terminal during the last rendering.
     """
     #: Remember the last printed character.
     last_char = [last_char]  # nonlocal
@@ -80,10 +93,10 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         elif new.y < current_y:
             _output_cursor_up(current_y - new.y)
 
-        if current_x >= screen.width - 1:
+        if current_x >= width - 1:
             write('\r')
             _output_cursor_forward(new.x)
-        elif new.x < current_x or current_x >= screen.width - 1:
+        elif new.x < current_x or current_x >= width - 1:
             _output_cursor_backward(current_x - new.x)
         elif new.x > current_x:
             _output_cursor_forward(new.x - current_x)
@@ -125,7 +138,7 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
 
     # When the previous screen has a different size, redraw everything anyway.
     # Also when we are done. (We meight take up less rows, so clearing is important.)
-    if is_done or not previous_screen or previous_screen.width != screen.width:  # XXX: also consider height??
+    if is_done or not previous_screen or previous_width != width:  # XXX: also consider height??
         current_pos = move_cursor(Point(0, 0))
         reset_attributes()
         output.erase_down()
@@ -395,6 +408,8 @@ class Renderer(object):
             output, screen, self._cursor_pos,
             self._last_screen, self._last_char, is_done,
             style=style,
+            width=size.columns,
+            previous_width=(self._last_size.columns if self._last_size else 0),
             )
         self._last_screen = screen
         self._last_size = size
