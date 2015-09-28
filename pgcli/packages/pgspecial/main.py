@@ -161,7 +161,6 @@ def register_special_command(handler, command, syntax, description,
                                        case_sensitive=case_sensitive,
                                        hidden=True)
 
-
 @special_command('\\e', '\\e [file]', 'Edit the query with external editor.', arg_type=NO_QUERY)
 def doc_only():
     raise RuntimeError
