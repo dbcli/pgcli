@@ -3,7 +3,6 @@ import logging
 from collections import namedtuple
 
 from . import export
-from .helpcommands import helpcommands
 
 log = logging.getLogger(__name__)
 
@@ -41,9 +40,6 @@ class PGSpecial(object):
 
         self.register(self.toggle_expanded_output, '\\x', '\\x',
                       'Toggle expanded output.', arg_type=PARSED_QUERY)
-
-        self.register(self.show_command_help, '\\h', '\\h',
-                      'Help.', arg_type=PARSED_QUERY)
 
         self.register(self.toggle_timing, '\\timing', '\\timing',
                       'Toggle timing of commands.', arg_type=NO_QUERY)
@@ -84,32 +80,6 @@ class PGSpecial(object):
             if not value.hidden:
                 result.append((value.syntax, value.description))
         return [(None, result, headers, None)]
-
-    def show_command_help_listing(self):
-        table = chunks(sorted(helpcommands.keys()), 6)
-        return [(None, table, [], None)]
-
-    def show_command_help(self, pattern, **_):
-        command = pattern.strip().upper()
-        message = ""
-
-        if not command:
-            return self.show_command_help_listing()
-
-        if command in helpcommands:
-            helpcommand = helpcommands[command]
-
-            if "description" in helpcommand:
-                message += helpcommand["description"]
-            if "synopsis" in helpcommand:
-                message += "\nSyntax:\n"
-                message += helpcommand["synopsis"]
-        else:
-            message = "No help available for \"%s\"" % pattern
-            message += "\nTry \h with no arguments to see available help."
-
-        return [(None, None, None, message)]
-
 
     def toggle_expanded_output(self, pattern, **_):
         flag = pattern.strip()
@@ -190,9 +160,6 @@ def register_special_command(handler, command, syntax, description,
         command_dict[cmd] = SpecialCommand(handler, syntax, description, arg_type,
                                        case_sensitive=case_sensitive,
                                        hidden=True)
-def chunks(l, n):
-    n = max(1, n)
-    return [l[i:i + n] for i in range(0, len(l), n)]
 
 @special_command('\\e', '\\e [file]', 'Edit the query with external editor.', arg_type=NO_QUERY)
 def doc_only():
