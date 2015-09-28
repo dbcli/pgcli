@@ -3,10 +3,11 @@ import logging
 import re
 import itertools
 import operator
+from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
-from .packages.pgspecial.namedqueries import namedqueries
+from .config import load_config
 
 try:
     from collections import Counter
@@ -15,6 +16,9 @@ except ImportError:
     from .packages.counter import Counter
 
 _logger = logging.getLogger(__name__)
+
+NamedQueries.instance = NamedQueries.from_config(load_config('~/.pgclirc'))
+
 
 class PGCompleter(Completer):
     keywords = ['ACCESS', 'ADD', 'ALL', 'ALTER TABLE', 'AND', 'ANY', 'AS',
@@ -141,7 +145,7 @@ class PGCompleter(Completer):
             self.all_completions.add(column)
 
     def extend_functions(self, func_data):
-        
+
         # func_data is a list of function metadata namedtuples
         # with fields schema_name, func_name, arg_list, result,
         # is_aggregate, is_window, is_set_returning
@@ -152,7 +156,7 @@ class PGCompleter(Completer):
 
         for f in func_data:
             schema, func = self.escaped_names([f.schema_name, f.func_name])
-            
+
             if func in metadata[schema]:
                 metadata[schema][func].append(f)
             else:
@@ -394,9 +398,9 @@ class PGCompleter(Completer):
                     completions.extend(types)
 
             elif suggestion['type'] == 'namedquery':
-                queries = self.find_matches(word_before_cursor, namedqueries.list(),
-                                            start_only=False, fuzzy=True,
-                                            meta='named query')
+                queries = self.find_matches(
+                    word_before_cursor, NamedQueries.instance.list(),
+                    start_only=False, fuzzy=True, meta='named query')
                 completions.extend(queries)
 
         return completions

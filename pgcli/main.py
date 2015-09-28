@@ -26,8 +26,8 @@ from pygments.token import Token
 
 from .packages.tabulate import tabulate
 from .packages.expanded import expanded_table
-from .packages.pgspecial.main import (PGSpecial, NO_QUERY, content_exceeds_width)
-import pgcli.packages.pgspecial as special
+from pgspecial.main import (PGSpecial, NO_QUERY, content_exceeds_width)
+import pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory
