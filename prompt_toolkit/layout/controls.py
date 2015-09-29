@@ -19,6 +19,8 @@ from .processors import Processor, Transformation
 from .screen import Screen, Char, Point
 from .utils import token_list_width
 
+import time
+
 __all__ = (
     'TokenListControl',
     'FillControl',
@@ -250,6 +252,7 @@ class BufferControl(UIControl):
         self._screen_lru_cache = _SimpleLRUCache(maxsize=8)
 
         self._xy_to_cursor_position = None
+        self._last_click_timestamp = None
 
     def _buffer(self, cli):
         """
@@ -479,6 +482,17 @@ class BufferControl(UIControl):
                     if abs(buffer.cursor_position - pos) > 1:
                         buffer.start_selection(selection_type=SelectionType.CHARACTERS)
                         buffer.cursor_position = pos
+
+                    # Select word around cursor on double click.
+                    # Two MOUSE_UP events in a short timespan are considered a double click.
+                    double_click = self._last_click_timestamp and time.time() - self._last_click_timestamp < .3
+                    self._last_click_timestamp = time.time()
+
+                    if double_click:
+                        start, end = buffer.document.find_boundaries_of_current_word()
+                        buffer.cursor_position += start
+                        buffer.start_selection(selection_type=SelectionType.CHARACTERS)
+                        buffer.cursor_position += end - start
                 else:
                     # Don't handle scroll events here.
                     return NotImplemented
