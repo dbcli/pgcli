@@ -27,8 +27,9 @@ ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 ext.set_wait_callback(psycopg2.extras.wait_select)
 
 FunctionMetadata = namedtuple('FunctionMetadata',
-                              ['schema_name', 'func_name', 'arg_list', 'result',
-                               'is_aggregate', 'is_window', 'is_set_returning'])
+                              ['schema_name', 'func_name', 'arg_list',
+                               'return_type', 'is_aggregate', 'is_window',
+                               'is_set_returning'])
 
 
 def register_json_typecasters(conn, loads_fn):
@@ -111,7 +112,7 @@ class PGExecute(object):
         SELECT 	n.nspname schema_name,
                 p.proname func_name,
                 pg_catalog.pg_get_function_arguments(p.oid) arg_list,
-                pg_catalog.pg_get_function_result(p.oid) result,
+                pg_catalog.pg_get_function_result(p.oid) return_type,
                 p.proisagg is_aggregate,
                 p.proiswindow is_window,
                 p.proretset is_set_returning
