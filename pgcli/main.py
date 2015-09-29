@@ -526,7 +526,7 @@ def format_output(title, cur, headers, status, table_format, expanded=False, max
         output.append(title)
     if cur:
         headers = [utf8tounicode(x) for x in headers]
-        if expanded:
+        if expanded and headers:
             output.append(expanded_table(cur, headers))
         else:
             tabulated, rows = tabulate(cur, headers, tablefmt=table_format,
