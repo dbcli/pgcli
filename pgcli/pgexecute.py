@@ -244,18 +244,19 @@ class PGExecute(object):
             # Remove spaces, eol and semi-colons.
             sql = sql.rstrip(';')
 
-            if pgspecial:
-                # First try to run each query as special
-                try:
+            try:
+                if pgspecial:
+                    # First try to run each query as special
                     _logger.debug('Trying a pgspecial command. sql: %r', sql)
                     cur = self.conn.cursor()
-                    for result in pgspecial.execute(cur, sql):
-                        yield result
-                    return
-                except special.CommandNotFound:
-                    pass
+                    try:
+                        for result in pgspecial.execute(cur, sql):
+                            yield result
+                        continue
+                    except special.CommandNotFound:
+                        pass
 
-            try:
+                # Not a special command, so execute as normal sql
                 yield self.execute_normal_sql(sql)
             except psycopg2.ProgrammingError as e:
                 _logger.error("sql: %r, error: %r", sql, e)
