@@ -275,6 +275,11 @@ def load_basic_bindings(registry, filter=Always()):
     def _(event):
         event.current_buffer.delete(count=event.arg)
 
+    @handle(Keys.Delete, filter=has_selection)
+    def _(event):
+        data = event.current_buffer.cut_selection()
+        event.cli.clipboard.set_data(data)
+
     @handle(Keys.Any, filter= ~has_selection, save_before=if_no_repeat)
     def _(event):
         """
