@@ -121,9 +121,10 @@ class TokenListControl(UIControl):
         upper left corner of this control, unless `get_token` returns a
         `Token.SetCursorPosition` token somewhere in the token list, then the
         cursor will be shown there.
+    :param wrap_lines: `bool` or `CLIFilter`: Wrap long lines.
     """
     def __init__(self, get_tokens, default_char=None, align_right=False, align_center=False,
-                 has_focus=False):
+                 has_focus=False, wrap_lines=True):
         assert default_char is None or isinstance(default_char, Char)
 
         self.get_tokens = get_tokens
@@ -131,6 +132,7 @@ class TokenListControl(UIControl):
         self.align_right = to_cli_filter(align_right)
         self.align_center = to_cli_filter(align_center)
         self._has_focus_filter = to_cli_filter(has_focus)
+        self.wrap_lines = to_cli_filter(wrap_lines)
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.get_tokens)
@@ -156,6 +158,7 @@ class TokenListControl(UIControl):
 
         # Get tokens
         tokens = self.get_tokens(cli)
+        wrap_lines = self.wrap_lines(cli)
 
         # Only call write_data when we actually have tokens.
         # (Otherwise the screen height will go up from 0 to 1 while we don't
@@ -172,7 +175,7 @@ class TokenListControl(UIControl):
                     padding = int(padding / 2)
                 tokens = [(self.default_char.token, self.default_char.char * padding)] + tokens
 
-            screen.write_data(tokens, width)
+            screen.write_data(tokens, width=(width if wrap_lines else None))
         return screen
 
     @classmethod
