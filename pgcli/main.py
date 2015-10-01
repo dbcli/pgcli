@@ -31,7 +31,7 @@ import pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory
-from .pgexecute import PGExecute
+from .pgexecute import PGExecute, ON_ERROR_RESUME, ON_ERROR_STOP
 from .pgbuffer import PGBuffer
 from .completion_refresher import CompletionRefresher
 from .config import write_default_config, load_config, config_location
@@ -81,6 +81,10 @@ class PGCli(object):
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
+
+        on_error_modes = {'STOP': ON_ERROR_STOP, 'RESUME': ON_ERROR_RESUME}
+        self.on_error = on_error_modes[c['main']['on_error'].upper()]
+
         self.completion_refresher = CompletionRefresher()
 
         self.logger = logging.getLogger(__name__)
@@ -130,7 +134,7 @@ class PGCli(object):
         except IOError as e:
             return [(None, None, None, str(e))]
 
-        return self.pgexecute.run(query, self.pgspecial)
+        return self.pgexecute.run(query, self.pgspecial, on_error=self.on_error)
 
     def initialize_logging(self):
 
@@ -330,7 +334,8 @@ class PGCli(object):
                     res = []
                     # Run the query.
                     start = time()
-                    res = pgexecute.run(document.text, self.pgspecial)
+                    res = pgexecute.run(document.text, self.pgspecial,
+                                        on_error=self.on_error)
                     successful = True
                     output = []
                     total = 0
