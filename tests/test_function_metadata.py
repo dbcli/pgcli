@@ -33,7 +33,6 @@ def test_parse_typed_field_list_more_complex():
 
 
 def test_parse_typed_field_list_no_arg_names():
-    #waiting on sqlparse/169
     sql = 'int, double precision, text'
     tokens = sqlparse.parse(sql)[0].flatten()
     args = list(parse_typed_field_list(tokens))
