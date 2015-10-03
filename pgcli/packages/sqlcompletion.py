@@ -315,7 +315,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
     elif token_v == 'schema':
         # DROP SCHEMA schema_name
         return [{'type': 'schema'}]
-    elif token_v.endswith(',') or token_v == '=':
+    elif token_v.endswith(',') or token_v in ('=', 'and', 'or'):
         prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
         if prev_keyword:
             return suggest_based_on_last_token(

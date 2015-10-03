@@ -355,9 +355,12 @@ def test_left_join_with_comma():
          {'type': 'schema'}])
 
 
-def test_join_alias_dot_suggests_cols1():
-    suggestions = suggest_type('SELECT * FROM abc a JOIN def d ON a.',
-            'SELECT * FROM abc a JOIN def d ON a.')
+@pytest.mark.parametrize('sql', [
+    'SELECT * FROM abc a JOIN def d ON a.',
+    'SELECT * FROM abc a JOIN def d ON a.id = d.id AND a.',
+])
+def test_join_alias_dot_suggests_cols1(sql):
+    suggestions = suggest_type(sql, sql)
     assert sorted_dicts(suggestions) == sorted_dicts([
         {'type': 'column', 'tables': [(None, 'abc', 'a')]},
         {'type': 'table', 'schema': 'a'},
@@ -365,9 +368,12 @@ def test_join_alias_dot_suggests_cols1():
         {'type': 'function', 'schema': 'a'}])
 
 
-def test_join_alias_dot_suggests_cols2():
-    suggestion = suggest_type('SELECT * FROM abc a JOIN def d ON a.',
-            'SELECT * FROM abc a JOIN def d ON a.id = d.')
+@pytest.mark.parametrize('sql', [
+    'SELECT * FROM abc a JOIN def d ON a.id = d.',
+    'SELECT * FROM abc a JOIN def d ON a.id = d.id AND a.id2 = d.',
+])
+def test_join_alias_dot_suggests_cols2(sql):
+    suggestion = suggest_type(sql, sql)
     assert sorted_dicts(suggestion) == sorted_dicts([
         {'type': 'column', 'tables': [(None, 'def', 'd')]},
         {'type': 'table', 'schema': 'd'},
