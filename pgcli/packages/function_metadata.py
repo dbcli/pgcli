@@ -75,6 +75,9 @@ class TypedFieldMetadata(object):
         self.default = []
         self.unknown = []
 
+    def __getitem__(self, attr):
+        return getattr(self, attr)
+
 
 def parse_typed_field_list(tokens):
     """Parses a argument/column list, yielding TypedFieldMetadata objects
@@ -106,7 +109,7 @@ def parse_typed_field_list(tokens):
             elif parens == 0 and tok.value == '=':
                 parse_state = 'default'
             else:
-                getattr(field, parse_state).append(tok)
+                field[parse_state].append(tok)
                 if tok.value == '(':
                     parens += 1
                 elif tok.value == ')':
@@ -124,9 +127,9 @@ def parse_typed_field_list(tokens):
                 # note that `ttype in Name` would also match Name.Builtin
                 field.name = tok.value
             else:
-                getattr(field, parse_state).append(tok)
+                field[parse_state].append(tok)
         else:
-            getattr(field, parse_state).append(tok)
+            field[parse_state].append(tok)
 
     # Final argument won't be followed by a comma, so make sure it gets yielded
     if field.type:
