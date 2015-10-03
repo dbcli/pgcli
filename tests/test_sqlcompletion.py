@@ -355,9 +355,12 @@ def test_left_join_with_comma():
          {'type': 'schema'}])
 
 
-def test_join_alias_dot_suggests_cols1():
-    suggestions = suggest_type('SELECT * FROM abc a JOIN def d ON a.',
-            'SELECT * FROM abc a JOIN def d ON a.')
+@pytest.mark.parametrize('sql', [
+    'SELECT * FROM abc a JOIN def d ON a.',
+    'SELECT * FROM abc a JOIN def d ON a.id = d.id AND a.',
+])
+def test_join_alias_dot_suggests_cols1(sql):
+    suggestions = suggest_type(sql, sql)
     assert sorted_dicts(suggestions) == sorted_dicts([
         {'type': 'column', 'tables': [(None, 'abc', 'a')]},
         {'type': 'table', 'schema': 'a'},
@@ -365,9 +368,12 @@ def test_join_alias_dot_suggests_cols1():
         {'type': 'function', 'schema': 'a'}])
 
 
-def test_join_alias_dot_suggests_cols2():
-    suggestion = suggest_type('SELECT * FROM abc a JOIN def d ON a.',
-            'SELECT * FROM abc a JOIN def d ON a.id = d.')
+@pytest.mark.parametrize('sql', [
+    'SELECT * FROM abc a JOIN def d ON a.id = d.',
+    'SELECT * FROM abc a JOIN def d ON a.id = d.id AND a.id2 = d.',
+])
+def test_join_alias_dot_suggests_cols2(sql):
+    suggestion = suggest_type(sql, sql)
     assert sorted_dicts(suggestion) == sorted_dicts([
         {'type': 'column', 'tables': [(None, 'def', 'd')]},
         {'type': 'table', 'schema': 'd'},
@@ -375,31 +381,39 @@ def test_join_alias_dot_suggests_cols2():
         {'type': 'function', 'schema': 'd'}])
 
 
-def test_on_suggests_aliases():
-    suggestions = suggest_type(
-        'select a.x, b.y from abc a join bcd b on ',
-        'select a.x, b.y from abc a join bcd b on ')
+@pytest.mark.parametrize('sql', [
+    'select a.x, b.y from abc a join bcd b on ',
+    'select a.x, b.y from abc a join bcd b on a.id = b.id OR ',
+])
+def test_on_suggests_aliases(sql):
+    suggestions = suggest_type(sql, sql)
     assert suggestions == [{'type': 'alias', 'aliases': ['a', 'b']}]
 
 
-def test_on_suggests_tables():
-    suggestions = suggest_type(
-        'select abc.x, bcd.y from abc join bcd on ',
-        'select abc.x, bcd.y from abc join bcd on ')
+@pytest.mark.parametrize('sql', [
+    'select abc.x, bcd.y from abc join bcd on ',
+    'select abc.x, bcd.y from abc join bcd on abc.id = bcd.id AND ',
+])
+def test_on_suggests_tables(sql):
+    suggestions = suggest_type(sql, sql)
     assert suggestions == [{'type': 'alias', 'aliases': ['abc', 'bcd']}]
 
 
-def test_on_suggests_aliases_right_side():
-    suggestions = suggest_type(
-        'select a.x, b.y from abc a join bcd b on a.id = ',
-        'select a.x, b.y from abc a join bcd b on a.id = ')
+@pytest.mark.parametrize('sql', [
+    'select a.x, b.y from abc a join bcd b on a.id = ',
+    'select a.x, b.y from abc a join bcd b on a.id = b.id AND a.id2 = ',
+])
+def test_on_suggests_aliases_right_side(sql):
+    suggestions = suggest_type(sql, sql)
     assert suggestions == [{'type': 'alias', 'aliases': ['a', 'b']}]
 
 
-def test_on_suggests_tables_right_side():
-    suggestions = suggest_type(
-        'select abc.x, bcd.y from abc join bcd on ',
-        'select abc.x, bcd.y from abc join bcd on ')
+@pytest.mark.parametrize('sql', [
+    'select abc.x, bcd.y from abc join bcd on ',
+    'select abc.x, bcd.y from abc join bcd on abc.id = bcd.id and ',
+])
+def test_on_suggests_tables_right_side(sql):
+    suggestions = suggest_type(sql, sql)
     assert suggestions == [{'type': 'alias', 'aliases': ['abc', 'bcd']}]
 
 
