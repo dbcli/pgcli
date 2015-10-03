@@ -545,10 +545,13 @@ def need_completion_refresh(queries):
     for query in sqlparse.split(queries):
         try:
             first_token = query.split()[0]
-            return first_token.lower() in ('alter', 'create', 'use', '\\c',
-                    '\\connect', 'drop')
+            if first_token.lower() in ('alter', 'create', 'use', '\\c',
+                    '\\connect', 'drop'):
+                return True
         except Exception:
             return False
+
+    return False
 
 def need_search_path_refresh(sql):
     """Determines if the search_path should be refreshed by checking if the
