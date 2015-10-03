@@ -122,7 +122,7 @@ def test_simple_function_as_table(arg_list):
 @pytest.mark.parametrize('arg_list', ['', 'arg1', 'arg1, arg2, arg3'])
 def test_simple_schema_qualified_function_as_table(arg_list):
     tables = extract_tables('SELECT * FROM foo.bar({0})'.format(arg_list))
-
+    assert tables == [('foo', 'bar', None, True)]
 
 @pytest.mark.parametrize('arg_list', ['', 'arg1', 'arg1, arg2, arg3'])
 def test_simple_aliased_function_as_table(arg_list):
