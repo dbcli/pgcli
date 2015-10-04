@@ -178,7 +178,7 @@ class ValidationToolbarControl(TokenListControl):
 
             if buffer.validation_error:
                 row, column = buffer.document.translate_index_to_position(
-                    buffer.validation_error.index)
+                    buffer.validation_error.cursor_position)
 
                 if show_position:
                     text = '%s (line=%s column=%s)' % (

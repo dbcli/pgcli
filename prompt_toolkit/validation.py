@@ -16,14 +16,14 @@ __all__ = (
 
 
 class ValidationError(Exception):
-    def __init__(self, index=0, message=''):
+    def __init__(self, cursor_position=0, message=''):
         super(ValidationError, self).__init__(message)
-        self.index = index
+        self.cursor_position = cursor_position
         self.message = message
 
     def __repr__(self):
-        return '%s(index=%r, message=%r)' % (
-            self.__class__.__name__, self.index, self.message)
+        return '%s(cursor_position=%r, message=%r)' % (
+            self.__class__.__name__, self.cursor_position, self.message)
 
 
 class Validator(with_metaclass(ABCMeta, object)):

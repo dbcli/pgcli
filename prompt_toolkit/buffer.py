@@ -935,7 +935,7 @@ class Buffer(object):
                 self.validator.validate(self.document)
             except ValidationError as e:
                 # Set cursor position (don't allow invalid values.)
-                cursor_position = e.index
+                cursor_position = e.cursor_position
                 self.cursor_position = min(max(0, cursor_position), len(self.text))
 
                 self.validation_error = e
