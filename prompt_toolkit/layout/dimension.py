@@ -12,6 +12,17 @@ __all__ = (
 
 
 class LayoutDimension(object):
+    """
+    Specified dimension (width/height) of a user control or window.
+
+    The layout engine tries to honor the preferred size. If that is not
+    possible, because the terminal is larger or smaller, it tries to keep in
+    between min and max.
+
+    :param min: Minimum size.
+    :param max: Maximum size.
+    :param preferred: Preferred size.
+    """
     def __init__(self, min=None, max=None, preferred=None):
         self.min_specified = min is not None
         self.max_specified = max is not None
@@ -37,6 +48,10 @@ class LayoutDimension(object):
 
     @classmethod
     def exact(cls, amount):
+        """
+        Return a ``LayoutDimension`` with an exact size. (min, max and
+        preferred set to ``amount``).
+        """
         return cls(min=amount, max=amount, preferred=amount)
 
     def __repr__(self):
@@ -48,7 +63,7 @@ class LayoutDimension(object):
 
 def sum_layout_dimensions(dimensions):
     """
-    Sum a list of `LayoutDimension` instances.
+    Sum a list of :class:`.LayoutDimension` instances.
     """
     min = sum([d.min for d in dimensions if d.min is not None])
     max = sum([d.max for d in dimensions if d.max is not None])
@@ -59,7 +74,7 @@ def sum_layout_dimensions(dimensions):
 
 def max_layout_dimensions(dimensions):
     """
-    Take the maximum of a list of `LayoutDimension` instances.
+    Take the maximum of a list of :class:`.LayoutDimension` instances.
     """
     min_ = max([d.min for d in dimensions if d.min is not None])
     max_ = max([d.max for d in dimensions if d.max is not None])

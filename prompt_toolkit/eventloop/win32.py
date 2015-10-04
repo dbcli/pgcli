@@ -1,5 +1,5 @@
 """
-Win32 asyncio event loop.
+Win32 event loop.
 
 Windows notes:
     - Somehow it doesn't seem to work with the 'ProactorEventLoop'.
@@ -26,6 +26,9 @@ INPUT_TIMEOUT_MS = int(1000 * INPUT_TIMEOUT)
 
 
 class Win32EventLoop(EventLoop):
+    """
+    Event loop for Windows systems.
+    """
     def __init__(self, inputhook=None):
         assert inputhook is None or callable(inputhook)
 

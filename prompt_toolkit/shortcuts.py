@@ -1,12 +1,11 @@
 """
-Useful shortcuts for creating a `CommandLineInterface` and reading input from it.
------------------------------------------------------------------------- --------
+Shortcuts for retrieving input from the user.
 
 If you are using this library for retrieving some input from the user (as a
 pure Python replacement for GNU readline), probably for 90% of the use cases,
-the `prompt` function is all you need. It's the easiest shortcut which does
-a lot of the underlying work like creating a `CommandLineInterface` instance
-for you.
+the :func:`.prompt` function is all you need. It's the easiest shortcut which
+does a lot of the underlying work like creating a
+:class:`~prompt_toolkit.interface.CommandLineInterface` instance for you.
 
 When is this not sufficient:
     - When you want to have more complicated layouts (maybe with sidebars or
@@ -67,7 +66,8 @@ __all__ = (
 
 def create_eventloop(inputhook=None):
     """
-    Create and return a normal `EventLoop` instance for a
+    Create and return a normal
+    :class:`~prompt_toolkit.eventloop.base.EventLoop` instance for a
     `CommandLineInterface`.
     """
     if is_windows():
@@ -401,12 +401,16 @@ def create_default_application(
 
 def prompt(message='', **kwargs):
     """
-    Get input from the user and return it. This wrapper builds the most obvious
-    configuration of a `CommandLineInterface`. This can be a replacement for
-    `raw_input`. (or GNU readline.)
+    Get input from the user and return it.
 
-    If you want to keep your history across several ``prompt`` calls, you
-    have to create a :class:`History` instance and pass it every time.
+    This is a wrapper around a lot of ``prompt_toolkit`` functionality and can
+    be a replacement for `raw_input`. (or GNU readline.)
+
+    If you want to keep your history across several calls, create one
+    :class:`~prompt_toolkit.history.History` instance and pass it every time.
+
+    This function accepts many keyword arguments. They are a proxy to the
+    arguments of :func:`.create_default_application`.
     """
     eventloop = kwargs.pop('eventloop', None) or create_eventloop()
     patch_stdout = kwargs.pop('patch_stdout', False)

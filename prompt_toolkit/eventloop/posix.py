@@ -19,6 +19,9 @@ __all__ = (
 
 
 class PosixEventLoop(EventLoop):
+    """
+    Event loop for posix systems (Linux, Mac os X).
+    """
     def __init__(self, inputhook=None):
         assert inputhook is None or callable(inputhook)
 

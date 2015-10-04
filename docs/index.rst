@@ -2,7 +2,7 @@ Python Prompt Toolkit
 =====================
 
 `prompt_toolkit` is a library for building powerful interactive command lines
-in Python.
+and terminal applications in Python.
 
 
 It can be a pure Python replacement for `GNU readline
@@ -14,20 +14,57 @@ Some features:
 - Syntax highlighting of the input while typing. (For instance, with a Pygments lexer.)
 - Multi-line input editing.
 - Advanced code completion.
-- Both Emacs and Vi key bindings. (Similar to readline.)
-- Reverse and forward incremental search.
-- Runs on all Python versions from 2.6 up to 3.4.
-- Works well with Unicode double width characters. (Chinese input.)
 - Selecting text for copy/paste. (Both Emacs and Vi style.)
-- Multiple input buffers.
+- Mouse support for cursor positioning and scrolling.
+- Auto suggestions. (Like `fish shell <http://fishshell.com/>`_.)
 - No global state.
-- Lightweight, the only dependencies are Pygments, six and wcwidth.
-- Code written with love.
+
+Like readline:
+
+- Both Emacs and Vi key bindings.
+- Reverse and forward incremental search.
+- Works well with Unicode double width characters. (Chinese input.)
+
+Works everywhere:
+
+- Pure Python. Runs on all Python versions from 2.6 up to 3.4.
 - Runs on Linux, OS X, OpenBSD and Windows systems.
+- Lightweight, the only dependencies are Pygments, six and wcwidth.
+- No assumptions about I/O are made. Every prompt_toolkit application should
+  also run in a telnet/ssh server or an `asyncio
+  <https://docs.python.org/3/library/asyncio.html>`_ process.
+
+
+Two use cases: prompts versus full screen terminal applications
+---------------------------------------------------------------
+
+``prompt_toolkit`` was in the first place meant to be a replacement for
+readline. However, when it became more mature, we realised that all the
+components for full screen applications are there and ``prompt_toolkit`` is
+very capable of handling many use cases. `Pyvim
+<http://github.com/jonathanslenders/pyvim>`_ is an example of such a full
+screen application:
+
+.. image:: images/pyvim.png
+
+Basically, at the core, ``prompt_toolkit`` has a layout engine, that supports
+horizontal and vertical splits as well as floats, where each "window" can
+display a user control. The API for user controls is simple yet powerful.
+
+When ``prompt_toolkit`` is used to simply read some input from the user, it
+uses a rather simple built-in layout. One that displays the default input
+buffer and the prompt, a float for the autocompletions and a toolbar for input
+validation which is hidden by default.
+
+For full screen applications, usually we build the layout ourself, because it's
+very custom.
+
+Further, there is a very flexible key binding system that can be programmed for
+all the needs of full screen applications.
 
 
 Installation
----------------
+------------
 
 ::
 
@@ -38,68 +75,26 @@ Getting started
 ---------------
 
 The following snippet is the most simple example, it uses the
-:func:`~prompt_toolkit.shortcuts.get_input` function to asks the user for input
+:func:`~prompt_toolkit.prompt` function to asks the user for input
 and returns the text. Just like ``(raw_)input``.
 
 .. code:: python
 
-    from prompt_toolkit.shortcuts import get_input
+    from prompt_toolkit import prompt
 
-    text = get_input('Give me some input: ')
+    text = prompt('Give me some input: ')
     print('You said: %s' % text)
 
-Let's add some highlighting to the input. We like to highlight HTML. It's very
-simple, just use one of the many lexers that `Pygments <http://pygments.org/>`_
-provides.
-
-.. code:: python
-
-    from pygments.lexers import HtmlLexer
-    from prompt_toolkit.shortcuts import get_input
-
-    text = get_input('Give me some HTML', lexer=HtmlLexer)
-    print('You said: %s' % text)
-
-Finally, let's add autocompletion:
-
-.. code:: python
-
-    from pygments.lexers import HtmlLexer
-    from prompt_toolkit.shortcuts import get_input
-    from prompt_toolkit.contrib.completers import WordCompleter
-
-    html_completer = WordCompleter(['<html>', '<body>', '<head>', '<title>'])
-    text = get_input('Give me some HTML', lexer=HtmlLexer, completer=html_completer)
-    print('You said: %s' % text)
-
-
-Chapters
---------
-
-TODO: these chapters still have to be written:
-
- - Simple example. (Most simple example, alternative to raw_input.)
- - Architecture of an application
-
- - Prompts.
- - Colors (styles.)
- - Autocompletion
- - Key bindings.
- - Input validation.
- - Input hooks.
- - History.
- - Layouts.
-
- - contrib.regular_languages
- - contrib.telnet.
- - asyncio
+For more information, start reading the :ref:`building prompts
+<building_prompts>` section.
 
 
 Thanks to:
 ----------
 
- - Pygments
- - wcwidth
+A special thanks to the `Pygments <http://pygments.org/>`_ and `wcwidth
+<https://github.com/jquast/wcwidth>`_ libraries for making prompt_toolkit
+possible.
 
 
 Table of contents
@@ -108,7 +103,8 @@ Table of contents
 .. toctree::
    :maxdepth: 3
 
-   pages/example
+   pages/building_prompts
+   pages/full_screen_apps
    pages/architecture
    pages/reference
 

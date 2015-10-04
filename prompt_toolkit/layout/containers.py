@@ -16,11 +16,13 @@ from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventTypes
 
 __all__ = (
+    'Layout',
     'HSplit',
     'VSplit',
     'FloatContainer',
     'Float',
     'Window',
+    'WindowRenderInfo',
     'ConditionalContainer',
     'ScrollOffsets'
 )
@@ -42,15 +44,15 @@ class Layout(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def preferred_width(self, cli, max_available_width):
         """
-        Return a `LayoutDimension` that represents the desired width for this
-        container.
+        Return a :class:`~prompt_toolkit.layout.dimension.LayoutDimension` that
+        represents the desired width for this container.
         """
 
     @abstractmethod
     def preferred_height(self, cli, width):
         """
-        Return a `LayoutDimension` that represents the desired height for this
-        container.
+        Return a :class:`~prompt_toolkit.layout.dimension.LayoutDimension` that
+        represents the desired height for this container.
         """
 
     @abstractmethod
@@ -564,22 +566,24 @@ class Window(Layout):
     """
     Layout that holds a control.
 
-    :param content: User interface control.
-    :param width: `LayoutDimension` instance.
-    :param height: `LayoutDimension` instance.
+    :param content: :class:`~prompt_toolkit.layout.controls.UIControl` instance.
+    :param width: :class:`~prompt_toolkit.layout.dimension.LayoutDimension` instance.
+    :param height: :class:`~prompt_toolkit.layout.dimension.LayoutDimension` instance.
     :param get_width: callable which takes a `CommandLineInterface` and returns a `LayoutDimension`.
     :param get_height: callable which takes a `CommandLineInterface` and returns a `LayoutDimension`.
     :param dont_extend_width: When `True`, don't take up more width then the
                               preferred width reported by the control.
     :param dont_extend_height: When `True`, don't take up more width then the
                                preferred height reported by the control.
-    :param left_margins: A list of `Margin` instance to be displayed on the left.
-        For instance: `NumberredMargin` can be one of them in order to show line numbers.
+    :param left_margins: A list of :class:`~prompt_toolkit.layout.margins.Margin`
+        instance to be displayed on the left. For instance:
+        :class:`~prompt_toolkit.layout.margins.NumberredMargin` can be one of
+        them in order to show line numbers.
     :param right_margins: Like `left_margins`, but on the other side.
-    :param scroll_offsets: `ScrollOffsets` instance, representing the preferred
-        amount of lines/columns to be always visible before/after the cursor.
-        When both top and bottom are a very high number, the cursor will be
-        centered vertically most of the time.
+    :param scroll_offsets: :class:`.ScrollOffsets` instance, representing the
+        preferred amount of lines/columns to be always visible before/after the
+        cursor. When both top and bottom are a very high number, the cursor
+        will be centered vertically most of the time.
     :param allow_scroll_beyond_bottom: A `bool` or `Filter` instance. When
          True, allow scrolling so far, that the top part of the content is not
          visible anymore, while there is still empty space available at the

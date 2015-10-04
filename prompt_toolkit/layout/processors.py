@@ -37,12 +37,13 @@ __all__ = (
 
 class Processor(with_metaclass(ABCMeta, object)):
     """
-    Manipulate the tokenstream for a `BufferControl`.
+    Manipulate the tokenstream for a
+    :class:`~prompt_toolkit.layout.controls.BufferControl`.
     """
     @abstractmethod
     def apply_transformation(self, cli, document, tokens):
         """
-        Apply transformation.
+        Apply transformation.  Returns a :class:`.Transformation` instance.
         """
         return Transformation(document, tokens)
 
@@ -54,6 +55,10 @@ class Processor(with_metaclass(ABCMeta, object)):
         return False
 
     def invalidation_hash(self, cli, document):
+        """
+        Returns a hashable for invalidation. When this changes, the processor
+        has to be applied again or the original input.
+        """
         return None
 
 
@@ -409,7 +414,7 @@ class ShowTrailingWhiteSpaceProcessor(Processor):
 class ConditionalProcessor(Processor):
     """
     Processor that applies another processor, according to a certain condition.
-    Example:
+    Example::
 
         # Create a function that returns whether or not the processor should
         # currently be applied.

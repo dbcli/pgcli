@@ -19,7 +19,7 @@ class ClipboardData(object):
     Text on the clipboard.
 
     :param text: string
-    :param type: :class:`~.ClipboardDataType`
+    :param type: :class:`~prompt_toolkit.selection.SelectionType`
     """
     def __init__(self, text='', type=SelectionType.CHARACTERS):
         assert isinstance(text, six.string_types)

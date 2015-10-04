@@ -42,18 +42,17 @@ class CommandLineInterface(object):
 
     Typical usage::
 
-        cli = CommandLineInterface(eventloop)
-        while True:
-            result = cli.run()
-            print(result)
+        application = Application(...)
+        cli = CommandLineInterface(application, eventloop)
+        result = cli.run()
+        print(result)
 
-    :param eventloop: The `EventLoop` to be used when `run` is called.
-                      (Further, this allows callbacks to know where to find the
-                      `run_in_executor`.) It can be `None` as well, when no
-                      eventloop is used/exposed.
-    :param application: `Application` .
-    :param input: :class:`Input` class.
-    :param output: :class:`Output` instance. (Probably Vt100_Output or Win32Output.)
+    :param application: :class:`~prompt_toolkit.application.Application` instance.
+    :param eventloop: The :class:`~prompt_toolkit.eventloop.base.EventLoop` to
+                      be used when `run` is called.
+    :param input: :class:`~prompt_toolkit.input.Input` instance.
+    :param output: :class:`~prompt_toolkit.output.Output` instance. (Probably
+                   Vt100_Output or Win32Output.)
     """
     def __init__(self, application, eventloop=None, input=None, output=None):
         assert isinstance(application, Application)
@@ -185,7 +184,7 @@ class CommandLineInterface(object):
     @property
     def current_buffer(self):
         """
-        The current focussed :class:`Buffer`.
+        The currently focussed :class:`~prompt_toolkit.buffer.Buffer`.
 
         (This returns a dummy `Buffer` when none of the actual buffers has the
         focus. In this case, it's really not practical to check for `None`
@@ -372,7 +371,7 @@ class CommandLineInterface(object):
 
     def run_sub_application(self, application, done_callback=None):
         """
-        Run a sub `Application`.
+        Run a sub :class:`~prompt_toolkit.application.Application`.
 
         This will suspend the main application and display the sub application
         until that one returns a value. The value is returned by calling
@@ -380,12 +379,12 @@ class CommandLineInterface(object):
 
         The sub application will share the same I/O of the main application.
         That means, it uses the same input and output channels and it shares
-        the same event loop. [1]
+        the same event loop.
 
-        [1] Technically, it gets another Eventloop instance, but that is only a
-            proxy to our main event loop. The reason is that calling 'stop'
-            --which returns the result of an application when it's done-- is
-            handled differently.
+        .. note:: Technically, it gets another Eventloop instance, but that is
+            only a proxy to our main event loop. The reason is that calling
+            'stop' --which returns the result of an application when it's
+            done-- is handled differently.
         """
         assert isinstance(application, Application)
         assert done_callback is None or callable(done_callback)

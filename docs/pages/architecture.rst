@@ -1,6 +1,7 @@
 Architecture
 ============
 
+TODO: this is a little outdated.
 
 ::
 

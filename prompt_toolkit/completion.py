@@ -12,20 +12,20 @@ __all__ = (
 
 
 class Completion(object):
+    """
+    :param text: The new string that will be inserted into the document.
+    :param start_position: Position relative to the cursor_position where the
+        new text will start. The text will be inserted between the
+        start_position and the original cursor position.
+    :param display: (optional string) If the completion has to be displayed
+        differently in the completion menu.
+    :param display_meta: (Optional string) Meta information about the
+        completion, e.g. the path or source where it's coming from.
+    :param get_display_meta: Lazy `display_meta`. Retrieve meta information
+        only when meta is displayed.
+    """
     def __init__(self, text, start_position=0, display=None, display_meta=None,
                  get_display_meta=None):
-        """
-        :param text: The new string that will be inserted into the document.
-        :param start_position: Position relative to the cursor_position where the
-            new text will start. The text will be inserted between the
-            start_position and the original cursor position.
-        :param display: (optional string) If the completion has to be displayed
-            differently in the completion menu.
-        :param display_meta: (Optional string) Meta information about the
-            completion, e.g. the path or source where it's coming from.
-        :param get_display_meta: Lazy `display_meta`. Retrieve meta information
-            only when meta is displayed.
-        """
         self.text = text
         self.start_position = start_position
         self._display_meta = display_meta
@@ -101,7 +101,7 @@ class Completer(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def get_completions(self, document, complete_event):
         """
-        Yield `Completion` instances.
+        Yield :class:`.Completion` instances.
         """
         while False:
             yield

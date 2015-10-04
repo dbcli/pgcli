@@ -22,9 +22,10 @@ from .utils import token_list_width
 import time
 
 __all__ = (
-    'TokenListControl',
-    'FillControl',
     'BufferControl',
+    'FillControl',
+    'TokenListControl',
+    'UIControl',
 )
 
 
@@ -214,7 +215,7 @@ class BufferControl(UIControl):
     """
     Control for visualising the content of a `Buffer`.
 
-    :param input_processors: list of `InputProcessor.
+    :param input_processors: list of :class:`~prompt_toolkit.layout.processors.Processor`.
     :param lexer: Pygments lexer class.
     :param preview_search: `bool` or `CLIFilter`: Show search while typing.
     :param wrap_lines: `bool` or `CLIFilter`: Wrap long lines.
