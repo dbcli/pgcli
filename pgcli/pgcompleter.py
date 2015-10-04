@@ -407,7 +407,7 @@ class PGCompleter(Completer):
 
     def populate_scoped_cols(self, scoped_tbls):
         """ Find all columns in a set of scoped_tables
-        :param scoped_tbls: list of (schema, table, alias) tuples
+        :param scoped_tbls: list of TableReference namedtuples
         :return: list of column names
         """
 
@@ -415,26 +415,39 @@ class PGCompleter(Completer):
         meta = self.dbmetadata
 
         for tbl in scoped_tbls:
-            if tbl[0]:
+            if tbl.schema:
                 # A fully qualified schema.relname reference
-                schema = self.escape_name(tbl[0])
-                relname = self.escape_name(tbl[1])
+                schema = self.escape_name(tbl.schema)
+                relname = self.escape_name(tbl.name)
 
-                # We don't know if schema.relname is a table or view. Since
-                # tables and views cannot share the same name, we can check one
-                # at a time
-                try:
-                    columns.extend(meta['tables'][schema][relname])
+                if tbl.is_function:
+                    # Return column names from a set-returning function
+                    try:
+                        # Get an array of FunctionMetadata objects
+                        functions = meta['functions'][schema][relname]
+                    except KeyError:
+                        # No such function name
+                        continue
 
-                    # Table exists, so don't bother checking for a view
-                    continue
-                except KeyError:
-                    pass
+                    for func in functions:
+                        # func is a FunctionMetadata object
+                        columns.extend(func.fieldnames())
+                else:
+                    # We don't know if schema.relname is a table or view. Since
+                    # tables and views cannot share the same name, we can check
+                    # one at a time
+                    try:
+                        columns.extend(meta['tables'][schema][relname])
 
-                try:
-                    columns.extend(meta['views'][schema][relname])
-                except KeyError:
-                    pass
+                        # Table exists, so don't bother checking for a view
+                        continue
+                    except KeyError:
+                        pass
+
+                    try:
+                        columns.extend(meta['views'][schema][relname])
+                    except KeyError:
+                        pass
 
             else:
                 # Schema not specified, so traverse the search path looking for
@@ -442,19 +455,29 @@ class PGCompleter(Completer):
                 # shadowing behavior, we need to check both views and tables for
                 # each schema before checking the next schema
                 for schema in self.search_path:
-                    relname = self.escape_name(tbl[1])
+                    relname = self.escape_name(tbl.name)
 
-                    try:
-                        columns.extend(meta['tables'][schema][relname])
-                        break
-                    except KeyError:
-                        pass
+                    if tbl.is_function:
+                        try:
+                            functions = meta['functions'][schema][relname]
+                        except KeyError:
+                            continue
 
-                    try:
-                        columns.extend(meta['views'][schema][relname])
-                        break
-                    except KeyError:
-                        pass
+                        for func in functions:
+                            # func is a FunctionMetadata object
+                            columns.extend(func.fieldnames())
+                    else:
+                        try:
+                            columns.extend(meta['tables'][schema][relname])
+                            break
+                        except KeyError:
+                            pass
+
+                        try:
+                            columns.extend(meta['views'][schema][relname])
+                            break
+                        except KeyError:
+                            pass
 
         return columns
 

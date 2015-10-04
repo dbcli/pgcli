@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import pytest
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
-from pgcli.pgexecute import FunctionMetadata
+from pgcli.packages.function_metadata import FunctionMetadata
 
 metadata = {
                 'tables': {
@@ -14,7 +14,8 @@ metadata = {
                 'functions': [
                     ['custom_func1', '', '', False, False, False],
                     ['custom_func2', '', '', False, False, False],
-                    ['set_returning_func', '', '', False, False, True]],
+                    ['set_returning_func', '', 'TABLE (x INT, y INT)',
+                                            False, False, True]],
                 'datatypes': ['custom_type1', 'custom_type2'],
             }
 
@@ -246,7 +247,7 @@ def test_suggested_multiple_column_names(completer, complete_event):
         Completion(text='last_name', start_position=0, display_meta='column'),
         Completion(text='custom_func1', start_position=0, display_meta='function'),
         Completion(text='custom_func2', start_position=0, display_meta='function'),
-    Completion(text='set_returning_func', start_position=0, display_meta='function')] +
+        Completion(text='set_returning_func', start_position=0, display_meta='function')] +
         list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
         list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
         )
@@ -416,3 +417,61 @@ def test_suggest_columns_from_escaped_table_alias(completer, complete_event):
         Completion(text='"insert"', start_position=0, display_meta='column'),
         Completion(text='"ABC"', start_position=0, display_meta='column'),
     ])
+
+
+def test_suggest_columns_from_set_returning_function(completer, complete_event):
+    sql = 'select  from set_returning_func()'
+    pos = len('select ')
+    result = completer.get_completions(Document(text=sql, cursor_position=pos),
+                                       complete_event)
+    assert set(result) == set([
+        Completion(text='x', start_position=0, display_meta='column'),
+        Completion(text='y', start_position=0, display_meta='column'),
+        Completion(text='custom_func1', start_position=0, display_meta='function'),
+        Completion(text='custom_func2', start_position=0, display_meta='function'),
+        Completion(text='set_returning_func', start_position=0, display_meta='function')]
+         + list(map(lambda f: Completion(f, display_meta='function'), completer.functions))
+         + list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords)))
+
+
+def test_suggest_columns_from_aliased_set_returning_function(completer, complete_event):
+    sql = 'select f. from set_returning_func() f'
+    pos = len('select f.')
+    result = completer.get_completions(Document(text=sql, cursor_position=pos),
+                                       complete_event)
+    assert set(result) == set([
+        Completion(text='x', start_position=0, display_meta='column'),
+        Completion(text='y', start_position=0, display_meta='column')])
+
+
+def test_join_functions_using_suggests_common_columns(completer, complete_event):
+    text = '''SELECT * FROM set_returning_func() f1
+              INNER JOIN set_returning_func() f2 USING ('''
+    pos = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=pos), complete_event))
+    assert set(result) == set([
+         Completion(text='x', start_position=0, display_meta='column'),
+         Completion(text='y', start_position=0, display_meta='column')])
+
+
+def test_join_functions_using_suggests_common_columns(completer, complete_event):
+    text = '''SELECT * FROM set_returning_func() f1
+              INNER JOIN set_returning_func() f2 USING ('''
+    pos = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=pos), complete_event))
+    assert set(result) == set([
+         Completion(text='x', start_position=0, display_meta='column'),
+         Completion(text='y', start_position=0, display_meta='column')])
+
+
+def test_join_functions_on_suggests_columns(completer, complete_event):
+    text = '''SELECT * FROM set_returning_func() f1
+              INNER JOIN set_returning_func() f2 ON f1.'''
+    pos = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=pos), complete_event))
+    assert set(result) == set([
+         Completion(text='x', start_position=0, display_meta='column'),
+         Completion(text='y', start_position=0, display_meta='column')])

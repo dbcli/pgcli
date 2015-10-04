@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import pytest
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
-from pgcli.pgexecute import FunctionMetadata
+from pgcli.packages.function_metadata import FunctionMetadata
 
 metadata = {
             'tables': {
@@ -22,7 +22,9 @@ metadata = {
                                 ['func2', '', '', False, False, False]],
                             'custom': [
                                 ['func3', '', '', False, False, False],
-                                ['set_returning_func', '', '', False, False, True]],
+                                ['set_returning_func',
+                                    'OUT x INT', 'SETOF INT',
+                                     False, False, True]],
                          },
             'datatypes': {
                             'public':   ['typ1', 'typ2'],
@@ -294,3 +296,12 @@ def test_schema_qualified_type_name(text, completer, complete_event):
         Completion(text='products', display_meta='table'),
         Completion(text='shipments', display_meta='table'),
         ])
+
+
+def test_suggest_columns_from_aliased_set_returning_function(completer, complete_event):
+    sql = 'select f. from custom.set_returning_func() f'
+    pos = len('select f.')
+    result = completer.get_completions(Document(text=sql, cursor_position=pos),
+                                       complete_event)
+    assert set(result) == set([
+        Completion(text='x', start_position=0, display_meta='column')])

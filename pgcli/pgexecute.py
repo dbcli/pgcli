@@ -4,8 +4,8 @@ import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
-from collections import namedtuple
 import pgspecial as special
+from .packages.function_metadata import FunctionMetadata
 from .encodingutils import unicode2utf8, PY2, utf8tounicode
 import click
 
@@ -25,10 +25,6 @@ ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
 ext.set_wait_callback(psycopg2.extras.wait_select)
-
-FunctionMetadata = namedtuple('FunctionMetadata',
-                              ['schema_name', 'func_name', 'arg_list', 'result',
-                               'is_aggregate', 'is_window', 'is_set_returning'])
 
 
 def register_json_typecasters(conn, loads_fn):
@@ -111,7 +107,7 @@ class PGExecute(object):
         SELECT 	n.nspname schema_name,
                 p.proname func_name,
                 pg_catalog.pg_get_function_arguments(p.oid) arg_list,
-                pg_catalog.pg_get_function_result(p.oid) result,
+                pg_catalog.pg_get_function_result(p.oid) return_type,
                 p.proisagg is_aggregate,
                 p.proiswindow is_window,
                 p.proretset is_set_returning

@@ -250,7 +250,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
 
         if parent:
             tables = extract_tables(full_text)
-            tables = [t for t in tables if identifies(parent, *t)]
+            tables = [t for t in tables if identifies(parent, t)]
             return [{'type': 'column', 'tables': tables},
                     {'type': 'table', 'schema': parent},
                     {'type': 'view', 'schema': parent},
@@ -297,7 +297,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         if parent:
             # "ON parent.<suggestion>"
             # parent can be either a schema name or table alias
-            tables = [t for t in tables if identifies(parent, *t)]
+            tables = [t for t in tables if identifies(parent, t)]
             return [{'type': 'column', 'tables': tables},
                     {'type': 'table', 'schema': parent},
                     {'type': 'view', 'schema': parent},
@@ -305,7 +305,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         else:
             # ON <suggestion>
             # Use table alias if there is one, otherwise the table name
-            aliases = [t[2] or t[1] for t in tables]
+            aliases = [t.alias or t.name for t in tables]
             return [{'type': 'alias', 'aliases': aliases}]
 
     elif token_v in ('c', 'use', 'database', 'template'):
@@ -337,6 +337,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         return [{'type': 'keyword'}]
 
 
-def identifies(id, schema, table, alias):
-    return id == alias or id == table or (
-        schema and (id == schema + '.' + table))
+def identifies(id, ref):
+    """Returns true if string `id` matches TableReference `ref`"""
+
+    return id == ref.alias or id == ref.name or (
+        ref.schema and (id == ref.schema + '.' + ref.name))
