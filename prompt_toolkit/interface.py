@@ -502,6 +502,7 @@ class CommandLineInterface(object):
         if render_cli_done:
             self._return_value = True
             self._redraw()
+            self.renderer.reset()  # Make sure to disable mouse mode, etc...
         else:
             self.renderer.erase()
 
