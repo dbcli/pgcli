@@ -83,16 +83,16 @@ The most simple example of the library would look like this:
 
 .. code:: python
 
-    from prompt_toolkit.shortcuts import get_input
+    from prompt_toolkit import prompt
 
     if __name__ == '__main__':
-        answer = get_input('Give me some input: ')
+        answer = prompt('Give me some input: ')
         print('You said: %s' % answer)
 
 For more complex examples, have a look in the ``examples`` directory. All
 examples are chosen to demonstrate only one thing. Also, don't be afraid to
-look at the source code. The implementation of the ``get_input`` function could
-be a good start.
+look at the source code. The implementation of the ``prompt`` function could be
+a good start.
 
 Note: For Python 2, you need to add ``from __future__ import unicode_literals``
 to the above example. All strings are expected to be unicode strings.

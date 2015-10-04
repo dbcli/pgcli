@@ -4,7 +4,7 @@ Useful shortcuts for creating a `CommandLineInterface` and reading input from it
 
 If you are using this library for retrieving some input from the user (as a
 pure Python replacement for GNU readline), probably for 90% of the use cases,
-the `get_input` function is all you need. It's the easiest shortcut which does
+the `prompt` function is all you need. It's the easiest shortcut which does
 a lot of the underlying work like creating a `CommandLineInterface` instance
 for you.
 
@@ -15,7 +15,7 @@ When is this not sufficient:
     - When you wish to have multiple input buffers. (If you would create an
       editor like a Vi clone.)
     - Something else that requires more customization than what is possible
-      with the parameters of `get_input`.
+      with the parameters of `prompt`.
 
 In that case, study the code in this file and build your own
 `CommandLineInterface` instance. It's not too complicated.
@@ -61,7 +61,7 @@ __all__ = (
     'create_default_output',
     'create_default_layout',
     'create_default_application',
-    'get_input',
+    'prompt',
 )
 
 
@@ -402,13 +402,13 @@ def create_default_application(
         on_exit=on_exit)
 
 
-def get_input(message='', **kwargs):
+def prompt(message='', **kwargs):
     """
     Get input from the user and return it. This wrapper builds the most obvious
     configuration of a `CommandLineInterface`. This can be a replacement for
     `raw_input`. (or GNU readline.)
 
-    If you want to keep your history across several ``get_input`` calls, you
+    If you want to keep your history across several ``prompt`` calls, you
     have to create a :class:`History` instance and pass it every time.
     """
     eventloop = kwargs.pop('eventloop', None) or create_eventloop()
@@ -440,3 +440,7 @@ def get_input(message='', **kwargs):
     finally:
         eventloop.close()
         sys.stdout = original_stdout
+
+
+# Deprecated alias for `prompt`.
+get_input = prompt
