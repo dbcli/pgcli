@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 from .buffer import Buffer
 from .document import Document
 from .enums import DEFAULT_BUFFER, SEARCH_BUFFER
-from .filters import IsDone, HasFocus, Always, Never, RendererHeightIsKnown, to_simple_filter, to_cli_filter, Condition
+from .filters import IsDone, HasFocus, RendererHeightIsKnown, to_simple_filter, to_cli_filter, Condition
 from .history import InMemoryHistory
 from .interface import CommandLineInterface, Application, AbortAction, AcceptAction
 from .key_binding.manager import KeyBindingManager
@@ -197,7 +197,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
                             # there is no search: the Vi 'n' binding for instance
                             # still allows to jump to the next match in
                             # navigation mode.)
-                            HighlightSearchProcessor(preview_search=Always()),
+                            HighlightSearchProcessor(preview_search=True),
                             HasFocus(SEARCH_BUFFER)),
                         HighlightSelectionProcessor(),
                         ConditionalProcessor(AppendAutoSuggestion(), HasFocus(DEFAULT_BUFFER) & ~IsDone()),
@@ -256,7 +256,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
                         wrap_lines=wrap_lines,
                         # Enable preview_search, we want to have immediate feedback
                         # in reverse-i-search mode.
-                        preview_search=Always()),
+                        preview_search=True),
                     get_height=get_height,
                 ),
                 [
@@ -272,7 +272,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
                           content=MultiColumnCompletionsMenu(
                               extra_filter=HasFocus(DEFAULT_BUFFER) &
                                            display_completions_in_columns,
-                              show_meta=Always()))
+                              show_meta=True))
                 ]
             ),
         ]),
@@ -287,15 +287,15 @@ def create_default_layout(message='', lexer=None, is_password=False,
 
 def create_default_application(
         message='',
-        multiline=Never(),
+        multiline=False,
         wrap_lines=True,
         is_password=False,
-        vi_mode=Never(),
-        complete_while_typing=Always(),
-        enable_history_search=Never(),
+        vi_mode=False,
+        complete_while_typing=True,
+        enable_history_search=False,
         lexer=None,
-        enable_system_bindings=Never(),
-        enable_open_in_editor=Never(),
+        enable_system_bindings=False,
+        enable_open_in_editor=False,
         validator=None,
         completer=None,
         auto_suggest=None,
@@ -324,17 +324,20 @@ def create_default_application(
     :param wrap_lines: `bool` or `CLIFilter`. When True (the default),
         automatically wrap long lines instead of scrolling horizontally.
     :param is_password: Show asterisks instead of the actual typed characters.
-    :param vi_mode: If True, use Vi key bindings.
-    :param complete_while_typing: Enable autocompletion while typing.
-    :param enable_history_search: Enable up-arrow parting string matching.
+    :param vi_mode: `bool` or `CLIFilter`. If True, use Vi key bindings.
+    :param complete_while_typing: `bool` or `CLIFilter`. Enable autocompletion
+        while typing.
+    :param enable_history_search: `bool` or `CLIFilter`. Enable up-arrow
+        parting string matching.
     :param lexer: Lexer to be used for the syntax highlighting.
     :param validator: `Validator` instance for input validation.
     :param completer: `Completer` instance for input completion.
     :param auto_suggest: `AutoSuggest` instance for input suggestions.
     :param style: Pygments style class for the color scheme.
-    :param enable_system_bindings: Pressing Meta+'!' will show a system prompt.
-    :param enable_open_in_editor: Pressing 'v' in Vi mode or C-X C-E in emacs
-                                  mode will open an external editor.
+    :param enable_system_bindings: `bool` or `CLIFilter`. Pressing Meta+'!'
+        will show a system prompt.
+    :param enable_open_in_editor: `bool` or `CLIFilter`. Pressing 'v' in Vi
+        mode or C-X C-E in emacs mode will open an external editor.
     :param history: `History` instance. (e.g. `FileHistory`)
     :param clipboard: `Clipboard` instance. (e.g. `InMemoryClipboard`)
     :param get_bottom_toolbar_tokens: Optional callable which takes a

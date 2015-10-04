@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from six.moves import zip_longest
-from prompt_toolkit.filters import HasCompletions, IsDone, Always, Condition
+from prompt_toolkit.filters import HasCompletions, IsDone, Always, Condition, to_cli_filter
 from prompt_toolkit.mouse_events import MouseEventTypes
 from prompt_toolkit.reactive import Integer
 from prompt_toolkit.utils import get_cwidth
@@ -451,7 +451,10 @@ class MultiColumnCompletionsMenu(HSplit):
     When `show_meta` (a CLIFilter) evaluates to True, it shows
     the meta information at the bottom.
     """
-    def __init__(self, min_rows=3, suggested_max_column_width=30, show_meta=Always(), extra_filter=Always()):
+    def __init__(self, min_rows=3, suggested_max_column_width=30, show_meta=True, extra_filter=True):
+        show_meta = to_cli_filter(show_meta)
+        extra_filter = to_cli_filter(extra_filter)
+
         # Display filter: show when there are completions but not at the point
         # we are returning the input.
         full_filter = HasCompletions() & ~IsDone() & extra_filter
