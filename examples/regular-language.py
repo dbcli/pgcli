@@ -15,10 +15,11 @@ to use variables in this grammar with completers and tokens attached.
 from __future__ import unicode_literals
 from prompt_toolkit.contrib.completers import WordCompleter
 
+from prompt_toolkit import prompt
 from prompt_toolkit.contrib.regular_languages.compiler import compile
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
-from prompt_toolkit.shortcuts import get_input
+from prompt_toolkit.layout.lexers import SimpleLexer
 from prompt_toolkit.styles import DefaultStyle
 
 from pygments.token import Token
@@ -51,11 +52,11 @@ class ExampleStyle(DefaultStyle):
 if __name__ == '__main__':
     g = create_grammar()
 
-    lexer = GrammarLexer(g, tokens={
-        'operator1': Token.Operator,
-        'operator2': Token.Operator,
-        'var1': Token.Number,
-        'var2': Token.Number
+    lexer = GrammarLexer(g, lexers={
+        'operator1': SimpleLexer(Token.Operator),
+        'operator2': SimpleLexer(Token.Operator),
+        'var1': SimpleLexer(Token.Number),
+        'var2': SimpleLexer(Token.Number),
     })
 
     completer = GrammarCompleter(g, {
@@ -68,7 +69,7 @@ if __name__ == '__main__':
         # REPL loop.
         while True:
             # Read input and parse the result.
-            text = get_input('Calculate: ', lexer=lexer, completer=completer, style=ExampleStyle)
+            text = prompt('Calculate: ', lexer=lexer, completer=completer, style=ExampleStyle)
             m = g.match(text)
             if m:
                 vars = m.variables()

@@ -3,7 +3,7 @@
 Simple example showing a bottom toolbar.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.shortcuts import get_input
+from prompt_toolkit import prompt
 from pygments.token import Token
 from pygments.style import Style
 
@@ -18,9 +18,9 @@ def main():
     def get_bottom_toolbar_tokens(cli):
         return [(Token.Toolbar, ' This is a toolbar. ')]
 
-    text = get_input('Say something: ',
-                     get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
-                     style=TestStyle)
+    text = prompt('Say something: ',
+                  get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
+                  style=TestStyle)
     print('You said: %s' % text)
 
 

@@ -18,15 +18,15 @@ Let's get started!
 
 #. Read User Input
 
-   Start accepting input using the ``get_input()`` method.
+   Start accepting input using the ``prompt()`` method.
 
    .. code:: python
 
        from __future__ import unicode_literals
-       from prompt_toolkit.shortcuts import get_input
+       from prompt_toolkit import prompt
 
        def main():
-           text = get_input("> ")
+           text = prompt("> ")
            print('You entered:', text)
 
        if __name__ == '__main__':
@@ -36,20 +36,20 @@ Let's get started!
 
 #. Loop The REPL
 
-   Now we call the ``get_input`` method in a loop while keeeping the line
+   Now we call the ``prompt`` method in a loop while keeeping the line
    history in our ``InMemoryHistory`` object.
 
    .. code:: python
 
        from __future__ import unicode_literals
-       from prompt_toolkit.shortcuts import get_input
+       from prompt_toolkit import prompt
        from prompt_toolkit.history import InMemoryHistory
 
        def main():
            history = InMemoryHistory()
 
            while True:
-               text = get_input("> ", history=history)
+               text = prompt("> ", history=history)
                print('You entered:', text)
            print('GoodBye!')
 
@@ -70,7 +70,7 @@ Let's get started!
    .. code:: python
 
        from __future__ import unicode_literals
-       from prompt_toolkit.shortcuts import get_input
+       from prompt_toolkit import prompt
        from prompt_toolkit.history import InMemoryHistory
        from pygments.lexers import SqlLexer
 
@@ -78,7 +78,7 @@ Let's get started!
            history = InMemoryHistory()
 
            while True:
-               text = get_input('> ', lexer=SqlLexer, history=history)
+               text = prompt('> ', lexer=SqlLexer, history=history)
                print('You entered:', text)
            print('GoodBye!')
 
@@ -95,13 +95,13 @@ Let's get started!
    Create your ``sql_completer`` instance from the ``WordCompleter`` class
    defining a set of ``keywords`` for auto-completion.
 
-   This ``sql_completer`` instance will be passed into the ``get_input``
+   This ``sql_completer`` instance will be passed into the ``prompt``
    function.
 
    .. code:: python
 
        from __future__ import unicode_literals
-       from prompt_toolkit.shortcuts import get_input
+       from prompt_toolkit import prompt
        from prompt_toolkit.history import InMemoryHistory
        from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
@@ -114,7 +114,7 @@ Let's get started!
            history = InMemoryHistory()
 
            while True:
-               text = get_input('> ', lexer=SqlLexer, completer=sql_completer, history=history)
+               text = prompt('> ', lexer=SqlLexer, completer=sql_completer, history=history)
                print('You entered:', text)
            print('GoodBye!')
 
@@ -131,12 +131,12 @@ Let's get started!
    The completion menu is hard to see, so let's add some customization to the
    menu colors. Create a class named ``DocumentStyle`` and sub-class it from
    ``pygments.style``. Customize the colors for the completion menu and pass in
-   the style as a parameter to the ``get_input`` function.
+   the style as a parameter to the ``prompt`` function.
 
    .. code:: python
 
        from __future__ import unicode_literals
-       from prompt_toolkit.shortcuts import get_input
+       from prompt_toolkit import prompt
        from prompt_toolkit.history import InMemoryHistory
        from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
@@ -160,7 +160,8 @@ Let's get started!
            history = InMemoryHistory()
 
            while True:
-               text = get_input('> ', lexer=SqlLexer, completer=sql_completer, style=DocumentStyle, history=history)
+               text = prompt('> ', lexer=SqlLexer, completer=sql_completer,
+                             style=DocumentStyle, history=history)
                print('You entered:', text)
            print('GoodBye!')
 
@@ -186,7 +187,7 @@ Let's get started!
        import sys
        import sqlite3
 
-       from prompt_toolkit.shortcuts import get_input
+       from prompt_toolkit import prompt
        from prompt_toolkit.history import InMemoryHistory
        from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
@@ -212,8 +213,9 @@ Let's get started!
 
            while True:
                try:
-                   text = get_input('> ', lexer=SqlLexer, completer=sql_completer, style=DocumentStyle, history=history,
-                                    on_abort=AbortAction.RETRY)
+                   text = prompt('> ', lexer=SqlLexer, completer=sql_completer,
+                                 style=DocumentStyle, history=history,
+                                 on_abort=AbortAction.RETRY)
                except EOFError:
                    break  # Control-D pressed.
                with connection:

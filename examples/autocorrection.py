@@ -6,7 +6,7 @@ The word "impotr" will be corrected when the user types a space afterwards.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.key_binding.manager import KeyBindingManager
-from prompt_toolkit.shortcuts import get_input
+from prompt_toolkit import prompt
 
 # Database of words to be replaced by typing.
 corrections = {
@@ -38,7 +38,7 @@ def main():
         b.insert_text(' ')
 
     # Read input.
-    text = get_input('Say something: ', key_bindings_registry=key_bindings_manager.registry)
+    text = prompt('Say something: ', key_bindings_registry=key_bindings_manager.registry)
     print('You said: %s' % text)
 
 

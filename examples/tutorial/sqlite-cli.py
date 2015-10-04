@@ -3,9 +3,8 @@ from __future__ import unicode_literals
 import sys
 import sqlite3
 
-from prompt_toolkit import AbortAction
+from prompt_toolkit import AbortAction, prompt
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.shortcuts import get_input
 from prompt_toolkit.history import InMemoryHistory
 
 from pygments.lexers import SqlLexer
@@ -31,8 +30,9 @@ def main(database):
 
     while True:
         try:
-            text = get_input('> ', lexer=SqlLexer, completer=sql_completer, style=DocumentStyle, history=history,
-                             on_abort=AbortAction.RETRY)
+            text = prompt('> ', lexer=SqlLexer, completer=sql_completer,
+                          style=DocumentStyle, history=history,
+                          on_abort=AbortAction.RETRY)
         except EOFError:
             break  # Control-D pressed.
 

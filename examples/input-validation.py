@@ -5,7 +5,7 @@ Simple example of input validation.
 from __future__ import unicode_literals
 
 from prompt_toolkit.validation import Validator, ValidationError
-from prompt_toolkit.shortcuts import get_input
+from prompt_toolkit import prompt
 
 
 class EmailValidator(Validator):
@@ -16,7 +16,7 @@ class EmailValidator(Validator):
 
 
 def main():
-    text = get_input('Enter e-mail address: ', validator=EmailValidator())
+    text = prompt('Enter e-mail address: ', validator=EmailValidator())
     print('You said: %s' % text)
 
 if __name__ == '__main__':

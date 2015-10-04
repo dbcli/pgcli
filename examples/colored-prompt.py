@@ -4,7 +4,7 @@ Example of a colored prompt.
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit.shortcuts import get_input
+from prompt_toolkit import prompt
 from pygments.style import Style
 from pygments.styles.default import DefaultStyle
 from pygments.token import Token
@@ -39,5 +39,5 @@ def get_prompt_tokens(cli):
 
 
 if __name__ == '__main__':
-    answer = get_input(get_prompt_tokens=get_prompt_tokens, style=ExampleStyle)
+    answer = prompt(get_prompt_tokens=get_prompt_tokens, style=ExampleStyle)
     print('You said: %s' % answer)

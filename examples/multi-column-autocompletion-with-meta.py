@@ -5,7 +5,7 @@ Autocompletion example that shows meta-information alongside the completions.
 from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.shortcuts import get_input
+from prompt_toolkit import prompt
 
 
 animal_completer = WordCompleter([
@@ -26,7 +26,7 @@ animal_completer = WordCompleter([
 
 
 def main():
-    text = get_input('Give some animals: ', completer=animal_completer, display_completions_in_columns=True)
+    text = prompt('Give some animals: ', completer=animal_completer, display_completions_in_columns=True)
     print('You said: %s' % text)
 
 
