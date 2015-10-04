@@ -122,5 +122,20 @@ class KeyBindingManager(object):
             self.registry,
             enable_auto_suggest_bindings & enable_all)
 
+    @classmethod
+    def for_prompt(cls, **kw):
+        """
+        Create a ``KeyBindingManager`` with the defaults for an input prompt.
+        This activates incremental the bindings for abort/exit (Ctrl-C/Ctrl-D),
+        incremental search and auto suggestions.
+
+        (Not for full screen applications.)
+        """
+        kw.setdefault('enable_abort_and_exit_bindings', True)
+        kw.setdefault('enable_search', True)
+        kw.setdefault('enable_auto_suggest_bindings', True)
+
+        return cls(**kw)
+
     def reset(self):
         self.vi_state.reset()

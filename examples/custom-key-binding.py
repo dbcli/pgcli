@@ -11,7 +11,7 @@ from prompt_toolkit.keys import Keys
 def main():
     # We start with a `KeyBindingManager` instance, because this will already
     # nicely load all the default key bindings.
-    key_bindings_manager = KeyBindingManager()
+    key_bindings_manager = KeyBindingManager.for_prompt()
 
     # Add our own key binding to the registry of the key bindings manager.
     @key_bindings_manager.registry.add_binding(Keys.F4)
