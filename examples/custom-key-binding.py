@@ -33,6 +33,20 @@ def main():
         """
         event.cli.current_buffer.insert_text('z')
 
+    @key_bindings_manager.registry.add_binding(Keys.ControlT)
+    def _(event):
+        """
+        Print 'hello world' in the terminal when ControlT is pressed.
+
+        We use ``run_in_terminal``, because that ensures that the prompt is
+        hidden right before ``print_hello`` gets executed and it's drawn again
+        after it. (Otherwise this would destroy the output.)
+        """
+        def print_hello():
+            print('hello world')
+        event.cli.run_in_terminal(print_hello)
+
+
     # Read input.
     print('Press F4 to insert "hello world", type "xy" to insert "z":')
     text = prompt('> ', key_bindings_registry=key_bindings_manager.registry)
