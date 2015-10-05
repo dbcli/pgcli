@@ -453,7 +453,6 @@ class CommandLineInterface(object):
         if on_abort != AbortAction.IGNORE:
             self._abort_flag = True
             self._redraw()
-            self.current_buffer.reset()
 
         if on_abort == AbortAction.RAISE_EXCEPTION:
             def keyboard_interrupt():
@@ -463,6 +462,7 @@ class CommandLineInterface(object):
         elif on_abort == AbortAction.RETRY:
             self.reset()
             self.renderer.request_absolute_cursor_position()
+            self.current_buffer.reset()
 
         elif on_abort == AbortAction.RETURN_NONE:
             self.set_return_value(None)
