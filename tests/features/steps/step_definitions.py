@@ -133,7 +133,7 @@ def step_db_connect_test(context):
     Send connect to database.
     """
     db_name = context.conf['dbname']
-    context.cli.sendline('\connect {0}'.format(db_name))
+    context.cli.sendline('\\connect {0}'.format(db_name))
 
 
 @when('we start external editor providing a file name')
@@ -177,7 +177,7 @@ def step_db_connect_postgres(context):
     """
     Send connect to database.
     """
-    context.cli.sendline('\connect postgres')
+    context.cli.sendline('\\connect postgres')
 
 
 @when('we refresh completions')
@@ -296,8 +296,7 @@ def _expect_exact(context, expected, timeout):
         context.cli.expect_exact(expected, timeout=timeout)
     except:
         # Strip color codes out of the output.
-        actual = re.sub('\x1b\[[0-9;]*m', '', context.cli.before)
-        actual = re.sub('\x1b\[(.*)?.{1}', '', actual)
+        actual = re.sub(r'\x1b\[([0-9A-Za-z;?])+[m|K]?', '', context.cli.before)
         raise Exception('Expected:\n---\n{0}\n---\n\nActual:\n---\n{1}\n---'.format(
             expected,
             actual))
