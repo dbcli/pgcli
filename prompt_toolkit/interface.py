@@ -425,12 +425,11 @@ class CommandLineInterface(object):
         """
         Set exit. When Control-D has been pressed.
         """
-        self._exit_flag = True
         on_exit = self.application.on_exit
 
         if on_exit != AbortAction.IGNORE:
+            self._exit_flag = True
             self._redraw()
-            self.current_buffer.reset()
 
         if on_exit == AbortAction.RAISE_EXCEPTION:
             def eof_error():
@@ -440,6 +439,7 @@ class CommandLineInterface(object):
         elif on_exit == AbortAction.RETRY:
             self.reset()
             self.renderer.request_absolute_cursor_position()
+            self.current_buffer.reset()
 
         elif on_exit == AbortAction.RETURN_NONE:
             self.set_return_value(None)
