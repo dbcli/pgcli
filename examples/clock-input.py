@@ -7,7 +7,7 @@ from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.application import Application
 from prompt_toolkit.layout import Window
 from prompt_toolkit.layout.controls import BufferControl
-from prompt_toolkit.layout.processors import Processor
+from prompt_toolkit.layout.processors import BeforeInput
 from prompt_toolkit.layout.utils import token_list_len
 from prompt_toolkit.shortcuts import create_eventloop
 from prompt_toolkit.utils import Callback
@@ -16,19 +16,13 @@ from pygments.token import Token
 import datetime
 import time
 
-
-class ClockPrompt(Processor):
-    def run(self, cli, buffer, tokens):
-        now = datetime.datetime.now()
-        before = [
-            (Token.Prompt, '%s:%s:%s' % (now.hour, now.minute, now.second)),
-            (Token.Prompt, ' Enter something: ')
-        ]
-
-        return before + tokens, lambda i: i + token_list_len(before)
-
-    def invalidation_hash(self, cli, buffer):
-        return datetime.datetime.now()
+def _clock_tokens(cli):
+    " Tokens to be shown before the prompt. "
+    now = datetime.datetime.now()
+    return [
+        (Token.Prompt, '%s:%s:%s' % (now.hour, now.minute, now.second)),
+        (Token.Prompt, ' Enter something: ')
+    ]
 
 
 def main():
@@ -55,7 +49,7 @@ def main():
         done[0] = True
 
     app = Application(
-        layout=Window(BufferControl(input_processors=[ClockPrompt()])),
+        layout=Window(BufferControl(input_processors=[BeforeInput(_clock_tokens)])),
         on_start=Callback(on_read_start),
         on_stop=Callback(on_read_end))
 

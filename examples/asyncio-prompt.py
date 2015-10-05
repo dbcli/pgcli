@@ -21,9 +21,6 @@ from __future__ import unicode_literals
 from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.shortcuts import create_default_application, create_asyncio_eventloop
 
-from pygments.style import Style
-from pygments.token import Token
-
 import asyncio
 import sys
 

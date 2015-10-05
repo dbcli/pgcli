@@ -11,7 +11,6 @@ from prompt_toolkit.selection import SelectionType
 __all__ = (
     'Clipboard',
     'ClipboardData',
-    'InMemoryClipboard',
 )
 
 
