@@ -64,13 +64,13 @@ class Document(object):
 
     @property
     def current_char(self):
-        """ Return character under cursor, or None """
-        return self._get_char_relative_to_cursor(0)
+        """ Return character under cursor or an empty string. """
+        return self._get_char_relative_to_cursor(0) or ''
 
     @property
     def char_before_cursor(self):
-        """ Return character before the cursor, or None """
-        return self._get_char_relative_to_cursor(-1)
+        """ Return character before the cursor or an empty string. """
+        return self._get_char_relative_to_cursor(-1) or ''
 
     @property
     def text_before_cursor(self):
