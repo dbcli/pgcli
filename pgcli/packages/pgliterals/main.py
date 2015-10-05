@@ -1,9 +1,15 @@
 import os
-root = os.path.dirname(__file__)
-literal_names = ['keywords', 'functions', 'datatypes']
-__all__ = ['keywords', 'functions', 'datatypes']
+import json
 
-for literals in literal_names:
-    filepath = os.path.join(root, literals + '.txt')
-    with open(filepath) as f:
-        globals()[literals] = tuple(f.read().splitlines())
+root = os.path.dirname(__file__)
+literal_file = os.path.join(root, 'pgliterals.json')
+
+with open(literal_file) as f:
+    literals = json.load(f)
+
+
+def get_literals(literal_type):
+    """Where `literal_type` is one of 'keywords', 'functions', 'datatypes',
+        returns a tuple of literal values of that type"""
+
+    return tuple(literals[literal_type])

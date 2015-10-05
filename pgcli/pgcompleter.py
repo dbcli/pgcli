@@ -7,6 +7,7 @@ from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
+from .packages.pgliterals.main import get_literals
 from .config import load_config
 
 try:
@@ -21,7 +22,9 @@ NamedQueries.instance = NamedQueries.from_config(load_config('~/.pgclirc'))
 
 
 class PGCompleter(Completer):
-    from .packages.pgliterals.main import keywords, functions, datatypes
+    keywords = get_literals('keywords')
+    functions = get_literals('functions')
+    datatypes = get_literals('datatypes')
 
     def __init__(self, smart_completion=True, pgspecial=None):
         super(PGCompleter, self).__init__()
