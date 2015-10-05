@@ -19,7 +19,7 @@ setup(
         license='LICENSE.txt',
         url='http://pgcli.com',
         packages=find_packages(),
-        package_data={'pgcli': ['pgclirc']},
+        package_data={'pgcli': ['pgclirc', 'packages/pgliterals/*.txt']},
         description=description,
         long_description=open('README.rst').read(),
         install_requires=[
