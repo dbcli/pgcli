@@ -6,7 +6,7 @@ python:
   - "3.4"
 
 install: 
-  - pip install . pytest mock codecov behave pexpect
+  - pip install . pytest mock codecov behave pexpect==3.3
 
 script:
   - coverage run --source pgcli -m py.test
