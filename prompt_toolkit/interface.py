@@ -160,7 +160,8 @@ class CommandLineInterface(object):
         buffer.on_text_insert += create_on_insert_handler()
 
     def start_completion(self, buffer_name=None, select_first=False,
-                         select_last=False, insert_common_part=False):
+                         select_last=False, insert_common_part=False,
+                         complete_event=None):
         """
         Start asynchronous autocompletion of this buffer.
         (This will do nothing if a previous completion was still in progress.)
@@ -171,7 +172,8 @@ class CommandLineInterface(object):
         if completer:
             completer(select_first=select_first,
                       select_last=select_last,
-                      insert_common_part=insert_common_part)
+                      insert_common_part=insert_common_part,
+                      complete_event=CompleteEvent(completion_requested=True))
 
     @property
     def current_buffer_name(self):
@@ -605,8 +607,9 @@ class CommandLineInterface(object):
         complete_thread_running = [False]  # By ref.
 
         def async_completer(select_first=False, select_last=False,
-                            insert_common_part=False):
+                            insert_common_part=False, complete_event=None):
             document = buffer.document
+            complete_event = complete_event or CompleteEvent(text_inserted=True)
 
             # Don't start two threads at the same time.
             if complete_thread_running[0]:
@@ -620,9 +623,7 @@ class CommandLineInterface(object):
             complete_thread_running[0] = True
 
             def run():
-                completions = list(buffer.completer.get_completions(
-                    document,
-                    CompleteEvent(text_inserted=True)))
+                completions = list(buffer.completer.get_completions(document, complete_event))
                 complete_thread_running[0] = False
 
                 def callback():
