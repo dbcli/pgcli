@@ -475,3 +475,12 @@ def test_join_functions_on_suggests_columns(completer, complete_event):
     assert set(result) == set([
          Completion(text='x', start_position=0, display_meta='column'),
          Completion(text='y', start_position=0, display_meta='column')])
+
+
+def test_find_matches_no_sort_ranked(completer, complete_event):
+    collection = ['AB', 'AA']
+    completions = completer.find_matches(
+        'A', collection, start_only=True, fuzzy=False,
+        meta=None, meta_collection=None, sort_ranked=False)
+    matches = [c.text for c in completions]
+    assert matches == collection
