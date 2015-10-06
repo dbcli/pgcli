@@ -341,10 +341,11 @@ class PGCompleter(Completer):
                 completions.extend(dbs)
 
             elif suggestion['type'] == 'keyword':
-                keywords = self.find_matches(word_before_cursor, self.keywords,
-                                             start_only=True,
-                                             fuzzy=False,
-                                             meta='keyword')
+                # Suggest keywords without sorting so they're suggested in the
+                # same order as listed in pgliterals
+                keywords = self.find_matches(
+                    word_before_cursor, self.keywords, start_only=True,
+                    fuzzy=False, sort_ranked=False, meta='keyword')
                 completions.extend(keywords)
 
             elif suggestion['type'] == 'special':
