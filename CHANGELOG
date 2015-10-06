@@ -1,6 +1,31 @@
 CHANGELOG
 =========
 
+0.53: 2015-10-06
+----------------
+
+New features:
+- Handling of the insert key in Vi mode.
+- Added 'zt' and 'zb' Vi key bindings.
+- Added delete key binding for deleting selected text.
+- Select word below cursor on double mouse click.
+- Added `wrap_lines` option to TokenListControl.
+- Added `KeyBindingManager.for_prompt`.
+
+Fixes:
+- Fix in rendering output.
+- Reset renderer correctly in run_in_terminal.
+- Only reset buffer when using `AbortAction.RETRY`.
+- Fix in handling of exit (Ctrl-D) key presses.
+- Fix in `CompleteEvent`. Correctly set `completion_requested`.
+
+Backwards-incompatible changes:
+- Renamed `ValidationError.index` to `ValidationError.cursor_position`.
+- Renamed `shortcuts.get_input` to `shortcuts.prompt`.
+- Return empty string instead of None in
+  `Document.current_char`/`char_before_cursor`.
+
+
 0.52: 2015-09-24
 ----------------
 
