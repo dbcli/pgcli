@@ -1,5 +1,11 @@
 {
     "keywords": [
+        "SELECT",
+        "FROM",
+        "WHERE",
+        "GROUP BY",
+        "HAVING",
+        "ORDER BY",
         "ACCESS",
         "ADD",
         "ALL",
@@ -46,12 +52,9 @@
         "FORCE_QUOTE",
         "FORCE_NOT_NULL",
         "FREEZE",
-        "FROM",
         "FULL",
         "FUNCTION",
         "GRANT",
-        "GROUP BY",
-        "HAVING",
         "HEADER",
         "IDENTIFIED",
         "IMMEDIATE",
@@ -91,7 +94,6 @@
         "ONLINE",
         "OPTION",
         "OR",
-        "ORDER BY",
         "OUTER",
         "OWNER",
         "PCTFREE",
@@ -109,7 +111,6 @@
         "ROWID",
         "ROWNUM",
         "ROWS",
-        "SELECT",
         "SESSION",
         "SET",
         "SHARE",
@@ -139,7 +140,6 @@
         "VIEW",
         "WHEN",
         "WHENEVER",
-        "WHERE",
         "WITH"
     ],
     "functions": [
