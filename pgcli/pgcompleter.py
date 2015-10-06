@@ -7,6 +7,7 @@ from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
+from .packages.pgliterals.main import get_literals
 from .config import load_config
 
 try:
@@ -21,35 +22,9 @@ NamedQueries.instance = NamedQueries.from_config(load_config('~/.pgclirc'))
 
 
 class PGCompleter(Completer):
-    keywords = ['ACCESS', 'ADD', 'ALL', 'ALTER TABLE', 'AND', 'ANY', 'AS',
-            'ASC', 'AUDIT', 'BETWEEN', 'BY', 'CASE', 'CHAR', 'CHECK',
-            'CLUSTER', 'COLUMN', 'COMMENT', 'COMPRESS', 'CONCURRENTLY',
-            'CONNECT', 'COPY', 'CREATE', 'CURRENT', 'DATABASE', 'DATE',
-            'DECIMAL', 'DEFAULT', 'DELETE FROM', 'DELIMITER', 'DESC',
-            'DESCRIBE', 'DISTINCT', 'DROP', 'ELSE', 'ENCODING', 'ESCAPE',
-            'EXCLUSIVE', 'EXISTS', 'EXTENSION', 'FILE', 'FLOAT', 'FOR',
-            'FORMAT', 'FORCE_QUOTE', 'FORCE_NOT_NULL', 'FREEZE', 'FROM',
-            'FULL', 'FUNCTION', 'GRANT', 'GROUP BY', 'HAVING', 'HEADER',
-            'IDENTIFIED', 'IMMEDIATE', 'IN', 'INCREMENT', 'INDEX', 'INITIAL',
-            'INSERT INTO', 'INTEGER', 'INTERSECT', 'INTERVAL', 'INTO', 'IS',
-            'JOIN', 'LEFT', 'LEVEL', 'LIKE', 'LIMIT', 'LOCK', 'LONG',
-            'MAXEXTENTS', 'MINUS', 'MLSLABEL', 'MODE', 'MODIFY', 'NOAUDIT',
-            'NOCOMPRESS', 'NOT', 'NOWAIT', 'NULL', 'NUMBER', 'OIDS', 'OF',
-            'OFFLINE', 'ON', 'ONLINE', 'OPTION', 'OR', 'ORDER BY', 'OUTER',
-            'OWNER', 'PCTFREE', 'PRIMARY', 'PRIOR', 'PRIVILEGES', 'QUOTE',
-            'RAW', 'RENAME', 'RESOURCE', 'REVOKE', 'RIGHT', 'ROW', 'ROWID',
-            'ROWNUM', 'ROWS', 'SELECT', 'SESSION', 'SET', 'SHARE', 'SIZE',
-            'SMALLINT', 'START', 'SUCCESSFUL', 'SYNONYM', 'SYSDATE', 'TABLE',
-            'TEMPLATE', 'THEN', 'TO', 'TRIGGER', 'TRUNCATE', 'UID', 'UNION',
-            'UNIQUE', 'UPDATE', 'USE', 'USER', 'USING', 'VALIDATE', 'VALUES',
-            'VARCHAR', 'VARCHAR2', 'VIEW', 'WHEN', 'WHENEVER', 'WHERE', 'WITH']
-
-    functions = ['AVG', 'COUNT', 'FIRST', 'FORMAT', 'LAST', 'LCASE', 'LEN',
-                 'MAX', 'MIN', 'MID', 'NOW', 'ROUND', 'SUM', 'TOP', 'UCASE']
-
-
-    datatypes = ['BIGINT', 'BOOLEAN', 'CHAR', 'DATE', 'DOUBLE PRECISION', 'INT',
-                 'INTEGER', 'NUMERIC', 'REAL', 'TEXT', 'VARCHAR']
+    keywords = get_literals('keywords')
+    functions = get_literals('functions')
+    datatypes = get_literals('datatypes')
 
     def __init__(self, smart_completion=True, pgspecial=None):
         super(PGCompleter, self).__init__()
