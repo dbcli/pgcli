@@ -105,7 +105,13 @@ Transparent = Token.Transparent
 
 class Screen(object):
     """
-    Two dimentional buffer for the output.
+    Two dimentional buffer of `Char` instances.
+    Typical usage::
+
+        screen = Screen()
+        screen.write_data([
+            (Token, 'text'), (Token, 'text'),
+        ])
     """
     def __init__(self, default_char=None, initial_width=0, initial_height=0):
         if default_char is None:

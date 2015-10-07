@@ -234,7 +234,7 @@ same history between several calls to
 
 
 To persist a history to disk, use :class:`~prompt_toolkit.history.FileHistory`
-instead.
+instead instead of :class:`~prompt_toolkit.history.InMemoryHistory`.
 
 
 Auto suggestion
@@ -284,7 +284,7 @@ binding are required, just pass ``vi_mode=True``.
     from prompt_toolkit import prompt
 
     prompt('> ', vi_mode=True)
-    
+
 
 Adding custom key bindings
 --------------------------
@@ -323,3 +323,81 @@ An example of a prompt that prints 'hello world' when Control-T is pressed.
 Note that we use
 :meth:`~prompt_toolkit.interface.CommandLineInterface.run_in_terminal`. This
 ensures that the output of the print-statement and the prompt don't mix up.
+
+
+Other prompt options
+--------------------
+
+Multiline input
+^^^^^^^^^^^^^^^
+
+Reading multiline input is as easy as passing the ``multiline=True`` parameter.
+
+.. code:: python
+
+    from prompt_toolkit import prompt
+
+    prompt('> ', multiline=True)
+
+A side effect of this is that the enter key will now insert a newline instead
+of accepting and returning the input. The user will now have to press
+``Meta+Enter`` in order to accept the input. (Or ``Escape`` folowed by
+``Enter``.)
+
+
+Passing a default
+^^^^^^^^^^^^^^^^^
+
+A default value can be given:
+
+.. code:: python
+
+    from prompt_toolkit import prompt
+    import getpass
+
+    prompt('What is your name: ', default='%s' % getpass.getuser())
+
+
+Mouse support
+^^^^^^^^^^^^^
+
+There is limited mouse support for positioning the cursor, for scrolling (in
+case of large multiline inputs) and for clicking in the autocompletion menu.
+
+Enabling can be done by passing the ``mouse_support=True`` option.
+
+.. code:: python
+
+    from prompt_toolkit import prompt
+    import getpass
+
+    prompt('What is your name: ', mouse_support=True)
+
+
+Line wrapping
+^^^^^^^^^^^^^
+
+Line wrapping is enabled by default. This is what most people are used too and
+this is what GNU readline does. When it is disabled, the input string will
+scroll horizontally.
+
+.. code:: python
+
+    from prompt_toolkit import prompt
+    import getpass
+
+    prompt('What is your name: ', wrap_lines=False)
+
+
+Password input
+^^^^^^^^^^^^^^
+
+When the ``is_password=True`` flag has been given, the input is replaced by
+asterisks (``*`` characters).
+
+.. code:: python
+
+    from prompt_toolkit import prompt
+    import getpass
+
+    prompt('What is your name: ', is_password=True)

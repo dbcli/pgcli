@@ -71,6 +71,23 @@ vertical line:
             get_tokens=lambda cli: [(Token, 'Hello world')])),
     ])
 
+The BufferControl
+^^^^^^^^^^^^^^^^^
+
+Input processors
+^^^^^^^^^^^^^^^^
+
+The TokenListControl
+^^^^^^^^^^^^^^^^^^^^^
+
+Custom user controls
+^^^^^^^^^^^^^^^^^^^^
+
+The Window class
+^^^^^^^^^^^^^^^^
+
+The :class:`~prompt_toolkit.layout.containers.Window` class exposes many
+interesting functionality that influences the behaviour of user controls.
 
 
 Key bindings
@@ -80,6 +97,9 @@ Key bindings
 Buffers
 -------
 
+
+The focus stack
+---------------
 
 
 The ``Application`` instance
@@ -141,8 +161,11 @@ So, the only thing we actually need in order to run an application is this:
     cli.run()
 
 
-Custom user controls
---------------------
+Filters
+-------
+
+
+
 
 Input hooks
 -----------
