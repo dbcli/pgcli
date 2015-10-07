@@ -6,7 +6,8 @@ import signal
 import errno
 import threading
 
-from ..terminal.vt100_input import InputStream
+from prompt_toolkit.terminal.vt100_input import InputStream
+from prompt_toolkit.utils import DummyContext, in_main_thread
 from .base import EventLoop, INPUT_TIMEOUT
 from .callbacks import EventLoopCallbacks
 from .inputhook import InputHookContext
@@ -28,6 +29,7 @@ class PosixEventLoop(EventLoop):
         self.running = False
         self.closed = False
         self._running = False
+        self._callbacks = None
 
         self._calls_from_executor = []
 
@@ -43,11 +45,13 @@ class PosixEventLoop(EventLoop):
         The input 'event loop'.
         """
         assert isinstance(callbacks, EventLoopCallbacks)
+        assert not self._running
 
         if self.closed:
             raise Exception('Event loop already closed.')
 
         self._running = True
+        self._callbacks = callbacks
 
         inputstream = InputStream(callbacks.feed_key)
         current_timeout = INPUT_TIMEOUT
@@ -55,15 +59,16 @@ class PosixEventLoop(EventLoop):
         # Create reader class.
         stdin_reader = PosixStdinReader(stdin)
 
-        def received_winch():
-            """
-            (We do it asynchronously, because the handler can write to the
-            output, and doing this inside the signal handler causes easily
-            reentrant calls, giving runtime errors.)
-            """
-            self.call_from_executor(callbacks.terminal_size_changed)
+        # Only attach SIGWINCH signal handler in main thread.
+        # (It's not possible to attach signal handlers in other threads. In
+        # that case we should rely on a the main thread to call this manually
+        # instead.)
+        if in_main_thread():
+            ctx = call_on_sigwinch(self.received_winch)
+        else:
+            ctx = DummyContext()
 
-        with call_on_sigwinch(received_winch):
+        with ctx:
             while self._running:
                 # Call inputhook.
                 with TimeIt() as inputhook_timer:
@@ -114,12 +119,32 @@ class PosixEventLoop(EventLoop):
                     callbacks.input_timeout()
                     current_timeout = None
 
+        self._callbacks = None
+
     def _ready_for_reading(self, stdin, timeout=None):
         """
         Return the file descriptors that are ready for reading.
         """
         r, _, _ =_select([stdin, self._schedule_pipe[0]], [], [], timeout)
         return r
+
+    def received_winch(self):
+        """
+        Notify the event loop that SIGWINCH has been received
+        """
+        # Process signal asynchronously, because this handler can write to the
+        # output, and doing this inside the signal handler causes easily
+        # reentrant calls, giving runtime errors..
+
+        # Furthur, this has to be thread safe. When the CommandLineInterface
+        # runs not in the main thread, this function still has to be called
+        # from the main thread. (The only place where we can install signal
+        # handlers.)
+        def process_winch():
+            if self._callbacks:
+                self._callbacks.terminal_size_changed()
+
+        self.call_from_executor(process_winch)
 
     def run_in_executor(self, callback):
         """
@@ -151,6 +176,9 @@ class PosixEventLoop(EventLoop):
             os.write(self._schedule_pipe[1], b'x')
 
     def stop(self):
+        """
+        Stop the event loop.
+        """
         self._running = False
 
     def close(self):

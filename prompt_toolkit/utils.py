@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import os
 import signal
 import sys
+import threading
 
 from wcwidth import wcwidth
 
@@ -13,6 +14,7 @@ __all__ = (
     'suspend_to_background_supported',
     'is_conemu_ansi',
     'is_windows',
+    'in_main_thread',
 )
 
 
@@ -133,3 +135,10 @@ def is_conemu_ansi():
     True when the ConEmu Windows console is used.
     """
     return is_windows() and os.environ.get('ConEmuANSI', 'OFF') == 'ON'
+
+
+def in_main_thread():
+    """
+    True when the current thread is the main thread.
+    """
+    return threading.current_thread().__class__.__name__ == '_MainThread'
