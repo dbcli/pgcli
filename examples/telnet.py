@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.contrib.telnet.application import TelnetApplication
 from prompt_toolkit.contrib.telnet.server import TelnetServer
-from prompt_toolkit.shortcuts import create_default_application
+from prompt_toolkit.shortcuts import create_prompt_application
 from prompt_toolkit.application import AbortAction
 
 from pygments.lexers import HtmlLexer
@@ -26,11 +26,10 @@ class ExampleApplication(TelnetApplication):
         # Set CommandLineInterface.
         animal_completer = WordCompleter(['alligator', 'ant'])
         telnet_connection.set_application(
-            create_default_application(
-                       message='Say something: ',
-                       lexer=HtmlLexer,
-                       completer=animal_completer,
-                       on_abort=AbortAction.RETRY),
+            create_prompt_application(message='Say something: ',
+                                      lexer=HtmlLexer,
+                                      completer=animal_completer,
+                                      on_abort=AbortAction.RETRY),
             self.handle_command)
 
     def handle_command(self, telnet_connection, document):

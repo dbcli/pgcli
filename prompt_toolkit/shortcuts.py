@@ -57,9 +57,9 @@ else:
 
 __all__ = (
     'create_eventloop',
-    'create_default_output',
-    'create_default_layout',
-    'create_default_application',
+    'create_output',
+    'create_prompt_layout',
+    'create_prompt_application',
     'prompt',
 )
 
@@ -78,7 +78,7 @@ def create_eventloop(inputhook=None):
     return Loop(inputhook=inputhook)
 
 
-def create_default_output(stdout=None):
+def create_output(stdout=None):
     """
     Return an :class:`~prompt_toolkit.output.Output` instance for the command
     line.
@@ -141,12 +141,12 @@ def _split_multiline_prompt(get_prompt_tokens):
     return before, first_input_line
 
 
-def create_default_layout(message='', lexer=None, is_password=False,
-                          reserve_space_for_menu=False,
-                          get_prompt_tokens=None, get_bottom_toolbar_tokens=None,
-                          display_completions_in_columns=False,
-                          extra_input_processors=None, multiline=False,
-                          wrap_lines=True):
+def create_prompt_layout(message='', lexer=None, is_password=False,
+                         reserve_space_for_menu=False,
+                         get_prompt_tokens=None, get_bottom_toolbar_tokens=None,
+                         display_completions_in_columns=False,
+                         extra_input_processors=None, multiline=False,
+                         wrap_lines=True):
     """
     Create a :class:`.Layout` instance for a prompt.
 
@@ -286,7 +286,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
     ] + toolbars)
 
 
-def create_default_application(
+def create_prompt_application(
         message='',
         multiline=False,
         wrap_lines=True,
@@ -376,7 +376,7 @@ def create_default_application(
 
     # Create application
     return Application(
-        layout=create_default_layout(
+        layout=create_prompt_layout(
                 message=message,
                 lexer=lexer,
                 is_password=is_password,
@@ -418,16 +418,16 @@ def prompt(message='', **kwargs):
     :class:`~prompt_toolkit.history.History` instance and pass it every time.
 
     This function accepts many keyword arguments. They are a proxy to the
-    arguments of :func:`.create_default_application`.
+    arguments of :func:`.create_prompt_application`.
     """
     eventloop = kwargs.pop('eventloop', None) or create_eventloop()
     patch_stdout = kwargs.pop('patch_stdout', False)
 
     # Create CommandLineInterface
     cli = CommandLineInterface(
-        application=create_default_application(message, **kwargs),
+        application=create_prompt_application(message, **kwargs),
         eventloop=eventloop,
-        output=create_default_output())
+        output=create_output())
 
     # Replace stdout.
     original_stdout = sys.stdout

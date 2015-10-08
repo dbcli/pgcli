@@ -60,14 +60,14 @@ class CommandLineInterface(object):
         assert output is None or isinstance(output, Output)
         assert input is None or isinstance(input, Input)
 
-        from .shortcuts import create_default_output, create_eventloop
+        from .shortcuts import create_output, create_eventloop
 
         self.application = application
         self.eventloop = eventloop or create_eventloop()
         self._is_running = False
 
         # Inputs and outputs.
-        self.output = output or create_default_output()
+        self.output = output or create_output()
         self.input = input or StdinInput(sys.stdin)
 
         #: The input buffers.

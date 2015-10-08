@@ -19,7 +19,7 @@ possible. ::
 """
 from __future__ import unicode_literals
 from prompt_toolkit.interface import CommandLineInterface
-from prompt_toolkit.shortcuts import create_default_application, create_asyncio_eventloop
+from prompt_toolkit.shortcuts import create_prompt_application, create_asyncio_eventloop
 
 import asyncio
 import sys
@@ -51,7 +51,7 @@ def interactive_shell():
 
     # Create interface.
     cli = CommandLineInterface(
-        application=create_default_application('Say something inside the event loop: '),
+        application=create_prompt_application('Say something inside the event loop: '),
         eventloop=eventloop)
 
     # Patch stdout in something that will always print *above* the prompt when

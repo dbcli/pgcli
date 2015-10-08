@@ -7,7 +7,7 @@ Example usage::
         def client_connected(self, telnet_connection):
             # Set CLI with simple prompt.
             telnet_connection.set_application(
-                telnet_connection.create_default_application(...))
+                telnet_connection.create_prompt_application(...))
 
         def handle_command(self, telnet_connection, document):
             # When the client enters a command, just reply.
@@ -34,7 +34,7 @@ from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.eventloop.base import EventLoop
 from prompt_toolkit.interface import CommandLineInterface, Application
 from prompt_toolkit.layout.screen import Size
-from prompt_toolkit.shortcuts import create_default_application
+from prompt_toolkit.shortcuts import create_prompt_application
 from prompt_toolkit.terminal.vt100_input import InputStream
 from prompt_toolkit.terminal.vt100_output import Vt100_Output
 
@@ -127,7 +127,7 @@ class TelnetConnection(object):
         self.eventloop = _TelnetEventLoopInterface(server)
 
         # Set default CommandLineInterface.
-        self.set_application(create_default_application())
+        self.set_application(create_prompt_application())
 
         # Call client_connected
         application.client_connected(self)
