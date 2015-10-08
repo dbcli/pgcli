@@ -43,11 +43,13 @@ class Application(object):
     `CommandLineInterface`s, each with a different I/O backends.
     that runs for instance over telnet, SSH or any other I/O backend.
 
-    :param layout: A :class:`Layout` instance.
-    :param buffer: A :class:`Buffer` instance for the default buffer.
+    :param layout: A :class:`~prompt_toolkit.layout.containers.Layout` instance.
+    :param buffer: A :class:`~prompt_toolkit.buffer.Buffer` instance for the default buffer.
     :param initial_focussed_buffer: Name of the buffer that is focussed during start-up.
-    :param key_bindings_registry: :class:`Registry` instance for the key bindings.
-    :param clipboard: Clipboard to use.
+    :param key_bindings_registry:
+        :class:`~prompt_toolkit.key_binding.registry.Registry` instance for the
+        key bindings.
+    :param clipboard: :class:`~prompt_toolkit.clipboard.base.Clipboard` to use.
     :param on_abort: What to do when Control-C is pressed.
     :param on_exit: What to do when Control-D is pressed.
     :param use_alternate_screen: When True, run the application on the alternate screen buffer.
@@ -67,7 +69,8 @@ class Application(object):
     :param on_stop: Called when reading input ends.
     :param on_reset: Called during reset.
     :param on_buffer_changed: Called when another buffer gets the focus.
-    :param on_initialize: Called after the `CommandLineInterface` initializes.
+    :param on_initialize: Called after the
+        :class:`~prompt_toolkit.interface.CommandLineInterface` initializes.
     """
     def __init__(self, layout=None, buffer=None, buffers=None,
                  initial_focussed_buffer=DEFAULT_BUFFER,

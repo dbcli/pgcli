@@ -47,7 +47,7 @@ class History(with_metaclass(ABCMeta, object)):
 
 class InMemoryHistory(History):
     """
-    ``History`` class that keeps a list of all strings in memory.
+    :class:`.History` class that keeps a list of all strings in memory.
     """
     def __init__(self):
         self.strings = []
@@ -67,7 +67,7 @@ class InMemoryHistory(History):
 
 class FileHistory(History):
     """
-    ``History`` class that stores all strings in a file.
+    :class:`.History` class that stores all strings in a file.
     """
     def __init__(self, filename):
         self.strings = []

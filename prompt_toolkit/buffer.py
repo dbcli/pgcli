@@ -38,8 +38,9 @@ class AcceptAction(object):
     What to do when the input is accepted by the user.
     (When Enter was pressed in the command line.)
 
-    :param handler: (optional) A callable which accepts a CLI and `Document'
-                    that is called when the user accepts input.
+    :param handler: (optional) A callable which accepts a CLI and
+                    :class:`prompt_toolkit.document.Document` that is called
+                    when the user accepts input.
     :param render_cli_done: When using a handler, first render the CLI in the
                     'done' state, then call the handler. This
     """
@@ -50,7 +51,8 @@ class AcceptAction(object):
     @classmethod
     def run_in_terminal(cls, handler, render_cli_done=False):
         """
-        Create an `AcceptAction` that runs the given handler in the terminal.
+        Create an :class:`.AcceptAction` that runs the given handler in the
+        terminal.
 
         :param render_cli_done: When True, render the interface in the 'Done'
                 state first, then execute the function. If False, erase the
@@ -109,7 +111,7 @@ class CompletionState(object):
 
     def go_to_index(self, index):
         """
-        Create a new CompletionState object with the new index.
+        Create a new :class:`.CompletionState` object with the new index.
         """
         return CompletionState(self.original_document, self.current_completions, complete_index=index)
 
@@ -368,8 +370,8 @@ class Buffer(object):
 
     def set_document(self, value, bypass_readonly=False):
         """
-        Set :class:`Document` instance. Like the `document` property, but
-        accept an `bypass_readonly` argument.
+        Set :class:`~prompt_toolkit.document.Document` instance. Like the
+        ``document`` property, but accept an ``bypass_readonly`` argument.
 
         :param bypass_readonly: When True, don't raise an `EditReadOnlyBuffer`
                                 exception, even when the buffer is read-only.
@@ -737,7 +739,7 @@ class Buffer(object):
         Move forwards through the history.
 
         :param count: Amount of items to move forward.
-        :param history_search: When True, filter history using self.history_search_text.
+        :param history_search: When True, filter history using ``self.history_search_text``.
         """
         self._set_history_search()
 
@@ -786,7 +788,7 @@ class Buffer(object):
 
     def copy_selection(self, _cut=False):
         """
-        Copy selected text and return :class:`ClipboardData` instance.
+        Copy selected text and return :class:`.ClipboardData` instance.
         """
         if self.selection_state:
             type = self.selection_state.type

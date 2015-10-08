@@ -17,7 +17,7 @@ __all__ = (
 
 class ValidationError(Exception):
     """
-    Error raised by :func:`.Validator.validate`.
+    Error raised by :meth:`.Validator.validate`.
 
     :param cursor_position: The cursor position where the error occured.
     :param message: Text.

@@ -49,7 +49,7 @@ class LayoutDimension(object):
     @classmethod
     def exact(cls, amount):
         """
-        Return a ``LayoutDimension`` with an exact size. (min, max and
+        Return a :class:`.LayoutDimension` with an exact size. (min, max and
         preferred set to ``amount``).
         """
         return cls(min=amount, max=amount, preferred=amount)

@@ -49,8 +49,8 @@ class AutoSuggest(with_metaclass(ABCMeta, object)):
         call. So, from here, don't access ``buffer.text``, but use
         ``document.text`` instead.
 
-        :param buffer: The :class:`prompt_toolkit.buffer.Buffer` instance.
-        :param document: The :class:`prompt_toolkit.document.Document` instance.
+        :param buffer: The :class:`~prompt_toolkit.buffer.Buffer` instance.
+        :param document: The :class:`~prompt_toolkit.document.Document` instance.
         """
 
 

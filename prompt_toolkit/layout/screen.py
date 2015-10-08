@@ -19,7 +19,7 @@ Size = namedtuple('Size', 'rows columns')
 
 class Char(object):
     """
-    Represent a single character in a `Screen.`
+    Represent a single character in a :class:`.Screen`.
 
     This should be considered immutable.
     """
@@ -88,7 +88,7 @@ class Char(object):
 
 class CharCache(dict):
     """
-    Cache of Char instances.
+    Cache of :class:`.Char` instances.
     Mapping of (character, Token) tuples to Char instances.
 
     (Char instances should be considered immutable.)
@@ -105,7 +105,7 @@ Transparent = Token.Transparent
 
 class Screen(object):
     """
-    Two dimentional buffer of `Char` instances.
+    Two dimentional buffer of :class:`.Char` instances.
     Typical usage::
 
         screen = Screen()
@@ -138,9 +138,10 @@ class Screen(object):
 
     def write_data(self, data, width=None):
         """
-        Write data at :class:`WritePosition`.
-        When one of the tokens in the token list is Token.SetCursorPosition,
-        this will set the cursor position.
+        Write a list of tokens to the screen.
+
+        When one of the tokens in the token list is
+        ``Token.SetCursorPosition``, this will set the cursor position.
 
         :param data: List of Token tuples to write to the buffer.
         :param width: Width of the line wrap. (Don't wrap when `width` is None.)

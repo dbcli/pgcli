@@ -1,5 +1,5 @@
 """
-Margin implementations for a `Window`.
+Margin implementations for a :class:`~prompt_toolkit.layout.containers.Window`.
 """
 from __future__ import unicode_literals
 
@@ -34,13 +34,15 @@ class Margin(with_metaclass(ABCMeta, object)):
         Creates a margin.
         This should return a list of (Token, text) tuples.
 
-        :param window_render_info: `WindowRenderInfo` instance, generated
-            after rendering and copying the visible part of the `UserControl`
-            into the `Window`.
+        :param window_render_info:
+            :class:`~prompt_toolkit.layout.containers.WindowRenderInfo`
+            instance, generated after rendering and copying the visible part of
+            the :class:`~prompt_toolkit.layout.controls.UIControl` into the
+            :class:`~prompt_toolkit.layout.containers.Window`.
         :param width: The width that's available for this margin. (As reported
-            by `self.get_width`.)
+            by :meth:`.get_width`.)
         :param height: The height that's available for this margin. (The height
-            of the `Window`.)
+            of the :class:`~prompt_toolkit.layout.containers.Window`.)
         """
         return []
 
@@ -50,9 +52,11 @@ class NumberredMargin(Margin):
     Margin that displays the line numbers.
 
     :param buffer_name: The name of the buffer. This is recommended if the
-        margin is used together with a `BufferControl` inside a `Window`.
-        That way, we can predict the width of this margin (the amount of
-        decimals) according to the number of lines in the buffer.
+        margin is used together with a
+        :class:`~prompt_toolkit.layout.controls.BufferControl` inside a
+        :class:`~prompt_toolkit.layout.containers.Window`. That way, we can
+        predict the width of this margin (the amount of decimals) according to
+        the number of lines in the buffer.
     :param width: If no buffer name is given, width can be used to set a fixed
         width.
     :param relative: Number relative to the cursor position. Similar to the Vi
@@ -118,7 +122,7 @@ class NumberredMargin(Margin):
 
 class ConditionalMargin(Margin):
     """
-    Wrapper around other `Margin` classes to show/hide them.
+    Wrapper around other :class:`.Margin` classes to show/hide them.
     """
     def __init__(self, margin, filter):
         assert isinstance(margin, Margin)

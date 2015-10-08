@@ -66,9 +66,9 @@ __all__ = (
 
 def create_eventloop(inputhook=None):
     """
-    Create and return a normal
+    Create and return an
     :class:`~prompt_toolkit.eventloop.base.EventLoop` instance for a
-    `CommandLineInterface`.
+    :class:`~prompt_toolkit.interface.CommandLineInterface`.
     """
     if is_windows():
         from prompt_toolkit.eventloop.win32 import Win32EventLoop as Loop
@@ -80,7 +80,8 @@ def create_eventloop(inputhook=None):
 
 def create_default_output(stdout=None):
     """
-    Return an `Output` instance for the command line.
+    Return an :class:`~prompt_toolkit.output.Output` instance for the command
+    line.
     """
     stdout = stdout or sys.__stdout__
 
@@ -95,8 +96,9 @@ def create_default_output(stdout=None):
 
 def create_asyncio_eventloop(loop=None):
     """
-    Returns an asyncio `Eventloop` instance for usage in a
-    `CommandLineInterface`. It is a wrapper around an asyncio loop.
+    Returns an asyncio :class:`~prompt_toolkit.eventloop.EventLoop` instance
+    for usage in a :class:`~prompt_toolkit.interface.CommandLineInterface`. It
+    is a wrapper around an asyncio loop.
 
     :param loop: The asyncio eventloop (or `None` if the default asyncioloop
                  should be used.)
@@ -146,8 +148,7 @@ def create_default_layout(message='', lexer=None, is_password=False,
                           extra_input_processors=None, multiline=False,
                           wrap_lines=True):
     """
-    Generate default layout.
-    Returns a ``Layout`` instance.
+    Create a :class:`.Layout` instance for a prompt.
 
     :param message: Text to be used as prompt.
     :param lexer: Lexer to be used for the highlighting.
@@ -314,9 +315,11 @@ def create_default_application(
         accept_action=AcceptAction.RETURN_DOCUMENT,
         default=''):
     """
-    Create a default `Aplication` instance.
-    It is meant to cover 90% of the use cases, where no extreme customization
-    is required.
+    Create an :class:`~Application` instance for a prompt.
+
+    (It is meant to cover 90% of the prompt use cases, where no extreme
+    customization is required. For more complex input, it is required to create
+    a custom :class:`~Application` instance.)
 
     :param message: Text to be shown before the prompt.
     :param mulitiline: Allow multiline input. Pressing enter will insert a
@@ -329,20 +332,25 @@ def create_default_application(
         while typing.
     :param enable_history_search: `bool` or `CLIFilter`. Enable up-arrow
         parting string matching.
-    :param lexer: Lexer to be used for the syntax highlighting.
-    :param validator: `Validator` instance for input validation.
-    :param completer: `Completer` instance for input completion.
-    :param auto_suggest: `AutoSuggest` instance for input suggestions.
+    :param lexer: :class:`~prompt_toolkit.layout.lexer.Lexer` to be used for
+        the syntax highlighting.
+    :param validator: :class:`~prompt_toolkit.validation.Validator` instance
+        for input validation.
+    :param completer: :class:`~prompt_toolkit.completion.Completer` instance
+        for input completion.
+    :param auto_suggest: :class:`~prompt_toolkit.auto_suggest.AutoSuggest`
+        instance for input suggestions.
     :param style: Pygments style class for the color scheme.
     :param enable_system_bindings: `bool` or `CLIFilter`. Pressing Meta+'!'
         will show a system prompt.
     :param enable_open_in_editor: `bool` or `CLIFilter`. Pressing 'v' in Vi
         mode or C-X C-E in emacs mode will open an external editor.
-    :param history: `History` instance. (e.g. `FileHistory`)
-    :param clipboard: `Clipboard` instance. (e.g. `InMemoryClipboard`)
+    :param history: :class:`~prompt_toolkit.history.History` instance.
+    :param clipboard: :class:`~prompt_toolkit.clipboard.base.Clipboard` instance.
+        (e.g. :class:`~prompt_toolkit.clipboard.in_memory.InMemoryClipboard`)
     :param get_bottom_toolbar_tokens: Optional callable which takes a
-        :class:`CommandLineInterface` and returns a list of tokens for the
-        bottom toolbar.
+        :class:`~prompt_toolkit.interface.CommandLineInterface` and returns a
+        list of tokens for the bottom toolbar.
     :param display_completions_in_columns: `bool` or `CLIFilter`. Display the
         completions in multiple columns.
     :param get_title: Callable that returns the title to be displayed in the

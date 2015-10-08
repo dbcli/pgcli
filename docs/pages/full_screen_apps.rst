@@ -1,3 +1,5 @@
+.. _full_screen_applications:
+
 Building full screen applications
 =================================
 

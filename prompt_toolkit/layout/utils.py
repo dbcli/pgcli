@@ -70,8 +70,9 @@ def explode_tokens(tokenlist):
 
 def find_window_for_buffer_name(layout, buffer_name):
     """
-    Look for a Window in the Layout that contains the BufferControl for the
-    given buffer and return it. If no such Window is found, return None.
+    Look for a :class:`~prompt_toolkit.layout.containers.Window` in the Layout
+    that contains the :class:`~prompt_toolkit.layout.controls.BufferControl`
+    for the given buffer and return it. If no such Window is found, return None.
     """
     from .containers import Window
     from .controls import BufferControl

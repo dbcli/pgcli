@@ -64,14 +64,15 @@ class Processor(with_metaclass(ABCMeta, object)):
 
 class Transformation(object):
     """
-    Transformation result, as returned by `Processor.run`.
+    Transformation result, as returned by :meth:`.Processor.apply_transformation`.
 
     Important: Always make sure that the length of `document.text` is equal to
                the length of all the text in `tokens`!
 
-    :param document: The transformed 'document' instance, to be passed to the
-        next processor. Most of the time, this can be the same as the received
-        document, unless some text has been changed/inserted somewhere.
+    :param document: The transformed :class:`~prompt_toolkit.document.Document`
+        instance, to be passed to the next processor. Most of the time, this
+        can be the same as the received document, unless some text has been
+        changed/inserted somewhere.
     :param tokens: The transformed tokens. To be displayed, or to pass to the
         next processor.
     :param source_to_display: Cursor position transformation from original string to

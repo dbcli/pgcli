@@ -115,12 +115,13 @@ class TokenListControl(UIControl):
 
     :param get_tokens: Callable that takes a `CommandLineInterface` instance
         and returns the list of (Token, text) tuples to be displayed right now.
-    :param default_char: default `Char` (character and Token) to use for the
-        background when there is more space available than `get_tokens` returns.
+    :param default_char: default :class:`.Char` (character and Token) to use
+        for the background when there is more space available than `get_tokens`
+        returns.
     :param has_focus: `bool` or `CLIFilter`, when this evaluates to `True`,
         this UI control will take the focus. The cursor will be shown in the
         upper left corner of this control, unless `get_token` returns a
-        `Token.SetCursorPosition` token somewhere in the token list, then the
+        ``Token.SetCursorPosition`` token somewhere in the token list, then the
         cursor will be shown there.
     :param wrap_lines: `bool` or `CLIFilter`: Wrap long lines.
     """
@@ -216,11 +217,11 @@ class BufferControl(UIControl):
     Control for visualising the content of a `Buffer`.
 
     :param input_processors: list of :class:`~prompt_toolkit.layout.processors.Processor`.
-    :param lexer: Pygments lexer class.
+    :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` instance for syntax highlighting.
     :param preview_search: `bool` or `CLIFilter`: Show search while typing.
     :param wrap_lines: `bool` or `CLIFilter`: Wrap long lines.
     :param buffer_name: String representing the name of the buffer to display.
-    :param default_char: `Char` instance to use to fill the background. This is
+    :param default_char: :class:`.Char` instance to use to fill the background. This is
         transparent by default.
     """
     def __init__(self,

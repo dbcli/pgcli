@@ -21,7 +21,8 @@ class Lexer(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def get_tokens(self, cli, text):
         """
-        Takes a `Document` and returns a list of tokens.
+        Takes a :class:`~prompt_toolkit.document.Document` and returns a list
+        of tokens.
         """
         return [(Token, text)]
 

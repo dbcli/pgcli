@@ -92,7 +92,8 @@ class HSplit(Layout):
         """
         Render the prompt to a `Screen` instance.
 
-        :param screen: The :class:`Screen` class into which we write the output.
+        :param screen: The :class:`~prompt_toolkit.layout.screen.Screen` class
+            to which the output has to be written.
         """
         # Calculate heights.
         dimensions = [c.preferred_height(cli, write_position.width) for c in self.children]
@@ -194,7 +195,8 @@ class VSplit(Layout):
         """
         Render the prompt to a `Screen` instance.
 
-        :param screen: The :class:`Screen` class into which we write the output.
+        :param screen: The :class:`~prompt_toolkit.layout.screen.Screen` class
+            to which the output has to be written.
         """
         if not self.children:
             return
@@ -409,15 +411,16 @@ class WindowRenderInfo(object):
     """
     Render information, for the last render time of this control.
     It stores mapping information between the input buffers (in case of a
-    BufferControl) and the actual render position on the output screen.
+    :class:`~prompt_toolkit.layout.controls.BufferControl`) and the actual
+    render position on the output screen.
 
     (Could be used for implementation of the Vi 'H' and 'L' key bindings as
     well as implementing mouse support.)
 
     :param original_screen: The original full screen instance that contains the
                             whole input, without clipping. (temp_screen)
-    :param horizontal_scroll: The horizontal scroll of the `Window` instance.
-    :param vertical_scroll: The vertical scroll of the `Window` instance.
+    :param horizontal_scroll: The horizontal scroll of the :class:`.Window` instance.
+    :param vertical_scroll: The vertical scroll of the :class:`.Window` instance.
     :param height: The height that was used for the rendering.
     :param cursor_position: `Point` instance. Where the cursor is currently
                             shown, relative to the window.
@@ -547,7 +550,7 @@ class WindowRenderInfo(object):
 
 class ScrollOffsets(object):
     """
-    Scroll offsets for the `Window` class.
+    Scroll offsets for the :class:`.Window` class.
 
     Note that left/rigth offsets only make sense if line wrapping is disabled.
     """
@@ -950,7 +953,7 @@ class ConditionalContainer(Layout):
     received `filter` determines whether the given container should be
     displayed or not.
 
-    :param content: `Container` instance.
+    :param content: :class:`.Layout` instance.
     :param filter: `CLIFilter` instance.
     """
     def __init__(self, content, filter):

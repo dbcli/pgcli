@@ -177,16 +177,16 @@ class CommandLineInterface(object):
     @property
     def current_buffer_name(self):
         """
-        The name of the current  :class:`Buffer`. (Or `None`.)
+        The name of the current  :class:`.Buffer`. (Or `None`.)
         """
         return self.focus_stack.current
 
     @property
     def current_buffer(self):
         """
-        The currently focussed :class:`~prompt_toolkit.buffer.Buffer`.
+        The currently focussed :class:`~.Buffer`.
 
-        (This returns a dummy `Buffer` when none of the actual buffers has the
+        (This returns a dummy :class:`.Buffer` when none of the actual buffers has the
         focus. In this case, it's really not practical to check for `None`
         values or catch exceptions every time.)
         """

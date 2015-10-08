@@ -3,6 +3,16 @@
 Building prompts
 ================
 
+This page is about building prompts. Pieces of code that we can embed in a
+program for asking the user for input. If you want to use `prompt_toolkit` for
+building full screen terminal applications, it is probably still a good idea to
+read this first, before heading to the :ref:`building full screen applications
+<full_screen_applications>` page.
+
+
+Hello world
+-----------
+
 The following snippet is the most simple example, it uses the
 :func:`~prompt_toolkit.shortcuts.prompt` function to asks the user for input
 and returns the text. Just like ``(raw_)input``.
@@ -159,15 +169,17 @@ instance:
 
     text = prompt('> ', completer=MyCustomCompleter)
 
-(when ``start_position`` is 0), or it can replace some text before the cursor
-(when ``start_position`` is something negative.) The latter makes sense when
-:func:`~prompt_toolkit.completion.Completer.get_completions` method. This is a
-A Completer class has to implement the
-generator that gets the current :class:`~prompt_toolkit.document.Document` and
-yields :class:`~prompt_toolkit.completion.Completion` instances, where each
-completion contains a portion of text, and the position the completer should be
-able to fix for instance casing or typos.  where it should be inserted. It can
-insert some text at the current position
+A :class:`~prompt_toolkit.completion.Completer` class has to implement a
+generator named :meth:`~prompt_toolkit.completion.Completer.get_completions`
+that takes a :class:`~prompt_toolkit.document.Document` and yields the current
+:class:`~prompt_toolkit.completion.Completion` instances. Each completion
+contains a portion of text, and a position.
+
+The position is used in for fixing text before the cursor. Pressing the tab key
+could for instance turn parts of the input from lowercase to uppercase. This
+makes sense for a case insensitive completer. Or in case of a fuzzy completion,
+it could fix typos. When ``start_position`` is something negative, this amount
+of characters will be deleted and replaced.
 
 
 Input validation

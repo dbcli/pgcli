@@ -36,7 +36,7 @@ class Document(object):
 
     :param text: string
     :param cursor_position: int
-    :param selection: :class:`SelectionState`
+    :param selection: :class:`.SelectionState`
     """
     __slots__ = ('text', 'cursor_position', 'selection')
 

@@ -7,6 +7,7 @@ from six import with_metaclass
 __all__ = (
     'Completion',
     'Completer',
+    'CompleteEvent',
     'get_common_complete_suffix',
 )
 
@@ -102,6 +103,9 @@ class Completer(with_metaclass(ABCMeta, object)):
     def get_completions(self, document, complete_event):
         """
         Yield :class:`.Completion` instances.
+
+        :param document: :class:`~prompt_toolkit.document.Document` instance.
+        :param complete_event: :class:`.CompleteEvent` instance.
         """
         while False:
             yield

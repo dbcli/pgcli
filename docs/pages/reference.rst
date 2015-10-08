@@ -13,6 +13,12 @@ Buffer
 .. automodule:: prompt_toolkit.buffer
     :members:
 
+Selection
+---------
+
+.. automodule:: prompt_toolkit.selection
+    :members:
+
 Clipboard
 ---------
 
