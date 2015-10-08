@@ -227,4 +227,10 @@ class call_on_sigwinch(object):
         self.previous_callback = signal.signal(signal.SIGWINCH, lambda *a: self.callback())
 
     def __exit__(self, *a, **kw):
-        signal.signal(signal.SIGWINCH, self.previous_callback)
+        if self.previous_callback is None:
+            # Normally, `signal.signal` should never return `None`.
+            # For some reason it happens here:
+            # https://github.com/jonathanslenders/python-prompt-toolkit/pull/174
+            signal.signal(signal.SIGWINCH, 0)
+        else:
+            signal.signal(signal.SIGWINCH, self.previous_callback)
