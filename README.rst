@@ -4,22 +4,20 @@ Python Prompt Toolkit
 |Build Status|  |PyPI|
 
 ``prompt_toolkit`` is a library for building powerful interactive command lines
-in Python.
+and terminal applications in Python.
 
-Looking for ptpython, the Python REPL?
-**************************************
+Read the `documentation on readthedocs
+<http://python-prompt-toolkit.readthedocs.org/en/latest/>`_.
 
-Are you looking for ``ptpython``, the interactive Python Shell? We moved the
-``ptpython`` source code to a separate repository. This way we are sure not to
-pollute the ``prompt_toolkit`` library with any ``ptpython``-specific stuff and
-``ptpython`` can be developed independently. You will now have to install it
-through::
 
-    pip install ptpython
+Ptpython
+********
 
-`Go to ptpython... <http://github.com/jonathanslenders/ptpython/>`_
+`ptpython <http://github.com/jonathanslenders/ptpython/>`_ is an interactive
+Python Shell is build on top of prompt-toolkit.
 
 .. image :: https://github.com/jonathanslenders/python-prompt-toolkit/raw/master/docs/images/ptpython.png
+
 
 prompt-toolkit features
 ***********************

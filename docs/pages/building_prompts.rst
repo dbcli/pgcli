@@ -53,8 +53,10 @@ create a custom lexer by implementing the
     from prompt_toolkit.shortcuts import prompt
     from prompt_toolkit.layout.lexers import PygmentsLexer
 
-    text = prompt('Give me some HTML', lexer=PygmentsLexer(HtmlLexer))
+    text = prompt('Enter HTML', lexer=PygmentsLexer(HtmlLexer))
     print('You said: %s' % text)
+
+.. image:: ../images/html-input.png
 
 
 Colors
@@ -85,7 +87,7 @@ Creating a custom style could be done like this:
         styles.update(default_style_extensions)
         styles.update(TangoStyle.styles)
 
-    text = prompt('Give me some HTML', lexer=PygmentsLexer(HtmlLexer), style=OurStyle)
+    text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer), style=OurStyle)
 
 
 Coloring the prompt itself
@@ -145,11 +147,13 @@ interface.
     from prompt_toolkit.contrib.completers import WordCompleter
 
     html_completer = WordCompleter(['<html>', '<body>', '<head>', '<title>'])
-    text = prompt('Give me some HTML', completer=html_completer)
+    text = prompt('Enter HTML: ', completer=html_completer)
     print('You said: %s' % text)
 
 ``WordCompleter`` is a simple completer that completes the last word before the
 cursor with any of the given words.
+
+.. image:: ../images/html-completion.png
 
 
 A custom completer

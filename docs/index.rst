@@ -103,6 +103,7 @@ Table of contents
 .. toctree::
    :maxdepth: 3
 
+   pages/gallery
    pages/building_prompts
    pages/full_screen_apps
    pages/architecture
