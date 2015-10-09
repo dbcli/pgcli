@@ -328,10 +328,9 @@ class PGCli(object):
                     # if an exception occurs in pgexecute.run(). Which causes
                     # finally clause to fail.
                     res = []
-                    start = time()
                     # Run the query.
+                    start = time()
                     res = pgexecute.run(document.text, self.pgspecial)
-                    duration = time() - start
                     successful = True
                     output = []
                     total = 0
@@ -339,7 +338,6 @@ class PGCli(object):
                         logger.debug("headers: %r", headers)
                         logger.debug("rows: %r", cur)
                         logger.debug("status: %r", status)
-                        start = time()
                         threshold = 1000
                         if (is_select(status) and
                                 cur and cur.rowcount > threshold):
@@ -395,8 +393,7 @@ class PGCli(object):
                     except KeyboardInterrupt:
                         pass
                     if self.pgspecial.timing_enabled:
-                        print('Command Time: %0.03fs' % duration)
-                        print('Format Time: %0.03fs' % total)
+                        print('Time: %0.03fs' % total)
 
                 # Refresh the table names and column names if necessary.
                 if need_completion_refresh(document.text):
