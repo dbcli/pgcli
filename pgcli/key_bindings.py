@@ -2,8 +2,10 @@ import logging
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.filters import Condition
+from .filters import HasSelectedCompletion
 
 _logger = logging.getLogger(__name__)
+
 
 def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
     """
@@ -72,5 +74,16 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
             b.complete_next()
         else:
             event.cli.start_completion(select_first=False)
+
+    @key_binding_manager.registry.add_binding(Keys.ControlJ, filter=HasSelectedCompletion())
+    def _(event):
+        """
+        Makes the enter key work as the tab key only when showing the menu.
+        """
+        _logger.debug('Detected <C-J> key.')
+
+        event.current_buffer.complete_state = None
+        b = event.cli.current_buffer
+        b.complete_state = None
 
     return key_binding_manager
