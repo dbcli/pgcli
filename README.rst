@@ -107,6 +107,7 @@ Projects using prompt-toolkit
 - `wharfee <http://wharfee.com/>`_: A Docker command line.
 - `xonsh <http://xonsh.org/>`_: A Python-ish, BASHwards-compatible shell.
 - `saws <https://github.com/donnemartin/saws>`_: A Supercharged AWS Command Line Interface.
+- `cycli <https://github.com/nicolewhite/cycli>`_:  A Command Line Interface for Cypher.
 
 
 (Want your own project to be listed here? Please create a GitHub issue.)
