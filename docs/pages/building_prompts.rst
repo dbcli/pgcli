@@ -341,6 +341,82 @@ Note that we use
 ensures that the output of the print-statement and the prompt don't mix up.
 
 
+Enable key bindings according to a condition
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Often, some key bindings can be enabled or disabled according to a certain
+condition. For instance, the Emacs and Vi bindings will never be active at the
+same time, but it is possible to switch between Emacs and Vi bindings at run
+time.
+
+In order to enable a key binding according to a certain condition, we have to
+pass it a :class:`~prompt_toolkit.filters.CLIFilter`, usually a
+:class:`~prompt_toolkit.filters.Condition` instance. (:ref:`Read more about
+filters <filters>`.)
+
+.. code:: python
+
+    from prompt_toolkit import prompt
+    from prompt_toolkit.filters import Condition
+    from prompt_toolkit.key_binding.manager import KeyBindingManager
+    from prompt_toolkit.keys import Keys
+
+    manager = KeyBindingManager.for_prompt()
+
+    def is_active(cli):
+        " Only activate key binding on the second half of each minute. "
+        return datetime.datetime.now().second > 30
+
+    @manager.registry.add_binding(Keys.ControlT, filter=Condition(is_active))
+    def _(event):
+        # ...
+        pass
+
+    prompt('> ', key_bindings_registry=manager.registry)
+
+
+Dynamically switch between Emacs and Vi mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :class:`~prompt_toolkit.key_binding.manager.KeyBindingManager` class
+accepts an ``enable_vi_mode`` argument. When this is ``True``, the Vi bindings
+will be active, when ``False``, the Emacs bindings will be active. One
+confusing thing here is that we can pass a boolean, but not change it
+afterwards. However, instead we can pass a
+:class:`~prompt_toolkit.filters.CLIFilter`, an expression that is True or
+False according to a certain condition.
+
+In our demonstration below, we are going to use a nonlocal variable
+``vi_mode_enabled`` to hold this state. (Of course, this state can be stored
+anywhere you want.)
+
+.. code:: python
+
+    from prompt_toolkit import prompt
+    from prompt_toolkit.filters import Condition
+    from prompt_toolkit.key_binding.manager import KeyBindingManager
+    from prompt_toolkit.keys import Keys
+
+    def run():
+        vi_mode_enabled = False
+
+        # Create a set of key bindings that have Vi mode enabled if the
+        # ``vi_mode_enabled`` is True..
+        manager = KeyBindingManager.for_prompt(
+            enable_vi_mode=Condition(lambda cli: vi_mode_enabled))
+
+        # Add an additional key binding for toggling this flag.
+        @manager.registry.add_binding(Keys.F4)
+        def _(event):
+            " Toggle between Emacs and Vi mode. "
+            nonlocal vi_mode_enabled
+            vi_mode_enabled = not vi_mode_enabled
+
+        prompt('> ', key_bindings_registry=manager.registry)
+
+    run()
+
+
 Other prompt options
 --------------------
 
@@ -416,4 +492,33 @@ asterisks (``*`` characters).
     from prompt_toolkit import prompt
     import getpass
 
-    prompt('What is your name: ', is_password=True)
+    prompt('Enter password: ', is_password=True)
+
+
+Prompt in an ``asyncio`` application
+------------------------------------
+
+For `asyncio <https://docs.python.org/3/library/asyncio.html>`_ applications,
+it's very important to never block the eventloop. However,
+:func:`~prompt_toolkit.shortcuts.prompt` is blocking and calling this would
+freeze the whole application. An alternative is to call this function, using
+the asyncio ``eventloop.run_in_executor``, but that would cause the user
+interface to run in another thread. (If we have custom key bindings for
+instance, it would be better to run them in the same thread as the other code.)
+
+The answer is to run the prompt_toolkit interface on top of the asyncio event
+loop. Prompting the user for input is as simple as calling
+:func:`~prompt_toolkit.shortcuts.prompt_async`.
+
+.. code:: python
+
+    from prompt_toolkit import prompt_async
+
+    async def my_coroutine():
+        while True:
+            result = await prompt_async('Say something: ', patch_stdout=True)
+            print('You said: %s' % result)
+
+The ``patch_stdout=True`` parameter is optional, but it's recommended, because
+other coroutines could print to stdout. This option ensures that other output
+won't destroy the prompt.

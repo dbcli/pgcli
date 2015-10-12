@@ -259,11 +259,105 @@ So, the only thing we actually need in order to run an application is this:
     cli.run()
 
 
-Filters
--------
+.. _filters:
 
+Filters (reactivity)
+--------------------
 
+Many places in prompt-toolkit expect a boolean. For instance, for determining
+the visibility of some part of the layout (it can be either hidden or visible),
+or a key binding filter (the binding can be active on not) or the
+``wrap_lines`` option of
+:class:`~prompt_toolkit.layout.controls.BufferControl`, etc.
+
+These booleans however are often dynamic and can change at runtime. For
+instance, the search toolbar should only be visible when the user is actually
+searching (when the search buffer has the focus). The ``wrap_lines`` option
+could be changed with a certain key binding. And that key binding could only
+work when the default buffer got the focus.
+
+In prompt_toolkit, we decided to reduce the amount of state in the whole
+framework, and apply a simple kind of reactive programming to describe the flow
+of these booleans as expressions. It's one way only: if a key binding needs to
+know whether it's active or not, it can follow this flow by evaluating an
+expression.
+
+There are two kind of expressions:
+
+- :class:`~prompt_toolkit.filters.Filter`
+- :class:`~prompt_toolkit.filters.CLIFilter`
+
+The first one wraps around an expression that doesn't take anything as input,
+and evaluates to a boolean. The second one on the other hand takes a
+:class:`~prompt_toolkit.interface.CommandLineInterface` as input. Most code in
+prompt_toolkit that expects a boolean, will also accept a
+:class:`~prompt_toolkit.filters.CLIFilter`
+
+One way to create a :class:`~prompt_toolkit.filters.CLIFilter` instance is by
+creating a :class:`~prompt_toolkit.filters.Condition`. For instance, the
+following condition will evaluate to ``True`` when the user is searching:
+
+.. code:: python
+
+    from prompt_toolkit.filters import Condition
+    from prompt_toolkit.enums import DEFAULT_BUFFER
+
+    is_searching = Condition(lambda cli: cli.is_searching)
+
+This filter can then be used in a key binding, like in the following snippet:
+
+.. code:: python
+
+    from prompt_toolkit.key_binding.manager import KeyBindingManager
+
+    manager = KeyBindingManager.for_prompt()
+
+    @manager.registry.add_binding(Keys.ControlT, filter=is_searching)
+    def _(event):
+        # Do, something, but only when searching.
+        pass
+
+There are many built-in filters, ready to use:
+:class:`~prompt_toolkit.filters.HasArg`
+:class:`~prompt_toolkit.filters.HasCompletions`
+:class:`~prompt_toolkit.filters.HasFocus`
+:class:`~prompt_toolkit.filters.InFocusStack`
+:class:`~prompt_toolkit.filters.HasSearch`
+:class:`~prompt_toolkit.filters.HasSelection`
+:class:`~prompt_toolkit.filters.HasValidationError`
+:class:`~prompt_toolkit.filters.IsAborting`
+:class:`~prompt_toolkit.filters.IsDone`
+:class:`~prompt_toolkit.filters.IsMultiline`
+:class:`~prompt_toolkit.filters.IsReadOnly`
+:class:`~prompt_toolkit.filters.IsReturning`
+:class:`~prompt_toolkit.filters.RendererHeightIsKnown`
+
+Further, these filters can be chained by the ``&`` and ``|`` operators or
+negated by the ``~`` operator.
+
+Some examples:
+
+.. code:: python
+
+    from prompt_toolkit.key_binding.manager import KeyBindingManager
+    from prompt_toolkit.filters import HasSearch, HasSelection
+
+    manager = KeyBindingManager()
+
+    @manager.registry.add_binding(Keys.ControlT, filter=~is_searching)
+    def _(event):
+        # Do, something, but not when when searching.
+        pass
+
+    @manager.registry.add_binding(Keys.ControlT, filter=HasSearch() | HasSelection())
+    def _(event):
+        # Do, something, but not when when searching.
+        pass
 
 
 Input hooks
 -----------
+
+
+Running on the ``asyncio`` event loop
+-------------------------------------

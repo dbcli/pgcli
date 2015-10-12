@@ -137,6 +137,21 @@ Layout
 .. automodule:: prompt_toolkit.layout.screen
     :members:
 
+Filters
+-------
+
+.. automodule:: prompt_toolkit.filters
+    :members:
+
+.. autoclass:: prompt_toolkit.filters.CLIFilter
+    :members:
+
+.. autoclass:: prompt_toolkit.filters.Filter
+    :members:
+
+.. autoclass:: prompt_toolkit.filters.Condition
+    :members:
+
 Key binding
 -----------
 
