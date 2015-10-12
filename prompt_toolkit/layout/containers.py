@@ -16,7 +16,7 @@ from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventTypes
 
 __all__ = (
-    'Layout',
+    'Container',
     'HSplit',
     'VSplit',
     'FloatContainer',
@@ -30,7 +30,7 @@ __all__ = (
 Transparent = Token.Transparent
 
 
-class Layout(with_metaclass(ABCMeta, object)):
+class Container(with_metaclass(ABCMeta, object)):
     """
     Base class for user interface layout.
     """
@@ -68,12 +68,12 @@ class Layout(with_metaclass(ABCMeta, object)):
         """
 
 
-class HSplit(Layout):
+class HSplit(Container):
     """
     Several layouts, one stacked above/under the other.
     """
     def __init__(self, children):
-        assert all(isinstance(c, Layout) for c in children)
+        assert all(isinstance(c, Container) for c in children)
         self.children = children
 
     def preferred_width(self, cli, max_available_width):
@@ -139,12 +139,12 @@ class HSplit(Layout):
                 yield i
 
 
-class VSplit(Layout):
+class VSplit(Container):
     """
     Several layouts, one stacked left/right of the other.
     """
     def __init__(self, children):
-        assert all(isinstance(c, Layout) for c in children)
+        assert all(isinstance(c, Container) for c in children)
         self.children = children
 
     def preferred_width(self, cli, max_available_width):
@@ -227,7 +227,7 @@ class VSplit(Layout):
                 yield i
 
 
-class FloatContainer(Layout):
+class FloatContainer(Container):
     """
     Container which can contain another container for the background, as well
     as a list of floating containers on top of it.
@@ -242,7 +242,7 @@ class FloatContainer(Layout):
                        ])
     """
     def __init__(self, content, floats):
-        assert isinstance(content, Layout)
+        assert isinstance(content, Container)
         assert all(isinstance(f, Float) for f in floats)
 
         self.content = content
@@ -388,7 +388,7 @@ class Float(object):
     def __init__(self, top=None, right=None, bottom=None, left=None,
                  width=None, height=None,
                  xcursor=False, ycursor=False, content=None):
-        assert isinstance(content, Layout)
+        assert isinstance(content, Container)
 
         self.left = left
         self.right = right
@@ -565,9 +565,9 @@ class ScrollOffsets(object):
             self.top, self.bottom, self.left, self.right)
 
 
-class Window(Layout):
+class Window(Container):
     """
-    Layout that holds a control.
+    Container that holds a control.
 
     :param content: :class:`~prompt_toolkit.layout.controls.UIControl` instance.
     :param width: :class:`~prompt_toolkit.layout.dimension.LayoutDimension` instance.
@@ -947,17 +947,17 @@ class Window(Layout):
         yield self
 
 
-class ConditionalContainer(Layout):
+class ConditionalContainer(Container):
     """
     Wrapper around any other container that can change the visibility. The
     received `filter` determines whether the given container should be
     displayed or not.
 
-    :param content: :class:`.Layout` instance.
+    :param content: :class:`.Container` instance.
     :param filter: `CLIFilter` instance.
     """
     def __init__(self, content, filter):
-        assert isinstance(content, Layout)
+        assert isinstance(content, Container)
 
         self.content = content
         self.filter = to_cli_filter(filter)
@@ -983,3 +983,7 @@ class ConditionalContainer(Layout):
 
     def walk(self):
         return self.content.walk()
+
+
+# Deprecated alias for 'Container'.
+Layout = Container

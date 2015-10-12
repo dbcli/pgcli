@@ -9,7 +9,7 @@ from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
 from .key_binding.registry import Registry
 from .layout import Window
-from .layout.containers import Layout
+from .layout.containers import Container
 from .layout.controls import BufferControl
 from .styles import DefaultStyle
 from .utils import Callback
@@ -43,7 +43,7 @@ class Application(object):
     `CommandLineInterface`s, each with a different I/O backends.
     that runs for instance over telnet, SSH or any other I/O backend.
 
-    :param layout: A :class:`~prompt_toolkit.layout.containers.Layout` instance.
+    :param layout: A :class:`~prompt_toolkit.layout.containers.Container` instance.
     :param buffer: A :class:`~prompt_toolkit.buffer.Buffer` instance for the default buffer.
     :param initial_focussed_buffer: Name of the buffer that is focussed during start-up.
     :param key_bindings_registry:
@@ -89,7 +89,7 @@ class Application(object):
         ignore_case = to_cli_filter(ignore_case)
         mouse_support = to_cli_filter(mouse_support)
 
-        assert layout is None or isinstance(layout, Layout)
+        assert layout is None or isinstance(layout, Container)
         assert buffer is None or isinstance(buffer, Buffer)
         assert buffers is None or isinstance(buffers, dict)
         assert key_bindings_registry is None or isinstance(key_bindings_registry, Registry)

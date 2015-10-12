@@ -148,7 +148,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
                          extra_input_processors=None, multiline=False,
                          wrap_lines=True):
     """
-    Create a :class:`.Layout` instance for a prompt.
+    Create a :class:`.Container` instance for a prompt.
 
     :param message: Text to be used as prompt.
     :param lexer: Lexer to be used for the highlighting.
@@ -231,7 +231,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
         else:
             return LayoutDimension()
 
-    # Create and return Layout instance.
+    # Create and return Container instance.
     return HSplit([
         ConditionalContainer(
             Window(
