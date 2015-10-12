@@ -1,7 +1,7 @@
 A REPL for Postgres 
 -------------------
 
-|Build Status|  |PyPI| |Gitter|
+|Build Status| |PyPI| |Gitter|
 
 This is a postgres client that does auto-completion and syntax highlighting.
 
@@ -199,7 +199,7 @@ Thanks to all the beta testers and contributors for your time and patience. :)
 .. |Build Status| image:: https://api.travis-ci.org/dbcli/pgcli.svg?branch=master
     :target: https://travis-ci.org/dbcli/pgcli
 
-.. |PyPI| image:: https://pypip.in/version/pgcli/badge.svg
+.. |PyPI| image:: https://img.shields.io/pypi/v/pgcli.svg
     :target: https://pypi.python.org/pypi/pgcli/
     :alt: Latest Version
 
