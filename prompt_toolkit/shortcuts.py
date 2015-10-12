@@ -40,13 +40,14 @@ from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
 from .layout.utils import explode_tokens
 from .styles import DefaultStyle
-from .utils import is_conemu_ansi, is_windows
+from .utils import is_conemu_ansi, is_windows, DummyContext
 
 from pygments.token import Token
-from six import text_type
+from six import text_type, exec_
 
 import pygments.lexer
 import sys
+import textwrap
 
 if is_windows():
     from .terminal.win32_output import Win32Output
@@ -417,38 +418,69 @@ def prompt(message='', **kwargs):
     If you want to keep your history across several calls, create one
     :class:`~prompt_toolkit.history.History` instance and pass it every time.
 
-    This function accepts many keyword arguments. They are a proxy to the
-    arguments of :func:`.create_prompt_application`.
-    """
-    eventloop = kwargs.pop('eventloop', None) or create_eventloop()
-    patch_stdout = kwargs.pop('patch_stdout', False)
+    This function accepts many keyword arguments. Except for the following,
+    they are a proxy to the arguments of :func:`.create_prompt_application`.
 
-    # Create CommandLineInterface
+    :param patch_stdout: Replace ``sys.stdout`` by a proxy that ensures that
+            print statements from other threads won't destroy the prompt. (They
+            will be printed above the prompt instead.)
+    :param return_asyncio_coroutine: When True, return a asyncio coroutine. (Python >3.3)
+    """
+    patch_stdout = kwargs.pop('patch_stdout', False)
+    return_asyncio_coroutine = kwargs.pop('return_asyncio_coroutine', False)
+
+    if return_asyncio_coroutine:
+        eventloop = create_asyncio_eventloop()
+    else:
+        eventloop = kwargs.pop('eventloop', None) or create_eventloop()
+
+    # Create CommandLineInterface.
     cli = CommandLineInterface(
         application=create_prompt_application(message, **kwargs),
         eventloop=eventloop,
         output=create_output())
 
     # Replace stdout.
-    original_stdout = sys.stdout
-
-    if patch_stdout:
-        sys.stdout = cli.stdout_proxy()
+    patch_context = cli.patch_stdout_context() if patch_stdout else DummyContext()
 
     # Read input and return it.
+    if return_asyncio_coroutine:
+        # Create an asyncio coroutine and call it.
+        exec_context = {'patch_context': patch_context, 'cli': cli}
+        exec_(textwrap.dedent('''
+        import asyncio
 
-    # Note: We pass `reset_current_buffer=False`, because that way it's easy to
-    #       give DEFAULT_BUFFER a default value, without it getting erased. We
-    #       don't have to reset anyway, because this is the first and only time
-    #       that this CommandLineInterface will run.
-    try:
-        document = cli.run(reset_current_buffer=False)
+        @asyncio.coroutine
+        def prompt_coro():
+            with patch_context:
+                document = yield from cli.run_async(reset_current_buffer=False)
 
-        if document:
-            return document.text
-    finally:
-        eventloop.close()
-        sys.stdout = original_stdout
+                if document:
+                    return document.text
+        '''), exec_context)
+
+        return exec_context['prompt_coro']()
+    else:
+        # Note: We pass `reset_current_buffer=False`, because that way it's easy to
+        #       give DEFAULT_BUFFER a default value, without it getting erased. We
+        #       don't have to reset anyway, because this is the first and only time
+        #       that this CommandLineInterface will run.
+        try:
+            with patch_context:
+                document = cli.run(reset_current_buffer=False)
+
+                if document:
+                    return document.text
+        finally:
+            eventloop.close()
+
+
+def prompt_async(message='', **kwargs):
+    """
+    Similar to :func:`.prompt`, but return an asyncio coroutine instead.
+    """
+    kwargs['return_asyncio_coroutine'] = True
+    return prompt(message, **kwargs)
 
 
 # Deprecated alias for `prompt`.

@@ -8,6 +8,7 @@ import os
 import signal
 import six
 import sys
+import textwrap
 import threading
 import weakref
 
@@ -26,9 +27,6 @@ from .output import Output
 from .renderer import Renderer, print_tokens
 from .search_state import SearchState
 from .utils import is_windows
-
-from types import GeneratorType
-
 
 __all__ = (
     'AbortAction',
@@ -334,40 +332,57 @@ class CommandLineInterface(object):
         # Return result.
         return self.return_value()
 
-    def run_async(self, reset_current_buffer=True, pre_run=None):
-        """
-        Same as `run`, but this returns a coroutine.
+    if six.PY3:
+        # The following `run_async` function is compiled at runtime
+        # because it contains syntax which is not supported on older Python
+        # versions. (A 'return' inside a generator.)
+        six.exec_(textwrap.dedent('''
+        def run_async(self, reset_current_buffer=True, pre_run=None):
+            """
+            Same as `run`, but this returns a coroutine.
 
-        This is mostly for Python >3.3, with asyncio.
-        """
-        assert pre_run is None or callable(pre_run)
+            This is only available on Python >3.3, with asyncio.
+            """
+            assert pre_run is None or callable(pre_run)
+
+            try:
+                self._is_running = True
+
+                self.application.on_start.fire(self)
+                self.reset(reset_current_buffer=reset_current_buffer)
+
+                # Call pre_run.
+                if pre_run:
+                    pre_run()
+
+                with self.input.raw_mode():
+                    self.renderer.request_absolute_cursor_position()
+                    self._redraw()
+
+                    yield from self.eventloop.run_as_coroutine(
+                            self.input, self.create_eventloop_callbacks())
+
+                return self.return_value()
+            finally:
+                self.renderer.reset()
+                self.application.on_stop.fire(self)
+                self._is_running = False
 
         try:
-            self._is_running = True
+            import asyncio
+        except ImportError:
+            pass
+        else:
+            run_async = asyncio.coroutine(run_async)
+        '''))
+    else:
+        def run_async(self, reset_current_buffer=True, pre_run=None):
+            """
+            Same as `run`, but this returns a coroutine.
 
-            self.application.on_start.fire(self)
-            self.reset(reset_current_buffer=reset_current_buffer)
-
-            # Call pre_run.
-            if pre_run:
-                pre_run()
-
-            with self.input.raw_mode():
-                self.renderer.request_absolute_cursor_position()
-                self._redraw()
-
-                g = self.eventloop.run_as_coroutine(
-                        self.input, self.create_eventloop_callbacks())
-                assert isinstance(g, GeneratorType)
-
-                while True:
-                    yield next(g)
-        except StopIteration:
-            raise StopIteration(self.return_value())
-        finally:
-            self.renderer.reset()
-            self.application.on_stop.fire(self)
-            self._is_running = False
+            This is only available on Python >3.3, with asyncio.
+            """
+            raise NotImplementedError
 
     def run_sub_application(self, application, done_callback=None):
         """
