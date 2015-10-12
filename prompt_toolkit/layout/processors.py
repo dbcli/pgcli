@@ -170,6 +170,8 @@ class HighlightSelectionProcessor(Processor):
 class PasswordProcessor(Processor):
     """
     Processor that turns masks the input. (For passwords.)
+
+    :param char: (string) Character to be used. "*" by default.
     """
     def __init__(self, char='*'):
         self.char = char
@@ -266,6 +268,10 @@ class BracketsMismatchProcessor(Processor):
 class BeforeInput(Processor):
     """
     Insert tokens before the input.
+
+    :param get_tokens: Callable that takes a
+        :class:`~prompt_toolkit.interface.CommandLineInterface` and returns the
+        list of tokens to be inserted.
     """
     def __init__(self, get_tokens):
         assert callable(get_tokens)
@@ -283,6 +289,10 @@ class BeforeInput(Processor):
 
     @classmethod
     def static(cls, text, token=Token):
+        """
+        Create a :class:`.BeforeInput` instance that always inserts the same
+        text.
+        """
         def get_static_tokens(cli):
             return [(token, text)]
         return cls(get_static_tokens)
@@ -299,6 +309,10 @@ class BeforeInput(Processor):
 class AfterInput(Processor):
     """
     Insert tokens after the input.
+
+    :param get_tokens: Callable that takes a
+        :class:`~prompt_toolkit.interface.CommandLineInterface` and returns the
+        list of tokens to be appended.
     """
     def __init__(self, get_tokens):
         assert callable(get_tokens)
@@ -312,6 +326,10 @@ class AfterInput(Processor):
 
     @classmethod
     def static(cls, text, token=Token):
+        """
+        Create a :class:`.AfterInput` instance that always inserts the same
+        text.
+        """
         def get_static_tokens(cli):
             return [(token, text)]
         return cls(get_static_tokens)

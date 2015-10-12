@@ -38,7 +38,7 @@ class ViStateFilter(Filter):
 class CursorRegion(object):
     """
     Return struct for functions wrapped in ``change_delete_move_yank_handler``.
-    Bot `start` and `end` are relative to the current cursor position.
+    Both `start` and `end` are relative to the current cursor position.
     """
     def __init__(self, start, end=0):
         self.start = start

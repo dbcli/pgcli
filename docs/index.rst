@@ -92,9 +92,12 @@ For more information, start reading the :ref:`building prompts
 Thanks to:
 ----------
 
-A special thanks to the `Pygments <http://pygments.org/>`_ and `wcwidth
-<https://github.com/jquast/wcwidth>`_ libraries for making prompt_toolkit
-possible.
+Thanks to `all the contributors
+<https://github.com/jonathanslenders/python-prompt-toolkit/graphs/contributors>`_
+for making prompt_toolkit possible.
+
+Also, a special thanks to the `Pygments <http://pygments.org/>`_ and `wcwidth
+<https://github.com/jquast/wcwidth>`_ libraries.
 
 
 Table of contents
@@ -116,3 +119,6 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+Prompt_toolkit was created by `Jonathan Slenders
+<http://github.com/jonathanslenders/>`_.

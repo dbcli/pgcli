@@ -2,8 +2,8 @@
 Command line layout definitions
 -------------------------------
 
-The layout of a command line interface is defined by a Layout instance. There
-are two main groups of classes here. Containers and controls:
+The layout of a command line interface is defined by a Container instance.
+There are two main groups of classes here. Containers and controls:
 
 - A container can contain other containers or controls, it can have multiple
   children and it decides about the dimensions.
@@ -15,7 +15,7 @@ are two main groups of classes here. Containers and controls:
 
 Container classes::
 
-    - Layout (Abstract base class)
+    - Container (Abstract base class)
        |- HSplit (Horizontal split)
        |- VSplit (Vertical split)
        |- VSplit (Vertical split)

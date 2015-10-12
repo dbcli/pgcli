@@ -46,6 +46,8 @@ class Container(with_metaclass(ABCMeta, object)):
         """
         Return a :class:`~prompt_toolkit.layout.dimension.LayoutDimension` that
         represents the desired width for this container.
+
+        :param cli: :class:`~prompt_toolkit.interface.CommandLineInterface`.
         """
 
     @abstractmethod
@@ -53,12 +55,18 @@ class Container(with_metaclass(ABCMeta, object)):
         """
         Return a :class:`~prompt_toolkit.layout.dimension.LayoutDimension` that
         represents the desired height for this container.
+
+        :param cli: :class:`~prompt_toolkit.interface.CommandLineInterface`.
         """
 
     @abstractmethod
     def write_to_screen(self, cli, screen, mouse_handlers, write_position):
         """
         Write the actual content to the screen.
+
+        :param cli: :class:`~prompt_toolkit.interface.CommandLineInterface`.
+        :param screen: :class:`~prompt_toolkit.layout.screen.Screen`
+        :param mouse_handlers: :class:`~prompt_toolkit.layout.mouse_handlers.MouseHandlers`.
         """
 
     @abstractmethod
