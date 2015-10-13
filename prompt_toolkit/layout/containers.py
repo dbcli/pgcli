@@ -962,7 +962,7 @@ class ConditionalContainer(Container):
     displayed or not.
 
     :param content: :class:`.Container` instance.
-    :param filter: `CLIFilter` instance.
+    :param filter: :class:`~prompt_toolkit.filters.CLIFilter` instance.
     """
     def __init__(self, content, filter):
         assert isinstance(content, Container)

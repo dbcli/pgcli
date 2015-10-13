@@ -62,12 +62,13 @@ class Registry(object):
         """
         Decorator for annotating key bindings.
 
-        :param filter: `CLIFilter` to determine when this key binding is active.
-        :param eager: `CLIFilter` or `bool`. When True, ignore potential longer
-                      matches when this key binding is hit. E.g. when there is an
-                      active eager key binding for Ctrl-X, execute the handler
-                      immediately and ignore the key binding for Ctrl-X Ctrl-E
-                      of which it is a prefix.
+        :param filter: :class:`~prompt_toolkit.filters.CLIFilter` to determine
+            when this key binding is active.
+        :param eager: :class:`~prompt_toolkit.filters.CLIFilter` or `bool`.
+            When True, ignore potential longer matches when this key binding is
+            hit. E.g. when there is an active eager key binding for Ctrl-X,
+            execute the handler immediately and ignore the key binding for
+            Ctrl-X Ctrl-E of which it is a prefix.
         """
         filter = to_cli_filter(kwargs.pop('filter', True))
         eager = to_cli_filter(kwargs.pop('eager', False))

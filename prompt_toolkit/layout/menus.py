@@ -448,8 +448,8 @@ class MultiColumnCompletionMenuControl(UIControl):
 class MultiColumnCompletionsMenu(HSplit):
     """
     Container that displays the completions in several columns.
-    When `show_meta` (a CLIFilter) evaluates to True, it shows
-    the meta information at the bottom.
+    When `show_meta` (a :class:`~prompt_toolkit.filters.CLIFilter`) evaluates
+    to True, it shows the meta information at the bottom.
     """
     def __init__(self, min_rows=3, suggested_max_column_width=30, show_meta=True, extra_filter=True):
         show_meta = to_cli_filter(show_meta)

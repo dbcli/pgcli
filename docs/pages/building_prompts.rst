@@ -58,6 +58,7 @@ create a custom lexer by implementing the
 
 .. image:: ../images/html-input.png
 
+.. _colors:
 
 Colors
 ------
@@ -84,8 +85,19 @@ Creating a custom style could be done like this:
 
     class OurStyle(Style):
         styles = {}
+
+        # Take the default colors from prompt_toolkit for the selection,
+        # search, etc...
         styles.update(default_style_extensions)
+
+        # Use the pygments 'Tango' style for syntax highlighting.
         styles.update(TangoStyle.styles)
+
+        # Override some tokens:
+        styles.update({
+            Token.Comment:   '#888888 bold',
+            Token.Keyword:   '#ff88ff bold',
+        })
 
     text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer), style=OurStyle)
 
@@ -286,6 +298,31 @@ A suggestion does not have to come from the history. Any implementation of the
 passed as an argument.
 
 
+Adding a bottom toolbar
+-----------------------
+
+Adding a bottom toolbar is as easy as passing a ``get_bottom_toolbar_tokens``
+function to :func:`~prompt_toolkit.shortcuts.prompt`. The function is called
+every time the prompt is rendered (at least on every key stroke), so the bottom
+toolbar can be used to display dynamic information. It receives a
+:class:`~prompt_toolkit.interface.CommandLineInterface` and should return a
+list of tokens. The toolbar is always erased when the prompt returns.
+
+.. code:: python
+
+    from pygments.token import Token
+
+    def get_bottom_toolbar_tokens(cli):
+        return [(Token.Toolbar, ' This is a toolbar. ')]
+
+    text = prompt('> ', get_bottom_toolbar_tokens=get_bottom_toolbar_tokens)
+    print('You said: %s' % text)
+
+The default token is ``Token.Toolbar`` and that will also be used to fill the
+background of the toolbar. :ref:`Styling <colors>` can be done by pointing to
+that token.
+
+
 Vi input mode
 -------------
 
@@ -360,6 +397,7 @@ filters <filters>`.)
     from prompt_toolkit.filters import Condition
     from prompt_toolkit.key_binding.manager import KeyBindingManager
     from prompt_toolkit.keys import Keys
+    from pygments.token import Token
 
     manager = KeyBindingManager.for_prompt()
 
@@ -412,7 +450,16 @@ anywhere you want.)
             nonlocal vi_mode_enabled
             vi_mode_enabled = not vi_mode_enabled
 
-        prompt('> ', key_bindings_registry=manager.registry)
+        # Add a toolbar at the bottom to display the current input mode.
+        def get_bottom_toolbar_tokens(cli):
+            " Display the current input mode. "
+            text = 'Vi' if vi_mode_enabled else 'Emacs'
+            return [
+                (Token.Toolbar, ' [F4] %s ' % text)
+            ]
+
+        prompt('> ', key_bindings_registry=manager.registry,
+               get_bottom_toolbar_tokens=get_bottom_toolbar_tokens)
 
     run()
 

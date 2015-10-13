@@ -284,7 +284,7 @@ expression.
 
 There are two kind of expressions:
 
-- :class:`~prompt_toolkit.filters.Filter`
+- :class:`~prompt_toolkit.filters.SimpleFilter`
 - :class:`~prompt_toolkit.filters.CLIFilter`
 
 The first one wraps around an expression that doesn't take anything as input,

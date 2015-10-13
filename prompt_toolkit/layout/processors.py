@@ -13,7 +13,7 @@ from pygments.token import Token
 
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SEARCH_BUFFER
-from prompt_toolkit.filters import to_cli_filter, Never
+from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.layout.utils import token_list_to_text
 
 from .utils import token_list_len
@@ -95,7 +95,7 @@ class HighlightSearchProcessor(Processor):
         the search text in real time while the user is typing, instead of the
         last active search state.
     """
-    def __init__(self, preview_search=Never()):
+    def __init__(self, preview_search=False):
         self.preview_search = to_cli_filter(preview_search)
 
     def _get_search_text(self, cli):
@@ -444,6 +444,9 @@ class ConditionalProcessor(Processor):
         BufferControl(input_processors=[
             ConditionalProcessor(HighlightSearchProcessor(),
                                  Condition(highlight_enabled))])
+
+    :param processor: :class:`.Processor` instance.
+    :param filter: :class:`~prompt_toolkit.filters.CLIFilter` instance.
     """
     def __init__(self, processor, filter):
         assert isinstance(processor, Processor)

@@ -8,6 +8,7 @@ import threading
 
 from prompt_toolkit.terminal.vt100_input import InputStream
 from prompt_toolkit.utils import DummyContext, in_main_thread
+from prompt_toolkit.input import Input
 from .base import EventLoop, INPUT_TIMEOUT
 from .callbacks import EventLoopCallbacks
 from .inputhook import InputHookContext
@@ -44,6 +45,7 @@ class PosixEventLoop(EventLoop):
         """
         The input 'event loop'.
         """
+        assert isinstance(stdin, Input)
         assert isinstance(callbacks, EventLoopCallbacks)
         assert not self._running
 

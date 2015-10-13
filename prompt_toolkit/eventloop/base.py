@@ -21,8 +21,8 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         Run the eventloop until stop() is called. Report all
         input/timeout/terminal-resize events to the callbacks.
 
-        :param stdin: The input stream to be used for the interface.
-        :param callbacks: EventLoopCallback instance.
+        :param stdin: :class:`~prompt_toolkit.input.Input` instance.
+        :param callbacks: :class:`~prompt_toolkit.eventloop.callbacks.EventLoopCallbacks` instance.
         """
         raise NotImplementedError("This eventloop doesn't implement synchronous 'run()'.")
 
@@ -35,8 +35,9 @@ class EventLoop(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def stop(self):
         """
-        Stop the `loop` call. (Normally called by the command line interface,
-        when a result is available, or Abort/Quit has been called.)
+        Stop the `run` call. (Normally called by
+        :class:`~prompt_toolkit.interface.CommandLineInterface`, when a result
+        is available, or Abort/Quit has been called.)
         """
 
     @abstractmethod

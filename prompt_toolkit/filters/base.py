@@ -223,8 +223,10 @@ class Condition(Filter):
         def feature_is_active(cli):  # `feature_is_active` becomes a Filter.
             return True
 
-    :param func: Callable which takes a `CommandLineInterface` and returns a
-                 boolean.
+    :param func: Callable which takes either a
+        :class:`~prompt_toolkit.interface.CommandLineInterface` or nothing and
+        returns a boolean. (Depending on what it takes, this will become a
+        :class:`.Filter` or :class:`~prompt_toolkit.filters.CLIFilter`.)
     """
     def __init__(self, func):
         assert callable(func)

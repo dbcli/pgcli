@@ -1,8 +1,5 @@
 """
 Interface for an output.
-
-The actual implementations are in
-`prompt_toolkit.terminal.vt100_output/win32_output`.
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
@@ -15,11 +12,16 @@ __all__ = (
 
 class Output(with_metaclass(ABCMeta, object)):
     """
-    Base class defining the Output interface for a renderer.
+    Base class defining the output interface for a
+    :class:`~prompt_toolkit.renderer.Renderer`.
+
+    Actual implementations are
+    :class:`~prompt_toolkit.terminal.vt100_output.Vt100_Output` and
+    :class:`~prompt_toolkit.terminal.win32_output.Win32Output`.
     """
     @abstractmethod
     def write(self, data):
-        pass
+        " Write text. "
 
     @abstractmethod
     def set_title(self, title):
@@ -42,19 +44,19 @@ class Output(with_metaclass(ABCMeta, object)):
 
     @abstractmethod
     def enter_alternate_screen(self):
-        pass
+        " Go to the alternate screen buffer. (For full screen applications). "
 
     @abstractmethod
     def quit_alternate_screen(self):
-        pass
+        " Leave the alternate screen buffer. "
 
     @abstractmethod
     def enable_mouse_support(self):
-        pass
+        " Enable mouse. "
 
     @abstractmethod
     def disable_mouse_support(self):
-        pass
+        " Disable mouse. "
 
     @abstractmethod
     def erase_end_of_line(self):
@@ -71,42 +73,39 @@ class Output(with_metaclass(ABCMeta, object)):
 
     @abstractmethod
     def reset_attributes(self):
-        pass
+        " Reset color and styling attributes. "
 
     @abstractmethod
     def set_attributes(self, fgcolor=None, bgcolor=None, bold=False, underline=False):
-        """
-        Create new style and output.
-        """
-        pass
+        " Set new color and styling attributes. "
 
     @abstractmethod
     def disable_autowrap(self):
-        pass
+        " Disable auto line wrapping. "
 
     @abstractmethod
     def enable_autowrap(self):
-        pass
+        " Enable auto line wrapping. "
 
     @abstractmethod
     def cursor_goto(self, row=0, column=0):
-        """ Move cursor position. """
+        " Move cursor position. "
 
     @abstractmethod
     def cursor_up(self, amount):
-        pass
+        " Move cursor `amount` place up. "
 
     @abstractmethod
     def cursor_down(self, amount):
-        pass
+        " Move cursor `amount` place down. "
 
     @abstractmethod
     def cursor_forward(self, amount):
-        pass
+        " Move cursor `amount` place forward. "
 
     @abstractmethod
     def cursor_backward(self, amount):
-        pass
+        " Move cursor `amount` place backward. "
 
     def ask_for_cpr(self):
         """

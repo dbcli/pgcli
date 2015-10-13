@@ -62,6 +62,7 @@ __all__ = (
     'create_prompt_layout',
     'create_prompt_application',
     'prompt',
+    'prompt_async',
 )
 
 
@@ -152,22 +153,26 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
     Create a :class:`.Container` instance for a prompt.
 
     :param message: Text to be used as prompt.
-    :param lexer: Lexer to be used for the highlighting.
-    :param is_password: `bool` or `CLIFilter`. When True, display input as '*'.
+    :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` to be used for
+        the highlighting.
+    :param is_password: `bool` or :class:`~prompt_toolkit.filters.CLIFilter`.
+        When True, display input as '*'.
     :param reserve_space_for_menu: When True, make sure that a minimal height is
         allocated in the terminal, in order to display the completion menu.
     :param get_prompt_tokens: An optional callable that returns the tokens to be
         shown in the menu. (To be used instead of a `message`.)
     :param get_bottom_toolbar_tokens: An optional callable that returns the
         tokens for a toolbar at the bottom.
-    :param display_completions_in_columns: `bool` or `CLIFilter`. Display the
-        completions in multiple columns.
-    :param multiline: `bool` or `CLIFilter`. When True, prefer a layout that is
-        more adapted for multiline input. Text after newlines is automatically
-        indented, and search/arg input is shown below the input, instead of
-        replacing the prompt.
-    :param wrap_lines: `bool` or `CLIFilter`. When True (the default),
-        automatically wrap long lines instead of scrolling horizontally.
+    :param display_completions_in_columns: `bool` or
+        :class:`~prompt_toolkit.filters.CLIFilter`. Display the completions in
+        multiple columns.
+    :param multiline: `bool` or :class:`~prompt_toolkit.filters.CLIFilter`.
+        When True, prefer a layout that is more adapted for multiline input.
+        Text after newlines is automatically indented, and search/arg input is
+        shown below the input, instead of replacing the prompt.
+    :param wrap_lines: `bool` or :class:`~prompt_toolkit.filters.CLIFilter`.
+        When True (the default), automatically wrap long lines instead of
+        scrolling horizontally.
     """
     assert isinstance(message, text_type)
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
@@ -325,15 +330,19 @@ def create_prompt_application(
     :param message: Text to be shown before the prompt.
     :param mulitiline: Allow multiline input. Pressing enter will insert a
                        newline. (This requires Meta+Enter to accept the input.)
-    :param wrap_lines: `bool` or `CLIFilter`. When True (the default),
-        automatically wrap long lines instead of scrolling horizontally.
+    :param wrap_lines: `bool` or :class:`~prompt_toolkit.filters.CLIFilter`.
+        When True (the default), automatically wrap long lines instead of
+        scrolling horizontally.
     :param is_password: Show asterisks instead of the actual typed characters.
-    :param vi_mode: `bool` or `CLIFilter`. If True, use Vi key bindings.
-    :param complete_while_typing: `bool` or `CLIFilter`. Enable autocompletion
-        while typing.
-    :param enable_history_search: `bool` or `CLIFilter`. Enable up-arrow
-        parting string matching.
-    :param lexer: :class:`~prompt_toolkit.layout.lexer.Lexer` to be used for
+    :param vi_mode: `bool` or :class:`~prompt_toolkit.filters.CLIFilter`. If
+        True, use Vi key bindings.
+    :param complete_while_typing: `bool` or
+        :class:`~prompt_toolkit.filters.CLIFilter`. Enable autocompletion while
+        typing.
+    :param enable_history_search: `bool` or
+        :class:`~prompt_toolkit.filters.CLIFilter`. Enable up-arrow parting
+        string matching.
+    :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` to be used for
         the syntax highlighting.
     :param validator: :class:`~prompt_toolkit.validation.Validator` instance
         for input validation.
@@ -342,21 +351,25 @@ def create_prompt_application(
     :param auto_suggest: :class:`~prompt_toolkit.auto_suggest.AutoSuggest`
         instance for input suggestions.
     :param style: Pygments style class for the color scheme.
-    :param enable_system_bindings: `bool` or `CLIFilter`. Pressing Meta+'!'
-        will show a system prompt.
-    :param enable_open_in_editor: `bool` or `CLIFilter`. Pressing 'v' in Vi
-        mode or C-X C-E in emacs mode will open an external editor.
+    :param enable_system_bindings: `bool` or
+        :class:`~prompt_toolkit.filters.CLIFilter`. Pressing Meta+'!' will show
+        a system prompt.
+    :param enable_open_in_editor: `bool` or
+        :class:`~prompt_toolkit.filters.CLIFilter`. Pressing 'v' in Vi mode or
+        C-X C-E in emacs mode will open an external editor.
     :param history: :class:`~prompt_toolkit.history.History` instance.
     :param clipboard: :class:`~prompt_toolkit.clipboard.base.Clipboard` instance.
         (e.g. :class:`~prompt_toolkit.clipboard.in_memory.InMemoryClipboard`)
     :param get_bottom_toolbar_tokens: Optional callable which takes a
         :class:`~prompt_toolkit.interface.CommandLineInterface` and returns a
         list of tokens for the bottom toolbar.
-    :param display_completions_in_columns: `bool` or `CLIFilter`. Display the
-        completions in multiple columns.
+    :param display_completions_in_columns: `bool` or
+        :class:`~prompt_toolkit.filters.CLIFilter`. Display the completions in
+        multiple columns.
     :param get_title: Callable that returns the title to be displayed in the
         terminal.
-    :param mouse_support: `bool` or `CLIFilter` to enable mouse support.
+    :param mouse_support: `bool` or :class:`~prompt_toolkit.filters.CLIFilter`
+        to enable mouse support.
     :param default: The default text to be shown in the input buffer. (This can
         be edited by the user.)
     """

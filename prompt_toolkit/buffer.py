@@ -30,7 +30,7 @@ __all__ = (
 )
 
 class EditReadOnlyBuffer(Exception):
-    " Attempt editing of read-only buffer. "
+    " Attempt editing of read-only :class:`.Buffer`. "
 
 
 class AcceptAction(object):
@@ -38,11 +38,12 @@ class AcceptAction(object):
     What to do when the input is accepted by the user.
     (When Enter was pressed in the command line.)
 
-    :param handler: (optional) A callable which accepts a CLI and
-                    :class:`prompt_toolkit.document.Document` that is called
-                    when the user accepts input.
+    :param handler: (optional) A callable which takes a
+        :class:`~prompt_toolkit.interface.CommandLineInterface` and
+        :class:`~prompt_toolkit.document.Document`. It is called when the user
+        accepts input.
     :param render_cli_done: When using a handler, first render the CLI in the
-                    'done' state, then call the handler. This
+        'done' state, then call the handler. This
     """
     def __init__(self, handler=None):
         assert handler is None or callable(handler)
@@ -155,26 +156,34 @@ class Buffer(object):
     :param history: :class:`~prompt_toolkit.history.History` instance.
     :param tempfile_suffix: Suffix to be appended to the tempfile for the 'open
                            in editor' function.
-    :param is_multiline: SimpleFilter to indicate whether we should consider
-                        this buffer a multiline input. If so, key bindings can
-                        decide to insert newlines when pressing [Enter].
-                        (Instead of accepting the input.)
-    :param complete_while_typing: Filter instance. Decide whether or not to do
-                                  asynchronous autocompleting while typing.
+
+    Events:
 
     :param on_text_changed: Callback instance or None.
     :param on_text_insert: Callback instance or None.
     :param on_cursor_position_changed: Callback instance or None.
-    :param enable_history_search: SimpleFilter to indicate when up-arrow partial
-        string matching is enabled. It is adviced to not enable this at the
-        same time as `complete_while_typing`, because when there is an
-        autocompletion found, the up arrows usually browse through the
-        completions, rather than through the history.
+
+    Filters:
+
+    :param is_multiline: :class:`~prompt_toolkit.filters.SimpleFilter` to
+        indicate whether we should consider this buffer a multiline input. If
+        so, key bindings can decide to insert newlines when pressing [Enter].
+        (Instead of accepting the input.)
+    :param complete_while_typing: :class:`~prompt_toolkit.filters.SimpleFilter`
+        instance. Decide whether or not to do asynchronous autocompleting while
+        typing.
+    :param enable_history_search: :class:`~prompt_toolkit.filters.SimpleFilter`
+        to indicate when up-arrow partial string matching is enabled. It is
+        adviced to not enable this at the same time as `complete_while_typing`,
+        because when there is an autocompletion found, the up arrows usually
+        browse through the completions, rather than through the history.
+    :param read_only: :class:`~prompt_toolkit.filters.SimpleFilter`. When True,
+        changes will not be allowed.
     """
     def __init__(self, completer=None, auto_suggest=None, history=None,
                  validator=None, tempfile_suffix='',
-                 is_multiline=Never(), complete_while_typing=Never(),
-                 enable_history_search=Never(), initial_document=None,
+                 is_multiline=False, complete_while_typing=False,
+                 enable_history_search=False, initial_document=None,
                  accept_action=AcceptAction.IGNORE, read_only=False,
                  on_text_changed=None, on_text_insert=None, on_cursor_position_changed=None):
 
@@ -353,15 +362,15 @@ class Buffer(object):
     @property
     def document(self):
         """
-        Return :class:`Document` instance from the current text and cursor
-        position.
+        Return :class:`~prompt_toolkit.document.Document` instance from the
+        current text and cursor position.
         """
         return Document(self.text, self.cursor_position, selection=self.selection_state)
 
     @document.setter
     def document(self, value):
         """
-        Set :class:`Document` instance.
+        Set :class:`~prompt_toolkit.document.Document` instance.
 
         This will set both the text and cursor position at the same time, but
         atomically. (Change events will be triggered only after both have been set.)
@@ -373,8 +382,9 @@ class Buffer(object):
         Set :class:`~prompt_toolkit.document.Document` instance. Like the
         ``document`` property, but accept an ``bypass_readonly`` argument.
 
-        :param bypass_readonly: When True, don't raise an `EditReadOnlyBuffer`
-                                exception, even when the buffer is read-only.
+        :param bypass_readonly: When True, don't raise an
+                                :class:`.EditReadOnlyBuffer` exception, even
+                                when the buffer is read-only.
         """
         assert isinstance(value, Document)
 
@@ -444,10 +454,10 @@ class Buffer(object):
         """
         Transform a part of the input string.
 
-        :param :from_: (int) start position.
-        :param :to: (int) end position.
-        :param :transform_callback: Callable which accepts a string and returns
-                                    the transformed string.
+        :param from_: (int) start position.
+        :param to: (int) end position.
+        :param transform_callback: Callable which accepts a string and returns
+            the transformed string.
         """
         assert from_ < to
 
@@ -810,7 +820,7 @@ class Buffer(object):
 
     def cut_selection(self):
         """
-        Delete selected text and return :class:`ClipboardData` instance.
+        Delete selected text and return :class:`.ClipboardData` instance.
         """
         return self.copy_selection(_cut=True)
 
@@ -1028,8 +1038,8 @@ class Buffer(object):
 
     def document_for_search(self, search_state):
         """
-        Return a `Document` instance that has the text/cursor position for this
-        search, if we would apply it.
+        Return a :class:`~prompt_toolkit.document.Document` instance that has
+        the text/cursor position for this search, if we would apply it.
         """
         search_result = self._search(search_state, include_current_position=True)
 
@@ -1041,8 +1051,8 @@ class Buffer(object):
 
     def apply_search(self, search_state, include_current_position=True, count=1):
         """
-        Return a `Document` instance that has the text/cursor position for this
-        search, if we would apply it.
+        Apply search. If something is found, set `working_index` and
+        `cursor_position`.
         """
         search_result = self._search(search_state,
             include_current_position=include_current_position, count=count)
@@ -1059,7 +1069,8 @@ class Buffer(object):
         """
         Open code in editor.
 
-        :param cli: `CommandLineInterface` instance.
+        :param cli: :class:`~prompt_toolkit.interface.CommandLineInterface`
+            instance.
         """
         if self.read_only():
             raise EditReadOnlyBuffer()
@@ -1128,7 +1139,7 @@ class Buffer(object):
 
 def indent(buffer, from_row, to_row, count=1):
     """
-    Indent text of the `Buffer` object.
+    Indent text of a :class:`.Buffer` object.
     """
     current_row = buffer.document.cursor_position_row
     line_range = range(from_row, to_row)
@@ -1145,7 +1156,7 @@ def indent(buffer, from_row, to_row, count=1):
 
 def unindent(buffer, from_row, to_row, count=1):
     """
-    Unindent text of the `Buffer` object.
+    Unindent text of a :class:`.Buffer` object.
     """
     current_row = buffer.document.cursor_position_row
     line_range = range(from_row, to_row)

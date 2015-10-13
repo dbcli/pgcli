@@ -9,11 +9,12 @@ __all__ = (
 
 class EventLoopCallbacks(with_metaclass(ABCMeta, object)):
     """
-    ``EventLoopCallbacks`` is the glue between the eventloops and
-    ``CommandLineInterface`` instances.
+    This is the glue between the :class:`~prompt_toolkit.eventloop.base.EventLoop`
+    and :class:`~prompt_toolkit.interface.CommandLineInterface`.
 
-    The ``loop`` method of an eventloop takes a ``EventLoopCallbacks`` instance
-    and operates on that one, driving the interface.
+    :meth:`~prompt_toolkit.eventloop.base.EventLoop.run` takes an
+    :class:`.EventLoopCallbacks` instance and operates on that one, driving the
+    interface.
     """
     @abstractmethod
     def terminal_size_changed(self):

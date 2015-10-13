@@ -53,13 +53,14 @@ class Application(object):
     :param on_abort: What to do when Control-C is pressed.
     :param on_exit: What to do when Control-D is pressed.
     :param use_alternate_screen: When True, run the application on the alternate screen buffer.
-    :param mouse_support: (CLIFilter or boolean). When True, enable mouse support.
     :param get_title: Callable that returns the current title to be displayed in the terminal.
 
     Filters:
 
-    :param paste_mode: Filter.
-    :param ignore_case: Filter.
+    :param mouse_support: (:class:`~prompt_toolkit.filters.CLIFilter` or
+        boolean). When True, enable mouse support.
+    :param paste_mode: :class:`~prompt_toolkit.filters.CLIFilter` or boolean.
+    :param ignore_case: :class:`~prompt_toolkit.filters.CLIFilter` or boolean.
 
     Callbacks:
 

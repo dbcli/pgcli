@@ -143,10 +143,13 @@ Filters
 .. automodule:: prompt_toolkit.filters
     :members:
 
+.. autoclass:: prompt_toolkit.filters.Filter
+    :members:
+
 .. autoclass:: prompt_toolkit.filters.CLIFilter
     :members:
 
-.. autoclass:: prompt_toolkit.filters.Filter
+.. autoclass:: prompt_toolkit.filters.SimpleFilter
     :members:
 
 .. autoclass:: prompt_toolkit.filters.Condition
@@ -183,4 +186,16 @@ Eventloop
     :members:
 
 .. automodule:: prompt_toolkit.eventloop.asyncio_posix
+    :members:
+
+.. automodule:: prompt_toolkit.eventloop.callbacks
+    :members:
+
+Input and output
+----------------
+
+.. automodule:: prompt_toolkit.input
+    :members:
+
+.. automodule:: prompt_toolkit.output
     :members:

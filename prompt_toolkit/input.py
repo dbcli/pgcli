@@ -24,10 +24,11 @@ __all__ = (
 
 class Input(with_metaclass(ABCMeta, object)):
     """
-    Abstraction for any CLI input.
+    Abstraction for any input.
 
     An instance of this class can be given to the constructor of a
-    `CommandLineInterface` and will also be passed to the eventloop.
+    :class:`~prompt_toolkit.interface.CommandLineInterface` and will also be
+    passed to the :class:`~prompt_toolkit.eventloop.base.EventLoop`.
     """
     @abstractmethod
     def fileno(self):
