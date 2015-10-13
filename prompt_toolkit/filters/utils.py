@@ -7,6 +7,9 @@ __all__ = (
     'to_simple_filter',
 )
 
+_always = Always()
+_never = Never()
+
 
 def to_simple_filter(bool_or_filter):
     """
@@ -17,8 +20,8 @@ def to_simple_filter(bool_or_filter):
         TypeError('Expecting a bool or a SimpleFilter instance. Got %r' % bool_or_filter)
 
     return {
-        True: Always(),
-        False: Never()
+        True: _always,
+        False: _never,
     }.get(bool_or_filter, bool_or_filter)
 
 
@@ -31,6 +34,6 @@ def to_cli_filter(bool_or_filter):
         TypeError('Expecting a bool or a CLIFilter instance. Got %r' % bool_or_filter)
 
     return {
-        True: Always(),
-        False: Never()
+        True: _always,
+        False: _never,
     }.get(bool_or_filter, bool_or_filter)
