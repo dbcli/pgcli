@@ -258,11 +258,14 @@ class PGExecute(object):
 
                 # Not a special command, so execute as normal sql
                 yield self.execute_normal_sql(sql)
-            except psycopg2.ProgrammingError as e:
+            except psycopg2.DatabaseError as e:
                 _logger.error("sql: %r, error: %r", sql, e)
                 _logger.error("traceback: %r", traceback.format_exc())
 
-                if on_error == ON_ERROR_RAISE:
+                if (isinstance(e, psycopg2.OperationalError)
+                        or on_error == ON_ERROR_RAISE):
+                    # Always raise operational errors, regardless of on_error
+                    # specification
                     raise
 
                 result = click.style(utf8tounicode(str(e)), fg='red')
