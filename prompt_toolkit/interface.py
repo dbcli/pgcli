@@ -332,7 +332,7 @@ class CommandLineInterface(object):
         # Return result.
         return self.return_value()
 
-    if six.PY3:
+    try:
         # The following `run_async` function is compiled at runtime
         # because it contains syntax which is not supported on older Python
         # versions. (A 'return' inside a generator.)
@@ -375,7 +375,8 @@ class CommandLineInterface(object):
         else:
             run_async = asyncio.coroutine(run_async)
         '''))
-    else:
+    except SyntaxError:
+        # Python2, or early versions of Python 3.
         def run_async(self, reset_current_buffer=True, pre_run=None):
             """
             Same as `run`, but this returns a coroutine.
