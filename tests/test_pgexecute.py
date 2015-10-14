@@ -1,10 +1,12 @@
 # coding=UTF-8
 
 import pytest
+import psycopg2
 from pgspecial.main import PGSpecial
 from pgcli.packages.function_metadata import FunctionMetadata
 from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
+from pgcli.pgexecute import (ON_ERROR_STOP, ON_ERROR_RAISE, ON_ERROR_RESUME)
 
 
 @dbtest
@@ -215,3 +217,27 @@ def test_describe_special(executor, command, verbose, pattern):
     # but we can at least make sure they run without error
     sql = r'\{command}{verbose} {pattern}'.format(**locals())
     executor.run(sql)
+
+
+@dbtest
+@pytest.mark.parametrize('sql', [
+    'invalid sql',
+    'SELECT 1; select error;',
+])
+def test_on_error_raises(executor, sql):
+    with pytest.raises(psycopg2.ProgrammingError):
+        list(executor.run(sql, on_error=ON_ERROR_RAISE))
+
+
+@dbtest
+def test_on_error_resume(executor):
+    sql = 'select 1; error; select 1;'
+    result = list(executor.run(sql, on_error=ON_ERROR_RESUME))
+    assert len(result) == 3
+
+
+@dbtest
+def test_on_error_stop(executor):
+    sql = 'select 1; error; select 1;'
+    result = list(executor.run(sql, on_error=ON_ERROR_STOP))
+    assert len(result) == 2

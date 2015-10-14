@@ -27,6 +27,11 @@ ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 ext.set_wait_callback(psycopg2.extras.wait_select)
 
 
+ON_ERROR_RAISE = 0
+ON_ERROR_RESUME = 1
+ON_ERROR_STOP = 2
+
+
 def register_json_typecasters(conn, loads_fn):
     """Set the function for converting JSON data for a connection.
 
@@ -221,7 +226,7 @@ class PGExecute(object):
         else:
             return json_data
 
-    def run(self, statement, pgspecial=None):
+    def run(self, statement, pgspecial=None, on_error=ON_ERROR_RESUME):
         """Execute the sql in the database and return the results.
 
         :param statement: A string containing one or more sql statements
@@ -239,41 +244,54 @@ class PGExecute(object):
             # Remove spaces, eol and semi-colons.
             sql = sql.rstrip(';')
 
-            if pgspecial:
-                # First try to run each query as special
-                try:
+            try:
+                if pgspecial:
+                    # First try to run each query as special
                     _logger.debug('Trying a pgspecial command. sql: %r', sql)
                     cur = self.conn.cursor()
-                    for result in pgspecial.execute(cur, sql):
-                        yield result
-                    return
-                except special.CommandNotFound:
-                    pass
+                    try:
+                        for result in pgspecial.execute(cur, sql):
+                            yield result
+                        continue
+                    except special.CommandNotFound:
+                        pass
 
-            yield self.execute_normal_sql(sql)
+                # Not a special command, so execute as normal sql
+                yield self.execute_normal_sql(sql)
+            except psycopg2.DatabaseError as e:
+                _logger.error("sql: %r, error: %r", sql, e)
+                _logger.error("traceback: %r", traceback.format_exc())
+
+                if (isinstance(e, psycopg2.OperationalError)
+                        or on_error == ON_ERROR_RAISE):
+                    # Always raise operational errors, regardless of on_error
+                    # specification
+                    raise
+
+                result = click.style(utf8tounicode(str(e)), fg='red')
+                yield None, None, None, result
+
+                if on_error == ON_ERROR_STOP:
+                    break
 
     def execute_normal_sql(self, split_sql):
         _logger.debug('Regular sql statement. sql: %r', split_sql)
         cur = self.conn.cursor()
-        try:
-            cur.execute(split_sql)
-        except psycopg2.ProgrammingError as e:
-            _logger.error("sql: %r, error: %r", split_sql, e)
-            _logger.error("traceback: %r", traceback.format_exc())
-            return (None, None, None, click.style(utf8tounicode(str(e)), fg='red'))
+        cur.execute(split_sql)
 
         try:
             title = self.conn.notices.pop()
         except IndexError:
             title = None
+
         # cur.description will be None for operations that do not return
         # rows.
         if cur.description:
             headers = [x[0] for x in cur.description]
-            return (title, cur, headers, cur.statusmessage)
+            return title, cur, headers, cur.statusmessage
         else:
             _logger.debug('No rows in result.')
-            return (title, None, None, cur.statusmessage)
+            return title, None, None, cur.statusmessage
 
     def search_path(self):
         """Returns the current search path as a list of schema names"""

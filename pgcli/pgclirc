@@ -44,6 +44,12 @@ syntax_style = default
 # for end are available in the REPL.
 vi = False
 
+# Error handling
+# When one of multiple SQL statements causes an error, choose to either
+# continue executing the remaining statements, or stopping
+# Possible values "STOP" or "RESUME"
+on_error = RESUME
+
 
 # Custom colors for the completion menu, toolbar, etc. 
 [colors]
