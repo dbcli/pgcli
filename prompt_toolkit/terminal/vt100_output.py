@@ -226,7 +226,7 @@ class Vt100_Output(Output):
             # for sys.stdout.encoding in xterm.
             if hasattr(self.stdout, 'encoding'):
                 out = self.stdout.buffer if six.PY3 else self.stdout
-                out.write(data.encode(self.stdout.encoding, 'replace'))
+                out.write(data.encode(self.stdout.encoding or 'utf-8', 'replace'))
             else:
                 self.stdout.write(data)
 
