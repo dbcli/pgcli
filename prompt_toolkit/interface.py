@@ -254,14 +254,14 @@ class CommandLineInterface(object):
         """ True when we currently ignore casing. """
         return self.application.ignore_case(self)
 
-    def request_redraw(self):
+    def invalidate(self):
         """
         Thread safe way of sending a repaint trigger to the input event loop.
         """
         if self.eventloop is not None:
             # Never schedule a second redraw, when a previous one has not yet been
             # executed. (This should protect against other threads calling
-            # 'request_redraw' many times, resulting in 100% CPU.)
+            # 'invalidate' many times, resulting in 100% CPU.)
             if self._invalidated:
                 return
 
@@ -273,10 +273,13 @@ class CommandLineInterface(object):
 
             self.eventloop.call_from_executor(redraw)
 
+    # Depracated alias for 'invalidate'.
+    request_redraw = invalidate
+
     def _redraw(self):
         """
-        Render the command line again. (Not thread safe!)
-        (From other threads, or if unsure, use `request_redraw`.)
+        Render the command line again. (Not thread safe!) (From other threads,
+        or if unsure, use :meth:`.CommandLineInterface.invalidate`.)
         """
         # Only draw when no sub application was started.
         if self._sub_cli is None:
