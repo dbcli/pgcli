@@ -374,7 +374,7 @@ class BufferControl(UIControl):
             # Note: we add the space character at the end, because that's where
             #       the cursor can also be.
             input_tokens, source_to_display, display_to_source = self._get_input_tokens(cli, document)
-            input_tokens += [(Token, ' ')]
+            input_tokens += [(self.default_char.token, ' ')]
 
             indexes_to_pos = screen.write_data(input_tokens, width=wrap_width)
             pos_to_indexes = dict((v, k) for k, v in indexes_to_pos.items())
