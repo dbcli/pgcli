@@ -162,7 +162,11 @@ class Win32Output(Output):
         self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole, 15)  # White
 
     def set_attributes(self, attrs):
-        fgcolor, bgcolor, bold, underline = attrs
+        fgcolor, bgcolor, bold, underline, reverse = attrs
+
+        if reverse:
+            fgcolor, bgcolor = bgcolor, fgcolor
+
         i = self.color_lookup_table.lookup_color(fgcolor, bgcolor)
         self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole, i)
 
