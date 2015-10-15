@@ -106,7 +106,7 @@ class Document(object):
 
     @property
     def line_count(self):
-        """ Return the number of lines in this document. If the document ends
+        r""" Return the number of lines in this document. If the document ends
         with a trailing \n, that counts as the beginning of a new line. """
         return len(self.lines)
 
