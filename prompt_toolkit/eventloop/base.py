@@ -48,6 +48,19 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
+    def add_reader(self, fd, callback):
+        """
+        Start watching the file descriptor for read availability and then call
+        the callback.
+        """
+
+    @abstractmethod
+    def remove_reader(self, fd):
+        """
+        Stop watching the file descriptor for read availability.
+        """
+
+    @abstractmethod
     def run_in_executor(self, callback):
         """
         Run a long running function in a background thread. (This is

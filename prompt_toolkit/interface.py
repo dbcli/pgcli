@@ -913,7 +913,13 @@ class _SubApplicationEventLoop(EventLoop):
         pass
 
     def run_in_executor(self, callback):
-        self.cli.run_in_executor(callback)
+        self.cli.eventloop.run_in_executor(callback)
 
     def call_from_executor(self, callback):
-        self.cli.call_from_executor(callback)
+        self.cli.eventloop.call_from_executor(callback)
+
+    def add_reader(self, fd, callback):
+        self.cli.eventloop.add_reader(fd, callback)
+
+    def remove_reader(self, fd):
+        self.cli.eventloop.remove_reader(fd)

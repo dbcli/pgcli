@@ -13,8 +13,9 @@ class PosixStdinReader(object):
     Wrapper around stdin which reads (nonblocking) the next available 1024
     bytes and decodes it.
     """
-    def __init__(self, stdin):
-        self.stdin = stdin
+    def __init__(self, stdin_fd):
+        assert isinstance(stdin_fd, int)
+        self.stdin_fd = stdin_fd
 
         # Create incremental decoder for decoding stdin.
         # We can not just do `os.read(stdin.fileno(), 1024).decode('utf-8')`, because
@@ -31,7 +32,7 @@ class PosixStdinReader(object):
         #       Somehow that causes some latency when the escape
         #       character is pressed. (Especially on combination with the `select`.)
         try:
-            data = os.read(self.stdin.fileno(), 1024)
+            data = os.read(self.stdin_fd, 1024)
         except OSError:
             # In case of SIGWINCH
             data = b''

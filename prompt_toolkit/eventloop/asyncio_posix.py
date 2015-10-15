@@ -32,7 +32,7 @@ class PosixAsyncioEventLoop(EventLoop):
         assert isinstance(callbacks, EventLoopCallbacks)
 
         # Create reader class.
-        stdin_reader = PosixStdinReader(stdin)
+        stdin_reader = PosixStdinReader(stdin.fileno())
 
         if self.closed:
             raise Exception('Event loop already closed.')
@@ -101,3 +101,11 @@ class PosixAsyncioEventLoop(EventLoop):
         Similar to Twisted's ``callFromThread``.
         """
         self.loop.call_soon_threadsafe(callback)
+
+    def add_reader(self, fd, callback):
+        " Start watching the file descriptor for read availability. "
+        self.loop.add_reader(fd, callback)
+
+    def remove_reader(self, fd):
+        " Stop watching the file descriptor for read availability. "
+        self.loop.remove_reader(fd)

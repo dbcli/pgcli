@@ -282,6 +282,12 @@ class _TelnetEventLoopInterface(EventLoop):
     def call_from_executor(self, callback):
         self._server.call_from_executor(callback)
 
+    def add_reader(self, fd, callback):
+        raise NotImplementedError
+
+    def remove_reader(self, fd):
+        raise NotImplementedError
+
 
 class TelnetServer(object):
     """

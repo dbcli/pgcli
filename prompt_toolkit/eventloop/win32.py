@@ -134,6 +134,14 @@ class Win32EventLoop(EventLoop):
         for c in calls_from_executor:
             c()
 
+    def add_reader(self, fd, callback):
+        " Start watching the file descriptor for read availability. "
+        raise NotImplementedError
+
+    def remove_reader(self, fd):
+        " Stop watching the file descriptor for read availability. "
+        raise NotImplementedError
+
 
 def _wait_for_handles(handles, timeout=-1):
     """

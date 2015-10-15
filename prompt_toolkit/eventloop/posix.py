@@ -33,6 +33,7 @@ class PosixEventLoop(EventLoop):
         self._callbacks = None
 
         self._calls_from_executor = []
+        self._read_fds = {} # Maps fd to handler.
 
         # Create a pipe for inter thread communication.
         self._schedule_pipe = os.pipe()
@@ -59,7 +60,7 @@ class PosixEventLoop(EventLoop):
         current_timeout = INPUT_TIMEOUT
 
         # Create reader class.
-        stdin_reader = PosixStdinReader(stdin)
+        stdin_reader = PosixStdinReader(stdin.fileno())
 
         # Only attach SIGWINCH signal handler in main thread.
         # (It's not possible to attach signal handlers in other threads. In
@@ -110,6 +111,14 @@ class PosixEventLoop(EventLoop):
                     calls_from_executor, self._calls_from_executor = self._calls_from_executor, []
                     for c in calls_from_executor:
                         c()
+                # When any of the registered read pipes are ready. Call the
+                # appropriate callback.
+                elif r:
+                    for fd in r:
+                        handler = self._read_fds.get(fd)
+                        if handler:
+                            handler()
+
                 else:
                     # Flush all pending keys on a timeout and redraw. (This is
                     # most important to flush the vt100 escape key early when
@@ -127,7 +136,10 @@ class PosixEventLoop(EventLoop):
         """
         Return the file descriptors that are ready for reading.
         """
-        r, _, _ =_select([stdin, self._schedule_pipe[0]], [], [], timeout)
+        read_fds = [stdin, self._schedule_pipe[0]]
+        read_fds.extend(self._read_fds.keys())
+
+        r, _, _ =_select(read_fds, [], [], timeout)
         return r
 
     def received_winch(self):
@@ -196,6 +208,15 @@ class PosixEventLoop(EventLoop):
 
         if self._inputhook_context:
             self._inputhook_context.close()
+
+    def add_reader(self, fd, callback):
+        " Add read file descriptor to the event loop. "
+        self._read_fds[fd] = callback
+
+    def remove_reader(self, fd):
+        " Remove read file descriptor from the event loop. "
+        if fd in self._read_fds:
+            del self._read_fds[fd]
 
 
 def _select(*args, **kwargs):
