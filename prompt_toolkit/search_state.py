@@ -1,5 +1,5 @@
 from .enums import IncrementalSearchDirection
-from .filters import SimpleFilter, Never
+from .filters import to_simple_filter
 
 __all__ = (
     'SearchState',
@@ -12,8 +12,8 @@ class SearchState(object):
     """
     __slots__ = ('text', 'direction', 'ignore_case')
 
-    def __init__(self, text='', direction=IncrementalSearchDirection.FORWARD, ignore_case=Never()):
-        assert isinstance(ignore_case, SimpleFilter)
+    def __init__(self, text='', direction=IncrementalSearchDirection.FORWARD, ignore_case=False):
+        ignore_case = to_simple_filter(ignore_case)
 
         self.text = text
         self.direction = direction

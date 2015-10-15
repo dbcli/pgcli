@@ -9,7 +9,7 @@ from .clipboard import ClipboardData
 from .completion import Completer, Completion, CompleteEvent
 from .document import Document
 from .enums import IncrementalSearchDirection
-from .filters import Never, to_simple_filter
+from .filters import to_simple_filter
 from .history import History, InMemoryHistory
 from .search_state import SearchState
 from .selection import SelectionType, SelectionState

@@ -3,7 +3,7 @@ Input validation for a `Buffer`.
 (Validators will be called before accepting input.)
 """
 from __future__ import unicode_literals
-from .filters import to_simple_filter, Always
+from .filters import to_simple_filter
 
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
@@ -52,7 +52,7 @@ class ConditionalValidator(Validator):
     Validator that can be switched on/off according to
     a filter. (This wraps around another validator.)
     """
-    def __init__(self, validator, filter=Always()):
+    def __init__(self, validator, filter):
         assert isinstance(validator, Validator)
 
         self.validator = validator

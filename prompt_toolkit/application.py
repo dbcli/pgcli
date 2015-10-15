@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from .buffer import Buffer, AcceptAction
 from .clipboard import Clipboard, InMemoryClipboard
 from .enums import DEFAULT_BUFFER
-from .filters import CLIFilter, Never, to_cli_filter
+from .filters import CLIFilter, to_cli_filter
 from .focus_stack import FocusStack
 from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
@@ -83,7 +83,7 @@ class Application(object):
                  use_alternate_screen=False, mouse_support=False,
                  get_title=None, focus_stack=None,
 
-                 paste_mode=Never(), ignore_case=Never(),
+                 paste_mode=False, ignore_case=False,
 
                  on_input_timeout=None, on_start=None, on_stop=None,
                  on_reset=None, on_initialize=None, on_buffer_changed=None):
