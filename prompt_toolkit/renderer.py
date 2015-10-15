@@ -54,6 +54,9 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     _output_cursor_up = output.cursor_up
     _output_cursor_backward = output.cursor_backward
 
+    # Hide cursor before rendering. (Avoid flickering.)
+    output.hide_cursor()
+
     def reset_attributes():
         " Wrapper around Output.reset_attributes. "
         _output_reset_attributes()
@@ -193,6 +196,8 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     # active background color.)
     if background_turned_on[0]:
         reset_attributes()
+
+    output.show_cursor()
 
     return current_pos, last_char[0]
 

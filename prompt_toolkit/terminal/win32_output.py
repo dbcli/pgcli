@@ -295,6 +295,12 @@ class Win32Output(Output):
         self._winapi(windll.kernel32.GetConsoleMode, handle, pointer(original_mode))
         self._winapi(windll.kernel32.SetConsoleMode, handle, original_mode.value & ~ ENABLE_MOUSE_INPUT)
 
+    def hide_cursor(self):
+        pass
+
+    def show_cursor(self):
+        pass
+
     @classmethod
     def win32_refresh_window(cls):
         """

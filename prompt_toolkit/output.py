@@ -107,6 +107,14 @@ class Output(with_metaclass(ABCMeta, object)):
     def cursor_backward(self, amount):
         " Move cursor `amount` place backward. "
 
+    @abstractmethod
+    def hide_cursor(self):
+        " Hide cursor. "
+
+    @abstractmethod
+    def show_cursor(self):
+        " Show cursor. "
+
     def ask_for_cpr(self):
         """
         Asks for a cursor position report (CPR).

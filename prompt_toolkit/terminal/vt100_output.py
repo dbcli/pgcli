@@ -211,6 +211,12 @@ class Vt100_Output(Output):
         else:
             self._write('\x1b[%iD' % amount)
 
+    def hide_cursor(self):
+        self._write('\x1b[?25l')
+
+    def show_cursor(self):
+        self._write('\x1b[?12l\x1b[?25h')  # Stop blinking cursor and show.
+
     def flush(self):
         """
         Write to output stream and flush.
