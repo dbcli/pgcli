@@ -11,7 +11,7 @@ from .key_binding.registry import Registry
 from .layout import Window
 from .layout.containers import Container
 from .layout.controls import BufferControl
-from .styles import DefaultStyle
+from .styles import DefaultStyle, Style, PygmentsStyle
 from .utils import Callback
 
 __all__ = (
@@ -34,14 +34,16 @@ class AbortAction:
 
 class Application(object):
     """
-    Application class to be passed to a `CommandLineInterface`.
+    Application class to be passed to a
+    :class:`~prompt_toolkit.interface.CommandLineInterface`.
 
     This contains all customizable logic that is not I/O dependent.
     (So, what is independent of event loops, input and output.)
 
-    This way, such an `Application` can run easily on several
-    `CommandLineInterface`s, each with a different I/O backends.
-    that runs for instance over telnet, SSH or any other I/O backend.
+    This way, such an :class:`.Application` can run easily on several
+    :class:`~prompt_toolkit.interface.CommandLineInterface` instances, each
+    with a different I/O backends. that runs for instance over telnet, SSH or
+    any other I/O backend.
 
     :param layout: A :class:`~prompt_toolkit.layout.containers.Container` instance.
     :param buffer: A :class:`~prompt_toolkit.buffer.Buffer` instance for the default buffer.
@@ -75,7 +77,7 @@ class Application(object):
     """
     def __init__(self, layout=None, buffer=None, buffers=None,
                  initial_focussed_buffer=DEFAULT_BUFFER,
-                 style=None, get_style=None,
+                 style=None,
                  key_bindings_registry=None, clipboard=None,
                  on_abort=AbortAction.IGNORE, on_exit=AbortAction.IGNORE,
                  use_alternate_screen=False, mouse_support=False,
@@ -107,19 +109,14 @@ class Application(object):
         assert on_reset is None or isinstance(on_reset, Callback)
         assert on_buffer_changed is None or isinstance(on_buffer_changed, Callback)
         assert on_initialize is None or isinstance(on_initialize, Callback)
-        assert not (style and get_style)
+        assert style is None or isinstance(style, Style)
 
         self.layout = layout or Window(BufferControl())
         self.buffer = buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)
         self.buffers = buffers or {}
         self.initial_focussed_buffer = initial_focussed_buffer
 
-        if style:
-            self.get_style = lambda: style
-        elif get_style:
-            self.get_style = get_style
-        else:
-            self.get_style = lambda: DefaultStyle
+        self.style = style or PygmentsStyle(DefaultStyle)
 
         if key_bindings_registry is None:
             key_bindings_registry = Registry()

@@ -283,7 +283,7 @@ class CommandLineInterface(object):
         """
         # Only draw when no sub application was started.
         if self._sub_cli is None:
-            self.renderer.render(self, self.layout, self.application.get_style(),
+            self.renderer.render(self, self.layout, self.application.style,
                                  is_done=self.is_done)
 
     def _on_resize(self):
@@ -581,7 +581,7 @@ class CommandLineInterface(object):
 
         :param style: Style class to use. Defaults to the active style in the CLI.
         """
-        print_tokens(self.output, tokens, style or self.application.get_style())
+        print_tokens(self.output, tokens, style or self.application.style)
 
     @property
     def is_exiting(self):

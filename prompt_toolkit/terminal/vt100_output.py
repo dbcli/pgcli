@@ -28,15 +28,15 @@ class _EscapeCodeCache(dict):
     Cache for VT100 escape codes. It maps
     (fgcolor, bgcolor, bold, underline) tuples to VT100 escape sequences.
     """
-    def __missing__(self, key):
-        fgcolor, bgcolor, bold, underline = key
+    def __missing__(self, attrs):
+        fgcolor, bgcolor, bold, underline = attrs
 
         fg = _tf._color_index(fgcolor) if fgcolor else None
         bg = _tf._color_index(bgcolor) if bgcolor else None
 
         e = EscapeSequence(fg=fg, bg=bg, bold=bold, underline=underline).color_string()
 
-        self[key] = e
+        self[attrs] = e
         return e
 
 _ESCAPE_CODE_CACHE = _EscapeCodeCache()
@@ -156,11 +156,13 @@ class Vt100_Output(Output):
     def reset_attributes(self):
         self._write('\x1b[0m')
 
-    def set_attributes(self, fgcolor=None, bgcolor=None, bold=False, underline=False):
+    def set_attributes(self, attrs):
         """
         Create new style and output.
+
+        :param attrs: `Attrs` instance.
         """
-        escape_code = _ESCAPE_CODE_CACHE[fgcolor, bgcolor, bold, underline]
+        escape_code = _ESCAPE_CODE_CACHE[attrs]
 
         self.reset_attributes()
         self._write(escape_code)

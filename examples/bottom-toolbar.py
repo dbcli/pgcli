@@ -4,8 +4,9 @@ Simple example showing a bottom toolbar.
 """
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
-from pygments.token import Token
+from prompt_toolkit.styles import PygmentsStyle
 from pygments.style import Style
+from pygments.token import Token
 
 
 class TestStyle(Style):
@@ -20,7 +21,7 @@ def main():
 
     text = prompt('Say something: ',
                   get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
-                  style=TestStyle)
+                  style=PygmentsStyle(TestStyle))
     print('You said: %s' % text)
 
 

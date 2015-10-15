@@ -20,7 +20,7 @@ from prompt_toolkit.contrib.regular_languages.compiler import compile
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
 from prompt_toolkit.layout.lexers import SimpleLexer
-from prompt_toolkit.styles import DefaultStyle
+from prompt_toolkit.styles import DefaultStyle, PygmentsStyle
 
 from pygments.token import Token
 
@@ -69,7 +69,8 @@ if __name__ == '__main__':
         # REPL loop.
         while True:
             # Read input and parse the result.
-            text = prompt('Calculate: ', lexer=lexer, completer=completer, style=ExampleStyle)
+            text = prompt('Calculate: ', lexer=lexer, completer=completer,
+                          style=PygmentsStyle(ExampleStyle))
             m = g.match(text)
             if m:
                 vars = m.variables()

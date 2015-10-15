@@ -4,35 +4,18 @@ Renders the command line on the console.
 """
 from __future__ import unicode_literals
 
-from pygments.style import Style
 from pygments.token import Token
 from prompt_toolkit.layout.screen import Point, Screen, WritePosition
 from prompt_toolkit.layout.mouse_handlers import MouseHandlers
 from prompt_toolkit.output import Output
 from prompt_toolkit.utils import is_windows
 from prompt_toolkit.filters import to_cli_filter
+from prompt_toolkit.styles import Style
 
 __all__ = (
     'Renderer',
     'print_tokens',
 )
-
-
-class _StyleForTokenCache(dict):
-    """
-    A cache structure that maps Pygments Tokens to their style objects.
-    """
-    def __init__(self, style):
-        self.style = style
-
-    def __missing__(self, token):
-        try:
-            result = self.style.style_for_token(token)
-        except KeyError:
-            result = None
-
-        self[token] = result
-        return result
 
 
 def output_screen_diff(output, screen, current_pos, previous_screen=None, last_char=None,
@@ -103,7 +86,7 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
 
         return new
 
-    style_for_token = _StyleForTokenCache(style)
+    attrs_for_token = style.get_token_to_attributes_dict()
 
     def output_char(char):
         """
@@ -114,15 +97,13 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         if last_char[0] and last_char[0].token == char.token:
             write(char.char)
         else:
-            style = style_for_token[char.token]
+            attrs = attrs_for_token[char.token]
 
             if style:
-                _output_set_attributes(style['color'], style['bgcolor'],
-                                       bold=style.get('bold', False),
-                                       underline=style.get('underline', False))
+                _output_set_attributes(attrs)
 
                 # If we print something with a background color, remember that.
-                background_turned_on[0] = bool(style['bgcolor'])
+                background_turned_on[0] = bool(attrs.bgcolor)
             else:
                 # Reset previous style and output.
                 reset_attributes()
@@ -343,14 +324,13 @@ class Renderer(object):
         # Set the
         self._min_available_height = rows_below_cursor
 
-    def render(self, cli, layout, style=None, is_done=False):
+    def render(self, cli, layout, style, is_done=False):
         """
         Render the current interface to the output.
 
         :param is_done: When True, put the cursor at the end of the interface. We
                 won't print any changes to this part.
         """
-        style = style or Style
         output = self.output
 
         # Enter alternate screen.
@@ -469,22 +449,20 @@ def print_tokens(output, tokens, style):
     Print a list of (Token, text) tuples in the given style to the output.
     """
     assert isinstance(output, Output)
-    assert style
+    assert isinstance(style, Style)
 
     # Reset first.
     output.reset_attributes()
     output.enable_autowrap()
 
     # Print all (token, text) tuples.
-    style_for_token = _StyleForTokenCache(style)
+    attrs_for_token = style.get_token_to_attributes_dict()
 
     for token, text in tokens:
-        style = style_for_token[token]
+        attrs = attrs_for_token[token]
 
-        if style:
-            output.set_attributes(style['color'], style['bgcolor'],
-                                  bold=style.get('bold', False),
-                                  underline=style.get('underline', False))
+        if attrs:
+            output.set_attributes(attrs)
         else:
             output.reset_attributes()
 

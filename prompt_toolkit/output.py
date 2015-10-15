@@ -76,7 +76,7 @@ class Output(with_metaclass(ABCMeta, object)):
         " Reset color and styling attributes. "
 
     @abstractmethod
-    def set_attributes(self, fgcolor=None, bgcolor=None, bold=False, underline=False):
+    def set_attributes(self, attrs):
         " Set new color and styling attributes. "
 
     @abstractmethod

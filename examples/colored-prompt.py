@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit import prompt
 from pygments.style import Style
+from prompt_toolkit.styles import PygmentsStyle
 from pygments.styles.default import DefaultStyle
 from pygments.token import Token
 
@@ -39,5 +40,5 @@ def get_prompt_tokens(cli):
 
 
 if __name__ == '__main__':
-    answer = prompt(get_prompt_tokens=get_prompt_tokens, style=ExampleStyle)
+    answer = prompt(get_prompt_tokens=get_prompt_tokens, style=PygmentsStyle(ExampleStyle))
     print('You said: %s' % answer)
