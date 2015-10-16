@@ -195,6 +195,11 @@ class InputProcessor(object):
         self._previous_key_sequence = key_sequence
         self._previous_handler = handler
 
+        # Invalidate user interface.
+        cli = self._cli_ref()
+        if cli and handler.invalidate_ui(cli):
+            cli.invalidate()
+
 
 class Event(object):
     """

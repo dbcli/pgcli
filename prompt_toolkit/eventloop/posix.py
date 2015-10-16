@@ -96,7 +96,6 @@ class PosixEventLoop(EventLoop):
                     # Feed input text.
                     data = stdin_reader.read()
                     inputstream.feed(data)
-                    callbacks.redraw()
 
                     # Set timeout again.
                     current_timeout = INPUT_TIMEOUT
@@ -120,11 +119,10 @@ class PosixEventLoop(EventLoop):
                             handler()
 
                 else:
-                    # Flush all pending keys on a timeout and redraw. (This is
-                    # most important to flush the vt100 escape key early when
+                    # Flush all pending keys on a timeout. (This is most
+                    # important to flush the vt100 'Escape' key early when
                     # nothing else follows.)
                     inputstream.flush()
-                    callbacks.redraw()
 
                     # Fire input timeout event.
                     callbacks.input_timeout()

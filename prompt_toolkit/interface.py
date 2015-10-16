@@ -683,7 +683,7 @@ class CommandLineInterface(object):
                                 completions=completions,
                                 go_to_first=select_first or select_first_anyway,
                                 go_to_last=select_last)
-                        self._redraw()
+                        self.invalidate()
                     else:
                         # Otherwise, restart thread.
                         async_completer()
@@ -726,7 +726,7 @@ class CommandLineInterface(object):
 
                         # Set suggestion and redraw interface.
                         buffer.suggestion = suggestion
-                        self._redraw()
+                        self.invalidate()
                     else:
                         # Otherwise, restart thread.
                         async_suggestor()
@@ -760,8 +760,8 @@ class CommandLineInterface(object):
 
 class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
     """
-    Callbacks on the ``CommandLineInterface`` object, to which an eventloop can
-    talk.
+    Callbacks on the :class:`.CommandLineInterface` object, to which an
+    eventloop can talk.
     """
     def __init__(self, cli):
         assert isinstance(cli, CommandLineInterface)
@@ -796,13 +796,6 @@ class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
         """
         # Feed the key and redraw.
         self._active_cli.input_processor.feed_key(key_press)
-
-    def redraw(self):
-        """
-        Redraw the interface. (Should probably be called after each
-        `feed_key`.)
-        """
-        self._active_cli._redraw()
 
 
 class _PatchStdoutContext(object):

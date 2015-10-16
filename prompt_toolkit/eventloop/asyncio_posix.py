@@ -50,7 +50,6 @@ class PosixAsyncioEventLoop(EventLoop):
                 flush the input stream and fire the timeout event.
                 """
                 inputstream.flush()
-                callbacks.redraw()
 
                 callbacks.input_timeout()
 
@@ -66,7 +65,6 @@ class PosixAsyncioEventLoop(EventLoop):
             def stdin_ready():
                 data = stdin_reader.read()
                 inputstream.feed(data)
-                callbacks.redraw()
                 timeout.reset()
 
             self.loop.add_reader(stdin.fileno(), stdin_ready)

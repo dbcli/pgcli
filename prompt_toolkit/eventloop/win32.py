@@ -72,7 +72,6 @@ class Win32EventLoop(EventLoop):
                 keys = self._console_input_reader.read()
                 for k in keys:
                     callbacks.feed_key(k)
-                callbacks.redraw()
                 current_timeout = INPUT_TIMEOUT_MS
 
             elif handle == self._event:

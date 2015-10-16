@@ -32,7 +32,7 @@ class PosixStdinReader(object):
         #       Somehow that causes some latency when the escape
         #       character is pressed. (Especially on combination with the `select`.)
         try:
-            data = os.read(self.stdin_fd, 1024)
+            data = os.read(self.stdin_fd, 8192)
         except OSError:
             # In case of SIGWINCH
             data = b''

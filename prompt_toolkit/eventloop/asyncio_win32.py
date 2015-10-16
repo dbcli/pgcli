@@ -55,7 +55,6 @@ class Win32AsyncioEventLoop(EventLoop):
                 # Feed keys to input processor.
                 for k in keys:
                     callbacks.feed_key(k)
-                callbacks.redraw()
         finally:
             timeout.stop()
 
