@@ -492,8 +492,8 @@ class CommandLineInterface(object):
         Set a return value. The eventloop can retrieve the result it by calling
         `return_value`.
         """
-        self._redraw()
         self._set_return_callable(lambda: document)
+        self._redraw()  # Redraw in "done" state, after the return value has been set.
 
     def _set_return_callable(self, value):
         assert callable(value)
