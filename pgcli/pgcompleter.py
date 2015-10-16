@@ -163,7 +163,7 @@ class PGCompleter(Completer):
         self.all_completions = set(self.keywords + self.functions)
 
     def find_matches(self, text, collection, start_only=False, fuzzy=True,
-                     meta=None, meta_collection=None):
+                     sort_ranked=True, meta=None, meta_collection=None):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -175,7 +175,9 @@ class PGCompleter(Completer):
         considered a match if the text appears anywhere within it.
 
         yields prompt_toolkit Completion instances for any matches found
-        in the collection of available completions.
+        in the collection of available completions. By default, matches are
+        sorted by priority. Specify sort_ranked=False to maintain the same order
+        as the supplied collection.
 
         """
 
@@ -218,8 +220,11 @@ class PGCompleter(Completer):
 
                 completions.append((sort_key, item, meta))
 
+        if sort_ranked:
+            completions = sorted(completions)
+
         return [Completion(item, -len(text), display_meta=meta)
-                for sort_key, item, meta in sorted(completions)]
+                for sort_key, item, meta in completions]
 
 
     def get_completions(self, document, complete_event, smart_completion=None):
@@ -336,10 +341,11 @@ class PGCompleter(Completer):
                 completions.extend(dbs)
 
             elif suggestion['type'] == 'keyword':
-                keywords = self.find_matches(word_before_cursor, self.keywords,
-                                             start_only=True,
-                                             fuzzy=False,
-                                             meta='keyword')
+                # Suggest keywords without sorting so they're suggested in the
+                # same order as listed in pgliterals
+                keywords = self.find_matches(
+                    word_before_cursor, self.keywords, start_only=True,
+                    fuzzy=False, sort_ranked=False, meta='keyword')
                 completions.extend(keywords)
 
             elif suggestion['type'] == 'special':
