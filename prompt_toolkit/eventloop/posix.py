@@ -100,6 +100,14 @@ class PosixEventLoop(EventLoop):
                     # Set timeout again.
                     current_timeout = INPUT_TIMEOUT
 
+                # When any of the registered read pipes are ready. Call the
+                # appropriate callback.
+                elif set(r) & set(self._read_fds):
+                    for fd in r:
+                        handler = self._read_fds.get(fd)
+                        if handler:
+                            handler()
+
                 # If we receive something on our "call_from_executor" pipe, process
                 # these callbacks in a thread safe way.
                 elif self._schedule_pipe[0] in r:
@@ -110,13 +118,6 @@ class PosixEventLoop(EventLoop):
                     calls_from_executor, self._calls_from_executor = self._calls_from_executor, []
                     for c in calls_from_executor:
                         c()
-                # When any of the registered read pipes are ready. Call the
-                # appropriate callback.
-                elif r:
-                    for fd in r:
-                        handler = self._read_fds.get(fd)
-                        if handler:
-                            handler()
 
                 else:
                     # Flush all pending keys on a timeout. (This is most
