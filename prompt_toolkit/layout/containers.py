@@ -796,8 +796,8 @@ class Window(Container):
         ypos = write_position.ypos
         height = write_position.height
 
-        temp_buffer = temp_screen._buffer
-        new_buffer = new_screen._buffer
+        temp_buffer = temp_screen.data_buffer
+        new_buffer = new_screen.data_buffer
         temp_screen_height = temp_screen.height
         y = 0
 
@@ -841,8 +841,8 @@ class Window(Container):
         xpos = write_position.xpos + move_x
         ypos = write_position.ypos
 
-        temp_buffer = temp_screen._buffer
-        new_buffer = new_screen._buffer
+        temp_buffer = temp_screen.data_buffer
+        new_buffer = new_screen.data_buffer
 
         # Now copy the region we need to the real screen.
         for y in range(0, write_position.height):

@@ -117,7 +117,7 @@ class Screen(object):
         if default_char is None:
             default_char = Char(token=Transparent)
 
-        self._buffer = defaultdict(lambda: defaultdict(lambda: default_char))
+        self.data_buffer = defaultdict(lambda: defaultdict(lambda: default_char))
 
         #: Position of the cursor.
         self.cursor_position = Point(y=0, x=0)
@@ -148,7 +148,7 @@ class Screen(object):
         """
         if width is None:
             width = 10 ** 100  # A very big number.
-        buffer = self._buffer
+        buffer = self.data_buffer
         screen_line_to_input_line = self.screen_line_to_input_line
 
         x = 0
@@ -218,7 +218,7 @@ class Screen(object):
         """
         For all the characters in the screen. Set the token to the given `token`.
         """
-        b = self._buffer
+        b = self.data_buffer
 
         for y, row in b.items():
             for x, char in row.items():

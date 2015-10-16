@@ -130,7 +130,7 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         previous_screen = Screen()
 
     # Get height of the screen.
-    # (height changes as we loop over _buffer, so remember the current value.)
+    # (height changes as we loop over data_buffer, so remember the current value.)
     current_height = screen.height
 
     # Loop over the rows.
@@ -138,8 +138,8 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     c = 0  # Column counter.
 
     for y, r in enumerate(range(0, row_count)):
-        new_row = screen._buffer[r]
-        previous_row = previous_screen._buffer[r]
+        new_row = screen.data_buffer[r]
+        previous_row = previous_screen.data_buffer[r]
 
         new_max_line_len = max(new_row.keys()) if new_row else 0
         previous_max_line_len = max(previous_row.keys()) if previous_row else 0
