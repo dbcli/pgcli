@@ -260,7 +260,6 @@ class Renderer(object):
         # Quit alternate screen.
         if self._in_alternate_screen:
             self.output.quit_alternate_screen()
-            self.output.flush()
             self._in_alternate_screen = False
 
         # Disable mouse support.

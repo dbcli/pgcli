@@ -282,7 +282,7 @@ class CommandLineInterface(object):
         or if unsure, use :meth:`.CommandLineInterface.invalidate`.)
         """
         # Only draw when no sub application was started.
-        if self._sub_cli is None:
+        if self._is_running and self._sub_cli is None:
             self.renderer.render(self, self.layout, self.application.style,
                                  is_done=self.is_done)
 
@@ -421,6 +421,7 @@ class CommandLineInterface(object):
             # screen, if the sub application used that.)
             sub_cli._redraw()
             sub_cli.renderer.reset()
+            sub_cli._is_running = False  # Don't render anymore.
 
             self._sub_cli = None
 
@@ -438,7 +439,9 @@ class CommandLineInterface(object):
             eventloop=_SubApplicationEventLoop(self, done),
             input=self.input,
             output=self.output)
+        sub_cli._is_running = True  # Allow rendering of sub app.
 
+        sub_cli._redraw()
         self._sub_cli = sub_cli
 
     def set_exit(self):
