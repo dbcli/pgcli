@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import os
+import re
 import sys
 import traceback
 import logging
@@ -12,6 +13,7 @@ from time import time
 from codecs import open
 
 import click
+import setproctitle
 import sqlparse
 from prompt_toolkit import CommandLineInterface, Application, AbortAction
 from prompt_toolkit.enums import DEFAULT_BUFFER
@@ -520,7 +522,17 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
             '\thost: %r'
             '\tport: %r', database, user, host, port)
 
+    obscure_process_password()
     pgcli.run_cli()
+
+def obscure_process_password():
+    process_title = setproctitle.getproctitle()
+    if '://' in process_title:
+        process_title = re.sub(r":(.*):(.*)@", r":\1:xxxx@", process_title)
+    elif "=" in process_title:
+        process_title = re.sub(r"password=\S+", "password=xxxx", process_title)
+
+    setproctitle.setproctitle(process_title)
 
 def format_output(title, cur, headers, status, table_format, expanded=False, max_width=None):
     output = []
