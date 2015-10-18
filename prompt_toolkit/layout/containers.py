@@ -825,6 +825,7 @@ class Window(Container):
         if self.content.has_focus(cli):
             new_screen.cursor_position = Point(y=temp_screen.cursor_position.y + ypos - self.vertical_scroll,
                                                x=temp_screen.cursor_position.x + xpos - self.horizontal_scroll)
+            new_screen.show_cursor = temp_screen.show_cursor
 
         if not new_screen.menu_position and temp_screen.menu_position:
             new_screen.menu_position = Point(y=temp_screen.menu_position.y + ypos - self.vertical_scroll,

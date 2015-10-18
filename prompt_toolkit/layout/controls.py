@@ -44,6 +44,14 @@ class UIControl(with_metaclass(ABCMeta, object)):
         return None
 
     def has_focus(self, cli):
+        """
+        Return ``True`` when this user control has the focus.
+
+        If so, the cursor will be displayed according to the cursor position
+        reported in :meth:`.UIControl.create_screen`. If the created screen has
+        the property ``show_cursor=False``, the cursor will be hidden from the
+        output.
+        """
         return False
 
     @abstractmethod

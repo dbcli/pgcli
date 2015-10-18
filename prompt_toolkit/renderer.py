@@ -197,7 +197,8 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     if background_turned_on[0]:
         reset_attributes()
 
-    output.show_cursor()
+    if screen.show_cursor:
+        output.show_cursor()
 
     return current_pos, last_char[0]
 

@@ -122,6 +122,9 @@ class Screen(object):
         #: Position of the cursor.
         self.cursor_position = Point(y=0, x=0)
 
+        #: Visibility of the cursor.
+        self.show_cursor = True
+
         #: (Optional) Where to position the menu. E.g. at the start of a completion.
         #: (We can't use the cursor position, because we don't want the
         #: completion menu to change its position when we browse through all the
