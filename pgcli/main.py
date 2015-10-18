@@ -273,7 +273,7 @@ class PGCli(object):
             return [(Token.Prompt,  '%s> ' % pgexecute.dbname)]
 
         get_toolbar_tokens = create_toolbar_tokens_func(lambda: self.vi_mode,
-                                                        lambda: self.completion_refresher.is_refreshing())
+                                                        self.completion_refresher.is_refreshing)
 
         layout = create_default_layout(lexer=PostgresLexer,
                                        reserve_space_for_menu=True,
@@ -402,7 +402,7 @@ class PGCli(object):
 
                 # Refresh the table names and column names if necessary.
                 if need_completion_refresh(document.text):
-                    self.refresh_completions()
+                    self.refresh_completions(need_completion_reset(document.text))
 
                 # Refresh search_path to set default schema.
                 if need_search_path_refresh(document.text):
@@ -427,7 +427,10 @@ class PGCli(object):
 
         return less_opts
 
-    def refresh_completions(self):
+    def refresh_completions(self, reset=False):
+        if reset:
+            with self._completer_lock:
+                self.completer.reset_completions()
         self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
                                           self._on_completions_refreshed)
         return [(None, None, None,
@@ -554,6 +557,19 @@ def need_completion_refresh(queries):
             return False
 
     return False
+
+def need_completion_reset(queries):
+    """Determines if the statement is a database switch such as 'use' or '\\c'.
+    When a database is changed the existing completions must be reset before we
+    start the completion refresh for the new database.
+    """
+    for query in sqlparse.split(queries):
+        try:
+            first_token = query.split()[0]
+            return first_token.lower() in ('use', '\\c', '\\connect')
+        except Exception:
+            return False
+
 
 def need_search_path_refresh(sql):
     """Determines if the search_path should be refreshed by checking if the
