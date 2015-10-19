@@ -533,7 +533,9 @@ def format_output(title, cur, headers, status, table_format, expanded=False, max
         else:
             tabulated, rows = tabulate(cur, headers, tablefmt=table_format,
                 missingval='<null>')
-            if max_width and content_exceeds_width(rows[0], max_width):
+            if (max_width and
+                    content_exceeds_width(rows[0], max_width) and
+                    headers):
                 output.append(expanded_table(rows, headers))
             else:
                 output.append(tabulated)
