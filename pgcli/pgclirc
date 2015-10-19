@@ -48,7 +48,7 @@ vi = False
 # When one of multiple SQL statements causes an error, choose to either
 # continue executing the remaining statements, or stopping
 # Possible values "STOP" or "RESUME"
-on_error = RESUME
+on_error = STOP
 
 
 # Custom colors for the completion menu, toolbar, etc. 
