@@ -57,6 +57,7 @@ from collections import namedtuple
 Query = namedtuple('Query', ['query', 'successful', 'mutating'])
 
 
+
 class PGCli(object):
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
@@ -522,15 +523,15 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
             '\thost: %r'
             '\tport: %r', database, user, host, port)
 
-    obscure_process_password()
+    obfuscate_process_password()
     pgcli.run_cli()
 
-def obscure_process_password():
+def obfuscate_process_password():
     process_title = setproctitle.getproctitle()
     if '://' in process_title:
         process_title = re.sub(r":(.*):(.*)@", r":\1:xxxx@", process_title)
     elif "=" in process_title:
-        process_title = re.sub(r"password=\S+", "password=xxxx", process_title)
+        process_title =  re.sub(r"password=(.+?)((\s[a-zA-Z]+=)|$)", r"password=xxxx\2", process_title)
 
     setproctitle.setproctitle(process_title)
 
