@@ -357,6 +357,8 @@ class Renderer(object):
         # Create screen and write layout to it.
         size = output.get_size()
         screen = Screen()
+        screen.show_cursor = False  # Hide cursor by default, unless one of the
+                                    # containers decides to display it.
         mouse_handlers = MouseHandlers()
 
         if is_done:
