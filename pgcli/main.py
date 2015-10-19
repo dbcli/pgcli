@@ -566,7 +566,8 @@ def need_completion_reset(queries):
     for query in sqlparse.split(queries):
         try:
             first_token = query.split()[0]
-            return first_token.lower() in ('use', '\\c', '\\connect')
+            if first_token.lower() in ('use', '\\c', '\\connect'):
+                return True
         except Exception:
             return False
 
