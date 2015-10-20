@@ -276,7 +276,7 @@ class PGCli(object):
             return [(Token.Prompt,  '%s> ' % pgexecute.dbname)]
 
         get_toolbar_tokens = create_toolbar_tokens_func(lambda: self.vi_mode,
-                                                        lambda: self.completion_refresher.is_refreshing())
+                                                        self.completion_refresher.is_refreshing)
 
         layout = create_default_layout(lexer=PostgresLexer,
                                        reserve_space_for_menu=True,
@@ -339,7 +339,6 @@ class PGCli(object):
                     start = time()
                     res = pgexecute.run(document.text, self.pgspecial,
                                         on_error=self.on_error)
-                    successful = True
                     output = []
                     total = 0
                     for title, cur, headers, status in res:
@@ -396,6 +395,7 @@ class PGCli(object):
                     logger.error("traceback: %r", traceback.format_exc())
                     click.secho(str(e), err=True, fg='red')
                 else:
+                    successful = True
                     try:
                         click.echo_via_pager('\n'.join(output))
                     except KeyboardInterrupt:
@@ -403,16 +403,16 @@ class PGCli(object):
                     if self.pgspecial.timing_enabled:
                         print('Time: %0.03fs' % total)
 
-                # Refresh the table names and column names if necessary.
-                if need_completion_refresh(document.text):
-                    self.refresh_completions()
+                    # Refresh the table names and column names if necessary.
+                    if need_completion_refresh(document.text):
+                        self.refresh_completions(need_completion_reset(document.text))
 
-                # Refresh search_path to set default schema.
-                if need_search_path_refresh(document.text):
-                    logger.debug('Refreshing search path')
-                    with self._completer_lock:
-                        self.completer.set_search_path(pgexecute.search_path())
-                    logger.debug('Search path: %r', self.completer.search_path)
+                    # Refresh search_path to set default schema.
+                    if need_search_path_refresh(document.text):
+                        logger.debug('Refreshing search path')
+                        with self._completer_lock:
+                            self.completer.set_search_path(pgexecute.search_path())
+                        logger.debug('Search path: %r', self.completer.search_path)
 
                 query = Query(document.text, successful, mutating)
                 self.query_history.append(query)
@@ -430,7 +430,10 @@ class PGCli(object):
 
         return less_opts
 
-    def refresh_completions(self):
+    def refresh_completions(self, reset=False):
+        if reset:
+            with self._completer_lock:
+                self.completer.reset_completions()
         self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
                                           self._on_completions_refreshed)
         return [(None, None, None,
@@ -569,6 +572,20 @@ def need_completion_refresh(queries):
             return False
 
     return False
+
+def need_completion_reset(queries):
+    """Determines if the statement is a database switch such as 'use' or '\\c'.
+    When a database is changed the existing completions must be reset before we
+    start the completion refresh for the new database.
+    """
+    for query in sqlparse.split(queries):
+        try:
+            first_token = query.split()[0]
+            if first_token.lower() in ('use', '\\c', '\\connect'):
+                return True
+        except Exception:
+            return False
+
 
 def need_search_path_refresh(sql):
     """Determines if the search_path should be refreshed by checking if the
