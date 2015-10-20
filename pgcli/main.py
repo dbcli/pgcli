@@ -336,7 +336,6 @@ class PGCli(object):
                     start = time()
                     res = pgexecute.run(document.text, self.pgspecial,
                                         on_error=self.on_error)
-                    successful = True
                     output = []
                     total = 0
                     for title, cur, headers, status in res:
@@ -393,6 +392,7 @@ class PGCli(object):
                     logger.error("traceback: %r", traceback.format_exc())
                     click.secho(str(e), err=True, fg='red')
                 else:
+                    successful = True
                     try:
                         click.echo_via_pager('\n'.join(output))
                     except KeyboardInterrupt:
@@ -400,16 +400,16 @@ class PGCli(object):
                     if self.pgspecial.timing_enabled:
                         print('Time: %0.03fs' % total)
 
-                # Refresh the table names and column names if necessary.
-                if need_completion_refresh(document.text):
-                    self.refresh_completions(need_completion_reset(document.text))
+                    # Refresh the table names and column names if necessary.
+                    if need_completion_refresh(document.text):
+                        self.refresh_completions(need_completion_reset(document.text))
 
-                # Refresh search_path to set default schema.
-                if need_search_path_refresh(document.text):
-                    logger.debug('Refreshing search path')
-                    with self._completer_lock:
-                        self.completer.set_search_path(pgexecute.search_path())
-                    logger.debug('Search path: %r', self.completer.search_path)
+                    # Refresh search_path to set default schema.
+                    if need_search_path_refresh(document.text):
+                        logger.debug('Refreshing search path')
+                        with self._completer_lock:
+                            self.completer.set_search_path(pgexecute.search_path())
+                        logger.debug('Search path: %r', self.completer.search_path)
 
                 query = Query(document.text, successful, mutating)
                 self.query_history.append(query)
