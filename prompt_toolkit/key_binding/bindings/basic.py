@@ -289,7 +289,7 @@ def load_basic_bindings(registry, filter=Always()):
 
     # Global bindings. These are never disabled and don't include the default filter.
 
-    @registry.add_binding(Keys.ControlL)
+    @handle(Keys.ControlL)
     def _(event):
         " Clear whole screen and redraw. "
         event.cli.renderer.clear()
