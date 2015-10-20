@@ -233,11 +233,11 @@ class BufferControl(UIControl):
         transparent by default.
     """
     def __init__(self,
+                 buffer_name=DEFAULT_BUFFER,
                  input_processors=None,
                  lexer=None,
                  preview_search=False,
                  wrap_lines=True,
-                 buffer_name=DEFAULT_BUFFER,
                  menu_position=None,
                  default_char=None):
         assert input_processors is None or all(isinstance(i, Processor) for i in input_processors)
