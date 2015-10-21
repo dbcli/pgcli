@@ -24,3 +24,10 @@ def cursor(connection):
 def executor(connection):
     return pgcli.pgexecute.PGExecute(database='_test_db', user=POSTGRES_USER,
             host=POSTGRES_HOST, password=None, port=None, dsn=None)
+
+
+@pytest.fixture
+def exception_formatter():
+    return lambda e: (None, None, None, str(e))
+
+
