@@ -1,6 +1,6 @@
 import pytest
 from utils import (POSTGRES_HOST, POSTGRES_USER, create_db, db_connection,
-drop_tables)
+                   drop_tables)
 import pgcli.pgexecute
 
 
