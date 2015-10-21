@@ -27,11 +27,6 @@ ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 ext.set_wait_callback(psycopg2.extras.wait_select)
 
 
-ON_ERROR_RAISE = 0
-ON_ERROR_RESUME = 1
-ON_ERROR_STOP = 2
-
-
 def register_json_typecasters(conn, loads_fn):
     """Set the function for converting JSON data for a connection.
 
@@ -226,12 +221,22 @@ class PGExecute(object):
         else:
             return json_data
 
-    def run(self, statement, pgspecial=None, on_error=ON_ERROR_RESUME):
+    def run(self, statement, pgspecial=None, exception_formatter=None,
+            on_error_resume=False):
         """Execute the sql in the database and return the results.
 
         :param statement: A string containing one or more sql statements
         :param pgspecial: PGSpecial object
-        :return: List of tuples containing (title, rows, headers, status)
+        :param exception_formatter: A callable that accepts an Exception and
+               returns a formatted (title, rows, headers, status) tuple that can
+               act as a query result. If an exception_formatter is not supplied,
+               psycopg2 exceptions are always raised.
+        :param on_error_resume: Bool. If true, queries following an exception
+               (assuming exception_formatter has been supplied) continue to
+               execute.
+
+        :return: Generator yielding tuples containing
+                 (title, rows, headers, status)
         """
 
         # Remove spaces and EOL
@@ -263,15 +268,14 @@ class PGExecute(object):
                 _logger.error("traceback: %r", traceback.format_exc())
 
                 if (isinstance(e, psycopg2.OperationalError)
-                        or on_error == ON_ERROR_RAISE):
+                        or not exception_formatter):
                     # Always raise operational errors, regardless of on_error
                     # specification
                     raise
 
-                result = click.style(utf8tounicode(str(e)), fg='red')
-                yield None, None, None, result
+                yield exception_formatter(e)
 
-                if on_error == ON_ERROR_STOP:
+                if not on_error_resume:
                     break
 
     def execute_normal_sql(self, split_sql):
