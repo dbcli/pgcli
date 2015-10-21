@@ -36,7 +36,7 @@ import pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory
-from .pgexecute import PGExecute, ON_ERROR_RESUME, ON_ERROR_STOP
+from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
 from .completion_refresher import CompletionRefresher
 from .config import write_default_config, load_config, config_location
@@ -88,8 +88,7 @@ class PGCli(object):
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
 
-        on_error_modes = {'STOP': ON_ERROR_STOP, 'RESUME': ON_ERROR_RESUME}
-        self.on_error = on_error_modes[c['main']['on_error'].upper()]
+        self.on_error = c['main']['on_error'].upper()
 
         self.completion_refresher = CompletionRefresher()
 
@@ -340,8 +339,9 @@ class PGCli(object):
                     res = []
                     # Run the query.
                     start = time()
+                    on_error_resume = self.on_error == 'RESUME'
                     res = pgexecute.run(document.text, self.pgspecial,
-                                        on_error=self.on_error)
+                                        exception_formatter, on_error_resume)
                     output = []
                     total = 0
                     for title, cur, headers, status in res:
@@ -616,6 +616,12 @@ def quit_command(sql):
             or sql.strip().lower() == 'quit'
             or sql.strip() == '\q'
             or sql.strip() == ':q')
+
+
+def exception_formatter(e):
+    msg = click.style(utf8tounicode(str(e)), fg='red')
+    return None, None, None, msg
+
 
 if __name__ == "__main__":
     cli()
