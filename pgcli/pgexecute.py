@@ -6,8 +6,7 @@ import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
 from .packages.function_metadata import FunctionMetadata
-from .encodingutils import unicode2utf8, PY2, utf8tounicode
-import click
+from .encodingutils import unicode2utf8, PY2
 
 
 _logger = logging.getLogger(__name__)
