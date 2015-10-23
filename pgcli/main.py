@@ -13,7 +13,10 @@ from time import time
 from codecs import open
 
 import click
-import setproctitle
+try:
+    import setproctitle
+except ImportError:
+    setproctitle = None
 import sqlparse
 from prompt_toolkit import CommandLineInterface, Application, AbortAction
 from prompt_toolkit.enums import DEFAULT_BUFFER
@@ -526,7 +529,9 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
             '\thost: %r'
             '\tport: %r', database, user, host, port)
 
-    obfuscate_process_password()
+    if setproctitle:
+        obfuscate_process_password()
+
     pgcli.run_cli()
 
 def obfuscate_process_password():
@@ -534,7 +539,7 @@ def obfuscate_process_password():
     if '://' in process_title:
         process_title = re.sub(r":(.*):(.*)@", r":\1:xxxx@", process_title)
     elif "=" in process_title:
-        process_title =  re.sub(r"password=(.+?)((\s[a-zA-Z]+=)|$)", r"password=xxxx\2", process_title)
+        process_title = re.sub(r"password=(.+?)((\s[a-zA-Z]+=)|$)", r"password=xxxx\2", process_title)
 
     setproctitle.setproctitle(process_title)
 
