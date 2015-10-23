@@ -17,7 +17,7 @@ from prompt_toolkit.utils import get_cwidth
 from .lexers import Lexer, SimpleLexer
 from .processors import Processor, Transformation
 from .screen import Screen, Char, Point
-from .utils import token_list_width
+from .utils import token_list_width, split_lines
 
 import time
 
@@ -178,12 +178,19 @@ class TokenListControl(UIControl):
             right = self.align_right(cli)
             center = self.align_center(cli)
 
-            if right or center:
-                used_width = token_list_width(tokens)
+            def process_line(line):
+                " Center or right align a single line. "
+                used_width = token_list_width(line)
                 padding = width - used_width
                 if center:
                     padding = int(padding / 2)
-                tokens = [(self.default_char.token, self.default_char.char * padding)] + tokens
+                return [(self.default_char.token, self.default_char.char * padding)] + line + [(Token, '\n')]
+
+            if right or center:
+                tokens2 = []
+                for line in split_lines(tokens):
+                    tokens2.extend(process_line(line))
+                tokens = tokens2
 
             screen.write_data(tokens, width=(width if wrap_lines else None))
         return screen

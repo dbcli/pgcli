@@ -52,6 +52,28 @@ def iter_token_lines(tokenlist):
     yield line
 
 
+def split_lines(tokenlist):
+    """
+    Take a single list of (Token, text) tuples and yield one such list for each
+    line.
+    """
+    line = []
+
+    for token, string in tokenlist:
+        items = string.split('\n')
+
+        for item in items[:-1]:
+            if item:
+                line.append((token, item))
+            yield line
+            line = []
+
+        line.append((token, items[-1]))
+
+    if line:
+        yield line
+
+
 def explode_tokens(tokenlist):
     """
     Turn a list of (token, text) tuples into another list where each string is
