@@ -1,4 +1,5 @@
 import pytest
+import platform
 from pgcli.main import need_completion_refresh, obfuscate_process_password
 
 
@@ -9,6 +10,8 @@ from pgcli.main import need_completion_refresh, obfuscate_process_password
 def test_need_completion_refresh(sql):
     assert need_completion_refresh(sql)
 
+@pytest.mark.skipif(platform.system() == 'Windows',
+                    reason='Not applicable in windows')
 def test_obfuscate_process_password():
     import setproctitle
     original_title = setproctitle.getproctitle()

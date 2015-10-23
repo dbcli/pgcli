@@ -1,5 +1,6 @@
 import re
 import ast
+import platform
 from setuptools import setup, find_packages
 
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
@@ -10,6 +11,23 @@ with open('pgcli/__init__.py', 'rb') as f:
 
 description = 'CLI for Postgres Database. With auto-completion and syntax highlighting.'
 
+install_requirements = [
+            'pgspecial>=1.1.0',
+            'click >= 4.1',
+            'Pygments >= 2.0',  # Pygments has to be Capitalcased. WTF?
+            'prompt_toolkit==0.46',
+            'psycopg2 >= 2.5.4',
+            'sqlparse == 0.1.16',
+            'configobj >= 5.0.6',
+            ]
+
+
+# setproctitle is used to mask the password when running `ps` in command line.
+# But this is not necessary in Windows since the password is never shown in the
+# task manager. Also setproctitle is a hard dependency to install in Windows,
+# so we'll only install it if we're not in Windows.
+if platform.system() != 'Windows':
+    install_requirements.append('setproctitle >= 1.1.9')
 
 setup(
         name='pgcli',
@@ -23,16 +41,7 @@ setup(
                                 'packages/pgliterals/pgliterals.json']},
         description=description,
         long_description=open('README.rst').read(),
-        install_requires=[
-            'pgspecial>=1.1.0',
-            'click >= 4.1',
-            'Pygments >= 2.0',  # Pygments has to be Capitalcased. WTF?
-            'prompt_toolkit==0.46',
-            'psycopg2 >= 2.5.4',
-            'sqlparse == 0.1.16',
-            'configobj >= 5.0.6',
-            'setproctitle >= 1.1.9'
-            ],
+        install_requires=install_requirements,
         entry_points='''
             [console_scripts]
             pgcli=pgcli.main:cli
