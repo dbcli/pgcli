@@ -441,10 +441,10 @@ def _align_column(strings, alignment, minwidth=0, has_invisible=True):
 
     """
     if alignment == "right":
-        strings = [s.strip() for s in strings]
+        strings = [s for s in strings]
         padfn = _padleft
     elif alignment == "center":
-        strings = [s.strip() for s in strings]
+        strings = [s for s in strings]
         padfn = _padboth
     elif alignment == "decimal":
         decimals = [_afterpoint(s) for s in strings]
@@ -455,7 +455,7 @@ def _align_column(strings, alignment, minwidth=0, has_invisible=True):
     elif not alignment:
         return strings
     else:
-        strings = [s.strip() for s in strings]
+        strings = [s for s in strings]
         padfn = _padright
 
     if has_invisible:
