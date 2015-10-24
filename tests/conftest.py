@@ -28,6 +28,6 @@ def executor(connection):
 
 @pytest.fixture
 def exception_formatter():
-    return lambda e: (None, None, None, str(e))
+    return lambda e: str(e)
 
 

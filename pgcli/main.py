@@ -619,8 +619,7 @@ def quit_command(sql):
 
 
 def exception_formatter(e):
-    msg = click.style(utf8tounicode(str(e)), fg='red')
-    return None, None, None, msg
+    return click.style(utf8tounicode(str(e)), fg='red')
 
 
 if __name__ == "__main__":

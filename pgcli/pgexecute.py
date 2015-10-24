@@ -272,7 +272,7 @@ class PGExecute(object):
                     # specification
                     raise
 
-                yield exception_formatter(e)
+                yield None, None, None, exception_formatter(e)
 
                 if not on_error_resume:
                     break
