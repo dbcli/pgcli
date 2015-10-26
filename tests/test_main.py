@@ -1,6 +1,10 @@
 import pytest
 import platform
 from pgcli.main import need_completion_refresh, obfuscate_process_password
+try:
+    import setproctitle
+except ImportError:
+    setproctitle = None
 
 
 @pytest.mark.parametrize('sql', [
@@ -12,8 +16,9 @@ def test_need_completion_refresh(sql):
 
 @pytest.mark.skipif(platform.system() == 'Windows',
                     reason='Not applicable in windows')
+@pytest.mark.skipif(not setproctitle,
+                    reason='setproctitle not available')
 def test_obfuscate_process_password():
-    import setproctitle
     original_title = setproctitle.getproctitle()
 
     setproctitle.setproctitle("pgcli user=root password=secret host=localhost")
