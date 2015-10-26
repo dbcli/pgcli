@@ -65,7 +65,7 @@ def run(executor, sql, join=False, expanded=False, pgspecial=None,
     results = executor.run(sql, pgspecial, exception_formatter)
     formatted = []
 
-    for title, rows, headers, status in results:
+    for title, rows, headers, status, sql, success in results:
         formatted.extend(format_output(title, rows, headers, status, 'psql',
                                        expanded=expanded))
     if join:
