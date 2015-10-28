@@ -6,7 +6,6 @@ from pgspecial.main import PGSpecial
 from pgcli.packages.function_metadata import FunctionMetadata
 from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
-from pgcli.pgexecute import (ON_ERROR_STOP, ON_ERROR_RAISE, ON_ERROR_RESUME)
 
 
 @dbtest
@@ -105,13 +104,15 @@ def test_database_list(executor):
     assert '_test_db' in databases
 
 @dbtest
-def test_invalid_syntax(executor):
-    result = run(executor, 'invalid syntax!')
+def test_invalid_syntax(executor, exception_formatter):
+    result = run(executor, 'invalid syntax!',
+                 exception_formatter=exception_formatter)
     assert 'syntax error at or near "invalid"' in result[0]
 
 @dbtest
-def test_invalid_column_name(executor):
-    result = run(executor, 'select invalid command')
+def test_invalid_column_name(executor, exception_formatter):
+    result = run(executor, 'select invalid command',
+                 exception_formatter=exception_formatter)
     assert 'column "invalid" does not exist' in result[0]
 
 
@@ -146,8 +147,9 @@ def test_multiple_queries_with_special_command_same_line(executor, pgspecial):
     assert "Schema" in result[2]
 
 @dbtest
-def test_multiple_queries_same_line_syntaxerror(executor):
-    result = run(executor, u"select 'fooé'; invalid syntax é")
+def test_multiple_queries_same_line_syntaxerror(executor, exception_formatter):
+    result = run(executor, u"select 'fooé'; invalid syntax é",
+                 exception_formatter=exception_formatter)
     assert u'fooé' in result[0]
     assert 'syntax error at or near "invalid"' in result[-1]
 
@@ -224,20 +226,22 @@ def test_describe_special(executor, command, verbose, pattern):
     'invalid sql',
     'SELECT 1; select error;',
 ])
-def test_on_error_raises(executor, sql):
+def test_raises_with_no_formatter(executor, sql):
     with pytest.raises(psycopg2.ProgrammingError):
-        list(executor.run(sql, on_error=ON_ERROR_RAISE))
+        list(executor.run(sql))
 
 
 @dbtest
-def test_on_error_resume(executor):
+def test_on_error_resume(executor, exception_formatter):
     sql = 'select 1; error; select 1;'
-    result = list(executor.run(sql, on_error=ON_ERROR_RESUME))
+    result = list(executor.run(sql, on_error_resume=True,
+                               exception_formatter=exception_formatter))
     assert len(result) == 3
 
 
 @dbtest
-def test_on_error_stop(executor):
+def test_on_error_stop(executor, exception_formatter):
     sql = 'select 1; error; select 1;'
-    result = list(executor.run(sql, on_error=ON_ERROR_STOP))
+    result = list(executor.run(sql, on_error_resume=False,
+                               exception_formatter=exception_formatter))
     assert len(result) == 2

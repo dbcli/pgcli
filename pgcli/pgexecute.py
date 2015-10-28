@@ -6,8 +6,7 @@ import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
 from .packages.function_metadata import FunctionMetadata
-from .encodingutils import unicode2utf8, PY2, utf8tounicode
-import click
+from .encodingutils import unicode2utf8, PY2
 
 
 _logger = logging.getLogger(__name__)
@@ -25,11 +24,6 @@ ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
 ext.set_wait_callback(psycopg2.extras.wait_select)
-
-
-ON_ERROR_RAISE = 0
-ON_ERROR_RESUME = 1
-ON_ERROR_STOP = 2
 
 
 def register_json_typecasters(conn, loads_fn):
@@ -58,6 +52,7 @@ def register_json_typecasters(conn, loads_fn):
 
     return available
 
+
 def register_hstore_typecaster(conn):
     """
     Instead of using register_hstore() which converts hstore into a python
@@ -72,6 +67,7 @@ def register_hstore_typecaster(conn):
             ext.register_type(ext.new_type((oid,), "HSTORE", ext.UNICODE))
         except Exception:
             pass
+
 
 class PGExecute(object):
 
@@ -226,18 +222,28 @@ class PGExecute(object):
         else:
             return json_data
 
-    def run(self, statement, pgspecial=None, on_error=ON_ERROR_RESUME):
+    def run(self, statement, pgspecial=None, exception_formatter=None,
+            on_error_resume=False):
         """Execute the sql in the database and return the results.
 
         :param statement: A string containing one or more sql statements
         :param pgspecial: PGSpecial object
-        :return: List of tuples containing (title, rows, headers, status)
+        :param exception_formatter: A callable that accepts an Exception and
+               returns a formatted (title, rows, headers, status) tuple that can
+               act as a query result. If an exception_formatter is not supplied,
+               psycopg2 exceptions are always raised.
+        :param on_error_resume: Bool. If true, queries following an exception
+               (assuming exception_formatter has been supplied) continue to
+               execute.
+
+        :return: Generator yielding tuples containing
+                 (title, rows, headers, status, query, success)
         """
 
         # Remove spaces and EOL
         statement = statement.strip()
         if not statement:  # Empty string
-            yield (None, None, None, None)
+            yield (None, None, None, None, statement, False)
 
         # Split the sql into separate queries and run each one.
         for sql in sqlparse.split(statement):
@@ -251,30 +257,30 @@ class PGExecute(object):
                     cur = self.conn.cursor()
                     try:
                         for result in pgspecial.execute(cur, sql):
-                            yield result
+                            yield result + (sql, True)
                         continue
                     except special.CommandNotFound:
                         pass
 
                 # Not a special command, so execute as normal sql
-                yield self.execute_normal_sql(sql)
+                yield self.execute_normal_sql(sql) + (sql, True)
             except psycopg2.DatabaseError as e:
                 _logger.error("sql: %r, error: %r", sql, e)
                 _logger.error("traceback: %r", traceback.format_exc())
 
                 if (isinstance(e, psycopg2.OperationalError)
-                        or on_error == ON_ERROR_RAISE):
+                        or not exception_formatter):
                     # Always raise operational errors, regardless of on_error
                     # specification
                     raise
 
-                result = click.style(utf8tounicode(str(e)), fg='red')
-                yield None, None, None, result
+                yield None, None, None, exception_formatter(e), sql, False
 
-                if on_error == ON_ERROR_STOP:
+                if not on_error_resume:
                     break
 
     def execute_normal_sql(self, split_sql):
+        """Returns tuple (title, rows, headers, status)"""
         _logger.debug('Regular sql statement. sql: %r', split_sql)
         cur = self.conn.cursor()
         cur.execute(split_sql)

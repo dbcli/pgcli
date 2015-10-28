@@ -1,6 +1,6 @@
 import pytest
 from utils import (POSTGRES_HOST, POSTGRES_USER, create_db, db_connection,
-drop_tables)
+                   drop_tables)
 import pgcli.pgexecute
 
 
@@ -24,3 +24,10 @@ def cursor(connection):
 def executor(connection):
     return pgcli.pgexecute.PGExecute(database='_test_db', user=POSTGRES_USER,
             host=POSTGRES_HOST, password=None, port=None, dsn=None)
+
+
+@pytest.fixture
+def exception_formatter():
+    return lambda e: str(e)
+
+
