@@ -1,6 +1,37 @@
 CHANGELOG
 =========
 
+0.54: 2015-10-29
+----------------
+
+New features:
+- Allow CommandLineInterface to run in any thread.
+- Hide cursor while rendering.
+- Added add_reader/remove_reader methods to EventLoop.
+- Support for 'reverse' style.
+- Redraw more lazy, by using invalidate.
+- Added show_cursor property to Screen.
+- Center or right align text in TokenListControl also when it spans multiple
+  lines.
+
+Fixes:
+- Bugfix in PathCompleter. (Expanduser issue.)
+- Fix in signal handler.
+- Use utf-8 encoding in Vt100_Output by default.
+- Use correct default token in BufferControl.
+- Fix in ControlL key binding. Use @handle to allow desactivation.
+
+Backwards-incompatible changes:
+- Renamed create_default_layout to create_prompt_layout
+- Renamed create_default_application to create_prompt_application
+- Renamed Layout to Container.
+- Renamed CommandLineInterfaces.request_redraw to invalidate.
+- Changed the actual value of SEARCH_BUFFER, DEFAULT_BUFFER, SYSTEM_BUFFER and
+  DUMMY_BUFFER.
+- Changed order of keyword arguments of the BufferControl class. "buffer_name"
+  now comes first.
+- Removed old pt(i)python code.
+
 0.53: 2015-10-06
 ----------------
 
