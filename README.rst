@@ -14,7 +14,7 @@ Ptpython
 ********
 
 `ptpython <http://github.com/jonathanslenders/ptpython/>`_ is an interactive
-Python Shell is build on top of prompt-toolkit.
+Python Shell, build on top of prompt-toolkit.
 
 .. image :: https://github.com/jonathanslenders/python-prompt-toolkit/raw/master/docs/images/ptpython.png
 
