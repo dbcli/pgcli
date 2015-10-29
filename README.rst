@@ -54,7 +54,7 @@ Features
 
 The `pgcli` is written using prompt_toolkit_.
 
-* Auto-completion as you type for SQL keywords as well as tables and
+* Auto-completes as you type for SQL keywords as well as tables and
   columns in the database.
 * Syntax highlighting using Pygments.
 * Smart-completion (enabled by default) will suggest context-sensitive
