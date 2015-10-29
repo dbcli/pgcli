@@ -109,7 +109,7 @@ class Vt100_Output(Output):
         """
         Set terminal title.
         """
-        self._write('\x1b]2;%s\x07' % title.replace('\x1b', ''))
+        self._write('\x1b]2;%s\x07' % title.replace('\x1b', '').replace('\x07', ''))
 
     def clear_title(self):
         self.set_title('')
