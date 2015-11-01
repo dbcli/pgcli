@@ -475,3 +475,30 @@ def test_join_functions_on_suggests_columns(completer, complete_event):
     assert set(result) == set([
          Completion(text='x', start_position=0, display_meta='column'),
          Completion(text='y', start_position=0, display_meta='column')])
+    
+    
+def test_learn_keywords(completer, complete_event):
+    sql = 'CREATE VIEW v AS SELECT 1'
+    completer.extend_query_history(sql)
+
+    # Now that we've used `VIEW` once, it should be suggested ahead of other
+    # keywords starting with v.
+    sql = 'create v'
+    completions = completer.get_completions(
+        Document(text=sql, cursor_position=len(sql)), complete_event)
+    assert completions[0].text == 'VIEW'
+
+
+def test_learn_table_names(completer, complete_event):
+    history = 'SELECT * FROM users; SELECT * FROM orders; SELECT * FROM users'
+    completer.extend_query_history(history)
+
+    sql = 'SELECT * FROM '
+    completions = completer.get_completions(
+        Document(text=sql, cursor_position=len(sql)), complete_event)
+
+    # `users` should be higher priority than `orders` (used more often)
+    users = Completion(text='users', start_position=0, display_meta='table')
+    orders = Completion(text='orders', start_position=0, display_meta='table')
+
+    assert completions.index(users) < completions.index(orders)
