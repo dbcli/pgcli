@@ -19,7 +19,7 @@ __all__ = (
 
 
 def output_screen_diff(output, screen, current_pos, previous_screen=None, last_char=None,
-                       is_done=False, style=None, width=0, previous_width=0):  # XXX: drop is_done
+                       is_done=False, attrs_for_token=None, width=0, previous_width=0):  # XXX: drop is_done
     """
     Render the diff between this screen and the previous screen.
 
@@ -35,7 +35,7 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     :param current_pos: Current cursor position.
     :param last_char: `Char` instance that represents the output attributes of
             the last drawn character. (Color/attributes.)
-    :param style: Pygments stylesheet.
+    :param attrs_for_token: :class:`._TokenToAttrsCache` instance.
     :param width: The width of the terminal.
     :param prevous_width: The width of the terminal during the last rendering.
     """
@@ -89,8 +89,6 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
 
         return new
 
-    attrs_for_token = style.get_token_to_attributes_dict()
-
     def output_char(char):
         """
         Write the output of this character.
@@ -102,14 +100,10 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
         else:
             attrs = attrs_for_token[char.token]
 
-            if style:
-                _output_set_attributes(attrs)
+            _output_set_attributes(attrs)
 
-                # If we print something with a background color, remember that.
-                background_turned_on[0] = bool(attrs.bgcolor)
-            else:
-                # Reset previous style and output.
-                reset_attributes()
+            # If we print something with a background color, remember that.
+            background_turned_on[0] = bool(attrs.bgcolor)
 
             write(char.char)
 
@@ -207,6 +201,24 @@ class HeightIsUnknownError(Exception):
     " Information unavailable. Did not yet receive the CPR response. "
 
 
+class _TokenToAttrsCache(dict):
+    """
+    A cache structure that maps Pygments Tokens to :class:`.Attr`.
+    (This is an important speed up.)
+    """
+    def __init__(self, get_style_for_token):
+        self.get_style_for_token = get_style_for_token
+
+    def __missing__(self, token):
+        try:
+            result = self.get_style_for_token(token)
+        except KeyError:
+            result = None
+
+        self[token] = result
+        return result
+
+
 class Renderer(object):
     """
     Typical usage:
@@ -214,12 +226,14 @@ class Renderer(object):
     ::
 
         output = Vt100_Output.from_pty(sys.stdout)
-        r = Renderer(output)
-        r.render(cli, layout=..., style=...)
+        r = Renderer(style, output)
+        r.render(cli, layout=...)
     """
-    def __init__(self, output, use_alternate_screen=False, mouse_support=False):
+    def __init__(self, style, output, use_alternate_screen=False, mouse_support=False):
+        assert isinstance(style, Style)
         assert isinstance(output, Output)
 
+        self.style = style
         self.output = output
         self.use_alternate_screen = use_alternate_screen
         self.mouse_support = to_cli_filter(mouse_support)
@@ -240,8 +254,11 @@ class Renderer(object):
         self._last_screen = None
         self._last_size = None
         self._last_char = None
-        self._last_style = None  # When the style changes, we have to do a full
-                                 # redraw as well.
+
+        # When the style hash changes, we have to do a full redraw as well as
+        # clear the `_attrs_for_token` dictionary.
+        self._last_style_hash = None
+        self._attrs_for_token = None
 
         # Default MouseHandlers. (Just empty.)
         self.mouse_handlers = MouseHandlers()
@@ -329,7 +346,7 @@ class Renderer(object):
         # Set the
         self._min_available_height = rows_below_cursor
 
-    def render(self, cli, layout, style, is_done=False):
+    def render(self, cli, layout, is_done=False):
         """
         Render the current interface to the output.
 
@@ -374,9 +391,12 @@ class Renderer(object):
         # When we render using another style, do a full repaint. (Forget about
         # the previous rendered screen.)
         # (But note that we still use _last_screen to calculate the height.)
-        if style != self._last_style:
+        if self.style.invalidation_hash() != self._last_style_hash:
             self._last_screen = None
-        self._last_style = style
+            self._attrs_for_token = None
+        if self._attrs_for_token is None:
+            self._attrs_for_token = _TokenToAttrsCache(self.style.get_attrs_for_token)
+        self._last_style_hash = self.style.invalidation_hash()
 
         layout.write_to_screen(cli, screen, mouse_handlers, WritePosition(
             xpos=0,
@@ -394,10 +414,9 @@ class Renderer(object):
         self._cursor_pos, self._last_char = output_screen_diff(
             output, screen, self._cursor_pos,
             self._last_screen, self._last_char, is_done,
-            style=style,
+            attrs_for_token=self._attrs_for_token,
             width=size.columns,
-            previous_width=(self._last_size.columns if self._last_size else 0),
-            )
+            previous_width=(self._last_size.columns if self._last_size else 0))
         self._last_screen = screen
         self._last_size = size
         self.mouse_handlers = mouse_handlers
@@ -463,7 +482,7 @@ def print_tokens(output, tokens, style):
     output.enable_autowrap()
 
     # Print all (token, text) tuples.
-    attrs_for_token = style.get_token_to_attributes_dict()
+    attrs_for_token = _TokenToAttrsCache(style.get_attrs_for_token)
 
     for token, text in tokens:
         attrs = attrs_for_token[token]

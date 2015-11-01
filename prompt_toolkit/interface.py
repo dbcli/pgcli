@@ -82,6 +82,7 @@ class CommandLineInterface(object):
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
         self.renderer = Renderer(
+            self.application.style,
             self.output,
             use_alternate_screen=application.use_alternate_screen,
             mouse_support=application.mouse_support)
@@ -283,8 +284,7 @@ class CommandLineInterface(object):
         """
         # Only draw when no sub application was started.
         if self._is_running and self._sub_cli is None:
-            self.renderer.render(self, self.layout, self.application.style,
-                                 is_done=self.is_done)
+            self.renderer.render(self, self.layout, is_done=self.is_done)
 
     def _on_resize(self):
         """

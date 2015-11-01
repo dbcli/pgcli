@@ -16,7 +16,7 @@ __all__ = (
     'Style',
     'Attrs',
     'DynamicStyle',
-    'PygmentsStyle'
+    'PygmentsStyle',
     'TokenToAttrsCache',
 
     'default_style_extensions',
@@ -42,11 +42,9 @@ class Style(with_metaclass(ABCMeta, object)):
     Abstract base class for prompt_toolkit styles.
     """
     @abstractmethod
-    def get_token_to_attributes_dict(self):
+    def get_attrs_for_token(self, token):
         """
-        This should return a dictionary mapping Token to :class:`.Attrs`.
-
-        (Best to return a :class:`.TokenToAttrsCache`.)
+        Return :class:`.Attrs` for the given token.
         """
 
     @abstractmethod
@@ -67,11 +65,11 @@ class DynamicStyle(Style):
     def __init__(self, get_style):
         self.get_style = get_style
 
-    def get_token_to_attributes_dict(self):
+    def get_attrs_for_token(self, token):
         style = self.get_style()
         assert isinstance(style, Style)
 
-        return style.get_token_to_attributes_dict()
+        return style.get_attrs_for_token(token)
 
     def invalidation_hash(self):
         return self.get_style().invalidation_hash()
@@ -88,44 +86,20 @@ class PygmentsStyle(Style):
         self.pygmens_style_cls = pygmens_style_cls
         self._token_to_attrs_dict = None
 
-    def get_token_to_attributes_dict(self):
-        def get_attributes(token):
-            try:
-                style = self.pygmens_style_cls.style_for_token(token)
-                return Attrs(color=style['color'],
-                             bgcolor=style['bgcolor'],
-                             bold=style.get('bold', False),
-                             underline=style.get('underline', False),
-                             reverse=False)
+    def get_attrs_for_token(self, token):
+        try:
+            style = self.pygmens_style_cls.style_for_token(token)
+            return Attrs(color=style['color'],
+                         bgcolor=style['bgcolor'],
+                         bold=style.get('bold', False),
+                         underline=style.get('underline', False),
+                         reverse=False)
 
-            except KeyError:
-                return _default_attrs
-
-        if self._token_to_attrs_dict is None:
-            self._token_to_attrs_dict = TokenToAttrsCache(get_attributes)
-
-        return self._token_to_attrs_dict
+        except KeyError:
+            return _default_attrs
 
     def invalidation_hash(self):
         return id(self.pygmens_style_cls)
-
-
-class TokenToAttrsCache(dict):
-    """
-    A cache structure that maps Pygments Tokens to :class:`.Attr`.
-    (This is an important speed up.)
-    """
-    def __init__(self, get_style_for_token):
-        self.get_style_for_token = get_style_for_token
-
-    def __missing__(self, token):
-        try:
-            result = self.get_style_for_token(token)
-        except KeyError:
-            result = None
-
-        self[token] = result
-        return result
 
 
 default_style_extensions = {
