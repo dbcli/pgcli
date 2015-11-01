@@ -8,6 +8,7 @@ from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
 from .packages.pgliterals.main import get_literals
+from .packages.prioritization import PrevalenceCounter
 from .config import load_config, config_location
 
 try:
@@ -31,6 +32,7 @@ class PGCompleter(Completer):
         super(PGCompleter, self).__init__()
         self.smart_completion = smart_completion
         self.pgspecial = pgspecial
+        self.prioritizer = PrevalenceCounter()
 
         self.reserved_words = set()
         for x in self.keywords:
@@ -151,6 +153,14 @@ class PGCompleter(Completer):
             schema, type_name = self.escaped_names(t)
             meta[schema][type_name] = None
             self.all_completions.add(type_name)
+
+    def extend_query_history(self, text, is_init=False):
+        if is_init:
+            # During completer initialization, only load keyword preferences,
+            # not names
+            self.prioritizer.update_keywords(text)
+        else:
+            self.prioritizer.update(text)
 
     def set_search_path(self, search_path):
         self.search_path = self.escaped_names(search_path)
