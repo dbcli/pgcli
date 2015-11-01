@@ -1,4 +1,4 @@
-"""
+r"""
 Tool for expressing the grammar of an input as a regular language.
 ==================================================================
 

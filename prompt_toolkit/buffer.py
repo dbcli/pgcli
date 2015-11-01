@@ -1027,7 +1027,7 @@ class Buffer(object):
         # Do 'count' search iterations.
         working_index = self.working_index
         document = self.document
-        for i in range(count):
+        for _ in range(count):
             result = search_once(working_index, document)
             if result is None:
                 return # Nothing found.

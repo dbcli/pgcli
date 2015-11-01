@@ -1,4 +1,4 @@
-"""
+r"""
 Compiler for a regular grammar.
 
 Example usage::

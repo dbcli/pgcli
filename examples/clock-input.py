@@ -8,13 +8,13 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.layout import Window
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.processors import BeforeInput
-from prompt_toolkit.layout.utils import token_list_len
 from prompt_toolkit.shortcuts import create_eventloop
 from prompt_toolkit.utils import Callback
 from pygments.token import Token
 
 import datetime
 import time
+
 
 def _clock_tokens(cli):
     " Tokens to be shown before the prompt. "

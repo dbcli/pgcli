@@ -37,13 +37,13 @@ class FocusStack(object):
             raise IndexError('Cannot pop last item from the focus stack.')
 
     def replace(self, buffer_name):
-        assert buffer_name == None or isinstance(buffer_name, string_types)
+        assert buffer_name is None or isinstance(buffer_name, string_types)
 
         self._stack.pop()
         self._stack.append(buffer_name)
 
     def push(self, buffer_name):
-        assert buffer_name == None or isinstance(buffer_name, string_types)
+        assert buffer_name is None or isinstance(buffer_name, string_types)
 
         self._stack.append(buffer_name)
 

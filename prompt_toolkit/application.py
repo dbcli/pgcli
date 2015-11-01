@@ -20,7 +20,7 @@ __all__ = (
 )
 
 
-class AbortAction:
+class AbortAction(object):
     """
     Actions to take on an Exit or Abort exception.
     """
