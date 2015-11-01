@@ -3,6 +3,7 @@ import logging
 import re
 import itertools
 import operator
+from collections import namedtuple
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
@@ -21,6 +22,9 @@ _logger = logging.getLogger(__name__)
 
 NamedQueries.instance = NamedQueries.from_config(
     load_config(config_location() + 'config'))
+
+
+Match = namedtuple('Match', ['completion', 'priority'])
 
 
 class PGCompleter(Completer):
@@ -173,7 +177,7 @@ class PGCompleter(Completer):
                            'datatypes': {}}
         self.all_completions = set(self.keywords + self.functions)
 
-    def find_matches(self, text, collection, start_only=False, fuzzy=True,
+    def find_matches(self, text, collection, mode='fuzzy',
                      meta=None, meta_collection=None):
         """Find completion matches for the given text.
 
@@ -181,9 +185,9 @@ class PGCompleter(Completer):
         completions, find completions matching the last word of the
         text.
 
-        If `start_only` is True, the text will match an available
-        completion only at the beginning. Otherwise, a completion is
-        considered a match if the text appears anywhere within it.
+        `mode` can be either 'fuzzy', or 'strict'
+            'fuzzy': fuzzy matching, ties broken by name prevalance
+            `keyword`: start only matching, ties broken by keyword prevalance
 
         yields prompt_toolkit Completion instances for any matches found
         in the collection of available completions.
@@ -192,9 +196,18 @@ class PGCompleter(Completer):
 
         text = last_word(text, include='most_punctuations').lower()
 
+        if mode == 'fuzzy':
+            fuzzy = True
+            priority_func = self.prioritizer.name_count
+        else:
+            fuzzy = False
+            priority_func = self.prioritizer.keyword_count
+            
         # Construct a `_match` function for either fuzzy or non-fuzzy matching
         # The match function returns a 2-tuple used for sorting the matches,
         # or None if the item doesn't match
+        # Note: higher priority values mean more important, so use negative
+        # signs to flip the direction of the tuple
         if fuzzy:
             regex = '.*?'.join(map(re.escape, text))
             pat = re.compile('(%s)' % regex)
@@ -202,14 +215,16 @@ class PGCompleter(Completer):
             def _match(item):
                 r = pat.search(self.unescape_name(item))
                 if r:
-                    return len(r.group()), r.start()
+                    return -len(r.group()), -r.start()
         else:
-            match_end_limit = len(text) if start_only else None
+            match_end_limit = len(text)
 
             def _match(item):
                 match_point = item.lower().find(text, 0, match_end_limit)
                 if match_point >= 0:
-                    return match_point, 0
+                    # Use negative infinity in second element to force keywords
+                    # to sort after all fuzzy matches
+                    return -match_point, -float('Infinity')
 
         if meta_collection:
             # Each possible completion in the collection has a corresponding
@@ -219,7 +234,8 @@ class PGCompleter(Completer):
             # All completions have an identical meta
             collection = zip(collection, itertools.repeat(meta))
 
-        completions = []
+        matches = []
+
         for item, meta in collection:
             sort_key = _match(item)
             if sort_key:
@@ -227,11 +243,11 @@ class PGCompleter(Completer):
                     # Truncate meta-text to 50 characters, if necessary
                     meta = meta[:47] + u'...'
 
-                completions.append((sort_key, item, meta))
+                matches.append(Match(
+                    completion=Completion(item, -len(text), display_meta=meta),
+                    priority=(sort_key, priority_func(item))))
 
-        return [Completion(item, -len(text), display_meta=meta)
-                for sort_key, item, meta in sorted(completions)]
-
+        return matches
 
     def get_completions(self, document, complete_event, smart_completion=None):
         word_before_cursor = document.get_word_before_cursor(WORD=True)
@@ -241,10 +257,12 @@ class PGCompleter(Completer):
         # If smart_completion is off then match any word that starts with
         # 'word_before_cursor'.
         if not smart_completion:
-            return self.find_matches(word_before_cursor, self.all_completions,
-                                     start_only=True, fuzzy=False)
+            matches = self.find_matches(word_before_cursor, self.all_completions,
+                                        mode='strict')
+            completions = [m.completion for m in matches]
+            return sorted(completions, key=operator.attrgetter('text'))
 
-        completions = []
+        matches = []
         suggestions = suggest_type(document.text, document.text_before_cursor)
 
         for suggestion in suggestions:
