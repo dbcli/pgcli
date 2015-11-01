@@ -8,6 +8,9 @@ Features:
   background thread. This means large databases with thousands of tables are
   handled without blocking.
 * Add ``CONCURRENTLY`` to keyword completion. (Thanks: `Johannes Hoff`_).
+* Add support for ``\h`` command. (Thanks: `Stuart Quin`_).
+  This is a huge deal. Users can now get help on an SQL command by typing:
+  ``\h COMMAND_NAME`` in the pgcli prompt.
 * Add support for ``\x auto``. (Thanks: `Stuart Quin`_).
   ``\\x auto`` will automatically switch to expanded mode if the output is wider
   than the display window.
