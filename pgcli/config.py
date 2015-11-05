@@ -6,9 +6,9 @@ from configobj import ConfigObj
 
 def config_location():
     if platform.system() == 'Windows':
-        return os.getenv('USERPROFILE') + '\AppData\Local\dbcli\pgcli\config'
+        return os.getenv('USERPROFILE') + '\\AppData\\Local\\dbcli\\pgcli\\'
     else:
-        return expanduser('~/.config/pgcli/config')
+        return expanduser('~/.config/pgcli/')
 
 def load_config(usr_cfg, def_cfg=None):
     cfg = ConfigObj()
