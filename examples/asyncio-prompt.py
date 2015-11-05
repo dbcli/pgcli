@@ -31,10 +31,7 @@ async def print_counter():
     while True:
         print('Counter: %i' % i)
         i += 1
-        try:
-            await asyncio.sleep(3)
-        except asyncio.CancelledError:
-            return
+        await asyncio.sleep(3)
 
 
 async def interactive_shell():
@@ -64,12 +61,14 @@ async def interactive_shell():
 
 
 def main():
-    counter = loop.create_task(print_counter())
     shell = loop.create_task(interactive_shell())
+
+    # This gathers all the async calls, so they can be cancelled at once
+    tasks = asyncio.gather(print_counter(), return_exceptions=True)
     
     loop.run_until_complete(shell)
-    counter.cancel()
-    loop.run_until_complete(counter)
+    tasks.cancel()
+    loop.run_until_complete(tasks)
     print('Qutting event loop. Bye.')
     loop.close()
 
