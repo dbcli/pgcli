@@ -1,35 +1,29 @@
 #!/usr/bin/env python
 """
-(Python >3.3)
-
+(Python >= 3.5)
 This is an example of how to embed a CommandLineInterface inside an application
 that uses the asyncio eventloop. The ``prompt_toolkit`` library will make sure
 that when other coroutines are writing to stdout, they write above the prompt,
 not destroying the input line.
-
 This example does several things:
     1. It starts a simple coroutine, printing a counter to stdout every second.
     2. It starts a simple input/echo cli loop which reads from stdin.
-
 Very important is the following patch. If you are passing stdin by reference to
 other parts of the code, make sure that this patch is applied as early as
 possible. ::
-
     sys.stdout = cli.stdout_proxy()
 """
-from __future__ import unicode_literals
+
 from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.shortcuts import create_prompt_application, create_asyncio_eventloop
 
 import asyncio
 import sys
 
-
 loop = asyncio.get_event_loop()
 
 
-@asyncio.coroutine
-def print_counter():
+async def print_counter():
     """
     Coroutine that prints counters.
     """
@@ -37,11 +31,13 @@ def print_counter():
     while True:
         print('Counter: %i' % i)
         i += 1
-        yield from asyncio.sleep(3)
+        try:
+            await asyncio.sleep(3)
+        except asyncio.CancelledError:
+            return
 
 
-@asyncio.coroutine
-def interactive_shell():
+async def interactive_shell():
     """
     Coroutine that shows the interactive command line.
     """
@@ -61,19 +57,20 @@ def interactive_shell():
     # Run echo loop. Read text from stdin, and reply it back.
     while True:
         try:
-            result = yield from cli.run_async()
-            print('You said: "%s"\n' % result.text)
+            result = await cli.run_async()
+            print('You said: "{0}"'.format(result.text))
         except (EOFError, KeyboardInterrupt):
-            loop.stop()
-            print('Qutting event loop. Bye.')
             return
 
 
 def main():
-    asyncio.async(print_counter())
-    asyncio.async(interactive_shell())
-
-    loop.run_forever()
+    counter = loop.create_task(print_counter())
+    shell = loop.create_task(interactive_shell())
+    
+    loop.run_until_complete(shell)
+    counter.cancel()
+    loop.run_until_complete(counter)
+    print('Qutting event loop. Bye.')
     loop.close()
 
 
