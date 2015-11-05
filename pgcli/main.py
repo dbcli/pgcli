@@ -555,15 +555,16 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
         os.makedirs(config_dir)
 
     # Migrate the config file from old location.
+    config_full_path = config_location() + 'config'
     if os.path.exists(os.path.expanduser('~/.pgclirc')):
-        if not os.path.exists(config_location()):
-            shutil.move(os.path.expanduser('~/.pgclirc'), config_location())
+        if not os.path.exists(config_full_path):
+            shutil.move(os.path.expanduser('~/.pgclirc'), config_full_path)
             print ('Config file (~/.pgclirc) moved to new location',
-                    config_location())
+                   config_full_path)
         else:
-            print ('Config file is now located at', config_location())
+            print ('Config file is now located at', config_full_path)
             print ('Please move the existing config file ~/.pgclirc to',
-                    config_location())
+                   config_full_path)
 
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc)
 

@@ -8,7 +8,7 @@ from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import suggest_type
 from .packages.parseutils import last_word
 from .packages.pgliterals.main import get_literals
-from .config import load_config
+from .config import load_config, config_location
 
 try:
     from collections import Counter
@@ -18,7 +18,8 @@ except ImportError:
 
 _logger = logging.getLogger(__name__)
 
-NamedQueries.instance = NamedQueries.from_config(load_config('~/.pgclirc'))
+NamedQueries.instance = NamedQueries.from_config(
+    load_config(config_location() + 'config'))
 
 
 class PGCompleter(Completer):
