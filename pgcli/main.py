@@ -154,6 +154,8 @@ class PGCli(object):
     def initialize_logging(self):
 
         log_file = self.config['main']['log_file']
+        if log_file == 'default':
+            log_file = config_location() + 'log'
         log_level = self.config['main']['log_level']
 
         level_map = {'CRITICAL': logging.CRITICAL,
@@ -382,6 +384,8 @@ class PGCli(object):
             ])
 
         history_file = self.config['main']['history_file']
+        if history_file == 'default':
+            history_file = config_location() + 'history'
         with self._completer_lock:
             buf = PGBuffer(
                 always_multiline=self.multi_line,
@@ -535,8 +539,8 @@ class PGCli(object):
 @click.option('-v', '--version', is_flag=True, help='Version of pgcli.')
 @click.option('-d', '--dbname', default='', envvar='PGDATABASE',
         help='database name to connect to.')
-@click.option('--pgclirc', default=config_location(), envvar='PGCLIRC',
-        help='Location of pgclirc file.')
+@click.option('--pgclirc', default=config_location() + 'config',
+        envvar='PGCLIRC', help='Location of pgclirc file.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
@@ -551,15 +555,16 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
         os.makedirs(config_dir)
 
     # Migrate the config file from old location.
+    config_full_path = config_location() + 'config'
     if os.path.exists(os.path.expanduser('~/.pgclirc')):
-        if not os.path.exists(config_location()):
-            shutil.move(os.path.expanduser('~/.pgclirc'), config_location())
+        if not os.path.exists(config_full_path):
+            shutil.move(os.path.expanduser('~/.pgclirc'), config_full_path)
             print ('Config file (~/.pgclirc) moved to new location',
-                    config_location())
+                   config_full_path)
         else:
-            print ('Config file is now located at', config_location())
+            print ('Config file is now located at', config_full_path)
             print ('Please move the existing config file ~/.pgclirc to',
-                    config_location())
+                   config_full_path)
 
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc)
 
