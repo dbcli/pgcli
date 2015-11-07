@@ -1,6 +1,13 @@
 0.20.0
 ======
 
+Bug Fixes:
+----------
+* Fixed logging in Windows by switching the location of log and history file based on OS. (Thanks: Amjith, `Darik Gamble`_, `Iryna Cherniavska`_).
+
+0.20.0
+======
+
 Features:
 ---------
 * Perform auto-completion refresh in background. (Thanks: Amjith, `Darik Gamble`_, `Iryna Cherniavska`_).
