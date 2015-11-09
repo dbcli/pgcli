@@ -23,16 +23,18 @@ __all__ = (
 
 
 #: Style attributes.
-Attrs = namedtuple('Attrs', 'color bgcolor bold underline reverse')
+Attrs = namedtuple('Attrs', 'color bgcolor bold underline italic reverse')
 """
 :param color: Hexadecimal string. E.g. '000000'
 :param bgcolor: Hexadecimal string. E.g. 'ffffff'
 :param bold: Boolean
 :param underline: Boolean
+:param italic: Boolean
 :param reverse: Boolean
 """
 
-_default_attrs = Attrs(color=None, bgcolor=None, bold=False, underline=False, reverse=False)
+_default_attrs = Attrs(color=None, bgcolor=None, bold=False, underline=False,
+                       italic=False, reverse=False)
 
 
 class Style(with_metaclass(ABCMeta, object)):
@@ -91,6 +93,7 @@ class PygmentsStyle(Style):
                          bgcolor=style['bgcolor'],
                          bold=style.get('bold', False),
                          underline=style.get('underline', False),
+                         italic=style.get('italic', False),
                          reverse=False)
 
         except KeyError:

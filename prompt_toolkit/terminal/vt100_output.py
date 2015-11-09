@@ -29,12 +29,16 @@ class _EscapeCodeCache(dict):
     (fgcolor, bgcolor, bold, underline) tuples to VT100 escape sequences.
     """
     def __missing__(self, attrs):
-        fgcolor, bgcolor, bold, underline, reverse = attrs
+        fgcolor, bgcolor, bold, underline, italic, reverse = attrs
 
         fg = _tf._color_index(fgcolor) if fgcolor else None
         bg = _tf._color_index(bgcolor) if bgcolor else None
 
         e = EscapeSequence(fg=fg, bg=bg, bold=bold, underline=underline).color_string()
+
+        # Add escape sequence for 'italic'.
+        if italic:
+            e += '\x1b[3m'
 
         # Add escape sequence for 'reverse'.
         if reverse:
