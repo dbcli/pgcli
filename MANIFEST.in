@@ -1,3 +1,4 @@
 include *rst LICENSE CHANGELOG MANIFEST.in
 recursive-include examples *.py
+recursive-include tests *.py
 prune examples/sample?/build
