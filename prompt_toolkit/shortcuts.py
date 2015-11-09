@@ -39,7 +39,7 @@ from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
 from .layout.utils import explode_tokens
-from .styles import DefaultStyle, PygmentsStyle
+from .styles import DEFAULT_STYLE, PygmentsStyle
 from .utils import is_conemu_ansi, is_windows, DummyContext
 
 from pygments.token import Token
@@ -419,7 +419,7 @@ def create_prompt_application(
             accept_action=accept_action,
             initial_document=Document(default),
         ),
-        style=style or PygmentsStyle(DefaultStyle),
+        style=style or DEFAULT_STYLE,
         clipboard=clipboard,
         key_bindings_registry=key_bindings_registry,
         get_title=get_title,

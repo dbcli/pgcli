@@ -20,7 +20,7 @@ from prompt_toolkit.contrib.regular_languages.compiler import compile
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
 from prompt_toolkit.layout.lexers import SimpleLexer
-from prompt_toolkit.styles import DefaultStyle, PygmentsStyle
+from prompt_toolkit.styles import PygmentsStyle
 
 from pygments.token import Token
 
@@ -38,15 +38,12 @@ def create_grammar():
     """)
 
 
-class ExampleStyle(DefaultStyle):
-    styles = {}
-    styles.update(DefaultStyle.styles)
-    styles.update({
-        Token.Operator:       '#33aa33 bold',
-        Token.Number:         '#aa3333 bold',
+example_style = PygmentsStyle.from_defaults({
+    Token.Operator:       '#33aa33 bold',
+    Token.Number:         '#aa3333 bold',
 
-        Token.TrailingInput: 'bg:#662222 #ffffff',
-    })
+    Token.TrailingInput: 'bg:#662222 #ffffff',
+})
 
 
 if __name__ == '__main__':
@@ -70,7 +67,7 @@ if __name__ == '__main__':
         while True:
             # Read input and parse the result.
             text = prompt('Calculate: ', lexer=lexer, completer=completer,
-                          style=PygmentsStyle(ExampleStyle))
+                          style=example_style)
             m = g.match(text)
             if m:
                 vars = m.variables()

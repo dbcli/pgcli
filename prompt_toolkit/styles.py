@@ -1,7 +1,5 @@
 """
-Default styling.
-This contains the default style from Pygments, but adds the styling for
-prompt-toolkit specific Tokens on top.
+Styling for prompt_toolkit applications.
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
@@ -19,8 +17,8 @@ __all__ = (
     'PygmentsStyle',
     'TokenToAttrsCache',
 
-    'default_style_extensions',
-    'DefaultStyle',
+    'DEFAULT_STYLE_EXTENSIONS',
+    'DEFAULT_STYLE',
 )
 
 
@@ -81,14 +79,14 @@ class PygmentsStyle(Style):
 
     :param pygments_style_cls: Pygments ``Style`` class.
     """
-    def __init__(self, pygmens_style_cls):
-        assert issubclass(pygmens_style_cls, pygments.style.Style)
-        self.pygmens_style_cls = pygmens_style_cls
+    def __init__(self, pygments_style_cls):
+        assert issubclass(pygments_style_cls, pygments.style.Style)
+        self.pygments_style_cls = pygments_style_cls
         self._token_to_attrs_dict = None
 
     def get_attrs_for_token(self, token):
         try:
-            style = self.pygmens_style_cls.style_for_token(token)
+            style = self.pygments_style_cls.style_for_token(token)
             return Attrs(color=style['color'],
                          bgcolor=style['bgcolor'],
                          bold=style.get('bold', False),
@@ -99,10 +97,42 @@ class PygmentsStyle(Style):
             return _default_attrs
 
     def invalidation_hash(self):
-        return id(self.pygmens_style_cls)
+        return id(self.pygments_style_cls)
+
+    @classmethod
+    def from_defaults(cls, style_dict=None,
+                      pygments_style_cls=pygments.styles.default.DefaultStyle,
+                      include_extensions=True):
+        """
+        Shortcut to create a :class:`.PygmentsStyle` instance from a Pygments
+        dictionary and a style class.
+
+        :param style_dict: Dictionary for this style. `{Token: style}`.
+        :param pygments_style_cls: Pygments style class to start from.
+        :param include_extensions: (`bool`) Include prompt_toolkit extensions.
+        """
+        assert style_dict is None or isinstance(style_dict, dict)
+        assert pygments_style_cls is None or issubclass(pygments_style_cls, pygments.style.Style)
+
+        class _CustomStyle(pygments.styles.default.DefaultStyle):
+            background_color = None
+            styles = {}
+
+            if pygments_style_cls is not None:
+                styles.update(pygments_style_cls.styles)
+
+            if include_extensions:
+                styles.update(DEFAULT_STYLE_EXTENSIONS)
+
+            if style_dict is not None:
+                styles.update(style_dict)
+
+        return cls(_CustomStyle)
 
 
-default_style_extensions = {
+#: Styling of prompt-toolkit specific tokens, that are not know by the default
+#: Pygments style.
+DEFAULT_STYLE_EXTENSIONS = {
     # Highlighting of search matches in document.
     Token.SearchMatch:                            '#000000 bg:#888888',
     Token.SearchMatch.Current:                    '#ffffff bg:#aa8888 underline',
@@ -164,12 +194,8 @@ default_style_extensions = {
     Token.Aborted:                                '#888888',
 }
 
+default_style_extensions = DEFAULT_STYLE_EXTENSIONS  # Old name.
 
-class DefaultStyle(pygments.styles.default.DefaultStyle):
-    """
-    Default Pygments style.
-    """
-    background_color = None
-    styles = {}
-    styles.update(default_style_extensions)
-    styles.update(pygments.styles.default.DefaultStyle.styles)
+
+#: The default built-in style.
+DEFAULT_STYLE = PygmentsStyle.from_defaults()

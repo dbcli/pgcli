@@ -11,7 +11,7 @@ from .key_binding.registry import Registry
 from .layout import Window
 from .layout.containers import Container
 from .layout.controls import BufferControl
-from .styles import DefaultStyle, Style, PygmentsStyle
+from .styles import DEFAULT_STYLE, Style
 from .utils import Callback
 
 __all__ = (
@@ -116,7 +116,7 @@ class Application(object):
         self.buffers = buffers or {}
         self.initial_focussed_buffer = initial_focussed_buffer
 
-        self.style = style or PygmentsStyle(DefaultStyle)
+        self.style = style or DEFAULT_STYLE
 
         if key_bindings_registry is None:
             key_bindings_registry = Registry()

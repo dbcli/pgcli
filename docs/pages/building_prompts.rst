@@ -63,43 +63,40 @@ create a custom lexer by implementing the
 Colors
 ------
 
-The colors for syntax highlighting are defined by a Pygments ``Style`` class.
-By default, the built-in style :class:`prompt_toolkit.styles.DefaultStyle` is
-used, but any Pygments style class can be passed to the
-:func:`~prompt_toolkit.shortcuts.prompt` function. Suppose we'd like to use
-``pygments.styles.tango.TangoStyle``. That works already, but we would miss
-some ``prompt_toolkit`` specific styling, like the highlighting of selected
-text and the styling of the completion menus. Because of that, we recommend
-creating a custom ``Style`` class, and populate the ``styles`` class attribute
-by updating it with the prompt_toolkit extensions.
+The colors for syntax highlighting are defined by a
+:class:`~prompt_toolkit.styles.Style` instance.  By default, a neutral built-in
+style is used, but any style instance can be passed to the
+:func:`~prompt_toolkit.shortcuts.prompt` function. All Pygments style classes
+can be used as well, when they are wrapped in a
+:class:`~prompt_toolkit.styles.PygmentsStyle`.
+
+Suppose we'd like to use a Pygments style, for instance
+``pygments.styles.tango.TangoStyle``. That works when we wrap it inside
+:class:`~prompt_toolkit.styles.PygmentsStyle`, but we would still miss some
+``prompt_toolkit`` specific styling, like the highlighting of selected text and
+the styling of the completion menus. Because of that, we recommend to use the
+:meth:`~prompt_toolkit.styles.PygmentsStyle.from_defaults` method to generate a
+a :class:`~prompt_toolkit.styles.Style` instance.
 
 Creating a custom style could be done like this:
 
 .. code:: python
 
     from prompt_toolkit.shortcuts import prompt
-    from prompt_toolkit.styles import default_style_extensions
+    from prompt_toolkit.styles import PygmentsStyle
 
     from pygments.style import Style
     from pygments.styles.tango import TangoStyle
 
-    class OurStyle(Style):
-        styles = {}
-
-        # Take the default colors from prompt_toolkit for the selection,
-        # search, etc...
-        styles.update(default_style_extensions)
-
-        # Use the pygments 'Tango' style for syntax highlighting.
-        styles.update(TangoStyle.styles)
-
-        # Override some tokens:
-        styles.update({
+    our_style = PygmentsStyle.from_defaults(
+        pygments_style_cls=TangoStyle,
+        style_dict={
             Token.Comment:   '#888888 bold',
             Token.Keyword:   '#ff88ff bold',
         })
 
-    text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer), style=OurStyle)
+    text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer),
+                  style=our_style)
 
 
 Coloring the prompt itself
@@ -115,22 +112,20 @@ Each token is a Pygments token and can be styled individually.
 
     from prompt_toolkit.shortcuts import prompt
     from pygments.style import Style
-    from prompt_toolkit.styles import default_style_extensions
+    from prompt_toolkit.styles import PygmentsStyle
 
-    class ExampleStyle(Style):
-        styles = {
-            # User input.
-            Token:          '#ff0066',
+    example_style = PygmentsStyle.from_defaults({
+        # User input.
+        Token:          '#ff0066',
 
-            # Prompt.
-            Token.Username: '#884444',
-            Token.At:       '#00aa00',
-            Token.Colon:    '#00aa00',
-            Token.Pound:    '#00aa00',
-            Token.Host:     '#000088 bg:#aaaaff',
-            Token.Path:     '#884444 underline',
-        }
-        styles.update(default_style_extensions)
+        # Prompt.
+        Token.Username: '#884444',
+        Token.At:       '#00aa00',
+        Token.Colon:    '#00aa00',
+        Token.Pound:    '#00aa00',
+        Token.Host:     '#000088 bg:#aaaaff',
+        Token.Path:     '#884444 underline',
+    })
 
     def get_prompt_tokens(cli):
         return [
@@ -142,7 +137,7 @@ Each token is a Pygments token and can be styled individually.
             (Token.Pound,    '# '),
         ]
 
-    text = prompt(get_prompt_tokens=get_prompt_tokens, style=OurStyle)
+    text = prompt(get_prompt_tokens=get_prompt_tokens, style=example_style)
 
 
 Autocompletion
