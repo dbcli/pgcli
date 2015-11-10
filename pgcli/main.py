@@ -9,8 +9,10 @@ import traceback
 import logging
 import threading
 import shutil
+import functools
 from time import time
 from codecs import open
+
 
 import click
 try:
@@ -118,16 +120,19 @@ class PGCli(object):
 
     def register_special_commands(self):
 
-        self.pgspecial.register(self.change_db, '\\c',
-                              '\\c[onnect] database_name',
-                              'Change to a new database.',
-                              aliases=('use', '\\connect', 'USE'))
-        self.pgspecial.register(self.refresh_completions, '\\#', '\\#',
-                              'Refresh auto-completions.', arg_type=NO_QUERY)
-        self.pgspecial.register(self.refresh_completions, '\\refresh', '\\refresh',
-                              'Refresh auto-completions.', arg_type=NO_QUERY)
+        self.pgspecial.register(
+            self.change_db, '\\c', '\\c[onnect] database_name',
+            'Change to a new database.', aliases=('use', '\\connect', 'USE'))
+
+        refresh_callback = lambda: self.refresh_completions(
+            persist_priorities='all')
+
+        self.pgspecial.register(refresh_callback, '\\#', '\\#',
+                                'Refresh auto-completions.', arg_type=NO_QUERY)
+        self.pgspecial.register(refresh_callback, '\\refresh', '\\refresh',
+                                'Refresh auto-completions.', arg_type=NO_QUERY)
         self.pgspecial.register(self.execute_from_file, '\\i', '\\i filename',
-                              'Execute commands from file.')
+                                'Execute commands from file.')
 
     def change_db(self, pattern, **_):
         if pattern:
@@ -270,10 +275,15 @@ class PGCli(object):
     def run_cli(self):
         logger = self.logger
         original_less_opts = self.adjust_less_opts()
+        
+        history_file = self.config['main']['history_file']
+        if history_file == 'default':
+            history_file = config_location() + 'history'
+        history = FileHistory(os.path.expanduser(history_file))
+        self.refresh_completions(history=history, 
+                                 persist_priorities='none')
 
-        self.refresh_completions()
-
-        self.cli = self._build_cli()
+        self.cli = self._build_cli(history)
 
         print('Version:', __version__)
         print('Chat: https://gitter.im/dbcli/pgcli')
@@ -335,9 +345,11 @@ class PGCli(object):
                     # Check if we need to update completions, in order of most
                     # to least drastic changes
                     if query.db_changed:
-                        self.refresh_completions(reset=True)
+                        with self._completer_lock:
+                            self.completer.reset_completions()
+                        self.refresh_completions(persist_priorities='keywords')
                     elif query.meta_changed:
-                        self.refresh_completions(reset=False)
+                        self.refresh_completions(persist_priorities='all')
                     elif query.path_changed:
                         logger.debug('Refreshing search path')
                         with self._completer_lock:
@@ -345,6 +357,10 @@ class PGCli(object):
                                 self.pgexecute.search_path())
                         logger.debug('Search path: %r',
                                      self.completer.search_path)
+                        
+                # Allow PGCompleter to learn user's preferred keywords, etc.
+                with self._completer_lock:
+                    self.completer.extend_query_history(document.text)
 
                 self.query_history.append(query)
 
@@ -354,7 +370,7 @@ class PGCli(object):
             logger.debug('Restoring env var LESS to %r.', original_less_opts)
             os.environ['LESS'] = original_less_opts
 
-    def _build_cli(self):
+    def _build_cli(self, history):
 
         def set_vi_mode(value):
             self.vi_mode = value
@@ -383,14 +399,11 @@ class PGCli(object):
                    filter=HasFocus(DEFAULT_BUFFER) & ~IsDone()),
             ])
 
-        history_file = self.config['main']['history_file']
-        if history_file == 'default':
-            history_file = config_location() + 'history'
         with self._completer_lock:
             buf = PGBuffer(
                 always_multiline=self.multi_line,
                 completer=self.completer,
-                history=FileHistory(os.path.expanduser(history_file)),
+                history=history,
                 complete_while_typing=Always())
 
             application = Application(
@@ -490,28 +503,60 @@ class PGCli(object):
 
         return less_opts
 
-    def refresh_completions(self, reset=False):
-        if reset:
-            with self._completer_lock:
-                self.completer.reset_completions()
-        self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
-                                          self._on_completions_refreshed)
+    def refresh_completions(self, history=None, persist_priorities='all'):
+        """ Refresh outdated completions
+
+        :param history: A prompt_toolkit.history.FileHistory object. Used to
+                        load keyword and identifier preferences
+
+        :param persist_priorities: 'all' or 'keywords'
+        """
+
+        callback = functools.partial(self._on_completions_refreshed,
+                                     persist_priorities=persist_priorities)
+        self.completion_refresher.refresh(
+            self.pgexecute, self.pgspecial, callback, history=history)
         return [(None, None, None,
                 'Auto-completion refresh started in the background.')]
 
-    def _on_completions_refreshed(self, new_completer):
-        self._swap_completer_objects(new_completer)
+    def _on_completions_refreshed(self, new_completer, persist_priorities):
+        self._swap_completer_objects(new_completer, persist_priorities)
 
         if self.cli:
             # After refreshing, redraw the CLI to clear the statusbar
             # "Refreshing completions..." indicator
             self.cli.request_redraw()
 
-    def _swap_completer_objects(self, new_completer):
+    def _swap_completer_objects(self, new_completer, persist_priorities):
         """Swap the completer object in cli with the newly created completer.
+
+            persist_priorities is a string specifying how the old completer's
+            learned prioritizer should be transferred to the new completer.
+
+              'none'     - The new prioritizer is left in a new/clean state
+
+              'all'      - The new prioritizer is updated to exactly reflect
+                           the old one
+
+              'keywords' - The new prioritizer is updated with old keyword
+                           priorities, but not any other.
         """
         with self._completer_lock:
+            old_completer = self.completer
             self.completer = new_completer
+
+            if persist_priorities == 'all':
+                # Just swap over the entire prioritizer
+                new_completer.prioritizer = old_completer.prioritizer
+            elif persist_priorities == 'keywords':
+                # Swap over the entire prioritizer, but clear name priorities,
+                # leaving learned keyword priorities alone
+                new_completer.prioritizer = old_completer.prioritizer
+                new_completer.prioritizer.clear_names()
+            elif persist_priorities == 'none':
+                # Leave the new prioritizer as is
+                pass
+
             # When pgcli is first launched we call refresh_completions before
             # instantiating the cli object. So it is necessary to check if cli
             # exists before trying the replace the completer object in cli.

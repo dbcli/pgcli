@@ -7,6 +7,7 @@ except ImportError:
 from .pgcompleter import PGCompleter
 from .pgexecute import PGExecute
 
+
 class CompletionRefresher(object):
 
     refreshers = OrderedDict()
@@ -15,7 +16,7 @@ class CompletionRefresher(object):
         self._completer_thread = None
         self._restart_refresh = threading.Event()
 
-    def refresh(self, executor, special, callbacks):
+    def refresh(self, executor, special, callbacks, history=None):
         """
         Creates a PGCompleter object and populates it with the relevant
         completion suggestions in a background thread.
@@ -31,9 +32,10 @@ class CompletionRefresher(object):
             self._restart_refresh.set()
             return [(None, None, None, 'Auto-completion refresh restarted.')]
         else:
-            self._completer_thread = threading.Thread(target=self._bg_refresh,
-                                                      args=(executor, special, callbacks),
-                                                      name='completion_refresh')
+            self._completer_thread = threading.Thread(
+                target=self._bg_refresh,
+                args=(executor, special, callbacks, history),
+                name='completion_refresh')
             self._completer_thread.setDaemon(True)
             self._completer_thread.start()
             return [(None, None, None,
@@ -42,7 +44,7 @@ class CompletionRefresher(object):
     def is_refreshing(self):
         return self._completer_thread and self._completer_thread.is_alive()
 
-    def _bg_refresh(self, pgexecute, special, callbacks):
+    def _bg_refresh(self, pgexecute, special, callbacks, history=None):
         completer = PGCompleter(smart_completion=True, pgspecial=special)
 
         # Create a new pgexecute method to popoulate the completions.
@@ -68,8 +70,15 @@ class CompletionRefresher(object):
             # break statement.
             continue
 
+        # Load history into pgcompleter so it can learn user preferences
+        n_recent = 100
+        if history:
+            for recent in history[-n_recent:]:
+                completer.extend_query_history(recent, is_init=True)
+
         for callback in callbacks:
             callback(completer)
+
 
 def refresher(name, refreshers=CompletionRefresher.refreshers):
     """Decorator to populate the dictionary of refreshers with the current
