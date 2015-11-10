@@ -14,7 +14,7 @@ example_style = PygmentsStyle.from_defaults(style_dict={
     Token:          '#ff0066',
 
     # Prompt.
-    Token.Username: '#884444',
+    Token.Username: '#884444 italic',
     Token.At:       '#00aa00',
     Token.Colon:    '#00aa00',
     Token.Pound:    '#00aa00',
