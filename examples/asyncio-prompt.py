@@ -61,14 +61,14 @@ async def interactive_shell():
 
 
 def main():
-    shell = loop.create_task(interactive_shell())
+    shell_task = loop.create_task(interactive_shell())
 
-    # This gathers all the async calls, so they can be cancelled at once
-    tasks = asyncio.gather(print_counter(), return_exceptions=True)
-    
-    loop.run_until_complete(shell)
-    tasks.cancel()
-    loop.run_until_complete(tasks)
+    # Gather all the async calls, so they can be cancelled at once
+    background_task = asyncio.gather(print_counter(), return_exceptions=True)
+
+    loop.run_until_complete(shell_task)
+    background_task.cancel()
+    loop.run_until_complete(background_task)
     print('Qutting event loop. Bye.')
     loop.close()
 
