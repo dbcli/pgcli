@@ -71,6 +71,10 @@ def create_source_tarball():
     run_step('python', 'setup.py', 'sdist')
 
 
+def upload_source_tarball():
+    run_step('python', 'setup.py', 'sdist', 'upload')
+
+
 def push_to_github():
     run_step('git', 'push', 'origin', 'master')
 
@@ -111,3 +115,4 @@ if __name__ == '__main__':
     create_source_tarball()
     push_to_github()
     push_tags_to_github()
+    upload_source_tarball()
