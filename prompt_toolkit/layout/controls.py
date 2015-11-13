@@ -126,6 +126,9 @@ class TokenListControl(UIControl):
     :param default_char: default :class:`.Char` (character and Token) to use
         for the background when there is more space available than `get_tokens`
         returns.
+    :param get_default_char: Like `default_char`, but this is a callable that
+        takes a :class:`prompt_toolkit.interface.CommandLineInterface` and
+        returns a :class:`.Char` instance.
     :param has_focus: `bool` or `CLIFilter`, when this evaluates to `True`,
         this UI control will take the focus. The cursor will be shown in the
         upper left corner of this control, unless `get_token` returns a
@@ -133,16 +136,27 @@ class TokenListControl(UIControl):
         cursor will be shown there.
     :param wrap_lines: `bool` or `CLIFilter`: Wrap long lines.
     """
-    def __init__(self, get_tokens, default_char=None, align_right=False, align_center=False,
+    def __init__(self, get_tokens, default_char=None, get_default_char=None,
+                 align_right=False, align_center=False,
                  has_focus=False, wrap_lines=True):
         assert default_char is None or isinstance(default_char, Char)
+        assert get_default_char is None or callable(get_default_char)
+        assert not (default_char and get_default_char)
 
-        self.get_tokens = get_tokens
-        self.default_char = default_char or Char(' ', Token)
         self.align_right = to_cli_filter(align_right)
         self.align_center = to_cli_filter(align_center)
         self._has_focus_filter = to_cli_filter(has_focus)
         self.wrap_lines = to_cli_filter(wrap_lines)
+
+        self.get_tokens = get_tokens
+
+        # Construct `get_default_char` callable.
+        if default_char:
+            get_default_char = lambda _: default_char
+        elif not get_default_char:
+            get_default_char = lambda _: Char(' ', Token)
+
+        self.get_default_char = get_default_char
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.get_tokens)
@@ -164,7 +178,8 @@ class TokenListControl(UIControl):
         return screen.height
 
     def create_screen(self, cli, width, height):
-        screen = Screen(self.default_char, initial_width=width)
+        default_char = self.get_default_char(cli)
+        screen = Screen(default_char, initial_width=width)
 
         # Get tokens
         tokens = self.get_tokens(cli)
@@ -184,7 +199,7 @@ class TokenListControl(UIControl):
                 padding = width - used_width
                 if center:
                     padding = int(padding / 2)
-                return [(self.default_char.token, self.default_char.char * padding)] + line + [(Token, '\n')]
+                return [(default_char.token, default_char.char * padding)] + line + [(Token, '\n')]
 
             if right or center:
                 tokens2 = []
