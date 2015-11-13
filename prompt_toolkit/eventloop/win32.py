@@ -116,7 +116,7 @@ class Win32EventLoop(EventLoop):
             threading.Thread(target=callback).start()
         self.call_from_executor(start_executor)
 
-    def call_from_executor(self, callback):
+    def call_from_executor(self, callback, _max_postpone_until=None):
         """
         Call this function in the main event loop.
         Similar to Twisted's ``callFromThread``.

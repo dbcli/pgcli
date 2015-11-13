@@ -93,7 +93,7 @@ class PosixAsyncioEventLoop(EventLoop):
     def run_in_executor(self, callback):
         self.loop.run_in_executor(None, callback)
 
-    def call_from_executor(self, callback):
+    def call_from_executor(self, callback, _max_postpone_until=None):
         """
         Call this function in the main event loop.
         Similar to Twisted's ``callFromThread``.

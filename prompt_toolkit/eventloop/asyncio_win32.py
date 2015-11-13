@@ -69,7 +69,7 @@ class Win32AsyncioEventLoop(EventLoop):
     def run_in_executor(self, callback):
         self.loop.run_in_executor(None, callback)
 
-    def call_from_executor(self, callback):
+    def call_from_executor(self, callback, _max_postpone_until=None):
         self.loop.call_soon_threadsafe(callback)
 
     def add_reader(self, fd, callback):

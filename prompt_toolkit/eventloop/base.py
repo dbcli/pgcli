@@ -69,8 +69,13 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def call_from_executor(self, callback):
+    def call_from_executor(self, callback, _max_postpone_until=None):
         """
         Call this function in the main event loop. Similar to Twisted's
         ``callFromThread``.
+
+        :param _max_postpone_until: `None` or `datetime` instance. For interal
+            use. If the eventloop is saturated, consider this task to be low
+            priority and postpone maximum until this timestamp. (For instance,
+            repaint is done using low priority.)
         """

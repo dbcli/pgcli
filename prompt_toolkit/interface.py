@@ -11,6 +11,7 @@ import sys
 import textwrap
 import threading
 import weakref
+import datetime
 
 from .application import Application, AbortAction
 from .buffer import Buffer, AcceptAction
@@ -272,7 +273,11 @@ class CommandLineInterface(object):
                 self._invalidated = False
                 self._redraw()
 
-            self.eventloop.call_from_executor(redraw)
+            # Call redraw in the eventloop (thread safe).
+            # Give it low priority. If there is other I/O or CPU intensive
+            # stuff to handle, give that priority, but max postpone x seconds.
+            _max_postpone_until = datetime.datetime.now() + datetime.timedelta(seconds=.5)
+            self.eventloop.call_from_executor(redraw, _max_postpone_until=_max_postpone_until)
 
     # Depracated alias for 'invalidate'.
     request_redraw = invalidate
@@ -911,8 +916,9 @@ class _SubApplicationEventLoop(EventLoop):
     def run_in_executor(self, callback):
         self.cli.eventloop.run_in_executor(callback)
 
-    def call_from_executor(self, callback):
-        self.cli.eventloop.call_from_executor(callback)
+    def call_from_executor(self, callback, _max_postpone_until=None):
+        self.cli.eventloop.call_from_executor(
+            callback, _max_postpone_until=_max_postpone_until)
 
     def add_reader(self, fd, callback):
         self.cli.eventloop.add_reader(fd, callback)

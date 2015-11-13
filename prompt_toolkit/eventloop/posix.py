@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
-import os
+import datetime
+import errno
 import fcntl
+import os
+import random
 import select
 import signal
-import errno
 import threading
 
 from prompt_toolkit.terminal.vt100_input import InputStream
@@ -18,6 +20,8 @@ from .utils import TimeIt
 __all__ = (
     'PosixEventLoop',
 )
+
+_now = datetime.datetime.now
 
 
 class PosixEventLoop(EventLoop):
@@ -57,7 +61,7 @@ class PosixEventLoop(EventLoop):
         self._callbacks = callbacks
 
         inputstream = InputStream(callbacks.feed_key)
-        current_timeout = INPUT_TIMEOUT
+        current_timeout = [INPUT_TIMEOUT]  # Nonlocal
 
         # Create reader class.
         stdin_reader = PosixStdinReader(stdin.fileno())
@@ -71,6 +75,18 @@ class PosixEventLoop(EventLoop):
         else:
             ctx = DummyContext()
 
+        def read_from_stdin():
+            " Read user input. "
+            # Feed input text.
+            data = stdin_reader.read()
+            inputstream.feed(data)
+
+            # Set timeout again.
+            current_timeout[0] = INPUT_TIMEOUT
+
+        self.add_reader(stdin, read_from_stdin)
+        self.add_reader(self._schedule_pipe[0], None)
+
         with ctx:
             while self._running:
                 # Call inputhook.
@@ -78,46 +94,68 @@ class PosixEventLoop(EventLoop):
                     if self._inputhook_context:
                         def ready(wait):
                             " True when there is input ready. The inputhook should return control. "
-                            return self._ready_for_reading(stdin, current_timeout if wait else 0) != []
+                            return self._ready_for_reading(stdin, current_timeout[0] if wait else 0) != []
                         self._inputhook_context.call_inputhook(ready)
 
                 # Calculate remaining timeout. (The inputhook consumed some of the time.)
-                if current_timeout is None:
+                if current_timeout[0] is None:
                     remaining_timeout = None
                 else:
-                    remaining_timeout = max(0, current_timeout - inputhook_timer.duration)
+                    remaining_timeout = max(0, current_timeout[0] - inputhook_timer.duration)
 
                 # Wait until input is ready.
-                r = self._ready_for_reading(stdin, remaining_timeout)
+                fds = self._ready_for_reading(stdin, remaining_timeout)
 
-                # If we got a character, feed it to the input stream. If we got
-                # none, it means we got a repaint request.
-                if stdin in r:
-                    # Feed input text.
-                    data = stdin_reader.read()
-                    inputstream.feed(data)
+                # When any of the FDs are ready. Call the appropriate callback.
+                if fds:
+                    # Create lists of high/low priority tasks. The main reason
+                    # for this is to allow painting the UI to happen as soon as
+                    # possible, but when there are many events happening, we
+                    # don't want to call the UI renderer 1000x per second. If
+                    # the eventloop is completely saturated with many CPU
+                    # intensive tasks (like processing input/output), we say
+                    # that drawing the UI can be postponed a little, to make
+                    # CPU available. This will be a low priority task in that
+                    # case.
+                    tasks = []
+                    low_priority_tasks = []
+                    now = _now()
 
-                    # Set timeout again.
-                    current_timeout = INPUT_TIMEOUT
+                    for fd in fds:
+                        # For the 'call_from_executor' fd, put each pending
+                        # item on either the high or low priority queue.
+                        if fd == self._schedule_pipe[0]:
+                            for c, max_postpone_until in self._calls_from_executor:
+                                if max_postpone_until is None or max_postpone_until < now:
+                                    tasks.append(c)
+                                else:
+                                    low_priority_tasks.append((c, max_postpone_until))
+                            self._calls_from_executor = []
 
-                # When any of the registered read pipes are ready. Call the
-                # appropriate callback.
-                elif set(r) & set(self._read_fds):
-                    for fd in r:
-                        handler = self._read_fds.get(fd)
-                        if handler:
-                            handler()
+                            # Flush all the pipe content.
+                            os.read(self._schedule_pipe[0], 1024)
+                        else:
+                            handler = self._read_fds.get(fd)
+                            if handler:
+                                tasks.append(handler)
 
-                # If we receive something on our "call_from_executor" pipe, process
-                # these callbacks in a thread safe way.
-                elif self._schedule_pipe[0] in r:
-                    # Flush all the pipe content.
-                    os.read(self._schedule_pipe[0], 1024)
+                    # Handle everything in random order. (To avoid starvation.)
+                    random.shuffle(tasks)
+                    random.shuffle(low_priority_tasks)
 
-                    # Process calls from executor.
-                    calls_from_executor, self._calls_from_executor = self._calls_from_executor, []
-                    for c in calls_from_executor:
-                        c()
+                    # When there are high priority tasks, run all these.
+                    # Schedule low priority tasks for the next iteration.
+                    if tasks:
+                        for t in tasks:
+                            t()
+
+                        # Postpone low priority tasks.
+                        for t, max_postpone_until in low_priority_tasks:
+                            self.call_from_executor(t, _max_postpone_until=max_postpone_until)
+                    else:
+                        # Currently there are only low priority tasks -> run them right now.
+                        for t, _ in low_priority_tasks:
+                            t()
 
                 else:
                     # Flush all pending keys on a timeout. (This is most
@@ -127,7 +165,10 @@ class PosixEventLoop(EventLoop):
 
                     # Fire input timeout event.
                     callbacks.input_timeout()
-                    current_timeout = None
+                    current_timeout[0] = None
+
+        self.remove_reader(stdin)
+        self.remove_reader(self._schedule_pipe[0])
 
         self._callbacks = None
 
@@ -135,9 +176,7 @@ class PosixEventLoop(EventLoop):
         """
         Return the file descriptors that are ready for reading.
         """
-        read_fds = [stdin, self._schedule_pipe[0]]
-        read_fds.extend(self._read_fds.keys())
-
+        read_fds = list(self._read_fds.keys())
         r, _, _ =_select(read_fds, [], [], timeout)
         return r
 
@@ -178,12 +217,17 @@ class PosixEventLoop(EventLoop):
             threading.Thread(target=callback).start()
         self.call_from_executor(start_executor)
 
-    def call_from_executor(self, callback):
+    def call_from_executor(self, callback, _max_postpone_until=None):
         """
         Call this function in the main event loop.
         Similar to Twisted's ``callFromThread``.
+
+        :param _max_postpone_until: `None` or `datetime` instance. For interal
+            use. If the eventloop is saturated, consider this task to be low
+            priority and postpone maximum until this timestamp. (For instance,
+            repaint is done using low priority.)
         """
-        self._calls_from_executor.append(callback)
+        self._calls_from_executor.append((callback, _max_postpone_until))
 
         if self._schedule_pipe:
             os.write(self._schedule_pipe[1], b'x')

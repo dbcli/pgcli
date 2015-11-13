@@ -23,7 +23,11 @@ class PosixStdinReader(object):
         self._stdin_decoder_cls = getincrementaldecoder('utf-8')
         self._stdin_decoder = self._stdin_decoder_cls()
 
-    def read(self):
+    def read(self, count=128):
+            # By default we choose a rather small chunk size, because reading
+            # big amounts of input at once, causes the event loop to process
+            # all these key bindings also at once without going back to the
+            # loop. This will make the application feel unresponsive.
         """
         Read the input and return it as a string.
         """
@@ -32,7 +36,7 @@ class PosixStdinReader(object):
         #       Somehow that causes some latency when the escape
         #       character is pressed. (Especially on combination with the `select`.)
         try:
-            data = os.read(self.stdin_fd, 8192)
+            data = os.read(self.stdin_fd, count)
         except OSError:
             # In case of SIGWINCH
             data = b''
