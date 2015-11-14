@@ -85,8 +85,11 @@ class HSplit(Container):
         self.children = children
 
     def preferred_width(self, cli, max_available_width):
-        dimensions = [c.preferred_width(cli, max_available_width) for c in self.children]
-        return max_layout_dimensions(dimensions)
+        if self.children:
+            dimensions = [c.preferred_width(cli, max_available_width) for c in self.children]
+            return max_layout_dimensions(dimensions)
+        else:
+            return LayoutDimension(0)
 
     def preferred_height(self, cli, width):
         dimensions = [c.preferred_height(cli, width) for c in self.children]
