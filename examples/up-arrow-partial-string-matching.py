@@ -8,7 +8,6 @@ history on the items starting with the given input text.
 from __future__ import unicode_literals, print_function
 from prompt_toolkit import prompt
 from prompt_toolkit.history import InMemoryHistory
-from prompt_toolkit.filters import Always
 from prompt_toolkit.interface import AbortAction
 
 
@@ -28,7 +27,7 @@ def main():
     print()
 
     text = prompt('Say something: ', history=history,
-                  enable_history_search=Always(),
+                  enable_history_search=True,
                   on_abort=AbortAction.RETRY)
     print('You said: %s' % text)
 
