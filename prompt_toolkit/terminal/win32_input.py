@@ -192,8 +192,7 @@ class ConsoleInputReader(object):
         # Return result. If alt was pressed, prefix the result with an
         # 'Escape' key, just like unix VT100 terminals do.
         if result:
-            meta_pressed = ev.ControlKeyState & self.LEFT_ALT_PRESSED or \
-                ev.ControlKeyState & self.RIGHT_ALT_PRESSED
+            meta_pressed = ev.ControlKeyState & self.LEFT_ALT_PRESSED
 
             if meta_pressed:
                 return [KeyPress(Keys.Escape, ''), result]
