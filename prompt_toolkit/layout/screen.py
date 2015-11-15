@@ -243,6 +243,6 @@ class WritePosition(object):
         self.extended_height = extended_height or height
 
     def __repr__(self):
-        return '%s(%r, %r, %r %r, %r)' % (
+        return '%s(%r, %r, %r, %r, %r)' % (
             self.__class__.__name__,
             self.xpos, self.ypos, self.width, self.height, self.extended_height)
