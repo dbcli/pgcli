@@ -351,8 +351,9 @@ class AppendAutoSuggestion(Processor):
     :param buffer_name: The name of the buffer from where we should take the
         auto suggestion. If not given, we take the current buffer.
     """
-    def __init__(self, buffer_name=None):
+    def __init__(self, buffer_name=None, token=Token.AutoSuggestion):
         self.buffer_name = buffer_name
+        self.token = token
 
     def _get_buffer(self, cli):
         if self.buffer_name:
@@ -370,7 +371,7 @@ class AppendAutoSuggestion(Processor):
 
         return Transformation(
             document=document.insert_after(suggestion),
-            tokens=tokens + [(Token.AutoSuggestion, suggestion)])
+            tokens=tokens + [(self.token, suggestion)])
 
     def invalidation_hash(self, cli, document):
         buffer = self._get_buffer(cli)
