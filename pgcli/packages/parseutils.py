@@ -161,7 +161,7 @@ def extract_tables(sql):
     """
     parsed = sqlparse.parse(sql)
     if not parsed:
-        return []
+        return ()
 
     # INSERT statements must stop looking for tables at the sign of first
     # Punctuation. eg: INSERT INTO abc (col1, col2) VALUES (1, 2)
@@ -177,7 +177,7 @@ def extract_tables(sql):
     # to have is_function=True
     identifiers = extract_table_identifiers(stream,
                                             allow_functions=not insert_stmt)
-    return list(identifiers)
+    return tuple(identifiers)
 
 
 def find_prev_keyword(sql):
