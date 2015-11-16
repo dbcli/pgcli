@@ -2,6 +2,7 @@ from __future__ import print_function
 import sys
 import re
 import sqlparse
+from collections import namedtuple
 from sqlparse.sql import Comparison, Identifier, Where
 from .parseutils import last_word, extract_tables, find_prev_keyword
 from pgspecial.main import parse_special_command
@@ -13,6 +14,25 @@ if PY3:
     string_types = str
 else:
     string_types = basestring
+
+
+Special = namedtuple('Special', [])
+Database = namedtuple('Database', [])
+Schema = namedtuple('Schema', [])
+Table = namedtuple('Table', ['schema'])
+
+Function = namedtuple('Function', ['schema', 'filter'])
+# For convenience, don't require the `filter` argument in Function constructor
+Function.__new__.__defaults__ = (None, None)
+
+Column = namedtuple('Column', ['tables', 'drop_unique'])
+Column.__new__.__defaults__ = (None, None)
+
+View = namedtuple('View', ['schema'])
+Keyword = namedtuple('Keyword', [])
+NamedQuery = namedtuple('NamedQuery', [])
+Datatype = namedtuple('Datatype', ['schema'])
+Alias = namedtuple('Alias', ['aliases'])
 
 
 def suggest_type(full_text, text_before_cursor):
@@ -106,13 +126,13 @@ def suggest_special(text):
 
     if cmd == text:
         # Trying to complete the special command itself
-        return [{'type': 'special'}]
+        return Special(),
 
     if cmd in ('\\c', '\\connect'):
-        return [{'type': 'database'}]
+        return Database(),
 
     if cmd == '\\dn':
-        return [{'type': 'schema'}]
+        return Schema(),
 
     if arg:
         # Try to distinguish "\d name" from "\d schema.name"
@@ -129,28 +149,27 @@ def suggest_special(text):
     if cmd[1:] == 'd':
         # \d can descibe tables or views
         if schema:
-            return [{'type': 'table', 'schema': schema},
-                    {'type': 'view', 'schema': schema}]
+            return (Table(schema=schema),
+                    View(schema=schema),)
         else:
-            return [{'type': 'schema'},
-                    {'type': 'table', 'schema': []},
-                    {'type': 'view', 'schema': []}]
+            return (Schema(),
+                    Table(schema=None),
+                    View(schema=None),)
     elif cmd[1:] in ('dt', 'dv', 'df', 'dT'):
-        rel_type = {'dt': 'table',
-                    'dv': 'view',
-                    'df': 'function',
-                    'dT': 'datatype',
+        rel_type = {'dt': Table,
+                    'dv': View,
+                    'df': Function,
+                    'dT': Datatype,
                     }[cmd[1:]]
         if schema:
-            return [{'type': rel_type, 'schema': schema}]
+            return rel_type(schema=schema),
         else:
-            return [{'type': 'schema'},
-                    {'type': rel_type, 'schema': []}]
+            return Schema(), rel_type(schema=None)
 
     if cmd in ['\\n', '\\ns', '\\nd']:
-        return [{'type': 'namedquery'}]
+        return NamedQuery(),
 
-    return [{'type': 'keyword'}, {'type': 'special'}]
+    return Keyword(), Special()
 
 
 def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier):
@@ -187,12 +206,12 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             return suggest_based_on_last_token('type', text_before_cursor,
                                            full_text, identifier)
         else:
-            return [{'type': 'keyword'}]
+            return Keyword(),
     else:
         token_v = token.value.lower()
 
     if not token:
-        return [{'type': 'keyword'}, {'type': 'special'}]
+        return Keyword(), Special()
     elif token_v.endswith('('):
         p = sqlparse.parse(text_before_cursor)[0]
 
@@ -221,7 +240,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
 
             prev_tok = prev_tok.value.lower()
             if prev_tok == 'exists':
-                return [{'type': 'keyword'}]
+                return Keyword(),
             else:
                 return column_suggestions
 
@@ -232,89 +251,89 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             tables = extract_tables(full_text)
 
             # suggest columns that are present in more than one table
-            return [{'type': 'column', 'tables': tables, 'drop_unique': True}]
+            return Column(tables=tables, drop_unique=True),
+
         elif p.token_first().value.lower() == 'select':
             # If the lparen is preceeded by a space chances are we're about to
             # do a sub-select.
             if last_word(text_before_cursor,
-                    'all_punctuations').startswith('('):
-                return [{'type': 'keyword'}]
-
+                         'all_punctuations').startswith('('):
+                return Keyword(),
         # We're probably in a function argument list
-        return [{'type': 'column', 'tables': extract_tables(full_text)}]
+        return Column(tables=extract_tables(full_text)),
     elif token_v in ('set', 'by', 'distinct'):
-        return [{'type': 'column', 'tables': extract_tables(full_text)}]
+        return Column(tables=extract_tables(full_text)),
     elif token_v in ('select', 'where', 'having'):
         # Check for a table alias or schema qualification
         parent = (identifier and identifier.get_parent_name()) or []
 
         if parent:
             tables = extract_tables(full_text)
-            tables = [t for t in tables if identifies(parent, t)]
-            return [{'type': 'column', 'tables': tables},
-                    {'type': 'table', 'schema': parent},
-                    {'type': 'view', 'schema': parent},
-                    {'type': 'function', 'schema': parent}]
+            tables = tuple(t for t in tables if identifies(parent, t))
+            return (Column(tables=tables),
+                    Table(schema=parent),
+                    View(schema=parent),
+                    Function(schema=parent),)
         else:
-            return [{'type': 'column', 'tables': extract_tables(full_text)},
-                    {'type': 'function', 'schema': []},
-                    {'type': 'keyword'}]
+            return (Column(tables=extract_tables(full_text)),
+                    Function(schema=None),
+                    Keyword(),)
+
     elif (token_v.endswith('join') and token.is_keyword) or (token_v in
             ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
         
-        schema = (identifier and identifier.get_parent_name()) or []
+        schema = (identifier and identifier.get_parent_name()) or None
 
         # Suggest tables from either the currently-selected schema or the
         # public schema if no schema has been specified
-        suggest = [{'type': 'table', 'schema': schema}]
+        suggest = [Table(schema=schema)]
 
         if not schema:
             # Suggest schemas
-            suggest.insert(0, {'type': 'schema'})
+            suggest.insert(0, Schema())
 
         # Only tables can be TRUNCATED, otherwise suggest views
         if token_v != 'truncate':
-            suggest.append({'type': 'view', 'schema': schema})
+            suggest.append(View(schema=schema))
             
         # Suggest set-returning functions in the FROM clause
         if token_v == 'from' or (token_v.endswith('join') and token.is_keyword):
-            suggest.append({'type': 'function', 'schema': schema,
-                            'filter': 'is_set_returning'})
+            suggest.append(Function(schema=schema, filter='is_set_returning'))
 
         return suggest
 
     elif token_v in ('table', 'view', 'function'):
         # E.g. 'DROP FUNCTION <funcname>', 'ALTER TABLE <tablname>'
-        rel_type = token_v
-        schema = (identifier and identifier.get_parent_name()) or []
+        rel_type = {'table': Table, 'view': View, 'function': Function}[token_v]
+        schema = (identifier and identifier.get_parent_name()) or None
         if schema:
-            return [{'type': rel_type, 'schema': schema}]
+            return rel_type(schema=schema),
         else:
-            return [{'type': 'schema'}, {'type': rel_type, 'schema': []}]
+            return Schema(), rel_type(schema=schema)
     elif token_v == 'on':
         tables = extract_tables(full_text)  # [(schema, table, alias), ...]
-        parent = (identifier and identifier.get_parent_name()) or []
+        parent = (identifier and identifier.get_parent_name()) or None
         if parent:
             # "ON parent.<suggestion>"
             # parent can be either a schema name or table alias
-            tables = [t for t in tables if identifies(parent, t)]
-            return [{'type': 'column', 'tables': tables},
-                    {'type': 'table', 'schema': parent},
-                    {'type': 'view', 'schema': parent},
-                    {'type': 'function', 'schema': parent}]
+            tables = tuple(t for t in tables if identifies(parent, t))
+            return (Column(tables=tables),
+                    Table(schema=parent),
+                    View(schema=parent),
+                    Function(schema=parent))
         else:
             # ON <suggestion>
             # Use table alias if there is one, otherwise the table name
-            aliases = [t.alias or t.name for t in tables]
-            return [{'type': 'alias', 'aliases': aliases}]
+            aliases = tuple(t.alias or t.name for t in tables)
+            return Alias(aliases=aliases),
 
     elif token_v in ('c', 'use', 'database', 'template'):
         # "\c <db", "use <db>", "DROP DATABASE <db>",
         # "CREATE DATABASE <newdb> WITH TEMPLATE <db>"
-        return [{'type': 'database'}]
+        return Database(),
     elif token_v == 'schema':
         # DROP SCHEMA schema_name
-        return [{'type': 'schema'}]
+        return Schema(),
     elif token_v.endswith(',') or token_v in ('=', 'and', 'or'):
         prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
         if prev_keyword:
@@ -327,14 +346,14 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         #   SELECT foo::bar
         # Note that tables are a form of composite type in postgresql, so
         # they're suggested here as well
-        schema = (identifier and identifier.get_parent_name()) or []
-        suggestions = [{'type': 'datatype', 'schema': schema},
-                       {'type': 'table', 'schema': schema}]
+        schema = (identifier and identifier.get_parent_name()) or None
+        suggestions = [Datatype(schema=schema),
+                       Table(schema=schema)]
         if not schema:
-            suggestions.append({'type': 'schema'})
+            suggestions.append(Schema())
         return suggestions
     else:
-        return [{'type': 'keyword'}]
+        return Keyword(),
 
 
 def identifies(id, ref):

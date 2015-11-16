@@ -6,7 +6,9 @@ import operator
 from collections import namedtuple
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
-from .packages.sqlcompletion import suggest_type
+from .packages.sqlcompletion import (
+    suggest_type, Special, Database, Schema, Table, Function, Column, View,
+    Keyword, NamedQuery, Datatype, Alias)
 from .packages.parseutils import last_word
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
@@ -266,11 +268,12 @@ class PGCompleter(Completer):
         suggestions = suggest_type(document.text, document.text_before_cursor)
 
         for suggestion in suggestions:
-            _logger.debug('Suggestion type: %r', suggestion['type'])
+            suggestion_type = type(suggestion)
+            _logger.debug('Suggestion type: %r', suggestion_type)
 
             # Map suggestion type to method
             # e.g. 'table' -> self.get_table_matches
-            matcher = self.suggestion_matchers[suggestion['type']]
+            matcher = self.suggestion_matchers[suggestion_type]
             matches.extend(matcher(self, suggestion, word_before_cursor))
 
         # Sort matches so highest priorities are first
@@ -280,11 +283,11 @@ class PGCompleter(Completer):
         return [m.completion for m in matches]
 
     def get_column_matches(self, suggestion, word_before_cursor):
-        tables = suggestion['tables']
+        tables = suggestion.tables
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables)
 
-        if suggestion.get('drop_unique'):
+        if suggestion.drop_unique:
             # drop_unique is used for 'tb11 JOIN tbl2 USING (...' which should
             # suggest only columns that appear in more than one table
             scoped_cols = [col for (col, count)
@@ -294,13 +297,13 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, scoped_cols, meta='column')
 
     def get_function_matches(self, suggestion, word_before_cursor):
-        if suggestion.get('filter') == 'is_set_returning':
+        if suggestion.filter == 'is_set_returning':
             # Only suggest set-returning functions
             filt = operator.attrgetter('is_set_returning')
-            funcs = self.populate_functions(suggestion['schema'], filt)
+            funcs = self.populate_functions(suggestion.schema, filt)
         else:
             funcs = self.populate_schema_objects(
-                suggestion['schema'], 'functions')
+                suggestion.schema, 'functions')
 
         # Function overloading means we way have multiple functions of the same
         # name at this point, so keep unique names only
@@ -308,7 +311,7 @@ class PGCompleter(Completer):
 
         funcs = self.find_matches(word_before_cursor, funcs, meta='function')
 
-        if not suggestion['schema'] and 'filter' not in suggestion:
+        if not suggestion.schema and not suggestion.filter:
             # also suggest hardcoded functions using startswith matching
             predefined_funcs = self.find_matches(
                 word_before_cursor, self.functions, mode='strict',
@@ -328,27 +331,27 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, schema_names, meta='schema')
 
     def get_table_matches(self, suggestion, word_before_cursor):
-        tables = self.populate_schema_objects(suggestion['schema'], 'tables')
+        tables = self.populate_schema_objects(suggestion.schema, 'tables')
 
         # Unless we're sure the user really wants them, don't suggest the
         # pg_catalog tables that are implicitly on the search path
-        if not suggestion['schema'] and (
+        if not suggestion.schema and (
                 not word_before_cursor.startswith('pg_')):
             tables = [t for t in tables if not t.startswith('pg_')]
 
         return self.find_matches(word_before_cursor, tables, meta='table')
 
     def get_view_matches(self, suggestion, word_before_cursor):
-        views = self.populate_schema_objects(suggestion['schema'], 'views')
+        views = self.populate_schema_objects(suggestion.schema, 'views')
 
-        if not suggestion['schema'] and (
+        if not suggestion.schema and (
                 not word_before_cursor.startswith('pg_')):
             views = [v for v in views if not v.startswith('pg_')]
 
         return self.find_matches(word_before_cursor, views, meta='view')
 
     def get_alias_matches(self, suggestion, word_before_cursor):
-        aliases = suggestion['aliases']
+        aliases = suggestion.aliases
         return self.find_matches(word_before_cursor, aliases,
                                  meta='table alias')
 
@@ -372,10 +375,10 @@ class PGCompleter(Completer):
 
     def get_datatype_matches(self, suggestion, word_before_cursor):
         # suggest custom datatypes
-        types = self.populate_schema_objects(suggestion['schema'], 'datatypes')
+        types = self.populate_schema_objects(suggestion.schema, 'datatypes')
         matches = self.find_matches(word_before_cursor, types, meta='datatype')
 
-        if not suggestion['schema']:
+        if not suggestion.schema:
             # Also suggest hardcoded types
             matches.extend(self.find_matches(word_before_cursor, self.datatypes,
                                              mode='strict', meta='datatype'))
@@ -387,17 +390,17 @@ class PGCompleter(Completer):
             word_before_cursor, NamedQueries.instance.list(), meta='named query')
 
     suggestion_matchers = {
-        'column': get_column_matches,
-        'function': get_function_matches,
-        'schema': get_schema_matches,
-        'table': get_table_matches,
-        'view': get_view_matches,
-        'alias': get_alias_matches,
-        'database': get_database_matches,
-        'keyword': get_keyword_matches,
-        'special': get_special_matches,
-        'datatype': get_datatype_matches,
-        'namedquery': get_namedquery_matches,
+        Column: get_column_matches,
+        Function: get_function_matches,
+        Schema: get_schema_matches,
+        Table: get_table_matches,
+        View: get_view_matches,
+        Alias: get_alias_matches,
+        Database: get_database_matches,
+        Keyword: get_keyword_matches,
+        Special: get_special_matches,
+        Datatype: get_datatype_matches,
+        NamedQuery: get_namedquery_matches,
     }
 
     def populate_scoped_cols(self, scoped_tbls):
