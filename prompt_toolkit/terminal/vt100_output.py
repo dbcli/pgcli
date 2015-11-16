@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
-from pygments.formatters.terminal256 import Terminal256Formatter, EscapeSequence
+from pygments.formatters.terminal256 import Terminal256Formatter
 
 from prompt_toolkit.layout.screen import Size
 from prompt_toolkit.renderer import Output
+from prompt_toolkit.styles import ANSI_COLOR_NAMES
 
 import array
 import errno
@@ -22,30 +23,103 @@ _tf = Terminal256Formatter()
 _DEBUG_RENDER_OUTPUT = False
 _DEBUG_RENDER_OUTPUT_FILENAME = '/tmp/prompt-toolkit-render-output'
 
+FG_ANSI_COLORS = {
+    'black':   30,
+    'default': 39,
+    'white':   97,
+
+    # Low intensity.
+    'red':     31,
+    'green':   32,
+    'yellow':  33,
+    'blue':    34,
+    'magenta': 35,
+    'cyan':    36,
+    'gray':    37,
+
+
+    # High intensity.
+    'dark-gray':      90,  # Bright black.
+    'bright-red':     91,
+    'bright-green':   92,
+    'bright-yellow':  93,
+    'bright-blue':    94,
+    'bright-magenta': 95,
+    'bright-cyan':    96,
+}
+
+BG_ANSI_COLORS = {
+    'black':   40,
+    'default': 49,
+    'white':   107,
+
+    # Low intensity.
+    'red':     41,
+    'green':   42,
+    'yellow':  43,
+    'blue':    44,
+    'magenta': 45,
+    'cyan':    46,
+    'gray':    47,
+
+    # High intensity.
+    'dark-gray':      100,  # bright black.
+    'bright-red':     101,
+    'bright-green':   102,
+    'bright-yellow':  103,
+    'bright-blue':    104,
+    'bright-magenta': 105,
+    'bright-cyan':    106,
+}
+
+assert set(FG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
+assert set(BG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
+
 
 class _EscapeCodeCache(dict):
     """
     Cache for VT100 escape codes. It maps
-    (fgcolor, bgcolor, bold, underline) tuples to VT100 escape sequences.
+    (fgcolor, bgcolor, bold, underline, reverse) tuples to VT100 escape sequences.
     """
     def __missing__(self, attrs):
         fgcolor, bgcolor, bold, underline, italic, reverse = attrs
 
-        fg = _tf._color_index(fgcolor) if fgcolor else None
-        bg = _tf._color_index(bgcolor) if bgcolor else None
+        parts = []
 
-        e = EscapeSequence(fg=fg, bg=bg, bold=bold, underline=underline).color_string()
-
-        # Add escape sequence for 'italic'.
+        if fgcolor:
+            parts.extend(self._color_to_code(fgcolor))
+        if bgcolor:
+            parts.extend(self._color_to_code(bgcolor, True))
+        if bold:
+            parts.append('01')
+        if underline:
+            parts.append('04')
         if italic:
-            e += '\x1b[3m'
-
-        # Add escape sequence for 'reverse'.
+            parts.append('03')
         if reverse:
-            e += '\x1b[7m'
+            parts.append('07')
 
-        self[attrs] = e
-        return e
+        if parts:
+            result = '\x1b[' + ';'.join(parts) + 'm'
+        else:
+            result = ''
+
+        self[attrs] = result
+        return result
+
+    def _color_to_code(self, color, bg=False):
+       table = BG_ANSI_COLORS if bg else FG_ANSI_COLORS
+
+       # 16 ANSI colors.
+       if color in table:
+           result = (table[color], )
+
+       # 256 RGB colors.
+       else:
+           result = (48 if bg else 38, 5, _tf._color_index(color))
+
+       return map(six.text_type, result)
+
 
 _ESCAPE_CODE_CACHE = _EscapeCodeCache()
 

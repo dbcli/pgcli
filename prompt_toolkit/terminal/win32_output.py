@@ -4,6 +4,7 @@ from ctypes import windll, byref, ArgumentError, c_char, c_long, c_ulong, c_uint
 from ctypes.wintypes import DWORD
 
 from prompt_toolkit.renderer import Output
+from prompt_toolkit.styles import ANSI_COLOR_NAMES
 from prompt_toolkit.win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, STD_INPUT_HANDLE, COORD, SMALL_RECT
 
 import six
@@ -329,7 +330,7 @@ class FOREGROUND_COLOR:
     RED       = 0x0004
     MAGENTA   = 0x0005
     YELLOW    = 0x0006
-    GREY      = 0x0007
+    GRAY      = 0x0007
     INTENSITY = 0x0008  # Foreground color is intensified.
 
 
@@ -341,8 +342,42 @@ class BACKROUND_COLOR:
     RED       = 0x0040
     MAGENTA   = 0x0050
     YELLOW    = 0x0060
-    GREY      = 0x0070
+    GRAY      = 0x0070
     INTENSITY = 0x0080  # Background color is intensified.
+
+
+def _create_ansi_color_dict(color_cls):
+    " Create a table that maps the 16 named ansi colors to their Windows code. "
+    return {
+        'black':   color_cls.BLACK,
+        'default': color_cls.BLACK,
+        'white':   color_cls.GRAY | color_cls.INTENSITY,
+
+        # Low intensity.
+        'red':     color_cls.RED,
+        'green':   color_cls.GREEN,
+        'yellow':  color_cls.YELLOW,
+        'blue':    color_cls.BLUE,
+        'magenta': color_cls.MAGENTA,
+        'cyan':    color_cls.CYAN,
+        'gray':    color_cls.GRAY,
+
+
+        # High intensity.
+        'dark-gray':      color_cls.BLACK | color_cls.INTENSITY,
+        'bright-red':     color_cls.RED | color_cls.INTENSITY,
+        'bright-green':   color_cls.GREEN | color_cls.INTENSITY,
+        'bright-yellow':  color_cls.YELLOW | color_cls.INTENSITY,
+        'bright-blue':    color_cls.BLUE | color_cls.INTENSITY,
+        'bright-magenta': color_cls.MAGENTA | color_cls.INTENSITY,
+        'bright-cyan':    color_cls.CYAN | color_cls.INTENSITY,
+    }
+
+FG_ANSI_COLORS = _create_ansi_color_dict(FOREGROUND_COLOR)
+BG_ANSI_COLORS = _create_ansi_color_dict(BACKROUND_COLOR)
+
+assert set(FG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
+assert set(BG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
 
 
 class ColorLookupTable(object):
@@ -369,7 +404,7 @@ class ColorLookupTable(object):
             (0xaa, 0x00, 0x00, FG.RED, BG.RED),
             (0xaa, 0x00, 0xaa, FG.MAGENTA, BG.MAGENTA),
             (0xaa, 0xaa, 0x00, FG.YELLOW, BG.YELLOW),
-            (0x88, 0x88, 0x88, FG.GREY, BG.GREY),
+            (0x88, 0x88, 0x88, FG.GRAY, BG.GRAY),
 
             (0x44, 0x44, 0xff, FG.BLUE | FG.INTENSITY, BG.BLUE | BG.INTENSITY),
             (0x44, 0xff, 0x44, FG.GREEN | FG.INTENSITY, BG.GREEN | BG.INTENSITY),
@@ -378,7 +413,7 @@ class ColorLookupTable(object):
             (0xff, 0x44, 0xff, FG.MAGENTA | FG.INTENSITY, BG.MAGENTA | BG.INTENSITY),
             (0xff, 0xff, 0x44, FG.YELLOW | FG.INTENSITY, BG.YELLOW | BG.INTENSITY),
 
-            (0xff, 0xff, 0xff, FG.GREY | FG.INTENSITY, BG.GREY | BG.INTENSITY),
+            (0xff, 0xff, 0xff, FG.GRAY | FG.INTENSITY, BG.GRAY | BG.INTENSITY),
         ]
 
     def _closest_color(self, r, g, b):
@@ -419,15 +454,24 @@ class ColorLookupTable(object):
         Return the color for use in the
         `windll.kernel32.SetConsoleTextAttribute` API call.
 
-        :param fg_color: Foreground as text. E.g. 'ffffff'
-        :param bg_color: Background as text. E.g. 'ffffff'
+        :param fg_color: Foreground as text. E.g. 'ffffff' or 'red'
+        :param bg_color: Background as text. E.g. 'ffffff' or 'red'
         """
         # Take white as the default foreground color.
         # (otherwise many things will be invisible.)
         if fg_color is None:
             fg_color = 'ffffff'
 
-        fg_index = self._color_indexes(fg_color)[0]
-        bg_index = self._color_indexes(bg_color)[1]
+        # Foreground.
+        if fg_color in FG_ANSI_COLORS:
+            fg_index = FG_ANSI_COLORS[fg_color]
+        else:
+            fg_index = self._color_indexes(fg_color)[0]
+
+        # Background.
+        if bg_color in BG_ANSI_COLORS:
+            bg_index = BG_ANSI_COLORS[bg_color]
+        else:
+            bg_index = self._color_indexes(bg_color)[1]
 
         return fg_index | bg_index

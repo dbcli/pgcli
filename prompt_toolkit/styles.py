@@ -36,6 +36,21 @@ Attrs = namedtuple('Attrs', 'color bgcolor bold underline italic reverse')
 _default_attrs = Attrs(color=None, bgcolor=None, bold=False, underline=False,
                        italic=False, reverse=False)
 
+#: ``Attrs.bgcolor/fgcolor`` can be in either 'ffffff' format, or can be any of
+#: the following in case we want to take colors from the 8/16 color palette.
+#: Usually, in that case, the terminal application allows to configure the RGB
+#: values for these names.
+ANSI_COLOR_NAMES = [
+    'black', 'white', 'default',
+
+    # Low intensity.
+    'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray',
+
+    # High intensity. (Not supported everywhere.)
+    'dark-gray', 'bright-red', 'bright-green', 'bright-yellow', 'bright-blue',
+    'bright-magenta', 'bright-cyan',
+]
+
 
 class Style(with_metaclass(ABCMeta, object)):
     """
