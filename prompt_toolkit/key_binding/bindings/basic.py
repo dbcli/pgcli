@@ -375,7 +375,7 @@ def load_basic_bindings(registry, filter=Always()):
         y -= 1
 
         # Only handle mouse events when we know the window height.
-        if event.cli.renderer.height_is_known:
+        if event.cli.renderer.height_is_known and mouse_event is not None:
             # Take region above the layout into account. The reported
             # coordinates are absolute to the visible part of the terminal.
             try:
