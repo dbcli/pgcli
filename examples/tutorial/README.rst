@@ -187,7 +187,7 @@ Let's get started!
        import sys
        import sqlite3
 
-       from prompt_toolkit import prompt
+       from prompt_toolkit import prompt, AbortAction
        from prompt_toolkit.history import InMemoryHistory
        from prompt_toolkit.contrib.completers import WordCompleter
        from pygments.lexers import SqlLexer
