@@ -300,7 +300,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         if token_v == 'from' or (token_v.endswith('join') and token.is_keyword):
             suggest.append(Function(schema=schema, filter='is_set_returning'))
 
-        return suggest
+        return tuple(suggest)
 
     elif token_v in ('table', 'view', 'function'):
         # E.g. 'DROP FUNCTION <funcname>', 'ALTER TABLE <tablname>'
@@ -340,7 +340,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             return suggest_based_on_last_token(
                 prev_keyword, text_before_cursor, full_text, identifier)
         else:
-            return []
+            return ()
     elif token_v in ('type', '::'):
         #   ALTER TABLE foo SET DATA TYPE bar
         #   SELECT foo::bar
@@ -351,7 +351,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
                        Table(schema=schema)]
         if not schema:
             suggestions.append(Schema())
-        return suggestions
+        return tuple(suggestions)
     else:
         return Keyword(),
 
