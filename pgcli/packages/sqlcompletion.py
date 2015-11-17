@@ -126,13 +126,13 @@ def suggest_special(text):
 
     if cmd == text:
         # Trying to complete the special command itself
-        return Special(),
+        return (Special(),)
 
     if cmd in ('\\c', '\\connect'):
-        return Database(),
+        return (Database(),)
 
     if cmd == '\\dn':
-        return Schema(),
+        return (Schema(),)
 
     if arg:
         # Try to distinguish "\d name" from "\d schema.name"
@@ -162,14 +162,14 @@ def suggest_special(text):
                     'dT': Datatype,
                     }[cmd[1:]]
         if schema:
-            return rel_type(schema=schema),
+            return (rel_type(schema=schema),)
         else:
-            return Schema(), rel_type(schema=None)
+            return (Schema(), rel_type(schema=None))
 
     if cmd in ['\\n', '\\ns', '\\nd']:
-        return NamedQuery(),
+        return (NamedQuery(),)
 
-    return Keyword(), Special()
+    return (Keyword(), Special())
 
 
 def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier):
@@ -206,12 +206,12 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             return suggest_based_on_last_token('type', text_before_cursor,
                                            full_text, identifier)
         else:
-            return Keyword(),
+            return (Keyword(),)
     else:
         token_v = token.value.lower()
 
     if not token:
-        return Keyword(), Special()
+        return (Keyword(), Special())
     elif token_v.endswith('('):
         p = sqlparse.parse(text_before_cursor)[0]
 
@@ -240,7 +240,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
 
             prev_tok = prev_tok.value.lower()
             if prev_tok == 'exists':
-                return Keyword(),
+                return (Keyword(),)
             else:
                 return column_suggestions
 
@@ -251,18 +251,18 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             tables = extract_tables(full_text)
 
             # suggest columns that are present in more than one table
-            return Column(tables=tables, drop_unique=True),
+            return (Column(tables=tables, drop_unique=True),)
 
         elif p.token_first().value.lower() == 'select':
             # If the lparen is preceeded by a space chances are we're about to
             # do a sub-select.
             if last_word(text_before_cursor,
                          'all_punctuations').startswith('('):
-                return Keyword(),
+                return (Keyword(),)
         # We're probably in a function argument list
-        return Column(tables=extract_tables(full_text)),
+        return (Column(tables=extract_tables(full_text)),)
     elif token_v in ('set', 'by', 'distinct'):
-        return Column(tables=extract_tables(full_text)),
+        return (Column(tables=extract_tables(full_text)),)
     elif token_v in ('select', 'where', 'having'):
         # Check for a table alias or schema qualification
         parent = (identifier and identifier.get_parent_name()) or []
@@ -307,9 +307,9 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         rel_type = {'table': Table, 'view': View, 'function': Function}[token_v]
         schema = (identifier and identifier.get_parent_name()) or None
         if schema:
-            return rel_type(schema=schema),
+            return (rel_type(schema=schema),)
         else:
-            return Schema(), rel_type(schema=schema)
+            return (Schema(), rel_type(schema=schema))
     elif token_v == 'on':
         tables = extract_tables(full_text)  # [(schema, table, alias), ...]
         parent = (identifier and identifier.get_parent_name()) or None
@@ -325,15 +325,15 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             # ON <suggestion>
             # Use table alias if there is one, otherwise the table name
             aliases = tuple(t.alias or t.name for t in tables)
-            return Alias(aliases=aliases),
+            return (Alias(aliases=aliases),)
 
     elif token_v in ('c', 'use', 'database', 'template'):
         # "\c <db", "use <db>", "DROP DATABASE <db>",
         # "CREATE DATABASE <newdb> WITH TEMPLATE <db>"
-        return Database(),
+        return (Database(),)
     elif token_v == 'schema':
         # DROP SCHEMA schema_name
-        return Schema(),
+        return (Schema(),)
     elif token_v.endswith(',') or token_v in ('=', 'and', 'or'):
         prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
         if prev_keyword:
@@ -353,7 +353,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             suggestions.append(Schema())
         return tuple(suggestions)
     else:
-        return Keyword(),
+        return (Keyword(),)
 
 
 def identifies(id, ref):
