@@ -189,8 +189,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         # 'where foo > 5 and '. We need to look "inside" token.tokens to handle
         # suggestions in complicated where clauses correctly
         prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
-        return suggest_based_on_last_token(prev_keyword, text_before_cursor,
-                                           full_text, identifier)
+        return suggest_based_on_last_token(
+            prev_keyword, text_before_cursor, full_text, identifier)
     elif isinstance(token, Identifier):
         # If the previous token is an identifier, we can suggest datatypes if
         # we're in a parenthesized column/field list, e.g.:
@@ -203,8 +203,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         prev_keyword, _ = find_prev_keyword(text_before_cursor)
         if prev_keyword and prev_keyword.value == '(':
             # Suggest datatypes
-            return suggest_based_on_last_token('type', text_before_cursor,
-                                           full_text, identifier)
+            return suggest_based_on_last_token(
+                'type', text_before_cursor, full_text, identifier)
         else:
             return (Keyword(),)
     else:
@@ -227,8 +227,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             #        Suggest columns/functions AND keywords. (If we wanted to be
             #        really fancy, we could suggest only array-typed columns)
 
-            column_suggestions = suggest_based_on_last_token('where',
-                                    text_before_cursor, full_text, identifier)
+            column_suggestions = suggest_based_on_last_token(
+                'where', text_before_cursor, full_text, identifier)
 
             # Check for a subquery expression (cases 3 & 4)
             where = p.tokens[-1]
