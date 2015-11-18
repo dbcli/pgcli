@@ -23,7 +23,7 @@ class PosixStdinReader(object):
         self._stdin_decoder_cls = getincrementaldecoder('utf-8')
         self._stdin_decoder = self._stdin_decoder_cls()
 
-    def read(self, count=128):
+    def read(self, count=1024):
             # By default we choose a rather small chunk size, because reading
             # big amounts of input at once, causes the event loop to process
             # all these key bindings also at once without going back to the

@@ -319,6 +319,11 @@ def load_basic_bindings(registry, filter=Always()):
         # Report absolute cursor position to the renderer.
         event.cli.renderer.report_absolute_cursor_row(row)
 
+    @registry.add_binding(Keys.BracketedPaste)
+    def _(event):
+        " Pasting from clipboard. "
+        event.current_buffer.insert_text(event.data)
+
     @registry.add_binding(Keys.Vt100MouseEvent)
     def _(event):
         """

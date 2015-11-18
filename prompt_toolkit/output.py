@@ -120,3 +120,9 @@ class Output(with_metaclass(ABCMeta, object)):
         Asks for a cursor position report (CPR).
         (VT100 only.)
         """
+
+    def enable_bracketed_paste(self):
+        " For vt100 only. "
+
+    def disable_bracketed_paste(self):
+        " For vt100 only. "

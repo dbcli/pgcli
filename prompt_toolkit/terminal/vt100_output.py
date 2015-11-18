@@ -255,6 +255,12 @@ class Vt100_Output(Output):
     def enable_autowrap(self):
         self._write('\x1b[?7h')
 
+    def enable_bracketed_paste(self):
+        self._write('\x1b[?2004h')
+
+    def disable_bracketed_paste(self):
+        self._write('\x1b[?2004l')
+
     def cursor_goto(self, row=0, column=0):
         """ Move cursor position. """
         self._write('\x1b[%i;%iH' % (row, column))

@@ -138,6 +138,8 @@ ANSI_SEQUENCES = {
     '\x1b[5C': Keys.ControlRight,
     '\x1b[5D': Keys.ControlLeft,
 
+    '\x1b[200~': Keys.BracketedPaste,  # Start of bracketed paste.
+
     # Meta + arrow keys. Several terminals handle this differently.
     # The following sequences are for xterm and gnome-terminal.
     #     (Iterm sends ESC followed by the normal arrow_up/down/left/right
@@ -204,6 +206,7 @@ class InputStream(object):
             self.LOG = open(_DEBUG_RENDERER_INPUT_FILENAME, 'ab')
 
     def reset(self, request=False):
+        self._in_bracketed_paste = False
         self._start_parser()
 
     def _start_parser(self):
@@ -290,11 +293,17 @@ class InputStream(object):
             for k in key:
                 self._call_handler(k, insert_text)
         else:
-            self.feed_key_callback(KeyPress(key, insert_text))
+            if key == Keys.BracketedPaste:
+                self._in_bracketed_paste = True
+                self._paste_buffer = ''
+            else:
+                self.feed_key_callback(KeyPress(key, insert_text))
 
     def feed(self, data):
         """
         Feed the input stream.
+
+        :param data: Input string (unicode).
         """
         assert isinstance(data, six.text_type)
 
@@ -302,14 +311,41 @@ class InputStream(object):
             self.LOG.write(repr(data).encode('utf-8') + b'\n')
             self.LOG.flush()
 
-        for c in data:
-            # Replace \r by \n. (Some clients send \r instead of \n when enter
-            # is pressed. E.g. telnet and some other terminals.)
-            # It's also too complicated to handle \r and \n separetely in the
-            # key bindings.
-            if c == '\r':
-                c = '\n'
-            self._input_parser.send(c)
+        # Handle bracketed paste. (We bypass the parser that matches all other
+        # key presses and keep reading input until we see the end mark.)
+        # This is much faster then parsing character by character.
+        if self._in_bracketed_paste:
+            self._paste_buffer += data
+            end_mark = '\x1b[201~'
+
+            if end_mark in self._paste_buffer:
+                end_index = self._paste_buffer.index(end_mark)
+
+                # Feed content to key bindings.
+                paste_content = self._paste_buffer[:end_index]
+                self.feed_key_callback(KeyPress(Keys.BracketedPaste, paste_content))
+
+                # Quit bracketed paste mode and handle remaining input.
+                self._in_bracketed_paste = False
+                self._paste_buffer = ''
+                self.feed(self._paste_buffer[end_index + len(end_mark):])
+
+        # Handle normal input character by character.
+        else:
+            for i, c in enumerate(data):
+                if self._in_bracketed_paste:
+                    # Quit loop and process from this position when the parser
+                    # entered bracketed paste.
+                    self.feed(data[i:])
+                    break
+                else:
+                    # Replace \r by \n. (Some clients send \r instead of \n
+                    # when enter is pressed. E.g. telnet and some other
+                    # terminals.) It's also too complicated to handle \r and \n
+                    # separetely in the key bindings.
+                    if c == '\r':
+                        c = '\n'
+                    self._input_parser.send(c)
 
     def flush(self):
         """

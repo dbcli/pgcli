@@ -240,6 +240,7 @@ class Renderer(object):
 
         self._in_alternate_screen = False
         self._mouse_support_enabled = False
+        self._bracketed_paste_enabled = False
 
         self.reset(_scroll=True)
 
@@ -284,6 +285,10 @@ class Renderer(object):
         if self._mouse_support_enabled:
             self.output.disable_mouse_support()
             self._mouse_support_enabled = False
+
+        # Disable bracketed paste.
+        if self._bracketed_paste_enabled:
+            self.output.disable_bracketed_paste()
 
         # Flush output. `disable_mouse_support` needs to write to stdout.
         self.output.flush()
@@ -359,6 +364,11 @@ class Renderer(object):
         if self.use_alternate_screen and not self._in_alternate_screen:
             self._in_alternate_screen = True
             output.enter_alternate_screen()
+
+        # Enable bracketed paste.
+        if not self._bracketed_paste_enabled:
+            self.output.enable_bracketed_paste()
+            self._bracketed_paste_enabled = True
 
         # Enable/disable mouse support.
         needs_mouse_support = self.mouse_support(cli)

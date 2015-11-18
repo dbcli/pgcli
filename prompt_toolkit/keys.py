@@ -101,3 +101,4 @@ class Keys(object):
     CPRResponse = Key('<Cursor-Position-Response>')
     Vt100MouseEvent = Key('<Vt100-Mouse-Event>')
     WindowsMouseEvent = Key('<Windows-Mouse-Event>')
+    BracketedPaste = Key('<Bracketed-Paste>')
