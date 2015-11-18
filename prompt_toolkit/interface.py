@@ -449,15 +449,13 @@ class CommandLineInterface(object):
         sub_cli._redraw()
         self._sub_cli = sub_cli
 
-    def set_exit(self):
+    def exit(self):
         """
         Set exit. When Control-D has been pressed.
         """
         on_exit = self.application.on_exit
-
-        if on_exit != AbortAction.IGNORE:
-            self._exit_flag = True
-            self._redraw()
+        self._exit_flag = True
+        self._redraw()
 
         if on_exit == AbortAction.RAISE_EXCEPTION:
             def eof_error():
@@ -472,15 +470,13 @@ class CommandLineInterface(object):
         elif on_exit == AbortAction.RETURN_NONE:
             self.set_return_value(None)
 
-    def set_abort(self):
+    def abort(self):
         """
         Set abort. When Control-C has been pressed.
         """
         on_abort = self.application.on_abort
-
-        if on_abort != AbortAction.IGNORE:
-            self._abort_flag = True
-            self._redraw()
+        self._abort_flag = True
+        self._redraw()
 
         if on_abort == AbortAction.RAISE_EXCEPTION:
             def keyboard_interrupt():
@@ -494,6 +490,10 @@ class CommandLineInterface(object):
 
         elif on_abort == AbortAction.RETURN_NONE:
             self.set_return_value(None)
+
+    # Deprecated aliase for exit/abort.
+    set_exit = exit
+    set_abort = abort
 
     def set_return_value(self, document):
         """

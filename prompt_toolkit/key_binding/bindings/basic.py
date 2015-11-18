@@ -426,7 +426,7 @@ def load_abort_and_exit_bindings(registry, filter=Always()):
     @handle(Keys.ControlC)
     def _(event):
         " Abort when Control-C has been pressed. "
-        event.cli.set_abort()
+        event.cli.abort()
 
     @Condition
     def ctrl_d_condition(cli):
@@ -438,7 +438,7 @@ def load_abort_and_exit_bindings(registry, filter=Always()):
     @handle(Keys.ControlD, filter=ctrl_d_condition)
     def _(event):
         " Exit on Control-D when the input is empty. "
-        event.cli.set_exit()
+        event.cli.exit()
 
 
 def load_basic_system_bindings(registry, filter=Always()):

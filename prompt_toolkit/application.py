@@ -24,12 +24,11 @@ class AbortAction(object):
     """
     Actions to take on an Exit or Abort exception.
     """
-    IGNORE = 'ignore'
     RETRY = 'retry'
     RAISE_EXCEPTION = 'raise-exception'
     RETURN_NONE = 'return-none'
 
-    _all = (IGNORE, RETRY, RAISE_EXCEPTION, RETURN_NONE)
+    _all = (RETRY, RAISE_EXCEPTION, RETURN_NONE)
 
 
 class Application(object):
@@ -79,7 +78,7 @@ class Application(object):
                  initial_focussed_buffer=DEFAULT_BUFFER,
                  style=None,
                  key_bindings_registry=None, clipboard=None,
-                 on_abort=AbortAction.IGNORE, on_exit=AbortAction.IGNORE,
+                 on_abort=AbortAction.RAISE_EXCEPTION, on_exit=AbortAction.RAISE_EXCEPTION,
                  use_alternate_screen=False, mouse_support=False,
                  get_title=None, focus_stack=None,
 
