@@ -396,23 +396,47 @@ class FloatContainer(Container):
 
 
 class Float(object):
+    """
+    Float for use in a :class:`.FloatContainer`.
+
+    :param content: :class:`.Container` instance.
+    """
     def __init__(self, top=None, right=None, bottom=None, left=None,
-                 width=None, height=None,
+                 width=None, height=None, get_width=None, get_height=None,
                  xcursor=False, ycursor=False, content=None):
         assert isinstance(content, Container)
+        assert width is None or get_width is None
+        assert height is None or get_height is None
 
         self.left = left
         self.right = right
         self.top = top
         self.bottom = bottom
 
-        self.width = width
-        self.height = height
+        self._width = width
+        self._height = height
+
+        self._get_width = get_width
+        self._get_height = get_height
 
         self.xcursor = xcursor
         self.ycursor = ycursor
 
         self.content = content
+
+    @property
+    def width(self):
+        if self._width:
+            return self._width
+        if self._get_width:
+            return self._get_width()
+
+    @property
+    def height(self):
+        if self._height:
+            return self._height
+        if self._get_height:
+            return self._get_height()
 
     def __repr__(self):
         return 'Float(content=%r)' % self.content
