@@ -94,7 +94,7 @@ class PosixEventLoop(EventLoop):
                     if self._inputhook_context:
                         def ready(wait):
                             " True when there is input ready. The inputhook should return control. "
-                            return self._ready_for_reading(stdin, current_timeout[0] if wait else 0) != []
+                            return self._ready_for_reading(current_timeout[0] if wait else 0) != []
                         self._inputhook_context.call_inputhook(ready)
 
                 # Calculate remaining timeout. (The inputhook consumed some of the time.)
@@ -104,7 +104,7 @@ class PosixEventLoop(EventLoop):
                     remaining_timeout = max(0, current_timeout[0] - inputhook_timer.duration)
 
                 # Wait until input is ready.
-                fds = self._ready_for_reading(stdin, remaining_timeout)
+                fds = self._ready_for_reading(remaining_timeout)
 
                 # When any of the FDs are ready. Call the appropriate callback.
                 if fds:
@@ -172,7 +172,7 @@ class PosixEventLoop(EventLoop):
 
         self._callbacks = None
 
-    def _ready_for_reading(self, stdin, timeout=None):
+    def _ready_for_reading(self, timeout=None):
         """
         Return the file descriptors that are ready for reading.
         """
