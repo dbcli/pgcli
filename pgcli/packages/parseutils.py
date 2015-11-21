@@ -46,6 +46,8 @@ def last_word(text, include='alphanum_underscore'):
     '\\\\def;'
     >>> last_word('bac::def', include='most_punctuations')
     'def'
+    >>> last_word('"foo*bar', include='most_punctuations')
+    '"foo*bar'
     """
 
     if not text:   # Empty string
