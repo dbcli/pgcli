@@ -650,3 +650,13 @@ def test_select_suggests_fields_from_function():
             Function(schema=None),
             Keyword()
             ])
+
+
+@pytest.mark.parametrize('sql', [
+    'select * from "',
+    'select * from "foo',
+])
+def test_ignore_leading_double_quotes(sql):
+    suggestions = suggest_type(sql, sql)
+    assert Table(schema=None) in set(suggestions)
+

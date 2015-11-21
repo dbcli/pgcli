@@ -386,6 +386,17 @@ def test_auto_escaped_col_names(completer, complete_event):
         )
 
 
+def test_allow_leading_double_quote_in_last_word(completer, complete_event):
+    text = 'SELECT * from "sele'
+    position = len(text)
+    result = completer.get_completions(
+        Document(text=text, cursor_position=position), complete_event)
+
+    expected = Completion(text='"select"', start_position=-5, display_meta='table')
+
+    assert expected in set(result)
+
+
 @pytest.mark.parametrize('text', [
     'SELECT 1::',
     'CREATE TABLE foo (bar ',

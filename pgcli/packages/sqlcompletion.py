@@ -68,18 +68,24 @@ def suggest_type(full_text, text_before_cursor):
     # partially typed string which renders the smart completion useless because
     # it will always return the list of keywords as completion.
     if word_before_cursor:
+
         if word_before_cursor[-1] == '(' or word_before_cursor[0] == '\\':
             parsed = sqlparse.parse(text_before_cursor)
         else:
             parsed = sqlparse.parse(
-                    text_before_cursor[:-len(word_before_cursor)])
+                text_before_cursor[:-len(word_before_cursor)])
+
+            if word_before_cursor[0] == '"':
+                # Assume user is manually escaping an identifier
+                word_before_cursor = word_before_cursor[1:]
 
             # word_before_cursor may include a schema qualification, like
             # "schema_name.partial_name" or "schema_name.", so parse it
             # separately
-            p = sqlparse.parse(word_before_cursor)[0]
-            if p.tokens and isinstance(p.tokens[0], Identifier):
-                identifier = p.tokens[0]
+            if word_before_cursor:
+                p = sqlparse.parse(word_before_cursor)[0]
+                if p.tokens and isinstance(p.tokens[0], Identifier):
+                    identifier = p.tokens[0]
     else:
         parsed = sqlparse.parse(text_before_cursor)
 
