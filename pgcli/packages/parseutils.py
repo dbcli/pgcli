@@ -103,12 +103,14 @@ def extract_from_part(parsed, stop_at_punctuation=True):
             elif item.ttype is Keyword and (
                     not item.value.upper() == 'FROM') and (
                     not item.value.upper().endswith('JOIN')):
-                raise StopIteration
+                tbl_prefix_seen = False
             else:
                 yield item
-        elif ((item.ttype is Keyword or item.ttype is Keyword.DML) and
-                item.value.upper() in ('COPY', 'FROM', 'INTO', 'UPDATE', 'TABLE', 'JOIN',)):
-            tbl_prefix_seen = True
+        elif item.ttype is Keyword or item.ttype is Keyword.DML:
+            item_val = item.value.upper()
+            if (item_val in ('COPY', 'FROM', 'INTO', 'UPDATE', 'TABLE') or
+                    item_val.endswith('JOIN')):
+                tbl_prefix_seen = True
         # 'SELECT a, FROM abc' will detect FROM as part of the column list.
         # So this check here is necessary.
         elif isinstance(item, IdentifierList):
