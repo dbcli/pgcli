@@ -443,6 +443,16 @@ def test_join_using_suggests_common_columns(col_list):
     ])
 
 
+def test_suggest_columns_after_multiple_joins():
+    sql = '''select * from t1
+            inner join t2 ON
+              t1.id = t2.t1_id
+            inner join t3 ON
+              t2.id = t3.'''
+    suggestions = suggest_type(sql, sql)
+    assert Column(tables=((None, 't3', None, False),)) in set(suggestions)
+
+    
 def test_2_statements_2nd_current():
     suggestions = suggest_type('select * from a; select * from ',
                                'select * from a; select * from ')
