@@ -33,6 +33,7 @@
         "DESCRIBE",
         "DISTINCT",
         "DROP",
+        "EXPLAIN",
         "ELSE",
         "ENCODING",
         "ESCAPE",
