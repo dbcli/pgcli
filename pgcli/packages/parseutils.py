@@ -3,7 +3,7 @@ import re
 import sqlparse
 from collections import namedtuple
 from sqlparse.sql import IdentifierList, Identifier, Function
-from sqlparse.tokens import Keyword, DML, Punctuation, Token
+from sqlparse.tokens import Keyword, DML, Punctuation, Token, Error
 
 cleanup_regex = {
         # This matches only alphanumerics and underscores.
@@ -254,6 +254,29 @@ def _parsed_is_open_quote(parsed):
         i += 1
 
     return False
+
+
+def parse_partial_identifier(word):
+    """Attempt to parse a (partially typed) word as an identifier
+
+    word may include a schema qualification, like `schema_name.partial_name`
+    or `schema_name.` There may also be unclosed quotation marks, like
+    `"schema`, or `schema."partial_name`
+
+    :param word: string representing a (partially complete) identifier
+    :return: sqlparse.sql.Identifier, or None
+    """
+
+    p = sqlparse.parse(word)[0]
+    n_tok = len(p.tokens)
+    if n_tok == 1 and isinstance(p.tokens[0], Identifier):
+        return p.tokens[0]
+    elif (n_tok in (2, 3)) and p.token_next_match(0, Error, '"'):
+        # An unmatched double quote, e.g. '"foo', 'foo."', or 'foo."bar'
+        # Close the double quote, then reparse
+        return parse_partial_identifier(word + '"')
+    else:
+        return None
 
 
 if __name__ == '__main__':
