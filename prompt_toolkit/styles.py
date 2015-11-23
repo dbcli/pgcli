@@ -23,18 +23,19 @@ __all__ = (
 
 
 #: Style attributes.
-Attrs = namedtuple('Attrs', 'color bgcolor bold underline italic reverse')
+Attrs = namedtuple('Attrs', 'color bgcolor bold underline italic blink reverse')
 """
 :param color: Hexadecimal string. E.g. '000000'
 :param bgcolor: Hexadecimal string. E.g. 'ffffff'
 :param bold: Boolean
 :param underline: Boolean
 :param italic: Boolean
+:param blink: Boolean
 :param reverse: Boolean
 """
 
 _default_attrs = Attrs(color=None, bgcolor=None, bold=False, underline=False,
-                       italic=False, reverse=False)
+                       italic=False, blink=False, reverse=False)
 
 #: ``Attrs.bgcolor/fgcolor`` can be in either 'ffffff' format, or can be any of
 #: the following in case we want to take colors from the 8/16 color palette.
@@ -109,6 +110,7 @@ class PygmentsStyle(Style):
                          bold=style.get('bold', False),
                          underline=style.get('underline', False),
                          italic=style.get('italic', False),
+                         blink=False,
                          reverse=False)
 
         except KeyError:

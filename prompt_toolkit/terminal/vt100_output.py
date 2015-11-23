@@ -82,7 +82,7 @@ class _EscapeCodeCache(dict):
     (fgcolor, bgcolor, bold, underline, reverse) tuples to VT100 escape sequences.
     """
     def __missing__(self, attrs):
-        fgcolor, bgcolor, bold, underline, italic, reverse = attrs
+        fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
 
         parts = []
 
@@ -91,18 +91,20 @@ class _EscapeCodeCache(dict):
         if bgcolor:
             parts.extend(self._color_to_code(bgcolor, True))
         if bold:
-            parts.append('01')
-        if underline:
-            parts.append('04')
+            parts.append('1')
         if italic:
-            parts.append('03')
+            parts.append('3')
+        if blink:
+            parts.append('5')
+        if underline:
+            parts.append('4')
         if reverse:
-            parts.append('07')
+            parts.append('7')
 
         if parts:
-            result = '\x1b[' + ';'.join(parts) + 'm'
+            result = '\x1b[0;' + ';'.join(parts) + 'm'
         else:
-            result = ''
+            result = '\x1b[0m'
 
         self[attrs] = result
         return result

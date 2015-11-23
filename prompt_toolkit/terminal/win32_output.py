@@ -163,7 +163,7 @@ class Win32Output(Output):
         self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole, 15)  # White
 
     def set_attributes(self, attrs):
-        fgcolor, bgcolor, bold, underline, italic, reverse = attrs
+        fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
 
         if reverse:
             fgcolor, bgcolor = bgcolor, fgcolor
