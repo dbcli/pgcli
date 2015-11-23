@@ -275,12 +275,12 @@ class PGCli(object):
     def run_cli(self):
         logger = self.logger
         original_less_opts = self.adjust_less_opts()
-        
+
         history_file = self.config['main']['history_file']
         if history_file == 'default':
             history_file = config_location() + 'history'
         history = FileHistory(os.path.expanduser(history_file))
-        self.refresh_completions(history=history, 
+        self.refresh_completions(history=history,
                                  persist_priorities='none')
 
         self.cli = self._build_cli(history)
@@ -357,7 +357,7 @@ class PGCli(object):
                                 self.pgexecute.search_path())
                         logger.debug('Search path: %r',
                                      self.completer.search_path)
-                        
+
                 # Allow PGCompleter to learn user's preferred keywords, etc.
                 with self._completer_lock:
                     self.completer.extend_query_history(document.text)
@@ -658,7 +658,7 @@ def format_output(title, cur, headers, status, table_format, expanded=False, max
         else:
             tabulated, rows = tabulate(cur, headers, tablefmt=table_format,
                 missingval='<null>')
-            if (max_width and
+            if (max_width and rows and
                     content_exceeds_width(rows[0], max_width) and
                     headers):
                 output.append(expanded_table(rows, headers))
