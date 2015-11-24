@@ -24,6 +24,7 @@ def test_select_suggests_cols_with_qualified_table_scope():
 
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM tabl WHERE ',
+    'SELECT * FROM "tabl" WHERE ',
     'SELECT * FROM tabl WHERE (',
     'SELECT * FROM tabl WHERE foo = ',
     'SELECT * FROM tabl WHERE bar OR ',
@@ -126,6 +127,10 @@ def test_suggest_qualified_tables_and_views(expression):
 
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM sch.',
+    'SELECT * FROM sch."',
+    'SELECT * FROM sch."foo',
+    'SELECT * FROM "sch".',
+    'SELECT * FROM "sch"."',
     'SELECT * FROM foo JOIN sch.',
 ])
 def test_suggest_qualified_tables_views_and_set_returning_functions(expression):
@@ -650,3 +655,13 @@ def test_select_suggests_fields_from_function():
             Function(schema=None),
             Keyword()
             ])
+
+
+@pytest.mark.parametrize('sql', [
+    'select * from "',
+    'select * from "foo',
+])
+def test_ignore_leading_double_quotes(sql):
+    suggestions = suggest_type(sql, sql)
+    assert Table(schema=None) in set(suggestions)
+

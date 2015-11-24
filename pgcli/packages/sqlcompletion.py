@@ -4,7 +4,8 @@ import re
 import sqlparse
 from collections import namedtuple
 from sqlparse.sql import Comparison, Identifier, Where
-from .parseutils import last_word, extract_tables, find_prev_keyword
+from .parseutils import (
+    last_word, extract_tables, find_prev_keyword, parse_partial_identifier)
 from pgspecial.main import parse_special_command
 
 PY2 = sys.version_info[0] == 2
@@ -72,14 +73,9 @@ def suggest_type(full_text, text_before_cursor):
             parsed = sqlparse.parse(text_before_cursor)
         else:
             parsed = sqlparse.parse(
-                    text_before_cursor[:-len(word_before_cursor)])
+                text_before_cursor[:-len(word_before_cursor)])
 
-            # word_before_cursor may include a schema qualification, like
-            # "schema_name.partial_name" or "schema_name.", so parse it
-            # separately
-            p = sqlparse.parse(word_before_cursor)[0]
-            if p.tokens and isinstance(p.tokens[0], Identifier):
-                identifier = p.tokens[0]
+            identifier = parse_partial_identifier(word_before_cursor)
     else:
         parsed = sqlparse.parse(text_before_cursor)
 
@@ -361,3 +357,4 @@ def identifies(id, ref):
 
     return id == ref.alias or id == ref.name or (
         ref.schema and (id == ref.schema + '.' + ref.name))
+

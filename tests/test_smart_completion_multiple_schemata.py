@@ -81,14 +81,18 @@ def test_schema_or_visible_table_completion(completer, complete_event):
        Completion(text='"select"', start_position=0, display_meta='table'),
        Completion(text='orders', start_position=0, display_meta='table')])
 
-def test_suggested_column_names_from_shadowed_visible_table(completer, complete_event):
+
+@pytest.mark.parametrize('text', [
+    'SELECT  FROM users',
+    'SELECT  FROM "users"',
+    ])
+def test_suggested_column_names_from_shadowed_visible_table(completer, complete_event, text):
     """
     Suggest column and function names when selecting from table
     :param completer:
     :param complete_event:
     :return:
     """
-    text = 'SELECT  from users'
     position = len('SELECT ')
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
@@ -163,17 +167,31 @@ def test_suggested_column_names_in_function(completer, complete_event):
         Completion(text='product_name', start_position=0, display_meta='column'),
         Completion(text='price', start_position=0, display_meta='column')])
 
-def test_suggested_table_names_with_schema_dot(completer, complete_event):
-    text = 'SELECT * FROM custom.'
+
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM custom.',
+    'SELECT * FROM "custom".',
+])
+@pytest.mark.parametrize('use_leading_double_quote', [False, True])
+def test_suggested_table_names_with_schema_dot(completer, complete_event,
+                                               text, use_leading_double_quote):
+    if use_leading_double_quote:
+        text += '"'
+        start_pos = -1
+    else:
+        start_pos = 0
+
     position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([
-        Completion(text='users', start_position=0, display_meta='table'),
-        Completion(text='products', start_position=0, display_meta='table'),
-        Completion(text='shipments', start_position=0, display_meta='table'),
-        Completion(text='set_returning_func', start_position=0, display_meta='function'),
+        Completion(text='users', start_position=start_pos, display_meta='table'),
+        Completion(text='products', start_position=start_pos, display_meta='table'),
+        Completion(text='shipments', start_position=start_pos, display_meta='table'),
+        Completion(text='set_returning_func', start_position=start_pos, display_meta='function'),
     ])
+
+
 def test_suggested_column_names_with_qualified_alias(completer, complete_event):
     """
     Suggest column names on table alias and dot

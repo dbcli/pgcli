@@ -197,6 +197,14 @@ class PGCompleter(Completer):
         """
 
         text = last_word(text, include='most_punctuations').lower()
+        text_len = len(text)
+
+        if text and text[0] == '"':
+            # text starts with double quote; user is manually escaping a name
+            # Match on everything that follows the double-quote. Note that
+            # text_len is calculated before removing the quote, so the
+            # Completion.position value is correct
+            text = text[1:]
 
         if mode == 'fuzzy':
             fuzzy = True
@@ -246,13 +254,14 @@ class PGCompleter(Completer):
                     meta = meta[:47] + u'...'
 
                 matches.append(Match(
-                    completion=Completion(item, -len(text), display_meta=meta),
+                    completion=Completion(item, -text_len, display_meta=meta),
                     priority=(sort_key, priority_func(item))))
 
         return matches
 
     def get_completions(self, document, complete_event, smart_completion=None):
         word_before_cursor = document.get_word_before_cursor(WORD=True)
+
         if smart_completion is None:
             smart_completion = self.smart_completion
 

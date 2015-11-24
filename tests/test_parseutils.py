@@ -10,9 +10,17 @@ def test_simple_select_single_table():
     tables = extract_tables('select * from abc')
     assert tables == ((None, 'abc', None, False),)
 
-def test_simple_select_single_table_schema_qualified():
-    tables = extract_tables('select * from abc.def')
+
+@pytest.mark.parametrize('sql', [
+    'select * from abc.def',
+    'select * from "abc".def',
+    'select * from "abc"."def"',
+    'select * from abc."def"',
+])
+def test_simple_select_single_table_schema_qualified(sql):
+    tables = extract_tables(sql)
     assert tables == (('abc', 'def', None, False),)
+
 
 def test_simple_select_single_table_double_quoted():
     tables = extract_tables('select * from "Abc"')
@@ -55,7 +63,7 @@ def test_simple_select_with_cols_multiple_tables():
     assert set(tables) == set([(None, 'abc', None, False),
                                (None, 'def', None, False)])
 
-def test_simple_select_with_cols_multiple_tables():
+def test_simple_select_with_cols_multiple_qualified_tables():
     tables = extract_tables('select a,b from abc.def, def.ghi')
     assert set(tables) == set([('abc', 'def', None, False),
                                ('def', 'ghi', None, False)])
