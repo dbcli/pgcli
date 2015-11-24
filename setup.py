@@ -19,6 +19,7 @@ install_requirements = [
             'psycopg2 >= 2.5.4',
             'sqlparse == 0.1.16',
             'configobj >= 5.0.6',
+            'humanize >= 0.5.1',
             ]
 
 

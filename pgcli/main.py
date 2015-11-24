@@ -10,6 +10,7 @@ import logging
 import threading
 import shutil
 import functools
+import humanize
 from time import time
 from codecs import open
 
@@ -340,7 +341,8 @@ class PGCli(object):
                         pass
 
                     if self.pgspecial.timing_enabled:
-                        print('Time: %0.03fs' % query.total_time)
+                        print('Time: %0.03fs (%s)' % (query.total_time,
+                              humanize.time.naturaldelta(query.total_time)))
 
                     # Check if we need to update completions, in order of most
                     # to least drastic changes
