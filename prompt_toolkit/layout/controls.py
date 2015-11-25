@@ -12,7 +12,7 @@ from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.mouse_events import MouseEventTypes
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
-from prompt_toolkit.utils import get_cwidth
+from prompt_toolkit.utils import get_cwidth, SimpleLRUCache
 
 from .lexers import Lexer, SimpleLexer
 from .processors import Processor, Transformation
@@ -86,40 +86,10 @@ class UIControl(with_metaclass(ABCMeta, object)):
         """
 
 
-class _SimpleLRUCache(object):
-    """
-    Very simple LRU cache.
-
-    :param maxsize: Maximum size of the cache. (Don't make it too big.)
-    """
-    def __init__(self, maxsize=8):
-        self.maxsize = maxsize
-        self._cache = []  # List of (key, value).
-
-    def get(self, key, getter_func):
-        """
-        Get object from the cache.
-        If not found, call `getter_func` to resolve it, and put that on the top
-        of the cache instead.
-        """
-        # Look in cache first.
-        for k, v in self._cache:
-            if k == key:
-                return v
-
-        # Not found? Get it.
-        value = getter_func()
-        self._cache.append((key, value))
-
-        if len(self._cache) > self.maxsize:
-            self._cache = self._cache[-self.maxsize:]
-
-        return value
-
-
 class TokenListControl(UIControl):
     """
     Control that displays a list of (Token, text) tuples.
+    (It's mostly optimized for rather small widgets, like toolbars, menus, etc...)
 
     :param get_tokens: Callable that takes a `CommandLineInterface` instance
         and returns the list of (Token, text) tuples to be displayed right now.
@@ -158,6 +128,9 @@ class TokenListControl(UIControl):
 
         self.get_default_char = get_default_char
 
+        #: Cache for rendered screens.
+        self._screen_lru_cache = SimpleLRUCache(maxsize=18)
+
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.get_tokens)
 
@@ -178,21 +151,29 @@ class TokenListControl(UIControl):
         return screen.height
 
     def create_screen(self, cli, width, height):
-        default_char = self.get_default_char(cli)
-        screen = Screen(default_char, initial_width=width)
-
         # Get tokens
         tokens = self.get_tokens(cli)
+        default_char = self.get_default_char(cli)
+
+        # Wrap/align right/center parameters.
         wrap_lines = self.wrap_lines(cli)
+        right = self.align_right(cli)
+        center = self.align_center(cli)
+
+        # Create screen, or take it from the cache.
+        params = (default_char, tokens, width, wrap_lines, right, center)
+        screen, pos_to_indexes = self._screen_lru_cache.get(params, lambda: self._get_screen(*params))
+
+        return screen
+
+    @classmethod
+    def _get_screen(cls, default_char, tokens, width, wrap_lines, right, center):
+        screen = Screen(default_char, initial_width=width)
 
         # Only call write_data when we actually have tokens.
         # (Otherwise the screen height will go up from 0 to 1 while we don't
         # want that. -- An empty control should not take up any space.)
         if tokens:
-            # Align right/center.
-            right = self.align_right(cli)
-            center = self.align_center(cli)
-
             def process_line(line):
                 " Center or right align a single line. "
                 used_width = token_list_width(line)
@@ -207,8 +188,12 @@ class TokenListControl(UIControl):
                     tokens2.extend(process_line(line))
                 tokens = tokens2
 
-            screen.write_data(tokens, width=(width if wrap_lines else None))
-        return screen
+            indexes_to_pos = screen.write_data(tokens, width=(width if wrap_lines else None))
+            pos_to_indexes = {v: k for k, v in indexes_to_pos.items()}
+        else:
+            pos_to_indexes = {}
+
+        return screen, pos_to_indexes
 
     @classmethod
     def static(cls, tokens):
@@ -279,12 +264,12 @@ class BufferControl(UIControl):
         #: Often, due to cursor movement, undo/redo and window resizing
         #: operations, it happens that a short time, the same document has to be
         #: lexed. This is a faily easy way to cache such an expensive operation.
-        self._token_lru_cache = _SimpleLRUCache(maxsize=8)
+        self._token_lru_cache = SimpleLRUCache(maxsize=8)
 
         #: Keep a similar cache for rendered screens. (when we scroll up/down
         #: through the screen, or when we change another buffer, we don't want
         #: to recreate the same screen again.)
-        self._screen_lru_cache = _SimpleLRUCache(maxsize=8)
+        self._screen_lru_cache = SimpleLRUCache(maxsize=8)
 
         self._xy_to_cursor_position = None
         self._last_click_timestamp = None

@@ -15,6 +15,7 @@ __all__ = (
     'is_conemu_ansi',
     'is_windows',
     'in_main_thread',
+    'SimpleLRUCache',
 )
 
 
@@ -142,3 +143,34 @@ def in_main_thread():
     True when the current thread is the main thread.
     """
     return threading.current_thread().__class__.__name__ == '_MainThread'
+
+
+class SimpleLRUCache(object):
+    """
+    Very simple LRU cache.
+
+    :param maxsize: Maximum size of the cache. (Don't make it too big.)
+    """
+    def __init__(self, maxsize=8):
+        self.maxsize = maxsize
+        self._cache = []  # List of (key, value).
+
+    def get(self, key, getter_func):
+        """
+        Get object from the cache.
+        If not found, call `getter_func` to resolve it, and put that on the top
+        of the cache instead.
+        """
+        # Look in cache first.
+        for k, v in self._cache:
+            if k == key:
+                return v
+
+        # Not found? Get it.
+        value = getter_func()
+        self._cache.append((key, value))
+
+        if len(self._cache) > self.maxsize:
+            self._cache = self._cache[-self.maxsize:]
+
+        return value

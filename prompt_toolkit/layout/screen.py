@@ -148,6 +148,8 @@ class Screen(object):
 
         :param data: List of Token tuples to write to the buffer.
         :param width: Width of the line wrap. (Don't wrap when `width` is None.)
+        :returns: A dictionary mapping the character positions of the input data to
+                  (x, y) coordinates.
         """
         if width is None:
             width = 10 ** 100  # A very big number.
