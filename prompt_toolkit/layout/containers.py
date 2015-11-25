@@ -378,7 +378,8 @@ class FloatContainer(Container):
                 height = min(height, write_position.height - ypos)
 
             # Write float.
-            if xpos >= 0 and ypos >= 0 and height > 0 and width > 0:
+            # (xpos and ypos can be negative: a float can be partially visible.)
+            if height > 0 and width > 0:
                 wp = WritePosition(xpos=xpos + write_position.xpos,
                                    ypos=ypos + write_position.ypos,
                                    width=width, height=height)

@@ -235,8 +235,7 @@ class WritePosition(object):
         assert height >= 0
         assert extended_height is None or extended_height >= 0
         assert width >= 0
-        assert xpos >= 0
-        assert ypos >= 0
+        # xpos and ypos can be negative. (A float can be partially visible.)
 
         self.xpos = xpos
         self.ypos = ypos
