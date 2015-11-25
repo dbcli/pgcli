@@ -221,7 +221,7 @@ class TokenListControl(UIControl):
                 tokens = tokens2
 
             indexes_to_pos = screen.write_data(tokens, width=(width if wrap_lines else None))
-            pos_to_indexes = {v: k for k, v in indexes_to_pos.items()}
+            pos_to_indexes = dict((v, k) for k, v in indexes_to_pos.items())
         else:
             pos_to_indexes = {}
 
