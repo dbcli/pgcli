@@ -69,6 +69,7 @@ class UIControl(with_metaclass(ABCMeta, object)):
         handled by the `UIControl` itself. The `Window` or key bindings can
         decide to handle this event as scrolling or changing focus.
 
+        :param cli: `CommandLineInterface` instance.
         :param mouse_event: `MouseEvent` instance.
         """
         return NotImplemented
@@ -90,6 +91,15 @@ class TokenListControl(UIControl):
     """
     Control that displays a list of (Token, text) tuples.
     (It's mostly optimized for rather small widgets, like toolbars, menus, etc...)
+
+    Mouse support:
+
+        The list of tokens can also contain tuples of three items, looking like:
+        (Token, text, handler). When mouse support is enabled and the user
+        clicks on this token, then the given handler is called. That handler
+        should accept two inputs: (CommandLineInterface, MouseEvent) and it
+        should either handle the event or return `NotImplemented` in case we
+        want the containing Window to handle this event.
 
     :param get_tokens: Callable that takes a `CommandLineInterface` instance
         and returns the list of (Token, text) tuples to be displayed right now.
@@ -131,6 +141,11 @@ class TokenListControl(UIControl):
         #: Cache for rendered screens.
         self._screen_lru_cache = SimpleLRUCache(maxsize=18)
 
+        # Render info for the mouse support.
+        self._tokens = None  # The last rendered tokens.
+        self._pos_to_indexes = None  # Mapping from mouse positions (x,y) to
+                                     # positions in the token list.
+
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.get_tokens)
 
@@ -152,8 +167,11 @@ class TokenListControl(UIControl):
 
     def create_screen(self, cli, width, height):
         # Get tokens
-        tokens = self.get_tokens(cli)
+        tokens_with_mouse_handlers = self.get_tokens(cli)
         default_char = self.get_default_char(cli)
+
+        # Strip mouse handlers from tokens.
+        tokens = [tuple(item[:2]) for item in tokens_with_mouse_handlers]
 
         # Wrap/align right/center parameters.
         wrap_lines = self.wrap_lines(cli)
@@ -161,9 +179,11 @@ class TokenListControl(UIControl):
         center = self.align_center(cli)
 
         # Create screen, or take it from the cache.
+        key = (default_char, tokens_with_mouse_handlers, width, wrap_lines, right, center)
         params = (default_char, tokens, width, wrap_lines, right, center)
-        screen, pos_to_indexes = self._screen_lru_cache.get(params, lambda: self._get_screen(*params))
+        screen, self._pos_to_indexes = self._screen_lru_cache.get(key, lambda: self._get_screen(*params))
 
+        self._tokens = tokens_with_mouse_handlers
         return screen
 
     @classmethod
@@ -200,6 +220,37 @@ class TokenListControl(UIControl):
         def get_static_tokens(cli):
             return tokens
         return cls(get_static_tokens)
+
+    def mouse_handler(self, cli, mouse_event):
+        """
+        Handle mouse events.
+
+        (When the token list contained mouse handlers and the user clicked on
+        on any of these, the matching handler is called. This handler can still
+        return `NotImplemented` in case we want the `Window` to handle this
+        particular event.)
+        """
+        if self._pos_to_indexes:
+            # Find position in the token list.
+            position = mouse_event.position
+            index = self._pos_to_indexes.get((position.x, position.y))
+
+            if index is not None:
+                # Find mouse handler for this character.
+                count = 0
+                for item in self._tokens:
+                    count += len(item[1])
+                    if count >= index:
+                        if len(item) >= 3:
+                            # Handler found. Call it.
+                            handler = item[2]
+                            handler(cli, mouse_event)
+                            return
+                        else:
+                            break
+
+        # Otherwise, don't handle here.
+        return NotImplemented
 
 
 class FillControl(UIControl):
