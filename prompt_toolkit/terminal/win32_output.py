@@ -61,6 +61,10 @@ class Win32Output(Output):
     def write(self, data):
         self._buffer.append(data)
 
+    def write_raw(self, data):
+        " For win32, there is no difference between write and write_raw. "
+        self.write(data)
+
     def get_size(self):
         from prompt_toolkit.layout.screen import Size
         info = self.get_win32_screen_buffer_info()

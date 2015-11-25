@@ -21,6 +21,10 @@ class Output(with_metaclass(ABCMeta, object)):
     """
     @abstractmethod
     def write(self, data):
+        " Write text (Terminal escape sequences will be removed/escaped.) "
+
+    @abstractmethod
+    def write_raw(self, data):
         " Write text. "
 
     @abstractmethod

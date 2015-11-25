@@ -745,22 +745,25 @@ class CommandLineInterface(object):
             self.eventloop.run_in_executor(run)
         return async_suggestor
 
-    def stdout_proxy(self):
+    def stdout_proxy(self, raw=False):
         """
         Create an :class:`_StdoutProxy` class which can be used as a patch for
-        sys.stdout. Writing to this proxy will make sure that the text appears
-        above the prompt, and that it doesn't destroy the output from the
-        renderer.
-        """
-        return _StdoutProxy(self)
+        `sys.stdout`. Writing to this proxy will make sure that the text
+        appears above the prompt, and that it doesn't destroy the output from
+        the renderer.
 
-    def patch_stdout_context(self):
+        :param raw: (`bool`) When True, vt100 terminal escape sequences are not
+                    removed/escaped.
+        """
+        return _StdoutProxy(self, raw=raw)
+
+    def patch_stdout_context(self, raw=False):
         """
         Return a context manager that will replace ``sys.stdout`` with a proxy
         that makes sure that all printed text will appear above the prompt, and
         that it doesn't destroy the output from the renderer.
         """
-        return _PatchStdoutContext(self.stdout_proxy())
+        return _PatchStdoutContext(self.stdout_proxy(raw=raw))
 
     def create_eventloop_callbacks(self):
         return _InterfaceEventLoopCallbacks(self)
@@ -823,9 +826,13 @@ class _StdoutProxy(object):
     Proxy for stdout, as returned by
     :class:`CommandLineInterface.stdout_proxy`.
     """
-    def __init__(self, cli):
+    def __init__(self, cli, raw=False):
+        assert isinstance(cli, CommandLineInterface)
+        assert isinstance(raw, bool)
+
         self._lock = threading.RLock()
         self._cli = cli
+        self._raw = raw
         self._buffer = []
 
         self.errors = sys.__stdout__.errors
@@ -857,7 +864,10 @@ class _StdoutProxy(object):
 
             def run():
                 for s in to_write:
-                    self._cli.output.write(s)
+                    if self._raw:
+                        self._cli.output.write_raw(s)
+                    else:
+                        self._cli.output.write(s)
             self._do(run)
         else:
             # Otherwise, cache in buffer.
