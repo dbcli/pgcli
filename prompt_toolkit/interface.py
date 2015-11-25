@@ -88,6 +88,11 @@ class CommandLineInterface(object):
             use_alternate_screen=application.use_alternate_screen,
             mouse_support=application.mouse_support)
 
+        #: Render counter. This one is increased every time the UI is rendered.
+        #: It can be used as a key for caching certain information during one
+        #: rendering.
+        self.render_counter = 0
+
         # Invalidate flag. When 'True', a repaint has been scheduled.
         self._invalidated = False
 
@@ -289,6 +294,7 @@ class CommandLineInterface(object):
         """
         # Only draw when no sub application was started.
         if self._is_running and self._sub_cli is None:
+            self.render_counter += 1
             self.renderer.render(self, self.layout, is_done=self.is_done)
 
     def _on_resize(self):

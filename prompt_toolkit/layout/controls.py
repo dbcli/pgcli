@@ -140,6 +140,8 @@ class TokenListControl(UIControl):
 
         #: Cache for rendered screens.
         self._screen_lru_cache = SimpleLRUCache(maxsize=18)
+        self._token_lru_cache = SimpleLRUCache(maxsize=1)
+            # Only cache one token list. We don't need the previous item.
 
         # Render info for the mouse support.
         self._tokens = None  # The last rendered tokens.
@@ -149,6 +151,15 @@ class TokenListControl(UIControl):
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.get_tokens)
 
+    def _get_tokens_cached(self, cli):
+        """
+        Get tokens, but only retrieve tokens once during one render run.
+        (This function is called several times during one rendering, because
+        we also need those for calculating the dimensions.)
+        """
+        return self._token_lru_cache.get(
+            cli.render_counter, lambda: self.get_tokens(cli))
+
     def has_focus(self, cli):
         return self._has_focus_filter(cli)
 
@@ -157,7 +168,7 @@ class TokenListControl(UIControl):
         Return the preferred width for this control.
         That is the width of the longest line.
         """
-        text = ''.join(t[1] for t in self.get_tokens(cli))
+        text = ''.join(t[1] for t in self._get_tokens_cached(cli))
         line_lengths = [get_cwidth(l) for l in text.split('\n')]
         return max(line_lengths)
 
@@ -167,7 +178,8 @@ class TokenListControl(UIControl):
 
     def create_screen(self, cli, width, height):
         # Get tokens
-        tokens_with_mouse_handlers = self.get_tokens(cli)
+        tokens_with_mouse_handlers = self._get_tokens_cached(cli)
+
         default_char = self.get_default_char(cli)
 
         # Strip mouse handlers from tokens.
