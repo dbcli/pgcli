@@ -292,6 +292,18 @@ def test_suggested_multiple_column_names_with_dot(completer, complete_event):
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column')])
 
+
+def test_suggest_columns_after_three_way_join(completer, complete_event):
+    text = '''SELECT * FROM users u1
+              INNER JOIN users u2 ON u1.id = u2.id
+              INNER JOIN users u3 ON u2.id = u3.'''
+    position = len(text)
+    result = completer.get_completions(
+        Document(text=text, cursor_position=position), complete_event)
+    assert (Completion(text='id', start_position=0, display_meta='column') in
+            set(result))
+
+
 def test_suggested_aliases_after_on(completer, complete_event):
     text = 'SELECT u.name, o.id FROM users u JOIN orders o ON '
     position = len('SELECT u.name, o.id FROM users u JOIN orders o ON ')

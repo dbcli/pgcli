@@ -116,9 +116,38 @@ def test_join_table_schema_qualified():
     assert set(tables) == set([('abc', 'def', 'x', False),
                                ('ghi', 'jkl', 'y', False)])
 
+
+def test_incomplete_join_clause():
+    sql = '''select a.x, b.y
+             from abc a join bcd b
+             on a.id = '''
+    tables = extract_tables(sql)
+    assert tables == ((None, 'abc', 'a', False),
+                      (None, 'bcd', 'b', False))
+
+
 def test_join_as_table():
     tables = extract_tables('SELECT * FROM my_table AS m WHERE m.a > 5')
     assert tables == ((None, 'my_table', 'm', False),)
+
+
+def test_multiple_joins():
+    sql = '''select * from t1
+            inner join t2 ON
+              t1.id = t2.t1_id
+            inner join t3 ON
+              t2.id = t3.'''
+    tables = extract_tables(sql)
+    assert tables == (
+        (None, 't1', None, False),
+        (None, 't2', None, False),
+        (None, 't3', None, False))
+
+
+def test_subselect_tables():
+    sql = 'SELECT * FROM (SELECT  FROM abc'
+    tables = extract_tables(sql)
+    assert tables == ((None, 'abc', None, False),)
 
 
 @pytest.mark.parametrize('arg_list', ['', 'arg1', 'arg1, arg2, arg3'])
