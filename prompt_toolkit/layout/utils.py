@@ -15,9 +15,10 @@ def token_list_len(tokenlist):
     """
     Return the amount of characters in this token list.
 
-    :param tokenlist: List of (token, text) tuples.
+    :param tokenlist: List of (token, text) or (token, text, mouse_handler)
+                      tuples.
     """
-    return sum(len(v) for k, v in tokenlist)
+    return sum(len(item[1]) for item in tokenlist)
 
 
 def token_list_width(tokenlist):
@@ -25,16 +26,17 @@ def token_list_width(tokenlist):
     Return the character width of this token list.
     (Take double width characters into account.)
 
-    :param tokenlist: List of (token, text) tuples.
+    :param tokenlist: List of (token, text) or (token, text, mouse_handler)
+                      tuples.
     """
-    return sum(get_cwidth(c) for k, word in tokenlist for c in word)
+    return sum(get_cwidth(c) for item in tokenlist for c in item[1])
 
 
 def token_list_to_text(tokenlist):
     """
     Concatenate all the text parts again.
     """
-    return ''.join(v for k, v in tokenlist)
+    return ''.join(item[1] for item in tokenlist)
 
 
 def iter_token_lines(tokenlist):
