@@ -288,20 +288,23 @@ class FloatContainer(Container):
                                 y=cursor_position.y - write_position.ypos)
 
         for fl in self.floats:
+            fl_width = fl.get_width(cli)
+            fl_height = fl.get_height(cli)
+
             # Left & width given.
-            if fl.left is not None and fl.width is not None:
+            if fl.left is not None and fl_width is not None:
                 xpos = fl.left
-                width = fl.width
+                width = fl_width
             # Left & right given -> calculate width.
             elif fl.left is not None and fl.right is not None:
                 xpos = fl.left
                 width = write_position.width - fl.left - fl.right
             # Width & right given -> calculate left.
-            elif fl.width is not None and fl.right is not None:
-                xpos = write_position.width - fl.right - fl.width
-                width = fl.width
+            elif fl_width is not None and fl.right is not None:
+                xpos = write_position.width - fl.right - fl_width
+                width = fl_width
             elif fl.xcursor:
-                width = fl.width
+                width = fl_width
                 if width is None:
                     width = fl.content.preferred_width(cli, write_position.width).preferred
                     width = min(write_position.width, width)
@@ -310,9 +313,9 @@ class FloatContainer(Container):
                 if xpos + width > write_position.width:
                     xpos = max(0, write_position.width - width)
             # Only width given -> center horizontally.
-            elif fl.width:
-                xpos = int((write_position.width - fl.width) / 2)
-                width = fl.width
+            elif fl_width:
+                xpos = int((write_position.width - fl_width) / 2)
+                width = fl_width
             # Otherwise, take preferred width from float content.
             else:
                 width = fl.content.preferred_width(cli, write_position.width).preferred
@@ -328,22 +331,22 @@ class FloatContainer(Container):
                 width = min(width, write_position.width - xpos)
 
             # Top & height given.
-            if fl.top is not None and fl.height is not None:
+            if fl.top is not None and fl_height is not None:
                 ypos = fl.top
-                height = fl.height
+                height = fl_height
             # Top & bottom given -> calculate height.
             elif fl.top is not None and fl.bottom is not None:
                 ypos = fl.top
                 height = write_position.height - fl.top - fl.bottom
             # Height & bottom given -> calculate top.
-            elif fl.height is not None and fl.bottom is not None:
-                ypos = write_position.height - fl.height - fl.bottom
-                height = fl.height
+            elif fl_height is not None and fl.bottom is not None:
+                ypos = write_position.height - fl_height - fl.bottom
+                height = fl_height
             # Near cursor
             elif fl.ycursor:
                 ypos = cursor_position.y + 1
 
-                height = fl.height
+                height = fl_height
                 if height is None:
                     height = fl.content.preferred_height(cli, width).preferred
 
@@ -360,9 +363,9 @@ class FloatContainer(Container):
                         ypos = cursor_position.y - height
 
             # Only height given -> center vertically.
-            elif fl.width:
-                ypos = int((write_position.height - fl.height) / 2)
-                height = fl.height
+            elif fl_width:
+                ypos = int((write_position.height - fl_height) / 2)
+                height = fl_height
             # Otherwise, take preferred height from content.
             else:
                 height = fl.content.preferred_height(cli, width).preferred
@@ -426,19 +429,17 @@ class Float(object):
 
         self.content = content
 
-    @property
-    def width(self):
+    def get_width(self, cli):
         if self._width:
             return self._width
         if self._get_width:
-            return self._get_width()
+            return self._get_width(cli)
 
-    @property
-    def height(self):
+    def get_height(self, cli):
         if self._height:
             return self._height
         if self._get_height:
-            return self._get_height()
+            return self._get_height(cli)
 
     def __repr__(self):
         return 'Float(content=%r)' % self.content
