@@ -341,8 +341,12 @@ class PGCli(object):
                         pass
 
                     if self.pgspecial.timing_enabled:
-                        print('Time: %0.03fs (%s)' % (query.total_time,
-                              humanize.time.naturaldelta(query.total_time)))
+                        # Only add humanized time display if > 1 second
+                        if query.total_time > 1:
+                            print('Time: %0.03fs (%s)' % (query.total_time,
+                                  humanize.time.naturaldelta(query.total_time)))
+                        else:
+                            print('Time: %0.03fs' % query.total_time)
 
                     # Check if we need to update completions, in order of most
                     # to least drastic changes
