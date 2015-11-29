@@ -525,3 +525,16 @@ def test_learn_table_names(completer, complete_event):
     orders = Completion(text='orders', start_position=0, display_meta='table')
 
     assert completions.index(users) < completions.index(orders)
+
+
+def test_columns_before_keywords(completer, complete_event):
+    sql = 'SELECT * FROM orders WHERE s'
+    completions = completer.get_completions(
+        Document(text=sql, cursor_position=len(sql)), complete_event)
+
+    column = Completion(text='status', start_position=-1, display_meta='column')
+    keyword = Completion(text='SELECT', start_position=-1, display_meta='keyword')
+
+    assert completions.index(column) < completions.index(keyword)
+
+

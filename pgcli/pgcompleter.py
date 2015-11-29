@@ -232,9 +232,9 @@ class PGCompleter(Completer):
             def _match(item):
                 match_point = item.lower().find(text, 0, match_end_limit)
                 if match_point >= 0:
-                    # Use negative infinity in second element to force keywords
-                    # to sort after all fuzzy matches
-                    return -match_point, -float('Infinity')
+                    # Use negative infinity to force keywords to sort after all
+                    # fuzzy matches
+                    return -float('Infinity'), -match_point
 
         if meta_collection:
             # Each possible completion in the collection has a corresponding
