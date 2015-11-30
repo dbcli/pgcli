@@ -186,6 +186,7 @@ DEFAULT_STYLE_EXTENSIONS = {
 
     # Validation toolbar.
     Token.Toolbar.Validation:                     'bg:#550000 #ffffff',
+    Token.WindowTooSmall:                         'bg:#550000 #ffffff',
 
     # Completions toolbar.
     Token.Toolbar.Completions:                    'bg:#bbbbbb #000000',

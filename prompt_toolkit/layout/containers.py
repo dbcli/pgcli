@@ -76,14 +76,27 @@ class Container(with_metaclass(ABCMeta, object)):
         Walk through all the layout nodes (and their children) and yield them.
         """
 
+def _window_too_small():
+    " Create a `Window` that displays the 'Window too small' text. "
+    return Window(TokenListControl.static(
+        [(Token.WindowTooSmall, ' Window too small... ')]))
+
 
 class HSplit(Container):
     """
     Several layouts, one stacked above/under the other.
+
+    :param children: List of child :class:`.Container` objects.
+    :param window_too_small: A :class:`.Container` object that is displayed if
+        there is not enough space for all the children. By default, this is a
+        "Window too small" message.
     """
-    def __init__(self, children):
+    def __init__(self, children, window_too_small=None):
         assert all(isinstance(c, Container) for c in children)
+        assert window_too_small is None or isinstance(window_too_small, Container)
+
         self.children = children
+        self.window_too_small = window_too_small or _window_too_small()
 
     def preferred_width(self, cli, max_available_width):
         if self.children:
@@ -112,8 +125,10 @@ class HSplit(Container):
         sum_dimensions = sum_layout_dimensions(dimensions)
 
         # If there is not enough space for both.
-        # Don't do anything. (TODO: show window too small message.)
+        # Don't do anything.
         if sum_dimensions.min > write_position.extended_height:
+            self.window_too_small.write_to_screen(
+                cli, screen, mouse_handlers, write_position)
             return
 
         # Find optimal sizes. (Start with minimal size, increase until we cover
@@ -154,10 +169,18 @@ class HSplit(Container):
 class VSplit(Container):
     """
     Several layouts, one stacked left/right of the other.
+
+    :param children: List of child :class:`.Container` objects.
+    :param window_too_small: A :class:`.Container` object that is displayed if
+        there is not enough space for all the children. By default, this is a
+        "Window too small" message.
     """
-    def __init__(self, children):
+    def __init__(self, children, window_too_small=None):
         assert all(isinstance(c, Container) for c in children)
+        assert window_too_small is None or isinstance(window_too_small, Container)
+
         self.children = children
+        self.window_too_small = window_too_small or _window_too_small()
 
     def preferred_width(self, cli, max_available_width):
         dimensions = [c.preferred_width(cli, max_available_width) for c in self.children]
@@ -186,7 +209,7 @@ class VSplit(Container):
         sum_dimensions = sum_layout_dimensions(dimensions)
 
         # If there is not enough space for both.
-        # Don't do anything. (TODO: show window too small message.)
+        # Don't do anything.
         if sum_dimensions.min > width:
             return
 
@@ -215,7 +238,10 @@ class VSplit(Container):
 
         sizes = self._divide_widths(cli, write_position.width)
 
+        # If there is not enough space.
         if sizes is None:
+            self.window_too_small.write_to_screen(
+                cli, screen, mouse_handlers, write_position)
             return
 
         # Calculate heights, take the largest possible, but not larger than write_position.extended_height.
