@@ -109,6 +109,7 @@ Projects using prompt-toolkit
 - `saws <https://github.com/donnemartin/saws>`_: A Supercharged AWS Command Line Interface.
 - `cycli <https://github.com/nicolewhite/cycli>`_:  A Command Line Interface for Cypher.
 - `crash <https://github.com/crate/crash>`_:  Crate command line client.
+- `vcli <https://github.com/dbcli/vcli>`_: Vertica client.
 
 
 (Want your own project to be listed here? Please create a GitHub issue.)
