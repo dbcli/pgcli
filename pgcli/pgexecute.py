@@ -289,7 +289,9 @@ class PGExecute(object):
         cur.execute(split_sql)
 
         try:
-            title = self.conn.notices.pop()
+            title = ''
+            while len(self.conn.notices) > 0:
+                title = title + self.conn.notices.pop()
         except IndexError:
             title = None
 
