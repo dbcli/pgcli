@@ -288,12 +288,10 @@ class PGExecute(object):
         cur = self.conn.cursor()
         cur.execute(split_sql)
 
-        try:
-            title = ''
-            while len(self.conn.notices) > 0:
-                title = title + self.conn.notices.pop()
-        except IndexError:
-            title = None
+        # conn.notices persist between queies, we use pop to clear out the list
+        title = ''
+        while len(self.conn.notices) > 0:
+            title = title + self.conn.notices.pop()
 
         # cur.description will be None for operations that do not return
         # rows.
