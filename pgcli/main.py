@@ -60,7 +60,6 @@ from psycopg2 import OperationalError
 from collections import namedtuple
 
 # Query tuples are used for maintaining history
-
 MetaQuery = namedtuple(
     'Query',
     [
@@ -75,9 +74,7 @@ MetaQuery = namedtuple(
 MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
 # Default less opts
-LESS_DEFAULTS = '-SRXF'
-
-
+LESS_DEFAULTS = '-~SR'
 
 class PGCli(object):
 
@@ -320,7 +317,7 @@ class PGCli(object):
                 query = MetaQuery(query=document.text, successful=False)
 
                 try:
-                    output, query = self._evaluate_command(document.text)
+                    output, query, output_fits_screen = self._evaluate_command(document.text)
                 except KeyboardInterrupt:
                     # Restart connection to the database
                     self.pgexecute.connect()
@@ -342,7 +339,7 @@ class PGCli(object):
                     click.secho(str(e), err=True, fg='red')
                 else:
                     try:
-                        click.echo_via_pager('\n'.join(output))
+                        self.display_output(output, output_fits_screen)
                     except KeyboardInterrupt:
                         pass
 
@@ -382,6 +379,13 @@ class PGCli(object):
             # Don't persist pgcli less defaults when session is terminated
             if less_opts_adjusted:
                 os.environ['LESS'] = ''
+
+    def display_output(self, output, output_fits_screen=True):
+        if self.pgspecial.pager_config == special.main.PAGER_ALWAYS or \
+            (self.pgspecial.pager_config == special.main.PAGER_LONG_OUTPUT and not output_fits_screen):
+            click.echo_via_pager("\n".join(output))
+        else:
+            click.echo("\n".join(output))
 
     def _build_cli(self, history):
 
@@ -455,6 +459,7 @@ class PGCli(object):
         on_error_resume = self.on_error == 'RESUME'
         res = self.pgexecute.run(text, self.pgspecial,
                                  exception_formatter, on_error_resume)
+        screen_size = self.cli.output.get_size()
 
         for title, cur, headers, status, sql, success in res:
             logger.debug("headers: %r", headers)
@@ -470,7 +475,7 @@ class PGCli(object):
                     break
 
             if self.pgspecial.auto_expand:
-                max_width = self.cli.output.get_size().columns
+                max_width = screen_size.columns
             else:
                 max_width = None
 
@@ -495,7 +500,7 @@ class PGCli(object):
         meta_query = MetaQuery(text, all_success, total, meta_changed,
                                db_changed, path_changed, mutated)
 
-        return output, meta_query
+        return output, meta_query, output_fits_screen(output, screen_size)
 
     def _handle_server_closed_connection(self):
         """Used during CLI execution"""
@@ -658,6 +663,19 @@ def obfuscate_process_password():
         process_title = re.sub(r"password=(.+?)((\s[a-zA-Z]+=)|$)", r"password=xxxx\2", process_title)
 
     setproctitle.setproctitle(process_title)
+
+def output_fits_screen(output, screen_size):
+    for entry in output:
+        new_line_index = entry.find("\n")
+        if new_line_index == -1:
+            if len(entry) > screen_size.columns:
+                return False
+        else:
+            if new_line_index > screen_size.columns:
+                return False
+            if entry.count("\n") >= screen_size.rows:
+                return False
+    return True
 
 def format_output(title, cur, headers, status, table_format, expanded=False, max_width=None):
     output = []
