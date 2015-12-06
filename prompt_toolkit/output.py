@@ -125,6 +125,9 @@ class Output(with_metaclass(ABCMeta, object)):
         (VT100 only.)
         """
 
+    def bell(self):
+        " Sound bell. "
+
     def enable_bracketed_paste(self):
         " For vt100 only. "
 

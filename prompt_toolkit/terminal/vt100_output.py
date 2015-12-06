@@ -355,3 +355,8 @@ class Vt100_Output(Output):
         """
         self.write_raw('\x1b[6n')
         self.flush()
+
+    def bell(self):
+        " Sound bell. "
+        self.write_raw('\a')
+        self.flush()
