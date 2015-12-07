@@ -194,6 +194,7 @@ def take_using_weights(items, weights):
     assert isinstance(weights, list)
     assert all(isinstance(i, int) for i in weights)
     assert len(items) == len(weights)
+    assert len(items) > 0
 
     already_taken = [0 for i in items]
     item_count = len(items)

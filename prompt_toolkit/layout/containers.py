@@ -157,6 +157,9 @@ class HSplit(Container):
         Return the heights for all rows.
         Or None when there is not enough space.
         """
+        if not self.children:
+            return []
+
         # Calculate heights.
         given_dimensions = self.get_dimensions(cli) if self.get_dimensions else None
 
@@ -260,6 +263,9 @@ class VSplit(Container):
         Return the widths for all columns.
         Or None when there is not enough space.
         """
+        if not self.children:
+            return []
+
         # Calculate widths.
         given_dimensions = self.get_dimensions(cli) if self.get_dimensions else None
 
