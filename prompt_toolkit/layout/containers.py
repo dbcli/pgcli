@@ -14,7 +14,7 @@ from .controls import UIControl, TokenListControl
 from .margins import Margin
 from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventTypes
-from prompt_toolkit.utils import SimpleLRUCache
+from prompt_toolkit.utils import SimpleLRUCache, take_using_weights
 
 __all__ = (
     'Container',
@@ -90,13 +90,26 @@ class HSplit(Container):
     :param window_too_small: A :class:`.Container` object that is displayed if
         there is not enough space for all the children. By default, this is a
         "Window too small" message.
+    :param get_dimensions: (`None` or a callable that takes a
+        `CommandLineInterface` and returns a list of `LayoutDimension`
+        instances.) By default the dimensions are taken from the children and
+        divided by the available space. However, when `get_dimensions` is specified,
+        this is taken instead.
+    :param report_dimensions_callback: When rendering, this function is called
+        with the `CommandLineInterface` and the list of used dimensions. (As a
+        list of integers.)
     """
-    def __init__(self, children, window_too_small=None):
+    def __init__(self, children, window_too_small=None,
+                 get_dimensions=None, report_dimensions_callback=None):
         assert all(isinstance(c, Container) for c in children)
         assert window_too_small is None or isinstance(window_too_small, Container)
+        assert get_dimensions is None or callable(get_dimensions)
+        assert report_dimensions_callback is None or callable(report_dimensions_callback)
 
         self.children = children
         self.window_too_small = window_too_small or _window_too_small()
+        self.get_dimensions = get_dimensions
+        self.report_dimensions_callback = report_dimensions_callback
 
     def preferred_width(self, cli, max_available_width):
         if self.children:
@@ -120,43 +133,72 @@ class HSplit(Container):
         :param screen: The :class:`~prompt_toolkit.layout.screen.Screen` class
             to which the output has to be written.
         """
+        sizes = self._divide_heigths(cli, write_position)
+
+        if self.report_dimensions_callback:
+            self.report_dimensions_callback(cli, sizes)
+
+        if sizes is None:
+            self.window_too_small.write_to_screen(
+                cli, screen, mouse_handlers, write_position)
+        else:
+            # Draw child panes.
+            ypos = write_position.ypos
+            xpos = write_position.xpos
+            width = write_position.width
+
+            for s, c in zip(sizes, self.children):
+                c.write_to_screen(cli, screen, mouse_handlers, WritePosition(xpos, ypos, width, s))
+                ypos += s
+
+    def _divide_heigths(self, cli, write_position):
+        """
+        Return the heights for all rows.
+        Or None when there is not enough space.
+        """
         # Calculate heights.
-        dimensions = [c.preferred_height(cli, write_position.width) for c in self.children]
+        given_dimensions = self.get_dimensions(cli) if self.get_dimensions else None
+
+        def get_dimension_for_child(c, index):
+            if given_dimensions and given_dimensions[index] is not None:
+                return given_dimensions[index]
+            else:
+                return c.preferred_height(cli, write_position.width)
+
+        dimensions = [get_dimension_for_child(c, index) for index, c in enumerate(self.children)]
+
+        # Sum dimensions
         sum_dimensions = sum_layout_dimensions(dimensions)
 
         # If there is not enough space for both.
         # Don't do anything.
         if sum_dimensions.min > write_position.extended_height:
-            self.window_too_small.write_to_screen(
-                cli, screen, mouse_handlers, write_position)
             return
 
         # Find optimal sizes. (Start with minimal size, increase until we cover
         # the whole height.)
         sizes = [d.min for d in dimensions]
 
-        i = 0
+        child_generator = take_using_weights(
+            items=list(range(len(dimensions))),
+            weights=[d.weight for d in dimensions])
+
+        i = next(child_generator)
+
         while sum(sizes) < min(write_position.extended_height, sum_dimensions.preferred):
             # Increase until we meet at least the 'preferred' size.
             if sizes[i] < dimensions[i].preferred:
                 sizes[i] += 1
-            i = (i + 1) % len(sizes)
+            i = next(child_generator)
 
         if not any([cli.is_returning, cli.is_exiting, cli.is_aborting]):
             while sum(sizes) < min(write_position.height, sum_dimensions.max):
                 # Increase until we use all the available space. (or until "max")
                 if sizes[i] < dimensions[i].max:
                     sizes[i] += 1
-                i = (i + 1) % len(sizes)
+                i = next(child_generator)
 
-        # Draw child panes.
-        ypos = write_position.ypos
-        xpos = write_position.xpos
-        width = write_position.width
-
-        for s, c in zip(sizes, self.children):
-            c.write_to_screen(cli, screen, mouse_handlers, WritePosition(xpos, ypos, width, s))
-            ypos += s
+        return sizes
 
     def walk(self):
         """ Walk through children. """
@@ -174,13 +216,26 @@ class VSplit(Container):
     :param window_too_small: A :class:`.Container` object that is displayed if
         there is not enough space for all the children. By default, this is a
         "Window too small" message.
+    :param get_dimensions: (`None` or a callable that takes a
+        `CommandLineInterface` and returns a list of `LayoutDimension`
+        instances.) By default the dimensions are taken from the children and
+        divided by the available space. However, when `get_dimensions` is specified,
+        this is taken instead.
+    :param report_dimensions_callback: When rendering, this function is called
+        with the `CommandLineInterface` and the list of used dimensions. (As a
+        list of integers.)
     """
-    def __init__(self, children, window_too_small=None):
+    def __init__(self, children, window_too_small=None,
+                 get_dimensions=None, report_dimensions_callback=None):
         assert all(isinstance(c, Container) for c in children)
         assert window_too_small is None or isinstance(window_too_small, Container)
+        assert get_dimensions is None or callable(get_dimensions)
+        assert report_dimensions_callback is None or callable(report_dimensions_callback)
 
         self.children = children
         self.window_too_small = window_too_small or _window_too_small()
+        self.get_dimensions = get_dimensions
+        self.report_dimensions_callback = report_dimensions_callback
 
     def preferred_width(self, cli, max_available_width):
         dimensions = [c.preferred_width(cli, max_available_width) for c in self.children]
@@ -205,7 +260,17 @@ class VSplit(Container):
         Or None when there is not enough space.
         """
         # Calculate widths.
-        dimensions = [c.preferred_width(cli, width) for c in self.children]
+        given_dimensions = self.get_dimensions(cli) if self.get_dimensions else None
+
+        def get_dimension_for_child(c, index):
+            if given_dimensions and given_dimensions[index] is not None:
+                return given_dimensions[index]
+            else:
+                return c.preferred_width(cli, width)
+
+        dimensions = [get_dimension_for_child(c, index) for index, c in enumerate(self.children)]
+
+        # Sum dimensions
         sum_dimensions = sum_layout_dimensions(dimensions)
 
         # If there is not enough space for both.
@@ -213,16 +278,27 @@ class VSplit(Container):
         if sum_dimensions.min > width:
             return
 
-        # TODO: like HSplit, first increase until the "preferred" size.
-
         # Find optimal sizes. (Start with minimal size, increase until we cover
         # the whole height.)
         sizes = [d.min for d in dimensions]
-        i = 0
+
+        child_generator = take_using_weights(
+            items=list(range(len(dimensions))),
+            weights=[d.weight for d in dimensions])
+
+        i = next(child_generator)
+
+        while sum(sizes) < min(width, sum_dimensions.preferred):
+            # Increase until we meet at least the 'preferred' size.
+            if sizes[i] < dimensions[i].preferred:
+                sizes[i] += 1
+            i = next(child_generator)
+
         while sum(sizes) < min(width, sum_dimensions.max):
+            # Increase until we use all the available space.
             if sizes[i] < dimensions[i].max:
                 sizes[i] += 1
-            i = (i + 1) % len(sizes)
+            i = next(child_generator)
 
         return sizes
 
@@ -237,6 +313,9 @@ class VSplit(Container):
             return
 
         sizes = self._divide_widths(cli, write_position.width)
+
+        if self.report_dimensions_callback:
+            self.report_dimensions_callback(cli, sizes)
 
         # If there is not enough space.
         if sizes is None:

@@ -9,6 +9,7 @@ from screen_tests import *
 from regular_languages_tests import *
 from layout_tests import *
 from contrib_tests import *
+from utils_tests import *
 
 import unittest
 

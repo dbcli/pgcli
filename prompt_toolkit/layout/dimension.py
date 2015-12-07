@@ -21,9 +21,16 @@ class LayoutDimension(object):
 
     :param min: Minimum size.
     :param max: Maximum size.
+    :param weight: For a VSplit/HSplit, the actual size will be determined
+                   by taking the proportion of weights from all the children.
+                   E.g. When there are two children, one width a weight of 1,
+                   and the other with a weight of 2. The second will always be
+                   twice as big as the first, if the min/max values allow it.
     :param preferred: Preferred size.
     """
-    def __init__(self, min=None, max=None, preferred=None):
+    def __init__(self, min=None, max=None, weight=1, preferred=None):
+        assert isinstance(weight, int) and weight > 0   # Cannot be a float.
+
         self.min_specified = min is not None
         self.max_specified = max is not None
         self.preferred_specified = preferred is not None
@@ -38,6 +45,7 @@ class LayoutDimension(object):
         self.min = min
         self.max = max
         self.preferred = preferred
+        self.weight = weight
 
         # Make sure that the 'preferred' size is always in the min..max range.
         if self.preferred < self.min:
@@ -55,7 +63,8 @@ class LayoutDimension(object):
         return cls(min=amount, max=amount, preferred=amount)
 
     def __repr__(self):
-        return 'LayoutDimension(min=%r, max=%r, preferred=%r)' % (self.min, self.max, self.preferred)
+        return 'LayoutDimension(min=%r, max=%r, preferred=%r, weight=%r)' % (
+            self.min, self.max, self.preferred, self.weight)
 
     def __add__(self, other):
         return sum_layout_dimensions([self, other])

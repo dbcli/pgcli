@@ -16,6 +16,7 @@ __all__ = (
     'is_windows',
     'in_main_thread',
     'SimpleLRUCache',
+    'take_using_weights',
 )
 
 
@@ -174,3 +175,41 @@ class SimpleLRUCache(object):
             self._cache = self._cache[-self.maxsize:]
 
         return value
+
+
+def take_using_weights(items, weights):
+    """
+    Generator that keeps yielding items from the items list, in proportion to
+    their weight. For instance::
+
+        # Getting the first 70 items from this generator should have yielded 10
+        # times A, 20 times B and 40 times C, all distributed equally..
+        take_using_weights(['A', 'B', 'C'], [5, 10, 20])
+
+    :param items: List of items to take from.
+    :param weights: Integers representing the weight. (Numbers have to be
+                    integers, not floats.)
+    """
+    assert isinstance(items, list)
+    assert isinstance(weights, list)
+    assert all(isinstance(i, int) for i in weights)
+    assert len(items) == len(weights)
+
+    already_taken = [0 for i in items]
+    item_count = len(items)
+    max_weight = max(weights)
+
+    i = 0
+    while True:
+        # Each iteration of this loop, we fill up until by (total_weight/max_weight).
+        adding = True
+        while adding:
+            adding = False
+
+            for item_i, item, weight in zip(range(item_count), items, weights):
+                if already_taken[item_i] < i * weight / float(max_weight):
+                    yield item
+                    already_taken[item_i] += 1
+                    adding = True
+
+        i += 1
