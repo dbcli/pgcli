@@ -76,6 +76,7 @@ class Container(with_metaclass(ABCMeta, object)):
         Walk through all the layout nodes (and their children) and yield them.
         """
 
+
 def _window_too_small():
     " Create a `Window` that displays the 'Window too small' text. "
     return Window(TokenListControl.static(
@@ -649,8 +650,8 @@ class WindowRenderInfo(object):
         """
         return (self.first_visible_line(after_scroll_offset) +
                 (self.last_visible_line(before_scroll_offset) -
-                    self.first_visible_line(after_scroll_offset))/2
-                )
+                 self.first_visible_line(after_scroll_offset)) / 2
+               )
 
     @property
     def content_height(self):
@@ -805,7 +806,7 @@ class Window(Container):
 
         # Window of the content.
         preferred_width = self.content.preferred_width(
-                cli, max_available_width - total_margin_width)
+            cli, max_available_width - total_margin_width)
 
         if preferred_width is not None:
             preferred_width += total_margin_width
@@ -909,11 +910,11 @@ class Window(Container):
             return result
 
         mouse_handlers.set_mouse_handler_for_range(
-                x_min=write_position.xpos + sum(left_margin_widths),
-                x_max=write_position.xpos + write_position.width - total_margin_width,
-                y_min=write_position.ypos,
-                y_max=write_position.ypos + write_position.height,
-                handler=mouse_handler)
+            x_min=write_position.xpos + sum(left_margin_widths),
+            x_max=write_position.xpos + write_position.width - total_margin_width,
+            y_min=write_position.ypos,
+            y_max=write_position.ypos + write_position.height,
+            handler=mouse_handler)
 
         # Render and copy margins.
         move_x = 0
@@ -1028,14 +1029,15 @@ class Window(Container):
         requested scroll offset.
         Return the applied scroll offsets.
         """
-        def do_scroll(current_scroll, scroll_offset_start, scroll_offset_end, cursor_pos, window_size, content_size):
+        def do_scroll(current_scroll, scroll_offset_start, scroll_offset_end,
+                      cursor_pos, window_size, content_size):
             " Scrolling algorithm. Used for both horizontal and vertical scrolling. "
             # Calculate the scroll offset to apply.
             # This can obviously never be more than have the screen size. Also, when the
             # cursor appears at the top or bottom, we don't apply the offset.
             scroll_offset_start = int(min(scroll_offset_start, window_size / 2, cursor_pos))
             scroll_offset_end = int(min(scroll_offset_end, window_size / 2,
-                                           content_size - 1 - cursor_pos))
+                                        content_size - 1 - cursor_pos))
 
             # Prevent negative scroll offsets.
             if current_scroll < 0:
@@ -1072,7 +1074,7 @@ class Window(Container):
         # remains visible.
         offsets = self.scroll_offsets
 
-        self.vertical_scroll, scroll_offset_top, scroll_offset_bottom  = do_scroll(
+        self.vertical_scroll, scroll_offset_top, scroll_offset_bottom = do_scroll(
             current_scroll=self.vertical_scroll,
             scroll_offset_start=offsets.top,
             scroll_offset_end=offsets.bottom,
