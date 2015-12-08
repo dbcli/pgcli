@@ -73,6 +73,12 @@ Installation
 
     pip install prompt-toolkit
 
+For Conda, do:
+
+::
+
+    conda install -c https://conda.anaconda.org/conda-forge prompt_toolkit
+
 
 Getting started
 ***************
