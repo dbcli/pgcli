@@ -23,17 +23,17 @@ class _Binding(object):
         assert isinstance(invalidate_ui, CLIFilter)
 
         self.keys = keys
-        self._handler = handler
+        self.handler = handler
         self.filter = filter
         self.eager = eager
         self.invalidate_ui = invalidate_ui
 
     def call(self, event):
-        return self._handler(event)
+        return self.handler(event)
 
     def __repr__(self):
         return '%s(keys=%r, handler=%r)' % (
-            self.__class__.__name__, self.keys, self._handler)
+            self.__class__.__name__, self.keys, self.handler)
 
 
 class Registry(object):
@@ -101,6 +101,29 @@ class Registry(object):
 
             return func
         return decorator
+
+    def remove_binding(self, function):
+        """
+        Remove a key binding.
+
+        This expects a function that was given to `add_binding` method as
+        parameter. Raises `ValueError` when the given function was not
+        registered before.
+        """
+        assert callable(function)
+
+        for b in self.key_bindings:
+            if b.handler == function:
+                self.key_bindings.remove(b)
+                self._keys_to_bindings[b.keys].remove(b)
+
+                for i in range(1, len(b.keys)):
+                    self._keys_to_bindings_suffixes[b.keys[:i]].remove(b)
+
+                return
+
+        # No key binding found for this function. Raise ValueError.
+        raise ValueError('Binding not found: %r' % (function, ))
 
     def get_bindings_for_keys(self, keys):
         """
