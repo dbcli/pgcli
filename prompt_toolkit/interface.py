@@ -886,7 +886,10 @@ class _StdoutProxy(object):
     def _flush(self):
         def run():
             for s in self._buffer:
-                self._cli.output.write(s)
+                if self._raw:
+                    self._cli.output.write_raw(s)
+                else:
+                    self._cli.output.write(s)
             self._buffer = []
             self._cli.output.flush()
         self._do(run)
