@@ -8,20 +8,20 @@ applications. Typically, an application consists of a layout (to describe the
 graphical part) and a set of key bindings.
 
 The sections below describe the components required for full screen
-applications (or custom, non full screen apps), and how to assemble them
+applications (or custom, non full screen applications), and how to assemble them
 together.
 
 
 Creating a layout
 -----------------
 
-There are two types of classes that have to be combined to contruct a layout.
+There are two types of classes that have to be combined to construct a layout.
 We have containers (:class:`~prompt_toolkit.layout.containers.Container`
 instances) and user controls
 (:class:`~prompt_toolkit.layout.controls.UIControl` instances).
 
 Simply said, containers are used for arranging the layout, while user controls
-paint the actual content. An important interal difference is that containers
+paint the actual content. An important internal difference is that containers
 use absolute coordinates, while user controls create their own
 :class:`~prompt_toolkit.layout.screen.Screen` with a relative coordinates.
 
@@ -56,6 +56,8 @@ vertical line:
     from prompt_toolkit.layout.containers import VSplit, HSplit, Window
     from prompt_toolkit.layout.controls import BufferControl, FillControl, TokenListControl
     from prompt_toolkit.layout.dimension import LayoutDimension as D
+
+    from pygments.token import Token
 
     layout = VSplit([
         # One window that holds the BufferControl with the default buffer on the
@@ -109,7 +111,7 @@ happens in several steps:
 1. The :class:`~prompt_toolkit.renderer.Renderer` calls the
    :meth:`~prompt_toolkit.layout.containers.Container.write_to_screen` method of a
    :class:`~prompt_toolkit.layout.containers.Container`. This is a request to
-   paint the layout in a rectange of a certain size. It is then the
+   paint the layout in a rectangle of a certain size. It is then the
    :class:`~prompt_toolkit.layout.containers.Window` object that will request
    the :class:`~prompt_toolkit.layout.controls.UIControl` to create a
    :class:`~prompt_toolkit.layout.screen.Screen` instance, by calling
@@ -204,7 +206,7 @@ The ``Application`` instance
 ----------------------------
 
 The :class:`~prompt_toolkit.application.Application` instance is where all the
-components for a prompt_toolkit applicaition come together.
+components for a prompt_toolkit application come together.
 
 .. note:: Actually, not "all" the components, but everything that is not
     dependent on I/O, so all components except for the eventloop and the
