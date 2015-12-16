@@ -36,12 +36,15 @@ class WordCompleter(Completer):
 
         def word_matches(word):
             """ True when the word before the cursor matches. """
+            if self.ignore_case:
+                word = word.lower()
+
             if self.match_middle:
                 return word_before_cursor in word
             else:
                 return word.startswith(word_before_cursor)
 
         for a in self.words:
-            if word_matches(a.lower()):
+            if word_matches(a):
                 display_meta = self.meta_dict.get(a, '')
                 yield Completion(a, -len(word_before_cursor), display_meta=display_meta)
