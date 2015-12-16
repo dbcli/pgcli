@@ -392,14 +392,16 @@ class FloatContainer(Container):
     def write_to_screen(self, cli, screen, mouse_handlers, write_position):
         self.content.write_to_screen(cli, screen, mouse_handlers, write_position)
 
-        # When a menu_position was given, use this instead of the cursor
-        # position. (These cursor positions are absolute, translate again
-        # relative to the write_position.)
-        cursor_position = screen.menu_position or screen.cursor_position
-        cursor_position = Point(x=cursor_position.x - write_position.xpos,
-                                y=cursor_position.y - write_position.ypos)
-
         for fl in self.floats:
+            # When a menu_position was given, use this instead of the cursor
+            # position. (These cursor positions are absolute, translate again
+            # relative to the write_position.)
+            # Note: This should be inside the for-loop, because one float could
+            #       set the cursor position to be used for the next one.
+            cursor_position = screen.menu_position or screen.cursor_position
+            cursor_position = Point(x=cursor_position.x - write_position.xpos,
+                                    y=cursor_position.y - write_position.ypos)
+
             fl_width = fl.get_width(cli)
             fl_height = fl.get_height(cli)
 
