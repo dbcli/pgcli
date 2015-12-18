@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from .buffer import Buffer, AcceptAction
+from .buffer_mapping import BufferMapping
 from .clipboard import Clipboard, InMemoryClipboard
 from .enums import DEFAULT_BUFFER
 from .filters import CLIFilter, to_cli_filter
@@ -93,7 +94,7 @@ class Application(object):
 
         assert layout is None or isinstance(layout, Container)
         assert buffer is None or isinstance(buffer, Buffer)
-        assert buffers is None or isinstance(buffers, dict)
+        assert buffers is None or isinstance(buffers, (dict, BufferMapping))
         assert key_bindings_registry is None or isinstance(key_bindings_registry, Registry)
         assert clipboard is None or isinstance(clipboard, Clipboard)
         assert on_abort in AbortAction._all
@@ -111,8 +112,17 @@ class Application(object):
         assert style is None or isinstance(style, Style)
 
         self.layout = layout or Window(BufferControl())
+
+        # Make sure that the 'buffers' dictionary is a BufferMapping.
         self.buffer = buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)
-        self.buffers = buffers or {}
+        if not buffers or not isinstance(buffers, BufferMapping):
+            self.buffers = BufferMapping(buffers)
+        else:
+            self.buffers = buffers
+
+        if buffer:
+            self.buffers[DEFAULT_BUFFER] = buffer
+
         self.initial_focussed_buffer = initial_focussed_buffer
 
         self.style = style or DEFAULT_STYLE

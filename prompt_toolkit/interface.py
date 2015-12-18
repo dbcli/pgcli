@@ -14,20 +14,23 @@ import weakref
 import datetime
 
 from .application import Application, AbortAction
-from .buffer import Buffer, AcceptAction
+from .buffer import Buffer
+from .buffer_mapping import BufferMapping
 from .completion import CompleteEvent
 from .completion import get_common_complete_suffix
-from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, SYSTEM_BUFFER, DUMMY_BUFFER
+from .enums import SEARCH_BUFFER, DUMMY_BUFFER
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
 from .filters import Condition
-from .history import InMemoryHistory
 from .input import StdinInput, Input
 from .key_binding.input_processor import InputProcessor
 from .output import Output
 from .renderer import Renderer, print_tokens
 from .search_state import SearchState
 from .utils import is_windows
+
+# Following import is required for backwards compatibility.
+from .buffer import AcceptAction
 
 __all__ = (
     'AbortAction',
@@ -70,15 +73,8 @@ class CommandLineInterface(object):
         self.input = input or StdinInput(sys.stdin)
 
         #: The input buffers.
-        self.buffers = {
-            # For the 'search' and 'system' buffers, 'returnable' is False, in
-            # order to block normal Enter/ControlC behaviour.
-            DEFAULT_BUFFER: (application.buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)),
-            SEARCH_BUFFER: Buffer(history=InMemoryHistory(), accept_action=AcceptAction.IGNORE),
-            SYSTEM_BUFFER: Buffer(history=InMemoryHistory(), accept_action=AcceptAction.IGNORE),
-            DUMMY_BUFFER: Buffer(read_only=True),
-        }
-        self.buffers.update(application.buffers)
+        assert isinstance(application.buffers, BufferMapping)
+        self.buffers = application.buffers
 
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
