@@ -23,7 +23,7 @@ def _current_window_for_event(event):
     """
     Return the `Window` for the currently focussed Buffer.
     """
-    return find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+    return find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
 
 
 def scroll_forward(event, half=False):
@@ -84,7 +84,7 @@ def scroll_one_line_down(event):
     """
     scroll_offset += 1
     """
-    w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+    w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
     b = event.cli.current_buffer
 
     if w:
@@ -103,7 +103,7 @@ def scroll_one_line_up(event):
     """
     scroll_offset -= 1
     """
-    w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+    w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
     b = event.cli.current_buffer
 
     if w:

@@ -71,7 +71,7 @@ class Container(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def walk(self):
+    def walk(self, cli):
         """
         Walk through all the layout nodes (and their children) and yield them.
         """
@@ -204,11 +204,11 @@ class HSplit(Container):
 
         return sizes
 
-    def walk(self):
+    def walk(self, cli):
         """ Walk through children. """
         yield self
         for c in self.children:
-            for i in c.walk():
+            for i in c.walk(cli):
                 yield i
 
 
@@ -343,11 +343,11 @@ class VSplit(Container):
             c.write_to_screen(cli, screen, mouse_handlers, WritePosition(xpos, ypos, s, height))
             xpos += s
 
-    def walk(self):
+    def walk(self, cli):
         """ Walk through children. """
         yield self
         for c in self.children:
-            for i in c.walk():
+            for i in c.walk(cli):
                 yield i
 
 
@@ -502,15 +502,15 @@ class FloatContainer(Container):
                                    width=width, height=height)
                 fl.content.write_to_screen(cli, screen, mouse_handlers, wp)
 
-    def walk(self):
+    def walk(self, cli):
         """ Walk through children. """
         yield self
 
-        for i in self.content.walk():
+        for i in self.content.walk(cli):
             yield i
 
         for f in self.floats:
-            for i in f.content.walk():
+            for i in f.content.walk(cli):
                 yield i
 
 
@@ -1136,7 +1136,7 @@ class Window(Container):
 
             self.vertical_scroll -= 1
 
-    def walk(self):
+    def walk(self, cli):
         # Only yield self. A window doesn't have children.
         yield self
 
@@ -1175,8 +1175,8 @@ class ConditionalContainer(Container):
         if self.filter(cli):
             return self.content.write_to_screen(cli, screen, mouse_handlers, write_position)
 
-    def walk(self):
-        return self.content.walk()
+    def walk(self, cli):
+        return self.content.walk(cli)
 
 
 # Deprecated alias for 'Container'.

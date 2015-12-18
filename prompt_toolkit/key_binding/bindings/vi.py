@@ -921,7 +921,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         Moves to the start of the visible region. (Below the scroll offset.)
         Implements 'cH', 'dH', 'H'.
         """
-        w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+        w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
         b = event.current_buffer
 
         if w:
@@ -942,7 +942,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         Moves cursor to the vertical center of the visible region.
         Implements 'cM', 'dM', 'M'.
         """
-        w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+        w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
         b = event.current_buffer
 
         if w:
@@ -962,7 +962,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         Moves to the end of the visible region. (Above the scroll offset.)
         """
-        w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+        w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
         b = event.current_buffer
 
         if w:
@@ -984,7 +984,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         Scrolls the window to makes the current line the first line in the visible region.
         """
-        w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+        w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
         b = event.cli.current_buffer
 
         if w and w.render_info:
@@ -1003,7 +1003,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         Scrolls the window to makes the current line the last line in the visible region.
         """
-        w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+        w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
         b = event.cli.current_buffer
 
         if w and w.render_info:
@@ -1020,7 +1020,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         Center Window vertically around cursor.
         """
-        w = find_window_for_buffer_name(event.cli.layout, event.cli.current_buffer_name)
+        w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
         b = event.cli.current_buffer
 
         if w and w.render_info:
