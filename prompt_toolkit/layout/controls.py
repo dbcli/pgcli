@@ -301,6 +301,7 @@ class BufferControl(UIControl):
     :param buffer_name: String representing the name of the buffer to display.
     :param default_char: :class:`.Char` instance to use to fill the background. This is
         transparent by default.
+    :param focus_on_click: Focus this buffer when it's click, but not yet focussed.
     """
     def __init__(self,
                  buffer_name=DEFAULT_BUFFER,
@@ -309,13 +310,15 @@ class BufferControl(UIControl):
                  preview_search=False,
                  wrap_lines=True,
                  menu_position=None,
-                 default_char=None):
+                 default_char=None,
+                 focus_on_click=False):
         assert input_processors is None or all(isinstance(i, Processor) for i in input_processors)
         assert menu_position is None or callable(menu_position)
         assert lexer is None or isinstance(lexer, Lexer)
 
         self.preview_search = to_cli_filter(preview_search)
         self.wrap_lines = to_cli_filter(wrap_lines)
+        self.focus_on_click = to_cli_filter(focus_on_click)
 
         self.input_processors = input_processors or []
         self.buffer_name = buffer_name
@@ -545,40 +548,52 @@ class BufferControl(UIControl):
         buffer = self._buffer(cli)
         position = mouse_event.position
 
-        if self._xy_to_cursor_position:
-            # Translate coordinates back to the cursor position of the
-            # original input.
-            pos = self._xy_to_cursor_position(position.x, position.y)
+        # Focus buffer when clicked.
+        if self.has_focus(cli):
+            if self._xy_to_cursor_position:
+                # Translate coordinates back to the cursor position of the
+                # original input.
+                pos = self._xy_to_cursor_position(position.x, position.y)
 
-            # Set the cursor position.
-            if pos <= len(buffer.text):
-                if mouse_event.event_type == MouseEventTypes.MOUSE_DOWN:
-                    buffer.exit_selection()
-                    buffer.cursor_position = pos
-
-                elif mouse_event.event_type == MouseEventTypes.MOUSE_UP:
-                    # When the cursor was moved to another place, select the text.
-                    # (The >1 is actually a small but acceptable workaround for
-                    # selecting text in Vi navigation mode. In navigation mode,
-                    # the cursor can never be after the text, so the cursor
-                    # will be repositioned automatically.)
-                    if abs(buffer.cursor_position - pos) > 1:
-                        buffer.start_selection(selection_type=SelectionType.CHARACTERS)
+                # Set the cursor position.
+                if pos <= len(buffer.text):
+                    if mouse_event.event_type == MouseEventTypes.MOUSE_DOWN:
+                        buffer.exit_selection()
                         buffer.cursor_position = pos
 
-                    # Select word around cursor on double click.
-                    # Two MOUSE_UP events in a short timespan are considered a double click.
-                    double_click = self._last_click_timestamp and time.time() - self._last_click_timestamp < .3
-                    self._last_click_timestamp = time.time()
+                    elif mouse_event.event_type == MouseEventTypes.MOUSE_UP:
+                        # When the cursor was moved to another place, select the text.
+                        # (The >1 is actually a small but acceptable workaround for
+                        # selecting text in Vi navigation mode. In navigation mode,
+                        # the cursor can never be after the text, so the cursor
+                        # will be repositioned automatically.)
+                        if abs(buffer.cursor_position - pos) > 1:
+                            buffer.start_selection(selection_type=SelectionType.CHARACTERS)
+                            buffer.cursor_position = pos
 
-                    if double_click:
-                        start, end = buffer.document.find_boundaries_of_current_word()
-                        buffer.cursor_position += start
-                        buffer.start_selection(selection_type=SelectionType.CHARACTERS)
-                        buffer.cursor_position += end - start
-                else:
-                    # Don't handle scroll events here.
-                    return NotImplemented
+                        # Select word around cursor on double click.
+                        # Two MOUSE_UP events in a short timespan are considered a double click.
+                        double_click = self._last_click_timestamp and time.time() - self._last_click_timestamp < .3
+                        self._last_click_timestamp = time.time()
+
+                        if double_click:
+                            start, end = buffer.document.find_boundaries_of_current_word()
+                            buffer.cursor_position += start
+                            buffer.start_selection(selection_type=SelectionType.CHARACTERS)
+                            buffer.cursor_position += end - start
+                    else:
+                        # Don't handle scroll events here.
+                        return NotImplemented
+
+        # Not focussed, but focussing on click events.
+        else:
+            if self.focus_on_click(cli) and mouse_event.event_type == MouseEventTypes.MOUSE_UP:
+                # Focus happens on mouseup. (If we did this on mousedown, the
+                # up event will be received at the point where this widget is
+                # focussed and be handled anyway.)
+                cli.focus_stack.replace(self.buffer_name)
+            else:
+                return NotImplemented
 
     def move_cursor_down(self, cli):
         b = self._buffer(cli)
