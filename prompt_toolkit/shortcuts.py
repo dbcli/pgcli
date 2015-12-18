@@ -21,12 +21,12 @@ In that case, study the code in this file and build your own
 """
 from __future__ import unicode_literals
 
-from .buffer import Buffer
+from .buffer import Buffer, AcceptAction
 from .document import Document
 from .enums import DEFAULT_BUFFER, SEARCH_BUFFER
 from .filters import IsDone, HasFocus, RendererHeightIsKnown, to_simple_filter, to_cli_filter, Condition
 from .history import InMemoryHistory
-from .interface import CommandLineInterface, Application, AbortAction, AcceptAction
+from .interface import CommandLineInterface, Application, AbortAction
 from .key_binding.manager import KeyBindingManager
 from .layout import Window, HSplit, VSplit, FloatContainer, Float
 from .layout.containers import ConditionalContainer
