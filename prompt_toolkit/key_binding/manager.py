@@ -40,7 +40,7 @@ class KeyBindingManager(object):
     :param enable_auto_suggest_bindings: Filter to enable fish-style suggestions.
     :param enable_all: Filter to enable (or disable) all bindings.
     """
-    def __init__(self, registry=None, enable_vi_mode=False, vi_state=None,
+    def __init__(self, registry=None, enable_vi_mode=False, get_vi_state=None,
                  enable_abort_and_exit_bindings=False,
                  enable_system_bindings=False, enable_search=False,
                  enable_open_in_editor=False, enable_extra_page_navigation=False,
@@ -48,13 +48,19 @@ class KeyBindingManager(object):
                  enable_all=True):
 
         assert registry is None or isinstance(registry, Registry)
-        assert vi_state is None or isinstance(vi_state, ViState)
+        assert get_vi_state is None or callable(get_vi_state)
 
         # Create registry.
         self.registry = registry or Registry()
 
         # Vi state. (Object to keep track of in which Vi mode we are.)
-        self.vi_state = vi_state or ViState()
+        if get_vi_state is None:
+            vi_state = ViState()  # Stateful. Should be defined outside the function below.
+
+            def get_vi_state(cli):
+                return vi_state
+
+        self.get_vi_state = get_vi_state
 
         # Accept both Filters and booleans as input.
         enable_vi_mode = to_cli_filter(enable_vi_mode)
@@ -95,19 +101,19 @@ class KeyBindingManager(object):
             enable_emacs_mode & enable_extra_page_navigation & enable_all)
 
         # Load Vi bindings.
-        load_vi_bindings(self.registry, self.vi_state, enable_visual_key=~enable_open_in_editor,
+        load_vi_bindings(self.registry, self.get_vi_state, enable_visual_key=~enable_open_in_editor,
                          filter=enable_vi_mode & enable_all)
 
         load_vi_open_in_editor_bindings(
-            self.registry, self.vi_state,
+            self.registry, self.get_vi_state,
             enable_vi_mode & enable_open_in_editor & enable_all)
 
         load_vi_search_bindings(
-            self.registry, self.vi_state,
+            self.registry, self.get_vi_state,
             enable_vi_mode & enable_search & enable_all)
 
         load_vi_system_bindings(
-            self.registry, self.vi_state,
+            self.registry, self.get_vi_state,
             enable_vi_mode & enable_system_bindings & enable_all)
 
         load_extra_vi_page_navigation_bindings(
@@ -137,5 +143,5 @@ class KeyBindingManager(object):
 
         return cls(**kw)
 
-    def reset(self):
-        self.vi_state.reset()
+    def reset(self, cli):
+        self.get_vi_state(cli).reset()

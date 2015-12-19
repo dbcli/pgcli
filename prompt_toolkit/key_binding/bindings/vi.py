@@ -26,13 +26,21 @@ __all__ = (
 class ViStateFilter(Filter):
     """
     Filter to enable some key bindings only in a certain Vi input mode.
+
+    :param get_vi_state: Callable that takes a `CommandLineInterface` and
+        returns a :class:`~prompt_toolkit.key_binding.vi_state.ViState` instance.
     """
-    def __init__(self, vi_state, mode):
-        self.vi_state = vi_state
+    # Note: The reason for making get_vi_state a callable, is that this way,
+    #       the registry of key bindings becomes more stateless and can be
+    #       reused for multiple CommandLineInterface instances.
+    def __init__(self, get_vi_state, mode):
+        assert callable(get_vi_state)
+
+        self.get_vi_state = get_vi_state
         self.mode = mode
 
     def __call__(self, cli):
-        return self.vi_state.input_mode == self.mode
+        return self.get_vi_state(cli).input_mode == self.mode
 
 
 class CursorRegion(object):
@@ -54,13 +62,14 @@ class CursorRegion(object):
             return self.end, self.start
 
 
-def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None):
+def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), filter=None):
     """
     Vi extensions.
 
     # Overview of Readline Vi commands:
     # http://www.catonmat.net/download/bash-vi-editing-mode-cheat-sheet.pdf
 
+    :param get_vi_state: Callable that takes a CommandLineInterface instances and returns the used ViState.
     :param enable_visual_key: Filter to enable lowercase 'v' bindings. A reason to disable these
          are to support open-in-editor functionality. These key bindings conflict.
     """
@@ -73,14 +82,14 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
     #       handled correctly. There is no need to add "~IsReadOnly" to all key
     #       bindings that do text manipulation.
 
-    assert isinstance(vi_state, ViState)
+    assert callable(get_vi_state)
     enable_visual_key = to_cli_filter(enable_visual_key)
 
     handle = create_handle_decorator(registry, filter)
 
-    insert_mode = ViStateFilter(vi_state, InputMode.INSERT) & ~ filters.HasSelection()
-    navigation_mode = ViStateFilter(vi_state, InputMode.NAVIGATION) & ~ filters.HasSelection()
-    replace_mode = ViStateFilter(vi_state, InputMode.REPLACE) & ~ filters.HasSelection()
+    insert_mode = ViStateFilter(get_vi_state, InputMode.INSERT) & ~ filters.HasSelection()
+    navigation_mode = ViStateFilter(get_vi_state, InputMode.NAVIGATION) & ~ filters.HasSelection()
+    replace_mode = ViStateFilter(get_vi_state, InputMode.REPLACE) & ~ filters.HasSelection()
     selection_mode = filters.HasSelection()
 
     vi_transform_functions = [
@@ -109,7 +118,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         if (
                 (filter is None or filter(event.cli)) and  # First make sure that this key bindings are active.
 
-                vi_state.input_mode == InputMode.NAVIGATION and
+                get_vi_state(event.cli).input_mode == InputMode.NAVIGATION and
                 buffer.document.is_cursor_at_the_end_of_line and
                 len(buffer.document.current_line) > 0):
             buffer.cursor_position -= 1
@@ -122,6 +131,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         Escape goes to vi navigation mode.
         """
         buffer = event.current_buffer
+        vi_state = get_vi_state(event.cli)
 
         if vi_state.input_mode in (InputMode.INSERT, InputMode.REPLACE):
             buffer.cursor_position += buffer.document.get_cursor_left_position()
@@ -232,19 +242,19 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
     @handle(Keys.Insert, filter=navigation_mode)
     def _(event):
         " Presing the Insert key. "
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle('a', filter=navigation_mode & ~IsReadOnly())
             # ~IsReadOnly, because we want to stay in navigation mode for
             # read-only buffers.
     def _(event):
         event.current_buffer.cursor_position += event.current_buffer.document.get_cursor_right_position()
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle('A', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         event.current_buffer.cursor_position += event.current_buffer.document.get_end_of_line_position()
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle('C', filter=navigation_mode & ~IsReadOnly())
     def _(event):
@@ -256,7 +266,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
 
         deleted = buffer.delete(count=buffer.document.get_end_of_line_position())
         event.cli.clipboard.set_text(deleted)
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle('c', 'c', filter=navigation_mode & ~IsReadOnly())
     @handle('S', filter=navigation_mode & ~IsReadOnly())
@@ -273,7 +283,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         # But we delete after the whitespace
         buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=True)
         buffer.delete(count=buffer.document.get_end_of_line_position())
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle('D', filter=navigation_mode)
     def _(event):
@@ -310,11 +320,11 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
 
     @handle('i', filter=navigation_mode & ~IsReadOnly())
     def _(event):
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle('I', filter=navigation_mode & ~IsReadOnly())
     def _(event):
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
         event.current_buffer.cursor_position += event.current_buffer.document.get_start_of_line_position(after_whitespace=True)
 
     @handle('J', filter=navigation_mode)
@@ -378,7 +388,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         Go to 'replace'-mode.
         """
-        vi_state.input_mode = InputMode.REPLACE
+        get_vi_state(event.cli).input_mode = InputMode.REPLACE
 
     @handle('s', filter=navigation_mode & ~IsReadOnly())
     def _(event):
@@ -388,7 +398,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         text = event.current_buffer.delete(count=event.arg)
         event.cli.clipboard.set_text(text)
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle('u', filter=navigation_mode, save_before=(lambda e: False))
     def _(event):
@@ -437,7 +447,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         clipboard_data = event.current_buffer.cut_selection()
         event.cli.clipboard.set_data(clipboard_data)
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle('y', filter=selection_mode)
     def _(event):
@@ -533,7 +543,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         event.current_buffer.insert_line_above(
                 copy_margin=not event.cli.in_paste_mode)
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle('o', filter=navigation_mode & ~IsReadOnly())
     def _(event):
@@ -542,7 +552,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         event.current_buffer.insert_line_below(
                 copy_margin=not event.cli.in_paste_mode)
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle('~', filter=navigation_mode)
     def _(event):
@@ -686,7 +696,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
 
                     # Only go back to insert mode in case of 'change'.
                     if not delete_only:
-                        vi_state.input_mode = InputMode.INSERT
+                        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
             create(True)
             create(False)
@@ -837,7 +847,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         Go to next occurance of character. Typing 'fx' will move the
         cursor to the next occurance of character. 'x'.
         """
-        vi_state.last_character_find = CharacterFind(event.data, False)
+        get_vi_state(event.cli).last_character_find = CharacterFind(event.data, False)
         match = event.current_buffer.document.find(event.data, in_current_line=True, count=event.arg)
         return CursorRegion(match or 0)
 
@@ -847,7 +857,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         Go to previous occurance of character. Typing 'Fx' will move the
         cursor to the previous occurance of character. 'x'.
         """
-        vi_state.last_character_find = CharacterFind(event.data, True)
+        get_vi_state(event.cli).last_character_find = CharacterFind(event.data, True)
         return CursorRegion(event.current_buffer.document.find_backwards(event.data, in_current_line=True, count=event.arg) or 0)
 
     @change_delete_move_yank_handler('t', Keys.Any)
@@ -855,7 +865,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         Move right to the next occurance of c, then one char backward.
         """
-        vi_state.last_character_find = CharacterFind(event.data, False)
+        get_vi_state(event.cli).last_character_find = CharacterFind(event.data, False)
         match = event.current_buffer.document.find(event.data, in_current_line=True, count=event.arg)
         return CursorRegion(match - 1 if match else 0)
 
@@ -864,7 +874,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         """
         Move left to the previous occurance of c, then one char forward.
         """
-        vi_state.last_character_find = CharacterFind(event.data, True)
+        get_vi_state(event.cli).last_character_find = CharacterFind(event.data, True)
         match = event.current_buffer.document.find_backwards(event.data, in_current_line=True, count=event.arg)
         return CursorRegion(match + 1 if match else 0)
 
@@ -876,6 +886,7 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         def _(event):
             # Repeat the last 'f'/'F'/'t'/'T' command.
             pos = 0
+            vi_state = get_vi_state(event.cli)
 
             if vi_state.last_character_find:
                 char = vi_state.last_character_find.character
@@ -1166,11 +1177,13 @@ def load_vi_bindings(registry, vi_state, enable_visual_key=Always(), filter=None
         pass
 
 
-def load_vi_open_in_editor_bindings(registry, vi_state, filter=None):
+def load_vi_open_in_editor_bindings(registry, get_vi_state, filter=None):
     """
     Pressing 'v' in navigation mode will open the buffer in an external editor.
     """
-    navigation_mode = ViStateFilter(vi_state, InputMode.NAVIGATION) & ~ filters.HasSelection()
+    assert callable(get_vi_state)
+
+    navigation_mode = ViStateFilter(get_vi_state, InputMode.NAVIGATION) & ~ filters.HasSelection()
     handle = create_handle_decorator(registry, filter)
 
     @handle('v', filter=navigation_mode)
@@ -1178,11 +1191,11 @@ def load_vi_open_in_editor_bindings(registry, vi_state, filter=None):
         event.current_buffer.open_in_editor(event.cli)
 
 
-def load_vi_system_bindings(registry, vi_state, filter=None):
-    assert isinstance(vi_state, ViState)
+def load_vi_system_bindings(registry, get_vi_state, filter=None):
+    assert callable(get_vi_state)
 
     has_focus = filters.HasFocus(SYSTEM_BUFFER)
-    navigation_mode = ViStateFilter(vi_state, InputMode.NAVIGATION) & ~ filters.HasSelection()
+    navigation_mode = ViStateFilter(get_vi_state, InputMode.NAVIGATION) & ~ filters.HasSelection()
 
     handle = create_handle_decorator(registry, filter)
 
@@ -1192,7 +1205,7 @@ def load_vi_system_bindings(registry, vi_state, filter=None):
         '!' opens the system prompt.
         """
         event.cli.focus_stack.push(SYSTEM_BUFFER)
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle(Keys.Escape, filter=has_focus)
     @handle(Keys.ControlC, filter=has_focus)
@@ -1200,7 +1213,7 @@ def load_vi_system_bindings(registry, vi_state, filter=None):
         """
         Cancel system prompt.
         """
-        vi_state.input_mode = InputMode.NAVIGATION
+        get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
         event.cli.buffers[SYSTEM_BUFFER].reset()
         event.cli.focus_stack.pop()
 
@@ -1209,7 +1222,7 @@ def load_vi_system_bindings(registry, vi_state, filter=None):
         """
         Run system command.
         """
-        vi_state.input_mode = InputMode.NAVIGATION
+        get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
 
         system_buffer = event.cli.buffers[SYSTEM_BUFFER]
         event.cli.run_system_command(system_buffer.text)
@@ -1219,11 +1232,11 @@ def load_vi_system_bindings(registry, vi_state, filter=None):
         event.cli.focus_stack.pop()
 
 
-def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=SEARCH_BUFFER):
-    assert isinstance(vi_state, ViState)
+def load_vi_search_bindings(registry, get_vi_state, filter=None, search_buffer_name=SEARCH_BUFFER):
+    assert callable(get_vi_state)  # Callable that takes a CLI and returns a ViState.
 
     has_focus = filters.HasFocus(search_buffer_name)
-    navigation_mode = ~has_focus & (ViStateFilter(vi_state, InputMode.NAVIGATION) | filters.HasSelection())
+    navigation_mode = ~has_focus & (ViStateFilter(get_vi_state, InputMode.NAVIGATION) | filters.HasSelection())
     handle = create_handle_decorator(registry, filter)
 
     @handle('/', filter=navigation_mode)
@@ -1234,7 +1247,7 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
         """
         # Set the ViState.
         event.cli.search_state.direction = IncrementalSearchDirection.FORWARD
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
         # Focus search buffer.
         event.cli.focus_stack.push(search_buffer_name)
@@ -1250,7 +1263,7 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
 
         # Focus search buffer.
         event.cli.focus_stack.push(search_buffer_name)
-        vi_state.input_mode = InputMode.INSERT
+        get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle(Keys.ControlJ, filter=has_focus)
     def _(event):
@@ -1272,7 +1285,7 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
         search_buffer.reset()
 
         # Focus previous document again.
-        vi_state.input_mode = InputMode.NAVIGATION
+        get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
         event.cli.focus_stack.pop()
 
     def search_buffer_is_empty(cli):
@@ -1286,7 +1299,7 @@ def load_vi_search_bindings(registry, vi_state, filter=None, search_buffer_name=
         """
         Cancel search.
         """
-        vi_state.input_mode = InputMode.NAVIGATION
+        get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
 
         event.cli.focus_stack.pop()
         event.cli.buffers[search_buffer_name].reset()
