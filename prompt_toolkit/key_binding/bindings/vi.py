@@ -4,7 +4,7 @@ from prompt_toolkit.buffer import ClipboardData, indent, unindent
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter, IsReadOnly
-from prompt_toolkit.key_binding.vi_state import ViState, CharacterFind, InputMode
+from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
 from prompt_toolkit.selection import SelectionType
@@ -411,6 +411,33 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), filter=
         Start lines selection.
         """
         event.current_buffer.start_selection(selection_type=SelectionType.LINES)
+
+    @handle('V', filter=selection_mode)
+    def _(event):
+        """
+        Exit line selection mode, or go from non line selection mode to line
+        selection mode.
+        """
+        selection_state = event.current_buffer.selection_state
+
+        if selection_state.type != SelectionType.LINES:
+            selection_state.type = SelectionType.LINES
+        else:
+            event.current_buffer.exit_selection()
+
+    @handle('v', filter=selection_mode)
+    def _(event):
+        """
+        Exit character selection mode, or go from non-character-selection mode
+        to character selection mode.
+        """
+        selection_state = event.current_buffer.selection_state
+
+        if selection_state.type != SelectionType.CHARACTERS:
+            selection_state.type = SelectionType.CHARACTERS
+        else:
+            event.current_buffer.exit_selection()
+
 
     @handle('a', 'w', filter=selection_mode)
     @handle('a', 'W', filter=selection_mode)
