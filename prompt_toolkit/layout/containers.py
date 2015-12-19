@@ -704,7 +704,7 @@ class ScrollOffsets(object):
     """
     Scroll offsets for the :class:`.Window` class.
 
-    Note that left/rigth offsets only make sense if line wrapping is disabled.
+    Note that left/right offsets only make sense if line wrapping is disabled.
     """
     def __init__(self, top=0, bottom=0, left=0, right=0):
         self.top = top
@@ -840,7 +840,7 @@ class Window(Container):
         """
         dimension = dimension or LayoutDimension()
 
-        # When a preferred dimension was explicitely given to the Window,
+        # When a preferred dimension was explicitly given to the Window,
         # ignore the UIControl.
         if dimension.preferred_specified:
             preferred = dimension.preferred
@@ -855,7 +855,7 @@ class Window(Container):
                 preferred = max(preferred, dimension.min)
 
         # When a `dont_extend` flag has been given, use the preferred dimension
-        # also as the max demension.
+        # also as the max dimension.
         if dont_extend and preferred is not None:
             max_ = min(dimension.max, preferred)
         else:
@@ -928,7 +928,7 @@ class Window(Container):
         move_x = 0
 
         def render_margin(m, width):
-            " Render margin. return `Screen`. "
+            " Render margin. Return `Screen`. "
             # Retrieve margin tokens.
             tokens = m.create_margin(cli, self.render_info, width, write_position.height)
 
