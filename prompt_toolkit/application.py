@@ -71,7 +71,7 @@ class Application(object):
     :param on_start: Called when reading input starts.
     :param on_stop: Called when reading input ends.
     :param on_reset: Called during reset.
-    :param on_buffer_changed: Called when another buffer gets the focus.
+    :param on_buffer_changed: Called when the content of a buffer has been changed.
     :param on_initialize: Called after the
         :class:`~prompt_toolkit.interface.CommandLineInterface` initializes.
     """
