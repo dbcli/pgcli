@@ -8,7 +8,8 @@ buffers has the focus.
 from __future__ import unicode_literals
 from six import string_types
 
-from prompt_toolkit.enums import DEFAULT_BUFFER
+from .enums import DEFAULT_BUFFER
+from .utils import Callback
 
 __all__ = (
     'FocusStack',
@@ -16,7 +17,11 @@ __all__ = (
 
 
 class FocusStack(object):
-    def __init__(self, initial=DEFAULT_BUFFER):
+    def __init__(self, initial=DEFAULT_BUFFER, on_focus_changed=None):
+        assert on_focus_changed is None or isinstance(on_focus_changed, Callback)
+
+        self.on_focus_changed = on_focus_changed or Callback()
+
         self._initial = initial
         self.reset()
 
@@ -37,15 +42,20 @@ class FocusStack(object):
             raise IndexError('Cannot pop last item from the focus stack.')
 
     def replace(self, buffer_name):
-        assert buffer_name is None or isinstance(buffer_name, string_types)
+        self.push(buffer_name, replace=True)
 
-        self._stack.pop()
+    def push(self, buffer_name, replace=False):
+        assert buffer_name is None or isinstance(buffer_name, string_types)
+        changed = self.current != buffer_name
+
+        # Update stack.
+        if replace:
+            self._stack.pop()
         self._stack.append(buffer_name)
 
-    def push(self, buffer_name):
-        assert buffer_name is None or isinstance(buffer_name, string_types)
-
-        self._stack.append(buffer_name)
+        # Trigger event.
+        if changed:
+            self.on_focus_changed.fire()
 
     @property
     def current(self):
