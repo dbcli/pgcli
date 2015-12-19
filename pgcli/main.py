@@ -60,6 +60,7 @@ from psycopg2 import OperationalError
 from collections import namedtuple
 
 # Query tuples are used for maintaining history
+
 MetaQuery = namedtuple(
     'Query',
     [
@@ -72,6 +73,10 @@ MetaQuery = namedtuple(
         'mutated',          # True if any subquery executed insert/update/delete
     ])
 MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
+
+# Default less opts
+LESS_DEFAULTS = '-SRXF'
+
 
 
 class PGCli(object):
@@ -275,7 +280,7 @@ class PGCli(object):
 
     def run_cli(self):
         logger = self.logger
-        original_less_opts = self.adjust_less_opts()
+        less_opts_adjusted = self.adjust_less_opts()
 
         history_file = self.config['main']['history_file']
         if history_file == 'default':
@@ -283,6 +288,7 @@ class PGCli(object):
         history = FileHistory(os.path.expanduser(history_file))
         self.refresh_completions(history=history,
                                  persist_priorities='none')
+
 
         self.cli = self._build_cli(history)
 
@@ -372,9 +378,10 @@ class PGCli(object):
 
         except EOFError:
             print ('Goodbye!')
-        finally:  # Reset the less opts back to original.
-            logger.debug('Restoring env var LESS to %r.', original_less_opts)
-            os.environ['LESS'] = original_less_opts
+        finally:
+            # Don't persist pgcli less defaults when session is terminated
+            if less_opts_adjusted:
+                os.environ['LESS'] = ''
 
     def _build_cli(self, history):
 
@@ -503,11 +510,10 @@ class PGCli(object):
                 click.secho(str(e), err=True, fg='red')
 
     def adjust_less_opts(self):
-        less_opts = os.environ.get('LESS', '')
-        self.logger.debug('Original value for LESS env var: %r', less_opts)
-        os.environ['LESS'] = '-SRXF'
-
-        return less_opts
+        if not os.environ.get('LESS'):
+            os.environ['LESS'] = LESS_DEFAULTS
+            return True
+        return False
 
     def refresh_completions(self, history=None, persist_priorities='all'):
         """ Refresh outdated completions

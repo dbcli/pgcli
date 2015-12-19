@@ -4,7 +4,10 @@ try:
     import setproctitle
 except ImportError:
     setproctitle = None
-from pgcli.main import obfuscate_process_password, format_output
+
+from pgcli.main import obfuscate_process_password, LESS_DEFAULTS, PGCli
+
+>>>>>>> d573d95... Preserve environmental LESS options if they are set
 
 
 @pytest.mark.skipif(platform.system() == 'Windows',
@@ -58,3 +61,17 @@ def test_format_output_auto_expand():
                                      max_width=1)
     expanded = ['Title', u'-[ RECORD 0 ]-------------------------\nhead1 | abc\nhead2 | def\n', 'test status']
     assert expanded_results == expanded
+
+def test_less_opts():
+    import os
+    original_less_opts = os.environ.get('LESS', '')
+    cli = PGCli.__new__(PGCli)
+    less_options_adjusted = cli.adjust_less_opts()
+    assert os.environ['LESS'] == LESS_DEFAULTS
+    assert less_options_adjusted is True
+    os.environ['LESS'] = '-lmnropst'
+    less_options_adjusted = cli.adjust_less_opts()
+    assert os.environ['LESS'] == '-lmnropst'
+    assert less_options_adjusted is False
+    os.environ['LESS'] = original_less_opts
+
