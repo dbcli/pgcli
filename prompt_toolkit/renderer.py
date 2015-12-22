@@ -19,7 +19,7 @@ __all__ = (
 
 
 def output_screen_diff(output, screen, current_pos, previous_screen=None, last_char=None,
-                       is_done=False, attrs_for_token=None, width=0, previous_width=0):  # XXX: drop is_done
+                       is_done=False, attrs_for_token=None, size=None, previous_width=0):  # XXX: drop is_done
     """
     Render the diff between this screen and the previous screen.
 
@@ -39,6 +39,8 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     :param width: The width of the terminal.
     :param prevous_width: The width of the terminal during the last rendering.
     """
+    width, height = size.columns, size.rows
+
     #: Remember the last printed character.
     last_char = [last_char]  # nonlocal
     background_turned_on = [False]  # Nonlocal
@@ -125,10 +127,11 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
 
     # Get height of the screen.
     # (height changes as we loop over data_buffer, so remember the current value.)
-    current_height = screen.height
+    # (Also make sure to clip the height to the size of the output.)
+    current_height = min(screen.height, height)
 
     # Loop over the rows.
-    row_count = max(screen.height, previous_screen.height)
+    row_count = min(max(screen.height, previous_screen.height), height)
     c = 0  # Column counter.
 
     for y, r in enumerate(range(0, row_count)):
@@ -171,8 +174,8 @@ def output_screen_diff(output, screen, current_pos, previous_screen=None, last_c
     # the artifact of the input scrolling when the completion menu is shown.
     # (If the scrolling is actually wanted, the layout can still be build in a
     # way to behave that way by setting a dynamic height.)
-    if screen.height > previous_screen.height:
-        current_pos = move_cursor(Point(y=screen.height - 1, x=0))
+    if current_height > previous_screen.height:
+        current_pos = move_cursor(Point(y=current_height - 1, x=0))
 
     # Move cursor:
     if is_done:
@@ -425,7 +428,7 @@ class Renderer(object):
             output, screen, self._cursor_pos,
             self._last_screen, self._last_char, is_done,
             attrs_for_token=self._attrs_for_token,
-            width=size.columns,
+            size=size,
             previous_width=(self._last_size.columns if self._last_size else 0))
         self._last_screen = screen
         self._last_size = size
