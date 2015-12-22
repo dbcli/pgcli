@@ -8,7 +8,7 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict, namedtuple
 from six import with_metaclass
 
-from prompt_toolkit.enums import DEFAULT_BUFFER
+from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER
 from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.mouse_events import MouseEventTypes
 from prompt_toolkit.search_state import SearchState
@@ -306,6 +306,8 @@ class BufferControl(UIControl):
     :param input_processors: list of :class:`~prompt_toolkit.layout.processors.Processor`.
     :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` instance for syntax highlighting.
     :param preview_search: `bool` or `CLIFilter`: Show search while typing.
+    :param get_search_state: Callable that takes a CommandLineInterface and
+        returns the SearchState to be used. (If not CommandLineInterface.search_state.)
     :param wrap_lines: `bool` or `CLIFilter`: Wrap long lines.
     :param buffer_name: String representing the name of the buffer to display.
     :param default_char: :class:`.Char` instance to use to fill the background. This is
@@ -318,6 +320,8 @@ class BufferControl(UIControl):
                  highlighters=None,
                  lexer=None,
                  preview_search=False,
+                 search_buffer_name=SEARCH_BUFFER,
+                 get_search_state=None,
                  wrap_lines=True,
                  menu_position=None,
                  default_char=None,
@@ -326,8 +330,10 @@ class BufferControl(UIControl):
         assert highlighters is None or all(isinstance(i, Highlighter) for i in highlighters)
         assert menu_position is None or callable(menu_position)
         assert lexer is None or isinstance(lexer, Lexer)
+        assert get_search_state is None or callable(get_search_state)
 
         self.preview_search = to_cli_filter(preview_search)
+        self.get_search_state = get_search_state
         self.wrap_lines = to_cli_filter(wrap_lines)
         self.focus_on_click = to_cli_filter(focus_on_click)
 
@@ -337,6 +343,7 @@ class BufferControl(UIControl):
         self.menu_position = menu_position
         self.lexer = lexer or SimpleLexer()
         self.default_char = default_char or Char(token=Token.Transparent)
+        self.search_buffer_name = search_buffer_name
 
         #: LRU cache for the lexer.
         #: Often, due to cursor movement, undo/redo and window resizing
@@ -452,13 +459,18 @@ class BufferControl(UIControl):
         def preview_now():
             """ True when we should preview a search. """
             return bool(self.preview_search(cli) and
-                        cli.is_searching and cli.current_buffer.text)
+                        cli.buffers[self.search_buffer_name].text)
 
         if preview_now():
+            if self.get_search_state:
+                ss = self.get_search_state(cli)
+            else:
+                ss = cli.search_state
+
             document = buffer.document_for_search(SearchState(
                 text=cli.current_buffer.text,
-                direction=cli.search_state.direction,
-                ignore_case=cli.search_state.ignore_case))
+                direction=ss.direction,
+                ignore_case=ss.ignore_case))
         else:
             document = buffer.document
 
