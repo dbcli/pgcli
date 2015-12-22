@@ -34,7 +34,8 @@ from .layout.controls import BufferControl, TokenListControl
 from .layout.dimension import LayoutDimension
 from .layout.lexers import PygmentsLexer
 from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
-from .layout.processors import PasswordProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, ConditionalProcessor, AppendAutoSuggestion
+from .layout.processors import PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion
+from .layout.highlighters import SearchHighlighter, SelectionHighlighter, ConditionalHighlighter
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
@@ -196,19 +197,21 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
     except TypeError: # Happens when lexer is `None` or an instance of something else.
         pass
 
-    # Create processors list.
-    # (DefaultPrompt should always be at the end.)
-    input_processors = [ConditionalProcessor(
-                            # By default, only highlight search when the search
-                            # input has the focus. (Note that this doesn't mean
-                            # there is no search: the Vi 'n' binding for instance
-                            # still allows to jump to the next match in
-                            # navigation mode.)
-                            HighlightSearchProcessor(preview_search=True),
-                            HasFocus(SEARCH_BUFFER)),
-                        HighlightSelectionProcessor(),
-                        ConditionalProcessor(AppendAutoSuggestion(), HasFocus(DEFAULT_BUFFER) & ~IsDone()),
-                        ConditionalProcessor(PasswordProcessor(), is_password)]
+    # Create highlighters and processors list.
+    highlighters = [
+        ConditionalHighlighter(
+            # By default, only highlight search when the search
+            # input has the focus. (Note that this doesn't mean
+            # there is no search: the Vi 'n' binding for instance
+            # still allows to jump to the next match in
+            # navigation mode.)
+            SearchHighlighter(preview_search=True),
+        HasFocus(SEARCH_BUFFER)),
+        SelectionHighlighter()]
+
+    input_processors = [
+        ConditionalProcessor(AppendAutoSuggestion(), HasFocus(DEFAULT_BUFFER) & ~IsDone()),
+        ConditionalProcessor(PasswordProcessor(), is_password)]
 
     if extra_input_processors:
         input_processors.extend(extra_input_processors)
@@ -216,6 +219,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
     # Show the prompt before the input (using the DefaultPrompt processor.
     # This also replaces it with reverse-i-search and 'arg' when required.
     # (Only for single line mode.)
+    # (DefaultPrompt should always be at the end of the processors.)
     input_processors.append(ConditionalProcessor(
         DefaultPrompt(get_prompt_tokens), ~multiline))
 
@@ -258,6 +262,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
             FloatContainer(
                 Window(
                     BufferControl(
+                        highlighters=highlighters,
                         input_processors=input_processors,
                         lexer=lexer,
                         wrap_lines=wrap_lines,

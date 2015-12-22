@@ -4,11 +4,12 @@ Container for the layout.
 """
 from __future__ import unicode_literals
 
-from six import with_metaclass
 from abc import ABCMeta, abstractmethod
+from collections import defaultdict
 from pygments.token import Token
+from six import with_metaclass
 
-from .screen import Point, WritePosition
+from .screen import Point, WritePosition, Char
 from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
 from .controls import UIControl, TokenListControl
 from .margins import Margin
@@ -868,21 +869,26 @@ class Window(Container):
         Write window to screen. This renders the user control, the margins and
         copies everything over to the absolute position at the given screen.
         """
-        # Render margins.
+        # Calculate margin sizes.
         left_margin_widths = [m.get_width(cli) for m in self.left_margins]
         right_margin_widths = [m.get_width(cli) for m in self.right_margins]
         total_margin_width = sum(left_margin_widths + right_margin_widths)
 
         # Render UserControl.
-        temp_screen = self.content.create_screen(
+        tpl = self.content.create_screen(
             cli, write_position.width - total_margin_width, write_position.height)
+        if isinstance(tpl, tuple):
+            temp_screen, highlighting = tpl
+        else:
+            # For backwards, compatibility.
+            temp_screen, highlighting = tpl, defaultdict(lambda: defaultdict(lambda: None))
 
         # Scroll content.
         applied_scroll_offsets = self._scroll(
             temp_screen, write_position.width - total_margin_width, write_position.height, cli)
 
         # Write body to screen.
-        self._copy_body(cli, temp_screen, screen, write_position,
+        self._copy_body(cli, temp_screen, highlighting, screen, write_position,
                         sum(left_margin_widths), write_position.width - total_margin_width,
                         applied_scroll_offsets)
 
@@ -959,7 +965,8 @@ class Window(Container):
             self._copy_margin(margin_screen, screen, write_position, move_x, width)
             move_x += width
 
-    def _copy_body(self, cli, temp_screen, new_screen, write_position, move_x, width, applied_scroll_offsets):
+    def _copy_body(self, cli, temp_screen, highlighting, new_screen,
+                   write_position, move_x, width, applied_scroll_offsets):
         """
         Copy characters from the temp screen that we got from the `UIControl`
         to the real screen.
@@ -971,6 +978,9 @@ class Window(Container):
         temp_buffer = temp_screen.data_buffer
         new_buffer = new_screen.data_buffer
         temp_screen_height = temp_screen.height
+
+        vertical_scroll = self.vertical_scroll
+        horizontal_scroll = self.horizontal_scroll
         y = 0
 
         # Now copy the region we need to the real screen.
@@ -985,25 +995,31 @@ class Window(Container):
                 # screen's height.)
                 break
             else:
-                temp_row = temp_buffer[y + self.vertical_scroll]
+                temp_row = temp_buffer[y + vertical_scroll]
+                highlighting_row = highlighting[y + vertical_scroll]
 
                 # Copy row content, except for transparent tokens.
                 # (This is useful in case of floats.)
+                # Also apply highlighting.
                 for x in range(0, width):
-                    cell = temp_row[x + self.horizontal_scroll]
-                    if cell.token != Transparent:
+                    cell = temp_row[x + horizontal_scroll]
+                    highlighting_token = highlighting_row[x]
+
+                    if highlighting_token:
+                        new_row[x + xpos] = Char(cell.char, highlighting_token)
+                    elif cell.token != Transparent:
                         new_row[x + xpos] = cell
 
         if self.content.has_focus(cli):
-            new_screen.cursor_position = Point(y=temp_screen.cursor_position.y + ypos - self.vertical_scroll,
-                                               x=temp_screen.cursor_position.x + xpos - self.horizontal_scroll)
+            new_screen.cursor_position = Point(y=temp_screen.cursor_position.y + ypos - vertical_scroll,
+                                               x=temp_screen.cursor_position.x + xpos - horizontal_scroll)
 
             if not self.always_hide_cursor(cli):
                 new_screen.show_cursor = temp_screen.show_cursor
 
         if not new_screen.menu_position and temp_screen.menu_position:
-            new_screen.menu_position = Point(y=temp_screen.menu_position.y + ypos - self.vertical_scroll,
-                                             x=temp_screen.menu_position.x + xpos - self.horizontal_scroll)
+            new_screen.menu_position = Point(y=temp_screen.menu_position.y + ypos - vertical_scroll,
+                                             x=temp_screen.menu_position.x + xpos - horizontal_scroll)
 
         # Update height of the output screen. (new_screen.write_data is not
         # called, so the screen is not aware of its height.)

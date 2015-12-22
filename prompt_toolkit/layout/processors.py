@@ -87,7 +87,7 @@ class Transformation(object):
         self.display_to_source = display_to_source or (lambda i: i)
 
 
-class HighlightSearchProcessor(Processor):
+class HighlightSearchProcessor(Processor):  # XXX: Deprecated!
     """
     Processor that highlights search matches in the document.
 
@@ -95,16 +95,17 @@ class HighlightSearchProcessor(Processor):
         the search text in real time while the user is typing, instead of the
         last active search state.
     """
-    def __init__(self, preview_search=False):
+    def __init__(self, preview_search=False, search_buffer_name=SEARCH_BUFFER):
         self.preview_search = to_cli_filter(preview_search)
+        self.search_buffer_name = search_buffer_name
 
     def _get_search_text(self, cli):
         """
         The text we are searching for.
         """
         # When the search buffer has focus, take that text.
-        if self.preview_search(cli) and cli.is_searching and cli.buffers[SEARCH_BUFFER].text:
-            return cli.buffers[SEARCH_BUFFER].text
+        if self.preview_search(cli) and cli.buffers[self.search_buffer_name].text:
+            return cli.buffers[self.search_buffer_name].text
         # Otherwise, take the text of the last active search.
         else:
             return cli.search_state.text
@@ -143,7 +144,7 @@ class HighlightSearchProcessor(Processor):
         )
 
 
-class HighlightSelectionProcessor(Processor):
+class HighlightSelectionProcessor(Processor):  # XXX: Deprecated!
     """
     Processor that highlights the selection in the document.
     """
@@ -182,7 +183,7 @@ class PasswordProcessor(Processor):
             document, [(token, self.char * len(text)) for token, text in tokens])
 
 
-class HighlightMatchingBracketProcessor(Processor):
+class HighlightMatchingBracketProcessor(Processor):  # XXX: Deprecated!
     """
     When the cursor is on or right after a bracket, it highlights the matching
     bracket.

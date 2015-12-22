@@ -102,6 +102,8 @@ class CharCache(dict):
 _CHAR_CACHE = CharCache()
 Transparent = Token.Transparent
 
+WriteDataResult = namedtuple('WriteDataResult', 'indexes_to_pos line_lengths')
+
 
 class Screen(object):
     """
@@ -163,8 +165,8 @@ class Screen(object):
         line_number = 0
         requires_line_feed = True
         indexes_to_pos = {}  # Map input positions to (x, y) coordinates.
+        line_lengths = {}  # Map line numbers (y) to max_x for this line.
         set_cursor_position = Token.SetCursorPosition
-        max_x = 0
 
         for token, text in data:
             if token == set_cursor_position:
@@ -182,7 +184,7 @@ class Screen(object):
                 # In case there is no more place left at this line, go first to the
                 # following line. (Also in case of double-width characters.)
                 if x + char_width > max_allowed_x and char != '\n':
-                    max_x = max(max_x, x)
+                    line_lengths[y] = x
                     y += 1
                     x = 0
 
@@ -191,7 +193,7 @@ class Screen(object):
 
                 # Insertion of newline
                 if char == '\n':
-                    max_x = max(max_x, x)
+                    line_lengths[y] = x
                     y += 1
                     x = 0
                     requires_line_feed = True
@@ -214,10 +216,12 @@ class Screen(object):
 
                 index += 1
 
-        self.height = max(self.height, y + 1)
-        self.width = max(self.width, max_x, x)
+        line_lengths[y] = x
 
-        return indexes_to_pos
+        self.height = max(self.height, y + 1)
+        self.width = max(self.width, max(line_lengths.values()))
+
+        return WriteDataResult(indexes_to_pos, line_lengths)
 
     def replace_all_tokens(self, token):
         """
