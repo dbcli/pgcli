@@ -80,10 +80,14 @@ class SearchHighlighter(Highlighter):
     :param preview_search: A Filter; when active it indicates that we take
         the search text in real time while the user is typing, instead of the
         last active search state.
+    :param get_search_state: (Optional) Callable that takes a
+        CommandLineInterface and returns the SearchState to be used for the highlighting.
     """
-    def __init__(self, preview_search=False, search_buffer_name=SEARCH_BUFFER):
+    def __init__(self, preview_search=False, search_buffer_name=SEARCH_BUFFER,
+                 get_search_state=None):
         self.preview_search = to_cli_filter(preview_search)
         self.search_buffer_name = search_buffer_name
+        self.get_search_state = get_search_state
 
     def _get_search_text(self, cli):
         """
@@ -93,6 +97,8 @@ class SearchHighlighter(Highlighter):
         if self.preview_search(cli) and cli.buffers[self.search_buffer_name].text:
             return cli.buffers[self.search_buffer_name].text
         # Otherwise, take the text of the last active search.
+        elif self.get_search_state:
+            return self.get_search_state(cli).text
         else:
             return cli.search_state.text
 
