@@ -62,7 +62,7 @@ class CursorRegion(object):
             return self.end, self.start
 
 
-def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), filter=None):
+def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_search_state=None, filter=None):
     """
     Vi extensions.
 
@@ -72,6 +72,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), filter=
     :param get_vi_state: Callable that takes a CommandLineInterface instances and returns the used ViState.
     :param enable_visual_key: Filter to enable lowercase 'v' bindings. A reason to disable these
          are to support open-in-editor functionality. These key bindings conflict.
+     :param get_search_state: None or a callable that takes a CommandLineInterface and returns a SearchState.
     """
     # Note: Some key bindings have the "~IsReadOnly()" filter added. This
     #       prevents the handler to be executed when the focus is on a
@@ -84,6 +85,10 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), filter=
 
     assert callable(get_vi_state)
     enable_visual_key = to_cli_filter(enable_visual_key)
+
+    # Default get_search_state.
+    if get_search_state is None:
+        def get_search_state(cli): return cli.search_state
 
     handle = create_handle_decorator(registry, filter)
 
@@ -344,7 +349,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), filter=
         Search next.
         """
         event.current_buffer.apply_search(
-            event.cli.search_state, include_current_position=False,
+            get_search_state(event.cli), include_current_position=False,
             count=event.arg)
 
     @handle('N', filter=navigation_mode)
@@ -353,7 +358,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), filter=
         Search previous.
         """
         event.current_buffer.apply_search(
-            ~event.cli.search_state, include_current_position=False,
+            ~get_search_state(event.cli), include_current_position=False,
             count=event.arg)
 
     @handle('p', filter=navigation_mode)
@@ -600,7 +605,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), filter=
         """
         b = event.cli.current_buffer
 
-        search_state = event.cli.search_state
+        search_state = get_search_state(event.cli)
         search_state.text = b.document.get_word_under_cursor()
         search_state.direction = IncrementalSearchDirection.BACKWARD
 
@@ -614,7 +619,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), filter=
         """
         b = event.cli.current_buffer
 
-        search_state = event.cli.search_state
+        search_state = get_search_state(event.cli)
         search_state.text = b.document.get_word_under_cursor()
         search_state.direction = IncrementalSearchDirection.FORWARD
 
@@ -1259,8 +1264,13 @@ def load_vi_system_bindings(registry, get_vi_state, filter=None):
         event.cli.focus_stack.pop()
 
 
-def load_vi_search_bindings(registry, get_vi_state, filter=None, search_buffer_name=SEARCH_BUFFER):
+def load_vi_search_bindings(registry, get_vi_state, get_search_state=None,
+                            filter=None, search_buffer_name=SEARCH_BUFFER):
     assert callable(get_vi_state)  # Callable that takes a CLI and returns a ViState.
+    assert get_search_state is None or callable(get_search_state)
+
+    if not get_search_state:
+        def get_search_state(cli): return cli.search_state
 
     has_focus = filters.HasFocus(search_buffer_name)
     navigation_mode = ~has_focus & (ViStateFilter(get_vi_state, InputMode.NAVIGATION) | filters.HasSelection())
@@ -1273,7 +1283,7 @@ def load_vi_search_bindings(registry, get_vi_state, filter=None, search_buffer_n
         Vi-style forward search.
         """
         # Set the ViState.
-        event.cli.search_state.direction = IncrementalSearchDirection.FORWARD
+        get_search_state(event.cli).direction = IncrementalSearchDirection.FORWARD
         get_vi_state(event.cli).input_mode = InputMode.INSERT
 
         # Focus search buffer.
@@ -1286,7 +1296,7 @@ def load_vi_search_bindings(registry, get_vi_state, filter=None, search_buffer_n
         Vi-style backward search.
         """
         # Set the ViState.
-        event.cli.search_state.direction = IncrementalSearchDirection.BACKWARD
+        get_search_state(event.cli).direction = IncrementalSearchDirection.BACKWARD
 
         # Focus search buffer.
         event.cli.focus_stack.push(search_buffer_name)
@@ -1302,10 +1312,10 @@ def load_vi_search_bindings(registry, get_vi_state, filter=None, search_buffer_n
 
         # Update search state.
         if search_buffer.text:
-            event.cli.search_state.text = search_buffer.text
+            get_search_state(event.cli).text = search_buffer.text
 
         # Apply search.
-        input_buffer.apply_search(event.cli.search_state)
+        input_buffer.apply_search(get_search_state(event.cli))
 
         # Add query to history of search line.
         search_buffer.append_to_history()

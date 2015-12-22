@@ -41,6 +41,7 @@ class KeyBindingManager(object):
     :param enable_all: Filter to enable (or disable) all bindings.
     """
     def __init__(self, registry=None, enable_vi_mode=False, get_vi_state=None,
+                 get_search_state=None,
                  enable_abort_and_exit_bindings=False,
                  enable_system_bindings=False, enable_search=False,
                  enable_open_in_editor=False, enable_extra_page_navigation=False,
@@ -49,6 +50,7 @@ class KeyBindingManager(object):
 
         assert registry is None or isinstance(registry, Registry)
         assert get_vi_state is None or callable(get_vi_state)
+        assert get_search_state is None or callable(get_search_state)
 
         # Create registry.
         self.registry = registry or Registry()
@@ -91,7 +93,9 @@ class KeyBindingManager(object):
             self.registry, enable_emacs_mode & enable_open_in_editor & enable_all)
 
         load_emacs_search_bindings(
-            self.registry, enable_emacs_mode & enable_search & enable_all)
+            self.registry,
+            filter=enable_emacs_mode & enable_search & enable_all,
+            get_search_state=get_search_state)
 
         load_emacs_system_bindings(
             self.registry, enable_emacs_mode & enable_system_bindings & enable_all)
@@ -101,8 +105,10 @@ class KeyBindingManager(object):
             enable_emacs_mode & enable_extra_page_navigation & enable_all)
 
         # Load Vi bindings.
-        load_vi_bindings(self.registry, self.get_vi_state, enable_visual_key=~enable_open_in_editor,
-                         filter=enable_vi_mode & enable_all)
+        load_vi_bindings(
+            self.registry, self.get_vi_state, enable_visual_key=~enable_open_in_editor,
+            filter=enable_vi_mode & enable_all,
+            get_search_state=get_search_state)
 
         load_vi_open_in_editor_bindings(
             self.registry, self.get_vi_state,
@@ -110,7 +116,8 @@ class KeyBindingManager(object):
 
         load_vi_search_bindings(
             self.registry, self.get_vi_state,
-            enable_vi_mode & enable_search & enable_all)
+            filter=enable_vi_mode & enable_search & enable_all,
+            get_search_state=get_search_state)
 
         load_vi_system_bindings(
             self.registry, self.get_vi_state,
