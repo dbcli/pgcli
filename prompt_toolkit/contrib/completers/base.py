@@ -16,20 +16,31 @@ class WordCompleter(Completer):
     :param ignore_case: If True, case-insensitive completion.
     :param meta_dict: Optional dict mapping words to their meta-information.
     :param WORD: When True, use WORD characters.
+    :param sentence: When True, don't complete by comparing the word before the
+        cursor, but by comparing all the text before the cursor. In this case,
+        the list of words is just a list of strings, where each string can
+        contain spaces. (Can not be used together with the WORD option.)
     :param match_middle: When True, match not only the start, but also in the
                          middle of the word.
     """
     def __init__(self, words, ignore_case=False, meta_dict=None, WORD=False,
-                 match_middle=False):
+                 sentence=False, match_middle=False):
+        assert not (WORD and sentence)
+
         self.words = list(words)
         self.ignore_case = ignore_case
         self.meta_dict = meta_dict or {}
         self.WORD = WORD
+        self.sentence = sentence
         self.match_middle = match_middle
         assert all(isinstance(w, string_types) for w in self.words)
 
     def get_completions(self, document, complete_event):
-        word_before_cursor = document.get_word_before_cursor(WORD=self.WORD)
+        # Get word/text before cursor.
+        if self.sentence:
+            word_before_cursor = document.text_before_cursor
+        else:
+            word_before_cursor = document.get_word_before_cursor(WORD=self.WORD)
 
         if self.ignore_case:
             word_before_cursor = word_before_cursor.lower()
