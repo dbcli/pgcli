@@ -38,7 +38,7 @@ class Document(object):
     :param cursor_position: int
     :param selection: :class:`.SelectionState`
     """
-    __slots__ = ('text', 'cursor_position', 'selection')
+    __slots__ = ('text', 'cursor_position', 'selection', '_lines_cache')
 
     def __init__(self, text='', cursor_position=None, selection=None):
         assert isinstance(text, six.text_type), 'Got %r' % text
@@ -58,6 +58,7 @@ class Document(object):
         self.text = text
         self.cursor_position = cursor_position
         self.selection = selection
+        self._lines_cache = None
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.text, self.cursor_position)
@@ -92,10 +93,12 @@ class Document(object):
 
     @property
     def lines(self):
-        """
-        Array of all the lines.
-        """
-        return self.text.split('\n')
+        " Array of all the lines. "
+        # Cache, because this one is reused very often.
+        if self._lines_cache is None:
+            self._lines_cache = self.text.split('\n')
+
+        return self._lines_cache
 
     @property
     def lines_from_current(self):
