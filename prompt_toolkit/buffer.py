@@ -555,7 +555,7 @@ class Buffer(object):
         assert self.selection_state
 
         # Get lines.
-        from_, to = self.document.selection_range()
+        from_, to = sorted([self.cursor_position, self.selection_state.original_cursor_position])
 
         before = self.text[:from_]
         lines = self.text[from_:to].splitlines()
@@ -800,29 +800,25 @@ class Buffer(object):
         """
         Copy selected text and return :class:`.ClipboardData` instance.
         """
-        if self.selection_state:
-            type = self.selection_state.type
+        new_document, clipboard_data = self.document.cut_selection()
+        if _cut:
+            self.document = new_document
 
-            # Take start and end of selection
-            from_, to = self.document.selection_range()
-
-            copied_text = self.text[from_:to]
-
-            # If cutting, remove the text and set the new cursor position.
-            if _cut:
-                self.document = Document(text=self.text[:from_] + self.text[to + 1:],
-                                         cursor_position=min(from_, to))
-
-            self.selection_state = None
-            return ClipboardData(copied_text, type)
-        else:
-            return ClipboardData('')
+        self.selection_state = None
+        return clipboard_data
 
     def cut_selection(self):
         """
         Delete selected text and return :class:`.ClipboardData` instance.
         """
         return self.copy_selection(_cut=True)
+
+    def paste_clipboard_data(self, data, before=False, count=1):
+        """
+        Insert the data from the clipboard.
+        """
+        assert isinstance(data, ClipboardData)
+        self.document = self.document.paste_clipboard_data(data, before=before, count=count)
 
     def newline(self, copy_margin=True):
         """
@@ -882,31 +878,6 @@ class Buffer(object):
         # Fire 'on_text_insert' event.
         if fire_event:
             self.on_text_insert.fire()
-
-    def paste_clipboard_data(self, data, before=False, count=1):
-        """
-        Insert the data from the clipboard.
-        """
-        assert isinstance(data, ClipboardData)
-
-        if data.type == SelectionType.CHARACTERS:
-            if before:
-                self.insert_text(data.text * count)
-            else:
-                self.cursor_right()
-                self.insert_text(data.text * count, fire_event=False)
-                self.cursor_left()
-
-        elif data.type == SelectionType.LINES:
-            if before:
-                self.cursor_position += self.document.get_start_of_line_position(after_whitespace=False)
-                self.insert_text((data.text + '\n') * count, move_cursor=False)
-            else:
-                self.cursor_position += self.document.get_end_of_line_position()
-                self.insert_text(('\n' + data.text) * count, move_cursor=False, fire_event=False)
-                self.cursor_down()
-
-            self.cursor_position += self.document.get_start_of_line_position(after_whitespace=True)
 
     def undo(self):
         # Pop from the undo-stack until we find a text that if different from

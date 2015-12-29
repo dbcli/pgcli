@@ -417,6 +417,11 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         """
         event.current_buffer.start_selection(selection_type=SelectionType.LINES)
 
+    @handle(Keys.ControlV, filter=navigation_mode)
+    def _(event):
+        " Enter block selection mode. "
+        event.current_buffer.start_selection(selection_type=SelectionType.BLOCK)
+
     @handle('V', filter=selection_mode)
     def _(event):
         """
@@ -430,6 +435,11 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         else:
             event.current_buffer.exit_selection()
 
+    @handle('v', filter=navigation_mode & enable_visual_key)
+    def _(event):
+        " Enter character selection mode. "
+        event.current_buffer.start_selection(selection_type=SelectionType.CHARACTERS)
+
     @handle('v', filter=selection_mode)
     def _(event):
         """
@@ -440,6 +450,19 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
 
         if selection_state.type != SelectionType.CHARACTERS:
             selection_state.type = SelectionType.CHARACTERS
+        else:
+            event.current_buffer.exit_selection()
+
+    @handle(Keys.ControlV, filter=selection_mode)
+    def _(event):
+        """
+        Exit block selection mode, or go from non block selection mode to block
+        selection mode.
+        """
+        selection_state = event.current_buffer.selection_state
+
+        if selection_state.type != SelectionType.BLOCK:
+            selection_state.type = SelectionType.BLOCK
         else:
             event.current_buffer.exit_selection()
 
@@ -690,19 +713,6 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
 
                 if substring:
                     event.cli.clipboard.set_text(substring)
-
-            @handle('v', *keys, filter=navigation_mode & enable_visual_key)
-            def visual_handler(event):
-                """ Create visual handler. (Enter character selection mode.) """
-                region = func(event)
-                buffer = event.current_buffer
-
-                start, end = region.sorted()
-                end += buffer.cursor_position - 1
-
-                buffer.cursor_position += start
-                buffer.start_selection(selection_type=SelectionType.CHARACTERS)
-                buffer.cursor_position = end
 
             def create(delete_only):
                 """ Create delete and change handlers. """

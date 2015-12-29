@@ -7,6 +7,7 @@ import six
 import string
 
 from .selection import SelectionType, SelectionState
+from .clipboard import ClipboardData
 
 __all__ = ('Document',)
 
@@ -571,22 +572,134 @@ class Document(object):
 
     def selection_range(self):
         """
-        Return (from, to) tuple of the selection or `None` if nothing was selected.
-        start and end position are always included in the selection.
+        Return (from, to) tuple of the selection.
+        start and end position are included.
+
+        This doesn't take the selection type into account. Use
+        `selection_ranges` instead.
+        """
+        if self.selection:
+            from_, to = sorted([self.cursor_position, self.selection.original_cursor_position])
+        else:
+            from_, to = self.cursor_position, self.cursor_position
+
+        return from_, to
+
+    def selection_ranges(self):
+        """
+        Return a list of (from, to) tuples for the selection or none if nothing
+        was selected.  start and end position are always included in the
+        selection.
+
+        This will yield several (from, to) tuples in case of a BLOCK selection.
         """
         if self.selection:
             from_, to = sorted([self.cursor_position, self.selection.original_cursor_position])
 
-            # In case of a LINES selection, go to the start/end of the lines.
-            if self.selection.type == SelectionType.LINES:
-                from_ = max(0, self.text[:from_].rfind('\n') + 1)
+            if self.selection.type == SelectionType.BLOCK:
+                from_line, from_column = self.translate_index_to_position(from_)
+                to_line, to_column = self.translate_index_to_position(to)
+                from_column, to_column = sorted([from_column, to_column])
+                lines = self.lines
 
-                if self.text[to:].find('\n') >= 0:
-                    to += self.text[to:].find('\n')
-                else:
-                    to = len(self.text)
+                for l in range(from_line - 1, to_line):
+                    line_length = len(lines[l])
+                    if from_column < line_length:
+                        yield (self.translate_row_col_to_index(l, from_column),
+                               self.translate_row_col_to_index(l, min(line_length, to_column)))
+            else:
+                # In case of a LINES selection, go to the start/end of the lines.
+                if self.selection.type == SelectionType.LINES:
+                    from_ = max(0, self.text[:from_].rfind('\n') + 1)
 
-            return from_, to
+                    if self.text[to:].find('\n') >= 0:
+                        to += self.text[to:].find('\n')
+                    else:
+                        to = len(self.text)
+
+                yield from_, to
+
+    def cut_selection(self):
+        """
+        Return a (:class:`.Document`, :class:`.ClipboardData`) tuple, where the
+        document represents the new document when the selection is cut, and the
+        clipboard data, represents whatever has to be put on the clipboard.
+        """
+        if self.selection:
+            cut_parts = []
+            remaining_parts = []
+            new_cursor_position = self.cursor_position
+
+            last_to = 0
+            for from_, to in self.selection_ranges():
+                if last_to == 0:
+                    new_cursor_position = from_
+
+                remaining_parts.append(self.text[last_to:from_])
+                cut_parts.append(self.text[from_:to + 1])
+                last_to = to + 1
+
+            remaining_parts.append(self.text[last_to:])
+
+            cut_text = '\n'.join(cut_parts)
+            remaining_text = ''.join(remaining_parts)
+
+            # In case of a LINES selection, don't include the trailing newline.
+            if self.selection.type == SelectionType.LINES and cut_text.endswith('\n'):
+                cut_text = cut_text[:-1]
+
+            return (Document(text=remaining_text, cursor_position=new_cursor_position),
+                    ClipboardData(cut_text, self.selection.type))
+        else:
+            return self, ClipboardData('')
+
+    def paste_clipboard_data(self, data, before=False, count=1):
+        """
+        Return a new :class:`.Document` instance which contains the result if
+        we would paste this data at the current cursor position.
+
+        :param before: Paste before the cursor position. (For line/character mode.)
+        :param count: When >1, Paste multiple times.
+        """
+        assert isinstance(data, ClipboardData)
+
+        if data.type == SelectionType.CHARACTERS:
+            if before:
+                new_text = self.text_before_cursor + data.text * count + self.text_after_cursor
+                new_cursor_position = self.cursor_position + len(data.text) * count - 1
+            else:
+                new_text = (self.text[:self.cursor_position + 1] + data.text * count +
+                            self.text[self.cursor_position + 1:])
+                new_cursor_position = self.cursor_position + len(data.text) * count
+
+        elif data.type == SelectionType.LINES:
+            l = self.cursor_position_row
+            if before:
+                lines = self.lines[:l] + [data.text] * count + self.lines[l:]
+                new_text = '\n'.join(lines)
+                new_cursor_position = len(''.join(self.lines[:l])) + l
+            else:
+                lines = self.lines[:l + 1] + [data.text] * count + self.lines[l + 1:]
+                new_cursor_position = len(''.join(self.lines[:l + 1])) + l + 1
+                new_text = '\n'.join(lines)
+
+        elif data.type == SelectionType.BLOCK:
+            lines = self.lines
+            start_line = self.cursor_position_row
+            start_column = self.cursor_position_col + (0 if before else 1)
+
+            for i, line in enumerate(data.text.split('\n')):
+                index = i + start_line
+                if index >= len(lines):
+                    lines.append('')
+
+                lines[index] = lines[index].ljust(start_column)
+                lines[index] = lines[index][:start_column] + line * count + lines[index][start_column:]
+
+            new_text = '\n'.join(lines)
+            new_cursor_position = self.cursor_position + (0 if before else 1)
+
+        return Document(text=new_text, cursor_position=new_cursor_position)
 
     def empty_line_count_at_the_end(self):
         """

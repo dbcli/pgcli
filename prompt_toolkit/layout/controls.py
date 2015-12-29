@@ -495,6 +495,8 @@ class BufferControl(UIControl):
             def cursor_position_to_xy(cursor_position):
                 """ Turn a cursor position in the buffer into x/y coordinates
                 on the screen. """
+                cursor_position = min(len(document.text), cursor_position)
+
                 # First get the real token position by applying all transformations.
                 cursor_position = source_to_display(cursor_position)
 

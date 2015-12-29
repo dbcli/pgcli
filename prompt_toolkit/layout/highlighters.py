@@ -60,17 +60,15 @@ class SelectionHighlighter(Highlighter):
     Highlight the selection.
     """
     def get_fragments(self, cli, document):
-        selection_range = document.selection_range()
-
-        if selection_range:
-            from_, to = selection_range
-            yield Fragment(from_, to, Token.SelectedText)
+        for from_, to in document.selection_ranges():
+            yield Fragment(from_, to + 1, Token.SelectedText)
 
     def invalidation_hash(self, cli, document):
-        # When the selection range changes, highlighting will be different.
-        return (
-            document.selection_range(),
-        )
+        # When the selection changes, highlighting will be different.
+        return (document.selection and (
+            document.cursor_position,
+            document.selection.original_cursor_position,
+            document.selection.type))
 
 
 class SearchHighlighter(Highlighter):

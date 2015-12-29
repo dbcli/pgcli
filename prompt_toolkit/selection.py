@@ -19,7 +19,7 @@ class SelectionType(object):
     #: Whole lines. (Visual-Line in Vi.)
     LINES = 'lines'
 
-    #: A block selection. (Visual-Block in Vi. But not supported yet.)
+    #: A block selection. (Visual-Block in Vi.)
     BLOCK = 'block'
 
 
