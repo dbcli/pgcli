@@ -574,7 +574,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
             from_, _ = buffer.document.translate_index_to_position(from_)
             to, _ = buffer.document.translate_index_to_position(to)
 
-            indent(buffer, from_ - 1, to, count=event.arg)  # XXX: why does translate_index_to_position return 1-based indexing???
+            indent(buffer, from_, to + 1, count=event.arg)
 
     @handle('<', filter=selection_mode)
     def _(event):
@@ -589,7 +589,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
             from_, _ = buffer.document.translate_index_to_position(from_)
             to, _ = buffer.document.translate_index_to_position(to)
 
-            unindent(buffer, from_ - 1, to, count=event.arg)
+            unindent(buffer, from_, to + 1, count=event.arg)
 
     @handle('O', filter=navigation_mode & ~IsReadOnly())
     def _(event):

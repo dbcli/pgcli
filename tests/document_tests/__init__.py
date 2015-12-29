@@ -58,5 +58,8 @@ class DocumentTest(unittest.TestCase):
         pos = self.document.translate_index_to_position(
             len('line 1\nline 2\nlin'))
 
-        self.assertEqual(pos[0], 3)
+        self.assertEqual(pos[0], 2)
         self.assertEqual(pos[1], 3)
+
+        pos = self.document.translate_index_to_position(0)
+        self.assertEqual(pos, (0, 0))

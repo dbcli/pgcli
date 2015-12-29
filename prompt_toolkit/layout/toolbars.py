@@ -182,7 +182,7 @@ class ValidationToolbarControl(TokenListControl):
 
                 if show_position:
                     text = '%s (line=%s column=%s)' % (
-                        buffer.validation_error.message, row, column)
+                        buffer.validation_error.message, row + 1, column + 1)
                 else:
                     text = buffer.validation_error.message
 

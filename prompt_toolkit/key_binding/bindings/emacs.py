@@ -411,7 +411,7 @@ def load_emacs_bindings(registry, filter=Always()):
         from_, _ = buffer.document.translate_index_to_position(from_)
         to, _ = buffer.document.translate_index_to_position(to)
 
-        indent(buffer, from_ - 1, to, count=event.arg)  # XXX: why does translate_index_to_position return 1-based indexing???
+        indent(buffer, from_, to + 1, count=event.arg)
 
     @handle(Keys.ControlC, '<', filter=has_selection)
     def _(event):
@@ -424,7 +424,7 @@ def load_emacs_bindings(registry, filter=Always()):
         from_, _ = buffer.document.translate_index_to_position(from_)
         to, _ = buffer.document.translate_index_to_position(to)
 
-        unindent(buffer, from_ - 1, to, count=event.arg)
+        unindent(buffer, from_, to + 1, count=event.arg)
 
 
 def load_emacs_open_in_editor_bindings(registry, filter=None):

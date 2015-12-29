@@ -167,10 +167,11 @@ class Document(object):
     def translate_index_to_position(self, index):  # TODO: make this 0-based indexed!!!
         """
         Given an index for the text, return the corresponding (row, col) tuple.
+        (0-based. Returns (0, 0) for index=0.)
         """
         text_before_position = self.text[:index]
 
-        row = len(text_before_position.split('\n'))
+        row = text_before_position.count('\n')
         col = len(text_before_position.split('\n')[-1])
 
         return row, col
@@ -602,7 +603,7 @@ class Document(object):
                 from_column, to_column = sorted([from_column, to_column])
                 lines = self.lines
 
-                for l in range(from_line - 1, to_line):
+                for l in range(from_line, to_line + 1):
                     line_length = len(lines[l])
                     if from_column < line_length:
                         yield (self.translate_row_col_to_index(l, from_column),
