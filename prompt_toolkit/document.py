@@ -607,7 +607,7 @@ class Document(object):
                     line_length = len(lines[l])
                     if from_column < line_length:
                         yield (self.translate_row_col_to_index(l, from_column),
-                               self.translate_row_col_to_index(l, min(line_length, to_column)))
+                               self.translate_row_col_to_index(l, min(line_length - 1, to_column)))
             else:
                 # In case of a LINES selection, go to the start/end of the lines.
                 if self.selection.type == SelectionType.LINES:
