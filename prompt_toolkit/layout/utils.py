@@ -58,19 +58,40 @@ def split_lines(tokenlist):
     """
     Take a single list of (Token, text) tuples and yield one such list for each
     line.
+
+    :param tokenlist: List of (token, text) or (token, text, mouse_handler)
+                      tuples.
     """
     line = []
 
-    for token, string in tokenlist:
-        items = string.split('\n')
+    for item in tokenlist:
+        # For (token, text) tuples.
+        if len(item) == 2:
+            token, string = item
+            parts = string.split('\n')
 
-        for item in items[:-1]:
-            if item:
-                line.append((token, item))
-            yield line
-            line = []
+            for part in parts[:-1]:
+                if part:
+                    line.append((token, part))
+                yield line
+                line = []
 
-        line.append((token, items[-1]))
+            line.append((token, parts[-1]))
+
+        # For (token, text, mouse_handler) tuples.
+        #     I know, partly copy/paste, but understandable and more efficient
+        #     than many tests.
+        else:
+            token, string, mouse_handler = item
+            parts = string.split('\n')
+
+            for part in parts[:-1]:
+                if part:
+                    line.append((token, part, mouse_handler))
+                yield line
+                line = []
+
+            line.append((token, parts[-1], mouse_handler))
 
     if line:
         yield line

@@ -189,13 +189,27 @@ class TokenListControl(UIControl):
 
         default_char = self.get_default_char(cli)
 
-        # Strip mouse handlers from tokens.
-        tokens = [tuple(item[:2]) for item in tokens_with_mouse_handlers]
-
         # Wrap/align right/center parameters.
         wrap_lines = self.wrap_lines(cli)
         right = self.align_right(cli)
         center = self.align_center(cli)
+
+        def process_line(line):
+            " Center or right align a single line. "
+            used_width = token_list_width(line)
+            padding = width - used_width
+            if center:
+                padding = int(padding / 2)
+            return [(default_char.token, default_char.char * padding)] + line + [(Token, '\n')]
+
+        if right or center:
+            tokens2 = []
+            for line in split_lines(tokens_with_mouse_handlers):
+                tokens2.extend(process_line(line))
+            tokens_with_mouse_handlers = tokens2
+
+        # Strip mouse handlers from tokens.
+        tokens = [tuple(item[:2]) for item in tokens_with_mouse_handlers]
 
         # Create screen, or take it from the cache.
         key = (default_char, tokens_with_mouse_handlers, width, wrap_lines, right, center)
@@ -213,20 +227,6 @@ class TokenListControl(UIControl):
         # (Otherwise the screen height will go up from 0 to 1 while we don't
         # want that. -- An empty control should not take up any space.)
         if tokens:
-            def process_line(line):
-                " Center or right align a single line. "
-                used_width = token_list_width(line)
-                padding = width - used_width
-                if center:
-                    padding = int(padding / 2)
-                return [(default_char.token, default_char.char * padding)] + line + [(Token, '\n')]
-
-            if right or center:
-                tokens2 = []
-                for line in split_lines(tokens):
-                    tokens2.extend(process_line(line))
-                tokens = tokens2
-
             write_data_result = screen.write_data(tokens, width=(width if wrap_lines else None))
 
             indexes_to_pos = write_data_result.indexes_to_pos
