@@ -81,10 +81,12 @@ def create_eventloop(inputhook=None):
     return Loop(inputhook=inputhook)
 
 
-def create_output(stdout=None):
+def create_output(stdout=None, true_color=False):
     """
     Return an :class:`~prompt_toolkit.output.Output` instance for the command
     line.
+
+    :param true_color: When True, use 24bit colors instead of 256 colors.
     """
     stdout = stdout or sys.__stdout__
 
@@ -94,7 +96,7 @@ def create_output(stdout=None):
         else:
             return Win32Output(stdout)
     else:
-        return Vt100_Output.from_pty(stdout)
+        return Vt100_Output.from_pty(stdout, true_color=true_color)
 
 
 def create_asyncio_eventloop(loop=None):
@@ -454,9 +456,11 @@ def prompt(message='', **kwargs):
             print statements from other threads won't destroy the prompt. (They
             will be printed above the prompt instead.)
     :param return_asyncio_coroutine: When True, return a asyncio coroutine. (Python >3.3)
+    :param true_color: When True, use 24bit colors instead of 256 colors.
     """
     patch_stdout = kwargs.pop('patch_stdout', False)
     return_asyncio_coroutine = kwargs.pop('return_asyncio_coroutine', False)
+    true_color = kwargs.pop('true_color', False)
 
     if return_asyncio_coroutine:
         eventloop = create_asyncio_eventloop()
@@ -467,7 +471,7 @@ def prompt(message='', **kwargs):
     cli = CommandLineInterface(
         application=create_prompt_application(message, **kwargs),
         eventloop=eventloop,
-        output=create_output())
+        output=create_output(true_color=true_color))
 
     # Replace stdout.
     patch_context = cli.patch_stdout_context() if patch_stdout else DummyContext()

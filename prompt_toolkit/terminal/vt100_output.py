@@ -80,7 +80,12 @@ class _EscapeCodeCache(dict):
     """
     Cache for VT100 escape codes. It maps
     (fgcolor, bgcolor, bold, underline, reverse) tuples to VT100 escape sequences.
+
+    :param true_color: When True, use 24bit colors instead of 256 colors.
     """
+    def __init__(self, true_color=False):
+        self.true_color = true_color
+
     def __missing__(self, attrs):
         fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
 
@@ -116,6 +121,19 @@ class _EscapeCodeCache(dict):
        if color in table:
            result = (table[color], )
 
+       # True colors.
+       elif self.true_color:
+            try:
+                rgb = int(color, 16)
+            except ValueError:
+                result = []
+
+            r = (rgb >> 16) & 0xff
+            g = (rgb >> 8) & 0xff
+            b = rgb & 0xff
+
+            result = (48 if bg else 38, 2, r, g, b)
+
        # 256 RGB colors.
        else:
            result = (48 if bg else 38, 5, _tf._color_index(color))
@@ -123,7 +141,8 @@ class _EscapeCodeCache(dict):
        return map(six.text_type, result)
 
 
-_ESCAPE_CODE_CACHE = _EscapeCodeCache()
+_ESCAPE_CODE_CACHE = _EscapeCodeCache(true_color=False)
+_ESCAPE_CODE_CACHE_TRUE_COLOR = _EscapeCodeCache(true_color=True)
 
 
 def _get_size(fileno):
@@ -154,14 +173,16 @@ class Vt100_Output(Output):
     """
     :param get_size: A callable which returns the `Size` of the output terminal.
     :param stdout: Any object with has a `write` and `flush` method.
+    :param true_color: Use 24bit color instead of 256 colors.
     """
-    def __init__(self, stdout, get_size):
+    def __init__(self, stdout, get_size, true_color=False):
         self._buffer = []
         self.stdout = stdout
         self.get_size = get_size
+        self.true_color = true_color
 
     @classmethod
-    def from_pty(cls, stdout):
+    def from_pty(cls, stdout, true_color=False):
         """
         Create an Output class from a pseudo terminal.
         (This will take the dimensions by reading the pseudo
@@ -247,10 +268,10 @@ class Vt100_Output(Output):
 
         :param attrs: `Attrs` instance.
         """
-        escape_code = _ESCAPE_CODE_CACHE[attrs]
-
-        self.reset_attributes()
-        self.write_raw(escape_code)
+        if self.true_color:
+            self.write_raw(_ESCAPE_CODE_CACHE_TRUE_COLOR[attrs])
+        else:
+            self.write_raw(_ESCAPE_CODE_CACHE[attrs])
 
     def disable_autowrap(self):
         self.write_raw('\x1b[?7l')
