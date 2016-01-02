@@ -87,8 +87,10 @@ def create_output(stdout=None, true_color=False):
     line.
 
     :param true_color: When True, use 24bit colors instead of 256 colors.
+        (`bool` or :class:`~prompt_toolkit.filters.SimpleFilter`.)
     """
     stdout = stdout or sys.__stdout__
+    true_color = to_simple_filter(true_color)
 
     if is_windows():
         if is_conemu_ansi():

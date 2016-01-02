@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from pygments.formatters.terminal256 import Terminal256Formatter
 
+from prompt_toolkit.filters import to_simple_filter
 from prompt_toolkit.layout.screen import Size
 from prompt_toolkit.renderer import Output
 from prompt_toolkit.styles import ANSI_COLOR_NAMES
@@ -84,6 +85,7 @@ class _EscapeCodeCache(dict):
     :param true_color: When True, use 24bit colors instead of 256 colors.
     """
     def __init__(self, true_color=False):
+        assert isinstance(true_color, bool)
         self.true_color = true_color
 
     def __missing__(self, attrs):
@@ -173,13 +175,13 @@ class Vt100_Output(Output):
     """
     :param get_size: A callable which returns the `Size` of the output terminal.
     :param stdout: Any object with has a `write` and `flush` method.
-    :param true_color: Use 24bit color instead of 256 colors.
+    :param true_color: Use 24bit color instead of 256 colors. (Can be a :class:`SimpleFilter`.)
     """
     def __init__(self, stdout, get_size, true_color=False):
         self._buffer = []
         self.stdout = stdout
         self.get_size = get_size
-        self.true_color = true_color
+        self.true_color = to_simple_filter(true_color)
 
     @classmethod
     def from_pty(cls, stdout, true_color=False):
@@ -192,7 +194,7 @@ class Vt100_Output(Output):
             rows, columns = _get_size(stdout.fileno())
             return Size(rows=rows, columns=columns)
 
-        return cls(stdout, get_size)
+        return cls(stdout, get_size, true_color=true_color)
 
     def write_raw(self, data):
         """
@@ -268,7 +270,7 @@ class Vt100_Output(Output):
 
         :param attrs: `Attrs` instance.
         """
-        if self.true_color:
+        if self.true_color():
             self.write_raw(_ESCAPE_CODE_CACHE_TRUE_COLOR[attrs])
         else:
             self.write_raw(_ESCAPE_CODE_CACHE[attrs])
