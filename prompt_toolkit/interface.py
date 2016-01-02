@@ -27,7 +27,7 @@ from .key_binding.input_processor import InputProcessor
 from .output import Output
 from .renderer import Renderer, print_tokens
 from .search_state import SearchState
-from .utils import is_windows
+from .utils import is_windows, Callback
 
 # Following import is required for backwards compatibility.
 from .buffer import AcceptAction
@@ -91,6 +91,7 @@ class CommandLineInterface(object):
 
         # Invalidate flag. When 'True', a repaint has been scheduled.
         self._invalidated = False
+        self.on_invalidate = Callback()  # Invalidate event.
 
         #: The `InputProcessor` instance.
         self.input_processor = InputProcessor(application.key_bindings_registry, weakref.ref(self))
@@ -261,15 +262,18 @@ class CommandLineInterface(object):
         """
         Thread safe way of sending a repaint trigger to the input event loop.
         """
-        if self.eventloop is not None:
-            # Never schedule a second redraw, when a previous one has not yet been
-            # executed. (This should protect against other threads calling
-            # 'invalidate' many times, resulting in 100% CPU.)
-            if self._invalidated:
-                return
-
+        # Never schedule a second redraw, when a previous one has not yet been
+        # executed. (This should protect against other threads calling
+        # 'invalidate' many times, resulting in 100% CPU.)
+        if self._invalidated:
+            return
+        else:
             self._invalidated = True
 
+        # Trigger event.
+        self.on_invalidate.fire()
+
+        if self.eventloop is not None:
             def redraw():
                 self._invalidated = False
                 self._redraw()
