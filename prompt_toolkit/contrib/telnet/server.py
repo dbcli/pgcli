@@ -162,6 +162,10 @@ class TelnetConnection(object):
         stdin_decoder_cls = getincrementaldecoder(self.encoding)
         stdin_decoder = [stdin_decoder_cls()]  # nonlocal
 
+        # Tell the CLI that it's running. We don't start it through the run()
+        # call, but will still want _redraw() to work.
+        self.cli._is_running = True
+
         def data_received(data):
             """ TelnetProtocolParser 'data_received' callback """
             assert isinstance(data, binary_type)
@@ -279,7 +283,7 @@ class _TelnetEventLoopInterface(EventLoop):
     def run_in_executor(self, callback):
         self._server.run_in_executor(callback)
 
-    def call_from_executor(self, callback):
+    def call_from_executor(self, callback, _max_postpone_until=None):
         self._server.call_from_executor(callback)
 
     def add_reader(self, fd, callback):
