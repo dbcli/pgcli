@@ -106,11 +106,12 @@ to the above example. All strings are expected to be unicode strings.
 Projects using prompt-toolkit
 *****************************
 
+Shells:
+
 - `ptpython <http://github.com/jonathanslenders/ptpython/>`_: Python REPL
 - `ptpdb <http://github.com/jonathanslenders/ptpdb/>`_: Python debugger (pdb replacement)
 - `pgcli <http://pgcli.com/>`_: Postgres client.
 - `mycli <http://mycli.net>`_: MySql client.
-- `pyvim <http://github.com/jonathanslenders/pyvim/>`_: A Vim clone in pure Python
 - `wharfee <http://wharfee.com/>`_: A Docker command line.
 - `xonsh <http://xonsh.org/>`_: A Python-ish, BASHwards-compatible shell.
 - `saws <https://github.com/donnemartin/saws>`_: A Supercharged AWS Command Line Interface.
@@ -119,6 +120,10 @@ Projects using prompt-toolkit
 - `vcli <https://github.com/dbcli/vcli>`_: Vertica client.
 - `aws-shell <https://github.com/awslabs/aws-shell>`_: An integrated shell for working with the AWS CLI.
 
+Full screen applications:
+
+- `pymux <http://github.com/jonathanslenders/pymux/>`_: A terminal multiplexer (like tmux) in pure Python.
+- `pyvim <http://github.com/jonathanslenders/pyvim/>`_: A Vim clone in pure Python.
 
 (Want your own project to be listed here? Please create a GitHub issue.)
 
