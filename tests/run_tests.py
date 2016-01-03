@@ -16,7 +16,9 @@ import unittest
 # Import modules for syntax checking.
 import prompt_toolkit
 import prompt_toolkit.application
+import prompt_toolkit.auto_suggest
 import prompt_toolkit.buffer
+import prompt_toolkit.buffer_mapping
 import prompt_toolkit.clipboard
 import prompt_toolkit.completion
 import prompt_toolkit.contrib.completers
@@ -30,7 +32,10 @@ import prompt_toolkit.eventloop.inputhook
 import prompt_toolkit.eventloop.posix
 import prompt_toolkit.eventloop.posix_utils
 import prompt_toolkit.eventloop.utils
-import prompt_toolkit.focus_stack
+import prompt_toolkit.filters.base
+import prompt_toolkit.filters.cli
+import prompt_toolkit.filters.types
+import prompt_toolkit.filters.utils
 import prompt_toolkit.history
 import prompt_toolkit.input
 import prompt_toolkit.interface
