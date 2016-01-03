@@ -292,6 +292,7 @@ class Renderer(object):
         # Disable bracketed paste.
         if self._bracketed_paste_enabled:
             self.output.disable_bracketed_paste()
+            self._bracketed_paste_enabled = False
 
         # Flush output. `disable_mouse_support` needs to write to stdout.
         self.output.flush()
