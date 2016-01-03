@@ -37,6 +37,7 @@ Some features:
 - Runs on all Python versions from 2.6 up to 3.4.
 - Works well with Unicode double width characters. (Chinese input.)
 - Selecting text for copy/paste. (Both Emacs and Vi style.)
+- Support for `bracketed paste <https://cirw.in/blog/bracketed-paste>`_.
 - Mouse support for cursor positioning and scrolling.
 - Auto suggestions. (Like `fish shell <http://fishshell.com/>`_.)
 - Multiple input buffers.
