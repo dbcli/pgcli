@@ -11,10 +11,12 @@ long_description = open(
 ).read()
 
 
+version = __import__('prompt_toolkit').__version__
+
 setup(
     name='prompt_toolkit',
     author='Jonathan Slenders',
-    version='0.54',
+    version=version,
     license='LICENSE.txt',
     url='https://github.com/jonathanslenders/python-prompt-toolkit',
     description='Library for building powerful interactive command lines in Python',
