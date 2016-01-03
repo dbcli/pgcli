@@ -102,11 +102,12 @@ class SearchHighlighter(Highlighter):
 
     def get_fragments(self, cli, document):
         search_text = self._get_search_text(cli)
+        search_text_length = len(search_text)
         ignore_case = cli.is_ignoring_case
 
         if search_text and not cli.is_returning:
             for index in document.find_all(search_text, ignore_case=ignore_case):
-                if index == document.cursor_position:
+                if index <= document.cursor_position < index + search_text_length:
                     token = Token.SearchMatch.Current
                 else:
                     token = Token.SearchMatch
