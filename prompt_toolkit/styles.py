@@ -15,7 +15,6 @@ __all__ = (
     'Attrs',
     'DynamicStyle',
     'PygmentsStyle',
-    'TokenToAttrsCache',
 
     'DEFAULT_STYLE_EXTENSIONS',
     'DEFAULT_STYLE',

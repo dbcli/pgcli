@@ -376,7 +376,7 @@ class BufferControl(UIControl):
         # wants the focus. (E.g. in case of a reverse-search, where the actual
         # search buffer may not be displayed, but the "reverse-i-search" text
         # should get the focus.)
-        return cli.focus_stack.current == self.buffer_name or \
+        return cli.current_buffer_name == self.buffer_name or \
             any(i.has_focus(cli) for i in self.input_processors)
 
     def preferred_width(self, cli, max_available_width):
@@ -682,7 +682,7 @@ class BufferControl(UIControl):
                 # Focus happens on mouseup. (If we did this on mousedown, the
                 # up event will be received at the point where this widget is
                 # focussed and be handled anyway.)
-                cli.focus_stack.replace(self.buffer_name)
+                cli.focus(self.buffer_name)
             else:
                 return NotImplemented
 

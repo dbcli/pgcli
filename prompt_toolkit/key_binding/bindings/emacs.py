@@ -451,7 +451,7 @@ def load_emacs_system_bindings(registry, filter=None):
         """
         M-'!' opens the system prompt.
         """
-        event.cli.focus_stack.push(SYSTEM_BUFFER)
+        event.cli.push_focus(SYSTEM_BUFFER)
 
     @handle(Keys.Escape, filter=has_focus)
     @handle(Keys.ControlG, filter=has_focus)
@@ -461,7 +461,7 @@ def load_emacs_system_bindings(registry, filter=None):
         Cancel system prompt.
         """
         event.cli.buffers[SYSTEM_BUFFER].reset()
-        event.cli.focus_stack.pop()
+        event.cli.pop_focus()
 
     @handle(Keys.ControlJ, filter=has_focus)
     def _(event):
@@ -473,7 +473,7 @@ def load_emacs_system_bindings(registry, filter=None):
         system_line.reset(append_to_history=True)
 
         # Focus previous buffer again.
-        event.cli.focus_stack.pop()
+        event.cli.pop_focus()
 
 
 def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
@@ -496,7 +496,7 @@ def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
         search_buffer = event.cli.buffers[SEARCH_BUFFER]
 
         search_buffer.reset()
-        event.cli.focus_stack.pop()
+        event.cli.pop_focus()
 
     @handle(Keys.ControlJ, filter=has_focus)
     def _(event):
@@ -504,7 +504,7 @@ def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
         When enter pressed in isearch, quit isearch mode. (Multiline
         isearch would be too complicated.)
         """
-        input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
+        input_buffer = event.cli.buffers.previous(event.cli)
         search_buffer = event.cli.buffers[SEARCH_BUFFER]
 
         # Update search state.
@@ -519,17 +519,17 @@ def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
         search_buffer.reset()
 
         # Focus previous document again.
-        event.cli.focus_stack.pop()
+        event.cli.pop_focus()
 
     @handle(Keys.ControlR, filter= ~has_focus)
     def _(event):
         get_search_state(event.cli).direction = IncrementalSearchDirection.BACKWARD
-        event.cli.focus_stack.push(SEARCH_BUFFER)
+        event.cli.push_focus(SEARCH_BUFFER)
 
     @handle(Keys.ControlS, filter= ~has_focus)
     def _(event):
         get_search_state(event.cli).direction = IncrementalSearchDirection.FORWARD
-        event.cli.focus_stack.push(SEARCH_BUFFER)
+        event.cli.push_focus(SEARCH_BUFFER)
 
     @handle(Keys.ControlR, filter=has_focus)
     @handle(Keys.Up, filter=has_focus)
@@ -543,7 +543,7 @@ def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
 
         # Apply search to current buffer.
         if not direction_changed:
-            input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
+            input_buffer = event.cli.buffers.previous(event.cli)
             input_buffer.apply_search(search_state,
                                       include_current_position=False, count=event.arg)
 
@@ -559,7 +559,7 @@ def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
 
         # Apply search to current buffer.
         if not direction_changed:
-            input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
+            input_buffer = event.cli.buffers.previous(event.cli)
             input_buffer.apply_search(search_state,
                                       include_current_position=False, count=event.arg)
 

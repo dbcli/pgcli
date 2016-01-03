@@ -1246,7 +1246,7 @@ def load_vi_system_bindings(registry, get_vi_state, filter=None):
         """
         '!' opens the system prompt.
         """
-        event.cli.focus_stack.push(SYSTEM_BUFFER)
+        event.cli.push_focus(SYSTEM_BUFFER)
         get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle(Keys.Escape, filter=has_focus)
@@ -1257,7 +1257,7 @@ def load_vi_system_bindings(registry, get_vi_state, filter=None):
         """
         get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
         event.cli.buffers[SYSTEM_BUFFER].reset()
-        event.cli.focus_stack.pop()
+        event.cli.pop_focus()
 
     @handle(Keys.ControlJ, filter=has_focus)
     def _(event):
@@ -1271,7 +1271,7 @@ def load_vi_system_bindings(registry, get_vi_state, filter=None):
         system_buffer.reset(append_to_history=True)
 
         # Focus previous buffer again.
-        event.cli.focus_stack.pop()
+        event.cli.pop_focus()
 
 
 def load_vi_search_bindings(registry, get_vi_state, get_search_state=None,
@@ -1297,7 +1297,7 @@ def load_vi_search_bindings(registry, get_vi_state, get_search_state=None,
         get_vi_state(event.cli).input_mode = InputMode.INSERT
 
         # Focus search buffer.
-        event.cli.focus_stack.push(search_buffer_name)
+        event.cli.push_focus(search_buffer_name)
 
     @handle('?', filter=navigation_mode)
     @handle(Keys.ControlR, filter=~has_focus)
@@ -1309,7 +1309,7 @@ def load_vi_search_bindings(registry, get_vi_state, get_search_state=None,
         get_search_state(event.cli).direction = IncrementalSearchDirection.BACKWARD
 
         # Focus search buffer.
-        event.cli.focus_stack.push(search_buffer_name)
+        event.cli.push_focus(search_buffer_name)
         get_vi_state(event.cli).input_mode = InputMode.INSERT
 
     @handle(Keys.ControlJ, filter=has_focus)
@@ -1317,7 +1317,7 @@ def load_vi_search_bindings(registry, get_vi_state, get_search_state=None,
         """
         Apply the search. (At the / or ? prompt.)
         """
-        input_buffer = event.cli.buffers[event.cli.focus_stack.previous]
+        input_buffer = event.cli.buffers.previous(event.cli)
         search_buffer = event.cli.buffers[search_buffer_name]
 
         # Update search state.
@@ -1333,7 +1333,7 @@ def load_vi_search_bindings(registry, get_vi_state, get_search_state=None,
 
         # Focus previous document again.
         get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
-        event.cli.focus_stack.pop()
+        event.cli.pop_focus()
 
     def search_buffer_is_empty(cli):
         """ Returns True when the search buffer is empty. """
@@ -1348,7 +1348,7 @@ def load_vi_search_bindings(registry, get_vi_state, get_search_state=None,
         """
         get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
 
-        event.cli.focus_stack.pop()
+        event.cli.pop_focus()
         event.cli.buffers[search_buffer_name].reset()
 
 

@@ -18,7 +18,7 @@ from .buffer import Buffer
 from .buffer_mapping import BufferMapping
 from .completion import CompleteEvent
 from .completion import get_common_complete_suffix
-from .enums import SEARCH_BUFFER, DUMMY_BUFFER
+from .enums import SEARCH_BUFFER
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
 from .filters import Condition
@@ -118,10 +118,6 @@ class CommandLineInterface(object):
     def clipboard(self):
         return self.application.clipboard
 
-    @property
-    def focus_stack(self):
-        return self.application.focus_stack
-
     def add_buffer(self, name, buffer, focus=False):
         """
         Insert a new buffer.
@@ -130,7 +126,7 @@ class CommandLineInterface(object):
         self.buffers[name] = buffer
 
         if focus:
-            self.focus_stack.replace(name)
+            self.buffers.focus(name)
 
         # Create asynchronous completer / auto suggestion.
         auto_suggest_function = self._create_auto_suggest_function(buffer)
@@ -181,22 +177,36 @@ class CommandLineInterface(object):
         """
         The name of the current  :class:`.Buffer`. (Or `None`.)
         """
-        return self.focus_stack.current
+        return self.buffers.current_name(self)
 
     @property
     def current_buffer(self):
         """
         The currently focussed :class:`~.Buffer`.
 
-        (This returns a dummy :class:`.Buffer` when none of the actual buffers has the
-        focus. In this case, it's really not practical to check for `None`
-        values or catch exceptions every time.)
+        (This returns a dummy :class:`.Buffer` when none of the actual buffers
+        has the focus. In this case, it's really not practical to check for
+        `None` values or catch exceptions every time.)
         """
-        name = self.focus_stack.current
-        if name is not None:
-            return self.buffers[self.focus_stack.current]
-        else:
-            return self.buffers[DUMMY_BUFFER]
+        return self.buffers.current(self)
+
+    def focus(self, buffer_name):
+        """
+        Focus the buffer with the given name on the focus stack.
+        """
+        self.buffers.focus(self, buffer_name)
+
+    def push_focus(self, buffer_name):
+        """
+        Push to the focus stack.
+        """
+        self.buffers.push_focus(self, buffer_name)
+
+    def pop_focus(self):
+        """
+        Pop from the focus stack.
+        """
+        self.buffers.pop_focus(self)
 
     @property
     def terminal_title(self):
@@ -227,7 +237,7 @@ class CommandLineInterface(object):
         # Notice that we don't reset the buffers. (This happens just before
         # returning, and when we have multiple buffers, we clearly want the
         # content in the other buffers to remain unchanged between several
-        # calls of `run`. (And the same is true for the `focus_stack`.)
+        # calls of `run`. (And the same is true for the focus stack.)
 
         self._exit_flag = False
         self._abort_flag = False

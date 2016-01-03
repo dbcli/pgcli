@@ -5,7 +5,6 @@ from .buffer_mapping import BufferMapping
 from .clipboard import Clipboard, InMemoryClipboard
 from .enums import DEFAULT_BUFFER
 from .filters import CLIFilter, to_cli_filter
-from .focus_stack import FocusStack
 from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
 from .key_binding.registry import Registry
@@ -81,7 +80,7 @@ class Application(object):
                  key_bindings_registry=None, clipboard=None,
                  on_abort=AbortAction.RAISE_EXCEPTION, on_exit=AbortAction.RAISE_EXCEPTION,
                  use_alternate_screen=False, mouse_support=False,
-                 get_title=None, focus_stack=None,
+                 get_title=None,
 
                  paste_mode=False, ignore_case=False,
 
@@ -101,7 +100,6 @@ class Application(object):
         assert on_exit in AbortAction._all
         assert isinstance(use_alternate_screen, bool)
         assert get_title is None or callable(get_title)
-        assert focus_stack is None or isinstance(focus_stack, FocusStack)
         assert isinstance(paste_mode, CLIFilter)
         assert isinstance(ignore_case, CLIFilter)
         assert on_start is None or isinstance(on_start, Callback)
@@ -116,7 +114,7 @@ class Application(object):
         # Make sure that the 'buffers' dictionary is a BufferMapping.
         self.buffer = buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)
         if not buffers or not isinstance(buffers, BufferMapping):
-            self.buffers = BufferMapping(buffers)
+            self.buffers = BufferMapping(buffers, initial=initial_focussed_buffer)
         else:
             self.buffers = buffers
 
@@ -152,5 +150,3 @@ class Application(object):
         self.on_reset = on_reset or Callback()
         self.on_initialize = on_initialize or Callback()
         self.on_buffer_changed = on_buffer_changed or Callback()
-
-        self.focus_stack = focus_stack or FocusStack(initial=initial_focussed_buffer)
