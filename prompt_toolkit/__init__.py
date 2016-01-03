@@ -18,4 +18,4 @@ from .application import AbortAction, Application
 from .shortcuts import prompt
 
 
-__version__ = '0.55'
+__version__ = '0.56'

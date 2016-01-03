@@ -10,6 +10,13 @@ About the version numbering:
     to a <breaking>.<feature>.<fix> style of numbering.
 
 
+0.56: 2016-01-03
+----------------
+
+Fixes:
+- Fix in bracketed paste. It was not correctly enabled for each prompt.
+
+
 0.55: 2016-01-03
 ----------------
 
