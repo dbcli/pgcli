@@ -1,6 +1,83 @@
 CHANGELOG
 =========
 
+About the version numbering:
+    As long as the version number starts with a zero, we allow backwards
+    incompatible changes between each release. This is required order to move
+    forward. However, we do our best to keep it to a minimum and ensure
+    backwards-compatibility in the most used public APIs.
+    When the library stabilizes, which is hopefully very soon, we will switch
+    to a <breaking>.<feature>.<fix> style of numbering.
+
+
+0.55: 2016-01-03
+----------------
+
+New features:
+- Implemented bracketed paste mode. (This allows much faster pasting, as well
+  as pasting without going into paste mode. This makes sure that indentation in
+  ptpython for instance is kept correctly.)
+- Added support for italic output and blink. (For terminals that support it.)
+- Added get_horizontal_scroll, get_vertical_scroll and always_hide_cursor
+  parameters to Window.
+- Refactoring of the posix event loop. Better scheduling of all tasks/FDs to
+  avoid starvation. (Everything should feel more responsive in high CPU
+  situations.)
+- Added get_default_char function to TokenListControl.
+- AppendAutoSuggestion now accepts a token parameter.
+- Support for ansi color names in styles.
+- Accept get_width/get_height parameters in Float.
+- Added Output.write_raw and accept 'raw' parameter in
+  CommandLineInterface.stdout_proxy.
+- Better caching of tokens in TokenListControl.
+- Add mouse support to TokenListControl.
+- Display "Window too small" when the window becomes too small.
+- Added 'bell' function to Output.
+- Accept weights in HSplit/VSplit.
+- Added Registry.remove_binding method to dynamically remove key bindings.
+- Added focus_on_click parameter to BufferControl.
+- Introduced BufferMapping class as a wrapper around the buffers dictionary.
+  This one also contains the focus stack.
+- Improved 'v' and 'V' key bindings. Allow switching between line and character
+  selection modes.
+- Added layout.highlighters. A new, much faster way to do selection and search
+  highlighting.
+- Make search_state dynamic for key bindings.
+- Added 'sentence' option to WordCompleter.
+- Cache Document.lines for better performance.
+- Implementation of BLOCK selections. (Cut, copy, paste.)
+- Accept a 'reserve_space_for_menu' parameter in the shortcuts. (This is an
+  integer.)
+- Support for 24bit true color on vt100 terminals.
+- Added CommandLineInterface.on_invalidate event.
+- Added __version__ to __init__.py.
+
+Fixes:
+- Always show cursor in the 'done' state.
+- Allow HSplit to have zero children.
+- Bugfix for handling of backslash on Windows with some non-us keyboards.
+  (Ptpython issue #28.)
+- Never render characters outside the visible screen region.
+- Fix in WordCompleter. When case insensitive and input contained uppercase.
+- Highlight search match when the cursor is at any position on the match. (not
+  just the beginning.)
+
+Backwards-incompatible changes:
+(Most changes will probably not have an impact on external applications.)
+- Change in the `Style` API. This allows caching of Attrs in renderer and
+  faster rendering.  (Style now has a get_attrs_for_token instead of a
+  get_token_to_attributes_dict method.)
+- Removed DefaultStyle. Created PygmentsStyle.from_defaults class method instead.
+- Removed AbortAction.IGNORE. This was ambiguous.
+- Accept 'cli' parameter in 'walk' and 'find_window_for_buffer_name'.
+- The focus stack is now stored in BufferMapping.
+- ViStateFilter and KeyBindingManager now accept a get_vi_state callable
+  instead of vi_state itself. (This way a key bindings registry becomes
+  stateless.)
+- HighlightSearchProcessor and HighlightSelectionProcessor became deprecated.
+  (Use highlighters instead.)
+
+
 0.54: 2015-10-29
 ----------------
 
