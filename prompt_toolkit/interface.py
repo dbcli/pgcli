@@ -89,6 +89,10 @@ class CommandLineInterface(object):
         #: rendering.
         self.render_counter = 0
 
+        #: When there is high CPU, postpone the renderering max x seconds.
+        #: '0' means: don't postpone. '.5' means: try to draw at least twice a second.
+        self.max_render_postpone_time = 0  # E.g. .5
+
         # Invalidate flag. When 'True', a repaint has been scheduled.
         self._invalidated = False
         self.on_invalidate = Callback()  # Invalidate event.
@@ -291,7 +295,8 @@ class CommandLineInterface(object):
             # Call redraw in the eventloop (thread safe).
             # Give it low priority. If there is other I/O or CPU intensive
             # stuff to handle, give that priority, but max postpone x seconds.
-            _max_postpone_until = datetime.datetime.now() + datetime.timedelta(seconds=.5)
+            _max_postpone_until = datetime.datetime.now() + datetime.timedelta(
+                seconds=self.max_render_postpone_time)
             self.eventloop.call_from_executor(redraw, _max_postpone_until=_max_postpone_until)
 
     # Depracated alias for 'invalidate'.
