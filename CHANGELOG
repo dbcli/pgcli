@@ -10,6 +10,14 @@ About the version numbering:
     to a <breaking>.<feature>.<fix> style of numbering.
 
 
+0.57: 2016-01-04
+----------------
+
+Fixes:
+- Made `max_render_postpone_time` configurable. The current default was bad.
+  (We should probably always draw the UI once every cycle of the event loop.)
+
+
 0.56: 2016-01-03
 ----------------
 
