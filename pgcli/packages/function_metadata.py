@@ -138,12 +138,12 @@ def parse_typed_field_list(tokens):
 
 def field_names(sql, mode_filter=('IN', 'OUT', 'INOUT', 'VARIADIC')):
     """Yields field names from a table declaration"""
+
+    if not sql:
+        return
+
     # sql is something like "x int, y text, ..."
     tokens = sqlparse.parse(sql)[0].flatten()
     for f in parse_typed_field_list(tokens):
         if f.name and (not mode_filter or f.mode in mode_filter):
             yield f.name
-
-
-
-
