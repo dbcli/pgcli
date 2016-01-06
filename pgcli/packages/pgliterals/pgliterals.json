@@ -79,9 +79,10 @@
         "MLSLABEL",
         "MODE",
         "MODIFY",
-        "NOAUDIT",
-        "NOCOMPRESS",
         "NOT",
+        "NOAUDIT",
+        "NOTICE",
+        "NOCOMPRESS",
         "NOWAIT",
         "NULL",
         "NUMBER",
@@ -100,8 +101,10 @@
         "PRIOR",
         "PRIVILEGES",
         "QUOTE",
-        "RAW",
+        "RAISE",
         "RENAME",
+        "REPLACE",
+        "RAW",
         "RESOURCE",
         "RETURNS",
         "REVOKE",
@@ -171,6 +174,7 @@
         "NUMERIC",
         "REAL",
         "TEXT",
-        "VARCHAR"
+        "VARCHAR",
+        "VOID"
     ]
 }
