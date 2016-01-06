@@ -264,9 +264,10 @@ class TokenListControl(UIControl):
                     if count >= index:
                         if len(item) >= 3:
                             # Handler found. Call it.
+                            # (Handler can return NotImplemented, so return
+                            # that result.)
                             handler = item[2]
-                            handler(cli, mouse_event)
-                            return
+                            return handler(cli, mouse_event)
                         else:
                             break
 
