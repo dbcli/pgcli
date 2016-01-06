@@ -29,6 +29,7 @@ __all__ = (
     'unindent',
 )
 
+
 class EditReadOnlyBuffer(Exception):
     " Attempt editing of read-only :class:`.Buffer`. "
 
@@ -1001,7 +1002,7 @@ class Buffer(object):
         for _ in range(count):
             result = search_once(working_index, document)
             if result is None:
-                return # Nothing found.
+                return  # Nothing found.
             else:
                 working_index, document = result
 
@@ -1025,8 +1026,8 @@ class Buffer(object):
         Apply search. If something is found, set `working_index` and
         `cursor_position`.
         """
-        search_result = self._search(search_state,
-            include_current_position=include_current_position, count=count)
+        search_result = self._search(
+            search_state, include_current_position=include_current_position, count=count)
 
         if search_result is not None:
             working_index, cursor_position = search_result

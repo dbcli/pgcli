@@ -405,7 +405,7 @@ def create_prompt_application(
     try:
         if issubclass(style, pygments.style.Style):
             style = PygmentsStyle(style)
-    except TypeError: # Happens when style is `None` or an instance of something else.
+    except TypeError:  # Happens when style is `None` or an instance of something else.
         pass
 
     # Create application

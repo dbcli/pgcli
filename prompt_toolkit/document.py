@@ -205,7 +205,7 @@ class Document(object):
         return self.text[self.cursor_position:].find(sub) == 0
 
     def find(self, sub, in_current_line=False, include_current_position=False,
-            ignore_case=False, count=1):
+             ignore_case=False, count=1):
         """
         Find `text` after the cursor, return position relative to the cursor
         position. Return `None` if nothing was found.
