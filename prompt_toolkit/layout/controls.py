@@ -213,7 +213,8 @@ class TokenListControl(UIControl):
         tokens = [tuple(item[:2]) for item in tokens_with_mouse_handlers]
 
         # Create screen, or take it from the cache.
-        key = (default_char, tuple(tokens_with_mouse_handlers), width, wrap_lines, right, center)
+        key = (default_char.char, default_char.token,
+                tuple(tokens_with_mouse_handlers), width, wrap_lines, right, center)
         params = (default_char, tokens, width, wrap_lines, right, center)
         screen, self._pos_to_indexes = self._screen_cache.get(key, lambda: self._get_screen(*params))
 
