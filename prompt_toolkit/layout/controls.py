@@ -8,12 +8,13 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict, namedtuple
 from six import with_metaclass
 
+from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER
 from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.mouse_events import MouseEventTypes
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
-from prompt_toolkit.utils import get_cwidth, SimpleLRUCache
+from prompt_toolkit.utils import get_cwidth
 
 from .highlighters import Highlighter
 from .lexers import Lexer, SimpleLexer
@@ -146,8 +147,8 @@ class TokenListControl(UIControl):
         self.get_default_char = get_default_char
 
         #: Cache for rendered screens.
-        self._screen_lru_cache = SimpleLRUCache(maxsize=18)
-        self._token_lru_cache = SimpleLRUCache(maxsize=1)
+        self._screen_cache = SimpleCache(maxsize=18)
+        self._token_cache = SimpleCache(maxsize=1)
             # Only cache one token list. We don't need the previous item.
 
         # Render info for the mouse support.
@@ -164,7 +165,7 @@ class TokenListControl(UIControl):
         (This function is called several times during one rendering, because
         we also need those for calculating the dimensions.)
         """
-        return self._token_lru_cache.get(
+        return self._token_cache.get(
             cli.render_counter, lambda: self.get_tokens(cli))
 
     def has_focus(self, cli):
@@ -212,9 +213,9 @@ class TokenListControl(UIControl):
         tokens = [tuple(item[:2]) for item in tokens_with_mouse_handlers]
 
         # Create screen, or take it from the cache.
-        key = (default_char, tokens_with_mouse_handlers, width, wrap_lines, right, center)
+        key = (default_char, tuple(tokens_with_mouse_handlers), width, wrap_lines, right, center)
         params = (default_char, tokens, width, wrap_lines, right, center)
-        screen, self._pos_to_indexes = self._screen_lru_cache.get(key, lambda: self._get_screen(*params))
+        screen, self._pos_to_indexes = self._screen_cache.get(key, lambda: self._get_screen(*params))
 
         self._tokens = tokens_with_mouse_handlers
         return screen
@@ -346,21 +347,21 @@ class BufferControl(UIControl):
         self.default_char = default_char or Char(token=Token.Transparent)
         self.search_buffer_name = search_buffer_name
 
-        #: LRU cache for the lexer.
+        #: Cache for the lexer.
         #: Often, due to cursor movement, undo/redo and window resizing
         #: operations, it happens that a short time, the same document has to be
         #: lexed. This is a faily easy way to cache such an expensive operation.
-        self._token_lru_cache = SimpleLRUCache(maxsize=8)
+        self._token_cache = SimpleCache(maxsize=8)
 
         #: Keep a similar cache for rendered screens. (when we scroll up/down
         #: through the screen, or when we change another buffer, we don't want
         #: to recreate the same screen again.)
-        self._screen_lru_cache = SimpleLRUCache(maxsize=8)
+        self._screen_cache = SimpleCache(maxsize=8)
 
         #: Highlight Cache.
         #: When nothing of the buffer content or processors has changed, but
         #: the highlighting of the selection/search changes,
-        self._highlight_lru_cache = SimpleLRUCache(maxsize=8)
+        self._highlight_cache = SimpleCache(maxsize=8)
 
         self._xy_to_cursor_position = None
         self._last_click_timestamp = None
@@ -448,7 +449,7 @@ class BufferControl(UIControl):
             tuple(p.invalidation_hash(cli, document) for p in self.input_processors),
         )
 
-        return self._token_lru_cache.get(key, get)
+        return self._token_cache.get(key, get)
 
     def create_screen(self, cli, width, height):
         buffer = self._buffer(cli)
@@ -548,7 +549,7 @@ class BufferControl(UIControl):
 
         # Get from cache, or create if this doesn't exist yet.
         screen, cursor_position_to_xy, self._xy_to_cursor_position, line_lengths = \
-            self._screen_lru_cache.get(key, _create_screen)
+            self._screen_cache.get(key, _create_screen)
 
         x, y = cursor_position_to_xy(document.cursor_position)
         screen.cursor_position = Point(y=y, x=x)
@@ -584,7 +585,7 @@ class BufferControl(UIControl):
             tuple(h.invalidation_hash(cli, document) for h in self.highlighters)
         )
 
-        highlighting = self._highlight_lru_cache.get(highlight_key, lambda:
+        highlighting = self._highlight_cache.get(highlight_key, lambda:
             self._get_highlighting(cli, document, cursor_position_to_xy, line_lengths))
 
         return screen, highlighting

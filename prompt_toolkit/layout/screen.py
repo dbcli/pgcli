@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from prompt_toolkit.cache import FastDictCache
 from prompt_toolkit.utils import get_cwidth
 from collections import defaultdict, namedtuple
 from pygments.token import Token
@@ -86,20 +87,7 @@ class Char(object):
         return '%s(%r, %r)' % (self.__class__.__name__, self.char, self.token)
 
 
-class CharCache(dict):
-    """
-    Cache of :class:`.Char` instances.
-    Mapping of (character, Token) tuples to Char instances.
-
-    (Char instances should be considered immutable.)
-    """
-    def __missing__(self, key):
-        c = Char(*key)
-        self[key] = c
-        return c
-
-
-_CHAR_CACHE = CharCache()
+_CHAR_CACHE = FastDictCache(Char, size=1000 * 1000)
 Transparent = Token.Transparent
 
 WriteDataResult = namedtuple('WriteDataResult', 'indexes_to_pos line_lengths')
@@ -117,7 +105,7 @@ class Screen(object):
     """
     def __init__(self, default_char=None, initial_width=0, initial_height=0):
         if default_char is None:
-            default_char = Char(token=Transparent)
+            default_char = _CHAR_CACHE[' ', Transparent]
 
         self.data_buffer = defaultdict(lambda: defaultdict(lambda: default_char))
 
@@ -209,7 +197,7 @@ class Screen(object):
                     # the ``output_screen_diff`` will notice that this byte is also
                     # gone and redraw both cells.
                     if char_width > 1:
-                        buffer_y[x+1] = Char(six.unichr(0))
+                        buffer_y[x+1] = _CHAR_CACHE[six.unichr(0)]
 
                     # Move position
                     x += char_width

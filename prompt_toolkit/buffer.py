@@ -14,6 +14,7 @@ from .history import History, InMemoryHistory
 from .search_state import SearchState
 from .selection import SelectionType, SelectionState
 from .utils import Callback
+from .cache import FastDictCache
 from .validation import ValidationError
 
 import os
@@ -226,6 +227,9 @@ class Buffer(object):
         self.on_text_insert = on_text_insert or Callback()
         self.on_cursor_position_changed = on_cursor_position_changed or Callback()
 
+        # Document cache. (Avoid creating new Document instances.)
+        self._document_cache = FastDictCache(Document, size=10)
+
         self.reset(initial_document=initial_document)
 
     def reset(self, initial_document=None, append_to_history=False):
@@ -364,9 +368,10 @@ class Buffer(object):
     def document(self):
         """
         Return :class:`~prompt_toolkit.document.Document` instance from the
-        current text and cursor position.
+        current text, cursor position and selection state.
         """
-        return Document(self.text, self.cursor_position, selection=self.selection_state)
+        return self._document_cache[
+            self.text, self.cursor_position, self.selection_state]
 
     @document.setter
     def document(self, value):
