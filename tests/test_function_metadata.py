@@ -54,3 +54,7 @@ def test_argument_names():
     assert list(names) == ['y']
 
 
+def test_empty_arg_list():
+    # happens for e.g. parameter-less functions like now()
+    names = field_names('')
+    assert list(names) == []
