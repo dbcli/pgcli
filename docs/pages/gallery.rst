@@ -24,3 +24,9 @@ Pyvim, a Vim clone
 ^^^^^^^^^^^^^^^^^^
 
 .. image:: ../images/pyvim.png
+
+
+Pymux, a terminal multiplexer (like tmux) in Python
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: ../images/pymux.png
