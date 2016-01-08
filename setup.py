@@ -11,7 +11,8 @@ long_description = open(
 ).read()
 
 
-version = '0.57'  # Don't forget to update in prompt_toolkit.__init__!
+# Don't forget to update in `prompt_toolkit.__init__` and `docs/conf.py`!
+version = '0.57' 
 
 setup(
     name='prompt_toolkit',
