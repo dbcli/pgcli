@@ -34,8 +34,9 @@ In the following sections, we will discover all these parameters.
 
     ``prompt_toolkit`` expects unicode strings everywhere. If you are using
     Python 2, make sure that all strings which are passed to ``prompt_toolkit``
-    are unicode strings (and not bytes). Either import ``unicode_literals`` or
-    explicitely put a small 'u' in front of every string.
+    are unicode strings (and not bytes). Either use 
+    ``from __future__ import unicode_literals`` or explicitely put a small 
+    ``'u'`` in front of every string.
 
 
 Syntax highlighting
@@ -277,7 +278,7 @@ Auto suggestion is a way to propose some input completions to the user like the
 
 Usually, the input is compared to the history and when there is another entry
 starting with the given text, the completion will be shown as gray text behind
-the current input. Pressing the right arrow will insert this suggestion.
+the current input. Pressing the right arrow :kbd:`→` will insert this suggestion.
 
 .. note:: 
 
@@ -357,7 +358,7 @@ usually, for a prompt, we would like to have at least the basic (Emacs/Vi)
 bindings and start from there. That's what the
 :class:`~prompt_toolkit.key_binding.manager.KeyBindingManager` class does.
 
-An example of a prompt that prints 'hello world' when Control-T is pressed.
+An example of a prompt that prints ``'hello world'`` when :kbd:`Control-T` is pressed.
 
 .. code:: python
 
@@ -425,8 +426,8 @@ accepts an ``enable_vi_mode`` argument. When this is ``True``, the Vi bindings
 will be active, when ``False``, the Emacs bindings will be active. One
 confusing thing here is that we can pass a boolean, but not change it
 afterwards. However, instead we can pass a
-:class:`~prompt_toolkit.filters.CLIFilter`, an expression that is True or
-False according to a certain condition.
+:class:`~prompt_toolkit.filters.CLIFilter`, an expression that is ``True`` or
+``False`` according to a certain condition.
 
 In our demonstration below, we are going to use a nonlocal variable
 ``vi_mode_enabled`` to hold this state. (Of course, this state can be stored
@@ -484,8 +485,8 @@ Reading multiline input is as easy as passing the ``multiline=True`` parameter.
 
 A side effect of this is that the enter key will now insert a newline instead
 of accepting and returning the input. The user will now have to press
-``Meta+Enter`` in order to accept the input. (Or ``Escape`` folowed by
-``Enter``.)
+:kbd:`Meta+Enter` in order to accept the input. (Or :kbd:`Escape` followed by
+:kbd:`Enter`.)
 
 
 Passing a default
@@ -551,8 +552,8 @@ Prompt in an ``asyncio`` application
 
 For `asyncio <https://docs.python.org/3/library/asyncio.html>`_ applications,
 it's very important to never block the eventloop. However,
-:func:`~prompt_toolkit.shortcuts.prompt` is blocking and calling this would
-freeze the whole application. An alternative is to call this function, using
+:func:`~prompt_toolkit.shortcuts.prompt` is blocking, and calling this would
+freeze the whole application. A quick fix is to call this function via
 the asyncio ``eventloop.run_in_executor``, but that would cause the user
 interface to run in another thread. (If we have custom key bindings for
 instance, it would be better to run them in the same thread as the other code.)

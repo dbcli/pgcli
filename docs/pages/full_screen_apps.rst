@@ -15,15 +15,24 @@ together.
 Creating a layout
 -----------------
 
-There are two types of classes that have to be combined to construct a layout.
-We have containers (:class:`~prompt_toolkit.layout.containers.Container`
-instances) and user controls
-(:class:`~prompt_toolkit.layout.controls.UIControl` instances).
+There are two types of classes that have to be combined to construct a layout:
 
-Simply said, containers are used for arranging the layout, while user controls
-paint the actual content. An important internal difference is that containers
-use absolute coordinates, while user controls create their own
-:class:`~prompt_toolkit.layout.screen.Screen` with a relative coordinates.
+
+- **containers** (:class:`~prompt_toolkit.layout.containers.Container`
+  instances), which arrange the layout
+
+- **user controls**
+  (:class:`~prompt_toolkit.layout.controls.UIControl` instances), which paint
+  the actual content
+
+
+.. note::
+    
+   An important difference: 
+   
+   - containers use *absolute coordinates*
+   - user controls create their own
+     :class:`~prompt_toolkit.layout.screen.Screen` with *relative coordinates*
 
 +------------------------------------------------------+-----------------------------------------------------------+
 | Abstract base class                                  | Examples                                                  |
@@ -41,13 +50,13 @@ use absolute coordinates, while user controls create their own
 
 The :class:`~prompt_toolkit.layout.containers.Window` class itself is a
 container that can contain a
-:class:`~prompt_toolkit.layout.controls.UIControl`, so that's the adaptor
+:class:`~prompt_toolkit.layout.controls.UIControl`, so it's the adaptor
 between the two. The Window class also takes care of scrolling the content if
 the user control created a :class:`~prompt_toolkit.layout.screen.Screen` that
 is larger than what was available to the window.
 
-This is an example of a layout that displays the content of the default buffer
-on the left, and displays "Hello world" on the right. In between it shows a
+Here is an example of a layout that displays the content of the default buffer
+on the left, and displays ``"Hello world"`` on the right. In between it shows a
 vertical line:
 
 .. code:: python
@@ -105,49 +114,52 @@ Let's take the following code:
 
 What happens when a :class:`~prompt_toolkit.renderer.Renderer` objects wants a
 :class:`~prompt_toolkit.layout.containers.Container` to be rendered on a
-certain :class:`~prompt_toolkit.layout.screen.Screen`? The visualisation
-happens in several steps:
+certain :class:`~prompt_toolkit.layout.screen.Screen`?
+
+The visualisation happens in several steps:
 
 1. The :class:`~prompt_toolkit.renderer.Renderer` calls the
-   :meth:`~prompt_toolkit.layout.containers.Container.write_to_screen` method of a
-   :class:`~prompt_toolkit.layout.containers.Container`. This is a request to
-   paint the layout in a rectangle of a certain size. It is then the
-   :class:`~prompt_toolkit.layout.containers.Window` object that will request
+   :meth:`~prompt_toolkit.layout.containers.Container.write_to_screen` method
+   of a :class:`~prompt_toolkit.layout.containers.Container`.
+   This is a request to paint the layout in a rectangle of a certain size.
+
+   The :class:`~prompt_toolkit.layout.containers.Window` object then requests 
    the :class:`~prompt_toolkit.layout.controls.UIControl` to create a
-   :class:`~prompt_toolkit.layout.screen.Screen` instance, by calling
-   :meth:`~prompt_toolkit.layout.controls.UIControl.create_screen`. The user
-   control will receive the dimensions of the window, but it can still decide
-   to create a larger or smaller screen.
+   :class:`~prompt_toolkit.layout.screen.Screen` instance (by calling
+   :meth:`~prompt_toolkit.layout.controls.UIControl.create_screen`). 
+   The user control receives the dimensions of the window, but can still 
+   decide to create a larger or smaller screen.
 
-Inside the :meth:`~prompt_toolkit.layout.controls.UIControl.create_screen`
-method of :class:`~prompt_toolkit.layout.controls.UIControl`, there are
-several steps that will happen:
+   Inside the :meth:`~prompt_toolkit.layout.controls.UIControl.create_screen`
+   method of :class:`~prompt_toolkit.layout.controls.UIControl`, there are
+   several steps:
 
-2. First, the textual content of the buffer is passed through a
-   :class:`~prompt_toolkit.layout.lexers.Lexer` that transforms it into a token
-   list. (This is a list of ``(Token, text)`` tuples.) 
+   2. First, the buffer's text is passed through a
+      :class:`~prompt_toolkit.layout.lexers.Lexer` that transforms it into a 
+      token list (a list of ``(Token, text)`` tuples).
 
-3. Then, this token list is passed through a list of
-   :class:`~prompt_toolkit.layout.processors.Processor` objects. Each processor
-   can do a transformation on this list. (For instance, they can insert or
-   replace some text.)
+   3. The token list is passed through a list of
+      :class:`~prompt_toolkit.layout.processors.Processor` objects.
+      Each processor can do a transformation on the list.
+      (For instance, they can insert or replace some text.)
 
-4. Then, the final token list is written to a
-   :class:`~prompt_toolkit.layout.screen.Screen`, using the
-   :meth:`~prompt_toolkit.layout.screen.Screen.write_data` method. This will do
-   the line wrapping and fill a two dimensional
-   :class:`~prompt_toolkit.layout.screen.Char` array. This screen is returned
-   from :meth:`~prompt_toolkit.layout.controls.UIControl.create_screen`.
+   4. The token list is written to a
+      :class:`~prompt_toolkit.layout.screen.Screen` via the
+      :meth:`~prompt_toolkit.layout.screen.Screen.write_data` method.
+      This performs the line wrapping and fills a two dimensional
+      :class:`~prompt_toolkit.layout.screen.Char` array. 
+      This screen is returned from 
+      :meth:`~prompt_toolkit.layout.controls.UIControl.create_screen`.
 
-The :class:`~prompt_toolkit.layout.containers.Window` will receive the screen,
+The :class:`~prompt_toolkit.layout.containers.Window` receives the screen,
 and then:
 
-5. It will calculate the horizontal and vertical scrolling. (When the returned
-   screen is larger than the available area.)
+5. It calculates the horizontal and vertical scrolling, if applicable 
+   (if the returned screen is larger than the available area).
 
-6. The received screen will be copied to the correct absolute position
-   :class:`~prompt_toolkit.layout.screen.Screen` that
-   the :class:`~prompt_toolkit.renderer.Renderer` has given.
+6. The received screen is copied to the correct absolute position
+   :class:`~prompt_toolkit.layout.screen.Screen`, given by the 
+   :class:`~prompt_toolkit.renderer.Renderer`.
 
 
 Input processors
@@ -177,7 +189,7 @@ Input processors
 
 
 
-The TokenListControl
+The ``TokenListControl``
 ^^^^^^^^^^^^^^^^^^^^^
 
 Custom user controls
@@ -208,9 +220,9 @@ The ``Application`` instance
 The :class:`~prompt_toolkit.application.Application` instance is where all the
 components for a prompt_toolkit application come together.
 
-.. note:: Actually, not "all" the components, but everything that is not
-    dependent on I/O, so all components except for the eventloop and the
-    input/output objects.
+.. note:: Actually, not *all* the components; just everything that is not
+    dependent on I/O (i.e. all components except for the eventloop and the
+    input/output objects).
 
     This way, it's possible to create an
     :class:`~prompt_toolkit.application.Application` instance and later decide
@@ -240,15 +252,17 @@ Running the application
 We need three I/O objects to run an application. These are passed as arguments
 to :class:`~prompt_toolkit.interface.CommandLineInterface`.
 
-- An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is
-  basically a while-true loop that waits for user input, and when it receives
-  something (like a key press), it will send that to the application.
-- An :class:`~prompt_toolkit.input.Input` instance. This is an abstraction on
-  the input stream (stdin).
-- An :class:`~prompt_toolkit.output.Output` instance. This is an abstraction on
+- An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance.
+  This is basically a while-true loop that waits for user input, and when it
+  receives something (like a key press), it will send that to the application.
+
+- An :class:`~prompt_toolkit.input.Input` instance.
+  This is an abstraction on the input stream (stdin).
+
+- An :class:`~prompt_toolkit.output.Output` instance. This is an abstraction of
   the output stream, and is called by the renderer.
 
-However, all three of the I/O objects are optional, and prompt_toolkit uses the
+However, all three of the I/O objects are optional, and `prompt_toolkit` uses the
 obvious default.
 
 So, the only thing we actually need in order to run an application is this:
@@ -266,7 +280,7 @@ So, the only thing we actually need in order to run an application is this:
 Filters (reactivity)
 --------------------
 
-Many places in prompt-toolkit expect a boolean. For instance, for determining
+Many places in `prompt_toolkit` expect a boolean. For instance, for determining
 the visibility of some part of the layout (it can be either hidden or visible),
 or a key binding filter (the binding can be active on not) or the
 ``wrap_lines`` option of
@@ -278,22 +292,23 @@ searching (when the search buffer has the focus). The ``wrap_lines`` option
 could be changed with a certain key binding. And that key binding could only
 work when the default buffer got the focus.
 
-In prompt_toolkit, we decided to reduce the amount of state in the whole
+In `prompt_toolkit`, we decided to reduce the amount of state in the whole
 framework, and apply a simple kind of reactive programming to describe the flow
-of these booleans as expressions. It's one way only: if a key binding needs to
+of these booleans as expressions. (It's one-way only: if a key binding needs to
 know whether it's active or not, it can follow this flow by evaluating an
-expression.
+expression.)
 
 There are two kind of expressions:
 
-- :class:`~prompt_toolkit.filters.SimpleFilter`
-- :class:`~prompt_toolkit.filters.CLIFilter`
+- :class:`~prompt_toolkit.filters.SimpleFilter`,
+  which wraps an expression that takes no input, and evaluates to a boolean.
 
-The first one wraps around an expression that doesn't take anything as input,
-and evaluates to a boolean. The second one on the other hand takes a
-:class:`~prompt_toolkit.interface.CommandLineInterface` as input. Most code in
-prompt_toolkit that expects a boolean, will also accept a
-:class:`~prompt_toolkit.filters.CLIFilter`
+- :class:`~prompt_toolkit.filters.CLIFilter`, which takes a
+  :class:`~prompt_toolkit.interface.CommandLineInterface` as input.
+
+
+Most code in prompt_toolkit that expects a boolean will also accept a
+:class:`~prompt_toolkit.filters.CLIFilter`.
 
 One way to create a :class:`~prompt_toolkit.filters.CLIFilter` instance is by
 creating a :class:`~prompt_toolkit.filters.Condition`. For instance, the
@@ -320,19 +335,20 @@ This filter can then be used in a key binding, like in the following snippet:
         pass
 
 There are many built-in filters, ready to use:
-:class:`~prompt_toolkit.filters.HasArg`
-:class:`~prompt_toolkit.filters.HasCompletions`
-:class:`~prompt_toolkit.filters.HasFocus`
-:class:`~prompt_toolkit.filters.InFocusStack`
-:class:`~prompt_toolkit.filters.HasSearch`
-:class:`~prompt_toolkit.filters.HasSelection`
-:class:`~prompt_toolkit.filters.HasValidationError`
-:class:`~prompt_toolkit.filters.IsAborting`
-:class:`~prompt_toolkit.filters.IsDone`
-:class:`~prompt_toolkit.filters.IsMultiline`
-:class:`~prompt_toolkit.filters.IsReadOnly`
-:class:`~prompt_toolkit.filters.IsReturning`
-:class:`~prompt_toolkit.filters.RendererHeightIsKnown`
+
+- :class:`~prompt_toolkit.filters.HasArg`
+- :class:`~prompt_toolkit.filters.HasCompletions`
+- :class:`~prompt_toolkit.filters.HasFocus`
+- :class:`~prompt_toolkit.filters.InFocusStack`
+- :class:`~prompt_toolkit.filters.HasSearch`
+- :class:`~prompt_toolkit.filters.HasSelection`
+- :class:`~prompt_toolkit.filters.HasValidationError`
+- :class:`~prompt_toolkit.filters.IsAborting`
+- :class:`~prompt_toolkit.filters.IsDone`
+- :class:`~prompt_toolkit.filters.IsMultiline`
+- :class:`~prompt_toolkit.filters.IsReadOnly`
+- :class:`~prompt_toolkit.filters.IsReturning`
+- :class:`~prompt_toolkit.filters.RendererHeightIsKnown`
 
 Further, these filters can be chained by the ``&`` and ``|`` operators or
 negated by the ``~`` operator.
