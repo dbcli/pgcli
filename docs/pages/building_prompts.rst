@@ -139,6 +139,15 @@ Each token is a Pygments token and can be styled individually.
 
     text = prompt(get_prompt_tokens=get_prompt_tokens, style=example_style)
 
+By default, colors are taking from the 256 color palette. If you want to have
+24bit true color, this is possible by adding the ``true_color=True`` option to
+the ``prompt`` function.
+
+.. code:: python
+
+    text = prompt(get_prompt_tokens=get_prompt_tokens, style=example_style,
+                  true_color=True)
+
 
 Autocompletion
 --------------
