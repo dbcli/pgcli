@@ -520,3 +520,7 @@ def prompt_async(message='', **kwargs):
 
 # Deprecated alias for `prompt`.
 get_input = prompt
+# Deprecated alias for create_default_layout
+create_default_layout = create_prompt_layout
+# Deprecated alias for create_default_application
+create_default_application = create_prompt_application
