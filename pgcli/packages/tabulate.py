@@ -8,6 +8,7 @@ from collections import namedtuple
 from decimal import Decimal
 from platform import python_version_tuple
 from wcwidth import wcswidth
+from ..encodingutils import utf8tounicode
 import re
 
 
@@ -515,7 +516,7 @@ def _format(val, valtype, floatfmt, missingval=""):
         return "{0}".format(val)
     elif valtype is _binary_type:
         try:
-            return _text_type(val, "ascii")
+            return _text_type(val, "utf-8")
         except TypeError:
             return _text_type(val)
     elif valtype is float:
@@ -885,8 +886,9 @@ def tabulate(tabular_data, headers=[], tablefmt="simple",
 
     # optimization: look for ANSI control codes once,
     # enable smart width functions only if a control code is found
-    plain_text = '\n'.join(['\t'.join(map(_text_type, headers))] + \
-                            ['\t'.join(map(_text_type, row)) for row in list_of_lists])
+    _text_type_encode = lambda x: _text_type(utf8tounicode(x))
+    plain_text = '\n'.join(['\t'.join(map(_text_type_encode, headers))] + \
+                            ['\t'.join(map(_text_type_encode, row)) for row in list_of_lists])
     has_invisible = re.search(_invisible_codes, plain_text)
     if has_invisible:
         width_fn = _visible_width
