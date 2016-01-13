@@ -179,6 +179,12 @@ def test_bytea_field_support_in_output(executor):
 def test_unicode_support_in_unknown_type(executor):
     assert u'日本語' in run(executor, "SELECT '日本語' AS japanese;", join=True)
 
+@dbtest
+def test_unicode_support_in_enum_type(executor):
+    run(executor, "CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy', '日本語')")
+    run(executor, "CREATE TABLE person (name TEXT, current_mood mood)")
+    run(executor, "INSERT INTO person VALUES ('Moe', '日本語')")
+    assert u'日本語' in run(executor, "SELECT * FROM person", join=True)
 
 @requires_json
 def test_json_renders_without_u_prefix(executor, expanded):
