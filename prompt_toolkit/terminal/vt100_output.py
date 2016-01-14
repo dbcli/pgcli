@@ -162,7 +162,7 @@ def _get_size(fileno):
     import termios
 
     # Buffer for the C call
-    buf = array.array(u'h' if six.PY3 else b'h', [0, 0, 0, 0])
+    buf = array.array(b'h' if six.PY2 else u'h', [0, 0, 0, 0])
 
     # Do TIOCGWINSZ (Get)
     fcntl.ioctl(fileno, termios.TIOCGWINSZ, buf, True)
@@ -347,7 +347,7 @@ class Vt100_Output(Output):
             # My Arch Linux installation of july 2015 reported 'ANSI_X3.4-1968'
             # for sys.stdout.encoding in xterm.
             if hasattr(self.stdout, 'encoding'):
-                out = self.stdout.buffer if six.PY3 else self.stdout
+                out = self.stdout if six.PY2 else self.stdout.buffer
                 out.write(data.encode(self.stdout.encoding or 'utf-8', 'replace'))
             else:
                 self.stdout.write(data)
