@@ -1,10 +1,12 @@
 sudo: false
 language: python
+python: '3.5'
 env:
   - TOXENV=py26
   - TOXENV=py27
   - TOXENV=py33
   - TOXENV=py34
+  - TOXENV=py35
   - TOXENV=pypy
   - TOXENV=pypy3
 install:
