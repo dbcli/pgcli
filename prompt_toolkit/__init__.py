@@ -18,4 +18,5 @@ from .application import AbortAction, Application
 from .shortcuts import prompt
 
 
+# Don't forget to update in `docs/conf.py`!
 __version__ = '0.57'

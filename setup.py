@@ -17,22 +17,20 @@ def get_version(package):
     Return package version as listed in `__version__` in `__init__.py`.
     """
     path = os.path.join(os.path.dirname(__file__), package, '__init__.py')
-    with open(path) as f:
-        init_py = f.read()
+    with open(path, 'rb') as f:
+        init_py = f.read().decode('utf-8')
     return re.search("__version__ = ['\"]([^'\"]+)['\"]", init_py).group(1)
 
-
-version = get_version('prompt_toolkit')
 
 setup(
     name='prompt_toolkit',
     author='Jonathan Slenders',
-    version=version,
+    version=get_version('prompt_toolkit'),
     url='https://github.com/jonathanslenders/python-prompt-toolkit',
     description='Library for building powerful interactive command lines in Python',
     long_description=long_description,
     packages=find_packages('.'),
-    install_requires = [
+    install_requires=[
         'pygments',
         'six>=1.9.0',
         'wcwidth',
