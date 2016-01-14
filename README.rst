@@ -64,7 +64,7 @@ possible". Both Unix and Windows terminals have their limitations. But in
 general, the Unix experience will still be a little better.
 
 For Windows, it's recommended to use either `cmder
-<http://gooseberrycreative.com/cmder/>`_ or `conemu <https://conemu.github.io/>`_.
+<http://cmder.net/>`_ or `conemu <https://conemu.github.io/>`_.
 
 
 Installation
