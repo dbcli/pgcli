@@ -488,6 +488,20 @@ of accepting and returning the input. The user will now have to press
 :kbd:`Meta+Enter` in order to accept the input. (Or :kbd:`Escape` followed by
 :kbd:`Enter`.)
 
+It is possible to specify a continuation prompt. This works by passing a
+``get_continuation_tokens`` callable to ``prompt``. This function can return a
+list of ``(Token, text)`` tuples. The width of the returned text should not
+exceed the given width. (The width of the prompt margin is defined by the
+prompt.)
+
+.. code:: python
+
+    def get_continuation_tokens(cli, width):
+        return [(Token, '.' * width)]
+
+    prompt('> ', multiline=True,
+           get_continuation_tokens=get_continuation_tokens)
+
 
 Passing a default
 ^^^^^^^^^^^^^^^^^

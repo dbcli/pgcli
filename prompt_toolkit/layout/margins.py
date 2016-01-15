@@ -7,6 +7,7 @@ from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 
 from prompt_toolkit.filters import to_cli_filter
+from prompt_toolkit.utils import get_cwidth
 from pygments.token import Token
 
 __all__ = (
@@ -14,6 +15,7 @@ __all__ = (
     'NumberredMargin',
     'ScrollbarMargin',
     'ConditionalMargin',
+    'PromptMargin',
 )
 
 
@@ -179,3 +181,58 @@ class ScrollbarMargin(Margin):
         result.append((Token.Scrollbar.Arrow, '\u25bc'))  # Down arrow
 
         return result
+
+
+class PromptMargin(Margin):
+    """
+    Create margin that displays a prompt.
+    This can display one prompt at the first line, and a continuation prompt
+    (e.g, just dots) on all the following lines.
+
+    :param get_prompt_tokens: Callable that takes a CommandLineInterface as
+        input and returns a list of (Token, type) tuples to be shown as the
+        prompt at the first line.
+    :param get_continuation_tokens: Callable that takes a CommandLineInterface
+        and a width as input and returns a list of (Token, type) tuples for the
+        next lines of the input.
+    :param show_numbers: (bool or :class:`~prompt_toolkit.filters.CLIFilter`)
+        Display line numbers instead of the continuation prompt.
+    """
+    def __init__(self, get_prompt_tokens, get_continuation_tokens=None,
+                 show_numbers=False):
+        assert callable(get_prompt_tokens)
+        assert get_continuation_tokens is None or callable(get_continuation_tokens)
+        show_numbers = to_cli_filter(show_numbers)
+
+        self.get_prompt_tokens = get_prompt_tokens
+        self.get_continuation_tokens = get_continuation_tokens
+        self.show_numbers = show_numbers
+
+    def get_width(self, cli):
+        " Width to report to the `Window`. "
+        # Take the width from the first line.
+        text = ''.join(t[1] for t in self.get_prompt_tokens(cli))
+        return get_cwidth(text)
+
+    def create_margin(self, cli, window_render_info, width, height):
+        # First line.
+        tokens = self.get_prompt_tokens(cli)[:]
+
+        # Next lines. (Show line numbering when numbering is enabled.)
+        if self.get_continuation_tokens:
+            tokens2 = self.get_continuation_tokens(cli, width)
+        else:
+            tokens2 = []
+
+        show_numbers = self.show_numbers(cli)
+        visible_line_to_input_line = window_render_info.visible_line_to_input_line
+
+        for y in range(1, min(window_render_info.content_height, height)):
+            tokens.append((Token, '\n'))
+            if show_numbers:
+                line_number = visible_line_to_input_line.get(y) or 0
+                tokens.append((Token.LineNumber, ('%i ' % (line_number + 1)).rjust(width)))
+            else:
+                tokens.extend(tokens2)
+
+        return tokens

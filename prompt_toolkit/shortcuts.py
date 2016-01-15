@@ -28,7 +28,7 @@ from .filters import IsDone, HasFocus, RendererHeightIsKnown, to_simple_filter, 
 from .history import InMemoryHistory
 from .interface import CommandLineInterface, Application, AbortAction
 from .key_binding.manager import KeyBindingManager
-from .layout import Window, HSplit, VSplit, FloatContainer, Float
+from .layout import Window, HSplit, FloatContainer, Float
 from .layout.containers import ConditionalContainer
 from .layout.controls import BufferControl, TokenListControl
 from .layout.dimension import LayoutDimension
@@ -36,6 +36,7 @@ from .layout.lexers import PygmentsLexer
 from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
 from .layout.processors import PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion
 from .layout.highlighters import SearchHighlighter, SelectionHighlighter, ConditionalHighlighter
+from .layout.margins import PromptMargin, ConditionalMargin
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
@@ -122,7 +123,7 @@ def create_asyncio_eventloop(loop=None):
 
 def _split_multiline_prompt(get_prompt_tokens):
     """
-    Take a `get_prompt_tokens` function. and return two new functions instead.
+    Take a `get_prompt_tokens` function and return two new functions instead.
     One that returns the tokens to be shown on the lines above the input, and
     another one with the tokens to be shown at the first line of the input.
     """
@@ -150,7 +151,8 @@ def _split_multiline_prompt(get_prompt_tokens):
 
 def create_prompt_layout(message='', lexer=None, is_password=False,
                          reserve_space_for_menu=8,
-                         get_prompt_tokens=None, get_bottom_toolbar_tokens=None,
+                         get_prompt_tokens=None, get_continuation_tokens=None,
+                         get_bottom_toolbar_tokens=None,
                          display_completions_in_columns=False,
                          extra_input_processors=None, multiline=False,
                          wrap_lines=True):
@@ -167,6 +169,9 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
         to display the completion menu.
     :param get_prompt_tokens: An optional callable that returns the tokens to be
         shown in the menu. (To be used instead of a `message`.)
+    :param get_continuation_tokens: An optional callable that takes a
+        CommandLineInterface and width as input and returns a list of (Token,
+        text) tuples to be used for the continuation.
     :param get_bottom_toolbar_tokens: An optional callable that returns the
         tokens for a toolbar at the bottom.
     :param display_completions_in_columns: `bool` or
@@ -254,45 +259,43 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
                 dont_extend_height=True),
             filter=multiline,
         ),
-        VSplit([
-            # In multiline mode, the prompt is displayed in a left pane.
-            ConditionalContainer(
-                Window(
-                    TokenListControl(get_prompt_tokens_2),
-                    dont_extend_width=True,
-                ),
-                filter=multiline,
+        # The main input, with completion menus floating on top of it.
+        FloatContainer(
+            Window(
+                BufferControl(
+                    highlighters=highlighters,
+                    input_processors=input_processors,
+                    lexer=lexer,
+                    wrap_lines=wrap_lines,
+                    # Enable preview_search, we want to have immediate feedback
+                    # in reverse-i-search mode.
+                    preview_search=True),
+                get_height=get_height,
+                left_margins=[
+                    # In multiline mode, use the window margin to display
+                    # the prompt and continuation tokens.
+                    ConditionalMargin(
+                        PromptMargin(get_prompt_tokens_2, get_continuation_tokens),
+                        filter=multiline
+                    )
+                ],
             ),
-            # The main input, with completion menus floating on top of it.
-            FloatContainer(
-                Window(
-                    BufferControl(
-                        highlighters=highlighters,
-                        input_processors=input_processors,
-                        lexer=lexer,
-                        wrap_lines=wrap_lines,
-                        # Enable preview_search, we want to have immediate feedback
-                        # in reverse-i-search mode.
-                        preview_search=True),
-                    get_height=get_height,
-                ),
-                [
-                    Float(xcursor=True,
-                          ycursor=True,
-                          content=CompletionsMenu(
-                              max_height=16,
-                              scroll_offset=1,
-                              extra_filter=HasFocus(DEFAULT_BUFFER) &
-                                           ~display_completions_in_columns)),
-                    Float(xcursor=True,
-                          ycursor=True,
-                          content=MultiColumnCompletionsMenu(
-                              extra_filter=HasFocus(DEFAULT_BUFFER) &
-                                           display_completions_in_columns,
-                              show_meta=True))
-                ]
-            ),
-        ]),
+            [
+                Float(xcursor=True,
+                      ycursor=True,
+                      content=CompletionsMenu(
+                          max_height=16,
+                          scroll_offset=1,
+                          extra_filter=HasFocus(DEFAULT_BUFFER) &
+                                       ~display_completions_in_columns)),
+                Float(xcursor=True,
+                      ycursor=True,
+                      content=MultiColumnCompletionsMenu(
+                          extra_filter=HasFocus(DEFAULT_BUFFER) &
+                                       display_completions_in_columns,
+                          show_meta=True))
+            ]
+        ),
         ValidationToolbar(),
         SystemToolbar(),
 
@@ -321,6 +324,7 @@ def create_prompt_application(
         history=None,
         clipboard=None,
         get_prompt_tokens=None,
+        get_continuation_tokens=None,
         get_bottom_toolbar_tokens=None,
         display_completions_in_columns=False,
         get_title=None,
@@ -417,6 +421,7 @@ def create_prompt_application(
             reserve_space_for_menu=(reserve_space_for_menu if completer is not None else 0),
             multiline=Condition(lambda cli: multiline()),
             get_prompt_tokens=get_prompt_tokens,
+            get_continuation_tokens=get_continuation_tokens,
             get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
             display_completions_in_columns=display_completions_in_columns,
             extra_input_processors=extra_input_processors,
