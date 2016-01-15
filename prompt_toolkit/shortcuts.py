@@ -185,7 +185,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
         When True (the default), automatically wrap long lines instead of
         scrolling horizontally.
     """
-    assert isinstance(message, text_type)
+    assert isinstance(message, text_type), 'Please provide a unicode string.'
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
     assert get_prompt_tokens is None or callable(get_prompt_tokens)
     assert not (message and get_prompt_tokens)
