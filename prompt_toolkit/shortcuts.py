@@ -130,10 +130,10 @@ def _split_multiline_prompt(get_prompt_tokens):
         result = []
         found_nl = False
         for token, char in reversed(explode_tokens(get_prompt_tokens(cli))):
-            if char == '\n':
-                found_nl = True
-            elif found_nl:
+            if found_nl:
                 result.insert(0, (token, char))
+            elif char == '\n':
+                found_nl = True
         return result
 
     def first_input_line(cli):
