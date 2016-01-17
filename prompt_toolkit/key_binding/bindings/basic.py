@@ -230,6 +230,9 @@ def load_basic_bindings(registry, filter=Always()):
                 deleted += event.cli.clipboard.get_data().text
 
             event.cli.clipboard.set_text(deleted)
+        else:
+            # Nothing to delete. Bell.
+            event.cli.output.bell()
 
     @handle(Keys.PageUp, filter= ~has_selection)
     def _(event):
@@ -268,12 +271,17 @@ def load_basic_bindings(registry, filter=Always()):
     @handle(Keys.ControlH, filter= ~has_selection, save_before=if_no_repeat)
     def _(event):
         " Backspace: delete before cursor. "
-        event.current_buffer.delete_before_cursor(count=event.arg)
+        deleted = event.current_buffer.delete_before_cursor(count=event.arg)
+        if not deleted:
+            event.cli.output.bell()
 
     @handle(Keys.Delete, filter= ~has_selection, save_before=if_no_repeat)
     @handle(Keys.ShiftDelete, filter= ~has_selection, save_before=if_no_repeat)
     def _(event):
-        event.current_buffer.delete(count=event.arg)
+        deleted = event.current_buffer.delete(count=event.arg)
+
+        if not deleted:
+            event.cli.output.bell()
 
     @handle(Keys.Delete, filter=has_selection)
     def _(event):
