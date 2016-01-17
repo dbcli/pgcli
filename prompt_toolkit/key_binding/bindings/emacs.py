@@ -181,6 +181,10 @@ def load_emacs_bindings(registry, filter=Always()):
         buffer = event.current_buffer
         pos = buffer.document.find_start_of_previous_word(count=event.arg)
 
+        if pos is None:
+            # Nothing found. Only whitespace before the cursor?
+            pos = - buffer.cursor_position
+
         if pos:
             deleted = buffer.delete_before_cursor(count=-pos)
             event.cli.clipboard.set_text(deleted)
