@@ -293,7 +293,7 @@ class Vt100_Output(Output):
 
     def cursor_up(self, amount):
         if amount == 0:
-            self.write_raw('')
+            pass
         elif amount == 1:
             self.write_raw('\x1b[A')
         else:
@@ -301,7 +301,7 @@ class Vt100_Output(Output):
 
     def cursor_down(self, amount):
         if amount == 0:
-            self.write_raw('')
+            pass
         elif amount == 1:
             # Note: Not the same as '\n', '\n' can cause the window content to
             #       scroll.
@@ -311,7 +311,7 @@ class Vt100_Output(Output):
 
     def cursor_forward(self, amount):
         if amount == 0:
-            self.write_raw('')
+            pass
         elif amount == 1:
             self.write_raw('\x1b[C')
         else:
@@ -319,7 +319,7 @@ class Vt100_Output(Output):
 
     def cursor_backward(self, amount):
         if amount == 0:
-            self.write_raw('')
+            pass
         elif amount == 1:
             self.write_raw('\b')  # '\x1b[D'
         else:
