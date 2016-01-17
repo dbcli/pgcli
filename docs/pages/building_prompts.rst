@@ -150,6 +150,31 @@ the ``prompt`` function.
                   true_color=True)
 
 
+Printing text (output) in color
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Besides prompting for input, we often have to print some output in color. This
+is simple with the :func:`~prompt_toolkit.shortcuts.print_tokens` function.
+
+.. code:: python
+
+    # Create a stylesheet.
+    style = PygmentsStyle.from_defaults(style_dict={
+        Token.Hello: '#ff0066',
+        Token.World: '#44ff44 italic',
+    })
+
+    # Make a list of (Token, text) tuples.
+    tokens = [
+        (Token.Hello, 'Hello '),
+        (Token.World, 'World'),
+        (Token, '\n'),
+    ]
+
+    # Print the result.
+    print_tokens(tokens, style=style)
+
+
 Autocompletion
 --------------
 

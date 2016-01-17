@@ -32,16 +32,17 @@ from .layout import Window, HSplit, FloatContainer, Float
 from .layout.containers import ConditionalContainer
 from .layout.controls import BufferControl, TokenListControl
 from .layout.dimension import LayoutDimension
+from .layout.highlighters import SearchHighlighter, SelectionHighlighter, ConditionalHighlighter
 from .layout.lexers import PygmentsLexer
+from .layout.margins import PromptMargin, ConditionalMargin
 from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
 from .layout.processors import PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion
-from .layout.highlighters import SearchHighlighter, SelectionHighlighter, ConditionalHighlighter
-from .layout.margins import PromptMargin, ConditionalMargin
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
 from .layout.utils import explode_tokens
-from .styles import DEFAULT_STYLE, PygmentsStyle
+from .renderer import print_tokens as renderer_print_tokens
+from .styles import DEFAULT_STYLE, PygmentsStyle, Style
 from .utils import is_conemu_ansi, is_windows, DummyContext
 
 from pygments.token import Token
@@ -65,6 +66,7 @@ __all__ = (
     'create_prompt_application',
     'prompt',
     'prompt_async',
+    'print_tokens',
 )
 
 
@@ -367,7 +369,7 @@ def create_prompt_application(
         (0 means that no space needs to be reserved.)
     :param auto_suggest: :class:`~prompt_toolkit.auto_suggest.AutoSuggest`
         instance for input suggestions.
-    :param style: Pygments style class for the color scheme.
+    :param style: :class:`.Style` instance for the color scheme.
     :param enable_system_bindings: `bool` or
         :class:`~prompt_toolkit.filters.CLIFilter`. Pressing Meta+'!' will show
         a system prompt.
@@ -521,6 +523,31 @@ def prompt_async(message='', **kwargs):
     """
     kwargs['return_asyncio_coroutine'] = True
     return prompt(message, **kwargs)
+
+
+def print_tokens(tokens, style=None, true_color=False):
+    """
+    Print a list of (Token, text) tuples in the given style to the output.
+    E.g.::
+
+        style = PygmentsStyle.from_defaults(style_dict={
+            Token.Hello: '#ff0066',
+            Token.World: '#884444 italic',
+        })
+        tokens = [
+            (Token.Hello, 'Hello'),
+            (Token.World, 'World'),
+        ]
+        print_tokens(tokens, style=style)
+
+    :param tokens: List of ``(Token, text)`` tuples.
+    :param style: :class:`.Style` instance for the color scheme.
+    :param true_color: When True, use 24bit colors instead of 256 colors.
+    """
+    assert isinstance(style, Style)
+
+    output = create_output(true_color=true_color)
+    renderer_print_tokens(output, tokens, style)
 
 
 # Deprecated alias for `prompt`.
