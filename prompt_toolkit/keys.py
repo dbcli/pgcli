@@ -106,3 +106,7 @@ class Keys(object):
     Vt100MouseEvent = Key('<Vt100-Mouse-Event>')
     WindowsMouseEvent = Key('<Windows-Mouse-Event>')
     BracketedPaste = Key('<Bracketed-Paste>')
+
+    # Key which is ignored. (The key binding for this key should not do
+    # anything.)
+    Ignore = Key('<Ignore>')
