@@ -1,5 +1,12 @@
+"""
+Output for vt100 terminals.
+
+A lot of thanks, regarding outputting of colors, goes to the Pygments project:
+(We don't rely on Pygments anymore, because many things are very custom, and
+everything has been highly optimized.)
+http://pygments.org/
+"""
 from __future__ import unicode_literals
-from pygments.formatters.terminal256 import Terminal256Formatter
 
 from prompt_toolkit.filters import to_simple_filter
 from prompt_toolkit.layout.screen import Size
@@ -14,9 +21,6 @@ __all__ = (
     'Vt100_Output',
 )
 
-
-# Global variable to keep the colour table in memory.
-_tf = Terminal256Formatter()
 
 #: If True: write the output of the renderer also to the following file. This
 #: is very useful for debugging. (e.g.: to see that we don't write more bytes
@@ -139,8 +143,71 @@ class _16ColorCache(dict):
         return code
 
 
+class _256ColorCache(dict):
+    """
+    Cach which maps (r, g, b) tuples to 256 colors.
+    """
+    def __init__(self):
+        # Build color table.
+        colors = []
+
+        # colors 0..15: 16 basic colors
+        colors.append((0x00, 0x00, 0x00))  # 0
+        colors.append((0xcd, 0x00, 0x00))  # 1
+        colors.append((0x00, 0xcd, 0x00))  # 2
+        colors.append((0xcd, 0xcd, 0x00))  # 3
+        colors.append((0x00, 0x00, 0xee))  # 4
+        colors.append((0xcd, 0x00, 0xcd))  # 5
+        colors.append((0x00, 0xcd, 0xcd))  # 6
+        colors.append((0xe5, 0xe5, 0xe5))  # 7
+        colors.append((0x7f, 0x7f, 0x7f))  # 8
+        colors.append((0xff, 0x00, 0x00))  # 9
+        colors.append((0x00, 0xff, 0x00))  # 10
+        colors.append((0xff, 0xff, 0x00))  # 11
+        colors.append((0x5c, 0x5c, 0xff))  # 12
+        colors.append((0xff, 0x00, 0xff))  # 13
+        colors.append((0x00, 0xff, 0xff))  # 14
+        colors.append((0xff, 0xff, 0xff))  # 15
+
+        # colors 16..232: the 6x6x6 color cube
+        valuerange = (0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff)
+
+        for i in range(217):
+            r = valuerange[(i // 36) % 6]
+            g = valuerange[(i // 6) % 6]
+            b = valuerange[i % 6]
+            colors.append((r, g, b))
+
+        # colors 233..253: grayscale
+        for i in range(1, 22):
+            v = 8 + i * 10
+            colors.append((v, v, v))
+
+        self.colors = colors
+
+    def __missing__(self, value):
+        r, g, b = value
+
+        # Find closest color.
+        # (Thanks to Pygments for this!)
+        distance = 257*257*3  # "infinity" (>distance from #000000 to #ffffff)
+        match = 0
+
+        for i, (r2, g2, b2) in enumerate(self.colors):
+            d = (r - r2) ** 2 + (g - g2) ** 2 + (b - b2) ** 2
+
+            if d < distance:
+                match = i
+                distance = d
+
+        # Turn color name into code.
+        self[value] = match
+        return match
+
+
 _16_fg_colors = _16ColorCache(bg=False)
 _16_bg_colors = _16ColorCache(bg=True)
+_256_colors = _256ColorCache()
 
 
 class _EscapeCodeCache(dict):
@@ -210,25 +277,26 @@ class _EscapeCodeCache(dict):
             except ValueError:
                 return ()
 
-            # True colors. (Only when this feature is enabled.)
-            if self.true_color:
-                r, g, b = rgb
-                result = (48 if bg else 38, 2, r, g, b)
-
-            # 16 colors.
-            elif self._supports_only_16_colors():
+            # When only 16 colors are supported, use that.
+            if self._supports_only_16_colors():
                 if bg:
                     result = (_16_bg_colors[rgb], )
                 else:
                     result = (_16_fg_colors[rgb], )
 
+            # True colors. (Only when this feature is enabled.)
+            elif self.true_color:
+                r, g, b = rgb
+                result = (48 if bg else 38, 2, r, g, b)
+
             # 256 RGB colors.
             else:
-                result = (48 if bg else 38, 5, _tf._color_index(color))
+                result = (48 if bg else 38, 5, _256_colors[rgb])
 
         return map(six.text_type, result)
 
     def _supports_only_16_colors(self):
+        " True when the given terminal only supports 16 colors. "
         return self.term in ('linux', )
 
 
