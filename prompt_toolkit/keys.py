@@ -93,6 +93,10 @@ class Keys(object):
     F18 = Key('<F18>')
     F19 = Key('<F19>')
     F20 = Key('<F20>')
+    F21 = Key('<F21>')
+    F22 = Key('<F22>')
+    F23 = Key('<F23>')
+    F24 = Key('<F24>')
 
     # Matches any key.
     Any = Key('<Any>')

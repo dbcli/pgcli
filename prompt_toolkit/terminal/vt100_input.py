@@ -129,6 +129,21 @@ ANSI_SEQUENCES = {
     '\x1b[32~': Keys.F18,
     '\x1b[33~': Keys.F19,
     '\x1b[34~': Keys.F20,
+
+    # Xterm
+    '\x1b[1;2P': Keys.F13,
+    '\x1b[1;2Q': Keys.F14,
+    # '\x1b[1;2R': Keys.F15,  # Conflicts with CPR response.
+    '\x1b[1;2S': Keys.F16,
+    '\x1b[15;2~': Keys.F17,
+    '\x1b[17;2~': Keys.F18,
+    '\x1b[18;2~': Keys.F19,
+    '\x1b[19;2~': Keys.F20,
+    '\x1b[20;2~': Keys.F21,
+    '\x1b[21;2~': Keys.F22,
+    '\x1b[23;2~': Keys.F23,
+    '\x1b[24;2~': Keys.F24,
+
     '\x1b[1;5A': Keys.ControlUp,     # Cursor Mode
     '\x1b[1;5B': Keys.ControlDown,   # Cursor Mode
     '\x1b[1;5C': Keys.ControlRight,  # Cursor Mode
