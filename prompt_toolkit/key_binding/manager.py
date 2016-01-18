@@ -139,7 +139,7 @@ class KeyBindingManager(object):
     def for_prompt(cls, **kw):
         """
         Create a ``KeyBindingManager`` with the defaults for an input prompt.
-        This activates incremental the bindings for abort/exit (Ctrl-C/Ctrl-D),
+        This activates the key bindings for abort/exit (Ctrl-C/Ctrl-D),
         incremental search and auto suggestions.
 
         (Not for full screen applications.)
