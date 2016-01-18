@@ -104,6 +104,11 @@ ANSI_SEQUENCES = {
     '\x1bOQ': Keys.F2,
     '\x1bOR': Keys.F3,
     '\x1bOS': Keys.F4,
+    '\x1b[[A': Keys.F1,  # Linux console.
+    '\x1b[[B': Keys.F2,  # Linux console.
+    '\x1b[[C': Keys.F3,  # Linux console.
+    '\x1b[[D': Keys.F4,  # Linux console.
+    '\x1b[[E': Keys.F5,  # Linux console.
     '\x1b[11~': Keys.F1,  # rxvt-unicode
     '\x1b[12~': Keys.F2,  # rxvt-unicode
     '\x1b[13~': Keys.F3,  # rxvt-unicode
