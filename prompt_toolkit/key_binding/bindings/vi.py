@@ -1195,9 +1195,8 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         """
         @handle(*keys, filter=selection_mode)
         def _(event):
-            range = event.current_buffer.document.selection_range()
-            if range:
-                event.current_buffer.transform_region(range[0], range[1], transform_func)
+            for from_, to_ in event.current_buffer.document.selection_ranges():
+                event.current_buffer.transform_region(from_, to_, transform_func)
 
     for k, f in vi_transform_functions:
         create_selection_transform_handler(k, f)
