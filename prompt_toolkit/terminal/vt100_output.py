@@ -73,8 +73,74 @@ BG_ANSI_COLORS = {
     'bright-cyan':    106,
 }
 
+ANSI_COLORS_TO_RGB = {
+    'black':   (0x00, 0x00, 0x00),
+    'default': (0x00, 0x00, 0x00),  # Don't use, 'default' doesn't really have a value.
+    'white':   (0xff, 0xff, 0xff),
+
+    # Low intensity.
+    'red':     (0xcd, 0x00, 0x00),
+    'green':   (0x00, 0xcd, 0x00),
+    'yellow':  (0xcd, 0xcd, 0x00),
+    'blue':    (0x00, 0x00, 0xcd),
+    'magenta': (0xcd, 0x00, 0xcd),
+    'cyan':    (0x00, 0xcd, 0xcd),
+    'gray':    (0xe5, 0xe5, 0xe5),
+
+
+    # High intensity.
+    'dark-gray':      (0x7f, 0x7f, 0x7f),  # Bright black.
+    'bright-red':     (0xff, 0x00, 0x00),
+    'bright-green':   (0x00, 0xff, 0x00),
+    'bright-yellow':  (0xff, 0xff, 0x00),
+    'bright-blue':    (0x00, 0x00, 0xff),
+    'bright-magenta': (0xff, 0x00, 0xff),
+    'bright-cyan':    (0x00, 0xff, 0xff),
+}
+
 assert set(FG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
 assert set(BG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
+assert set(ANSI_COLORS_TO_RGB) == set(ANSI_COLOR_NAMES)
+
+
+class _16ColorCache(dict):
+    """
+    Cache which maps (r, g, b) tuples to 16 ansi colors.
+
+    :param bg: Cache for background colors, instead of foreground.
+    """
+    def __init__(self, bg=False):
+        assert isinstance(bg, bool)
+        self.bg = bg
+
+    def __missing__(self, value):
+        r, g, b = value
+
+        # Find closest color.
+        # (Thanks to Pygments for this!)
+        distance = 257*257*3  # "infinity" (>distance from #000000 to #ffffff)
+        match = 'default'
+
+        for name, (r2, g2, b2) in ANSI_COLORS_TO_RGB.items():
+            if name != 'default':
+                d = (r - r2) ** 2 + (g - g2) ** 2 + (b - b2) ** 2
+
+                if d < distance:
+                    match = name
+                    distance = d
+
+        # Turn color name into code.
+        if self.bg:
+            code = BG_ANSI_COLORS[match]
+        else:
+            code = FG_ANSI_COLORS[match]
+
+        self[value] = code
+        return code
+
+
+_16_fg_colors = _16ColorCache(bg=False)
+_16_bg_colors = _16ColorCache(bg=True)
 
 
 class _EscapeCodeCache(dict):
@@ -84,9 +150,10 @@ class _EscapeCodeCache(dict):
 
     :param true_color: When True, use 24bit colors instead of 256 colors.
     """
-    def __init__(self, true_color=False):
+    def __init__(self, true_color=False, term='xterm'):
         assert isinstance(true_color, bool)
         self.true_color = true_color
+        self.term = term
 
     def __missing__(self, attrs):
         fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
@@ -116,35 +183,53 @@ class _EscapeCodeCache(dict):
         self[attrs] = result
         return result
 
-    def _color_to_code(self, color, bg=False):
-       table = BG_ANSI_COLORS if bg else FG_ANSI_COLORS
-
-       # 16 ANSI colors.
-       if color in table:
-           result = (table[color], )
-
-       # True colors.
-       elif self.true_color:
-            try:
-                rgb = int(color, 16)
-            except ValueError:
-                result = []
-
+    def _color_name_to_rgb(self, color):
+        " Turn 'ffffff', into (0xff, 0xff, 0xff). "
+        try:
+            rgb = int(color, 16)
+        except ValueError:
+            raise
+        else:
             r = (rgb >> 16) & 0xff
             g = (rgb >> 8) & 0xff
             b = rgb & 0xff
+            return r, g, b
 
-            result = (48 if bg else 38, 2, r, g, b)
+    def _color_to_code(self, color, bg=False):
+        " Return a tuple with the vt100 values  that represent this color. "
+        table = BG_ANSI_COLORS if bg else FG_ANSI_COLORS
 
-       # 256 RGB colors.
-       else:
-           result = (48 if bg else 38, 5, _tf._color_index(color))
+        # 16 ANSI colors. (Given by name.)
+        if color in table:
+            result = (table[color], )
 
-       return map(six.text_type, result)
+        # RGB colors. (Defined as 'ffffff'.)
+        else:
+            try:
+               rgb = self._color_name_to_rgb(color)
+            except ValueError:
+                return ()
 
+            # True colors. (Only when this feature is enabled.)
+            if self.true_color:
+                r, g, b = rgb
+                result = (48 if bg else 38, 2, r, g, b)
 
-_ESCAPE_CODE_CACHE = _EscapeCodeCache(true_color=False)
-_ESCAPE_CODE_CACHE_TRUE_COLOR = _EscapeCodeCache(true_color=True)
+            # 16 colors.
+            elif self._supports_only_16_colors():
+                if bg:
+                    result = (_16_bg_colors[rgb], )
+                else:
+                    result = (_16_fg_colors[rgb], )
+
+            # 256 RGB colors.
+            else:
+                result = (48 if bg else 38, 5, _tf._color_index(color))
+
+        return map(six.text_type, result)
+
+    def _supports_only_16_colors(self):
+        return self.term in ('linux', )
 
 
 def _get_size(fileno):
@@ -176,15 +261,24 @@ class Vt100_Output(Output):
     :param get_size: A callable which returns the `Size` of the output terminal.
     :param stdout: Any object with has a `write` and `flush` method.
     :param true_color: Use 24bit color instead of 256 colors. (Can be a :class:`SimpleFilter`.)
+    :param term: The terminal environment variable. (xterm, xterm-256color, linux, ...)
     """
-    def __init__(self, stdout, get_size, true_color=False):
+    def __init__(self, stdout, get_size, true_color=False, term=None):
+        assert callable(get_size)
+        assert term is None or isinstance(term, six.text_type)
+
         self._buffer = []
         self.stdout = stdout
         self.get_size = get_size
         self.true_color = to_simple_filter(true_color)
+        self.term = term or 'xterm'
+
+        # Cache for escape codes.
+        self._escape_code_cache = _EscapeCodeCache(true_color=False, term=term)
+        self._escape_code_cache_true_color = _EscapeCodeCache(true_color=True, term=term)
 
     @classmethod
-    def from_pty(cls, stdout, true_color=False):
+    def from_pty(cls, stdout, true_color=False, term=None):
         """
         Create an Output class from a pseudo terminal.
         (This will take the dimensions by reading the pseudo
@@ -194,7 +288,7 @@ class Vt100_Output(Output):
             rows, columns = _get_size(stdout.fileno())
             return Size(rows=rows, columns=columns)
 
-        return cls(stdout, get_size, true_color=true_color)
+        return cls(stdout, get_size, true_color=true_color, term=term)
 
     def write_raw(self, data):
         """
@@ -213,7 +307,8 @@ class Vt100_Output(Output):
         """
         Set terminal title.
         """
-        self.write_raw('\x1b]2;%s\x07' % title.replace('\x1b', '').replace('\x07', ''))
+        if self.term != 'linux':  # Not supported by the Linux console.
+            self.write_raw('\x1b]2;%s\x07' % title.replace('\x1b', '').replace('\x07', ''))
 
     def clear_title(self):
         self.set_title('')
@@ -271,9 +366,9 @@ class Vt100_Output(Output):
         :param attrs: `Attrs` instance.
         """
         if self.true_color():
-            self.write_raw(_ESCAPE_CODE_CACHE_TRUE_COLOR[attrs])
+            self.write_raw(self._escape_code_cache_true_color[attrs])
         else:
-            self.write_raw(_ESCAPE_CODE_CACHE[attrs])
+            self.write_raw(self._escape_code_cache[attrs])
 
     def disable_autowrap(self):
         self.write_raw('\x1b[?7l')

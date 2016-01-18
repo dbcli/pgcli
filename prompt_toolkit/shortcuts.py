@@ -46,8 +46,9 @@ from .styles import DEFAULT_STYLE, PygmentsStyle, Style
 from .utils import is_conemu_ansi, is_windows, DummyContext
 
 from pygments.token import Token
-from six import text_type, exec_
+from six import text_type, exec_, PY2
 
+import os
 import pygments.lexer
 import sys
 import textwrap
@@ -101,7 +102,11 @@ def create_output(stdout=None, true_color=False):
         else:
             return Win32Output(stdout)
     else:
-        return Vt100_Output.from_pty(stdout, true_color=true_color)
+        term = os.environ.get('TERM', '')
+        if PY2:
+            term = term.decode('utf-8')
+
+        return Vt100_Output.from_pty(stdout, true_color=true_color, term=term)
 
 
 def create_asyncio_eventloop(loop=None):
