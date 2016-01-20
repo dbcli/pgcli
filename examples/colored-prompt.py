@@ -5,11 +5,11 @@ Example of a colored prompt.
 from __future__ import unicode_literals
 
 from prompt_toolkit import prompt
-from prompt_toolkit.styles import PygmentsStyle
-from pygments.token import Token
+from prompt_toolkit.styles import style_from_dict
+from prompt_toolkit.token import Token
 
 
-example_style = PygmentsStyle.from_defaults(style_dict={
+example_style = style_from_dict({
     # User input.
     Token:          '#ff0066',
 
@@ -20,6 +20,10 @@ example_style = PygmentsStyle.from_defaults(style_dict={
     Token.Pound:    '#00aa00',
     Token.Host:     '#000088 bg:#aaaaff',
     Token.Path:     '#884444 underline',
+
+    # Make a selection reverse/underlined.
+    # (Use Control-Space to select.)
+    Token.SelectedText: 'reverse underline',
 })
 
 

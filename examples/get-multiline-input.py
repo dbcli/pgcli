@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
-from pygments.token import Token
+from prompt_toolkit.token import Token
+
 
 def continuation_tokens(cli, width):
     " The continuation: display dots before all the following lines. "

@@ -67,34 +67,55 @@ Colors
 The colors for syntax highlighting are defined by a
 :class:`~prompt_toolkit.styles.Style` instance.  By default, a neutral built-in
 style is used, but any style instance can be passed to the
-:func:`~prompt_toolkit.shortcuts.prompt` function. All Pygments style classes
-can be used as well, when they are wrapped in a
-:class:`~prompt_toolkit.styles.PygmentsStyle`.
+:func:`~prompt_toolkit.shortcuts.prompt` function. A simple way to create a
+style, is by using the :class:`~prompt_toolkit.styles.style_from_dict`
+function:
+
+.. code:: python
+
+    from prompt_toolkit.shortcuts import prompt
+    from prompt_toolkit.styles import style_from_dict
+
+    our_style = style_from_dict({
+        Token.Comment:   '#888888 bold',
+        Token.Keyword:   '#ff88ff bold',
+    })
+
+    text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer),
+                  style=our_style)
+
+
+The style dictionary is very similar to the Pygments ``styles`` dictionary,
+with a few differences:
+
+- The `roman`, `sans`, `mono` and `border` options are not ignored.
+- The style has a few additions: `blink`, `noblink`, `reverse` and `noreverse`.
+- Colors can be in the `#ff0000` format, but they can be one of the built-in
+  ANSI color names as well. In that case, they map directly to the 16 color
+  palette of the terminal.
+
+Using a Pygments style
+^^^^^^^^^^^^^^^^^^^^^^
+
+All Pygments style classes can be used as well, when they are wrapped through
+:func:`~prompt_toolkit.styles.style_from_pygments`.
 
 Suppose we'd like to use a Pygments style, for instance
-``pygments.styles.tango.TangoStyle``. That works when we wrap it inside
-:class:`~prompt_toolkit.styles.PygmentsStyle`, but we would still miss some
-``prompt_toolkit`` specific styling, like the highlighting of selected text and
-the styling of the completion menus. Because of that, we recommend to use the
-:meth:`~prompt_toolkit.styles.PygmentsStyle.from_defaults` method to generate a
-a :class:`~prompt_toolkit.styles.Style` instance.
+``pygments.styles.tango.TangoStyle``, that is possible like this:
 
 Creating a custom style could be done like this:
 
 .. code:: python
 
     from prompt_toolkit.shortcuts import prompt
-    from prompt_toolkit.styles import PygmentsStyle
+    from prompt_toolkit.styles import style_from_pygments
 
-    from pygments.style import Style
     from pygments.styles.tango import TangoStyle
 
-    our_style = PygmentsStyle.from_defaults(
-        pygments_style_cls=TangoStyle,
-        style_dict={
-            Token.Comment:   '#888888 bold',
-            Token.Keyword:   '#ff88ff bold',
-        })
+    our_style = style_from_pygments(TangoStyle, {
+        Token.Comment:   '#888888 bold',
+        Token.Keyword:   '#ff88ff bold',
+    })
 
     text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer),
                   style=our_style)
@@ -112,10 +133,9 @@ Each token is a Pygments token and can be styled individually.
 .. code:: python
 
     from prompt_toolkit.shortcuts import prompt
-    from pygments.style import Style
-    from prompt_toolkit.styles import PygmentsStyle
+    from prompt_toolkit.styles import style_from_dict
 
-    example_style = PygmentsStyle.from_defaults({
+    example_style = style_from_dict({
         # User input.
         Token:          '#ff0066',
 
@@ -159,7 +179,7 @@ is simple with the :func:`~prompt_toolkit.shortcuts.print_tokens` function.
 .. code:: python
 
     # Create a stylesheet.
-    style = PygmentsStyle.from_defaults(style_dict={
+    style = style_from_dict({
         Token.Hello: '#ff0066',
         Token.World: '#44ff44 italic',
     })

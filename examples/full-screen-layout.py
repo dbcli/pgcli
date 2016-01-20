@@ -17,8 +17,7 @@ from prompt_toolkit.layout.containers import VSplit, HSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, FillControl, TokenListControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.shortcuts import create_eventloop
-
-from pygments.token import Token
+from prompt_toolkit.token import Token
 
 
 # 1. First we create the layout

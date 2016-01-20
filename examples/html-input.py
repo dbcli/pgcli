@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
 Simple example of a syntax-highlighted HTML input line.
+(This requires Pygments to be installed.)
 """
 from __future__ import unicode_literals
 from pygments.lexers import HtmlLexer

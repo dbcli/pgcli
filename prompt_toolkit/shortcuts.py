@@ -54,8 +54,10 @@ import textwrap
 
 try:
     from pygments.lexer import Lexer as pygments_Lexer
+    from pygments.style import Style as pygments_Style
 except ImportError:
     pygments_Lexer = None
+    pygments_Style = None
 
 if is_windows():
     from .terminal.win32_output import Win32Output
@@ -213,7 +215,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
     # class is given, turn it into a PygmentsLexer. (Important for
     # backwards-compatibility.)
     try:
-        if pygments_Lexer and issubclass(lexer, pygments.lexer.Lexer):
+        if pygments_Lexer and issubclass(lexer, pygments_Lexer):
             lexer = PygmentsLexer(lexer)
     except TypeError: # Happens when lexer is `None` or an instance of something else.
         pass
@@ -418,7 +420,7 @@ def create_prompt_application(
 
     # Accept Pygments styles as well for backwards compatibility.
     try:
-        if issubclass(style, pygments.style.Style):
+        if pygments_Style and issubclass(style, pygments_Style):
             style = PygmentsStyle(style)
     except TypeError:  # Happens when style is `None` or an instance of something else.
         pass

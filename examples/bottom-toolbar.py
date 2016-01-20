@@ -5,7 +5,7 @@ Simple example showing a bottom toolbar.
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
 from prompt_toolkit.styles import PygmentsStyle
-from pygments.token import Token
+from prompt_toolkit.token import Token
 
 
 test_style = PygmentsStyle.from_defaults({

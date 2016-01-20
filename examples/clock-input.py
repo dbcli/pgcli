@@ -3,14 +3,14 @@
 Example of a 'dynamic' prompt. On that shows the current time in the prompt.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.application import Application
+from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.layout import Window
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.processors import BeforeInput
 from prompt_toolkit.shortcuts import create_eventloop
+from prompt_toolkit.token import Token
 from prompt_toolkit.utils import Callback
-from pygments.token import Token
 
 import datetime
 import time

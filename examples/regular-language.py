@@ -21,8 +21,7 @@ from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
 from prompt_toolkit.layout.lexers import SimpleLexer
 from prompt_toolkit.styles import PygmentsStyle
-
-from pygments.token import Token
+from prompt_toolkit.token import Token
 
 import math
 
