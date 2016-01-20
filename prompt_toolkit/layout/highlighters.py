@@ -11,13 +11,13 @@ because most of the highlighting code is applied only to the visible region of
 the screen. (The Window class will apply the highlighting to the visible region.)
 """
 from __future__ import unicode_literals
-from pygments.token import Token
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SEARCH_BUFFER
 from prompt_toolkit.filters import to_cli_filter
+from prompt_toolkit.token import Token
 
 __all__ = (
     'Fragment',

@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
 
-from pygments.token import Token
 from six import text_type
 
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER
 from prompt_toolkit.layout.utils import token_list_to_text
+from prompt_toolkit.token import Token
 
 from .utils import token_list_len
 from .processors import Processor, Transformation

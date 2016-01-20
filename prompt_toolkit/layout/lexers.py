@@ -5,7 +5,8 @@ Used for syntax highlighting.
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
-from pygments.token import Token
+
+from prompt_toolkit.token import Token
 
 __all__ = (
     'Lexer',

@@ -6,16 +6,16 @@ from __future__ import unicode_literals
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
-from pygments.token import Token
 from six import with_metaclass
 
-from .screen import Point, WritePosition, Char
-from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
 from .controls import UIControl, TokenListControl
+from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
 from .margins import Margin
+from .screen import Point, WritePosition, Char
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventTypes
+from prompt_toolkit.token import Token
 from prompt_toolkit.utils import take_using_weights
 
 __all__ = (

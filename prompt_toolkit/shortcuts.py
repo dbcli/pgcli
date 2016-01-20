@@ -43,9 +43,9 @@ from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, Searc
 from .layout.utils import explode_tokens
 from .renderer import print_tokens as renderer_print_tokens
 from .styles import DEFAULT_STYLE, PygmentsStyle, Style
+from .token import Token
 from .utils import is_conemu_ansi, is_windows, DummyContext
 
-from pygments.token import Token
 from six import text_type, exec_, PY2
 
 import os

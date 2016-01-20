@@ -9,12 +9,12 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
-from pygments.token import Token
 
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SEARCH_BUFFER
 from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.layout.utils import token_list_to_text
+from prompt_toolkit.token import Token
 
 from .utils import token_list_len
 

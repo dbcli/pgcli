@@ -7,8 +7,8 @@ from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 
 from prompt_toolkit.filters import to_cli_filter
+from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
-from pygments.token import Token
 
 __all__ = (
     'Margin',

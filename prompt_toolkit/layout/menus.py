@@ -4,8 +4,8 @@ from six.moves import zip_longest
 from prompt_toolkit.filters import HasCompletions, IsDone, Always, Condition, to_cli_filter
 from prompt_toolkit.mouse_events import MouseEventTypes
 from prompt_toolkit.reactive import Integer
+from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
-from pygments.token import Token
 
 from .containers import Window, HSplit, ConditionalContainer
 from .controls import UIControl

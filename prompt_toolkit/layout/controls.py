@@ -2,7 +2,6 @@
 User interface Controls for the layout.
 """
 from __future__ import unicode_literals
-from pygments.token import Token
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict, namedtuple
@@ -14,6 +13,7 @@ from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.mouse_events import MouseEventTypes
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
+from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
 from .highlighters import Highlighter
