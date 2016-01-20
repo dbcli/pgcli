@@ -49,9 +49,13 @@ from .utils import is_conemu_ansi, is_windows, DummyContext
 from six import text_type, exec_, PY2
 
 import os
-import pygments.lexer
 import sys
 import textwrap
+
+try:
+    from pygments.lexer import Lexer as pygments_Lexer
+except ImportError:
+    pygments_Lexer = None
 
 if is_windows():
     from .terminal.win32_output import Win32Output
@@ -209,7 +213,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
     # class is given, turn it into a PygmentsLexer. (Important for
     # backwards-compatibility.)
     try:
-        if issubclass(lexer, pygments.lexer.Lexer):
+        if pygments_Lexer and issubclass(lexer, pygments.lexer.Lexer):
             lexer = PygmentsLexer(lexer)
     except TypeError: # Happens when lexer is `None` or an instance of something else.
         pass

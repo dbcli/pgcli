@@ -30,4 +30,9 @@ class _TokenType(tuple):
         return 'Token' + (self and '.' or '') + '.'.join(self)
 
 
-Token = _TokenType()
+# Prefer the Token class from Pygments. If Pygments is not installed, use our
+# minimalistic Token class.
+try:
+    from pygments.token import Token
+except ImportError:
+    Token = _TokenType()

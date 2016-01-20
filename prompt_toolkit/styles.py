@@ -1,14 +1,23 @@
 """
 Styling for prompt_toolkit applications.
+
+Pygments needs to be installed for usage of ``PygmentsStyle``.
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-from pygments.token import Token
 from six import with_metaclass
 
-import pygments.style
-import pygments.styles.default
+from .token import Token
+
+# Following imports are only needed when a ``PygmentsStyle`` class is used.
+try:
+    from pygments.style import Style as pygments_Style
+    from pygments.styles.default import DefaultStyle as pygments_DefaultStyle
+except ImportError:
+    pygments_Style = None
+    pygments_DefaultStyle = None
+
 
 __all__ = (
     'Style',
@@ -97,7 +106,7 @@ class PygmentsStyle(Style):
     :param pygments_style_cls: Pygments ``Style`` class.
     """
     def __init__(self, pygments_style_cls):
-        assert issubclass(pygments_style_cls, pygments.style.Style)
+        assert issubclass(pygments_style_cls, pygments_Style)
         self.pygments_style_cls = pygments_style_cls
         self._token_to_attrs_dict = None
 
@@ -120,7 +129,7 @@ class PygmentsStyle(Style):
 
     @classmethod
     def from_defaults(cls, style_dict=None,
-                      pygments_style_cls=pygments.styles.default.DefaultStyle,
+                      pygments_style_cls=pygments_DefaultStyle,
                       include_extensions=True):
         """
         Shortcut to create a :class:`.PygmentsStyle` instance from a Pygments
@@ -131,9 +140,9 @@ class PygmentsStyle(Style):
         :param include_extensions: (`bool`) Include prompt_toolkit extensions.
         """
         assert style_dict is None or isinstance(style_dict, dict)
-        assert pygments_style_cls is None or issubclass(pygments_style_cls, pygments.style.Style)
+        assert pygments_style_cls is None or issubclass(pygments_style_cls, pygments_Style)
 
-        class _CustomStyle(pygments.styles.default.DefaultStyle):
+        class _CustomStyle(pygments_DefaultStyle):
             background_color = None
             styles = {}
 

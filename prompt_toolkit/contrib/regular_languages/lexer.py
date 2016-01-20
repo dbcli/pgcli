@@ -3,8 +3,8 @@
 the input using a regular grammar with token annotations.
 """
 from __future__ import unicode_literals
-from pygments.token import Token
 from prompt_toolkit.layout.lexers import Lexer
+from prompt_toolkit.token import Token
 
 from .compiler import _CompiledGrammar
 

@@ -3,11 +3,11 @@
 Parse vt100 input and print keys.
 For testing terminal input.
 """
-
 from __future__ import unicode_literals
+import sys
+
 from prompt_toolkit.terminal.vt100_input import InputStream, raw_mode
 from prompt_toolkit.keys import Keys
-import sys
 
 
 def callback(key_press):

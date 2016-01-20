@@ -1,12 +1,10 @@
 from __future__ import unicode_literals
 
-from pygments.lexers import BashLexer
-
 from ..enums import IncrementalSearchDirection
 
 from .processors import BeforeInput
 
-from .lexers import PygmentsLexer, SimpleLexer
+from .lexers import SimpleLexer
 from .dimension import LayoutDimension
 from .controls import BufferControl, TokenListControl, UIControl
 from .containers import Window, ConditionalContainer
@@ -38,7 +36,6 @@ class TokenListToolbar(ConditionalContainer):
 class SystemToolbarControl(BufferControl):
     def __init__(self):
         super(SystemToolbarControl, self).__init__(
-            lexer=PygmentsLexer(BashLexer),
             buffer_name=SYSTEM_BUFFER,
             input_processors=[BeforeInput.static('Shell command: ', Token.Toolbar.System)],)
 
