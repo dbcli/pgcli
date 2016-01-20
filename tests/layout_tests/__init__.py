@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.layout.utils import split_lines
-from pygments.token import Token
+from prompt_toolkit.token import Token
 
 import unittest
 

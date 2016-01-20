@@ -2,15 +2,14 @@
 from __future__ import unicode_literals
 
 from buffer_tests import *
+from contrib_tests import *
 from document_tests import *
 from inputstream_tests import *
 from key_binding_tests import *
-from screen_tests import *
-from regular_languages_tests import *
 from layout_tests import *
-from contrib_tests import *
-from utils_tests import *
+from regular_languages_tests import *
 from style_tests import *
+from utils_tests import *
 
 import unittest
 
