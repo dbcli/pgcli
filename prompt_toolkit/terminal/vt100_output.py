@@ -375,7 +375,7 @@ class Vt100_Output(Output):
         """
         Set terminal title.
         """
-        if self.term != 'linux':  # Not supported by the Linux console.
+        if self.term not in ('linux', 'eterm-color'):  # Not supported by the Linux console.
             self.write_raw('\x1b]2;%s\x07' % title.replace('\x1b', '').replace('\x07', ''))
 
     def clear_title(self):
