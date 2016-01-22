@@ -156,6 +156,7 @@ class Screen(object):
         indexes_to_pos = {}  # Map input positions to (x, y) coordinates.
         line_lengths = {}  # Map line numbers (y) to max_x for this line.
         set_cursor_position = Token.SetCursorPosition
+        char_cache = _CHAR_CACHE  # Local variable access is faster.
 
         for token, text in data:
             if token == set_cursor_position:
@@ -167,7 +168,7 @@ class Screen(object):
                     screen_line_to_input_line[y] = line_number
                     requires_line_feed = False
 
-                char_obj = _CHAR_CACHE[char, token]
+                char_obj = char_cache[char, token]
                 char_width = char_obj.width
 
                 # In case there is no more place left at this line, go first to the
@@ -198,7 +199,7 @@ class Screen(object):
                     # the ``output_screen_diff`` will notice that this byte is also
                     # gone and redraw both cells.
                     if char_width > 1:
-                        buffer_y[x+1] = _CHAR_CACHE[six.unichr(0)]
+                        buffer_y[x+1] = char_cache[six.unichr(0)]
 
                     # Move position
                     x += char_width

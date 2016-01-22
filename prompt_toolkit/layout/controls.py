@@ -232,7 +232,7 @@ class TokenListControl(UIControl):
             write_data_result = screen.write_data(tokens, width=(width if wrap_lines else None))
 
             indexes_to_pos = write_data_result.indexes_to_pos
-            pos_to_indexes = dict((v, k) for k, v in indexes_to_pos.items())
+            pos_to_indexes = _LazyReverseDict(indexes_to_pos)
         else:
             pos_to_indexes = {}
 
@@ -403,9 +403,9 @@ class BufferControl(UIControl):
         """
         def get():
             # Call lexer.
-            tokens = list(self.lexer.get_tokens(cli, document.text))
+            tokens = self.lexer.get_tokens(cli, document.text)
 
-            # 'Explode' tokens in characters.
+            # 'Explode' tokens in characters. (And turn generator into a list.)
             # (Some input processors -- like search/selection highlighter --
             # rely on that each item in the tokens array only contains one
             # character.)
@@ -493,7 +493,7 @@ class BufferControl(UIControl):
             indexes_to_pos = write_data_result.indexes_to_pos
             line_lengths = write_data_result.line_lengths
 
-            pos_to_indexes = dict((v, k) for k, v in indexes_to_pos.items())
+            pos_to_indexes = _LazyReverseDict(indexes_to_pos)
 
             def cursor_position_to_xy(cursor_position):
                 """ Turn a cursor position in the buffer into x/y coordinates
@@ -734,3 +734,31 @@ class _HighlightDictRow(dict):
 
         self[key] = result
         return result
+
+
+class _LazyReverseDict(dict):
+    """
+    Dictionary constructed from another dictionary by reversing the key/values.
+    This is lazy and will be populated, the first time when it is accessed.
+
+    It is equivalent to::
+
+        new_dict = dict((v, k) for k, v in original_dict.items())
+    """
+    def __init__(self, original_dict):
+        self.original_dict = original_dict
+        self._populated = False
+
+    def _populate(self):
+        self.update(dict((v, k) for k, v in self.original_dict.items()))
+
+    def __missing__(self, key):
+        # Populate when a key is accessed for the first time.
+        if not self._populated:
+            self._populate()
+            self._populated = True
+
+        if key in self:
+            return self[key]
+        else:
+            raise KeyError
