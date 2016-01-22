@@ -22,12 +22,6 @@ __all__ = (
 )
 
 
-#: If True: write the output of the renderer also to the following file. This
-#: is very useful for debugging. (e.g.: to see that we don't write more bytes
-#: than required.)
-_DEBUG_RENDER_OUTPUT = False
-_DEBUG_RENDER_OUTPUT_FILENAME = '/tmp/prompt-toolkit-render-output'
-
 FG_ANSI_COLORS = {
     'black':   30,
     'default': 39,

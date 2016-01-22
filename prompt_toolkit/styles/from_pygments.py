@@ -8,8 +8,7 @@ Usage::
 """
 from __future__ import unicode_literals
 
-from .base import Style, Attrs
-from .defaults import DEFAULT_STYLE_EXTENSIONS
+from .base import Style
 from .from_dict import style_from_dict
 
 __all__ = (
@@ -70,5 +69,3 @@ class PygmentsStyle(Style):
             style_cls=pygments_style_cls,
             style_dict=style_dict,
             include_defaults=include_extensions)
-
-
