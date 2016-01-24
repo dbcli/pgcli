@@ -5,7 +5,6 @@ from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
 from collections import defaultdict, namedtuple
-import six
 
 __all__ = (
     'Point',
@@ -91,18 +90,10 @@ class Char(object):
 _CHAR_CACHE = FastDictCache(Char, size=1000 * 1000)
 Transparent = Token.Transparent
 
-WriteDataResult = namedtuple('WriteDataResult', 'indexes_to_pos line_lengths')
-
 
 class Screen(object):
     """
     Two dimentional buffer of :class:`.Char` instances.
-    Typical usage::
-
-        screen = Screen()
-        screen.write_data([
-            (Token, 'text'), (Token, 'text'),
-        ])
     """
     def __init__(self, default_char=None, initial_width=0, initial_height=0):
         if default_char is None:
@@ -126,92 +117,6 @@ class Screen(object):
         #: data is written to the screen.
         self.width = initial_width or 0
         self.height = initial_height or 0
-
-        #: Mapping of buffer lines to input lines.
-        self.screen_line_to_input_line = {}
-
-    def write_data(self, data, width=None):
-        """
-        Write a list of tokens to the screen.
-
-        When one of the tokens in the token list is
-        ``Token.SetCursorPosition``, this will set the cursor position.
-
-        :param data: List of Token tuples to write to the buffer.
-        :param width: Width of the line wrap. (Don't wrap when `width` is None.)
-        :returns: A dictionary mapping the character positions of the input data to
-                  (x, y) coordinates.
-        """
-        if width is None:
-            width = 10 ** 100  # A very big number.
-        buffer = self.data_buffer
-        screen_line_to_input_line = self.screen_line_to_input_line
-
-        x = 0
-        y = 0
-        max_allowed_x = x + width
-        index = 0
-        line_number = 0
-        requires_line_feed = True
-        indexes_to_pos = {}  # Map input positions to (x, y) coordinates.
-        line_lengths = {}  # Map line numbers (y) to max_x for this line.
-        set_cursor_position = Token.SetCursorPosition
-        char_cache = _CHAR_CACHE  # Local variable access is faster.
-
-        for token, text in data:
-            if token == set_cursor_position:
-                self.cursor_position = Point(y=y, x=x)
-
-            for char in text:
-                # Line feed.
-                if requires_line_feed:
-                    screen_line_to_input_line[y] = line_number
-                    requires_line_feed = False
-
-                char_obj = char_cache[char, token]
-                char_width = char_obj.width
-
-                # In case there is no more place left at this line, go first to the
-                # following line. (Also in case of double-width characters.)
-                if x + char_width > max_allowed_x and char != '\n':
-                    line_lengths[y] = x
-                    y += 1
-                    x = 0
-
-                # Keep mapping of index to position.
-                indexes_to_pos[index] = (x, y)
-
-                # Insertion of newline
-                if char == '\n':
-                    line_lengths[y] = x
-                    y += 1
-                    x = 0
-                    requires_line_feed = True
-                    line_number += 1
-
-                # Insertion of a 'visible' character.
-                else:
-                    buffer_y = buffer[y]
-                    buffer_y[x] = char_obj
-
-                    # When we have a double width character, store this byte in the
-                    # second cell. So that if this character gets deleted afterwarsd,
-                    # the ``output_screen_diff`` will notice that this byte is also
-                    # gone and redraw both cells.
-                    if char_width > 1:
-                        buffer_y[x+1] = char_cache[six.unichr(0)]
-
-                    # Move position
-                    x += char_width
-
-                index += 1
-
-        line_lengths[y] = x
-
-        self.height = max(self.height, y + 1)
-        self.width = max(self.width, max(line_lengths.values()))
-
-        return WriteDataResult(indexes_to_pos, line_lengths)
 
     def replace_all_tokens(self, token):
         """

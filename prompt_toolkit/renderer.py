@@ -18,8 +18,8 @@ __all__ = (
 )
 
 
-def output_screen_diff(output, screen, current_pos, previous_screen=None, last_char=None,
-                       is_done=False, attrs_for_token=None, size=None, previous_width=0):  # XXX: drop is_done
+def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_char=None,
+                        is_done=False, attrs_for_token=None, size=None, previous_width=0):  # XXX: drop is_done
     """
     Render the diff between this screen and the previous screen.
 
@@ -425,7 +425,7 @@ class Renderer(object):
             screen.replace_all_tokens(Token.Aborted)
 
         # Process diff and write to output.
-        self._cursor_pos, self._last_char = output_screen_diff(
+        self._cursor_pos, self._last_char = _output_screen_diff(
             output, screen, self._cursor_pos,
             self._last_screen, self._last_char, is_done,
             attrs_for_token=self._attrs_for_token,

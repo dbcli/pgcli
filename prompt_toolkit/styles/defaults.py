@@ -22,11 +22,12 @@ DEFAULT_STYLE_EXTENSIONS = {
     Token.SelectedText:                           '#ffffff bg:#666666',
 
     # Highlighting of matching brackets.
-    Token.MatchingBracket:                        'bg:#aaaaff #000000',
+    Token.MatchingBracket:                        'bg:#aaaaff #000044',
 
     # Line numbers.
     Token.LineNumber:                             '#888888',
     Token.LineNumber.Current:                     'bold',
+    Token.Tilde:                                  '#8888ff',
 
     # Default prompt.
     Token.Prompt:                                 'bold',
@@ -56,18 +57,17 @@ DEFAULT_STYLE_EXTENSIONS = {
     Token.Toolbar.Completions.Completion.Current: 'bg:#444444 #ffffff',
 
     # Completions menu.
-    Token.Menu.Completions.Completion:            'bg:#bbbbbb #000000',
+    Token.Menu.Completions:                       'bg:#bbbbbb #000000',
+    Token.Menu.Completions.Completion:            '',
     Token.Menu.Completions.Completion.Current:    'bg:#888888 #ffffff',
     Token.Menu.Completions.Meta:                  'bg:#999999 #000000',
     Token.Menu.Completions.Meta.Current:          'bg:#aaaaaa #000000',
     Token.Menu.Completions.MultiColumnMeta:       'bg:#aaaaaa #000000',
-    Token.Menu.Completions.ProgressBar:           'bg:#aaaaaa',
-    Token.Menu.Completions.ProgressButton:        'bg:#000000',
 
     # Scrollbars.
-    Token.Scrollbar:                              'bg:#444444',
-    Token.Scrollbar.Button:                       'bg:#888888',
-    Token.Scrollbar.Arrow:                        'bg:#222222 #ffffff',
+    Token.Scrollbar:                              'bg:#888888',
+    Token.Scrollbar.Button:                       'bg:#444444',
+    Token.Scrollbar.Arrow:                        'bg:#222222 #888888 bold',
 
     # Auto suggestion text.
     Token.AutoSuggestion:                         '#666666',

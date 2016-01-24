@@ -32,11 +32,10 @@ from .layout import Window, HSplit, FloatContainer, Float
 from .layout.containers import ConditionalContainer
 from .layout.controls import BufferControl, TokenListControl
 from .layout.dimension import LayoutDimension
-from .layout.highlighters import SearchHighlighter, SelectionHighlighter, ConditionalHighlighter
 from .layout.lexers import PygmentsLexer
 from .layout.margins import PromptMargin, ConditionalMargin
 from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
-from .layout.processors import PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion
+from .layout.processors import PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
@@ -216,25 +215,24 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
     # backwards-compatibility.)
     try:
         if pygments_Lexer and issubclass(lexer, pygments_Lexer):
-            lexer = PygmentsLexer(lexer)
+            lexer = PygmentsLexer(lexer, sync_from_start=True)
     except TypeError: # Happens when lexer is `None` or an instance of something else.
         pass
 
-    # Create highlighters and processors list.
-    highlighters = [
-        ConditionalHighlighter(
+    # Create processors list.
+    input_processors = [
+        ConditionalProcessor(
             # By default, only highlight search when the search
             # input has the focus. (Note that this doesn't mean
             # there is no search: the Vi 'n' binding for instance
             # still allows to jump to the next match in
             # navigation mode.)
-            SearchHighlighter(preview_search=True),
-        HasFocus(SEARCH_BUFFER)),
-        SelectionHighlighter()]
-
-    input_processors = [
+            HighlightSearchProcessor(preview_search=True),
+            HasFocus(SEARCH_BUFFER)),
+        HighlightSelectionProcessor(),
         ConditionalProcessor(AppendAutoSuggestion(), HasFocus(DEFAULT_BUFFER) & ~IsDone()),
-        ConditionalProcessor(PasswordProcessor(), is_password)]
+        ConditionalProcessor(PasswordProcessor(), is_password)
+    ]
 
     if extra_input_processors:
         input_processors.extend(extra_input_processors)
@@ -276,10 +274,8 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
         FloatContainer(
             Window(
                 BufferControl(
-                    highlighters=highlighters,
                     input_processors=input_processors,
                     lexer=lexer,
-                    wrap_lines=wrap_lines,
                     # Enable preview_search, we want to have immediate feedback
                     # in reverse-i-search mode.
                     preview_search=True),
@@ -292,6 +288,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
                         filter=multiline
                     )
                 ],
+                wrap_lines=wrap_lines,
             ),
             [
                 Float(xcursor=True,

@@ -24,9 +24,14 @@ class Margin(with_metaclass(ABCMeta, object)):
     Base interface for a margin.
     """
     @abstractmethod
-    def get_width(self, cli):
+    def get_width(self, cli, get_ui_content):
         """
         Return the width that this margin is going to consume.
+
+        :param cli: :class:`.CommandLineInterface` instance.
+        :param get_ui_content: Callable that asks the user control to create
+            a :class:`.UIContent` instance. This can be used for instance to
+            obtain the number of lines.
         """
         return 0
 
@@ -36,6 +41,7 @@ class Margin(with_metaclass(ABCMeta, object)):
         Creates a margin.
         This should return a list of (Token, text) tuples.
 
+        :param cli: :class:`.CommandLineInterface` instance.
         :param window_render_info:
             :class:`~prompt_toolkit.layout.containers.WindowRenderInfo`
             instance, generated after rendering and copying the visible part of
@@ -53,71 +59,59 @@ class NumberredMargin(Margin):
     """
     Margin that displays the line numbers.
 
-    :param buffer_name: The name of the buffer. This is recommended if the
-        margin is used together with a
-        :class:`~prompt_toolkit.layout.controls.BufferControl` inside a
-        :class:`~prompt_toolkit.layout.containers.Window`. That way, we can
-        predict the width of this margin (the amount of decimals) according to
-        the number of lines in the buffer.
-    :param width: If no buffer name is given, width can be used to set a fixed
-        width.
     :param relative: Number relative to the cursor position. Similar to the Vi
                      'relativenumber' option.
+    :param display_tildes: Display tildes after the end of the document, just
+        like Vi does.
     """
-    def __init__(self, buffer_name=None, width=None, relative=False):
-        assert buffer_name or width
-
-        self.buffer_name = buffer_name
-        self.width = width
+    def __init__(self, relative=False, display_tildes=False):
         self.relative = to_cli_filter(relative)
+        self.display_tildes = to_cli_filter(display_tildes)
 
-    def get_width(self, cli):
-        if self.width is not None:
-            # Fixed width.
-            return self.width
-        else:
-            # Width determined by the amount of lines in the buffer.
-            document = cli.buffers[self.buffer_name].document
-            return max(3, len('%s' % document.line_count) + 1)
+    def get_width(self, cli, get_ui_content):
+        line_count = get_ui_content().line_count
+        return max(3, len('%s' % line_count) + 1)
 
     def create_margin(self, cli, window_render_info, width, height):
-        visible_line_to_input_line = window_render_info.visible_line_to_input_line
         relative = self.relative(cli)
 
         token = Token.LineNumber
         token_current = Token.LineNumber.Current
 
         # Get current line number.
-        if self.buffer_name:
-            # (BufferControl will only have a cursor position when the buffer
-            # has the focus, so this is a better way to know the current line.)
-            document = cli.buffers[self.buffer_name].document
-            current_lineno = document.cursor_position_row
-        else:
-            current_lineno = visible_line_to_input_line.get(window_render_info.cursor_position.y) or 0
+        current_lineno = window_render_info.ui_content.cursor_position.y
 
         # Construct margin.
         result = []
+        last_lineno = None
 
-        for y in range(window_render_info.window_height):
-            line_number = visible_line_to_input_line.get(y)
-
-            if line_number is not None:
-                if line_number == current_lineno:
+        for y, lineno in enumerate(window_render_info.displayed_lines):
+            # Only display line number if this line is not a continuation of the previous line.
+            if lineno != last_lineno:
+                if lineno is None:
+                    pass
+                elif lineno == current_lineno:
                     # Current line.
                     if relative:
                         # Left align current number in relative mode.
-                        result.append((token_current, '%i' % (line_number + 1)))
+                        result.append((token_current, '%i' % (lineno + 1)))
                     else:
-                        result.append((token_current, ('%i ' % (line_number + 1)).rjust(width)))
+                        result.append((token_current, ('%i ' % (lineno + 1)).rjust(width)))
                 else:
                     # Other lines.
                     if relative:
-                        line_number = abs(line_number - current_lineno) - 1
+                        lineno = abs(lineno - current_lineno) - 1
 
-                    result.append((token, ('%i ' % (line_number + 1)).rjust(width)))
+                    result.append((token, ('%i ' % (lineno + 1)).rjust(width)))
 
+            last_lineno = lineno
             result.append((Token, '\n'))
+
+        # Fill with tildes.
+        if self.display_tildes(cli):
+            while y < window_render_info.window_height:
+                result.append((Token.Tilde, '~\n'))
+                y += 1
 
         return result
 
@@ -132,9 +126,9 @@ class ConditionalMargin(Margin):
         self.margin = margin
         self.filter = to_cli_filter(filter)
 
-    def get_width(self, cli):
+    def get_width(self, cli, ui_content):
         if self.filter(cli):
-            return self.margin.get_width(cli)
+            return self.margin.get_width(cli, ui_content)
         else:
             return 0
 
@@ -148,39 +142,54 @@ class ConditionalMargin(Margin):
 class ScrollbarMargin(Margin):
     """
     Margin displaying a scrollbar.
+
+    :param display_arrows: Display scroll up/down arrows.
     """
-    def get_width(self, cli):
+    def __init__(self, display_arrows=False):
+        self.display_arrows = to_cli_filter(display_arrows)
+
+    def get_width(self, cli, ui_content):
         return 1
 
     def create_margin(self, cli, window_render_info, width, height):
         total_height = window_render_info.content_height
-        items_per_row = float(total_height) / min(total_height, window_render_info.window_height - 2)
+        display_arrows = self.display_arrows(cli)
 
-        index = window_render_info.vertical_scroll
+        window_height = window_render_info.window_height
+        if display_arrows:
+            window_height -= 2
 
-        visible_lines = set(range(index, index + window_render_info.window_height))
+        try:
+            items_per_row = float(total_height) / min(total_height, window_height)
+        except ZeroDivisionError:
+            return []
+        else:
+            def is_scroll_button(row):
+                " True if we should display a button on this row. "
+                current_row_middle = int((row + .5) * items_per_row)
+                return current_row_middle in window_render_info.displayed_lines
 
-        def is_scroll_button(row):
-            " True if we should display a button on this row. "
-            current_row_middle = int((row + .5) * items_per_row)
-            return current_row_middle in visible_lines
+            # Up arrow.
+            result = []
+            if display_arrows:
+                result.extend([
+                    (Token.Scrollbar.Arrow, '^'),
+                    (Token.Scrollbar, '\n')
+                ])
 
-        # Generate tokens.
-        result = [
-            (Token.Scrollbar.Arrow, '\u25b2'),  # Up arrow.
-            (Token.Scrollbar, '\n')
-        ]
+            # Scrollbar body.
+            for i in range(window_height):
+                if is_scroll_button(i):
+                    result.append((Token.Scrollbar.Button, ' '))
+                else:
+                    result.append((Token.Scrollbar, ' '))
+                result.append((Token, '\n'))
 
-        for i in range(window_render_info.window_height - 2):
-            if is_scroll_button(i):
-                result.append((Token.Scrollbar.Button, ' '))
-            else:
-                result.append((Token.Scrollbar, ' '))
-            result.append((Token, '\n'))
+            # Down arrow
+            if display_arrows:
+                result.append((Token.Scrollbar.Arrow, 'v'))
 
-        result.append((Token.Scrollbar.Arrow, '\u25bc'))  # Down arrow
-
-        return result
+            return result
 
 
 class PromptMargin(Margin):
@@ -208,7 +217,7 @@ class PromptMargin(Margin):
         self.get_continuation_tokens = get_continuation_tokens
         self.show_numbers = show_numbers
 
-    def get_width(self, cli):
+    def get_width(self, cli, ui_content):
         " Width to report to the `Window`. "
         # Take the width from the first line.
         text = ''.join(t[1] for t in self.get_prompt_tokens(cli))
@@ -225,14 +234,15 @@ class PromptMargin(Margin):
             tokens2 = []
 
         show_numbers = self.show_numbers(cli)
-        visible_line_to_input_line = window_render_info.visible_line_to_input_line
+        last_y = None
 
-        for y in range(1, min(window_render_info.content_height, height)):
+        for y in window_render_info.displayed_lines[1:]:
             tokens.append((Token, '\n'))
             if show_numbers:
-                line_number = visible_line_to_input_line.get(y) or 0
-                tokens.append((Token.LineNumber, ('%i ' % (line_number + 1)).rjust(width)))
+                if y != last_y:
+                    tokens.append((Token.LineNumber, ('%i ' % (y + 1)).rjust(width)))
             else:
                 tokens.extend(tokens2)
+            last_y = y
 
         return tokens

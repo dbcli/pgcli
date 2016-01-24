@@ -8,6 +8,7 @@ This is very similar to the Pygments style dictionary, with some additions:
 """
 from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES
 from .defaults import DEFAULT_STYLE_EXTENSIONS
+from six.moves import range
 
 __all__ = (
     'style_from_dict',

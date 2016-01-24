@@ -6,10 +6,9 @@ from .processors import BeforeInput
 
 from .lexers import SimpleLexer
 from .dimension import LayoutDimension
-from .controls import BufferControl, TokenListControl, UIControl
+from .controls import BufferControl, TokenListControl, UIControl, UIContent
 from .containers import Window, ConditionalContainer
 from .utils import token_list_len
-from .screen import Screen
 from prompt_toolkit.enums import SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import HasFocus, HasArg, HasCompletions, HasValidationError, HasSearch, Always, IsDone
 from prompt_toolkit.token import Token
@@ -104,7 +103,7 @@ class SearchToolbar(ConditionalContainer):
 class CompletionsToolbarControl(UIControl):
     token = Token.Toolbar.Completions
 
-    def create_screen(self, cli, width, height):
+    def create_content(self, cli, width, height):
         complete_state = cli.current_buffer.complete_state
         if complete_state:
             completions = complete_state.current_completions
@@ -152,9 +151,10 @@ class CompletionsToolbarControl(UIControl):
         else:
             all_tokens = []
 
-        screen = Screen(initial_width=width)
-        screen.write_data(all_tokens, width)
-        return screen
+        def get_line(i):
+            return all_tokens
+
+        return UIContent(get_line=get_line, line_count=1)
 
 
 class CompletionsToolbar(ConditionalContainer):

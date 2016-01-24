@@ -102,7 +102,11 @@ class _CharSizesCache(dict):
         else:
             result = sum(max(0, wcwidth(c)) for c in string)
 
-        self[string] = result
+        # Cache for short strings.
+        # (It's hard to tell what we can consider short...)
+        if len(string) < 256:
+            self[string] = result
+
         return result
 
 

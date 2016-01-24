@@ -5,18 +5,20 @@ Container for the layout.
 from __future__ import unicode_literals
 
 from abc import ABCMeta, abstractmethod
-from collections import defaultdict
 from six import with_metaclass
+from six.moves import range
 
-from .controls import UIControl, TokenListControl
+from .controls import UIControl, TokenListControl, UIContent
 from .dimension import LayoutDimension, sum_layout_dimensions, max_layout_dimensions
 from .margins import Margin
-from .screen import Point, WritePosition, Char
+from .screen import Point, WritePosition, _CHAR_CACHE
+from .utils import token_list_to_text, explode_tokens
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventTypes
+from prompt_toolkit.reactive import Integer
 from prompt_toolkit.token import Token
-from prompt_toolkit.utils import take_using_weights
+from prompt_toolkit.utils import take_using_weights, get_cwidth
 
 __all__ = (
     'Container',
@@ -54,7 +56,7 @@ class Container(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def preferred_height(self, cli, width):
+    def preferred_height(self, cli, width, max_available_height):
         """
         Return a :class:`~prompt_toolkit.layout.dimension.LayoutDimension` that
         represents the desired height for this container.
@@ -121,8 +123,8 @@ class HSplit(Container):
         else:
             return LayoutDimension(0)
 
-    def preferred_height(self, cli, width):
-        dimensions = [c.preferred_height(cli, width) for c in self.children]
+    def preferred_height(self, cli, width, max_available_height):
+        dimensions = [c.preferred_height(cli, width, max_available_height) for c in self.children]
         return sum_layout_dimensions(dimensions)
 
     def reset(self):
@@ -169,7 +171,7 @@ class HSplit(Container):
             if given_dimensions and given_dimensions[index] is not None:
                 return given_dimensions[index]
             else:
-                return c.preferred_height(cli, write_position.width)
+                return c.preferred_height(cli, write_position.width, write_position.extended_height)
 
         dimensions = [get_dimension_for_child(c, index) for index, c in enumerate(self.children)]
 
@@ -247,12 +249,12 @@ class VSplit(Container):
         dimensions = [c.preferred_width(cli, max_available_width) for c in self.children]
         return sum_layout_dimensions(dimensions)
 
-    def preferred_height(self, cli, width):
+    def preferred_height(self, cli, width, max_available_height):
         sizes = self._divide_widths(cli, width)
         if sizes is None:
             return LayoutDimension()
         else:
-            dimensions = [c.preferred_height(cli, s)
+            dimensions = [c.preferred_height(cli, s, max_available_height)
                           for s, c in zip(sizes, self.children)]
             return max_layout_dimensions(dimensions)
 
@@ -333,7 +335,7 @@ class VSplit(Container):
             return
 
         # Calculate heights, take the largest possible, but not larger than write_position.extended_height.
-        heights = [child.preferred_height(cli, width).preferred
+        heights = [child.preferred_height(cli, width, write_position.extended_height).preferred
                    for width, child in zip(sizes, self.children)]
         height = max(write_position.height, min(write_position.extended_height, max(heights)))
 
@@ -383,13 +385,13 @@ class FloatContainer(Container):
     def preferred_width(self, cli, write_position):
         return self.content.preferred_width(cli, write_position)
 
-    def preferred_height(self, cli, width):
+    def preferred_height(self, cli, width, max_available_height):
         """
         Return the preferred height of the float container.
         (We don't care about the height of the floats, they should always fit
         into the dimensions provided by the container.)
         """
-        return self.content.preferred_height(cli, width)
+        return self.content.preferred_height(cli, width, max_available_height)
 
     def write_to_screen(self, cli, screen, mouse_handlers, write_position):
         self.content.write_to_screen(cli, screen, mouse_handlers, write_position)
@@ -464,7 +466,8 @@ class FloatContainer(Container):
 
                 height = fl_height
                 if height is None:
-                    height = fl.content.preferred_height(cli, width).preferred
+                    height = fl.content.preferred_height(
+                        cli, width, write_position.extended_height).preferred
 
                 # Reduce height if not enough space. (We can use the
                 # extended_height when the content requires it.)
@@ -484,7 +487,8 @@ class FloatContainer(Container):
                 height = fl_height
             # Otherwise, take preferred height from content.
             else:
-                height = fl.content.preferred_height(cli, width).preferred
+                height = fl.content.preferred_height(
+                    cli, width, write_position.extended_height).preferred
 
                 if fl.top is not None:
                     ypos = fl.top
@@ -571,87 +575,119 @@ class WindowRenderInfo(object):
     (Could be used for implementation of the Vi 'H' and 'L' key bindings as
     well as implementing mouse support.)
 
-    :param original_screen: The original full screen instance that contains the
-                            whole input, without clipping. (temp_screen)
+    :param ui_content: The original :class:`.UIContent` instance that contains
+        the whole input, without clipping. (ui_content)
     :param horizontal_scroll: The horizontal scroll of the :class:`.Window` instance.
     :param vertical_scroll: The vertical scroll of the :class:`.Window` instance.
     :param height: The height that was used for the rendering.
-    :param cursor_position: `Point` instance. Where the cursor is currently
-                            shown, relative to the window.
     """
-    def __init__(self, original_screen, horizontal_scroll, vertical_scroll,
-                 window_width, window_height, cursor_position,
-                 configured_scroll_offsets, applied_scroll_offsets):
-        self.original_screen = original_screen
+    def __init__(self, ui_content, horizontal_scroll, vertical_scroll,
+                 window_width, window_height,
+                 configured_scroll_offsets,
+                 visible_line_to_row_col, rowcol_to_yx,
+                 x_offset, y_offset, wrap_lines):
+        assert isinstance(ui_content, UIContent)
+        assert isinstance(horizontal_scroll, int)
+        assert isinstance(vertical_scroll, int)
+        assert isinstance(window_width, int)
+        assert isinstance(window_height, int)
+        assert isinstance(configured_scroll_offsets, ScrollOffsets)
+        assert isinstance(visible_line_to_row_col, dict)
+        assert isinstance(rowcol_to_yx, dict)
+        assert isinstance(x_offset, int)
+        assert isinstance(y_offset, int)
+        assert isinstance(wrap_lines, bool)
+
+        self.ui_content = ui_content
         self.vertical_scroll = vertical_scroll
-        self.window_width = window_width
+        self.window_width = window_width  # Width without margins.
         self.window_height = window_height
-        self.cursor_position = cursor_position
+
         self.configured_scroll_offsets = configured_scroll_offsets
-        self.applied_scroll_offsets = applied_scroll_offsets
+        self.visible_line_to_row_col = visible_line_to_row_col
+        self.wrap_lines = wrap_lines
 
-    @property
-    def input_line_to_screen_line(self):
-        """
-        Return a dictionary mapping the line numbers of the screen to the one
-        of the input buffer.
-        """
-        return dict((v, k) for k, v in
-                    self.original_screen.screen_line_to_input_line.items())
-
-    @property
-    def screen_line_to_input_line(self):
-        """
-        Return the dictionary mapping the line numbers of the input buffer to
-        the lines of the screen.
-        """
-        return self.original_screen.screen_line_to_input_line
+        self._rowcol_to_yx = rowcol_to_yx  # row/col from input to absolute y/x
+                                           # screen coordinates.
+        self._x_offset = x_offset
+        self._y_offset = y_offset
 
     @property
     def visible_line_to_input_line(self):
+        return dict(
+            (visible_line, rowcol[0])
+            for visible_line, rowcol in self.visible_line_to_row_col.items())
+
+    @property
+    def cursor_position(self):
         """
-        Return a dictionary mapping the visible rows to the line numbers of the
-        input.
+        Return the cursor position coordinates, relative to the left/top corner
+        of the rendered screen.
         """
-        return dict((k - self.vertical_scroll, v) for
-                    k, v in self.original_screen.screen_line_to_input_line.items())
+        cpos = self.ui_content.cursor_position
+        y, x = self._rowcol_to_yx[cpos.y, cpos.x]
+        return Point(x=x - self._x_offset, y=y - self._y_offset)
+
+    @property
+    def applied_scroll_offsets(self):
+        if self.displayed_lines[0] == 0:
+            top = 0
+        else:
+            # Get row where the cursor is displayed.
+            y = self.input_line_to_visible_line[self.ui_content.cursor_position.y]
+            top = min(y, self.configured_scroll_offsets.top)
+
+        return ScrollOffsets(
+            top=top,
+            bottom=min(self.ui_content.line_count - self.displayed_lines[-1] - 1,
+                       self.configured_scroll_offsets.bottom),
+
+            # For left/right, it probably doesn't make sense to return something.
+            # (We would have to calculate the widths of all the lines and keep
+            # double width characters in mind.)
+            left=0, right=0)
+
+    @property
+    def displayed_lines(self):
+        """
+        List of all the visible rows. (Line numbers of the input buffer.)
+        The last line may not be entirely visible.
+        """
+        return sorted(row for row, col in self.visible_line_to_row_col.values())
+
+    @property
+    def input_line_to_visible_line(self):
+        """
+        Return the dictionary mapping the line numbers of the input buffer to
+        the lines of the screen. When a line spans several rows at the screen,
+        the first row appears in the dictionary.
+        """
+        result = {}
+        for k, v in self.visible_line_to_input_line.items():
+            if v in result:
+                result[v] = min(result[v], k)
+            else:
+                result[v] = k
+        return result
 
     def first_visible_line(self, after_scroll_offset=False):
         """
         Return the line number (0 based) of the input document that corresponds
         with the first visible line.
         """
-        # Note that we can't just do vertical_scroll+height because some input
-        # lines could be wrapped and span several lines in the screen.
-        screen = self.original_screen
-        height = self.window_height
-
-        start = self.vertical_scroll
         if after_scroll_offset:
-            start += self.applied_scroll_offsets.top
-
-        for y in range(start, self.vertical_scroll + height):
-            if y in screen.screen_line_to_input_line:
-                return screen.screen_line_to_input_line[y]
-
-        return 0
+            return self.displayed_lines[self.applied_scroll_offsets.top]
+        else:
+            return self.displayed_lines[0]
 
     def last_visible_line(self, before_scroll_offset=False):
         """
         Like `first_visible_line`, but for the last visible line.
         """
-        screen = self.original_screen
-        height = self.window_height
-
-        start = self.vertical_scroll + height - 1
         if before_scroll_offset:
-            start -= self.applied_scroll_offsets.bottom
-
-        for y in range(start, self.vertical_scroll, -1):
-            if y in screen.screen_line_to_input_line:
-                return screen.screen_line_to_input_line[y]
-
-        return 0
+            return self.displayed_lines[-1 - self.applied_scroll_offsets.bottom]
+        else:
+            return self.displayed_lines[-1]
 
     def center_visible_line(self, before_scroll_offset=False,
                             after_scroll_offset=False):
@@ -660,7 +696,7 @@ class WindowRenderInfo(object):
         """
         return (self.first_visible_line(after_scroll_offset) +
                 (self.last_visible_line(before_scroll_offset) -
-                 self.first_visible_line(after_scroll_offset)) / 2
+                 self.first_visible_line(after_scroll_offset)) // 2
                )
 
     @property
@@ -668,14 +704,14 @@ class WindowRenderInfo(object):
         """
         The full height of the user control.
         """
-        return self.original_screen.height
+        return self.ui_content.line_count
 
     @property
     def full_height_visible(self):
         """
         True when the full height is visible (There is no vertical scroll.)
         """
-        return self.window_height >= self.original_screen.height
+        return self.vertical_scroll == 0 and self.last_visible_line() == self.content_height
 
     @property
     def top_visible(self):
@@ -689,8 +725,7 @@ class WindowRenderInfo(object):
         """
         True when the bottom of the buffer is visible.
         """
-        return self.vertical_scroll >= \
-            self.original_screen.height - self.window_height
+        return self.last_visible_line() == self.content_height - 1
 
     @property
     def vertical_scroll_percentage(self):
@@ -698,8 +733,20 @@ class WindowRenderInfo(object):
         Vertical scroll as a percentage. (0 means: the top is visible,
         100 means: the bottom is visible.)
         """
-        return (100 * self.vertical_scroll //
-                (self.original_screen.height - self.window_height))
+        if self.bottom_visible:
+            return 100
+        else:
+            return (100 * self.vertical_scroll // self.content_height)
+
+    def get_height_for_line(self, lineno):
+        """
+        Return the height of the given line.
+        (The height that it would take, if this line became visible.)
+        """
+        if self.wrap_lines:
+            return self.ui_content.get_height_for_line(lineno, self.window_width)
+        else:
+            return 1
 
 
 class ScrollOffsets(object):
@@ -709,10 +756,31 @@ class ScrollOffsets(object):
     Note that left/right offsets only make sense if line wrapping is disabled.
     """
     def __init__(self, top=0, bottom=0, left=0, right=0):
-        self.top = top
-        self.bottom = bottom
-        self.left = left
-        self.right = right
+        assert isinstance(top, Integer)
+        assert isinstance(bottom, Integer)
+        assert isinstance(left, Integer)
+        assert isinstance(right, Integer)
+
+        self._top = top
+        self._bottom = bottom
+        self._left = left
+        self._right = right
+
+    @property
+    def top(self):
+        return int(self._top)
+
+    @property
+    def bottom(self):
+        return int(self._bottom)
+
+    @property
+    def left(self):
+        return int(self._left)
+
+    @property
+    def right(self):
+        return int(self._right)
 
     def __repr__(self):
         return 'ScrollOffsets(top=%r, bottom=%r, left=%r, right=%r)' % (
@@ -747,6 +815,8 @@ class Window(Container):
         anymore, while there is still empty space available at the bottom of
         the window. In the Vi editor for instance, this is possible. You will
         see tildes while the top part of the body is hidden.
+    :param wrap_lines: A `bool` or :class:`~prompt_toolkit.filters.CLIFilter`
+        instance. When True, don't scroll horizontally, but wrap lines instead.
     :param get_vertical_scroll: Callable that takes this window
         instance as input and returns a preferred vertical scroll.
         (When this is `None`, the scroll is only determined by the last and
@@ -761,7 +831,7 @@ class Window(Container):
     def __init__(self, content, width=None, height=None, get_width=None,
                  get_height=None, dont_extend_width=False, dont_extend_height=False,
                  left_margins=None, right_margins=None, scroll_offsets=None,
-                 allow_scroll_beyond_bottom=False,
+                 allow_scroll_beyond_bottom=False, wrap_lines=False,
                  get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False):
         assert isinstance(content, UIControl)
         assert width is None or isinstance(width, LayoutDimension)
@@ -778,6 +848,7 @@ class Window(Container):
 
         self.allow_scroll_beyond_bottom = to_cli_filter(allow_scroll_beyond_bottom)
         self.always_hide_cursor = to_cli_filter(always_hide_cursor)
+        self.wrap_lines = to_cli_filter(wrap_lines)
 
         self.content = content
         self.dont_extend_width = dont_extend_width
@@ -791,7 +862,7 @@ class Window(Container):
         self._height = get_height or (lambda cli: height)
 
         # Cache for the screens generated by the margin.
-        self._margin_cache = SimpleCache(maxsize=8)
+        self._ui_content_cache = SimpleCache(maxsize=8)
 
         self.reset()
 
@@ -805,20 +876,31 @@ class Window(Container):
         self.vertical_scroll = 0
         self.horizontal_scroll = 0
 
+        # Vertical scroll 2: this is the vertical offset that a line is
+        # scrolled if a single line (the one that contains the cursor) consumes
+        # all of the vertical space.
+        self.vertical_scroll_2 = 0
+
         #: Keep render information (mappings between buffer input and render
         #: output.)
         self.render_info = None
 
     def preferred_width(self, cli, max_available_width):
-        # Width of the margins.
-        total_margin_width = sum(m.get_width(cli) for m in
+        # Calculate the width of the margin.
+        def get_ui_content():
+            """ Create UIContent for the margins that need this information for
+            calculating their width. """
+            return self._get_ui_content(cli, width=0, height=0)
+
+        total_margin_width = sum(m.get_width(cli, get_ui_content) for m in
                                  self.left_margins + self.right_margins)
 
-        # Window of the content.
+        # Window of the content. (Can be `None`.)
         preferred_width = self.content.preferred_width(
             cli, max_available_width - total_margin_width)
 
         if preferred_width is not None:
+            # Include width of the margins.
             preferred_width += total_margin_width
 
         # Merge.
@@ -827,10 +909,13 @@ class Window(Container):
             preferred=preferred_width,
             dont_extend=self.dont_extend_width)
 
-    def preferred_height(self, cli, width):
+    def preferred_height(self, cli, width, max_available_height):
+        wrap_lines = self.wrap_lines(cli)
+
         return self._merge_dimensions(
             dimension=self._height(cli),
-            preferred=self.content.preferred_height(cli, width),
+            preferred=self.content.preferred_height(
+                cli, width, max_available_height, wrap_lines),
             dont_extend=self.dont_extend_height)
 
     @staticmethod
@@ -865,58 +950,93 @@ class Window(Container):
 
         return LayoutDimension(min=dimension.min, max=max_, preferred=preferred)
 
+    def _get_ui_content(self, cli, width, height):
+        """
+        Create a `UIContent` instance.
+        """
+        def get_content():
+            return self.content.create_content(cli, width=width, height=height)
+
+        key = (cli.render_counter, width, height)
+        return self._ui_content_cache.get(key, get_content)
+
     def write_to_screen(self, cli, screen, mouse_handlers, write_position):
         """
         Write window to screen. This renders the user control, the margins and
         copies everything over to the absolute position at the given screen.
         """
         # Calculate margin sizes.
-        left_margin_widths = [m.get_width(cli) for m in self.left_margins]
-        right_margin_widths = [m.get_width(cli) for m in self.right_margins]
+        # Margin.get_width, needs to have a UIContent instance.
+        def get_ui_content():
+            return self._get_ui_content(cli, width=0, height=0)
+
+        left_margin_widths = [m.get_width(cli, get_ui_content) for m in self.left_margins]
+        right_margin_widths = [m.get_width(cli, get_ui_content) for m in self.right_margins]
         total_margin_width = sum(left_margin_widths + right_margin_widths)
 
         # Render UserControl.
-        tpl = self.content.create_screen(
+        ui_content = self.content.create_content(
             cli, write_position.width - total_margin_width, write_position.height)
-        if isinstance(tpl, tuple):
-            temp_screen, highlighting = tpl
-        else:
-            # For backwards, compatibility.
-            temp_screen, highlighting = tpl, defaultdict(lambda: defaultdict(lambda: None))
+        assert isinstance(ui_content, UIContent)
 
         # Scroll content.
-        applied_scroll_offsets = self._scroll(
-            temp_screen, write_position.width - total_margin_width, write_position.height, cli)
+        wrap_lines = self.wrap_lines(cli)
+        scroll_func = self._scroll_when_linewrapping if wrap_lines else self._scroll_without_linewrapping
 
-        # Write body to screen.
-        self._copy_body(cli, temp_screen, highlighting, screen, write_position,
-                        sum(left_margin_widths), write_position.width - total_margin_width,
-                        applied_scroll_offsets)
+        scroll_func(
+            ui_content, write_position.width - total_margin_width, write_position.height, cli)
+
+        # Write body
+        visible_line_to_row_col, rowcol_to_yx = self._copy_body(
+            ui_content, screen, write_position,
+            sum(left_margin_widths), write_position.width - total_margin_width,
+            self.vertical_scroll, self.horizontal_scroll,
+            has_focus=self.content.has_focus(cli),
+            wrap_lines=wrap_lines,
+            vertical_scroll_2=self.vertical_scroll_2)
 
         # Remember render info. (Set before generating the margins. They need this.)
+        x_offset=write_position.xpos + sum(left_margin_widths)
+        y_offset=write_position.ypos
+
         self.render_info = WindowRenderInfo(
-            original_screen=temp_screen,
+            ui_content=ui_content,
             horizontal_scroll=self.horizontal_scroll,
             vertical_scroll=self.vertical_scroll,
-            window_width=write_position.width,
+            window_width=write_position.width - total_margin_width,
             window_height=write_position.height,
-            cursor_position=Point(y=temp_screen.cursor_position.y - self.vertical_scroll,
-                                  x=temp_screen.cursor_position.x - self.horizontal_scroll),
             configured_scroll_offsets=self.scroll_offsets,
-            applied_scroll_offsets=applied_scroll_offsets)
+            visible_line_to_row_col=visible_line_to_row_col,
+            rowcol_to_yx=rowcol_to_yx,
+            x_offset=x_offset,
+            y_offset=y_offset,
+            wrap_lines=wrap_lines)
 
         # Set mouse handlers.
         def mouse_handler(cli, mouse_event):
             """ Wrapper around the mouse_handler of the `UIControl` that turns
-            absolute coordinates into relative coordinates. """
-            position = mouse_event.position
+            screen coordinates into line coordinates. """
+            # Find row/col position first.
+            yx_to_rowcol = dict((v, k) for k, v in rowcol_to_yx.items())
+            y = mouse_event.position.y
+            x = mouse_event.position.x
 
-            # Call the mouse handler of the UIControl first.
-            result = self.content.mouse_handler(
-                cli, MouseEvent(
-                    position=Point(x=position.x - write_position.xpos - sum(left_margin_widths),
-                                   y=position.y - write_position.ypos + self.vertical_scroll),
-                    event_type=mouse_event.event_type))
+            while x >= 0:
+                try:
+                    row, col = yx_to_rowcol[y, x]
+                except KeyError:
+                    # Try again. (When clicking on the right side of double
+                    # width characters, or on the right side of the input.)
+                    x -= 1
+                else:
+                    # Found position, call handler of UIControl.
+                    result = self.content.mouse_handler(
+                        cli, MouseEvent(position=Point(x=col, y=row),
+                                        event_type=mouse_event.event_type))
+                    break
+            else:
+                # nobreak.
+                result = NotImplemented
 
             # If it returns NotImplemented, handle it here.
             if result == NotImplemented:
@@ -939,14 +1059,10 @@ class Window(Container):
             # Retrieve margin tokens.
             tokens = m.create_margin(cli, self.render_info, width, write_position.height)
 
-            # Turn it into a screen. (Take a screen from the cache if we
+            # Turn it into a UIContent object.
             # already rendered those tokens using this size.)
-            def create_screen():
-                return TokenListControl.static(tokens).create_screen(
-                    cli, width + 1, write_position.height)
-
-            key = (tuple(tokens), width, write_position.height)
-            return self._margin_cache.get(key, create_screen)
+            return TokenListControl.static(tokens).create_content(
+                cli, width + 1, write_position.height)
 
         for m, width in zip(self.left_margins, left_margin_widths):
             # Create screen for margin.
@@ -966,94 +1082,235 @@ class Window(Container):
             self._copy_margin(margin_screen, screen, write_position, move_x, width)
             move_x += width
 
-    def _copy_body(self, cli, temp_screen, highlighting, new_screen,
-                   write_position, move_x, width, applied_scroll_offsets):
+    @classmethod
+    def _copy_body(cls, ui_content, new_screen, write_position, move_x,
+                   width, vertical_scroll=0, horizontal_scroll=0,
+                   has_focus=False, wrap_lines=False, vertical_scroll_2=0):
         """
-        Copy characters from the temp screen that we got from the `UIControl`
-        to the real screen.
+        Copy the UIContent into the output screen.
         """
         xpos = write_position.xpos + move_x
         ypos = write_position.ypos
-        height = write_position.height
-
-        temp_buffer = temp_screen.data_buffer
+        line_count = ui_content.line_count
         new_buffer = new_screen.data_buffer
-        temp_screen_height = temp_screen.height
 
-        vertical_scroll = self.vertical_scroll
-        horizontal_scroll = self.horizontal_scroll
-        y = 0
+        # Result dict.
 
-        # Now copy the region we need to the real screen.
-        for y in range(0, height):
-            # We keep local row variables. (Don't look up the row in the dict
-            # for each iteration of the nested loop.)
-            new_row = new_buffer[y + ypos]
+        # Map visible line number to (row, col) of input.
+        # 'col' will always be zero if line wrapping is off.
+        visible_line_to_row_col = {}
+        rowcol_to_yx = {}  # Maps (row, col) from the input to (y, x) screen coordinates.
 
-            if y >= temp_screen_height and y >= write_position.height:
-                # Break out of for loop when we pass after the last row of the
-                # temp screen. (We use the 'y' position for calculation of new
-                # screen's height.)
-                break
+        # Fill background with default_char first.
+        default_char = ui_content.default_char
+
+        if default_char:
+            for y in range(ypos, ypos + write_position.height):
+                new_buffer_row = new_buffer[y]
+                for x in range(xpos, xpos + width):
+                    new_buffer_row[x] = default_char
+
+        # Copy content.
+        def copy():
+            y = - vertical_scroll_2
+            lineno = vertical_scroll
+
+            while y < write_position.height and lineno < line_count:
+                # Take the next line and copy it in the real screen.
+                line = ui_content.get_line(lineno)
+
+                col = 0
+                x = -horizontal_scroll
+
+                visible_line_to_row_col[y] = (lineno, horizontal_scroll)
+
+                for token, text in line:
+                    new_buffer_row = new_buffer[y + ypos]
+                    for c in text:
+                        char = _CHAR_CACHE[c, token]
+
+                        # Wrap when the line width is exceeded.
+                        if wrap_lines and x + char.width > width:
+                            visible_line_to_row_col[y + 1] = (
+                                lineno, visible_line_to_row_col[y][1] + x)
+                            y += 1
+                            x = -horizontal_scroll  # This would be equal to zero.
+                                                    # (horizontal_scroll=0 when wrap_lines.)
+                            new_buffer_row = new_buffer[y + ypos]
+
+                            if y >= write_position.height:
+                                return y  # Break out of all for loops.
+
+                        # Set character in screen and shift 'x'.
+                        if x >= 0 and y >= 0 and x < write_position.width:
+                            new_buffer_row[x + xpos] = char
+
+                            # Keep track of write position for each character.
+                            rowcol_to_yx[lineno, col] = (y + ypos, x + xpos)
+                        col += 1
+                        x += char.width
+
+                lineno += 1
+                y += 1
+            return y
+
+        y = copy()
+
+        def cursor_pos_to_screen_pos(row, col):
+            " Translate row/col from UIContent to real Screen coordinates. "
+            try:
+                y, x = rowcol_to_yx[row, col]
+            except KeyError:
+                # Normally this should never happen. (It is a bug, if it happens.)
+                # But to be sure, return (0, 0)
+                return Point(y=0, x=0)
+
+                # raise ValueError(
+                #     'Invalid position. row=%r col=%r, vertical_scroll=%r, '
+                #     'horizontal_scroll=%r, height=%r' %
+                #     (row, col, vertical_scroll, horizontal_scroll, write_position.height))
             else:
-                temp_row = temp_buffer[y + vertical_scroll]
-                highlighting_row = highlighting[y + vertical_scroll]
+                return Point(y=y, x=x)
 
-                # Copy row content, except for transparent tokens.
-                # (This is useful in case of floats.)
-                # Also apply highlighting.
-                for x in range(0, width):
-                    cell = temp_row[x + horizontal_scroll]
-                    highlighting_token = highlighting_row[x]
+        # Set cursor and menu positions.
+        if has_focus and ui_content.cursor_position:
+            new_screen.cursor_position = cursor_pos_to_screen_pos(
+                    ui_content.cursor_position.y, ui_content.cursor_position.x)
+            new_screen.show_cursor = ui_content.show_cursor
 
-                    if highlighting_token:
-                        new_row[x + xpos] = Char(cell.char, highlighting_token)
-                    elif cell.token != Transparent:
-                        new_row[x + xpos] = cell
+        if not new_screen.menu_position and ui_content.menu_position:
+            new_screen.menu_position = cursor_pos_to_screen_pos(
+                    ui_content.menu_position.y, ui_content.menu_position.x)
 
-        if self.content.has_focus(cli):
-            new_screen.cursor_position = Point(y=temp_screen.cursor_position.y + ypos - vertical_scroll,
-                                               x=temp_screen.cursor_position.x + xpos - horizontal_scroll)
+        new_screen.height = max(new_screen.height, ypos + y)
 
-            if not self.always_hide_cursor(cli):
-                new_screen.show_cursor = temp_screen.show_cursor
+        return visible_line_to_row_col, rowcol_to_yx
 
-        if not new_screen.menu_position and temp_screen.menu_position:
-            new_screen.menu_position = Point(y=temp_screen.menu_position.y + ypos - vertical_scroll,
-                                             x=temp_screen.menu_position.x + xpos - horizontal_scroll)
-
-        # Update height of the output screen. (new_screen.write_data is not
-        # called, so the screen is not aware of its height.)
-        new_screen.height = max(new_screen.height, ypos + y + 1)
-
-    def _copy_margin(self, temp_screen, new_screen, write_position, move_x, width):
+    @classmethod
+    def _copy_margin(cls, lazy_screen, new_screen, write_position, move_x, width):
         """
         Copy characters from the margin screen to the real screen.
         """
         xpos = write_position.xpos + move_x
         ypos = write_position.ypos
 
-        temp_buffer = temp_screen.data_buffer
-        new_buffer = new_screen.data_buffer
+        margin_write_position = WritePosition(xpos, ypos, width, write_position.height)
+        cls._copy_body(lazy_screen, new_screen, margin_write_position, 0, width)
 
-        # Now copy the region we need to the real screen.
-        for y in range(0, write_position.height):
-            new_row = new_buffer[y + ypos]
-            temp_row = temp_buffer[y]
-
-            # Copy row content, except for transparent tokens.
-            # (This is useful in case of floats.)
-            for x in range(0, width):
-                cell = temp_row[x]
-                if cell.token != Transparent:
-                    new_row[x + xpos] = cell
-
-    def _scroll(self, temp_screen, width, height, cli):
+    def _scroll_when_linewrapping(self, ui_content, width, height, cli):
         """
-        Scroll to make sure the cursor position is visible and that we maintain the
-        requested scroll offset.
-        Return the applied scroll offsets.
+        Scroll to make sure the cursor position is visible and that we maintain
+        the requested scroll offset.
+
+        Set `self.horizontal_scroll/vertical_scroll`.
         """
+        scroll_offsets_bottom = self.scroll_offsets.bottom
+        scroll_offsets_top = self.scroll_offsets.top
+
+        # We don't have horizontal scrolling.
+        self.horizontal_scroll = 0
+
+        # If the current line consumes more than the whole window height,
+        # then we have to scroll vertically inside this line. (We don't take
+        # the scroll offsets into account for this.)
+        # Also, ignore the scroll offsets in this case. Just set the vertical
+        # scroll to this line.
+        if ui_content.get_height_for_line(ui_content.cursor_position.y, width) > height - scroll_offsets_top:
+            # Calculate the height of the text before the cursor, with the line
+            # containing the cursor included, and the character belowe the
+            # cursor included as well.
+            line = explode_tokens(ui_content.get_line(ui_content.cursor_position.y))
+            text_before_cursor = token_list_to_text(line[:ui_content.cursor_position.x + 1])
+            text_before_height = UIContent.get_height_for_text(text_before_cursor, width)
+
+            # Adjust scroll offset.
+            self.vertical_scroll = ui_content.cursor_position.y
+            self.vertical_scroll_2 = min(text_before_height - 1, self.vertical_scroll_2)
+            self.vertical_scroll_2 = max(0, text_before_height - height, self.vertical_scroll_2)
+            return
+        else:
+            self.vertical_scroll_2 = 0
+
+        # Current line doesn't consume the whole height. Take scroll offsets into account.
+        def get_min_vertical_scroll():
+            # Make sure that the cursor line is not below the bottom.
+            # (Calculate how many lines can be shown between the cursor and the .)
+            used_height = 0
+            prev_lineno = ui_content.cursor_position.y
+
+            for lineno in range(ui_content.cursor_position.y, -1, -1):
+                used_height += ui_content.get_height_for_line(lineno, width)
+
+                if used_height > height - scroll_offsets_bottom:
+                    return prev_lineno
+                else:
+                    prev_lineno = lineno
+            return 0
+
+        def get_max_vertical_scroll():
+            # Make sure that the cursor line is not above the top.
+            prev_lineno = ui_content.cursor_position.y
+            used_height = 0
+
+            for lineno in range(ui_content.cursor_position.y - 1, -1, -1):
+                used_height += ui_content.get_height_for_line(lineno, width)
+
+                if used_height > scroll_offsets_top:
+                    return prev_lineno
+                else:
+                    prev_lineno = lineno
+            return prev_lineno
+
+        def get_topmost_visible():
+            """
+            Calculate the upper most line that can be visible, while the bottom
+            is still visible. We should not allow scroll more than this if
+            `allow_scroll_beyond_bottom` is false.
+            """
+            prev_lineno = ui_content.line_count - 1
+            used_height = 0
+            for lineno in range(ui_content.line_count - 1, -1, -1):
+                used_height += ui_content.get_height_for_line(lineno, width)
+                if used_height > height:
+                    return prev_lineno
+                else:
+                    prev_lineno = lineno
+            return prev_lineno
+
+        # Scroll vertically. (Make sure that the whole line which contains the
+        # cursor is visible.
+        topmost_visible = get_topmost_visible()
+
+            # Note: the `min(topmost_visible, ...)` is to make sure that we
+            # don't require scrolling up because of the bottom scroll offset,
+            # when we are at the end of the document.
+        self.vertical_scroll = max(self.vertical_scroll, min(topmost_visible, get_min_vertical_scroll()))
+        self.vertical_scroll = min(self.vertical_scroll, get_max_vertical_scroll())
+
+        # Disallow scrolling beyond bottom?
+        if not self.allow_scroll_beyond_bottom(cli):
+            self.vertical_scroll = min(self.vertical_scroll, topmost_visible)
+
+    def _scroll_without_linewrapping(self, ui_content, width, height, cli):
+        """
+        Scroll to make sure the cursor position is visible and that we maintain
+        the requested scroll offset.
+
+        Set `self.horizontal_scroll/vertical_scroll`.
+        """
+        cursor_position = ui_content.cursor_position or Point(0, 0)
+
+        # Without line wrapping, we will never have to scroll vertically inside
+        # a single line.
+        self.vertical_scroll_2 = 0
+
+        if ui_content.line_count == 0:
+            self.vertical_scroll = 0
+            self.horizontal_scroll = 0
+            return
+        else:
+            current_line_text = token_list_to_text(ui_content.get_line(cursor_position.y))
+
         def do_scroll(current_scroll, scroll_offset_start, scroll_offset_end,
                       cursor_pos, window_size, content_size):
             " Scrolling algorithm. Used for both horizontal and vertical scrolling. "
@@ -1081,11 +1338,7 @@ class Window(Container):
             if current_scroll < (cursor_pos + 1) - window_size + scroll_offset_end:
                 current_scroll = (cursor_pos + 1) - window_size + scroll_offset_end
 
-            # Calculate the applied scroll offset. This value can be lower than what we had.
-            scroll_offset_start = max(0, min(current_scroll, scroll_offset_start))
-            scroll_offset_end = max(0, min(content_size - current_scroll - window_size, scroll_offset_end))
-
-            return current_scroll, scroll_offset_start, scroll_offset_end
+            return current_scroll
 
         # When a preferred scroll is given, take that first into account.
         if self.get_vertical_scroll:
@@ -1099,29 +1352,23 @@ class Window(Container):
         # remains visible.
         offsets = self.scroll_offsets
 
-        self.vertical_scroll, scroll_offset_top, scroll_offset_bottom = do_scroll(
+        self.vertical_scroll = do_scroll(
             current_scroll=self.vertical_scroll,
             scroll_offset_start=offsets.top,
             scroll_offset_end=offsets.bottom,
-            cursor_pos=temp_screen.cursor_position.y,
+            cursor_pos=ui_content.cursor_position.y,
             window_size=height,
-            content_size=temp_screen.height)
+            content_size=ui_content.line_count)
 
-        self.horizontal_scroll, scroll_offset_left, scroll_offset_right = do_scroll(
+        self.horizontal_scroll = do_scroll(
             current_scroll=self.horizontal_scroll,
             scroll_offset_start=offsets.left,
             scroll_offset_end=offsets.right,
-            cursor_pos=temp_screen.cursor_position.x,
+            cursor_pos=get_cwidth(current_line_text[:ui_content.cursor_position.x]),
             window_size=width,
-            content_size=temp_screen.width)
-
-        applied_scroll_offsets = ScrollOffsets(
-            top=scroll_offset_top,
-            bottom=scroll_offset_bottom,
-            left=scroll_offset_left,
-            right=scroll_offset_right)
-
-        return applied_scroll_offsets
+            # We can only analyse the current line. Calculating the width off
+            # all the lines is too expensive.
+            content_size=max(get_cwidth(current_line_text), self.horizontal_scroll + width))
 
     def _mouse_handler(self, cli, mouse_event):
         """
@@ -1148,6 +1395,7 @@ class Window(Container):
         info = self.render_info
 
         if info.vertical_scroll > 0:
+            # TODO: not entirely correct yet in case of line wrapping and long lines.
             if info.cursor_position.y >= info.window_height - 1 - info.configured_scroll_offsets.bottom:
                 self.content.move_cursor_up(cli)
 
@@ -1182,9 +1430,9 @@ class ConditionalContainer(Container):
         else:
             return LayoutDimension.exact(0)
 
-    def preferred_height(self, cli, width):
+    def preferred_height(self, cli, width, max_available_height):
         if self.filter(cli):
-            return self.content.preferred_height(cli, width)
+            return self.content.preferred_height(cli, width, max_available_height)
         else:
             return LayoutDimension.exact(0)
 

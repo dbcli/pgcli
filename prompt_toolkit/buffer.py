@@ -17,6 +17,8 @@ from .utils import Callback
 from .cache import FastDictCache
 from .validation import ValidationError
 
+from six.moves import range
+
 import os
 import six
 import subprocess
@@ -278,10 +280,23 @@ class Buffer(object):
 
     def _set_text(self, value):
         """ set text at current working_index. Return whether it changed. """
-        original_value = self._working_lines[self.working_index]
-        self._working_lines[self.working_index] = value
+        working_index = self.working_index
+        working_lines = self._working_lines
 
-        return value != original_value
+        original_value = working_lines[working_index]
+        working_lines[working_index] = value
+
+        # Return True when this text has been changed.
+        if len(value) != len(original_value):
+            # For Python 2, it seems that when two strings have a different
+            # length and one is a prefix of the other, Python still scans
+            # character by character to see whether the strings are different.
+            # (Some benchmarking showed significant differences for big
+            # documents. >100,000 of lines.)
+            return True
+        elif value != original_value:
+            return True
+        return False
 
     def _set_cursor_position(self, value):
         """ Set cursor position. Return whether it changed. """
@@ -867,16 +882,21 @@ class Buffer(object):
         :param fire_event: Fire `on_text_insert` event. This is mainly used to
             trigger autocompletion while typing.
         """
+        # Original text & cursor position.
+        otext = self.text
+        ocpos = self.cursor_position
+
         # In insert/text mode.
         if overwrite:
-            # Don't overwrite the newline itself. Just before the line ending, it should act like insert mode.
-            overwritten_text = self.text[self.cursor_position:self.cursor_position+len(data)]
+            # Don't overwrite the newline itself. Just before the line ending,
+            # it should act like insert mode.
+            overwritten_text = otext[ocpos:ocpos + len(data)]
             if '\n' in overwritten_text:
                 overwritten_text = overwritten_text[:overwritten_text.find('\n')]
 
-            self.text = self.text[:self.cursor_position] + data + self.text[self.cursor_position+len(overwritten_text):]
+            self.text = otext[:ocpos] + data + otext[ocpos + len(overwritten_text):]
         else:
-            self.text = self.text[:self.cursor_position] + data + self.text[self.cursor_position:]
+            self.text = otext[:ocpos] + data + otext[ocpos:]
 
         if move_cursor:
             self.cursor_position += len(data)
