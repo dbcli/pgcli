@@ -3,8 +3,8 @@
 Autocompletion example.
 
 Press [Tab] to complete the current word.
-- The first Tab press fills in the common part of all completions.
-- The second Tab press shows all the completions. (In the menu)
+- The first Tab press fills in the common part of all completions
+    and shows all the completions. (In the menu)
 - Any following tab press cycles through all the possible completions.
 """
 from __future__ import unicode_literals
@@ -50,7 +50,8 @@ animal_completer = WordCompleter([
 
 
 def main():
-    text = prompt('Give some animals: ', completer=animal_completer)
+    text = prompt('Give some animals: ', completer=animal_completer,
+                  complete_while_typing=False)
     print('You said: %s' % text)
 
 
