@@ -85,12 +85,12 @@ class Document(object):
     @property
     def current_line_before_cursor(self):
         """ Text from the start of the line until the cursor. """
-        return self.text_before_cursor.split('\n')[-1]
+        return self.text_before_cursor.rsplit('\n', 1)[-1]
 
     @property
     def current_line_after_cursor(self):
         """ Text from the cursor until the end of the line. """
-        return self.text_after_cursor.split('\n')[0]
+        return self.text_after_cursor.split('\n', 1)[0]
 
     @property
     def lines(self):
@@ -155,7 +155,7 @@ class Document(object):
         """
         Current row. (0-based.)
         """
-        return len(self.text_before_cursor.split('\n')) - 1
+        return self.text_before_cursor.count('\n')
 
     @property
     def cursor_position_col(self):
