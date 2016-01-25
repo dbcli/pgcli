@@ -157,7 +157,10 @@ class PGCli(object):
         except IOError as e:
             return [(None, None, None, str(e))]
 
-        return self.pgexecute.run(query, self.pgspecial, on_error=self.on_error)
+        on_error_resume = (self.on_error == 'RESUME')
+        return self.pgexecute.run(
+            query, self.pgspecial, on_error_resume=on_error_resume
+        )
 
     def initialize_logging(self):
 
