@@ -55,6 +55,10 @@ class Win32Output(Output):
 
         self.color_lookup_table = ColorLookupTable()
 
+        # Remember the default console colors.
+        info = self.get_win32_screen_buffer_info()
+        self.default_attrs = info.wAttributes if info else 15
+
         if _DEBUG_RENDER_OUTPUT:
             self.LOG = open(_DEBUG_RENDER_OUTPUT_FILENAME, 'ab')
 
@@ -164,7 +168,9 @@ class Win32Output(Output):
                      byref(chars_written))
 
     def reset_attributes(self):
-        self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole, 15)  # White
+        " Reset the console foreground/background color. "
+        self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole,
+                     self.default_attrs)
 
     def set_attributes(self, attrs):
         fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
