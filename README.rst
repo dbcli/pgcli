@@ -7,7 +7,7 @@ Python Prompt Toolkit
 and terminal applications in Python.
 
 Read the `documentation on readthedocs
-<http://python-prompt-toolkit.readthedocs.org/en/latest/>`_.
+<http://python-prompt-toolkit.readthedocs.org/en/stable/>`_.
 
 
 Ptpython
