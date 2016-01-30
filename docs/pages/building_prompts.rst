@@ -233,7 +233,7 @@ instance:
         def get_completions(self, document, complete_event):
             yield Completion('completion', start_position=0)
 
-    text = prompt('> ', completer=MyCustomCompleter)
+    text = prompt('> ', completer=MyCustomCompleter())
 
 A :class:`~prompt_toolkit.completion.Completer` class has to implement a
 generator named :meth:`~prompt_toolkit.completion.Completer.get_completions`
