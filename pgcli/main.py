@@ -150,12 +150,12 @@ class PGCli(object):
     def execute_from_file(self, pattern, **_):
         if not pattern:
             message = '\\i: missing required argument'
-            return [(None, None, None, message)]
+            return [(None, None, None, message, '', False)]
         try:
             with open(os.path.expanduser(pattern), encoding='utf-8') as f:
                 query = f.read()
         except IOError as e:
-            return [(None, None, None, str(e))]
+            return [(None, None, None, str(e), '', False)]
 
         on_error_resume = (self.on_error == 'RESUME')
         return self.pgexecute.run(
