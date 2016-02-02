@@ -31,6 +31,9 @@ history_file = default
 # and "DEBUG".
 log_level = INFO
 
+# Default pager
+pager = less -SRXF
+
 # Timing of sql statments and table rendering.
 timing = True
 

@@ -98,6 +98,7 @@ class PGCli(object):
         self.multi_line = c['main'].as_bool('multi_line')
         self.vi_mode = c['main'].as_bool('vi')
         self.pgspecial.timing_enabled = c['main'].as_bool('timing')
+        self.pgspecial.set_pager(c['main']['pager'])
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
@@ -277,7 +278,6 @@ class PGCli(object):
 
     def run_cli(self):
         logger = self.logger
-        original_less_opts = self.adjust_less_opts()
 
         history_file = self.config['main']['history_file']
         if history_file == 'default':
@@ -374,9 +374,6 @@ class PGCli(object):
 
         except EOFError:
             print ('Goodbye!')
-        finally:  # Reset the less opts back to original.
-            logger.debug('Restoring env var LESS to %r.', original_less_opts)
-            os.environ['LESS'] = original_less_opts
 
     def _build_cli(self, history):
 
@@ -503,13 +500,6 @@ class PGCli(object):
                 click.secho('Reconnected!\nTry the command again.', fg='green')
             except OperationalError as e:
                 click.secho(str(e), err=True, fg='red')
-
-    def adjust_less_opts(self):
-        less_opts = os.environ.get('LESS', '')
-        self.logger.debug('Original value for LESS env var: %r', less_opts)
-        os.environ['LESS'] = '-SRXF'
-
-        return less_opts
 
     def refresh_completions(self, history=None, persist_priorities='all'):
         """ Refresh outdated completions
