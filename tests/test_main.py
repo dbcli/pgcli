@@ -1,11 +1,12 @@
-import pytest
+import os
 import platform
+
+import pytest
 try:
     import setproctitle
 except ImportError:
     setproctitle = None
 
-from pgcli.config import config_location
 from pgcli.main import obfuscate_process_password, format_output, PGCli
 from utils import dbtest, run
 
@@ -67,9 +68,19 @@ def test_format_output_auto_expand():
 def test_i_works(tmpdir, executor):
     sqlfile = tmpdir.join("test.sql")
     sqlfile.write("SELECT NOW()")
+    rcfile = str(tmpdir.join("rcfile"))
     cli = PGCli(
         pgexecute=executor,
-        pgclirc_file=config_location(),
+        pgclirc_file=rcfile,
     )
     statement = r"\i {}".format(sqlfile)
     run(executor, statement, pgspecial=cli.pgspecial)
+
+
+def test_missing_rc_dir(tmpdir):
+    rcfile = str(tmpdir.join("subdir").join("rcfile"))
+
+    cli = PGCli(
+        pgclirc_file=rcfile,
+    )
+    assert os.path.exists(rcfile)

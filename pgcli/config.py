@@ -1,7 +1,8 @@
+import errno
 import shutil
 import os
 import platform
-from os.path import expanduser, exists
+from os.path import expanduser, exists, dirname
 from configobj import ConfigObj
 
 def config_location():
@@ -22,6 +23,14 @@ def write_default_config(source, destination, overwrite=False):
     destination = expanduser(destination)
     if not overwrite and exists(destination):
         return
+
+    destination_dir = dirname(destination)
+    try:
+        os.makedirs(destination_dir)
+    except OSError as exc:
+        # ignore existing destination (py2 has no exist_ok arg to makedirs)
+        if exc.errno != errno.EEXIST:
+            raise
 
     shutil.copyfile(source, destination)
 
