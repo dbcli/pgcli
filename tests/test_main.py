@@ -4,7 +4,10 @@ try:
     import setproctitle
 except ImportError:
     setproctitle = None
-from pgcli.main import obfuscate_process_password, format_output
+
+from pgcli.config import config_location
+from pgcli.main import obfuscate_process_password, format_output, PGCli
+from utils import dbtest, run
 
 
 @pytest.mark.skipif(platform.system() == 'Windows',
@@ -58,3 +61,15 @@ def test_format_output_auto_expand():
                                      max_width=1)
     expanded = ['Title', u'-[ RECORD 0 ]-------------------------\nhead1 | abc\nhead2 | def\n', 'test status']
     assert expanded_results == expanded
+
+
+@dbtest
+def test_i_works(tmpdir, executor):
+    sqlfile = tmpdir.join("test.sql")
+    sqlfile.write("SELECT NOW()")
+    cli = PGCli(
+        pgexecute=executor,
+        pgclirc_file=config_location(),
+    )
+    statement = r"\i {}".format(sqlfile)
+    run(executor, statement, pgspecial=cli.pgspecial)
