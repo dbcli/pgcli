@@ -74,7 +74,7 @@ def test_i_works(tmpdir, executor):
         pgexecute=executor,
         pgclirc_file=rcfile,
     )
-    statement = r"\i {}".format(sqlfile)
+    statement = r"\i {0}".format(sqlfile)
     run(executor, statement, pgspecial=cli.pgspecial)
 
 
