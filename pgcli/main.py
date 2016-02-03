@@ -75,8 +75,23 @@ MetaQuery = namedtuple(
     ])
 MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
-
 class PGCli(object):
+
+    def set_default_pager(self, config):
+        configured_pager = config['main'].get('pager')
+        os_environ_pager = os.environ.get('PAGER')
+
+        if configured_pager:
+            self.logger.info('Default pager found in config file: ' + '\'' + configured_pager + '\'')
+            os.environ['PAGER'] = configured_pager
+        elif (os_environ_pager):
+            self.logger.info('Default pager found in PAGER environment variable: ' + '\'' + os_environ_pager + '\'')
+            os.environ['PAGER'] = os_environ_pager
+        else:
+            self.logger.info('No default pager found in environment. Using os default pager')
+        # Always set default set of less recommended options, they are ignored if pager is 
+        # different than less or is already parameterized with their own arguments 
+        os.environ['LESS'] = '-SRXF'
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
                  pgexecute=None, pgclirc_file=None):
@@ -91,13 +106,19 @@ class PGCli(object):
         default_config = os.path.join(package_root, 'pgclirc')
         write_default_config(default_config, pgclirc_file)
 
-        self.pgspecial = PGSpecial()
-
         # Load config.
         c = self.config = load_config(pgclirc_file, default_config)
+
+        self.logger = logging.getLogger(__name__)
+        self.initialize_logging()
+
+        self.set_default_pager(c)
+        self.pgspecial = PGSpecial()
+
         self.multi_line = c['main'].as_bool('multi_line')
         self.vi_mode = c['main'].as_bool('vi')
         self.pgspecial.timing_enabled = c['main'].as_bool('timing')
+
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
@@ -106,9 +127,6 @@ class PGCli(object):
         self.on_error = c['main']['on_error'].upper()
 
         self.completion_refresher = CompletionRefresher()
-
-        self.logger = logging.getLogger(__name__)
-        self.initialize_logging()
 
         self.query_history = []
 
@@ -280,7 +298,6 @@ class PGCli(object):
 
     def run_cli(self):
         logger = self.logger
-        original_less_opts = self.adjust_less_opts()
 
         history_file = self.config['main']['history_file']
         if history_file == 'default':
@@ -377,9 +394,6 @@ class PGCli(object):
 
         except EOFError:
             print ('Goodbye!')
-        finally:  # Reset the less opts back to original.
-            logger.debug('Restoring env var LESS to %r.', original_less_opts)
-            os.environ['LESS'] = original_less_opts
 
     def _build_cli(self, history):
 
@@ -506,13 +520,6 @@ class PGCli(object):
                 click.secho('Reconnected!\nTry the command again.', fg='green')
             except OperationalError as e:
                 click.secho(str(e), err=True, fg='red')
-
-    def adjust_less_opts(self):
-        less_opts = os.environ.get('LESS', '')
-        self.logger.debug('Original value for LESS env var: %r', less_opts)
-        os.environ['LESS'] = '-SRXF'
-
-        return less_opts
 
     def refresh_completions(self, history=None, persist_priorities='all'):
         """ Refresh outdated completions
