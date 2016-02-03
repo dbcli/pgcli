@@ -78,26 +78,8 @@ def test_i_works(tmpdir, executor):
     run(executor, statement, pgspecial=cli.pgspecial)
 
 
-def test_existing_rc_dir(tmpdir):
-    rcfile = str(tmpdir.mkdir("subdir").join("rcfile"))
-
-    PGCli(pgclirc_file=rcfile)
-    assert os.path.exists(rcfile)
-
-
 def test_missing_rc_dir(tmpdir):
     rcfile = str(tmpdir.join("subdir").join("rcfile"))
 
     PGCli(pgclirc_file=rcfile)
     assert os.path.exists(rcfile)
-
-
-def test_other_rcdir_create_error(tmpdir):
-    subdir = tmpdir.join("subdir")
-    rcfile = subdir.join("rcfile")
-
-    # trigger an oserror that isn't "directory already exists"
-    os.chmod(str(tmpdir), stat.S_IREAD)
-
-    with pytest.raises(OSError):
-        PGCli(pgclirc_file=str(rcfile))
