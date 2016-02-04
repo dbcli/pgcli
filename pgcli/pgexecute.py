@@ -29,6 +29,23 @@ ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 ext.set_wait_callback(psycopg2.extras.wait_select)
 
 
+def register_date_typecasters(connection):
+    """
+    Casts date and timestamp values to string, resolves issues with out of
+    range dates (e.g. BC) which psycopg2 can't handle
+    """
+    def cast_date(value, cursor):
+        return value
+    cursor = connection.cursor()
+    cursor.execute('SELECT NULL::date')
+    date_oid = cursor.description[0][1]
+    cursor.execute('SELECT NULL::timestamp')
+    timestamp_oid = cursor.description[0][1]
+    oids = (date_oid, timestamp_oid)
+    new_type = psycopg2.extensions.new_type(oids, 'DATE', cast_date)
+    psycopg2.extensions.register_type(new_type)
+
+
 def register_json_typecasters(conn, loads_fn):
     """Set the function for converting JSON data for a connection.
 
@@ -198,6 +215,8 @@ class PGExecute(object):
         self.password = password
         self.host = host
         self.port = port
+
+        register_date_typecasters(conn)
         register_json_typecasters(self.conn, self._json_typecaster)
         register_hstore_typecaster(self.conn)
 
