@@ -44,7 +44,9 @@ from .pgstyle import style_factory
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
 from .completion_refresher import CompletionRefresher
-from .config import write_default_config, load_config, config_location
+from .config import (
+    write_default_config, load_config, config_location, ensure_dir_exists,
+)
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
 from .__init__ import __version__
@@ -185,6 +187,7 @@ class PGCli(object):
         log_file = self.config['main']['log_file']
         if log_file == 'default':
             log_file = config_location() + 'log'
+        ensure_dir_exists(log_file)
         log_level = self.config['main']['log_level']
 
         level_map = {'CRITICAL': logging.CRITICAL,
