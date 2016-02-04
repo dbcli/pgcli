@@ -222,7 +222,11 @@ class PGExecute(object):
                     cur = self.conn.cursor()
                     try:
                         for result in pgspecial.execute(cur, sql):
-                            yield result + (sql, True)
+                            # e.g. execute_from_file already appends these
+                            if len(result) < 6:
+                                yield result + (sql, True)
+                            else:
+                                yield result
                         continue
                     except special.CommandNotFound:
                         pass
