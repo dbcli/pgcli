@@ -1,5 +1,7 @@
 import traceback
 import logging
+import pprint
+import itertools
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
@@ -102,72 +104,32 @@ class PGExecute(object):
         ORDER BY 1 '''
 
     tables_query = '''
-        SELECT 	n.nspname schema_name,
+        SELECT  n.nspname schema_name,
                 c.relname table_name
-        FROM 	pg_catalog.pg_class c
+        FROM    pg_catalog.pg_class c
                 LEFT JOIN pg_catalog.pg_namespace n
                     ON n.oid = c.relnamespace
-        WHERE 	c.relkind = ANY(%s)
+        WHERE   c.relkind = ANY(%s)
         ORDER BY 1,2;'''
 
     columns_query = '''
-        SELECT 	nsp.nspname schema_name,
+        SELECT  nsp.nspname schema_name,
                 cls.relname table_name,
                 att.attname column_name
-        FROM 	pg_catalog.pg_attribute att
+        FROM    pg_catalog.pg_attribute att
                 INNER JOIN pg_catalog.pg_class cls
                     ON att.attrelid = cls.oid
                 INNER JOIN pg_catalog.pg_namespace nsp
                     ON cls.relnamespace = nsp.oid
-        WHERE 	cls.relkind = ANY(%s)
+        WHERE   cls.relkind = ANY(%s)
                 AND NOT att.attisdropped
                 AND att.attnum  > 0
         ORDER BY 1, 2, 3'''
 
-    functions_query = '''
-        SELECT 	n.nspname schema_name,
-                p.proname func_name,
-                pg_catalog.pg_get_function_arguments(p.oid) arg_list,
-                pg_catalog.pg_get_function_result(p.oid) return_type,
-                p.proisagg is_aggregate,
-                p.proiswindow is_window,
-                p.proretset is_set_returning
-        FROM 	pg_catalog.pg_proc p
-                INNER JOIN pg_catalog.pg_namespace n
-                    ON n.oid = p.pronamespace
-        ORDER BY 1, 2'''
-
-
-    databases_query = """SELECT d.datname as "Name",
-       pg_catalog.pg_get_userbyid(d.datdba) as "Owner",
-       pg_catalog.pg_encoding_to_char(d.encoding) as "Encoding",
-       d.datcollate as "Collate",
-       d.datctype as "Ctype",
-       pg_catalog.array_to_string(d.datacl, E'\n') AS "Access privileges"
-    FROM pg_catalog.pg_database d
-    ORDER BY 1;"""
-
-    datatypes_query = '''
-        SELECT n.nspname schema_name,
-               t.typname type_name
-        FROM   pg_catalog.pg_type t
-               INNER JOIN pg_catalog.pg_namespace n
-                  ON n.oid = t.typnamespace
-        WHERE ( t.typrelid = 0  -- non-composite types
-                OR (  -- composite type, but not a table
-                      SELECT c.relkind = 'c'
-                      FROM pg_catalog.pg_class c
-                      WHERE c.oid = t.typrelid
-                    )
-              )
-              AND NOT EXISTS( -- ignore array types
-                    SELECT  1
-                    FROM    pg_catalog.pg_type el
-                    WHERE   el.oid = t.typelem AND el.typarray = t.oid
-                  )
-              AND n.nspname <> 'pg_catalog'
-              AND n.nspname <> 'information_schema'
-        ORDER BY 1, 2;'''
+    databases_query = '''
+        SELECT d.datname
+        FROM pg_catalog.pg_database d
+        ORDER BY 1'''
 
     def __init__(self, database, user, password, host, port, dsn):
         self.dbname = database
@@ -328,10 +290,18 @@ class PGExecute(object):
     def search_path(self):
         """Returns the current search path as a list of schema names"""
 
-        with self.conn.cursor() as cur:
-            _logger.debug('Search path query. sql: %r', self.search_path_query)
-            cur.execute(self.search_path_query)
-            return [x[0] for x in cur.fetchall()]
+        try:
+            with self.conn.cursor() as cur:
+                _logger.debug('Search path query. sql: %r', self.search_path_query)
+                cur.execute(self.search_path_query)
+                return [x[0] for x in cur.fetchall()]
+        except psycopg2.ProgrammingError:
+            fallback = 'SELECT * FROM current_schemas(true)'
+            with self.conn.cursor() as cur:
+                _logger.debug('Search path query. sql: %r', fallback)
+                cur.execute(fallback)
+                return cur.fetchone()[0]
+
 
     def schemata(self):
         """Returns a list of schema names in the database"""
@@ -406,16 +376,94 @@ class PGExecute(object):
         """Yields FunctionMetadata named tuples"""
 
         with self.conn.cursor() as cur:
-            _logger.debug('Functions Query. sql: %r', self.functions_query)
-            cur.execute(self.functions_query)
-            for row in cur:
-                yield FunctionMetadata(*row)
+            if self.conn.server_version > 90000:
+                query = '''
+                    SELECT n.nspname schema_name,
+                            p.proname func_name,
+                            pg_catalog.pg_get_function_arguments(p.oid) arg_list,
+                            pg_catalog.pg_get_function_result(p.oid) return_type,
+                            p.proisagg is_aggregate,
+                            p.proiswindow is_window,
+                            p.proretset is_set_returning
+                    FROM pg_catalog.pg_proc p
+                            INNER JOIN pg_catalog.pg_namespace n
+                                ON n.oid = p.pronamespace
+                    ORDER BY 1, 2
+                    '''
+                _logger.debug('Functions Query. sql: %r', query)
+                cur.execute(query)
+                for row in cur:
+                    yield FunctionMetadata(*row)
+            else:
+                query = '''
+                    SELECT n.nspname schema_name,
+                            p.proname func_name,
+                            p.proargnames,
+                            oidvectortypes(p.proargtypes) proargtypes,
+                            t.typname return_type,
+                            p.proisagg is_aggregate,
+                            false is_window,
+                            p.proretset is_set_returning
+                    FROM pg_catalog.pg_proc p
+                    INNER JOIN pg_catalog.pg_namespace n
+                    ON n.oid = p.pronamespace
+                    INNER JOIN pg_catalog.pg_type t
+                    ON p.prorettype = t.oid
+                    ORDER BY 1, 2
+                    '''
+                _logger.debug('Functions Query. sql: %r', query)
+                cur.execute(query)
+                for row in cur:
+                    names = row[2] if row[2] is not None else []
+                    args = itertools.izip_longest(names, row[3].split(', '), '')
+                    _logger.debug(list(args))
+                    typed_args = [f[0] + ', ' + f[1] for f in args]
+                    arg_list = ', '.join(typed_args)
+                    _logger.debug(arg_list)
+                    yield FunctionMetadata(row[0], row[1], arg_list, row[4], row[5], row[6], row[7])
 
     def datatypes(self):
         """Yields tuples of (schema_name, type_name)"""
 
         with self.conn.cursor() as cur:
-            _logger.debug('Datatypes Query. sql: %r', self.datatypes_query)
-            cur.execute(self.datatypes_query)
+            if self.conn.server_version > 90000:
+                query = '''
+                    SELECT n.nspname schema_name,
+                           t.typname type_name
+                    FROM   pg_catalog.pg_type t
+                           INNER JOIN pg_catalog.pg_namespace n
+                              ON n.oid = t.typnamespace
+                    WHERE ( t.typrelid = 0  -- non-composite types
+                            OR (  -- composite type, but not a table
+                                  SELECT c.relkind = 'c'
+                                  FROM pg_catalog.pg_class c
+                                  WHERE c.oid = t.typrelid
+                                )
+                          )
+                          AND NOT EXISTS( -- ignore array types
+                                SELECT  1
+                                FROM    pg_catalog.pg_type el
+                                WHERE   el.oid = t.typelem AND el.typarray = t.oid
+                              )
+                          AND n.nspname <> 'pg_catalog'
+                          AND n.nspname <> 'information_schema'
+                    ORDER BY 1, 2;
+                    '''
+            else:
+                query = '''
+                    SELECT n.nspname schema_name,
+                      pg_catalog.format_type(t.oid, NULL) type_name
+                    FROM pg_catalog.pg_type t
+                         LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+                    WHERE (t.typrelid = 0 OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid))
+                      AND t.typname !~ '^_'
+                          AND n.nspname <> 'pg_catalog'
+                          AND n.nspname <> 'information_schema'
+                      AND pg_catalog.pg_type_is_visible(t.oid)
+                    ORDER BY 1, 2;
+                '''
+            _logger.debug('Datatypes Query. sql: %r', query)
+            cur.execute(query)
             for row in cur:
                 yield row
+
