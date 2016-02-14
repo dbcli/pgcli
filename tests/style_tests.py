@@ -24,18 +24,18 @@ class StyleFromDictTest(unittest.TestCase):
         style = style_from_dict({
             Token: '#ff0000',
             Token.A.B.C: 'bold',
-            Token.A.B.C.D: 'red',
+            Token.A.B.C.D: '#ansired',
             Token.A.B.C.D.E: 'noinherit blink'
         })
 
         expected = Attrs(color='ff0000', bgcolor=None, bold=True,
                          underline=False, italic=False, blink=False, reverse=False)
-        assert style.get_attrs_for_token(Token.A.B.C) == expected
+        self.assertEqual(style.get_attrs_for_token(Token.A.B.C), expected)
 
-        expected = Attrs(color='red', bgcolor=None, bold=True,
+        expected = Attrs(color='ansired', bgcolor=None, bold=True,
                          underline=False, italic=False, blink=False, reverse=False)
-        assert style.get_attrs_for_token(Token.A.B.C.D) == expected
+        self.assertEqual(style.get_attrs_for_token(Token.A.B.C.D), expected)
 
         expected = Attrs(color=None, bgcolor=None, bold=False,
                          underline=False, italic=False, blink=True, reverse=False)
-        assert style.get_attrs_for_token(Token.A.B.C.D.E) == expected
+        self.assertEqual(style.get_attrs_for_token(Token.A.B.C.D.E), expected)

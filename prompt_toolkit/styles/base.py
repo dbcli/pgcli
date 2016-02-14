@@ -18,8 +18,8 @@ __all__ = (
 #: Style attributes.
 Attrs = namedtuple('Attrs', 'color bgcolor bold underline italic blink reverse')
 """
-:param color: Hexadecimal string. E.g. '000000' or Ansi color name: e.g. 'magenta'
-:param bgcolor: Hexadecimal string. E.g. 'ffffff' or Ansi color name: e.g. 'magenta'
+:param color: Hexadecimal string. E.g. '000000' or Ansi color name: e.g. 'ansiblue'
+:param bgcolor: Hexadecimal string. E.g. 'ffffff' or Ansi color name: e.g. 'ansired'
 :param bold: Boolean
 :param underline: Boolean
 :param italic: Boolean
@@ -37,14 +37,14 @@ DEFAULT_ATTRS = Attrs(color=None, bgcolor=None, bold=False, underline=False,
 #: Usually, in that case, the terminal application allows to configure the RGB
 #: values for these names.
 ANSI_COLOR_NAMES = [
-    'black', 'white', 'default',
+    'ansiblack', 'ansiwhite', 'ansidefault',
 
     # Low intensity.
-    'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray',
+    'ansired', 'ansigreen', 'ansiyellow', 'ansiblue', 'ansifuchsia', 'ansiturquoise', 'ansilightgray',
 
     # High intensity. (Not supported everywhere.)
-    'dark-gray', 'bright-red', 'bright-green', 'bright-yellow', 'bright-blue',
-    'bright-magenta', 'bright-cyan',
+    'ansidarkgray', 'ansidarkred', 'ansidarkgreen', 'ansibrown', 'ansidarkblue',
+    'ansipurple', 'ansiteal',
 ]
 
 

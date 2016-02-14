@@ -26,11 +26,13 @@ def _colorformat(text):
     """
     if text[0:1] == '#':
         col = text[1:]
-        if len(col) == 6:
+        if col in ANSI_COLOR_NAMES:
+            return col
+        elif len(col) == 6:
             return col
         elif len(col) == 3:
             return col[0]*2 + col[1]*2 + col[2]*2
-    elif text == '' or text in ANSI_COLOR_NAMES:
+    elif text == '':
         return text
 
     raise ValueError('Wrong color format %r' % text)

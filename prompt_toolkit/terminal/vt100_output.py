@@ -24,78 +24,80 @@ __all__ = (
 
 
 FG_ANSI_COLORS = {
-    'black':   30,
-    'default': 39,
-    'white':   97,
+    'ansiblack':   30,
+    'ansidefault': 39,
+    'ansiwhite':   97,
 
     # Low intensity.
-    'red':     31,
-    'green':   32,
-    'yellow':  33,
-    'blue':    34,
-    'magenta': 35,
-    'cyan':    36,
-    'gray':    37,
+    'ansired':         31,
+    'ansigreen':       32,
+    'ansiyellow':      33,
+    'ansiblue':        34,
+    'ansifuchsia':     35,
+    'ansiturquoise':   36,
+    'ansilightgray':   37,
 
 
     # High intensity.
-    'dark-gray':      90,  # Bright black.
-    'bright-red':     91,
-    'bright-green':   92,
-    'bright-yellow':  93,
-    'bright-blue':    94,
-    'bright-magenta': 95,
-    'bright-cyan':    96,
+    'ansidarkgray':    90,  # Bright black.
+    'ansidarkred':     91,
+    'ansidarkgreen':   92,
+    'ansibrown':       93,
+    'ansidarkblue':    94,
+    'ansipurple':      95,
+    'ansiteal':        96,
 }
 
 BG_ANSI_COLORS = {
-    'black':   40,
-    'default': 49,
-    'white':   107,
+    'ansiblack':       40,
+    'ansidefault':     49,
+    'ansiwhite':       107,
 
     # Low intensity.
-    'red':     41,
-    'green':   42,
-    'yellow':  43,
-    'blue':    44,
-    'magenta': 45,
-    'cyan':    46,
-    'gray':    47,
+    'ansired':         41,
+    'ansigreen':       42,
+    'ansiyellow':      43,
+    'ansiblue':        44,
+    'ansifuchsia':     45,
+    'ansiturquoise':   46,
+    'ansilightgray':   47,
 
     # High intensity.
-    'dark-gray':      100,  # bright black.
-    'bright-red':     101,
-    'bright-green':   102,
-    'bright-yellow':  103,
-    'bright-blue':    104,
-    'bright-magenta': 105,
-    'bright-cyan':    106,
+    'ansidarkgray':    100,  # bright black.
+    'ansidarkred':     101,
+    'ansidarkgreen':   102,
+    'ansibrown':       103,
+    'ansidarkblue':    104,
+    'ansipurple':      105,
+    'ansiteal':        106,
 }
+
 
 ANSI_COLORS_TO_RGB = {
-    'black':   (0x00, 0x00, 0x00),
-    'default': (0x00, 0x00, 0x00),  # Don't use, 'default' doesn't really have a value.
-    'white':   (0xff, 0xff, 0xff),
+    'ansiblack':   (0x00, 0x00, 0x00),
+    'ansidefault': (0x00, 0x00, 0x00),  # Don't use, 'default' doesn't really have a value.
+    'ansiwhite':   (0xff, 0xff, 0xff),
 
     # Low intensity.
-    'red':     (0xcd, 0x00, 0x00),
-    'green':   (0x00, 0xcd, 0x00),
-    'yellow':  (0xcd, 0xcd, 0x00),
-    'blue':    (0x00, 0x00, 0xcd),
-    'magenta': (0xcd, 0x00, 0xcd),
-    'cyan':    (0x00, 0xcd, 0xcd),
-    'gray':    (0xe5, 0xe5, 0xe5),
+    'ansired':         (0xcd, 0x00, 0x00),
+    'ansigreen':       (0x00, 0xcd, 0x00),
+    'ansiyellow':      (0xcd, 0xcd, 0x00),
+    'ansiblue':        (0x00, 0x00, 0xcd),
+    'ansifuchsia':     (0xcd, 0x00, 0xcd),
+    'ansiturquoise':   (0x00, 0xcd, 0xcd),
+    'ansilightgray':   (0xe5, 0xe5, 0xe5),
 
 
     # High intensity.
-    'dark-gray':      (0x7f, 0x7f, 0x7f),  # Bright black.
-    'bright-red':     (0xff, 0x00, 0x00),
-    'bright-green':   (0x00, 0xff, 0x00),
-    'bright-yellow':  (0xff, 0xff, 0x00),
-    'bright-blue':    (0x00, 0x00, 0xff),
-    'bright-magenta': (0xff, 0x00, 0xff),
-    'bright-cyan':    (0x00, 0xff, 0xff),
+    'ansidarkgray':    (0x7f, 0x7f, 0x7f),  # Bright black.
+    'ansidarkred':     (0xff, 0x00, 0x00),
+    'ansidarkgreen':   (0x00, 0xff, 0x00),
+    'ansibrown':       (0xff, 0xff, 0x00),
+    'ansidarkblue':    (0x00, 0x00, 0xff),
+    'ansipurple':      (0xff, 0x00, 0xff),
+    'ansiteal':        (0x00, 0xff, 0xff),
 }
+
 
 assert set(FG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
 assert set(BG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
@@ -219,7 +221,6 @@ class _EscapeCodeCache(dict):
 
     def __missing__(self, attrs):
         fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
-
         parts = []
 
         if fgcolor:
@@ -268,7 +269,7 @@ class _EscapeCodeCache(dict):
         # RGB colors. (Defined as 'ffffff'.)
         else:
             try:
-               rgb = self._color_name_to_rgb(color)
+                rgb = self._color_name_to_rgb(color)
             except ValueError:
                 return ()
 
