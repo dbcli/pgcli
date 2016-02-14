@@ -8,8 +8,101 @@ applications. Typically, an application consists of a layout (to describe the
 graphical part) and a set of key bindings.
 
 The sections below describe the components required for full screen
-applications (or custom, non full screen applications), and how to assemble them
-together.
+applications (or custom, non full screen applications), and how to assemble
+them together.
+
+
+Running the application
+-----------------------
+
+To run our final Full screen Application, we first need three I/O objects.
+And an :class:`~prompt_toolkit.application.Application` instance.
+These are passed as arguments to :class:`~prompt_toolkit.interface.CommandLineInterface`.
+
+For the I/O objects::
+
+    - An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is
+      basically a while-true loop that waits for user input, and when it receives
+      something (like a key press), it will send that to the application.
+    - An :class:`~prompt_toolkit.input.Input` instance. This is an abstraction on
+      the input stream (stdin).
+    - An :class:`~prompt_toolkit.output.Output` instance. This is an abstraction on
+      the output stream, and is called by the renderer.
+
+However, all three of the I/O objects are optional, and prompt_toolkit uses the
+obvious default.
+
+We'll come back at what the :class:`~prompt_toolkit.application.Application` instance is later.
+
+
+So, the only thing we actually need in order to run an application is this:
+
+.. code:: python
+
+    from prompt_toolkit.interface import CommandLineInterface
+    from prompt_toolkit.application import Application
+
+    application = Application()
+    cli = CommandLineInterface(application=application)
+    # cli.run()
+    print('Exiting')
+
+
+.. I'm not sure of the following as sometime `Enter` will make the Application exit,
+.. but better safe that locking the users that follow the tutorial.
+
+We wont run the application yet as otherwise it will hang indefinitely waiting
+for a signal to exit the event loop. This is why the `cli.run()` part is commented.
+
+Let's now bind a keyboard shortcut to exit.
+
+Key bindings
+------------
+
+In order to react to user action, you need to create a registry of keyboard
+shortcut to pass to the :class:`~prompt_toolkit.application.Application` when
+it is constructed. The easiest way to do so is to create a
+:class:`~prompt_toolkit.key_binding.manager.KeyBindingManager`, and then attach
+callback to desired shortcut. :class:`~prompt_toolkit.keys.Keys` contains a few
+predefined keyboards shortcut that can be useful.
+
+To create a `registry` simply instantiate
+:class:`~prompt_toolkit.key_binding.manager.KeyBindingManager` and get it's
+`registry` attribute:
+
+.. code:: python
+
+    from prompt_toolkit.key_binding.manager import KeyBindingManager
+    registry = KeyBindingManager().registry
+
+Update the `Application` constructor, and pass the registry as one of the argument.
+
+.. code:: python
+
+    application = Application(buffer=buffer, key_bindings_registry=registry)
+
+To register a new keyboard shortcut use the
+:meth:`prompt_toolkit.key_binding.registry.Registry.add_binding` methods as a
+decorator of a callback:
+
+.. code:: python
+
+    from prompt_toolkit.keys import Keys
+
+    @registry.add_binding(Keys.ControlQ, eager=True)
+    def exit_(event):
+        """
+        Pressing Ctrl-Q will exit the user interface.
+
+        Setting a return value means: quit the event loop that drives the user
+        interface and return this value from the `CommandLineInterface.run()` call.
+        """
+        event.cli.set_return_value(None)
+
+In this particular example we use `eager=True` to trigger the callback as soon
+as the shortcut `Ctrl-Q` is pressed. The callback is named `exit_` to be
+explicit, but the name have not much importance.
+
 
 
 Creating a layout
@@ -202,8 +295,6 @@ The :class:`~prompt_toolkit.layout.containers.Window` class exposes many
 interesting functionality that influences the behaviour of user controls.
 
 
-Key bindings
-------------
 
 
 Buffers
@@ -244,35 +335,6 @@ components for a prompt_toolkit application come together.
 
 We are talking about full screen applications, so it's important to pass
 ``use_alternate_screen=True``. This switches the terminal buffer.
-
-
-Running the application
------------------------
-
-We need three I/O objects to run an application. These are passed as arguments
-to :class:`~prompt_toolkit.interface.CommandLineInterface`.
-
-- An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance.
-  This is basically a while-true loop that waits for user input, and when it
-  receives something (like a key press), it will send that to the application.
-
-- An :class:`~prompt_toolkit.input.Input` instance.
-  This is an abstraction on the input stream (stdin).
-
-- An :class:`~prompt_toolkit.output.Output` instance. This is an abstraction of
-  the output stream, and is called by the renderer.
-
-However, all three of the I/O objects are optional, and `prompt_toolkit` uses the
-obvious default.
-
-So, the only thing we actually need in order to run an application is this:
-
-.. code:: python
-
-    from prompt_toolkit.interface import CommandLineInterface
-
-    cli = CommandLineInterface(application=application)
-    cli.run()
 
 
 .. _filters:
