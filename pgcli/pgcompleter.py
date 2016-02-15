@@ -212,7 +212,7 @@ class PGCompleter(Completer):
         else:
             fuzzy = False
             priority_func = self.prioritizer.keyword_count
-            
+
         # Construct a `_match` function for either fuzzy or non-fuzzy matching
         # The match function returns a 2-tuple used for sorting the matches,
         # or None if the item doesn't match
@@ -236,6 +236,14 @@ class PGCompleter(Completer):
                     # fuzzy matches
                     return -float('Infinity'), -match_point
 
+        # Lexical order of items in the collection, used for tiebreaking items
+        # with the same match group length and start position. In Python,
+        # 'user' < 'users', i.e. the "lower" value comes first. Since we use
+        # *higher* priority to mean "more important," we need to flip Python's
+        # usual position ranking, hence -position.
+        lexical_order = dict([(name, -position) for position, name in
+                              enumerate(sorted(collection))])
+
         if meta_collection:
             # Each possible completion in the collection has a corresponding
             # meta-display string
@@ -253,9 +261,11 @@ class PGCompleter(Completer):
                     # Truncate meta-text to 50 characters, if necessary
                     meta = meta[:47] + u'...'
 
+                priority = sort_key, priority_func(item), lexical_order[item]
+
                 matches.append(Match(
                     completion=Completion(item, -text_len, display_meta=meta),
-                    priority=(sort_key, priority_func(item))))
+                    priority=priority))
 
         return matches
 
