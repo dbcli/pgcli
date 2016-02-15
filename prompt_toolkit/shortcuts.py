@@ -161,9 +161,19 @@ def _split_multiline_prompt(get_prompt_tokens):
     return before, first_input_line
 
 
+class _RPrompt(Window):
+    " The prompt that is displayed on the right side of the Window. "
+    def __init__(self, get_tokens=None):
+        get_tokens = get_tokens or (lambda cli: [])
+
+        super(_RPrompt, self).__init__(
+            TokenListControl(get_tokens, align_right=True))
+
+
 def create_prompt_layout(message='', lexer=None, is_password=False,
                          reserve_space_for_menu=8,
                          get_prompt_tokens=None, get_continuation_tokens=None,
+                         get_rprompt_tokens=None,
                          get_bottom_toolbar_tokens=None,
                          display_completions_in_columns=False,
                          extra_input_processors=None, multiline=False,
@@ -200,6 +210,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
     assert isinstance(message, text_type), 'Please provide a unicode string.'
     assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
     assert get_prompt_tokens is None or callable(get_prompt_tokens)
+    assert get_rprompt_tokens is None or callable(get_rprompt_tokens)
     assert not (message and get_prompt_tokens)
 
     display_completions_in_columns = to_cli_filter(display_completions_in_columns)
@@ -291,6 +302,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
                 wrap_lines=wrap_lines,
             ),
             [
+                # Completion menus.
                 Float(xcursor=True,
                       ycursor=True,
                       content=CompletionsMenu(
@@ -303,7 +315,11 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
                       content=MultiColumnCompletionsMenu(
                           extra_filter=HasFocus(DEFAULT_BUFFER) &
                                        display_completions_in_columns,
-                          show_meta=True))
+                          show_meta=True)),
+
+                # The right prompt.
+                Float(right=0, top=0, hide_when_covering_content=True,
+                      content=_RPrompt(get_rprompt_tokens)),
             ]
         ),
         ValidationToolbar(),
@@ -335,6 +351,7 @@ def create_prompt_application(
         clipboard=None,
         get_prompt_tokens=None,
         get_continuation_tokens=None,
+        get_rprompt_tokens=None,
         get_bottom_toolbar_tokens=None,
         display_completions_in_columns=False,
         get_title=None,
@@ -432,6 +449,7 @@ def create_prompt_application(
             multiline=Condition(lambda cli: multiline()),
             get_prompt_tokens=get_prompt_tokens,
             get_continuation_tokens=get_continuation_tokens,
+            get_rprompt_tokens=get_rprompt_tokens,
             get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
             display_completions_in_columns=display_completions_in_columns,
             extra_input_processors=extra_input_processors,

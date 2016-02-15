@@ -188,6 +188,7 @@ class TokenListControl(UIControl):
     """
     def __init__(self, get_tokens, default_char=None, get_default_char=None,
                  align_right=False, align_center=False, has_focus=False):
+        assert callable(get_tokens)
         assert default_char is None or isinstance(default_char, Char)
         assert get_default_char is None or callable(get_default_char)
         assert not (default_char and get_default_char)
