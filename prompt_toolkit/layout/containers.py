@@ -506,7 +506,28 @@ class FloatContainer(Container):
                 wp = WritePosition(xpos=xpos + write_position.xpos,
                                    ypos=ypos + write_position.ypos,
                                    width=width, height=height)
-                fl.content.write_to_screen(cli, screen, mouse_handlers, wp)
+
+                if not fl.hide_when_covering_content or self._area_is_empty(screen, wp):
+                    fl.content.write_to_screen(cli, screen, mouse_handlers, wp)
+
+    def _area_is_empty(self, screen, write_position):
+        """
+        Return True when the area below the write position is still empty.
+        (For floats that should not hide content underneath.)
+        """
+        wp = write_position
+        Transparent = Token.Transparent
+
+        for y in range(wp.ypos, wp.ypos + wp.height):
+            if y in screen.data_buffer:
+                row = screen.data_buffer[y]
+
+                for x in range(wp.xpos, wp.xpos + wp.width):
+                    c = row[x]
+                    if c.char != ' ' or c.token != Transparent:
+                        return False
+
+        return True
 
     def walk(self, cli):
         """ Walk through children. """
@@ -525,10 +546,12 @@ class Float(object):
     Float for use in a :class:`.FloatContainer`.
 
     :param content: :class:`.Container` instance.
+    :param hide_when_covering_content: Hide the float when it covers content underneath.
     """
     def __init__(self, top=None, right=None, bottom=None, left=None,
                  width=None, height=None, get_width=None, get_height=None,
-                 xcursor=False, ycursor=False, content=None):
+                 xcursor=False, ycursor=False, content=None,
+                 hide_when_covering_content=False):
         assert isinstance(content, Container)
         assert width is None or get_width is None
         assert height is None or get_height is None
@@ -548,6 +571,7 @@ class Float(object):
         self.ycursor = ycursor
 
         self.content = content
+        self.hide_when_covering_content = hide_when_covering_content
 
     def get_width(self, cli):
         if self._width:
