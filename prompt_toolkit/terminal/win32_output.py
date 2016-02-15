@@ -7,6 +7,7 @@ from prompt_toolkit.renderer import Output
 from prompt_toolkit.styles import ANSI_COLOR_NAMES
 from prompt_toolkit.win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, STD_INPUT_HANDLE, COORD, SMALL_RECT
 
+import os
 import six
 
 __all__ = (
@@ -37,6 +38,26 @@ def _coord_byval(coord):
 #: than required.)
 _DEBUG_RENDER_OUTPUT = False
 _DEBUG_RENDER_OUTPUT_FILENAME = r'prompt-toolkit-windows-output.log'
+
+
+class NoConsoleScreenBufferError(Exception):
+    """
+    Raised when the application is not running inside a Windows Console, but
+    the user tries to instantiate Win32Output.
+    """
+    def __init__(self):
+        # Are we running in 'xterm' on Windows, like git-bash for instance?
+        xterm = 'xterm' in os.environ.get('TERM')
+
+        if xterm:
+            message = ('Found %s, while expecting a Windows console. '
+                       'Maybe try to run this program using "winpty" '
+                       'or run it in cmd.exe instead. Or otherwise, '
+                       'in case of Cygwin, use the Python executable '
+                       'that is compiled for Cygwin.' % os.environ['TERM'])
+        else:
+            message = 'No Windows console found. Are you running cmd.exe?'
+        super(NoConsoleScreenBufferError, self).__init__(message)
 
 
 class Win32Output(Output):
@@ -117,6 +138,8 @@ class Win32Output(Output):
                                self.hconsole, byref(sbinfo))
         if success:
             return sbinfo
+        else:
+            raise NoConsoleScreenBufferError
 
     def set_title(self, title):
         """
