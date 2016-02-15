@@ -20,7 +20,7 @@ from prompt_toolkit.contrib.regular_languages.compiler import compile
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
 from prompt_toolkit.layout.lexers import SimpleLexer
-from prompt_toolkit.styles import PygmentsStyle
+from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.token import Token
 
 import math
@@ -37,7 +37,7 @@ def create_grammar():
     """)
 
 
-example_style = PygmentsStyle.from_defaults({
+example_style = style_from_dict({
     Token.Operator:       '#33aa33 bold',
     Token.Number:         '#aa3333 bold',
 

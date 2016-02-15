@@ -41,7 +41,7 @@ from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
 from .layout.utils import explode_tokens
 from .renderer import print_tokens as renderer_print_tokens
-from .styles import DEFAULT_STYLE, PygmentsStyle, Style
+from .styles import DEFAULT_STYLE, Style, style_from_dict
 from .token import Token
 from .utils import is_conemu_ansi, is_windows, DummyContext
 
@@ -435,7 +435,7 @@ def create_prompt_application(
     # Accept Pygments styles as well for backwards compatibility.
     try:
         if pygments_Style and issubclass(style, pygments_Style):
-            style = PygmentsStyle(style)
+            style = style_from_dict(style.styles)
     except TypeError:  # Happens when style is `None` or an instance of something else.
         pass
 
@@ -556,7 +556,7 @@ def print_tokens(tokens, style=None, true_color=False):
     Print a list of (Token, text) tuples in the given style to the output.
     E.g.::
 
-        style = PygmentsStyle.from_defaults(style_dict={
+        style = style_from_dict({
             Token.Hello: '#ff0066',
             Token.World: '#884444 italic',
         })

@@ -4,11 +4,11 @@ Simple example showing a bottom toolbar.
 """
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
-from prompt_toolkit.styles import PygmentsStyle
+from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.token import Token
 
 
-test_style = PygmentsStyle.from_defaults({
+test_style = style_from_dict({
     Token.Toolbar: '#ffffff bg:#333333',
 })
 
