@@ -49,3 +49,28 @@ def test_ranking_based_on_shortest_match(completer):
     matches = completer.find_matches(text, collection)
 
     assert matches[1].priority > matches[0].priority
+
+
+@pytest.mark.parametrize('collection', [
+    ['user_action', 'user'],
+    ['user_group', 'user'],
+    ['user_group', 'user_action'],
+])
+def test_should_break_ties_using_lexical_order(completer, collection):
+    """Fuzzy result rank should use lexical order to break ties.
+
+    When fuzzy matching, if multiple matches have the same match length and
+    start position, present them in lexical (rather than arbitrary) order. For
+    example, if we have tables 'user', 'user_action', and 'user_group', a
+    search for the text 'user' should present these tables in this order.
+
+    The input collections to this test are out of order; each run checks that
+    the search text 'user' results in the input tables being reordered
+    lexically.
+
+    """
+
+    text = 'user'
+    matches = completer.find_matches(text, collection)
+
+    assert matches[1].priority > matches[0].priority
