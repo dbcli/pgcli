@@ -4,6 +4,7 @@ from ..keys import Key
 from ..utils import Callback
 
 from six import text_type
+from six.moves import range
 from collections import defaultdict
 
 __all__ = (

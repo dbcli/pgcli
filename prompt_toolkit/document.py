@@ -7,6 +7,7 @@ import re
 import six
 import string
 import weakref
+from six.moves import range
 
 from .selection import SelectionType, SelectionState
 from .clipboard import ClipboardData

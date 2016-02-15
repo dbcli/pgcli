@@ -5,6 +5,7 @@ import sys
 import threading
 
 from wcwidth import wcwidth
+from six.moves import range
 
 
 __all__ = (

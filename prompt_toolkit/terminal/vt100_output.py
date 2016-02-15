@@ -13,6 +13,7 @@ from prompt_toolkit.layout.screen import Size
 from prompt_toolkit.renderer import Output
 from prompt_toolkit.styles import ANSI_COLOR_NAMES
 
+from six.moves import range
 import array
 import errno
 import six

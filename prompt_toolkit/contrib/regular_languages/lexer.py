@@ -9,6 +9,7 @@ from prompt_toolkit.layout.utils import split_lines
 from prompt_toolkit.token import Token
 
 from .compiler import _CompiledGrammar
+from six.moves import range
 
 __all__ = (
     'GrammarLexer',

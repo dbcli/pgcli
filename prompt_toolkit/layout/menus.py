@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from six.moves import zip_longest
+from six.moves import zip_longest, range
 from prompt_toolkit.filters import HasCompletions, IsDone, Condition, to_cli_filter
 from prompt_toolkit.mouse_events import MouseEventTypes
 from prompt_toolkit.token import Token
