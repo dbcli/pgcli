@@ -535,37 +535,29 @@ def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
         get_search_state(event.cli).direction = IncrementalSearchDirection.FORWARD
         event.cli.push_focus(SEARCH_BUFFER)
 
-    @handle(Keys.ControlR, filter=has_focus)
-    @handle(Keys.Up, filter=has_focus)
-    def _(event):
+    def incremental_search(cli, direction, count=1):
         # Update search_state.
-        search_state = get_search_state(event.cli)
-        direction_changed = search_state.direction != IncrementalSearchDirection.BACKWARD
+        search_state = get_search_state(cli)
+        direction_changed = search_state.direction != direction
 
-        search_state.text = event.cli.buffers[SEARCH_BUFFER].text
-        search_state.direction = IncrementalSearchDirection.BACKWARD
+        search_state.text = cli.buffers[SEARCH_BUFFER].text
+        search_state.direction = direction
 
         # Apply search to current buffer.
         if not direction_changed:
-            input_buffer = event.cli.buffers.previous(event.cli)
+            input_buffer = cli.buffers.previous(cli)
             input_buffer.apply_search(search_state,
-                                      include_current_position=False, count=event.arg)
+                                      include_current_position=False, count=count)
+
+    @handle(Keys.ControlR, filter=has_focus)
+    @handle(Keys.Up, filter=has_focus)
+    def _(event):
+        incremental_search(event.cli, IncrementalSearchDirection.BACKWARD, count=event.arg)
 
     @handle(Keys.ControlS, filter=has_focus)
     @handle(Keys.Down, filter=has_focus)
     def _(event):
-        # Update search_state.
-        search_state = get_search_state(event.cli)
-        direction_changed = search_state.direction != IncrementalSearchDirection.FORWARD
-
-        search_state.text = event.cli.buffers[SEARCH_BUFFER].text
-        search_state.direction = IncrementalSearchDirection.FORWARD
-
-        # Apply search to current buffer.
-        if not direction_changed:
-            input_buffer = event.cli.buffers.previous(event.cli)
-            input_buffer.apply_search(search_state,
-                                      include_current_position=False, count=event.arg)
+        incremental_search(event.cli, IncrementalSearchDirection.FORWARD, count=event.arg)
 
 
 def load_extra_emacs_page_navigation_bindings(registry, filter=None):
