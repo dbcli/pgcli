@@ -354,6 +354,14 @@ class CommandLineInterface(object):
         finally:
             # Clean up renderer. (This will leave the alternate screen, if we use
             # that.)
+
+            # If exit/abort haven't been called set, but another exception was
+            # thrown instead for some reason, make sure that we redraw in exit
+            # mode.
+            if not self.is_done:
+                self._exit_flag = True
+                self._redraw()
+
             self.renderer.reset()
             self.application.on_stop.fire(self)
             self._is_running = False
@@ -393,6 +401,10 @@ class CommandLineInterface(object):
 
                 return self.return_value()
             finally:
+                if not self.is_done:
+                    self._exit_flag = True
+                    self._redraw()
+
                 self.renderer.reset()
                 self.application.on_stop.fire(self)
                 self._is_running = False
