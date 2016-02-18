@@ -6,6 +6,8 @@ This is very similar to the Pygments style dictionary, with some additions:
 - Support for ANSI color names. (These will map directly to the 16 terminal
   colors.)
 """
+from collections import Mapping
+
 from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES
 from .defaults import DEFAULT_STYLE_EXTENSIONS
 from six.moves import range
@@ -36,7 +38,7 @@ def _colorformat(text):
 
 def style_from_dict(style_dict, include_defaults=True):
     """
-    Create a ``Style`` instance from a dictionary.
+    Create a ``Style`` instance from a dictionary or other mapping.
 
     The dictionary is equivalent to the ``Style.styles`` dictionary from
     pygments, with a few additions: it supports 'reverse' and 'blink'.
@@ -52,7 +54,7 @@ def style_from_dict(style_dict, include_defaults=True):
     :param include_defaults: Include the defaults (built-in) styling for
         selected text, etc...)
     """
-    assert isinstance(style_dict, dict)
+    assert isinstance(style_dict, Mapping)
 
     if include_defaults:
         s2 = {}
