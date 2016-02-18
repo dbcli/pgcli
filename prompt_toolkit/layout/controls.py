@@ -30,6 +30,7 @@ __all__ = (
     'FillControl',
     'TokenListControl',
     'UIControl',
+    'UIContent',
 )
 
 

@@ -95,9 +95,11 @@ class HighlightSearchProcessor(Processor):
         the search text in real time while the user is typing, instead of the
         last active search state.
     """
-    def __init__(self, preview_search=False, search_buffer_name=SEARCH_BUFFER):
+    def __init__(self, preview_search=False, search_buffer_name=SEARCH_BUFFER,
+                 get_search_state=None):
         self.preview_search = to_cli_filter(preview_search)
         self.search_buffer_name = search_buffer_name
+        self.get_search_state = get_search_state or (lambda cli: cli.search_state)
 
     def _get_search_text(self, cli):
         """
@@ -108,7 +110,7 @@ class HighlightSearchProcessor(Processor):
             return cli.buffers[self.search_buffer_name].text
         # Otherwise, take the text of the last active search.
         else:
-            return cli.search_state.text
+            return self.get_search_state(cli).text
 
     def apply_transformation(self, cli, document, lineno, source_to_display, tokens):
         search_text = self._get_search_text(cli)
@@ -151,6 +153,9 @@ class HighlightSelectionProcessor(Processor):
 
         if selection_at_line:
             from_, to = selection_at_line
+            from_ = source_to_display(from_)
+            to = source_to_display(to)
+
             tokens = explode_tokens(tokens)
 
             for i in range(from_, to + 1):
