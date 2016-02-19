@@ -1045,6 +1045,11 @@ class Window(Container):
             y = mouse_event.position.y
             x = mouse_event.position.x
 
+            # If clicked below the content area, look for a position in the
+            # last line instead.
+            max_y = write_position.ypos + len(visible_line_to_row_col) - 1
+            y = min(max_y, y)
+
             while x >= 0:
                 try:
                     row, col = yx_to_rowcol[y, x]
