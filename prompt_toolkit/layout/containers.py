@@ -1122,6 +1122,7 @@ class Window(Container):
         ypos = write_position.ypos
         line_count = ui_content.line_count
         new_buffer = new_screen.data_buffer
+        empty_char = _CHAR_CACHE['', Token]
 
         # Result dict.
 
@@ -1174,8 +1175,16 @@ class Window(Container):
                         if x >= 0 and y >= 0 and x < write_position.width:
                             new_buffer_row[x + xpos] = char
 
+                            # When we print a double width character, make sure
+                            # to erase the neighbour position in the screen.
+                            # (The empty string if different from everything,
+                            # so next redraw this cell will repaint anyway.)
+                            if char.width > 1:
+                                new_buffer_row[x + xpos + 1] = empty_char
+
                             # Keep track of write position for each character.
                             rowcol_to_yx[lineno, col] = (y + ypos, x + xpos)
+
                         col += 1
                         x += char.width
 
