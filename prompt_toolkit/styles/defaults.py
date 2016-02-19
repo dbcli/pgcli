@@ -15,8 +15,8 @@ __all__ = (
 #: Pygments style.
 DEFAULT_STYLE_EXTENSIONS = {
     # Highlighting of search matches in document.
-    Token.SearchMatch:                            '#000000 bg:#888888',
-    Token.SearchMatch.Current:                    '#ffffff bg:#aa8888 underline',
+    Token.SearchMatch:                            'noinherit reverse',
+    Token.SearchMatch.Current:                    'noinherit #ffffff bg:#44aa44 underline',
 
     # Highlighting of select text in document.
     Token.SelectedText:                           '#ffffff bg:#666666',
@@ -30,10 +30,10 @@ DEFAULT_STYLE_EXTENSIONS = {
     Token.Tilde:                                  '#8888ff',
 
     # Default prompt.
-    Token.Prompt:                                 'bold',
+    Token.Prompt:                                 '',
     Token.Prompt.Arg:                             'noinherit',
     Token.Prompt.Search:                          'noinherit',
-    Token.Prompt.Search.Text:                     'bold',
+    Token.Prompt.Search.Text:                     '',
 
     # Search toolbar.
     Token.Toolbar.Search:                         'bold',
