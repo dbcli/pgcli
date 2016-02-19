@@ -1460,6 +1460,9 @@ class ConditionalContainer(Container):
         self.content = content
         self.filter = to_cli_filter(filter)
 
+    def __repr__(self):
+        return 'ConditionalContainer(%r, filter=%r)' % (self.content, self.filter)
+
     def reset(self):
         self.content.reset()
 
