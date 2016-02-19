@@ -1220,7 +1220,8 @@ class Window(Container):
             new_screen.menu_position = cursor_pos_to_screen_pos(
                     ui_content.menu_position.y, ui_content.menu_position.x)
 
-        new_screen.height = max(new_screen.height, ypos + y)
+        # Update output screne height.
+        new_screen.height = max(new_screen.height, ypos + write_position.height)
 
         return visible_line_to_row_col, rowcol_to_yx
 
