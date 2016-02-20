@@ -339,14 +339,17 @@ class AppendAutoSuggestion(Processor):
 
     def apply_transformation(self, cli, document, lineno, source_to_display, tokens):
         # Insert tokens after the last line.
-        buffer = self._get_buffer(cli)
+        if lineno == document.line_count - 1:
+            buffer = self._get_buffer(cli)
 
-        if buffer.suggestion and buffer.document.is_cursor_at_the_end:
-            suggestion = buffer.suggestion.text
+            if buffer.suggestion and buffer.document.is_cursor_at_the_end:
+                suggestion = buffer.suggestion.text
+            else:
+                suggestion = ''
+
+            return Transformation(tokens=tokens + [(self.token, suggestion)])
         else:
-            suggestion = ''
-
-        return Transformation(tokens=tokens + [(self.token, suggestion)])
+            return Transformation(tokens=tokens)
 
 
 class ShowLeadingWhiteSpaceProcessor(Processor):
