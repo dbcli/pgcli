@@ -46,8 +46,6 @@ class AcceptAction(object):
         :class:`~prompt_toolkit.interface.CommandLineInterface` and
         :class:`~prompt_toolkit.document.Document`. It is called when the user
         accepts input.
-    :param render_cli_done: When using a handler, first render the CLI in the
-        'done' state, then call the handler. This
     """
     def __init__(self, handler=None):
         assert handler is None or callable(handler)
