@@ -239,6 +239,7 @@ class HighlightMatchingBracketProcessor(Processor):
         if positions:
             for row, col in positions:
                 if row == lineno:
+                    col = source_to_display(col)
                     tokens = explode_tokens(tokens)
                     tokens[col] = (Token.MatchingBracket, tokens[col][1])
 
