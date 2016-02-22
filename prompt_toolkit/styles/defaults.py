@@ -72,6 +72,10 @@ DEFAULT_STYLE_EXTENSIONS = {
     # Auto suggestion text.
     Token.AutoSuggestion:                         '#666666',
 
+    # Trailing whitespace and tabs.
+    Token.TrailingWhiteSpace:                     '#999999',
+    Token.Tab:                                    '#999999',
+
     # When Control-C has been pressed. Grayed.
     Token.Aborted:                                '#888888',
 }
