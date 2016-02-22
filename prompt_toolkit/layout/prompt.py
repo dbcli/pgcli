@@ -79,15 +79,6 @@ class DefaultPrompt(Processor):
         # buffer that's focussed.
         return cli.is_searching
 
-    def invalidation_hash(self, cli, document):
-        return (
-            cli.input_processor.arg,
-            cli.is_searching,
-            cli.is_searching and cli.search_state.direction,
-            cli.buffers[SEARCH_BUFFER].text,
-            tuple(self.get_tokens(cli)),
-        )
-
 
 def _get_isearch_tokens(cli):
     def before():
