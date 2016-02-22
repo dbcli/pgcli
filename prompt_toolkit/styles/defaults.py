@@ -16,7 +16,7 @@ __all__ = (
 DEFAULT_STYLE_EXTENSIONS = {
     # Highlighting of search matches in document.
     Token.SearchMatch:                            'noinherit reverse',
-    Token.SearchMatch.Current:                    'noinherit #ffffff bg:#44aa44 underline',
+    Token.SearchMatch.Current:                    'noinherit #ffffff bg:#448844 underline',
 
     # Highlighting of select text in document.
     Token.SelectedText:                           '#ffffff bg:#666666',
