@@ -1330,6 +1330,29 @@ def load_vi_search_bindings(registry, get_vi_state, get_search_state=None,
         get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
         event.cli.pop_focus()
 
+    def incremental_search(cli, direction, count=1):
+        " Apply search, but keep search buffer focussed. "
+        # Update search_state.
+        search_state = get_search_state(cli)
+        direction_changed = search_state.direction != direction
+
+        search_state.text = cli.buffers[search_buffer_name].text
+        search_state.direction = direction
+
+        # Apply search to current buffer.
+        if not direction_changed:
+            input_buffer = cli.buffers.previous(cli)
+            input_buffer.apply_search(search_state,
+                                      include_current_position=False, count=count)
+
+    @handle(Keys.ControlR, filter=has_focus)
+    def _(event):
+        incremental_search(event.cli, IncrementalSearchDirection.BACKWARD, count=event.arg)
+
+    @handle(Keys.ControlS, filter=has_focus)
+    def _(event):
+        incremental_search(event.cli, IncrementalSearchDirection.FORWARD, count=event.arg)
+
     def search_buffer_is_empty(cli):
         """ Returns True when the search buffer is empty. """
         return cli.buffers[search_buffer_name].text == ''

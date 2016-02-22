@@ -59,6 +59,11 @@ class DefaultPrompt(Processor):
         # Insert before buffer text.
         shift_position = token_list_len(before)
 
+        # Only show the prompt before the first line. For the following lines,
+        # only indent using spaces.
+        if lineno != 0:
+            before = [(Token.Prompt, ' ' * shift_position)]
+
         return Transformation(
                 tokens=before + tokens,
                 source_to_display=lambda i: i + shift_position,
