@@ -536,6 +536,7 @@ def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
         event.cli.push_focus(SEARCH_BUFFER)
 
     def incremental_search(cli, direction, count=1):
+        " Apply search, but keep search buffer focussed. "
         # Update search_state.
         search_state = get_search_state(cli)
         direction_changed = search_state.direction != direction
