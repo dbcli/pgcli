@@ -10,6 +10,70 @@ About the version numbering:
     to a <breaking>.<feature>.<fix> style of numbering.
 
 
+0.58: 2016-02-23
+----------------
+
+Fixes:
+- Correctly return result for mouse handler in TokenListControl.
+- Bugfix in meta-backspace key binding. (Delete all whitespace before the
+  cursor, when there is only whitespace.)
+- Bugfix in Vi gu, gU, g? and g~ key bindings (in selection mode).
+- Correctly restore default console attributes on Windows.
+- Disable bracketed paste support in ConEmu. (This was broken.)
+- When an unknown exception is raised in `CommandLineInterface.run()`, don't
+  forget to redraw the CLI.
+
+New features:
+- Many performance improvements and better caching. (Especially in the
+  `Document` class.)
+- Support for continuation tokens in `shortcuts.prompt` and
+  `shortcuts.create_prompt_layout`.
+- Added `shortcuts.print_tokens` function for printing colored output.
+- Sound bell when nothing was deleted.
+- Added escape sequences for F1-F5 keys on the Linux console.
+- Improved support for the Linux console. (Switch back to 16 colors.)
+- Added F13-F24 input codes for xterm.
+- Created prompt_toolkit.token. A custom Token implementation, that is
+  compatible with Pygments.token. (This way, Pygments becomes an optional
+  dependency. For many use cases, nothing except the Token class from Pygments
+  was used, so it was a bit overkill to install Pygments for only that.)
+- Refactoring of prompt_toolkit.styles.
+- `Float` objects got a `hide_when_covering_content` option.
+- Implementation of RPROMPT, like ZSH: Added `get_rprompt_tokens` to
+  `create_prompt_layout`.
+- Some improvements to the default style.
+- Also handle Ctrl-R and Ctrl-S in Vi mode when searching.
+- Added TabsProcessor: a tool to visualise tabs instead of displaying ^I.
+- Give a better error message when trying to run in git-bash.
+- Support for ANSI color names in style dictionaries.
+
+- Big refactoring of the `Window` and `UIControl` classes. This should result
+  in huge performance improvements on big inputs. (While first, a document
+  could have 1,000 lines; now it can have about 100,000 lines on the same system.)
+
+  The Window and UIControl have been rewritten very much. Rather than each time
+  rendering the whole user control, we now only have to render the visible part.
+
+  Because of this, many pieces had to be rewritten:
+  - UIControls work differently. They return a `UIContent` instance that
+    consist of a collection of lines.
+  - All processors have been rewritten. (Their API changed as well, because
+    they process one line at a time.)
+  - Lexers work differently. `Lexer.lex_document` should now return a function
+    that returns the tokens for one line. PygmentsLexer has been optimized that
+    it becomes 'lazy', and it has optional syntax synchronisation. That means,
+    that the lexer doesn't have to start the lexing at the beginning of the
+    document. (Which would be slow for big documents.)
+
+Backwards-incompatible changes:
+- As mentioned above, the refactoring of `Window` and `UIControl` caused many
+  "internal" APIs to change. All custom `UIControl`, `Processor` and `Lexer`
+  classes have to be rewritten. However, for most applications this should not
+  be an issue. Especially, the `shortcuts.prompt` function is
+  backwards-compatible.
+- `wrap_lines` became a property of `Window` instead of `BufferControl`.
+
+
 0.57: 2016-01-04
 ----------------
 
