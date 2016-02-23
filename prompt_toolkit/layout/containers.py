@@ -603,7 +603,17 @@ class WindowRenderInfo(object):
         the whole input, without clipping. (ui_content)
     :param horizontal_scroll: The horizontal scroll of the :class:`.Window` instance.
     :param vertical_scroll: The vertical scroll of the :class:`.Window` instance.
-    :param height: The height that was used for the rendering.
+    :param window_width: The width of the window that displays the content,
+        without the margins.
+    :param window_height: The height of the window that displays the content.
+    :param configured_scroll_offsets: The scroll offsets as configured for the
+        :class:`Window` instance.
+    :param visible_line_to_row_col: Mapping that maps the row numbers on the
+        displayed screen (starting from zero for the first visible line) to
+        (row, col) tuples pointing to the row and column of the :class:`.UIContent`.
+    :param rowcol_to_yx: Mapping that maps (row, column) tuples representing
+        coordinates of the :class:`UIContent` to (y, x) absolute coordinates at
+        the rendered screen.
     """
     def __init__(self, ui_content, horizontal_scroll, vertical_scroll,
                  window_width, window_height,
@@ -654,6 +664,12 @@ class WindowRenderInfo(object):
 
     @property
     def applied_scroll_offsets(self):
+        """
+        Return a :class:`.ScrollOffsets` instance that indicates the actual
+        offset. This can be less than or equal to what's configured. E.g, when
+        the cursor is completely at the top, the top offset will be zero rather
+        than what's configured.
+        """
         if self.displayed_lines[0] == 0:
             top = 0
         else:
