@@ -338,6 +338,7 @@ Example:
 
 .. code:: python
 
+    from prompt_toolkit import prompt
     from prompt_toolkit.history import InMemoryHistory
     from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
@@ -363,17 +364,57 @@ list of tokens. The toolbar is always erased when the prompt returns.
 
 .. code:: python
 
-    from pygments.token import Token
+    from prompt_toolkit import prompt
+    from prompt_toolkit.styles import style_from_dict
+    from prompt_toolkit.token import Token
 
     def get_bottom_toolbar_tokens(cli):
         return [(Token.Toolbar, ' This is a toolbar. ')]
 
-    text = prompt('> ', get_bottom_toolbar_tokens=get_bottom_toolbar_tokens)
+    style = style_from_dict({
+        Token.Toolbar: '#ffffff bg:#333333',
+    })
+
+    text = prompt('> ', get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
+                  style=style)
     print('You said: %s' % text)
 
 The default token is ``Token.Toolbar`` and that will also be used to fill the
 background of the toolbar. :ref:`Styling <colors>` can be done by pointing to
 that token.
+
+.. image:: ../images/bottom-toolbar.png
+
+Adding a right prompt
+---------------------
+
+The :func:`~prompt_toolkit.shortcuts.prompt` function has out of the box
+support for right prompts as well. People familiar to ZSH could recognise this
+as the `RPROMPT` option.
+
+So, similar to adding a bottom toolbar, we can pass a ``get_rprompt_tokens``
+callable.
+
+.. code:: python
+
+    from prompt_toolkit import prompt
+    from prompt_toolkit.styles import style_from_dict
+    from prompt_toolkit.token import Token
+
+    example_style = style_from_dict({
+        Token.RPrompt: 'bg:#ff0066 #ffffff',
+    })
+
+    def get_rprompt_tokens(cli):
+        return [
+            (Token, ' '),
+            (Token.RPrompt, '<rprompt>'),
+        ]
+
+    answer = prompt('> ', get_rprompt_tokens=get_rprompt_tokens,
+                    style=example_style)
+
+.. image:: ../images/rprompt.png
 
 
 Vi input mode
@@ -450,7 +491,6 @@ filters <filters>`.)
     from prompt_toolkit.filters import Condition
     from prompt_toolkit.key_binding.manager import KeyBindingManager
     from prompt_toolkit.keys import Keys
-    from pygments.token import Token
 
     manager = KeyBindingManager.for_prompt()
 

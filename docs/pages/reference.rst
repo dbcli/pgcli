@@ -137,6 +137,12 @@ Layout
 .. automodule:: prompt_toolkit.layout.screen
     :members:
 
+Token
+-----
+
+.. automodule:: prompt_toolkit.token
+    :members:
+
 Filters
 -------
 

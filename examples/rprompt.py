@@ -13,7 +13,6 @@ from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.token import Token
 
 example_style = style_from_dict({
-    # User input.
     Token.RPrompt: 'bg:#ff0066 #ffffff',
 })
 

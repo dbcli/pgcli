@@ -8,7 +8,7 @@ There are two main groups of classes here. Containers and controls:
 - A container can contain other containers or controls, it can have multiple
   children and it decides about the dimensions.
 - A control is responsible for rendering the actual content to a screen.
-  container can propose some dimensions, but it's the container who decides
+  A control can propose some dimensions, but it's the container who decides
   about the dimensions -- or when the control consumes more space -- which part
   of the control will be visible.
 

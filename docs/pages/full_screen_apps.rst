@@ -15,25 +15,25 @@ them together.
 Running the application
 -----------------------
 
-To run our final Full screen Application, we first need three I/O objects.
-And an :class:`~prompt_toolkit.application.Application` instance.
-These are passed as arguments to :class:`~prompt_toolkit.interface.CommandLineInterface`.
+To run our final Full screen Application, we first need three I/O objects. And
+an :class:`~prompt_toolkit.application.Application` instance. These are passed
+as arguments to :class:`~prompt_toolkit.interface.CommandLineInterface`.
 
 For the I/O objects:
 
     - An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is
       basically a while-true loop that waits for user input, and when it receives
       something (like a key press), it will send that to the application.
-    - An :class:`~prompt_toolkit.input.Input` instance. This is an abstraction on
-      the input stream (stdin).
-    - An :class:`~prompt_toolkit.output.Output` instance. This is an abstraction on
-      the output stream, and is called by the renderer.
+    - An :class:`~prompt_toolkit.input.Input` instance. This is an abstraction
+      on the input stream (stdin).
+    - An :class:`~prompt_toolkit.output.Output` instance. This is an
+      abstraction on the output stream, and is called by the renderer.
 
 However, all three of the I/O objects are optional, and prompt_toolkit uses the
 obvious default.
 
-We'll come back at what the :class:`~prompt_toolkit.application.Application` instance is later.
-
+We'll come back at what the :class:`~prompt_toolkit.application.Application`
+instance is later.
 
 So, the only thing we actually need in order to run an application is this:
 
@@ -47,43 +47,50 @@ So, the only thing we actually need in order to run an application is this:
     # cli.run()
     print('Exiting')
 
+.. note:: In the example above, we don't run the application yet, as otherwise
+    it will hang indefinitely waiting for a signal to exit the event loop. This
+    is why the `cli.run()` part is commented.
 
-.. I'm not sure of the following as sometime `Enter` will make the Application exit,
-.. but better safe that locking the users that follow the tutorial.
+    (Actually, it would accept the `Enter` key by default. But that's only
+    because by default, a buffer called `DEFAULT_BUFFER` has the focus; its
+    :class:`~prompt_toolkit.buffer.AcceptAction` is configured to return the
+    result when accepting, and there is a default `Enter` key binding that
+    calls the :class:`~prompt_toolkit.buffer.AcceptAction` of the currently
+    focussed buffer. However, the content of the `DEFAULT_BUFFER` buffer is not
+    yet visible, so it's hard to see what's going on.)
 
-We wont run the application yet as otherwise it will hang indefinitely waiting
-for a signal to exit the event loop. This is why the `cli.run()` part is commented.
-
-Let's now bind a keyboard shortcut to exit.
+Let's now bind a keyboard shortcut to exit:
 
 Key bindings
 ------------
 
-In order to react to user action, you need to create a registry of keyboard
-shortcut to pass to the :class:`~prompt_toolkit.application.Application` when
-it is constructed. The easiest way to do so is to create a
+In order to react to user actions, we need to create a registry of keyboard
+shortcuts to pass to our :class:`~prompt_toolkit.application.Application`.  The
+easiest way to do so, is to create a
 :class:`~prompt_toolkit.key_binding.manager.KeyBindingManager`, and then attach
-callback to desired shortcut. :class:`~prompt_toolkit.keys.Keys` contains a few
+handlers to our desired keys. :class:`~prompt_toolkit.keys.Keys` contains a few
 predefined keyboards shortcut that can be useful.
 
-To create a `registry` simply instantiate
-:class:`~prompt_toolkit.key_binding.manager.KeyBindingManager` and get it's
+To create a `registry`, we can simply instantiate a
+:class:`~prompt_toolkit.key_binding.manager.KeyBindingManager` and take its
 `registry` attribute:
 
 .. code:: python
 
     from prompt_toolkit.key_binding.manager import KeyBindingManager
-    registry = KeyBindingManager().registry
+    manager = KeyBindingManager()
+    registry = manager.registry
 
-Update the `Application` constructor, and pass the registry as one of the argument.
+Update the `Application` constructor, and pass the registry as one of the
+argument.
 
 .. code:: python
 
     application = Application(buffer=buffer, key_bindings_registry=registry)
 
-To register a new keyboard shortcut use the
-:meth:`prompt_toolkit.key_binding.registry.Registry.add_binding` methods as a
-decorator of a callback:
+To register a new keyboard shortcut, we can use the
+:meth:`~prompt_toolkit.key_binding.registry.Registry.add_binding` method as a
+decorator of the key handler:
 
 .. code:: python
 
@@ -100,9 +107,9 @@ decorator of a callback:
         event.cli.set_return_value(None)
 
 In this particular example we use `eager=True` to trigger the callback as soon
-as the shortcut `Ctrl-Q` is pressed. The callback is named `exit_` to be
-explicit, but the name have not much importance.
-
+as the shortcut `Ctrl-Q` is pressed. The callback is named `exit_` for clarity,
+but it could have been named ``_`` (underscore) as well, because the we won't
+refer to this name.
 
 
 Creating a layout
@@ -110,22 +117,24 @@ Creating a layout
 
 There are two types of classes that have to be combined to construct a layout:
 
-
 - **containers** (:class:`~prompt_toolkit.layout.containers.Container`
   instances), which arrange the layout
 
 - **user controls**
-  (:class:`~prompt_toolkit.layout.controls.UIControl` instances), which paint
-  the actual content
+  (:class:`~prompt_toolkit.layout.controls.UIControl` instances), which
+  generate the actual content
 
 
 .. note::
-    
-   An important difference: 
-   
-   - containers use *absolute coordinates*
-   - user controls create their own
-     :class:`~prompt_toolkit.layout.screen.Screen` with *relative coordinates*
+
+   An important difference:
+
+   - containers use *absolute coordinates*, and paint on a
+     :class:`~prompt_toolkit.layout.screen.Screen` instance.
+   - user controls create a :class:`~prompt_toolkit.layout.controls.UIContent`
+     instance. This is a collection of lines that represent the actual
+     content. A :class:`~prompt_toolkit.layout.controls.UIControl` is not aware
+     of the screen.
 
 +------------------------------------------------------+-----------------------------------------------------------+
 | Abstract base class                                  | Examples                                                  |
@@ -181,7 +190,7 @@ vertical line:
 The rendering flow
 ^^^^^^^^^^^^^^^^^^
 
-Understanding the rendering flow is important for understanding how user
+Understanding the rendering flow is important for understanding how
 :class:`~prompt_toolkit.layout.containers.Container` and
 :class:`~prompt_toolkit.layout.controls.UIControl` objects interact. We will
 demonstrate it by explaining the flow around a
@@ -216,47 +225,59 @@ The visualisation happens in several steps:
    of a :class:`~prompt_toolkit.layout.containers.Container`.
    This is a request to paint the layout in a rectangle of a certain size.
 
-   The :class:`~prompt_toolkit.layout.containers.Window` object then requests 
+   The :class:`~prompt_toolkit.layout.containers.Window` object then requests
    the :class:`~prompt_toolkit.layout.controls.UIControl` to create a
-   :class:`~prompt_toolkit.layout.screen.Screen` instance (by calling
-   :meth:`~prompt_toolkit.layout.controls.UIControl.create_screen`). 
-   The user control receives the dimensions of the window, but can still 
-   decide to create a larger or smaller screen.
+   :class:`~prompt_toolkit.layout.controls.UIContent` instance (by calling
+   :meth:`~prompt_toolkit.layout.controls.UIControl.create_content`).
+   The user control receives the dimensions of the window, but can still
+   decide to create more or less content.
 
-   Inside the :meth:`~prompt_toolkit.layout.controls.UIControl.create_screen`
+   Inside the :meth:`~prompt_toolkit.layout.controls.UIControl.create_content`
    method of :class:`~prompt_toolkit.layout.controls.UIControl`, there are
    several steps:
 
-   2. First, the buffer's text is passed through a
-      :class:`~prompt_toolkit.layout.lexers.Lexer` that transforms it into a 
-      token list (a list of ``(Token, text)`` tuples).
+   2. First, the buffer's text is passed to the
+      :meth:`~prompt_toolkit.layout.lexers.Lexer.lex_document` method of a
+      :class:`~prompt_toolkit.layout.lexers.Lexer`. This returns a function which
+      for a given line number, returns a token list for that line (that's a
+      list of ``(Token, text)`` tuples).
 
    3. The token list is passed through a list of
       :class:`~prompt_toolkit.layout.processors.Processor` objects.
-      Each processor can do a transformation on the list.
+      Each processor can do a transformation for each line.
       (For instance, they can insert or replace some text.)
 
-   4. The token list is written to a
-      :class:`~prompt_toolkit.layout.screen.Screen` via the
-      :meth:`~prompt_toolkit.layout.screen.Screen.write_data` method.
-      This performs the line wrapping and fills a two dimensional
-      :class:`~prompt_toolkit.layout.screen.Char` array. 
-      This screen is returned from 
-      :meth:`~prompt_toolkit.layout.controls.UIControl.create_screen`.
+   4. The :class:`~prompt_toolkit.layout.controls.UIControl` returns a
+      :class:`~prompt_toolkit.layout.controls.UIContent` instance which
+      generates such a token lists for each lines.
 
-The :class:`~prompt_toolkit.layout.containers.Window` receives the screen,
-and then:
+The :class:`~prompt_toolkit.layout.containers.Window` receives the
+:class:`~prompt_toolkit.layout.controls.UIContent` and then:
 
-5. It calculates the horizontal and vertical scrolling, if applicable 
-   (if the returned screen is larger than the available area).
+5. It calculates the horizontal and vertical scrolling, if applicable
+   (if the content would take more space than what is available).
 
-6. The received screen is copied to the correct absolute position
-   :class:`~prompt_toolkit.layout.screen.Screen`, given by the 
-   :class:`~prompt_toolkit.renderer.Renderer`.
+6. The content is copied to the correct absolute position
+   :class:`~prompt_toolkit.layout.screen.Screen`, as requested by the
+   :class:`~prompt_toolkit.renderer.Renderer`. While doing this, the
+   :class:`~prompt_toolkit.layout.containers.Window` can possible wrap the
+   lines, if line wrapping was configured.
 
+Note that this process is lazy: if a certain line is not displayed in the
+:class:`~prompt_toolkit.layout.containers.Window`, then it is not requested
+from the :class:`~prompt_toolkit.layout.controls.UIContent`. And from there,
+the line is not passed through the processors or even asked from the
+:class:`~prompt_toolkit.layout.lexers.Lexer`.
 
 Input processors
 ^^^^^^^^^^^^^^^^
+
+An :class:`~prompt_toolkit.layout.processors.Processor` is an object that
+processes the tokens of a line in a
+:class:`~prompt_toolkit.layout.controls.BufferControl` before it's passed to a
+:class:`~prompt_toolkit.layout.controls.UIContent` instance.
+
+Some build-in processors:
 
 +----------------------------------------------------------------------------+-----------------------------------------------------------+
 | Processor                                                                  | Usage:                                                    |
@@ -278,6 +299,8 @@ Input processors
 | :class:`~prompt_toolkit.layout.processors.ShowLeadingWhiteSpaceProcessor`  | Visualise leading whitespace.                             |
 +----------------------------------------------------------------------------+-----------------------------------------------------------+
 | :class:`~prompt_toolkit.layout.processors.ShowTrailingWhiteSpaceProcessor` | Visualise trailing whitespace.                            |
++----------------------------------------------------------------------------+-----------------------------------------------------------+
+| :class:`~prompt_toolkit.layout.processors.TabsProcessor`                   | Visualise tabs as `n` spaces, or some symbols.            |
 +----------------------------------------------------------------------------+-----------------------------------------------------------+
 
 
@@ -334,7 +357,7 @@ components for a prompt_toolkit application come together.
         use_alternate_screen=True)
 
 We are talking about full screen applications, so it's important to pass
-``use_alternate_screen=True``. This switches the terminal buffer.
+``use_alternate_screen=True``. This switches to the alternate terminal buffer.
 
 
 .. _filters:
