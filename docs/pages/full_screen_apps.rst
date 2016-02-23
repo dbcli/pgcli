@@ -19,7 +19,7 @@ To run our final Full screen Application, we first need three I/O objects.
 And an :class:`~prompt_toolkit.application.Application` instance.
 These are passed as arguments to :class:`~prompt_toolkit.interface.CommandLineInterface`.
 
-For the I/O objects::
+For the I/O objects:
 
     - An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is
       basically a while-true loop that waits for user input, and when it receives
