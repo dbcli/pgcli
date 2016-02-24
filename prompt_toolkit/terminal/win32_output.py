@@ -201,6 +201,12 @@ class Win32Output(Output):
         if reverse:
             fgcolor, bgcolor = bgcolor, fgcolor
 
+            # Make sure to reverse, even when no values were specified.
+            if fgcolor is None:
+                fgcolor = '000000'
+            if bgcolor is None:
+                bgcolor = 'ffffff'
+
         i = self.color_lookup_table.lookup_color(fgcolor, bgcolor)
         self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole, i)
 
