@@ -490,16 +490,16 @@ class ColorLookupTable(object):
         :param fg_color: Foreground as text. E.g. 'ffffff' or 'red'
         :param bg_color: Background as text. E.g. 'ffffff' or 'red'
         """
-        # Take white as the default foreground color.
-        # (otherwise many things will be invisible.)
+        # Set the default foreground color. (Otherwise, many things will be
+        # invisible.) Note that gray is the default on Windows, not GRAY|INTENSITY!
         if fg_color is None:
-            fg_color = 'ffffff'
-
-        # Foreground.
-        if fg_color in FG_ANSI_COLORS:
-            fg_index = FG_ANSI_COLORS[fg_color]
+            fg_index = FOREGROUND_COLOR.GRAY
         else:
-            fg_index = self._color_indexes(fg_color)[0]
+            # Foreground.
+            if fg_color in FG_ANSI_COLORS:
+                fg_index = FG_ANSI_COLORS[fg_color]
+            else:
+                fg_index = self._color_indexes(fg_color)[0]
 
         # Background.
         if bg_color in BG_ANSI_COLORS:
