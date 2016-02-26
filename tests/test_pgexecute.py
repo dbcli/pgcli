@@ -206,7 +206,7 @@ def test_jsonb_renders_without_u_prefix(executor, expanded):
     assert u'{"name": "Éowyn"}' in result
 
 @dbtest
-def test_bc_timestamps(executor):
+def test_date_time_types(executor):
     run(executor, "SET TIME ZONE UTC")
     assert run(executor, "SELECT (CAST('00:00:00' AS time))", join=True).split("\n")[3] \
          == "| 00:00:00 |"
