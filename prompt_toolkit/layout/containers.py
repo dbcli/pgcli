@@ -1081,7 +1081,12 @@ class Window(Container):
                     break
             else:
                 # nobreak.
-                result = NotImplemented
+                # (No x/y coordinate found for the content. This happens in
+                # case of a FillControl, that only specifies a background, but
+                # doesn't have a content. Report (0,0) instead.)
+                result = self.content.mouse_handler(
+                    cli, MouseEvent(position=Point(x=0, y=0),
+                                    event_type=mouse_event.event_type))
 
             # If it returns NotImplemented, handle it here.
             if result == NotImplemented:
