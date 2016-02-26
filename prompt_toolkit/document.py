@@ -502,7 +502,7 @@ class Document(object):
     def find_previous_word_beginning(self, count=1, WORD=False):
         """
         Return an index relative to the cursor position pointing to the start
-        of the next word. Return `None` if nothing was found.
+        of the previous word. Return `None` if nothing was found.
         """
         regex = _FIND_BIG_WORD_RE if WORD else _FIND_WORD_RE
         iterator = regex.finditer(self.text_before_cursor[::-1])
@@ -511,6 +511,27 @@ class Document(object):
             for i, match in enumerate(iterator):
                 if i + 1 == count:
                     return - match.end(1)
+        except StopIteration:
+            pass
+
+    def find_previous_word_ending(self, count=1, WORD=False):
+        """
+        Return an index relative to the cursor position pointing to the end
+        of the previous word. Return `None` if nothing was found.
+        """
+        text_before_cursor = self.text_after_cursor[:1] + self.text_before_cursor[::-1]
+
+        regex = _FIND_BIG_WORD_RE if WORD else _FIND_WORD_RE
+        iterator = regex.finditer(text_before_cursor)
+
+        try:
+            for i, match in enumerate(iterator):
+                # Take first match, unless it's the word on which we're right now.
+                if i == 0 and match.start(1) == 0:
+                    count += 1
+
+                if i + 1 == count:
+                    return -match.start(1) + 1
         except StopIteration:
             pass
 
@@ -581,52 +602,77 @@ class Document(object):
         return self.translate_row_col_to_index(
             self.cursor_position_row + count, self.cursor_position_col) - self.cursor_position
 
-    def find_matching_bracket_position(self, start_pos=None, end_pos=None):
+    def find_enclosing_bracket_right(self, left_ch, right_ch, end_pos=None):
         """
-        Return relative cursor position of matching [, (, { or < bracket.
+        Find the right bracket enclosing current position. Return the relative
+        position to the cursor position.
 
-        When `start_pos` or `end_pos` are given. Don't look past the positions.
+        When `end_pos` is given, don't look past the position.
         """
-        stack = 1
-
-        # Start/end limit.
-        if start_pos is None:
-            start_pos = 0
-        else:
-            start_pos = max(0, start_pos)
+        if self.current_char == right_ch:
+            return 0
 
         if end_pos is None:
             end_pos = len(self.text)
         else:
             end_pos = min(len(self.text), end_pos)
 
+        stack = 1
+
+        # Look forward.
+        for i in range(self.cursor_position + 1, end_pos):
+            c = self.text[i]
+
+            if c == left_ch:
+                stack += 1
+            elif c == right_ch:
+                stack -= 1
+
+            if stack == 0:
+                return i - self.cursor_position
+
+    def find_enclosing_bracket_left(self, left_ch, right_ch, start_pos=None):
+        """
+        Find the left bracket enclosing current position. Return the relative
+        position to the cursor position.
+
+        When `start_pos` is given, don't look past the position.
+        """
+        if self.current_char == left_ch:
+            return 0
+
+        if start_pos is None:
+            start_pos = 0
+        else:
+            start_pos = max(0, start_pos)
+
+        stack = 1
+
+        # Look backward.
+        for i in range(self.cursor_position - 1, start_pos - 1, -1):
+            c = self.text[i]
+
+            if c == right_ch:
+                stack += 1
+            elif c == left_ch:
+                stack -= 1
+
+            if stack == 0:
+                return i - self.cursor_position
+
+    def find_matching_bracket_position(self, start_pos=None, end_pos=None):
+        """
+        Return relative cursor position of matching [, (, { or < bracket.
+
+        When `start_pos` or `end_pos` are given. Don't look past the positions.
+        """
+
         # Look for a match.
         for A, B in '()', '[]', '{}', '<>':
-            # Look forward.
             if self.current_char == A:
-                for i in range(self.cursor_position + 1, end_pos):
-                    c = self.text[i]
-
-                    if c == A:
-                        stack += 1
-                    elif c == B:
-                        stack -= 1
-
-                    if stack == 0:
-                        return i - self.cursor_position
-
-            # Look backwards.
+                return self.find_enclosing_bracket_right(A, B, end_pos=end_pos) or 0
             elif self.current_char == B:
-                for i in range(self.cursor_position - 1, start_pos - 1, -1):
-                    c = self.text[i]
-
-                    if c == B:
-                        stack += 1
-                    elif c == A:
-                        stack -= 1
-
-                    if stack == 0:
-                        return i - self.cursor_position
+                return self.find_enclosing_bracket_left(A, B, start_pos=start_pos) or 0
 
         return 0
 
@@ -654,7 +700,7 @@ class Document(object):
         """
         Relative position for the last non blank character of this line.
         """
-        return len(self.current_line_after_cursor.rstrip())
+        return len(self.current_line.rstrip()) - self.cursor_position_col - 1
 
     def get_column_cursor_position(self, column):
         """

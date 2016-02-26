@@ -43,14 +43,28 @@ class ViStateFilter(Filter):
         return self.get_vi_state(cli).input_mode == self.mode
 
 
+class CursorRegionType(object):
+    EXCLUSIVE = 'EXCLUSIVE'
+    INCLUSIVE = 'INCLUSIVE'
+    LINEWISE = 'LINEWISE'
+
+
 class CursorRegion(object):
     """
     Return struct for functions wrapped in ``change_delete_move_yank_handler``.
     Both `start` and `end` are relative to the current cursor position.
     """
-    def __init__(self, start, end=0):
+    def __init__(self, start, end=0, type=CursorRegionType.EXCLUSIVE):
         self.start = start
         self.end = end
+        self.type = type
+
+    @property
+    def selection_type(self):
+        if self.type == CursorRegionType.LINEWISE:
+            return SelectionType.LINES
+        else:
+            return SelectionType.CHARACTERS
 
     def sorted(self):
         """
@@ -60,6 +74,29 @@ class CursorRegion(object):
             return self.start, self.end
         else:
             return self.end, self.start
+
+    def operator_range(self, buffer):
+        """
+        Return a (start, end) tuple with start <= end that indicates the range
+        operators should operate on.
+        `buffer` is used to get start and end of line positions.
+        """
+        start, end = self.sorted()
+        doc = buffer.document
+        if (self.type == CursorRegionType.EXCLUSIVE and
+                doc.translate_index_to_position(end + buffer.cursor_position)[1] == 0):
+            # If the motion is exclusive and the end of motion is on the first
+            # column, the end position becomes end of previous line.
+            end -= 1
+        if self.type == CursorRegionType.INCLUSIVE:
+            end += 1
+        if self.type == CursorRegionType.LINEWISE:
+            # Select whole lines
+            row, col = doc.translate_index_to_position(start + buffer.cursor_position)
+            start = doc.translate_row_col_to_index(row, 0) - buffer.cursor_position
+            row, col = doc.translate_index_to_position(end + buffer.cursor_position)
+            end = doc.translate_row_col_to_index(row, len(doc.lines[row])) - buffer.cursor_position
+        return start, end
 
 
 def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_search_state=None, filter=None):
@@ -687,8 +724,8 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
                 def _(event):
                     """ Apply transformation (uppercase, lowercase, rot13, swap case). """
                     region = func(event)
-                    start, end = region.sorted()
                     buffer = event.current_buffer
+                    start, end = region.operator_range(buffer)
 
                     # Transform.
                     buffer.transform_region(
@@ -708,11 +745,11 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
                 region = func(event)
                 buffer = event.current_buffer
 
-                start, end = region.sorted()
+                start, end = region.operator_range(buffer)
                 substring = buffer.text[buffer.cursor_position + start: buffer.cursor_position + end]
 
                 if substring:
-                    event.cli.clipboard.set_text(substring)
+                    event.cli.clipboard.set_data(ClipboardData(substring, region.selection_type))
 
             def create(delete_only):
                 """ Create delete and change handlers. """
@@ -724,7 +761,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
                     buffer = event.current_buffer
 
                     if region:
-                        start, end = region.sorted()
+                        start, end = region.operator_range(buffer)
 
                         # Move to the start of the region.
                         buffer.cursor_position += start
@@ -734,7 +771,12 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
 
                     # Set deleted/changed text to clipboard.
                     if deleted:
-                        event.cli.clipboard.set_text(deleted)
+                        event.cli.clipboard.set_data(ClipboardData(deleted, region.selection_type))
+
+                    # If using 'd' operator with a linewise motion, delete
+                    # the newline as well.
+                    if delete_only and region.type == CursorRegionType.LINEWISE:
+                        buffer.delete() or buffer.delete_before_cursor()
 
                     # Only go back to insert mode in case of 'change'.
                     if not delete_only:
@@ -776,13 +818,13 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
     def _(event):
         """ End of 'word': 'ce', 'de', 'e' """
         end = event.current_buffer.document.find_next_word_ending(count=event.arg)
-        return CursorRegion(end - 1 if end else 0)
+        return CursorRegion(end - 1 if end else 0, type=CursorRegionType.INCLUSIVE)
 
     @change_delete_move_yank_handler('E')
     def _(event):
         """ End of 'WORD': 'cE', 'dE', 'E' """
         end = event.current_buffer.document.find_next_word_ending(count=event.arg, WORD=True)
-        return CursorRegion(end - 1 if end else 0)
+        return CursorRegion(end - 1 if end else 0, type=CursorRegionType.INCLUSIVE)
 
     @change_delete_move_yank_handler('i', 'w', no_move_handler=True)
     def _(event):
@@ -831,8 +873,14 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         @change_delete_move_yank_handler('ai'[inner], ci_start, no_move_handler=True)
         @change_delete_move_yank_handler('ai'[inner], ci_end, no_move_handler=True)
         def _(event):
-            start = event.current_buffer.document.find_backwards(ci_start, in_current_line=False)
-            end = event.current_buffer.document.find(ci_end, in_current_line=False)
+            if ci_start == ci_end:
+                # Quotes
+                start = event.current_buffer.document.find_backwards(ci_start, in_current_line=False)
+                end = event.current_buffer.document.find(ci_end, in_current_line=False)
+            else:
+                # Brackets
+                start = event.current_buffer.document.find_enclosing_bracket_left(ci_start, ci_end)
+                end = event.current_buffer.document.find_enclosing_bracket_right(ci_start, ci_end)
 
             if start is not None and end is not None:
                 offset = 0 if inner else 1
@@ -891,7 +939,10 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         """
         get_vi_state(event.cli).last_character_find = CharacterFind(event.data, False)
         match = event.current_buffer.document.find(event.data, in_current_line=True, count=event.arg)
-        return CursorRegion(match or 0)
+        if match:
+            return CursorRegion(match, type=CursorRegionType.INCLUSIVE)
+        else:
+            return CursorRegion(0)
 
     @change_delete_move_yank_handler('F', Keys.Any)
     def _(event):
@@ -909,7 +960,10 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         """
         get_vi_state(event.cli).last_character_find = CharacterFind(event.data, False)
         match = event.current_buffer.document.find(event.data, in_current_line=True, count=event.arg)
-        return CursorRegion(match - 1 if match else 0)
+        if match:
+            return CursorRegion(match - 1, type=CursorRegionType.INCLUSIVE)
+        else:
+            return CursorRegion(0)
 
     @change_delete_move_yank_handler('T', Keys.Any)
     def _(event):
@@ -930,6 +984,8 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
             pos = 0
             vi_state = get_vi_state(event.cli)
 
+            type = CursorRegionType.EXCLUSIVE
+
             if vi_state.last_character_find:
                 char = vi_state.last_character_find.character
                 backwards = vi_state.last_character_find.backwards
@@ -941,7 +997,11 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
                     pos = event.current_buffer.document.find_backwards(char, in_current_line=True, count=event.arg)
                 else:
                     pos = event.current_buffer.document.find(char, in_current_line=True, count=event.arg)
-            return CursorRegion(pos or 0)
+                    type = CursorRegionType.INCLUSIVE
+            if pos:
+                return CursorRegion(pos, type=type)
+            else:
+                return CursorRegion(0)
     repeat(True)
     repeat(False)
 
@@ -954,12 +1014,12 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
     @change_delete_move_yank_handler('j', no_move_handler=True)
     def _(event):
         """ Implements 'cj', 'dj', 'j', ... Cursor up. """
-        return CursorRegion(event.current_buffer.document.get_cursor_down_position(count=event.arg))
+        return CursorRegion(event.current_buffer.document.get_cursor_down_position(count=event.arg), type=CursorRegionType.LINEWISE)
 
     @change_delete_move_yank_handler('k', no_move_handler=True)
     def _(event):
         """ Implements 'ck', 'dk', 'k', ... Cursor up. """
-        return CursorRegion(event.current_buffer.document.get_cursor_up_position(count=event.arg))
+        return CursorRegion(event.current_buffer.document.get_cursor_up_position(count=event.arg), type=CursorRegionType.LINEWISE)
 
     @change_delete_move_yank_handler('l')
     @change_delete_move_yank_handler(' ')
@@ -987,7 +1047,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         else:
             # Otherwise, move to the start of the input.
             pos = -len(b.document.text_before_cursor)
-        return CursorRegion(pos)
+        return CursorRegion(pos, type=CursorRegionType.LINEWISE)
 
     @change_delete_move_yank_handler('M')
     def _(event):
@@ -1008,7 +1068,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         else:
             # Otherwise, move to the start of the input.
             pos = -len(b.document.text_before_cursor)
-        return CursorRegion(pos)
+        return CursorRegion(pos, type=CursorRegionType.LINEWISE)
 
     @change_delete_move_yank_handler('L')
     def _(event):
@@ -1028,7 +1088,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         else:
             # Otherwise, move to the end of the input.
             pos = len(b.document.text_after_cursor)
-        return CursorRegion(pos)
+        return CursorRegion(pos, type=CursorRegionType.LINEWISE)
 
     @handle('z', '+', filter=navigation_mode|selection_mode)
     @handle('z', 't', filter=navigation_mode|selection_mode)
@@ -1095,20 +1155,24 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
             # row in the file.
             if 0 < event.arg <= 100:
                 absolute_index = buffer.document.translate_row_col_to_index(
-                    int(event.arg * buffer.document.line_count / 100), 0)
-                return CursorRegion(absolute_index - buffer.document.cursor_position)
+                    int((event.arg * buffer.document.line_count - 1) / 100), 0)
+                return CursorRegion(absolute_index - buffer.document.cursor_position, type=CursorRegionType.LINEWISE)
             else:
                 return CursorRegion(0)  # Do nothing.
 
         else:
             # Move to the corresponding opening/closing bracket (()'s, []'s and {}'s).
-            return CursorRegion(buffer.document.find_matching_bracket_position())
+            match = buffer.document.find_matching_bracket_position()
+            if match:
+                return CursorRegion(match, type=CursorRegionType.INCLUSIVE)
+            else:
+                return CursorRegion(0)
 
     @change_delete_move_yank_handler('|')
     def _(event):
         # Move to the n-th column (you may specify the argument n by typing
         # it on number keys, for example, 20|).
-        return CursorRegion(event.current_buffer.document.get_column_cursor_position(event.arg))
+        return CursorRegion(event.current_buffer.document.get_column_cursor_position(event.arg - 1))
 
     @change_delete_move_yank_handler('g', 'g')
     def _(event):
@@ -1119,10 +1183,10 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
 
         if event._arg:
             # Move to the given line.
-            return CursorRegion(d.translate_row_col_to_index(event.arg - 1, 0) - d.cursor_position)
+            return CursorRegion(d.translate_row_col_to_index(event.arg - 1, 0) - d.cursor_position, type=CursorRegionType.LINEWISE)
         else:
             # Move to the top of the input.
-            return CursorRegion(d.get_start_of_document_position())
+            return CursorRegion(d.get_start_of_document_position(), type=CursorRegionType.LINEWISE)
 
     @change_delete_move_yank_handler('g', '_')
     def _(event):
@@ -1131,7 +1195,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         'g_', 'cg_', 'yg_', etc..
         """
         return CursorRegion(
-            event.current_buffer.document.last_non_blank_of_current_line_position())
+            event.current_buffer.document.last_non_blank_of_current_line_position(), type=CursorRegionType.INCLUSIVE)
 
     @change_delete_move_yank_handler('g', 'e')
     def _(event):
@@ -1139,8 +1203,8 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         Go to last character of previous word.
         'ge', 'cge', 'yge', etc..
         """
-        return CursorRegion(
-            event.current_buffer.document.find_start_of_previous_word(count=event.arg) or 0)
+        prev_end = event.current_buffer.document.find_previous_word_ending(count=event.arg)
+        return CursorRegion(prev_end - 1 if prev_end is not None else 0, type=CursorRegionType.INCLUSIVE)
 
     @change_delete_move_yank_handler('g', 'E')
     def _(event):
@@ -1148,16 +1212,17 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         Go to last character of previous WORD.
         'gE', 'cgE', 'ygE', etc..
         """
-        return CursorRegion(
-            event.current_buffer.document.find_start_of_previous_word(
-                count=event.arg, WORD=True) or 0)
+        prev_end = event.current_buffer.document.find_previous_word_ending(count=event.arg, WORD=True)
+        return CursorRegion(prev_end - 1 if prev_end is not None else 0, type=CursorRegionType.INCLUSIVE)
 
     @change_delete_move_yank_handler('G')
     def _(event):
         """
         Go to the end of the document. (If no arg has been given.)
         """
-        return CursorRegion(len(event.current_buffer.document.text_after_cursor))
+        buf = event.current_buffer
+        return CursorRegion(buf.document.translate_row_col_to_index(buf.document.line_count - 1, 0) -
+                            buf.cursor_position, type=CursorRegionType.LINEWISE)
 
     @handle('G', filter=HasArg())
     def _(event):
