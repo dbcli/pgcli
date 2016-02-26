@@ -342,6 +342,8 @@ Example:
     from prompt_toolkit.history import InMemoryHistory
     from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
+    history = InMemoryHistory()
+
     while True:
         text = prompt('> ', history=history, auto_suggest=AutoSuggestFromHistory())
         print('You said: %s' % text)
