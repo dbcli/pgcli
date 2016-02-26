@@ -153,10 +153,16 @@ class UIContent(object):
         line_width = get_cwidth(text)
 
         # Calculate height.
-        quotient, remainder = divmod(line_width, width)
-        if remainder:
-            quotient += 1  # Like math.ceil.
-        return max(1, quotient)
+        try:
+            quotient, remainder = divmod(line_width, width)
+        except ZeroDivisionError:
+            # Return something very big.
+            # (This can happen, when the Window gets very small.)
+            return 10 ** 10
+        else:
+            if remainder:
+                quotient += 1  # Like math.ceil.
+            return max(1, quotient)
 
 
 class TokenListControl(UIControl):
