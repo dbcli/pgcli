@@ -10,6 +10,19 @@ About the version numbering:
     to a <breaking>.<feature>.<fix> style of numbering.
 
 
+0.59: 2016-02-27
+----------------
+
+Fixes:
+- Set correct default color on Windows. (Gray instead of high intensity gray.)
+- Reverse colors on Windows when foreground/background color have not been
+  specified.
+- Correct handling of mouse events for FillControl.
+- Take margin into account when calculating Window height. (Fixes bug in
+  multiline prompt.)
+- Handle division by zero in UIContent.get_height_for_text.
+
+
 0.58: 2016-02-23
 ----------------
 
