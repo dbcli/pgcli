@@ -7,6 +7,7 @@ __all__ = (
     'token_list_width',
     'token_list_to_text',
     'explode_tokens',
+    'split_lines',
     'find_window_for_buffer_name',
 )
 
