@@ -1001,7 +1001,9 @@ class Window(Container):
         else:
             max_ = dimension.max
 
-        return LayoutDimension(min=dimension.min, max=max_, preferred=preferred)
+        return LayoutDimension(
+            min=dimension.min, max=max_,
+            preferred=preferred, weight=dimension.weight)
 
     def _get_ui_content(self, cli, width, height):
         """
