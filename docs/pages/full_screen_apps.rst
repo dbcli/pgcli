@@ -177,7 +177,7 @@ vertical line:
 .. code:: python
 
     from prompt_toolkit.enums import DEFAULT_BUFFER
-    from prompt_toolkit.layout.containers import VSplit, HSplit, Window
+    from prompt_toolkit.layout.containers import VSplit, Window
     from prompt_toolkit.layout.controls import BufferControl, FillControl, TokenListControl
     from prompt_toolkit.layout.dimension import LayoutDimension as D
 
@@ -200,8 +200,8 @@ vertical line:
             get_tokens=lambda cli: [(Token, 'Hello world')])),
     ])
 
-The previous section explain how to create an application, you can just pass
-the currently created `layout` when you create the ``Aplpication`` instance
+The previous section explains how to create an application, you can just pass
+the currently created `layout` when you create the ``Application`` instance
 using the ``layout=`` keyword argument.
 
 .. code:: python

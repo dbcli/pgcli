@@ -23,11 +23,11 @@ from prompt_toolkit.token import Token
 # 1. First we create the layout
 #    --------------------------
 
-# There are two types of classes that have to be combined to contruct a layout.
+# There are two types of classes that have to be combined to construct a layout.
 # We have containers and user controls. Simply said, containers are used for
 # arranging the layout, we have for instance `HSplit` and `VSplit`. And on the
 # other hand user controls paint the actual content. We have for instance
-# `BufferControl` and `TokenListControl`. An important interal difference is that
+# `BufferControl` and `TokenListControl`. An important internal difference is that
 # containers use absolute coordinates, while user controls paint on their own
 # `Screen` with a relative coordinates.
 
