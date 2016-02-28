@@ -15,11 +15,11 @@ them together.
 Running the application
 -----------------------
 
-To run our final Full screen Application, we first need three I/O objects. And
+To run our final Full screen Application, need three optional I/O objects. And
 an :class:`~prompt_toolkit.application.Application` instance. These are passed
 as arguments to :class:`~prompt_toolkit.interface.CommandLineInterface`.
 
-For the I/O objects:
+The three optional I/O objects are:
 
     - An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is
       basically a while-true loop that waits for user input, and when it receives
@@ -29,13 +29,13 @@ For the I/O objects:
     - An :class:`~prompt_toolkit.output.Output` instance. This is an
       abstraction on the output stream, and is called by the renderer.
 
-However, all three of the I/O objects are optional, and prompt_toolkit uses the
+As hinted before all three of the I/O objects are optional, and prompt_toolkit uses the
 obvious default.
 
 We'll come back at what the :class:`~prompt_toolkit.application.Application`
 instance is later.
 
-So, the only thing we actually need in order to run an application is this:
+So, the only thing we actually need in order to run an application is the following:
 
 .. code:: python
 
@@ -86,7 +86,7 @@ argument.
 
 .. code:: python
 
-    application = Application(buffer=buffer, key_bindings_registry=registry)
+    application = Application(key_bindings_registry=registry)
 
 To register a new keyboard shortcut, we can use the
 :meth:`~prompt_toolkit.key_binding.registry.Registry.add_binding` method as a
@@ -106,14 +106,24 @@ decorator of the key handler:
         """
         event.cli.set_return_value(None)
 
-In this particular example we use `eager=True` to trigger the callback as soon
-as the shortcut `Ctrl-Q` is pressed. The callback is named `exit_` for clarity,
+In this particular example we use ``eager=True`` to trigger the callback as soon
+as the shortcut `Ctrl-Q` is pressed. The callback is named ``exit_`` for clarity,
 but it could have been named ``_`` (underscore) as well, because the we won't
 refer to this name.
 
 
 Creating a layout
 -----------------
+
+A `layout` is a composition of
+:class:`~prompt_toolkit.layout.containers.Container` and
+:class:`~prompt_toolkit.layout.controls.UIControl` that will describe the
+disposition of various element on the user screen.
+
+Various Layouts can refer to `Buffers` that have to be created and pass to the
+application separately. This allow an application to have its layout changed,
+without having to reconstruct buffers. You can imagine for example switching
+from an horizontal to a vertical split panel layout and vice versa,
 
 There are two types of classes that have to be combined to construct a layout:
 
@@ -150,12 +160,15 @@ There are two types of classes that have to be combined to construct a layout:
 +------------------------------------------------------+-----------------------------------------------------------+
 
 
-The :class:`~prompt_toolkit.layout.containers.Window` class itself is a
-container that can contain a
-:class:`~prompt_toolkit.layout.controls.UIControl`, so it's the adaptor
-between the two. The Window class also takes care of scrolling the content if
-the user control created a :class:`~prompt_toolkit.layout.screen.Screen` that
-is larger than what was available to the window.
+The :class:`~prompt_toolkit.layout.containers.Window` class itself is
+particular: it is a :class:`~prompt_toolkit.layout.containers.Container` that
+can contain a :class:`~prompt_toolkit.layout.controls.UIControl`. Thus, it's
+the adaptor between the two.
+
+The :class:`~prompt_toolkit.layout.containers.Window` class also takes care of
+scrolling the content if the user control created a
+:class:`~prompt_toolkit.layout.screen.Screen` that is larger than what was
+available to the :class:`~prompt_toolkit.layout.containers.Window`.
 
 Here is an example of a layout that displays the content of the default buffer
 on the left, and displays ``"Hello world"`` on the right. In between it shows a
@@ -186,6 +199,15 @@ vertical line:
         Window(content=TokenListControl(
             get_tokens=lambda cli: [(Token, 'Hello world')])),
     ])
+
+The previous section explain how to create an application, you can just pass
+the currently created `layout` when you create the ``Aplpication`` instance
+using the ``layout=`` keyword argument.
+
+.. code:: python
+
+    app = Application(..., layout=layout, ...)
+
 
 The rendering flow
 ^^^^^^^^^^^^^^^^^^
