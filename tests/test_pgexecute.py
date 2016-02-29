@@ -206,12 +206,20 @@ def test_jsonb_renders_without_u_prefix(executor, expanded):
     assert u'{"name": "Éowyn"}' in result
 
 @dbtest
-def test_bc_dates(executor):
-    run(executor, "create table bc_date_test(d DATE)")
-    run(executor, "insert into bc_date_test(d) values ('0001-01-01 00:00:00 BC')")
-
-    result = run(executor, "SELECT d FROM bc_date_test LIMIT 1", join=True)
-    assert result.split("\n")[3] == "| 0001-01-01 BC |"
+def test_date_time_types(executor):
+    run(executor, "SET TIME ZONE UTC")
+    assert run(executor, "SELECT (CAST('00:00:00' AS time))", join=True).split("\n")[3] \
+         == "| 00:00:00 |"
+    assert run(executor, "SELECT (CAST('00:00:00+14:59' AS timetz))", join=True).split("\n")[3]  \
+        == "| 00:00:00+14:59 |"
+    assert run(executor, "SELECT (CAST('4713-01-01 BC' AS date))", join=True).split("\n")[3] \
+         == "| 4713-01-01 BC |"
+    assert run(executor, "SELECT (CAST('4713-01-01 00:00:00 BC' AS timestamp))", join=True).split("\n")[3] \
+         == "| 4713-01-01 00:00:00 BC |"
+    assert run(executor, "SELECT (CAST('4713-01-01 00:00:00+00 BC' AS timestamptz))", join=True).split("\n")[3] \
+         == "| 4713-01-01 00:00:00+00 BC |"
+    assert run(executor, "SELECT (CAST('-123456789 days 12:23:56' AS interval))", join=True).split("\n")[3] \
+         == "| -123456789 days, 12:23:56 |"
 
 @dbtest
 @pytest.mark.parametrize('value', ['10000000', '10000000.0', '10000000000000'])
