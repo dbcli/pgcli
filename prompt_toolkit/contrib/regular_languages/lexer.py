@@ -57,6 +57,9 @@ class GrammarLexer(Lexer):
                     lexer_tokens = []
                     for i in range(len(document.lines)):
                         lexer_tokens.extend(lexer_tokens_for_line(i))
+                        lexer_tokens.append((Token, '\n'))
+                    if lexer_tokens:
+                        lexer_tokens.pop()
 
                     i = v.start
                     for t, s in lexer_tokens:
