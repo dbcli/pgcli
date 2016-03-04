@@ -321,6 +321,9 @@ class CommandLineInterface(object):
             self.render_counter += 1
             self.renderer.render(self, self.layout, is_done=self.is_done)
 
+            # Fire render event.
+            self.application.on_render.fire(self)
+
     def _on_resize(self):
         """
         When the window size changes, we erase the current output and request
