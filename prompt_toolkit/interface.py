@@ -153,12 +153,21 @@ class CommandLineInterface(object):
                 if buffer.auto_suggest:
                     auto_suggest_function()
 
-                # Trigger on_buffer_changed when text in this buffer changes.
-                self.application.on_buffer_changed.fire(self)
-
             return on_text_insert
 
         buffer.on_text_insert += create_on_insert_handler()
+
+        def buffer_changed():
+            """
+            When the text in a buffer changes.
+            (A paste event is also a change, but not an insert. So we don't
+            want to do autocompletions in this case, but we want to propagate
+            the on_buffer_changed event.)
+            """
+            # Trigger on_buffer_changed.
+            self.application.on_buffer_changed.fire(self)
+
+        buffer.on_text_changed += buffer_changed
 
     def start_completion(self, buffer_name=None, select_first=False,
                          select_last=False, insert_common_part=False,
