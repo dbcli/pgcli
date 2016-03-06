@@ -120,6 +120,7 @@ Shells:
 - `vcli <https://github.com/dbcli/vcli>`_: Vertica client.
 - `aws-shell <https://github.com/awslabs/aws-shell>`_: An integrated shell for working with the AWS CLI.
 - `softlayer-python <https://github.com/softlayer/softlayer-python>`_: A command-line interface to manage various SoftLayer products and services.
+- `ipython <http://github.com/ipython/ipython/>`_: The IPython REPL
 
 Full screen applications:
 
