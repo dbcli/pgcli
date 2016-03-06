@@ -410,6 +410,9 @@ class PGCli(object):
         def prompt_tokens(_):
             return [(Token.Prompt, '%s> ' % self.pgexecute.dbname)]
 
+        def get_continuation_tokens(cli, width):
+            return [(Token.Continuation, '.' * (width - 1) + ' ')]
+
         get_toolbar_tokens = create_toolbar_tokens_func(
             lambda: self.vi_mode, self.completion_refresher.is_refreshing)
 
@@ -417,6 +420,7 @@ class PGCli(object):
             lexer=PygmentsLexer(PostgresLexer),
             reserve_space_for_menu=4,
             get_prompt_tokens=prompt_tokens,
+            get_continuation_tokens=get_continuation_tokens,
             get_bottom_toolbar_tokens=get_toolbar_tokens,
             display_completions_in_columns=self.wider_completion_menu,
             multiline=True,
