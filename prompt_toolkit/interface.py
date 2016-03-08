@@ -611,10 +611,13 @@ class CommandLineInterface(object):
 
         self.run_in_terminal(run)
 
-    def suspend_to_background(self):
+    def suspend_to_background(self, suspend_group=True):
         """
         (Not thread safe -- to be called from inside the key bindings.)
         Suspend process.
+
+        :param suspend_group: When true, suspend the whole process group.
+            (This is the default, and probably what you want.)
         """
         # Only suspend when the opperating system supports it.
         # (Not on Windows.)
@@ -622,7 +625,13 @@ class CommandLineInterface(object):
             def run():
                 # Send `SIGSTP` to own process.
                 # This will cause it to suspend.
-                os.kill(os.getpid(), signal.SIGTSTP)
+
+                # Usually we want the whole process group to be suspended. This
+                # handles the case when input is piped from another process.
+                if suspend_group:
+                    os.kill(0, signal.SIGTSTP)
+                else:
+                    os.kill(os.getpid(), signal.SIGTSTP)
 
             self.run_in_terminal(run)
 
