@@ -89,6 +89,10 @@ class RegexSync(SyntaxSync):
     # That would be too CPU intensive.
     MAX_BACKWARDS = 500
 
+    # Start lexing at the start, if we are in the first 'n' lines and no
+    # synchronisation position was found.
+    FROM_START_IF_NO_SYNC_POS_FOUND = 100
+
     def __init__(self, pattern):
         assert isinstance(pattern, six.text_type)
         self._compiled_pattern = re.compile(pattern)
@@ -105,8 +109,13 @@ class RegexSync(SyntaxSync):
             if match:
                 return i, match.start()
 
-        # No synchronisation point found. Just try to start at the current line.
-        return lineno, 0
+        # No synchronisation point found. If we aren't that far from the
+        # beginning, start at the very beginning, otherwise, just try to start
+        # at the current line.
+        if lineno < self.FROM_START_IF_NO_SYNC_POS_FOUND:
+            return 0, 0
+        else:
+            return lineno, 0
 
     @classmethod
     def from_pygments_lexer_cls(cls, lexer_cls):
