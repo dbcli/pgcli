@@ -36,6 +36,25 @@ _FIND_CURRENT_BIG_WORD_INCLUDE_TRAILING_WHITESPACE_RE = re.compile(r'^([^\s]+\s*
 _text_to_document_cache = weakref.WeakValueDictionary()  # Maps document.text to DocumentCache instance.
 
 
+class _ImmutableLineList(list):
+    """
+    Some protection for our 'lines' list, which is assumed to be immutable in the cache.
+    (Useful for detecting obvious bugs.)
+    """
+    def _error(self, *a, **kw):
+        raise NotImplementedError('Attempt to modifiy an immutable list.')
+
+    __setitem__ = _error
+    append = _error
+    clear = _error
+    extend = _error
+    insert = _error
+    pop = _error
+    remove = _error
+    reverse = _error
+    sort = _error
+
+
 class _DocumentCache(object):
     def __init__(self):
         #: List of lines for the Document text.
@@ -120,7 +139,7 @@ class Document(object):
         """
         # Cache, because this one is reused very often.
         if self._cache.lines is None:
-            self._cache.lines = self.text.split('\n')
+            self._cache.lines = _ImmutableLineList(self.text.split('\n'))
 
         return self._cache.lines
 
@@ -794,7 +813,7 @@ class Document(object):
                 new_text = '\n'.join(lines)
 
         elif data.type == SelectionType.BLOCK:
-            lines = self.lines
+            lines = self.lines[:]
             start_line = self.cursor_position_row
             start_column = self.cursor_position_col + (0 if before else 1)
 
