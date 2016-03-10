@@ -275,32 +275,34 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
 
     # Create and return Container instance.
     return HSplit([
-        ConditionalContainer(
-            Window(
-                TokenListControl(get_prompt_tokens_1),
-                dont_extend_height=True),
-            filter=multiline,
-        ),
         # The main input, with completion menus floating on top of it.
         FloatContainer(
-            Window(
-                BufferControl(
-                    input_processors=input_processors,
-                    lexer=lexer,
-                    # Enable preview_search, we want to have immediate feedback
-                    # in reverse-i-search mode.
-                    preview_search=True),
-                get_height=get_height,
-                left_margins=[
-                    # In multiline mode, use the window margin to display
-                    # the prompt and continuation tokens.
-                    ConditionalMargin(
-                        PromptMargin(get_prompt_tokens_2, get_continuation_tokens),
-                        filter=multiline
-                    )
-                ],
-                wrap_lines=wrap_lines,
-            ),
+            HSplit([
+                ConditionalContainer(
+                    Window(
+                        TokenListControl(get_prompt_tokens_1),
+                        dont_extend_height=True),
+                    filter=multiline,
+                ),
+                Window(
+                    BufferControl(
+                        input_processors=input_processors,
+                        lexer=lexer,
+                        # Enable preview_search, we want to have immediate feedback
+                        # in reverse-i-search mode.
+                        preview_search=True),
+                    get_height=get_height,
+                    left_margins=[
+                        # In multiline mode, use the window margin to display
+                        # the prompt and continuation tokens.
+                        ConditionalMargin(
+                            PromptMargin(get_prompt_tokens_2, get_continuation_tokens),
+                            filter=multiline
+                        )
+                    ],
+                    wrap_lines=wrap_lines,
+                ),
+            ]),
             [
                 # Completion menus.
                 Float(xcursor=True,
