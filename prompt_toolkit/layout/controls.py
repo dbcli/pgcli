@@ -210,7 +210,7 @@ class TokenListControl(UIControl):
         if default_char:
             get_default_char = lambda _: default_char
         elif not get_default_char:
-            get_default_char = lambda _: Char(' ', Token)
+            get_default_char = lambda _: Char(' ', Token.Transparent)
 
         self.get_default_char = get_default_char
 
