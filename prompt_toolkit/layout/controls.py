@@ -437,7 +437,6 @@ class BufferControl(UIControl):
         #: operations, it happens that a short time, the same document has to be
         #: lexed. This is a faily easy way to cache such an expensive operation.
         self._token_cache = SimpleCache(maxsize=8)
-        self._processed_token_cache = SimpleCache(maxsize=8)
 
         self._xy_to_cursor_position = None
         self._last_click_timestamp = None
