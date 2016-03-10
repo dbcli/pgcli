@@ -253,7 +253,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
     # (Only for single line mode.)
     # (DefaultPrompt should always be at the end of the processors.)
     input_processors.append(ConditionalProcessor(
-        DefaultPrompt(get_prompt_tokens), ~multiline))
+        DefaultPrompt(get_prompt_tokens_2), ~multiline))
 
     # Create bottom toolbar.
     if get_bottom_toolbar_tokens:
@@ -278,12 +278,9 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
         # The main input, with completion menus floating on top of it.
         FloatContainer(
             HSplit([
-                ConditionalContainer(
-                    Window(
-                        TokenListControl(get_prompt_tokens_1),
-                        dont_extend_height=True),
-                    filter=multiline,
-                ),
+                Window(
+                    TokenListControl(get_prompt_tokens_1),
+                    dont_extend_height=True),
                 Window(
                     BufferControl(
                         input_processors=input_processors,
