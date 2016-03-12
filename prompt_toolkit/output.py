@@ -20,6 +20,10 @@ class Output(with_metaclass(ABCMeta, object)):
     :class:`~prompt_toolkit.terminal.win32_output.Win32Output`.
     """
     @abstractmethod
+    def fileno(self):
+        " Return the file descriptor to which we can write for the output. "
+
+    @abstractmethod
     def write(self, data):
         " Write text (Terminal escape sequences will be removed/escaped.) "
 

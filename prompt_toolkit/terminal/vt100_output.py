@@ -354,6 +354,10 @@ class Vt100_Output(Output):
 
         return cls(stdout, get_size, true_color=true_color, term=term)
 
+    def fileno(self):
+        " Return file descriptor. "
+        return self.stdout.fileno()
+
     def write_raw(self, data):
         """
         Write raw data to output.

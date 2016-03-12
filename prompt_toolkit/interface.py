@@ -13,17 +13,20 @@ import threading
 import weakref
 import datetime
 
+from subprocess import Popen
+
 from .application import Application, AbortAction
 from .buffer import Buffer
 from .buffer_mapping import BufferMapping
-from .completion import CompleteEvent
-from .completion import get_common_complete_suffix
+from .completion import CompleteEvent, get_common_complete_suffix
 from .enums import SEARCH_BUFFER
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
 from .filters import Condition
 from .input import StdinInput, Input
 from .key_binding.input_processor import InputProcessor
+from .key_binding.registry import Registry
+from .keys import Keys
 from .output import Output
 from .renderer import Renderer, print_tokens
 from .search_state import SearchState
@@ -598,16 +601,47 @@ class CommandLineInterface(object):
 
         :param command: Shell command to be executed.
         """
-        def run():
-            if is_windows():
-                os.system(command)  # Needs to be unicode for win32
-            else:
-                os.system(command.encode('utf-8'))
+        def wait_for_enter():
+            """
+            Create a sub application to wait for the enter key press.
+            This has two advantages over using 'input'/'raw_input':
+            - This will share the same input/output I/O.
+            - This doesn't block the event loop.
+            """
+            from .shortcuts import create_prompt_application
 
+            registry = Registry()
+
+            @registry.add_binding(Keys.ControlJ)
+            @registry.add_binding(Keys.ControlM)
+            def _(event):
+                event.cli.set_return_value(None)
+
+            application = create_prompt_application(
+                message='Press ENTER to continue...',
+                key_bindings_registry=registry)
+            self.run_sub_application(application)
+
+        def run():
+            # Try to use the same input/output file descriptors as the one,
+            # used to run this application.
             try:
-                six.moves.input('\nPress ENTER to continue...')
-            except EOFError:
-                pass
+                input_fd = self.input.fileno()
+            except AttributeError:
+                input_fd = sys.stdin.fileno()
+            try:
+                output_fd = self.output.fileno()
+            except AttributeError:
+                output_fd = sys.stdout.fileno()
+
+            # Run sub process.
+            # XXX: This will still block the event loop.
+            p = Popen(command, shell=True,
+                      stdin=input_fd, stdout=output_fd)
+            p.wait()
+
+            # Wait for the user to press enter.
+            wait_for_enter()
 
         self.run_in_terminal(run)
 

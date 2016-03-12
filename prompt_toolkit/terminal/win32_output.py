@@ -83,6 +83,10 @@ class Win32Output(Output):
         if _DEBUG_RENDER_OUTPUT:
             self.LOG = open(_DEBUG_RENDER_OUTPUT_FILENAME, 'ab')
 
+    def fileno(self):
+        " Return file descriptor. "
+        return self.stdout.fileno()
+
     def write(self, data):
         self._buffer.append(data)
 
