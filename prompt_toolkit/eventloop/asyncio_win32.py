@@ -66,6 +66,8 @@ class Win32AsyncioEventLoop(EventLoop):
         # was not created here.
         self.closed = True
 
+        self._console_input_reader.close()
+
     def run_in_executor(self, callback):
         self.loop.run_in_executor(None, callback)
 

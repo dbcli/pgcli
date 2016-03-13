@@ -15,6 +15,7 @@ from .utils import TimeIt
 from ctypes import windll, pointer
 from ctypes.wintypes import DWORD, BOOL, HANDLE
 
+import msvcrt
 import threading
 
 __all__ = (
@@ -38,6 +39,9 @@ class Win32EventLoop(EventLoop):
 
         self.closed = False
         self._running = False
+
+        # Additional readers.
+        self._read_fds = {} # Maps fd to handler.
 
         # Create inputhook context.
         self._inputhook_context = InputHookContext(inputhook) if inputhook else None
@@ -79,6 +83,9 @@ class Win32EventLoop(EventLoop):
                 windll.kernel32.ResetEvent(self._event)
                 self._process_queued_calls_from_executor()
 
+            elif handle in self._read_fds:
+                callback = self._read_fds[handle]
+                callback()
             else:
                 # Fire input timeout event.
                 callbacks.input_timeout()
@@ -88,8 +95,9 @@ class Win32EventLoop(EventLoop):
         """
         Return the handle that is ready for reading or `None` on timeout.
         """
-        return _wait_for_handles([self._event, self._console_input_reader.handle],
-                                   timeout)
+        handles = [self._event, self._console_input_reader.handle]
+        handles.extend(self._read_fds.keys())
+        return _wait_for_handles(handles, timeout)
 
     def stop(self):
         self._running = False
@@ -102,6 +110,8 @@ class Win32EventLoop(EventLoop):
 
         if self._inputhook_context:
             self._inputhook_context.close()
+
+        self._console_input_reader.close()
 
     def run_in_executor(self, callback):
         """
@@ -135,11 +145,14 @@ class Win32EventLoop(EventLoop):
 
     def add_reader(self, fd, callback):
         " Start watching the file descriptor for read availability. "
-        raise NotImplementedError
+        h = msvcrt.get_osfhandle(fd)
+        self._read_fds[h] = callback
 
     def remove_reader(self, fd):
         " Stop watching the file descriptor for read availability. "
-        raise NotImplementedError
+        h = msvcrt.get_osfhandle(fd)
+        if h in self._read_fds:
+            del self._read_fds[h]
 
 
 def _wait_for_handles(handles, timeout=-1):

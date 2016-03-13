@@ -6,6 +6,10 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.mouse_events import MouseEventTypes
 from prompt_toolkit.win32_types import EventTypes, KEY_EVENT_RECORD, MOUSE_EVENT_RECORD, INPUT_RECORD, STD_INPUT_HANDLE
 
+import msvcrt
+import os
+import sys
+
 __all__ = (
     'ConsoleInputReader',
     'raw_mode',
@@ -94,7 +98,20 @@ class ConsoleInputReader(object):
     RIGHT_CTRL_PRESSED = 0x0004
 
     def __init__(self):
-        self.handle = windll.kernel32.GetStdHandle(STD_INPUT_HANDLE)
+        self._fdcon = None
+
+        # When stdin is a tty, use that handle, otherwise, create a handle from
+        # CONIN$.
+        if sys.stdin.isatty():
+            self.handle = windll.kernel32.GetStdHandle(STD_INPUT_HANDLE)
+        else:
+            self._fdcon = os.open('CONIN$', os.O_RDWR | os.O_BINARY)
+            self.handle = msvcrt.get_osfhandle(self._fdcon)
+
+    def close(self):
+        " Close fdcon. "
+        if self._fdcon is not None:
+            os.close(self._fdcon)
 
     def read(self):
         """
