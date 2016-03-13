@@ -54,7 +54,9 @@ class CommandLineInterface(object):
 
     :param application: :class:`~prompt_toolkit.application.Application` instance.
     :param eventloop: The :class:`~prompt_toolkit.eventloop.base.EventLoop` to
-                      be used when `run` is called.
+                      be used when `run` is called. The easiest way to create
+                      an eventloop is by calling
+                      :meth:`~prompt_toolkit.shortcuts.create_eventloop`.
     :param input: :class:`~prompt_toolkit.input.Input` instance.
     :param output: :class:`~prompt_toolkit.output.Output` instance. (Probably
                    Vt100_Output or Win32Output.)
