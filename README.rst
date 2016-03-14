@@ -43,8 +43,8 @@ Some features:
 - Multiple input buffers.
 - No global state.
 - Lightweight, the only dependencies are Pygments, six and wcwidth.
-- Code written with love.
 - Runs on Linux, OS X, OpenBSD and Windows systems.
+- And much more...
 
 Feel free to create tickets for bugs and feature requests, and create pull
 requests if you have nice patches that you would like to share with others.
@@ -99,8 +99,9 @@ examples are chosen to demonstrate only one thing. Also, don't be afraid to
 look at the source code. The implementation of the ``prompt`` function could be
 a good start.
 
-Note: For Python 2, you need to add ``from __future__ import unicode_literals``
-to the above example. All strings are expected to be unicode strings.
+Note for Python 2: all strings are expected to be unicode strings. So, either
+put a small ``u`` in front of every string or put ``from __future__ import
+unicode_literals`` at the start of the above example.
 
 
 Projects using prompt-toolkit
