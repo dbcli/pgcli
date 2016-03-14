@@ -10,6 +10,31 @@ About the version numbering:
     to a <breaking>.<feature>.<fix> style of numbering.
 
 
+0.60: 2016-03-14
+----------------
+
+Fixes:
+- Fix in Document.paste. (The screen was not updated after an undo of a paste.)
+- Don't use deprecated inspect.getargspec on Python 3.
+- Fixed reading input on Windows when input was piped in stdin.
+- Use correct file descriptors for input/output in run_system_command.
+- Always correctly split prompt in shortcuts.prompt. (Even when multiline=False)
+- Correctly align right prompt to the top when the left prompt consists of
+  multiple lines.
+- Correctly use Token.Transparent as default token for a TokenListControl.
+- Fix in syntax synchronisation. (Better handle the case when no
+  synchronisation point was found.)
+- Send SIGTSTP to the whole process group.
+- Correctly raise on_buffer_changed on all text changes.
+- Fix in regular_languages.GrammarLexer. (Fixes bug in ptipython syntax
+  highlighting.)
+
+New features:
+- Add support for additional readers to the Win32 event loop.
+- Added on_render event.
+- Carry the weight in layout dimensions to allow stretching.
+
+
 0.59: 2016-02-27
 ----------------
 

@@ -19,4 +19,4 @@ from .shortcuts import prompt
 
 
 # Don't forget to update in `docs/conf.py`!
-__version__ = '0.59'
+__version__ = '0.60'
