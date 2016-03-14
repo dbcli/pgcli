@@ -72,7 +72,7 @@ class FilterTest(unittest.TestCase):
                 c2 = Condition(lambda: b)
                 c3 = c1 | c2
 
-                self.assertIsInstance(c3, Filter)
+                self.assertTrue(isinstance(c3, Filter))
                 self.assertEqual(c3(), a or b)
 
     def test_and(self):
@@ -82,34 +82,34 @@ class FilterTest(unittest.TestCase):
                 c2 = Condition(lambda: b)
                 c3 = c1 & c2
 
-                self.assertIsInstance(c3, Filter)
+                self.assertTrue(isinstance(c3, Filter))
                 self.assertEqual(c3(), a and b)
 
     def test_cli_filter(self):
         c1 = Condition(lambda cli: True)
-        self.assertIsInstance(c1, CLIFilter)
-        self.assertNotIsInstance(c1, SimpleFilter)
+        self.assertTrue(isinstance(c1, CLIFilter))
+        self.assertFalse(isinstance(c1, SimpleFilter))
 
         c2 = Condition(lambda: True)
-        self.assertNotIsInstance(c2, CLIFilter)
-        self.assertIsInstance(c2, SimpleFilter)
+        self.assertFalse(isinstance(c2, CLIFilter))
+        self.assertTrue(isinstance(c2, SimpleFilter))
 
         c3 = c1 | c2
-        self.assertNotIsInstance(c3, CLIFilter)
-        self.assertNotIsInstance(c3, SimpleFilter)
+        self.assertFalse(isinstance(c3, CLIFilter))
+        self.assertFalse(isinstance(c3, SimpleFilter))
 
         c4 = Condition(lambda cli: True)
         c5 = Condition(lambda cli: True)
         c6 = c4 & c5
         c7 = c4 | c5
-        self.assertIsInstance(c6, CLIFilter)
-        self.assertIsInstance(c7, CLIFilter)
-        self.assertNotIsInstance(c6, SimpleFilter)
-        self.assertNotIsInstance(c7, SimpleFilter)
+        self.assertTrue(isinstance(c6, CLIFilter))
+        self.assertTrue(isinstance(c7, CLIFilter))
+        self.assertFalse(isinstance(c6, SimpleFilter))
+        self.assertFalse(isinstance(c7, SimpleFilter))
 
         c8 = Condition(lambda *args: True)
-        self.assertIsInstance(c8, CLIFilter)
-        self.assertIsInstance(c8, SimpleFilter)
+        self.assertTrue(isinstance(c8, CLIFilter))
+        self.assertTrue(isinstance(c8, SimpleFilter))
 
     def test_to_cli_filter(self):
         f1 = to_cli_filter(True)
@@ -117,20 +117,17 @@ class FilterTest(unittest.TestCase):
         f3 = to_cli_filter(Condition(lambda cli: True))
         f4 = to_cli_filter(Condition(lambda cli: False))
 
-        self.assertIsInstance(f1, CLIFilter)
-        self.assertIsInstance(f2, CLIFilter)
-        self.assertIsInstance(f3, CLIFilter)
-        self.assertIsInstance(f4, CLIFilter)
+        self.assertTrue(isinstance(f1, CLIFilter))
+        self.assertTrue(isinstance(f2, CLIFilter))
+        self.assertTrue(isinstance(f3, CLIFilter))
+        self.assertTrue(isinstance(f4, CLIFilter))
         self.assertTrue(f1(None))
         self.assertFalse(f2(None))
         self.assertTrue(f3(None))
         self.assertFalse(f4(None))
 
-        with self.assertRaises(TypeError):
-            to_cli_filter(4)
-
-        with self.assertRaises(TypeError):
-            to_cli_filter(Condition(lambda: True))
+        self.assertRaises(TypeError, to_cli_filter, 4)
+        self.assertRaises(TypeError, to_cli_filter, Condition(lambda: True))
 
     def test_to_simple_filter(self):
         f1 = to_simple_filter(True)
@@ -138,22 +135,19 @@ class FilterTest(unittest.TestCase):
         f3 = to_simple_filter(Condition(lambda: True))
         f4 = to_simple_filter(Condition(lambda: False))
 
-        self.assertIsInstance(f1, SimpleFilter)
-        self.assertIsInstance(f2, SimpleFilter)
-        self.assertIsInstance(f3, SimpleFilter)
-        self.assertIsInstance(f4, SimpleFilter)
+        self.assertTrue(isinstance(f1, SimpleFilter))
+        self.assertTrue(isinstance(f2, SimpleFilter))
+        self.assertTrue(isinstance(f3, SimpleFilter))
+        self.assertTrue(isinstance(f4, SimpleFilter))
         self.assertTrue(f1())
         self.assertFalse(f2())
         self.assertTrue(f3())
         self.assertFalse(f4())
 
-        with self.assertRaises(TypeError):
-            to_simple_filter(4)
-
-        with self.assertRaises(TypeError):
-            to_simple_filter(Condition(lambda cli: True))
+        self.assertRaises(TypeError, to_simple_filter, 4)
+        self.assertRaises(TypeError, to_simple_filter, Condition(lambda cli: True))
 
     def test_cli_filters(self):
-        self.assertIsInstance(HasArg(), CLIFilter)
-        self.assertIsInstance(HasFocus('BUFFER_NAME'), CLIFilter)
-        self.assertIsInstance(HasSelection(), CLIFilter)
+        self.assertTrue(isinstance(HasArg(), CLIFilter))
+        self.assertTrue(isinstance(HasFocus('BUFFER_NAME'), CLIFilter))
+        self.assertTrue(isinstance(HasSelection(), CLIFilter))
