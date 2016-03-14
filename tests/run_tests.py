@@ -10,6 +10,7 @@ from layout_tests import *
 from regular_languages_tests import *
 from style_tests import *
 from utils_tests import *
+from filter_tests import *
 
 import unittest
 

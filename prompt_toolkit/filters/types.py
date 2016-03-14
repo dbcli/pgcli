@@ -1,20 +1,20 @@
 from __future__ import unicode_literals
-from inspect import ArgSpec
 from six import with_metaclass
+import inspect
 
 __all__ = (
     'CLIFilter',
     'SimpleFilter',
-    'check_signatures_are_equal',
+    'test_callable_args',
 )
+
 
 class _FilterTypeMeta(type):
     def __instancecheck__(cls, instance):
-        if not hasattr(instance, 'getargspec'):
+        if not hasattr(instance, 'test_args'):
             return False
 
-        arguments = _drop_self(instance.getargspec())
-        return arguments.args == cls.arguments_list or arguments.varargs is not None
+        return instance.test_args(*cls.arguments_list)
 
 
 class _FilterType(with_metaclass(_FilterTypeMeta)):
@@ -40,24 +40,38 @@ class SimpleFilter(_FilterType):
     arguments_list = []
 
 
-def _drop_self(spec):
+def test_callable_args(func, args):
     """
-    Take an argspec and return a new one without the 'self'.
+    Return True when this function can be called with the given arguments.
     """
-    args, varargs, varkw, defaults = spec
-    if args[0:1] == ['self']:
-        args = args[1:]
-    return ArgSpec(args, varargs, varkw, defaults)
+    signature = getattr(inspect, 'signature', None)
 
+    if signature is not None:
+        # For Python 3, use inspect.signature.
+        sig = signature(func)
+        try:
+            sig.bind(*args)
+        except TypeError:
+            return False
+        else:
+            return True
+    else:
+        # For older Python versions, fall back to using getargspec.
+        spec = inspect.getargspec(func)
 
-def check_signatures_are_equal(lst):
-    """
-    Check whether all filters in this list have the same signature.
-    Raises `TypeError` if not.
-    """
-    spec = _drop_self(lst[0].getargspec())
+        # Drop the 'self'
+        def drop_self(spec):
+            args, varargs, varkw, defaults = spec
+            if args[0:1] == ['self']:
+                args = args[1:]
+            return inspect.ArgSpec(args, varargs, varkw, defaults)
 
-    for f in lst[1:]:
-        if _drop_self(f.getargspec()) != spec:
-            raise TypeError('Trying to chain filters with different signature: %r and %r' %
-                            (lst[0], f))
+        spec = drop_self(spec)
+
+        # When taking *args, always return True.
+        if spec.varargs is not None:
+            return True
+
+        # Test whether the given amount of args is between the min and max
+        # accepted argument counts.
+        return len(spec.args) - len(spec.defaults or []) <= len(args) <= len(spec.args)

@@ -1,9 +1,9 @@
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
-from .types import check_signatures_are_equal
 
-import inspect
+from .types import test_callable_args
+
 
 __all__ = (
     'Filter',
@@ -68,12 +68,11 @@ class Filter(with_metaclass(ABCMeta, object)):
 
     __nonzero__ = __bool__  # For Python 2.
 
-    def getargspec(self):
+    def test_args(self, *args):
         """
-        Return an Arguments object for this filter. This is used for type
-        checking.
+        Test whether this filter can be called with the following argument list.
         """
-        return inspect.getargspec(self.__call__)
+        return test_callable_args(self.__call__, args)
 
 
 class _AndCache(dict):
@@ -131,13 +130,10 @@ class _AndList(Filter):
             else:
                 all_filters.append(f)
 
-        # Make sure that all chained filters have the same signature.
-        check_signatures_are_equal(all_filters)
-
         self.filters = all_filters
 
-    def getargspec(self):
-        return self.filters[0].getargspec()
+    def test_args(self, *args):
+        return all(f.test_args(*args) for f in self.filters)
 
     def __call__(self, *a, **kw):
         return all(f(*a, **kw) for f in self.filters)
@@ -159,13 +155,10 @@ class _OrList(Filter):
             else:
                 all_filters.append(f)
 
-        # Make sure that all chained filters have the same signature.
-        check_signatures_are_equal(all_filters)
-
         self.filters = all_filters
 
-    def getargspec(self):
-        return self.filters[0].getargspec()
+    def test_args(self, *args):
+        return all(f.test_args(*args) for f in self.filters)
 
     def __call__(self, *a, **kw):
         return any(f(*a, **kw) for f in self.filters)
@@ -187,8 +180,8 @@ class _Invert(Filter):
     def __repr__(self):
         return '~%r' % self.filter
 
-    def getargspec(self):
-        return self.filter.getargspec()
+    def test_args(self, *args):
+        return self.filter.test_args(*args)
 
 
 class Always(Filter):
@@ -238,5 +231,5 @@ class Condition(Filter):
     def __repr__(self):
         return 'Condition(%r)' % self.func
 
-    def getargspec(self):
-        return inspect.getargspec(self.func)
+    def test_args(self, *a):
+        return test_callable_args(self.func, a)
