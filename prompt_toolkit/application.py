@@ -114,7 +114,12 @@ class Application(object):
         self.layout = layout or Window(BufferControl())
 
         # Make sure that the 'buffers' dictionary is a BufferMapping.
-        self.buffer = buffer or Buffer(accept_action=AcceptAction.RETURN_DOCUMENT)
+        # NOTE: If no buffer is given, we create a default Buffer, with IGNORE as
+        #       default accept_action. This is what makes sense for most users
+        #       creating full screen applications. Doing nothing is the obvious
+        #       default. Those creating a REPL would use the shortcuts module that
+        #       passes in RETURN_DOCUMENT.
+        self.buffer = buffer or Buffer(accept_action=AcceptAction.IGNORE)
         if not buffers or not isinstance(buffers, BufferMapping):
             self.buffers = BufferMapping(buffers, initial=initial_focussed_buffer)
         else:
