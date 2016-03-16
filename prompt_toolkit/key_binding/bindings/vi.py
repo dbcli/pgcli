@@ -977,7 +977,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
         b = event.current_buffer
 
-        if w:
+        if w and w.render_info:
             # When we find a Window that has BufferControl showing this window,
             # move to the start of the visible area.
             pos = (b.document.translate_row_col_to_index(
@@ -998,7 +998,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
         b = event.current_buffer
 
-        if w:
+        if w and w.render_info:
             # When we find a Window that has BufferControl showing this window,
             # move to the center of the visible area.
             pos = (b.document.translate_row_col_to_index(
@@ -1018,7 +1018,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
         b = event.current_buffer
 
-        if w:
+        if w and w.render_info:
             # When we find a Window that has BufferControl showing this window,
             # move to the end of the visible area.
             pos = (b.document.translate_row_col_to_index(
