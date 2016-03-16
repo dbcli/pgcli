@@ -63,14 +63,14 @@ class CommandLineInterface(object):
     """
     def __init__(self, application, eventloop=None, input=None, output=None):
         assert isinstance(application, Application)
-        assert eventloop is None or isinstance(eventloop, EventLoop)
+        assert isinstance(eventloop, EventLoop)
         assert output is None or isinstance(output, Output)
         assert input is None or isinstance(input, Input)
 
-        from .shortcuts import create_output, create_eventloop
+        from .shortcuts import create_output
 
         self.application = application
-        self.eventloop = eventloop or create_eventloop()
+        self.eventloop = eventloop
         self._is_running = False
 
         # Inputs and outputs.
