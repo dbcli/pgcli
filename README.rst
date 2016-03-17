@@ -122,6 +122,7 @@ Shells:
 - `aws-shell <https://github.com/awslabs/aws-shell>`_: An integrated shell for working with the AWS CLI.
 - `softlayer-python <https://github.com/softlayer/softlayer-python>`_: A command-line interface to manage various SoftLayer products and services.
 - `ipython <http://github.com/ipython/ipython/>`_: The IPython REPL
+- `click-repl <https://github.com/click-contrib/click-repl>`_: Subcommand REPL for click apps.
 
 Full screen applications:
 
