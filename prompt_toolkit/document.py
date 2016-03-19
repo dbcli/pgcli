@@ -566,7 +566,7 @@ class Document(object):
         user pressed the arrow-up button.
         """
         assert count >= 1
-        if self.cursor_position_row > 0:
+        if self.cursor_position_row >= count:
             return self.translate_row_col_to_index(
                 self.cursor_position_row - count, self.cursor_position_col) - self.cursor_position
         else:
