@@ -8,6 +8,7 @@ from .lexers import SimpleLexer
 from .dimension import LayoutDimension
 from .controls import BufferControl, TokenListControl, UIControl, UIContent
 from .containers import Window, ConditionalContainer
+from .screen import Char
 from .utils import token_list_len
 from prompt_toolkit.enums import SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import HasFocus, HasArg, HasCompletions, HasValidationError, HasSearch, Always, IsDone
@@ -34,9 +35,13 @@ class TokenListToolbar(ConditionalContainer):
 
 class SystemToolbarControl(BufferControl):
     def __init__(self):
+        token = Token.Toolbar.System
+
         super(SystemToolbarControl, self).__init__(
             buffer_name=SYSTEM_BUFFER,
-            input_processors=[BeforeInput.static('Shell command: ', Token.Toolbar.System)],)
+            default_char=Char(token=token),
+            lexer=SimpleLexer(default_token=token.Text),
+            input_processors=[BeforeInput.static('Shell command: ', token)],)
 
 
 class SystemToolbar(ConditionalContainer):
@@ -88,6 +93,7 @@ class SearchToolbarControl(BufferControl):
         super(SearchToolbarControl, self).__init__(
             buffer_name=SEARCH_BUFFER,
             input_processors=[BeforeInput(get_before_input)],
+            default_char=Char(token=token),
             lexer=SimpleLexer(default_token=token.Text))
 
 

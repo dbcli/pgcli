@@ -41,6 +41,7 @@ DEFAULT_STYLE_EXTENSIONS = {
 
     # System toolbar
     Token.Toolbar.System:                         'bold',
+    Token.Toolbar.System.Text:                    'nobold',
 
     # "arg" toolbar.
     Token.Toolbar.Arg:                            'bold',
