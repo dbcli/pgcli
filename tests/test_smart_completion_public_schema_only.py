@@ -379,6 +379,14 @@ def test_table_names_after_from(completer, complete_event):
         Completion(text='set_returning_func', start_position=0, display_meta='function')
         ])
 
+def test_table_names_after_from_are_lexical_ordered_by_text(completer, complete_event):
+    text = 'SELECT * FROM '
+    position = len('SELECT * FROM ')
+    result = completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event)
+    assert result == sorted(result, key=lambda c: c.text)
+
 def test_auto_escaped_col_names(completer, complete_event):
     text = 'SELECT  from "select"'
     position = len('SELECT ')
@@ -498,8 +506,8 @@ def test_join_functions_on_suggests_columns(completer, complete_event):
     assert set(result) == set([
          Completion(text='x', start_position=0, display_meta='column'),
          Completion(text='y', start_position=0, display_meta='column')])
-    
-    
+
+
 def test_learn_keywords(completer, complete_event):
     sql = 'CREATE VIEW v AS SELECT 1'
     completer.extend_query_history(sql)
