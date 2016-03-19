@@ -12,19 +12,19 @@ the changes and create the commits in your local machine. Then push those
 changes to your fork. Then click on the pull request icon on github and create
 a new pull request. Add a description about the change and send it along. I
 promise to review the pull request in a reasonable window of time and get back
-to you. 
+to you.
 
 In order to keep your fork up to date with any changes from mainline, add a new
 git remote to your local copy called 'upstream' and point it to the main pgcli
 repo.
 
-:: 
+::
 
    $ git remote add upstream git@github.com:dbcli/pgcli.git
 
 Once the 'upstream' end point is added you can then periodically do a ``git
 pull upstream master`` to update your local copy and then do a ``git push
-origin master`` to keep your own fork up to date. 
+origin master`` to keep your own fork up to date.
 
 Local Setup
 -----------
@@ -60,7 +60,7 @@ working folder into the virtualenv. By installing it using `pip install -e`
 we've linked the pgcli installation with the working copy. So any changes made
 to the code is immediately available in the installed version of pgcli. This
 makes it easy to change something in the code, launch pgcli and check the
-effects of your change. 
+effects of your change.
 
 Adding PostgreSQL Special (Meta) Commands
 -----------------------------------------
@@ -90,7 +90,7 @@ Building RPM and DEB packages
 
 You will need Vagrant 1.7.2 or higher. In the project root there is a
 Vagrantfile that is setup to do multi-vm provisioning. If you're setting things
-up for the first time, then do: 
+up for the first time, then do:
 
 ::
 
@@ -98,21 +98,21 @@ up for the first time, then do:
     $ version=x.y.z vagrant up centos
 
 If you already have those VMs setup and you're merely creating a new version of
-DEB or RPM package, then you can do: 
+DEB or RPM package, then you can do:
 
 ::
 
     $ version=x.y.z vagrant provision
 
-That will create a .deb file and a .rpm file. 
+That will create a .deb file and a .rpm file.
 
 The deb package can be installed as follows:
 
 ::
 
     $ sudo dpkg -i pgcli*.deb   # if dependencies are available.
-    
-    or 
+
+    or
 
     $ sudo apt-get install -f pgcli*.deb  # if dependencies are not available.
 
@@ -131,7 +131,7 @@ Configuration settings for this package are provided via ``behave.ini`` file
 in root directory.
 
 The database user (``pg_test_user = postgres`` in .ini file) has to have
-permissions to create and drop test database. Dafault user is ``postgres``
+permissions to create and drop test database. Default user is ``postgres``
 at ``localhost``, without the password (authentication mode trust).
 
 First, install the requirements for testing:
