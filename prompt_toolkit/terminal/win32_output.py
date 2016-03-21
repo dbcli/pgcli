@@ -456,6 +456,7 @@ class ColorLookupTable(object):
             (0xff, 0x44, 0xff, FG.MAGENTA | FG.INTENSITY, BG.MAGENTA | BG.INTENSITY),
             (0xff, 0xff, 0x44, FG.YELLOW | FG.INTENSITY, BG.YELLOW | BG.INTENSITY),
 
+            (0x44, 0x44, 0x44, FG.BLACK | FG.INTENSITY, BG.BLACK | BG.INTENSITY),
             (0xff, 0xff, 0xff, FG.GRAY | FG.INTENSITY, BG.GRAY | BG.INTENSITY),
         ]
 
