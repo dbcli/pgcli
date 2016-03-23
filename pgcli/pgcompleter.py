@@ -257,8 +257,10 @@ class PGCompleter(Completer):
                 # tiebreaking items with the same match group length and start
                 # position. Since we use *higher* priority to mean "more
                 # important," we use -ord(c) to prioritize "aa" > "ab" and end
-                # with 1 to prioritize shorter strings (ie "user" > "users")
-                lexical_priority = tuple(-ord(c) for c in item) + (1,)
+                # with 1 to prioritize shorter strings (ie "user" > "users").
+                # We also use the unescape_name to make sure quoted names have
+                # the same priority as unquoted names.
+                lexical_priority = tuple(-ord(c) for c in self.unescape_name(item)) + (1,)
 
                 priority = sort_key, priority_func(item), lexical_priority
 

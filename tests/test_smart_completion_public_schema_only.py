@@ -385,7 +385,14 @@ def test_table_names_after_from_are_lexical_ordered_by_text(completer, complete_
     result = completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event)
-    assert result == sorted(result, key=lambda c: c.text)
+    assert [c.text for c in result] == [
+        'orders',
+        'public',
+        '"select"',
+        'set_returning_func',
+        'user_emails',
+        'users'
+        ]
 
 def test_auto_escaped_col_names(completer, complete_event):
     text = 'SELECT  from "select"'
