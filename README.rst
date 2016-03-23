@@ -114,7 +114,7 @@ Shells:
 - `pgcli <http://pgcli.com/>`_: Postgres client.
 - `mycli <http://mycli.net>`_: MySql client.
 - `wharfee <http://wharfee.com/>`_: A Docker command line.
-- `xonsh <http://xonsh.org/>`_: A Python-ish, BASHwards-compatible shell.
+- `xonsh <http://xon.sh/>`_: A Python-ish, BASHwards-compatible shell.
 - `saws <https://github.com/donnemartin/saws>`_: A Supercharged AWS Command Line Interface.
 - `cycli <https://github.com/nicolewhite/cycli>`_:  A Command Line Interface for Cypher.
 - `crash <https://github.com/crate/crash>`_:  Crate command line client.
