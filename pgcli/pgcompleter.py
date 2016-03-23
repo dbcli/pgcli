@@ -223,7 +223,7 @@ class PGCompleter(Completer):
             pat = re.compile('(%s)' % regex)
 
             def _match(item):
-                r = pat.search(self.unescape_name(item))
+                r = pat.search(self.unescape_name(item.lower()))
                 if r:
                     return -len(r.group()), -r.start()
         else:
