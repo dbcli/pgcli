@@ -74,3 +74,16 @@ def test_should_break_ties_using_lexical_order(completer, collection):
     matches = completer.find_matches(text, collection)
 
     assert matches[1].priority > matches[0].priority
+
+def test_matching_should_be_case_insensitive(completer):
+    """Fuzzy matching should keep matches even if letter casing doesn't match.
+
+    This test checks that variations of the text which have different casing
+    are still matched.
+    """
+
+    text = 'foo'
+    collection = ['Foo', 'FOO', 'fOO']
+    matches = completer.find_matches(text, collection)
+
+    assert len(matches) == 3
