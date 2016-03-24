@@ -35,6 +35,8 @@ NamedQuery = namedtuple('NamedQuery', [])
 Datatype = namedtuple('Datatype', ['schema'])
 Alias = namedtuple('Alias', ['aliases'])
 
+Path = namedtuple('Path', [])
+
 
 def suggest_type(full_text, text_before_cursor):
     """Takes the full_text that is typed so far and also the text before the
@@ -43,6 +45,9 @@ def suggest_type(full_text, text_before_cursor):
     Returns a tuple with a type of entity ('table', 'column' etc) and a scope.
     A scope for a column category will be a list of tables.
     """
+
+    if full_text.startswith('\\i '):
+        return (Path(),)
 
     word_before_cursor = last_word(text_before_cursor,
             include='many_punctuations')
@@ -277,7 +282,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
 
     elif (token_v.endswith('join') and token.is_keyword) or (token_v in
             ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
-        
+
         schema = (identifier and identifier.get_parent_name()) or None
 
         # Suggest tables from either the currently-selected schema or the
@@ -291,7 +296,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         # Only tables can be TRUNCATED, otherwise suggest views
         if token_v != 'truncate':
             suggest.append(View(schema=schema))
-            
+
         # Suggest set-returning functions in the FROM clause
         if token_v == 'from' or (token_v.endswith('join') and token.is_keyword):
             suggest.append(Function(schema=schema, filter='is_set_returning'))

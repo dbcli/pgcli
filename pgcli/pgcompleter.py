@@ -3,12 +3,13 @@ import logging
 import re
 import itertools
 import operator
+import os
 from collections import namedtuple
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from .packages.sqlcompletion import (
     suggest_type, Special, Database, Schema, Table, Function, Column, View,
-    Keyword, NamedQuery, Datatype, Alias)
+    Keyword, NamedQuery, Datatype, Alias, Path)
 from .packages.parseutils import last_word
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
@@ -180,7 +181,7 @@ class PGCompleter(Completer):
         self.all_completions = set(self.keywords + self.functions)
 
     def find_matches(self, text, collection, mode='fuzzy',
-                     meta=None, meta_collection=None):
+                     meta=None, meta_collection=None, last_word_include='most_punctuations'):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -196,7 +197,7 @@ class PGCompleter(Completer):
 
         """
 
-        text = last_word(text, include='most_punctuations').lower()
+        text = last_word(text, include=last_word_include).lower()
         text_len = len(text)
 
         if text and text[0] == '"':
@@ -383,6 +384,23 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, self.keywords,
                                  mode='strict', meta='keyword')
 
+    def get_path_matches(self, _, word_before_cursor):
+        dirname, basename = os.path.split(word_before_cursor)
+        abs_dirname = os.path.abspath(os.path.expanduser(dirname))
+        collection = []
+        dir_or_file = []
+        if os.path.lexists(abs_dirname):
+            for l in os.listdir(abs_dirname):
+                if os.path.isdir(os.path.join(abs_dirname, l)):
+                    collection.append(l + os.sep)
+                    dir_or_file.append('dir')
+                else:
+                    collection.append(l)
+                    dir_or_file.append('file')
+        return self.find_matches(basename, collection,
+                                 meta_collection=dir_or_file,
+                                 last_word_include="all_punctuations")
+
     def get_special_matches(self, _, word_before_cursor):
         if not self.pgspecial:
             return []
@@ -421,6 +439,7 @@ class PGCompleter(Completer):
         Special: get_special_matches,
         Datatype: get_datatype_matches,
         NamedQuery: get_namedquery_matches,
+        Path: get_path_matches,
     }
 
     def populate_scoped_cols(self, scoped_tbls):
