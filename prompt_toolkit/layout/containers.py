@@ -1044,7 +1044,8 @@ class Window(Container):
             self.vertical_scroll, self.horizontal_scroll,
             has_focus=self.content.has_focus(cli),
             wrap_lines=wrap_lines,
-            vertical_scroll_2=self.vertical_scroll_2)
+            vertical_scroll_2=self.vertical_scroll_2,
+            always_hide_cursor=self.always_hide_cursor(cli))
 
         # Remember render info. (Set before generating the margins. They need this.)
         x_offset=write_position.xpos + sum(left_margin_widths)
@@ -1146,7 +1147,8 @@ class Window(Container):
     @classmethod
     def _copy_body(cls, ui_content, new_screen, write_position, move_x,
                    width, vertical_scroll=0, horizontal_scroll=0,
-                   has_focus=False, wrap_lines=False, vertical_scroll_2=0):
+                   has_focus=False, wrap_lines=False, vertical_scroll_2=0,
+                   always_hide_cursor=False):
         """
         Copy the UIContent into the output screen.
         """
@@ -1246,7 +1248,11 @@ class Window(Container):
         if has_focus and ui_content.cursor_position:
             new_screen.cursor_position = cursor_pos_to_screen_pos(
                     ui_content.cursor_position.y, ui_content.cursor_position.x)
-            new_screen.show_cursor = ui_content.show_cursor
+
+            if always_hide_cursor:
+                new_screen.show_cursor = False
+            else:
+                new_screen.show_cursor = ui_content.show_cursor
 
         if not new_screen.menu_position and ui_content.menu_position:
             new_screen.menu_position = cursor_pos_to_screen_pos(
