@@ -85,3 +85,6 @@ Token.Toolbar.Arg.Text = 'nobold'
 # Named queries are queries you can execute by name.
 [named queries]
 
+# DNS to call by -D option
+[alias_dsn]
+# example_dsn = postgresql://[user[:password]@][netloc][:port][/dbname]
