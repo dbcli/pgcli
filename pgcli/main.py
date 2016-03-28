@@ -611,10 +611,12 @@ class PGCli(object):
         help='database name to connect to.')
 @click.option('--pgclirc', default=config_location() + 'config',
         envvar='PGCLIRC', help='Location of pgclirc file.')
+@click.option('-D', '--dsn', default='', envvar='DSN',
+        help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
-        username, version, pgclirc):
+        username, version, pgclirc, dsn):
 
     if version:
         print('Version:', __version__)
@@ -642,7 +644,17 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
     database = database or dbname
     user = username or user
 
-    if '://' in database:
+    if dsn is not '':
+        try:
+            cfg = load_config(config_full_path)
+            dsn_config = cfg['alias_dsn'][dsn]
+        except:
+            click.secho('Invalid DSNs found in the config file. '\
+                'Please check the "[alias_dsn]" section in pgclirc.',
+                 err=True, fg='red')
+            exit(1)
+        pgcli.connect_uri(dsn_config)
+    elif '://' in database:
         pgcli.connect_uri(database)
     elif "=" in database:
         pgcli.connect_dsn(database)
