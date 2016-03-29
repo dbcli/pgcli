@@ -75,16 +75,17 @@ class CursorRegion(object):
         else:
             return self.end, self.start
 
-    def operator_range(self, buffer):
+    def operator_range(self, document):
         """
         Return a (start, end) tuple with start <= end that indicates the range
         operators should operate on.
         `buffer` is used to get start and end of line positions.
         """
         start, end = self.sorted()
-        doc = buffer.document
+        doc = document
+
         if (self.type == CursorRegionType.EXCLUSIVE and
-                doc.translate_index_to_position(end + buffer.cursor_position)[1] == 0):
+                doc.translate_index_to_position(end + doc.cursor_position)[1] == 0):
             # If the motion is exclusive and the end of motion is on the first
             # column, the end position becomes end of previous line.
             end -= 1
@@ -92,10 +93,10 @@ class CursorRegion(object):
             end += 1
         if self.type == CursorRegionType.LINEWISE:
             # Select whole lines
-            row, col = doc.translate_index_to_position(start + buffer.cursor_position)
-            start = doc.translate_row_col_to_index(row, 0) - buffer.cursor_position
-            row, col = doc.translate_index_to_position(end + buffer.cursor_position)
-            end = doc.translate_row_col_to_index(row, len(doc.lines[row])) - buffer.cursor_position
+            row, col = doc.translate_index_to_position(start + doc.cursor_position)
+            start = doc.translate_row_col_to_index(row, 0) - doc.cursor_position
+            row, col = doc.translate_index_to_position(end + doc.cursor_position)
+            end = doc.translate_row_col_to_index(row, len(doc.lines[row])) - doc.cursor_position
         return start, end
 
 
@@ -725,7 +726,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
                     """ Apply transformation (uppercase, lowercase, rot13, swap case). """
                     region = func(event)
                     buffer = event.current_buffer
-                    start, end = region.operator_range(buffer)
+                    start, end = region.operator_range(buffer.document)
 
                     # Transform.
                     buffer.transform_region(
@@ -745,7 +746,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
                 region = func(event)
                 buffer = event.current_buffer
 
-                start, end = region.operator_range(buffer)
+                start, end = region.operator_range(buffer.document)
                 substring = buffer.text[buffer.cursor_position + start: buffer.cursor_position + end]
 
                 if substring:
@@ -761,7 +762,7 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
                     buffer = event.current_buffer
 
                     if region:
-                        start, end = region.operator_range(buffer)
+                        start, end = region.operator_range(buffer.document)
 
                         # Move to the start of the region.
                         buffer.cursor_position += start
