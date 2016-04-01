@@ -125,12 +125,14 @@ class Document(object):
     @property
     def current_line_before_cursor(self):
         """ Text from the start of the line until the cursor. """
-        return self.text_before_cursor.rsplit('\n', 1)[-1]
+        _, _, text = self.text_before_cursor.rpartition('\n')
+        return text
 
     @property
     def current_line_after_cursor(self):
         """ Text from the cursor until the end of the line. """
-        return self.text_after_cursor.split('\n', 1)[0]
+        text, _, _ = self.text_after_cursor.partition('\n')
+        return text
 
     @property
     def lines(self):
