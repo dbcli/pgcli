@@ -115,6 +115,7 @@ class PGCli(object):
         self.initialize_logging()
 
         self.set_default_pager(c)
+        self.output_file = None
         self.pgspecial = PGSpecial()
 
         self.multi_line = c['main'].as_bool('multi_line')
@@ -156,6 +157,8 @@ class PGCli(object):
                                 'Refresh auto-completions.', arg_type=NO_QUERY)
         self.pgspecial.register(self.execute_from_file, '\\i', '\\i filename',
                                 'Execute commands from file.')
+        self.pgspecial.register(self.write_to_file, '\\o', '\\o [filename]',
+                                'Send all query results to file.')
 
     def change_db(self, pattern, **_):
         if pattern:
@@ -181,6 +184,20 @@ class PGCli(object):
         return self.pgexecute.run(
             query, self.pgspecial, on_error_resume=on_error_resume
         )
+
+    def write_to_file(self, pattern, **_):
+        if not pattern:
+            self.output_file = None
+            return [(None, None, None, None, '', True)]
+        filename = os.path.abspath(os.path.expanduser(pattern))
+        if not os.path.isfile(filename):
+            try:
+                open(filename, 'w').close()
+            except IOError as e:
+                self.output_file = None
+                return [(None, None, None, str(e), '', False)]
+        self.output_file = filename
+        return [(None, None, None, None, '', True)]
 
     def initialize_logging(self):
 
@@ -361,7 +378,14 @@ class PGCli(object):
                     click.secho(str(e), err=True, fg='red')
                 else:
                     try:
-                        click.echo_via_pager('\n'.join(output))
+                        if self.output_file:
+                            try:
+                                with open(self.output_file, 'a') as f:
+                                    click.echo('\n'.join(output), file=f)
+                            except IOError as e:
+                                click.secho(str(e), err=True, fg='red')
+                        else:
+                            click.echo_via_pager('\n'.join(output))
                     except KeyboardInterrupt:
                         pass
 
