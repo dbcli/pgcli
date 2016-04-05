@@ -6,9 +6,11 @@ import operator
 from collections import namedtuple
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
+from prompt_toolkit.contrib.completers import PathCompleter
+from prompt_toolkit.document import Document
 from .packages.sqlcompletion import (
     suggest_type, Special, Database, Schema, Table, Function, Column, View,
-    Keyword, NamedQuery, Datatype, Alias)
+    Keyword, NamedQuery, Datatype, Alias, Path)
 from .packages.parseutils import last_word
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
@@ -383,6 +385,13 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, self.keywords,
                                  mode='strict', meta='keyword')
 
+    def get_path_matches(self, _, word_before_cursor):
+        completer = PathCompleter(expanduser=True)
+        document = Document(text=word_before_cursor,
+                            cursor_position=len(word_before_cursor))
+        for c in completer.get_completions(document, None):
+            yield Match(completion=c, priority = None)
+
     def get_special_matches(self, _, word_before_cursor):
         if not self.pgspecial:
             return []
@@ -421,6 +430,7 @@ class PGCompleter(Completer):
         Special: get_special_matches,
         Datatype: get_datatype_matches,
         NamedQuery: get_namedquery_matches,
+        Path: get_path_matches,
     }
 
     def populate_scoped_cols(self, scoped_tbls):
