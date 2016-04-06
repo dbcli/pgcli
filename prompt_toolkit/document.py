@@ -290,8 +290,12 @@ class Document(object):
             result = self._line_start_indexes[row]
             line = self.lines[row]
         except IndexError:
-            result = self._line_start_indexes[-1]
-            line = self.lines[-1]
+            if row < 0:
+                result = self._line_start_indexes[0]
+                line = self.lines[0]
+            else:
+                result = self._line_start_indexes[-1]
+                line = self.lines[-1]
 
         result += min(col, len(line))
 
