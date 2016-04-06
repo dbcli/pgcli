@@ -1214,7 +1214,8 @@ class Window(Container):
                             # (The empty string if different from everything,
                             # so next redraw this cell will repaint anyway.)
                             if char.width > 1:
-                                new_buffer_row[x + xpos + 1] = empty_char
+                                for i in range(1, char.width):
+                                    new_buffer_row[x + xpos + i] = empty_char
 
                             # Keep track of write position for each character.
                             rowcol_to_yx[lineno, col] = (y + ypos, x + xpos)

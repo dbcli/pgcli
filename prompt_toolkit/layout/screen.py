@@ -73,7 +73,18 @@ class Char(object):
 
         # Calculate width. (We always need this, so better to store it directly
         # as a member for performance.)
-        self.width = get_cwidth(char)
+        width = get_cwidth(char)
+        self.width = width
+
+        # When the character width is zero, display as {hexcode}.
+        # (This is useful for debugging, to visualise for instance a part of a
+        # decomposed unicode character, if that ends up in the buffer.)
+        # See: https://en.wikipedia.org/wiki/Unicode_equivalence
+        # If for some reason, people don't want it to be displayed like this,
+        # it's still possible to use a Processor.
+        if width == 0 and char:
+            self.char = '{%s}' % hex(ord(char))
+            self.width = get_cwidth(self.char)
 
     def __eq__(self, other):
         return self.char == other.char and self.token == other.token
