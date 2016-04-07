@@ -7,7 +7,7 @@ This is a postgres client that does auto-completion and syntax highlighting.
 
 Home Page: http://pgcli.com
 
-MySQL Equivalent: http://mysql-cli.com
+MySQL Equivalent: http://mycli.net
 
 .. image:: screenshots/pgcli.gif
 .. image:: screenshots/image01.png
