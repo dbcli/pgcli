@@ -1192,9 +1192,10 @@ class Window(Container):
                     new_buffer_row = new_buffer[y + ypos]
                     for c in text:
                         char = _CHAR_CACHE[c, token]
+                        char_width = char.width
 
                         # Wrap when the line width is exceeded.
-                        if wrap_lines and x + char.width > width:
+                        if wrap_lines and x + char_width > width:
                             visible_line_to_row_col[y + 1] = (
                                 lineno, visible_line_to_row_col[y][1] + x)
                             y += 1
@@ -1209,13 +1210,22 @@ class Window(Container):
                         if x >= 0 and y >= 0 and x < write_position.width:
                             new_buffer_row[x + xpos] = char
 
-                            # When we print a double width character, make sure
-                            # to erase the neighbour position in the screen.
+                            # When we print a multi width character, make sure
+                            # to erase the neighbous positions in the screen.
                             # (The empty string if different from everything,
                             # so next redraw this cell will repaint anyway.)
-                            if char.width > 1:
-                                for i in range(1, char.width):
+                            if char_width > 1:
+                                for i in range(1, char_width):
                                     new_buffer_row[x + xpos + i] = empty_char
+
+                            # If this is a zero width characters, then it's
+                            # probably part of a decomposed unicode character.
+                            # See: https://en.wikipedia.org/wiki/Unicode_equivalence
+                            # Merge it in the previous cell.
+                            elif char_width == 0 and x - 1 >= 0:
+                                prev_char = new_buffer_row[x + xpos - 1]
+                                char = _CHAR_CACHE[prev_char.char + c, prev_char.token]
+                                new_buffer_row[x + xpos - 1] = char
 
                             # Keep track of write position for each character.
                             rowcol_to_yx[lineno, col] = (y + ypos, x + xpos)
