@@ -1224,14 +1224,14 @@ class Window(Container):
                             # Merge it in the previous cell.
                             elif char_width == 0 and x - 1 >= 0:
                                 prev_char = new_buffer_row[x + xpos - 1]
-                                char = _CHAR_CACHE[prev_char.char + c, prev_char.token]
-                                new_buffer_row[x + xpos - 1] = char
+                                char2 = _CHAR_CACHE[prev_char.char + c, prev_char.token]
+                                new_buffer_row[x + xpos - 1] = char2
 
                             # Keep track of write position for each character.
                             rowcol_to_yx[lineno, col] = (y + ypos, x + xpos)
 
                         col += 1
-                        x += char.width
+                        x += char_width
 
                 lineno += 1
                 y += 1
