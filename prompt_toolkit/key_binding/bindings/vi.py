@@ -156,15 +156,20 @@ def load_vi_bindings(registry, get_vi_state, enable_visual_key=Always(), get_sea
         never put the cursor after the last character of a line. (Unless it's
         an empty line.)
         """
-        buffer = event.current_buffer
+        buff = event.current_buffer
+        preferred_column = buff.preferred_column
 
         if (
                 (filter is None or filter(event.cli)) and  # First make sure that this key bindings are active.
 
                 get_vi_state(event.cli).input_mode == InputMode.NAVIGATION and
-                buffer.document.is_cursor_at_the_end_of_line and
-                len(buffer.document.current_line) > 0):
-            buffer.cursor_position -= 1
+                buff.document.is_cursor_at_the_end_of_line and
+                len(buff.document.current_line) > 0):
+            buff.cursor_position -= 1
+
+            # Set the preferred_column for arrow up/down again.
+            # (This was cleared after changing the cursor position.)
+            buff.preferred_column = preferred_column
 
     registry.on_handler_called += check_cursor_position
 

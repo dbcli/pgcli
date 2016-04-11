@@ -251,6 +251,9 @@ class Buffer(object):
         # State of the selection.
         self.selection_state = None
 
+        # When doing consecutive up/down movements, prefer to stay at this column.
+        self.preferred_column = None
+
         # State of complete browser
         self.complete_state = None  # For interactive completion through Ctrl-N/Ctrl-P.
 
@@ -362,6 +365,7 @@ class Buffer(object):
         self.complete_state = None
         self.selection_state = None
         self.suggestion = None
+        self.preferred_column = None
 
         # fire 'on_text_changed' event.
         self.on_text_changed.fire()
@@ -370,6 +374,10 @@ class Buffer(object):
         # Remove any validation errors and complete state.
         self.validation_error = None
         self.complete_state = None
+
+        # Unset preferred_column. (Will be set after the cursor movement, if
+        # required.)
+        self.preferred_column = None
 
         # Note that the cursor position can change if we have a selection the
         # new position of the cursor determines the end of the selection.
@@ -494,11 +502,21 @@ class Buffer(object):
 
     def cursor_up(self, count=1):
         """ (for multiline edit). Move cursor to the previous line.  """
-        self.cursor_position += self.document.get_cursor_up_position(count=count)
+        original_column = self.preferred_column or self.document.cursor_position_col
+        self.cursor_position += self.document.get_cursor_up_position(
+            count=count, preferred_column=original_column)
+
+        # Remember the original column for the next up/down movement.
+        self.preferred_column = original_column
 
     def cursor_down(self, count=1):
         """ (for multiline edit). Move cursor to the next line.  """
-        self.cursor_position += self.document.get_cursor_down_position(count=count)
+        original_column = self.preferred_column or self.document.cursor_position_col
+        self.cursor_position += self.document.get_cursor_down_position(
+            count=count, preferred_column=original_column)
+
+        # Remember the original column for the next up/down movement.
+        self.preferred_column = original_column
 
     def auto_up(self, count=1):
         """
@@ -508,7 +526,7 @@ class Buffer(object):
         if self.complete_state:
             self.complete_previous(count=count)
         elif self.document.cursor_position_row > 0:
-            self.cursor_position += self.document.get_cursor_up_position(count=count)
+            self.cursor_up(count=count)
         elif not self.selection_state:
             self.history_backward(count=count)
 
@@ -520,7 +538,7 @@ class Buffer(object):
         if self.complete_state:
             self.complete_next(count=count)
         elif self.document.cursor_position_row < self.document.line_count - 1:
-            self.cursor_position += self.document.get_cursor_down_position(count=count)
+            self.cursor_down(count=count)
         elif not self.selection_state:
             self.history_forward(count=count)
 

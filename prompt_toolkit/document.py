@@ -587,23 +587,33 @@ class Document(object):
         """
         return min(count, len(self.current_line_after_cursor))
 
-    def get_cursor_up_position(self, count=1):
+    def get_cursor_up_position(self, count=1, preferred_column=None):
         """
         Return the relative cursor position (character index) where we would be if the
         user pressed the arrow-up button.
+
+        :param preferred_column: When given, go to this column instead of
+                                 staying at the current column.
         """
         assert count >= 1
-        return self.translate_row_col_to_index(
-            self.cursor_position_row - count, self.cursor_position_col) - self.cursor_position
+        column = self.cursor_position_col if preferred_column is None else preferred_column
 
-    def get_cursor_down_position(self, count=1):
+        return self.translate_row_col_to_index(
+            self.cursor_position_row - count, column) - self.cursor_position
+
+    def get_cursor_down_position(self, count=1, preferred_column=None):
         """
         Return the relative cursor position (character index) where we would be if the
         user pressed the arrow-down button.
+
+        :param preferred_column: When given, go to this column instead of
+                                 staying at the current column.
         """
         assert count >= 1
+        column = self.cursor_position_col if preferred_column is None else preferred_column
+
         return self.translate_row_col_to_index(
-            self.cursor_position_row + count, self.cursor_position_col) - self.cursor_position
+            self.cursor_position_row + count, column) - self.cursor_position
 
     def find_enclosing_bracket_right(self, left_ch, right_ch, end_pos=None):
         """
