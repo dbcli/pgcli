@@ -286,6 +286,8 @@ class Document(object):
         Given a (row, col) tuple, return the corresponding index.
         (Row and col params are 0-based.)
         """
+        assert row >= 0
+        assert col >= 0
         try:
             result = self._line_start_indexes[row]
             line = self.lines[row]
@@ -599,7 +601,7 @@ class Document(object):
         column = self.cursor_position_col if preferred_column is None else preferred_column
 
         return self.translate_row_col_to_index(
-            self.cursor_position_row - count, column) - self.cursor_position
+            max(0, self.cursor_position_row - count), column) - self.cursor_position
 
     def get_cursor_down_position(self, count=1, preferred_column=None):
         """
