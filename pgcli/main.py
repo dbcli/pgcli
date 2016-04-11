@@ -188,16 +188,19 @@ class PGCli(object):
     def write_to_file(self, pattern, **_):
         if not pattern:
             self.output_file = None
-            return [(None, None, None, None, '', True)]
+            message = 'File output disabled'
+            return [(None, None, None, message, '', True)]
         filename = os.path.abspath(os.path.expanduser(pattern))
         if not os.path.isfile(filename):
             try:
                 open(filename, 'w').close()
             except IOError as e:
                 self.output_file = None
-                return [(None, None, None, str(e), '', False)]
+                message = str(e) + '\nFile output disabled'
+                return [(None, None, None, message, '', False)]
         self.output_file = filename
-        return [(None, None, None, None, '', True)]
+        message = 'Writing to file "%s"' % self.output_file
+        return [(None, None, None, message, '', True)]
 
     def initialize_logging(self):
 
@@ -378,10 +381,12 @@ class PGCli(object):
                     click.secho(str(e), err=True, fg='red')
                 else:
                     try:
-                        if self.output_file:
+                        if self.output_file and not document.text.startswith(('\\o ', '\\? ')):
                             try:
                                 with open(self.output_file, 'a') as f:
+                                    click.echo(document.text, file=f)
                                     click.echo('\n'.join(output), file=f)
+                                    click.echo('', file=f) # extra newline
                             except IOError as e:
                                 click.secho(str(e), err=True, fg='red')
                         else:
