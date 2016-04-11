@@ -593,11 +593,8 @@ class Document(object):
         user pressed the arrow-up button.
         """
         assert count >= 1
-        if self.cursor_position_row >= count:
-            return self.translate_row_col_to_index(
-                self.cursor_position_row - count, self.cursor_position_col) - self.cursor_position
-        else:
-            return 0
+        return self.translate_row_col_to_index(
+            self.cursor_position_row - count, self.cursor_position_col) - self.cursor_position
 
     def get_cursor_down_position(self, count=1):
         """
