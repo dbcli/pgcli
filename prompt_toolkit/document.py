@@ -285,9 +285,9 @@ class Document(object):
         """
         Given a (row, col) tuple, return the corresponding index.
         (Row and col params are 0-based.)
+
+        Negative row/col values are turned into zero.
         """
-        assert row >= 0
-        assert col >= 0
         try:
             result = self._line_start_indexes[row]
             line = self.lines[row]
@@ -299,7 +299,7 @@ class Document(object):
                 result = self._line_start_indexes[-1]
                 line = self.lines[-1]
 
-        result += min(col, len(line))
+        result += max(0, min(col, len(line)))
 
         # Keep in range. (len(self.text) is included, because the cursor can be
         # right after the end of the text as well.)
@@ -785,7 +785,7 @@ class Document(object):
         """
         if self.selection:
             row_start = self.translate_row_col_to_index(row, 0)
-            row_end = self.translate_row_col_to_index(row, len(self.lines[row]) - 1)
+            row_end = self.translate_row_col_to_index(row, max(0, len(self.lines[row]) - 1))
 
             from_, to = sorted([self.cursor_position, self.selection.original_cursor_position])
 
