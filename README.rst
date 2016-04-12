@@ -123,6 +123,7 @@ Shells:
 - `softlayer-python <https://github.com/softlayer/softlayer-python>`_: A command-line interface to manage various SoftLayer products and services.
 - `ipython <http://github.com/ipython/ipython/>`_: The IPython REPL
 - `click-repl <https://github.com/click-contrib/click-repl>`_: Subcommand REPL for click apps.
+- `haxor-news <https://github.com/donnemartin/haxor-news>`_: A Hacker News CLI.
 
 Full screen applications:
 
