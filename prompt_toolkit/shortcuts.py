@@ -269,9 +269,15 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
         # If there is an autocompletion menu to be shown, make sure that our
         # layout has at least a minimal height in order to display it.
         if reserve_space_for_menu and not cli.is_done:
-            return LayoutDimension(min=reserve_space_for_menu)
-        else:
-            return LayoutDimension()
+            buff = cli.current_buffer
+
+            # Reserve the space, either when there are completions, or when
+            # `complete_while_typing` is true and we expect completions very
+            # soon.
+            if buff.complete_while_typing(cli) or buff.complete_state is not None:
+                return LayoutDimension(min=reserve_space_for_menu)
+
+        return LayoutDimension()
 
     # Create and return Container instance.
     return HSplit([
