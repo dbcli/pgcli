@@ -67,6 +67,10 @@ class PosixAsyncioEventLoop(EventLoop):
                 inputstream.feed(data)
                 timeout.reset()
 
+                # Quit when the input stream was closed.
+                if stdin_reader.closed:
+                    self.stop()
+
             self.loop.add_reader(stdin.fileno(), stdin_ready)
 
             # Block this coroutine until stop() has been called.

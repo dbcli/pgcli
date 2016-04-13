@@ -84,6 +84,10 @@ class PosixEventLoop(EventLoop):
             # Set timeout again.
             current_timeout[0] = INPUT_TIMEOUT
 
+            # Quit when the input stream was closed.
+            if stdin_reader.closed:
+                self.stop()
+
         self.add_reader(stdin, read_from_stdin)
         self.add_reader(self._schedule_pipe[0], None)
 
