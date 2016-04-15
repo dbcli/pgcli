@@ -704,6 +704,10 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
                 # Execute operator.
                 operator_func(event, text_object)
+
+                # Quit selection mode.
+                buff.selection_state = None
+
         return decorator
 
     def text_object(*keys, filter=Always(), no_move_handler=False):
@@ -821,14 +825,15 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             buff = event.current_buffer
             start, end = region.operator_range(buff.document)
 
-            # Transform.
-            buff.transform_region(
-                buff.cursor_position + start,
-                buff.cursor_position + end,
-                transform_func)
+            if start < end:
+                # Transform.
+                buff.transform_region(
+                    buff.cursor_position + start,
+                    buff.cursor_position + end,
+                    transform_func)
 
-            # Move cursor
-            buff.cursor_position += (region.end or region.start)
+                # Move cursor
+                buff.cursor_position += (region.end or region.start)
 
     for k, f in vi_transform_functions:
         create_transform_handler(f, *k)
