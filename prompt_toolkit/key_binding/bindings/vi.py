@@ -468,7 +468,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         @handle('"', c, 'P')
         def _(event):
             " Paste (before) from named register. "
-            data = cli.vi_state.named_registers.get(c)
+            data = event.cli.vi_state.named_registers.get(c)
             if data:
                 event.current_buffer.paste_clipboard_data(
                     data, before=True, count=event.arg)
