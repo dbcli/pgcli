@@ -745,10 +745,11 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             def _(event):
                 # Call the text object handler.
                 text_obj = text_object_func(event)
-                assert isinstance(text_obj, TextObject)
+                if text_obj is not None:
+                    assert isinstance(text_obj, TextObject)
 
-                # Call the operator function with the text object.
-                event.cli.vi_state.operator_func(event, text_obj)
+                    # Call the operator function with the text object.
+                    event.cli.vi_state.operator_func(event, text_obj)
 
                 # Clear operator.
                 event.cli.vi_state.operator_func = None
@@ -791,6 +792,13 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             return text_object_func
 
         return decorator
+
+    @text_object(Keys.Any, filter=operator_given)
+    def _(event):
+        """
+        Unknown key binding while waiting for a text object.
+        """
+        event.cli.output.bell()
 
     #
     # *** Operators ***
@@ -1337,16 +1345,17 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         """
         event.current_buffer.go_to_history(event.arg - 1)
 
-    @handle(Keys.Any, filter=navigation_mode|selection_mode|operator_given)
-    def _(event):
-        """
-        Always handle numberics in navigation mode as arg.
-        """
-        if event.data in '123456789' or (event._arg and event.data == '0'):
-            event.append_to_arg_count(event.data)
-        elif event.data == '0':
-            buffer = event.current_buffer
-            buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=False)
+    for n in '0123456789':
+        @handle(n, filter=navigation_mode|selection_mode|operator_given)
+        def _(event):
+            """
+            Always handle numberics in navigation mode as arg.
+            """
+            if event.data in '123456789' or (event._arg and event.data == '0'):
+                event.append_to_arg_count(event.data)
+            elif event.data == '0':
+                buffer = event.current_buffer
+                buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=False)
 
     @handle(Keys.Any, filter=replace_mode)
     def _(event):
