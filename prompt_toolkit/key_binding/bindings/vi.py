@@ -1,6 +1,6 @@
 # pylint: disable=function-redefined
 from __future__ import unicode_literals
-from prompt_toolkit.buffer import ClipboardData, indent, unindent
+from prompt_toolkit.buffer import ClipboardData, indent, unindent, reshape_text
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter, IsReadOnly, ViMode
@@ -117,6 +117,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
     insert_mode = ViMode(InputMode.INSERT) & ~ filters.HasSelection() & ~IsReadOnly()
     replace_mode = ViMode(InputMode.REPLACE) & ~ filters.HasSelection() & ~IsReadOnly()
     selection_mode = filters.HasSelection()
+    operator_given = Condition(lambda cli: cli.vi_state.operator_func is not None)
 
     vi_transform_functions = [
         # Rot 13 transformation
@@ -658,8 +659,6 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         # XXX: should become text_object.
         pass
 
-    operator_given = Condition(lambda cli: cli.vi_state.operator_func is not None)
-
     def operator(*keys, filter=Always()):
         """
         Register a Vi operator.
@@ -886,6 +885,24 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         to, _ = buff.document.translate_index_to_position(to)
 
         unindent(buff, from_, to + 1, count=event.arg)
+
+    @operator('g', 'q')
+    def _(event, region):
+        """
+        Reshape text.
+        """
+        buff = event.current_buffer
+
+        # Get absolute cursor positions from text object.
+        from_, to = region.operator_range(buff.document)
+        from_ += buff.cursor_position
+        to += buff.cursor_position
+
+        # Take the start of the lines.
+        from_, _ = buff.document.translate_index_to_position(from_)
+        to, _ = buff.document.translate_index_to_position(to)
+
+        reshape_text(buff, from_, to)
 
     # TODO: Also "gq": text formatting
 

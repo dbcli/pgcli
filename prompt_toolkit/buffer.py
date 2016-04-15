@@ -20,6 +20,7 @@ from .validation import ValidationError
 from six.moves import range
 
 import os
+import re
 import six
 import subprocess
 import tempfile
@@ -30,6 +31,7 @@ __all__ = (
     'Buffer',
     'indent',
     'unindent',
+    'reshape_text',
 )
 
 
@@ -214,6 +216,9 @@ class Buffer(object):
         self.complete_while_typing = complete_while_typing
         self.enable_history_search = enable_history_search
         self.read_only = read_only
+
+        # Text width. (For wrapping, used by the Vi 'gq' operator.)
+        self.text_width = 0
 
         #: The command buffer history.
         # Note that we shouldn't use a lazy 'or' here. bool(history) could be
@@ -1189,3 +1194,52 @@ def unindent(buffer, from_row, to_row, count=1):
 
     # Go to the start of the line.
     buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=True)
+
+
+def reshape_text(buffer, from_row, to_row):
+    """
+    Reformat text, taking the width into account.
+    `to_row` is included.
+    (Vi 'gq' operator.)
+    """
+    lines = buffer.text.splitlines(True)
+    lines_before = lines[:from_row]
+    lines_after = lines[to_row + 1:]
+    lines_to_reformat = lines[from_row:to_row + 1]
+
+    if lines_to_reformat:
+        # Take indentation from the first line.
+        length = re.search(r'^\s*', lines_to_reformat[0]).end()
+        indent = lines_to_reformat[0][:length].replace('\n', '')
+
+        # Now, take all the 'words' from the lines to be reshaped.
+        words = ''.join(lines_to_reformat).split()
+
+        # And reshape.
+        width = (buffer.text_width or 80) - len(indent)
+        reshaped_text = [indent]
+        current_width = 0
+        for w in words:
+            if current_width:
+                if len(w) + current_width + 1 > width:
+                    reshaped_text.append('\n')
+                    reshaped_text.append(indent)
+                    current_width = 0
+                else:
+                    reshaped_text.append(' ')
+                    current_width += 1
+
+            reshaped_text.append(w)
+            current_width += len(w)
+
+        if reshaped_text[-1] != '\n':
+            reshaped_text.append('\n')
+
+        with open('/tmp/format', 'a') as f:
+            f.write('words=%r\n' % (words, ))
+            f.write('%r\n' % (reshaped_text, ))
+
+        # Apply result.
+        buffer.document = Document(
+            text=''.join(lines_before + reshaped_text + lines_after),
+            cursor_position=len(''.join(lines_before + reshaped_text)))
