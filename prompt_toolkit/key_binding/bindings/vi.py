@@ -773,8 +773,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                 if region.end:
                     # Take selection positions from text object.
                     start, end = region.operator_range(buff.document)
-                    start += buff.selection_state.original_cursor_position
-                    end += buff.selection_state.original_cursor_position
+                    start += buff.cursor_position
+                    end += buff.cursor_position
 
                     buff.selection_state.original_cursor_position = start
                     buff.cursor_position = end
