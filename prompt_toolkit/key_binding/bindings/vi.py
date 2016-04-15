@@ -680,6 +680,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                 # function in the ViState. We should execute it after a text
                 # object has been received.
                 event.cli.vi_state.operator_func = operator_func
+                event.cli.vi_state.operator_arg = event.arg
 
             @handle(*keys, filter=~operator_given & filter & selection_mode)
             def _(event):
@@ -733,6 +734,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
                 # Clear operator.
                 event.cli.vi_state.operator_func = None
+                event.cli.vi_state.operator_arg = None
 
             # Register a move operation. (Doesn't need an operator.)
             if not no_move_handler:
@@ -1325,8 +1327,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         """
         event.current_buffer.go_to_history(event.arg - 1)
 
-    @handle(Keys.Any, filter=navigation_mode)
-    @handle(Keys.Any, filter=selection_mode)
+    @handle(Keys.Any, filter=navigation_mode|selection_mode|operator_given)
     def _(event):
         """
         Always handle numberics in navigation mode as arg.

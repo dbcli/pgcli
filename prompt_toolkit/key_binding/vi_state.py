@@ -32,6 +32,7 @@ class ViState(object):
         # -- e.g. in the case of 'dw', after the 'd' --, an operator callback
         # is set here.
         self.operator_func = None
+        self.operator_arg = None
 
         #: The Vi mode we're currently in to.
         self.input_mode = InputMode.INSERT
