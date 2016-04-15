@@ -674,7 +674,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         # XXX: should become text_object.
         pass
 
-    def operator(*keys, filter=Always()):
+    def operator(*keys, **kw):
         """
         Register a Vi operator.
 
@@ -684,6 +684,9 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             def handler(cli, text_object):
                 # Do something with the text object here.
         """
+        filter = kw.pop('filter', Always())
+        assert not kw
+
         def decorator(operator_func):
             @handle(*keys, filter=~operator_given & filter & navigation_mode)
             def _(event):
