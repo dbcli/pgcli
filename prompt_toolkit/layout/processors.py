@@ -160,9 +160,14 @@ class HighlightSelectionProcessor(Processor):
 
             tokens = explode_tokens(tokens)
 
-            for i in range(from_, to + 1):
-                if i < len(tokens):
-                    tokens[i] = (Token.SelectedText, tokens[i][1])
+            if from_ == 0 and to == 0 and len(tokens) == 0:
+                # When this is an empty line, insert a space in order to
+                # visualiase the selection.
+                return Transformation([(Token.SelectedText, ' ')])
+            else:
+                for i in range(from_, to + 1):
+                    if i < len(tokens):
+                        tokens[i] = (Token.SelectedText, tokens[i][1])
 
         return Transformation(tokens)
 
