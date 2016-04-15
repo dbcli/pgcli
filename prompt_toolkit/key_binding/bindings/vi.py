@@ -588,36 +588,6 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         current_row = event.current_buffer.document.cursor_position_row
         unindent(event.current_buffer, current_row, current_row + event.arg)
 
-    @handle('>', filter=selection_mode)
-    def _(event):
-        """
-        Indent selection
-        """
-        buffer = event.current_buffer
-        selection_type = buffer.selection_state.type
-
-        if selection_type == SelectionType.LINES:
-            from_, to = buffer.document.selection_range()
-            from_, _ = buffer.document.translate_index_to_position(from_)
-            to, _ = buffer.document.translate_index_to_position(to)
-
-            indent(buffer, from_, to + 1, count=event.arg)
-
-    @handle('<', filter=selection_mode)
-    def _(event):
-        """
-        Unindent selection
-        """
-        buffer = event.current_buffer
-        selection_type = buffer.selection_state.type
-
-        if selection_type == SelectionType.LINES:
-            from_, to = buffer.document.selection_range()
-            from_, _ = buffer.document.translate_index_to_position(from_)
-            to, _ = buffer.document.translate_index_to_position(to)
-
-            unindent(buffer, from_, to + 1, count=event.arg)
-
     @handle('O', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         """
@@ -732,7 +702,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                     type=text_obj_type)
 
                 # Execute operator.
-                operator_func(event.cli, text_object)
+                operator_func(event, text_object)
         return decorator
 
     def text_object(*keys, filter=Always(), no_move_handler=False):
@@ -759,7 +729,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                 assert isinstance(text_obj, TextObject)
 
                 # Call the operator function with the text object.
-                event.cli.vi_state.operator_func(event.cli, text_obj)
+                event.cli.vi_state.operator_func(event, text_obj)
 
                 # Clear operator.
                 event.cli.vi_state.operator_func = None
@@ -811,9 +781,9 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Create delete and change handlers.
         """
         @operator('cd'[delete_only], filter=~IsReadOnly())
-        def delete_operator(cli, region):
+        def delete_operator(event, region):
             deleted = ''
-            buff = cli.current_buffer
+            buff = event.current_buffer
 
             if region:  # XXX: is this possible?
                 start, end = region.operator_range(buff.document)
@@ -826,7 +796,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
             # Set deleted/changed text to clipboard.
             if deleted:
-                cli.clipboard.set_data(ClipboardData(deleted, region.selection_type))
+                event.cli.clipboard.set_data(ClipboardData(deleted, region.selection_type))
 
             # If using 'd' operator with a linewise motion, delete
             # the newline as well.
@@ -835,18 +805,18 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
             # Only go back to insert mode in case of 'change'.
             if not delete_only:
-                cli.vi_state.input_mode = InputMode.INSERT
+                event.cli.vi_state.input_mode = InputMode.INSERT
 
     create_delete_and_change_operators(False)
     create_delete_and_change_operators(True)
 
     def create_transform_handler(transform_func, *a):
         @operator(*a, filter=~IsReadOnly())
-        def _(cli, region):
+        def _(event, region):
             """
             Apply transformation (uppercase, lowercase, rot13, swap case).
             """
-            buff = cli.current_buffer
+            buff = event.current_buffer
             start, end = region.operator_range(buff.document)
 
             # Transform.
@@ -862,21 +832,55 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         create_transform_handler(f, *k)
 
     @operator('y')
-    def yank_handler(cli, region):
+    def yank_handler(event, region):
         """
         Yank operator. (Copy text.)
         """
-        buff = cli.current_buffer
+        buff = event.current_buffer
 
         start, end = region.operator_range(buff.document)
         substring = buff.text[buff.cursor_position + start: buff.cursor_position + end]
 
         if substring:
-            cli.clipboard.set_data(ClipboardData(substring, region.selection_type))
+            event.cli.clipboard.set_data(ClipboardData(substring, region.selection_type))
 
-    # TODO: Also do '>' and '<' indent/unindent operators.
+    @operator('>')
+    def _(event, region):
+        """
+        Indent.
+        """
+        buff = event.current_buffer
+
+        # Get absolute cursor positions from the text object.
+        from_, to = region.operator_range(buff.document)
+        from_ += buff.cursor_position
+        to += buff.cursor_position
+
+        # Take the start of the lines.
+        from_, _ = buff.document.translate_index_to_position(from_)
+        to, _ = buff.document.translate_index_to_position(to)
+
+        indent(buff, from_, to + 1, count=event.arg)
+
+    @operator('<')
+    def _(event, region):
+        """
+        Unindent.
+        """
+        buff = event.current_buffer
+
+        # Get absolute cursor positions from text object.
+        from_, to = region.operator_range(buff.document)
+        from_ += buff.cursor_position
+        to += buff.cursor_position
+
+        # Take the start of the lines.
+        from_, _ = buff.document.translate_index_to_position(from_)
+        to, _ = buff.document.translate_index_to_position(to)
+
+        unindent(buff, from_, to + 1, count=event.arg)
+
     # TODO: Also "gq": text formatting
-    # TODO: Handle whe visual binding: e.g.   'viw'
 
     #
     # *** Text objects ***
