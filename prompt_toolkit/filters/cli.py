@@ -3,6 +3,7 @@ Filters that accept a `CommandLineInterface` as argument.
 """
 from __future__ import unicode_literals
 from .base import Filter
+import six
 
 __all__ = (
     'HasArg',
@@ -18,6 +19,7 @@ __all__ = (
     'IsReadOnly',
     'IsReturning',
     'RendererHeightIsKnown',
+    'ViMode',
 )
 
 
@@ -185,3 +187,15 @@ class RendererHeightIsKnown(Filter):
 
     def __repr__(self):
         return 'RendererHeightIsKnown()'
+
+
+class ViMode(Filter):
+    """
+    When in a certain Vi mode.
+    """
+    def __init__(self, mode):
+        assert isinstance(mode, six.string_types)
+        self.mode = mode
+
+    def __call__(self, cli):
+        return cli.vi_state.input_mode == self.mode

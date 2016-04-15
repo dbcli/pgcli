@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import ClipboardData, indent, unindent
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
-from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter, IsReadOnly
+from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter, IsReadOnly, ViMode
 from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
@@ -26,9 +26,9 @@ __all__ = (
 
 class ViStateFilter(Filter):
     """
-    Filter to enable some key bindings only in a certain Vi input mode.
+    Deprecated!
     """
-    def __init__(self, mode):
+    def __init__(self, get_vi_state, mode):
         assert isinstance(mode, six.string_types)
         self.mode = mode
 
@@ -125,9 +125,9 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
     # (Note: Always take the navigation bindings in read-only mode, even when
     #  ViState says different.)
-    navigation_mode = (ViStateFilter(InputMode.NAVIGATION) | IsReadOnly()) & ~ filters.HasSelection()
-    insert_mode = ViStateFilter(InputMode.INSERT) & ~ filters.HasSelection() & ~IsReadOnly()
-    replace_mode = ViStateFilter(InputMode.REPLACE) & ~ filters.HasSelection() & ~IsReadOnly()
+    navigation_mode = (ViMode(InputMode.NAVIGATION) | IsReadOnly()) & ~ filters.HasSelection()
+    insert_mode = ViMode(InputMode.INSERT) & ~ filters.HasSelection() & ~IsReadOnly()
+    replace_mode = ViMode(InputMode.REPLACE) & ~ filters.HasSelection() & ~IsReadOnly()
     selection_mode = filters.HasSelection()
 
     vi_transform_functions = [
@@ -1286,7 +1286,7 @@ def load_vi_open_in_editor_bindings(registry, filter=None):
     """
     Pressing 'v' in navigation mode will open the buffer in an external editor.
     """
-    navigation_mode = ViStateFilter(InputMode.NAVIGATION) & ~ filters.HasSelection()
+    navigation_mode = ViMode(InputMode.NAVIGATION) & ~ filters.HasSelection()
     handle = create_handle_decorator(registry, filter)
 
     @handle('v', filter=navigation_mode)
@@ -1296,7 +1296,7 @@ def load_vi_open_in_editor_bindings(registry, filter=None):
 
 def load_vi_system_bindings(registry, filter=None):
     has_focus = filters.HasFocus(SYSTEM_BUFFER)
-    navigation_mode = ViStateFilter(InputMode.NAVIGATION) & ~ filters.HasSelection()
+    navigation_mode = ViMode(InputMode.NAVIGATION) & ~ filters.HasSelection()
 
     handle = create_handle_decorator(registry, filter)
 
@@ -1341,7 +1341,7 @@ def load_vi_search_bindings(registry, get_search_state=None,
         def get_search_state(cli): return cli.search_state
 
     has_focus = filters.HasFocus(search_buffer_name)
-    navigation_mode = ~has_focus & (ViStateFilter(InputMode.NAVIGATION) | filters.HasSelection())
+    navigation_mode = ~has_focus & (ViMode(InputMode.NAVIGATION) | filters.HasSelection())
     handle = create_handle_decorator(registry, filter)
 
     @handle('/', filter=navigation_mode)

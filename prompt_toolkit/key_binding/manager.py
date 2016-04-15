@@ -142,3 +142,7 @@ class KeyBindingManager(object):
     def reset(self, cli):
         # For backwards compatibility.
         pass
+
+    def get_vi_state(self, cli):
+        # Deprecated!
+        return cli.vi_state
