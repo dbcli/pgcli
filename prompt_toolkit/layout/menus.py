@@ -319,7 +319,7 @@ class MultiColumnCompletionMenuControl(UIControl):
 
                 # Draw left arrow if we have hidden completions on the left.
                 if render_left_arrow:
-                    tokens += [(self.token.ProgressBar, '<' if middle_row else ' ')]
+                    tokens += [(Token.Scrollbar, '<' if middle_row else ' ')]
 
                 # Draw row content.
                 for column_index, c in enumerate(row[self.scroll:][:visible_columns]):
@@ -337,7 +337,7 @@ class MultiColumnCompletionMenuControl(UIControl):
 
                 # Draw right arrow if we have hidden completions on the right.
                 if render_right_arrow:
-                    tokens += [(self.token.ProgressBar, '>' if middle_row else ' ')]
+                    tokens += [(Token.Scrollbar, '>' if middle_row else ' ')]
 
                 # Newline.
                 tokens_for_line.append(tokens)
