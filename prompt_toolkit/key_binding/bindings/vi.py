@@ -30,9 +30,9 @@ class CursorRegionType(object):
     LINEWISE = 'LINEWISE'
 
 
-class CursorRegion(object):
+class CursorRegion(object):  # Rename to TextObject.
     """
-    Return struct for functions wrapped in ``change_delete_move_yank_handler``.
+    Return struct for functions wrapped in ``text_object``.
     Both `start` and `end` are relative to the current cursor position.
     """
     def __init__(self, start, end=0, type=CursorRegionType.EXCLUSIVE):
@@ -359,19 +359,19 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         event.current_buffer.cursor_position += \
             event.current_buffer.document.get_start_of_line_position(after_whitespace=True)
 
-    @handle('J', filter=navigation_mode)
+    @handle('J', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         """ Join lines. """
         for i in range(event.arg):
             event.current_buffer.join_next_line()
 
-    @handle('J', filter=selection_mode)
+    @handle('J', filter=selection_mode & ~IsReadOnly())
     def _(event):
         """ Join selected lines. """
         event.current_buffer.join_selected_lines()
 
     @handle('n', filter=navigation_mode)
-    def _(event):  # XXX: use `change_delete_move_yank_handler`
+    def _(event):  # XXX: use `text_object`
         """
         Search next.
         """
@@ -380,7 +380,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             count=event.arg)
 
     @handle('N', filter=navigation_mode)
-    def _(event):  # TODO: use `change_delete_move_yank_handler`
+    def _(event):  # TODO: use `text_object`
         """
         Search previous.
         """
@@ -679,173 +679,227 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
     @handle('(', filter=navigation_mode)
     def _(event):
         # TODO: go to begin of sentence.
+        # XXX: should become text_object.
         pass
 
     @handle(')', filter=navigation_mode)
     def _(event):
         # TODO: go to end of sentence.
+        # XXX: should become text_object.
         pass
 
-    def change_delete_move_yank_handler(*keys, **kw):
+    operator_given = Condition(lambda cli: cli.vi_state.operator_func is not None)
+
+    def operator(*keys, filter=Always()):
         """
-        Register a change/delete/move/yank handlers. e.g.  'dw'/'cw'/'w'/'yw'
-        The decorated function should return a ``CursorRegion``.
-        This decorator will create both the 'change', 'delete' and move variants,
-        based on that ``CursorRegion``.
+        Register a Vi operator.
 
-        When there is nothing selected yet, this will also handle the "visual"
-        binding. E.g. 'viw' should select the current word.
+        Usage::
+
+            @operator('d', filter=...)
+            def handler(cli, region):
+                # Do something with the text object here.
         """
-        no_move_handler = kw.pop('no_move_handler', False)
+        def decorator(operator_func):
+            @handle(*keys, filter=~operator_given & filter & navigation_mode)
+            def _(event):
+                # When this key binding is matched, only set the operator
+                # function in the ViState. We should execute it after a text
+                # object has been received.
+                event.cli.vi_state.operator_func = operator_func
 
-        # TODO: Also do '>' and '<' indent/unindent operators.
-        # TODO: Also "gq": text formatting
-        #  See: :help motion.txt
-        def decorator(func):
-            if not no_move_handler:
-                @handle(*keys, filter=navigation_mode|selection_mode)
-                def move(event):
-                    """ Create move handler. """
-                    region = func(event)
-                    event.current_buffer.cursor_position += region.start
-
-            def create_transform_handler(transform_func, *a):
-                @handle(*(a + keys), filter=navigation_mode)
-                def _(event):
-                    """ Apply transformation (uppercase, lowercase, rot13, swap case). """
-                    region = func(event)
-                    buffer = event.current_buffer
-                    start, end = region.operator_range(buffer.document)
-
-                    # Transform.
-                    buffer.transform_region(
-                        buffer.cursor_position + start,
-                        buffer.cursor_position + end,
-                        transform_func)
-
-                    # Move cursor
-                    buffer.cursor_position += (region.end or region.start)
-
-            for k, f in vi_transform_functions:
-                create_transform_handler(f, *k)
-
-            @handle('y', *keys, filter=navigation_mode)
-            def yank_handler(event):
-                """ Create yank handler. """
-                region = func(event)
-                buffer = event.current_buffer
-
-                start, end = region.operator_range(buffer.document)
-                substring = buffer.text[buffer.cursor_position + start: buffer.cursor_position + end]
-
-                if substring:
-                    event.cli.clipboard.set_data(ClipboardData(substring, region.selection_type))
-
-            def create(delete_only):
-                """ Create delete and change handlers. """
-                @handle('cd'[delete_only], *keys, filter=navigation_mode & ~IsReadOnly())
-                @handle('cd'[delete_only], *keys, filter=navigation_mode & ~IsReadOnly())
-                def _(event):
-                    region = func(event)
-                    deleted = ''
-                    buffer = event.current_buffer
-
-                    if region:
-                        start, end = region.operator_range(buffer.document)
-
-                        # Move to the start of the region.
-                        buffer.cursor_position += start
-
-                        # Delete until end of region.
-                        deleted = buffer.delete(count=end-start)
-
-                    # Set deleted/changed text to clipboard.
-                    if deleted:
-                        event.cli.clipboard.set_data(ClipboardData(deleted, region.selection_type))
-
-                    # If using 'd' operator with a linewise motion, delete
-                    # the newline as well.
-                    if delete_only and region.type == CursorRegionType.LINEWISE:
-                        buffer.delete() or buffer.delete_before_cursor()
-
-                    # Only go back to insert mode in case of 'change'.
-                    if not delete_only:
-                        event.cli.vi_state.input_mode = InputMode.INSERT
-
-            create(True)
-            create(False)
-            return func
+            # TODO: apply operators in selection_mode as well.
+            #       (This requires all operators to understand the selection.)
         return decorator
 
-    @change_delete_move_yank_handler('b')
+    def text_object(*keys, filter=Always(), no_move_handler=False):
+        """
+        Register a text object function.
+
+        Usage::
+
+            @text_object('w', filter=...)
+            def handler(event):
+                # Return a text object for this key.
+                return CursorRegion(...)
+        """
+        def decorator(text_object_func):
+            assert callable(text_object_func), text_object_func
+
+            @handle(*keys, filter=operator_given & filter)
+            def _(event):
+                # Call the text object handler.
+                text_obj = text_object_func(event)
+                assert isinstance(text_obj, CursorRegion)
+
+                # Call the operator function with the text object.
+                event.cli.vi_state.operator_func(event.cli, text_obj)
+
+                # Clear operator.
+                event.cli.vi_state.operator_func = None
+
+            # Register a move operation. (Doesn't need an operator.)
+            if not no_move_handler:
+                @handle(*keys, filter=~operator_given & filter & (navigation_mode|selection_mode))
+                def _(event):
+                    " Move handler. "
+                    region = text_object_func(event)
+                    event.current_buffer.cursor_position += region.start
+
+            # Make it possible to chain @text_object decorators.
+            return text_object_func
+
+        return decorator
+
+    #
+    # *** Operators ***
+    #
+
+    def create_delete_and_change_operators(delete_only):
+        """
+        Create delete and change handlers.
+        """
+        @operator('cd'[delete_only], filter=~IsReadOnly())
+        def delete_operator(cli, region):
+            deleted = ''
+            buff = cli.current_buffer
+
+            if region:  # XXX: is this possible?
+                start, end = region.operator_range(buff.document)
+
+                # Move to the start of the region.
+                buff.cursor_position += start
+
+                # Delete until end of region.
+                deleted = buff.delete(count=end-start)
+
+            # Set deleted/changed text to clipboard.
+            if deleted:
+                cli.clipboard.set_data(ClipboardData(deleted, region.selection_type))
+
+            # If using 'd' operator with a linewise motion, delete
+            # the newline as well.
+            if delete_only and region.type == CursorRegionType.LINEWISE:
+                buff.delete() or buff.delete_before_cursor()
+
+            # Only go back to insert mode in case of 'change'.
+            if not delete_only:
+                cli.vi_state.input_mode = InputMode.INSERT
+
+    create_delete_and_change_operators(False)
+    create_delete_and_change_operators(True)
+
+    def create_transform_handler(transform_func, *a):
+        @operator(*a, filter=~IsReadOnly())
+        def _(cli, region):
+            """
+            Apply transformation (uppercase, lowercase, rot13, swap case).
+            """
+            buff = cli.current_buffer
+            start, end = region.operator_range(buff.document)
+
+            # Transform.
+            buff.transform_region(
+                buff.cursor_position + start,
+                buff.cursor_position + end,
+                transform_func)
+
+            # Move cursor
+            buff.cursor_position += (region.end or region.start)
+
+    for k, f in vi_transform_functions:
+        create_transform_handler(f, *k)
+
+    @operator('y')
+    def yank_handler(cli, region):
+        """
+        Yank operator. (Copy text.)
+        """
+        buff = cli.current_buffer
+
+        start, end = region.operator_range(buff.document)
+        substring = buff.text[buff.cursor_position + start: buff.cursor_position + end]
+
+        if substring:
+            cli.clipboard.set_data(ClipboardData(substring, region.selection_type))
+
+    # TODO: Also do '>' and '<' indent/unindent operators.
+    # TODO: Also "gq": text formatting
+    # TODO: Handle whe visual binding: e.g.   'viw'
+
+    #
+    # *** Text objects ***
+    #
+
+    @text_object('b')
     def _(event):
         """ Move one word or token left. """
         return CursorRegion(event.current_buffer.document.find_start_of_previous_word(count=event.arg) or 0)
 
-    @change_delete_move_yank_handler('B')
+    @text_object('B')
     def _(event):
         """ Move one non-blank word left """
         return CursorRegion(event.current_buffer.document.find_start_of_previous_word(count=event.arg, WORD=True) or 0)
 
-    @change_delete_move_yank_handler('$')
+    @text_object('$')
     def key_dollar(event):
         """ 'c$', 'd$' and '$':  Delete/change/move until end of line. """
         return CursorRegion(event.current_buffer.document.get_end_of_line_position())
 
-    @change_delete_move_yank_handler('w')
+    @text_object('w')
     def _(event):
         """ 'word' forward. 'cw', 'dw', 'w': Delete/change/move one word.  """
         return CursorRegion(event.current_buffer.document.find_next_word_beginning(count=event.arg) or
                             event.current_buffer.document.get_end_of_document_position())
 
-    @change_delete_move_yank_handler('W')
+    @text_object('W')
     def _(event):
         """ 'WORD' forward. 'cW', 'dW', 'W': Delete/change/move one WORD.  """
         return CursorRegion(event.current_buffer.document.find_next_word_beginning(count=event.arg, WORD=True) or
                             event.current_buffer.document.get_end_of_document_position())
 
-    @change_delete_move_yank_handler('e')
+    @text_object('e')
     def _(event):
         """ End of 'word': 'ce', 'de', 'e' """
         end = event.current_buffer.document.find_next_word_ending(count=event.arg)
         return CursorRegion(end - 1 if end else 0, type=CursorRegionType.INCLUSIVE)
 
-    @change_delete_move_yank_handler('E')
+    @text_object('E')
     def _(event):
         """ End of 'WORD': 'cE', 'dE', 'E' """
         end = event.current_buffer.document.find_next_word_ending(count=event.arg, WORD=True)
         return CursorRegion(end - 1 if end else 0, type=CursorRegionType.INCLUSIVE)
 
-    @change_delete_move_yank_handler('i', 'w', no_move_handler=True)
+    @text_object('i', 'w', no_move_handler=True)
     def _(event):
         """ Inner 'word': ciw and diw """
         start, end = event.current_buffer.document.find_boundaries_of_current_word()
         return CursorRegion(start, end)
 
-    @change_delete_move_yank_handler('a', 'w', no_move_handler=True)
+    @text_object('a', 'w', no_move_handler=True)
     def _(event):
         """ A 'word': caw and daw """
         start, end = event.current_buffer.document.find_boundaries_of_current_word(include_trailing_whitespace=True)
         return CursorRegion(start, end)
 
-    @change_delete_move_yank_handler('i', 'W', no_move_handler=True)
+    @text_object('i', 'W', no_move_handler=True)
     def _(event):
         """ Inner 'WORD': ciW and diW """
         start, end = event.current_buffer.document.find_boundaries_of_current_word(WORD=True)
         return CursorRegion(start, end)
 
-    @change_delete_move_yank_handler('a', 'W', no_move_handler=True)
+    @text_object('a', 'W', no_move_handler=True)
     def _(event):
         """ A 'WORD': caw and daw """
         start, end = event.current_buffer.document.find_boundaries_of_current_word(WORD=True, include_trailing_whitespace=True)
         return CursorRegion(start, end)
 
-    @change_delete_move_yank_handler('^')
+    @text_object('^')
     def key_circumflex(event):
         """ 'c^', 'd^' and '^': Soft start of line, after whitespace. """
         return CursorRegion(event.current_buffer.document.get_start_of_line_position(after_whitespace=True))
 
-    @change_delete_move_yank_handler('0', no_move_handler=True)
+    @text_object('0', no_move_handler=True)
     def key_zero(event):
         """
         'c0', 'd0': Hard start of line, before whitespace.
@@ -860,8 +914,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Delete/Change string between this start and stop character. But keep these characters.
         This implements all the ci", ci<, ci{, ci(, di", di<, ca", ca<, ... combinations.
         """
-        @change_delete_move_yank_handler('ai'[inner], ci_start, no_move_handler=True)
-        @change_delete_move_yank_handler('ai'[inner], ci_end, no_move_handler=True)
+        @text_object('ai'[inner], ci_start, no_move_handler=True)
+        @text_object('ai'[inner], ci_end, no_move_handler=True)
         def _(event):
             if ci_start == ci_end:
                 # Quotes
@@ -884,7 +938,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                                  ('[', ']'), ('<', '>'), ('{', '}'), ('(', ')')]:
             create_ci_ca_handles(ci_start, ci_end, inner)
 
-    @change_delete_move_yank_handler('{')
+    @text_object('{')
     def _(event):
         """
         Move to previous blank-line separated section.
@@ -902,7 +956,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             index = 0
         return CursorRegion(index)
 
-    @change_delete_move_yank_handler('}')
+    @text_object('}')
     def _(event):
         """
         Move to next blank-line separated section.
@@ -921,7 +975,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
         return CursorRegion(index)
 
-    @change_delete_move_yank_handler('f', Keys.Any)
+    @text_object('f', Keys.Any)
     def _(event):
         """
         Go to next occurance of character. Typing 'fx' will move the
@@ -934,7 +988,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         else:
             return CursorRegion(0)
 
-    @change_delete_move_yank_handler('F', Keys.Any)
+    @text_object('F', Keys.Any)
     def _(event):
         """
         Go to previous occurance of character. Typing 'Fx' will move the
@@ -943,7 +997,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         event.cli.vi_state.last_character_find = CharacterFind(event.data, True)
         return CursorRegion(event.current_buffer.document.find_backwards(event.data, in_current_line=True, count=event.arg) or 0)
 
-    @change_delete_move_yank_handler('t', Keys.Any)
+    @text_object('t', Keys.Any)
     def _(event):
         """
         Move right to the next occurance of c, then one char backward.
@@ -955,7 +1009,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         else:
             return CursorRegion(0)
 
-    @change_delete_move_yank_handler('T', Keys.Any)
+    @text_object('T', Keys.Any)
     def _(event):
         """
         Move left to the previous occurance of c, then one char forward.
@@ -968,7 +1022,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         """
         Create ',' and ';' commands.
         """
-        @change_delete_move_yank_handler(',' if reverse else ';')
+        @text_object(',' if reverse else ';')
         def _(event):
             # Repeat the last 'f'/'F'/'t'/'T' command.
             pos = 0
@@ -995,30 +1049,30 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
     repeat(True)
     repeat(False)
 
-    @change_delete_move_yank_handler('h')
-    @change_delete_move_yank_handler(Keys.Left)
+    @text_object('h')
+    @text_object(Keys.Left)
     def _(event):
         """ Implements 'ch', 'dh', 'h': Cursor left. """
         return CursorRegion(event.current_buffer.document.get_cursor_left_position(count=event.arg))
 
-    @change_delete_move_yank_handler('j', no_move_handler=True)
+    @text_object('j', no_move_handler=True)
     def _(event):
         """ Implements 'cj', 'dj', 'j', ... Cursor up. """
         return CursorRegion(event.current_buffer.document.get_cursor_down_position(count=event.arg), type=CursorRegionType.LINEWISE)
 
-    @change_delete_move_yank_handler('k', no_move_handler=True)
+    @text_object('k', no_move_handler=True)
     def _(event):
         """ Implements 'ck', 'dk', 'k', ... Cursor up. """
         return CursorRegion(event.current_buffer.document.get_cursor_up_position(count=event.arg), type=CursorRegionType.LINEWISE)
 
-    @change_delete_move_yank_handler('l')
-    @change_delete_move_yank_handler(' ')
-    @change_delete_move_yank_handler(Keys.Right)
+    @text_object('l')
+    @text_object(' ')
+    @text_object(Keys.Right)
     def _(event):
         """ Implements 'cl', 'dl', 'l', 'c ', 'd ', ' '. Cursor right. """
         return CursorRegion(event.current_buffer.document.get_cursor_right_position(count=event.arg))
 
-    @change_delete_move_yank_handler('H')
+    @text_object('H')
     def _(event):
         """
         Moves to the start of the visible region. (Below the scroll offset.)
@@ -1039,7 +1093,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             pos = -len(b.document.text_before_cursor)
         return CursorRegion(pos, type=CursorRegionType.LINEWISE)
 
-    @change_delete_move_yank_handler('M')
+    @text_object('M')
     def _(event):
         """
         Moves cursor to the vertical center of the visible region.
@@ -1060,7 +1114,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             pos = -len(b.document.text_before_cursor)
         return CursorRegion(pos, type=CursorRegionType.LINEWISE)
 
-    @change_delete_move_yank_handler('L')
+    @text_object('L')
     def _(event):
         """
         Moves to the end of the visible region. (Above the scroll offset.)
@@ -1132,7 +1186,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
             w.vertical_scroll = y
 
-    @change_delete_move_yank_handler('%')
+    @text_object('%')
     def _(event):
         """
         Implements 'c%', 'd%', '%, 'y%' (Move to corresponding bracket.)
@@ -1158,13 +1212,13 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             else:
                 return CursorRegion(0)
 
-    @change_delete_move_yank_handler('|')
+    @text_object('|')
     def _(event):
         # Move to the n-th column (you may specify the argument n by typing
         # it on number keys, for example, 20|).
         return CursorRegion(event.current_buffer.document.get_column_cursor_position(event.arg - 1))
 
-    @change_delete_move_yank_handler('g', 'g')
+    @text_object('g', 'g')
     def _(event):
         """
         Implements 'gg', 'cgg', 'ygg'
@@ -1178,7 +1232,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             # Move to the top of the input.
             return CursorRegion(d.get_start_of_document_position(), type=CursorRegionType.LINEWISE)
 
-    @change_delete_move_yank_handler('g', '_')
+    @text_object('g', '_')
     def _(event):
         """
         Go to last non-blank of line.
@@ -1187,7 +1241,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         return CursorRegion(
             event.current_buffer.document.last_non_blank_of_current_line_position(), type=CursorRegionType.INCLUSIVE)
 
-    @change_delete_move_yank_handler('g', 'e')
+    @text_object('g', 'e')
     def _(event):
         """
         Go to last character of previous word.
@@ -1196,7 +1250,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         prev_end = event.current_buffer.document.find_previous_word_ending(count=event.arg)
         return CursorRegion(prev_end - 1 if prev_end is not None else 0, type=CursorRegionType.INCLUSIVE)
 
-    @change_delete_move_yank_handler('g', 'E')
+    @text_object('g', 'E')
     def _(event):
         """
         Go to last character of previous WORD.
@@ -1205,7 +1259,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         prev_end = event.current_buffer.document.find_previous_word_ending(count=event.arg, WORD=True)
         return CursorRegion(prev_end - 1 if prev_end is not None else 0, type=CursorRegionType.INCLUSIVE)
 
-    @change_delete_move_yank_handler('G')
+    @text_object('G')
     def _(event):
         """
         Go to the end of the document. (If no arg has been given.)
@@ -1213,6 +1267,10 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         buf = event.current_buffer
         return CursorRegion(buf.document.translate_row_col_to_index(buf.document.line_count - 1, 0) -
                             buf.cursor_position, type=CursorRegionType.LINEWISE)
+
+    #
+    # *** Others ***
+    #
 
     @handle('G', filter=HasArg())
     def _(event):

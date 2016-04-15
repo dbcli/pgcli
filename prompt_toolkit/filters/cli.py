@@ -198,4 +198,12 @@ class ViMode(Filter):
         self.mode = mode
 
     def __call__(self, cli):
-        return cli.vi_state.input_mode == self.mode
+        vi_state = cli.vi_state
+
+        # Always report False when we are waiting for a text object.
+        # (This is the best to avoid inserting key bindings in between the
+        # operator and text object.)
+        if vi_state.operator_func:
+            return False
+
+        return vi_state.input_mode == self.mode
