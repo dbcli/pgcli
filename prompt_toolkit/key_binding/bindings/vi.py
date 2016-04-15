@@ -727,13 +727,13 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
         return decorator
 
-    def text_object(*keys, filter=Always(), no_move_handler=False):
+    def text_object(*keys, **kw):
         """
         Register a text object function.
 
         Usage::
 
-            @text_object('w', filter=...)
+            @text_object('w', filter=..., no_move_handler=False)
             def handler(event):
                 # Return a text object for this key.
                 return TextObject(...)
@@ -741,6 +741,10 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         :param no_move_handler: Disable the move handler in navigation mode.
             (It's still active in selection mode.)
         """
+        filter = kw.pop('filter', Always())
+        no_move_handler = kw.pop('no_move_handler', False)
+        assert not kw
+
         def decorator(text_object_func):
             assert callable(text_object_func)
 
