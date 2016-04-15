@@ -80,6 +80,21 @@ class TextObject(object):
             end = doc.translate_row_col_to_index(row, len(doc.lines[row])) - doc.cursor_position
         return start, end
 
+    def get_line_numbers(self, buffer):
+        """
+        Return a (start_line, end_line) pair.
+        """
+        # Get absolute cursor positions from the text object.
+        from_, to = self.operator_range(buffer.document)
+        from_ += buffer.cursor_position
+        to += buffer.cursor_position
+
+        # Take the start of the lines.
+        from_, _ = buffer.document.translate_index_to_position(from_)
+        to, _ = buffer.document.translate_index_to_position(to)
+
+        return from_, to
+
 
 def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None, filter=None):
     """
@@ -856,16 +871,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Indent.
         """
         buff = event.current_buffer
-
-        # Get absolute cursor positions from the text object.
-        from_, to = region.operator_range(buff.document)
-        from_ += buff.cursor_position
-        to += buff.cursor_position
-
-        # Take the start of the lines.
-        from_, _ = buff.document.translate_index_to_position(from_)
-        to, _ = buff.document.translate_index_to_position(to)
-
+        from_, to = region.get_line_numbers(buff)
         indent(buff, from_, to + 1, count=event.arg)
 
     @operator('<')
@@ -874,16 +880,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Unindent.
         """
         buff = event.current_buffer
-
-        # Get absolute cursor positions from text object.
-        from_, to = region.operator_range(buff.document)
-        from_ += buff.cursor_position
-        to += buff.cursor_position
-
-        # Take the start of the lines.
-        from_, _ = buff.document.translate_index_to_position(from_)
-        to, _ = buff.document.translate_index_to_position(to)
-
+        from_, to = region.get_line_numbers(buff)
         unindent(buff, from_, to + 1, count=event.arg)
 
     @operator('g', 'q')
@@ -892,16 +889,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Reshape text.
         """
         buff = event.current_buffer
-
-        # Get absolute cursor positions from text object.
-        from_, to = region.operator_range(buff.document)
-        from_ += buff.cursor_position
-        to += buff.cursor_position
-
-        # Take the start of the lines.
-        from_, _ = buff.document.translate_index_to_position(from_)
-        to, _ = buff.document.translate_index_to_position(to)
-
+        from_, to = region.get_line_numbers(buff)
         reshape_text(buff, from_, to)
 
     # TODO: Also "gq": text formatting
