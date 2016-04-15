@@ -24,25 +24,25 @@ __all__ = (
 )
 
 
-class CursorRegionType(object):
+class TextObjectType(object):
     EXCLUSIVE = 'EXCLUSIVE'
     INCLUSIVE = 'INCLUSIVE'
     LINEWISE = 'LINEWISE'
 
 
-class CursorRegion(object):  # Rename to TextObject.
+class TextObject(object):
     """
     Return struct for functions wrapped in ``text_object``.
     Both `start` and `end` are relative to the current cursor position.
     """
-    def __init__(self, start, end=0, type=CursorRegionType.EXCLUSIVE):
+    def __init__(self, start, end=0, type=TextObjectType.EXCLUSIVE):
         self.start = start
         self.end = end
         self.type = type
 
     @property
     def selection_type(self):
-        if self.type == CursorRegionType.LINEWISE:
+        if self.type == TextObjectType.LINEWISE:
             return SelectionType.LINES
         else:
             return SelectionType.CHARACTERS
@@ -65,14 +65,14 @@ class CursorRegion(object):  # Rename to TextObject.
         start, end = self.sorted()
         doc = document
 
-        if (self.type == CursorRegionType.EXCLUSIVE and
+        if (self.type == TextObjectType.EXCLUSIVE and
                 doc.translate_index_to_position(end + doc.cursor_position)[1] == 0):
             # If the motion is exclusive and the end of motion is on the first
             # column, the end position becomes end of previous line.
             end -= 1
-        if self.type == CursorRegionType.INCLUSIVE:
+        if self.type == TextObjectType.INCLUSIVE:
             end += 1
-        if self.type == CursorRegionType.LINEWISE:
+        if self.type == TextObjectType.LINEWISE:
             # Select whole lines
             row, col = doc.translate_index_to_position(start + doc.cursor_position)
             start = doc.translate_row_col_to_index(row, 0) - doc.cursor_position
@@ -172,14 +172,14 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         if bool(buffer.selection_state):
             buffer.exit_selection()
 
-    @handle('k', filter=selection_mode)
+    @handle('k', filter=selection_mode)   # XXX: don't need this...
     def _(event):
         """
         Arrow up in selection mode.
         """
         event.current_buffer.cursor_up(count=event.arg)
 
-    @handle('j', filter=selection_mode)
+    @handle('j', filter=selection_mode)   # XXX: don't need this...
     def _(event):
         """
         Arrow down in selection mode.
@@ -256,7 +256,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         """
         event.current_buffer.cancel_completion()
 
-    @handle(Keys.ControlJ, filter=navigation_mode)
+    @handle(Keys.ControlJ, filter=navigation_mode)   # XXX: only if the selected buffer has a return handler.
     def _(event):
         """
         In navigation mode, pressing enter will always return the input.
@@ -721,7 +721,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             @text_object('w', filter=...)
             def handler(event):
                 # Return a text object for this key.
-                return CursorRegion(...)
+                return TextObject(...)
         """
         def decorator(text_object_func):
             assert callable(text_object_func), text_object_func
@@ -730,7 +730,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             def _(event):
                 # Call the text object handler.
                 text_obj = text_object_func(event)
-                assert isinstance(text_obj, CursorRegion)
+                assert isinstance(text_obj, TextObject)
 
                 # Call the operator function with the text object.
                 event.cli.vi_state.operator_func(event.cli, text_obj)
@@ -779,7 +779,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
             # If using 'd' operator with a linewise motion, delete
             # the newline as well.
-            if delete_only and region.type == CursorRegionType.LINEWISE:
+            if delete_only and region.type == TextObjectType.LINEWISE:
                 buff.delete() or buff.delete_before_cursor()
 
             # Only go back to insert mode in case of 'change'.
@@ -834,70 +834,70 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
     @text_object('b')
     def _(event):
         """ Move one word or token left. """
-        return CursorRegion(event.current_buffer.document.find_start_of_previous_word(count=event.arg) or 0)
+        return TextObject(event.current_buffer.document.find_start_of_previous_word(count=event.arg) or 0)
 
     @text_object('B')
     def _(event):
         """ Move one non-blank word left """
-        return CursorRegion(event.current_buffer.document.find_start_of_previous_word(count=event.arg, WORD=True) or 0)
+        return TextObject(event.current_buffer.document.find_start_of_previous_word(count=event.arg, WORD=True) or 0)
 
     @text_object('$')
     def key_dollar(event):
         """ 'c$', 'd$' and '$':  Delete/change/move until end of line. """
-        return CursorRegion(event.current_buffer.document.get_end_of_line_position())
+        return TextObject(event.current_buffer.document.get_end_of_line_position())
 
     @text_object('w')
     def _(event):
         """ 'word' forward. 'cw', 'dw', 'w': Delete/change/move one word.  """
-        return CursorRegion(event.current_buffer.document.find_next_word_beginning(count=event.arg) or
+        return TextObject(event.current_buffer.document.find_next_word_beginning(count=event.arg) or
                             event.current_buffer.document.get_end_of_document_position())
 
     @text_object('W')
     def _(event):
         """ 'WORD' forward. 'cW', 'dW', 'W': Delete/change/move one WORD.  """
-        return CursorRegion(event.current_buffer.document.find_next_word_beginning(count=event.arg, WORD=True) or
+        return TextObject(event.current_buffer.document.find_next_word_beginning(count=event.arg, WORD=True) or
                             event.current_buffer.document.get_end_of_document_position())
 
     @text_object('e')
     def _(event):
         """ End of 'word': 'ce', 'de', 'e' """
         end = event.current_buffer.document.find_next_word_ending(count=event.arg)
-        return CursorRegion(end - 1 if end else 0, type=CursorRegionType.INCLUSIVE)
+        return TextObject(end - 1 if end else 0, type=TextObjectType.INCLUSIVE)
 
     @text_object('E')
     def _(event):
         """ End of 'WORD': 'cE', 'dE', 'E' """
         end = event.current_buffer.document.find_next_word_ending(count=event.arg, WORD=True)
-        return CursorRegion(end - 1 if end else 0, type=CursorRegionType.INCLUSIVE)
+        return TextObject(end - 1 if end else 0, type=TextObjectType.INCLUSIVE)
 
     @text_object('i', 'w', no_move_handler=True)
     def _(event):
         """ Inner 'word': ciw and diw """
         start, end = event.current_buffer.document.find_boundaries_of_current_word()
-        return CursorRegion(start, end)
+        return TextObject(start, end)
 
     @text_object('a', 'w', no_move_handler=True)
     def _(event):
         """ A 'word': caw and daw """
         start, end = event.current_buffer.document.find_boundaries_of_current_word(include_trailing_whitespace=True)
-        return CursorRegion(start, end)
+        return TextObject(start, end)
 
     @text_object('i', 'W', no_move_handler=True)
     def _(event):
         """ Inner 'WORD': ciW and diW """
         start, end = event.current_buffer.document.find_boundaries_of_current_word(WORD=True)
-        return CursorRegion(start, end)
+        return TextObject(start, end)
 
     @text_object('a', 'W', no_move_handler=True)
     def _(event):
         """ A 'WORD': caw and daw """
         start, end = event.current_buffer.document.find_boundaries_of_current_word(WORD=True, include_trailing_whitespace=True)
-        return CursorRegion(start, end)
+        return TextObject(start, end)
 
     @text_object('^')
     def key_circumflex(event):
         """ 'c^', 'd^' and '^': Soft start of line, after whitespace. """
-        return CursorRegion(event.current_buffer.document.get_start_of_line_position(after_whitespace=True))
+        return TextObject(event.current_buffer.document.get_start_of_line_position(after_whitespace=True))
 
     @text_object('0', no_move_handler=True)
     def key_zero(event):
@@ -905,7 +905,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         'c0', 'd0': Hard start of line, before whitespace.
         (The move '0' key is implemented elsewhere, because a '0' could also change the `arg`.)
         """
-        return CursorRegion(event.current_buffer.document.get_start_of_line_position(after_whitespace=False))
+        return TextObject(event.current_buffer.document.get_start_of_line_position(after_whitespace=False))
 
     def create_ci_ca_handles(ci_start, ci_end, inner):
                 # TODO: 'dab', 'dib', (brackets or block) 'daB', 'diB', Braces.
@@ -928,10 +928,10 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
             if start is not None and end is not None:
                 offset = 0 if inner else 1
-                return CursorRegion(start + 1 - offset, end + offset)
+                return TextObject(start + 1 - offset, end + offset)
             else:
                 # Nothing found.
-                return CursorRegion(0)
+                return TextObject(0)
 
     for inner in (False, True):
         for ci_start, ci_end in [('"', '"'), ("'", "'"), ("`", "`"),
@@ -954,7 +954,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             index = event.current_buffer.document.get_cursor_up_position(count=-line_index)
         else:
             index = 0
-        return CursorRegion(index)
+        return TextObject(index)
 
     @text_object('}')
     def _(event):
@@ -973,7 +973,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         else:
             index = 0
 
-        return CursorRegion(index)
+        return TextObject(index)
 
     @text_object('f', Keys.Any)
     def _(event):
@@ -984,9 +984,9 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         event.cli.vi_state.last_character_find = CharacterFind(event.data, False)
         match = event.current_buffer.document.find(event.data, in_current_line=True, count=event.arg)
         if match:
-            return CursorRegion(match, type=CursorRegionType.INCLUSIVE)
+            return TextObject(match, type=TextObjectType.INCLUSIVE)
         else:
-            return CursorRegion(0)
+            return TextObject(0)
 
     @text_object('F', Keys.Any)
     def _(event):
@@ -995,7 +995,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         cursor to the previous occurance of character. 'x'.
         """
         event.cli.vi_state.last_character_find = CharacterFind(event.data, True)
-        return CursorRegion(event.current_buffer.document.find_backwards(event.data, in_current_line=True, count=event.arg) or 0)
+        return TextObject(event.current_buffer.document.find_backwards(event.data, in_current_line=True, count=event.arg) or 0)
 
     @text_object('t', Keys.Any)
     def _(event):
@@ -1005,9 +1005,9 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         event.cli.vi_state.last_character_find = CharacterFind(event.data, False)
         match = event.current_buffer.document.find(event.data, in_current_line=True, count=event.arg)
         if match:
-            return CursorRegion(match - 1, type=CursorRegionType.INCLUSIVE)
+            return TextObject(match - 1, type=TextObjectType.INCLUSIVE)
         else:
-            return CursorRegion(0)
+            return TextObject(0)
 
     @text_object('T', Keys.Any)
     def _(event):
@@ -1016,7 +1016,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         """
         event.cli.vi_state.last_character_find = CharacterFind(event.data, True)
         match = event.current_buffer.document.find_backwards(event.data, in_current_line=True, count=event.arg)
-        return CursorRegion(match + 1 if match else 0)
+        return TextObject(match + 1 if match else 0)
 
     def repeat(reverse):
         """
@@ -1028,7 +1028,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             pos = 0
             vi_state = event.cli.vi_state
 
-            type = CursorRegionType.EXCLUSIVE
+            type = TextObjectType.EXCLUSIVE
 
             if vi_state.last_character_find:
                 char = vi_state.last_character_find.character
@@ -1041,11 +1041,11 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                     pos = event.current_buffer.document.find_backwards(char, in_current_line=True, count=event.arg)
                 else:
                     pos = event.current_buffer.document.find(char, in_current_line=True, count=event.arg)
-                    type = CursorRegionType.INCLUSIVE
+                    type = TextObjectType.INCLUSIVE
             if pos:
-                return CursorRegion(pos, type=type)
+                return TextObject(pos, type=type)
             else:
-                return CursorRegion(0)
+                return TextObject(0)
     repeat(True)
     repeat(False)
 
@@ -1053,24 +1053,24 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
     @text_object(Keys.Left)
     def _(event):
         """ Implements 'ch', 'dh', 'h': Cursor left. """
-        return CursorRegion(event.current_buffer.document.get_cursor_left_position(count=event.arg))
+        return TextObject(event.current_buffer.document.get_cursor_left_position(count=event.arg))
 
     @text_object('j', no_move_handler=True)
     def _(event):
         """ Implements 'cj', 'dj', 'j', ... Cursor up. """
-        return CursorRegion(event.current_buffer.document.get_cursor_down_position(count=event.arg), type=CursorRegionType.LINEWISE)
+        return TextObject(event.current_buffer.document.get_cursor_down_position(count=event.arg), type=TextObjectType.LINEWISE)
 
     @text_object('k', no_move_handler=True)
     def _(event):
         """ Implements 'ck', 'dk', 'k', ... Cursor up. """
-        return CursorRegion(event.current_buffer.document.get_cursor_up_position(count=event.arg), type=CursorRegionType.LINEWISE)
+        return TextObject(event.current_buffer.document.get_cursor_up_position(count=event.arg), type=TextObjectType.LINEWISE)
 
     @text_object('l')
     @text_object(' ')
     @text_object(Keys.Right)
     def _(event):
         """ Implements 'cl', 'dl', 'l', 'c ', 'd ', ' '. Cursor right. """
-        return CursorRegion(event.current_buffer.document.get_cursor_right_position(count=event.arg))
+        return TextObject(event.current_buffer.document.get_cursor_right_position(count=event.arg))
 
     @text_object('H')
     def _(event):
@@ -1091,7 +1091,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         else:
             # Otherwise, move to the start of the input.
             pos = -len(b.document.text_before_cursor)
-        return CursorRegion(pos, type=CursorRegionType.LINEWISE)
+        return TextObject(pos, type=TextObjectType.LINEWISE)
 
     @text_object('M')
     def _(event):
@@ -1112,7 +1112,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         else:
             # Otherwise, move to the start of the input.
             pos = -len(b.document.text_before_cursor)
-        return CursorRegion(pos, type=CursorRegionType.LINEWISE)
+        return TextObject(pos, type=TextObjectType.LINEWISE)
 
     @text_object('L')
     def _(event):
@@ -1132,7 +1132,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         else:
             # Otherwise, move to the end of the input.
             pos = len(b.document.text_after_cursor)
-        return CursorRegion(pos, type=CursorRegionType.LINEWISE)
+        return TextObject(pos, type=TextObjectType.LINEWISE)
 
     @handle('z', '+', filter=navigation_mode|selection_mode)
     @handle('z', 't', filter=navigation_mode|selection_mode)
@@ -1200,23 +1200,23 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             if 0 < event.arg <= 100:
                 absolute_index = buffer.document.translate_row_col_to_index(
                     int((event.arg * buffer.document.line_count - 1) / 100), 0)
-                return CursorRegion(absolute_index - buffer.document.cursor_position, type=CursorRegionType.LINEWISE)
+                return TextObject(absolute_index - buffer.document.cursor_position, type=TextObjectType.LINEWISE)
             else:
-                return CursorRegion(0)  # Do nothing.
+                return TextObject(0)  # Do nothing.
 
         else:
             # Move to the corresponding opening/closing bracket (()'s, []'s and {}'s).
             match = buffer.document.find_matching_bracket_position()
             if match:
-                return CursorRegion(match, type=CursorRegionType.INCLUSIVE)
+                return TextObject(match, type=TextObjectType.INCLUSIVE)
             else:
-                return CursorRegion(0)
+                return TextObject(0)
 
     @text_object('|')
     def _(event):
         # Move to the n-th column (you may specify the argument n by typing
         # it on number keys, for example, 20|).
-        return CursorRegion(event.current_buffer.document.get_column_cursor_position(event.arg - 1))
+        return TextObject(event.current_buffer.document.get_column_cursor_position(event.arg - 1))
 
     @text_object('g', 'g')
     def _(event):
@@ -1227,10 +1227,10 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
         if event._arg:
             # Move to the given line.
-            return CursorRegion(d.translate_row_col_to_index(event.arg - 1, 0) - d.cursor_position, type=CursorRegionType.LINEWISE)
+            return TextObject(d.translate_row_col_to_index(event.arg - 1, 0) - d.cursor_position, type=TextObjectType.LINEWISE)
         else:
             # Move to the top of the input.
-            return CursorRegion(d.get_start_of_document_position(), type=CursorRegionType.LINEWISE)
+            return TextObject(d.get_start_of_document_position(), type=TextObjectType.LINEWISE)
 
     @text_object('g', '_')
     def _(event):
@@ -1238,8 +1238,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Go to last non-blank of line.
         'g_', 'cg_', 'yg_', etc..
         """
-        return CursorRegion(
-            event.current_buffer.document.last_non_blank_of_current_line_position(), type=CursorRegionType.INCLUSIVE)
+        return TextObject(
+            event.current_buffer.document.last_non_blank_of_current_line_position(), type=TextObjectType.INCLUSIVE)
 
     @text_object('g', 'e')
     def _(event):
@@ -1248,7 +1248,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         'ge', 'cge', 'yge', etc..
         """
         prev_end = event.current_buffer.document.find_previous_word_ending(count=event.arg)
-        return CursorRegion(prev_end - 1 if prev_end is not None else 0, type=CursorRegionType.INCLUSIVE)
+        return TextObject(prev_end - 1 if prev_end is not None else 0, type=TextObjectType.INCLUSIVE)
 
     @text_object('g', 'E')
     def _(event):
@@ -1257,7 +1257,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         'gE', 'cgE', 'ygE', etc..
         """
         prev_end = event.current_buffer.document.find_previous_word_ending(count=event.arg, WORD=True)
-        return CursorRegion(prev_end - 1 if prev_end is not None else 0, type=CursorRegionType.INCLUSIVE)
+        return TextObject(prev_end - 1 if prev_end is not None else 0, type=TextObjectType.INCLUSIVE)
 
     @text_object('G')
     def _(event):
@@ -1265,8 +1265,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Go to the end of the document. (If no arg has been given.)
         """
         buf = event.current_buffer
-        return CursorRegion(buf.document.translate_row_col_to_index(buf.document.line_count - 1, 0) -
-                            buf.cursor_position, type=CursorRegionType.LINEWISE)
+        return TextObject(buf.document.translate_row_col_to_index(buf.document.line_count - 1, 0) -
+                          buf.cursor_position, type=TextObjectType.LINEWISE)
 
     #
     # *** Others ***
