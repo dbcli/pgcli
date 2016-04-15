@@ -24,18 +24,6 @@ __all__ = (
 )
 
 
-class ViStateFilter(Filter):
-    """
-    Deprecated!
-    """
-    def __init__(self, get_vi_state, mode):
-        assert isinstance(mode, six.string_types)
-        self.mode = mode
-
-    def __call__(self, cli):
-        return cli.vi_state.input_mode == self.mode
-
-
 class CursorRegionType(object):
     EXCLUSIVE = 'EXCLUSIVE'
     INCLUSIVE = 'INCLUSIVE'
@@ -1448,3 +1436,12 @@ def load_extra_vi_page_navigation_bindings(registry, filter=None):
     handle(Keys.ControlY)(scroll_one_line_up)
     handle(Keys.PageDown)(scroll_page_down)
     handle(Keys.PageUp)(scroll_page_up)
+
+
+class ViStateFilter(Filter):
+    " Deprecated! "
+    def __init__(self, get_vi_state, mode):
+        self.mode = mode
+
+    def __call__(self, cli):
+        return cli.vi_state.input_mode == self.mode
