@@ -681,7 +681,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Usage::
 
             @operator('d', filter=...)
-            def handler(cli, region):
+            def handler(cli, text_object):
                 # Do something with the text object here.
         """
         def decorator(operator_func):
@@ -759,20 +759,20 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                 @handle(*keys, filter=~operator_given & filter & navigation_mode)
                 def _(event):
                     " Move handler for navigation mode. "
-                    region = text_object_func(event)
-                    event.current_buffer.cursor_position += region.start
+                    text_object = text_object_func(event)
+                    event.current_buffer.cursor_position += text_object.start
 
             @handle(*keys, filter=~operator_given & filter & selection_mode)
             def _(event):
                 " Move handler for selection mode. "
-                region = text_object_func(event)
+                text_object = text_object_func(event)
                 buff = event.current_buffer
 
                 # When the text object has both a start and end position, like 'i(' or 'iw',
                 # Turn this into a selection, otherwise the cursor.
-                if region.end:
+                if text_object.end:
                     # Take selection positions from text object.
-                    start, end = region.operator_range(buff.document)
+                    start, end = text_object.operator_range(buff.document)
                     start += buff.cursor_position
                     end += buff.cursor_position
 
@@ -780,12 +780,12 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                     buff.cursor_position = end
 
                     # Take selection type from text object.
-                    if region.type == TextObjectType.LINEWISE:
+                    if text_object.type == TextObjectType.LINEWISE:
                         buff.selection_state.type = SelectionType.LINES
                     else:
                         buff.selection_state.type = SelectionType.CHARACTERS
                 else:
-                    event.current_buffer.cursor_position += region.start
+                    event.current_buffer.cursor_position += text_object.start
 
             # Make it possible to chain @text_object decorators.
             return text_object_func
@@ -801,26 +801,26 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Create delete and change handlers.
         """
         @operator('cd'[delete_only], filter=~IsReadOnly())
-        def delete_operator(event, region):
+        def delete_operator(event, text_object):
             deleted = ''
             buff = event.current_buffer
 
-            if region:  # XXX: is this possible?
-                start, end = region.operator_range(buff.document)
+            if text_object:  # XXX: is this possible?
+                start, end = text_object.operator_range(buff.document)
 
-                # Move to the start of the region.
+                # Move to the start of the text_object.
                 buff.cursor_position += start
 
-                # Delete until end of region.
+                # Delete until end of text_object.
                 deleted = buff.delete(count=end-start)
 
             # Set deleted/changed text to clipboard.
             if deleted:
-                event.cli.clipboard.set_data(ClipboardData(deleted, region.selection_type))
+                event.cli.clipboard.set_data(ClipboardData(deleted, text_object.selection_type))
 
             # If using 'd' operator with a linewise motion, delete
             # the newline as well.
-            if delete_only and region.type == TextObjectType.LINEWISE:
+            if delete_only and text_object.type == TextObjectType.LINEWISE:
                 buff.delete() or buff.delete_before_cursor()
 
             # Only go back to insert mode in case of 'change'.
@@ -832,12 +832,12 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
     def create_transform_handler(transform_func, *a):
         @operator(*a, filter=~IsReadOnly())
-        def _(event, region):
+        def _(event, text_object):
             """
             Apply transformation (uppercase, lowercase, rot13, swap case).
             """
             buff = event.current_buffer
-            start, end = region.operator_range(buff.document)
+            start, end = text_object.operator_range(buff.document)
 
             if start < end:
                 # Transform.
@@ -847,49 +847,49 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                     transform_func)
 
                 # Move cursor
-                buff.cursor_position += (region.end or region.start)
+                buff.cursor_position += (text_object.end or text_object.start)
 
     for k, f in vi_transform_functions:
         create_transform_handler(f, *k)
 
     @operator('y')
-    def yank_handler(event, region):
+    def yank_handler(event, text_object):
         """
         Yank operator. (Copy text.)
         """
         buff = event.current_buffer
 
-        start, end = region.operator_range(buff.document)
+        start, end = text_object.operator_range(buff.document)
         substring = buff.text[buff.cursor_position + start: buff.cursor_position + end]
 
         if substring:
-            event.cli.clipboard.set_data(ClipboardData(substring, region.selection_type))
+            event.cli.clipboard.set_data(ClipboardData(substring, text_object.selection_type))
 
     @operator('>')
-    def _(event, region):
+    def _(event, text_object):
         """
         Indent.
         """
         buff = event.current_buffer
-        from_, to = region.get_line_numbers(buff)
+        from_, to = text_object.get_line_numbers(buff)
         indent(buff, from_, to + 1, count=event.arg)
 
     @operator('<')
-    def _(event, region):
+    def _(event, text_object):
         """
         Unindent.
         """
         buff = event.current_buffer
-        from_, to = region.get_line_numbers(buff)
+        from_, to = text_object.get_line_numbers(buff)
         unindent(buff, from_, to + 1, count=event.arg)
 
     @operator('g', 'q')
-    def _(event, region):
+    def _(event, text_object):
         """
         Reshape text.
         """
         buff = event.current_buffer
-        from_, to = region.get_line_numbers(buff)
+        from_, to = text_object.get_line_numbers(buff)
         reshape_text(buff, from_, to)
 
     # TODO: Also "gq": text formatting
