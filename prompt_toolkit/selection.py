@@ -14,13 +14,13 @@ class SelectionType(object):
     Type of selection.
     """
     #: Characters. (Visual in Vi.)
-    CHARACTERS = 'characters'
+    CHARACTERS = 'CHARACTERS'
 
     #: Whole lines. (Visual-Line in Vi.)
-    LINES = 'lines'
+    LINES = 'LINES'
 
     #: A block selection. (Visual-Block in Vi.)
-    BLOCK = 'block'
+    BLOCK = 'BLOCK'
 
 
 class SelectionState(object):

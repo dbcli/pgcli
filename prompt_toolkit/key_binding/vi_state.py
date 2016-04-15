@@ -34,6 +34,10 @@ class ViState(object):
         self.operator_func = None
         self.operator_arg = None
 
+        #: Named registers. Maps register name (e.g. 'a') to
+        #: :class:`ClipboardData` instances.
+        self.named_registers = {}
+
         #: The Vi mode we're currently in to.
         self.input_mode = InputMode.INSERT
 

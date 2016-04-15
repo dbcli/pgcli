@@ -7,7 +7,7 @@ from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_fil
 from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
-from prompt_toolkit.selection import SelectionType
+from prompt_toolkit.selection import SelectionType, SelectionState
 
 from .utils import create_handle_decorator
 from .scroll import scroll_forward, scroll_backward, scroll_half_page_up, scroll_half_page_down, scroll_one_line_up, scroll_one_line_down, scroll_page_up, scroll_page_down
@@ -15,6 +15,7 @@ from .scroll import scroll_forward, scroll_backward, scroll_half_page_up, scroll
 import prompt_toolkit.filters as filters
 import codecs
 import six
+import string
 
 __all__ = (
     'load_vi_bindings',
@@ -23,11 +24,17 @@ __all__ = (
     'load_extra_vi_page_navigation_bindings',
 )
 
+if six.PY2:
+    ascii_lowercase = string.ascii_lowercase.decode('ascii')
+else:
+    ascii_lowercase = string.ascii_lowercase
+
 
 class TextObjectType(object):
     EXCLUSIVE = 'EXCLUSIVE'
     INCLUSIVE = 'INCLUSIVE'
     LINEWISE = 'LINEWISE'
+    BLOCK = 'BLOCK'
 
 
 class TextObject(object):
@@ -44,6 +51,8 @@ class TextObject(object):
     def selection_type(self):
         if self.type == TextObjectType.LINEWISE:
             return SelectionType.LINES
+        if self.type == TextObjectType.BLOCK:
+            return SelectionType.BLOCK
         else:
             return SelectionType.CHARACTERS
 
@@ -94,6 +103,22 @@ class TextObject(object):
         to, _ = buffer.document.translate_index_to_position(to)
 
         return from_, to
+
+    def cut(self, buffer):
+        """
+        Turn text object into `ClipboardData` instance.
+        """
+        from_, to = self.operator_range(buffer.document)
+
+        from_ += buffer.cursor_position
+        to += buffer.cursor_position
+        to -= 1  # SelectionState does not include the end position, `operator_range` does.
+
+        document = Document(buffer.text, to, SelectionState(
+            original_cursor_position=from_, type=self.selection_type))
+
+        new_document, clipboard_data = document.cut_selection()
+        return new_document, clipboard_data
 
 
 def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None, filter=None):
@@ -365,6 +390,15 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         # Set clipboard data
         event.cli.clipboard.set_data(ClipboardData(deleted, SelectionType.LINES))
 
+    @handle('x', filter=selection_mode)
+    def _(event):
+        """
+        Cut selection.
+        ('x' is not an operator.)
+        """
+        clipboard_data = event.current_buffer.cut_selection()
+        event.cli.clipboard.set_data(clipboard_data)
+
     @handle('i', filter=navigation_mode & ~IsReadOnly())
     def _(event):
         event.cli.vi_state.input_mode = InputMode.INSERT
@@ -422,6 +456,26 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             event.cli.clipboard.get_data(),
             before=True,
             count=event.arg)
+
+    def paste_named_register_handler(c):
+        @handle('"', c, 'p')
+        def _(event):
+            " Paste from named register. "
+            data = event.cli.vi_state.named_registers.get(c)
+            if data:
+                event.current_buffer.paste_clipboard_data(data, count=event.arg)
+
+        @handle('"', c, 'P')
+        def _(event):
+            " Paste (before) from named register. "
+            data = cli.vi_state.named_registers.get(c)
+            if data:
+                event.current_buffer.paste_clipboard_data(
+                    data, before=True, count=event.arg)
+
+    for c in ascii_lowercase:
+        paste_named_register_handler(c)
+
 
     @handle('r', Keys.Any, filter=navigation_mode)
     def _(event):
@@ -528,32 +582,6 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         """
         text = event.current_buffer.delete(count=event.arg)
         event.cli.clipboard.set_text(text)
-
-    @handle('x', filter=selection_mode)
-    @handle('d', filter=selection_mode)
-    def _(event):
-        """
-        Cut selection.
-        """
-        clipboard_data = event.current_buffer.cut_selection()
-        event.cli.clipboard.set_data(clipboard_data)
-
-    @handle('c', filter=selection_mode & ~IsReadOnly())
-    def _(event):
-        """
-        Change selection (cut and go to insert mode).
-        """
-        clipboard_data = event.current_buffer.cut_selection()
-        event.cli.clipboard.set_data(clipboard_data)
-        event.cli.vi_state.input_mode = InputMode.INSERT
-
-    @handle('y', filter=selection_mode)
-    def _(event):
-        """
-        Copy selection.
-        """
-        clipboard_data = event.current_buffer.copy_selection()
-        event.cli.clipboard.set_data(clipboard_data)
 
     @handle('X', filter=navigation_mode)
     def _(event):
@@ -710,10 +738,10 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                 # Create text object from selection.
                 if selection_state.type == SelectionType.LINES:
                     text_obj_type = TextObjectType.LINEWISE
+                elif selection_state.type == SelectionType.BLOCK:
+                    text_obj_type = TextObjectType.BLOCK
                 else:
                     text_obj_type = TextObjectType.INCLUSIVE
-
-                    # TODO: handle block selections in the operators.
 
                 text_object = TextObject(
                     selection_state.original_cursor_position - buff.cursor_position,
@@ -750,13 +778,17 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
             @handle(*keys, filter=operator_given & filter)
             def _(event):
+                # Arguments are multiplied.
+                vi_state = event.cli.vi_state
+                event._arg = (vi_state.operator_arg or 1) * (event.arg or 1)
+
                 # Call the text object handler.
                 text_obj = text_object_func(event)
                 if text_obj is not None:
                     assert isinstance(text_obj, TextObject)
 
                     # Call the operator function with the text object.
-                    event.cli.vi_state.operator_func(event, text_obj)
+                    vi_state.operator_func(event, text_obj)
 
                 # Clear operator.
                 event.cli.vi_state.operator_func = None
@@ -811,39 +843,41 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
     # *** Operators ***
     #
 
-    def create_delete_and_change_operators(delete_only):
+    def create_delete_and_change_operators(delete_only, reg_name=None):
         """
-        Create delete and change handlers.
+        Delete and change operators.
+
+        :param delete_only: Create an operator that deletes, but doesn't go to insert mode.
+        :param reg_name: Copy the deleted text to this named register instead of the clipboard.
         """
-        @operator('cd'[delete_only], filter=~IsReadOnly())
-        def delete_operator(event, text_object):
-            deleted = ''
+        if reg_name:
+            handler_keys = ('"', reg_name, 'cd'[delete_only])
+        else:
+            handler_keys = 'cd'[delete_only]
+
+        @operator(*handler_keys, filter=~IsReadOnly())
+        def delete_or_change_operator(event, text_object):
+            clipboard_data = None
             buff = event.current_buffer
 
-            if text_object:  # XXX: is this possible?
-                start, end = text_object.operator_range(buff.document)
+            if text_object:
+                new_document, clipboard_data = text_object.cut(buff)
+                buff.document = new_document
 
-                # Move to the start of the text_object.
-                buff.cursor_position += start
-
-                # Delete until end of text_object.
-                deleted = buff.delete(count=end-start)
-
-            # Set deleted/changed text to clipboard.
-            if deleted:
-                event.cli.clipboard.set_data(ClipboardData(deleted, text_object.selection_type))
-
-            # If using 'd' operator with a linewise motion, delete
-            # the newline as well.
-            if delete_only and text_object.type == TextObjectType.LINEWISE:
-                buff.delete() or buff.delete_before_cursor()
+            # Set deleted/changed text to clipboard or named register.
+            if clipboard_data and clipboard_data.text:
+                if reg_name:
+                    event.cli.named_registers[reg_name] = clipboard_data
+                else:
+                    event.cli.clipboard.set_data(clipboard_data)
 
             # Only go back to insert mode in case of 'change'.
             if not delete_only:
                 event.cli.vi_state.input_mode = InputMode.INSERT
 
-    create_delete_and_change_operators(False)
-    create_delete_and_change_operators(True)
+    for c in tuple(ascii_lowercase) + (None, ):
+        create_delete_and_change_operators(False, reg_name=c)
+        create_delete_and_change_operators(True, reg_name=c)
 
     def create_transform_handler(transform_func, *a):
         @operator(*a, filter=~IsReadOnly())
@@ -872,13 +906,19 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         """
         Yank operator. (Copy text.)
         """
-        buff = event.current_buffer
+        _, clipboard_data = text_object.cut(event.current_buffer)
+        if clipboard_data.text:
+            event.cli.clipboard.set_data(clipboard_data)
 
-        start, end = text_object.operator_range(buff.document)
-        substring = buff.text[buff.cursor_position + start: buff.cursor_position + end]
+    def create_yank_selection_handler(c):
+        @operator('"', c, 'y')
+        def _(event, text_object):
+            " Yank selection to named register 'c'. "
+            _, clipboard_data = text_object.cut(event.current_buffer)
+            event.cli.vi_state.named_registers[c] = clipboard_data
 
-        if substring:
-            event.cli.clipboard.set_data(ClipboardData(substring, text_object.selection_type))
+    for c in ascii_lowercase:
+        create_yank_selection_handler(c)
 
     @operator('>')
     def _(event, text_object):
@@ -906,8 +946,6 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         buff = event.current_buffer
         from_, to = text_object.get_line_numbers(buff)
         reshape_text(buff, from_, to)
-
-    # TODO: Also "gq": text formatting
 
     #
     # *** Text objects ***
