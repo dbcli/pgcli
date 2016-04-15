@@ -26,11 +26,12 @@ from .filters import Condition
 from .input import StdinInput, Input
 from .key_binding.input_processor import InputProcessor
 from .key_binding.registry import Registry
+from .key_binding.vi_state import ViState
 from .keys import Keys
 from .output import Output
 from .renderer import Renderer, print_tokens
 from .search_state import SearchState
-from .utils import is_windows, Callback
+from .utils import Callback
 
 # Following import is required for backwards compatibility.
 from .buffer import AcceptAction
@@ -80,6 +81,9 @@ class CommandLineInterface(object):
         #: The input buffers.
         assert isinstance(application.buffers, BufferMapping)
         self.buffers = application.buffers
+
+        # Vi state. (For Vi key bindings.)
+        self.vi_state = ViState()
 
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
@@ -265,6 +269,7 @@ class CommandLineInterface(object):
         self.renderer.reset()
         self.input_processor.reset()
         self.layout.reset()
+        self.vi_state.reset()
 
         if reset_current_buffer:
             self.current_buffer.reset()
