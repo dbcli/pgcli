@@ -172,14 +172,14 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         if bool(buffer.selection_state):
             buffer.exit_selection()
 
-    @handle('k', filter=selection_mode)   # XXX: don't need this...
+    @handle('k', filter=selection_mode)
     def _(event):
         """
         Arrow up in selection mode.
         """
         event.current_buffer.cursor_up(count=event.arg)
 
-    @handle('j', filter=selection_mode)   # XXX: don't need this...
+    @handle('j', filter=selection_mode)
     def _(event):
         """
         Arrow down in selection mode.
@@ -703,13 +703,36 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         def decorator(operator_func):
             @handle(*keys, filter=~operator_given & filter & navigation_mode)
             def _(event):
+                """
+                Handle operator in navigation mode.
+                """
                 # When this key binding is matched, only set the operator
                 # function in the ViState. We should execute it after a text
                 # object has been received.
                 event.cli.vi_state.operator_func = operator_func
 
-            # TODO: apply operators in selection_mode as well.
-            #       (This requires all operators to understand the selection.)
+            @handle(*keys, filter=~operator_given & filter & selection_mode)
+            def _(event):
+                """
+                Handle operator in selection mode.
+                """
+                buff = event.current_buffer
+                selection_state = buff.selection_state
+
+                # Create text object from selection.
+                if selection_state.type == SelectionType.LINES:
+                    text_obj_type = TextObjectType.LINEWISE
+                else:
+                    text_obj_type = TextObjectType.INCLUSIVE
+
+                    # TODO: handle block selections in the operators.
+
+                text_object = TextObject(
+                    selection_state.original_cursor_position - buff.cursor_position,
+                    type=text_obj_type)
+
+                # Execute operator.
+                operator_func(event.cli, text_object)
         return decorator
 
     def text_object(*keys, filter=Always(), no_move_handler=False):
@@ -722,9 +745,12 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
             def handler(event):
                 # Return a text object for this key.
                 return TextObject(...)
+
+        :param no_move_handler: Disable the move handler in navigation mode.
+            (It's still active in selection mode.)
         """
         def decorator(text_object_func):
-            assert callable(text_object_func), text_object_func
+            assert callable(text_object_func)
 
             @handle(*keys, filter=operator_given & filter)
             def _(event):
@@ -740,10 +766,35 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
             # Register a move operation. (Doesn't need an operator.)
             if not no_move_handler:
-                @handle(*keys, filter=~operator_given & filter & (navigation_mode|selection_mode))
+                @handle(*keys, filter=~operator_given & filter & navigation_mode)
                 def _(event):
-                    " Move handler. "
+                    " Move handler for navigation mode. "
                     region = text_object_func(event)
+                    event.current_buffer.cursor_position += region.start
+
+            @handle(*keys, filter=~operator_given & filter & selection_mode)
+            def _(event):
+                " Move handler for selection mode. "
+                region = text_object_func(event)
+                buff = event.current_buffer
+
+                # When the text object has both a start and end position, like 'i(' or 'iw',
+                # Turn this into a selection, otherwise the cursor.
+                if region.end:
+                    # Take selection positions from text object.
+                    start, end = region.operator_range(buff.document)
+                    start += buff.selection_state.original_cursor_position
+                    end += buff.selection_state.original_cursor_position
+
+                    buff.selection_state.original_cursor_position = start
+                    buff.cursor_position = end
+
+                    # Take selection type from text object.
+                    if region.type == TextObjectType.LINEWISE:
+                        buff.selection_state.type = SelectionType.LINES
+                    else:
+                        buff.selection_state.type = SelectionType.CHARACTERS
+                else:
                     event.current_buffer.cursor_position += region.start
 
             # Make it possible to chain @text_object decorators.
@@ -1298,18 +1349,6 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Insert data at cursor position.
         """
         event.current_buffer.insert_text(event.data, overwrite=True)
-
-    def create_selection_transform_handler(keys, transform_func):
-        """
-        Apply transformation on selection (uppercase, lowercase, rot13, swap case).
-        """
-        @handle(*keys, filter=selection_mode)
-        def _(event):
-            for from_, to_ in event.current_buffer.document.selection_ranges():
-                event.current_buffer.transform_region(from_, to_, transform_func)
-
-    for k, f in vi_transform_functions:
-        create_selection_transform_handler(k, f)
 
     @handle(Keys.ControlX, Keys.ControlL, filter=insert_mode)
     def _(event):
