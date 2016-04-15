@@ -123,9 +123,11 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
 
     handle = create_handle_decorator(registry, filter)
 
-    insert_mode = ViStateFilter(InputMode.INSERT) & ~ filters.HasSelection()
-    navigation_mode = ViStateFilter(InputMode.NAVIGATION) & ~ filters.HasSelection()
-    replace_mode = ViStateFilter(InputMode.REPLACE) & ~ filters.HasSelection()
+    # (Note: Always take the navigation bindings in read-only mode, even when
+    #  ViState says different.)
+    navigation_mode = (ViStateFilter(InputMode.NAVIGATION) | IsReadOnly()) & ~ filters.HasSelection()
+    insert_mode = ViStateFilter(InputMode.INSERT) & ~ filters.HasSelection() & ~IsReadOnly()
+    replace_mode = ViStateFilter(InputMode.REPLACE) & ~ filters.HasSelection() & ~IsReadOnly()
     selection_mode = filters.HasSelection()
 
     vi_transform_functions = [
