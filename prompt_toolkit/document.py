@@ -904,7 +904,7 @@ class Document(object):
 
         return count
 
-    def start_of_paragraph(self, count=1):
+    def start_of_paragraph(self, count=1, before=False):
         """
         Return the start of the current paragraph. (Relative cursor position.)
         """
@@ -914,11 +914,12 @@ class Document(object):
         line_index = self.find_previous_matching_line(match_func=match_func, count=count)
 
         if line_index:
-            return self.get_cursor_up_position(count=-line_index)
+            add = 0 if before else 1
+            return min(0, self.get_cursor_up_position(count=-line_index) + add)
         else:
-            return 0  # XXX: shouldn't we return the start position?
+            return -self.cursor_position
 
-    def end_of_paragraph(self, count=1):
+    def end_of_paragraph(self, count=1, after=False):
         """
         Return the end of the current paragraph. (Relative cursor position.)
         """
@@ -928,9 +929,10 @@ class Document(object):
         line_index = self.find_next_matching_line(match_func=match_func, count=count)
 
         if line_index:
-            return self.get_cursor_down_position(count=line_index)
+            add = 0 if after else 1
+            return max(0, self.get_cursor_down_position(count=line_index) - add)
         else:
-            return 0  # XXX: shouldn't we return the end position?
+            return len(self.text_after_cursor)
 
     # Modifiers.
 

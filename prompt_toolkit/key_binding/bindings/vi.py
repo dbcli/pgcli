@@ -1015,7 +1015,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Move to previous blank-line separated section.
         Implements '{', 'c{', 'd{', 'y{'
         """
-        index = event.current_buffer.document.start_of_paragraph(count=event.arg)
+        index = event.current_buffer.document.start_of_paragraph(count=event.arg, before=True)
         return TextObject(index)
 
     @text_object('}')
@@ -1024,7 +1024,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Move to next blank-line separated section.
         Implements '}', 'c}', 'd}', 'y}'
         """
-        index = event.current_buffer.document.end_of_paragraph(count=event.arg)
+        index = event.current_buffer.document.end_of_paragraph(count=event.arg, after=True)
         return TextObject(index)
 
     @text_object('f', Keys.Any)
