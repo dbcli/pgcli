@@ -945,6 +945,15 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         start, end = event.current_buffer.document.find_boundaries_of_current_word(WORD=True, include_trailing_whitespace=True)
         return TextObject(start, end)
 
+    @text_object('a', 'p', no_move_handler=True)
+    def _(event):
+        """
+        Auto paragraph.
+        """
+        start = event.current_buffer.document.start_of_paragraph()
+        end = event.current_buffer.document.end_of_paragraph(count=event.arg)
+        return TextObject(start, end)
+
     @text_object('^')
     def key_circumflex(event):
         """ 'c^', 'd^' and '^': Soft start of line, after whitespace. """
@@ -995,16 +1004,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Move to previous blank-line separated section.
         Implements '{', 'c{', 'd{', 'y{'
         """
-        def match_func(text):
-            return not text or text.isspace()
-
-        line_index = event.current_buffer.document.find_previous_matching_line(
-            match_func=match_func, count=event.arg)
-
-        if line_index:
-            index = event.current_buffer.document.get_cursor_up_position(count=-line_index)
-        else:
-            index = 0
+        index = event.current_buffer.document.start_of_paragraph(count=event.arg)
         return TextObject(index)
 
     @text_object('}')
@@ -1013,17 +1013,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Move to next blank-line separated section.
         Implements '}', 'c}', 'd}', 'y}'
         """
-        def match_func(text):
-            return not text or text.isspace()
-
-        line_index = event.current_buffer.document.find_next_matching_line(
-            match_func=match_func, count=event.arg)
-
-        if line_index:
-            index = event.current_buffer.document.get_cursor_down_position(count=line_index)
-        else:
-            index = 0
-
+        index = event.current_buffer.document.end_of_paragraph(count=event.arg)
         return TextObject(index)
 
     @text_object('f', Keys.Any)
@@ -1320,7 +1310,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
                           buf.cursor_position, type=TextObjectType.LINEWISE)
 
     #
-    # *** Others ***
+    # *** Other ***
     #
 
     @handle('G', filter=HasArg())

@@ -904,6 +904,34 @@ class Document(object):
 
         return count
 
+    def start_of_paragraph(self, count=1):
+        """
+        Return the start of the current paragraph. (Relative cursor position.)
+        """
+        def match_func(text):
+            return not text or text.isspace()
+
+        line_index = self.find_previous_matching_line(match_func=match_func, count=count)
+
+        if line_index:
+            return self.get_cursor_up_position(count=-line_index)
+        else:
+            return 0  # XXX: shouldn't we return the start position?
+
+    def end_of_paragraph(self, count=1):
+        """
+        Return the end of the current paragraph. (Relative cursor position.)
+        """
+        def match_func(text):
+            return not text or text.isspace()
+
+        line_index = self.find_next_matching_line(match_func=match_func, count=count)
+
+        if line_index:
+            return self.get_cursor_down_position(count=line_index)
+        else:
+            return 0  # XXX: shouldn't we return the end position?
+
     # Modifiers.
 
     def insert_after(self, text):
