@@ -3,11 +3,12 @@ The `Document` that implements all the text operations/querying.
 """
 from __future__ import unicode_literals
 
+import bisect
 import re
 import six
 import string
 import weakref
-from six.moves import range
+from six.moves import range, map
 
 from .selection import SelectionType, SelectionState
 from .clipboard import ClipboardData
@@ -250,24 +251,8 @@ class Document(object):
         """
         indexes = self._line_start_indexes
 
-        # Special case: 'index' appears after the last line.
-        if index >= indexes[-1]:
-            return len(indexes) - 1, indexes[-1]
-
-        # Binary search for the closest index.
-        a, b = 0, len(indexes) - 1
-
-        while a != b:
-            mid = (a + b) // 2
-
-            if indexes[mid] <= index and indexes[mid + 1] > index:
-                return mid, indexes[mid]
-            elif indexes[mid] <= index:
-                a = mid
-            else:
-                b = mid
-
-        return a, indexes[a]
+        pos = bisect.bisect_right(indexes, index) - 1
+        return pos, indexes[pos]
 
     def translate_index_to_position(self, index):
         """
