@@ -73,8 +73,7 @@ class Char(object):
 
         # Calculate width. (We always need this, so better to store it directly
         # as a member for performance.)
-        width = get_cwidth(char)
-        self.width = width
+        self.width = get_cwidth(char)
 
     def __eq__(self, other):
         return self.char == other.char and self.token == other.token
