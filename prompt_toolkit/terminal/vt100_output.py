@@ -293,7 +293,7 @@ class _EscapeCodeCache(dict):
 
     def _supports_only_16_colors(self):
         " True when the given terminal only supports 16 colors. "
-        return self.term in ('linux', )
+        return self.term in ('linux', 'eterm-color')
 
 
 def _get_size(fileno):
