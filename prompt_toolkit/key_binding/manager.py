@@ -15,7 +15,8 @@ from prompt_toolkit.key_binding.registry import Registry
 from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_abort_and_exit_bindings, load_basic_system_bindings, load_auto_suggestion_bindings
 from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_system_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings, load_extra_emacs_page_navigation_bindings
 from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_system_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings, load_extra_vi_page_navigation_bindings
-from prompt_toolkit.filters import to_cli_filter
+from prompt_toolkit.filters import to_cli_filter, InEditingMode
+from prompt_toolkit.enums import EditingMode
 
 __all__ = (
     'KeyBindingManager',
@@ -27,7 +28,6 @@ class KeyBindingManager(object):
     Utility for loading all key bindings into memory.
 
     :param registry: Optional `Registry` instance.
-    :param enable_vi_mode: Filter to enable Vi-mode.
     :param enable_abort_and_exit_bindings: Filter to enable Ctrl-C and Ctrl-D.
     :param enable_system_bindings: Filter to enable the system bindings
             (meta-! prompt and Control-Z suspension.)
@@ -38,8 +38,11 @@ class KeyBindingManager(object):
         (Bindings for up/down scrolling through long pages, like in Emacs or Vi.)
     :param enable_auto_suggest_bindings: Filter to enable fish-style suggestions.
     :param enable_all: Filter to enable (or disable) all bindings.
+
+    :param enable_vi_mode: Deprecated!
     """
-    def __init__(self, registry=None, enable_vi_mode=False,
+    def __init__(self, registry=None,
+                 enable_vi_mode=None,  # (`enable_vi_mode` is deprecated.)
                  get_search_state=None,
                  enable_abort_and_exit_bindings=False,
                  enable_system_bindings=False, enable_search=False,
@@ -50,11 +53,21 @@ class KeyBindingManager(object):
         assert registry is None or isinstance(registry, Registry)
         assert get_search_state is None or callable(get_search_state)
 
+        # Emacs/Vi mode.
+        if enable_vi_mode is None:
+            enable_vi_mode = InEditingMode(EditingMode.VI)
+            enable_emacs_mode = InEditingMode(EditingMode.EMACS)
+        else:
+            # When `enable_vi_mode` is given, use this to determine whether Vi
+            # or Emacs bindings are active, rather than using
+            # CommandLineInterface.editing_mode.
+            enable_vi_mode = to_cli_filter(enable_vi_mode)
+            enable_emacs_mode = ~enable_vi_mode
+
         # Create registry.
         self.registry = registry or Registry()
 
         # Accept both Filters and booleans as input.
-        enable_vi_mode = to_cli_filter(enable_vi_mode)
         enable_abort_and_exit_bindings = to_cli_filter(enable_abort_and_exit_bindings)
         enable_system_bindings = to_cli_filter(enable_system_bindings)
         enable_search = to_cli_filter(enable_search)
@@ -62,9 +75,6 @@ class KeyBindingManager(object):
         enable_extra_page_navigation = to_cli_filter(enable_extra_page_navigation)
         enable_auto_suggest_bindings = to_cli_filter(enable_auto_suggest_bindings)
         enable_all = to_cli_filter(enable_all)
-
-        # Emacs mode filter is the opposite of Vi mode.
-        enable_emacs_mode = ~enable_vi_mode
 
         # Load basic bindings.
         load_basic_bindings(self.registry, enable_all)

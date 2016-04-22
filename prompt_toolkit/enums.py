@@ -6,6 +6,12 @@ class IncrementalSearchDirection(object):
     BACKWARD = 'BACKWARD'
 
 
+class EditingMode(object):
+    # The set of key bindings that is active.
+    VI = 'VI'
+    EMACS = 'EMACS'
+
+
 #: Name of the search buffer.
 SEARCH_BUFFER = 'SEARCH_BUFFER'
 

@@ -3,6 +3,8 @@ Filters that accept a `CommandLineInterface` as argument.
 """
 from __future__ import unicode_literals
 from .base import Filter
+from prompt_toolkit.enums import EditingMode
+from prompt_toolkit.key_binding.vi_state import InputMode as ViInputMode
 import six
 
 __all__ = (
@@ -19,7 +21,8 @@ __all__ = (
     'IsReadOnly',
     'IsReturning',
     'RendererHeightIsKnown',
-    'ViMode',
+    'InViMode',
+    'InEditingMode',
 )
 
 
@@ -189,9 +192,9 @@ class RendererHeightIsKnown(Filter):
         return 'RendererHeightIsKnown()'
 
 
-class ViMode(Filter):
+class InViMode(Filter):
     """
-    When in a certain Vi mode.
+    Check whether we are in a certain Vi mode. (Insert, Replace, Navigation.)
     """
     def __init__(self, mode):
         assert isinstance(mode, six.string_types)
@@ -206,4 +209,41 @@ class ViMode(Filter):
         if vi_state.operator_func:
             return False
 
-        return vi_state.input_mode == self.mode
+        # When the current buffer is read-only, always report NAVIGATION mode.
+        if cli.current_buffer.read_only():
+            input_mode = ViInputMode.NAVIGATION
+        else:
+            input_mode = vi_state.input_mode
+
+        return input_mode == self.mode
+
+    def __repr__(self):
+        return 'InViMode(%r)' % (self.mode, )
+
+
+class InEditingMode(Filter):
+    """
+    Check whether a given editing mode is active. (Vi or Emacs.)
+    """
+    def __init__(self, editing_mode):
+        self.editing_mode = editing_mode
+
+    def __call__(self, cli):
+        return cli.editing_mode == self.editing_mode
+
+    def __repr__(self):
+        return 'InEditingMode(%r)' % (self.editing_mode, )
+
+
+class CanInsert(Filter):
+    """
+    When it's possible to insert text.
+    (When we are in Emacs mode, or Vi insert mode.)
+    """
+    def __call__(self, cli):
+        return cli.editing_mode != EditingMode.VI or (
+                not cli.vi_state.operator_func and
+                cli.vi_state.input_mode == ViInputMode.INSERT)
+
+    def __repr__(self):
+        return 'CanInsert()'

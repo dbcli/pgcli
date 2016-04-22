@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from .buffer import Buffer, AcceptAction
 from .buffer_mapping import BufferMapping
 from .clipboard import Clipboard, InMemoryClipboard
-from .enums import DEFAULT_BUFFER
+from .enums import DEFAULT_BUFFER, EditingMode
 from .filters import CLIFilter, to_cli_filter
 from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
@@ -13,6 +13,7 @@ from .layout.containers import Container
 from .layout.controls import BufferControl
 from .styles import DEFAULT_STYLE, Style
 from .utils import Callback
+import six
 
 __all__ = (
     'AbortAction',
@@ -62,6 +63,7 @@ class Application(object):
         boolean). When True, enable mouse support.
     :param paste_mode: :class:`~prompt_toolkit.filters.CLIFilter` or boolean.
     :param ignore_case: :class:`~prompt_toolkit.filters.CLIFilter` or boolean.
+    :param editing_mode: :class:`~prompt_toolkit.enums.EditingMode`.
 
     Callbacks:
 
@@ -83,7 +85,7 @@ class Application(object):
                  use_alternate_screen=False, mouse_support=False,
                  get_title=None,
 
-                 paste_mode=False, ignore_case=False,
+                 paste_mode=False, ignore_case=False, editing_mode=EditingMode.EMACS,
 
                  on_input_timeout=None, on_start=None, on_stop=None,
                  on_reset=None, on_initialize=None, on_buffer_changed=None, on_render=None):
@@ -103,6 +105,7 @@ class Application(object):
         assert get_title is None or callable(get_title)
         assert isinstance(paste_mode, CLIFilter)
         assert isinstance(ignore_case, CLIFilter)
+        assert isinstance(editing_mode, six.string_types)
         assert on_start is None or isinstance(on_start, Callback)
         assert on_stop is None or isinstance(on_stop, Callback)
         assert on_reset is None or isinstance(on_reset, Callback)
@@ -150,6 +153,7 @@ class Application(object):
 
         self.paste_mode = paste_mode
         self.ignore_case = ignore_case
+        self.editing_mode = editing_mode
 
         self.on_input_timeout = on_input_timeout or Callback()
         self.on_start = on_start or Callback()
