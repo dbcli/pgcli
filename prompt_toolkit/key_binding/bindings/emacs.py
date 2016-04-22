@@ -4,6 +4,7 @@ from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import CLIFilter, Always
+from prompt_toolkit.completion import CompleteEvent
 
 from .utils import create_handle_decorator
 from .scroll import scroll_page_up, scroll_page_down
@@ -294,12 +295,30 @@ def load_emacs_bindings(registry, filter=Always()):
         Delete all spaces and tabs around point.
         (delete-horizontal-space)
         """
+        buff = event.current_buffer
+        text_before_cursor = buff.document.text_before_cursor
+        text_after_cursor = buff.document.text_after_cursor
+
+        delete_before = len(text_before_cursor) - len(text_before_cursor.rstrip('\t '))
+        delete_after = len(text_after_cursor) - len(text_after_cursor.lstrip('\t '))
+
+        buff.delete_before_cursor(count=delete_before)
+        buff.delete(count=delete_after)
 
     @handle(Keys.Escape, '*', filter= ~has_selection)
     def _(event):
         """
         `meta-*`: Insert all possible completions of the preceding text.
         """
+        buff = event.current_buffer
+
+        # List all completions.
+        complete_event = CompleteEvent(text_inserted=False, completion_requested=True)
+        completions = list(buff.completer.get_completions(buff.document, complete_event))
+
+        # Insert them.
+        text_to_insert = ' '.join(c.text for c in completions)
+        buff.insert_text(text_to_insert)
 
     @handle(Keys.ControlX, Keys.ControlU, save_before=(lambda e: False), filter= ~has_selection)
     def _(event):
