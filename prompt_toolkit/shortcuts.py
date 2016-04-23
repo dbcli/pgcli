@@ -23,7 +23,7 @@ from __future__ import unicode_literals
 
 from .buffer import Buffer, AcceptAction
 from .document import Document
-from .enums import DEFAULT_BUFFER, SEARCH_BUFFER
+from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
 from .filters import IsDone, HasFocus, RendererHeightIsKnown, to_simple_filter, to_cli_filter, Condition
 from .history import InMemoryHistory
 from .interface import CommandLineInterface, Application, AbortAction
@@ -341,7 +341,8 @@ def create_prompt_application(
         multiline=False,
         wrap_lines=True,
         is_password=False,
-        vi_mode=False,
+        vi_mode=False,  # Deprecated!
+        editing_mode=EditingMode.EMACS,
         complete_while_typing=True,
         enable_history_search=False,
         lexer=None,
@@ -381,8 +382,6 @@ def create_prompt_application(
         When True (the default), automatically wrap long lines instead of
         scrolling horizontally.
     :param is_password: Show asterisks instead of the actual typed characters.
-    :param vi_mode: `bool` or :class:`~prompt_toolkit.filters.CLIFilter`. If
-        True, use Vi key bindings.
     :param complete_while_typing: `bool` or
         :class:`~prompt_toolkit.filters.CLIFilter`. Enable autocompletion while
         typing.
@@ -424,9 +423,12 @@ def create_prompt_application(
     """
     if key_bindings_registry is None:
         key_bindings_registry = KeyBindingManager.for_prompt(
-            enable_vi_mode=vi_mode,
             enable_system_bindings=enable_system_bindings,
             enable_open_in_editor=enable_open_in_editor).registry
+
+    # Ensure backwards-compatibility, when `vi_mode` is passed.
+    if vi_mode:
+        editing_mode = EditingMode.VI
 
     # Make sure that complete_while_typing is disabled when enable_history_search
     # is enabled. (First convert to SimpleFilter, to avoid doing bitwise operations
@@ -475,6 +477,7 @@ def create_prompt_application(
         key_bindings_registry=key_bindings_registry,
         get_title=get_title,
         mouse_support=mouse_support,
+        editing_mode=editing_mode,
         on_abort=on_abort,
         on_exit=on_exit)
 
