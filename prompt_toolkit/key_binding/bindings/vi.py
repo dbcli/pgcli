@@ -1597,7 +1597,8 @@ def load_extra_vi_page_navigation_bindings(registry, filter=None):
 class ViStateFilter(Filter):
     " Deprecated! "
     def __init__(self, get_vi_state, mode):
+        self.get_vi_state = get_vi_state
         self.mode = mode
 
     def __call__(self, cli):
-        return cli.vi_state.input_mode == self.mode
+        return self.get_vi_state(cli).input_mode == self.mode
