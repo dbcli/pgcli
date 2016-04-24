@@ -511,17 +511,9 @@ filters <filters>`.)
 Dynamically switch between Emacs and Vi mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :class:`~prompt_toolkit.key_binding.manager.KeyBindingManager` class
-accepts an ``enable_vi_mode`` argument. When this is ``True``, the Vi bindings
-will be active, when ``False``, the Emacs bindings will be active. One
-confusing thing here is that we can pass a boolean, but not change it
-afterwards. However, instead we can pass a
-:class:`~prompt_toolkit.filters.CLIFilter`, an expression that is ``True`` or
-``False`` according to a certain condition.
-
-In our demonstration below, we are going to use a nonlocal variable
-``vi_mode_enabled`` to hold this state. (Of course, this state can be stored
-anywhere you want.)
+The :class:`~prompt_toolkit.interface.CommandLineInterface` has
+an ``editing_mode`` attribute. We can change the key bindings by changing this
+attribute from ``EditingMode.VI`` to ``EditingMode.EMACS``.
 
 .. code:: python
 
@@ -531,24 +523,24 @@ anywhere you want.)
     from prompt_toolkit.keys import Keys
 
     def run():
-        vi_mode_enabled = False
-
-        # Create a set of key bindings that have Vi mode enabled if the
-        # ``vi_mode_enabled`` is True..
-        manager = KeyBindingManager.for_prompt(
-            enable_vi_mode=Condition(lambda cli: vi_mode_enabled))
+        # Create a set of key bindings.
+        manager = KeyBindingManager.for_prompt()
 
         # Add an additional key binding for toggling this flag.
         @manager.registry.add_binding(Keys.F4)
         def _(event):
             " Toggle between Emacs and Vi mode. "
-            nonlocal vi_mode_enabled
-            vi_mode_enabled = not vi_mode_enabled
+            cli = event.cli
+
+            if cli.editing_mode == EditingMode.VI:
+                cli.editing_mode = EditingMode.EMACS
+            else:
+                cli.editing_mode = EditingMode.VI
 
         # Add a toolbar at the bottom to display the current input mode.
         def get_bottom_toolbar_tokens(cli):
             " Display the current input mode. "
-            text = 'Vi' if vi_mode_enabled else 'Emacs'
+            text = 'Vi' if cli.editing_mode = EditingMode.VI else 'Emacs'
             return [
                 (Token.Toolbar, ' [F4] %s ' % text)
             ]
