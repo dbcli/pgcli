@@ -91,8 +91,8 @@ class PGCli(object):
             os.environ['PAGER'] = os_environ_pager
         else:
             self.logger.info('No default pager found in environment. Using os default pager')
-        # Always set default set of less recommended options, they are ignored if pager is 
-        # different than less or is already parameterized with their own arguments 
+        # Always set default set of less recommended options, they are ignored if pager is
+        # different than less or is already parameterized with their own arguments
         os.environ['LESS'] = '-SRXF'
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
@@ -383,7 +383,7 @@ class PGCli(object):
                     try:
                         if self.output_file and not document.text.startswith(('\\o ', '\\? ')):
                             try:
-                                with open(self.output_file, 'a') as f:
+                                with open(self.output_file, 'a', encoding='utf-8') as f:
                                     click.echo(document.text, file=f)
                                     click.echo('\n'.join(output), file=f)
                                     click.echo('', file=f) # extra newline
