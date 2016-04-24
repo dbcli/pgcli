@@ -82,9 +82,10 @@ class CommandLineInterface(object):
         assert isinstance(application.buffers, BufferMapping)
         self.buffers = application.buffers
 
+        #: EditingMode.VI or EditingMode.EMACS
         self.editing_mode = application.editing_mode
 
-        # Vi state. (For Vi key bindings.)
+        #: Vi state. (For Vi key bindings.)
         self.vi_state = ViState()
 
         #: The `Renderer` instance.
