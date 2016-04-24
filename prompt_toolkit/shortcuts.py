@@ -341,7 +341,7 @@ def create_prompt_application(
         multiline=False,
         wrap_lines=True,
         is_password=False,
-        vi_mode=False,  # Deprecated!
+        vi_mode=False,
         editing_mode=EditingMode.EMACS,
         complete_while_typing=True,
         enable_history_search=False,
@@ -382,6 +382,8 @@ def create_prompt_application(
         When True (the default), automatically wrap long lines instead of
         scrolling horizontally.
     :param is_password: Show asterisks instead of the actual typed characters.
+    :param editing_mode: ``EditingMode.VI`` or ``EditingMode.EMACS``.
+    :param vi_mode: `bool`, if True, Identical to ``editing_mode=EditingMode.VI``.
     :param complete_while_typing: `bool` or
         :class:`~prompt_toolkit.filters.CLIFilter`. Enable autocompletion while
         typing.
