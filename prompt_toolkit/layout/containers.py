@@ -1038,6 +1038,7 @@ class Window(Container):
             ui_content, write_position.width - total_margin_width, write_position.height, cli)
 
         # Write body
+        digraph = cli.vi_state.waiting_for_digraph
         visible_line_to_row_col, rowcol_to_yx = self._copy_body(
             ui_content, screen, write_position,
             sum(left_margin_widths), write_position.width - total_margin_width,
@@ -1045,7 +1046,8 @@ class Window(Container):
             has_focus=self.content.has_focus(cli),
             wrap_lines=wrap_lines,
             vertical_scroll_2=self.vertical_scroll_2,
-            always_hide_cursor=self.always_hide_cursor(cli))
+            always_hide_cursor=self.always_hide_cursor(cli),
+            cursor_char='?' if digraph else False)
 
         # Remember render info. (Set before generating the margins. They need this.)
         x_offset=write_position.xpos + sum(left_margin_widths)
@@ -1148,17 +1150,18 @@ class Window(Container):
     def _copy_body(cls, ui_content, new_screen, write_position, move_x,
                    width, vertical_scroll=0, horizontal_scroll=0,
                    has_focus=False, wrap_lines=False, vertical_scroll_2=0,
-                   always_hide_cursor=False):
+                   always_hide_cursor=False, cursor_char=None):
         """
         Copy the UIContent into the output screen.
+
+        :param cursor_char: When '?', put a question mark underneath the cursor.
+            Used when going into Vi digraph mode.
         """
         xpos = write_position.xpos + move_x
         ypos = write_position.ypos
         line_count = ui_content.line_count
         new_buffer = new_screen.data_buffer
         empty_char = _CHAR_CACHE['', Token]
-
-        # Result dict.
 
         # Map visible line number to (row, col) of input.
         # 'col' will always be zero if line wrapping is off.
@@ -1264,6 +1267,11 @@ class Window(Container):
                 new_screen.show_cursor = False
             else:
                 new_screen.show_cursor = ui_content.show_cursor
+
+            if cursor_char:
+                cpos = new_screen.cursor_position
+                new_screen.data_buffer[cpos.y][cpos.x] = \
+                    _CHAR_CACHE[cursor_char, new_screen.data_buffer[cpos.y][cpos.x].token]
 
         if not new_screen.menu_position and ui_content.menu_position:
             new_screen.menu_position = cursor_pos_to_screen_pos(

@@ -203,10 +203,10 @@ class InViMode(Filter):
     def __call__(self, cli):
         vi_state = cli.vi_state
 
-        # Always report False when we are waiting for a text object.
+        # Always report False when we are waiting for a text object or digraph.
         # (This is the best to avoid inserting key bindings in between the
         # operator and text object.)
-        if vi_state.operator_func:
+        if vi_state.operator_func or vi_state.waiting_for_digraph:
             return False
 
         # When the current buffer is read-only, always report NAVIGATION mode.

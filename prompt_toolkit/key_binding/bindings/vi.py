@@ -4,6 +4,7 @@ from prompt_toolkit.buffer import ClipboardData, indent, unindent, reshape_text
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter, IsReadOnly, InViMode
+from prompt_toolkit.key_binding.digraphs import DIGRAPHS
 from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
@@ -158,6 +159,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
     replace_mode = InViMode(InputMode.REPLACE) & ~ filters.HasSelection() & ~IsReadOnly()
     selection_mode = filters.HasSelection()
     operator_given = Condition(lambda cli: cli.vi_state.operator_func is not None)
+    digraph_mode = Condition(lambda cli: cli.vi_state.waiting_for_digraph)
 
     vi_transform_functions = [
         # Rot 13 transformation
@@ -208,7 +210,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         if vi_state.input_mode in (InputMode.INSERT, InputMode.REPLACE):
             buffer.cursor_position += buffer.document.get_cursor_left_position()
 
-        vi_state.input_mode = InputMode.NAVIGATION
+        vi_state.reset(InputMode.NAVIGATION)
 
         if bool(buffer.selection_state):
             buffer.exit_selection()
@@ -1424,6 +1426,24 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         """
         # TODO
         pass
+
+    @handle(Keys.ControlK, filter=insert_mode)
+    def _(event):
+        " Insert digraph. "
+        event.cli.vi_state.waiting_for_digraph = True
+
+    for key1, key2, symbol in DIGRAPHS:
+        @handle(key1, key2, filter=digraph_mode)
+        def _(event, symbol=symbol):
+            " Insert digraph. "
+            event.current_buffer.insert_text(six.unichr(symbol))
+            event.cli.vi_state.waiting_for_digraph = False
+
+    @handle(Keys.Any, filter=digraph_mode)
+    def _(event):
+        " Unknown digraph sequence. "
+        event.cli.output.bell()
+        event.cli.vi_state.waiting_for_digraph = False
 
 
 def load_vi_open_in_editor_bindings(registry, filter=None):
