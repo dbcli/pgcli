@@ -540,7 +540,7 @@ attribute from ``EditingMode.VI`` to ``EditingMode.EMACS``.
         # Add a toolbar at the bottom to display the current input mode.
         def get_bottom_toolbar_tokens(cli):
             " Display the current input mode. "
-            text = 'Vi' if cli.editing_mode = EditingMode.VI else 'Emacs'
+            text = 'Vi' if cli.editing_mode == EditingMode.VI else 'Emacs'
             return [
                 (Token.Toolbar, ' [F4] %s ' % text)
             ]
