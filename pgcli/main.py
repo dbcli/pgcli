@@ -54,9 +54,9 @@ from .__init__ import __version__
 click.disable_unicode_literals_warning = True
 
 try:
-    from urlparse import urlparse
+    from urlparse import urlparse, unquote
 except ImportError:
-    from urllib.parse import urlparse
+    from urllib.parse import urlparse, unquote
 
 from getpass import getuser
 from psycopg2 import OperationalError
@@ -238,8 +238,10 @@ class PGCli(object):
     def connect_uri(self, uri):
         uri = urlparse(uri)
         database = uri.path[1:]  # ignore the leading fwd slash
-        self.connect(database, uri.hostname, uri.username,
-                     uri.port, uri.password)
+        arguments = [database, uri.hostname, uri.username,
+                     uri.port, uri.password]
+        # unquote each URI part (they may be percent encoded)
+        self.connect(*list(map(lambda p: unquote(p) if p else p, arguments)))
 
     def connect(self, database='', host='', user='', port='', passwd='',
                 dsn=''):
