@@ -1235,10 +1235,6 @@ def reshape_text(buffer, from_row, to_row):
         if reshaped_text[-1] != '\n':
             reshaped_text.append('\n')
 
-        with open('/tmp/format', 'a') as f:
-            f.write('words=%r\n' % (words, ))
-            f.write('%r\n' % (reshaped_text, ))
-
         # Apply result.
         buffer.document = Document(
             text=''.join(lines_before + reshaped_text + lines_after),
