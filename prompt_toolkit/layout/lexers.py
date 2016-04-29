@@ -39,9 +39,15 @@ class Lexer(with_metaclass(ABCMeta, object)):
 class SimpleLexer(Lexer):
     """
     Lexer that doesn't do any tokenizing and returns the whole input as one token.
+
+    :param token: The `Token` for this lexer.
     """
-    def __init__(self, default_token=Token):
-        self.default_token = default_token
+    # `default_token` parameter is deprecated!
+    def __init__(self, token=Token, default_token=None):
+        self.token = token
+
+        if default_token is not None:
+            self.token = default_token
 
     def lex_document(self, cli, document):
         lines = document.lines
@@ -49,7 +55,7 @@ class SimpleLexer(Lexer):
         def get_line(lineno):
             " Return the tokens for the given line. "
             try:
-                return [(self.default_token, lines[lineno])]
+                return [(self.token, lines[lineno])]
             except IndexError:
                 return []
         return get_line

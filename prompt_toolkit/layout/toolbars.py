@@ -40,7 +40,7 @@ class SystemToolbarControl(BufferControl):
         super(SystemToolbarControl, self).__init__(
             buffer_name=SYSTEM_BUFFER,
             default_char=Char(token=token),
-            lexer=SimpleLexer(default_token=token.Text),
+            lexer=SimpleLexer(token=token.Text),
             input_processors=[BeforeInput.static('Shell command: ', token)],)
 
 
@@ -94,7 +94,7 @@ class SearchToolbarControl(BufferControl):
             buffer_name=SEARCH_BUFFER,
             input_processors=[BeforeInput(get_before_input)],
             default_char=Char(token=token),
-            lexer=SimpleLexer(default_token=token.Text))
+            lexer=SimpleLexer(token=token.Text))
 
 
 class SearchToolbar(ConditionalContainer):
