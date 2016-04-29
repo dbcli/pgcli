@@ -106,3 +106,10 @@ class PipeInput(Input):
 
     def cooked_mode(self):
         return DummyContext()
+
+    def close(self):
+        " Close pipe fds. "
+        os.close(self._r)
+        os.close(self._w)
+        self._r = None
+        self._w = None

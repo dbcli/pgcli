@@ -35,6 +35,7 @@ def _feed_cli_with_input(text):
         return result, cli
     finally:
         loop.close()
+        inp.close()
 
 
 class FeedCliTest(unittest.TestCase):
