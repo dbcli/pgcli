@@ -25,7 +25,7 @@ def _feed_cli_with_input(text):
     loop = PosixEventLoop()
     try:
         inp = PipeInput()
-        inp.send(text)
+        inp.send_text(text)
         cli = CommandLineInterface(
             application=Application(),
             eventloop=loop,

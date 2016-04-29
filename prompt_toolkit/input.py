@@ -98,8 +98,12 @@ class PipeInput(Input):
     def read(self):
         return os.read(self._r)
 
-    def send(self, data):
+    def send_text(self, data):
+        " Send text to the input. "
         os.write(self._w, data.encode('utf-8'))
+
+    # Deprecated alias for `send_text`.
+    send = send_text
 
     def raw_mode(self):
         return DummyContext()
