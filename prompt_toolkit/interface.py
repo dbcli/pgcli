@@ -19,7 +19,7 @@ from .application import Application, AbortAction
 from .buffer import Buffer
 from .buffer_mapping import BufferMapping
 from .completion import CompleteEvent, get_common_complete_suffix
-from .enums import SEARCH_BUFFER, EditingMode
+from .enums import SEARCH_BUFFER
 from .eventloop.base import EventLoop
 from .eventloop.callbacks import EventLoopCallbacks
 from .filters import Condition
