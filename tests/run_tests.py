@@ -11,6 +11,7 @@ from regular_languages_tests import *
 from style_tests import *
 from utils_tests import *
 from filter_tests import *
+from cli_tests import *
 
 import unittest
 
