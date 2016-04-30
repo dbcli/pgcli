@@ -4,15 +4,16 @@ instance, feed it with some input and check the result.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.application import Application
-from prompt_toolkit.enums import DEFAULT_BUFFER
+from prompt_toolkit.enums import DEFAULT_BUFFER, EditingMode
 from prompt_toolkit.eventloop.posix import PosixEventLoop
 from prompt_toolkit.input import PipeInput
 from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.output import DummyOutput
+from functools import partial
 
 import unittest
 
-def _feed_cli_with_input(text):
+def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS):
     """
     Create a CommandLineInterface, feed it with the given user input and return
     the CLI object.
@@ -27,7 +28,7 @@ def _feed_cli_with_input(text):
         inp = PipeInput()
         inp.send_text(text)
         cli = CommandLineInterface(
-            application=Application(),
+            application=Application(editing_mode=editing_mode),
             eventloop=loop,
             input=inp,
             output=DummyOutput())
@@ -88,3 +89,98 @@ class FeedCliTest(unittest.TestCase):
         # ControlL: should not influence the result.
         result, cli = _feed_cli_with_input('hello\x0c\n')
         self.assertEqual(result.text, 'hello')
+
+    def test_vi_cursor_movements(self):
+        """
+        Test cursor movements with Vi key bindings.
+        """
+        feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI)
+
+        result, cli = feed('\x1b\n')
+        self.assertEqual(result.text, '')
+
+        # Esc h a X
+        result, cli = feed('hello\x1bhaX\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'hellXo')
+
+        # Esc I X
+        result, cli = feed('hello\x1bIX\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'Xhello')
+
+        # Esc I X
+        result, cli = feed('hello\x1bIX\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'Xhello')
+
+        # Esc 2hiX
+        result, cli = feed('hello\x1b2hiX\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'heXllo')
+
+        # Esc 2h2liX
+        result, cli = feed('hello\x1b2h2liX\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'hellXo')
+
+        # Esc \b\b
+        result, cli = feed('hello\b\b\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'hel')
+
+        # Esc \b\b
+        result, cli = feed('hello\b\b\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'hel')
+
+        # Esc 2h D
+        result, cli = feed('hello\x1b2hD\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'he')
+
+        # Esc 2h rX \n
+        result, cli = feed('hello\x1b2hrX\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'heXlo')
+
+    def test_vi_operators(self):
+        feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI)
+
+        # Esc g~0
+        result, cli = feed('hello\x1bg~0\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'HELLo')
+
+        # Esc gU0
+        result, cli = feed('hello\x1bgU0\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'HELLo')
+
+        # Esc d0
+        result, cli = feed('hello\x1bd0\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'o')
+
+    def test_vi_text_objects(self):
+        feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI)
+
+        # Esc gUgg
+        result, cli = feed('hello\x1bgUgg\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'HELLO')
+
+        # Esc di(
+        result, cli = feed('before(inside)after\x1b8hdi(\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'before()after')
+
+        # Esc di[
+        result, cli = feed('before[inside]after\x1b8hdi[\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'before[]after')
+
+        # Esc da(
+        result, cli = feed('before(inside)after\x1b8hda(\n')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
+        self.assertEqual(result.text, 'beforeafter')
