@@ -44,6 +44,9 @@ class ViState(object):
         #: Waiting for digraph.
         self.waiting_for_digraph = False
 
+        #: When true, make ~ act as an operator.
+        self.tilde_operator = False
+
     def reset(self, mode=InputMode.INSERT):
         """
         Reset state, go back to the given mode. INSERT by default.

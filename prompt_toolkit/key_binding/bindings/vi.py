@@ -165,17 +165,17 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
 
     vi_transform_functions = [
         # Rot 13 transformation
-        (('g', '?'), lambda string: codecs.encode(string, 'rot_13')),
+        (('g', '?'), Always(), lambda string: codecs.encode(string, 'rot_13')),
 
         # To lowercase
-        (('g', 'u'), lambda string: string.lower()),
+        (('g', 'u'), Always(), lambda string: string.lower()),
 
         # To uppercase.
-        (('g', 'U'), lambda string: string.upper()),
+        (('g', 'U'), Always(), lambda string: string.upper()),
 
         # Swap case.
-        # (XXX: If we would implement 'tildeop', the 'g' prefix is not required.)
-        (('g', '~'), lambda string: string.swapcase()),
+        (('g', '~'), Always(), lambda string: string.swapcase()),
+        (('~', ), Condition(lambda cli: cli.vi_state.tilde_operator), lambda string: string.swapcase()),
     ]
 
     def check_cursor_position(event):
@@ -881,8 +881,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         create_delete_and_change_operators(False, reg_name=c)
         create_delete_and_change_operators(True, reg_name=c)
 
-    def create_transform_handler(transform_func, *a):
-        @operator(*a, filter=~IsReadOnly())
+    def create_transform_handler(filter, transform_func, *a):
+        @operator(*a, filter=filter & ~IsReadOnly())
         def _(event, text_object):
             """
             Apply transformation (uppercase, lowercase, rot13, swap case).
@@ -900,8 +900,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
                 # Move cursor
                 buff.cursor_position += (text_object.end or text_object.start)
 
-    for k, f in vi_transform_functions:
-        create_transform_handler(f, *k)
+    for k, f, func in vi_transform_functions:
+        create_transform_handler(f, func, *k)
 
     @operator('y')
     def yank_handler(event, text_object):
