@@ -7,6 +7,7 @@ from .enums import DEFAULT_BUFFER, EditingMode
 from .filters import CLIFilter, to_cli_filter
 from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
+from .key_binding.bindings.vi import load_vi_bindings
 from .key_binding.registry import Registry
 from .layout import Window
 from .layout.containers import Container
@@ -139,6 +140,7 @@ class Application(object):
             key_bindings_registry = Registry()
             load_basic_bindings(key_bindings_registry)
             load_emacs_bindings(key_bindings_registry)
+            load_vi_bindings(key_bindings_registry)
 
         if get_title is None:
             get_title = lambda: None

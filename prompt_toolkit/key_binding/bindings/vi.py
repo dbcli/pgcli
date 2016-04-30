@@ -124,7 +124,7 @@ class TextObject(object):
 
 
 def load_vi_bindings(registry, enable_visual_key=Always(),
-                     get_search_state=None, filter=None):
+                     get_search_state=None, filter=Always()):
     """
     Vi extensions.
 
