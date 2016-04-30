@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import ClipboardData, indent, unindent, reshape_text
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
-from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter, IsReadOnly, InViMode
+from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter, IsReadOnly
+from prompt_toolkit.filters.cli import ViNavigationMode, ViInsertMode, ViReplaceMode, ViSelectionMode, ViWaitingForTextObjectMode, ViDigraphMode, ViMode
 from prompt_toolkit.key_binding.digraphs import DIGRAPHS
 from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
@@ -122,7 +123,8 @@ class TextObject(object):
         return new_document, clipboard_data
 
 
-def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None, filter=None):
+def load_vi_bindings(registry, enable_visual_key=Always(),
+                     get_search_state=None, filter=None):
     """
     Vi extensions.
 
@@ -150,16 +152,16 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
     if get_search_state is None:
         def get_search_state(cli): return cli.search_state
 
-    handle = create_handle_decorator(registry, filter)
+    handle = create_handle_decorator(registry, filter & ViMode())
 
     # (Note: Always take the navigation bindings in read-only mode, even when
     #  ViState says different.)
-    navigation_mode = (InViMode(InputMode.NAVIGATION) | IsReadOnly()) & ~ filters.HasSelection()
-    insert_mode = InViMode(InputMode.INSERT) & ~ filters.HasSelection() & ~IsReadOnly()
-    replace_mode = InViMode(InputMode.REPLACE) & ~ filters.HasSelection() & ~IsReadOnly()
-    selection_mode = filters.HasSelection()
-    operator_given = Condition(lambda cli: cli.vi_state.operator_func is not None)
-    digraph_mode = Condition(lambda cli: cli.vi_state.waiting_for_digraph)
+    navigation_mode = ViNavigationMode()
+    insert_mode = ViInsertMode()
+    replace_mode = ViReplaceMode()
+    selection_mode = ViSelectionMode()
+    operator_given = ViWaitingForTextObjectMode()
+    digraph_mode = ViDigraphMode()
 
     vi_transform_functions = [
         # Rot 13 transformation
@@ -186,9 +188,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         preferred_column = buff.preferred_column
 
         if (
-                (filter is None or filter(event.cli)) and  # First make sure that this key bindings are active.
-
-                event.cli.vi_state.input_mode == InputMode.NAVIGATION and
+                navigation_mode(event.cli) and  # First make sure that this key bindings are active.
                 buff.document.is_cursor_at_the_end_of_line and
                 len(buff.document.current_line) > 0):
             buff.cursor_position -= 1
@@ -1075,7 +1075,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Move to previous blank-line separated section.
         Implements '{', 'c{', 'd{', 'y{'
         """
-        index = event.current_buffer.document.start_of_paragraph(count=event.arg, before=True)
+        index = event.current_buffer.document.start_of_paragraph(
+            count=event.arg, before=True)
         return TextObject(index)
 
     @text_object('}')
@@ -1094,7 +1095,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         cursor to the next occurance of character. 'x'.
         """
         event.cli.vi_state.last_character_find = CharacterFind(event.data, False)
-        match = event.current_buffer.document.find(event.data, in_current_line=True, count=event.arg)
+        match = event.current_buffer.document.find(
+            event.data, in_current_line=True, count=event.arg)
         if match:
             return TextObject(match, type=TextObjectType.INCLUSIVE)
         else:
@@ -1107,7 +1109,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         cursor to the previous occurance of character. 'x'.
         """
         event.cli.vi_state.last_character_find = CharacterFind(event.data, True)
-        return TextObject(event.current_buffer.document.find_backwards(event.data, in_current_line=True, count=event.arg) or 0)
+        return TextObject(event.current_buffer.document.find_backwards(
+            event.data, in_current_line=True, count=event.arg) or 0)
 
     @text_object('t', Keys.Any)
     def _(event):
@@ -1115,7 +1118,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Move right to the next occurance of c, then one char backward.
         """
         event.cli.vi_state.last_character_find = CharacterFind(event.data, False)
-        match = event.current_buffer.document.find(event.data, in_current_line=True, count=event.arg)
+        match = event.current_buffer.document.find(
+            event.data, in_current_line=True, count=event.arg)
         if match:
             return TextObject(match - 1, type=TextObjectType.INCLUSIVE)
         else:
@@ -1127,7 +1131,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         Move left to the previous occurance of c, then one char forward.
         """
         event.cli.vi_state.last_character_find = CharacterFind(event.data, True)
-        match = event.current_buffer.document.find_backwards(event.data, in_current_line=True, count=event.arg)
+        match = event.current_buffer.document.find_backwards(
+            event.data, in_current_line=True, count=event.arg)
         return TextObject(match + 1 if match else 0)
 
     def repeat(reverse):
@@ -1427,7 +1432,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         # TODO
         pass
 
-    @handle(Keys.ControlK, filter=insert_mode)
+    @handle(Keys.ControlK, filter=insert_mode|replace_mode)
     def _(event):
         " Insert digraph. "
         event.cli.vi_state.waiting_for_digraph = True
@@ -1436,7 +1441,9 @@ def load_vi_bindings(registry, enable_visual_key=Always(), get_search_state=None
         @handle(key1, key2, filter=digraph_mode)
         def _(event, symbol=symbol):
             " Insert digraph. "
-            event.current_buffer.insert_text(six.unichr(symbol))
+            overwrite = event.cli.vi_state.input_mode == InputMode.REPLACE
+            event.current_buffer.insert_text(
+                six.unichr(symbol), overwrite=overwrite)
             event.cli.vi_state.waiting_for_digraph = False
 
     @handle(Keys.Any, filter=digraph_mode)
@@ -1450,8 +1457,8 @@ def load_vi_open_in_editor_bindings(registry, filter=None):
     """
     Pressing 'v' in navigation mode will open the buffer in an external editor.
     """
-    navigation_mode = InViMode(InputMode.NAVIGATION) & ~ filters.HasSelection()
-    handle = create_handle_decorator(registry, filter)
+    navigation_mode = ViNavigationMode()
+    handle = create_handle_decorator(registry, filter & ViMode())
 
     @handle('v', filter=navigation_mode)
     def _(event):
@@ -1460,9 +1467,9 @@ def load_vi_open_in_editor_bindings(registry, filter=None):
 
 def load_vi_system_bindings(registry, filter=None):
     has_focus = filters.HasFocus(SYSTEM_BUFFER)
-    navigation_mode = InViMode(InputMode.NAVIGATION) & ~ filters.HasSelection()
+    navigation_mode = ViNavigationMode()
 
-    handle = create_handle_decorator(registry, filter)
+    handle = create_handle_decorator(registry, filter & ViMode())
 
     @handle('!', filter=~has_focus & navigation_mode)
     def _(event):
@@ -1505,8 +1512,8 @@ def load_vi_search_bindings(registry, get_search_state=None,
         def get_search_state(cli): return cli.search_state
 
     has_focus = filters.HasFocus(search_buffer_name)
-    navigation_mode = ~has_focus & (InViMode(InputMode.NAVIGATION) | filters.HasSelection())
-    handle = create_handle_decorator(registry, filter)
+    navigation_mode = ViNavigationMode()
+    handle = create_handle_decorator(registry, filter & ViMode())
 
     @handle('/', filter=navigation_mode)
     @handle(Keys.ControlS, filter=~has_focus)
@@ -1602,7 +1609,7 @@ def load_extra_vi_page_navigation_bindings(registry, filter=None):
     Key bindings, for scrolling up and down through pages.
     This are separate bindings, because GNU readline doesn't have them.
     """
-    handle = create_handle_decorator(registry, filter)
+    handle = create_handle_decorator(registry, filter & ViMode())
 
     handle(Keys.ControlF)(scroll_forward)
     handle(Keys.ControlB)(scroll_backward)

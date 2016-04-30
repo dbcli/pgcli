@@ -15,8 +15,7 @@ from prompt_toolkit.key_binding.registry import Registry
 from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_abort_and_exit_bindings, load_basic_system_bindings, load_auto_suggestion_bindings
 from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_system_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings, load_extra_emacs_page_navigation_bindings
 from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_system_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings, load_extra_vi_page_navigation_bindings
-from prompt_toolkit.filters import to_cli_filter, InEditingMode
-from prompt_toolkit.enums import EditingMode
+from prompt_toolkit.filters import to_cli_filter
 
 __all__ = (
     'KeyBindingManager',
@@ -53,17 +52,6 @@ class KeyBindingManager(object):
         assert registry is None or isinstance(registry, Registry)
         assert get_search_state is None or callable(get_search_state)
 
-        # Emacs/Vi mode.
-        if enable_vi_mode is None:
-            enable_vi_mode = InEditingMode(EditingMode.VI)
-            enable_emacs_mode = InEditingMode(EditingMode.EMACS)
-        else:
-            # When `enable_vi_mode` is given, use this to determine whether Vi
-            # or Emacs bindings are active, rather than using
-            # CommandLineInterface.editing_mode.
-            enable_vi_mode = to_cli_filter(enable_vi_mode)
-            enable_emacs_mode = ~enable_vi_mode
-
         # Create registry.
         self.registry = registry or Registry()
 
@@ -86,45 +74,45 @@ class KeyBindingManager(object):
             enable_system_bindings & enable_all)
 
         # Load emacs bindings.
-        load_emacs_bindings(self.registry, enable_emacs_mode & enable_all)
+        load_emacs_bindings(self.registry, enable_all)
 
         load_emacs_open_in_editor_bindings(
-            self.registry, enable_emacs_mode & enable_open_in_editor & enable_all)
+            self.registry, enable_open_in_editor & enable_all)
 
         load_emacs_search_bindings(
             self.registry,
-            filter=enable_emacs_mode & enable_search & enable_all,
+            filter=enable_search & enable_all,
             get_search_state=get_search_state)
 
         load_emacs_system_bindings(
-            self.registry, enable_emacs_mode & enable_system_bindings & enable_all)
+            self.registry, enable_system_bindings & enable_all)
 
         load_extra_emacs_page_navigation_bindings(
             self.registry,
-            enable_emacs_mode & enable_extra_page_navigation & enable_all)
+            enable_extra_page_navigation & enable_all)
 
         # Load Vi bindings.
         load_vi_bindings(
             self.registry, enable_visual_key=~enable_open_in_editor,
-            filter=enable_vi_mode & enable_all,
+            filter=enable_all,
             get_search_state=get_search_state)
 
         load_vi_open_in_editor_bindings(
             self.registry,
-            enable_vi_mode & enable_open_in_editor & enable_all)
+            enable_open_in_editor & enable_all)
 
         load_vi_search_bindings(
             self.registry,
-            filter=enable_vi_mode & enable_search & enable_all,
+            filter=enable_search & enable_all,
             get_search_state=get_search_state)
 
         load_vi_system_bindings(
             self.registry,
-            enable_vi_mode & enable_system_bindings & enable_all)
+            enable_system_bindings & enable_all)
 
         load_extra_vi_page_navigation_bindings(
             self.registry,
-            enable_vi_mode & enable_extra_page_navigation & enable_all)
+            enable_extra_page_navigation & enable_all)
 
         # Suggestion bindings.
         # (This has to come at the end, because the Vi bindings also have an

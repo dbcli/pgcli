@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
-from prompt_toolkit.filters import CLIFilter, Always
+from prompt_toolkit.filters import CLIFilter, Always, Condition, EmacsMode
 from prompt_toolkit.completion import CompleteEvent
 
 from .utils import create_handle_decorator
@@ -28,7 +28,7 @@ def load_emacs_bindings(registry, filter=Always()):
 
     assert isinstance(filter, CLIFilter)
 
-    handle = create_handle_decorator(registry, filter)
+    handle = create_handle_decorator(registry, filter & EmacsMode())
     has_selection = filters.HasSelection()
 
     @handle(Keys.Escape)
@@ -155,15 +155,16 @@ def load_emacs_bindings(registry, filter=Always()):
         if event._arg is None:
             event.append_to_arg_count('-')
 
-    @handle(Keys.Escape, Keys.ControlJ, filter= ~has_selection)
+    is_returnable = Condition(
+        lambda cli: cli.current_buffer.accept_action.is_returnable)
+
+    @handle(Keys.Escape, Keys.ControlJ, filter= ~has_selection & is_returnable)
     def _(event):
         """
         Meta + Newline: always accept input.
         """
         b = event.current_buffer
-
-        if b.accept_action.is_returnable:
-            b.accept_action.validate_and_handle(event.cli, b)
+        b.accept_action.validate_and_handle(event.cli, b)
 
     @handle(Keys.ControlSquareClose, Keys.Any)
     def _(event):
@@ -502,7 +503,7 @@ def load_emacs_system_bindings(registry, filter=None):
 
 
 def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
-    handle = create_handle_decorator(registry, filter)
+    handle = create_handle_decorator(registry, filter & EmacsMode())
     has_focus = filters.HasFocus(SEARCH_BUFFER)
 
     assert get_search_state is None or callable(get_search_state)
@@ -587,7 +588,7 @@ def load_extra_emacs_page_navigation_bindings(registry, filter=None):
     Key bindings, for scrolling up and down through pages.
     This are separate bindings, because GNU readline doesn't have them.
     """
-    handle = create_handle_decorator(registry, filter)
+    handle = create_handle_decorator(registry, filter & EmacsMode())
 
     handle(Keys.ControlV)(scroll_page_down)
     handle(Keys.PageDown)(scroll_page_down)

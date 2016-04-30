@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.enums import DEFAULT_BUFFER
-from prompt_toolkit.filters import CLIFilter, Always, HasSelection, Condition
+from prompt_toolkit.filters import CLIFilter, Always, HasSelection, Condition, EmacsInsertMode, ViInsertMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.screen import Point
 from prompt_toolkit.mouse_events import MouseEventTypes, MouseEvent
@@ -28,6 +28,7 @@ def if_no_repeat(event):
 def load_basic_bindings(registry, filter=Always()):
     assert isinstance(filter, CLIFilter)
 
+    insert_mode = ViInsertMode() | EmacsInsertMode()
     handle = create_handle_decorator(registry, filter)
     has_selection = HasSelection()
 
@@ -124,14 +125,14 @@ def load_basic_bindings(registry, filter=Always()):
 
     # CTRL keys.
 
-    @handle(Keys.ControlD, filter=Condition(lambda cli: cli.current_buffer.text))
+    text_before_cursor = Condition(lambda cli: cli.current_buffer.text)
+
+    @handle(Keys.ControlD, filter=text_before_cursor & insert_mode)
     def _(event):
-        """
-        Delete text before cursor.
-        """
+        " Delete text before cursor. "
         event.current_buffer.delete(event.arg)
 
-    @handle(Keys.ControlI, filter= ~has_selection)
+    @handle(Keys.ControlI, filter=insert_mode)
     def _(event):
         r"""
         Ctrl-I is identical to "\t"
@@ -154,33 +155,34 @@ def load_basic_bindings(registry, filter=Always()):
         else:
             event.cli.start_completion(insert_common_part=True)
 
-    @handle(Keys.BackTab, filter= ~has_selection)
+    @handle(Keys.BackTab, filter=insert_mode)
     def _(event):
         """
         Shift+Tab: go to previous completion.
         """
         event.current_buffer.complete_previous()
 
-    @handle(Keys.ControlJ, filter= ~has_selection)
+    is_multiline = Condition(lambda cli: cli.current_buffer.is_multiline())
+    is_returnable = Condition(lambda cli: cli.current_buffer.accept_action.is_returnable)
+
+    @handle(Keys.ControlJ, filter=is_multiline)
     def _(event):
-        """
-        Newline/Enter. (Or return input.)
-        """
-        b = event.current_buffer
+        " Newline (in case of multiline input. "
+        event.current_buffer.newline(copy_margin=not event.cli.in_paste_mode)
 
-        if b.is_multiline():
-            b.newline(copy_margin=not event.cli.in_paste_mode)
-        else:
-            if b.accept_action.is_returnable:
-                b.accept_action.validate_and_handle(event.cli, b)
+    @handle(Keys.ControlJ, filter=~is_multiline & is_returnable)
+    def _(event):
+        " Enter, accept input. "
+        buff = event.current_buffer
+        buff.accept_action.validate_and_handle(event.cli, buff)
 
-    @handle(Keys.ControlK, filter= ~has_selection)
+    @handle(Keys.ControlK, filter=insert_mode)
     def _(event):
         buffer = event.current_buffer
         deleted = buffer.delete(count=buffer.document.get_end_of_line_position())
         event.cli.clipboard.set_text(deleted)
 
-    @handle(Keys.ControlT, filter= ~has_selection)
+    @handle(Keys.ControlT, filter=insert_mode)
     def _(event):
         """
         Emulate Emacs transpose-char behavior: at the beginning of the buffer,
@@ -198,7 +200,7 @@ def load_basic_bindings(registry, filter=Always()):
             b.cursor_position += b.document.get_cursor_right_position()
             b.swap_characters_before_cursor()
 
-    @handle(Keys.ControlU, filter= ~has_selection)
+    @handle(Keys.ControlU, filter=insert_mode)
     def _(event):
         """
         Clears the line before the cursor position. If you are at the end of
@@ -208,7 +210,7 @@ def load_basic_bindings(registry, filter=Always()):
         deleted = buffer.delete_before_cursor(count=-buffer.document.get_start_of_line_position())
         event.cli.clipboard.set_text(deleted)
 
-    @handle(Keys.ControlW, filter= ~has_selection)
+    @handle(Keys.ControlW, filter=insert_mode)
     def _(event):
         """
         Delete the word before the cursor.
@@ -269,15 +271,15 @@ def load_basic_bindings(registry, filter=Always()):
     def _(event):
         event.current_buffer.cursor_down(count=event.arg)
 
-    @handle(Keys.ControlH, filter= ~has_selection, save_before=if_no_repeat)
+    @handle(Keys.ControlH, filter=insert_mode, save_before=if_no_repeat)
     def _(event):
         " Backspace: delete before cursor. "
         deleted = event.current_buffer.delete_before_cursor(count=event.arg)
         if not deleted:
             event.cli.output.bell()
 
-    @handle(Keys.Delete, filter= ~has_selection, save_before=if_no_repeat)
-    @handle(Keys.ShiftDelete, filter= ~has_selection, save_before=if_no_repeat)
+    @handle(Keys.Delete, filter=insert_mode, save_before=if_no_repeat)
+    @handle(Keys.ShiftDelete, filter=insert_mode, save_before=if_no_repeat)
     def _(event):
         deleted = event.current_buffer.delete(count=event.arg)
 
@@ -289,7 +291,7 @@ def load_basic_bindings(registry, filter=Always()):
         data = event.current_buffer.cut_selection()
         event.cli.clipboard.set_data(data)
 
-    @handle(Keys.Any, filter= ~has_selection, save_before=if_no_repeat)
+    @handle(Keys.Any, filter=insert_mode, save_before=if_no_repeat)
     def _(event):
         """
         Insert data at cursor position.

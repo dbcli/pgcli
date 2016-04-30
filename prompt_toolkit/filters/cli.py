@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 from .base import Filter
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.key_binding.vi_state import InputMode as ViInputMode
-import six
 
 __all__ = (
     'HasArg',
@@ -21,8 +20,20 @@ __all__ = (
     'IsReadOnly',
     'IsReturning',
     'RendererHeightIsKnown',
-    'InViMode',
     'InEditingMode',
+
+    # Vi modes.
+    'ViNavigationMode',
+    'ViInsertMode',
+    'ViReplaceMode',
+    'ViSelectionMode',
+    'ViWaitingForTextObjectMode',
+    'ViDigraphMode',
+
+    # Emacs modes.
+    'EmacsMode',
+    'EmacsInsertMode',
+    'EmacsSelectionMode',
 )
 
 
@@ -192,35 +203,6 @@ class RendererHeightIsKnown(Filter):
         return 'RendererHeightIsKnown()'
 
 
-class InViMode(Filter):
-    """
-    Check whether we are in a certain Vi mode. (Insert, Replace, Navigation.)
-    """
-    def __init__(self, mode):
-        assert isinstance(mode, six.string_types)
-        self.mode = mode
-
-    def __call__(self, cli):
-        vi_state = cli.vi_state
-
-        # Always report False when we are waiting for a text object or digraph.
-        # (This is the best to avoid inserting key bindings in between the
-        # operator and text object.)
-        if vi_state.operator_func or vi_state.waiting_for_digraph:
-            return False
-
-        # When the current buffer is read-only, always report NAVIGATION mode.
-        if cli.current_buffer.read_only():
-            input_mode = ViInputMode.NAVIGATION
-        else:
-            input_mode = vi_state.input_mode
-
-        return input_mode == self.mode
-
-    def __repr__(self):
-        return 'InViMode(%r)' % (self.mode, )
-
-
 class InEditingMode(Filter):
     """
     Check whether a given editing mode is active. (Vi or Emacs.)
@@ -235,15 +217,89 @@ class InEditingMode(Filter):
         return 'InEditingMode(%r)' % (self.editing_mode, )
 
 
-class CanInsert(Filter):
+class ViMode(Filter):
+    def __call__(self, cli):
+        return cli.editing_mode == EditingMode.VI
+
+
+class ViNavigationMode(Filter):
     """
-    When it's possible to insert text.
-    (When we are in Emacs mode, or Vi insert mode.)
+    Active when the set for Vi navigation key bindings are active.
     """
     def __call__(self, cli):
-        return cli.editing_mode != EditingMode.VI or (
-                not cli.vi_state.operator_func and
-                cli.vi_state.input_mode == ViInputMode.INSERT)
+        if (cli.editing_mode != EditingMode.VI
+                or cli.vi_state.operator_func
+                or cli.vi_state.waiting_for_digraph
+                or cli.current_buffer.selection_state):
+            return False
 
-    def __repr__(self):
-        return 'CanInsert()'
+        return (cli.vi_state.input_mode == ViInputMode.NAVIGATION or
+                cli.current_buffer.read_only())
+
+class ViInsertMode(Filter):
+    def __call__(self, cli):
+        if (cli.editing_mode != EditingMode.VI
+                or cli.vi_state.operator_func
+                or cli.vi_state.waiting_for_digraph
+                or cli.current_buffer.selection_state
+                or cli.current_buffer.read_only()):
+            return False
+
+        return cli.vi_state.input_mode == ViInputMode.INSERT
+
+
+class ViReplaceMode(Filter):
+    def __call__(self, cli):
+        if (cli.editing_mode != EditingMode.VI
+                or cli.vi_state.operator_func
+                or cli.vi_state.waiting_for_digraph
+                or cli.current_buffer.selection_state
+                or cli.current_buffer.read_only()):
+            return False
+
+        return cli.vi_state.input_mode == ViInputMode.REPLACE
+
+
+class ViSelectionMode(Filter):
+    def __call__(self, cli):
+        if cli.editing_mode != EditingMode.VI:
+            return False
+
+        return bool(cli.current_buffer.selection_state)
+
+
+class ViWaitingForTextObjectMode(Filter):
+    def __call__(self, cli):
+        if cli.editing_mode != EditingMode.VI:
+            return False
+
+        return cli.vi_state.operator_func is not None
+
+
+class ViDigraphMode(Filter):
+    def __call__(self, cli):
+        if cli.editing_mode != EditingMode.VI:
+            return False
+
+        return cli.vi_state.waiting_for_digraph
+
+
+class EmacsMode(Filter):
+    " When the Emacs bindings are active. "
+    def __call__(self, cli):
+        return cli.editing_mode == EditingMode.EMACS
+
+
+class EmacsInsertMode(Filter):
+    def __call__(self, cli):
+        if (cli.editing_mode != EditingMode.EMACS
+                or cli.current_buffer.selection_state
+                or cli.current_buffer.read_only()):
+            return False
+        return True
+
+
+class EmacsSelectionMode(Filter):
+    def __call__(self, cli):
+        return (cli.editing_mode == EditingMode.EMACS
+                and cli.current_buffer.selection_state)
