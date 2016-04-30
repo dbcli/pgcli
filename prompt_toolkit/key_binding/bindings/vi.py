@@ -1030,7 +1030,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         """ 'c^', 'd^' and '^': Soft start of line, after whitespace. """
         return TextObject(event.current_buffer.document.get_start_of_line_position(after_whitespace=True))
 
-    @text_object('0', no_move_handler=True)
+    @text_object('0')
     def key_zero(event):
         """
         'c0', 'd0': Hard start of line, before whitespace.
@@ -1397,17 +1397,18 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         """
         event.current_buffer.go_to_history(event.arg - 1)
 
-    for n in '0123456789':
+    for n in '123456789':
         @handle(n, filter=navigation_mode|selection_mode|operator_given)
         def _(event):
             """
             Always handle numberics in navigation mode as arg.
             """
-            if event.data in '123456789' or (event._arg and event.data == '0'):
-                event.append_to_arg_count(event.data)
-            elif event.data == '0':
-                buffer = event.current_buffer
-                buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=False)
+            event.append_to_arg_count(event.data)
+
+    @handle('0', filter=(navigation_mode|selection_mode|operator_given) & HasArg())
+    def _(event):
+        " Zero when an argument was already give. "
+        event.append_to_arg_count(event.data)
 
     @handle(Keys.Any, filter=replace_mode)
     def _(event):
