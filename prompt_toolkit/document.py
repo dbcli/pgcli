@@ -100,7 +100,17 @@ class Document(object):
 
         # Cache for lines/indexes. (Shared with other Document instances that
         # contain the same text.
-        self._cache = _text_to_document_cache.setdefault(self.text, _DocumentCache())
+        try:
+            self._cache = _text_to_document_cache[self.text]
+        except KeyError:
+            self._cache = _DocumentCache()
+            _text_to_document_cache[self.text] = self._cache
+
+        # XX: For some reason, above, we can't use 'WeakValueDictionary.setdefault'.
+        #     This fails in Pypy3. `self._cache` becomes None, because that's what
+        #     'setdefault' returns.
+        # self._cache = _text_to_document_cache.setdefault(self.text, _DocumentCache())
+        # assert self._cache
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.text, self.cursor_position)
