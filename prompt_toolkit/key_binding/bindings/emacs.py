@@ -340,10 +340,12 @@ def load_emacs_bindings(registry, filter=Always()):
     @handle(Keys.ControlSpace)
     def _(event):
         """
-        Start of the selection.
+        Start of the selection (if the current buffer is not empty).
         """
         # Take the current cursor position as the start of this selection.
-        event.current_buffer.start_selection(selection_type=SelectionType.CHARACTERS)
+        buff = event.current_buffer
+        if buff.text:
+            buff.start_selection(selection_type=SelectionType.CHARACTERS)
 
     @handle(Keys.ControlG, filter= ~has_selection)
     def _(event):
