@@ -1435,23 +1435,36 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
 
     @handle(Keys.ControlK, filter=insert_mode|replace_mode)
     def _(event):
-        " Insert digraph. "
+        " Go into digraph mode. "
         event.cli.vi_state.waiting_for_digraph = True
 
-    for key1, key2, symbol in DIGRAPHS:
-        @handle(key1, key2, filter=digraph_mode)
-        def _(event, symbol=symbol):
-            " Insert digraph. "
+    @Condition
+    def digraph_symbol_1_given(cli):
+        return cli.vi_state.digraph_symbol1 is not None
+
+    @handle(Keys.Any, filter=digraph_mode & ~digraph_symbol_1_given)
+    def _(event):
+        event.cli.vi_state.digraph_symbol1 = event.data
+
+    @handle(Keys.Any, filter=digraph_mode & digraph_symbol_1_given)
+    def _(event):
+        " Insert digraph. "
+        try:
+            # Lookup.
+            code = (event.cli.vi_state.digraph_symbol1, event.data)
+            symbol = DIGRAPHS[code]
+        except KeyError:
+            # Unkown digraph.
+            event.cli.output.bell()
+        else:
+            # Insert digraph.
             overwrite = event.cli.vi_state.input_mode == InputMode.REPLACE
             event.current_buffer.insert_text(
                 six.unichr(symbol), overwrite=overwrite)
             event.cli.vi_state.waiting_for_digraph = False
-
-    @handle(Keys.Any, filter=digraph_mode)
-    def _(event):
-        " Unknown digraph sequence. "
-        event.cli.output.bell()
-        event.cli.vi_state.waiting_for_digraph = False
+        finally:
+            event.cli.vi_state.waiting_for_digraph = False
+            event.cli.vi_state.digraph_symbol1 = None
 
 
 def load_vi_open_in_editor_bindings(registry, filter=None):

@@ -43,6 +43,7 @@ class ViState(object):
 
         #: Waiting for digraph.
         self.waiting_for_digraph = False
+        self.digraph_symbol1 = None  # (None or a symbol.)
 
         #: When true, make ~ act as an operator.
         self.tilde_operator = False
