@@ -1015,6 +1015,14 @@ class Window(Container):
         key = (cli.render_counter, width, height)
         return self._ui_content_cache.get(key, get_content)
 
+    def _get_digraph_char(self, cli):
+        " Return `False`, or the Digraph symbol to be used. "
+        if cli.vi_state.waiting_for_digraph:
+            if cli.vi_state.digraph_symbol1:
+                return cli.vi_state.digraph_symbol1
+            return '?'
+        return False
+
     def write_to_screen(self, cli, screen, mouse_handlers, write_position):
         """
         Write window to screen. This renders the user control, the margins and
@@ -1038,7 +1046,6 @@ class Window(Container):
             ui_content, write_position.width - total_margin_width, write_position.height, cli)
 
         # Write body
-        digraph = cli.vi_state.waiting_for_digraph
         visible_line_to_row_col, rowcol_to_yx = self._copy_body(
             ui_content, screen, write_position,
             sum(left_margin_widths), write_position.width - total_margin_width,
@@ -1047,7 +1054,7 @@ class Window(Container):
             wrap_lines=wrap_lines,
             vertical_scroll_2=self.vertical_scroll_2,
             always_hide_cursor=self.always_hide_cursor(cli),
-            cursor_char='?' if digraph else False)
+            digraph_char=self._get_digraph_char(cli))
 
         # Remember render info. (Set before generating the margins. They need this.)
         x_offset=write_position.xpos + sum(left_margin_widths)
@@ -1150,11 +1157,11 @@ class Window(Container):
     def _copy_body(cls, ui_content, new_screen, write_position, move_x,
                    width, vertical_scroll=0, horizontal_scroll=0,
                    has_focus=False, wrap_lines=False, vertical_scroll_2=0,
-                   always_hide_cursor=False, cursor_char=None):
+                   always_hide_cursor=False, digraph_char=None):
         """
         Copy the UIContent into the output screen.
 
-        :param cursor_char: When '?', put a question mark underneath the cursor.
+        :param digraph_char: When '?', put a question mark underneath the cursor.
             Used when going into Vi digraph mode.
         """
         xpos = write_position.xpos + move_x
@@ -1268,10 +1275,10 @@ class Window(Container):
             else:
                 new_screen.show_cursor = ui_content.show_cursor
 
-            if cursor_char:
+            if digraph_char:
                 cpos = new_screen.cursor_position
                 new_screen.data_buffer[cpos.y][cpos.x] = \
-                    _CHAR_CACHE[cursor_char, new_screen.data_buffer[cpos.y][cpos.x].token]
+                    _CHAR_CACHE[digraph_char, Token.Digraph]
 
         if not new_screen.menu_position and ui_content.menu_position:
             new_screen.menu_position = cursor_pos_to_screen_pos(

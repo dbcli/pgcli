@@ -79,6 +79,9 @@ DEFAULT_STYLE_EXTENSIONS = {
 
     # When Control-C has been pressed. Grayed.
     Token.Aborted:                                '#888888',
+
+    # Entering a Vi digraph.
+    Token.Digraph:                                '#4444ff',
 }
 
 default_style_extensions = DEFAULT_STYLE_EXTENSIONS  # Old name.
