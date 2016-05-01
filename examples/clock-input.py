@@ -10,7 +10,6 @@ from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.processors import BeforeInput
 from prompt_toolkit.shortcuts import create_eventloop
 from prompt_toolkit.token import Token
-from prompt_toolkit.utils import Callback
 
 import datetime
 import time
@@ -45,13 +44,13 @@ def main():
 
         cli.eventloop.run_in_executor(run)
 
-    def on_read_end(cli):
+    def on_read_stop(cli):
         done[0] = True
 
     app = Application(
         layout=Window(BufferControl(input_processors=[BeforeInput(_clock_tokens)])),
-        on_start=Callback(on_read_start),
-        on_stop=Callback(on_read_end))
+        on_start=on_read_start,
+        on_stop=on_read_stop)
 
     cli = CommandLineInterface(application=app, eventloop=eventloop)
 

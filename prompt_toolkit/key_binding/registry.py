@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 from ..filters import CLIFilter, to_cli_filter, Never
 from ..keys import Key
-from ..utils import Callback
 
 from six import text_type
 from six.moves import range
@@ -58,8 +57,6 @@ class Registry(object):
 
         #: (tuple of keys) -> [list of bindings handling suffixes of this sequence].
         self._keys_to_bindings_suffixes = defaultdict(list)
-
-        self.on_handler_called = Callback()
 
     def add_binding(self, *keys, **kwargs):
         """

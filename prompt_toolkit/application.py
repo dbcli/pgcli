@@ -13,7 +13,6 @@ from .layout import Window
 from .layout.containers import Container
 from .layout.controls import BufferControl
 from .styles import DEFAULT_STYLE, Style
-from .utils import Callback
 import six
 
 __all__ = (
@@ -66,7 +65,8 @@ class Application(object):
     :param ignore_case: :class:`~prompt_toolkit.filters.CLIFilter` or boolean.
     :param editing_mode: :class:`~prompt_toolkit.enums.EditingMode`.
 
-    Callbacks:
+    Callbacks (all of these should accept a
+    :class:`~prompt_toolkit.interface.CommandLineInterface` object as input.)
 
     :param on_input_timeout: Called when there is no input for x seconds.
                     (Fired when any eventloop.onInputTimeout is fired.)
@@ -109,14 +109,16 @@ class Application(object):
         assert isinstance(paste_mode, CLIFilter)
         assert isinstance(ignore_case, CLIFilter)
         assert isinstance(editing_mode, six.string_types)
-        assert on_start is None or isinstance(on_start, Callback)
-        assert on_stop is None or isinstance(on_stop, Callback)
-        assert on_reset is None or isinstance(on_reset, Callback)
-        assert on_buffer_changed is None or isinstance(on_buffer_changed, Callback)
-        assert on_initialize is None or isinstance(on_initialize, Callback)
-        assert on_render is None or isinstance(on_render, Callback)
-        assert on_invalidate is None or isinstance(on_invalidate, Callback)
+        assert on_input_timeout is None or callable(on_input_timeout)
         assert style is None or isinstance(style, Style)
+
+        assert on_start is None or callable(on_start)
+        assert on_stop is None or callable(on_stop)
+        assert on_reset is None or callable(on_reset)
+        assert on_buffer_changed is None or callable(on_buffer_changed)
+        assert on_initialize is None or callable(on_initialize)
+        assert on_render is None or callable(on_render)
+        assert on_invalidate is None or callable(on_invalidate)
 
         self.layout = layout or Window(BufferControl())
 
@@ -160,11 +162,14 @@ class Application(object):
         self.ignore_case = ignore_case
         self.editing_mode = editing_mode
 
-        self.on_input_timeout = on_input_timeout or Callback()
-        self.on_start = on_start or Callback()
-        self.on_stop = on_stop or Callback()
-        self.on_reset = on_reset or Callback()
-        self.on_initialize = on_initialize or Callback()
-        self.on_buffer_changed = on_buffer_changed or Callback()
-        self.on_render = on_render or Callback()
-        self.on_invalidate = on_invalidate or Callback()
+        def dummy_handler(cli):
+            " Dummy event handler. "
+
+        self.on_input_timeout = on_input_timeout or dummy_handler
+        self.on_start = on_start or dummy_handler
+        self.on_stop = on_stop or dummy_handler
+        self.on_reset = on_reset or dummy_handler
+        self.on_initialize = on_initialize or dummy_handler
+        self.on_buffer_changed = on_buffer_changed or dummy_handler
+        self.on_render = on_render or dummy_handler
+        self.on_invalidate = on_invalidate or dummy_handler

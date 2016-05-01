@@ -31,6 +31,7 @@ from .keys import Keys
 from .output import Output
 from .renderer import Renderer, print_tokens
 from .search_state import SearchState
+from .utils import Event
 
 # Following import is required for backwards compatibility.
 from .buffer import AcceptAction
@@ -119,10 +120,20 @@ class CommandLineInterface(object):
         for name, b in self.buffers.items():
             self.add_buffer(name, b)
 
-        self.reset()
+        # Events.
+        self.on_buffer_changed = Event(self, application.on_buffer_changed)
+        self.on_initialize = Event(self, application.on_initialize)
+        self.on_input_timeout = Event(self, application.on_input_timeout)
+        self.on_invalidate = Event(self, application.on_invalidate)
+        self.on_render = Event(self, application.on_render)
+        self.on_reset = Event(self, application.on_reset)
+        self.on_start = Event(self, application.on_start)
+        self.on_stop = Event(self, application.on_stop)
 
         # Trigger initialize callback.
-        self.application.on_initialize.fire(self)
+        self.reset()
+        self.on_initialize += self.application.on_initialize
+        self.on_initialize.fire()
 
     @property
     def layout(self):
@@ -154,7 +165,7 @@ class CommandLineInterface(object):
             ensures that it's only called while typing if the
             `complete_while_typing` filter is enabled.
             """
-            def on_text_insert():
+            def on_text_insert(_):
                 # Only complete when "complete_while_typing" is enabled.
                 if buffer.completer and buffer.complete_while_typing():
                     completer_function()
@@ -167,7 +178,7 @@ class CommandLineInterface(object):
 
         buffer.on_text_insert += create_on_insert_handler()
 
-        def buffer_changed():
+        def buffer_changed(_):
             """
             When the text in a buffer changes.
             (A paste event is also a change, but not an insert. So we don't
@@ -175,7 +186,7 @@ class CommandLineInterface(object):
             the on_buffer_changed event.)
             """
             # Trigger on_buffer_changed.
-            self.application.on_buffer_changed.fire(self)
+            self.on_buffer_changed.fire()
 
         buffer.on_text_changed += buffer_changed
 
@@ -280,7 +291,7 @@ class CommandLineInterface(object):
         self.search_state = SearchState(ignore_case=Condition(lambda: self.is_ignoring_case))
 
         # Trigger reset event.
-        self.application.on_reset.fire(self)
+        self.on_reset.fire()
 
     @property
     def in_paste_mode(self):
@@ -305,7 +316,7 @@ class CommandLineInterface(object):
             self._invalidated = True
 
         # Trigger event.
-        self.application.on_invalidate.fire(self)
+        self.on_invalidate.fire()
 
         if self.eventloop is not None:
             def redraw():
@@ -333,7 +344,7 @@ class CommandLineInterface(object):
             self.renderer.render(self, self.layout, is_done=self.is_done)
 
             # Fire render event.
-            self.application.on_render.fire(self)
+            self.on_render.fire()
 
     def _on_resize(self):
         """
@@ -361,7 +372,7 @@ class CommandLineInterface(object):
         try:
             self._is_running = True
 
-            self.application.on_start.fire(self)
+            self.on_start.fire()
             self.reset(reset_current_buffer=reset_current_buffer)
 
             # Call pre_run.
@@ -386,7 +397,7 @@ class CommandLineInterface(object):
                 self._redraw()
 
             self.renderer.reset()
-            self.application.on_stop.fire(self)
+            self.on_stop.fire()
             self._is_running = False
 
         # Return result.
@@ -408,7 +419,7 @@ class CommandLineInterface(object):
             try:
                 self._is_running = True
 
-                self.application.on_start.fire(self)
+                self.on_start.fire()
                 self.reset(reset_current_buffer=reset_current_buffer)
 
                 # Call pre_run.
@@ -429,7 +440,7 @@ class CommandLineInterface(object):
                     self._redraw()
 
                 self.renderer.reset()
-                self.application.on_stop.fire(self)
+                self.on_stop.fire()
                 self._is_running = False
 
         try:
@@ -895,7 +906,7 @@ class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
 
     def input_timeout(self):
         cli = self._active_cli
-        cli.application.on_input_timeout.fire(cli)
+        cli.on_input_timeout.fire()
 
     def feed_key(self, key_press):
         """

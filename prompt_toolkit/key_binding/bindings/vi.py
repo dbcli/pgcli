@@ -178,27 +178,6 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         (('~', ), Condition(lambda cli: cli.vi_state.tilde_operator), lambda string: string.swapcase()),
     ]
 
-    def check_cursor_position(event):
-        """
-        After every command, make sure that if we are in navigation mode, we
-        never put the cursor after the last character of a line. (Unless it's
-        an empty line.)
-        """
-        buff = event.current_buffer
-        preferred_column = buff.preferred_column
-
-        if (
-                navigation_mode(event.cli) and  # First make sure that this key bindings are active.
-                buff.document.is_cursor_at_the_end_of_line and
-                len(buff.document.current_line) > 0):
-            buff.cursor_position -= 1
-
-            # Set the preferred_column for arrow up/down again.
-            # (This was cleared after changing the cursor position.)
-            buff.preferred_column = preferred_column
-
-    registry.on_handler_called += check_cursor_position
-
     @handle(Keys.Escape)
     def _(event):
         """

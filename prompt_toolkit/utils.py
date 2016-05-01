@@ -3,13 +3,14 @@ import os
 import signal
 import sys
 import threading
+import inspect
 
 from wcwidth import wcwidth
 from six.moves import range
 
 
 __all__ = (
-    'Callback',
+    'Event',
     'DummyContext',
     'get_cwidth',
     'suspend_to_background_supported',
@@ -17,44 +18,58 @@ __all__ = (
     'is_windows',
     'in_main_thread',
     'take_using_weights',
+    'test_callable_args',
 )
 
 
-class Callback(object):
+class Event(object):
     """
-    Callbacks wrapper. Used for event propagation.
+    Simple event to which event handlers can be attached. For instance::
 
-    There are two ways of using it. The first way is to create a callback
-    instance from a callable and pass it to the code that's going to fire it.
-    (This can also be used as a decorator.)
-    ::
+        class Cls:
+            def __init__(self):
+                # Define event. The first parameter is the sender.
+                self.event = Event(self)
 
-        c = Callback(function)
-        c.fire()
+        obj = Cls()
 
-    The second way is that the code who's going to fire the callback, already
-    created an Callback instance. Then handlers can be attached using the
-    ``+=`` operator::
+        def handler(sender):
+            pass
 
-        c = Callback()
-        c += handler_function  # Add event handler.
-        c.fire()  # Fire event.
+        # Add event handler by using the += operator.
+        obj.event += handler
+
+        # Fire event.
+        obj.event()
     """
-    def __init__(self, func=None):
-        assert func is None or callable(func)
-        self._handlers = [func] if func else []
+    def __init__(self, sender, handler=None):
+        self.sender = sender
+        self._handlers = []
 
-    def fire(self, *args, **kwargs):
-        """
-        Trigger callback.
-        """
+        if handler is not None:
+            self += handler
+
+    def __call__(self):
+        " Fire event. "
         for handler in self._handlers:
-            handler(*args, **kwargs)
+            handler(self.sender)
+
+    def fire(self):
+        " Alias for just calling the event. "
+        self()
 
     def __iadd__(self, handler):
         """
         Add another handler to this callback.
+        (Handler should be a callable that takes exactly one parameter: the
+        sender object.)
         """
+        # Test handler.
+        assert callable(handler)
+        if not test_callable_args(handler, [None]):
+            raise TypeError("%r doesn't take exactly one argument." % handler)
+
+        # Add to list of event handlers.
         self._handlers.append(handler)
         return self
 
@@ -65,17 +80,43 @@ class Callback(object):
         self._handlers.remove(handler)
         return self
 
-    def __or__(self, other):
-        """
-        Chain two callbacks, using the | operator.
-        """
-        assert isinstance(other, Callback)
 
-        def call_both():
-            self.fire()
-            other.fire()
+def test_callable_args(func, args):
+    """
+    Return True when this function can be called with the given arguments.
+    """
+    assert isinstance(args, (list, tuple))
+    signature = getattr(inspect, 'signature', None)
 
-        return Callback(call_both)
+    if signature is not None:
+        # For Python 3, use inspect.signature.
+        sig = signature(func)
+        try:
+            sig.bind(*args)
+        except TypeError:
+            return False
+        else:
+            return True
+    else:
+        # For older Python versions, fall back to using getargspec.
+        spec = inspect.getargspec(func)
+
+        # Drop the 'self'
+        def drop_self(spec):
+            args, varargs, varkw, defaults = spec
+            if args[0:1] == ['self']:
+                args = args[1:]
+            return inspect.ArgSpec(args, varargs, varkw, defaults)
+
+        spec = drop_self(spec)
+
+        # When taking *args, always return True.
+        if spec.varargs is not None:
+            return True
+
+        # Test whether the given amount of args is between the min and max
+        # accepted argument counts.
+        return len(spec.args) - len(spec.defaults or []) <= len(args) <= len(spec.args)
 
 
 class DummyContext(object):

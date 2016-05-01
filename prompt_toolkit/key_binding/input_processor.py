@@ -7,9 +7,10 @@ The `InputProcessor` will according to the implemented keybindings call the
 correct callbacks when new key presses are feed through `feed_key`.
 """
 from __future__ import unicode_literals
-from ..keys import Keys
-from ..utils import Callback
 from prompt_toolkit.buffer import EditReadOnlyBuffer
+from prompt_toolkit.filters.cli import ViNavigationMode
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.utils import Event
 
 import weakref
 
@@ -60,8 +61,8 @@ class InputProcessor(object):
         self._cli_ref = cli_ref
         self.reset()
 
-        self.beforeKeyPress = Callback()
-        self.afterKeyPress = Callback()
+        self.beforeKeyPress = Event(self)
+        self.afterKeyPress = Event(self)
 
 #        print(' '.join(set(''.join(map(str, kb.keys)) for kb in registry.key_bindings if all(isinstance(X, unicode) for X in kb.keys))))
 
@@ -181,15 +182,16 @@ class InputProcessor(object):
         is_repeat = handler == self._previous_handler
 
         try:
-            event = Event(weakref.ref(self), arg=arg, key_sequence=key_sequence,
-                          previous_key_sequence=self._previous_key_sequence,
-                          is_repeat=is_repeat)
+            event = KeyPressEvent(
+                weakref.ref(self), arg=arg, key_sequence=key_sequence,
+                previous_key_sequence=self._previous_key_sequence,
+                is_repeat=is_repeat)
             handler.call(event)
-            self._registry.on_handler_called.fire(event)
+            self._fix_vi_cursor_position(event)
 
         except EditReadOnlyBuffer:
-            # When a key binding does an attempt to change a buffer which is read-only,
-            # we can just silently ignore that.
+            # When a key binding does an attempt to change a buffer which is
+            # read-only, we can just silently ignore that.
             pass
 
         self._previous_key_sequence = key_sequence
@@ -200,8 +202,28 @@ class InputProcessor(object):
         if cli and handler.invalidate_ui(cli):
             cli.invalidate()
 
+    def _fix_vi_cursor_position(self, event):
+        """
+        After every command, make sure that if we are in Vi navigation mode, we
+        never put the cursor after the last character of a line. (Unless it's
+        an empty line.)
+        """
+        cli = event.cli
+        buff = event.current_buffer
+        preferred_column = buff.preferred_column
 
-class Event(object):
+        if (ViNavigationMode()(event.cli) and
+                buff.document.is_cursor_at_the_end_of_line and
+                len(buff.document.current_line) > 0):
+            buff.cursor_position -= 1
+
+            # Set the preferred_column for arrow up/down again.
+            # (This was cleared after changing the cursor position.)
+            buff.preferred_column = preferred_column
+
+
+
+class KeyPressEvent(object):
     """
     Key press event, delivered to key bindings.
 
@@ -223,7 +245,7 @@ class Event(object):
         self._arg = arg
 
     def __repr__(self):
-        return 'Event(arg=%r, key_sequence=%r, is_repeat=%r)' % (
+        return 'KeyPressEvent(arg=%r, key_sequence=%r, is_repeat=%r)' % (
                 self.arg, self.key_sequence, self.is_repeat)
 
     @property

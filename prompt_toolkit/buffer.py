@@ -13,7 +13,7 @@ from .filters import to_simple_filter
 from .history import History, InMemoryHistory
 from .search_state import SearchState
 from .selection import SelectionType, SelectionState
-from .utils import Callback
+from .utils import Event
 from .cache import FastDictCache
 from .validation import ValidationError
 
@@ -163,9 +163,9 @@ class Buffer(object):
 
     Events:
 
-    :param on_text_changed: Callback instance or None.
-    :param on_text_insert: Callback instance or None.
-    :param on_cursor_position_changed: Callback instance or None.
+    :param on_text_changed: When the buffer text changes. (Callable on None.)
+    :param on_text_insert: When new text is inserted. (Callable on None.)
+    :param on_cursor_position_changed: When the cursor moves. (Callable on None.)
 
     Filters:
 
@@ -201,9 +201,9 @@ class Buffer(object):
         assert completer is None or isinstance(completer, Completer)
         assert auto_suggest is None or isinstance(auto_suggest, AutoSuggest)
         assert history is None or isinstance(history, History)
-        assert on_text_changed is None or isinstance(on_text_changed, Callback)
-        assert on_text_insert is None or isinstance(on_text_insert, Callback)
-        assert on_cursor_position_changed is None or isinstance(on_cursor_position_changed, Callback)
+        assert on_text_changed is None or callable(on_text_changed)
+        assert on_text_insert is None or callable(on_text_insert)
+        assert on_cursor_position_changed is None or callable(on_cursor_position_changed)
 
         self.completer = completer
         self.auto_suggest = auto_suggest
@@ -228,9 +228,9 @@ class Buffer(object):
         self.__cursor_position = 0
 
         # Events
-        self.on_text_changed = on_text_changed or Callback()
-        self.on_text_insert = on_text_insert or Callback()
-        self.on_cursor_position_changed = on_cursor_position_changed or Callback()
+        self.on_text_changed = Event(self, on_text_changed)
+        self.on_text_insert = Event(self, on_text_insert)
+        self.on_cursor_position_changed = Event(self, on_cursor_position_changed)
 
         # Document cache. (Avoid creating new Document instances.)
         self._document_cache = FastDictCache(Document, size=10)
