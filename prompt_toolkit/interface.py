@@ -107,7 +107,6 @@ class CommandLineInterface(object):
 
         # Invalidate flag. When 'True', a repaint has been scheduled.
         self._invalidated = False
-        self.on_invalidate = Callback()  # Invalidate event.
 
         #: The `InputProcessor` instance.
         self.input_processor = InputProcessor(application.key_bindings_registry, weakref.ref(self))
@@ -307,7 +306,7 @@ class CommandLineInterface(object):
             self._invalidated = True
 
         # Trigger event.
-        self.on_invalidate.fire()
+        self.application.on_invalidate.fire(self)
 
         if self.eventloop is not None:
             def redraw():

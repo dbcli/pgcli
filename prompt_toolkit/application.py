@@ -77,6 +77,7 @@ class Application(object):
     :param on_initialize: Called after the
         :class:`~prompt_toolkit.interface.CommandLineInterface` initializes.
     :param on_render: Called right after rendering.
+    :param on_invalidate: Called when the UI has been invalidated.
     """
     def __init__(self, layout=None, buffer=None, buffers=None,
                  initial_focussed_buffer=DEFAULT_BUFFER,
@@ -89,7 +90,8 @@ class Application(object):
                  paste_mode=False, ignore_case=False, editing_mode=EditingMode.EMACS,
 
                  on_input_timeout=None, on_start=None, on_stop=None,
-                 on_reset=None, on_initialize=None, on_buffer_changed=None, on_render=None):
+                 on_reset=None, on_initialize=None, on_buffer_changed=None,
+                 on_render=None, on_invalidate=None):
 
         paste_mode = to_cli_filter(paste_mode)
         ignore_case = to_cli_filter(ignore_case)
@@ -113,6 +115,7 @@ class Application(object):
         assert on_buffer_changed is None or isinstance(on_buffer_changed, Callback)
         assert on_initialize is None or isinstance(on_initialize, Callback)
         assert on_render is None or isinstance(on_render, Callback)
+        assert on_invalidate is None or isinstance(on_invalidate, Callback)
         assert style is None or isinstance(style, Style)
 
         self.layout = layout or Window(BufferControl())
@@ -164,3 +167,4 @@ class Application(object):
         self.on_initialize = on_initialize or Callback()
         self.on_buffer_changed = on_buffer_changed or Callback()
         self.on_render = on_render or Callback()
+        self.on_invalidate = on_invalidate or Callback()
