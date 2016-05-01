@@ -31,7 +31,6 @@ from .keys import Keys
 from .output import Output
 from .renderer import Renderer, print_tokens
 from .search_state import SearchState
-from .utils import Callback
 
 # Following import is required for backwards compatibility.
 from .buffer import AcceptAction
