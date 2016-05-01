@@ -867,12 +867,17 @@ class Window(Container):
         :class:`~prompt_toolkit.filters.CLIFilter` instance. When True, never
         display the cursor, even when the user control specifies a cursor
         position.
+    :param cursorline: A `bool` or :class:`~prompt_toolkit.filters.CLIFilter`
+        instance. When True, display a cursorline.
+    :param cursorcolumn: A `bool` or :class:`~prompt_toolkit.filters.CLIFilter`
+        instance. When True, display a cursorcolumn.
     """
     def __init__(self, content, width=None, height=None, get_width=None,
                  get_height=None, dont_extend_width=False, dont_extend_height=False,
                  left_margins=None, right_margins=None, scroll_offsets=None,
                  allow_scroll_beyond_bottom=False, wrap_lines=False,
-                 get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False):
+                 get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False,
+                 cursorline=False, cursorcolumn=False):
         assert isinstance(content, UIControl)
         assert width is None or isinstance(width, LayoutDimension)
         assert height is None or isinstance(height, LayoutDimension)
@@ -889,6 +894,8 @@ class Window(Container):
         self.allow_scroll_beyond_bottom = to_cli_filter(allow_scroll_beyond_bottom)
         self.always_hide_cursor = to_cli_filter(always_hide_cursor)
         self.wrap_lines = to_cli_filter(wrap_lines)
+        self.cursorline = to_cli_filter(cursorline)
+        self.cursorcolumn = to_cli_filter(cursorcolumn)
 
         self.content = content
         self.dont_extend_width = dont_extend_width
@@ -1047,14 +1054,13 @@ class Window(Container):
 
         # Write body
         visible_line_to_row_col, rowcol_to_yx = self._copy_body(
-            ui_content, screen, write_position,
+            cli, ui_content, screen, write_position,
             sum(left_margin_widths), write_position.width - total_margin_width,
             self.vertical_scroll, self.horizontal_scroll,
             has_focus=self.content.has_focus(cli),
-            wrap_lines=wrap_lines,
+            wrap_lines=wrap_lines, highlight_lines=True,
             vertical_scroll_2=self.vertical_scroll_2,
-            always_hide_cursor=self.always_hide_cursor(cli),
-            digraph_char=self._get_digraph_char(cli))
+            always_hide_cursor=self.always_hide_cursor(cli))
 
         # Remember render info. (Set before generating the margins. They need this.)
         x_offset=write_position.xpos + sum(left_margin_widths)
@@ -1140,7 +1146,7 @@ class Window(Container):
             margin_screen = render_margin(m, width)
 
             # Copy and shift X.
-            self._copy_margin(margin_screen, screen, write_position, move_x, width)
+            self._copy_margin(cli, margin_screen, screen, write_position, move_x, width)
             move_x += width
 
         move_x = write_position.width - sum(right_margin_widths)
@@ -1150,19 +1156,15 @@ class Window(Container):
             margin_screen = render_margin(m, width)
 
             # Copy and shift X.
-            self._copy_margin(margin_screen, screen, write_position, move_x, width)
+            self._copy_margin(cli, margin_screen, screen, write_position, move_x, width)
             move_x += width
 
-    @classmethod
-    def _copy_body(cls, ui_content, new_screen, write_position, move_x,
+    def _copy_body(self, cli, ui_content, new_screen, write_position, move_x,
                    width, vertical_scroll=0, horizontal_scroll=0,
-                   has_focus=False, wrap_lines=False, vertical_scroll_2=0,
-                   always_hide_cursor=False, digraph_char=None):
+                   has_focus=False, wrap_lines=False, highlight_lines=False,
+                   vertical_scroll_2=0, always_hide_cursor=False):
         """
         Copy the UIContent into the output screen.
-
-        :param digraph_char: When '?', put a question mark underneath the cursor.
-            Used when going into Vi digraph mode.
         """
         xpos = write_position.xpos + move_x
         ypos = write_position.ypos
@@ -1266,19 +1268,24 @@ class Window(Container):
                 return Point(y=y, x=x)
 
         # Set cursor and menu positions.
-        if has_focus and ui_content.cursor_position:
-            new_screen.cursor_position = cursor_pos_to_screen_pos(
+        if ui_content.cursor_position:
+            screen_cursor_position = cursor_pos_to_screen_pos(
                     ui_content.cursor_position.y, ui_content.cursor_position.x)
 
-            if always_hide_cursor:
-                new_screen.show_cursor = False
-            else:
-                new_screen.show_cursor = ui_content.show_cursor
+            if has_focus:
+                new_screen.cursor_position = screen_cursor_position
 
-            if digraph_char:
-                cpos = new_screen.cursor_position
-                new_screen.data_buffer[cpos.y][cpos.x] = \
-                    _CHAR_CACHE[digraph_char, Token.Digraph]
+                if always_hide_cursor:
+                    new_screen.show_cursor = False
+                else:
+                    new_screen.show_cursor = ui_content.show_cursor
+
+                self._highlight_digraph(cli, new_screen)
+
+            if highlight_lines:
+                self._highlight_cursorlines(
+                    cli, new_screen, screen_cursor_position, xpos, ypos, width,
+                    write_position.height)
 
         if not new_screen.menu_position and ui_content.menu_position:
             new_screen.menu_position = cursor_pos_to_screen_pos(
@@ -1289,8 +1296,43 @@ class Window(Container):
 
         return visible_line_to_row_col, rowcol_to_yx
 
-    @classmethod
-    def _copy_margin(cls, lazy_screen, new_screen, write_position, move_x, width):
+    def _highlight_digraph(self, cli, new_screen):
+        """
+        When we are in Vi digraph mode, put a question mark underneath the
+        cursor.
+        """
+        digraph_char = self._get_digraph_char(cli)
+        if digraph_char:
+            cpos = new_screen.cursor_position
+            new_screen.data_buffer[cpos.y][cpos.x] = \
+                _CHAR_CACHE[digraph_char, Token.Digraph]
+
+    def _highlight_cursorlines(self, cli, new_screen, cpos, x, y, width, height):
+        """
+        Highlight cursor row/column.
+        """
+        cursor_line_token = (':', ) + Token.CursorLine
+        cursor_column_token = (':', ) + Token.CursorColumn
+
+        data_buffer = new_screen.data_buffer
+
+        # Highlight line.
+        if self.cursorline(cli):
+            row = data_buffer[cpos.y]
+            for x in range(x, x + width):
+                original_char = row[x]
+                row[x] = _CHAR_CACHE[
+                    original_char.char, original_char.token + cursor_line_token]
+
+        # Highlight column.
+        if self.cursorcolumn(cli):
+            for y in range(y, y + height):
+                row = data_buffer[y]
+                original_char = row[cpos.x]
+                row[cpos.x] = _CHAR_CACHE[
+                   original_char.char, original_char.token + cursor_column_token]
+
+    def _copy_margin(self, cli, lazy_screen, new_screen, write_position, move_x, width):
         """
         Copy characters from the margin screen to the real screen.
         """
@@ -1298,7 +1340,7 @@ class Window(Container):
         ypos = write_position.ypos
 
         margin_write_position = WritePosition(xpos, ypos, width, write_position.height)
-        cls._copy_body(lazy_screen, new_screen, margin_write_position, 0, width)
+        self._copy_body(cli, lazy_screen, new_screen, margin_write_position, 0, width)
 
     def _scroll_when_linewrapping(self, ui_content, width, height, cli):
         """
