@@ -8,7 +8,7 @@ This is very similar to the Pygments style dictionary, with some additions:
 """
 from collections import Mapping
 
-from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES
+from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
 from .defaults import DEFAULT_STYLE_EXTENSIONS
 from six.moves import range
 
@@ -137,7 +137,49 @@ class _StyleFromDict(Style):
         self.token_to_attrs = token_to_attrs
 
     def get_attrs_for_token(self, token):
-        return self.token_to_attrs.get(token, DEFAULT_ATTRS)
+        # Split Token.
+        list_of_attrs = []
+        for token in split_token_in_parts(token):
+            list_of_attrs.append(self.token_to_attrs.get(token, DEFAULT_ATTRS))
+        return merge_attrs(list_of_attrs)
 
     def invalidation_hash(self):
         return id(self.token_to_attrs)
+
+
+def split_token_in_parts(token):
+    """
+    Take a Token, and turn it in a list of tokens, by splitting
+    it on ':' (taking that as a separator.)
+    """
+    result = []
+    current = []
+    for part in token + (':', ):
+        if part == ':':
+            if current:
+                result.append(tuple(current))
+                current = []
+        else:
+            current.append(part)
+
+    return result
+
+
+def merge_attrs(list_of_attrs):
+    """
+    Take a list of :class:`.Attrs` instances and merge them into one.
+    Every `Attr` in the list can override the styling of the previous one.
+    """
+    result = DEFAULT_ATTRS
+
+    for attr in list_of_attrs:
+        result = Attrs(
+            color=attr.color or result.color,
+            bgcolor=attr.bgcolor or result.bgcolor,
+            bold=attr.bold or result.bold,
+            underline=attr.underline or result.underline,
+            italic=attr.italic or result.italic,
+            blink=attr.blink or result.blink,
+            reverse=attr.reverse or result.reverse)
+
+    return result

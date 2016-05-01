@@ -150,6 +150,8 @@ class HighlightSelectionProcessor(Processor):
     Processor that highlights the selection in the document.
     """
     def apply_transformation(self, cli, document, lineno, source_to_display, tokens):
+        selected_token = (':', ) + Token.SelectedText
+
         # In case of selection, highlight all matches.
         selection_at_line = document.selection_range_at_line(lineno)
 
@@ -167,7 +169,8 @@ class HighlightSelectionProcessor(Processor):
             else:
                 for i in range(from_, to + 1):
                     if i < len(tokens):
-                        tokens[i] = (Token.SelectedText, tokens[i][1])
+                        old_token, old_text = tokens[i]
+                        tokens[i] = (old_token + selected_token, old_text)
 
         return Transformation(tokens)
 

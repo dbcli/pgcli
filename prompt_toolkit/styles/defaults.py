@@ -19,7 +19,7 @@ DEFAULT_STYLE_EXTENSIONS = {
     Token.SearchMatch.Current:                    'noinherit #ffffff bg:#448844 underline',
 
     # Highlighting of select text in document.
-    Token.SelectedText:                           '#ffffff bg:#666666',
+    Token.SelectedText:                           'reverse',
 
     # Highlighting of matching brackets.
     Token.MatchingBracket:                        'bg:#aaaaff #000044',
