@@ -208,18 +208,19 @@ class InputProcessor(object):
         never put the cursor after the last character of a line. (Unless it's
         an empty line.)
         """
-        cli = event.cli
-        buff = event.current_buffer
-        preferred_column = buff.preferred_column
+        cli = self._cli_ref()
+        if cli:
+            buff = cli.current_buffer
+            preferred_column = buff.preferred_column
 
-        if (ViNavigationMode()(event.cli) and
-                buff.document.is_cursor_at_the_end_of_line and
-                len(buff.document.current_line) > 0):
-            buff.cursor_position -= 1
+            if (ViNavigationMode()(event.cli) and
+                    buff.document.is_cursor_at_the_end_of_line and
+                    len(buff.document.current_line) > 0):
+                buff.cursor_position -= 1
 
-            # Set the preferred_column for arrow up/down again.
-            # (This was cleared after changing the cursor position.)
-            buff.preferred_column = preferred_column
+                # Set the preferred_column for arrow up/down again.
+                # (This was cleared after changing the cursor position.)
+                buff.preferred_column = preferred_column
 
 
 
