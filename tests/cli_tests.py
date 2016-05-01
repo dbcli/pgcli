@@ -1,3 +1,4 @@
+# encoding: utf-8
 """
 These are almost end-to-end tests. They create a CommandLineInterface
 instance, feed it with some input and check the result.
@@ -98,50 +99,42 @@ class FeedCliTest(unittest.TestCase):
 
         result, cli = feed('\x1b\n')
         self.assertEqual(result.text, '')
+        self.assertEqual(cli.editing_mode, EditingMode.VI)
 
         # Esc h a X
         result, cli = feed('hello\x1bhaX\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'hellXo')
 
         # Esc I X
         result, cli = feed('hello\x1bIX\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'Xhello')
 
         # Esc I X
         result, cli = feed('hello\x1bIX\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'Xhello')
 
         # Esc 2hiX
         result, cli = feed('hello\x1b2hiX\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'heXllo')
 
         # Esc 2h2liX
         result, cli = feed('hello\x1b2h2liX\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'hellXo')
 
         # Esc \b\b
         result, cli = feed('hello\b\b\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'hel')
 
         # Esc \b\b
         result, cli = feed('hello\b\b\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'hel')
 
         # Esc 2h D
         result, cli = feed('hello\x1b2hD\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'he')
 
         # Esc 2h rX \n
         result, cli = feed('hello\x1b2hrX\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'heXlo')
 
     def test_vi_operators(self):
@@ -149,17 +142,14 @@ class FeedCliTest(unittest.TestCase):
 
         # Esc g~0
         result, cli = feed('hello\x1bg~0\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'HELLo')
 
         # Esc gU0
         result, cli = feed('hello\x1bgU0\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'HELLo')
 
         # Esc d0
         result, cli = feed('hello\x1bd0\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'o')
 
     def test_vi_text_objects(self):
@@ -167,20 +157,27 @@ class FeedCliTest(unittest.TestCase):
 
         # Esc gUgg
         result, cli = feed('hello\x1bgUgg\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'HELLO')
 
         # Esc di(
         result, cli = feed('before(inside)after\x1b8hdi(\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'before()after')
 
         # Esc di[
         result, cli = feed('before[inside]after\x1b8hdi[\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'before[]after')
 
         # Esc da(
         result, cli = feed('before(inside)after\x1b8hda(\n')
-        self.assertEqual(cli.editing_mode, EditingMode.VI)
         self.assertEqual(result.text, 'beforeafter')
+
+    def test_vi_digraphs(self):
+        feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI)
+
+        # C-K o/
+        result, cli = feed('hello\x0bo/\n')
+        self.assertEqual(result.text, 'helloø')
+
+        # C-K e:
+        result, cli = feed('hello\x0be:\n')
+        self.assertEqual(result.text, 'helloë')
