@@ -23,6 +23,7 @@ DEFAULT_STYLE_EXTENSIONS = {
 
     Token.CursorColumn:                           'bg:#88ff88',
     Token.CursorLine:                             'underline',
+    Token.ColorColumn:                            'bg:#8888ff',
 
     # Highlighting of matching brackets.
     Token.MatchingBracket:                        'bg:#aaaaff #000044',
