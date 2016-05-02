@@ -1355,6 +1355,22 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         prev_end = event.current_buffer.document.find_previous_word_ending(count=event.arg, WORD=True)
         return TextObject(prev_end - 1 if prev_end is not None else 0, type=TextObjectType.INCLUSIVE)
 
+    @text_object('g', 'm')
+    def _(event):
+        """
+        Like g0, but half a screenwidth to the right. (Or as much as possible.)
+        """
+        w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
+        buff = event.current_buffer
+
+        if w and w.render_info:
+            width = w.render_info.window_width
+            start = buff.document.get_start_of_line_position(after_whitespace=False)
+            start += int(min(width / 2, len(buff.document.current_line)))
+
+            return TextObject(start, type=TextObjectType.INCLUSIVE)
+        return TextObject(0)
+
     @text_object('G')
     def _(event):
         """
