@@ -8,8 +8,9 @@ This is very similar to the Pygments style dictionary, with some additions:
 """
 from collections import Mapping
 
-from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
+from .base import Style, DEFAULT_ATTRS, ANSI_COLOR_NAMES
 from .defaults import DEFAULT_STYLE_EXTENSIONS
+from .utils import merge_attrs, split_token_in_parts
 from six.moves import range
 
 __all__ = (
@@ -145,41 +146,3 @@ class _StyleFromDict(Style):
 
     def invalidation_hash(self):
         return id(self.token_to_attrs)
-
-
-def split_token_in_parts(token):
-    """
-    Take a Token, and turn it in a list of tokens, by splitting
-    it on ':' (taking that as a separator.)
-    """
-    result = []
-    current = []
-    for part in token + (':', ):
-        if part == ':':
-            if current:
-                result.append(tuple(current))
-                current = []
-        else:
-            current.append(part)
-
-    return result
-
-
-def merge_attrs(list_of_attrs):
-    """
-    Take a list of :class:`.Attrs` instances and merge them into one.
-    Every `Attr` in the list can override the styling of the previous one.
-    """
-    result = DEFAULT_ATTRS
-
-    for attr in list_of_attrs:
-        result = Attrs(
-            color=attr.color or result.color,
-            bgcolor=attr.bgcolor or result.bgcolor,
-            bold=attr.bold or result.bold,
-            underline=attr.underline or result.underline,
-            italic=attr.italic or result.italic,
-            blink=attr.blink or result.blink,
-            reverse=attr.reverse or result.reverse)
-
-    return result

@@ -7,6 +7,7 @@ from .base import *
 from .defaults import *
 from .from_dict import *
 from .from_pygments import *
+from .utils import *
 
 
 #: The default built-in style.
