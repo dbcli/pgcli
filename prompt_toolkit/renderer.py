@@ -12,6 +12,8 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.token import Token
 from prompt_toolkit.utils import is_windows
 
+from six.moves import range
+
 __all__ = (
     'Renderer',
     'print_tokens',

@@ -8,6 +8,7 @@ token types.
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
+from six.moves import range
 
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.document import Document
@@ -18,7 +19,6 @@ from prompt_toolkit.reactive import Integer
 from prompt_toolkit.token import Token
 
 from .utils import token_list_len, explode_tokens
-from six.moves import range
 
 import re
 

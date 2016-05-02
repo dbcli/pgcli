@@ -41,6 +41,7 @@ Partial matches are possible::
 from __future__ import unicode_literals
 import re
 
+from six.moves import range
 from .regex_parser import Any, Sequence, Regex, Variable, Repeat, Lookahead
 from .regex_parser import parse_regex, tokenize_regex
 

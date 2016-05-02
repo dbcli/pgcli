@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 from six import with_metaclass
+from six.moves import range
 
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER

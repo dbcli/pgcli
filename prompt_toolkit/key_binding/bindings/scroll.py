@@ -8,6 +8,7 @@ Vi, Emacs, etc...
 from __future__ import unicode_literals
 
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
+from six.moves import range
 
 __all__ = (
     'scroll_forward',

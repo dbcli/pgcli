@@ -9,6 +9,7 @@ from prompt_toolkit.completion import CompleteEvent
 from .utils import create_handle_decorator
 from .scroll import scroll_page_up, scroll_page_down
 
+from six.moves import range
 import prompt_toolkit.filters as filters
 
 __all__ = (

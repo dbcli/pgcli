@@ -12,6 +12,7 @@ from prompt_toolkit.filters.cli import ViNavigationMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.utils import Event
 
+from six.moves import range
 import weakref
 
 __all__ = (

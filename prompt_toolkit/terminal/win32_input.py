@@ -1,5 +1,6 @@
 from ctypes import windll, pointer
 from ctypes.wintypes import DWORD
+from six.moves import range
 
 from prompt_toolkit.key_binding.input_processor import KeyPress
 from prompt_toolkit.keys import Keys

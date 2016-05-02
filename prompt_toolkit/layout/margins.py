@@ -3,8 +3,9 @@ Margin implementations for a :class:`~prompt_toolkit.layout.containers.Window`.
 """
 from __future__ import unicode_literals
 
-from six import with_metaclass
 from abc import ABCMeta, abstractmethod
+from six import with_metaclass
+from six.moves import range
 
 from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.token import Token

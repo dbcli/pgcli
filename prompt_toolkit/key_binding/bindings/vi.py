@@ -15,6 +15,7 @@ from .utils import create_handle_decorator
 from .scroll import scroll_forward, scroll_backward, scroll_half_page_up, scroll_half_page_down, scroll_one_line_up, scroll_one_line_down, scroll_page_up, scroll_page_down
 
 import prompt_toolkit.filters as filters
+from six.moves import range
 import codecs
 import six
 import string
