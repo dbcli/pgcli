@@ -455,7 +455,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
                 event.current_buffer.paste_clipboard_data(
                     data, before=True, count=event.arg)
 
-    for c in ascii_lowercase:
+    for c in ascii_lowercase + '0123456789':
         paste_named_register_handler(c)
 
 
@@ -899,7 +899,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
             _, clipboard_data = text_object.cut(event.current_buffer)
             event.cli.vi_state.named_registers[c] = clipboard_data
 
-    for c in ascii_lowercase:
+    for c in ascii_lowercase + '0123456789':
         create_yank_selection_handler(c)
 
     @operator('>')
