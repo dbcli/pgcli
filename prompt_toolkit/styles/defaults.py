@@ -21,9 +21,9 @@ DEFAULT_STYLE_EXTENSIONS = {
     # Highlighting of select text in document.
     Token.SelectedText:                           'reverse',
 
-    Token.CursorColumn:                           'bg:#88ff88',
+    Token.CursorColumn:                           'bg:#dddddd',
     Token.CursorLine:                             'underline',
-    Token.ColorColumn:                            'bg:#8888ff',
+    Token.ColorColumn:                            'bg:#ccaacc',
 
     # Highlighting of matching brackets.
     Token.MatchingBracket:                        'bg:#aaaaff #000044',
