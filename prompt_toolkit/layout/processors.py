@@ -116,6 +116,8 @@ class HighlightSearchProcessor(Processor):
 
     def apply_transformation(self, cli, document, lineno, source_to_display, tokens):
         search_text = self._get_search_text(cli)
+        searchmatch_current_token = (':', ) + Token.SearchMatch.Current
+        searchmatch_token = (':', ) + Token.SearchMatch
 
         if search_text and not cli.is_returning:
             # For each search match, replace the Token.
@@ -137,10 +139,11 @@ class HighlightSearchProcessor(Processor):
                     on_cursor = False
 
                 for i in range(match.start(), match.end()):
+                    old_token, text = tokens[i]
                     if on_cursor:
-                        tokens[i] = (Token.SearchMatch.Current, tokens[i][1])
+                        tokens[i] = (old_token + searchmatch_current_token, tokens[i][1])
                     else:
-                        tokens[i] = (Token.SearchMatch, tokens[i][1])
+                        tokens[i] = (old_token + searchmatch_token, tokens[i][1])
 
         return Transformation(tokens)
 
