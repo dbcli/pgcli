@@ -29,6 +29,11 @@ class CompletionsMenuControl(UIControl):
         is a very high number, the current completion will be shown in the
         middle most of the time.
     """
+    # Preferred minimum size of the menu control.
+    # The CompletionsMenu class defines a width of 8, and there is a scrollbar
+    # of 1.)
+    MIN_WIDTH = 7
+
     def __init__(self):
         self.token = Token.Menu.Completions
 
@@ -92,8 +97,8 @@ class CompletionsMenuControl(UIControl):
         """
         Return the width of the main column.
         """
-        return min(max_width, max(get_cwidth(c.display)
-                   for c in complete_state.current_completions) + 2)
+        return min(max_width, max(self.MIN_WIDTH, max(get_cwidth(c.display)
+                   for c in complete_state.current_completions) + 2))
 
     def _get_menu_meta_width(self, max_width, complete_state):
         """
