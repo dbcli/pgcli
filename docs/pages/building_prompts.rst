@@ -181,6 +181,10 @@ is simple with the :func:`~prompt_toolkit.shortcuts.print_tokens` function.
 
 .. code:: python
 
+    from prompt_toolkit.shortcuts import print_tokens
+    from prompt_toolkit.styles import style_from_dict
+    from pygments.token import Token
+
     # Create a stylesheet.
     style = style_from_dict({
         Token.Hello: '#ff0066',
