@@ -9,7 +9,7 @@ def config_location():
     if platform.system() == 'Windows':
         return os.getenv('USERPROFILE') + '\\AppData\\Local\\dbcli\\pgcli\\'
     else:
-        return expanduser('~/.config/pgcli/')
+        return expanduser(os.path.join(os.environ.get('XDG_CONFIG_HOME', '~/.config'),  "pgcli/"))
 
 def load_config(usr_cfg, def_cfg=None):
     cfg = ConfigObj()
