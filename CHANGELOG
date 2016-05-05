@@ -1,13 +1,92 @@
 CHANGELOG
 =========
 
-About the version numbering:
-    As long as the version number starts with a zero, we allow backwards
-    incompatible changes between each release. This is required order to move
-    forward. However, we do our best to keep it to a minimum and ensure
-    backwards-compatibility in the most used public APIs.
-    When the library stabilizes, which is hopefully very soon, we will switch
-    to a <breaking>.<feature>.<fix> style of numbering.
+1.0.0: 2016-05-05
+-----------------
+
+Fixes:
+- Adjust minimum completion menu width to match UIControl and Window class.
+- Bugfix regarding weakref in InputProcessor.
+- Fix for pypy3: bug in WeakValueDictionary.
+- Correctly handle '0' key binding in Vi mode.
+- Also load Vi bindings by default in Application if no registry has been given.
+- Only go into selection mode if the current buffer is not empty.
+- Close PipeInput after usage.
+- Only use 16 colors in (Emacs) eterm-color.
+- Bugfix in "xP Vi key binding.
+- Bugfix in Vi { and } key binding.
+- Fix: use correct token for Scrollbar in MultiColumnCompletionMenuControl.
+- Handle negative values in translate_row_col_to_index.
+- Handle decomposed unicode characters.
+- Fixed Window.always_hide_cursor. (Parameter was ignored.)
+- Fix in zz Vi key binding. (When render info is not available.)
+- Fix in Document.get_cursor_up_position. (When an argument is given.)
+
+New features:
+- Separated `load_mouse_bindings`.
+- Refactoring/simplification of the key bindings: better use of filters and
+  CLI.editing_mode.
+- Added DummyOutput class and a few unit tests that test the whole CLI.
+- Use the bisect module in Document._line_start_indexes instead of a custom
+  binary search. This should improve the performance.
+- Stay in the same column when doing multiple up/down movements.
+- Visual improvements:
+  * Implemented cursorcolumn, cursorline and colorcolumn.
+  * Only reserve menu space when `complete_while_typing=True` or when there are
+    completions to be displayed.
+  * Support for chaining tokens for combined styles. SelectedText will now
+    reverse the colors from the highlighting by default. Style
+    `Token.SelectedText` to set a fixed foreground/background.
+    Also for SearchMatch, we now use combined tokens.
+  * Support for dark gray on Windows.
+  * Default token for SystemToolbar and SearchToolbar.
+  * Display selection also on empty lines.
+- Emacs key bindings improved:
+  * Recognize + handle ControlDelete key.
+  * Implemented meta-* and control-backslash key bindings.
+- Vi key bindings improved:
+  * Handle inclusive and linewise motions properly.
+  * Fix g_ motion off by one character, and don't work when cursor is in
+    the trailing whitespace part of line.
+  * Make a(/a)/i(/i)/... motions. Find enclosing brackets instead of the next
+    bracket.
+  * Update N% motion according to vim behaviors.
+  * Fix | motion off by one character.
+  * ge/gE motions go to end of previous word, not start.
+  * Added Vi 'gm' key binding.
+  * Implemented 'gq' key binding in Vi mode. (Reshape text.)
+  * Vi operator/text object separation for key bindings.
+  * Added 'ap' (auto-paragraph) text object.
+  * Implemented Vi digraphs. ControlK will now insert a digraph.
+  * Implemented vi tilde_operator.
+  * Support named registers.
+  * Vi < and > key bindings became operators.
+  * Text objects and motions are now separate bindings.
+  * Improved copy/paste in Vi mode.
+
+Backwards-incompatible changes:
+- Don't reset the current buffer anymore by default in
+  CommandLineInterface.run(). Passing `reset_current_buffer=True` is now
+  required.
+- Renamed MouseEventTypes to MouseEventType for consistency. The old name is
+  still valid, but deprecated.
+- Refactoring of Callbacks. All events should now receive one argument, which
+  is the sender. (Furter, Callback was renamed to Event.) This is mostly used
+  internally.
+- Moved on_invalidate callback from CommandLineInterface to Application
+- Renamed `PipeInput.send` to `PipeInput.send_text`. (Old deprecated name is
+  still kept as a valid alias.)
+- Renamed SimpleLexer.default_token to SimpleLexer.token. (+
+  backwards-compatibility.)
+- Refactoring of the filters: `ViStateFilter` has been deprecated. (Should not
+  be used anymore.) Use the filters, as defined in prompt_toolkit.filters.
+- `editing_mode` is now a property of `CommandLineInterface`. This is replacing
+  the `vi_mode` parameter in `KeyBindingManager`.
+- The default accept_action for the default Buffer in Application now becomes
+  IGNORE. This is a much more sensible default. Pass RETURN_DOCUMENT to get
+  the previous behaviour,
+- Always expect an EventLoop instance in CommandLineInterface. Creating it in
+  __init__ caused a memory leak.
 
 
 0.60: 2016-03-14
