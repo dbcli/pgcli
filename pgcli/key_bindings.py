@@ -1,4 +1,5 @@
 import logging
+from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.filters import Condition
@@ -18,8 +19,7 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
         enable_open_in_editor=True,
         enable_system_bindings=True,
         enable_search=True,
-        enable_abort_and_exit_bindings=True,
-        enable_vi_mode=Condition(lambda cli: get_vi_mode_enabled()))
+        enable_abort_and_exit_bindings=True)
 
     @key_binding_manager.registry.add_binding(Keys.F2)
     def _(event):
@@ -45,7 +45,10 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
         Toggle between Vi and Emacs mode.
         """
         _logger.debug('Detected F4 key.')
-        set_vi_mode_enabled(not get_vi_mode_enabled())
+        vi_mode = not get_vi_mode_enabled()
+        set_vi_mode_enabled(vi_mode)
+
+        event.cli.editing_mode = EditingMode.VI if vi_mode else EditingMode.EMACS
 
     @key_binding_manager.registry.add_binding(Keys.Tab)
     def _(event):
