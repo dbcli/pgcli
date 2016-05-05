@@ -92,6 +92,7 @@ def load_basic_bindings(registry, filter=Always()):
     @handle(Keys.End)
     @handle(Keys.Delete)
     @handle(Keys.ShiftDelete)
+    @handle(Keys.ControlDelete)
     @handle(Keys.PageUp)
     @handle(Keys.PageDown)
     @handle(Keys.BackTab)

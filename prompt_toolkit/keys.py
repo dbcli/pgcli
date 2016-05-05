@@ -65,6 +65,7 @@ class Keys(object):
     End         = Key('<End>')
     Delete      = Key('<Delete>')
     ShiftDelete = Key('<ShiftDelete>')
+    ControlDelete = Key('<C-Delete>')
     PageUp      = Key('<PageUp>')
     PageDown    = Key('<PageDown>')
     BackTab     = Key('<BackTab>')  # shift + tab

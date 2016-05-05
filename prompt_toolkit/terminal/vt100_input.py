@@ -93,6 +93,7 @@ ANSI_SEQUENCES = {
     '\x1bOF': Keys.End,
     '\x1b[3~': Keys.Delete,
     '\x1b[3;2~': Keys.ShiftDelete,  # xterm, gnome-terminal.
+    '\x1b[3;5~': Keys.ControlDelete,  # xterm, gnome-terminal.
     '\x1b[1~': Keys.Home,  # tmux
     '\x1b[4~': Keys.End,  # tmux
     '\x1b[5~': Keys.PageUp,
