@@ -336,6 +336,12 @@ def load_basic_bindings(registry, filter=Always()):
         " Pasting from clipboard. "
         event.current_buffer.insert_text(event.data)
 
+
+def load_mouse_bindings(registry, filter=Always()):
+    """
+    Key bindings, required for mouse support.
+    (Mouse events enter through the key binding system.)
+    """
     @registry.add_binding(Keys.Vt100MouseEvent)
     def _(event):
         """
