@@ -220,8 +220,9 @@ class PGCompleter(Completer):
         # or None if the item doesn't match
         # Note: higher priority values mean more important, so use negative
         # signs to flip the direction of the tuple
+        searchtext = '' if text == '*' and meta == 'column' else text
         if fuzzy:
-            regex = '.*?'.join(map(re.escape, text))
+            regex = '.*?'.join(map(re.escape, searchtext))
             pat = re.compile('(%s)' % regex)
 
             def _match(item):
@@ -229,10 +230,10 @@ class PGCompleter(Completer):
                 if r:
                     return -len(r.group()), -r.start()
         else:
-            match_end_limit = len(text)
+            match_end_limit = len(searchtext)
 
             def _match(item):
-                match_point = item.lower().find(text, 0, match_end_limit)
+                match_point = item.lower().find(searchtext, 0, match_end_limit)
                 if match_point >= 0:
                     # Use negative infinity to force keywords to sort after all
                     # fuzzy matches
@@ -269,7 +270,11 @@ class PGCompleter(Completer):
                 matches.append(Match(
                     completion=Completion(item, -text_len, display_meta=meta),
                     priority=priority))
-
+        if text == '*' and meta == 'column' and matches:
+            collist = ', '.join([m.completion.text for m in matches
+                if m.completion.text != '*'])
+            matches = [Match(completion=Completion(collist, -text_len,
+                display_meta='columns', display='*'), priority=(1,1,1))]
         return matches
 
     def get_completions(self, document, complete_event, smart_completion=None):
