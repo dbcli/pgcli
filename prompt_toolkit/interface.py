@@ -358,7 +358,7 @@ class CommandLineInterface(object):
         self.renderer.request_absolute_cursor_position()
         self._redraw()
 
-    def run(self, reset_current_buffer=True, pre_run=None):
+    def run(self, reset_current_buffer=False, pre_run=None):
         """
         Read input from the command line.
         This runs the eventloop until a return value has been set.
