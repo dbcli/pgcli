@@ -3,14 +3,13 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
-from prompt_toolkit.filters import CLIFilter, Always, Condition, EmacsMode
+from prompt_toolkit.filters import Always, Condition, EmacsMode, to_cli_filter, HasSelection, EmacsInsertMode, HasFocus
 from prompt_toolkit.completion import CompleteEvent
 
 from .utils import create_handle_decorator
 from .scroll import scroll_page_up, scroll_page_down
 
 from six.moves import range
-import prompt_toolkit.filters as filters
 
 __all__ = (
     'load_emacs_bindings',
@@ -26,11 +25,11 @@ def load_emacs_bindings(registry, filter=Always()):
     """
     # Overview of Readline emacs commands:
     # http://www.catonmat.net/download/readline-emacs-editing-mode-cheat-sheet.pdf
-
-    assert isinstance(filter, CLIFilter)
+    filter = to_cli_filter(filter)
 
     handle = create_handle_decorator(registry, filter & EmacsMode())
-    has_selection = filters.HasSelection()
+    insert_mode = EmacsInsertMode()
+    has_selection = HasSelection()
 
     @handle(Keys.Escape)
     def _(event):
@@ -90,7 +89,7 @@ def load_emacs_bindings(registry, filter=Always()):
         """
         event.current_buffer.cursor_down()
 
-    @handle(Keys.ControlO, filter= ~has_selection)
+    @handle(Keys.ControlO, filter=insert_mode)
     def _(event):
         """
         Insert newline, but don't move the cursor.
@@ -122,8 +121,8 @@ def load_emacs_bindings(registry, filter=Always()):
         """
         event.current_buffer.insert_text(event.data, overwrite=False)
 
-    @handle(Keys.ControlY, filter= ~has_selection)
-    @handle(Keys.ControlX, 'r', 'y', filter= ~has_selection)
+    @handle(Keys.ControlY, filter=insert_mode)
+    @handle(Keys.ControlX, 'r', 'y', filter=insert_mode)
     def _(event):
         """
         Paste before cursor.
@@ -131,7 +130,7 @@ def load_emacs_bindings(registry, filter=Always()):
         event.current_buffer.paste_clipboard_data(
             event.cli.clipboard.get_data(), count=event.arg, before=True)
 
-    @handle(Keys.ControlUnderscore, save_before=(lambda e: False), filter= ~has_selection)
+    @handle(Keys.ControlUnderscore, save_before=(lambda e: False), filter=insert_mode)
     def _(event):
         """
         Undo.
@@ -159,7 +158,7 @@ def load_emacs_bindings(registry, filter=Always()):
     is_returnable = Condition(
         lambda cli: cli.current_buffer.accept_action.is_returnable)
 
-    @handle(Keys.Escape, Keys.ControlJ, filter= ~has_selection & is_returnable)
+    @handle(Keys.Escape, Keys.ControlJ, filter=insert_mode & is_returnable)
     def _(event):
         """
         Meta + Newline: always accept input.
@@ -176,7 +175,7 @@ def load_emacs_bindings(registry, filter=Always()):
         if match is not None:
             event.current_buffer.cursor_position += match
 
-    @handle(Keys.Escape, Keys.Backspace, filter= ~has_selection)
+    @handle(Keys.Escape, Keys.Backspace, filter=insert_mode)
     def _(event):
         """
         Delete word backwards.
@@ -192,7 +191,19 @@ def load_emacs_bindings(registry, filter=Always()):
             deleted = buffer.delete_before_cursor(count=-pos)
             event.cli.clipboard.set_text(deleted)
 
-    @handle(Keys.Escape, 'a', filter= ~has_selection)
+    @handle(Keys.ControlDelete, filter=insert_mode)
+    def _(event):
+        """
+        Delete word after cursor.
+        """
+        buff = event.current_buffer
+        pos = buff.document.find_next_word_ending(count=event.arg)
+
+        if pos:
+            deleted = buff.delete(count=pos)
+            event.cli.clipboard.set_text(deleted)
+
+    @handle(Keys.Escape, 'a')
     def _(event):
         """
         Previous sentence.
@@ -200,7 +211,7 @@ def load_emacs_bindings(registry, filter=Always()):
         # TODO:
         pass
 
-    @handle(Keys.Escape, 'c', filter= ~has_selection)
+    @handle(Keys.Escape, 'c', filter=insert_mode)
     def _(event):
         """
         Capitalize the current (or following) word.
@@ -212,7 +223,7 @@ def load_emacs_bindings(registry, filter=Always()):
             words = buffer.document.text_after_cursor[:pos]
             buffer.insert_text(words.title(), overwrite=True)
 
-    @handle(Keys.Escape, 'd', filter= ~has_selection)
+    @handle(Keys.Escape, 'd', filter=insert_mode)
     def _(event):
         """
         Delete word forwards.
@@ -224,7 +235,7 @@ def load_emacs_bindings(registry, filter=Always()):
             deleted = buffer.delete(count=pos)
             event.cli.clipboard.set_text(deleted)
 
-    @handle(Keys.Escape, 'e', filter= ~has_selection)
+    @handle(Keys.Escape, 'e')
     def _(event):
         """ Move to end of sentence. """
         # TODO:
@@ -253,7 +264,7 @@ def load_emacs_bindings(registry, filter=Always()):
         if pos:
             buffer.cursor_position += pos
 
-    @handle(Keys.Escape, 'l', filter= ~has_selection)
+    @handle(Keys.Escape, 'l', filter=insert_mode)
     def _(event):
         """
         Lowercase the current (or following) word.
@@ -265,14 +276,14 @@ def load_emacs_bindings(registry, filter=Always()):
             words = buffer.document.text_after_cursor[:pos]
             buffer.insert_text(words.lower(), overwrite=True)
 
-    @handle(Keys.Escape, 't', filter= ~has_selection)
+    @handle(Keys.Escape, 't', filter=insert_mode)
     def _(event):
         """
         Swap the last two words before the cursor.
         """
         # TODO
 
-    @handle(Keys.Escape, 'u', filter= ~has_selection)
+    @handle(Keys.Escape, 'u', filter=insert_mode)
     def _(event):
         """
         Uppercase the current (or following) word.
@@ -284,14 +295,14 @@ def load_emacs_bindings(registry, filter=Always()):
             words = buffer.document.text_after_cursor[:pos]
             buffer.insert_text(words.upper(), overwrite=True)
 
-    @handle(Keys.Escape, '.', filter= ~has_selection)
+    @handle(Keys.Escape, '.', filter=insert_mode)
     def _(event):
         """
         Rotate through the last word (white-space delimited) of the previous lines in history.
         """
         # TODO
 
-    @handle(Keys.Escape, '\\', filter= ~has_selection)
+    @handle(Keys.Escape, '\\', filter=insert_mode)
     def _(event):
         """
         Delete all spaces and tabs around point.
@@ -307,7 +318,7 @@ def load_emacs_bindings(registry, filter=Always()):
         buff.delete_before_cursor(count=delete_before)
         buff.delete(count=delete_after)
 
-    @handle(Keys.Escape, '*', filter= ~has_selection)
+    @handle(Keys.Escape, '*', filter=insert_mode)
     def _(event):
         """
         `meta-*`: Insert all possible completions of the preceding text.
@@ -322,7 +333,7 @@ def load_emacs_bindings(registry, filter=Always()):
         text_to_insert = ' '.join(c.text for c in completions)
         buff.insert_text(text_to_insert)
 
-    @handle(Keys.ControlX, Keys.ControlU, save_before=(lambda e: False), filter= ~has_selection)
+    @handle(Keys.ControlX, Keys.ControlU, save_before=(lambda e: False), filter=insert_mode)
     def _(event):
         event.current_buffer.undo()
 
@@ -414,7 +425,7 @@ def load_emacs_bindings(registry, filter=Always()):
         buffer.cursor_position += buffer.document.find_next_word_beginning(count=event.arg) or \
             buffer.document.get_end_of_document_position()
 
-    @handle(Keys.Escape, '/', filter= ~has_selection)
+    @handle(Keys.Escape, '/', filter=insert_mode)
     def _(event):
         """
         M-/: Complete.
@@ -459,7 +470,7 @@ def load_emacs_open_in_editor_bindings(registry, filter=None):
     Pressing C-X C-E will open the buffer in an external editor.
     """
     handle = create_handle_decorator(registry, filter)
-    has_selection = filters.HasSelection()
+    has_selection = HasSelection()
 
     @handle(Keys.ControlX, Keys.ControlE, filter= ~has_selection)
     def _(event):
@@ -471,7 +482,7 @@ def load_emacs_open_in_editor_bindings(registry, filter=None):
 
 def load_emacs_system_bindings(registry, filter=None):
     handle = create_handle_decorator(registry, filter)
-    has_focus = filters.HasFocus(SYSTEM_BUFFER)
+    has_focus = HasFocus(SYSTEM_BUFFER)
 
     @handle(Keys.Escape, '!', filter= ~has_focus)
     def _(event):
@@ -504,8 +515,10 @@ def load_emacs_system_bindings(registry, filter=None):
 
 
 def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
+    filter = to_cli_filter(filter)
+
     handle = create_handle_decorator(registry, filter & EmacsMode())
-    has_focus = filters.HasFocus(SEARCH_BUFFER)
+    has_focus = HasFocus(SEARCH_BUFFER)
 
     assert get_search_state is None or callable(get_search_state)
 
@@ -589,6 +602,7 @@ def load_extra_emacs_page_navigation_bindings(registry, filter=None):
     Key bindings, for scrolling up and down through pages.
     This are separate bindings, because GNU readline doesn't have them.
     """
+    filter = to_cli_filter(filter)
     handle = create_handle_decorator(registry, filter & EmacsMode())
 
     handle(Keys.ControlV)(scroll_page_down)
