@@ -21,7 +21,7 @@ def load_config(usr_cfg, def_cfg=None):
 
 
 def ensure_dir_exists(path):
-    parent_dir = dirname(path)
+    parent_dir = expanduser(dirname(path))
     try:
         os.makedirs(parent_dir)
     except OSError as exc:
