@@ -4,7 +4,7 @@ from six.moves import range
 
 from prompt_toolkit.key_binding.input_processor import KeyPress
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.mouse_events import MouseEventTypes
+from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.win32_types import EventTypes, KEY_EVENT_RECORD, MOUSE_EVENT_RECORD, INPUT_RECORD, STD_INPUT_HANDLE
 
 import msvcrt
@@ -237,7 +237,7 @@ class ConsoleInputReader(object):
         # Check event type.
         if ev.ButtonState == FROM_LEFT_1ST_BUTTON_PRESSED:
             # On a key press, generate both the mouse down and up event.
-            for event_type in [MouseEventTypes.MOUSE_DOWN, MouseEventTypes.MOUSE_UP]:
+            for event_type in [MouseEventType.MOUSE_DOWN, MouseEventType.MOUSE_UP]:
                 data = ';'.join([
                    event_type,
                    str(ev.MousePosition.X),

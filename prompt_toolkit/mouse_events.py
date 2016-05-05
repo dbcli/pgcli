@@ -18,16 +18,19 @@ coordinates to coordinates relative to the user control, and there
 from __future__ import unicode_literals
 
 __all__ = (
-    'MouseEventTypes',
+    'MouseEventType',
     'MouseEvent'
 )
 
 
-class MouseEventTypes:
+class MouseEventType:
     MOUSE_UP = 'MOUSE_UP'
     MOUSE_DOWN = 'MOUSE_DOWN'
     SCROLL_UP = 'SCROLL_UP'
     SCROLL_DOWN = 'SCROLL_DOWN'
+
+
+MouseEventTypes = MouseEventType  # Deprecated: plural for backwards compatibility.
 
 
 class MouseEvent(object):

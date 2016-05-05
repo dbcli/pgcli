@@ -11,7 +11,7 @@ from six.moves import range
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER
 from prompt_toolkit.filters import to_cli_filter
-from prompt_toolkit.mouse_events import MouseEventTypes
+from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
 from prompt_toolkit.token import Token
@@ -659,11 +659,11 @@ class BufferControl(UIControl):
                 index = buffer.document.translate_row_col_to_index(position.y, xpos)
 
                 # Set the cursor position.
-                if mouse_event.event_type == MouseEventTypes.MOUSE_DOWN:
+                if mouse_event.event_type == MouseEventType.MOUSE_DOWN:
                     buffer.exit_selection()
                     buffer.cursor_position = index
 
-                elif mouse_event.event_type == MouseEventTypes.MOUSE_UP:
+                elif mouse_event.event_type == MouseEventType.MOUSE_UP:
                     # When the cursor was moved to another place, select the text.
                     # (The >1 is actually a small but acceptable workaround for
                     # selecting text in Vi navigation mode. In navigation mode,
@@ -689,7 +689,7 @@ class BufferControl(UIControl):
 
         # Not focussed, but focussing on click events.
         else:
-            if self.focus_on_click(cli) and mouse_event.event_type == MouseEventTypes.MOUSE_UP:
+            if self.focus_on_click(cli) and mouse_event.event_type == MouseEventType.MOUSE_UP:
                 # Focus happens on mouseup. (If we did this on mousedown, the
                 # up event will be received at the point where this widget is
                 # focussed and be handled anyway.)

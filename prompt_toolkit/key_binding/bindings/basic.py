@@ -5,7 +5,7 @@ from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import CLIFilter, Always, HasSelection, Condition, EmacsInsertMode, ViInsertMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.screen import Point
-from prompt_toolkit.mouse_events import MouseEventTypes, MouseEvent
+from prompt_toolkit.mouse_events import MouseEventType, MouseEvent
 from prompt_toolkit.renderer import HeightIsUnknownError
 from prompt_toolkit.utils import suspend_to_background_supported, is_windows
 
@@ -356,10 +356,10 @@ def load_mouse_bindings(registry, filter=Always()):
             # Typical.
             mouse_event, x, y = map(ord, event.data[3:])
             mouse_event = {
-                32: MouseEventTypes.MOUSE_DOWN,
-                35: MouseEventTypes.MOUSE_UP,
-                96: MouseEventTypes.SCROLL_UP,
-                97: MouseEventTypes.SCROLL_DOWN,
+                32: MouseEventType.MOUSE_DOWN,
+                35: MouseEventType.MOUSE_UP,
+                96: MouseEventType.SCROLL_UP,
+                97: MouseEventType.SCROLL_DOWN,
             }.get(mouse_event)
             x -= 32
             y -= 32
@@ -381,17 +381,17 @@ def load_mouse_bindings(registry, filter=Always()):
             # Parse event type.
             if sgr:
                 mouse_event = {
-                    (0, 'M'): MouseEventTypes.MOUSE_DOWN,
-                    (0, 'm'): MouseEventTypes.MOUSE_UP,
-                    (64, 'M'): MouseEventTypes.SCROLL_UP,
-                    (65, 'M'): MouseEventTypes.SCROLL_DOWN,
+                    (0, 'M'): MouseEventType.MOUSE_DOWN,
+                    (0, 'm'): MouseEventType.MOUSE_UP,
+                    (64, 'M'): MouseEventType.SCROLL_UP,
+                    (65, 'M'): MouseEventType.SCROLL_DOWN,
                 }.get((mouse_event, m))
             else:
                 mouse_event = {
-                    32: MouseEventTypes.MOUSE_DOWN,
-                    35: MouseEventTypes.MOUSE_UP,
-                    96: MouseEventTypes.SCROLL_UP,
-                    97: MouseEventTypes.SCROLL_DOWN,
+                    32: MouseEventType.MOUSE_DOWN,
+                    35: MouseEventType.MOUSE_UP,
+                    96: MouseEventType.SCROLL_UP,
+                    97: MouseEventType.SCROLL_DOWN,
                     }.get(mouse_event)
 
         x -= 1

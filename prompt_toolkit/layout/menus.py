@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from six.moves import zip_longest, range
 from prompt_toolkit.filters import HasCompletions, IsDone, Condition, to_cli_filter
-from prompt_toolkit.mouse_events import MouseEventTypes
+from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
@@ -136,16 +136,16 @@ class CompletionsMenuControl(UIControl):
         """
         b = cli.current_buffer
 
-        if mouse_event.event_type == MouseEventTypes.MOUSE_UP:
+        if mouse_event.event_type == MouseEventType.MOUSE_UP:
             # Select completion.
             b.go_to_completion(mouse_event.position.y)
             b.complete_state = None
 
-        elif mouse_event.event_type == MouseEventTypes.SCROLL_DOWN:
+        elif mouse_event.event_type == MouseEventType.SCROLL_DOWN:
             # Scroll up.
             b.complete_next(count=3, disable_wrap_around=True)
 
-        elif mouse_event.event_type == MouseEventTypes.SCROLL_UP:
+        elif mouse_event.event_type == MouseEventType.SCROLL_UP:
             # Scroll down.
             b.complete_previous(count=3, disable_wrap_around=True)
 
@@ -393,13 +393,13 @@ class MultiColumnCompletionMenuControl(UIControl):
             b.complete_next(count=self._rendered_rows, disable_wrap_around=True)
             self.scroll = min(self._total_columns - self._rendered_columns, self.scroll + 1)
 
-        if mouse_event.event_type == MouseEventTypes.SCROLL_DOWN:
+        if mouse_event.event_type == MouseEventType.SCROLL_DOWN:
             scroll_right()
 
-        elif mouse_event.event_type == MouseEventTypes.SCROLL_UP:
+        elif mouse_event.event_type == MouseEventType.SCROLL_UP:
             scroll_left()
 
-        elif mouse_event.event_type == MouseEventTypes.MOUSE_UP:
+        elif mouse_event.event_type == MouseEventType.MOUSE_UP:
             x = mouse_event.position.x
             y = mouse_event.position.y
 

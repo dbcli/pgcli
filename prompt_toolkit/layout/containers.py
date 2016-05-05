@@ -15,7 +15,7 @@ from .screen import Point, WritePosition, _CHAR_CACHE
 from .utils import token_list_to_text, explode_tokens
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.filters import to_cli_filter
-from prompt_toolkit.mouse_events import MouseEvent, MouseEventTypes
+from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from prompt_toolkit.reactive import Integer
 from prompt_toolkit.token import Token
 from prompt_toolkit.utils import take_using_weights, get_cwidth
@@ -1551,9 +1551,9 @@ class Window(Container):
         Mouse handler. Called when the UI control doesn't handle this
         particular event.
         """
-        if mouse_event.event_type == MouseEventTypes.SCROLL_DOWN:
+        if mouse_event.event_type == MouseEventType.SCROLL_DOWN:
             self._scroll_down(cli)
-        elif mouse_event.event_type == MouseEventTypes.SCROLL_UP:
+        elif mouse_event.event_type == MouseEventType.SCROLL_UP:
             self._scroll_up(cli)
 
     def _scroll_down(self, cli):
