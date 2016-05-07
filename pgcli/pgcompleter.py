@@ -319,9 +319,9 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, scoped_cols, meta='column')
 
     def get_function_matches(self, suggestion, word_before_cursor):
-        if suggestion.filter == 'is_set_returning':
-            # Only suggest set-returning functions
-            filt = operator.attrgetter('is_set_returning')
+        if suggestion.filter == 'for_from_clause':
+            # Only suggest functions allowed in FROM clause
+            filt = lambda f: not f.is_aggregate and not f.is_window
             funcs = self.populate_functions(suggestion.schema, filt)
         else:
             funcs = self.populate_schema_objects(

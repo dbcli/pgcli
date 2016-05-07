@@ -299,7 +299,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
 
         # Suggest set-returning functions in the FROM clause
         if token_v == 'from' or (token_v.endswith('join') and token.is_keyword):
-            suggest.append(Function(schema=schema, filter='is_set_returning'))
+            suggest.append(Function(schema=schema, filter='for_from_clause'))
 
         return tuple(suggest)
 
