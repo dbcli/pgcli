@@ -26,7 +26,7 @@ Function = namedtuple('Function', ['schema', 'filter'])
 # For convenience, don't require the `filter` argument in Function constructor
 Function.__new__.__defaults__ = (None, None)
 
-Column = namedtuple('Column', ['tables', 'drop_unique'])
+Column = namedtuple('Column', ['tables', 'drop_unique', 'parent'])
 Column.__new__.__defaults__ = (None, None)
 
 View = namedtuple('View', ['schema'])
@@ -271,7 +271,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         if parent:
             tables = extract_tables(full_text)
             tables = tuple(t for t in tables if identifies(parent, t))
-            return (Column(tables=tables),
+            return (Column(tables=tables, parent=parent),
                     Table(schema=parent),
                     View(schema=parent),
                     Function(schema=parent),)

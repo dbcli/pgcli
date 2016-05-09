@@ -182,7 +182,7 @@ class PGCompleter(Completer):
         self.all_completions = set(self.keywords + self.functions)
 
     def find_matches(self, text, collection, mode='fuzzy',
-                     meta=None, meta_collection=None):
+                     meta=None, meta_collection=None, parent=None):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -271,8 +271,9 @@ class PGCompleter(Completer):
                     completion=Completion(item, -text_len, display_meta=meta),
                     priority=priority))
         if text == '*' and meta == 'column' and matches:
-            collist = ', '.join([m.completion.text for m in matches
-                if m.completion.text != '*'])
+            sep = ', ' + parent + '.' if parent else ', '
+            cols = (m.completion.text for m in matches)
+            collist = (sep).join([c for c in cols if c != '*'])
             matches = [Match(completion=Completion(collist, -text_len,
                 display_meta='columns', display='*'), priority=(1,1,1))]
         return matches
@@ -321,7 +322,7 @@ class PGCompleter(Completer):
                                  in Counter(scoped_cols).items()
                                    if count > 1 and col != '*']
 
-        return self.find_matches(word_before_cursor, scoped_cols, meta='column')
+        return self.find_matches(word_before_cursor, scoped_cols, meta='column', parent=suggestion.parent)
 
     def get_function_matches(self, suggestion, word_before_cursor):
         if suggestion.filter == 'is_set_returning':

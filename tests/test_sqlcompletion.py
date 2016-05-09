@@ -217,7 +217,7 @@ def test_partially_typed_col_name_suggests_col_names():
 def test_dot_suggests_cols_of_a_table_or_schema_qualified_table():
     suggestions = suggest_type('SELECT tabl. FROM tabl', 'SELECT tabl.')
     assert set(suggestions) == set([
-        Column(tables=((None, 'tabl', None, False),)),
+        Column(tables=((None, 'tabl', None, False),), parent='tabl'),
         Table(schema='tabl'),
         View(schema='tabl'),
         Function(schema='tabl'),
@@ -235,7 +235,7 @@ def test_dot_suggests_cols_of_an_alias(sql):
     assert set(suggestions) == set([
         Table(schema='t1'),
         View(schema='t1'),
-        Column(tables=((None, 'tabl1', 't1', False),)),
+        Column(tables=((None, 'tabl1', 't1', False),), parent='t1'),
         Function(schema='t1'),
     ])
 
@@ -251,7 +251,7 @@ def test_dot_suggests_cols_of_an_alias_where(sql):
     assert set(suggestions) == set([
         Table(schema='t1'),
         View(schema='t1'),
-        Column(tables=((None, 'tabl1', 't1', False),)),
+        Column(tables=((None, 'tabl1', 't1', False),), parent='t1'),
         Function(schema='t1'),
     ])
 
@@ -260,7 +260,7 @@ def test_dot_col_comma_suggests_cols_or_schema_qualified_table():
     suggestions = suggest_type('SELECT t1.a, t2. FROM tabl1 t1, tabl2 t2',
             'SELECT t1.a, t2.')
     assert set(suggestions) == set([
-        Column(tables=((None, 'tabl2', 't2', False),)),
+        Column(tables=((None, 'tabl2', 't2', False),), parent='t2'),
         Table(schema='t2'),
         View(schema='t2'),
         Function(schema='t2'),
@@ -291,7 +291,7 @@ def test_outer_table_reference_in_exists_subquery_suggests_columns():
     q = 'SELECT * FROM foo f WHERE EXISTS (SELECT 1 FROM bar WHERE f.'
     suggestions = suggest_type(q, q)
     assert set(suggestions) == set([
-        Column(tables=((None, 'foo', 'f', False),)),
+        Column(tables=((None, 'foo', 'f', False),), parent='f'),
         Table(schema='f'),
         View(schema='f'),
         Function(schema='f'),
@@ -338,7 +338,7 @@ def test_sub_select_dot_col_name_completion():
     suggestions = suggest_type('SELECT * FROM (SELECT t. FROM tabl t',
             'SELECT * FROM (SELECT t.')
     assert set(suggestions) == set([
-        Column(tables=((None, 'tabl', 't', False),)),
+        Column(tables=((None, 'tabl', 't', False),), parent='t'),
         Table(schema='t'),
         View(schema='t'),
         Function(schema='t'),
@@ -452,7 +452,7 @@ def test_suggest_columns_after_multiple_joins():
     suggestions = suggest_type(sql, sql)
     assert Column(tables=((None, 't3', None, False),)) in set(suggestions)
 
-    
+
 def test_2_statements_2nd_current():
     suggestions = suggest_type('select * from a; select * from ',
                                'select * from a; select * from ')
@@ -649,7 +649,7 @@ def test_suggest_where_keyword(text):
     ('\\ns abc SELECT t1. FROM tabl1 t1', 'SELECT t1.', [
         Table(schema='t1'),
         View(schema='t1'),
-        Column(tables=((None, 'tabl1', 't1', False),)),
+        Column(tables=((None, 'tabl1', 't1', False),), parent='t1'),
         Function(schema='t1')
     ])
 ])
