@@ -11,7 +11,7 @@ TODO: this is a little outdated.
     |          - Parses the input stream coming from a VT100        |
     |            compatible terminal. Translates it into data input |
     |            and control characters. Calls the corresponding    |
-    |            handlers of the `InputStreamHandel` instance.      |
+    |            handlers of the `InputStreamHandler` instance.     |
     |                                                               |
     |          e.g. Translate '\x1b[6~' into "Keys.PageDown", call  |
     |               the `feed_key` method of `InputProcessor`.      |
