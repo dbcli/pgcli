@@ -124,6 +124,7 @@ Shells:
 - `ipython <http://github.com/ipython/ipython/>`_: The IPython REPL
 - `click-repl <https://github.com/click-contrib/click-repl>`_: Subcommand REPL for click apps.
 - `haxor-news <https://github.com/donnemartin/haxor-news>`_: A Hacker News CLI.
+- `gitsome <https://github.com/donnemartin/gitsome>`_: A Git/Shell Autocompleter with GitHub Integration.
 
 Full screen applications:
 
