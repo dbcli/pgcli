@@ -15,7 +15,7 @@ install_requirements = [
             'pgspecial>=1.3.0',
             'click >= 4.1',
             'Pygments >= 2.0',  # Pygments has to be Capitalcased. WTF?
-            'prompt_toolkit==0.60',
+            'prompt_toolkit>=1.0.0,<1.1.0',
             'psycopg2 >= 2.5.4',
             'sqlparse == 0.1.19',
             'configobj >= 5.0.6',

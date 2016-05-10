@@ -22,8 +22,8 @@ except ImportError:
     setproctitle = None
 import sqlparse
 from prompt_toolkit import CommandLineInterface, Application, AbortAction
-from prompt_toolkit.enums import DEFAULT_BUFFER
-from prompt_toolkit.shortcuts import create_prompt_layout
+from prompt_toolkit.enums import DEFAULT_BUFFER, EditingMode
+from prompt_toolkit.shortcuts import create_prompt_layout, create_eventloop
 from prompt_toolkit.buffer import AcceptAction
 from prompt_toolkit.document import Document
 from prompt_toolkit.filters import Always, HasFocus, IsDone
@@ -140,6 +140,7 @@ class PGCli(object):
         self._completer_lock = threading.Lock()
         self.register_special_commands()
 
+        self.eventloop = create_eventloop()
         self.cli = None
 
     def register_special_commands(self):
@@ -338,7 +339,7 @@ class PGCli(object):
 
         try:
             while True:
-                document = self.cli.run()
+                document = self.cli.run(True)
 
                 # The reason we check here instead of inside the pgexecute is
                 # because we want to raise the Exit exception which will be
@@ -468,6 +469,8 @@ class PGCli(object):
                 complete_while_typing=Always(),
                 accept_action=AcceptAction.RETURN_DOCUMENT)
 
+            editing_mode = EditingMode.VI if self.vi_mode else EditingMode.EMACS
+
             application = Application(
                 style=style_factory(self.syntax_style, self.cli_style),
                 layout=layout,
@@ -475,9 +478,11 @@ class PGCli(object):
                 key_bindings_registry=key_binding_manager.registry,
                 on_exit=AbortAction.RAISE_EXCEPTION,
                 on_abort=AbortAction.RETRY,
-                ignore_case=True)
+                ignore_case=True,
+                editing_mode=editing_mode)
 
-            cli = CommandLineInterface(application=application)
+            cli = CommandLineInterface(application=application,
+                                       eventloop=self.eventloop)
 
             return cli
 
