@@ -440,14 +440,14 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
             count=event.arg)
 
     def paste_named_register_handler(c):
-        @handle('"', c, 'p')
+        @handle('"', c, 'p', filter=navigation_mode)
         def _(event):
             " Paste from named register. "
             data = event.cli.vi_state.named_registers.get(c)
             if data:
                 event.current_buffer.paste_clipboard_data(data, count=event.arg)
 
-        @handle('"', c, 'P')
+        @handle('"', c, 'P', filter=navigation_mode)
         def _(event):
             " Paste (before) from named register. "
             data = event.cli.vi_state.named_registers.get(c)
@@ -849,7 +849,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
             # Set deleted/changed text to clipboard or named register.
             if clipboard_data and clipboard_data.text:
                 if reg_name:
-                    event.cli.named_registers[reg_name] = clipboard_data
+                    event.cli.vi_state.named_registers[reg_name] = clipboard_data
                 else:
                     event.cli.clipboard.set_data(clipboard_data)
 
