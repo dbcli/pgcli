@@ -1,6 +1,7 @@
 import sqlparse
 from pgcli.packages.function_metadata import (
-    FunctionMetadata, parse_typed_field_list, field_names)
+    FunctionMetadata, parse_typed_field_list, fields)
+from pgcli.pgcompleter import ColumnMetadata
 
 
 def test_function_metadata_eq():
@@ -44,17 +45,17 @@ def test_table_column_names():
         x INT,
         y DOUBLE PRECISION,
         z TEXT '''
-    names = list(field_names(tbl_str, mode_filter=None))
-    assert names == ['x', 'y', 'z']
+    fs = list(fields(tbl_str, mode_filter=None))
+    assert fs == [ColumnMetadata(x, None, []) for x in('x' ,'y', 'z')]
 
 
 def test_argument_names():
     func_header = 'IN x INT DEFAULT 2, OUT y DOUBLE PRECISION'
-    names = field_names(func_header, mode_filter=['OUT', 'INOUT'])
-    assert list(names) == ['y']
+    fs = fields(func_header, mode_filter=['OUT', 'INOUT'])
+    assert list(fs) == [ColumnMetadata('y', None, [])]
 
 
 def test_empty_arg_list():
     # happens for e.g. parameter-less functions like now()
-    names = field_names('')
-    assert list(names) == []
+    fs = fields('')
+    assert list(fs) == []

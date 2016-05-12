@@ -87,7 +87,7 @@ def test_simple_insert_single_table():
 
     # sqlparse mistakenly assigns an alias to the table
     # AND mistakenly identifies the field list as
-    # assert tables == ((None, 'abc', None, False),)
+    # assert tables == ((None, 'abc', 'abc', False),)
 
     assert tables == ((None, 'abc', 'abc', False),)
 
