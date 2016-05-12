@@ -33,6 +33,7 @@ Some features:
 - Multi-line input editing.
 - Advanced code completion.
 - Both Emacs and Vi key bindings. (Similar to readline.)
+- Even some advanced Vi functionality, like named registers and digraphs.
 - Reverse and forward incremental search.
 - Runs on all Python versions from 2.6 up to 3.5.
 - Works well with Unicode double width characters. (Chinese input.)
