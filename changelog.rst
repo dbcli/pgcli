@@ -1,4 +1,50 @@
-0.20.0
+1.0.0
+=====
+
+Features:
+---------
+
+* Upgrade to prompt-toolkit 1.0.0. (Thanks: `Jonathan Slenders`_).
+* Add support for \o command to redirect query output to a file. (Thanks: `Tim Sanders`_).
+* Add \i path completion. (Thanks: `Anthony Lai`_).
+* Connect to a dsn saved in config file. (Thanks: `Rodrigo Ramírez Norambuena`_).
+* Update pgspecial dependency to 1.3.0. (Thanks: `Amjith Ramanujam`_).
+* Upgrade sqlparse requirement to version 0.1.19. (Thanks: `Fernando L. Canizo`_).
+* Add timestamptz to DATE custom extension. (Thanks: `Fernando Mora`_).
+* Ensure target dir exists when copying config. (Thanks: `David Szotten`_).
+* Handle dates that fall in the B.C. range. (Thanks: `Stuart Quin`_).
+* Pager is selected from config file or else from environment variable. (Thanks: `Fernando Mora`_).
+* Add support for redshift. (Thanks: `Timothy Cleaver`_).
+* Don't error when completing parameter-less functions. (Thanks: `David Szotten`_).
+* Concat and return all available notices. (Thanks: `Stuart Quin`_).
+* Handle unicode in record type. (Thanks: `Amjith Ramanujam`_).
+* Added humanized time display. Connect #396. (Thanks: `Irina Truong`_).
+* Add EXPLAIN keyword to the completion list. (Thanks: `Amjith Ramanujam`_).
+* Added sdist upload to release script. (Thanks: `Irina Truong`_).
+* Sort completions based on most recently used. (Thanks: `Darik Gamble`)
+
+Bugs:
+-----
+
+* Fix bug where config writing would leave a '~' dir. (Thanks: `James Munson`_).
+* Fix auto-completion breaking for table names with caps. (Thanks: `Anthony Lai`_).
+* Fix lexical ordering bug. (Thanks: `Anthony Lai`_).
+* Use lexical order to break ties when fuzzy matching. (Thanks: `Daniel Rocco`_).
+* Fix the bug in auto-expand mode when there are no rows to display. (Thanks: `Amjith Ramanujam`_).
+* Fix broken `\i` after #395. (Thanks: `David Szotten`_).
+* Fix multi-way joins in auto-completion. (Thanks: `Darik Gamble`_)
+* Display null values as <null> in expanded output. (Thanks: `Amjith Ramanujam`_).
+
+Internal Changes:
+-----------------
+
+* Update config file location in README. (Thanks: `Ari Summer`_).
+* Explicitly add wcwidth as a dependency. (Thanks: `Amjith Ramanujam`_).
+* Add tests for the format_output. (Thanks: `Amjith Ramanujam`_).
+* Lots of tests for pgcompleter. (Thanks: `Darik Gamble`_).
+
+
+0.20.1
 ======
 
 Bug Fixes:
@@ -418,3 +464,17 @@ Improvements:
 .. _`Stuart Quin`: https://github.com/stuartquin
 .. _`Tamas Boros`: https://github.com/TamasNo1
 .. _`Jacek Wielemborek`: https://github.com/d33tah
+.. _`Rodrigo Ramírez Norambuena`: https://github.com/roramirez
+.. _`Anthony Lai`: https://github.com/AnyBucket
+.. _`Ari Summer`: Ari Summer
+.. _`David Szotten`: David Szotten
+.. _`Fernando L. Canizo`: Fernando L. Canizo
+.. _`Tim Sanders`: https://github.com/Gollum999
+.. _`Irina Truong`: https://github.com/j-bennet
+.. _`James Munson`: https://github.com/jmunson
+.. _`Jonathan Slenders`: https://github.com/jonathanslenders
+.. _`Fernando Mora`: https://github.com/fernandomora
+.. _`Stuart Quin`: https://github.com/stuartquin
+.. _`Timothy Cleaver`: Timothy Cleaver
+.. _`gtxx`: gtxx
+
