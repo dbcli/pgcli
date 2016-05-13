@@ -50,6 +50,8 @@ from six import text_type, exec_, PY2
 import os
 import sys
 import textwrap
+import threading
+import time
 
 try:
     from pygments.lexer import Lexer as pygments_Lexer
@@ -502,10 +504,13 @@ def prompt(message='', **kwargs):
             will be printed above the prompt instead.)
     :param return_asyncio_coroutine: When True, return a asyncio coroutine. (Python >3.3)
     :param true_color: When True, use 24bit colors instead of 256 colors.
+    :param refresh_interval: (number; in seconds) When given, refresh the UI
+        every so many seconds.
     """
     patch_stdout = kwargs.pop('patch_stdout', False)
     return_asyncio_coroutine = kwargs.pop('return_asyncio_coroutine', False)
     true_color = kwargs.pop('true_color', False)
+    refresh_interval = kwargs.pop('refresh_interval', 0)
 
     if return_asyncio_coroutine:
         eventloop = create_asyncio_eventloop()
@@ -517,6 +522,24 @@ def prompt(message='', **kwargs):
         application=create_prompt_application(message, **kwargs),
         eventloop=eventloop,
         output=create_output(true_color=true_color))
+
+    # Set up refresh interval.
+    if refresh_interval:
+        done = [False]
+        def start_refresh_loop(cli):
+            def run():
+                while not done[0]:
+                    time.sleep(refresh_interval)
+                    cli.request_redraw()
+            t = threading.Thread(target=run)
+            t.daemon = True
+            t.start()
+
+        def stop_refresh_loop(cli):
+            done[0] = True
+
+        cli.on_start += start_refresh_loop
+        cli.on_stop += stop_refresh_loop
 
     # Replace stdout.
     patch_context = cli.patch_stdout_context() if patch_stdout else DummyContext()
