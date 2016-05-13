@@ -330,6 +330,7 @@ class Vt100_Output(Output):
     def __init__(self, stdout, get_size, true_color=False, term=None):
         assert callable(get_size)
         assert term is None or isinstance(term, six.text_type)
+        assert all(hasattr(stdout, a) for a in ('encoding', 'write', 'flush'))
 
         self._buffer = []
         self.stdout = stdout
@@ -357,6 +358,10 @@ class Vt100_Output(Output):
     def fileno(self):
         " Return file descriptor. "
         return self.stdout.fileno()
+
+    def encoding(self):
+        " Return encoding used for stdout. "
+        return self.stdout.encoding
 
     def write_raw(self, data):
         """

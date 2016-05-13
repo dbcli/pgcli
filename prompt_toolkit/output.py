@@ -25,6 +25,15 @@ class Output(with_metaclass(ABCMeta, object)):
         " Return the file descriptor to which we can write for the output. "
 
     @abstractmethod
+    def encoding(self):
+        """
+        Return the encoding for this output, e.g. 'utf-8'.
+        (This is used mainly to know which characters are supported by the
+        output the data, so that the UI can provide alternatives, when
+        required.)
+        """
+
+    @abstractmethod
     def write(self, data):
         " Write text (Terminal escape sequences will be removed/escaped.) "
 
@@ -147,6 +156,9 @@ class DummyOutput(Output):
     def fileno(self):
         " There is no sensible default for fileno(). "
         raise NotImplementedError
+
+    def encoding(self):
+        return 'utf-8'
 
     def write(self, data): pass
     def write_raw(self, data): pass

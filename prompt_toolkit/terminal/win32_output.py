@@ -87,6 +87,10 @@ class Win32Output(Output):
         " Return file descriptor. "
         return self.stdout.fileno()
 
+    def encoding(self):
+        " Return encoding used for stdout. "
+        return self.stdout.encoding
+
     def write(self, data):
         self._buffer.append(data)
 
