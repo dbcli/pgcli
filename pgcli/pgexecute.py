@@ -8,7 +8,7 @@ import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
 from .packages.function_metadata import FunctionMetadata
-from .encodingutils import unicode2utf8, PY2
+from .encodingutils import unicode2utf8, PY2, utf8tounicode
 
 
 _logger = logging.getLogger(__name__)
@@ -278,7 +278,7 @@ class PGExecute(object):
         # conn.notices persist between queies, we use pop to clear out the list
         title = ''
         while len(self.conn.notices) > 0:
-            title = title + self.conn.notices.pop()
+            title = title + utf8tounicode(self.conn.notices.pop())
 
         # cur.description will be None for operations that do not return
         # rows.
