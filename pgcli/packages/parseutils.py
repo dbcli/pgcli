@@ -66,6 +66,7 @@ def last_word(text, include='alphanum_underscore'):
 
 TableReference = namedtuple('TableReference', ['schema', 'name', 'alias',
                                                'is_function'])
+TableReference.ref = property(lambda self: self.alias or self.name)
 
 
 # This code is borrowed from sqlparse example script.
