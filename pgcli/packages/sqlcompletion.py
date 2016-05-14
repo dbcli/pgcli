@@ -247,7 +247,9 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
 
         # Get the token before the parens
         prev_tok = p.token_prev(len(p.tokens) - 1)
-        if prev_tok and prev_tok.value and prev_tok.value.lower() == 'using':
+
+        if (prev_tok and prev_tok.value
+          and prev_tok.value.lower().split(' ')[-1] == 'using'):
             # tbl1 INNER JOIN tbl2 USING (col1, col2)
             tables = extract_tables(full_text)
 
