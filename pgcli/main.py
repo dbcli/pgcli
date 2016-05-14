@@ -95,8 +95,8 @@ class PGCli(object):
         # different than less or is already parameterized with their own arguments
         os.environ['LESS'] = '-SRXF'
 
-    def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
-                 pgexecute=None, pgclirc_file=None):
+    def __init__(self, pgclirc_file, pgexecute=None, 
+                 force_passwd_prompt=False, never_passwd_prompt=False):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
