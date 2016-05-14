@@ -319,9 +319,10 @@ class PGCompleter(Completer):
                                    if count > 1 and col != '*']
         lastword = last_word(word_before_cursor, include='most_punctuations')
         if lastword == '*':
-            if suggestion.parent:
+            if (lastword != word_before_cursor and len(tables) == 1
+              and word_before_cursor[-len(lastword) - 1] == '.'):
                 # User typed x.*; replicate "x." for all columns
-                sep = ', ' + self.escape_name(suggestion.parent) + '.'
+                sep = ', ' + self.escape_name(tables[0].ref) + '.'
                 collist = (sep).join([c for c in flat_cols if c != '*'])
             elif len(scoped_cols) > 1:
                 # Multiple tables; qualify all columns
