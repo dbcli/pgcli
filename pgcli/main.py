@@ -672,7 +672,8 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
             print ('Please move the existing config file ~/.pgclirc to',
                    config_full_path)
 
-    pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc)
+    pgcli = PGCli(pgclirc, force_passwd_prompt=prompt_passwd,
+                  never_passwd_prompt=never_prompt)
 
     # Choose which ever one has a valid value.
     database = database or dbname
