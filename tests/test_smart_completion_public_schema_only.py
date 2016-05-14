@@ -95,6 +95,8 @@ def test_schema_or_visible_table_completion(completer, complete_event):
         Completion(text='"select"', start_position=0, display_meta='table'),
         Completion(text='orders', start_position=0, display_meta='table'),
         Completion(text='user_emails', start_position=0, display_meta='view'),
+        Completion(text='custom_func1', start_position=0, display_meta='function'),
+        Completion(text='custom_func2', start_position=0, display_meta='function'),
         Completion(text='set_returning_func', start_position=0, display_meta='function')])
 
 
@@ -376,6 +378,8 @@ def test_table_names_after_from(completer, complete_event):
         Completion(text='orders', start_position=0, display_meta='table'),
         Completion(text='"select"', start_position=0, display_meta='table'),
         Completion(text='user_emails', start_position=0, display_meta='view'),
+        Completion(text='custom_func1', start_position=0, display_meta='function'),
+        Completion(text='custom_func2', start_position=0, display_meta='function'),
         Completion(text='set_returning_func', start_position=0, display_meta='function')
         ])
 
@@ -386,6 +390,8 @@ def test_table_names_after_from_are_lexical_ordered_by_text(completer, complete_
         Document(text=text, cursor_position=position),
         complete_event)
     assert [c.text for c in result] == [
+        'custom_func1',
+        'custom_func2',
         'orders',
         'public',
         '"select"',
