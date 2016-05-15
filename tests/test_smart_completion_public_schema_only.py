@@ -594,14 +594,14 @@ def test_wildcard_column_expansion_with_table_qualifier(completer, complete_even
 
     assert expected == completions
 
-def test_wildcard_column_expansion_with_two_tables_and_parent(completer, complete_event):
+def test_wildcard_column_expansion_with_two_tables(completer, complete_event):
     sql = 'SELECT * FROM "select" JOIN users u ON true'
     pos = len('SELECT *')
 
     completions = completer.get_completions(
         Document(text=sql, cursor_position=pos), complete_event)
 
-    col_list = '"select".id, "select"."insert", "select"."ABC", u.id, u.phone_number'
+    col_list = '"select".id, "select"."insert", "select"."ABC", u.id, u.email, u.first_name, u.last_name'
     expected = [Completion(text=col_list, start_position=-1,
                           display='*', display_meta='columns')]
 
