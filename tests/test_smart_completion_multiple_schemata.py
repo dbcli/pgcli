@@ -323,11 +323,3 @@ def test_suggest_columns_from_aliased_set_returning_function(completer, complete
                                        complete_event)
     assert set(result) == set([
         Completion(text='x', start_position=0, display_meta='column')])
-
-def test_using(completer, complete_event):
-    sql = 'select * from public.users join custom.shipments using('
-    pos = len(sql)
-    result = completer.get_completions(Document(text=sql, cursor_position=pos),
-                                       complete_event)
-    assert set(result) == set([
-        Completion(text='id', start_position=0, display_meta='column')])
