@@ -601,11 +601,14 @@ def test_wildcard_column_expansion_with_two_tables(completer, complete_event):
     completions = completer.get_completions(
         Document(text=sql, cursor_position=pos), complete_event)
 
-    col_list = '"select".id, "select"."insert", "select"."ABC", u.id, u.email, u.first_name, u.last_name'
-    expected = [Completion(text=col_list, start_position=-1,
-                          display='*', display_meta='columns')]
-
-    assert expected == completions
+    # The order of the tables is indeterministic, so allwo both possibilities
+    cols1 = '"select".id, "select"."insert", "select"."ABC"'
+    cols2 = 'u.id, u.email, u.first_name, u.last_name'
+    expected = (Completion(text=text, start_position=-1,
+        display='*', display_meta='columns')
+        for text in (cols1 + ', ' + cols2, cols2 + ', ' + cols1))
+    assert len(completions) == 1
+    assert completions[0] in expected
 
 
 def test_wildcard_column_expansion_with_two_tables_and_parent(completer, complete_event):
