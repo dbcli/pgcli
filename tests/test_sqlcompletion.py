@@ -106,7 +106,7 @@ def test_suggest_tables_views_schemas_and_set_returning_functions(expression):
     assert set(suggestions) == set([
         Table(schema=None),
         View(schema=None),
-        Function(schema=None, filter='is_set_returning'),
+        Function(schema=None, filter='for_from_clause'),
         Schema(),
     ])
 
@@ -138,7 +138,7 @@ def test_suggest_qualified_tables_views_and_set_returning_functions(expression):
     assert set(suggestions) == set([
         Table(schema='sch'),
         View(schema='sch'),
-        Function(schema='sch', filter='is_set_returning'),
+        Function(schema='sch', filter='for_from_clause'),
     ])
 
 
@@ -175,7 +175,7 @@ def test_table_comma_suggests_tables_and_schemas():
     assert set(suggestions) == set([
         Table(schema=None),
         View(schema=None),
-        Function(schema=None, filter='is_set_returning'),
+        Function(schema=None, filter='for_from_clause'),
         Schema(),
     ])
 
@@ -308,7 +308,7 @@ def test_sub_select_table_name_completion(expression):
     assert set(suggestion) == set([
         Table(schema=None),
         View(schema=None),
-        Function(schema=None, filter='is_set_returning'),
+        Function(schema=None, filter='for_from_clause'),
         Schema(),
     ])
 
@@ -353,7 +353,7 @@ def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
     assert set(suggestion) == set([
         Table(schema=None),
         View(schema=None),
-        Function(schema=None, filter='is_set_returning'),
+        Function(schema=None, filter='for_from_clause'),
         Schema(),
     ])
 
@@ -364,7 +364,7 @@ def test_left_join_with_comma():
     assert set(suggestions) == set([
          Table(schema=None),
          View(schema=None),
-         Function(schema=None, filter='is_set_returning'),
+         Function(schema=None, filter='for_from_clause'),
          Schema(),
     ])
 
@@ -452,14 +452,14 @@ def test_suggest_columns_after_multiple_joins():
     suggestions = suggest_type(sql, sql)
     assert Column(tables=((None, 't3', None, False),)) in set(suggestions)
 
-    
+
 def test_2_statements_2nd_current():
     suggestions = suggest_type('select * from a; select * from ',
                                'select * from a; select * from ')
     assert set(suggestions) == set([
         Table(schema=None),
         View(schema=None),
-        Function(schema=None, filter='is_set_returning'),
+        Function(schema=None, filter='for_from_clause'),
         Schema(),
     ])
 
@@ -477,7 +477,7 @@ def test_2_statements_2nd_current():
     assert set(suggestions) == set([
         Table(schema=None),
         View(schema=None),
-        Function(schema=None, filter='is_set_returning'),
+        Function(schema=None, filter='for_from_clause'),
         Schema(),
     ])
 
@@ -488,7 +488,7 @@ def test_2_statements_1st_current():
     assert set(suggestions) == set([
         Table(schema=None),
         View(schema=None),
-        Function(schema=None, filter='is_set_returning'),
+        Function(schema=None, filter='for_from_clause'),
         Schema(),
     ])
 
@@ -507,7 +507,7 @@ def test_3_statements_2nd_current():
     assert set(suggestions) == set([
         Table(schema=None),
         View(schema=None),
-        Function(schema=None, filter='is_set_returning'),
+        Function(schema=None, filter='for_from_clause'),
         Schema(),
     ])
 

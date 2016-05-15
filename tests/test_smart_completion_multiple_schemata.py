@@ -75,6 +75,8 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([
+       Completion(text='func1', start_position=0, display_meta='function'),
+       Completion(text='func2', start_position=0, display_meta='function'),
        Completion(text='public', start_position=0, display_meta='schema'),
        Completion(text='custom', start_position=0, display_meta='schema'),
        Completion(text='users', start_position=0, display_meta='table'),
@@ -185,6 +187,7 @@ def test_suggested_table_names_with_schema_dot(completer, complete_event,
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([
+        Completion(text='func3', start_position=start_pos, display_meta='function'),
         Completion(text='users', start_position=start_pos, display_meta='table'),
         Completion(text='products', start_position=start_pos, display_meta='table'),
         Completion(text='shipments', start_position=start_pos, display_meta='table'),
@@ -280,6 +283,8 @@ def test_table_names_after_from(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
+        Completion(text='func1', start_position=0, display_meta='function'),
+        Completion(text='func2', start_position=0, display_meta='function'),
         Completion(text='public', start_position=0, display_meta='schema'),
         Completion(text='custom', start_position=0, display_meta='schema'),
         Completion(text='users', start_position=0, display_meta='table'),
