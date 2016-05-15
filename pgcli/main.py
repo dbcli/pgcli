@@ -20,7 +20,6 @@ try:
     import setproctitle
 except ImportError:
     setproctitle = None
-import sqlparse
 from prompt_toolkit import CommandLineInterface, Application, AbortAction
 from prompt_toolkit.enums import DEFAULT_BUFFER, EditingMode
 from prompt_toolkit.shortcuts import create_prompt_layout, create_eventloop

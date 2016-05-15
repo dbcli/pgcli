@@ -96,11 +96,11 @@ def test_simple_insert_single_table_schema_qualified():
     tables = extract_tables('insert into abc.def (id, name) values (1, "def")')
     assert tables == (('abc', 'def', None, False),)
 
-def test_simple_update_table():
+def test_simple_update_table_no_schema():
     tables = extract_tables('update abc set id = 1')
     assert tables == ((None, 'abc', None, False),)
 
-def test_simple_update_table():
+def test_simple_update_table_with_schema():
     tables = extract_tables('update abc.def set id = 1')
     assert tables == (('abc', 'def', None, False),)
 
