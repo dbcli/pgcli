@@ -346,8 +346,11 @@ def test_suggested_tables_after_on_right_side(completer, complete_event):
         Completion(text='users', start_position=0, display_meta='table alias'),
         Completion(text='orders', start_position=0, display_meta='table alias')])
 
-def test_join_using_suggests_common_columns(completer, complete_event):
-    text = 'SELECT * FROM users INNER JOIN orders USING ('
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM users INNER JOIN orders USING (',
+    'SELECT * FROM users INNER JOIN orders USING(',
+])
+def test_join_using_suggests_common_columns(completer, complete_event, text):
     pos = len(text)
     result = set(completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event))
@@ -356,8 +359,11 @@ def test_join_using_suggests_common_columns(completer, complete_event):
         Completion(text='email', start_position=0, display_meta='column'),
         ])
 
-def test_join_using_suggests_columns_after_first_column(completer, complete_event):
-    text = 'SELECT * FROM users INNER JOIN orders USING (id,'
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM users INNER JOIN orders USING (id,',
+    'SELECT * FROM users INNER JOIN orders USING(id,',
+])
+def test_join_using_suggests_columns_after_first_column(completer, complete_event, text):
     pos = len(text)
     result = set(completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event))
