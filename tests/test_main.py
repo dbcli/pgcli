@@ -1,6 +1,7 @@
 import os
 import platform
 import stat
+import mock
 
 import pytest
 try:
@@ -83,3 +84,10 @@ def test_missing_rc_dir(tmpdir):
 
     PGCli(pgclirc_file=rcfile)
     assert os.path.exists(rcfile)
+
+
+def test_quoted_db_uri(tmpdir):
+    with mock.patch.object(PGCli, 'connect') as mock_connect:
+        cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+        cli.connect_uri('postgres://bar%5E:%5Dfoo@baz.com/testdb%5B')
+    mock_connect.assert_called_with('testdb[', 'baz.com', 'bar^', None, ']foo')
