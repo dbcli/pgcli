@@ -111,11 +111,11 @@ class PGCompleter(Completer):
         data = [self.escaped_names(d) for d in data]
 
         # dbmetadata['tables']['schema_name']['table_name'] should be a list of
-        # column names. Default to an asterisk
+        # column names.
         metadata = self.dbmetadata[kind]
         for schema, relname in data:
             try:
-                metadata[schema][relname] = ['*']
+                metadata[schema][relname] = []
             except KeyError:
                 _logger.error('%r %r listed in unrecognized schema %r',
                               kind, relname, schema)
@@ -319,7 +319,7 @@ class PGCompleter(Completer):
             # suggest only columns that appear in more than one table
             flat_cols = [col for (col, count)
                                  in Counter(flat_cols).items()
-                                   if count > 1 and col != '*']
+                                   if count > 1]
         lastword = last_word(word_before_cursor, include='most_punctuations')
         if lastword == '*':
             if (lastword != word_before_cursor and len(tables) == 1
@@ -327,14 +327,14 @@ class PGCompleter(Completer):
                 # User typed x.*; replicate "x." for all columns except the
                 # first, which gets the original (as we only replace the "*"")
                 sep = ', ' + self.escape_name(tables[0].ref) + '.'
-                collist = sep.join(c for c in flat_cols if c != '*')
+                collist = sep.join(c for c in flat_cols)
             elif len(scoped_cols) > 1:
                 # Multiple tables; qualify all columns
                 collist = ', '.join(t.ref + '.' + c for t, cs in colit()
-                    for c in cs if c != '*')
+                    for c in cs)
             else:
                 # Plain columns
-                collist = ', '.join(c for c in flat_cols if c != '*')
+                collist = ', '.join(c for c in flat_cols)
 
             return [Match(completion=Completion(collist, -1,
                 display_meta='columns', display='*'), priority=(1,1,1))]
