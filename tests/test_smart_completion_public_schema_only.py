@@ -601,7 +601,6 @@ def test_wildcard_column_expansion_with_two_tables(completer, complete_event):
     completions = completer.get_completions(
         Document(text=sql, cursor_position=pos), complete_event)
 
-    # The order of the tables is indeterministic, so allwo both possibilities
     cols = ('"select".id, "select"."insert", "select"."ABC", '
         'u.id, u.email, u.first_name, u.last_name')
     expected = [Completion(text=cols, start_position=-1,
