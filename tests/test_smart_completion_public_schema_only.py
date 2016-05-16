@@ -565,3 +565,70 @@ def test_columns_before_keywords(completer, complete_event):
     assert completions.index(column) < completions.index(keyword)
 
 
+def test_wildcard_column_expansion(completer, complete_event):
+    sql = 'SELECT * FROM users'
+    pos = len('SELECT *')
+
+    completions = completer.get_completions(
+        Document(text=sql, cursor_position=pos), complete_event)
+
+    col_list = 'id, email, first_name, last_name'
+    expected = [Completion(text=col_list, start_position=-1,
+                          display='*', display_meta='columns')]
+
+    assert expected == completions
+
+
+def test_wildcard_column_expansion_with_alias_qualifier(completer, complete_event):
+    sql = 'SELECT u.* FROM users u'
+    pos = len('SELECT u.*')
+
+    completions = completer.get_completions(
+        Document(text=sql, cursor_position=pos), complete_event)
+
+    col_list = 'id, u.email, u.first_name, u.last_name'
+    expected = [Completion(text=col_list, start_position=-1,
+                          display='*', display_meta='columns')]
+
+    assert expected == completions
+
+
+def test_wildcard_column_expansion_with_table_qualifier(completer, complete_event):
+    sql = 'SELECT users.* FROM users'
+    pos = len('SELECT users.*')
+
+    completions = completer.get_completions(
+        Document(text=sql, cursor_position=pos), complete_event)
+
+    col_list = 'id, users.email, users.first_name, users.last_name'
+    expected = [Completion(text=col_list, start_position=-1,
+                          display='*', display_meta='columns')]
+
+    assert expected == completions
+
+def test_wildcard_column_expansion_with_two_tables(completer, complete_event):
+    sql = 'SELECT * FROM "select" JOIN users u ON true'
+    pos = len('SELECT *')
+
+    completions = completer.get_completions(
+        Document(text=sql, cursor_position=pos), complete_event)
+
+    cols = ('"select".id, "select"."insert", "select"."ABC", '
+        'u.id, u.email, u.first_name, u.last_name')
+    expected = [Completion(text=cols, start_position=-1,
+        display='*', display_meta='columns')]
+    assert completions == expected
+
+
+def test_wildcard_column_expansion_with_two_tables_and_parent(completer, complete_event):
+    sql = 'SELECT "select".* FROM "select" JOIN users u ON true'
+    pos = len('SELECT "select".*')
+
+    completions = completer.get_completions(
+        Document(text=sql, cursor_position=pos), complete_event)
+
+    col_list = 'id, "select"."insert", "select"."ABC"'
+    expected = [Completion(text=col_list, start_position=-1,
+                          display='*', display_meta='columns')]
+
+    assert expected == completions
