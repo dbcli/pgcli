@@ -1,6 +1,5 @@
 import traceback
 import logging
-import pprint
 import itertools
 import psycopg2
 import psycopg2.extras

@@ -1,6 +1,5 @@
 import os
 import platform
-import stat
 import mock
 
 import pytest

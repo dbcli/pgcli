@@ -1,5 +1,4 @@
 from pgcli.packages.expanded import expanded_table
-import pytest
 
 def test_expanded_table_renders():
     input = [("hello", 123),("world", 456)]

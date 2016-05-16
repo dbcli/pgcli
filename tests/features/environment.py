@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import os
 import sys
-import pexpect
 import db_utils as dbutils
 import fixture_utils as fixutils
 

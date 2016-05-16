@@ -505,17 +505,6 @@ def test_join_functions_using_suggests_common_columns(completer, complete_event)
          Completion(text='y', start_position=0, display_meta='column')])
 
 
-def test_join_functions_using_suggests_common_columns(completer, complete_event):
-    text = '''SELECT * FROM set_returning_func() f1
-              INNER JOIN set_returning_func() f2 USING ('''
-    pos = len(text)
-    result = set(completer.get_completions(
-        Document(text=text, cursor_position=pos), complete_event))
-    assert set(result) == set([
-         Completion(text='x', start_position=0, display_meta='column'),
-         Completion(text='y', start_position=0, display_meta='column')])
-
-
 def test_join_functions_on_suggests_columns(completer, complete_event):
     text = '''SELECT * FROM set_returning_func() f1
               INNER JOIN set_returning_func() f2 ON f1.'''
