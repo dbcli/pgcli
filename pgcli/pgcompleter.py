@@ -3,7 +3,7 @@ import logging
 import re
 import itertools
 import operator
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.contrib.completers import PathCompleter
