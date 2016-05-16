@@ -22,6 +22,11 @@ except ImportError:
     # python 2.6
     from .packages.counter import Counter
 
+try:
+    from collections import OrderedDict
+except ImportError:
+    from .packages.ordereddict import OrderedDict
+
 _logger = logging.getLogger(__name__)
 
 NamedQueries.instance = NamedQueries.from_config(
@@ -307,10 +312,8 @@ class PGCompleter(Completer):
         tables = suggestion.tables
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables)
-        colit = scoped_cols.items()
-        flat_cols = []
-        for cols in scoped_cols.values():
-            flat_cols.extend(cols)
+        colit = scoped_cols.items
+        flat_cols = list(itertools.chain(*scoped_cols.values()))
         if suggestion.drop_unique:
             # drop_unique is used for 'tb11 JOIN tbl2 USING (...' which should
             # suggest only columns that appear in more than one table
@@ -321,18 +324,21 @@ class PGCompleter(Completer):
         if lastword == '*':
             if (lastword != word_before_cursor and len(tables) == 1
               and word_before_cursor[-len(lastword) - 1] == '.'):
-                # User typed x.*; replicate "x." for all columns
+                # User typed x.*; replicate "x." for all columns except the
+                # first, which gets the original (as we only replace the "*"")
                 sep = ', ' + self.escape_name(tables[0].ref) + '.'
-                collist = (sep).join([c for c in flat_cols if c != '*'])
+                collist = sep.join(c for c in flat_cols if c != '*')
             elif len(scoped_cols) > 1:
                 # Multiple tables; qualify all columns
-                collist = (', ').join([t.ref + '.' + c for t, cs in colit
-                    for c in cs if c != '*'])
+                collist = ', '.join(t.ref + '.' + c for t, cs in colit()
+                    for c in cs if c != '*')
             else:
                 # Plain columns
-                collist = (', ').join([c for c in flat_cols if c != '*'])
+                collist = ', '.join(c for c in flat_cols if c != '*')
+
             return [Match(completion=Completion(collist, -1,
                 display_meta='columns', display='*'), priority=(1,1,1))]
+
         return self.find_matches(word_before_cursor, flat_cols, meta='column')
 
     def get_function_matches(self, suggestion, word_before_cursor):
@@ -456,11 +462,15 @@ class PGCompleter(Completer):
         :return: dict {TableReference:[list of column names]}
         """
 
-        columns = defaultdict(lambda: [])
+        columns = OrderedDict()
         meta = self.dbmetadata
+
         def addcols(schema, rel, alias, reltype, cols):
             tbl = TableReference(schema, rel, alias, reltype == 'functions')
+            if tbl not in columns:
+                columns[tbl] = []
             columns[tbl].extend(cols)
+
         for tbl in scoped_tbls:
             schemas = [tbl.schema] if tbl.schema else self.search_path
             for schema in schemas:
