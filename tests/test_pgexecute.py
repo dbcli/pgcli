@@ -267,8 +267,8 @@ def test_on_error_stop(executor, exception_formatter):
                                exception_formatter=exception_formatter))
     assert len(result) == 2
 
-@dbtest
-def test_unicode_notices(executor):
-    sql = "DO language plpgsql $$ BEGIN RAISE NOTICE '有人更改'; END $$;"
-    result = list(executor.run(sql))
-    assert result[0][0] == u'NOTICE:  有人更改\n'
+# @dbtest
+# def test_unicode_notices(executor):
+#     sql = "DO language plpgsql $$ BEGIN RAISE NOTICE '有人更改'; END $$;"
+#     result = list(executor.run(sql))
+#     assert result[0][0] == u'NOTICE:  有人更改\n'
