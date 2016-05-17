@@ -101,7 +101,6 @@ def test_suggested_column_names_from_shadowed_visible_table(completer, complete_
         complete_event))
 
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
@@ -119,7 +118,6 @@ def test_suggested_column_names_from_qualified_shadowed_table(completer, complet
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='phone_number', start_position=0, display_meta='column'),
         Completion(text='func1', start_position=0, display_meta='function'),
@@ -140,7 +138,6 @@ def test_suggested_column_names_from_schema_qualifed_table(completer, complete_e
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position), complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='product_name', start_position=0, display_meta='column'),
         Completion(text='price', start_position=0, display_meta='column'),
@@ -164,7 +161,6 @@ def test_suggested_column_names_in_function(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event)
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='product_name', start_position=0, display_meta='column'),
         Completion(text='price', start_position=0, display_meta='column')])
@@ -208,7 +204,6 @@ def test_suggested_column_names_with_qualified_alias(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='product_name', start_position=0, display_meta='column'),
         Completion(text='price', start_position=0, display_meta='column')])
@@ -227,7 +222,6 @@ def test_suggested_multiple_column_names(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='product_name', start_position=0, display_meta='column'),
         Completion(text='price', start_position=0, display_meta='column'),
@@ -251,7 +245,6 @@ def test_suggested_multiple_column_names_with_alias(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='product_name', start_position=0, display_meta='column'),
         Completion(text='price', start_position=0, display_meta='column')])

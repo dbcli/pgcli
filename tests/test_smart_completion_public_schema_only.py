@@ -157,7 +157,6 @@ def test_suggested_column_names_from_visible_table(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
@@ -184,7 +183,6 @@ def test_suggested_column_names_in_function(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event)
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
@@ -203,7 +201,6 @@ def test_suggested_column_names_with_table_dot(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
@@ -222,7 +219,6 @@ def test_suggested_column_names_with_alias(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
@@ -242,7 +238,6 @@ def test_suggested_multiple_column_names(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
@@ -268,7 +263,6 @@ def test_suggested_multiple_column_names_with_alias(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
@@ -288,7 +282,6 @@ def test_suggested_multiple_column_names_with_dot(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
@@ -413,7 +406,6 @@ def test_auto_escaped_col_names(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='"insert"', start_position=0, display_meta='column'),
         Completion(text='"ABC"', start_position=0, display_meta='column'),
@@ -462,7 +454,6 @@ def test_suggest_columns_from_escaped_table_alias(completer, complete_event):
     result = completer.get_completions(Document(text=sql, cursor_position=pos),
                                        complete_event)
     assert set(result) == set([
-        Completion(text='*', start_position=0, display_meta='column'),
         Completion(text='id', start_position=0, display_meta='column'),
         Completion(text='"insert"', start_position=0, display_meta='column'),
         Completion(text='"ABC"', start_position=0, display_meta='column'),
