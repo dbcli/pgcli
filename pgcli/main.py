@@ -103,6 +103,8 @@ class PGCli(object):
 
         from pgcli import __file__ as package_root
         package_root = os.path.dirname(package_root)
+        
+        pgclirc_file = pgclirc_file or '%sconfig' % config_location()
 
         default_config = os.path.join(package_root, 'pgclirc')
         write_default_config(default_config, pgclirc_file)
