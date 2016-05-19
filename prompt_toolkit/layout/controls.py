@@ -364,14 +364,38 @@ class FillControl(UIControl):
     """
     Fill whole control with characters with this token.
     (Also helpful for debugging.)
+
+    :param char: :class:`.Char` instance to use for filling.
+    :param get_char: A callable that takes a CommandLineInterface and returns a
+        :class:`.Char` object.
     """
-    def __init__(self, character=' ', token=Token):
-        self.token = token
-        self.character = character
+    def __init__(self, character=None, token=Token, char=None, get_char=None):  # 'character' and 'token' parameters are deprecated.
+        assert char is None or isinstance(char, Char)
+        assert get_char is None or callable(get_char)
+        assert not (char and get_char)
+
+        self.char = char
+
+        if character:
+            # Passing (character=' ', token=token) is deprecated.
+            self.character = character
+            self.token = token
+
+            self.get_char = lambda cli: Char(character, token)
+        elif get_char:
+            # When 'get_char' is given.
+            self.get_char = get_char
+        else:
+            # When 'char' is given.
+            self.char = self.char or Char()
+            self.get_char = lambda cli: self.char
+            self.char = char
 
     def __repr__(self):
-        return '%s(character=%r, token=%r)' % (
-            self.__class__.__name__, self.character, self.token)
+        if self.char:
+            return '%s(char=%r)' % (self.__class__.__name__, self.char)
+        else:
+            return '%s(get_char=%r)' % (self.__class__.__name__, self.get_char)
 
     def reset(self):
         pass
@@ -380,13 +404,13 @@ class FillControl(UIControl):
         return False
 
     def create_content(self, cli, width, height):
-        char = Char(self.character, self.token)
         def get_line(i):
             return []
-        line_count = 100 ** 100  # Something very big.
-        content = UIContent(get_line=get_line, line_count=line_count,
-                            default_char=char)
-        return content
+
+        return UIContent(
+            get_line=get_line,
+            line_count=100 ** 100,  # Something very big.
+            default_char=self.get_char(cli))
 
 
 _ProcessedLine = namedtuple('_ProcessedLine', 'tokens source_to_display display_to_source')
