@@ -125,6 +125,28 @@ def extract_from_part(parsed, stop_at_punctuation=True):
 def extract_table_identifiers(token_stream, allow_functions=True):
     """yields tuples of TableReference namedtuples"""
 
+    # We need to do some massaging of the names because postgres is case-
+    # insensitive and '"Foo"' is not the same table as 'Foo' (while 'foo' is)
+    def getnames(item):
+        name = item.get_real_name()
+        schema_name = item.get_parent_name()
+        alias = item.get_alias()
+        if not name:
+            schema_name = None
+            name = item.get_name()
+            alias = alias or name
+        schemaisquoted = schema_name and item.value[0] == '"'
+        if schema_name and not schemaisquoted:
+            schema_name = schema_name.lower()
+        quotecount = item.value.count('"')
+        nameisquoted = quotecount > 2 or (quotecount and not schemaisquoted)
+        if name and not nameisquoted and name != name.lower():
+            if not alias:
+                alias = name
+            name = name.lower()
+        return schema_name, name, alias
+
+
     for item in token_stream:
         if isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
@@ -141,17 +163,10 @@ def extract_table_identifiers(token_stream, allow_functions=True):
                     yield TableReference(schema_name, real_name,
                                          identifier.get_alias(), is_function)
         elif isinstance(item, Identifier):
-            real_name = item.get_real_name()
-            schema_name = item.get_parent_name()
+            schema_name, real_name, alias = getnames(item)
             is_function = allow_functions and _identifier_is_function(item)
 
-            if real_name:
-                yield TableReference(schema_name, real_name, item.get_alias(),
-                                     is_function)
-            else:
-                name = item.get_name()
-                yield TableReference(None, name, item.get_alias() or name,
-                                     is_function)
+            yield TableReference(schema_name, real_name, alias, is_function)
         elif isinstance(item, Function):
             yield TableReference(None, item.get_real_name(), item.get_alias(),
                                  allow_functions)
