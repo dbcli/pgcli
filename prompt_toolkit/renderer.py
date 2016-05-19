@@ -136,9 +136,9 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
     row_count = min(max(screen.height, previous_screen.height), height)
     c = 0  # Column counter.
 
-    for y, r in enumerate(range(0, row_count)):
-        new_row = screen.data_buffer[r]
-        previous_row = previous_screen.data_buffer[r]
+    for y in range(row_count):
+        new_row = screen.data_buffer[y]
+        previous_row = previous_screen.data_buffer[y]
 
         new_max_line_len = min(width - 1, max(new_row.keys()) if new_row else 0)
         previous_max_line_len = min(width - 1, max(previous_row.keys()) if previous_row else 0)
