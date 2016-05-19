@@ -126,6 +126,7 @@ Shells:
 - `click-repl <https://github.com/click-contrib/click-repl>`_: Subcommand REPL for click apps.
 - `haxor-news <https://github.com/donnemartin/haxor-news>`_: A Hacker News CLI.
 - `gitsome <https://github.com/donnemartin/gitsome>`_: A Git/Shell Autocompleter with GitHub Integration.
+- `http-prompt <https://github.com/eliangcs/http-prompt>`_: An interactive command-line HTTP client.
 
 Full screen applications:
 
