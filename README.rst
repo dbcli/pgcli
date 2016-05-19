@@ -44,7 +44,7 @@ Some features:
 - Multiple input buffers.
 - No global state.
 - Lightweight, the only dependencies are Pygments, six and wcwidth.
-- Runs on Linux, OS X, OpenBSD and Windows systems.
+- Runs on Linux, OS X, FreeBSD, OpenBSD and Windows systems.
 - And much more...
 
 Feel free to create tickets for bugs and feature requests, and create pull
