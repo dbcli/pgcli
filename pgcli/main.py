@@ -43,9 +43,8 @@ from .pgstyle import style_factory
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
 from .completion_refresher import CompletionRefresher
-from .config import (
-    write_default_config, load_config, config_location, ensure_dir_exists,
-)
+from .config import (get_casing_file,
+    load_config, config_location, ensure_dir_exists, get_config)
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
 from .__init__ import __version__
@@ -101,16 +100,8 @@ class PGCli(object):
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
 
-        from pgcli import __file__ as package_root
-        package_root = os.path.dirname(package_root)
-
-        pgclirc_file = pgclirc_file or '%sconfig' % config_location()
-
-        default_config = os.path.join(package_root, 'pgclirc')
-        write_default_config(default_config, pgclirc_file)
-
         # Load config.
-        c = self.config = load_config(pgclirc_file, default_config)
+        c = self.config = get_config(pgclirc_file)
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
@@ -136,7 +127,8 @@ class PGCli(object):
 
         # Initialize completer
         smart_completion = c['main'].as_bool('smart_completion')
-        settings = {
+        settings = {'casing_file': get_casing_file(c),
+            'generate_casing_file': c['main']['generate_casing_file'],
             'asterisk_column_order': c['main']['asterisk_column_order']}
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial,
             settings=settings)
@@ -579,8 +571,10 @@ class PGCli(object):
 
         callback = functools.partial(self._on_completions_refreshed,
                                      persist_priorities=persist_priorities)
-        settings = {'asterisk_column_order':
-            self.config['main']['asterisk_column_order']}
+        config = self.config
+        settings = {'casing_file': get_casing_file(config),
+          'generate_casing_file': config['main']['generate_casing_file'],
+          'asterisk_column_order': config['main']['asterisk_column_order']}
         self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
             callback, history=history, settings=settings)
         return [(None, None, None,

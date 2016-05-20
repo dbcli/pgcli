@@ -54,3 +54,10 @@ def get_config(pgclirc_file=None):
     write_default_config(default_config, pgclirc_file)
 
     return load_config(pgclirc_file, default_config)
+
+
+def get_casing_file(config):
+    casing_file = config['main']['casing_file']
+    if casing_file == 'default':
+        casing_file = config_location() + 'casing'
+    return casing_file

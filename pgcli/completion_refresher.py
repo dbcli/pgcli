@@ -1,4 +1,5 @@
 import threading
+import os
 try:
     from collections import OrderedDict
 except ImportError:
@@ -25,6 +26,7 @@ class CompletionRefresher(object):
         executor - PGExecute object, used to extract the credentials to connect
                    to the database.
         special - PGSpecial object used for creating a new completion object.
+        settings - dict of settings for completer object
         callbacks - A function or a list of functions to call after the thread
                     has completed the refresh. The newly created completion
                     object will be passed in as an argument to each callback.
@@ -119,3 +121,17 @@ def refresh_types(completer, executor):
 @refresher('databases')
 def refresh_databases(completer, executor):
     completer.extend_database_names(executor.databases())
+
+@refresher('casing')
+def refresh_casing(completer, executor):
+    casing_file = completer.casing_file
+    if not casing_file:
+        return
+    generate_casing_file = completer.generate_casing_file
+    if generate_casing_file and not os.path.isfile(casing_file):
+        casing_prefs = '\n'.join(executor.casing())
+        with open(casing_file, 'w') as f:
+            f.write(casing_prefs)
+    if os.path.isfile(casing_file):
+        with open(casing_file, 'r') as f:
+            completer.extend_casing([line.strip() for line in f])
