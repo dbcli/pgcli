@@ -239,10 +239,12 @@ def load_basic_bindings(registry, filter=Always()):
             event.cli.output.bell()
 
     @handle(Keys.PageUp, filter= ~has_selection)
+    @handle(Keys.ControlUp)
     def _(event):
         event.current_buffer.history_backward()
 
     @handle(Keys.PageDown, filter= ~has_selection)
+    @handle(Keys.ControlDown)
     def _(event):
         event.current_buffer.history_forward()
 
