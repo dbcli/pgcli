@@ -323,17 +323,23 @@ def _get_size(fileno):
 class Vt100_Output(Output):
     """
     :param get_size: A callable which returns the `Size` of the output terminal.
-    :param stdout: Any object with has a `write` and `flush` method.
+    :param stdout: Any object with has a `write` and `flush` method + an 'encoding' property.
     :param true_color: Use 24bit color instead of 256 colors. (Can be a :class:`SimpleFilter`.)
     :param term: The terminal environment variable. (xterm, xterm-256color, linux, ...)
+    :param write_binary: Encode the output before writing it. If `True` (the
+        default), the `stdout` object is supposed to expose an `encoding` attribute.
     """
-    def __init__(self, stdout, get_size, true_color=False, term=None):
+    def __init__(self, stdout, get_size, true_color=False, term=None, write_binary=True):
         assert callable(get_size)
         assert term is None or isinstance(term, six.text_type)
-        assert all(hasattr(stdout, a) for a in ('encoding', 'write', 'flush'))
+        assert all(hasattr(stdout, a) for a in ('write', 'flush'))
+
+        if write_binary:
+            assert hasattr(stdout, 'encoding')
 
         self._buffer = []
         self.stdout = stdout
+        self.write_binary = write_binary
         self.get_size = get_size
         self.true_color = to_simple_filter(true_color)
         self.term = term or 'xterm'
@@ -514,8 +520,11 @@ class Vt100_Output(Output):
             # UnicodeEncodeError crashes. E.g. u'\xb7' does not appear in 'ascii'.)
             # My Arch Linux installation of july 2015 reported 'ANSI_X3.4-1968'
             # for sys.stdout.encoding in xterm.
-            if hasattr(self.stdout, 'encoding'):
-                out = self.stdout if six.PY2 else self.stdout.buffer
+            if self.write_binary:
+                if hasattr(self.stdout, 'buffer'):
+                    out = self.stdout.buffer  # Py3.
+                else:
+                    out = self.stdout
                 out.write(data.encode(self.stdout.encoding or 'utf-8', 'replace'))
             else:
                 self.stdout.write(data)
