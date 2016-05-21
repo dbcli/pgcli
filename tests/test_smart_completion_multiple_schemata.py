@@ -13,6 +13,7 @@ metadata = {
                             },
                 'custom':   {
                                 'users': ['id', 'phone_number'],
+                                'Users': ['userid', 'username'],
                                 'products': ['id', 'product_name', 'price'],
                                 'shipments': ['id', 'address', 'user_id']
                             }},
@@ -185,6 +186,7 @@ def test_suggested_table_names_with_schema_dot(completer, complete_event,
     assert set(result) == set([
         Completion(text='func3', start_position=start_pos, display_meta='function'),
         Completion(text='users', start_position=start_pos, display_meta='table'),
+        Completion(text='"Users"', start_position=start_pos, display_meta='table'),
         Completion(text='products', start_position=start_pos, display_meta='table'),
         Completion(text='shipments', start_position=start_pos, display_meta='table'),
         Completion(text='set_returning_func', start_position=start_pos, display_meta='function'),
@@ -309,6 +311,7 @@ def test_schema_qualified_type_name(text, completer, complete_event):
         Completion(text='typ3', display_meta='datatype'),
         Completion(text='typ4', display_meta='datatype'),
         Completion(text='users', display_meta='table'),
+        Completion(text='"Users"', display_meta='table'),
         Completion(text='products', display_meta='table'),
         Completion(text='shipments', display_meta='table'),
         ])
@@ -390,3 +393,31 @@ def test_wildcard_column_expansion_with_two_tables_and_parent(completer, complet
                           display='*', display_meta='columns')]
 
     assert expected == completions
+
+@pytest.mark.parametrize('text', [
+    'SELECT U. FROM custom.Users U',
+    'SELECT U. FROM custom.USERS U',
+    'SELECT U. FROM custom.users U',
+    'SELECT U. FROM "custom".Users U',
+    'SELECT U. FROM "custom".USERS U',
+    'SELECT U. FROM "custom".users U'
+])
+def test_suggest_columns_from_unquoted_table(completer, complete_event, text):
+    pos = len('SELECT U.')
+    result = completer.get_completions(Document(text=text, cursor_position=pos),
+                                       complete_event)
+    assert set(result) == set([
+        Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='phone_number', start_position=0, display_meta='column')])
+
+@pytest.mark.parametrize('text', [
+    'SELECT U. FROM custom."Users" U',
+    'SELECT U. FROM "custom"."Users" U'
+])
+def test_suggest_columns_from_quoted_table(completer, complete_event, text):
+    pos = len('SELECT U.')
+    result = completer.get_completions(Document(text=text, cursor_position=pos),
+                                       complete_event)
+    assert set(result) == set([
+        Completion(text='userid', start_position=0, display_meta='column'),
+        Completion(text='username', start_position=0, display_meta='column')])

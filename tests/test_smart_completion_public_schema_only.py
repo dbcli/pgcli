@@ -7,6 +7,7 @@ from pgcli.packages.function_metadata import FunctionMetadata
 metadata = {
                 'tables': {
                     'users': ['id', 'email', 'first_name', 'last_name'],
+                    'Users': ['userid', 'username'],
                     'orders': ['id', 'ordered_date', 'status', 'email'],
                     'select': ['id', 'insert', 'ABC']},
                 'views': {
@@ -92,6 +93,7 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     assert set(result) == set([
         Completion(text='public', start_position=0, display_meta='schema'),
         Completion(text='users', start_position=0, display_meta='table'),
+        Completion(text='"Users"', start_position=0, display_meta='table'),
         Completion(text='"select"', start_position=0, display_meta='table'),
         Completion(text='orders', start_position=0, display_meta='table'),
         Completion(text='user_emails', start_position=0, display_meta='view'),
@@ -374,6 +376,7 @@ def test_table_names_after_from(completer, complete_event):
     assert set(result) == set([
         Completion(text='public', start_position=0, display_meta='schema'),
         Completion(text='users', start_position=0, display_meta='table'),
+        Completion(text='"Users"', start_position=0, display_meta='table'),
         Completion(text='orders', start_position=0, display_meta='table'),
         Completion(text='"select"', start_position=0, display_meta='table'),
         Completion(text='user_emails', start_position=0, display_meta='view'),
@@ -389,6 +392,7 @@ def test_table_names_after_from_are_lexical_ordered_by_text(completer, complete_
         Document(text=text, cursor_position=position),
         complete_event)
     assert [c.text for c in result] == [
+        '"Users"',
         'custom_func1',
         'custom_func2',
         'orders',
@@ -443,6 +447,7 @@ def test_suggest_datatype(text, completer, complete_event):
         Completion(text='custom_type2', start_position=0, display_meta='datatype'),
         Completion(text='public', start_position=0, display_meta='schema'),
         Completion(text='users', start_position=0, display_meta='table'),
+        Completion(text='"Users"', start_position=0, display_meta='table'),
         Completion(text='orders', start_position=0, display_meta='table'),
         Completion(text='"select"', start_position=0, display_meta='table')] +
         list(map(lambda f: Completion(f, display_meta='datatype'), completer.datatypes)))
@@ -612,3 +617,29 @@ def test_wildcard_column_expansion_with_two_tables_and_parent(completer, complet
                           display='*', display_meta='columns')]
 
     assert expected == completions
+
+
+@pytest.mark.parametrize('text', [
+    'SELECT U. FROM Users U',
+    'SELECT U. FROM USERS U',
+    'SELECT U. FROM users U'
+])
+def test_suggest_columns_from_unquoted_table(completer, complete_event, text):
+    pos = len('SELECT U.')
+    result = completer.get_completions(Document(text=text, cursor_position=pos),
+                                       complete_event)
+    assert set(result) == set([
+        Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='email', start_position=0, display_meta='column'),
+        Completion(text='first_name', start_position=0, display_meta='column'),
+        Completion(text='last_name', start_position=0, display_meta='column')])
+
+
+def test_suggest_columns_from_quoted_table(completer, complete_event):
+    text = 'SELECT U. FROM "Users" U'
+    pos = len('SELECT U.')
+    result = completer.get_completions(Document(text=text, cursor_position=pos),
+                                       complete_event)
+    assert set(result) == set([
+        Completion(text='userid', start_position=0, display_meta='column'),
+        Completion(text='username', start_position=0, display_meta='column')])
