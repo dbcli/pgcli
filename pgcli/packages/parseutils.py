@@ -127,7 +127,7 @@ def extract_table_identifiers(token_stream, allow_functions=True):
 
     # We need to do some massaging of the names because postgres is case-
     # insensitive and '"Foo"' is not the same table as 'Foo' (while 'foo' is)
-    def getnames(item):
+    def parse_identifier(item):
         name = item.get_real_name()
         schema_name = item.get_parent_name()
         alias = item.get_alias()
@@ -135,12 +135,12 @@ def extract_table_identifiers(token_stream, allow_functions=True):
             schema_name = None
             name = item.get_name()
             alias = alias or name
-        schemaisquoted = schema_name and item.value[0] == '"'
-        if schema_name and not schemaisquoted:
+        schema_quoted = schema_name and item.value[0] == '"'
+        if schema_name and not schema_quoted:
             schema_name = schema_name.lower()
-        quotecount = item.value.count('"')
-        nameisquoted = quotecount > 2 or (quotecount and not schemaisquoted)
-        if name and not nameisquoted and name != name.lower():
+        quote_count = item.value.count('"')
+        name_quoted = quote_count > 2 or (quote_count and not schema_quoted)
+        if name and not name_quoted and name != name.lower():
             if not alias:
                 alias = name
             name = name.lower()
@@ -163,7 +163,7 @@ def extract_table_identifiers(token_stream, allow_functions=True):
                     yield TableReference(schema_name, real_name,
                                          identifier.get_alias(), is_function)
         elif isinstance(item, Identifier):
-            schema_name, real_name, alias = getnames(item)
+            schema_name, real_name, alias = parse_identifier(item)
             is_function = allow_functions and _identifier_is_function(item)
 
             yield TableReference(schema_name, real_name, alias, is_function)
