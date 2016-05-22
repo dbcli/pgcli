@@ -469,7 +469,7 @@ def load_emacs_open_in_editor_bindings(registry, filter=None):
     """
     Pressing C-X C-E will open the buffer in an external editor.
     """
-    handle = create_handle_decorator(registry, filter)
+    handle = create_handle_decorator(registry, filter & EmacsMode())
     has_selection = HasSelection()
 
     @handle(Keys.ControlX, Keys.ControlE, filter= ~has_selection)
@@ -481,7 +481,7 @@ def load_emacs_open_in_editor_bindings(registry, filter=None):
 
 
 def load_emacs_system_bindings(registry, filter=None):
-    handle = create_handle_decorator(registry, filter)
+    handle = create_handle_decorator(registry, filter & EmacsMode())
     has_focus = HasFocus(SYSTEM_BUFFER)
 
     @handle(Keys.Escape, '!', filter= ~has_focus)
