@@ -369,16 +369,28 @@ class AppendAutoSuggestion(Processor):
 class ShowLeadingWhiteSpaceProcessor(Processor):
     """
     Make leading whitespace visible.
+
+    :param get_char: Callable that takes a :class:`CommandLineInterface`
+        instance and returns one character.
+    :param token: Token to be used.
     """
-    def __init__(self, token=Token.LeadingWhiteSpace, char='\xb7'):
+    def __init__(self, get_char=None, token=Token.LeadingWhiteSpace):
+        assert get_char is None or callable(get_char)
+
+        if get_char is None:
+            def get_char(cli):
+                if '\xb7'.encode(cli.output.encoding(), 'replace') == b'?':
+                    return '.'
+                else:
+                    return '\xb7'
+
         self.token = token
-        self.char = char
+        self.get_char = get_char
 
     def apply_transformation(self, cli, document, lineno, source_to_display, tokens):
         # Walk through all te tokens.
-        t = (self.token, self.char)
-
         if tokens and token_list_to_text(tokens).startswith(' '):
+            t = (self.token, self.get_char(cli))
             tokens = explode_tokens(tokens)
 
             for i in range(len(tokens)):
@@ -393,14 +405,28 @@ class ShowLeadingWhiteSpaceProcessor(Processor):
 class ShowTrailingWhiteSpaceProcessor(Processor):
     """
     Make trailing whitespace visible.
+
+    :param get_char: Callable that takes a :class:`CommandLineInterface`
+        instance and returns one character.
+    :param token: Token to be used.
     """
-    def __init__(self, token=Token.TrailingWhiteSpace, char='\xb7'):
+    def __init__(self, get_char=None, token=Token.TrailingWhiteSpace):
+        assert get_char is None or callable(get_char)
+
+        if get_char is None:
+            def get_char(cli):
+                if '\xb7'.encode(cli.output.encoding(), 'replace') == b'?':
+                    return '.'
+                else:
+                    return '\xb7'
+
         self.token = token
-        self.char = char
+        self.get_char = get_char
+
 
     def apply_transformation(self, cli, document, lineno, source_to_display, tokens):
         if tokens and tokens[-1][1].endswith(' '):
-            t = (self.token, self.char)
+            t = (self.token, self.get_char(cli))
             tokens = explode_tokens(tokens)
 
             # Walk backwards through all te tokens and replace whitespace.
