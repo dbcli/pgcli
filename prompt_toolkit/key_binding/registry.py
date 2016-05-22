@@ -15,18 +15,16 @@ class _Binding(object):
     """
     (Immutable binding class.)
     """
-    def __init__(self, keys, handler, filter=None, eager=None, invalidate_ui=True):
+    def __init__(self, keys, handler, filter=None, eager=None):
         assert isinstance(keys, tuple)
         assert callable(handler)
         assert isinstance(filter, CLIFilter)
         assert isinstance(eager, CLIFilter)
-        assert isinstance(invalidate_ui, CLIFilter)
 
         self.keys = keys
         self.handler = handler
         self.filter = filter
         self.eager = eager
-        self.invalidate_ui = invalidate_ui
 
     def call(self, event):
         return self.handler(event)
@@ -69,13 +67,10 @@ class Registry(object):
             hit. E.g. when there is an active eager key binding for Ctrl-X,
             execute the handler immediately and ignore the key binding for
             Ctrl-X Ctrl-E of which it is a prefix.
-        :param invalidate_ui: :class:`~prompt_toolkit.filters.CLIFilter` or
-            `bool`. When True (which is the default), invalidate (redraw) the
-            user interface after handling this key binding.
         """
         filter = to_cli_filter(kwargs.pop('filter', True))
         eager = to_cli_filter(kwargs.pop('eager', False))
-        invalidate_ui = to_cli_filter(kwargs.pop('invalidate_ui', True))
+        to_cli_filter(kwargs.pop('invalidate_ui', True))  # Deprecated! (ignored.)
 
         assert not kwargs
         assert keys
@@ -88,8 +83,7 @@ class Registry(object):
             # press otherwise. (This happens for instance when a KeyBindingManager
             # is used, but some set of bindings are always disabled.)
             if not isinstance(filter, Never):
-                binding = _Binding(keys, func, filter=filter, eager=eager,
-                                   invalidate_ui=invalidate_ui)
+                binding = _Binding(keys, func, filter=filter, eager=eager)
 
                 self.key_bindings.append(binding)
                 self._keys_to_bindings[keys].append(binding)

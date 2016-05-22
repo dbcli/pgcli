@@ -25,6 +25,7 @@ from .eventloop.callbacks import EventLoopCallbacks
 from .filters import Condition
 from .input import StdinInput, Input
 from .key_binding.input_processor import InputProcessor
+from .key_binding.input_processor import KeyPress
 from .key_binding.registry import Registry
 from .key_binding.vi_state import ViState
 from .keys import Keys
@@ -912,8 +913,11 @@ class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
         """
         Feed a key press to the CommandLineInterface.
         """
+        assert isinstance(key_press, KeyPress)
+
         # Feed the key and redraw.
-        self._active_cli.input_processor.feed_key(key_press)
+        self._active_cli.input_processor.feed(key_press)
+        self._active_cli.input_processor.process_keys()
 
 
 class _PatchStdoutContext(object):

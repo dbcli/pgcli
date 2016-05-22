@@ -29,43 +29,54 @@ class KeyBindingTest(unittest.TestCase):
         self.processor = InputProcessor(self.registry, lambda: None)
 
     def test_feed_simple(self):
-        self.processor.feed_key(KeyPress(Keys.ControlX, '\x18'))
-        self.processor.feed_key(KeyPress(Keys.ControlC, '\x03'))
+        self.processor.feed(KeyPress(Keys.ControlX, '\x18'))
+        self.processor.feed(KeyPress(Keys.ControlC, '\x03'))
+        self.processor.process_keys()
 
         self.assertEqual(self.handlers.called, ['controlx_controlc'])
 
     def test_feed_several(self):
         # First an unknown key first.
-        self.processor.feed_key(KeyPress(Keys.ControlQ, ''))
+        self.processor.feed(KeyPress(Keys.ControlQ, ''))
+        self.processor.process_keys()
+
         self.assertEqual(self.handlers.called, [])
 
         # Followed by a know key sequence.
-        self.processor.feed_key(KeyPress(Keys.ControlX, ''))
-        self.processor.feed_key(KeyPress(Keys.ControlC, ''))
+        self.processor.feed(KeyPress(Keys.ControlX, ''))
+        self.processor.feed(KeyPress(Keys.ControlC, ''))
+        self.processor.process_keys()
+
         self.assertEqual(self.handlers.called, ['controlx_controlc'])
 
         # Followed by another unknown sequence.
-        self.processor.feed_key(KeyPress(Keys.ControlR, ''))
-        self.processor.feed_key(KeyPress(Keys.ControlS, ''))
+        self.processor.feed(KeyPress(Keys.ControlR, ''))
+        self.processor.feed(KeyPress(Keys.ControlS, ''))
 
         # Followed again by a know key sequence.
-        self.processor.feed_key(KeyPress(Keys.ControlD, ''))
+        self.processor.feed(KeyPress(Keys.ControlD, ''))
+        self.processor.process_keys()
+
         self.assertEqual(self.handlers.called, ['controlx_controlc', 'control_d'])
 
     def test_control_square_closed_any(self):
-        self.processor.feed_key(KeyPress(Keys.ControlSquareClose, ''))
-        self.processor.feed_key(KeyPress('C', 'C'))
+        self.processor.feed(KeyPress(Keys.ControlSquareClose, ''))
+        self.processor.feed(KeyPress('C', 'C'))
+        self.processor.process_keys()
 
         self.assertEqual(self.handlers.called, ['control_square_close_any'])
 
     def test_common_prefix(self):
         # Sending Control_X should not yet do anything, because there is
         # another sequence starting with that as well.
-        self.processor.feed_key(KeyPress(Keys.ControlX, ''))
+        self.processor.feed(KeyPress(Keys.ControlX, ''))
+        self.processor.process_keys()
+
         self.assertEqual(self.handlers.called, [])
 
         # When another key is pressed, we know that we did not meant the longer
         # "ControlX ControlC" sequence and the callbacks are called.
-        self.processor.feed_key(KeyPress(Keys.ControlD, ''))
+        self.processor.feed(KeyPress(Keys.ControlD, ''))
+        self.processor.process_keys()
 
         self.assertEqual(self.handlers.called, ['control_x', 'control_d'])
