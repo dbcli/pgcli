@@ -1,10 +1,9 @@
 from __future__ import unicode_literals
-from ..filters import CLIFilter, to_cli_filter, Never
-from ..keys import Key
+from prompt_toolkit.cache import SimpleCache
+from prompt_toolkit.filters import CLIFilter, to_cli_filter, Never
+from prompt_toolkit.keys import Key, Keys
 
 from six import text_type
-from six.moves import range
-from collections import defaultdict
 
 __all__ = (
     'Registry',
@@ -49,12 +48,12 @@ class Registry(object):
     """
     def __init__(self):
         self.key_bindings = []
+        self._get_bindings_for_keys_cache = SimpleCache(maxsize=10000)
+        self._get_bindings_starting_with_keys_cache = SimpleCache(maxsize=1000)
 
-        #: (tuple of keys) -> [list of bindings handling this sequence].
-        self._keys_to_bindings = defaultdict(list)
-
-        #: (tuple of keys) -> [list of bindings handling suffixes of this sequence].
-        self._keys_to_bindings_suffixes = defaultdict(list)
+    def _clear_cache(self):
+        self._get_bindings_for_keys_cache.clear()
+        self._get_bindings_starting_with_keys_cache.clear()
 
     def add_binding(self, *keys, **kwargs):
         """
@@ -80,16 +79,11 @@ class Registry(object):
         def decorator(func):
             # When a filter is Never, it will always stay disabled, so in that case
             # don't bother putting it in the registry. It will slow down every key
-            # press otherwise. (This happens for instance when a KeyBindingManager
-            # is used, but some set of bindings are always disabled.)
+            # press otherwise.
             if not isinstance(filter, Never):
-                binding = _Binding(keys, func, filter=filter, eager=eager)
-
-                self.key_bindings.append(binding)
-                self._keys_to_bindings[keys].append(binding)
-
-                for i in range(1, len(keys)):
-                    self._keys_to_bindings_suffixes[keys[:i]].append(binding)
+                self.key_bindings.append(
+                    _Binding(keys, func, filter=filter, eager=eager))
+                self._clear_cache()
 
             return func
         return decorator
@@ -107,11 +101,7 @@ class Registry(object):
         for b in self.key_bindings:
             if b.handler == function:
                 self.key_bindings.remove(b)
-                self._keys_to_bindings[b.keys].remove(b)
-
-                for i in range(1, len(b.keys)):
-                    self._keys_to_bindings_suffixes[b.keys[:i]].remove(b)
-
+                self._clear_cache()
                 return
 
         # No key binding found for this function. Raise ValueError.
@@ -125,7 +115,30 @@ class Registry(object):
 
         :param keys: tuple of keys.
         """
-        return self._keys_to_bindings[keys]
+        def get():
+            result = []
+            for b in self.key_bindings:
+                if len(keys) == len(b.keys):
+                    match = True
+                    any_count = 0
+
+                    for i, j in zip(b.keys, keys):
+                        if i != j and i != Keys.Any:
+                            match = False
+                            break
+
+                        if i == Keys.Any:
+                            any_count += 1
+
+                    if match:
+                        result.append((any_count, b))
+
+            # Place bindings that have more 'Any' occurences in them at the end.
+            result = sorted(result, key=lambda item: -item[0])
+
+            return [item[1] for item in result]
+
+        return self._get_bindings_for_keys_cache.get(keys, get)
 
     def get_bindings_starting_with_keys(self, keys):
         """
@@ -136,4 +149,17 @@ class Registry(object):
 
         :param keys: tuple of keys.
         """
-        return self._keys_to_bindings_suffixes[keys]
+        def get():
+            result = []
+            for b in self.key_bindings:
+                if len(keys) < len(b.keys):
+                    match = True
+                    for i, j in zip(b.keys, keys):
+                        if i != j and i != Keys.Any:
+                            match = False
+                            break
+                    if match:
+                        result.append(b)
+            return result
+
+        return self._get_bindings_starting_with_keys_cache.get(keys, get)

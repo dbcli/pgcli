@@ -44,6 +44,11 @@ class SimpleCache(object):
 
             return value
 
+    def clear(self):
+        " Clear cache. "
+        self._data = {}
+        self._keys = deque()
+
 
 class FastDictCache(dict):
     """

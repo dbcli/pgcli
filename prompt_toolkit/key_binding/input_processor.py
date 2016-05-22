@@ -106,18 +106,7 @@ class InputProcessor(object):
         cli = self._cli_ref()
 
         # Try match, with mode flag
-        with_mode = [b for b in self._registry.get_bindings_for_keys(keys) if b.filter(cli)]
-        if with_mode:
-            return with_mode
-
-        # Try match, where the last key is replaced with 'Any', with mode.
-        keys_any = tuple(keys[:-1] + (Keys.Any,))
-
-        with_mode_any = [b for b in self._registry.get_bindings_for_keys(keys_any) if b.filter(cli)]
-        if with_mode_any:
-            return with_mode_any
-
-        return []
+        return [b for b in self._registry.get_bindings_for_keys(keys) if b.filter(cli)]
 
     def _is_prefix_of_longer_match(self, key_presses):
         """

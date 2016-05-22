@@ -32,6 +32,8 @@ if six.PY2:
 else:
     ascii_lowercase = string.ascii_lowercase
 
+vi_register_names = ascii_lowercase + '0123456789'
+
 
 class TextObjectType(object):
     EXCLUSIVE = 'EXCLUSIVE'
@@ -439,25 +441,24 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
             before=True,
             count=event.arg)
 
-    def paste_named_register_handler(c):
-        @handle('"', c, 'p', filter=navigation_mode)
-        def _(event):
-            " Paste from named register. "
+    @handle('"', Keys.Any, 'p', filter=navigation_mode)
+    def _(event):
+        " Paste from named register. "
+        c = event.key_sequence[1].data
+        if c in vi_register_names:
             data = event.cli.vi_state.named_registers.get(c)
             if data:
                 event.current_buffer.paste_clipboard_data(data, count=event.arg)
 
-        @handle('"', c, 'P', filter=navigation_mode)
-        def _(event):
-            " Paste (before) from named register. "
+    @handle('"', Keys.Any, 'P', filter=navigation_mode)
+    def _(event):
+        " Paste (before) from named register. "
+        c = event.key_sequence[1].data
+        if c in vi_register_names:
             data = event.cli.vi_state.named_registers.get(c)
             if data:
                 event.current_buffer.paste_clipboard_data(
                     data, before=True, count=event.arg)
-
-    for c in ascii_lowercase + '0123456789':
-        paste_named_register_handler(c)
-
 
     @handle('r', Keys.Any, filter=navigation_mode)
     def _(event):
@@ -825,15 +826,15 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
     # *** Operators ***
     #
 
-    def create_delete_and_change_operators(delete_only, reg_name=None):
+    def create_delete_and_change_operators(delete_only, with_register=False):
         """
         Delete and change operators.
 
         :param delete_only: Create an operator that deletes, but doesn't go to insert mode.
-        :param reg_name: Copy the deleted text to this named register instead of the clipboard.
+        :param with_register: Copy the deleted text to this named register instead of the clipboard.
         """
-        if reg_name:
-            handler_keys = ('"', reg_name, 'cd'[delete_only])
+        if with_register:
+            handler_keys = ('"', Keys.Any, 'cd'[delete_only])
         else:
             handler_keys = 'cd'[delete_only]
 
@@ -848,8 +849,10 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
 
             # Set deleted/changed text to clipboard or named register.
             if clipboard_data and clipboard_data.text:
-                if reg_name:
-                    event.cli.vi_state.named_registers[reg_name] = clipboard_data
+                if with_register:
+                    reg_name = event.key_sequence[1].data
+                    if reg_name in vi_register_names:
+                        event.cli.vi_state.named_registers[reg_name] = clipboard_data
                 else:
                     event.cli.clipboard.set_data(clipboard_data)
 
@@ -857,9 +860,10 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
             if not delete_only:
                 event.cli.vi_state.input_mode = InputMode.INSERT
 
-    for c in tuple(ascii_lowercase) + (None, ):
-        create_delete_and_change_operators(False, reg_name=c)
-        create_delete_and_change_operators(True, reg_name=c)
+    create_delete_and_change_operators(False, False)
+    create_delete_and_change_operators(False, True)
+    create_delete_and_change_operators(True, False)
+    create_delete_and_change_operators(True, True)
 
     def create_transform_handler(filter, transform_func, *a):
         @operator(*a, filter=filter & ~IsReadOnly())
@@ -892,15 +896,13 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         if clipboard_data.text:
             event.cli.clipboard.set_data(clipboard_data)
 
-    def create_yank_selection_handler(c):
-        @operator('"', c, 'y')
-        def _(event, text_object):
-            " Yank selection to named register 'c'. "
+    @operator('"', Keys.Any, 'y')
+    def _(event, text_object):
+        " Yank selection to named register. "
+        c = event.key_sequence[1].data
+        if c in vi_register_names:
             _, clipboard_data = text_object.cut(event.current_buffer)
             event.cli.vi_state.named_registers[c] = clipboard_data
-
-    for c in ascii_lowercase + '0123456789':
-        create_yank_selection_handler(c)
 
     @operator('>')
     def _(event, text_object):
