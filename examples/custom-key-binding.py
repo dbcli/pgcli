@@ -29,9 +29,15 @@ def main():
 
         Note that when you type for instance 'xa', the insertion of 'x' is
         postponed until the 'a' is typed. because we don't know earlier whether
-        or not a 'y' will follow.
+        or not a 'y' will follow. However, prompt-toolkit should already give
+        some visual feedback of the typed character.
         """
         event.cli.current_buffer.insert_text('z')
+
+    @key_bindings_manager.registry.add_binding('a', 'b', 'c')
+    def _(event):
+        " Typing 'abc' should insert 'd'. "
+        event.cli.current_buffer.insert_text('d')
 
     @key_bindings_manager.registry.add_binding(Keys.ControlT)
     def _(event):
