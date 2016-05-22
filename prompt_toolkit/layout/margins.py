@@ -10,6 +10,7 @@ from six.moves import range
 from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
+from .utils import token_list_to_text
 
 __all__ = (
     'Margin',
@@ -221,7 +222,7 @@ class PromptMargin(Margin):
     def get_width(self, cli, ui_content):
         " Width to report to the `Window`. "
         # Take the width from the first line.
-        text = ''.join(t[1] for t in self.get_prompt_tokens(cli))
+        text = token_list_to_text(self.get_prompt_tokens(cli))
         return get_cwidth(text)
 
     def create_margin(self, cli, window_render_info, width, height):

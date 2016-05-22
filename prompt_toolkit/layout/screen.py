@@ -101,6 +101,9 @@ class Screen(object):
 
         self.data_buffer = defaultdict(lambda: defaultdict(lambda: default_char))
 
+        #: Escape sequences to be injected.
+        self.zero_width_escapes = defaultdict(lambda: defaultdict(lambda: ''))
+
         #: Position of the cursor.
         self.cursor_position = Point(y=0, x=0)
 

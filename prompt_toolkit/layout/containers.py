@@ -1193,6 +1193,7 @@ class Window(Container):
         line_count = ui_content.line_count
         new_buffer = new_screen.data_buffer
         empty_char = _CHAR_CACHE['', Token]
+        ZeroWidthEscape = Token.ZeroWidthEscape
 
         # Map visible line number to (row, col) of input.
         # 'col' will always be zero if line wrapping is off.
@@ -1221,9 +1222,15 @@ class Window(Container):
                 x = -horizontal_scroll
 
                 visible_line_to_row_col[y] = (lineno, horizontal_scroll)
+                new_buffer_row = new_buffer[y + ypos]
 
                 for token, text in line:
-                    new_buffer_row = new_buffer[y + ypos]
+                    # Remember raw VT escape sequences. (E.g. FinalTerm's
+                    # escape sequences.)
+                    if token == ZeroWidthEscape:
+                        new_screen.zero_width_escapes[y + ypos][x + xpos] += text
+                        continue
+
                     for c in text:
                         char = _CHAR_CACHE[c, token]
                         char_width = char.width

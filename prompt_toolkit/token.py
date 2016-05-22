@@ -14,6 +14,7 @@ style.
 
 __all__ = (
     'Token',
+    'ZeroWidthEscape',
 )
 
 
@@ -36,3 +37,11 @@ try:
     from pygments.token import Token
 except ImportError:
     Token = _TokenType()
+
+
+# Built-in tokens:
+
+#: `ZeroWidthEscape` can be used for raw VT escape sequences that don't
+#: cause the cursor position to move. (E.g. FinalTerm's escape sequences
+#: for shell integration.)
+ZeroWidthEscape = Token.ZeroWidthEscape

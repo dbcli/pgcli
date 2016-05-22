@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.utils import get_cwidth
+from prompt_toolkit.token import Token
 
 __all__ = (
     'token_list_len',
@@ -19,7 +20,8 @@ def token_list_len(tokenlist):
     :param tokenlist: List of (token, text) or (token, text, mouse_handler)
                       tuples.
     """
-    return sum(len(item[1]) for item in tokenlist)
+    ZeroWidthEscape = Token.ZeroWidthEscape
+    return sum(len(item[1]) for item in tokenlist if item[0] != ZeroWidthEscape)
 
 
 def token_list_width(tokenlist):
@@ -30,14 +32,16 @@ def token_list_width(tokenlist):
     :param tokenlist: List of (token, text) or (token, text, mouse_handler)
                       tuples.
     """
-    return sum(get_cwidth(c) for item in tokenlist for c in item[1])
+    ZeroWidthEscape = Token.ZeroWidthEscape
+    return sum(get_cwidth(c) for item in tokenlist for c in item[1] if item[0] != ZeroWidthEscape)
 
 
 def token_list_to_text(tokenlist):
     """
     Concatenate all the text parts again.
     """
-    return ''.join(item[1] for item in tokenlist)
+    ZeroWidthEscape = Token.ZeroWidthEscape
+    return ''.join(item[1] for item in tokenlist if item[0] != ZeroWidthEscape)
 
 
 def iter_token_lines(tokenlist):

@@ -49,6 +49,7 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
 
     #: Variable for capturing the output.
     write = output.write
+    write_raw = output.write_raw
 
     # Create locals for the most used output methods.
     # (Save expensive attribute lookups.)
@@ -139,6 +140,7 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
     for y in range(row_count):
         new_row = screen.data_buffer[y]
         previous_row = previous_screen.data_buffer[y]
+        zero_width_escapes_row = screen.zero_width_escapes[y]
 
         new_max_line_len = min(width - 1, max(new_row.keys()) if new_row else 0)
         previous_max_line_len = min(width - 1, max(previous_row.keys()) if previous_row else 0)
@@ -155,6 +157,11 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
             # `Char.__ne__`, but inline the same expression.)
             if new_char.char != old_char.char or new_char.token != old_char.token:
                 current_pos = move_cursor(Point(y=y, x=c))
+
+                # Send injected escape sequences to output.
+                if c in zero_width_escapes_row:
+                    write_raw(zero_width_escapes_row[c])
+
                 output_char(new_char)
                 current_pos = current_pos._replace(x=current_pos.x + char_width)
 
