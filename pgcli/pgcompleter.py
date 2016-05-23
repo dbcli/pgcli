@@ -187,7 +187,8 @@ class PGCompleter(Completer):
         self.all_completions = set(self.keywords + self.functions)
 
     def find_matches(self, text, collection, mode='fuzzy',
-                     meta=None, meta_collection=None):
+                     meta=None, meta_collection=None,
+                     type_priority=0, priority_collection = None):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -243,17 +244,16 @@ class PGCompleter(Completer):
                     # fuzzy matches
                     return -float('Infinity'), -match_point
 
-        if meta_collection:
-            # Each possible completion in the collection has a corresponding
-            # meta-display string
-            collection = zip(collection, meta_collection)
-        else:
-            # All completions have an identical meta
-            collection = zip(collection, itertools.repeat(meta))
+        # Fallback to meta param if meta_collection param is None
+        meta_collection = meta_collection or itertools.repeat(meta)
+        # Fallback to 0 if priority_collection param is None
+        priority_collection = priority_collection or itertools.repeat(0)
+
+        collection = zip(collection, meta_collection, priority_collection)
 
         matches = []
 
-        for item, meta in collection:
+        for item, meta, prio in collection:
             sort_key = _match(item)
             if sort_key:
                 if meta and len(meta) > 50:
@@ -269,7 +269,7 @@ class PGCompleter(Completer):
                 # the same priority as unquoted names.
                 lexical_priority = tuple(-ord(c) for c in self.unescape_name(item)) + (1,)
 
-                priority = sort_key, priority_func(item), lexical_priority
+                priority = type_priority, prio, sort_key, priority_func(item), lexical_priority
 
                 matches.append(Match(
                     completion=Completion(item, -text_len, display_meta=meta),
