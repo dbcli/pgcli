@@ -12,6 +12,8 @@ from prompt_toolkit.filters.cli import ViNavigationMode
 from prompt_toolkit.keys import Keys, Key
 from prompt_toolkit.utils import Event
 
+from .registry import Registry
+
 from collections import deque
 from six.moves import range
 import weakref
@@ -69,6 +71,8 @@ class InputProcessor(object):
     :param cli_ref: weakref to `CommandLineInterface`.
     """
     def __init__(self, registry, cli_ref):
+        assert isinstance(registry, Registry)
+
         self._registry = registry
         self._cli_ref = cli_ref
 
@@ -213,8 +217,10 @@ class InputProcessor(object):
             is_repeat=(handler == self._previous_handler))
 
         # Save the state of the current buffer.
-        if handler.save_before(event):
-            event.cli.current_buffer.save_to_undo_stack()
+        cli = event.cli  # Can be `None` (In unit-tests only.)
+
+        if handler.save_before(event) and cli:
+            cli.current_buffer.save_to_undo_stack()
 
         # Call handler.
         try:
