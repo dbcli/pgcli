@@ -1,9 +1,10 @@
 from __future__ import unicode_literals
+import inspect
 import os
 import signal
 import sys
 import threading
-import inspect
+import weakref
 
 from wcwidth import wcwidth
 from six.moves import range
@@ -81,6 +82,10 @@ class Event(object):
         return self
 
 
+# Cache of signatures. Improves the performance of `test_callable_args`.
+_signatures_cache = weakref.WeakKeyDictionary()
+
+
 def test_callable_args(func, args):
     """
     Return True when this function can be called with the given arguments.
@@ -90,7 +95,12 @@ def test_callable_args(func, args):
 
     if signature is not None:
         # For Python 3, use inspect.signature.
-        sig = signature(func)
+        try:
+            sig = _signatures_cache[func]
+        except KeyError:
+            sig = signature(func)
+            _signatures_cache[func] = sig
+
         try:
             sig.bind(*args)
         except TypeError:
