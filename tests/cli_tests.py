@@ -59,6 +59,10 @@ class FeedCliTest(unittest.TestCase):
         result, cli = _feed_cli_with_input('hello\x08X\n')
         self.assertEqual(result.text, 'hellX')
 
+        # Delete.  (Left, left, delete)
+        result, cli = _feed_cli_with_input('hello\x1b[D\x1b[D\x1b[3~\n')
+        self.assertEqual(result.text, 'helo')
+
         # Left.
         result, cli = _feed_cli_with_input('hello\x1b[DX\n')
         self.assertEqual(result.text, 'hellXo')
@@ -90,6 +94,27 @@ class FeedCliTest(unittest.TestCase):
         # ControlL: should not influence the result.
         result, cli = _feed_cli_with_input('hello\x0c\n')
         self.assertEqual(result.text, 'hello')
+
+    def test_emacs_other_bindings(self):
+        # Transpose characters.
+        result, cli = _feed_cli_with_input('abcde\x14X\n')  # Ctrl-T
+        self.assertEqual(result.text, 'abcedX')
+
+        # Left, Left, Transpose. (This is slightly different.)
+        result, cli = _feed_cli_with_input('abcde\x1b[D\x1b[D\x14X\n')
+        self.assertEqual(result.text, 'abdcXe')
+
+        # Clear before cursor.
+        result, cli = _feed_cli_with_input('hello\x1b[D\x1b[D\x15X\n')
+        self.assertEqual(result.text, 'Xlo')
+
+        # Delete word before the cursor.
+        result, cli = _feed_cli_with_input('hello world test\x17X\n')
+        self.assertEqual(result.text, 'hello world X')
+
+        # (with argument.)
+        result, cli = _feed_cli_with_input('hello world test\x1b2\x17X\n')
+        self.assertEqual(result.text, 'hello X')
 
     def test_vi_cursor_movements(self):
         """
