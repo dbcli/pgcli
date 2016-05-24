@@ -403,8 +403,8 @@ class PGCompleter(Completer):
                 if rtbl.ref != lefttable.ref:
                     cond = make_cond(lefttable.ref, rtbl.ref, c.name, c.name)
                     if cond not in found:
-                        prio = (1000 if c.datatype[:3] == 'int' else
-                            0 + refprio[rtbl.ref])
+                        prio = (1000 if c.datatype and c.datatype[:3] == 'int'
+                         else 0 + refprio[rtbl.ref])
                         conds.append((cond, 'name join', prio))
 
         if not conds:

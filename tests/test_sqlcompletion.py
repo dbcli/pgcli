@@ -402,6 +402,14 @@ def test_join_alias_dot_suggests_cols2(sql):
 
 @pytest.mark.parametrize('sql', [
     'select a.x, b.y from abc a join bcd b on ',
+    '''select a.x, b.y
+from abc a
+join bcd b on
+''',
+    '''select a.x, b.y
+from abc a
+join bcd b
+on ''',
     'select a.x, b.y from abc a join bcd b on a.id = b.id OR ',
 ])
 def test_on_suggests_aliases_and_join_conditions(sql):

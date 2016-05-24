@@ -41,7 +41,9 @@ Path = namedtuple('Path', [])
 # Pattern for when to suggest join conditions after 'on'
 # We need this to avoid bad suggestions when entering e.g.
 # 'select * from tbl1 a join tbl2 b on a.id = <cursor>'
-join_cond_pat = re.compile('.* (ON|AND|OR)\s*(\\w+\\.)?\\w*$', re.I)
+# We check that before the cursor we have a ON/AND/OR surrounded by whitespace
+# possibly followed by a qualifier and a period
+join_cond_pat = re.compile('\s(ON|AND|OR)\s+(\w+\.)?\w*$', re.I | re.MULTILINE)
 
 def suggest_type(full_text, text_before_cursor):
     """Takes the full_text that is typed so far and also the text before the
@@ -332,7 +334,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text,
                     Table(schema=parent),
                     View(schema=parent),
                     Function(schema=parent)]
-            if join_cond_pat.match(real_text_before_cursor):
+            if join_cond_pat.search(real_text_before_cursor):
                 sugs.append(JoinCondition(tables=tables,
                     parent=filteredtables[-1]))
             return tuple(sugs)
@@ -340,7 +342,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text,
             # ON <suggestion>
             # Use table alias if there is one, otherwise the table name
             aliases = tuple(t.alias or t.name for t in tables)
-            if join_cond_pat.match(real_text_before_cursor):
+            if join_cond_pat.search(real_text_before_cursor):
                 return (Alias(aliases=aliases), JoinCondition(
                     tables=tables, parent=None))
             else:
