@@ -16,7 +16,8 @@ class CompletionRefresher(object):
         self._completer_thread = None
         self._restart_refresh = threading.Event()
 
-    def refresh(self, executor, special, callbacks, history=None):
+    def refresh(self, executor, special, callbacks, history=None,
+      config=None):
         """
         Creates a PGCompleter object and populates it with the relevant
         completion suggestions in a background thread.
@@ -34,7 +35,7 @@ class CompletionRefresher(object):
         else:
             self._completer_thread = threading.Thread(
                 target=self._bg_refresh,
-                args=(executor, special, callbacks, history),
+                args=(executor, special, callbacks, history, config),
                 name='completion_refresh')
             self._completer_thread.setDaemon(True)
             self._completer_thread.start()
@@ -44,8 +45,10 @@ class CompletionRefresher(object):
     def is_refreshing(self):
         return self._completer_thread and self._completer_thread.is_alive()
 
-    def _bg_refresh(self, pgexecute, special, callbacks, history=None):
-        completer = PGCompleter(smart_completion=True, pgspecial=special)
+    def _bg_refresh(self, pgexecute, special, callbacks, history=None,
+      config=None):
+        completer = PGCompleter(smart_completion=True, pgspecial=special,
+            config=config)
 
         # Create a new pgexecute method to popoulate the completions.
         e = pgexecute

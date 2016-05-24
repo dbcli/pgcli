@@ -128,7 +128,7 @@ class PGExecute(object):
         WHERE   cls.relkind = ANY(%s)
                 AND NOT att.attisdropped
                 AND att.attnum  > 0
-        ORDER BY 1, 2, 3'''
+        ORDER BY 1, 2, att.attnum'''
 
     databases_query = '''
         SELECT d.datname

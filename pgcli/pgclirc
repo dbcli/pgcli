@@ -31,6 +31,10 @@ history_file = default
 # and "DEBUG".
 log_level = INFO
 
+# Order of columns when expanding * to column list
+# Possible values: "table_order" and "alphabetic"
+asterisk_column_order = table_order
+
 # Default pager.
 # By default 'PAGER' environment variable is used
 # pager = less -SRXF
@@ -48,7 +52,7 @@ table_format = psql
 # colorful, murphy, bw, pastie, paraiso-light, trac, default, fruity
 syntax_style = default
 
-# Keybindings: 
+# Keybindings:
 # When Vi mode is enabled you can use modal editing features offered by Vi in the REPL.
 # When Vi mode is disabled emacs keybindings such as Ctrl-A for home and Ctrl-E
 # for end are available in the REPL.
@@ -61,7 +65,7 @@ vi = False
 on_error = STOP
 
 
-# Custom colors for the completion menu, toolbar, etc. 
+# Custom colors for the completion menu, toolbar, etc.
 [colors]
 Token.Menu.Completions.Completion.Current = 'bg:#ffffff #000000'
 Token.Menu.Completions.Completion = 'bg:#008888 #ffffff'

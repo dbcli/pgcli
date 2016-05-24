@@ -15,7 +15,7 @@ from .packages.function_metadata import ColumnMetadata, ForeignKey
 from .packages.parseutils import last_word, TableReference
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
-from .config import load_config, config_location
+from .config import load_config, config_location, get_config
 
 try:
     from collections import OrderedDict
@@ -36,11 +36,12 @@ class PGCompleter(Completer):
     functions = get_literals('functions')
     datatypes = get_literals('datatypes')
 
-    def __init__(self, smart_completion=True, pgspecial=None):
+    def __init__(self, smart_completion=True, pgspecial=None, config=None):
         super(PGCompleter, self).__init__()
         self.smart_completion = smart_completion
         self.pgspecial = pgspecial
         self.prioritizer = PrevalenceCounter()
+        self.config = config or get_config()
 
         self.reserved_words = set()
         for x in self.keywords:
@@ -332,8 +333,8 @@ class PGCompleter(Completer):
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables)
         colit = scoped_cols.items
-        flat_cols = itertools.chain(*((c.name for c in cols)
-            for t, cols in colit()))
+        flat_cols = list(itertools.chain(*((c.name for c in cols)
+            for t, cols in colit())))
         if suggestion.require_last_table:
             # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
             # suggest only columns that appear in the last table and one more
@@ -343,6 +344,10 @@ class PGCompleter(Completer):
               set(c.name for t, cs in colit() if t.ref != ltbl for c in cs))
         lastword = last_word(word_before_cursor, include='most_punctuations')
         if lastword == '*':
+            if self.config['main']['asterisk_column_order'] == 'alphabetic':
+                flat_cols.sort()
+                for cols in scoped_cols.values():
+                    cols.sort(key=operator.attrgetter('name'))
             if (lastword != word_before_cursor and len(tables) == 1
               and word_before_cursor[-len(lastword) - 1] == '.'):
                 # User typed x.*; replicate "x." for all columns except the
