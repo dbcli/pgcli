@@ -207,13 +207,17 @@ class InputProcessor(object):
         arg = self.arg
         self.arg = None
 
-        is_repeat = handler == self._previous_handler
+        event = KeyPressEvent(
+            weakref.ref(self), arg=arg, key_sequence=key_sequence,
+            previous_key_sequence=self._previous_key_sequence,
+            is_repeat=(handler == self._previous_handler))
 
+        # Save the state of the current buffer.
+        if handler.save_before(event):
+            event.cli.current_buffer.save_to_undo_stack()
+
+        # Call handler.
         try:
-            event = KeyPressEvent(
-                weakref.ref(self), arg=arg, key_sequence=key_sequence,
-                previous_key_sequence=self._previous_key_sequence,
-                is_repeat=is_repeat)
             handler.call(event)
             self._fix_vi_cursor_position(event)
 

@@ -14,16 +14,18 @@ class _Binding(object):
     """
     (Immutable binding class.)
     """
-    def __init__(self, keys, handler, filter=None, eager=None):
+    def __init__(self, keys, handler, filter=None, eager=None, save_before=None):
         assert isinstance(keys, tuple)
         assert callable(handler)
         assert isinstance(filter, CLIFilter)
         assert isinstance(eager, CLIFilter)
+        assert callable(save_before)
 
         self.keys = keys
         self.handler = handler
         self.filter = filter
         self.eager = eager
+        self.save_before = save_before
 
     def call(self, event):
         return self.handler(event)
@@ -66,15 +68,20 @@ class Registry(object):
             hit. E.g. when there is an active eager key binding for Ctrl-X,
             execute the handler immediately and ignore the key binding for
             Ctrl-X Ctrl-E of which it is a prefix.
+        :param save_before: Callable that takes an `Event` and returns True if
+            we should save the current buffer, before handling the event.
+            (That's the default.)
         """
         filter = to_cli_filter(kwargs.pop('filter', True))
         eager = to_cli_filter(kwargs.pop('eager', False))
+        save_before = kwargs.pop('save_before', lambda e: True)
         to_cli_filter(kwargs.pop('invalidate_ui', True))  # Deprecated! (ignored.)
 
         assert not kwargs
         assert keys
         assert all(isinstance(k, (Key, text_type)) for k in keys), \
             'Key bindings should consist of Key and string (unicode) instances.'
+        assert callable(save_before)
 
         def decorator(func):
             # When a filter is Never, it will always stay disabled, so in that case
@@ -82,7 +89,8 @@ class Registry(object):
             # press otherwise.
             if not isinstance(filter, Never):
                 self.key_bindings.append(
-                    _Binding(keys, func, filter=filter, eager=eager))
+                    _Binding(keys, func, filter=filter, eager=eager,
+                             save_before=save_before))
                 self._clear_cache()
 
             return func
