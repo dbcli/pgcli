@@ -168,8 +168,8 @@ def extract_table_identifiers(token_stream, allow_functions=True):
 
             yield TableReference(schema_name, real_name, alias, is_function)
         elif isinstance(item, Function):
-            yield TableReference(None, item.get_real_name(), item.get_alias(),
-                                 allow_functions)
+            schema_name, real_name, alias = parse_identifier(item)
+            yield TableReference(None, real_name, alias, allow_functions)
 
 
 # extract_tables is inspired from examples in the sqlparse lib.

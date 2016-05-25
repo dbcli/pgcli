@@ -325,13 +325,16 @@ def test_suggest_columns_from_aliased_set_returning_function(completer, complete
     assert set(result) == set([
         Completion(text='x', start_position=0, display_meta='column')])
 
-
-def test_wildcard_column_expansion(completer, complete_event):
-    sql = 'SELECT * FROM custom.set_returning_func()'
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM custom.set_returning_func()',
+    'SELECT * FROM Custom.set_returning_func()',
+    'SELECT * FROM Custom.Set_Returning_Func()'
+])
+def test_wildcard_column_expansion_with_function(completer, complete_event, text):
     pos = len('SELECT *')
 
     completions = completer.get_completions(
-        Document(text=sql, cursor_position=pos), complete_event)
+        Document(text=text, cursor_position=pos), complete_event)
 
     col_list = 'x'
     expected = [Completion(text=col_list, start_position=-1,
@@ -353,6 +356,32 @@ def test_wildcard_column_expansion_with_alias_qualifier(completer, complete_even
 
     assert expected == completions
 
+@pytest.mark.parametrize('text', [
+    'INSERT INTO public.orders(*',
+    'INSERT INTO public.Orders(*',
+    'INSERT INTO public.orders (*',
+    'INSERT INTO public.Orders (*',
+    'INSERT INTO orders(*',
+    'INSERT INTO Orders(*',
+    'INSERT INTO orders (*',
+    'INSERT INTO Orders (*',
+    'INSERT INTO public.orders(*)',
+    'INSERT INTO public.Orders(*)',
+    'INSERT INTO public.orders (*)',
+    'INSERT INTO public.Orders (*)',
+    'INSERT INTO orders(*)',
+    'INSERT INTO Orders(*)',
+    'INSERT INTO orders (*)',
+    'INSERT INTO Orders (*)'
+])
+def test_wildcard_column_expansion_with_insert(completer, complete_event, text):
+    pos = text.index('*') + 1
+    completions = completer.get_completions(
+        Document(text=text, cursor_position=pos), complete_event)
+
+    expected = [Completion(text='id, ordered_date, status', start_position=-1,
+                          display='*', display_meta='columns')]
+    assert expected == completions
 
 def test_wildcard_column_expansion_with_table_qualifier(completer, complete_event):
     sql = 'SELECT "select".* FROM public."select"'
