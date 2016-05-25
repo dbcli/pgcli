@@ -117,14 +117,12 @@ class PGExecute(object):
         SELECT  nsp.nspname schema_name,
                 cls.relname table_name,
                 att.attname column_name,
-                typ.typname type_name
+                att.atttypid::regtype::text type_name
         FROM    pg_catalog.pg_attribute att
                 INNER JOIN pg_catalog.pg_class cls
                     ON att.attrelid = cls.oid
                 INNER JOIN pg_catalog.pg_namespace nsp
                     ON cls.relnamespace = nsp.oid
-                INNER JOIN pg_catalog.pg_type typ
-                    ON typ.oid = att.atttypid
         WHERE   cls.relkind = ANY(%s)
                 AND NOT att.attisdropped
                 AND att.attnum  > 0
@@ -424,8 +422,10 @@ class PGExecute(object):
                 query = '''
                     SELECT n.nspname schema_name,
                             p.proname func_name,
-                            pg_catalog.pg_get_function_arguments(p.oid) arg_list,
-                            pg_catalog.pg_get_function_result(p.oid) return_type,
+                            p.proargnames,
+                            COALESCE(proallargtypes::regtype[], proargtypes::regtype[])::text[],
+                            p.proargmodes,
+                            prorettype::regtype::text return_type,
                             p.proisagg is_aggregate,
                             p.proiswindow is_window,
                             p.proretset is_set_returning
@@ -443,28 +443,21 @@ class PGExecute(object):
                     SELECT n.nspname schema_name,
                             p.proname func_name,
                             p.proargnames,
-                            oidvectortypes(p.proargtypes) proargtypes,
-                            t.typname return_type,
+                            COALESCE(proallargtypes::regtype[], proargtypes::regtype[])::text[],
+                            p.proargmodes,
+                            prorettype::regtype::text,
                             p.proisagg is_aggregate,
                             false is_window,
                             p.proretset is_set_returning
                     FROM pg_catalog.pg_proc p
                     INNER JOIN pg_catalog.pg_namespace n
                     ON n.oid = p.pronamespace
-                    INNER JOIN pg_catalog.pg_type t
-                    ON p.prorettype = t.oid
                     ORDER BY 1, 2
                     '''
                 _logger.debug('Functions Query. sql: %r', query)
                 cur.execute(query)
                 for row in cur:
-                    names = row[2] if row[2] is not None else []
-                    args = itertools.izip_longest(names, row[3].split(', '), '')
-                    _logger.debug(list(args))
-                    typed_args = [f[0] + ', ' + f[1] for f in args]
-                    arg_list = ', '.join(typed_args)
-                    _logger.debug(arg_list)
-                    yield FunctionMetadata(row[0], row[1], arg_list, row[4], row[5], row[6], row[7])
+                      yield FunctionMetadata(*row)
 
     def datatypes(self):
         """Yields tuples of (schema_name, type_name)"""

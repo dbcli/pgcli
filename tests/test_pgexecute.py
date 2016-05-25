@@ -61,7 +61,7 @@ def test_schemata_table_views_and_columns_query(executor):
         ('public', 'd')])
 
     assert set(executor.view_columns()) >= set([
-        ('public', 'd', 'e', 'int4')])
+        ('public', 'd', 'e', 'integer')])
 
 @dbtest
 def test_foreign_key_query(executor):
@@ -90,13 +90,13 @@ def test_functions_query(executor):
 
     funcs = set(executor.functions())
     assert funcs >= set([
-        FunctionMetadata('public', 'func1', '',
+        FunctionMetadata('public', 'func1', None, [], [],
                          'integer', False, False, False),
-        FunctionMetadata('public', 'func3', '',
-                         'TABLE(x integer, y integer)', False, False, True),
-        FunctionMetadata('public', 'func4', 'x integer',
-                         'SETOF integer', False, False, True),
-        FunctionMetadata('schema1', 'func2', '',
+        FunctionMetadata('public', 'func3', ['x', 'y'],
+            ['integer', 'integer'], ['t', 't'], 'record', False, False, True),
+        FunctionMetadata('public', 'func4', ('x',), ('integer',), [],
+                         'integer', False, False, True),
+        FunctionMetadata('schema1', 'func2', None, [], [],
                          'integer', False, False, False),
       ])
 
