@@ -10,7 +10,7 @@ from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.document import Document
 from .packages.sqlcompletion import (
     suggest_type, Special, Database, Schema, Table, Function, Column, View,
-    Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition)
+    Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join)
 from .packages.function_metadata import ColumnMetadata, ForeignKey
 from .packages.parseutils import last_word, TableReference
 from .packages.pgliterals.main import get_literals
@@ -384,6 +384,43 @@ class PGCompleter(Completer):
 
         return self.find_matches(word_before_cursor, flat_cols, meta='column')
 
+    def get_join_matches(self, suggestion, word_before_cursor):
+        scoped_cols = self.populate_scoped_cols(suggestion.tables)
+        # Set up some data structures for efficient access
+        qualified = dict((t.ref, t.schema) for t in suggestion.tables)
+        tbls = set((t.schema, t.name) for t in scoped_cols.keys())
+        tblprio = dict((t.ref, n) for n, t in enumerate(suggestion.tables))
+        joins, prios = [], []
+        # Iterate over FKs in existing tables to find potential joins
+        for fk, rtbl, rcol in ((fk, rtbl, rcol)
+          for rtbl, rcols in scoped_cols.items()
+          for rcol in rcols
+          for fk in rcol.foreignkeys):
+            if (fk.childschema, fk.childtable, fk.childcolumn) == (
+              rtbl.schema, rtbl.name, rcol.name):
+                lsch = fk.parentschema
+                ltbl = fk.parenttable
+                lcol = fk.parentcolumn
+            else:
+                lsch = fk.childschema
+                ltbl = fk.childtable
+                lcol = fk.childcolumn
+            if suggestion.schema and lsch != suggestion.schema:
+                continue
+            rsch, rtbl, rcol = rtbl.schema, rtbl.ref, rcol.name
+            join = '{0} ON {0}.{1} = {2}.{3}'.format(
+                self.case(ltbl), self.case(lcol), rtbl, self.case(rcol))
+            # Schema-qualify if (1) new table in same schema as old, and old
+            # is schema-qualified, or (2) new in other schema, except public
+            if not suggestion.schema and (qualified[rtbl] and lsch == rsch
+              or lsch not in(rsch, 'public')):
+                join = lsch + '.' + join
+            joins.append(join)
+            prios.append(tblprio[rtbl] * 2 + 0 if (lsch, ltbl) in tbls else 1)
+
+        return self.find_matches(word_before_cursor, joins, meta='join',
+            priority_collection=prios, type_priority=100)
+
     def get_join_condition_matches(self, suggestion, word_before_cursor):
         lefttable = suggestion.parent or suggestion.tables[-1]
         scoped_cols = self.populate_scoped_cols(suggestion.tables)
@@ -541,6 +578,7 @@ class PGCompleter(Completer):
 
     suggestion_matchers = {
         JoinCondition: get_join_condition_matches,
+        Join: get_join_matches,
         Column: get_column_matches,
         Function: get_function_matches,
         Schema: get_schema_matches,

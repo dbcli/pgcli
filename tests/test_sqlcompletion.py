@@ -1,6 +1,6 @@
 from pgcli.packages.sqlcompletion import (
     suggest_type, Special, Database, Schema, Table, Column, View, Keyword,
-    Function, Datatype, Alias, JoinCondition)
+    Function, Datatype, Alias, JoinCondition, Join)
 import pytest
 
 
@@ -99,14 +99,27 @@ def test_suggests_tables_views_and_schemas(expression):
 
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM ',
-    'SELECT * FROM foo JOIN ',
 ])
-def test_suggest_tables_views_schemas_and_set_returning_functions(expression):
+def test_suggest_tables_views_schemas_and_functions(expression):
     suggestions = suggest_type(expression, expression)
     assert set(suggestions) == set([
         Table(schema=None),
         View(schema=None),
         Function(schema=None, filter='for_from_clause'),
+        Schema()
+    ])
+
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM foo JOIN ',
+])
+def test_suggest_tables_views_schemas_functions_and_joins(expression):
+    suggestions = suggest_type(expression, expression)
+    assert set(suggestions) == set([
+        Table(schema=None),
+        View(schema=None),
+        Function(schema=None, filter='for_from_clause'),
+        Join(((None, 'foo', None, False),), None),
         Schema(),
     ])
 
@@ -131,14 +144,26 @@ def test_suggest_qualified_tables_and_views(expression):
     'SELECT * FROM sch."foo',
     'SELECT * FROM "sch".',
     'SELECT * FROM "sch"."',
-    'SELECT * FROM foo JOIN sch.',
 ])
-def test_suggest_qualified_tables_views_and_set_returning_functions(expression):
+def test_suggest_qualified_tables_views_and_functions(expression):
     suggestions = suggest_type(expression, expression)
     assert set(suggestions) == set([
         Table(schema='sch'),
         View(schema='sch'),
         Function(schema='sch', filter='for_from_clause'),
+    ])
+
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM foo JOIN sch.',
+])
+def test_suggest_qualified_tables_views_functions_and_joins(expression):
+    suggestions = suggest_type(expression, expression)
+    assert set(suggestions) == set([
+        Table(schema='sch'),
+        View(schema='sch'),
+        Function(schema='sch', filter='for_from_clause'),
+        Join(((None, 'foo', None, False),), 'sch'),
     ])
 
 
@@ -355,6 +380,7 @@ def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
         View(schema=None),
         Function(schema=None, filter='for_from_clause'),
         Schema(),
+        Join(((None, 'abc', tbl_alias if tbl_alias else None, False),), None),
     ])
 
 

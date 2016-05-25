@@ -197,7 +197,8 @@ def extract_tables(sql):
     # to have is_function=True
     identifiers = extract_table_identifiers(stream,
                                             allow_functions=not insert_stmt)
-    return tuple(identifiers)
+    # In the case 'sche.<cursor>', we get an empty TableReference; remove that
+    return tuple(i for i in identifiers if i.ref)
 
 
 def find_prev_keyword(sql):
