@@ -98,6 +98,7 @@ def refresh_schemata(completer, executor):
 def refresh_tables(completer, executor):
     completer.extend_relations(executor.tables(), kind='tables')
     completer.extend_columns(executor.table_columns(), kind='tables')
+    completer.extend_foreignkeys(executor.foreignkeys())
 
 @refresher('views')
 def refresh_views(completer, executor):

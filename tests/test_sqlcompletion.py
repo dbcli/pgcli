@@ -1,6 +1,6 @@
 from pgcli.packages.sqlcompletion import (
     suggest_type, Special, Database, Schema, Table, Column, View, Keyword,
-    Function, Datatype, Alias)
+    Function, Datatype, Alias, JoinCondition)
 import pytest
 
 
@@ -380,6 +380,9 @@ def test_join_alias_dot_suggests_cols1(sql):
         Table(schema='a'),
         View(schema='a'),
         Function(schema='a'),
+        JoinCondition(tables=((None, 'abc', 'a', False),
+            (None, 'def', 'd', False)),
+            parent=(None, 'abc', 'a', False))
     ])
 
 
@@ -399,20 +402,35 @@ def test_join_alias_dot_suggests_cols2(sql):
 
 @pytest.mark.parametrize('sql', [
     'select a.x, b.y from abc a join bcd b on ',
+    '''select a.x, b.y
+from abc a
+join bcd b on
+''',
+    '''select a.x, b.y
+from abc a
+join bcd b
+on ''',
     'select a.x, b.y from abc a join bcd b on a.id = b.id OR ',
 ])
-def test_on_suggests_aliases(sql):
+def test_on_suggests_aliases_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
-    assert suggestions == (Alias(aliases=('a', 'b',)),)
-
+    assert set(suggestions) == set((JoinCondition(
+        tables=((None, 'abc', 'a', False),
+            (None, 'bcd', 'b', False)),
+        parent=None),
+        Alias(aliases=('a', 'b',)),))
 
 @pytest.mark.parametrize('sql', [
-    'select abc.x, bcd.y from abc join bcd on ',
     'select abc.x, bcd.y from abc join bcd on abc.id = bcd.id AND ',
+    'select abc.x, bcd.y from abc join bcd on ',
 ])
-def test_on_suggests_tables(sql):
+def test_on_suggests_tables_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
-    assert suggestions == (Alias(aliases=('abc', 'bcd',)),)
+    assert set(suggestions) == set((JoinCondition(tables=(
+        (None, 'abc', None, False),
+        (None, 'bcd', None, False)),
+        parent=None),
+        Alias(aliases=('abc', 'bcd',)),))
 
 
 @pytest.mark.parametrize('sql', [
@@ -425,12 +443,18 @@ def test_on_suggests_aliases_right_side(sql):
 
 
 @pytest.mark.parametrize('sql', [
-    'select abc.x, bcd.y from abc join bcd on ',
     'select abc.x, bcd.y from abc join bcd on abc.id = bcd.id and ',
+    'select abc.x, bcd.y from abc join bcd on ',
 ])
-def test_on_suggests_tables_right_side(sql):
+def test_on_suggests_tables_and_join_conditions_right_side(sql):
     suggestions = suggest_type(sql, sql)
-    assert suggestions == (Alias(aliases=('abc', 'bcd',)),)
+    assert set(suggestions) == set((JoinCondition(
+        tables=(
+            (None, 'abc', None, False),
+            (None, 'bcd', None, False)),
+        parent=None
+      ),
+      Alias(aliases=('abc', 'bcd',)),))
 
 
 @pytest.mark.parametrize('col_list', ('', 'col1, ',))
@@ -439,7 +463,7 @@ def test_join_using_suggests_common_columns(col_list):
     assert set(suggest_type(text, text)) == set([
         Column(tables=((None, 'abc', None, False),
                        (None, 'def', None, False)),
-               drop_unique=True),
+            require_last_table=True),
     ])
 
 

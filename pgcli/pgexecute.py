@@ -6,7 +6,7 @@ import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
-from .packages.function_metadata import FunctionMetadata
+from .packages.function_metadata import FunctionMetadata, ForeignKey
 from .encodingutils import unicode2utf8, PY2, utf8tounicode
 
 
@@ -116,12 +116,15 @@ class PGExecute(object):
     columns_query = '''
         SELECT  nsp.nspname schema_name,
                 cls.relname table_name,
-                att.attname column_name
+                att.attname column_name,
+                typ.typname type_name
         FROM    pg_catalog.pg_attribute att
                 INNER JOIN pg_catalog.pg_class cls
                     ON att.attrelid = cls.oid
                 INNER JOIN pg_catalog.pg_namespace nsp
                     ON cls.relnamespace = nsp.oid
+                INNER JOIN pg_catalog.pg_type typ
+                    ON typ.oid = att.atttypid
         WHERE   cls.relkind = ANY(%s)
                 AND NOT att.attisdropped
                 AND att.attnum  > 0
@@ -349,7 +352,7 @@ class PGExecute(object):
                 'r' - table
                 'v' - view
                 'm' - materialized view
-        :return: list of (schema_name, relation_name, column_name) tuples
+        :return: list of (schema_name, relation_name, column_name, column_type) tuples
         """
 
         with self.conn.cursor() as cur:
@@ -372,6 +375,43 @@ class PGExecute(object):
             _logger.debug('Databases Query. sql: %r', self.databases_query)
             cur.execute(self.databases_query)
             return [x[0] for x in cur.fetchall()]
+
+    def foreignkeys(self):
+        """Yields ForeignKey named tuples"""
+
+        with self.conn.cursor() as cur:
+            query = '''
+                SELECT s_p.nspname AS parentschema,
+                       t_p.relname AS parenttable,
+                       unnest((
+                        select
+                            array_agg(attname ORDER BY i)
+                        from
+                            (select unnest(confkey) as attnum, generate_subscripts(confkey, 1) as i) x
+                            JOIN pg_catalog.pg_attribute c USING(attnum)
+                            WHERE c.attrelid = fk.confrelid
+                        )) AS parentcolumn,
+                       s_c.nspname AS childschema,
+                       t_c.relname AS childtable,
+                       unnest((
+                        select
+                            array_agg(attname ORDER BY i)
+                        from
+                            (select unnest(conkey) as attnum, generate_subscripts(conkey, 1) as i) x
+                            JOIN pg_catalog.pg_attribute c USING(attnum)
+                            WHERE c.attrelid = fk.conrelid
+                        )) AS childcolumn
+                FROM pg_catalog.pg_constraint fk
+                JOIN pg_catalog.pg_class      t_p ON t_p.oid = fk.confrelid
+                JOIN pg_catalog.pg_namespace  s_p ON s_p.oid = t_p.relnamespace
+                JOIN pg_catalog.pg_class      t_c ON t_c.oid = fk.conrelid
+                JOIN pg_catalog.pg_namespace  s_c ON s_c.oid = t_c.relnamespace
+                WHERE fk.contype = 'f';
+                '''
+            _logger.debug('Functions Query. sql: %r', query)
+            cur.execute(query)
+            for row in cur:
+                yield ForeignKey(*row)
 
     def functions(self):
         """Yields FunctionMetadata named tuples"""

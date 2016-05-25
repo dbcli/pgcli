@@ -33,7 +33,8 @@ def completer():
     tables, columns = [], []
     for table, cols in metadata['tables'].items():
         tables.append(('public', table))
-        columns.extend([('public', table, col) for col in cols])
+        # Let all columns be text columns
+        columns.extend([('public', table, col, 'text') for col in cols])
 
     comp.extend_relations(tables, kind='tables')
     comp.extend_columns(columns, kind='tables')
@@ -42,7 +43,7 @@ def completer():
     views, columns = [], []
     for view, cols in metadata['views'].items():
         views.append(('public', view))
-        columns.extend([('public', view, col) for col in cols])
+        columns.extend([('public', view, col, 'text') for col in cols])
 
     comp.extend_relations(views, kind='views')
     comp.extend_columns(columns, kind='views')
@@ -300,19 +301,26 @@ def test_suggest_columns_after_three_way_join(completer, complete_event):
     assert (Completion(text='id', start_position=0, display_meta='column') in
             set(result))
 
-
-def test_suggested_aliases_after_on(completer, complete_event):
-    text = 'SELECT u.name, o.id FROM users u JOIN orders o ON '
+@pytest.mark.parametrize('text', [
+    'SELECT u.name, o.id FROM users u JOIN orders o ON ',
+    'SELECT u.name, o.id FROM users u JOIN orders o ON JOIN orders o2 ON'
+])
+def test_suggested_aliases_after_on(completer, complete_event, text):
     position = len('SELECT u.name, o.id FROM users u JOIN orders o ON ')
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
         Completion(text='u', start_position=0, display_meta='table alias'),
+        Completion(text='o.id = u.id', start_position=0, display_meta='name join'),
+        Completion(text='o.email = u.email', start_position=0, display_meta='name join'),
         Completion(text='o', start_position=0, display_meta='table alias')])
 
-def test_suggested_aliases_after_on_right_side(completer, complete_event):
-    text = 'SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = '
+@pytest.mark.parametrize('text', [
+    'SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = ',
+    'SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id =  JOIN orders o2 ON'
+])
+def test_suggested_aliases_after_on_right_side(completer, complete_event, text):
     position = len('SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = ')
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
@@ -321,18 +329,26 @@ def test_suggested_aliases_after_on_right_side(completer, complete_event):
         Completion(text='u', start_position=0, display_meta='table alias'),
         Completion(text='o', start_position=0, display_meta='table alias')])
 
-def test_suggested_tables_after_on(completer, complete_event):
-    text = 'SELECT users.name, orders.id FROM users JOIN orders ON '
+@pytest.mark.parametrize('text', [
+    'SELECT users.name, orders.id FROM users JOIN orders ON ',
+    'SELECT users.name, orders.id FROM users JOIN orders ON JOIN orders orders2 ON'
+])
+def test_suggested_tables_after_on(completer, complete_event, text):
     position = len('SELECT users.name, orders.id FROM users JOIN orders ON ')
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set([
+        Completion(text='orders.id = users.id', start_position=0, display_meta='name join'),
+        Completion(text='orders.email = users.email', start_position=0, display_meta='name join'),
         Completion(text='users', start_position=0, display_meta='table alias'),
         Completion(text='orders', start_position=0, display_meta='table alias')])
 
-def test_suggested_tables_after_on_right_side(completer, complete_event):
-    text = 'SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = '
+@pytest.mark.parametrize('text', [
+    'SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = JOIN orders orders2 ON',
+    'SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = '
+])
+def test_suggested_tables_after_on_right_side(completer, complete_event, text):
     position = len('SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = ')
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
@@ -347,6 +363,21 @@ def test_suggested_tables_after_on_right_side(completer, complete_event):
 ])
 def test_join_using_suggests_common_columns(completer, complete_event, text):
     pos = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=pos), complete_event))
+    assert set(result) == set([
+        Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='email', start_position=0, display_meta='column'),
+        ])
+
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM users u1 JOIN users u2 USING (email) JOIN user_emails ue USING()',
+    'SELECT * FROM users u1 JOIN users u2 USING(email) JOIN user_emails ue USING ()',
+    'SELECT * FROM users u1 JOIN user_emails ue USING () JOIN users u2 ue USING(first_name, last_name)',
+    'SELECT * FROM users u1 JOIN user_emails ue USING() JOIN users u2 ue USING (first_name, last_name)',
+])
+def test_join_using_suggests_from_last_table(completer, complete_event, text):
+    pos = text.index('()') + 1
     result = set(completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event))
     assert set(result) == set([
@@ -501,13 +532,15 @@ def test_join_functions_using_suggests_common_columns(completer, complete_event)
          Completion(text='y', start_position=0, display_meta='column')])
 
 
-def test_join_functions_on_suggests_columns(completer, complete_event):
+def test_join_functions_on_suggests_columns_and_join_conditions(completer, complete_event):
     text = '''SELECT * FROM set_returning_func() f1
               INNER JOIN set_returning_func() f2 ON f1.'''
     pos = len(text)
     result = set(completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event))
     assert set(result) == set([
+         Completion(text='y = f2.y', start_position=0, display_meta='name join'),
+         Completion(text='x = f2.x', start_position=0, display_meta='name join'),
          Completion(text='x', start_position=0, display_meta='column'),
          Completion(text='y', start_position=0, display_meta='column')])
 

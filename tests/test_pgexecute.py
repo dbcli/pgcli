@@ -50,18 +50,28 @@ def test_schemata_table_views_and_columns_query(executor):
 
     # tables
     assert set(executor.tables()) >= set([
-        ('public', 'a'), ('public', 'b'), ('schema1', 'c')])
+    ('public', 'a'), ('public', 'b'), ('schema1', 'c')])
 
     assert set(executor.table_columns()) >= set([
-        ('public', 'a', 'x'), ('public', 'a', 'y'),
-        ('public', 'b', 'z'), ('schema1', 'c', 'w')])
+        ('public', 'a', 'x', 'text'), ('public', 'a', 'y', 'text'),
+        ('public', 'b', 'z', 'text'), ('schema1', 'c', 'w', 'text')])
 
     # views
     assert set(executor.views()) >= set([
         ('public', 'd')])
 
     assert set(executor.view_columns()) >= set([
-        ('public', 'd', 'e')])
+        ('public', 'd', 'e', 'int4')])
+
+@dbtest
+def test_foreign_key_query(executor):
+    run(executor, "create schema schema1")
+    run(executor, "create schema schema2")
+    run(executor, "create table schema1.parent(parentid int PRIMARY KEY)")
+    run(executor, "create table schema2.child(childid int PRIMARY KEY, motherid int REFERENCES schema1.parent)")
+
+    assert set(executor.foreignkeys()) >= set([
+        ('schema1', 'parent', 'parentid', 'schema2', 'child', 'motherid')])
 
 @dbtest
 def test_functions_query(executor):

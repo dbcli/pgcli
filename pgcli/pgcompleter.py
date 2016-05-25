@@ -3,24 +3,19 @@ import logging
 import re
 import itertools
 import operator
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.document import Document
 from .packages.sqlcompletion import (
     suggest_type, Special, Database, Schema, Table, Function, Column, View,
-    Keyword, NamedQuery, Datatype, Alias, Path)
+    Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition)
+from .packages.function_metadata import ColumnMetadata, ForeignKey
 from .packages.parseutils import last_word, TableReference
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
 from .config import load_config, config_location
-
-try:
-    from collections import Counter
-except ImportError:
-    # python 2.6
-    from .packages.counter import Counter
 
 try:
     from collections import OrderedDict
@@ -110,12 +105,12 @@ class PGCompleter(Completer):
 
         data = [self.escaped_names(d) for d in data]
 
-        # dbmetadata['tables']['schema_name']['table_name'] should be a list of
-        # column names.
+        # dbmetadata['tables']['schema_name']['table_name'] should be an
+        # OrderedDict {column_name:ColumnMetaData}.
         metadata = self.dbmetadata[kind]
         for schema, relname in data:
             try:
-                metadata[schema][relname] = []
+                metadata[schema][relname] = OrderedDict()
             except KeyError:
                 _logger.error('%r %r listed in unrecognized schema %r',
                               kind, relname, schema)
@@ -124,16 +119,18 @@ class PGCompleter(Completer):
     def extend_columns(self, column_data, kind):
         """ extend column metadata
 
-        :param column_data: list of (schema_name, rel_name, column_name) tuples
+        :param column_data: list of (schema_name, rel_name, column_name, column_type) tuples
         :param kind: either 'tables' or 'views'
         :return:
         """
-
-        column_data = [self.escaped_names(d) for d in column_data]
         metadata = self.dbmetadata[kind]
-        for schema, relname, column in column_data:
-            metadata[schema][relname].append(column)
-            self.all_completions.add(column)
+        for schema, relname, colname, datatype in column_data:
+            (schema, relname, colname) = self.escaped_names(
+                [schema, relname, colname])
+            column = ColumnMetadata(name=colname, datatype=datatype,
+                foreignkeys=[])
+            metadata[schema][relname][colname] = column
+            self.all_completions.add(colname)
 
     def extend_functions(self, func_data):
 
@@ -154,6 +151,28 @@ class PGCompleter(Completer):
                 metadata[schema][func] = [f]
 
             self.all_completions.add(func)
+
+    def extend_foreignkeys(self, fk_data):
+
+        # fk_data is a list of ForeignKey namedtuples, with fields
+        # parentschema, childschema, parenttable, childtable,
+        # parentcolumns, childcolumns
+
+        # These are added as a list of ForeignKey namedtuples to the
+        # ColumnMetadata namedtuple for both the child and parent
+        meta = self.dbmetadata['tables']
+
+        for fk in fk_data:
+            e = self.escaped_names
+            parentschema, childschema = e([fk.parentschema, fk.childschema])
+            parenttable, childtable = e([fk.parenttable, fk.childtable])
+            childcol, parcol = e([fk.childcolumn, fk.parentcolumn])
+            childcolmeta =  meta[childschema][childtable][childcol]
+            parcolmeta =  meta[parentschema][parenttable][parcol]
+            fk = ForeignKey(parentschema, parenttable, parcol,
+                childschema, childtable, childcol)
+            childcolmeta.foreignkeys.append((fk))
+            parcolmeta.foreignkeys.append((fk))
 
     def extend_datatypes(self, type_data):
 
@@ -313,13 +332,15 @@ class PGCompleter(Completer):
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables)
         colit = scoped_cols.items
-        flat_cols = list(itertools.chain(*scoped_cols.values()))
-        if suggestion.drop_unique:
-            # drop_unique is used for 'tb11 JOIN tbl2 USING (...' which should
-            # suggest only columns that appear in more than one table
-            flat_cols = [col for (col, count)
-                                 in Counter(flat_cols).items()
-                                   if count > 1]
+        flat_cols = itertools.chain(*((c.name for c in cols)
+            for t, cols in colit()))
+        if suggestion.require_last_table:
+            # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
+            # suggest only columns that appear in the last table and one more
+            ltbl = tables[-1].ref
+            flat_cols = list(
+              set(c.name for t, cs in colit() if t.ref == ltbl for c in cs) &
+              set(c.name for t, cs in colit() if t.ref != ltbl for c in cs))
         lastword = last_word(word_before_cursor, include='most_punctuations')
         if lastword == '*':
             if (lastword != word_before_cursor and len(tables) == 1
@@ -330,7 +351,7 @@ class PGCompleter(Completer):
                 collist = sep.join(c for c in flat_cols)
             elif len(scoped_cols) > 1:
                 # Multiple tables; qualify all columns
-                collist = ', '.join(t.ref + '.' + c for t, cs in colit()
+                collist = ', '.join(t.ref + '.' + c.name for t, cs in colit()
                     for c in cs)
             else:
                 # Plain columns
@@ -340,6 +361,59 @@ class PGCompleter(Completer):
                 display_meta='columns', display='*'), priority=(1,1,1))]
 
         return self.find_matches(word_before_cursor, flat_cols, meta='column')
+
+    def get_join_condition_matches(self, suggestion, word_before_cursor):
+        lefttable = suggestion.parent or suggestion.tables[-1]
+        scoped_cols = self.populate_scoped_cols(suggestion.tables)
+
+        def make_cond(tbl1, tbl2, col1, col2):
+            prefix = '' if suggestion.parent else tbl1 + '.'
+            return prefix + col1 + ' = ' + tbl2 + '.' + col2
+
+        # Tables that are closer to the cursor get higher prio
+        refprio = dict((tbl.ref, num) for num, tbl
+            in enumerate(suggestion.tables))
+        # Map (schema, tablename) to tables and ref to columns
+        tbldict = defaultdict(list)
+        for t in scoped_cols.keys():
+            tbldict[(t.schema, t.name)].append(t)
+        refcols = dict((t.ref, cs) for t, cs in scoped_cols.items())
+        # For each fk from the left table, generate a join condition if
+        # the other table is also in the scope
+        conds = []
+        for lcol in refcols.get(lefttable.ref, []):
+            for fk in lcol.foreignkeys:
+                for rcol in ((fk.parentschema, fk.parenttable,
+                  fk.parentcolumn), (fk.childschema, fk.childtable,
+                  fk.childcolumn)):
+                    for rtbl in tbldict[(rcol[0], rcol[1])]:
+                        if rtbl and rtbl.ref != lefttable.ref:
+                            cond = make_cond(lefttable.ref, rtbl.ref,
+                              lcol.name, rcol[2])
+                            prio = 2000 + refprio[rtbl.ref]
+                            conds.append((cond, 'fk join', prio))
+        # For name matching, use a {(colname, coltype): TableReference} dict
+        col_table = defaultdict(lambda: [])
+        for tbl, col in ((t, c) for t, cs in scoped_cols.items() for c in cs):
+            col_table[(col.name, col.datatype)].append(tbl)
+        # Find all name-match join conditions
+        found = set(cnd[0] for cnd in conds)
+        for c in refcols.get(lefttable.ref, []):
+            for rtbl in col_table[(c.name, c.datatype)]:
+                if rtbl.ref != lefttable.ref:
+                    cond = make_cond(lefttable.ref, rtbl.ref, c.name, c.name)
+                    if cond not in found:
+                        prio = (1000 if c.datatype and c.datatype[:3] == 'int'
+                         else 0 + refprio[rtbl.ref])
+                        conds.append((cond, 'name join', prio))
+
+        if not conds:
+            return []
+
+        conds, metas, prios = zip(*conds)
+
+        return self.find_matches(word_before_cursor, conds,
+          meta_collection=metas, type_priority=100, priority_collection=prios)
 
     def get_function_matches(self, suggestion, word_before_cursor):
         if suggestion.filter == 'for_from_clause':
@@ -442,6 +516,7 @@ class PGCompleter(Completer):
             word_before_cursor, NamedQueries.instance.list(), meta='named query')
 
     suggestion_matchers = {
+        JoinCondition: get_join_condition_matches,
         Column: get_column_matches,
         Function: get_function_matches,
         Schema: get_schema_matches,
@@ -459,7 +534,7 @@ class PGCompleter(Completer):
     def populate_scoped_cols(self, scoped_tbls):
         """ Find all columns in a set of scoped_tables
         :param scoped_tbls: list of TableReference namedtuples
-        :return: dict {TableReference:[list of column names]}
+        :return: {TableReference:{colname:ColumnMetaData}}
         """
 
         columns = OrderedDict()
@@ -482,12 +557,13 @@ class PGCompleter(Completer):
                     functions = meta['functions'].get(schema, {}).get(relname)
                     for func in (functions or []):
                         # func is a FunctionMetadata object
-                        cols = func.fieldnames()
+                        cols = func.fields()
                         addcols(schema, relname, tbl.alias, 'functions', cols)
                 else:
                     for reltype in ('tables', 'views'):
                         cols = meta[reltype].get(schema, {}).get(relname)
                         if cols:
+                            cols = cols.values()
                             addcols(schema, relname, tbl.alias, reltype, cols)
                             break
 

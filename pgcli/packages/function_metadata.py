@@ -1,10 +1,12 @@
 import re
 import sqlparse
+from collections import namedtuple
 from sqlparse.tokens import Whitespace, Comment, Keyword, Name, Punctuation
 
-
 table_def_regex = re.compile(r'^TABLE\s*\((.+)\)$', re.IGNORECASE)
-
+ColumnMetadata = namedtuple('ColumnMetadata', ['name', 'datatype', 'foreignkeys'])
+ForeignKey = namedtuple('ForeignKey', ['parentschema', 'parenttable',
+    'parentcolumn', 'childschema', 'childtable', 'childcolumn'])
 
 class FunctionMetadata(object):
 
@@ -39,8 +41,8 @@ class FunctionMetadata(object):
                    self.arg_list, self.return_type, self.is_aggregate,
                    self.is_window, self.is_set_returning))
 
-    def fieldnames(self):
-        """Returns a list of output field names"""
+    def fields(self):
+        """Returns a list of output-field ColumnMetadata namedtuples"""
 
         if self.return_type.lower() == 'void':
             return []
@@ -48,11 +50,11 @@ class FunctionMetadata(object):
         match = table_def_regex.match(self.return_type)
         if match:
             # Function returns a table -- get the column names
-            return list(field_names(match.group(1), mode_filter=None))
+            return list(fields(match.group(1), mode_filter=None))
 
         # Function may have named output arguments -- find them and return
         # their names
-        return list(field_names(self.arg_list, mode_filter=('OUT', 'INOUT')))
+        return list(fields(self.arg_list, mode_filter=('OUT', 'INOUT')))
 
 
 class TypedFieldMetadata(object):
@@ -136,8 +138,8 @@ def parse_typed_field_list(tokens):
         yield field
 
 
-def field_names(sql, mode_filter=('IN', 'OUT', 'INOUT', 'VARIADIC')):
-    """Yields field names from a table declaration"""
+def fields(sql, mode_filter=('IN', 'OUT', 'INOUT', 'VARIADIC')):
+    """Yields ColumnMetaData namedtuples from a table declaration"""
 
     if not sql:
         return
@@ -146,4 +148,4 @@ def field_names(sql, mode_filter=('IN', 'OUT', 'INOUT', 'VARIADIC')):
     tokens = sqlparse.parse(sql)[0].flatten()
     for f in parse_typed_field_list(tokens):
         if f.name and (not mode_filter or f.mode in mode_filter):
-            yield f.name
+            yield ColumnMetadata(f.name, None, [])

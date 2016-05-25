@@ -21,12 +21,13 @@ Special = namedtuple('Special', [])
 Database = namedtuple('Database', [])
 Schema = namedtuple('Schema', [])
 Table = namedtuple('Table', ['schema'])
+JoinCondition = namedtuple('JoinCondition', ['tables', 'parent'])
 
 Function = namedtuple('Function', ['schema', 'filter'])
 # For convenience, don't require the `filter` argument in Function constructor
 Function.__new__.__defaults__ = (None, None)
 
-Column = namedtuple('Column', ['tables', 'drop_unique'])
+Column = namedtuple('Column', ['tables', 'require_last_table'])
 Column.__new__.__defaults__ = (None, None)
 
 View = namedtuple('View', ['schema'])
@@ -117,8 +118,9 @@ def suggest_type(full_text, text_before_cursor):
 
     last_token = statement and statement.token_prev(len(statement.tokens)) or ''
 
-    return suggest_based_on_last_token(last_token, text_before_cursor,
-                                       full_text, identifier)
+    return suggest_based_on_last_token(
+        last_token, text_before_cursor, full_text, identifier,
+        parsed_statement=statement)
 
 
 def suggest_special(text):
@@ -173,7 +175,9 @@ def suggest_special(text):
     return (Keyword(), Special())
 
 
-def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier):
+def suggest_based_on_last_token(token, text_before_cursor, full_text,
+                                identifier, parsed_statement=None):
+
     if isinstance(token, string_types):
         token_v = token.lower()
     elif isinstance(token, Comparison):
@@ -190,8 +194,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         # 'where foo > 5 and '. We need to look "inside" token.tokens to handle
         # suggestions in complicated where clauses correctly
         prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
-        return suggest_based_on_last_token(
-            prev_keyword, text_before_cursor, full_text, identifier)
+        return suggest_based_on_last_token(prev_keyword, text_before_cursor,
+            full_text, identifier, parsed_statement)
     elif isinstance(token, Identifier):
         # If the previous token is an identifier, we can suggest datatypes if
         # we're in a parenthesized column/field list, e.g.:
@@ -204,8 +208,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         prev_keyword, _ = find_prev_keyword(text_before_cursor)
         if prev_keyword and prev_keyword.value == '(':
             # Suggest datatypes
-            return suggest_based_on_last_token(
-                'type', text_before_cursor, full_text, identifier)
+            return suggest_based_on_last_token('type', text_before_cursor,
+                full_text, identifier, parsed_statement)
         else:
             return (Keyword(),)
     else:
@@ -229,7 +233,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             #        really fancy, we could suggest only array-typed columns)
 
             column_suggestions = suggest_based_on_last_token(
-                'where', text_before_cursor, full_text, identifier)
+                'where', text_before_cursor, full_text, identifier,
+                parsed_statement)
 
             # Check for a subquery expression (cases 3 & 4)
             where = p.tokens[-1]
@@ -251,10 +256,10 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         if (prev_tok and prev_tok.value
           and prev_tok.value.lower().split(' ')[-1] == 'using'):
             # tbl1 INNER JOIN tbl2 USING (col1, col2)
-            tables = extract_tables(full_text)
+            tables = extract_tables(text_before_cursor)
 
             # suggest columns that are present in more than one table
-            return (Column(tables=tables, drop_unique=True),)
+            return (Column(tables=tables, require_last_table=True),)
 
         elif p.token_first().value.lower() == 'select':
             # If the lparen is preceeded by a space chances are we're about to
@@ -314,21 +319,30 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         else:
             return (Schema(), rel_type(schema=schema))
     elif token_v == 'on':
-        tables = extract_tables(full_text)  # [(schema, table, alias), ...]
+        tables = extract_tables(text_before_cursor)  # [(schema, table, alias), ...]
         parent = (identifier and identifier.get_parent_name()) or None
         if parent:
             # "ON parent.<suggestion>"
             # parent can be either a schema name or table alias
-            tables = tuple(t for t in tables if identifies(parent, t))
-            return (Column(tables=tables),
+            filteredtables = tuple(t for t in tables if identifies(parent, t))
+            sugs = [Column(tables=filteredtables),
                     Table(schema=parent),
                     View(schema=parent),
-                    Function(schema=parent))
+                    Function(schema=parent)]
+            last_token = parsed_statement
+            if _allow_join_suggestion(parsed_statement):
+                sugs.append(JoinCondition(tables=tables,
+                    parent=filteredtables[-1]))
+            return tuple(sugs)
         else:
             # ON <suggestion>
             # Use table alias if there is one, otherwise the table name
             aliases = tuple(t.alias or t.name for t in tables)
-            return (Alias(aliases=aliases),)
+            if _allow_join_suggestion(parsed_statement):
+                return (Alias(aliases=aliases), JoinCondition(
+                    tables=tables, parent=None))
+            else:
+                return (Alias(aliases=aliases),)
 
     elif token_v in ('c', 'use', 'database', 'template'):
         # "\c <db", "use <db>", "DROP DATABASE <db>",
@@ -341,7 +355,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
         prev_keyword, text_before_cursor = find_prev_keyword(text_before_cursor)
         if prev_keyword:
             return suggest_based_on_last_token(
-                prev_keyword, text_before_cursor, full_text, identifier)
+                prev_keyword, text_before_cursor, full_text, identifier,
+                parsed_statement)
         else:
             return ()
     elif token_v in ('type', '::'):
@@ -365,3 +380,22 @@ def identifies(id, ref):
     return id == ref.alias or id == ref.name or (
         ref.schema and (id == ref.schema + '.' + ref.name))
 
+
+def _allow_join_suggestion(statement):
+    """
+    Tests if a join condition should be suggested
+
+    We need this to avoid bad suggestions when entering e.g.
+        select * from tbl1 a join tbl2 b on a.id = <cursor>
+    So check that the preceding token is a ON, AND, or OR keyword, instead of
+    e.g. an equals sign.
+
+    :param statement: an sqlparse.sql.Statement
+    :return: boolean
+    """
+
+    if not statement or not statement.tokens:
+        return False
+
+    last_tok = statement.token_prev(len(statement.tokens))
+    return last_tok.value.lower() in ('on', 'and', 'or')
