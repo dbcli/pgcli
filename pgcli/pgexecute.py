@@ -379,6 +379,9 @@ class PGExecute(object):
     def foreignkeys(self):
         """Yields ForeignKey named tuples"""
 
+        if self.conn.server_version < 90000:
+            return
+
         with self.conn.cursor() as cur:
             query = '''
                 SELECT s_p.nspname AS parentschema,
