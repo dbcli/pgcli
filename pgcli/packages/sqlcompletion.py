@@ -292,7 +292,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text,
 
         schema = (identifier and identifier.get_parent_name()) or None
         # If schema name is unquoted, lower-case it
-        if schema and identifier and identifier.value[0] != '"':
+        if schema and identifier.value[0] != '"':
             schema = schema.lower()
         # Suggest tables from either the currently-selected schema or the
         # public schema if no schema has been specified
