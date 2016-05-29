@@ -26,7 +26,9 @@ DEFAULT_STYLE_EXTENSIONS = {
     Token.ColorColumn:                            'bg:#ccaacc',
 
     # Highlighting of matching brackets.
-    Token.MatchingBracket:                        'bg:#aaaaff #000044',
+    Token.MatchingBracket:                        '',
+    Token.MatchingBracket.Other:                  '#000000 bg:#aacccc',
+    Token.MatchingBracket.Cursor:                 '#ff8888 bg:#880000',
 
     # Line numbers.
     Token.LineNumber:                             '#888888',

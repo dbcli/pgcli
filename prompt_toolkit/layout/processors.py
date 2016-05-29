@@ -246,13 +246,20 @@ class HighlightMatchingBracketProcessor(Processor):
         positions = self._positions_cache.get(
             key, lambda: self._get_positions_to_highlight(document))
 
-        # Apply if positions were foun at this line.
+        # Apply if positions were found at this line.
         if positions:
             for row, col in positions:
                 if row == lineno:
                     col = source_to_display(col)
                     tokens = explode_tokens(tokens)
-                    tokens[col] = (Token.MatchingBracket, tokens[col][1])
+                    token, text = tokens[col]
+
+                    if col == document.cursor_position_col:
+                        token += (':', ) + Token.MatchingBracket.Cursor
+                    else:
+                        token += (':', ) + Token.MatchingBracket.Other
+
+                    tokens[col] = (token, text)
 
         return Transformation(tokens)
 
