@@ -16,6 +16,9 @@ metadata = {
                                 'Users': ['userid', 'username'],
                                 'products': ['id', 'product_name', 'price'],
                                 'shipments': ['id', 'address', 'user_id']
+                            },
+                'Custom':   {
+                                'projects': ['projectid', 'name']
                             }},
             'functions': {
                             'public': [
@@ -26,6 +29,9 @@ metadata = {
                                 ['set_returning_func',
                                     'OUT x INT', 'SETOF INT',
                                      False, False, True]],
+                            'Custom': [
+                                ['func4', '', '', False, False, False]
+                            ]
                          },
             'datatypes': {
                             'public':   ['typ1', 'typ2'],
@@ -81,6 +87,7 @@ def test_schema_or_visible_table_completion(completer, complete_event):
        Completion(text='func2', start_position=0, display_meta='function'),
        Completion(text='public', start_position=0, display_meta='schema'),
        Completion(text='custom', start_position=0, display_meta='schema'),
+       Completion(text='"Custom"', start_position=0, display_meta='schema'),
        Completion(text='users', start_position=0, display_meta='table'),
        Completion(text='"select"', start_position=0, display_meta='table'),
        Completion(text='orders', start_position=0, display_meta='table')])
@@ -169,6 +176,7 @@ def test_suggested_column_names_in_function(completer, complete_event):
 
 
 @pytest.mark.parametrize('text', [
+    'SELECT * FROM Custom.',
     'SELECT * FROM custom.',
     'SELECT * FROM "custom".',
 ])
@@ -193,6 +201,25 @@ def test_suggested_table_names_with_schema_dot(completer, complete_event,
         Completion(text='set_returning_func', start_position=start_pos, display_meta='function'),
     ])
 
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM "Custom".',
+])
+@pytest.mark.parametrize('use_leading_double_quote', [False, True])
+def test_suggested_table_names_with_schema_dot2(completer, complete_event,
+                                               text, use_leading_double_quote):
+    if use_leading_double_quote:
+        text += '"'
+        start_pos = -1
+    else:
+        start_pos = 0
+
+    position = len(text)
+    result = completer.get_completions(
+        Document(text=text, cursor_position=position), complete_event)
+    assert set(result) == set([
+        Completion(text='func4', start_position=start_pos, display_meta='function'),
+        Completion(text='projects', start_position=start_pos, display_meta='table')
+    ])
 
 def test_suggested_column_names_with_qualified_alias(completer, complete_event):
     """
@@ -289,6 +316,7 @@ def test_table_names_after_from(completer, complete_event):
         Completion(text='func2', start_position=0, display_meta='function'),
         Completion(text='public', start_position=0, display_meta='schema'),
         Completion(text='custom', start_position=0, display_meta='schema'),
+        Completion(text='"Custom"', start_position=0, display_meta='schema'),
         Completion(text='users', start_position=0, display_meta='table'),
         Completion(text='orders', start_position=0, display_meta='table'),
         Completion(text='"select"', start_position=0, display_meta='table'),

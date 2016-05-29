@@ -573,10 +573,9 @@ class PGCompleter(Completer):
         """Returns list of tables or functions for a (optional) schema"""
 
         metadata = self.dbmetadata[obj_type]
-
         if schema:
             try:
-                objects = metadata[schema].keys()
+                objects = metadata[self.escape_name(schema)].keys()
             except KeyError:
                 # schema doesn't exist
                 objects = []
@@ -601,6 +600,7 @@ class PGCompleter(Completer):
         # with the same name, which is why `for meta in metas` is necessary
         # in the comprehensions below
         if schema:
+            schema = self.escape_name(schema)
             try:
                 return [func for (func, metas) in metadata[schema].items()
                                 for meta in metas
