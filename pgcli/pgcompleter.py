@@ -347,7 +347,7 @@ class PGCompleter(Completer):
               and word_before_cursor[-len(lastword) - 1] == '.'):
                 # User typed x.*; replicate "x." for all columns except the
                 # first, which gets the original (as we only replace the "*"")
-                sep = ', ' + self.escape_name(tables[0].ref) + '.'
+                sep = ', ' + word_before_cursor[:-1]
                 collist = sep.join(c for c in flat_cols)
             elif len(scoped_cols) > 1:
                 # Multiple tables; qualify all columns

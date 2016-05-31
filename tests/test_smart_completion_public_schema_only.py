@@ -610,16 +610,19 @@ def test_wildcard_column_expansion_with_alias_qualifier(completer, complete_even
 
     assert expected == completions
 
-
-def test_wildcard_column_expansion_with_table_qualifier(completer, complete_event):
-    sql = 'SELECT users.* FROM users'
+@pytest.mark.parametrize('text,expected', [
+    ('SELECT users.* FROM users',
+        'id, users.email, users.first_name, users.last_name'),
+    ('SELECT Users.* FROM Users',
+        'id, Users.email, Users.first_name, Users.last_name'),
+])
+def test_wildcard_column_expansion_with_table_qualifier(completer, complete_event, text, expected):
     pos = len('SELECT users.*')
 
     completions = completer.get_completions(
-        Document(text=sql, cursor_position=pos), complete_event)
+        Document(text=text, cursor_position=pos), complete_event)
 
-    col_list = 'id, users.email, users.first_name, users.last_name'
-    expected = [Completion(text=col_list, start_position=-1,
+    expected = [Completion(text=expected, start_position=-1,
                           display='*', display_meta='columns')]
 
     assert expected == completions
