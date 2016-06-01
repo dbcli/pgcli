@@ -758,7 +758,6 @@ class CommandLineInterface(object):
 
             def run():
                 completions = list(buffer.completer.get_completions(document, complete_event))
-                complete_thread_running[0] = False
 
                 def callback():
                     """
@@ -767,6 +766,8 @@ class CommandLineInterface(object):
                     pressed 'Tab' in the meantime. Also don't set it if the text
                     was changed in the meantime.
                     """
+                    complete_thread_running[0] = False
+
                     # Set completions if the text was not yet changed.
                     if buffer.text == document.text and \
                             buffer.cursor_position == document.cursor_position and \
@@ -800,7 +801,7 @@ class CommandLineInterface(object):
                                 go_to_first=select_first or select_first_anyway,
                                 go_to_last=select_last)
                         self.invalidate()
-                    else:
+                    elif not buffer.complete_state:
                         # Otherwise, restart thread.
                         async_completer()
 
@@ -833,9 +834,10 @@ class CommandLineInterface(object):
 
             def run():
                 suggestion = buffer.auto_suggest.get_suggestion(self, buffer, document)
-                suggest_thread_running[0] = False
 
                 def callback():
+                    suggest_thread_running[0] = False
+
                     # Set suggestion only if the text was not yet changed.
                     if buffer.text == document.text and \
                             buffer.cursor_position == document.cursor_position:
