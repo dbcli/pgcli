@@ -36,13 +36,13 @@ class PGCompleter(Completer):
     functions = get_literals('functions')
     datatypes = get_literals('datatypes')
 
-    def __init__(self, smart_completion=True, pgspecial=None, config=None):
+    def __init__(self, smart_completion=True, pgspecial=None, settings=None):
         super(PGCompleter, self).__init__()
         self.smart_completion = smart_completion
         self.pgspecial = pgspecial
         self.prioritizer = PrevalenceCounter()
-        self.config = config or get_config()
-
+        self.asterisk_column_order = (settings or {}).get(
+            'asterisk_column_order', 'name_order')
         self.reserved_words = set()
         for x in self.keywords:
             self.reserved_words.update(x.split())
@@ -344,7 +344,7 @@ class PGCompleter(Completer):
               set(c.name for t, cs in colit() if t.ref != ltbl for c in cs))
         lastword = last_word(word_before_cursor, include='most_punctuations')
         if lastword == '*':
-            if self.config['main']['asterisk_column_order'] == 'alphabetic':
+            if self.asterisk_column_order == 'alphabetic':
                 flat_cols.sort()
                 for cols in scoped_cols.values():
                     cols.sort(key=operator.attrgetter('name'))
