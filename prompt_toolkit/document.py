@@ -77,7 +77,7 @@ class Document(object):
     :param cursor_position: int
     :param selection: :class:`.SelectionState`
     """
-    __slots__ = ('text', 'cursor_position', 'selection', '_cache')
+    __slots__ = ('_text', '_cursor_position', '_selection', '_cache')
 
     def __init__(self, text='', cursor_position=None, selection=None):
         assert isinstance(text, six.text_type), 'Got %r' % text
@@ -94,9 +94,12 @@ class Document(object):
         if cursor_position is None:
             cursor_position = len(text)
 
-        self.text = text
-        self.cursor_position = cursor_position
-        self.selection = selection
+        # Keep these attributes private. A `Document` really has to be
+        # considered to be immutable, because otherwise the caching will break
+        # things. Because of that, we wrap these into read-only properties.
+        self._text = text
+        self._cursor_position = cursor_position
+        self._selection = selection
 
         # Cache for lines/indexes. (Shared with other Document instances that
         # contain the same text.
@@ -114,6 +117,21 @@ class Document(object):
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.text, self.cursor_position)
+
+    @property
+    def text(self):
+        " The document text. "
+        return self._text
+
+    @property
+    def cursor_position(self):
+        " The document cursor position. "
+        return self._cursor_position
+
+    @property
+    def selection(self):
+        " :class:`.SelectionState` object. "
+        return self._selection
 
     @property
     def current_char(self):
