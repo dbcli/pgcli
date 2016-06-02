@@ -49,8 +49,12 @@ class FunctionMetadata(object):
         if self.return_type.lower() == 'void':
             return []
         elif not self.arg_modes:
+            # For functions  without output parameters, the function name
+            # is used as the name of the output column.
+            # E.g. 'SELECT unnest FROM unnest(...);'
             return [ColumnMetadata(self.func_name, self.return_type, [])]
 
-        return [ColumnMetadata(n, t, [])
-            for n, t, m in zip(self.arg_names, self.arg_types, self.arg_modes)
-            if m in ('o', 'b', 't')]
+        return [ColumnMetadata(name, type, [])
+            for name, type, mode in zip(
+                self.arg_names, self.arg_types, self.arg_modes)
+            if mode in ('o', 'b', 't')] # OUT, INOUT, TABLE
