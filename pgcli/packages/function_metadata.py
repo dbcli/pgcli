@@ -3,7 +3,6 @@ from collections import namedtuple
 ColumnMetadata = namedtuple('ColumnMetadata', ['name', 'datatype', 'foreignkeys'])
 ForeignKey = namedtuple('ForeignKey', ['parentschema', 'parenttable',
     'parentcolumn', 'childschema', 'childtable', 'childcolumn'])
-TypedFieldMetadata = namedtuple('TypedFieldMetadata', ['name', 'mode', 'type'])
 
 
 class FunctionMetadata(object):
@@ -55,6 +54,6 @@ class FunctionMetadata(object):
             return [ColumnMetadata(self.func_name, self.return_type, [])]
 
         return [ColumnMetadata(name, type, [])
-            for name, type, mode in zip(
+            for name, typ, mode in zip(
                 self.arg_names, self.arg_types, self.arg_modes)
             if mode in ('o', 'b', 't')] # OUT, INOUT, TABLE
