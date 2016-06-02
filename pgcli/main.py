@@ -95,15 +95,16 @@ class PGCli(object):
         os.environ['LESS'] = '-SRXF'
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
-                 pgexecute=None, pgclirc_file=None):
+                 pgexecute=None, pgclirc_file=None, row_limit=1000):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
+        self.row_limit = row_limit
 
         from pgcli import __file__ as package_root
         package_root = os.path.dirname(package_root)
-        
+
         pgclirc_file = pgclirc_file or '%sconfig' % config_location()
 
         default_config = os.path.join(package_root, 'pgclirc')
@@ -489,6 +490,12 @@ class PGCli(object):
 
             return cli
 
+    def _should_show_limit_prompt(self, status, cur):
+        """returns True if limit prompt should be shown False otherwise."""
+        if not is_select(status):
+            return False
+        return self.row_limit > 0 and cur and cur.rowcount > self.row_limit
+
     def _evaluate_command(self, text):
         """Used to run a command entered by the user during CLI operation
         (Puts the E in REPL)
@@ -516,9 +523,8 @@ class PGCli(object):
             logger.debug("headers: %r", headers)
             logger.debug("rows: %r", cur)
             logger.debug("status: %r", status)
-            threshold = 1000
-            if (is_select(status) and
-                    cur and cur.rowcount > threshold):
+            threshold = self.row_limit
+            if (self._should_show_limit_prompt(status, cur)):
                 click.secho('The result set has more than %s rows.'
                             % threshold, fg='red')
                 if not click.confirm('Do you want to continue?'):
@@ -650,10 +656,12 @@ class PGCli(object):
         envvar='PGCLIRC', help='Location of pgclirc file.')
 @click.option('-D', '--dsn', default='', envvar='DSN',
         help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
+@click.option('-R', '--row-limit', default=1000, envvar='PGROWLIMIT',
+        help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
-        username, version, pgclirc, dsn):
+        username, version, pgclirc, dsn, row_limit):
 
     if version:
         print('Version:', __version__)
@@ -675,7 +683,8 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
             print ('Please move the existing config file ~/.pgclirc to',
                    config_full_path)
 
-    pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc)
+    pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc,
+                  row_limit=row_limit)
 
     # Choose which ever one has a valid value.
     database = database or dbname
