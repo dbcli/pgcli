@@ -6,13 +6,13 @@ LIMIT = DEFAULT + 1000
 
 
 over_default = Mock()
-over_default.configure_mock(rowcount=DEFAULT + 1)
+over_default.configure_mock(rowcount=DEFAULT + 10)
 
 over_limit = Mock()
-over_limit.configure_mock(rowcount=LIMIT + 1)
+over_limit.configure_mock(rowcount=LIMIT + 10)
 
 low_count = Mock()
-low_count.configure_mock(rowcount=10)
+low_count.configure_mock(rowcount=1)
 
 
 def test_default_row_limit():
