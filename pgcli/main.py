@@ -85,7 +85,7 @@ class PGCli(object):
         if configured_pager:
             self.logger.info('Default pager found in config file: ' + '\'' + configured_pager + '\'')
             os.environ['PAGER'] = configured_pager
-        elif (os_environ_pager):
+        elif os_environ_pager:
             self.logger.info('Default pager found in PAGER environment variable: ' + '\'' + os_environ_pager + '\'')
             os.environ['PAGER'] = os_environ_pager
         else:
@@ -524,7 +524,7 @@ class PGCli(object):
             logger.debug("rows: %r", cur)
             logger.debug("status: %r", status)
             threshold = self.row_limit
-            if (self._should_show_limit_prompt(status, cur)):
+            if self._should_show_limit_prompt(status, cur):
                 click.secho('The result set has more than %s rows.'
                             % threshold, fg='red')
                 if not click.confirm('Do you want to continue?'):
