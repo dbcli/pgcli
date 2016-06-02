@@ -48,7 +48,7 @@ table_format = psql
 # colorful, murphy, bw, pastie, paraiso-light, trac, default, fruity
 syntax_style = default
 
-# Keybindings: 
+# Keybindings:
 # When Vi mode is enabled you can use modal editing features offered by Vi in the REPL.
 # When Vi mode is disabled emacs keybindings such as Ctrl-A for home and Ctrl-E
 # for end are available in the REPL.
@@ -60,8 +60,10 @@ vi = False
 # Possible values "STOP" or "RESUME"
 on_error = STOP
 
+# Set threshold for row limit prompt. Use 0 to disable prompt.
+row_limit = 1000
 
-# Custom colors for the completion menu, toolbar, etc. 
+# Custom colors for the completion menu, toolbar, etc.
 [colors]
 Token.Menu.Completions.Completion.Current = 'bg:#ffffff #000000'
 Token.Menu.Completions.Completion = 'bg:#008888 #ffffff'
