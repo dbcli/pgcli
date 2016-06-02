@@ -137,7 +137,7 @@ class PGCli(object):
         # Initialize completer
         smart_completion = c['main'].as_bool('smart_completion')
         settings = {
-            'asterisk_column_order':c['main']['asterisk_column_order']}
+            'asterisk_column_order': c['main']['asterisk_column_order']}
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial,
             settings=settings)
         self.completer = completer

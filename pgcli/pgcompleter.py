@@ -42,7 +42,7 @@ class PGCompleter(Completer):
         self.pgspecial = pgspecial
         self.prioritizer = PrevalenceCounter()
         self.asterisk_column_order = (settings or {}).get(
-            'asterisk_column_order', 'name_order')
+            'asterisk_column_order', 'table_order')
         self.reserved_words = set()
         for x in self.keywords:
             self.reserved_words.update(x.split())
