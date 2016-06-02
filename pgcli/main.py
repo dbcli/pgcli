@@ -491,7 +491,7 @@ class PGCli(object):
             return cli
 
     def _should_show_limit_prompt(self, status, cur):
-        """returns True if limit prompt should be shown False otherwise."""
+        """returns True if limit prompt should be shown, False otherwise."""
         if not is_select(status):
             return False
         return self.row_limit > 0 and cur and cur.rowcount > self.row_limit
