@@ -1,6 +1,6 @@
 from pgcli.packages.sqlcompletion import (
     suggest_type, Special, Database, Schema, Table, Column, View, Keyword,
-    Function, Datatype, Alias, JoinCondition, Join)
+    FromClauseItem, Function, Datatype, Alias, JoinCondition, Join)
 import pytest
 
 # Returns the expected select-clause suggestions for a single-table select
@@ -96,9 +96,7 @@ def test_suggests_tables_views_and_schemas(expression):
 def test_suggest_tables_views_schemas_and_functions(expression):
     suggestions = suggest_type(expression, expression)
     assert set(suggestions) == set([
-        Table(schema=None),
-        View(schema=None),
-        Function(schema=None, filter='for_from_clause'),
+        FromClauseItem(schema=None),
         Schema()
     ])
 
@@ -109,11 +107,10 @@ def test_suggest_tables_views_schemas_and_functions(expression):
 ])
 def test_suggest_after_join_with_two_tables(expression):
     suggestions = suggest_type(expression, expression)
+    tables = tuple([(None, 'foo', None, False), (None, 'bar', None, False)])
     assert set(suggestions) == set([
-        Table(schema=None),
-        View(schema=None),
-        Function(schema=None, filter='for_from_clause'),
-        Join(((None, 'foo', None, False), (None, 'bar', None, False)), None),
+        FromClauseItem(schema=None, tables=tables),
+        Join(tables, None),
         Schema(),
     ])
 
@@ -124,10 +121,9 @@ def test_suggest_after_join_with_two_tables(expression):
 ])
 def test_suggest_after_join_with_one_table(expression):
     suggestions = suggest_type(expression, expression)
+    tables = ((None, 'foo', None, False),)
     assert set(suggestions) == set([
-        Table(schema=None),
-        View(schema=None),
-        Function(schema=None, filter='for_from_clause'),
+        FromClauseItem(schema=None, tables=tables),
         Join(((None, 'foo', None, False),), None),
         Schema(),
     ])
@@ -136,10 +132,20 @@ def test_suggest_after_join_with_one_table(expression):
 @pytest.mark.parametrize('expression', [
     'INSERT INTO sch.',
     'COPY sch.',
-    'UPDATE sch.',
     'DESCRIBE sch.',
 ])
 def test_suggest_qualified_tables_and_views(expression):
+    suggestions = suggest_type(expression, expression)
+    assert set(suggestions) == set([
+        Table(schema='sch'),
+        View(schema='sch'),
+    ])
+
+
+@pytest.mark.parametrize('expression', [
+    'UPDATE sch.',
+])
+def test_suggest_qualified_aliasable_tables_and_views(expression):
     suggestions = suggest_type(expression, expression)
     assert set(suggestions) == set([
         Table(schema='sch'),
@@ -156,11 +162,7 @@ def test_suggest_qualified_tables_and_views(expression):
 ])
 def test_suggest_qualified_tables_views_and_functions(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == set([
-        Table(schema='sch'),
-        View(schema='sch'),
-        Function(schema='sch', filter='for_from_clause'),
-    ])
+    assert set(suggestions) == set([FromClauseItem(schema='sch')])
 
 
 @pytest.mark.parametrize('expression', [
@@ -168,11 +170,10 @@ def test_suggest_qualified_tables_views_and_functions(expression):
 ])
 def test_suggest_qualified_tables_views_functions_and_joins(expression):
     suggestions = suggest_type(expression, expression)
+    tbls = tuple([(None, 'foo', None, False)])
     assert set(suggestions) == set([
-        Table(schema='sch'),
-        View(schema='sch'),
-        Function(schema='sch', filter='for_from_clause'),
-        Join(((None, 'foo', None, False),), 'sch'),
+        FromClauseItem(schema='sch', tables=tbls),
+        Join(tbls, 'sch'),
     ])
 
 
@@ -207,9 +208,7 @@ def test_table_comma_suggests_tables_and_schemas():
     suggestions = suggest_type('SELECT a, b FROM tbl1, ',
             'SELECT a, b FROM tbl1, ')
     assert set(suggestions) == set([
-        Table(schema=None),
-        View(schema=None),
-        Function(schema=None, filter='for_from_clause'),
+        FromClauseItem(schema=None),
         Schema(),
     ])
 
@@ -330,15 +329,24 @@ def test_outer_table_reference_in_exists_subquery_suggests_columns():
 
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM (SELECT * FROM ',
-    'SELECT * FROM foo WHERE EXISTS (SELECT * FROM ',
-    'SELECT * FROM foo WHERE bar AND NOT EXISTS (SELECT * FROM ',
 ])
 def test_sub_select_table_name_completion(expression):
     suggestion = suggest_type(expression, expression)
     assert set(suggestion) == set([
-        Table(schema=None),
-        View(schema=None),
-        Function(schema=None, filter='for_from_clause'),
+        FromClauseItem(schema=None),
+        Schema(),
+    ])
+
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM foo WHERE EXISTS (SELECT * FROM ',
+    'SELECT * FROM foo WHERE bar AND NOT EXISTS (SELECT * FROM ',
+])
+def test_sub_select_table_name_completion_with_outer_table(expression):
+    suggestion = suggest_type(expression, expression)
+    tbls = tuple([(None, 'foo', None, False)])
+    assert set(suggestion) == set([
+        FromClauseItem(schema=None, tables=tbls),
         Schema(),
     ])
 
@@ -376,22 +384,22 @@ def test_sub_select_dot_col_name_completion():
 def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
     text = 'SELECT * FROM abc {0} {1} JOIN '.format(tbl_alias, join_type)
     suggestion = suggest_type(text, text)
+    tbls = tuple([(None, 'abc', tbl_alias or None, False)])
     assert set(suggestion) == set([
-        Table(schema=None),
-        View(schema=None),
-        Function(schema=None, filter='for_from_clause'),
+        FromClauseItem(schema=None, tables=tbls),
         Schema(),
-        Join(((None, 'abc', tbl_alias if tbl_alias else None, False),), None),
+        Join(tbls, None),
     ])
 
 
 def test_left_join_with_comma():
     text = 'select * from foo f left join bar b,'
     suggestions = suggest_type(text, text)
+    # tbls should also include (None, 'bar', 'b', False)
+    # but there's a bug with commas
+    tbls = tuple([(None, 'foo', 'f', False)])
     assert set(suggestions) == set([
-         Table(schema=None),
-         View(schema=None),
-         Function(schema=None, filter='for_from_clause'),
+         FromClauseItem(schema=None, tables=tbls),
          Schema(),
     ])
 
@@ -497,9 +505,7 @@ def test_2_statements_2nd_current():
     suggestions = suggest_type('select * from a; select * from ',
                                'select * from a; select * from ')
     assert set(suggestions) == set([
-        Table(schema=None),
-        View(schema=None),
-        Function(schema=None, filter='for_from_clause'),
+        FromClauseItem(schema=None),
         Schema(),
     ])
 
@@ -515,9 +521,7 @@ def test_2_statements_2nd_current():
     suggestions = suggest_type('select * from; select * from ',
                                'select * from; select * from ')
     assert set(suggestions) == set([
-        Table(schema=None),
-        View(schema=None),
-        Function(schema=None, filter='for_from_clause'),
+        FromClauseItem(schema=None),
         Schema(),
     ])
 
@@ -526,9 +530,7 @@ def test_2_statements_1st_current():
     suggestions = suggest_type('select * from ; select * from b',
                                'select * from ')
     assert set(suggestions) == set([
-        Table(schema=None),
-        View(schema=None),
-        Function(schema=None, filter='for_from_clause'),
+        FromClauseItem(schema=None),
         Schema(),
     ])
 
@@ -541,9 +543,7 @@ def test_3_statements_2nd_current():
     suggestions = suggest_type('select * from a; select * from ; select * from c',
                                'select * from a; select * from ')
     assert set(suggestions) == set([
-        Table(schema=None),
-        View(schema=None),
-        Function(schema=None, filter='for_from_clause'),
+        FromClauseItem(schema=None),
         Schema(),
     ])
 
@@ -698,7 +698,7 @@ def test_select_suggests_fields_from_function():
 ])
 def test_ignore_leading_double_quotes(sql):
     suggestions = suggest_type(sql, sql)
-    assert Table(schema=None) in set(suggestions)
+    assert FromClauseItem(schema=None) in set(suggestions)
 
 
 @pytest.mark.parametrize('sql', [
