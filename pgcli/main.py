@@ -95,12 +95,11 @@ class PGCli(object):
         os.environ['LESS'] = '-SRXF'
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
-                 pgexecute=None, pgclirc_file=None, row_limit=1000):
+                 pgexecute=None, pgclirc_file=None, row_limit=None):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
-        self.row_limit = row_limit
 
         from pgcli import __file__ as package_root
         package_root = os.path.dirname(package_root)
@@ -123,6 +122,10 @@ class PGCli(object):
         self.multi_line = c['main'].as_bool('multi_line')
         self.vi_mode = c['main'].as_bool('vi')
         self.pgspecial.timing_enabled = c['main'].as_bool('timing')
+        if row_limit is not None:
+            self.row_limit = row_limit
+        else:
+            self.row_limit = c['main'].as_int('row_limit')
 
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
@@ -656,7 +659,7 @@ class PGCli(object):
         envvar='PGCLIRC', help='Location of pgclirc file.')
 @click.option('-D', '--dsn', default='', envvar='DSN',
         help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
-@click.option('-R', '--row-limit', default=1000, envvar='PGROWLIMIT',
+@click.option('-R', '--row-limit', default=None, envvar='PGROWLIMIT',
         help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
