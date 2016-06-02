@@ -13,10 +13,12 @@ metadata = {
                 'views': {
                     'user_emails': ['id', 'email']},
                 'functions': [
-                    ['custom_func1', '', '', False, False, False],
-                    ['custom_func2', '', '', False, False, False],
-                    ['set_returning_func', '', 'TABLE (x INT, y INT)',
-                                            False, False, True]],
+                    ['custom_func1', [''], [''], [''], '', False, False,
+                        False],
+                    ['custom_func2', [''], [''], [''], '', False, False,
+                        False],
+                    ['set_returning_func', ['x', 'y'], ['integer', 'integer'],
+                        ['o', 'o'], '', False, False, True]],
                 'datatypes': ['custom_type1', 'custom_type2'],
             }
 
