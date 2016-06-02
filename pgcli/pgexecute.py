@@ -432,6 +432,7 @@ class PGExecute(object):
                     FROM pg_catalog.pg_proc p
                             INNER JOIN pg_catalog.pg_namespace n
                                 ON n.oid = p.pronamespace
+                    WHERE p.prorettype::regtype != 'trigger'::regtype
                     ORDER BY 1, 2
                     '''
                 _logger.debug('Functions Query. sql: %r', query)
@@ -452,6 +453,7 @@ class PGExecute(object):
                     FROM pg_catalog.pg_proc p
                     INNER JOIN pg_catalog.pg_namespace n
                     ON n.oid = p.pronamespace
+                    WHERE p.prorettype::regtype != 'trigger'::regtype
                     ORDER BY 1, 2
                     '''
                 _logger.debug('Functions Query. sql: %r', query)
