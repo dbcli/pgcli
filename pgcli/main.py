@@ -659,7 +659,7 @@ class PGCli(object):
         envvar='PGCLIRC', help='Location of pgclirc file.')
 @click.option('-D', '--dsn', default='', envvar='DSN',
         help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
-@click.option('-R', '--row-limit', default=None, envvar='PGROWLIMIT',
+@click.option('-R', '--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
         help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
