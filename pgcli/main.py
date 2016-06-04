@@ -221,6 +221,7 @@ class PGCli(object):
                      'INFO': logging.INFO,
                      'DEBUG': logging.DEBUG
                      }
+        log_level = level_map[log_level.upper()]
 
         handler = logging.FileHandler(os.path.expanduser(log_file))
 
@@ -232,10 +233,14 @@ class PGCli(object):
 
         root_logger = logging.getLogger('pgcli')
         root_logger.addHandler(handler)
-        root_logger.setLevel(level_map[log_level.upper()])
+        root_logger.setLevel(log_level)
 
         root_logger.debug('Initializing pgcli logging.')
         root_logger.debug('Log file %r.', log_file)
+
+        pgspecial_logger = logging.getLogger('pgspecial')
+        pgspecial_logger.addHandler(handler)
+        pgspecial_logger.setLevel(log_level)
 
     def connect_dsn(self, dsn):
         self.connect(dsn=dsn)
