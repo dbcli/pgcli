@@ -103,7 +103,7 @@ class PGCli(object):
 
         from pgcli import __file__ as package_root
         package_root = os.path.dirname(package_root)
-        
+
         pgclirc_file = pgclirc_file or '%sconfig' % config_location()
 
         default_config = os.path.join(package_root, 'pgclirc')
@@ -136,7 +136,10 @@ class PGCli(object):
 
         # Initialize completer
         smart_completion = c['main'].as_bool('smart_completion')
-        completer = PGCompleter(smart_completion, pgspecial=self.pgspecial)
+        settings = {
+            'asterisk_column_order': c['main']['asterisk_column_order']}
+        completer = PGCompleter(smart_completion, pgspecial=self.pgspecial,
+            settings=settings)
         self.completer = completer
         self._completer_lock = threading.Lock()
         self.register_special_commands()
@@ -576,8 +579,10 @@ class PGCli(object):
 
         callback = functools.partial(self._on_completions_refreshed,
                                      persist_priorities=persist_priorities)
-        self.completion_refresher.refresh(
-            self.pgexecute, self.pgspecial, callback, history=history)
+        settings = {'asterisk_column_order':
+            self.config['main']['asterisk_column_order']}
+        self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
+            callback, history=history, settings=settings)
         return [(None, None, None,
                 'Auto-completion refresh started in the background.')]
 

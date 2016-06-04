@@ -42,3 +42,15 @@ def write_default_config(source, destination, overwrite=False):
 def upgrade_config(config, def_config):
     cfg = load_config(config, def_config)
     cfg.write()
+
+
+def get_config(pgclirc_file=None):
+    from pgcli import __file__ as package_root
+    package_root = os.path.dirname(package_root)
+
+    pgclirc_file = pgclirc_file or '%sconfig' % config_location()
+
+    default_config = os.path.join(package_root, 'pgclirc')
+    write_default_config(default_config, pgclirc_file)
+
+    return load_config(pgclirc_file, default_config)
