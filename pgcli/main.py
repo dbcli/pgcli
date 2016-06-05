@@ -128,7 +128,7 @@ class PGCli(object):
         # Initialize completer
         smart_completion = c['main'].as_bool('smart_completion')
         settings = {'casing_file': get_casing_file(c),
-            'generate_casing_file': c['main']['generate_casing_file'],
+            'generate_casing_file': c['main'].as_bool('generate_casing_file'),
             'asterisk_column_order': c['main']['asterisk_column_order']}
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial,
             settings=settings)
@@ -571,10 +571,10 @@ class PGCli(object):
 
         callback = functools.partial(self._on_completions_refreshed,
                                      persist_priorities=persist_priorities)
-        config = self.config
-        settings = {'casing_file': get_casing_file(config),
-          'generate_casing_file': config['main']['generate_casing_file'],
-          'asterisk_column_order': config['main']['asterisk_column_order']}
+        c = self.config
+        settings = {'casing_file': get_casing_file(c),
+          'generate_casing_file': c['main'].as_bool('generate_casing_file'),
+          'asterisk_column_order': c['main']['asterisk_column_order']}
         self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
             callback, history=history, settings=settings)
         return [(None, None, None,

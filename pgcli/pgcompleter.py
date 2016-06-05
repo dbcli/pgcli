@@ -43,8 +43,7 @@ class PGCompleter(Completer):
         self.prioritizer = PrevalenceCounter()
         settings = settings or {}
         self.casing_file = settings.get('casing_file')
-        self.generate_casing_file = (
-            settings.get('generate_casing_file') == 'True')
+        self.generate_casing_file = settings.get('generate_casing_file')
         self.asterisk_column_order = settings.get(
             'asterisk_column_order', 'table_order')
 
