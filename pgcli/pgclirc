@@ -64,6 +64,8 @@ vi = False
 # Possible values "STOP" or "RESUME"
 on_error = STOP
 
+# Set threshold for row limit prompt. Use 0 to disable prompt.
+row_limit = 1000
 
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
