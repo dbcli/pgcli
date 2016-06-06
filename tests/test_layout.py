@@ -25,3 +25,36 @@ def test_split_lines_2():
         [(Token.B, 'line3')],
         [(Token.B, 'line4')],
     ]
+
+
+def test_split_lines_3():
+    " Edge cases: inputs ending with newlines. "
+    # -1-
+    lines = list(split_lines([
+        (Token.A, 'line1\nline2\n')
+    ]))
+
+    assert lines == [
+        [(Token.A, 'line1')],
+        [(Token.A, 'line2')],
+        [(Token.A, '')],
+    ]
+
+    # -2-
+    lines = list(split_lines([
+        (Token.A, '\n'),
+    ]))
+
+    assert lines == [
+        [],
+        [(Token.A, '')],
+    ]
+
+    # -3-
+    lines = list(split_lines([
+        (Token.A, ''),
+    ]))
+
+    assert lines == [
+        [(Token.A, '')],
+    ]

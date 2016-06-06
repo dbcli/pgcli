@@ -137,10 +137,17 @@ def create_asyncio_eventloop(loop=None):
 
 def _split_multiline_prompt(get_prompt_tokens):
     """
-    Take a `get_prompt_tokens` function and return two new functions instead.
-    One that returns the tokens to be shown on the lines above the input, and
-    another one with the tokens to be shown at the first line of the input.
+    Take a `get_prompt_tokens` function and return three new functions instead.
+    One that tells whether this prompt consists of multiple lines; one that
+    returns the tokens to be shown on the lines above the input; and another
+    one with the tokens to be shown at the first line of the input.
     """
+    def has_before_tokens(cli):
+        for token, char in get_prompt_tokens(cli):
+            if '\n' in char:
+                return True
+        return False
+
     def before(cli):
         result = []
         found_nl = False
@@ -160,7 +167,7 @@ def _split_multiline_prompt(get_prompt_tokens):
                 result.insert(0, (token, char))
         return result
 
-    return before, first_input_line
+    return has_before_tokens, before, first_input_line
 
 
 class _RPrompt(Window):
@@ -221,7 +228,8 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
     if get_prompt_tokens is None:
         get_prompt_tokens = lambda _: [(Token.Prompt, message)]
 
-    get_prompt_tokens_1, get_prompt_tokens_2 = _split_multiline_prompt(get_prompt_tokens)
+    has_before_tokens, get_prompt_tokens_1, get_prompt_tokens_2 = \
+        _split_multiline_prompt(get_prompt_tokens)
 
     # `lexer` is supposed to be a `Lexer` instance. But if a Pygments lexer
     # class is given, turn it into a PygmentsLexer. (Important for
@@ -286,9 +294,12 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
         # The main input, with completion menus floating on top of it.
         FloatContainer(
             HSplit([
-                Window(
-                    TokenListControl(get_prompt_tokens_1),
-                    dont_extend_height=True),
+                ConditionalContainer(
+                    Window(
+                        TokenListControl(get_prompt_tokens_1),
+                        dont_extend_height=True),
+                    Condition(has_before_tokens)
+                ),
                 Window(
                     BufferControl(
                         input_processors=input_processors,

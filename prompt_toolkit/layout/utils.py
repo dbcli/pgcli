@@ -62,7 +62,7 @@ def iter_token_lines(tokenlist):
 def split_lines(tokenlist):
     """
     Take a single list of (Token, text) tuples and yield one such list for each
-    line.
+    line. Just like str.split, this will yield at least one item.
 
     :param tokenlist: List of (token, text) or (token, text, mouse_handler)
                       tuples.
@@ -100,8 +100,11 @@ def split_lines(tokenlist):
 
             line.append((token, parts[-1], mouse_handler))
 
-    if line:
-        yield line
+    # Always yield the last line, even when this is an empty line. This ensures
+    # that when `tokenlist` ends with a newline character, an additional empty
+    # line is yielded. (Otherwise, there's no way to differentiate between the
+    # cases where `tokenlist` does and doesn't end with a newline.)
+    yield line
 
 
 class _ExplodedList(list):
