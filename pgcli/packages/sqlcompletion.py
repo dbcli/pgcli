@@ -320,6 +320,11 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text,
             return (rel_type(schema=schema),)
         else:
             return (Schema(), rel_type(schema=schema))
+
+    elif token_v == 'column':
+        # E.g. 'ALTER TABLE foo ALTER COLUMN bar
+        return (Column(tables=extract_tables(text_before_cursor)),)
+
     elif token_v == 'on':
         tables = extract_tables(text_before_cursor)  # [(schema, table, alias), ...]
         parent = (identifier and identifier.get_parent_name()) or None
