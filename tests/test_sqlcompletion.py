@@ -699,3 +699,16 @@ def test_ignore_leading_double_quotes(sql):
     suggestions = suggest_type(sql, sql)
     assert Table(schema=None) in set(suggestions)
 
+
+@pytest.mark.parametrize('sql', [
+    'ALTER TABLE foo ALTER COLUMN ',
+    'ALTER TABLE foo ALTER COLUMN bar',
+    'ALTER TABLE foo DROP COLUMN ',
+    'ALTER TABLE foo DROP COLUMN bar',
+])
+def test_column_keyword_suggests_columns(sql):
+    suggestions = suggest_type(sql, sql)
+    assert set(suggestions) == set([
+        Column(tables=((None, 'foo', None, False),)),
+    ])
+
