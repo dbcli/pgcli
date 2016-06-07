@@ -278,7 +278,7 @@ class PGExecute(object):
         # conn.notices persist between queies, we use pop to clear out the list
         title = ''
         while len(self.conn.notices) > 0:
-            title = title + utf8tounicode(self.conn.notices.pop())
+            title = utf8tounicode(self.conn.notices.pop()) + title
 
         # cur.description will be None for operations that do not return
         # rows.
