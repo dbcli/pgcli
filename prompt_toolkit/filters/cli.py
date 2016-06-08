@@ -23,6 +23,7 @@ __all__ = (
     'InEditingMode',
 
     # Vi modes.
+    'ViMode',
     'ViNavigationMode',
     'ViInsertMode',
     'ViReplaceMode',
