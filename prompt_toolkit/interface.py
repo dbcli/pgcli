@@ -740,6 +740,16 @@ class CommandLineInterface(object):
         """
         complete_thread_running = [False]  # By ref.
 
+        def completion_does_nothing(document, completion):
+            """
+            Return `True` if applying this completion doesn't have any effect.
+            (When it doesn't insert any new text.
+            """
+            text_before_cursor = document.text_before_cursor
+            replaced_text = text_before_cursor[
+                len(text_before_cursor) + completion.start_position:]
+            return replaced_text == completion.text
+
         def async_completer(select_first=False, select_last=False,
                             insert_common_part=False, complete_event=None):
             document = buffer.document
@@ -767,6 +777,12 @@ class CommandLineInterface(object):
                     was changed in the meantime.
                     """
                     complete_thread_running[0] = False
+
+                    # When there is only one completion, which has nothing to add, ignore it.
+                    text_before_cursor = document.text_before_cursor
+                    if (len(completions) == 1 and
+                            completion_does_nothing(document, completions[0])):
+                        del completions[:]
 
                     # Set completions if the text was not yet changed.
                     if buffer.text == document.text and \
