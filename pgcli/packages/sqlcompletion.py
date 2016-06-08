@@ -41,8 +41,10 @@ View.__new__.__defaults__ = (None, tuple())
 FromClauseItem.__new__.__defaults__ = (None, tuple(), tuple())
 
 Column = namedtuple(
-    'Column', ['table_refs', 'require_last_table', 'local_tables'])
-Column.__new__.__defaults__ = (None, None, tuple())
+    'Column',
+    ['table_refs', 'require_last_table', 'local_tables', 'qualifiable']
+)
+Column.__new__.__defaults__ = (None, None, tuple(), False)
 
 Keyword = namedtuple('Keyword', [])
 NamedQuery = namedtuple('NamedQuery', [])
@@ -340,10 +342,13 @@ def suggest_based_on_last_token(token, stmt):
             return (Column(table_refs=stmt.get_tables('insert')),)
         # We're probably in a function argument list
         return (Column(table_refs=extract_tables(stmt.full_text),
-                       local_tables=stmt.local_tables),)
-    elif token_v in ('set', 'by', 'distinct'):
+                       local_tables=stmt.local_tables, qualifiable=True),)
+    elif token_v == 'set':
         return (Column(table_refs=stmt.get_tables(),
                        local_tables=stmt.local_tables),)
+    elif token_v in ('by', 'distinct'):
+        return (Column(table_refs=stmt.get_tables(),
+                       local_tables=stmt.local_tables, qualifiable=True),)
     elif token_v in ('select', 'where', 'having'):
         # Check for a table alias or schema qualification
         parent = (stmt.identifier and stmt.identifier.get_parent_name()) or []
@@ -355,7 +360,8 @@ def suggest_based_on_last_token(token, stmt):
                     View(schema=parent),
                     Function(schema=parent),)
         else:
-            return (Column(table_refs=tables, local_tables=stmt.local_tables),
+            return (Column(table_refs=tables, local_tables=stmt.local_tables,
+                           qualifiable=True),
                     Function(schema=None),
                     Keyword(),)
     elif token_v == 'as':

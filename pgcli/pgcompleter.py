@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 import logging
 import re
-from itertools import count, repeat, chain
+from itertools import count, repeat
 import operator
 from collections import namedtuple, defaultdict
 from pgspecial.namedqueries import NamedQueries
@@ -30,7 +30,10 @@ NamedQueries.instance = NamedQueries.from_config(
 
 
 Match = namedtuple('Match', ['completion', 'priority'])
-Candidate = namedtuple('Candidate', ['completion', 'priority', 'meta'])
+
+_Candidate = namedtuple('Candidate', ['completion', 'priority', 'meta', 'synonyms'])
+def Candidate(completion, priority, meta, synonyms = None):
+    return _Candidate(completion, priority, meta, synonyms or [completion])
 
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
@@ -58,6 +61,8 @@ class PGCompleter(Completer):
         self.generate_aliases = settings.get('generate_aliases')
         self.casing_file = settings.get('casing_file')
         self.generate_casing_file = settings.get('generate_casing_file')
+        self.qualify_columns = settings.get(
+            'qualify_columns', 'if_more_than_one_table')
         self.asterisk_column_order = settings.get(
             'asterisk_column_order', 'table_order')
 
@@ -304,15 +309,16 @@ class PGCompleter(Completer):
 
         matches = []
         for cand in collection:
-            if isinstance(cand, Candidate):
-                item, prio, met = cand
+            if isinstance(cand, _Candidate):
+                item, prio, display_meta, synonyms = cand
             else:
-                item, met, prio = cand, meta, 0
-            sort_key = _match(item)
+                item, display_meta, prio, synonyms = cand, meta, 0, [cand]
+
+            sort_key = max(_match(x) for x in synonyms)
             if sort_key:
-                if meta and len(meta) > 50:
+                if display_meta and len(display_meta) > 50:
                     # Truncate meta-text to 50 characters, if necessary
-                    met = met[:47] + u'...'
+                    display_meta = display_meta[:47] + u'...'
 
                 # Lexical order of items in the collection, used for
                 # tiebreaking items with the same match group length and start
@@ -331,7 +337,8 @@ class PGCompleter(Completer):
                 priority = sort_key, type_priority, prio, priority_func(item), lexical_priority
 
                 matches.append(Match(
-                    completion=Completion(item, -text_len, display_meta=met),
+                    completion=Completion(item, -text_len,
+                    display_meta=display_meta),
                     priority=priority))
         return matches
 
@@ -373,12 +380,20 @@ class PGCompleter(Completer):
 
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.table_refs
+        do_qualify = suggestion.qualifiable and {'always': True, 'never': False,
+            'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
+        qualify = lambda col, tbl: (
+            (tbl + '.' + self.case(col)) if do_qualify else self.case(col))
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables, suggestion.local_tables)
 
         colit = scoped_cols.items
-        flat_cols = list(chain(*((c.name for c in cols)
-            for t, cols in colit())))
+        def make_cand(name, ref):
+            return Candidate(qualify(name, ref), 0, 'column', [name])
+        flat_cols = []
+        for t, cols in colit():
+            for c in cols:
+                flat_cols.append(make_cand(c.name, t.ref))
         if suggestion.require_last_table:
             # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
             # suggest only columns that appear in the last table and one more
@@ -397,14 +412,10 @@ class PGCompleter(Completer):
                 # User typed x.*; replicate "x." for all columns except the
                 # first, which gets the original (as we only replace the "*"")
                 sep = ', ' + word_before_cursor[:-1]
-                collist = sep.join(self.case(c) for c in flat_cols)
-            elif len(scoped_cols) > 1:
-                # Multiple tables; qualify all columns
-                collist = ', '.join(t.ref + '.' + self.case(c.name)
-                    for t, cs in colit() for c in cs)
+                collist = sep.join(self.case(c.completion) for c in flat_cols)
             else:
-                # Plain columns
-                collist = ', '.join(self.case(c) for c in flat_cols)
+                collist = ', '.join(qualify(c.name, t.ref)
+                    for t, cs in colit() for c in cs)
 
             return [Match(completion=Completion(collist, -1,
                 display_meta='columns', display='*'), priority=(1,1,1))]
