@@ -315,7 +315,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text,
             suggest.append(Function(schema=schema, filter='for_from_clause'))
 
         if (token_v.endswith('join') and token.is_keyword
-          and _allow_join_suggestion(parsed_statement)):
+          and _allow_join(parsed_statement)):
             tables = extract_tables(text_before_cursor)
             suggest.append(Join(tables=tables, schema=schema))
 
@@ -346,15 +346,15 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text,
                     View(schema=parent),
                     Function(schema=parent)]
             last_token = parsed_statement
-            if _allow_join_condition_suggestion(parsed_statement):
+            if filteredtables and _allow_join_condition(parsed_statement):
                 sugs.append(JoinCondition(tables=tables,
                     parent=filteredtables[-1]))
             return tuple(sugs)
         else:
             # ON <suggestion>
             # Use table alias if there is one, otherwise the table name
-            aliases = tuple(t.alias or t.name for t in tables)
-            if _allow_join_condition_suggestion(parsed_statement):
+            aliases = tuple(t.ref for t in tables)
+            if _allow_join_condition(parsed_statement):
                 return (Alias(aliases=aliases), JoinCondition(
                     tables=tables, parent=None))
             else:
@@ -397,7 +397,7 @@ def identifies(id, ref):
         ref.schema and (id == ref.schema + '.' + ref.name))
 
 
-def _allow_join_condition_suggestion(statement):
+def _allow_join_condition(statement):
     """
     Tests if a join condition should be suggested
 
@@ -417,7 +417,7 @@ def _allow_join_condition_suggestion(statement):
     return last_tok.value.lower() in ('on', 'and', 'or')
 
 
-def _allow_join_suggestion(statement):
+def _allow_join(statement):
     """
     Tests if a join should be suggested
 
