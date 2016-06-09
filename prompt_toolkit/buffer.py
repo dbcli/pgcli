@@ -805,7 +805,6 @@ class Buffer(object):
         Move forwards through the history.
 
         :param count: Amount of items to move forward.
-        :param history_search: When True, filter history using ``self.history_search_text``.
         """
         self._set_history_search()
 
