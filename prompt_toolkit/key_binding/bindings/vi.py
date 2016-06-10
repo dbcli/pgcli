@@ -1020,16 +1020,13 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         """
         return TextObject(event.current_buffer.document.get_start_of_line_position(after_whitespace=False))
 
-    def create_ci_ca_handles(ci_start, ci_end, inner):
-                # TODO: 'dab', 'dib', (brackets or block) 'daB', 'diB', Braces.
+    def create_ci_ca_handles(ci_start, ci_end, inner, key=None):
                 # TODO: 'dat', 'dit', (tags (like xml)
         """
         Delete/Change string between this start and stop character. But keep these characters.
         This implements all the ci", ci<, ci{, ci(, di", di<, ca", ca<, ... combinations.
         """
-        @text_object('ai'[inner], ci_start, no_move_handler=True)
-        @text_object('ai'[inner], ci_end, no_move_handler=True)
-        def _(event):
+        def handler(event):
             if ci_start == ci_end:
                 # Quotes
                 start = event.current_buffer.document.find_backwards(ci_start, in_current_line=False)
@@ -1046,10 +1043,19 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
                 # Nothing found.
                 return TextObject(0)
 
+        if key is None:
+            text_object('ai'[inner], ci_start, no_move_handler=True)(handler)
+            text_object('ai'[inner], ci_end, no_move_handler=True)(handler)
+        else:
+            text_object('ai'[inner], key, no_move_handler=True)(handler)
+
     for inner in (False, True):
         for ci_start, ci_end in [('"', '"'), ("'", "'"), ("`", "`"),
                                  ('[', ']'), ('<', '>'), ('{', '}'), ('(', ')')]:
             create_ci_ca_handles(ci_start, ci_end, inner)
+
+        create_ci_ca_handles('(', ')', inner, 'b')  # 'dab', 'dib'
+        create_ci_ca_handles('{', '}', inner, 'B')  # 'daB', 'diB'
 
     @text_object('{')
     def _(event):
