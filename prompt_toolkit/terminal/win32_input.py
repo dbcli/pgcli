@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ctypes import windll, pointer
 from ctypes.wintypes import DWORD
 from six.moves import range
