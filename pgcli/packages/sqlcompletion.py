@@ -434,4 +434,4 @@ def _allow_join_suggestion(statement):
 
     last_tok = statement.token_prev(len(statement.tokens))
     return (last_tok.value.lower().endswith('join')
-        and last_tok.value.lower() != 'cross join')
+        and last_tok.value.lower() not in('cross join', 'natural join'))

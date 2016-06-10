@@ -455,7 +455,8 @@ def test_join_using_suggests_columns_after_first_column(completer, complete_even
 
 @pytest.mark.parametrize('text', [
     'SELECT * FROM ',
-    'SELECT * FROM users CROSS JOIN '
+    'SELECT * FROM users CROSS JOIN ',
+    'SELECT * FROM users natural join '
 ])
 def test_table_names_after_from(completer, complete_event, text):
     position = len(text)
