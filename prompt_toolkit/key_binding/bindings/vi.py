@@ -653,8 +653,25 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         c = buffer.document.current_char
 
         if c is not None and c != '\n':
-            c = (c.upper() if c.islower() else c.lower())
-            buffer.insert_text(c, overwrite=True)
+            buffer.insert_text(c.swapcase(), overwrite=True)
+
+    @handle('g', 'u', 'u', filter=navigation_mode & ~IsReadOnly())
+    def _(event):
+        " Lowercase current line. "
+        buff = event.current_buffer
+        buff.transform_current_line(lambda s: s.lower())
+
+    @handle('g', 'U', 'U', filter=navigation_mode & ~IsReadOnly())
+    def _(event):
+        " Uppercase current line. "
+        buff = event.current_buffer
+        buff.transform_current_line(lambda s: s.upper())
+
+    @handle('g', '~', '~', filter=navigation_mode & ~IsReadOnly())
+    def _(event):
+        " Swap case of the current line. "
+        buff = event.current_buffer
+        buff.transform_current_line(lambda s: s.swapcase())
 
     @handle('#', filter=navigation_mode)
     def _(event):

@@ -482,6 +482,20 @@ class Buffer(object):
 
         return '\n'.join(lines)
 
+    def transform_current_line(self, transform_callback):
+        """
+        Apply the given transformation function to the current line.
+
+        :param transform_callback: callable that takes a string and return a new string.
+        """
+        document = self.document
+        a = document.cursor_position + document.get_start_of_line_position()
+        b = document.cursor_position + document.get_end_of_line_position()
+        self.text = (
+            document.text[:a] +
+            transform_callback(document.text[a:b]) +
+            document.text[b:])
+
     def transform_region(self, from_, to, transform_callback):
         """
         Transform a part of the input string.
