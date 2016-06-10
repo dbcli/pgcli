@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import pytest
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
-from pgcli.packages.function_metadata import FunctionMetadata
+from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
 metadata = {
                 'tables': {
@@ -20,6 +20,9 @@ metadata = {
                     ['set_returning_func', ['x', 'y'], ['integer', 'integer'],
                         ['o', 'o'], '', False, False, True]],
                 'datatypes': ['custom_type1', 'custom_type2'],
+                'foreignkeys': [
+                    ('public', 'users', 'id', 'public', 'Users', 'userid')
+                ],
             }
 
 @pytest.fixture
@@ -58,6 +61,10 @@ def completer():
     # types
     datatypes = [('public', typ) for typ in metadata['datatypes']]
     comp.extend_datatypes(datatypes)
+
+    # fks
+    foreignkeys = [ForeignKey(*fk) for fk in metadata['foreignkeys']]
+    comp.extend_foreignkeys(foreignkeys)
 
     comp.set_search_path(['public'])
 
@@ -304,6 +311,52 @@ def test_suggest_columns_after_three_way_join(completer, complete_event):
             set(result))
 
 @pytest.mark.parametrize('text', [
+    'SELECT * FROM users u JOIN "Users" u2 ON ',
+    'SELECT * FROM users u INNER join "Users" u2 ON ',
+    'SELECT * FROM USERS u right JOIN "Users" u2 ON ',
+    'SELECT * FROM users u LEFT JOIN "Users" u2 ON ',
+    'SELECT * FROM Users u FULL JOIN "Users" u2 ON ',
+    'SELECT * FROM users u right outer join "Users" u2 ON ',
+    'SELECT * FROM Users u LEFT OUTER JOIN "Users" u2 ON ',
+    'SELECT * FROM users u FULL OUTER JOIN "Users" u2 ON ',
+    '''SELECT *
+    FROM users u
+    FULL OUTER JOIN "Users" u2 ON '''
+])
+def test_suggested_join_conditions(completer, complete_event, text):
+    position = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='u', start_position=0, display_meta='table alias'),
+        Completion(text='u2', start_position=0, display_meta='table alias'),
+        Completion(text='u2.userid = u.id', start_position=0, display_meta='fk join')])
+
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM users JOIN ',
+    '''SELECT *
+    FROM users
+    INNER JOIN '''
+])
+def test_suggested_joins(completer, complete_event, text):
+    position = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='"Users" ON "Users".userid = users.id', start_position=0, display_meta='join'),
+        Completion(text='public', start_position=0, display_meta='schema'),
+        Completion(text='"Users"', start_position=0, display_meta='table'),
+        Completion(text='"select"', start_position=0, display_meta='table'),
+        Completion(text='orders', start_position=0, display_meta='table'),
+        Completion(text='users', start_position=0, display_meta='table'),
+        Completion(text='user_emails', start_position=0, display_meta='view'),
+        Completion(text='custom_func2', start_position=0, display_meta='function'),
+        Completion(text='set_returning_func', start_position=0, display_meta='function'),
+        Completion(text='custom_func1', start_position=0, display_meta='function')])
+
+@pytest.mark.parametrize('text', [
     'SELECT u.name, o.id FROM users u JOIN orders o ON ',
     'SELECT u.name, o.id FROM users u JOIN orders o ON JOIN orders o2 ON'
 ])
@@ -400,12 +453,15 @@ def test_join_using_suggests_columns_after_first_column(completer, complete_even
         Completion(text='email', start_position=0, display_meta='column'),
         ])
 
-def test_table_names_after_from(completer, complete_event):
-    text = 'SELECT * FROM '
-    position = len('SELECT * FROM ')
-    result = set(completer.get_completions(
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM ',
+    'SELECT * FROM users CROSS JOIN '
+])
+def test_table_names_after_from(completer, complete_event, text):
+    position = len(text)
+    result = completer.get_completions(
         Document(text=text, cursor_position=position),
-        complete_event))
+        complete_event)
     assert set(result) == set([
         Completion(text='public', start_position=0, display_meta='schema'),
         Completion(text='users', start_position=0, display_meta='table'),
@@ -417,13 +473,6 @@ def test_table_names_after_from(completer, complete_event):
         Completion(text='custom_func2', start_position=0, display_meta='function'),
         Completion(text='set_returning_func', start_position=0, display_meta='function')
         ])
-
-def test_table_names_after_from_are_lexical_ordered_by_text(completer, complete_event):
-    text = 'SELECT * FROM '
-    position = len('SELECT * FROM ')
-    result = completer.get_completions(
-        Document(text=text, cursor_position=position),
-        complete_event)
     assert [c.text for c in result] == [
         '"Users"',
         'custom_func1',

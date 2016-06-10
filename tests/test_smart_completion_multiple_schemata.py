@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import pytest
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
-from pgcli.packages.function_metadata import FunctionMetadata
+from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
 metadata = {
             'tables': {
@@ -37,6 +37,9 @@ metadata = {
                             'public':   ['typ1', 'typ2'],
                             'custom':   ['typ3', 'typ4'],
                          },
+                'foreignkeys': [
+                    ('public', 'users', 'id', 'custom', 'shipments', 'user_id')
+                ],
             }
 
 @pytest.fixture
@@ -63,11 +66,14 @@ def completer():
                     for schema, datatypes in metadata['datatypes'].items()
                     for datatype in datatypes]
 
+    foreignkeys = [ForeignKey(*fk) for fk in metadata['foreignkeys']]
+
     comp.extend_schemata(schemata)
     comp.extend_relations(tables, kind='tables')
     comp.extend_columns(columns, kind='tables')
     comp.extend_functions(functions)
     comp.extend_datatypes(datatypes)
+    comp.extend_foreignkeys(foreignkeys)
     comp.set_search_path(['public'])
 
     return comp
@@ -134,6 +140,45 @@ def test_suggested_column_names_from_qualified_shadowed_table(completer, complet
         list(map(lambda f: Completion(f, display_meta='function'), completer.functions)) +
         list(map(lambda x: Completion(x, display_meta='keyword'), completer.keywords))
         )
+
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM users JOIN custom.shipments ON ',
+    '''SELECT *
+    FROM public.users
+    JOIN custom.shipments ON '''
+])
+def test_suggested_join_conditions(completer, complete_event, text):
+    position = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='users', start_position=0, display_meta='table alias'),
+        Completion(text='shipments', start_position=0, display_meta='table alias'),
+        Completion(text='shipments.id = users.id', start_position=0, display_meta='name join'),
+        Completion(text='shipments.user_id = users.id', start_position=0, display_meta='fk join')])
+
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM public.users RIGHT OUTER JOIN ',
+    '''SELECT *
+    FROM users
+    JOIN '''
+])
+def test_suggested_joins(completer, complete_event, text):
+    position = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='custom.shipments ON shipments.user_id = users.id', start_position=0, display_meta='join'),
+        Completion(text='public', start_position=0, display_meta='schema'),
+        Completion(text='custom', start_position=0, display_meta='schema'),
+        Completion(text='"Custom"', start_position=0, display_meta='schema'),
+        Completion(text='orders', start_position=0, display_meta='table'),
+        Completion(text='users', start_position=0, display_meta='table'),
+        Completion(text='"select"', start_position=0, display_meta='table'),
+        Completion(text='func1', start_position=0, display_meta='function'),
+        Completion(text='func2', start_position=0, display_meta='function')])
 
 def test_suggested_column_names_from_schema_qualifed_table(completer, complete_event):
     """

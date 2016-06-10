@@ -392,10 +392,9 @@ class PGCompleter(Completer):
         tblprio = dict((t.ref, n) for n, t in enumerate(suggestion.tables))
         joins, prios = [], []
         # Iterate over FKs in existing tables to find potential joins
-        for fk, rtbl, rcol in ((fk, rtbl, rcol)
-          for rtbl, rcols in scoped_cols.items()
-          for rcol in rcols
-          for fk in rcol.foreignkeys):
+        fks = ((fk, rtbl, rcol) for rtbl, rcols in scoped_cols.items()
+            for rcol in rcols for fk in rcol.foreignkeys)
+        for fk, rtbl, rcol in fks:
             if (fk.childschema, fk.childtable, fk.childcolumn) == (
               rtbl.schema, rtbl.name, rcol.name):
                 lsch = fk.parentschema

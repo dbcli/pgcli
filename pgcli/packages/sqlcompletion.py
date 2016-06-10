@@ -21,7 +21,9 @@ Special = namedtuple('Special', [])
 Database = namedtuple('Database', [])
 Schema = namedtuple('Schema', [])
 Table = namedtuple('Table', ['schema'])
+# JoinConditions are suggested after ON, e.g. 'foo.barid = bar.barid'
 JoinCondition = namedtuple('JoinCondition', ['tables', 'parent'])
+# Joins are suggested after JOIN, e.g. 'foo ON foo.barid = bar.barid'
 Join = namedtuple('Join', ['tables', 'schema'])
 
 Function = namedtuple('Function', ['schema', 'filter'])
@@ -431,4 +433,5 @@ def _allow_join_suggestion(statement):
         return False
 
     last_tok = statement.token_prev(len(statement.tokens))
-    return last_tok.value.lower().endswith('join')
+    return (last_tok.value.lower().endswith('join')
+        and last_tok.value.lower() != 'cross join')
