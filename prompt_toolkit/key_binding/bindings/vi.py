@@ -358,7 +358,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         lines = buffer.document.lines
 
         before = '\n'.join(lines[:buffer.document.cursor_position_row])
-        deleted = '\n'.join(lines[buffer.document.cursor_position_row: buffer.document.cursor_position_row + event.arg])
+        deleted = '\n'.join(lines[buffer.document.cursor_position_row:
+                                  buffer.document.cursor_position_row + event.arg])
         after = '\n'.join(lines[buffer.document.cursor_position_row + event.arg:])
 
         # Set new text.
