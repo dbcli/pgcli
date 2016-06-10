@@ -577,7 +577,7 @@ class Buffer(object):
         else:
             return ''
 
-    def join_next_line(self):
+    def join_next_line(self, separator=' '):
         """
         Join the next line to the current one by deleting the line ending after
         the current line.
@@ -587,10 +587,10 @@ class Buffer(object):
             self.delete()
 
             # Remove spaces.
-            self.text = (self.document.text_before_cursor + ' ' +
+            self.text = (self.document.text_before_cursor + separator +
                          self.document.text_after_cursor.lstrip(' '))
 
-    def join_selected_lines(self):
+    def join_selected_lines(self, separator=' '):
         """
         Join the selected lines.
         """
@@ -604,7 +604,7 @@ class Buffer(object):
         after = self.text[to:]
 
         # Replace leading spaces with just one space.
-        lines = [l.lstrip(' ') + ' ' for l in lines]
+        lines = [l.lstrip(' ') + separator for l in lines]
 
         # Set new document.
         self.document = Document(text=before + ''.join(lines) + after,

@@ -395,14 +395,25 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
 
     @handle('J', filter=navigation_mode & ~IsReadOnly())
     def _(event):
-        """ Join lines. """
+        " Join lines. "
         for i in range(event.arg):
             event.current_buffer.join_next_line()
 
+    @handle('g', 'J', filter=navigation_mode & ~IsReadOnly())
+    def _(event):
+        " Join lines without space. "
+        for i in range(event.arg):
+            event.current_buffer.join_next_line(separator='')
+
     @handle('J', filter=selection_mode & ~IsReadOnly())
     def _(event):
-        """ Join selected lines. """
+        " Join selected lines. "
         event.current_buffer.join_selected_lines()
+
+    @handle('g', 'J', filter=selection_mode & ~IsReadOnly())
+    def _(event):
+        " Join selected lines without space. "
+        event.current_buffer.join_selected_lines(separator='')
 
     @handle('n', filter=navigation_mode)
     def _(event):  # XXX: use `text_object`
