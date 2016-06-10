@@ -170,6 +170,7 @@ class InputProcessor(object):
                             self._call_handler(matches[-1], key_sequence=buffer[:i])
                             del buffer[:i]
                             found = True
+                            break
 
                     if not found:
                         del buffer[:1]

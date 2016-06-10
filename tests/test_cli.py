@@ -187,6 +187,10 @@ def test_vi_text_objects():
     result, cli = feed('hello\x1bgUgg\n')
     assert result.text == 'HELLO'
 
+    # Esc gUU
+    result, cli = feed('hello\x1bgUU\n')
+    assert result.text == 'HELLO'
+
     # Esc di(
     result, cli = feed('before(inside)after\x1b8hdi(\n')
     assert result.text == 'before()after'
