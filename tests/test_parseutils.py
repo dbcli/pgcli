@@ -12,10 +12,17 @@ def test_simple_select_single_table():
 
 
 @pytest.mark.parametrize('sql', [
-    'select * from abc.def',
-    'select * from "abc".def',
     'select * from "abc"."def"',
     'select * from abc."def"',
+])
+def test_simple_select_single_table_schema_qualified_quoted_table(sql):
+    tables = extract_tables(sql)
+    assert tables == (('abc', 'def', '"def"', False),)
+
+
+@pytest.mark.parametrize('sql', [
+    'select * from abc.def',
+    'select * from "abc".def',
 ])
 def test_simple_select_single_table_schema_qualified(sql):
     tables = extract_tables(sql)

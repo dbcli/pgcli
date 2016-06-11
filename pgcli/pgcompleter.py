@@ -30,6 +30,7 @@ NamedQueries.instance = NamedQueries.from_config(
 
 Match = namedtuple('Match', ['completion', 'priority'])
 
+normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
 class PGCompleter(Completer):
     keywords = get_literals('keywords')
@@ -384,38 +385,50 @@ class PGCompleter(Completer):
 
         return self.find_matches(word_before_cursor, flat_cols, meta='column')
 
+    def generate_alias(self, tbl, tbls):
+        if tbl[0] == '"':
+            aliases = ('"' + tbl[1:-1] + str(i) + '"' for i in itertools.count(2))
+        else:
+            aliases = (self.case(tbl) + str(i) for i in itertools.count(2))
+        return (a for a in aliases if normalize_ref(a) not in tbls).next()
+
     def get_join_matches(self, suggestion, word_before_cursor):
-        scoped_cols = self.populate_scoped_cols(suggestion.tables)
+        tbls = suggestion.tables
+        cols = self.populate_scoped_cols(tbls)
         # Set up some data structures for efficient access
-        qualified = dict((t.ref, t.schema) for t in suggestion.tables)
-        tbls = set((t.schema, t.name) for t in scoped_cols.keys())
-        tblprio = dict((t.ref, n) for n, t in enumerate(suggestion.tables))
+        qualified = dict((normalize_ref(t.ref), t.schema) for t in tbls)
+        ref_prio = dict((normalize_ref(t.ref), n) for n, t in enumerate(tbls))
+        refs = set(normalize_ref(t.ref) for t in tbls)
+        other_tbls = set((t.schema, t.name) for t in cols.keys()[:-1])
         joins, prios = [], []
         # Iterate over FKs in existing tables to find potential joins
-        fks = ((fk, rtbl, rcol) for rtbl, rcols in scoped_cols.items()
+        fks = ((fk, rtbl, rcol) for rtbl, rcols in cols.items()
             for rcol in rcols for fk in rcol.foreignkeys)
+        col = namedtuple('col', 'schema tbl col')
         for fk, rtbl, rcol in fks:
-            if (fk.childschema, fk.childtable, fk.childcolumn) == (
-              rtbl.schema, rtbl.name, rcol.name):
-                lsch = fk.parentschema
-                ltbl = fk.parenttable
-                lcol = fk.parentcolumn
-            else:
-                lsch = fk.childschema
-                ltbl = fk.childtable
-                lcol = fk.childcolumn
-            if suggestion.schema and lsch != suggestion.schema:
+            right = col(rtbl.schema, rtbl.name, rcol.name)
+            child = col(fk.childschema, fk.childtable, fk.childcolumn)
+            parent = col(fk.parentschema, fk.parenttable, fk.parentcolumn)
+            left = child if parent == right else parent
+            if suggestion.schema and left.schema != suggestion.schema:
                 continue
-            rsch, rtbl, rcol = rtbl.schema, rtbl.ref, rcol.name
-            join = '{0} ON {0}.{1} = {2}.{3}'.format(
-                self.case(ltbl), self.case(lcol), rtbl, self.case(rcol))
+            c = self.case
+            if normalize_ref(left.tbl) in refs:
+                lref = self.generate_alias(left.tbl, refs)
+                join = '{0} {4} ON {4}.{1} = {2}.{3}'.format(
+                    c(left.tbl), c(left.col), rtbl.ref, c(right.col), lref)
+            else:
+                join = '{0} ON {0}.{1} = {2}.{3}'.format(
+                    c(left.tbl), c(left.col), rtbl.ref, c(right.col))
             # Schema-qualify if (1) new table in same schema as old, and old
             # is schema-qualified, or (2) new in other schema, except public
-            if not suggestion.schema and (qualified[rtbl] and lsch == rsch
-              or lsch not in(rsch, 'public')):
-                join = lsch + '.' + join
+            if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)]
+                and left.schema == right.schema
+                or left.schema not in(right.schema, 'public')):
+                join = left.schema + '.' + join
             joins.append(join)
-            prios.append(tblprio[rtbl] * 2 + 0 if (lsch, ltbl) in tbls else 1)
+            prios.append(ref_prio[normalize_ref(rtbl.ref)] * 2 + (
+                0 if (left.schema, left.tbl) in other_tbls else 1))
 
         return self.find_matches(word_before_cursor, joins, meta='join',
             priority_collection=prios, type_priority=100)

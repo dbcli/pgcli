@@ -6,7 +6,7 @@ from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
 metadata = {
                 'tables': {
-                    'users': ['id', 'email', 'first_name', 'last_name'],
+                    'users': ['id', 'parentid', 'email', 'first_name', 'last_name'],
                     'Users': ['userid', 'username'],
                     'orders': ['id', 'ordered_date', 'status', 'email'],
                     'select': ['id', 'insert', 'ABC']},
@@ -21,6 +21,7 @@ metadata = {
                         ['o', 'o'], '', False, False, True]],
                 'datatypes': ['custom_type1', 'custom_type2'],
                 'foreignkeys': [
+                    ('public', 'users', 'id', 'public', 'users', 'parentid'),
                     ('public', 'users', 'id', 'public', 'Users', 'userid')
                 ],
             }
@@ -170,6 +171,7 @@ def test_suggested_column_names_from_visible_table(completer, complete_event):
         complete_event))
     assert set(result) == set([
         Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='parentid', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column'),
@@ -196,6 +198,7 @@ def test_suggested_column_names_in_function(completer, complete_event):
         complete_event)
     assert set(result) == set([
         Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='parentid', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column')])
@@ -214,6 +217,7 @@ def test_suggested_column_names_with_table_dot(completer, complete_event):
         complete_event))
     assert set(result) == set([
         Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='parentid', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column')])
@@ -232,6 +236,7 @@ def test_suggested_column_names_with_alias(completer, complete_event):
         complete_event))
     assert set(result) == set([
         Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='parentid', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column')])
@@ -251,6 +256,7 @@ def test_suggested_multiple_column_names(completer, complete_event):
         complete_event))
     assert set(result) == set([
         Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='parentid', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column'),
@@ -276,6 +282,7 @@ def test_suggested_multiple_column_names_with_alias(completer, complete_event):
         complete_event))
     assert set(result) == set([
         Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='parentid', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column')])
@@ -295,6 +302,7 @@ def test_suggested_multiple_column_names_with_dot(completer, complete_event):
         complete_event))
     assert set(result) == set([
         Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='parentid', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column')])
@@ -321,7 +329,8 @@ def test_suggest_columns_after_three_way_join(completer, complete_event):
     'SELECT * FROM users u FULL OUTER JOIN "Users" u2 ON ',
     '''SELECT *
     FROM users u
-    FULL OUTER JOIN "Users" u2 ON '''
+    FULL OUTER JOIN "Users" u2 ON
+    '''
 ])
 def test_suggested_join_conditions(completer, complete_event, text):
     position = len(text)
@@ -346,6 +355,32 @@ def test_suggested_joins(completer, complete_event, text):
         complete_event))
     assert set(result) == set([
         Completion(text='"Users" ON "Users".userid = users.id', start_position=0, display_meta='join'),
+        Completion(text='users users2 ON users2.id = users.parentid', start_position=0, display_meta='join'),
+        Completion(text='users users2 ON users2.parentid = users.id', start_position=0, display_meta='join'),
+        Completion(text='public', start_position=0, display_meta='schema'),
+        Completion(text='"Users"', start_position=0, display_meta='table'),
+        Completion(text='"select"', start_position=0, display_meta='table'),
+        Completion(text='orders', start_position=0, display_meta='table'),
+        Completion(text='users', start_position=0, display_meta='table'),
+        Completion(text='user_emails', start_position=0, display_meta='view'),
+        Completion(text='custom_func2', start_position=0, display_meta='function'),
+        Completion(text='set_returning_func', start_position=0, display_meta='function'),
+        Completion(text='custom_func1', start_position=0, display_meta='function')])
+
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM public."Users" JOIN ',
+    'SELECT * FROM public."Users" RIGHT OUTER JOIN ',
+    '''SELECT *
+    FROM public."Users"
+    LEFT JOIN '''
+])
+def test_suggested_joins_quoted_schema_qualified_table(completer, complete_event, text):
+    position = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='public.users ON users.id = "Users".userid', start_position=0, display_meta='join'),
         Completion(text='public', start_position=0, display_meta='schema'),
         Completion(text='"Users"', start_position=0, display_meta='table'),
         Completion(text='"select"', start_position=0, display_meta='table'),
@@ -642,7 +677,7 @@ def test_wildcard_column_expansion(completer, complete_event):
     completions = completer.get_completions(
         Document(text=sql, cursor_position=pos), complete_event)
 
-    col_list = 'id, email, first_name, last_name'
+    col_list = 'id, parentid, email, first_name, last_name'
     expected = [Completion(text=col_list, start_position=-1,
                           display='*', display_meta='columns')]
 
@@ -656,7 +691,7 @@ def test_wildcard_column_expansion_with_alias_qualifier(completer, complete_even
     completions = completer.get_completions(
         Document(text=sql, cursor_position=pos), complete_event)
 
-    col_list = 'id, u.email, u.first_name, u.last_name'
+    col_list = 'id, u.parentid, u.email, u.first_name, u.last_name'
     expected = [Completion(text=col_list, start_position=-1,
                           display='*', display_meta='columns')]
 
@@ -664,9 +699,9 @@ def test_wildcard_column_expansion_with_alias_qualifier(completer, complete_even
 
 @pytest.mark.parametrize('text,expected', [
     ('SELECT users.* FROM users',
-        'id, users.email, users.first_name, users.last_name'),
+        'id, users.parentid, users.email, users.first_name, users.last_name'),
     ('SELECT Users.* FROM Users',
-        'id, Users.email, Users.first_name, Users.last_name'),
+        'id, Users.parentid, Users.email, Users.first_name, Users.last_name'),
 ])
 def test_wildcard_column_expansion_with_table_qualifier(completer, complete_event, text, expected):
     pos = len('SELECT users.*')
@@ -687,7 +722,7 @@ def test_wildcard_column_expansion_with_two_tables(completer, complete_event):
         Document(text=sql, cursor_position=pos), complete_event)
 
     cols = ('"select".id, "select"."insert", "select"."ABC", '
-        'u.id, u.email, u.first_name, u.last_name')
+        'u.id, u.parentid, u.email, u.first_name, u.last_name')
     expected = [Completion(text=cols, start_position=-1,
         display='*', display_meta='columns')]
     assert completions == expected
@@ -718,6 +753,7 @@ def test_suggest_columns_from_unquoted_table(completer, complete_event, text):
                                        complete_event)
     assert set(result) == set([
         Completion(text='id', start_position=0, display_meta='column'),
+        Completion(text='parentid', start_position=0, display_meta='column'),
         Completion(text='email', start_position=0, display_meta='column'),
         Completion(text='first_name', start_position=0, display_meta='column'),
         Completion(text='last_name', start_position=0, display_meta='column')])

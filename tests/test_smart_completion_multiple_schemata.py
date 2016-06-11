@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import pytest
+import itertools
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
@@ -158,19 +159,21 @@ def test_suggested_join_conditions(completer, complete_event, text):
         Completion(text='shipments.id = users.id', start_position=0, display_meta='name join'),
         Completion(text='shipments.user_id = users.id', start_position=0, display_meta='fk join')])
 
-@pytest.mark.parametrize('text', [
-    'SELECT * FROM public.users RIGHT OUTER JOIN ',
+@pytest.mark.parametrize(('query', 'tbl'), itertools.product((
+    'SELECT * FROM public.{0} RIGHT OUTER JOIN ',
     '''SELECT *
-    FROM users
+    FROM {0}
     JOIN '''
-])
-def test_suggested_joins(completer, complete_event, text):
+), ('users', '"users"', 'Users')))
+def test_suggested_joins(completer, complete_event, query, tbl):
+    text = query.format(tbl)
     position = len(text)
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
+    join = 'custom.shipments ON shipments.user_id = {0}.id'.format(tbl)
     assert set(result) == set([
-        Completion(text='custom.shipments ON shipments.user_id = users.id', start_position=0, display_meta='join'),
+        Completion(text=join, start_position=0, display_meta='join'),
         Completion(text='public', start_position=0, display_meta='schema'),
         Completion(text='custom', start_position=0, display_meta='schema'),
         Completion(text='"Custom"', start_position=0, display_meta='schema'),

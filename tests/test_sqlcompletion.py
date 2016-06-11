@@ -23,8 +23,19 @@ def test_select_suggests_cols_with_qualified_table_scope():
 
 
 @pytest.mark.parametrize('expression', [
-    'SELECT * FROM tabl WHERE ',
     'SELECT * FROM "tabl" WHERE ',
+])
+def test_where_suggests_columns_functions_quoted_table(expression):
+    suggestions = suggest_type(expression, expression)
+    assert set(suggestions) == set([
+        Column(tables=((None, 'tabl', '"tabl"', False),)),
+        Function(schema=None),
+        Keyword(),
+    ])
+
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM tabl WHERE ',
     'SELECT * FROM tabl WHERE (',
     'SELECT * FROM tabl WHERE foo = ',
     'SELECT * FROM tabl WHERE bar OR ',
