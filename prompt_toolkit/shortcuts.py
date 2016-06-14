@@ -82,7 +82,7 @@ __all__ = (
 )
 
 
-def create_eventloop(inputhook=None):
+def create_eventloop(inputhook=None, recognize_win32_paste=True):
     """
     Create and return an
     :class:`~prompt_toolkit.eventloop.base.EventLoop` instance for a
@@ -90,10 +90,10 @@ def create_eventloop(inputhook=None):
     """
     if is_windows():
         from prompt_toolkit.eventloop.win32 import Win32EventLoop as Loop
+        return Loop(inputhook=inputhook, recognize_paste=recognize_win32_paste)
     else:
         from prompt_toolkit.eventloop.posix import PosixEventLoop as Loop
-
-    return Loop(inputhook=inputhook)
+        return Loop(inputhook=inputhook)
 
 
 def create_output(stdout=None, true_color=False):

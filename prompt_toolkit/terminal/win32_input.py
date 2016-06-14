@@ -11,6 +11,7 @@ from prompt_toolkit.win32_types import EventTypes, KEY_EVENT_RECORD, MOUSE_EVENT
 import msvcrt
 import os
 import sys
+import six
 
 __all__ = (
     'ConsoleInputReader',
@@ -20,6 +21,10 @@ __all__ = (
 
 
 class ConsoleInputReader(object):
+    """
+    :param recognize_paste: When True, try to discover paste actions and turn
+        the event into a BracketedPaste.
+    """
     # Keys with character data.
     mappings = {
         b'\x1b': Keys.Escape,
@@ -99,8 +104,9 @@ class ConsoleInputReader(object):
     LEFT_CTRL_PRESSED = 0x0008
     RIGHT_CTRL_PRESSED = 0x0004
 
-    def __init__(self):
+    def __init__(self, recognize_paste=True):
         self._fdcon = None
+        self.recognize_paste = recognize_paste
 
         # When stdin is a tty, use that handle, otherwise, create a handle from
         # CONIN$.
@@ -117,23 +123,51 @@ class ConsoleInputReader(object):
 
     def read(self):
         """
-        Read from the Windows console and return a list of `KeyPress` instances.
-        It can return an empty list when there was nothing to read. (This
-        function doesn't block.)
+        Return a list of `KeyPress` instances. It won't return anything when
+        there was nothing to read.  (This function doesn't block.)
 
         http://msdn.microsoft.com/en-us/library/windows/desktop/ms684961(v=vs.85).aspx
         """
-        max_count = 1024  # Read max 1024 events at the same time.
-        result = []
+        max_count = 2048  # Max events to read at the same time.
 
         read = DWORD(0)
-
         arrtype = INPUT_RECORD * max_count
         input_records = arrtype()
 
         # Get next batch of input event.
-        windll.kernel32.ReadConsoleInputW(self.handle, pointer(input_records), max_count, pointer(read))
+        windll.kernel32.ReadConsoleInputW(
+            self.handle, pointer(input_records), max_count, pointer(read))
 
+        # First, get all the keys from the input buffer, in order to determine
+        # whether we should consider this a paste event or not.
+        all_keys = list(self._get_keys(read, input_records))
+
+        if self.recognize_paste and self._is_paste(all_keys):
+            gen = iter(all_keys)
+            for k in gen:
+                # Pasting: if the current key consists of text or \n, turn it
+                # into a BracketedPaste.
+                data = []
+                while k and (isinstance(k.key, six.text_type) or
+                             k.key == Keys.ControlJ):
+                    data.append(k.data)
+                    try:
+                        k = next(gen)
+                    except StopIteration:
+                        k = None
+
+                if data:
+                    yield KeyPress(Keys.BracketedPaste, ''.join(data))
+                if k is not None:
+                    yield k
+        else:
+            for k in all_keys:
+                yield k
+
+    def _get_keys(self, read, input_records):
+        """
+        Generator that yields `KeyPress` objects from the input records.
+        """
         for i in range(read.value):
             ir = input_records[i]
 
@@ -147,14 +181,34 @@ class ConsoleInputReader(object):
                 # Process if this is a key event. (We also have mouse, menu and
                 # focus events.)
                 if type(ev) == KEY_EVENT_RECORD and ev.KeyDown:
-                    key_presses = self._event_to_key_presses(ev)
-                    if key_presses:
-                        result.extend(key_presses)
+                    for key_press in self._event_to_key_presses(ev):
+                        yield key_press
 
                 elif type(ev) == MOUSE_EVENT_RECORD:
-                    result.extend(self._handle_mouse(ev))
+                    for key_press in self._handle_mouse(ev):
+                        yield key_press
 
-        return result
+    @staticmethod
+    def _is_paste(keys):
+        """
+        Return `True` when we should consider this list of keys as a paste
+        event. Pasted text on windows will be turned into a
+        `Keys.BracketedPaste` event. (It's not 100% correct, but it is probably
+        the best possible way to detect pasting of text and handle that
+        correctly.)
+        """
+        # Consider paste when it contains at least one newline and at least one
+        # other character.
+        text_count = 0
+        newline_count = 0
+
+        for k in keys:
+            if isinstance(k.key, six.text_type):
+                text_count += 1
+            if k.key == Keys.ControlJ:
+                newline_count += 1
+
+        return newline_count >= 1 and text_count > 1
 
     def _event_to_key_presses(self, ev):
         """
@@ -172,6 +226,8 @@ class ConsoleInputReader(object):
                 result = KeyPress(self.keycodes[ev.VirtualKeyCode], '')
         else:
             if ascii_char in self.mappings:
+                if self.mappings[ascii_char] == Keys.ControlJ:
+                    u_char = '\n'  # Windows sends \n, turn into \r for unix compatibility.
                 result = KeyPress(self.mappings[ascii_char], u_char)
             else:
                 result = KeyPress(u_char, u_char)

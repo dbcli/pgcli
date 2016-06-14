@@ -29,12 +29,15 @@ INPUT_TIMEOUT_MS = int(1000 * INPUT_TIMEOUT)
 class Win32EventLoop(EventLoop):
     """
     Event loop for Windows systems.
+
+    :param recognize_paste: When True, try to discover paste actions and turn
+        the event into a BracketedPaste.
     """
-    def __init__(self, inputhook=None):
+    def __init__(self, inputhook=None, recognize_paste=True):
         assert inputhook is None or callable(inputhook)
 
         self._event = _create_event()
-        self._console_input_reader = ConsoleInputReader()
+        self._console_input_reader = ConsoleInputReader(recognize_paste=recognize_paste)
         self._calls_from_executor = []
 
         self.closed = False
