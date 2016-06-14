@@ -937,10 +937,14 @@ class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
         Feed a key press to the CommandLineInterface.
         """
         assert isinstance(key_press, KeyPress)
+        cli = self._active_cli
 
         # Feed the key and redraw.
-        self._active_cli.input_processor.feed(key_press)
-        self._active_cli.input_processor.process_keys()
+        # (When the CLI is in 'done' state, it should return to the event loop
+        # as soon as possible. Ignore all key presses beyond this point.)
+        if not cli.is_done:
+            cli.input_processor.feed(key_press)
+            cli.input_processor.process_keys()
 
 
 class _PatchStdoutContext(object):
