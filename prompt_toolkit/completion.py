@@ -120,13 +120,18 @@ def get_common_complete_suffix(document, completions):
         end = completion.text[:-completion.start_position]
         return document.text_before_cursor.endswith(end)
 
-    completions = [c for c in completions if doesnt_change_before_cursor(c)]
+    completions2 = [c for c in completions if doesnt_change_before_cursor(c)]
+
+    # When there is at least one completion that changes the text before the
+    # cursor, don't return any common part.
+    if len(completions2) != len(completions):
+        return ''
 
     # Return the common prefix.
     def get_suffix(completion):
         return completion.text[-completion.start_position:]
 
-    return _commonprefix([get_suffix(c) for c in completions])
+    return _commonprefix([get_suffix(c) for c in completions2])
 
 
 def _commonprefix(strings):

@@ -779,7 +779,6 @@ class CommandLineInterface(object):
                     complete_thread_running[0] = False
 
                     # When there is only one completion, which has nothing to add, ignore it.
-                    text_before_cursor = document.text_before_cursor
                     if (len(completions) == 1 and
                             completion_does_nothing(document, completions[0])):
                         del completions[:]
