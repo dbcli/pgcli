@@ -461,7 +461,7 @@ class CommandLineInterface(object):
             """
             raise NotImplementedError
 
-    def run_sub_application(self, application, done_callback=None):
+    def run_sub_application(self, application, done_callback=None, erase_when_done=False):
         """
         Run a sub :class:`~prompt_toolkit.application.Application`.
 
@@ -477,6 +477,10 @@ class CommandLineInterface(object):
             only a proxy to our main event loop. The reason is that calling
             'stop' --which returns the result of an application when it's
             done-- is handled differently.
+
+        :param erase_when_done: Explicitely erase the sub application when
+            done. (This has no effect if the sub application runs in an
+            alternate screen.)
         """
         assert isinstance(application, Application)
         assert done_callback is None or callable(done_callback)
@@ -493,6 +497,8 @@ class CommandLineInterface(object):
             # and reset the renderer. (This reset will also quit the alternate
             # screen, if the sub application used that.)
             sub_cli._redraw()
+            if erase_when_done:
+                sub_cli.renderer.erase()
             sub_cli.renderer.reset()
             sub_cli._is_running = False  # Don't render anymore.
 

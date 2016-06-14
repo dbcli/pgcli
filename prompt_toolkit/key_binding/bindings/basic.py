@@ -9,6 +9,7 @@ from prompt_toolkit.mouse_events import MouseEventType, MouseEvent
 from prompt_toolkit.renderer import HeightIsUnknownError
 from prompt_toolkit.utils import suspend_to_background_supported, is_windows
 
+from .completion import generate_completions
 from .utils import create_handle_decorator
 
 
@@ -133,28 +134,8 @@ def load_basic_bindings(registry, filter=Always()):
         " Delete text before cursor. "
         event.current_buffer.delete(event.arg)
 
-    @handle(Keys.ControlI, filter=insert_mode)
-    def _(event):
-        r"""
-        Ctrl-I is identical to "\t"
-
-        Traditional tab-completion, where the first tab completes the common
-        suffix and the second tab lists all the completions.
-        """
-        b = event.current_buffer
-
-        def second_tab():
-            if b.complete_state:
-                b.complete_next()
-            else:
-                event.cli.start_completion(select_first=True)
-
-        # On the second tab-press, or when already navigating through
-        # completions.
-        if event.is_repeat or b.complete_state:
-            second_tab()
-        else:
-            event.cli.start_completion(insert_common_part=True)
+    # Tab completion. (ControlI == Tab)
+    handle(Keys.ControlI, filter=insert_mode)(generate_completions)
 
     @handle(Keys.BackTab, filter=insert_mode)
     def _(event):
