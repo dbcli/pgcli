@@ -28,6 +28,8 @@ from .filters import IsDone, HasFocus, RendererHeightIsKnown, to_simple_filter, 
 from .history import InMemoryHistory
 from .interface import CommandLineInterface, Application, AbortAction
 from .key_binding.manager import KeyBindingManager
+from .key_binding.registry import Registry
+from .keys import Keys
 from .layout import Window, HSplit, FloatContainer, Float
 from .layout.containers import ConditionalContainer
 from .layout.controls import BufferControl, TokenListControl
@@ -74,6 +76,8 @@ __all__ = (
     'create_prompt_application',
     'prompt',
     'prompt_async',
+    'create_confirm_application',
+    'confirm',
     'print_tokens',
 )
 
@@ -522,15 +526,42 @@ def prompt(message='', **kwargs):
     return_asyncio_coroutine = kwargs.pop('return_asyncio_coroutine', False)
     true_color = kwargs.pop('true_color', False)
     refresh_interval = kwargs.pop('refresh_interval', 0)
+    eventloop = kwargs.pop('eventloop', None)
+
+    application = create_prompt_application(message, **kwargs)
+
+    return run_application(application,
+        patch_stdout=patch_stdout,
+        return_asyncio_coroutine=return_asyncio_coroutine,
+        true_color=true_color,
+        refresh_interval=refresh_interval,
+        eventloop=eventloop)
+
+
+def run_application(
+        application, patch_stdout=False, return_asyncio_coroutine=False,
+        true_color=False, refresh_interval=0, eventloop=None):
+    """
+    Run a prompt toolkit application.
+
+    :param patch_stdout: Replace ``sys.stdout`` by a proxy that ensures that
+            print statements from other threads won't destroy the prompt. (They
+            will be printed above the prompt instead.)
+    :param return_asyncio_coroutine: When True, return a asyncio coroutine. (Python >3.3)
+    :param true_color: When True, use 24bit colors instead of 256 colors.
+    :param refresh_interval: (number; in seconds) When given, refresh the UI
+        every so many seconds.
+    """
+    assert isinstance(application, Application)
 
     if return_asyncio_coroutine:
         eventloop = create_asyncio_eventloop()
     else:
-        eventloop = kwargs.pop('eventloop', None) or create_eventloop()
+        eventloop = eventloop or create_eventloop()
 
     # Create CommandLineInterface.
     cli = CommandLineInterface(
-        application=create_prompt_application(message, **kwargs),
+        application=application,
         eventloop=eventloop,
         output=create_output(true_color=true_color))
 
@@ -558,17 +589,19 @@ def prompt(message='', **kwargs):
     # Read input and return it.
     if return_asyncio_coroutine:
         # Create an asyncio coroutine and call it.
-        exec_context = {'patch_context': patch_context, 'cli': cli}
+        exec_context = {'patch_context': patch_context, 'cli': cli,
+                        'Document': Document}
         exec_(textwrap.dedent('''
         import asyncio
 
         @asyncio.coroutine
         def prompt_coro():
             with patch_context:
-                document = yield from cli.run_async(reset_current_buffer=False)
+                result = yield from cli.run_async(reset_current_buffer=False)
 
-                if document:
-                    return document.text
+            if isinstance(result, Document):  # Backwards-compatibility.
+                return result.text
+            return result
         '''), exec_context)
 
         return exec_context['prompt_coro']()
@@ -579,10 +612,11 @@ def prompt(message='', **kwargs):
         #       that this CommandLineInterface will run.
         try:
             with patch_context:
-                document = cli.run(reset_current_buffer=False)
+                result = cli.run(reset_current_buffer=False)
 
-                if document:
-                    return document.text
+            if isinstance(result, Document):  # Backwards-compatibility.
+                return result.text
+            return result
         finally:
             eventloop.close()
 
@@ -593,6 +627,36 @@ def prompt_async(message='', **kwargs):
     """
     kwargs['return_asyncio_coroutine'] = True
     return prompt(message, **kwargs)
+
+
+def create_confirm_application(message):
+    """
+    Create a confirmation `Application` that returns True/False.
+    """
+    registry = Registry()
+
+    @registry.add_binding('y')
+    @registry.add_binding('Y')
+    def _(event):
+        event.cli.set_return_value(True)
+
+    @registry.add_binding('n')
+    @registry.add_binding('N')
+    @registry.add_binding(Keys.ControlC)
+    def _(event):
+        event.cli.set_return_value(False)
+
+    return create_prompt_application(message, key_bindings_registry=registry)
+
+
+def confirm(message='Confirm (y or n) '):
+    """
+    Display a confirmation prompt.
+    """
+    assert isinstance(message, text_type)
+
+    app = create_confirm_application(message)
+    return run_application(app)
 
 
 def print_tokens(tokens, style=None, true_color=False):
