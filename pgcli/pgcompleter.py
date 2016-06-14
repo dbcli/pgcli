@@ -390,7 +390,7 @@ class PGCompleter(Completer):
             aliases = ('"' + tbl[1:-1] + str(i) + '"' for i in itertools.count(2))
         else:
             aliases = (self.case(tbl) + str(i) for i in itertools.count(2))
-        return (a for a in aliases if normalize_ref(a) not in tbls).next()
+        return next(a for a in aliases if normalize_ref(a) not in tbls)
 
     def get_join_matches(self, suggestion, word_before_cursor):
         tbls = suggestion.tables
@@ -399,7 +399,8 @@ class PGCompleter(Completer):
         qualified = dict((normalize_ref(t.ref), t.schema) for t in tbls)
         ref_prio = dict((normalize_ref(t.ref), n) for n, t in enumerate(tbls))
         refs = set(normalize_ref(t.ref) for t in tbls)
-        other_tbls = set((t.schema, t.name) for t in cols.keys()[:-1])
+        other_tbls = set((t.schema, t.name)
+            for t in list(cols)[:-1])
         joins, prios = [], []
         # Iterate over FKs in existing tables to find potential joins
         fks = ((fk, rtbl, rcol) for rtbl, rcols in cols.items()
