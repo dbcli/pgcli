@@ -123,7 +123,7 @@ def test_suggest_tables_views_schemas_and_functions(expression):
 
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM foo JOIN bar on bar.barid = foo.barid JOIN ',
-    'SELECT * FROM foo JOIN bar USING (barid) JOIN ',
+    'SELECT * FROM foo JOIN bar USING (barid) JOIN '
 ])
 def test_suggest_after_join_with_two_tables(expression):
     suggestions = suggest_type(expression, expression)
@@ -137,7 +137,8 @@ def test_suggest_after_join_with_two_tables(expression):
 
 
 @pytest.mark.parametrize('expression', [
-    'SELECT * FROM foo JOIN '
+    'SELECT * FROM foo JOIN ',
+    'SELECT * FROM foo JOIN bar'
 ])
 def test_suggest_after_join_with_one_table(expression):
     suggestions = suggest_type(expression, expression)

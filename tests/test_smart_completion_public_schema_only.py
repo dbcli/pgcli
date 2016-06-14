@@ -343,6 +343,22 @@ def test_suggested_join_conditions(completer, complete_event, text):
         Completion(text='u2.userid = u.id', start_position=0, display_meta='fk join')])
 
 @pytest.mark.parametrize('text', [
+    'SELECT * FROM "Users" u JOIN u',
+    'SELECT * FROM "Users" u JOIN uid',
+    'SELECT * FROM "Users" u JOIN userid',
+    'SELECT * FROM "Users" u JOIN id',
+])
+def test_suggested_joins_fuzzy(completer, complete_event, text):
+    position = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    last_word = text.split()[-1]
+    expected = Completion(text='users ON users.id = u.userid',
+                          start_position=-len(last_word), display_meta='join')
+    assert expected in result
+
+@pytest.mark.parametrize('text', [
     'SELECT * FROM users JOIN ',
     '''SELECT *
     FROM users
