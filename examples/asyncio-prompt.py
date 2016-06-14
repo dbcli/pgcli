@@ -15,7 +15,7 @@ possible. ::
 """
 
 from prompt_toolkit.interface import CommandLineInterface
-from prompt_toolkit.shortcuts import create_prompt_application, create_asyncio_eventloop
+from prompt_toolkit.shortcuts import create_prompt_application, create_asyncio_eventloop, prompt_async
 
 import asyncio
 import sys
@@ -37,6 +37,19 @@ async def print_counter():
 async def interactive_shell():
     """
     Coroutine that shows the interactive command line.
+    """
+    while True:
+        try:
+            result = await prompt_async('prompt async: ', patch_stdout=True)
+        except (EOFError, KeyboardInterrupt):
+            return
+        else:
+            print('You said: %s' % result)
+
+
+async def interactive_shell_manual():
+    """
+    Like `interactive_shell`, but doing things manual.
     """
     # Create an asyncio `EventLoop` object. This is a wrapper around the
     # asyncio loop that can be passed into prompt_toolkit.
