@@ -1,6 +1,72 @@
 CHANGELOG
 =========
 
+1.0.1: 2016-06-15
+-----------------
+
+Fixes:
+- Bugfix in GrammarValidator and SentenceValidator.
+- Don't leave the alternate screen on resize events.
+- Use errors=surrogateescape, in order to handle mouse events in some
+  terminals.
+- Ignore key presses in _InterfaceEventLoopCallbacks.feed_key when the CLI is in the done state.
+- Bugfix in get_common_complete_suffix. Don't return any suffix when there are
+  completions that change whatever is before the cursor.
+- Bugfix for Win32/Python2: use unicode literals: This crashed arrow navigation
+  on Windows.
+- Bugfix in InputProcessor: handling of more complex key bindings.
+- Fix: don't apply completions, if there is only one completion which doesn't
+  have any effect.
+- Fix: correctly handle prompts starting with a newline in
+  prompt_toolkit.shortcuts.
+- Fix: thread safety in autocomplete code.
+- Improve styling for matching brackets. (Allow individual styling for the
+  bracket under the cursor and the other.)
+- Fix in ShowLeadingWhiteSpaceProcessor/ShowTrailingWhiteSpaceProcessor: take
+  output encoding into account. (The signature had to change a little for
+  this.)
+- Bug fix in key bindings: only activate Emacs system/open-in-editor bindings
+  if editing_mode is emacs.
+- Added write_binary parameter to Vt100_Output. This fixes a bug in some cases
+  where we expect it to write non-encoded strings.
+- Fix key bindings for Vi mode registers.
+
+New features (**):
+- Added shortcuts.confirm/create_confirm_application function.
+- Emulate bracketed paste on Windows. (When the input stream contains multiple
+  key presses among which a newline and at least one other character, consider
+  this a paste event, and handle as bracketed paste on Unix.
+- Added key handler for displaying completions, just like readline does.
+- Implemented Vi guu,gUU,g~~ key bindings.
+- Implemented Vi 'gJ' key binding.
+- Implemented Vi ab,ib,aB,iB text objects.
+- Support for ZeroWidthEscape tokens in prompt and token lists. Used to support
+  final shell integration.
+- Fix: Make document.text/cursor_position/selection read-only. (Changing these
+  would break the caching causing bigger issues.)
+- Using pytest for unit tests.
+- Allow key bindings to have Keys.Any at any possible position. (Not just the
+  end.) This made it significantly easier to write the named register Vi
+  bindings, resulting in an approved start-up time.)
+- Better feedback when entering multi-key key bindings in insert mode. (E.g.
+  when 'jj' would be mapped to escape.)
+- Small improvement in key processor: allow key bindings to generate new key
+  presses.
+- Handle ControlUp and ControlDown by default: move to the previous/next record
+  in the history.
+- Accept 'char'/'get_char' parameters in FillControl.
+- Added refresh_interval method to prompt() function.
+
+Performance improvements:
+- Improve the performance of test_callable_args: this should significantly
+  increase the start-up time.
+- Start-up time for creating the Vi bindings has been improved significantly.
+
+(**) Some small backwards-compatible features were allowed for this minor
+     release. After evaluating the impact/risk/work involved we concluded that
+     we could ship these in a minor release.
+
+
 1.0.0: 2016-05-05
 -----------------
 
