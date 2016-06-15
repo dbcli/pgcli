@@ -344,6 +344,11 @@ def load_mouse_bindings(registry, filter=Always()):
                 96: MouseEventType.SCROLL_UP,
                 97: MouseEventType.SCROLL_DOWN,
             }.get(mouse_event)
+
+            # Handle situations where `PosixStdinReader` used surrogateescapes.
+            if x >= 0xdc00: x-= 0xdc00
+            if y >= 0xdc00: y-= 0xdc00
+
             x -= 32
             y -= 32
         else:

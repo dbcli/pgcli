@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from codecs import getincrementaldecoder
 import os
+import six
 
 __all__ = (
     'PosixStdinReader',
@@ -22,12 +23,19 @@ class PosixStdinReader(object):
 
     :param stdin_fd: File descriptor from which we read.
     :param errors:  Can be 'ignore', 'strict' or 'replace'.
+        On Python3, this can be 'surrogateescape', which is the default.
+
+        'surrogateescape' is preferred, because this allows us to transfer
+        unrecognised bytes to the key bindings. Some terminals, like lxterminal
+        and Guake, use the 'Mxx' notation to send mouse events, where each 'x'
+        can be any possible byte.
     """
     # By default, we want to 'ignore' errors here. The input stream can be full
     # of junk.  One occurrence of this that I had was when using iTerm2 on OS X,
     # with "Option as Meta" checked (You should choose "Option as +Esc".)
 
-    def __init__(self, stdin_fd, errors='ignore'):
+    def __init__(self, stdin_fd,
+                 errors=('ignore' if six.PY2 else 'surrogateescape')):
         assert isinstance(stdin_fd, int)
         self.stdin_fd = stdin_fd
         self.errors = errors
