@@ -121,7 +121,7 @@ class TelnetConnection(object):
         def get_size():
             return self.size
         self.stdout = _ConnectionStdout(conn, encoding=encoding)
-        self.vt100_output = Vt100_Output(self.stdout, get_size)
+        self.vt100_output = Vt100_Output(self.stdout, get_size, write_binary=False)
 
         # Create an eventloop (adaptor) for the CommandLineInterface.
         self.eventloop = _TelnetEventLoopInterface(server)
