@@ -50,7 +50,7 @@ class GrammarValidator(Validator):
                         validator.validate(inner_document)
                     except ValidationError as e:
                         raise ValidationError(
-                            index=v.start + e.cursor_position,
+                            cursor_position=v.start + e.cursor_position,
                             message=e.message)
         else:
             raise ValidationError(cursor_position=len(document.text),

@@ -30,4 +30,5 @@ class SentenceValidator(Validator):
             else:
                 index = 0
 
-            raise ValidationError(index=index, message=self.error_message)
+            raise ValidationError(cursor_position=index,
+                                  message=self.error_message)
