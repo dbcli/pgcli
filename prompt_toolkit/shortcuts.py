@@ -638,12 +638,14 @@ def create_confirm_application(message):
     @registry.add_binding('y')
     @registry.add_binding('Y')
     def _(event):
+        event.cli.buffers[DEFAULT_BUFFER].text = 'y'
         event.cli.set_return_value(True)
 
     @registry.add_binding('n')
     @registry.add_binding('N')
     @registry.add_binding(Keys.ControlC)
     def _(event):
+        event.cli.buffers[DEFAULT_BUFFER].text = 'n'
         event.cli.set_return_value(False)
 
     return create_prompt_application(message, key_bindings_registry=registry)
