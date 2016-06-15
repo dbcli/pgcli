@@ -355,7 +355,7 @@ class CommandLineInterface(object):
         """
         # Erase, request position (when cursor is at the start position)
         # and redraw again. -- The order is important.
-        self.renderer.erase()
+        self.renderer.erase(leave_alternate_screen=False, erase_title=False)
         self.renderer.request_absolute_cursor_position()
         self._redraw()
 

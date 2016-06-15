@@ -256,7 +256,7 @@ class Renderer(object):
 
         self.reset(_scroll=True)
 
-    def reset(self, _scroll=False):
+    def reset(self, _scroll=False, leave_alternate_screen=True):
         # Reset position
         self._cursor_pos = Point(x=0, y=0)
 
@@ -289,7 +289,7 @@ class Renderer(object):
             self.output.scroll_buffer_to_prompt()
 
         # Quit alternate screen.
-        if self._in_alternate_screen:
+        if self._in_alternate_screen and leave_alternate_screen:
             self.output.quit_alternate_screen()
             self._in_alternate_screen = False
 
@@ -456,11 +456,15 @@ class Renderer(object):
 
         output.flush()
 
-    def erase(self):
+    def erase(self, leave_alternate_screen=True, erase_title=True):
         """
         Hide all output and put the cursor back at the first line. This is for
         instance used for running a system command (while hiding the CLI) and
         later resuming the same CLI.)
+
+        :param leave_alternate_screen: When True, and when inside an alternate
+            screen buffer, quit the alternate screen.
+        :param erase_title: When True, clear the title from the title bar.
         """
         output = self.output
 
@@ -471,10 +475,10 @@ class Renderer(object):
         output.flush()
 
         # Erase title.
-        if self._last_title:
+        if self._last_title and erase_title:
             output.clear_title()
 
-        self.reset()
+        self.reset(leave_alternate_screen=leave_alternate_screen)
 
     def clear(self):
         """
