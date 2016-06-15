@@ -1351,7 +1351,7 @@ class Window(Container):
         """
         key_buffer = cli.input_processor.key_buffer
 
-        if key_buffer and _in_insert_mode(cli):
+        if key_buffer and _in_insert_mode(cli) and not cli.is_done:
             # The textual data for the given key. (Can be a VT100 escape
             # sequence.)
             data = key_buffer[-1].data
