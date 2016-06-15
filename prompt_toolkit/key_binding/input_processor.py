@@ -155,8 +155,8 @@ class InputProcessor(object):
 
                 # Exact matches found, call handler.
                 if not is_prefix_of_longer_match and matches:
-                    del buffer[:]  # Keep reference. [0]
                     self._call_handler(matches[-1], key_sequence=buffer)
+                    del buffer[:]  # Keep reference.
 
                 # No match found.
                 elif not is_prefix_of_longer_match and not matches:
@@ -167,24 +167,13 @@ class InputProcessor(object):
                     for i in range(len(buffer), 0, -1):
                         matches = self._get_matches(buffer[:i])
                         if matches:
-                            key_sequence = buffer[:i]
-                            del buffer[:i]  # See note [0]
-                            self._call_handler(matches[-1], key_sequence=key_sequence)
+                            self._call_handler(matches[-1], key_sequence=buffer[:i])
+                            del buffer[:i]
                             found = True
                             break
 
                     if not found:
                         del buffer[:1]
-
-        # Note [0]: self.key_buffer needs to be erased before calling the
-        #           handler. This because if a key handler would call
-        #           `CommandLineInterface.set_return_value`, the UI would be
-        #           drawn with still a key in this key_buffer. This would
-        #           display the key while it was not supposed to. Futher, there
-        #           is no reason that the handler needs to access this
-        #           `key_buffer`.
-        #           See also: `prompt_toolkit.containers.Window.
-        #                                    _show_input_processor_key_buffer`
 
     def feed(self, key_press):
         """
