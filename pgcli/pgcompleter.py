@@ -439,56 +439,56 @@ class PGCompleter(Completer):
             priority_collection=prios, type_priority=100)
 
     def get_join_condition_matches(self, suggestion, word_before_cursor):
-        lefttable = suggestion.parent or suggestion.tables[-1]
-        scoped_cols = self.populate_scoped_cols(suggestion.tables)
+        col = namedtuple('col', 'schema tbl col')
+        tbls = self.populate_scoped_cols(suggestion.tables).items
+        cols = [(t, c) for t, cs in tbls() for c in cs]
+        try:
+            lref = (suggestion.parent or suggestion.tables[-1]).ref
+            ltbl, lcols = [(t, cs) for (t, cs) in tbls() if t.ref == lref][-1]
+        except IndexError: # The user typed an incorrect table qualifier
+            return []
+        conds, found_conds = [], set()
 
-        def make_cond(tbl1, tbl2, col1, col2):
-            prefix = '' if suggestion.parent else tbl1 + '.'
+        def add_cond(lcol, rcol, rref, meta, prio):
+            prefix = '' if suggestion.parent else ltbl.ref + '.'
             case = self.case
-            return prefix + case(col1) + ' = ' + tbl2 + '.' + case(col2)
+            cond = prefix + case(lcol) + ' = ' + rref + '.' + case(rcol)
+            if cond not in found_conds:
+                found_conds.add(cond)
+                conds.append((cond, meta, prio + ref_prio[rref]))
+
+        def list_dict(pairs): # Turns [(a, b), (a, c)] into {a: [b, c]}
+            d = defaultdict(list)
+            for pair in pairs:
+                d[pair[0]].append(pair[1])
+            return d
 
         # Tables that are closer to the cursor get higher prio
-        refprio = dict((tbl.ref, num) for num, tbl
+        ref_prio = dict((tbl.ref, num) for num, tbl
             in enumerate(suggestion.tables))
-        # Map (schema, tablename) to tables and ref to columns
-        tbldict = defaultdict(list)
-        for t in scoped_cols.keys():
-            tbldict[(t.schema, t.name)].append(t)
-        refcols = dict((t.ref, cs) for t, cs in scoped_cols.items())
+        # Map (schema, table, col) to tables
+        coldict = list_dict(((t.schema, t.name, c.name), t)
+            for t, c in cols if t.ref != lref)
         # For each fk from the left table, generate a join condition if
         # the other table is also in the scope
-        conds = []
-        for lcol in refcols.get(lefttable.ref, []):
-            for fk in lcol.foreignkeys:
-                for rcol in ((fk.parentschema, fk.parenttable,
-                  fk.parentcolumn), (fk.childschema, fk.childtable,
-                  fk.childcolumn)):
-                    for rtbl in tbldict[(rcol[0], rcol[1])]:
-                        if rtbl and rtbl.ref != lefttable.ref:
-                            cond = make_cond(lefttable.ref, rtbl.ref,
-                              lcol.name, rcol[2])
-                            prio = 2000 + refprio[rtbl.ref]
-                            conds.append((cond, 'fk join', prio))
+        fks = ((fk, lcol.name) for lcol in lcols for fk in lcol.foreignkeys)
+        for fk, lcol in fks:
+            left = col(ltbl.schema, ltbl.name, lcol)
+            child = col(fk.childschema, fk.childtable, fk.childcolumn)
+            par = col(fk.parentschema, fk.parenttable, fk.parentcolumn)
+            left, right = (child, par) if left == child else (par, child)
+            for rtbl in coldict[right]:
+                add_cond(left.col, right.col, rtbl.ref, 'fk join', 2000)
         # For name matching, use a {(colname, coltype): TableReference} dict
-        col_table = defaultdict(lambda: [])
-        for tbl, col in ((t, c) for t, cs in scoped_cols.items() for c in cs):
-            col_table[(col.name, col.datatype)].append(tbl)
+        coltyp = namedtuple('coltyp', 'name datatype')
+        col_table = list_dict((coltyp(c.name, c.datatype), t) for t, c in cols)
         # Find all name-match join conditions
-        found = set(cnd[0] for cnd in conds)
-        for c in refcols.get(lefttable.ref, []):
-            for rtbl in col_table[(c.name, c.datatype)]:
-                if rtbl.ref != lefttable.ref:
-                    cond = make_cond(lefttable.ref, rtbl.ref, c.name, c.name)
-                    if cond not in found:
-                        prio = (1000 if c.datatype and c.datatype in(
-                            'integer', 'bigint', 'smallint')
-                         else 0 + refprio[rtbl.ref])
-                        conds.append((cond, 'name join', prio))
+        for c in (coltyp(c.name, c.datatype) for c in lcols):
+            for rtbl in (t for t in col_table[c] if t.ref != ltbl.ref):
+                add_cond(c.name, c.name, rtbl.ref, 'name join', 1000
+                    if c.datatype in ('integer', 'bigint', 'smallint') else 0)
 
-        if not conds:
-            return []
-
-        conds, metas, prios = zip(*conds)
+        conds, metas, prios = zip(*conds) if conds else ([], [], [])
 
         return self.find_matches(word_before_cursor, conds,
           meta_collection=metas, type_priority=100, priority_collection=prios)

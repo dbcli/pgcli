@@ -343,6 +343,52 @@ def test_suggested_join_conditions(completer, complete_event, text):
         Completion(text='u2.userid = u.id', start_position=0, display_meta='fk join')])
 
 @pytest.mark.parametrize('text', [
+    '''SELECT *
+    FROM users
+    CROSS JOIN "Users"
+    NATURAL JOIN users u
+    JOIN "Users" u2 ON
+    '''
+])
+def test_suggested_join_conditions_with_same_table_twice(completer, complete_event, text):
+    position = len(text)
+    result = completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event)
+    assert result == [
+        Completion(text='u2.userid = u.id', start_position=0, display_meta='fk join'),
+        Completion(text='u2.userid = users.id', start_position=0, display_meta='fk join'),
+        Completion(text='u2.userid = "Users".userid', start_position=0, display_meta='name join'),
+        Completion(text='u2.username = "Users".username', start_position=0, display_meta='name join'),
+        Completion(text='"Users"', start_position=0, display_meta='table alias'),
+        Completion(text='u', start_position=0, display_meta='table alias'),
+        Completion(text='u2', start_position=0, display_meta='table alias'),
+        Completion(text='users', start_position=0, display_meta='table alias')]
+
+@pytest.mark.parametrize('text', [
+    'SELECT * FROM users JOIN users u2 on foo.'
+])
+def test_suggested_join_conditions_with_invalid_qualifier(completer, complete_event, text):
+    position = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set()
+
+@pytest.mark.parametrize(('text', 'ref'), [
+    ('SELECT * FROM users JOIN NonTable on ', 'NonTable'),
+    ('SELECT * FROM users JOIN nontable nt on ', 'nt')
+])
+def test_suggested_join_conditions_with_invalid_table(completer, complete_event, text, ref):
+    position = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([
+        Completion(text='users', start_position=0, display_meta='table alias'),
+        Completion(text=ref, start_position=0, display_meta='table alias')])
+
+@pytest.mark.parametrize('text', [
     'SELECT * FROM "Users" u JOIN u',
     'SELECT * FROM "Users" u JOIN uid',
     'SELECT * FROM "Users" u JOIN userid',

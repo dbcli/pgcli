@@ -100,17 +100,18 @@ def test_schema_or_visible_table_completion(completer, complete_event):
        Completion(text='orders', start_position=0, display_meta='table')])
 
 
-@pytest.mark.parametrize('text', [
-    'SELECT  FROM users',
-    'SELECT  FROM "users"',
+@pytest.mark.parametrize('table', [
+    'users',
+    '"users"',
     ])
-def test_suggested_column_names_from_shadowed_visible_table(completer, complete_event, text):
+def test_suggested_column_names_from_shadowed_visible_table(completer, complete_event, table):
     """
     Suggest column and function names when selecting from table
     :param completer:
     :param complete_event:
     :return:
     """
+    text = 'SELECT  FROM ' + table
     position = len('SELECT ')
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
