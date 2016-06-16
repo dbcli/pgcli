@@ -66,7 +66,9 @@ def last_word(text, include='alphanum_underscore'):
 
 TableReference = namedtuple('TableReference', ['schema', 'name', 'alias',
                                                'is_function'])
-TableReference.ref = property(lambda self: self.alias or self.name)
+TableReference.ref = property(lambda self: self.alias or (
+  self.name if self.name.islower() or self.name[0] == '"'
+  else '"' + self.name + '"'))
 
 
 # This code is borrowed from sqlparse example script.
@@ -140,7 +142,10 @@ def extract_table_identifiers(token_stream, allow_functions=True):
             schema_name = schema_name.lower()
         quote_count = item.value.count('"')
         name_quoted = quote_count > 2 or (quote_count and not schema_quoted)
-        if name and not name_quoted and name != name.lower():
+        alias_quoted = alias and item.value[-1] == '"'
+        if alias_quoted or name_quoted and not alias and name.islower():
+            alias = '"' + (alias or name) + '"'
+        if name and not name_quoted and not name.islower():
             if not alias:
                 alias = name
             name = name.lower()
@@ -197,7 +202,9 @@ def extract_tables(sql):
     # to have is_function=True
     identifiers = extract_table_identifiers(stream,
                                             allow_functions=not insert_stmt)
-    return tuple(identifiers)
+    # In the case 'sche.<cursor>', we get an empty TableReference; remove that
+    return tuple(i for i in identifiers if i.name)
+
 
 
 def find_prev_keyword(sql):

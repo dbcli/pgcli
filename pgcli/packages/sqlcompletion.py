@@ -21,7 +21,10 @@ Special = namedtuple('Special', [])
 Database = namedtuple('Database', [])
 Schema = namedtuple('Schema', [])
 Table = namedtuple('Table', ['schema'])
+# JoinConditions are suggested after ON, e.g. 'foo.barid = bar.barid'
 JoinCondition = namedtuple('JoinCondition', ['tables', 'parent'])
+# Joins are suggested after JOIN, e.g. 'foo ON foo.barid = bar.barid'
+Join = namedtuple('Join', ['tables', 'schema'])
 
 Function = namedtuple('Function', ['schema', 'filter'])
 # For convenience, don't require the `filter` argument in Function constructor
@@ -68,6 +71,7 @@ def suggest_type(full_text, text_before_cursor):
 
     full_text = strip_named_query(full_text)
     text_before_cursor = strip_named_query(text_before_cursor)
+    text_before_cursor_including_last_word = text_before_cursor
 
     # If we've partially typed a word then word_before_cursor won't be an empty
     # string. In that case we want to remove the partially typed string before
@@ -78,8 +82,8 @@ def suggest_type(full_text, text_before_cursor):
         if word_before_cursor[-1] == '(' or word_before_cursor[0] == '\\':
             parsed = sqlparse.parse(text_before_cursor)
         else:
-            parsed = sqlparse.parse(
-                text_before_cursor[:-len(word_before_cursor)])
+            text_before_cursor = text_before_cursor[:-len(word_before_cursor)]
+            parsed = sqlparse.parse(text_before_cursor)
 
             identifier = parse_partial_identifier(word_before_cursor)
     else:
@@ -114,7 +118,7 @@ def suggest_type(full_text, text_before_cursor):
         # but the statement won't have a first token
         tok1 = statement.token_first()
         if tok1 and tok1.value == '\\':
-            return suggest_special(text_before_cursor)
+            return suggest_special(text_before_cursor_including_last_word)
 
     last_token = statement and statement.token_prev(len(statement.tokens)) or ''
 
@@ -310,6 +314,11 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text,
         if token_v == 'from' or (token_v.endswith('join') and token.is_keyword):
             suggest.append(Function(schema=schema, filter='for_from_clause'))
 
+        if (token_v.endswith('join') and token.is_keyword
+          and _allow_join_suggestion(parsed_statement)):
+            tables = extract_tables(text_before_cursor)
+            suggest.append(Join(tables=tables, schema=schema))
+
         return tuple(suggest)
 
     elif token_v in ('table', 'view', 'function'):
@@ -337,7 +346,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text,
                     View(schema=parent),
                     Function(schema=parent)]
             last_token = parsed_statement
-            if _allow_join_suggestion(parsed_statement):
+            if _allow_join_condition_suggestion(parsed_statement):
                 sugs.append(JoinCondition(tables=tables,
                     parent=filteredtables[-1]))
             return tuple(sugs)
@@ -345,7 +354,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text,
             # ON <suggestion>
             # Use table alias if there is one, otherwise the table name
             aliases = tuple(t.alias or t.name for t in tables)
-            if _allow_join_suggestion(parsed_statement):
+            if _allow_join_condition_suggestion(parsed_statement):
                 return (Alias(aliases=aliases), JoinCondition(
                     tables=tables, parent=None))
             else:
@@ -388,7 +397,7 @@ def identifies(id, ref):
         ref.schema and (id == ref.schema + '.' + ref.name))
 
 
-def _allow_join_suggestion(statement):
+def _allow_join_condition_suggestion(statement):
     """
     Tests if a join condition should be suggested
 
@@ -406,3 +415,23 @@ def _allow_join_suggestion(statement):
 
     last_tok = statement.token_prev(len(statement.tokens))
     return last_tok.value.lower() in ('on', 'and', 'or')
+
+
+def _allow_join_suggestion(statement):
+    """
+    Tests if a join should be suggested
+
+    We need this to avoid bad suggestions when entering e.g.
+        select * from tbl1 a join tbl2 b <cursor>
+    So check that the preceding token is a JOIN keyword
+
+    :param statement: an sqlparse.sql.Statement
+    :return: boolean
+    """
+
+    if not statement or not statement.tokens:
+        return False
+
+    last_tok = statement.token_prev(len(statement.tokens))
+    return (last_tok.value.lower().endswith('join')
+        and last_tok.value.lower() not in('cross join', 'natural join'))

@@ -1,6 +1,6 @@
 from pgcli.packages.sqlcompletion import (
     suggest_type, Special, Database, Schema, Table, Column, View, Keyword,
-    Function, Datatype, Alias, JoinCondition)
+    Function, Datatype, Alias, JoinCondition, Join)
 import pytest
 
 
@@ -23,8 +23,19 @@ def test_select_suggests_cols_with_qualified_table_scope():
 
 
 @pytest.mark.parametrize('expression', [
-    'SELECT * FROM tabl WHERE ',
     'SELECT * FROM "tabl" WHERE ',
+])
+def test_where_suggests_columns_functions_quoted_table(expression):
+    suggestions = suggest_type(expression, expression)
+    assert set(suggestions) == set([
+        Column(tables=((None, 'tabl', '"tabl"', False),)),
+        Function(schema=None),
+        Keyword(),
+    ])
+
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM tabl WHERE ',
     'SELECT * FROM tabl WHERE (',
     'SELECT * FROM tabl WHERE foo = ',
     'SELECT * FROM tabl WHERE bar OR ',
@@ -99,14 +110,43 @@ def test_suggests_tables_views_and_schemas(expression):
 
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM ',
-    'SELECT * FROM foo JOIN ',
 ])
-def test_suggest_tables_views_schemas_and_set_returning_functions(expression):
+def test_suggest_tables_views_schemas_and_functions(expression):
     suggestions = suggest_type(expression, expression)
     assert set(suggestions) == set([
         Table(schema=None),
         View(schema=None),
         Function(schema=None, filter='for_from_clause'),
+        Schema()
+    ])
+
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM foo JOIN bar on bar.barid = foo.barid JOIN ',
+    'SELECT * FROM foo JOIN bar USING (barid) JOIN '
+])
+def test_suggest_after_join_with_two_tables(expression):
+    suggestions = suggest_type(expression, expression)
+    assert set(suggestions) == set([
+        Table(schema=None),
+        View(schema=None),
+        Function(schema=None, filter='for_from_clause'),
+        Join(((None, 'foo', None, False), (None, 'bar', None, False)), None),
+        Schema(),
+    ])
+
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM foo JOIN ',
+    'SELECT * FROM foo JOIN bar'
+])
+def test_suggest_after_join_with_one_table(expression):
+    suggestions = suggest_type(expression, expression)
+    assert set(suggestions) == set([
+        Table(schema=None),
+        View(schema=None),
+        Function(schema=None, filter='for_from_clause'),
+        Join(((None, 'foo', None, False),), None),
         Schema(),
     ])
 
@@ -131,14 +171,26 @@ def test_suggest_qualified_tables_and_views(expression):
     'SELECT * FROM sch."foo',
     'SELECT * FROM "sch".',
     'SELECT * FROM "sch"."',
-    'SELECT * FROM foo JOIN sch.',
 ])
-def test_suggest_qualified_tables_views_and_set_returning_functions(expression):
+def test_suggest_qualified_tables_views_and_functions(expression):
     suggestions = suggest_type(expression, expression)
     assert set(suggestions) == set([
         Table(schema='sch'),
         View(schema='sch'),
         Function(schema='sch', filter='for_from_clause'),
+    ])
+
+
+@pytest.mark.parametrize('expression', [
+    'SELECT * FROM foo JOIN sch.',
+])
+def test_suggest_qualified_tables_views_functions_and_joins(expression):
+    suggestions = suggest_type(expression, expression)
+    assert set(suggestions) == set([
+        Table(schema='sch'),
+        View(schema='sch'),
+        Function(schema='sch', filter='for_from_clause'),
+        Join(((None, 'foo', None, False),), 'sch'),
     ])
 
 
@@ -355,6 +407,7 @@ def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
         View(schema=None),
         Function(schema=None, filter='for_from_clause'),
         Schema(),
+        Join(((None, 'abc', tbl_alias if tbl_alias else None, False),), None),
     ])
 
 

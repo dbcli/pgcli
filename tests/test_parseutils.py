@@ -12,10 +12,17 @@ def test_simple_select_single_table():
 
 
 @pytest.mark.parametrize('sql', [
-    'select * from abc.def',
-    'select * from "abc".def',
     'select * from "abc"."def"',
     'select * from abc."def"',
+])
+def test_simple_select_single_table_schema_qualified_quoted_table(sql):
+    tables = extract_tables(sql)
+    assert tables == (('abc', 'def', '"def"', False),)
+
+
+@pytest.mark.parametrize('sql', [
+    'select * from abc.def',
+    'select * from "abc".def',
 ])
 def test_simple_select_single_table_schema_qualified(sql):
     tables = extract_tables(sql)
@@ -149,12 +156,15 @@ def test_subselect_tables():
     tables = extract_tables(sql)
     assert tables == ((None, 'abc', None, False),)
 
+@pytest.mark.parametrize('text', ['SELECT * FROM foo.', 'SELECT 123 AS foo'])
+def test_extract_no_tables(text):
+    tables = extract_tables(text)
+    assert tables == tuple()
 
 @pytest.mark.parametrize('arg_list', ['', 'arg1', 'arg1, arg2, arg3'])
 def test_simple_function_as_table(arg_list):
     tables = extract_tables('SELECT * FROM foo({0})'.format(arg_list))
     assert tables == ((None, 'foo', None, True),)
-
 
 @pytest.mark.parametrize('arg_list', ['', 'arg1', 'arg1, arg2, arg3'])
 def test_simple_schema_qualified_function_as_table(arg_list):

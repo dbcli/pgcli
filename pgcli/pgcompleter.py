@@ -10,7 +10,7 @@ from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.document import Document
 from .packages.sqlcompletion import (
     suggest_type, Special, Database, Schema, Table, Function, Column, View,
-    Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition)
+    Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join)
 from .packages.function_metadata import ColumnMetadata, ForeignKey
 from .packages.parseutils import last_word, TableReference
 from .packages.pgliterals.main import get_literals
@@ -30,6 +30,7 @@ NamedQueries.instance = NamedQueries.from_config(
 
 Match = namedtuple('Match', ['completion', 'priority'])
 
+normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
 class PGCompleter(Completer):
     keywords = get_literals('keywords')
@@ -384,6 +385,59 @@ class PGCompleter(Completer):
 
         return self.find_matches(word_before_cursor, flat_cols, meta='column')
 
+    def generate_alias(self, tbl, tbls):
+        """ Generate a unique table alias
+        tbl - name of the table to alias, quoted if it needs to be
+        tbls - set of table refs already in use, normalized with normalize_ref
+        """
+        if tbl[0] == '"':
+            aliases = ('"' + tbl[1:-1] + str(i) + '"' for i in itertools.count(2))
+        else:
+            aliases = (self.case(tbl) + str(i) for i in itertools.count(2))
+        return next(a for a in aliases if normalize_ref(a) not in tbls)
+
+    def get_join_matches(self, suggestion, word_before_cursor):
+        tbls = suggestion.tables
+        cols = self.populate_scoped_cols(tbls)
+        # Set up some data structures for efficient access
+        qualified = dict((normalize_ref(t.ref), t.schema) for t in tbls)
+        ref_prio = dict((normalize_ref(t.ref), n) for n, t in enumerate(tbls))
+        refs = set(normalize_ref(t.ref) for t in tbls)
+        other_tbls = set((t.schema, t.name)
+            for t in list(cols)[:-1])
+        joins, prios = [], []
+        # Iterate over FKs in existing tables to find potential joins
+        fks = ((fk, rtbl, rcol) for rtbl, rcols in cols.items()
+            for rcol in rcols for fk in rcol.foreignkeys)
+        col = namedtuple('col', 'schema tbl col')
+        for fk, rtbl, rcol in fks:
+            right = col(rtbl.schema, rtbl.name, rcol.name)
+            child = col(fk.childschema, fk.childtable, fk.childcolumn)
+            parent = col(fk.parentschema, fk.parenttable, fk.parentcolumn)
+            left = child if parent == right else parent
+            if suggestion.schema and left.schema != suggestion.schema:
+                continue
+            c = self.case
+            if normalize_ref(left.tbl) in refs:
+                lref = self.generate_alias(left.tbl, refs)
+                join = '{0} {4} ON {4}.{1} = {2}.{3}'.format(
+                    c(left.tbl), c(left.col), rtbl.ref, c(right.col), lref)
+            else:
+                join = '{0} ON {0}.{1} = {2}.{3}'.format(
+                    c(left.tbl), c(left.col), rtbl.ref, c(right.col))
+            # Schema-qualify if (1) new table in same schema as old, and old
+            # is schema-qualified, or (2) new in other schema, except public
+            if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)]
+                and left.schema == right.schema
+                or left.schema not in(right.schema, 'public')):
+                join = left.schema + '.' + join
+            joins.append(join)
+            prios.append(ref_prio[normalize_ref(rtbl.ref)] * 2 + (
+                0 if (left.schema, left.tbl) in other_tbls else 1))
+
+        return self.find_matches(word_before_cursor, joins, meta='join',
+            priority_collection=prios, type_priority=100)
+
     def get_join_condition_matches(self, suggestion, word_before_cursor):
         lefttable = suggestion.parent or suggestion.tables[-1]
         scoped_cols = self.populate_scoped_cols(suggestion.tables)
@@ -541,6 +595,7 @@ class PGCompleter(Completer):
 
     suggestion_matchers = {
         JoinCondition: get_join_condition_matches,
+        Join: get_join_matches,
         Column: get_column_matches,
         Function: get_function_matches,
         Schema: get_schema_matches,
