@@ -33,7 +33,7 @@ def generate_completions(event):
         second_tab()
     else:
         event.cli.start_completion(insert_common_part=True,
-                                   select_first=True)
+                                   select_first=False)
 
 
 def display_completions_like_readline(event):
