@@ -386,6 +386,10 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, flat_cols, meta='column')
 
     def generate_alias(self, tbl, tbls):
+        """ Generate a unique table alias
+        tbl - name of the table to alias, quoted if it needs to be
+        tbls - set of table refs already in use, normalized with normalize_ref
+        """
         if tbl[0] == '"':
             aliases = ('"' + tbl[1:-1] + str(i) + '"' for i in itertools.count(2))
         else:
