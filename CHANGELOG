@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+1.0.2: 2016-06-16
+-----------------
+
+Fixes:
+- Don't select the first completion when `complete_while_typing` is False.
+  (Restore the old behaviour.)
+
+
 1.0.1: 2016-06-15
 -----------------
 
