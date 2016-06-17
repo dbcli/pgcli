@@ -56,6 +56,7 @@ class Application(object):
     :param on_exit: What to do when Control-D is pressed.
     :param use_alternate_screen: When True, run the application on the alternate screen buffer.
     :param get_title: Callable that returns the current title to be displayed in the terminal.
+    :param erase_when_done: (bool) Clear the application output when it finishes.
 
     Filters:
 
@@ -88,6 +89,7 @@ class Application(object):
                  get_title=None,
 
                  paste_mode=False, ignore_case=False, editing_mode=EditingMode.EMACS,
+                 erase_when_done=False,
 
                  on_input_timeout=None, on_start=None, on_stop=None,
                  on_reset=None, on_initialize=None, on_buffer_changed=None,
@@ -111,6 +113,7 @@ class Application(object):
         assert isinstance(editing_mode, six.string_types)
         assert on_input_timeout is None or callable(on_input_timeout)
         assert style is None or isinstance(style, Style)
+        assert isinstance(erase_when_done, bool)
 
         assert on_start is None or callable(on_start)
         assert on_stop is None or callable(on_stop)
@@ -161,6 +164,7 @@ class Application(object):
         self.paste_mode = paste_mode
         self.ignore_case = ignore_case
         self.editing_mode = editing_mode
+        self.erase_when_done = erase_when_done
 
         def dummy_handler(cli):
             " Dummy event handler. "

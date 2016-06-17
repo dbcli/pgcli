@@ -3,6 +3,7 @@ The main `CommandLineInterface` class and logic.
 """
 from __future__ import unicode_literals
 
+import datetime
 import functools
 import os
 import signal
@@ -10,8 +11,8 @@ import six
 import sys
 import textwrap
 import threading
+import types
 import weakref
-import datetime
 
 from subprocess import Popen
 
@@ -461,7 +462,9 @@ class CommandLineInterface(object):
             """
             raise NotImplementedError
 
-    def run_sub_application(self, application, done_callback=None, erase_when_done=False):
+    def run_sub_application(self, application, done_callback=None, erase_when_done=False,
+                            _from_application_generator=False):
+        # `erase_when_done` is deprecated, set Application.erase_when_done instead.
         """
         Run a sub :class:`~prompt_toolkit.application.Application`.
 
@@ -477,10 +480,6 @@ class CommandLineInterface(object):
             only a proxy to our main event loop. The reason is that calling
             'stop' --which returns the result of an application when it's
             done-- is handled differently.
-
-        :param erase_when_done: Explicitely erase the sub application when
-            done. (This has no effect if the sub application runs in an
-            alternate screen.)
         """
         assert isinstance(application, Application)
         assert done_callback is None or callable(done_callback)
@@ -489,7 +488,8 @@ class CommandLineInterface(object):
             raise RuntimeError('Another sub application started already.')
 
         # Erase current application.
-        self.renderer.erase()
+        if not _from_application_generator:
+            self.renderer.erase()
 
         # Callback when the sub app is done.
         def done():
@@ -497,7 +497,7 @@ class CommandLineInterface(object):
             # and reset the renderer. (This reset will also quit the alternate
             # screen, if the sub application used that.)
             sub_cli._redraw()
-            if erase_when_done:
+            if erase_when_done or application.erase_when_done:
                 sub_cli.renderer.erase()
             sub_cli.renderer.reset()
             sub_cli._is_running = False  # Don't render anymore.
@@ -505,8 +505,9 @@ class CommandLineInterface(object):
             self._sub_cli = None
 
             # Restore main application.
-            self.renderer.request_absolute_cursor_position()
-            self._redraw()
+            if not _from_application_generator:
+                self.renderer.request_absolute_cursor_position()
+                self._redraw()
 
             # Deliver result.
             if done_callback:
@@ -607,11 +608,12 @@ class CommandLineInterface(object):
             self.renderer.reset()  # Make sure to disable mouse mode, etc...
         else:
             self.renderer.erase()
+        self._return_value = None
 
         # Run system command.
         with self.input.cooked_mode():
             result = func()
-        self._return_value = None
+
 
         # Redraw interface again.
         self.renderer.reset()
@@ -619,6 +621,63 @@ class CommandLineInterface(object):
         self._redraw()
 
         return result
+
+    def run_application_generator(self, coroutine, render_cli_done=False):
+        """
+        EXPERIMENTAL
+        Like `run_in_terminal`, but takes a generator that can yield Application instances.
+
+        Example:
+
+            def f():
+                yield Application1(...)
+                print('...')
+                yield Application2(...)
+            cli.run_in_terminal_async(f)
+
+        The values which are yielded by the given coroutine are supposed to be
+        `Application` instances that run in the current CLI, all other code is
+        supposed to be CPU bound, so except for yielding the applications,
+        there should not be any user interaction or I/O in the given function.
+        """
+        # Draw interface in 'done' state, or erase.
+        if render_cli_done:
+            self._return_value = True
+            self._redraw()
+            self.renderer.reset()  # Make sure to disable mouse mode, etc...
+        else:
+            self.renderer.erase()
+        self._return_value = None
+
+        # Loop through the generator.
+        g = coroutine()
+        assert isinstance(g, types.GeneratorType)
+
+        def step_next(send_value=None):
+            " Execute next step of the coroutine."
+            try:
+                # Run until next yield, in cooked mode.
+                with self.input.cooked_mode():
+                    result = g.send(send_value)
+            except StopIteration:
+                done()
+            except:
+                done()
+                raise
+            else:
+                # Process yielded value from coroutine.
+                assert isinstance(result, Application)
+                self.run_sub_application(result, done_callback=step_next,
+                                         _from_application_generator=True)
+
+        def done():
+            # Redraw interface again.
+            self.renderer.reset()
+            self.renderer.request_absolute_cursor_position()
+            self._redraw()
+
+        # Start processing coroutine.
+        step_next()
 
     def run_system_command(self, command):
         """

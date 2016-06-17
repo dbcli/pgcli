@@ -93,14 +93,15 @@ def _display_completions_like_readline(cli, completions):
         max(get_cwidth(c.text) for c in completions) + 1)
     column_count = max(1, term_width // max_compl_width)
     completions_per_page = column_count * (term_height - 1)
-    page_count = math.ceil(len(completions) / float(completions_per_page))
+    page_count = int(math.ceil(len(completions) / float(completions_per_page)))
+        # Note: math.ceil can return float on Python2.
 
     def display(page):
         # Display completions.
         page_completions = completions[page * completions_per_page:
                                        (page+1) * completions_per_page]
 
-        page_row_count = math.ceil(len(page_completions) / float(column_count))
+        page_row_count = int(math.ceil(len(page_completions) / float(column_count)))
         page_columns = [page_completions[i * page_row_count:(i+1) * page_row_count]
                    for i in range(column_count)]
 
@@ -115,29 +116,30 @@ def _display_completions_like_readline(cli, completions):
         cli.output.write(''.join(result))
         cli.output.flush()
 
-    cli.output.write('\n'); cli.output.flush()
+    # User interaction through an application generator function.
+    def run():
+        if len(completions) > completions_per_page:
+            # Ask confirmation if it doesn't fit on the screen.
+            message = 'Display all {} possibilities? (y on n) '.format(len(completions))
+            confirm = yield create_confirm_application(message)
 
-    if len(completions) > completions_per_page:
-        # Ask confirmation if it doesn't fit on the screen.
-        page_counter = [0]
-        def display_page(result):
-            if result:
-                cli.run_in_terminal(lambda: display(page_counter[0]))
+            if confirm:
+                # Display pages.
+                for page in range(page_count):
+                    display(page)
 
-                # Display --MORE-- and go to the next page.
-                page_counter[0] += 1
-                if page_counter[0] < page_count:
-                    cli.run_sub_application(
-                        _create_more_application(),
-                        done_callback=display_page, erase_when_done=True)
+                    if page != page_count - 1:
+                        # Display --MORE-- and go to the next page.
+                        show_more = yield _create_more_application()
+                        if not show_more:
+                            return
+            else:
+                cli.output.write('\n'); cli.output.flush()
+        else:
+            # Display all completions.
+            display(0)
 
-        message = 'Display all {} possibilities? (y on n) '.format(len(completions))
-        cli.run_sub_application(
-            create_confirm_application(message),
-            done_callback=display_page, erase_when_done=True)
-    else:
-        # Display all completions.
-        cli.run_in_terminal(lambda: display(0))
+    cli.run_application_generator(run, render_cli_done=True)
 
 
 def _create_more_application():
@@ -148,7 +150,10 @@ def _create_more_application():
     registry = Registry()
 
     @registry.add_binding(' ')
+    @registry.add_binding('y')
+    @registry.add_binding('Y')
     @registry.add_binding(Keys.ControlJ)
+    @registry.add_binding(Keys.ControlI)  # Tab.
     def _(event):
         event.cli.set_return_value(True)
 
@@ -160,4 +165,5 @@ def _create_more_application():
     def _(event):
         event.cli.set_return_value(False)
 
-    return create_prompt_application('--MORE--', key_bindings_registry=registry)
+    return create_prompt_application(
+        '--MORE--', key_bindings_registry=registry, erase_when_done=True)

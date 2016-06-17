@@ -384,6 +384,7 @@ def create_prompt_application(
         on_abort=AbortAction.RAISE_EXCEPTION,
         on_exit=AbortAction.RAISE_EXCEPTION,
         accept_action=AcceptAction.RETURN_DOCUMENT,
+        erase_when_done=False,
         default=''):
     """
     Create an :class:`~Application` instance for a prompt.
@@ -497,6 +498,7 @@ def create_prompt_application(
         get_title=get_title,
         mouse_support=mouse_support,
         editing_mode=editing_mode,
+        erase_when_done=erase_when_done,
         on_abort=on_abort,
         on_exit=on_exit)
 
