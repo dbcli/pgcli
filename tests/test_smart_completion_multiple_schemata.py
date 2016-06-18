@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 import pytest
 import itertools
 from metadata import (MetaData, alias, name_join, fk_join, join,
-    table,
     function,
     column,
     wildcard_expansion)
@@ -67,9 +66,7 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     assert set(result) == set(testdata.schemas() + [
        function('func1'),
        function('func2'),
-       table('users'),
-       table('"select"'),
-       table('orders')])
+       ] + testdata.tables())
 
 
 @pytest.mark.parametrize('table', [
@@ -144,11 +141,8 @@ def test_suggested_joins(completer, complete_event, query, tbl):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set(testdata.schemas() + [
+    assert set(result) == set(testdata.schemas() + testdata.tables() + [
         join('custom.shipments ON shipments.user_id = {0}.id'.format(tbl)),
-        table('orders'),
-        table('users'),
-        table('"select"'),
         function('func1'),
         function('func2')])
 
@@ -209,12 +203,8 @@ def test_suggested_table_names_with_schema_dot(completer, complete_event,
     position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set([
+    assert set(result) == set(testdata.tables('custom', start_pos) + [
         function('func3', start_pos),
-        table('users', start_pos),
-        table('"Users"', start_pos),
-        table('products', start_pos),
-        table('shipments', start_pos),
         function('set_returning_func', start_pos),
     ])
 
@@ -234,9 +224,9 @@ def test_suggested_table_names_with_schema_dot2(completer, complete_event,
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([
-        function('func4', start_pos),
-        table('projects', start_pos)
-    ])
+        function('func4', start_pos)]
+        + testdata.tables('Custom', start_pos)
+    )
 
 def test_suggested_column_names_with_qualified_alias(completer, complete_event):
     """
@@ -328,12 +318,9 @@ def test_table_names_after_from(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set(testdata.schemas() + [
+    assert set(result) == set(testdata.schemas() + testdata.tables() + [
         function('func1'),
         function('func2'),
-        table('users'),
-        table('orders'),
-        table('"select"'),
         ])
 
 def test_schema_qualified_function_name(completer, complete_event):
@@ -356,12 +343,8 @@ def test_schema_qualified_type_name(text, completer, complete_event):
     pos = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event)
-    assert set(result) == set(testdata.datatypes('custom') + [
-        table('users'),
-        table('"Users"'),
-        table('products'),
-        table('shipments'),
-        ])
+    assert set(result) == set(testdata.datatypes('custom')
+        + testdata.tables('custom'))
 
 
 def test_suggest_columns_from_aliased_set_returning_function(completer, complete_event):

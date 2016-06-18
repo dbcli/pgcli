@@ -40,6 +40,10 @@ class MetaData(object):
         return [datatype(escape(x), pos)
             for x in self.metadata.get('datatypes', {}).get(schema, [])]
 
+    def tables(self, schema='public', pos=0):
+        return [table(escape(x), pos)
+            for x in self.metadata.get('tables', {}).get(schema, [])]
+
     def schemas(self, pos=0):
         schemas = set(sch for schs in self.metadata.values() for sch in schs)
         return [schema(escape(s), pos=pos) for s in schemas]

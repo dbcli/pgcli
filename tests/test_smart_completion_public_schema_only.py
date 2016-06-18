@@ -67,11 +67,7 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set(testdata.schemas() + [
-        table('users'),
-        table('"Users"'),
-        table('"select"'),
-        table('orders'),
+    assert set(result) == set(testdata.schemas() + testdata.tables() + [
         view('user_emails'),
         function('custom_func1'),
         function('custom_func2'),
@@ -377,14 +373,10 @@ def test_suggested_joins(completer, complete_event, text):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set(testdata.schemas() + [
+    assert set(result) == set(testdata.schemas() + testdata.tables() + [
         join('"Users" ON "Users".userid = users.id'),
         join('users users2 ON users2.id = users.parentid'),
         join('users users2 ON users2.parentid = users.id'),
-        table('"Users"'),
-        table('"select"'),
-        table('orders'),
-        table('users'),
         view('user_emails'),
         function('custom_func2'),
         function('set_returning_func'),
@@ -402,12 +394,8 @@ def test_suggested_joins_quoted_schema_qualified_table(completer, complete_event
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set(testdata.schemas() + [
+    assert set(result) == set(testdata.schemas() + testdata.tables() + [
         join('public.users ON users.id = "Users".userid'),
-        table('"Users"'),
-        table('"select"'),
-        table('orders'),
-        table('users'),
         view('user_emails'),
         function('custom_func2'),
         function('set_returning_func'),
@@ -520,11 +508,7 @@ def test_table_names_after_from(completer, complete_event, text):
     result = completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event)
-    assert set(result) == set(testdata.schemas() + [
-        table('users'),
-        table('"Users"'),
-        table('orders'),
-        table('"select"'),
+    assert set(result) == set(testdata.schemas() + testdata.tables() + [
         view('user_emails'),
         function('custom_func1'),
         function('custom_func2'),
@@ -581,12 +565,8 @@ def test_suggest_datatype(text, completer, complete_event):
     pos = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event)
-    assert set(result) == set(testdata.schemas() + testdata.datatypes() + [
-        table('users'),
-        table('"Users"'),
-        table('orders'),
-        table('"select"')] +
-        list(testdata.builtin_datatypes()))
+    assert set(result) == set(testdata.schemas() + testdata.datatypes() +
+        testdata.tables() + list(testdata.builtin_datatypes()))
 
 
 def test_suggest_columns_from_escaped_table_alias(completer, complete_event):
