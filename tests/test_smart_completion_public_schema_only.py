@@ -1,10 +1,7 @@
 from __future__ import unicode_literals
 import pytest
 from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
-    table,
-    function,
-    column,
-    wildcard_expansion)
+    table, function, column, wildcard_expansion)
 from prompt_toolkit.document import Document
 from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
@@ -126,13 +123,7 @@ def test_suggested_column_names_from_visible_table(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('parentid'),
-        column('email'),
-        column('first_name'),
-        column('last_name'),
-        ] + testdata.functions() +
+    assert set(result) == set(testdata.columns('users') + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -151,12 +142,7 @@ def test_suggested_column_names_in_function(completer, complete_event):
     result = completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event)
-    assert set(result) == set([
-        column('id'),
-        column('parentid'),
-        column('email'),
-        column('first_name'),
-        column('last_name')])
+    assert set(result) == set(testdata.columns('users'))
 
 def test_suggested_column_names_with_table_dot(completer, complete_event):
     """
@@ -170,12 +156,7 @@ def test_suggested_column_names_with_table_dot(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('parentid'),
-        column('email'),
-        column('first_name'),
-        column('last_name')])
+    assert set(result) == set(testdata.columns('users'))
 
 def test_suggested_column_names_with_alias(completer, complete_event):
     """
@@ -189,12 +170,7 @@ def test_suggested_column_names_with_alias(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('parentid'),
-        column('email'),
-        column('first_name'),
-        column('last_name')])
+    assert set(result) == set(testdata.columns('users'))
 
 def test_suggested_multiple_column_names(completer, complete_event):
     """
@@ -209,13 +185,7 @@ def test_suggested_multiple_column_names(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('parentid'),
-        column('email'),
-        column('first_name'),
-        column('last_name'),
-        ] + testdata.functions() +
+    assert set(result) == set(testdata.columns('users') + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -233,12 +203,7 @@ def test_suggested_multiple_column_names_with_alias(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('parentid'),
-        column('email'),
-        column('first_name'),
-        column('last_name')])
+    assert set(result) == set(testdata.columns('users'))
 
 def test_suggested_multiple_column_names_with_dot(completer, complete_event):
     """
@@ -253,12 +218,7 @@ def test_suggested_multiple_column_names_with_dot(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('parentid'),
-        column('email'),
-        column('first_name'),
-        column('last_name')])
+    assert set(result) == set(testdata.columns('users'))
 
 
 def test_suggest_columns_after_three_way_join(completer, complete_event):
@@ -516,10 +476,7 @@ def test_auto_escaped_col_names(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('"insert"'),
-        column('"ABC"'),
+    assert set(result) == set(testdata.columns('select') + [
         ] + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
@@ -556,11 +513,7 @@ def test_suggest_columns_from_escaped_table_alias(completer, complete_event):
     pos = len(sql)
     result = completer.get_completions(Document(text=sql, cursor_position=pos),
                                        complete_event)
-    assert set(result) == set([
-        column('id'),
-        column('"insert"'),
-        column('"ABC"'),
-    ])
+    assert set(result) == set(testdata.columns('select'))
 
 
 def test_suggest_columns_from_set_returning_function(completer, complete_event):
@@ -568,12 +521,11 @@ def test_suggest_columns_from_set_returning_function(completer, complete_event):
     pos = len('select ')
     result = completer.get_completions(Document(text=sql, cursor_position=pos),
                                        complete_event)
-    assert set(result) == set([
-        column('x'),
-        column('y'),
-        ] + testdata.functions()
-         + list(testdata.builtin_functions()
-         + testdata.keywords()))
+    assert set(result) == set(
+        testdata.columns('set_returning_func', typ='functions')
+        + testdata.functions()
+        + list(testdata.builtin_functions()
+        + testdata.keywords()))
 
 
 def test_suggest_columns_from_aliased_set_returning_function(completer, complete_event):
@@ -581,9 +533,7 @@ def test_suggest_columns_from_aliased_set_returning_function(completer, complete
     pos = len('select f.')
     result = completer.get_completions(Document(text=sql, cursor_position=pos),
                                        complete_event)
-    assert set(result) == set([
-        column('x'),
-        column('y')])
+    assert set(result) == set(testdata.columns('set_returning_func', typ='functions'))
 
 
 def test_join_functions_using_suggests_common_columns(completer, complete_event):
@@ -592,9 +542,8 @@ def test_join_functions_using_suggests_common_columns(completer, complete_event)
     pos = len(text)
     result = set(completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event))
-    assert set(result) == set([
-         column('x'),
-         column('y')])
+    assert set(result) == set(
+        testdata.columns('set_returning_func', typ='functions'))
 
 
 def test_join_functions_on_suggests_columns_and_join_conditions(completer, complete_event):
@@ -606,8 +555,7 @@ def test_join_functions_on_suggests_columns_and_join_conditions(completer, compl
     assert set(result) == set([
          name_join('y = f2.y'),
          name_join('x = f2.x'),
-         column('x'),
-         column('y')])
+         ] + testdata.columns('set_returning_func', typ='functions'))
 
 
 def test_learn_keywords(completer, complete_event):
@@ -724,12 +672,7 @@ def test_suggest_columns_from_unquoted_table(completer, complete_event, text):
     pos = len('SELECT U.')
     result = completer.get_completions(Document(text=text, cursor_position=pos),
                                        complete_event)
-    assert set(result) == set([
-        column('id'),
-        column('parentid'),
-        column('email'),
-        column('first_name'),
-        column('last_name')])
+    assert set(result) == set(testdata.columns('users'))
 
 
 def test_suggest_columns_from_quoted_table(completer, complete_event):
@@ -737,6 +680,4 @@ def test_suggest_columns_from_quoted_table(completer, complete_event):
     pos = len('SELECT U.')
     result = completer.get_completions(Document(text=text, cursor_position=pos),
                                        complete_event)
-    assert set(result) == set([
-        column('userid'),
-        column('username')])
+    assert set(result) == set(testdata.columns('Users'))

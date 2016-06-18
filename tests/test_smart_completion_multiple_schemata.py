@@ -2,9 +2,7 @@ from __future__ import unicode_literals
 import pytest
 import itertools
 from metadata import (MetaData, alias, name_join, fk_join, join,
-    function,
-    column,
-    wildcard_expansion)
+    function, wildcard_expansion)
 from prompt_toolkit.document import Document
 from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
@@ -83,12 +81,8 @@ def test_suggested_column_names_from_shadowed_visible_table(completer, complete_
         Document(text=text, cursor_position=position),
         complete_event))
 
-    assert set(result) == set([
-        column('id'),
-        column('email'),
-        column('first_name'),
-        column('last_name'),
-        ] + testdata.functions() +
+    assert set(result) == set(testdata.columns('users') +
+        testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -99,10 +93,8 @@ def test_suggested_column_names_from_qualified_shadowed_table(completer, complet
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('phone_number'),
-        ] + testdata.functions() +
+    assert set(result) == set(testdata.columns('users', 'custom') +
+        testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -151,11 +143,7 @@ def test_suggested_column_names_from_schema_qualifed_table(completer, complete_e
     position = len('SELECT ')
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position), complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('product_name'),
-        column('price'),
-        ] + testdata.functions() +
+    assert set(result) == set(testdata.columns('products', 'custom') + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -173,10 +161,7 @@ def test_suggested_column_names_in_function(completer, complete_event):
     result = completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event)
-    assert set(result) == set([
-        column('id'),
-        column('product_name'),
-        column('price')])
+    assert set(result) == set(testdata.columns('products', 'custom'))
 
 
 @pytest.mark.parametrize('text', [
@@ -229,10 +214,7 @@ def test_suggested_column_names_with_qualified_alias(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('product_name'),
-        column('price')])
+    assert set(result) == set(testdata.columns('products', 'custom'))
 
 def test_suggested_multiple_column_names(completer, complete_event):
     """
@@ -247,11 +229,8 @@ def test_suggested_multiple_column_names(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('product_name'),
-        column('price'),
-        ] + testdata.functions() +
+    assert set(result) == set(testdata.columns('products', 'custom') +
+        testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -269,10 +248,7 @@ def test_suggested_multiple_column_names_with_alias(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        column('id'),
-        column('product_name'),
-        column('price')])
+    assert set(result) == set(testdata.columns('products', 'custom'))
 
 @pytest.mark.parametrize('text', [
     'SELECT x.id, y.product_name FROM custom.products x JOIN custom.products y ON ',
@@ -338,8 +314,8 @@ def test_suggest_columns_from_aliased_set_returning_function(completer, complete
     pos = len('select f.')
     result = completer.get_completions(Document(text=sql, cursor_position=pos),
                                        complete_event)
-    assert set(result) == set([
-        column('x')])
+    assert set(result) == set(
+        testdata.columns('set_returning_func', 'custom', 'functions'))
 
 @pytest.mark.parametrize('text', [
     'SELECT * FROM custom.set_returning_func()',
@@ -445,9 +421,7 @@ def test_suggest_columns_from_unquoted_table(completer, complete_event, text):
     pos = len('SELECT U.')
     result = completer.get_completions(Document(text=text, cursor_position=pos),
                                        complete_event)
-    assert set(result) == set([
-        column('id'),
-        column('phone_number')])
+    assert set(result) == set(testdata.columns('users', 'custom'))
 
 @pytest.mark.parametrize('text', [
     'SELECT U. FROM custom."Users" U',
@@ -457,6 +431,4 @@ def test_suggest_columns_from_quoted_table(completer, complete_event, text):
     pos = len('SELECT U.')
     result = completer.get_completions(Document(text=text, cursor_position=pos),
                                        complete_event)
-    assert set(result) == set([
-        column('userid'),
-        column('username')])
+    assert set(result) == set(testdata.columns('Users', 'custom'))

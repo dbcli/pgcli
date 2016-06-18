@@ -36,6 +36,14 @@ class MetaData(object):
     def keywords(self, pos=0):
         return [keyword(kw, pos) for kw in self.completer.keywords]
 
+    def columns(self, parent, schema='public', typ='tables', pos=0):
+        if typ == 'functions':
+            fun = [x for x in self.metadata[typ][schema] if x[0] == parent][0]
+            cols = fun[1]
+        else:
+            cols = self.metadata[typ][schema][parent]
+        return [column(escape(col), pos) for col in cols]
+
     def datatypes(self, schema='public', pos=0):
         return [datatype(escape(x), pos)
             for x in self.metadata.get('datatypes', {}).get(schema, [])]
