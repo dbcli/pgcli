@@ -67,10 +67,7 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set(testdata.schemas()
-        + testdata.views() + testdata.tables() + [
-        function('custom_func1'),
-        function('custom_func2'),
-        function('set_returning_func')])
+        + testdata.views() + testdata.tables() + testdata.functions())
 
 
 def test_builtin_function_name_completion(completer, complete_event):
@@ -135,9 +132,7 @@ def test_suggested_column_names_from_visible_table(completer, complete_event):
         column('email'),
         column('first_name'),
         column('last_name'),
-        function('custom_func1'),
-        function('custom_func2'),
-    function('set_returning_func')] +
+        ] + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -220,9 +215,7 @@ def test_suggested_multiple_column_names(completer, complete_event):
         column('email'),
         column('first_name'),
         column('last_name'),
-        function('custom_func1'),
-        function('custom_func2'),
-        function('set_returning_func')] +
+        ] + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -377,9 +370,7 @@ def test_suggested_joins(completer, complete_event, text):
         join('"Users" ON "Users".userid = users.id'),
         join('users users2 ON users2.id = users.parentid'),
         join('users users2 ON users2.parentid = users.id'),
-        function('custom_func2'),
-        function('set_returning_func'),
-        function('custom_func1')])
+        ] + testdata.functions())
 
 @pytest.mark.parametrize('text', [
     'SELECT * FROM public."Users" JOIN ',
@@ -396,9 +387,7 @@ def test_suggested_joins_quoted_schema_qualified_table(completer, complete_event
     assert set(result) == set(testdata.schemas() + testdata.tables()
         + testdata.views() + [
         join('public.users ON users.id = "Users".userid'),
-        function('custom_func2'),
-        function('set_returning_func'),
-        function('custom_func1')])
+        ] + testdata.functions())
 
 @pytest.mark.parametrize('text', [
     'SELECT u.name, o.id FROM users u JOIN orders o ON ',
@@ -508,11 +497,7 @@ def test_table_names_after_from(completer, complete_event, text):
         Document(text=text, cursor_position=position),
         complete_event)
     assert set(result) == set(testdata.schemas() + testdata.tables()
-        + testdata.views() + [
-        function('custom_func1'),
-        function('custom_func2'),
-        function('set_returning_func')
-        ])
+        + testdata.views() + testdata.functions())
     assert [c.text for c in result] == [
         '"Users"',
         'custom_func1',
@@ -535,9 +520,7 @@ def test_auto_escaped_col_names(completer, complete_event):
         column('id'),
         column('"insert"'),
         column('"ABC"'),
-        function('custom_func1'),
-        function('custom_func2'),
-        function('set_returning_func')] +
+        ] + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -588,9 +571,7 @@ def test_suggest_columns_from_set_returning_function(completer, complete_event):
     assert set(result) == set([
         column('x'),
         column('y'),
-        function('custom_func1'),
-        function('custom_func2'),
-        function('set_returning_func')]
+        ] + testdata.functions()
          + list(testdata.builtin_functions()
          + testdata.keywords()))
 

@@ -63,10 +63,7 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set(testdata.schemas() + [
-       function('func1'),
-       function('func2'),
-       ] + testdata.tables())
+    assert set(result) == set(testdata.schemas() + testdata.functions() + testdata.tables())
 
 
 @pytest.mark.parametrize('table', [
@@ -91,8 +88,7 @@ def test_suggested_column_names_from_shadowed_visible_table(completer, complete_
         column('email'),
         column('first_name'),
         column('last_name'),
-        function('func1'),
-        function('func2')] +
+        ] + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -106,8 +102,7 @@ def test_suggested_column_names_from_qualified_shadowed_table(completer, complet
     assert set(result) == set([
         column('id'),
         column('phone_number'),
-        function('func1'),
-        function('func2')] +
+        ] + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -143,8 +138,7 @@ def test_suggested_joins(completer, complete_event, query, tbl):
         complete_event))
     assert set(result) == set(testdata.schemas() + testdata.tables() + [
         join('custom.shipments ON shipments.user_id = {0}.id'.format(tbl)),
-        function('func1'),
-        function('func2')])
+        ] + testdata.functions())
 
 def test_suggested_column_names_from_schema_qualifed_table(completer, complete_event):
     """
@@ -161,8 +155,7 @@ def test_suggested_column_names_from_schema_qualifed_table(completer, complete_e
         column('id'),
         column('product_name'),
         column('price'),
-        function('func1'),
-        function('func2')] +
+        ] + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -203,10 +196,8 @@ def test_suggested_table_names_with_schema_dot(completer, complete_event,
     position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set(testdata.tables('custom', start_pos) + [
-        function('func3', start_pos),
-        function('set_returning_func', start_pos),
-    ])
+    assert set(result) == set(testdata.tables('custom', start_pos)
+        + testdata.functions('custom', start_pos))
 
 @pytest.mark.parametrize('text', [
     'SELECT * FROM "Custom".',
@@ -223,10 +214,8 @@ def test_suggested_table_names_with_schema_dot2(completer, complete_event,
     position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set([
-        function('func4', start_pos)]
-        + testdata.tables('Custom', start_pos)
-    )
+    assert set(result) == set(testdata.functions('Custom', start_pos) +
+        testdata.tables('Custom', start_pos))
 
 def test_suggested_column_names_with_qualified_alias(completer, complete_event):
     """
@@ -262,8 +251,7 @@ def test_suggested_multiple_column_names(completer, complete_event):
         column('id'),
         column('product_name'),
         column('price'),
-        function('func1'),
-        function('func2')] +
+        ] + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
@@ -318,10 +306,8 @@ def test_table_names_after_from(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set(testdata.schemas() + testdata.tables() + [
-        function('func1'),
-        function('func2'),
-        ])
+    assert set(result) == set(testdata.schemas() + testdata.tables()
+        + testdata.functions())
 
 def test_schema_qualified_function_name(completer, complete_event):
     text = 'SELECT custom.func'
