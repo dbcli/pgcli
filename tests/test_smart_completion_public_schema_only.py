@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 import pytest
 from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
     table,
-    view,
     function,
     column,
     wildcard_expansion)
@@ -67,8 +66,8 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set(testdata.schemas() + testdata.tables() + [
-        view('user_emails'),
+    assert set(result) == set(testdata.schemas()
+        + testdata.views() + testdata.tables() + [
         function('custom_func1'),
         function('custom_func2'),
         function('set_returning_func')])
@@ -373,11 +372,11 @@ def test_suggested_joins(completer, complete_event, text):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set(testdata.schemas() + testdata.tables() + [
+    assert set(result) == set(testdata.schemas() + testdata.tables()
+        + testdata.views() + [
         join('"Users" ON "Users".userid = users.id'),
         join('users users2 ON users2.id = users.parentid'),
         join('users users2 ON users2.parentid = users.id'),
-        view('user_emails'),
         function('custom_func2'),
         function('set_returning_func'),
         function('custom_func1')])
@@ -394,9 +393,9 @@ def test_suggested_joins_quoted_schema_qualified_table(completer, complete_event
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set(testdata.schemas() + testdata.tables() + [
+    assert set(result) == set(testdata.schemas() + testdata.tables()
+        + testdata.views() + [
         join('public.users ON users.id = "Users".userid'),
-        view('user_emails'),
         function('custom_func2'),
         function('set_returning_func'),
         function('custom_func1')])
@@ -508,8 +507,8 @@ def test_table_names_after_from(completer, complete_event, text):
     result = completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event)
-    assert set(result) == set(testdata.schemas() + testdata.tables() + [
-        view('user_emails'),
+    assert set(result) == set(testdata.schemas() + testdata.tables()
+        + testdata.views() + [
         function('custom_func1'),
         function('custom_func2'),
         function('set_returning_func')
