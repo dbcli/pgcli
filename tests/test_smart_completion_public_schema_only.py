@@ -6,26 +6,26 @@ from prompt_toolkit.document import Document
 from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
 metadata = {
-                'tables': {
-                    'users': ['id', 'parentid', 'email', 'first_name', 'last_name'],
-                    'Users': ['userid', 'username'],
-                    'orders': ['id', 'ordered_date', 'status', 'email'],
-                    'select': ['id', 'insert', 'ABC']},
-                'views': {
-                    'user_emails': ['id', 'email']},
-                'functions': [
-                    ['custom_func1', [''], [''], [''], '', False, False,
-                        False],
-                    ['custom_func2', [''], [''], [''], '', False, False,
-                        False],
-                    ['set_returning_func', ['x', 'y'], ['integer', 'integer'],
-                        ['o', 'o'], '', False, False, True]],
-                'datatypes': ['custom_type1', 'custom_type2'],
-                'foreignkeys': [
-                    ('public', 'users', 'id', 'public', 'users', 'parentid'),
-                    ('public', 'users', 'id', 'public', 'Users', 'userid')
-                ],
-            }
+    'tables': {
+        'users': ['id', 'parentid', 'email', 'first_name', 'last_name'],
+        'Users': ['userid', 'username'],
+        'orders': ['id', 'ordered_date', 'status', 'email'],
+        'select': ['id', 'insert', 'ABC']},
+    'views': {
+        'user_emails': ['id', 'email']},
+    'functions': [
+        ['custom_func1', [''], [''], [''], '', False, False,
+            False],
+        ['custom_func2', [''], [''], [''], '', False, False,
+            False],
+        ['set_returning_func', ['x', 'y'], ['integer', 'integer'],
+            ['o', 'o'], '', False, False, True]],
+    'datatypes': ['custom_type1', 'custom_type2'],
+    'foreignkeys': [
+        ('public', 'users', 'id', 'public', 'users', 'parentid'),
+        ('public', 'users', 'id', 'public', 'Users', 'userid')
+    ],
+}
 
 metadata = dict((k, {'public': v}) for k, v in metadata.items())
 

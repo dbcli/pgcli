@@ -7,43 +7,41 @@ from prompt_toolkit.document import Document
 from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
 metadata = {
-            'tables': {
-                'public':   {
-                                'users': ['id', 'email', 'first_name', 'last_name'],
-                                'orders': ['id', 'ordered_date', 'status'],
-                                'select': ['id', 'insert', 'ABC']
-                            },
-                'custom':   {
-                                'users': ['id', 'phone_number'],
-                                'Users': ['userid', 'username'],
-                                'products': ['id', 'product_name', 'price'],
-                                'shipments': ['id', 'address', 'user_id']
-                            },
-                'Custom':   {
-                                'projects': ['projectid', 'name']
-                            }},
-            'functions': {
-                            'public': [
-                                ['func1', [], [], [], '', False, False,
-                                    False],
-                                ['func2', [], [], [], '', False, False,
-                                    False]],
-                            'custom': [
-                                ['func3', [], [], [], '', False, False, False],
-                                ['set_returning_func', ['x'], ['integer'], ['o'],
-                                    'integer', False, False, True]],
-                            'Custom': [
-                                ['func4', [], [], [], '', False, False, False]]
-                         },
-            'datatypes': {
-                            'public':   ['typ1', 'typ2'],
-                            'custom':   ['typ3', 'typ4'],
-                         },
-                'foreignkeys': {
-                    'custom': [
-                    ('public', 'users', 'id', 'custom', 'shipments', 'user_id')
-                ]},
-            }
+    'tables': {
+        'public': {
+            'users': ['id', 'email', 'first_name', 'last_name'],
+            'orders': ['id', 'ordered_date', 'status'],
+            'select': ['id', 'insert', 'ABC']
+        },
+        'custom': {
+            'users': ['id', 'phone_number'],
+            'Users': ['userid', 'username'],
+            'products': ['id', 'product_name', 'price'],
+            'shipments': ['id', 'address', 'user_id']
+        },
+        'Custom': {
+            'projects': ['projectid', 'name']
+        }},
+    'functions': {
+        'public': [
+            ['func1', [], [], [], '', False, False, False],
+            ['func2', [], [], [], '', False, False, False]],
+        'custom': [
+            ['func3', [], [], [], '', False, False, False],
+            ['set_returning_func', ['x'], ['integer'], ['o'],
+                'integer', False, False, True]],
+        'Custom': [
+            ['func4', [], [], [], '', False, False, False]]
+     },
+    'datatypes': {
+        'public': ['typ1', 'typ2'],
+        'custom': ['typ3', 'typ4'],
+     },
+    'foreignkeys': {
+        'custom': [
+            ('public', 'users', 'id', 'custom', 'shipments', 'user_id')
+    ]},
+}
 
 testdata = MetaData(metadata)
 
