@@ -5,7 +5,6 @@ from metadata import (MetaData, alias, name_join, fk_join, join,
     table,
     function,
     column,
-    schema,
     datatype,
     wildcard_expansion)
 from prompt_toolkit.document import Document
@@ -66,12 +65,9 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set([
+    assert set(result) == set(testdata.schemas() + [
        function('func1'),
        function('func2'),
-       schema('public'),
-       schema('custom'),
-       schema('"Custom"'),
        table('users'),
        table('"select"'),
        table('orders')])
@@ -149,11 +145,8 @@ def test_suggested_joins(completer, complete_event, query, tbl):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
+    assert set(result) == set(testdata.schemas() + [
         join('custom.shipments ON shipments.user_id = {0}.id'.format(tbl)),
-        schema('public'),
-        schema('custom'),
-        schema('"Custom"'),
         table('orders'),
         table('users'),
         table('"select"'),
@@ -336,10 +329,7 @@ def test_table_names_after_from(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        schema('public'),
-        schema('custom'),
-        schema('"Custom"'),
+    assert set(result) == set(testdata.schemas() + [
         function('func1'),
         function('func2'),
         table('users'),

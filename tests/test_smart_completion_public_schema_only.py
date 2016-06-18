@@ -5,7 +5,6 @@ from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
     view,
     function,
     column,
-    schema,
     datatype,
     wildcard_expansion)
 from prompt_toolkit.document import Document
@@ -69,8 +68,7 @@ def test_schema_or_visible_table_completion(completer, complete_event):
     position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set([
-        schema('public'),
+    assert set(result) == set(testdata.schemas() + [
         table('users'),
         table('"Users"'),
         table('"select"'),
@@ -380,8 +378,7 @@ def test_suggested_joins(completer, complete_event, text):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
-        schema('public'),
+    assert set(result) == set(testdata.schemas() + [
         join('"Users" ON "Users".userid = users.id'),
         join('users users2 ON users2.id = users.parentid'),
         join('users users2 ON users2.parentid = users.id'),
@@ -406,9 +403,8 @@ def test_suggested_joins_quoted_schema_qualified_table(completer, complete_event
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
-    assert set(result) == set([
+    assert set(result) == set(testdata.schemas() + [
         join('public.users ON users.id = "Users".userid'),
-        schema('public'),
         table('"Users"'),
         table('"select"'),
         table('orders'),
@@ -525,8 +521,7 @@ def test_table_names_after_from(completer, complete_event, text):
     result = completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event)
-    assert set(result) == set([
-        schema('public'),
+    assert set(result) == set(testdata.schemas() + [
         table('users'),
         table('"Users"'),
         table('orders'),
@@ -587,8 +582,7 @@ def test_suggest_datatype(text, completer, complete_event):
     pos = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event)
-    assert set(result) == set([
-        schema('public'),
+    assert set(result) == set(testdata.schemas() + [
         datatype('custom_type1'),
         datatype('custom_type2'),
         table('users'),

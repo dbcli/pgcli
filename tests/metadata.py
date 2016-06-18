@@ -36,6 +36,10 @@ class MetaData(object):
     def keywords(self, pos=0):
         return [keyword(kw, pos) for kw in self.completer.keywords]
 
+    def schemas(self, pos=0):
+        schemas = set(sch for schs in self.metadata.values() for sch in schs)
+        return [schema(escape(s), pos=pos) for s in schemas]
+
     def get_completer(self):
         metadata = self.metadata
         import pgcli.pgcompleter as pgcompleter
