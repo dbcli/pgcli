@@ -5,7 +5,6 @@ from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
     view,
     function,
     column,
-    datatype,
     wildcard_expansion)
 from prompt_toolkit.document import Document
 from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
@@ -582,9 +581,7 @@ def test_suggest_datatype(text, completer, complete_event):
     pos = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=pos), complete_event)
-    assert set(result) == set(testdata.schemas() + [
-        datatype('custom_type1'),
-        datatype('custom_type2'),
+    assert set(result) == set(testdata.schemas() + testdata.datatypes() + [
         table('users'),
         table('"Users"'),
         table('orders'),

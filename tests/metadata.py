@@ -36,6 +36,10 @@ class MetaData(object):
     def keywords(self, pos=0):
         return [keyword(kw, pos) for kw in self.completer.keywords]
 
+    def datatypes(self, schema='public', pos=0):
+        return [datatype(escape(x), pos)
+            for x in self.metadata.get('datatypes', {}).get(schema, [])]
+
     def schemas(self, pos=0):
         schemas = set(sch for schs in self.metadata.values() for sch in schs)
         return [schema(escape(s), pos=pos) for s in schemas]
