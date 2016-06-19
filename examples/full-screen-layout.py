@@ -141,7 +141,7 @@ buffers={
 # Now we add an event handler that captures change events to the buffer on the
 # left. If the text changes over there, we'll update the buffer on the right.
 
-def default_buffer_changed(cli):
+def default_buffer_changed(default_buffer):
     """
     When the buffer on the left (DEFAULT_BUFFER) changes, update the buffer on
     the right. We just reverse the text.
