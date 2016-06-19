@@ -14,7 +14,8 @@ Features:
 * Ensure target dir exists when copying config. (Thanks: `David Szotten`_).
 * Handle dates that fall in the B.C. range. (Thanks: `Stuart Quin`_).
 * Pager is selected from config file or else from environment variable. (Thanks: `Fernando Mora`_).
-* Add support for redshift. (Thanks: `Timothy Cleaver`_).
+* Add support for Amazon Redshift. (Thanks: `Timothy Cleaver`_).
+* Add support for Postgres 8.x. (Thanks: `Timothy Cleaver`_ and `Darik Gamble`_)
 * Don't error when completing parameter-less functions. (Thanks: `David Szotten`_).
 * Concat and return all available notices. (Thanks: `Stuart Quin`_).
 * Handle unicode in record type. (Thanks: `Amjith Ramanujam`_).
@@ -22,6 +23,13 @@ Features:
 * Add EXPLAIN keyword to the completion list. (Thanks: `Amjith Ramanujam`_).
 * Added sdist upload to release script. (Thanks: `Irina Truong`_).
 * Sort completions based on most recently used. (Thanks: `Darik Gamble`)
+* Expand '*' into column list during completion. This can be triggered by hitting `<tab>` after the '*' character in the sql while typing. (Thanks: `Joakim Koljonen`_)
+* Add a limit to the warning about too many rows. This is controlled by a new config value in ~/.config/pgcli/config. (Thanks: `Anže Pečar`_)
+* Improved argument list in function parameter completions. (Thanks: `Joakim Koljonen`_)
+* Column suggestions after the COLUMN keyword. (Thanks: `Darik Gamble`_)
+* Filter out trigger implemented functions from the suggestion list. (Thanks: `Daniel Rocco`_)
+* State of the art JOIN clause completions that suggest entire conditions. (Thanks: `Joakim Koljonen`_)
+* Suggest fully formed JOIN clauses based on Foreign Key relations. (Thanks: `Joakim Koljonen`_)
 
 Bugs:
 -----
@@ -34,6 +42,7 @@ Bugs:
 * Fix broken `\i` after #395. (Thanks: `David Szotten`_).
 * Fix multi-way joins in auto-completion. (Thanks: `Darik Gamble`_)
 * Display null values as <null> in expanded output. (Thanks: `Amjith Ramanujam`_).
+* Robust support for Postgres version less than 9.x. (Thanks: `Darik Gamble`_)
 
 Internal Changes:
 -----------------
@@ -443,6 +452,7 @@ Improvements:
 * Faster test runs on TravisCI. (Thanks: https://github.com/macobo)
 * Integration tests with Postgres!! (Thanks: https://github.com/macobo)
 
+.. _`Amjith Ramanujam`: https://github.com/amjith
 .. _`Darik Gamble`: https://github.com/darikg
 .. _`Iryna Cherniavska`: https://github.com/j-bennet
 .. _`Daniel Rocco`: https://github.com/drocco007 
@@ -477,4 +487,5 @@ Improvements:
 .. _`Stuart Quin`: https://github.com/stuartquin
 .. _`Timothy Cleaver`: Timothy Cleaver
 .. _`gtxx`: gtxx
-
+.. _`Joakim Koljonen`: https://github.com/koljonen
+.. _`Anže Pečar`: https://github.com/Smotko
