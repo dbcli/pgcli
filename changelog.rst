@@ -5,10 +5,9 @@ Features:
 ---------
 
 * Upgrade to prompt-toolkit 1.0.0. (Thanks: `Jonathan Slenders`_).
-* Add support for \o command to redirect query output to a file. (Thanks: `Tim Sanders`_).
-* Add \i path completion. (Thanks: `Anthony Lai`_).
+* Add support for `\o` command to redirect query output to a file. (Thanks: `Tim Sanders`_).
+* Add `\i` path completion. (Thanks: `Anthony Lai`_).
 * Connect to a dsn saved in config file. (Thanks: `Rodrigo Ramírez Norambuena`_).
-* Update pgspecial dependency to 1.3.0. (Thanks: `Amjith Ramanujam`_).
 * Upgrade sqlparse requirement to version 0.1.19. (Thanks: `Fernando L. Canizo`_).
 * Add timestamptz to DATE custom extension. (Thanks: `Fernando Mora`_).
 * Ensure target dir exists when copying config. (Thanks: `David Szotten`_).
@@ -30,6 +29,8 @@ Features:
 * Filter out trigger implemented functions from the suggestion list. (Thanks: `Daniel Rocco`_)
 * State of the art JOIN clause completions that suggest entire conditions. (Thanks: `Joakim Koljonen`_)
 * Suggest fully formed JOIN clauses based on Foreign Key relations. (Thanks: `Joakim Koljonen`_)
+* Add support for `\dx` meta command to list the installed extensions. (Thanks: `Darik Gamble`_)
+* Add support for `\copy` command. (Thanks: `Catherine Devlin`_)
 
 Bugs:
 -----
@@ -51,6 +52,7 @@ Internal Changes:
 * Explicitly add wcwidth as a dependency. (Thanks: `Amjith Ramanujam`_).
 * Add tests for the format_output. (Thanks: `Amjith Ramanujam`_).
 * Lots of tests for pgcompleter. (Thanks: `Darik Gamble`_).
+* Update pgspecial dependency to 1.4.0.
 
 
 0.20.1
@@ -489,3 +491,4 @@ Improvements:
 .. _`gtxx`: gtxx
 .. _`Joakim Koljonen`: https://github.com/koljonen
 .. _`Anže Pečar`: https://github.com/Smotko
+.. _`Catherine Devlin`: https://github.com/catherinedevlin
