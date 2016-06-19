@@ -475,7 +475,7 @@ Improvements:
 .. _`Tamas Boros`: https://github.com/TamasNo1
 .. _`Jacek Wielemborek`: https://github.com/d33tah
 .. _`Rodrigo Ramírez Norambuena`: https://github.com/roramirez
-.. _`Anthony Lai`: https://github.com/AnyBucket
+.. _`Anthony Lai`: https://github.com/ajlai
 .. _`Ari Summer`: Ari Summer
 .. _`David Szotten`: David Szotten
 .. _`Fernando L. Canizo`: Fernando L. Canizo
