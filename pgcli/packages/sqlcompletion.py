@@ -57,20 +57,8 @@ def suggest_type(full_text, text_before_cursor):
             include='many_punctuations')
 
     identifier = None
-
-    def strip_named_query(txt):
-        """
-        This will strip "save named query" command in the beginning of the line:
-        '\ns zzz SELECT * FROM abc'   -> 'SELECT * FROM abc'
-        '  \ns zzz SELECT * FROM abc' -> 'SELECT * FROM abc'
-        """
-        pattern = re.compile(r'^\s*\\ns\s+[A-z0-9\-_]+\s+')
-        if pattern.match(txt):
-            txt = pattern.sub('', txt)
-        return txt
-
-    full_text = strip_named_query(full_text)
-    text_before_cursor = strip_named_query(text_before_cursor)
+    full_text = _strip_named_query(full_text)
+    text_before_cursor = _strip_named_query(text_before_cursor)
     text_before_cursor_including_last_word = text_before_cursor
 
     # If we've partially typed a word then word_before_cursor won't be an empty
@@ -125,6 +113,18 @@ def suggest_type(full_text, text_before_cursor):
     return suggest_based_on_last_token(
         last_token, text_before_cursor, full_text, identifier,
         parsed_statement=statement)
+
+
+def _strip_named_query(txt):
+    """
+    This will strip "save named query" command in the beginning of the line:
+    '\ns zzz SELECT * FROM abc'   -> 'SELECT * FROM abc'
+    '  \ns zzz SELECT * FROM abc' -> 'SELECT * FROM abc'
+    """
+    pattern = re.compile(r'^\s*\\ns\s+[A-z0-9\-_]+\s+')
+    if pattern.match(txt):
+        txt = pattern.sub('', txt)
+    return txt
 
 
 def suggest_special(text):
