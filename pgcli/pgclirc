@@ -38,7 +38,7 @@ generate_casing_file = False
 history_file = default
 
 # Default log level. Possible values: "CRITICAL", "ERROR", "WARNING", "INFO"
-# and "DEBUG".
+# and "DEBUG". "NONE" disables logging.
 log_level = INFO
 
 # Order of columns when expanding * to column list
@@ -76,6 +76,9 @@ on_error = STOP
 
 # Set threshold for row limit prompt. Use 0 to disable prompt.
 row_limit = 1000
+
+# Skip intro on startup and goodbye on exit
+less_chatty = False
 
 # Custom colors for the completion menu, toolbar, etc.
 [colors]

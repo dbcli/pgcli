@@ -75,6 +75,13 @@ MetaQuery = namedtuple(
     ])
 MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
+
+# no-op logging handler
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+
 class PGCli(object):
 
     def set_default_pager(self, config):
@@ -122,6 +129,7 @@ class PGCli(object):
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
+        self.less_chatty = c['main'].as_bool('less_chatty')
 
         self.on_error = c['main']['on_error'].upper()
 
@@ -211,15 +219,22 @@ class PGCli(object):
         ensure_dir_exists(log_file)
         log_level = self.config['main']['log_level']
 
+        # Disable logging if value is NONE by switching to a no-op handler.
+        # Set log level to a high value so it doesn't even waste cycles getting called.
+        if log_level.upper() == 'NONE':
+            handler = NullHandler()
+        else:
+            handler = logging.FileHandler(os.path.expanduser(log_file))
+
         level_map = {'CRITICAL': logging.CRITICAL,
                      'ERROR': logging.ERROR,
                      'WARNING': logging.WARNING,
                      'INFO': logging.INFO,
-                     'DEBUG': logging.DEBUG
+                     'DEBUG': logging.DEBUG,
+                     'NONE': logging.CRITICAL
                      }
-        log_level = level_map[log_level.upper()]
 
-        handler = logging.FileHandler(os.path.expanduser(log_file))
+        log_level = level_map[log_level.upper()]
 
         formatter = logging.Formatter(
             '%(asctime)s (%(process)d/%(threadName)s) '
@@ -339,10 +354,11 @@ class PGCli(object):
 
         self.cli = self._build_cli(history)
 
-        print('Version:', __version__)
-        print('Chat: https://gitter.im/dbcli/pgcli')
-        print('Mail: https://groups.google.com/forum/#!forum/pgcli')
-        print('Home: http://pgcli.com')
+        if not self.less_chatty:
+            print('Version:', __version__)
+            print('Chat: https://gitter.im/dbcli/pgcli')
+            print('Mail: https://groups.google.com/forum/#!forum/pgcli')
+            print('Home: http://pgcli.com')
 
         try:
             while True:
@@ -433,7 +449,8 @@ class PGCli(object):
                 self.query_history.append(query)
 
         except EOFError:
-            print ('Goodbye!')
+            if not self.less_chatty:
+                print ('Goodbye!')
 
     def _build_cli(self, history):
 
