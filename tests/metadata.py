@@ -25,7 +25,6 @@ def wildcard_expansion(cols, pos=-1):
 class MetaData(object):
     def __init__(self, metadata):
         self.metadata = metadata
-        self.get_completer()
 
     def builtin_functions(self, pos=0):
         return [function(f, pos) for f in self.completer.functions]
@@ -64,10 +63,11 @@ class MetaData(object):
         schemas = set(sch for schs in self.metadata.values() for sch in schs)
         return [schema(escape(s), pos=pos) for s in schemas]
 
-    def get_completer(self):
+    @property
+    def completer(self):
         metadata = self.metadata
         import pgcli.pgcompleter as pgcompleter
-        self.completer = comp = pgcompleter.PGCompleter(smart_completion=True)
+        comp = pgcompleter.PGCompleter(smart_completion=True)
 
         schemata, tables, tbl_cols, views, view_cols = [], [], [], [], []
 
@@ -105,3 +105,5 @@ class MetaData(object):
         comp.extend_datatypes(datatypes)
         comp.extend_foreignkeys(foreignkeys)
         comp.set_search_path(['public'])
+
+        return comp
