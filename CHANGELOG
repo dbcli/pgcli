@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+1.0.3: 2016-06-20
+-----------------
+
+Fixes:
+- Bugfix for Python2 in readline-like completion.
+- Bugfix in readline-like completion visualisation.
+
+New features:
+- Added `erase_when_done` parameter to the `Aplication` class.  (This was
+  required for the bug fixes.)
+- Added (experimental) `CommandLineInterface.run_application_generator` method.
+  (Also required for the bug fix.)
+
 1.0.2: 2016-06-16
 -----------------
 
