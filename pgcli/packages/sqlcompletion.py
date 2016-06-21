@@ -115,15 +115,18 @@ def suggest_type(full_text, text_before_cursor):
     return suggest_based_on_last_token(doc.last_token, doc)
 
 
+named_query_regex = re.compile(r'^\s*\\ns\s+[A-z0-9\-_]+\s+')
+
+
 def _strip_named_query(txt):
     """
     This will strip "save named query" command in the beginning of the line:
     '\ns zzz SELECT * FROM abc'   -> 'SELECT * FROM abc'
     '  \ns zzz SELECT * FROM abc' -> 'SELECT * FROM abc'
     """
-    pattern = re.compile(r'^\s*\\ns\s+[A-z0-9\-_]+\s+')
-    if pattern.match(txt):
-        txt = pattern.sub('', txt)
+
+    if named_query_regex.match(txt):
+        txt = named_query_regex.sub('', txt)
     return txt
 
 
