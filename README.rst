@@ -187,7 +187,7 @@ library rather than listing it as a dependency in setup.py, is because I had to
 make a change to the table format which is merged back into the original repo,
 but not yet released in PyPI.
 
-`Click <http://click.pocoo.org/3/>`_ is used for command line option parsing
+`Click <http://click.pocoo.org/>`_ is used for command line option parsing
 and printing error messages.
 
 Thanks to `psycopg <http://initd.org/psycopg/>`_ for providing a rock solid
