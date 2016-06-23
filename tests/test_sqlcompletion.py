@@ -3,23 +3,21 @@ from pgcli.packages.sqlcompletion import (
     Function, Datatype, Alias, JoinCondition, Join)
 import pytest
 
+# Returns the expected select-clause suggestions for a single-table select
+def cols_etc(table, schema=None, alias=None, is_function=False, parent=None):
+    return set([
+        Column(tables=((schema, table, alias, is_function),)),
+        Function(schema=parent),
+        Keyword()])
 
 def test_select_suggests_cols_with_visible_table_scope():
     suggestions = suggest_type('SELECT  FROM tabl', 'SELECT ')
-    assert set(suggestions) == set([
-        Column(tables=((None, 'tabl', None, False),)),
-        Function(schema=None),
-        Keyword()
-    ])
+    assert set(suggestions) == cols_etc('tabl')
 
 
 def test_select_suggests_cols_with_qualified_table_scope():
     suggestions = suggest_type('SELECT  FROM sch.tabl', 'SELECT ')
-    assert set(suggestions) == set([
-        Column(tables=(('sch', 'tabl', None, False),)),
-        Function(schema=None),
-        Keyword()
-    ])
+    assert set(suggestions) == cols_etc('tabl', 'sch')
 
 
 @pytest.mark.parametrize('expression', [
@@ -27,11 +25,7 @@ def test_select_suggests_cols_with_qualified_table_scope():
 ])
 def test_where_suggests_columns_functions_quoted_table(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == set([
-        Column(tables=((None, 'tabl', '"tabl"', False),)),
-        Function(schema=None),
-        Keyword(),
-    ])
+    assert set(suggestions) == cols_etc('tabl', alias='"tabl"')
 
 
 @pytest.mark.parametrize('expression', [
@@ -48,11 +42,7 @@ def test_where_suggests_columns_functions_quoted_table(expression):
 ])
 def test_where_suggests_columns_functions(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == set([
-        Column(tables=((None, 'tabl', None, False),)),
-        Function(schema=None),
-        Keyword(),
-    ])
+    assert set(suggestions) == cols_etc('tabl')
 
 
 @pytest.mark.parametrize('expression', [
@@ -61,21 +51,13 @@ def test_where_suggests_columns_functions(expression):
 ])
 def test_where_in_suggests_columns(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == set([
-        Column(tables=((None, 'tabl', None, False),)),
-        Function(schema=None),
-        Keyword(),
-    ])
+    assert set(suggestions) == cols_etc('tabl')
 
 
 def test_where_equals_any_suggests_columns_or_keywords():
     text = 'SELECT * FROM tabl WHERE foo = ANY('
     suggestions = suggest_type(text, text)
-    assert set(suggestions) == set([
-        Column(tables=((None, 'tabl', None, False),)),
-        Function(schema=None),
-        Keyword(),
-    ])
+    assert set(suggestions) == cols_etc('tabl')
 
 
 def test_lparen_suggests_cols():
@@ -259,11 +241,7 @@ def test_insert_into_lparen_comma_suggests_cols():
 def test_partially_typed_col_name_suggests_col_names():
     suggestions = suggest_type('SELECT * FROM tabl WHERE col_n',
             'SELECT * FROM tabl WHERE col_n')
-    assert set(suggestions) == set([
-        Column(tables=((None, 'tabl', None, False),)),
-        Function(schema=None),
-        Keyword()
-    ])
+    assert set(suggestions) == cols_etc('tabl')
 
 
 def test_dot_suggests_cols_of_a_table_or_schema_qualified_table():
@@ -379,11 +357,7 @@ def test_sub_select_col_name_completion():
 def test_sub_select_multiple_col_name_completion():
     suggestions = suggest_type('SELECT * FROM (SELECT a, FROM abc',
             'SELECT * FROM (SELECT a, ')
-    assert set(suggestions) == set([
-        Column(tables=((None, 'abc', None, False),)),
-        Function(schema=None),
-        Keyword(),
-    ])
+    assert set(suggestions) == cols_etc('abc')
 
 
 def test_sub_select_dot_col_name_completion():
@@ -428,14 +402,13 @@ def test_left_join_with_comma():
 ])
 def test_join_alias_dot_suggests_cols1(sql):
     suggestions = suggest_type(sql, sql)
+    tables = ((None, 'abc', 'a', False), (None, 'def', 'd', False))
     assert set(suggestions) == set([
         Column(tables=((None, 'abc', 'a', False),)),
         Table(schema='a'),
         View(schema='a'),
         Function(schema='a'),
-        JoinCondition(tables=((None, 'abc', 'a', False),
-            (None, 'def', 'd', False)),
-            parent=(None, 'abc', 'a', False))
+        JoinCondition(tables=tables, parent=(None, 'abc', 'a', False))
     ])
 
 
@@ -467,10 +440,8 @@ on ''',
 ])
 def test_on_suggests_aliases_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
-    assert set(suggestions) == set((JoinCondition(
-        tables=((None, 'abc', 'a', False),
-            (None, 'bcd', 'b', False)),
-        parent=None),
+    tables = ((None, 'abc', 'a', False), (None, 'bcd', 'b', False))
+    assert set(suggestions) == set((JoinCondition(tables=tables, parent=None),
         Alias(aliases=('a', 'b',)),))
 
 @pytest.mark.parametrize('sql', [
@@ -479,10 +450,8 @@ def test_on_suggests_aliases_and_join_conditions(sql):
 ])
 def test_on_suggests_tables_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
-    assert set(suggestions) == set((JoinCondition(tables=(
-        (None, 'abc', None, False),
-        (None, 'bcd', None, False)),
-        parent=None),
+    tables = ((None, 'abc', None, False), (None, 'bcd', None, False))
+    assert set(suggestions) == set((JoinCondition(tables=tables, parent=None),
         Alias(aliases=('abc', 'bcd',)),))
 
 
@@ -501,23 +470,17 @@ def test_on_suggests_aliases_right_side(sql):
 ])
 def test_on_suggests_tables_and_join_conditions_right_side(sql):
     suggestions = suggest_type(sql, sql)
-    assert set(suggestions) == set((JoinCondition(
-        tables=(
-            (None, 'abc', None, False),
-            (None, 'bcd', None, False)),
-        parent=None
-      ),
+    tables = ((None, 'abc', None, False), (None, 'bcd', None, False))
+    assert set(suggestions) == set((JoinCondition(tables=tables, parent=None),
       Alias(aliases=('abc', 'bcd',)),))
 
 
 @pytest.mark.parametrize('col_list', ('', 'col1, ',))
 def test_join_using_suggests_common_columns(col_list):
     text = 'select * from abc inner join def using (' + col_list
+    tables = ((None, 'abc', None, False), (None, 'def', None, False))
     assert set(suggest_type(text, text)) == set([
-        Column(tables=((None, 'abc', None, False),
-                       (None, 'def', None, False)),
-            require_last_table=True),
-    ])
+        Column(tables=tables, require_last_table=True),])
 
 
 def test_suggest_columns_after_multiple_joins():
@@ -571,11 +534,7 @@ def test_2_statements_1st_current():
 
     suggestions = suggest_type('select  from a; select * from b',
                                'select ')
-    assert set(suggestions) == set([
-        Column(tables=((None, 'a', None, False),)),
-        Function(schema=None),
-        Keyword()
-    ])
+    assert set(suggestions) == cols_etc('a')
 
 
 def test_3_statements_2nd_current():
@@ -590,11 +549,7 @@ def test_3_statements_2nd_current():
 
     suggestions = suggest_type('select * from a; select  from b; select * from c',
                                'select * from a; select ')
-    assert set(suggestions) == set([
-        Column(tables=((None, 'b', None, False),)),
-        Function(schema=None),
-        Keyword()
-    ])
+    assert set(suggestions) == cols_etc('b')
 
 
 def test_create_db_with_template():
@@ -709,11 +664,7 @@ def test_invalid_sql():
 def test_suggest_where_keyword(text):
     # https://github.com/dbcli/mycli/issues/135
     suggestions = suggest_type(text, text)
-    assert set(suggestions) == set([
-        Column(tables=((None, 'foo', None, False),)),
-        Function(schema=None),
-        Keyword(),
-    ])
+    assert set(suggestions) == cols_etc('foo')
 
 
 @pytest.mark.parametrize('text, before, expected', [
@@ -737,11 +688,8 @@ def test_named_query_completion(text, before, expected):
 
 def test_select_suggests_fields_from_function():
     suggestions = suggest_type('SELECT  FROM func()', 'SELECT ')
-    assert set(suggestions) == set([
-            Column(tables=((None, 'func', None, True),)),
-            Function(schema=None),
-            Keyword()
-            ])
+    assert set(suggestions) == cols_etc(
+        'func', is_function=True)
 
 
 @pytest.mark.parametrize('sql', [
