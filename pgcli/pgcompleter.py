@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 import logging
 import re
-import itertools
+from itertools import count, repeat, chain
 import operator
 from collections import namedtuple, defaultdict
 from pgspecial.namedqueries import NamedQueries
@@ -279,9 +279,9 @@ class PGCompleter(Completer):
                     return -float('Infinity'), -match_point
 
         # Fallback to meta param if meta_collection param is None
-        meta_collection = meta_collection or itertools.repeat(meta)
+        meta_collection = meta_collection or repeat(meta)
         # Fallback to 0 if priority_collection param is None
-        priority_collection = priority_collection or itertools.repeat(0)
+        priority_collection = priority_collection or repeat(0)
 
         collection = zip(collection, meta_collection, priority_collection)
 
@@ -351,7 +351,7 @@ class PGCompleter(Completer):
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables)
         colit = scoped_cols.items
-        flat_cols = list(itertools.chain(*((c.name for c in cols)
+        flat_cols = list(chain(*((c.name for c in cols)
             for t, cols in colit())))
         if suggestion.require_last_table:
             # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
@@ -391,9 +391,9 @@ class PGCompleter(Completer):
         tbls - set of table refs already in use, normalized with normalize_ref
         """
         if tbl[0] == '"':
-            aliases = ('"' + tbl[1:-1] + str(i) + '"' for i in itertools.count(2))
+            aliases = ('"' + tbl[1:-1] + str(i) + '"' for i in count(2))
         else:
-            aliases = (self.case(tbl) + str(i) for i in itertools.count(2))
+            aliases = (self.case(tbl) + str(i) for i in count(2))
         return next(a for a in aliases if normalize_ref(a) not in tbls)
 
     def get_join_matches(self, suggestion, word_before_cursor):
