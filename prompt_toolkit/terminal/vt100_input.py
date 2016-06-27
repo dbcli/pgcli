@@ -151,10 +151,14 @@ ANSI_SEQUENCES = {
     '\x1b[1;5B': Keys.ControlDown,   # Cursor Mode
     '\x1b[1;5C': Keys.ControlRight,  # Cursor Mode
     '\x1b[1;5D': Keys.ControlLeft,   # Cursor Mode
-    '\x1bOA': Keys.ControlUp,       # Application Mode (tmux)
-    '\x1bOB': Keys.ControlDown,     # Application Mode (tmux)
-    '\x1bOC': Keys.ControlRight,    # Application Mode (tmux)
-    '\x1bOD': Keys.ControlLeft,     # Application Mode (tmux)
+
+    # Tmux sends following keystrokes when control+arrow is pressed, but for
+    # Emacs ansi-term sends the same sequences for normal arrow keys. Consider
+    # it a normal arrow press, because that's more important.
+    '\x1bOA': Keys.Up,
+    '\x1bOB': Keys.Down,
+    '\x1bOC': Keys.Right,
+    '\x1bOD': Keys.Left,
 
     '\x1b[5A': Keys.ControlUp,
     '\x1b[5B': Keys.ControlDown,
