@@ -594,16 +594,20 @@ def run_application(
         exec_context = {'patch_context': patch_context, 'cli': cli,
                         'Document': Document}
         exec_(textwrap.dedent('''
-        import asyncio
-
-        @asyncio.coroutine
         def prompt_coro():
-            with patch_context:
-                result = yield from cli.run_async(reset_current_buffer=False)
+            # Inline import, because it slows down startup when asyncio is not
+            # needed.
+            import asyncio
 
-            if isinstance(result, Document):  # Backwards-compatibility.
-                return result.text
-            return result
+            @asyncio.coroutine
+            def run():
+                with patch_context:
+                    result = yield from cli.run_async(reset_current_buffer=False)
+
+                if isinstance(result, Document):  # Backwards-compatibility.
+                    return result.text
+                return result
+            return run()
         '''), exec_context)
 
         return exec_context['prompt_coro']()

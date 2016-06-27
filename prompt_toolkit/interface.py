@@ -416,41 +416,42 @@ class CommandLineInterface(object):
 
             This is only available on Python >3.3, with asyncio.
             """
-            assert pre_run is None or callable(pre_run)
-
-            try:
-                self._is_running = True
-
-                self.on_start.fire()
-                self.reset(reset_current_buffer=reset_current_buffer)
-
-                # Call pre_run.
-                if pre_run:
-                    pre_run()
-
-                with self.input.raw_mode():
-                    self.renderer.request_absolute_cursor_position()
-                    self._redraw()
-
-                    yield from self.eventloop.run_as_coroutine(
-                            self.input, self.create_eventloop_callbacks())
-
-                return self.return_value()
-            finally:
-                if not self.is_done:
-                    self._exit_flag = True
-                    self._redraw()
-
-                self.renderer.reset()
-                self.on_stop.fire()
-                self._is_running = False
-
-        try:
+            # Inline import, because it slows down startup when asyncio is not
+            # needed.
             import asyncio
-        except ImportError:
-            pass
-        else:
-            run_async = asyncio.coroutine(run_async)
+
+            @asyncio.coroutine
+            def run():
+                assert pre_run is None or callable(pre_run)
+
+                try:
+                    self._is_running = True
+
+                    self.on_start.fire()
+                    self.reset(reset_current_buffer=reset_current_buffer)
+
+                    # Call pre_run.
+                    if pre_run:
+                        pre_run()
+
+                    with self.input.raw_mode():
+                        self.renderer.request_absolute_cursor_position()
+                        self._redraw()
+
+                        yield from self.eventloop.run_as_coroutine(
+                                self.input, self.create_eventloop_callbacks())
+
+                    return self.return_value()
+                finally:
+                    if not self.is_done:
+                        self._exit_flag = True
+                        self._redraw()
+
+                    self.renderer.reset()
+                    self.on_stop.fire()
+                    self._is_running = False
+
+            return run()
         '''))
     except SyntaxError:
         # Python2, or early versions of Python 3.
