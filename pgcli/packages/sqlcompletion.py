@@ -33,7 +33,7 @@ Join = namedtuple('Join', ['tables', 'schema'])
 
 Function = namedtuple('Function', ['schema', 'tables', 'filter'])
 # For convenience, don't require the `filter` argument in Function constructor
-Function.__new__.__defaults__ = (None, None, tuple())
+Function.__new__.__defaults__ = (None, tuple(), None)
 Table.__new__.__defaults__ = (None, tuple())
 View.__new__.__defaults__ = (None, tuple())
 FromClauseItem.__new__.__defaults__ = (None, tuple())
