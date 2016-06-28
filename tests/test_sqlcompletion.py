@@ -582,6 +582,85 @@ def test_3_statements_2nd_current():
                                'select * from a; select ')
     assert set(suggestions) == cols_etc('b')
 
+@pytest.mark.parametrize('text', [
+'''
+CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $$
+SELECT  FROM foo;
+SELECT 2 FROM bar;
+$$ language sql;
+    ''',
+    '''create function func2(int, varchar)
+RETURNS text
+language sql AS
+$func$
+SELECT 2 FROM bar;
+SELECT  FROM foo;
+$func$
+    ''',
+'''
+CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $func$
+SELECT 3 FROM foo;
+SELECT 2 FROM bar;
+$$ language sql;
+create function func2(int, varchar)
+RETURNS text
+language sql AS
+$func$
+SELECT 2 FROM bar;
+SELECT  FROM foo;
+$func$
+    ''',
+'''
+SELECT * FROM baz;
+CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $func$
+SELECT  FROM foo;
+SELECT 2 FROM bar;
+$$ language sql;
+create function func2(int, varchar)
+RETURNS text
+language sql AS
+$func$
+SELECT 3 FROM bar;
+SELECT  FROM foo;
+$func$
+SELECT * FROM qux;
+    '''
+])
+def test_statements_in_function_body(text):
+    suggestions = suggest_type(text, text[:text.find('  ') + 1])
+    assert set(suggestions) == set([
+        Column(table_refs=((None, 'foo', None, False),), qualifiable=True),
+        Function(schema=None),
+        Keyword()
+    ])
+
+functions = [
+'''
+CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $$
+SELECT 1 FROM foo;
+SELECT 2 FROM bar;
+$$ language sql;
+    ''',
+    '''
+create function func2(int, varchar)
+RETURNS text
+language sql AS
+'
+SELECT 2 FROM bar;
+SELECT 1 FROM foo;
+';
+    '''
+]
+
+@pytest.mark.parametrize('text', functions)
+def test_statements_with_cursor_after_function_body(text):
+    suggestions = suggest_type(text, text[:text.find('; ') + 1])
+    assert set(suggestions) == set([Keyword()])
+
+@pytest.mark.parametrize('text', functions)
+def test_statements_with_cursor_before_function_body(text):
+    suggestions = suggest_type(text, '')
+    assert set(suggestions) == set([Keyword()])
 
 def test_create_db_with_template():
     suggestions = suggest_type('create database foo with template ',
