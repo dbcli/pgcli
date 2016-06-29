@@ -3,7 +3,6 @@ import pytest
 from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
     schema, table, view, function, column, wildcard_expansion)
 from prompt_toolkit.document import Document
-from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
 metadata = {
     'tables': {
@@ -294,6 +293,9 @@ def test_suggest_columns_after_three_way_join(completer, complete_event):
             set(result))
 
 join_condition_texts = [
+    'INSERT INTO orders SELECT * FROM users U JOIN "Users" U2 ON ',
+    '''INSERT INTO public.orders(orderid)
+    SELECT * FROM users U JOIN "Users" U2 ON ''',
     'SELECT * FROM users U JOIN "Users" U2 ON ',
     'SELECT * FROM users U INNER join "Users" U2 ON ',
     'SELECT * FROM USERS U right JOIN "Users" U2 ON ',
@@ -388,6 +390,14 @@ def test_suggested_joins_fuzzy(completer, complete_event, text):
 
 join_texts = [
     'SELECT * FROM Users JOIN ',
+    '''INSERT INTO "Users"
+    SELECT *
+    FROM Users
+    INNER JOIN ''',
+    '''INSERT INTO public."Users"(username)
+    SELECT *
+    FROM Users
+    INNER JOIN ''',
     '''SELECT *
     FROM Users
     INNER JOIN '''
@@ -689,10 +699,15 @@ def test_columns_before_keywords(completer, complete_event):
 
     assert completions.index(col) < completions.index(kw)
 
-
-def test_wildcard_column_expansion(completer, complete_event):
-    sql = 'SELECT * FROM users'
-    pos = len('SELECT *')
+@pytest.mark.parametrize('sql', [
+    'SELECT * FROM users',
+    'INSERT INTO users SELECT * FROM users u',
+    '''INSERT INTO users(id, parentid, email, first_name, last_name)
+    SELECT *
+    FROM users u''',
+    ])
+def test_wildcard_column_expansion(completer, complete_event, sql):
+    pos = sql.find('*') + 1
 
     completions = completer.get_completions(
         Document(text=sql, cursor_position=pos), complete_event)
@@ -702,10 +717,15 @@ def test_wildcard_column_expansion(completer, complete_event):
 
     assert expected == completions
 
-
-def test_wildcard_column_expansion_with_alias_qualifier(completer, complete_event):
-    sql = 'SELECT u.* FROM users u'
-    pos = len('SELECT u.*')
+@pytest.mark.parametrize('sql', [
+    'SELECT u.* FROM users u',
+    'INSERT INTO public.users SELECT u.* FROM users u',
+    '''INSERT INTO users(id, parentid, email, first_name, last_name)
+    SELECT u.*
+    FROM users u''',
+    ])
+def test_wildcard_column_expansion_with_alias(completer, complete_event, sql):
+    pos = sql.find('*') + 1
 
     completions = completer.get_completions(
         Document(text=sql, cursor_position=pos), complete_event)
@@ -834,3 +854,16 @@ def test_table_casing(cased_completer, complete_event, text):
     result = cased_completer.get_completions(
         Document(text=text), complete_event)
     assert set(result) == set([schema('PUBLIC')] + cased_rels)
+
+
+@pytest.mark.parametrize('text', [
+    'INSERT INTO users ()',
+    'INSERT INTO users()',
+    'INSERT INTO users () SELECT * FROM orders;',
+    'INSERT INTO users() SELECT * FROM users u cross join orders o',
+])
+def test_insert(completer, complete_event, text):
+    pos = text.find('(') + 1
+    result = completer.get_completions(Document(text=text, cursor_position=pos),
+                                       complete_event)
+    assert set(result) == set(testdata.columns('users'))
