@@ -435,49 +435,63 @@ class PGExecute(object):
     def functions(self):
         """Yields FunctionMetadata named tuples"""
 
+        if self.conn.server_version > 90000:
+            query = '''
+                SELECT n.nspname schema_name,
+                        p.proname func_name,
+                        p.proargnames,
+                        COALESCE(proallargtypes::regtype[], proargtypes::regtype[])::text[],
+                        p.proargmodes,
+                        prorettype::regtype::text return_type,
+                        p.proisagg is_aggregate,
+                        p.proiswindow is_window,
+                        p.proretset is_set_returning
+                FROM pg_catalog.pg_proc p
+                        INNER JOIN pg_catalog.pg_namespace n
+                            ON n.oid = p.pronamespace
+                WHERE p.prorettype::regtype != 'trigger'::regtype
+                ORDER BY 1, 2
+                '''
+        elif self.conn.server_version >= 80400:
+            query = '''
+                SELECT n.nspname schema_name,
+                        p.proname func_name,
+                        p.proargnames,
+                        COALESCE(proallargtypes::regtype[], proargtypes::regtype[])::text[],
+                        p.proargmodes,
+                        prorettype::regtype::text,
+                        p.proisagg is_aggregate,
+                        false is_window,
+                        p.proretset is_set_returning
+                FROM pg_catalog.pg_proc p
+                INNER JOIN pg_catalog.pg_namespace n
+                ON n.oid = p.pronamespace
+                WHERE p.prorettype::regtype != 'trigger'::regtype
+                ORDER BY 1, 2
+                '''
+        else:
+            query = '''
+                SELECT n.nspname schema_name,
+                        p.proname func_name,
+                        p.proargnames,
+                        NULL,
+                        p.proargmodes,
+                        '',
+                        p.proisagg is_aggregate,
+                        false is_window,
+                        p.proretset is_set_returning
+                FROM pg_catalog.pg_proc p
+                INNER JOIN pg_catalog.pg_namespace n
+                ON n.oid = p.pronamespace
+                WHERE p.prorettype::regtype != 'trigger'::regtype
+                ORDER BY 1, 2
+                '''
+
         with self.conn.cursor() as cur:
-            if self.conn.server_version > 90000:
-                query = '''
-                    SELECT n.nspname schema_name,
-                            p.proname func_name,
-                            p.proargnames,
-                            COALESCE(proallargtypes::regtype[], proargtypes::regtype[])::text[],
-                            p.proargmodes,
-                            prorettype::regtype::text return_type,
-                            p.proisagg is_aggregate,
-                            p.proiswindow is_window,
-                            p.proretset is_set_returning
-                    FROM pg_catalog.pg_proc p
-                            INNER JOIN pg_catalog.pg_namespace n
-                                ON n.oid = p.pronamespace
-                    WHERE p.prorettype::regtype != 'trigger'::regtype
-                    ORDER BY 1, 2
-                    '''
-                _logger.debug('Functions Query. sql: %r', query)
-                cur.execute(query)
-                for row in cur:
-                    yield FunctionMetadata(*row)
-            else:
-                query = '''
-                    SELECT n.nspname schema_name,
-                            p.proname func_name,
-                            p.proargnames,
-                            COALESCE(proallargtypes::regtype[], proargtypes::regtype[])::text[],
-                            p.proargmodes,
-                            prorettype::regtype::text,
-                            p.proisagg is_aggregate,
-                            false is_window,
-                            p.proretset is_set_returning
-                    FROM pg_catalog.pg_proc p
-                    INNER JOIN pg_catalog.pg_namespace n
-                    ON n.oid = p.pronamespace
-                    WHERE p.prorettype::regtype != 'trigger'::regtype
-                    ORDER BY 1, 2
-                    '''
-                _logger.debug('Functions Query. sql: %r', query)
-                cur.execute(query)
-                for row in cur:
-                      yield FunctionMetadata(*row)
+            _logger.debug('Functions Query. sql: %r', query)
+            cur.execute(query)
+            for row in cur:
+                  yield FunctionMetadata(*row)
 
     def datatypes(self):
         """Yields tuples of (schema_name, type_name)"""
