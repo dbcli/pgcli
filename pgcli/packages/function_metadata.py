@@ -18,11 +18,14 @@ class FunctionMetadata(object):
         self.arg_names = tuple(arg_names) if arg_names else None
 
         # Be flexible in not requiring arg_types -- use None as a placeholder
-        # for each arg
+        # for each arg. (Used for compatibility with old versions of postgresql
+        # where such info is hard to get.
         if arg_types:
             self.arg_types = tuple(arg_types)
         elif arg_modes:
             self.arg_types = tuple([None] * len(arg_modes))
+        elif arg_names:
+            self.arg_types = tuple([None] * len(arg_names))
         else:
             self.arg_types = None
 

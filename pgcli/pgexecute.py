@@ -474,9 +474,9 @@ class PGExecute(object):
                 SELECT n.nspname schema_name,
                         p.proname func_name,
                         p.proargnames,
-                        NULL,
-                        p.proargmodes,
-                        '',
+                        NULL arg_types,
+                        NULL arg_modes,
+                        '' ret_type,
                         p.proisagg is_aggregate,
                         false is_window,
                         p.proretset is_set_returning
