@@ -262,7 +262,7 @@ class PGCli(object):
         arguments = [database, uri.hostname, uri.username,
                      uri.port, uri.password]
         # unquote each URI part (they may be percent encoded)
-        self.connect(*list(map(lambda p: unquote(p) if p else p, arguments)))
+        self.connect(*list(map(lambda p: unquote(str(p)) if p else p, arguments)))
 
     def connect(self, database='', host='', user='', port='', passwd='',
                 dsn=''):
