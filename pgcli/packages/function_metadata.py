@@ -13,9 +13,22 @@ class FunctionMetadata(object):
 
         self.schema_name = schema_name
         self.func_name = func_name
-        self.arg_names = tuple(arg_names) if arg_names else None
-        self.arg_types = tuple(arg_types)
+
         self.arg_modes = tuple(arg_modes) if arg_modes else None
+        self.arg_names = tuple(arg_names) if arg_names else None
+
+        # Be flexible in not requiring arg_types -- use None as a placeholder
+        # for each arg. (Used for compatibility with old versions of postgresql
+        # where such info is hard to get.
+        if arg_types:
+            self.arg_types = tuple(arg_types)
+        elif arg_modes:
+            self.arg_types = tuple([None] * len(arg_modes))
+        elif arg_names:
+            self.arg_types = tuple([None] * len(arg_names))
+        else:
+            self.arg_types = None
+
         self.return_type = return_type.strip()
         self.is_aggregate = is_aggregate
         self.is_window = is_window
