@@ -90,3 +90,10 @@ def test_quoted_db_uri(tmpdir):
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri('postgres://bar%5E:%5Dfoo@baz.com/testdb%5B')
     mock_connect.assert_called_with('testdb[', 'baz.com', 'bar^', None, ']foo')
+
+
+def test_port_db_uri(tmpdir):
+    with mock.patch.object(PGCli, 'connect') as mock_connect:
+        cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+        cli.connect_uri('postgres://bar:foo@baz.com:2543/testdb')
+    mock_connect.assert_called_with('testdb', 'baz.com', 'bar', '2543', 'foo')
