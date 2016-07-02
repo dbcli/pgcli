@@ -1,3 +1,22 @@
+1.1.0
+=====
+
+Features:
+---------
+
+* Add support for ``\db`` command. (Thanks: `Irina Truong`_)
+
+Bugs:
+-----
+
+* Fix the crash at startup while parsing the postgres url with port number. (Thanks: `Eric Wald`_)
+* Fix the crash with Redshift databases. (Thanks: `Darik Gamble`_)
+
+Internal Changes:
+-----------------
+
+* Upgrade pgspecial to 1.5.0 and above.
+
 1.0.0
 =====
 
@@ -492,3 +511,4 @@ Improvements:
 .. _`Joakim Koljonen`: https://github.com/koljonen
 .. _`Anže Pečar`: https://github.com/Smotko
 .. _`Catherine Devlin`: https://github.com/catherinedevlin
+.. _`Eric Wald`: https://github.com/eswald
