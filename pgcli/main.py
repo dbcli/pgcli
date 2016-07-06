@@ -139,11 +139,12 @@ class PGCli(object):
 
         # Initialize completer
         smart_completion = c['main'].as_bool('smart_completion')
-        settings = {'casing_file': get_casing_file(c),
-            'generate_casing_file': c['main'].as_bool('generate_casing_file'),
-            'asterisk_column_order': c['main']['asterisk_column_order']}
+        self.settings = {'casing_file': get_casing_file(c),
+          'generate_casing_file': c['main'].as_bool('generate_casing_file'),
+          'generate_aliases': c['main'].as_bool('generate_aliases'),
+          'asterisk_column_order': c['main']['asterisk_column_order']}
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial,
-            settings=settings)
+            settings=self.settings)
         self.completer = completer
         self._completer_lock = threading.Lock()
         self.register_special_commands()
@@ -602,12 +603,8 @@ class PGCli(object):
 
         callback = functools.partial(self._on_completions_refreshed,
                                      persist_priorities=persist_priorities)
-        c = self.config
-        settings = {'casing_file': get_casing_file(c),
-          'generate_casing_file': c['main'].as_bool('generate_casing_file'),
-          'asterisk_column_order': c['main']['asterisk_column_order']}
         self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
-            callback, history=history, settings=settings)
+            callback, history=history, settings=self.settings)
         return [(None, None, None,
                 'Auto-completion refresh started in the background.')]
 

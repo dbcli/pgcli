@@ -56,7 +56,7 @@ class MetaData(object):
             for x in self.metadata.get('views', {}).get(schema, [])]
 
     def functions(self, schema='public', pos=0):
-        return [function(escape(x[0]), pos)
+        return [function(escape(x[0] + '()'), pos)
             for x in self.metadata.get('functions', {}).get(schema, [])]
 
     def schemas(self, pos=0):
@@ -65,9 +65,12 @@ class MetaData(object):
 
     @property
     def completer(self):
+        return self.get_completer()
+
+    def get_completer(self, settings=None, casing=None):
         metadata = self.metadata
-        import pgcli.pgcompleter as pgcompleter
-        comp = pgcompleter.PGCompleter(smart_completion=True)
+        from pgcli.pgcompleter import PGCompleter
+        comp = PGCompleter(smart_completion=True, settings=settings)
 
         schemata, tables, tbl_cols, views, view_cols = [], [], [], [], []
 
@@ -105,5 +108,6 @@ class MetaData(object):
         comp.extend_datatypes(datatypes)
         comp.extend_foreignkeys(foreignkeys)
         comp.set_search_path(['public'])
+        comp.extend_casing(casing or [])
 
         return comp

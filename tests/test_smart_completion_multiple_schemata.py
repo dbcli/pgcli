@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import pytest
 import itertools
 from metadata import (MetaData, alias, name_join, fk_join, join,
-    function, wildcard_expansion)
+    schema, table, function, wildcard_expansion)
 from prompt_toolkit.document import Document
 from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
@@ -49,18 +49,24 @@ testdata = MetaData(metadata)
 def completer():
     return testdata.completer
 
+casing = ('SELECT', 'Orders', 'User_Emails', 'CUSTOM', 'Func1')
+
+@pytest.fixture
+def completer_with_casing():
+    return testdata.get_completer(casing=casing)
+
+@pytest.fixture
+def completer_with_aliases():
+    return testdata.get_completer({'generate_aliases': True})
+
+@pytest.fixture
+def completer_aliases_casing(request):
+    return testdata.get_completer({'generate_aliases': True}, casing)
+
 @pytest.fixture
 def complete_event():
     from mock import Mock
     return Mock()
-
-def test_schema_or_visible_table_completion(completer, complete_event):
-    text = 'SELECT * FROM '
-    position = len(text)
-    result = completer.get_completions(
-        Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set(testdata.schemas() + testdata.functions() + testdata.tables())
-
 
 @pytest.mark.parametrize('table', [
     'users',
@@ -289,8 +295,8 @@ def test_schema_qualified_function_name(completer, complete_event):
     result = set(completer.get_completions(
         Document(text=text, cursor_position=postion), complete_event))
     assert result == set([
-        function('func3', -len('func')),
-        function('set_returning_func', -len('func'))])
+        function('func3()', -len('func')),
+        function('set_returning_func()', -len('func'))])
 
 
 @pytest.mark.parametrize('text', [
@@ -430,3 +436,51 @@ def test_suggest_columns_from_quoted_table(completer, complete_event, text):
     result = completer.get_completions(Document(text=text, cursor_position=pos),
                                        complete_event)
     assert set(result) == set(testdata.columns('Users', 'custom'))
+
+texts = ['SELECT * FROM ', 'SELECT * FROM public.Orders O CROSS JOIN ']
+
+@pytest.mark.parametrize('text', texts)
+def test_schema_or_visible_table_completion(completer, complete_event, text):
+    result = completer.get_completions(Document(text=text), complete_event)
+    assert set(result) == set(testdata.schemas()
+        + testdata.views() + testdata.tables() + testdata.functions())
+    result = completer.get_completions(Document(text=text), complete_event)
+
+@pytest.mark.parametrize('text', texts)
+def test_table_aliases(completer_with_aliases, complete_event, text):
+    result = completer_with_aliases.get_completions(
+        Document(text=text), complete_event)
+    assert set(result) == set(testdata.schemas() + [
+        table('users u'),
+        table('orders o' if text == 'SELECT * FROM ' else 'orders o2'),
+        table('"select" s'),
+        function('func1() f'),
+        function('func2() f')])
+
+@pytest.mark.parametrize('text', texts)
+def test_aliases_with_casing(completer_aliases_casing, complete_event, text):
+    result = completer_aliases_casing.get_completions(
+        Document(text=text), complete_event)
+    assert set(result) == set([
+        schema('public'),
+        schema('CUSTOM'),
+        schema('"Custom"'),
+        table('users u'),
+        table('Orders O' if text == 'SELECT * FROM ' else 'Orders O2'),
+        table('"select" s'),
+        function('Func1() F'),
+        function('func2() f')])
+
+@pytest.mark.parametrize('text', texts)
+def test_table_casing(completer_with_casing, complete_event, text):
+    result = completer_with_casing.get_completions(
+        Document(text=text), complete_event)
+    assert set(result) == set([
+        schema('public'),
+        schema('CUSTOM'),
+        schema('"Custom"'),
+        table('users'),
+        table('Orders'),
+        table('"select"'),
+        function('Func1()'),
+        function('func2()')])

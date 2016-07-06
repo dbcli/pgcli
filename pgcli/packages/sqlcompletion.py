@@ -20,20 +20,27 @@ else:
 Special = namedtuple('Special', [])
 Database = namedtuple('Database', [])
 Schema = namedtuple('Schema', [])
-Table = namedtuple('Table', ['schema'])
+# FromClauseItem is a table/view/function used in the FROM clause
+# `tables` contains the list of tables/... already in the statement,
+# used to ensure that the alias we suggest is unique
+FromClauseItem = namedtuple('FromClauseItem', 'schema tables')
+Table = namedtuple('Table', ['schema', 'tables'])
+View = namedtuple('View', ['schema', 'tables'])
 # JoinConditions are suggested after ON, e.g. 'foo.barid = bar.barid'
 JoinCondition = namedtuple('JoinCondition', ['tables', 'parent'])
 # Joins are suggested after JOIN, e.g. 'foo ON foo.barid = bar.barid'
 Join = namedtuple('Join', ['tables', 'schema'])
 
-Function = namedtuple('Function', ['schema', 'filter'])
+Function = namedtuple('Function', ['schema', 'tables', 'filter'])
 # For convenience, don't require the `filter` argument in Function constructor
-Function.__new__.__defaults__ = (None, None)
+Function.__new__.__defaults__ = (None, tuple(), None)
+Table.__new__.__defaults__ = (None, tuple())
+View.__new__.__defaults__ = (None, tuple())
+FromClauseItem.__new__.__defaults__ = (None, tuple())
 
 Column = namedtuple('Column', ['tables', 'require_last_table'])
 Column.__new__.__defaults__ = (None, None)
 
-View = namedtuple('View', ['schema'])
 Keyword = namedtuple('Keyword', [])
 NamedQuery = namedtuple('NamedQuery', [])
 Datatype = namedtuple('Datatype', ['schema'])
@@ -320,26 +327,26 @@ def suggest_based_on_last_token(token, stmt):
             ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
 
         schema = stmt.get_identifier_schema()
+        tables = extract_tables(stmt.text_before_cursor)
+        is_join = token_v.endswith('join') and token.is_keyword
 
         # Suggest tables from either the currently-selected schema or the
         # public schema if no schema has been specified
-        suggest = [Table(schema=schema)]
+        suggest = []
 
         if not schema:
             # Suggest schemas
             suggest.insert(0, Schema())
 
-        # Only tables can be TRUNCATED, otherwise suggest views
-        if token_v != 'truncate':
-            suggest.append(View(schema=schema))
-
         # Suggest set-returning functions in the FROM clause
-        if token_v == 'from' or (token_v.endswith('join') and token.is_keyword):
-            suggest.append(Function(schema=schema, filter='for_from_clause'))
+        if token_v == 'from' or is_join:
+            suggest.append(FromClauseItem(schema=schema, tables=tables))
+        elif token_v == 'truncate':
+            suggest.append(Table(schema))
+        else:
+            suggest.extend((Table(schema), View(schema)))
 
-        if (token_v.endswith('join') and token.is_keyword
-          and _allow_join(stmt.parsed)):
-            tables = extract_tables(stmt.text_before_cursor)
+        if is_join and _allow_join(stmt.parsed):
             suggest.append(Join(tables=tables, schema=schema))
 
         return tuple(suggest)

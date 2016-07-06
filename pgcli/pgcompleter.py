@@ -1,21 +1,21 @@
 from __future__ import print_function, unicode_literals
 import logging
 import re
-import itertools
+from itertools import count, repeat, chain
 import operator
 from collections import namedtuple, defaultdict
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.document import Document
-from .packages.sqlcompletion import (
+from .packages.sqlcompletion import (FromClauseItem,
     suggest_type, Special, Database, Schema, Table, Function, Column, View,
     Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join)
 from .packages.function_metadata import ColumnMetadata, ForeignKey
 from .packages.parseutils import last_word, TableReference
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
-from .config import load_config, config_location, get_config
+from .config import load_config, config_location
 
 try:
     from collections import OrderedDict
@@ -32,6 +32,16 @@ Match = namedtuple('Match', ['completion', 'priority'])
 
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
+def generate_alias(tbl, tbs):
+    """ Generate a table alias, consisting of all upper-case letters in
+    the table name, or, if there are no upper-case letters, the first letter +
+    all letters preceded by _
+    param tbl - unescaped name of the table to alias
+    param tbls - set TableReference objects for tables already in query
+    """
+    return ''.join([l for l in tbl if l.isupper()] or
+        [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and l != '_'])
+
 class PGCompleter(Completer):
     keywords = get_literals('keywords')
     functions = get_literals('functions')
@@ -43,6 +53,7 @@ class PGCompleter(Completer):
         self.pgspecial = pgspecial
         self.prioritizer = PrevalenceCounter()
         settings = settings or {}
+        self.generate_aliases = settings.get('generate_aliases')
         self.casing_file = settings.get('casing_file')
         self.generate_casing_file = settings.get('generate_casing_file')
         self.asterisk_column_order = settings.get(
@@ -279,9 +290,9 @@ class PGCompleter(Completer):
                     return -float('Infinity'), -match_point
 
         # Fallback to meta param if meta_collection param is None
-        meta_collection = meta_collection or itertools.repeat(meta)
+        meta_collection = meta_collection or repeat(meta)
         # Fallback to 0 if priority_collection param is None
-        priority_collection = priority_collection or itertools.repeat(0)
+        priority_collection = priority_collection or repeat(0)
 
         collection = zip(collection, meta_collection, priority_collection)
 
@@ -299,9 +310,13 @@ class PGCompleter(Completer):
                 # position. Since we use *higher* priority to mean "more
                 # important," we use -ord(c) to prioritize "aa" > "ab" and end
                 # with 1 to prioritize shorter strings (ie "user" > "users").
+                # We first do a case-insensitive sort and then a
+                # case-sensitive one as a tie breaker.
                 # We also use the unescape_name to make sure quoted names have
                 # the same priority as unquoted names.
-                lexical_priority = tuple(-ord(c) for c in self.unescape_name(item)) + (1,)
+                lexical_priority = (tuple(0 if c in(' _') else -ord(c)
+                    for c in self.unescape_name(item.lower())) + (1,)
+                    + tuple(c for c in item))
 
                 item = self.case(item)
                 priority = type_priority, prio, sort_key, priority_func(item), lexical_priority
@@ -346,12 +361,13 @@ class PGCompleter(Completer):
 
         return [m.completion for m in matches]
 
+
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.tables
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables)
         colit = scoped_cols.items
-        flat_cols = list(itertools.chain(*((c.name for c in cols)
+        flat_cols = list(chain(*((c.name for c in cols)
             for t, cols in colit())))
         if suggestion.require_last_table:
             # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
@@ -385,15 +401,21 @@ class PGCompleter(Completer):
 
         return self.find_matches(word_before_cursor, flat_cols, meta='column')
 
-    def generate_alias(self, tbl, tbls):
+    def alias(self, tbl, tbls):
         """ Generate a unique table alias
         tbl - name of the table to alias, quoted if it needs to be
-        tbls - set of table refs already in use, normalized with normalize_ref
+        tbls - TableReference iterable of tables already in query
         """
-        if tbl[0] == '"':
-            aliases = ('"' + tbl[1:-1] + str(i) + '"' for i in itertools.count(2))
+        tbl = self.case(tbl)
+        tbls = set(normalize_ref(t.ref) for t in tbls)
+        if self.generate_aliases:
+            tbl = generate_alias(self.unescape_name(tbl), tbls)
+        if normalize_ref(tbl) not in tbls:
+            return tbl
+        elif tbl[0] == '"':
+            aliases = ('"' + tbl[1:-1] + str(i) + '"' for i in count(2))
         else:
-            aliases = (self.case(tbl) + str(i) for i in itertools.count(2))
+            aliases = (tbl + str(i) for i in count(2))
         return next(a for a in aliases if normalize_ref(a) not in tbls)
 
     def get_join_matches(self, suggestion, word_before_cursor):
@@ -418,8 +440,8 @@ class PGCompleter(Completer):
             if suggestion.schema and left.schema != suggestion.schema:
                 continue
             c = self.case
-            if normalize_ref(left.tbl) in refs:
-                lref = self.generate_alias(left.tbl, refs)
+            if self.generate_aliases or normalize_ref(left.tbl) in refs:
+                lref = self.alias(left.tbl, suggestion.tables)
                 join = '{0} {4} ON {4}.{1} = {2}.{3}'.format(
                     c(left.tbl), c(left.col), rtbl.ref, c(right.col), lref)
             else:
@@ -493,14 +515,19 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, conds,
           meta_collection=metas, type_priority=100, priority_collection=prios)
 
-    def get_function_matches(self, suggestion, word_before_cursor):
+    def get_function_matches(self, suggestion, word_before_cursor, alias=False):
         if suggestion.filter == 'for_from_clause':
             # Only suggest functions allowed in FROM clause
             filt = lambda f: not f.is_aggregate and not f.is_window
             funcs = self.populate_functions(suggestion.schema, filt)
+            if alias:
+                funcs = [self.case(f) + '() ' + self.alias(f,
+                    suggestion.tables) for f in funcs]
+            else:
+                funcs = [self.case(f) + '()' for f in funcs]
         else:
-            funcs = self.populate_schema_objects(
-                suggestion.schema, 'functions')
+            funcs = [f + '()' for f in self.populate_schema_objects(
+                suggestion.schema, 'functions')]
 
         # Function overloading means we way have multiple functions of the same
         # name at this point, so keep unique names only
@@ -527,7 +554,16 @@ class PGCompleter(Completer):
 
         return self.find_matches(word_before_cursor, schema_names, meta='schema')
 
-    def get_table_matches(self, suggestion, word_before_cursor):
+    def get_from_clause_item_matches(self, suggestion, word_before_cursor):
+        alias = self.generate_aliases
+        t_sug = Table(*suggestion)
+        v_sug = View(*suggestion)
+        f_sug = Function(*suggestion, filter='for_from_clause')
+        return (self.get_table_matches(t_sug, word_before_cursor, alias)
+            + self.get_view_matches(v_sug, word_before_cursor, alias)
+            + self.get_function_matches(f_sug, word_before_cursor, alias))
+
+    def get_table_matches(self, suggestion, word_before_cursor, alias=False):
         tables = self.populate_schema_objects(suggestion.schema, 'tables')
 
         # Unless we're sure the user really wants them, don't suggest the
@@ -535,16 +571,21 @@ class PGCompleter(Completer):
         if not suggestion.schema and (
                 not word_before_cursor.startswith('pg_')):
             tables = [t for t in tables if not t.startswith('pg_')]
-
+        if alias:
+            tables = [self.case(t) + ' ' + self.alias(t, suggestion.tables)
+                for t in tables]
         return self.find_matches(word_before_cursor, tables, meta='table')
 
-    def get_view_matches(self, suggestion, word_before_cursor):
+
+    def get_view_matches(self, suggestion, word_before_cursor, alias=False):
         views = self.populate_schema_objects(suggestion.schema, 'views')
 
         if not suggestion.schema and (
                 not word_before_cursor.startswith('pg_')):
             views = [v for v in views if not v.startswith('pg_')]
-
+        if alias:
+            views = [self.case(v) + ' ' + self.alias(v, suggestion.tables)
+                for v in views]
         return self.find_matches(word_before_cursor, views, meta='view')
 
     def get_alias_matches(self, suggestion, word_before_cursor):
@@ -594,6 +635,7 @@ class PGCompleter(Completer):
             word_before_cursor, NamedQueries.instance.list(), meta='named query')
 
     suggestion_matchers = {
+        FromClauseItem: get_from_clause_item_matches,
         JoinCondition: get_join_condition_matches,
         Join: get_join_matches,
         Column: get_column_matches,
@@ -663,7 +705,7 @@ class PGCompleter(Completer):
             objects = [obj for schema in schemas
                            for obj in metadata[schema].keys()]
 
-        return objects
+        return [self.case(o) for o in objects]
 
     def populate_functions(self, schema, filter_func):
         """Returns a list of function names

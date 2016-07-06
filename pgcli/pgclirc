@@ -15,6 +15,9 @@ wider_completion_menu = False
 # lines. End of line (return) is considered as the end of the statement.
 multi_line = False
 
+# If set to True, table suggestions will include a table alias
+generate_aliases = False
+
 # log_file location.
 # In Unix/Linux: ~/.config/pgcli/log
 # In Windows: %USERPROFILE%\AppData\Local\dbcli\pgcli\log

@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import pytest
 from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
-    table, function, column, wildcard_expansion)
+    schema, table, view, function, column, wildcard_expansion)
 from prompt_toolkit.document import Document
 from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
@@ -14,10 +14,10 @@ metadata = {
     'views': {
         'user_emails': ['id', 'email']},
     'functions': [
-        ['custom_func1', [''], [''], [''], '', False, False,
-            False],
-        ['custom_func2', [''], [''], [''], '', False, False,
-            False],
+        ['custom_fun', [''], [''], [''], '', False, False, False],
+        ['_custom_fun', [''], [''], [''], '', False, False, False],
+        ['custom_func1', [''], [''], [''], '', False, False, False],
+        ['custom_func2', [''], [''], [''], '', False, False, False],
         ['set_returning_func', ['x', 'y'], ['integer', 'integer'],
             ['o', 'o'], '', False, False, True]],
     'datatypes': ['custom_type1', 'custom_type2'],
@@ -31,9 +31,44 @@ metadata = dict((k, {'public': v}) for k, v in metadata.items())
 
 testdata = MetaData(metadata)
 
+cased_users_cols = ['ID', 'PARENTID', 'Email', 'First_Name', 'last_name']
+cased_users2_cols = ['UserID', 'UserName']
+cased_funcs = ['Custom_Fun', '_custom_fun', 'Custom_Func1',
+    'custom_func2', 'set_returning_func']
+cased_tbls = ['Users', 'Orders']
+cased_views = ['User_Emails']
+casing =  (['SELECT', 'PUBLIC'] + cased_funcs + cased_tbls + cased_views
+    + cased_users_cols + cased_users2_cols)
+# Lists for use in assertions
+cased_funcs = [function(f + '()') for f in cased_funcs]
+cased_tbls = [table(t) for t in (cased_tbls + ['"Users"', '"select"'])]
+cased_rels = [view(t) for t in cased_views] + cased_funcs + cased_tbls
+cased_users_cols = [column(c) for c in cased_users_cols]
+aliased_rels = [table(t) for t in ('users u', '"Users" U', 'orders o',
+    '"select" s')] + [view('user_emails ue')] + [function(f) for f in (
+    '_custom_fun() cf', 'custom_fun() cf', 'custom_func1() cf',
+    'custom_func2() cf', 'set_returning_func() srf')]
+cased_aliased_rels = [table(t) for t in ('Users U', '"Users" U', 'Orders O',
+    '"select" s')] + [view('User_Emails UE')] + [function(f) for f in (
+    '_custom_fun() cf', 'Custom_Fun() CF', 'Custom_Func1() CF',
+    'custom_func2() cf', 'set_returning_func() srf')]
+
+
 @pytest.fixture
 def completer():
     return testdata.completer
+
+@pytest.fixture
+def cased_completer():
+    return testdata.get_completer(casing=casing)
+
+@pytest.fixture
+def aliased_completer():
+    return testdata.get_completer({'generate_aliases': True})
+
+@pytest.fixture
+def cased_aliased_completer(request):
+    return testdata.get_completer({'generate_aliases': True}, casing)
 
 @pytest.fixture
 def complete_event():
@@ -56,15 +91,6 @@ def test_select_keyword_completion(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event)
     assert set(result) == set([keyword('SELECT', -3)])
-
-
-def test_schema_or_visible_table_completion(completer, complete_event):
-    text = 'SELECT * FROM '
-    position = len(text)
-    result = completer.get_completions(
-        Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set(testdata.schemas()
-        + testdata.views() + testdata.tables() + testdata.functions())
 
 
 def test_builtin_function_name_completion(completer, complete_event):
@@ -94,8 +120,10 @@ def test_user_function_name_completion(completer, complete_event):
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([
-        function('custom_func1', -2),
-        function('custom_func2', -2),
+        function('custom_fun()', -2),
+        function('_custom_fun()', -2),
+        function('custom_func1()', -2),
+        function('custom_func2()', -2),
         keyword('CURRENT', -2),
         ])
 
@@ -107,8 +135,10 @@ def test_user_function_name_completion_matches_anywhere(completer,
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([
-        function('custom_func1', -2),
-        function('custom_func2', -2)])
+        function('custom_fun()', -2),
+        function('_custom_fun()', -2),
+        function('custom_func1()', -2),
+        function('custom_func2()', -2)])
 
 
 def test_suggested_column_names_from_visible_table(completer, complete_event):
@@ -127,6 +157,22 @@ def test_suggested_column_names_from_visible_table(completer, complete_event):
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
+
+
+def test_suggested_cased_column_names(cased_completer, complete_event):
+    """
+    Suggest column and function names when selecting from table
+    :param completer:
+    :param complete_event:
+    :return:
+    """
+    text = 'SELECT  from users'
+    position = len('SELECT ')
+    result = set(cased_completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set(cased_funcs + cased_users_cols
+        + testdata.builtin_functions() + testdata.keywords())
 
 
 def test_suggested_column_names_in_function(completer, complete_event):
@@ -205,6 +251,22 @@ def test_suggested_multiple_column_names_with_alias(completer, complete_event):
         complete_event))
     assert set(result) == set(testdata.columns('users'))
 
+
+def test_suggested_cased_column_names_with_alias(cased_completer, complete_event):
+    """
+    Suggest column names on table alias and dot
+    when selecting multiple columns from table
+    :param completer:
+    :param complete_event:
+    :return:
+    """
+    text = 'SELECT u.id, u. from users u'
+    position = len('SELECT u.id, u.')
+    result = set(cased_completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set(cased_users_cols)
+
 def test_suggested_multiple_column_names_with_dot(completer, complete_event):
     """
     Suggest column names on table names and dot
@@ -231,29 +293,38 @@ def test_suggest_columns_after_three_way_join(completer, complete_event):
     assert (column('id') in
             set(result))
 
-@pytest.mark.parametrize('text', [
-    'SELECT * FROM users u JOIN "Users" u2 ON ',
-    'SELECT * FROM users u INNER join "Users" u2 ON ',
-    'SELECT * FROM USERS u right JOIN "Users" u2 ON ',
-    'SELECT * FROM users u LEFT JOIN "Users" u2 ON ',
-    'SELECT * FROM Users u FULL JOIN "Users" u2 ON ',
-    'SELECT * FROM users u right outer join "Users" u2 ON ',
-    'SELECT * FROM Users u LEFT OUTER JOIN "Users" u2 ON ',
-    'SELECT * FROM users u FULL OUTER JOIN "Users" u2 ON ',
+join_condition_texts = [
+    'SELECT * FROM users U JOIN "Users" U2 ON ',
+    'SELECT * FROM users U INNER join "Users" U2 ON ',
+    'SELECT * FROM USERS U right JOIN "Users" U2 ON ',
+    'SELECT * FROM users U LEFT JOIN "Users" U2 ON ',
+    'SELECT * FROM Users U FULL JOIN "Users" U2 ON ',
+    'SELECT * FROM users U right outer join "Users" U2 ON ',
+    'SELECT * FROM Users U LEFT OUTER JOIN "Users" U2 ON ',
+    'SELECT * FROM users U FULL OUTER JOIN "Users" U2 ON ',
     '''SELECT *
-    FROM users u
-    FULL OUTER JOIN "Users" u2 ON
+    FROM users U
+    FULL OUTER JOIN "Users" U2 ON
     '''
-])
+]
+
+@pytest.mark.parametrize('text', join_condition_texts)
 def test_suggested_join_conditions(completer, complete_event, text):
-    position = len(text)
     result = set(completer.get_completions(
-        Document(text=text, cursor_position=position),
-        complete_event))
+        Document(text=text,), complete_event))
     assert set(result) == set([
-        alias('u'),
-        alias('u2'),
-        fk_join('u2.userid = u.id')])
+        alias('U'),
+        alias('U2'),
+        fk_join('U2.userid = U.id')])
+
+@pytest.mark.parametrize('text', join_condition_texts)
+def test_cased_join_conditions(cased_completer, complete_event, text):
+    result = set(cased_completer.get_completions(
+        Document(text=text), complete_event))
+    assert set(result) == set([
+        alias('U'),
+        alias('U2'),
+        fk_join('U2.UserID = U.ID')])
 
 @pytest.mark.parametrize('text', [
     '''SELECT *
@@ -273,10 +344,11 @@ def test_suggested_join_conditions_with_same_table_twice(completer, complete_eve
         fk_join('u2.userid = users.id'),
         name_join('u2.userid = "Users".userid'),
         name_join('u2.username = "Users".username'),
-        alias('"Users"'),
         alias('u'),
         alias('u2'),
-        alias('users')]
+        alias('users'),
+        alias('"Users"')
+    ]
 
 @pytest.mark.parametrize('text', [
     'SELECT * FROM users JOIN users u2 on foo.'
@@ -314,23 +386,43 @@ def test_suggested_joins_fuzzy(completer, complete_event, text):
     expected = join('users ON users.id = u.userid', -len(last_word))
     assert expected in result
 
-@pytest.mark.parametrize('text', [
-    'SELECT * FROM users JOIN ',
+join_texts = [
+    'SELECT * FROM Users JOIN ',
     '''SELECT *
-    FROM users
+    FROM Users
     INNER JOIN '''
-])
+]
+
+@pytest.mark.parametrize('text', join_texts)
 def test_suggested_joins(completer, complete_event, text):
-    position = len(text)
     result = set(completer.get_completions(
-        Document(text=text, cursor_position=position),
-        complete_event))
+        Document(text=text), complete_event))
     assert set(result) == set(testdata.schemas() + testdata.tables()
         + testdata.views() + [
-        join('"Users" ON "Users".userid = users.id'),
-        join('users users2 ON users2.id = users.parentid'),
-        join('users users2 ON users2.parentid = users.id'),
+        join('"Users" ON "Users".userid = Users.id'),
+        join('users users2 ON users2.id = Users.parentid'),
+        join('users users2 ON users2.parentid = Users.id'),
         ] + testdata.functions())
+
+@pytest.mark.parametrize('text', join_texts)
+def test_cased_joins(cased_completer, complete_event, text):
+    result = set(cased_completer.get_completions(
+        Document(text=text), complete_event))
+    assert set(result) == set([schema('PUBLIC')] + cased_rels + [
+        join('"Users" ON "Users".UserID = Users.ID'),
+        join('Users Users2 ON Users2.ID = Users.PARENTID'),
+        join('Users Users2 ON Users2.PARENTID = Users.ID'),
+        ])
+
+@pytest.mark.parametrize('text', join_texts)
+def test_aliased_joins(aliased_completer, complete_event, text):
+    result = set(aliased_completer.get_completions(
+        Document(text=text), complete_event))
+    assert set(result) == set(testdata.schemas() + aliased_rels + [
+        join('"Users" U ON U.userid = Users.id'),
+        join('users u ON u.id = Users.parentid'),
+        join('users u ON u.parentid = Users.id'),
+        ])
 
 @pytest.mark.parametrize('text', [
     'SELECT * FROM public."Users" JOIN ',
@@ -459,15 +551,17 @@ def test_table_names_after_from(completer, complete_event, text):
     assert set(result) == set(testdata.schemas() + testdata.tables()
         + testdata.views() + testdata.functions())
     assert [c.text for c in result] == [
-        '"Users"',
-        'custom_func1',
-        'custom_func2',
+        '_custom_fun()',
+        'custom_fun()',
+        'custom_func1()',
+        'custom_func2()',
         'orders',
         'public',
         '"select"',
-        'set_returning_func',
+        'set_returning_func()',
         'user_emails',
-        'users'
+        'users',
+        '"Users"',
         ]
 
 def test_auto_escaped_col_names(completer, complete_event):
@@ -681,3 +775,62 @@ def test_suggest_columns_from_quoted_table(completer, complete_event):
     result = completer.get_completions(Document(text=text, cursor_position=pos),
                                        complete_event)
     assert set(result) == set(testdata.columns('Users'))
+
+@pytest.mark.parametrize('text', ['SELECT * FROM ',
+    'SELECT * FROM Orders o CROSS JOIN '])
+def test_schema_or_visible_table_completion(completer, complete_event, text):
+    result = completer.get_completions(Document(text=text), complete_event)
+    assert set(result) == set(testdata.schemas()
+        + testdata.views() + testdata.tables() + testdata.functions())
+
+@pytest.mark.parametrize('text', ['SELECT * FROM '])
+def test_table_aliases(aliased_completer, complete_event, text):
+    result = aliased_completer.get_completions(
+        Document(text=text), complete_event)
+    assert set(result) == set(testdata.schemas() + aliased_rels)
+
+@pytest.mark.parametrize('text', ['SELECT * FROM Orders o CROSS JOIN '])
+def test_duplicate_table_aliases(aliased_completer, complete_event, text):
+    result = aliased_completer.get_completions(
+        Document(text=text), complete_event)
+    assert set(result) == set(testdata.schemas() + [
+        table('orders o2'),
+        table('users u'),
+        table('"Users" U'),
+        table('"select" s'),
+        view('user_emails ue'),
+        function('_custom_fun() cf'),
+        function('custom_fun() cf'),
+        function('custom_func1() cf'),
+        function('custom_func2() cf'),
+        function('set_returning_func() srf')])
+
+@pytest.mark.parametrize('text', ['SELECT * FROM Orders o CROSS JOIN '])
+def test_duplicate_aliases_with_casing(cased_aliased_completer,
+                                        complete_event, text):
+    result = cased_aliased_completer.get_completions(
+        Document(text=text), complete_event)
+    assert set(result) == set([
+        schema('PUBLIC'),
+        table('Orders O2'),
+        table('Users U'),
+        table('"Users" U'),
+        table('"select" s'),
+        view('User_Emails UE'),
+        function('_custom_fun() cf'),
+        function('Custom_Fun() CF'),
+        function('Custom_Func1() CF'),
+        function('custom_func2() cf'),
+        function('set_returning_func() srf')])
+
+@pytest.mark.parametrize('text', ['SELECT * FROM '])
+def test_aliases_with_casing(cased_aliased_completer, complete_event, text):
+    result = cased_aliased_completer.get_completions(
+        Document(text=text), complete_event)
+    assert set(result) == set([schema('PUBLIC')] + cased_aliased_rels)
+
+@pytest.mark.parametrize('text', ['SELECT * FROM '])
+def test_table_casing(cased_completer, complete_event, text):
+    result = cased_completer.get_completions(
+        Document(text=text), complete_event)
+    assert set(result) == set([schema('PUBLIC')] + cased_rels)
