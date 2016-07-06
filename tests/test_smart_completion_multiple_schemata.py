@@ -4,7 +4,6 @@ import itertools
 from metadata import (MetaData, alias, name_join, fk_join, join,
     schema, table, function, wildcard_expansion)
 from prompt_toolkit.document import Document
-from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
 
 metadata = {
     'tables': {

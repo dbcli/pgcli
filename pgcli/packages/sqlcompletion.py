@@ -83,6 +83,24 @@ class SqlStatement(object):
 
         self.last_token = parsed and parsed.token_prev(len(parsed.tokens)) or ''
 
+    def is_insert(self):
+        return self.parsed.token_first().value.lower() == 'insert'
+
+    def get_tables(self, scope='full'):
+        """ Gets the tables available in the statement.
+        param `scope:` possible values: 'full', 'insert', 'before'
+        If 'insert', only the first table is returned.
+        If 'before', only tables before the cursor are returned.
+        If not 'insert' and the stmt is an insert, the first table is skipped.
+        """
+        tables = extract_tables(
+            self.full_text if scope == 'full' else self.text_before_cursor)
+        if scope == 'insert':
+            tables = tables[:1]
+        elif self.is_insert():
+            tables = tables[1:]
+        return tables
+
     def get_identifier_schema(self):
         schema = (self.identifier and self.identifier.get_parent_name()) or None
         # If schema name is unquoted, lower-case it
@@ -292,7 +310,7 @@ def suggest_based_on_last_token(token, stmt):
         if (prev_tok and prev_tok.value
           and prev_tok.value.lower().split(' ')[-1] == 'using'):
             # tbl1 INNER JOIN tbl2 USING (col1, col2)
-            tables = extract_tables(stmt.text_before_cursor)
+            tables = stmt.get_tables('before')
 
             # suggest columns that are present in more than one table
             return (Column(tables=tables, require_last_table=True),)
@@ -303,23 +321,25 @@ def suggest_based_on_last_token(token, stmt):
             if last_word(stmt.text_before_cursor,
                          'all_punctuations').startswith('('):
                 return (Keyword(),)
+        prev_prev_tok = p.token_prev(p.token_index(prev_tok))
+        if prev_prev_tok and prev_prev_tok.normalized == 'INTO':
+            return (Column(tables=stmt.get_tables('insert')),)
         # We're probably in a function argument list
         return (Column(tables=extract_tables(stmt.full_text)),)
     elif token_v in ('set', 'by', 'distinct'):
-        return (Column(tables=extract_tables(stmt.full_text)),)
+        return (Column(tables=stmt.get_tables()),)
     elif token_v in ('select', 'where', 'having'):
         # Check for a table alias or schema qualification
         parent = (stmt.identifier and stmt.identifier.get_parent_name()) or []
-
+        tables = stmt.get_tables()
         if parent:
-            tables = extract_tables(stmt.full_text)
             tables = tuple(t for t in tables if identifies(parent, t))
             return (Column(tables=tables),
                     Table(schema=parent),
                     View(schema=parent),
                     Function(schema=parent),)
         else:
-            return (Column(tables=extract_tables(stmt.full_text)),
+            return (Column(tables=tables),
                     Function(schema=None),
                     Keyword(),)
 
@@ -347,6 +367,7 @@ def suggest_based_on_last_token(token, stmt):
             suggest.extend((Table(schema), View(schema)))
 
         if is_join and _allow_join(stmt.parsed):
+            tables = stmt.get_tables('before')
             suggest.append(Join(tables=tables, schema=schema))
 
         return tuple(suggest)
@@ -362,10 +383,10 @@ def suggest_based_on_last_token(token, stmt):
 
     elif token_v == 'column':
         # E.g. 'ALTER TABLE foo ALTER COLUMN bar
-        return (Column(tables=extract_tables(stmt.text_before_cursor)),)
+        return (Column(tables=stmt.get_tables()),)
 
     elif token_v == 'on':
-        tables = extract_tables(stmt.text_before_cursor)  # [(schema, table, alias), ...]
+        tables = stmt.get_tables('before')
         parent = (stmt.identifier and stmt.identifier.get_parent_name()) or None
         if parent:
             # "ON parent.<suggestion>"

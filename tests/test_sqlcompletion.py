@@ -29,6 +29,8 @@ def test_where_suggests_columns_functions_quoted_table(expression):
 
 
 @pytest.mark.parametrize('expression', [
+    'INSERT INTO OtherTabl(ID, Name) SELECT * FROM tabl WHERE ',
+    'INSERT INTO OtherTabl SELECT * FROM tabl WHERE ',
     'SELECT * FROM tabl WHERE ',
     'SELECT * FROM tabl WHERE (',
     'SELECT * FROM tabl WHERE foo = ',
@@ -189,9 +191,12 @@ def test_truncate_suggests_qualified_tables():
     assert set(suggestions) == set([
         Table(schema='sch')])
 
-
-def test_distinct_suggests_cols():
-    suggestions = suggest_type('SELECT DISTINCT ', 'SELECT DISTINCT ')
+@pytest.mark.parametrize('text', [
+    'SELECT DISTINCT ',
+    'INSERT INTO foo SELECT DISTINCT '
+])
+def test_distinct_suggests_cols(text):
+    suggestions = suggest_type(text, text)
     assert suggestions ==(Column(tables=()),)
 
 
@@ -221,9 +226,12 @@ def test_into_suggests_tables_and_schemas():
         Schema(),
     ])
 
-
-def test_insert_into_lparen_suggests_cols():
-    suggestions = suggest_type('INSERT INTO abc (', 'INSERT INTO abc (')
+@pytest.mark.parametrize('text', [
+    'INSERT INTO abc (',
+    'INSERT INTO abc () SELECT * FROM hij;',
+])
+def test_insert_into_lparen_suggests_cols(text):
+    suggestions = suggest_type(text, 'INSERT INTO abc (')
     assert suggestions ==(Column(tables=((None, 'abc', None, False),)),)
 
 
@@ -483,9 +491,16 @@ def test_on_suggests_tables_and_join_conditions_right_side(sql):
       Alias(aliases=('abc', 'bcd',)),))
 
 
-@pytest.mark.parametrize('col_list', ('', 'col1, ',))
-def test_join_using_suggests_common_columns(col_list):
-    text = 'select * from abc inner join def using (' + col_list
+@pytest.mark.parametrize('text', (
+    'select * from abc inner join def using (',
+    'select * from abc inner join def using (col1, ',
+    'insert into hij select * from abc inner join def using (',
+    '''insert into hij(x, y, z)
+    select * from abc inner join def using (col1, ''',
+    '''insert into hij (a,b,c)
+    select * from abc inner join def using (col1, ''',
+))
+def test_join_using_suggests_common_columns(text):
     tables = ((None, 'abc', None, False), (None, 'def', None, False))
     assert set(suggest_type(text, text)) == set([
         Column(tables=tables, require_last_table=True),])
