@@ -319,7 +319,7 @@ class PGCompleter(Completer):
                     + tuple(c for c in item))
 
                 item = self.case(item)
-                priority = type_priority, prio, sort_key, priority_func(item), lexical_priority
+                priority = sort_key, type_priority, prio, priority_func(item), lexical_priority
 
                 matches.append(Match(
                     completion=Completion(item, -text_len, display_meta=meta),
@@ -399,7 +399,8 @@ class PGCompleter(Completer):
             return [Match(completion=Completion(collist, -1,
                 display_meta='columns', display='*'), priority=(1,1,1))]
 
-        return self.find_matches(word_before_cursor, flat_cols, meta='column')
+        return self.find_matches(word_before_cursor, flat_cols,
+            meta='column', type_priority=90)
 
     def alias(self, tbl, tbls):
         """ Generate a unique table alias
@@ -552,7 +553,8 @@ class PGCompleter(Completer):
         if not word_before_cursor.startswith('pg_'):
             schema_names = [s for s in schema_names if not s.startswith('pg_')]
 
-        return self.find_matches(word_before_cursor, schema_names, meta='schema')
+        return self.find_matches(word_before_cursor, schema_names,
+            meta='schema', type_priority=50)
 
     def get_from_clause_item_matches(self, suggestion, word_before_cursor):
         alias = self.generate_aliases
@@ -574,7 +576,8 @@ class PGCompleter(Completer):
         if alias:
             tables = [self.case(t) + ' ' + self.alias(t, suggestion.tables)
                 for t in tables]
-        return self.find_matches(word_before_cursor, tables, meta='table')
+        return self.find_matches(word_before_cursor, tables,
+            meta='table', type_priority=40)
 
 
     def get_view_matches(self, suggestion, word_before_cursor, alias=False):
@@ -586,7 +589,8 @@ class PGCompleter(Completer):
         if alias:
             views = [self.case(v) + ' ' + self.alias(v, suggestion.tables)
                 for v in views]
-        return self.find_matches(word_before_cursor, views, meta='view')
+        return self.find_matches(word_before_cursor, views,
+            meta='view', type_priority=30)
 
     def get_alias_matches(self, suggestion, word_before_cursor):
         aliases = suggestion.aliases
@@ -595,7 +599,7 @@ class PGCompleter(Completer):
 
     def get_database_matches(self, _, word_before_cursor):
         return self.find_matches(word_before_cursor, self.databases,
-                                 meta='database')
+                                 meta='database', type_priority=45)
 
     def get_keyword_matches(self, _, word_before_cursor):
         return self.find_matches(word_before_cursor, self.keywords,
