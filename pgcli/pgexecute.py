@@ -42,7 +42,7 @@ def register_date_typecasters(connection):
     date_oid = cursor.description[0][1]
     cursor.execute('SELECT NULL::timestamp')
     timestamp_oid = cursor.description[0][1]
-    cursor.execute('SELECT NULL::timestamptz')
+    cursor.execute('SELECT NULL::timestamp with time zone')
     timestamptz_oid = cursor.description[0][1]
     oids = (date_oid, timestamp_oid, timestamptz_oid)
     new_type = psycopg2.extensions.new_type(oids, 'DATE', cast_date)
