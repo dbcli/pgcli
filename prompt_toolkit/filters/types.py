@@ -1,20 +1,35 @@
 from __future__ import unicode_literals
 from six import with_metaclass
-import inspect
-from prompt_toolkit.utils import test_callable_args
+from collections import defaultdict
+import weakref
 
 __all__ = (
     'CLIFilter',
     'SimpleFilter',
 )
 
+# Cache for _FilterTypeMeta. (Don't test the same __instancecheck__ twice as
+# long as the object lives. -- We do this a lot and calling 'test_args' is
+# expensive.)
+_instance_check_cache = defaultdict(weakref.WeakKeyDictionary)
+
 
 class _FilterTypeMeta(type):
     def __instancecheck__(cls, instance):
-        if not hasattr(instance, 'test_args'):
-            return False
+        cache = _instance_check_cache[tuple(cls.arguments_list)]
 
-        return instance.test_args(*cls.arguments_list)
+        def get():
+            " The actual test. "
+            if not hasattr(instance, 'test_args'):
+                return False
+            return instance.test_args(*cls.arguments_list)
+
+        try:
+            return cache[instance]
+        except KeyError:
+            result = get()
+            cache[instance] = result
+            return result
 
 
 class _FilterType(with_metaclass(_FilterTypeMeta)):
