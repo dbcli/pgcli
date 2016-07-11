@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
-from .types import test_callable_args
+from prompt_toolkit.utils import test_callable_args
 
 
 __all__ = (
@@ -53,7 +53,7 @@ class Filter(with_metaclass(ABCMeta, object)):
         """
         Inverting of filters using the ~ operator.
         """
-        return _Invert(self)
+        return _invert(self)
 
     def __bool__(self):
         """
@@ -98,9 +98,17 @@ class _OrCache(dict):
         self[filters] = result
         return result
 
+class _InvertCache(dict):
+    """ Cache for inversion operator. """
+    def __missing__(self, filter):
+        result = _Invert(filter)
+        self[filter] = result
+        return result
+
 
 _and_cache = _AndCache()
 _or_cache = _OrCache()
+_invert_cache = _InvertCache()
 
 
 def _and(filter1, filter2):
@@ -115,6 +123,10 @@ def _or(filter1, filter2):
     Or operation between two filters.
     """
     return _or_cache[filter1, filter2]
+
+
+def _invert(filter):
+    return _invert_cache[filter]
 
 
 class _AndList(Filter):
