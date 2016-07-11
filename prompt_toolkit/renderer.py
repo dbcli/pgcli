@@ -254,6 +254,10 @@ class Renderer(object):
         self._mouse_support_enabled = False
         self._bracketed_paste_enabled = False
 
+        # Waiting for CPR flag. True when we send the request, but didn't got a
+        # response.
+        self.waiting_for_cpr = False
+
         self.reset(_scroll=True)
 
     def reset(self, _scroll=False, leave_alternate_screen=True):
@@ -349,6 +353,7 @@ class Renderer(object):
                 self._min_available_height = self.output.get_size().rows
             else:
                 # Asks for a cursor position report (CPR).
+                self.waiting_for_cpr = True
                 self.output.ask_for_cpr()
 
     def report_absolute_cursor_row(self, row):
@@ -363,6 +368,8 @@ class Renderer(object):
 
         # Set the
         self._min_available_height = rows_below_cursor
+
+        self.waiting_for_cpr = False
 
     def render(self, cli, layout, is_done=False):
         """
