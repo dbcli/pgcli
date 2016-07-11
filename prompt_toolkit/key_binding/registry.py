@@ -83,17 +83,20 @@ class Registry(object):
             'Key bindings should consist of Key and string (unicode) instances.'
         assert callable(save_before)
 
-        def decorator(func):
+        if isinstance(filter, Never):
             # When a filter is Never, it will always stay disabled, so in that case
             # don't bother putting it in the registry. It will slow down every key
             # press otherwise.
-            if not isinstance(filter, Never):
+            def decorator(func):
+                return func
+        else:
+            def decorator(func):
                 self.key_bindings.append(
                     _Binding(keys, func, filter=filter, eager=eager,
                              save_before=save_before))
                 self._clear_cache()
 
-            return func
+                return func
         return decorator
 
     def remove_binding(self, function):
