@@ -948,13 +948,18 @@ class CommandLineInterface(object):
         """
         return _StdoutProxy(self, raw=raw)
 
-    def patch_stdout_context(self, raw=False):
+    def patch_stdout_context(self, raw=False, patch_stdout=True, patch_stderr=True):
         """
         Return a context manager that will replace ``sys.stdout`` with a proxy
         that makes sure that all printed text will appear above the prompt, and
         that it doesn't destroy the output from the renderer.
+
+        :param patch_stdout: Replace `sys.stdout`.
+        :param patch_stderr: Replace `sys.stderr`.
         """
-        return _PatchStdoutContext(self.stdout_proxy(raw=raw))
+        return _PatchStdoutContext(
+            self.stdout_proxy(raw=raw),
+            patch_stdout=patch_stdout, patch_stderr=patch_stderr)
 
     def create_eventloop_callbacks(self):
         return _InterfaceEventLoopCallbacks(self)
@@ -1008,15 +1013,26 @@ class _InterfaceEventLoopCallbacks(EventLoopCallbacks):
 
 
 class _PatchStdoutContext(object):
-    def __init__(self, new_stdout):
+    def __init__(self, new_stdout, patch_stdout=True, patch_stderr=True):
         self.new_stdout = new_stdout
+        self.patch_stdout = patch_stdout
+        self.patch_stderr = patch_stderr
 
     def __enter__(self):
         self.original_stdout = sys.stdout
-        sys.stdout = self.new_stdout
+        self.original_stderr = sys.stderr
+
+        if self.patch_stdout:
+            sys.stdout = self.new_stdout
+        if self.patch_stderr:
+            sys.stderr = self.new_stdout
 
     def __exit__(self, *a, **kw):
-        sys.stdout = self.original_stdout
+        if self.patch_stdout:
+            sys.stdout = self.original_stdout
+
+        if self.patch_stderr:
+            sys.stderr = self.original_stderr
 
 
 class _StdoutProxy(object):
