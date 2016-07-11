@@ -18,7 +18,6 @@ Container classes::
     - Container (Abstract base class)
        |- HSplit (Horizontal split)
        |- VSplit (Vertical split)
-       |- VSplit (Vertical split)
        |- FloatContainer (Container which can also contain menus and other floats)
        `- Window (Container which contains one actual control
 
