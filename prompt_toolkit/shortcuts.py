@@ -692,6 +692,16 @@ def print_tokens(tokens, style=None, true_color=False):
     renderer_print_tokens(output, tokens, style)
 
 
+def clear():
+    """
+    Clear the screen.
+    """
+    out = create_output()
+    out.erase_screen()
+    out.cursor_goto(0, 0)
+    out.flush()
+
+
 # Deprecated alias for `prompt`.
 get_input = prompt
 # Deprecated alias for create_default_layout
