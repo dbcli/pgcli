@@ -29,31 +29,19 @@ class Filter(with_metaclass(ABCMeta, object)):
         """
         Chaining of filters using the & operator.
         """
-        if isinstance(other, Always) or isinstance(self, Never):
-            return self
-        elif isinstance(other, Never) or isinstance(self, Always):
-            return other
-        else:
-            assert isinstance(other, Filter), 'Expecting filter, got %r' % other
-            return _and(self, other)
+        return _and_cache[self, other]
 
     def __or__(self, other):
         """
         Chaining of filters using the | operator.
         """
-        if isinstance(other, Always) or isinstance(self, Never):
-            return other
-        elif isinstance(other, Never) or isinstance(self, Always):
-            return self
-        else:
-            assert isinstance(other, Filter), 'Expecting filter, got %r' % other
-            return _or(self, other)
+        return _or_cache[self, other]
 
     def __invert__(self):
         """
         Inverting of filters using the ~ operator.
         """
-        return _invert(self)
+        return _invert_cache[self]
 
     def __bool__(self):
         """
@@ -86,6 +74,14 @@ class _AndCache(dict):
           removed. In practise however, there is a finite amount of filters.
     """
     def __missing__(self, filters):
+        a, b = filters
+        assert isinstance(b, Filter), 'Expecting filter, got %r' % b
+
+        if isinstance(b, Always) or isinstance(a, Never):
+            return a
+        elif isinstance(b, Never) or isinstance(a, Always):
+            return b
+
         result = _AndList(filters)
         self[filters] = result
         return result
@@ -94,9 +90,18 @@ class _AndCache(dict):
 class _OrCache(dict):
     """ Cache for Or operation between filters. """
     def __missing__(self, filters):
+        a, b = filters
+        assert isinstance(b, Filter), 'Expecting filter, got %r' % b
+
+        if isinstance(b, Always) or isinstance(a, Never):
+            return b
+        elif isinstance(b, Never) or isinstance(a, Always):
+            return a
+
         result = _OrList(filters)
         self[filters] = result
         return result
+
 
 class _InvertCache(dict):
     """ Cache for inversion operator. """
@@ -109,24 +114,6 @@ class _InvertCache(dict):
 _and_cache = _AndCache()
 _or_cache = _OrCache()
 _invert_cache = _InvertCache()
-
-
-def _and(filter1, filter2):
-    """
-    And operation between two filters.
-    """
-    return _and_cache[filter1, filter2]
-
-
-def _or(filter1, filter2):
-    """
-    Or operation between two filters.
-    """
-    return _or_cache[filter1, filter2]
-
-
-def _invert(filter):
-    return _invert_cache[filter]
 
 
 class _AndList(Filter):
