@@ -24,6 +24,7 @@ controls everything.
 """
 from __future__ import unicode_literals
 import os
+import select
 import threading
 
 __all__ = (
@@ -73,6 +74,14 @@ class InputHookContext(object):
 
         # Flush the read end of the pipe.
         try:
+            # Before calling 'os.read', call select.select. This fixes a bug
+            # with Gevent where the following read call blocked the select call
+            # from the eventloop that we call through 'input_is_ready_func' in
+            # the above thread.
+            # This appears to be only required when gevent.monkey.patch_all()
+            # has been executed. Otherwise it doesn't do much.
+            select.select([self._r], [], [])
+
             os.read(self._r, 1024)
         except OSError:
             # This happens when the window resizes and a SIGWINCH was received.
