@@ -10,8 +10,9 @@ class InMemoryClipboard(Clipboard):
     Default clipboard implementation.
     Just keep the data in memory.
     """
-    def __init__(self):
-        self._data = None
+    def __init__(self, data=None):
+        assert data is None or isinstance(data, ClipboardData)
+        self._data = data
 
     def set_data(self, data):
         assert isinstance(data, ClipboardData)
