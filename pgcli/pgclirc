@@ -83,6 +83,13 @@ row_limit = 1000
 # Skip intro on startup and goodbye on exit
 less_chatty = False
 
+# Postgres prompt
+# \u - Username
+# \h - Hostname of the server
+# \d - Database name
+# \n - Newline
+prompt = '\u@\h:\d> '
+
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
 Token.Menu.Completions.Completion.Current = 'bg:#ffffff #000000'
