@@ -10,10 +10,11 @@ from prompt_toolkit.eventloop.posix import PosixEventLoop
 from prompt_toolkit.input import PipeInput
 from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.output import DummyOutput
+from prompt_toolkit.clipboard import InMemoryClipboard, ClipboardData
 from functools import partial
 
 
-def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS):
+def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS, clipboard=None):
     """
     Create a CommandLineInterface, feed it with the given user input and return
     the CLI object.
@@ -28,7 +29,10 @@ def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS):
         inp = PipeInput()
         inp.send_text(text)
         cli = CommandLineInterface(
-            application=Application(editing_mode=editing_mode),
+            application=Application(
+                editing_mode=editing_mode,
+                clipboard=clipboard or InMemoryClipboard(),
+            ),
             eventloop=loop,
             input=inp,
             output=DummyOutput())
@@ -50,9 +54,13 @@ def test_emacs_cursor_movements():
     """
     Test cursor movements with Emacs key bindings.
     """
-    # ControlA
+    # ControlA (beginning-of-line)
     result, cli = _feed_cli_with_input('hello\x01X\n')
     assert result.text == 'Xhello'
+
+    # ControlE (end-of-line)
+    result, cli = _feed_cli_with_input('hello\x01X\x05Y\n')
+    assert result.text == 'XhelloY'
 
     # ControlH or \b
     result, cli = _feed_cli_with_input('hello\x08X\n')
@@ -74,9 +82,13 @@ def test_emacs_cursor_movements():
     result, cli = _feed_cli_with_input('hello\x01\x1b[CX\n')
     assert result.text == 'hXello'
 
-    # ControlB (Emacs cursor left.)
+    # ControlB (backward-char)
     result, cli = _feed_cli_with_input('hello\x02X\n')
     assert result.text == 'hellXo'
+
+    # ControlF (forward-char)
+    result, cli = _feed_cli_with_input('hello\x01\x06X\n')
+    assert result.text == 'hXello'
 
     # ControlC: ignored by default, unless the prompt-bindings are loaded.
     result, cli = _feed_cli_with_input('hello\x03\n')
@@ -86,13 +98,90 @@ def test_emacs_cursor_movements():
     result, cli = _feed_cli_with_input('hello\x04\n')
     assert result.text == 'hello'
 
-    # Left, Left, ControlK
+    # Left, Left, ControlK  (kill-line)
     result, cli = _feed_cli_with_input('hello\x1b[D\x1b[D\x0b\n')
     assert result.text == 'hel'
 
     # ControlL: should not influence the result.
     result, cli = _feed_cli_with_input('hello\x0c\n')
     assert result.text == 'hello'
+
+    # ControlRight (forward-word)
+    result, cli = _feed_cli_with_input('hello world\x01X\x1b[1;5CY\n')
+    assert result.text == 'XhelloY world'
+
+    # ContrlolLeft (backward-word)
+    result, cli = _feed_cli_with_input('hello world\x1b[1;5DY\n')
+    assert result.text == 'hello Yworld'
+
+    # ControlW (kill-word / unix-word-rubout)
+    result, cli = _feed_cli_with_input('hello world\x17\n')
+    assert result.text == 'hello '
+    assert cli.clipboard.get_data().text == 'world'
+
+    result, cli = _feed_cli_with_input('test hello world\x1b2\x17\n')
+    assert result.text == 'test '
+
+    # Escape Backspace (unix-word-rubout)
+    result, cli = _feed_cli_with_input('hello world\x1b\x08\n')
+    assert result.text == 'hello '
+    assert cli.clipboard.get_data().text == 'world'
+
+    # Backspace (backward-delete-char)
+    result, cli = _feed_cli_with_input('hello world\x08\n')
+    assert result.text == 'hello worl'
+    assert result.cursor_position == len('hello worl')
+
+    # Delete (delete-char)
+    result, cli = _feed_cli_with_input('hello world\x01\x1b[3~\n')
+    assert result.text == 'ello world'
+    assert result.cursor_position == 0
+
+    # Escape-\\ (delete-horizontal-space)
+    result, cli = _feed_cli_with_input('hello     world\x1b8\x02\x1b\\\n')
+    assert result.text == 'helloworld'
+    assert result.cursor_position == len('hello')
+
+
+def test_emacs_yank():
+    # ControlY (yank)
+    c = InMemoryClipboard(ClipboardData('XYZ'))
+    result, cli = _feed_cli_with_input('hello\x02\x19\n', clipboard=c)
+    assert result.text == 'hellXYZo'
+    assert result.cursor_position == len('hellXY')
+
+
+def test_quoted_insert():
+    # ControlQ - ControlB (quoted-insert)
+    result, cli = _feed_cli_with_input('hello\x11\x02\n')
+    assert result.text == 'hello\x02'
+
+
+def test_transformations():
+    # Meta-c (capitalize-word)
+    result, cli = _feed_cli_with_input('hello world\01\x1bc\n')
+    assert result.text == 'Hello world'
+    assert result.cursor_position == len('Hello')
+
+    # Meta-u (uppercase-word)
+    result, cli = _feed_cli_with_input('hello world\01\x1bu\n')
+    assert result.text == 'HELLO world'
+    assert result.cursor_position == len('Hello')
+
+    # Meta-u (downcase-word)
+    result, cli = _feed_cli_with_input('HELLO WORLD\01\x1bl\n')
+    assert result.text == 'hello WORLD'
+    assert result.cursor_position == len('Hello')
+
+    # ControlT (transpose-chars)
+    result, cli = _feed_cli_with_input('hello\x14\n')
+    assert result.text == 'helol'
+    assert result.cursor_position == len('hello')
+
+    # Left, Left, Control-T (transpose-chars)
+    result, cli = _feed_cli_with_input('abcde\x1b[D\x1b[D\x14\n')
+    assert result.text == 'abdce'
+    assert result.cursor_position == len('abcd')
 
 
 def test_emacs_other_bindings():

@@ -9,8 +9,8 @@ from prompt_toolkit.mouse_events import MouseEventType, MouseEvent
 from prompt_toolkit.renderer import HeightIsUnknownError
 from prompt_toolkit.utils import suspend_to_background_supported, is_windows
 
-from .completion import generate_completions
 from .utils import create_handle_decorator
+from .named_commands import get_by_name
 
 
 __all__ = (
@@ -115,27 +115,36 @@ def load_basic_bindings(registry, filter=Always()):
         """
         pass
 
-    @handle(Keys.Home)
-    def _(event):
-        b = event.current_buffer
-        b.cursor_position += b.document.get_start_of_line_position()
+    # Readline-style bindings.
+    handle(Keys.Home)(get_by_name('beginning-of-line'))
+    handle(Keys.End)(get_by_name('end-of-line'))
+    handle(Keys.Left)(get_by_name('backward-char'))
+    handle(Keys.Right)(get_by_name('forward-char'))
+    handle(Keys.ControlUp)(get_by_name('previous-history'))
+    handle(Keys.ControlDown)(get_by_name('next-history'))
+    handle(Keys.ControlL)(get_by_name('clear-screen'))
 
-    @handle(Keys.End)
-    def _(event):
-        b = event.current_buffer
-        b.cursor_position += b.document.get_end_of_line_position()
+    handle(Keys.ControlK, filter=insert_mode)(get_by_name('kill-line'))
+    handle(Keys.ControlU, filter=insert_mode)(get_by_name('unix-line-discard'))
+    handle(Keys.ControlH, filter=insert_mode, save_before=if_no_repeat)(
+        get_by_name('backward-delete-char'))
+    handle(Keys.Delete, filter=insert_mode, save_before=if_no_repeat)(
+        get_by_name('delete-char'))
+    handle(Keys.ShiftDelete, filter=insert_mode, save_before=if_no_repeat)(
+        get_by_name('delete-char'))
+    handle(Keys.Any, filter=insert_mode, save_before=if_no_repeat)(
+        get_by_name('self-insert'))
+    handle(Keys.ControlT, filter=insert_mode)(get_by_name('transpose-chars'))
+    handle(Keys.ControlW, filter=insert_mode)(get_by_name('unix-word-rubout'))
+    handle(Keys.ControlI, filter=insert_mode)(get_by_name('complete'))
+
+    handle(Keys.PageUp, filter= ~has_selection)(get_by_name('previous-history'))
+    handle(Keys.PageDown, filter= ~has_selection)(get_by_name('next-history'))
 
     # CTRL keys.
 
     text_before_cursor = Condition(lambda cli: cli.current_buffer.text)
-
-    @handle(Keys.ControlD, filter=text_before_cursor & insert_mode)
-    def _(event):
-        " Delete text before cursor. "
-        event.current_buffer.delete(event.arg)
-
-    # Tab completion. (ControlI == Tab)
-    handle(Keys.ControlI, filter=insert_mode)(generate_completions)
+    handle(Keys.ControlD, filter=text_before_cursor & insert_mode)(get_by_name('delete-char'))
 
     @handle(Keys.BackTab, filter=insert_mode)
     def _(event):
@@ -158,86 +167,7 @@ def load_basic_bindings(registry, filter=Always()):
         buff = event.current_buffer
         buff.accept_action.validate_and_handle(event.cli, buff)
 
-    @handle(Keys.ControlK, filter=insert_mode)
-    def _(event):
-        buffer = event.current_buffer
-        deleted = buffer.delete(count=buffer.document.get_end_of_line_position())
-        event.cli.clipboard.set_text(deleted)
-
-    @handle(Keys.ControlT, filter=insert_mode)
-    def _(event):
-        """
-        Emulate Emacs transpose-char behavior: at the beginning of the buffer,
-        do nothing.  At the end of a line or buffer, swap the characters before
-        the cursor.  Otherwise, move the cursor right, and then swap the
-        characters before the cursor.
-        """
-        b = event.current_buffer
-        p = b.cursor_position
-        if p == 0:
-            return
-        elif p == len(b.text) or b.text[p] == '\n':
-            b.swap_characters_before_cursor()
-        else:
-            b.cursor_position += b.document.get_cursor_right_position()
-            b.swap_characters_before_cursor()
-
-    @handle(Keys.ControlU, filter=insert_mode)
-    def _(event):
-        """
-        Clears the line before the cursor position. If you are at the end of
-        the line, clears the entire line.
-        """
-        buffer = event.current_buffer
-        deleted = buffer.delete_before_cursor(count=-buffer.document.get_start_of_line_position())
-        event.cli.clipboard.set_text(deleted)
-
-    @handle(Keys.ControlW, filter=insert_mode)
-    def _(event):
-        """
-        Delete the word before the cursor.
-        """
-        buffer = event.current_buffer
-        pos = buffer.document.find_start_of_previous_word(count=event.arg)
-
-        if pos is None:
-            # Nothing found? delete until the start of the document.  (The
-            # input starts with whitespace and no words were found before the
-            # cursor.)
-            pos = - buffer.cursor_position
-
-        if pos:
-            deleted = buffer.delete_before_cursor(count=-pos)
-
-            # If the previous key press was also Control-W, concatenate deleted
-            # text.
-            if event.is_repeat:
-                deleted += event.cli.clipboard.get_data().text
-
-            event.cli.clipboard.set_text(deleted)
-        else:
-            # Nothing to delete. Bell.
-            event.cli.output.bell()
-
-    @handle(Keys.PageUp, filter= ~has_selection)
-    @handle(Keys.ControlUp)
-    def _(event):
-        event.current_buffer.history_backward()
-
-    @handle(Keys.PageDown, filter= ~has_selection)
-    @handle(Keys.ControlDown)
-    def _(event):
-        event.current_buffer.history_forward()
-
-    @handle(Keys.Left)
-    def _(event):
-        buffer = event.current_buffer
-        buffer.cursor_position += buffer.document.get_cursor_left_position(count=event.arg)
-
-    @handle(Keys.Right)
-    def _(event):
-        buffer = event.current_buffer
-        buffer.cursor_position += buffer.document.get_cursor_right_position(count=event.arg)
+    # Delete the word before the cursor.
 
     @handle(Keys.Up, filter= ~has_selection)
     def _(event):
@@ -255,39 +185,12 @@ def load_basic_bindings(registry, filter=Always()):
     def _(event):
         event.current_buffer.cursor_down(count=event.arg)
 
-    @handle(Keys.ControlH, filter=insert_mode, save_before=if_no_repeat)
-    def _(event):
-        " Backspace: delete before cursor. "
-        deleted = event.current_buffer.delete_before_cursor(count=event.arg)
-        if not deleted:
-            event.cli.output.bell()
-
-    @handle(Keys.Delete, filter=insert_mode, save_before=if_no_repeat)
-    @handle(Keys.ShiftDelete, filter=insert_mode, save_before=if_no_repeat)
-    def _(event):
-        deleted = event.current_buffer.delete(count=event.arg)
-
-        if not deleted:
-            event.cli.output.bell()
-
     @handle(Keys.Delete, filter=has_selection)
     def _(event):
         data = event.current_buffer.cut_selection()
         event.cli.clipboard.set_data(data)
 
-    @handle(Keys.Any, filter=insert_mode, save_before=if_no_repeat)
-    def _(event):
-        """
-        Insert data at cursor position.
-        """
-        event.current_buffer.insert_text(event.data * event.arg)
-
     # Global bindings. These are never disabled and don't include the default filter.
-
-    @handle(Keys.ControlL)
-    def _(event):
-        " Clear whole screen and redraw. "
-        event.cli.renderer.clear()
 
     @handle(Keys.ControlZ)
     def _(event):
@@ -441,10 +344,7 @@ def load_abort_and_exit_bindings(registry, filter=Always()):
         return (cli.current_buffer_name == DEFAULT_BUFFER and
                 not cli.current_buffer.text)
 
-    @handle(Keys.ControlD, filter=ctrl_d_condition)
-    def _(event):
-        " Exit on Control-D when the input is empty. "
-        event.cli.exit()
+    handle(Keys.ControlD, filter=ctrl_d_condition)(get_by_name('end-of-file'))
 
 
 def load_basic_system_bindings(registry, filter=Always()):

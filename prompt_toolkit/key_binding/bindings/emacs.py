@@ -8,8 +8,7 @@ from prompt_toolkit.completion import CompleteEvent
 
 from .utils import create_handle_decorator
 from .scroll import scroll_page_up, scroll_page_down
-
-from six.moves import range
+from .named_commands import get_by_name
 
 __all__ = (
     'load_emacs_bindings',
@@ -43,71 +42,57 @@ def load_emacs_bindings(registry, filter=Always()):
         """
         pass
 
-    @handle(Keys.ControlA)
-    def _(event):
-        """
-        Start of line.
-        """
-        buffer = event.current_buffer
-        buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=False)
+    handle(Keys.ControlA)(get_by_name('beginning-of-line'))
+    handle(Keys.ControlB)(get_by_name('backward-char'))
+    handle(Keys.ControlDelete, filter=insert_mode)(get_by_name('kill-word'))
+    handle(Keys.ControlE)(get_by_name('end-of-line'))
+    handle(Keys.ControlF)(get_by_name('forward-char'))
+    handle(Keys.ControlLeft)(get_by_name('backward-word'))
+    handle(Keys.ControlRight)(get_by_name('forward-word'))
+    handle(Keys.ControlX, 'r', 'y', filter=insert_mode)(get_by_name('yank'))
+    handle(Keys.ControlY, filter=insert_mode)(get_by_name('yank'))
+    handle(Keys.Escape, 'b')(get_by_name('backward-word'))
+    handle(Keys.Escape, 'c', filter=insert_mode)(get_by_name('capitalize-word'))
+    handle(Keys.Escape, 'd', filter=insert_mode)(get_by_name('kill-word'))
+    handle(Keys.Escape, 'f')(get_by_name('forward-word'))
+    handle(Keys.Escape, 'l', filter=insert_mode)(get_by_name('downcase-word'))
+    handle(Keys.Escape, 'u', filter=insert_mode)(get_by_name('uppercase-word'))
+    handle(Keys.Escape, Keys.Backspace, filter=insert_mode)(get_by_name('unix-word-rubout'))
+    handle(Keys.Escape, '\\', filter=insert_mode)(get_by_name('delete-horizontal-space'))
 
-    @handle(Keys.ControlB)
-    def _(event):
-        """
-        Character back.
-        """
-        buffer = event.current_buffer
-        buffer.cursor_position += buffer.document.get_cursor_left_position(count=event.arg)
+    handle(Keys.ControlUnderscore, save_before=(lambda e: False), filter=insert_mode)(
+        get_by_name('undo'))
 
-    @handle(Keys.ControlE)
-    def _(event):
-        """
-        End of line.
-        """
-        buffer = event.current_buffer
-        buffer.cursor_position += buffer.document.get_end_of_line_position()
+    handle(Keys.ControlX, Keys.ControlU, save_before=(lambda e: False), filter=insert_mode)(
+        get_by_name('undo'))
 
-    @handle(Keys.ControlF)
-    def _(event):
-        """
-        Character forward.
-        """
-        buffer = event.current_buffer
-        buffer.cursor_position += buffer.document.get_cursor_right_position(count=event.arg)
+
+    handle(Keys.Escape, '<', filter= ~has_selection)(get_by_name('beginning-of-history'))
+    handle(Keys.Escape, '>', filter= ~has_selection)(get_by_name('end-of-history'))
 
     @handle(Keys.ControlN, filter= ~has_selection)
     def _(event):
-        """
-        Next line.
-        """
+        " Next line. "
         event.current_buffer.auto_down()
 
     @handle(Keys.ControlN, filter=has_selection)
     def _(event):
-        """
-        Next line.
-        """
+        " Next line (but don't cycle through history.) "
         event.current_buffer.cursor_down()
 
     @handle(Keys.ControlO, filter=insert_mode)
     def _(event):
-        """
-        Insert newline, but don't move the cursor.
-        """
+        " Insert newline, but don't move the cursor. "
         event.current_buffer.insert_text('\n', move_cursor=False)
 
     @handle(Keys.ControlP, filter= ~has_selection)
     def _(event):
-        """
-        Previous line.
-        """
+        " Previous line. "
         event.current_buffer.auto_up(count=event.arg)
 
     @handle(Keys.ControlP, filter=has_selection)
     def _(event):
-        """
-        Previous line.
-        """
+        " Previous line. "
         event.current_buffer.cursor_up(count=event.arg)
 
     @handle(Keys.ControlQ, Keys.Any, filter= ~has_selection)
@@ -120,22 +105,6 @@ def load_emacs_bindings(registry, filter=Always()):
         terminal.
         """
         event.current_buffer.insert_text(event.data, overwrite=False)
-
-    @handle(Keys.ControlY, filter=insert_mode)
-    @handle(Keys.ControlX, 'r', 'y', filter=insert_mode)
-    def _(event):
-        """
-        Paste before cursor.
-        """
-        event.current_buffer.paste_clipboard_data(
-            event.cli.clipboard.get_data(), count=event.arg, before=True)
-
-    @handle(Keys.ControlUnderscore, save_before=(lambda e: False), filter=insert_mode)
-    def _(event):
-        """
-        Undo.
-        """
-        event.current_buffer.undo()
 
     def handle_digit(c):
         """
@@ -158,123 +127,38 @@ def load_emacs_bindings(registry, filter=Always()):
     is_returnable = Condition(
         lambda cli: cli.current_buffer.accept_action.is_returnable)
 
-    @handle(Keys.Escape, Keys.ControlJ, filter=insert_mode & is_returnable)
-    def _(event):
-        """
-        Meta + Newline: always accept input.
-        """
-        b = event.current_buffer
-        b.accept_action.validate_and_handle(event.cli, b)
+    # Meta + Newline: always accept input.
+    handle(Keys.Escape, Keys.ControlJ, filter=insert_mode & is_returnable)(
+        get_by_name('accept-line'))
+
+    def character_search(buff, char, count):
+        if count < 0:
+            match = buff.document.find_backwards(char, in_current_line=True, count=-count)
+        else:
+            match = buff.document.find(char, in_current_line=True, count=count)
+
+        if match is not None:
+            buff.cursor_position += match
 
     @handle(Keys.ControlSquareClose, Keys.Any)
     def _(event):
-        """
-        When Ctl-] + a character is pressed. go to that character.
-        """
-        match = event.current_buffer.document.find(event.data, in_current_line=True, count=(event.arg))
-        if match is not None:
-            event.current_buffer.cursor_position += match
+        " When Ctl-] + a character is pressed. go to that character. "
+        character_search(event.current_buffer, event.data, event.arg)
 
-    @handle(Keys.Escape, Keys.Backspace, filter=insert_mode)
+    @handle(Keys.Escape, Keys.ControlSquareClose, Keys.Any)
     def _(event):
-        """
-        Delete word backwards.
-        """
-        buffer = event.current_buffer
-        pos = buffer.document.find_start_of_previous_word(count=event.arg)
-
-        if pos is None:
-            # Nothing found. Only whitespace before the cursor?
-            pos = - buffer.cursor_position
-
-        if pos:
-            deleted = buffer.delete_before_cursor(count=-pos)
-            event.cli.clipboard.set_text(deleted)
-
-    @handle(Keys.ControlDelete, filter=insert_mode)
-    def _(event):
-        """
-        Delete word after cursor.
-        """
-        buff = event.current_buffer
-        pos = buff.document.find_next_word_ending(count=event.arg)
-
-        if pos:
-            deleted = buff.delete(count=pos)
-            event.cli.clipboard.set_text(deleted)
+        " Like Ctl-], but backwards. "
+        character_search(event.current_buffer, event.data, -event.arg)
 
     @handle(Keys.Escape, 'a')
     def _(event):
-        """
-        Previous sentence.
-        """
+        " Previous sentence. "
         # TODO:
-        pass
-
-    @handle(Keys.Escape, 'c', filter=insert_mode)
-    def _(event):
-        """
-        Capitalize the current (or following) word.
-        """
-        buffer = event.current_buffer
-
-        for i in range(event.arg):
-            pos = buffer.document.find_next_word_ending()
-            words = buffer.document.text_after_cursor[:pos]
-            buffer.insert_text(words.title(), overwrite=True)
-
-    @handle(Keys.Escape, 'd', filter=insert_mode)
-    def _(event):
-        """
-        Delete word forwards.
-        """
-        buffer = event.current_buffer
-        pos = buffer.document.find_next_word_ending(count=event.arg)
-
-        if pos:
-            deleted = buffer.delete(count=pos)
-            event.cli.clipboard.set_text(deleted)
 
     @handle(Keys.Escape, 'e')
     def _(event):
-        """ Move to end of sentence. """
+        " Move to end of sentence. "
         # TODO:
-        pass
-
-    @handle(Keys.Escape, 'f')
-    @handle(Keys.ControlRight)
-    def _(event):
-        """
-        Cursor to end of next word.
-        """
-        buffer= event.current_buffer
-        pos = buffer.document.find_next_word_ending(count=event.arg)
-
-        if pos:
-            buffer.cursor_position += pos
-
-    @handle(Keys.Escape, 'b')
-    @handle(Keys.ControlLeft)
-    def _(event):
-        """
-        Cursor to start of previous word.
-        """
-        buffer = event.current_buffer
-        pos = buffer.document.find_previous_word_beginning(count=event.arg)
-        if pos:
-            buffer.cursor_position += pos
-
-    @handle(Keys.Escape, 'l', filter=insert_mode)
-    def _(event):
-        """
-        Lowercase the current (or following) word.
-        """
-        buffer = event.current_buffer
-
-        for i in range(event.arg):  # XXX: not DRY: see meta_c and meta_u!!
-            pos = buffer.document.find_next_word_ending()
-            words = buffer.document.text_after_cursor[:pos]
-            buffer.insert_text(words.lower(), overwrite=True)
 
     @handle(Keys.Escape, 't', filter=insert_mode)
     def _(event):
@@ -283,40 +167,12 @@ def load_emacs_bindings(registry, filter=Always()):
         """
         # TODO
 
-    @handle(Keys.Escape, 'u', filter=insert_mode)
-    def _(event):
-        """
-        Uppercase the current (or following) word.
-        """
-        buffer = event.current_buffer
-
-        for i in range(event.arg):
-            pos = buffer.document.find_next_word_ending()
-            words = buffer.document.text_after_cursor[:pos]
-            buffer.insert_text(words.upper(), overwrite=True)
-
     @handle(Keys.Escape, '.', filter=insert_mode)
     def _(event):
         """
         Rotate through the last word (white-space delimited) of the previous lines in history.
         """
         # TODO
-
-    @handle(Keys.Escape, '\\', filter=insert_mode)
-    def _(event):
-        """
-        Delete all spaces and tabs around point.
-        (delete-horizontal-space)
-        """
-        buff = event.current_buffer
-        text_before_cursor = buff.document.text_before_cursor
-        text_after_cursor = buff.document.text_after_cursor
-
-        delete_before = len(text_before_cursor) - len(text_before_cursor.rstrip('\t '))
-        delete_after = len(text_after_cursor) - len(text_after_cursor.lstrip('\t '))
-
-        buff.delete_before_cursor(count=delete_before)
-        buff.delete(count=delete_after)
 
     @handle(Keys.Escape, '*', filter=insert_mode)
     def _(event):
@@ -332,10 +188,6 @@ def load_emacs_bindings(registry, filter=Always()):
         # Insert them.
         text_to_insert = ' '.join(c.text for c in completions)
         buff.insert_text(text_to_insert)
-
-    @handle(Keys.ControlX, Keys.ControlU, save_before=(lambda e: False), filter=insert_mode)
-    def _(event):
-        event.current_buffer.undo()
 
     @handle(Keys.ControlX, Keys.ControlX)
     def _(event):
@@ -391,22 +243,6 @@ def load_emacs_bindings(registry, filter=Always()):
         """
         data = event.current_buffer.copy_selection()
         event.cli.clipboard.set_data(data)
-
-    @handle(Keys.Escape, '<', filter= ~has_selection)
-    def _(event):
-        """
-        Move to the first line in the history.
-        """
-        event.current_buffer.go_to_history(0)
-
-    @handle(Keys.Escape, '>', filter= ~has_selection)
-    def _(event):
-        """
-        Move to the end of the input history.
-        This is the line we are editing.
-        """
-        buffer = event.current_buffer
-        buffer.go_to_history(len(buffer._working_lines) - 1)
 
     @handle(Keys.Escape, Keys.Left)
     def _(event):
