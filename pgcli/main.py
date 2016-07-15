@@ -463,7 +463,8 @@ class PGCli(object):
             set_vi_mode_enabled=set_vi_mode)
 
         def prompt_tokens(_):
-            return [(Token.Prompt, '%s> ' % self.pgexecute.dbname)]
+            return [(Token.Prompt, '{user}@{host}:{dbname}> '.format(
+                user=self.pgexecute.user, host=self.pgexecute.host, dbname=self.pgexecute.dbname))]
 
         def get_continuation_tokens(cli, width):
             return [(Token.Continuation, '.' * (width - 1) + ' ')]
