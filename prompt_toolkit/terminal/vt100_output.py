@@ -355,6 +355,7 @@ class Vt100_Output(Output):
         (This will take the dimensions by reading the pseudo
         terminal attributes.)
         """
+        assert stdout.isatty()
         def get_size():
             rows, columns = _get_size(stdout.fileno())
             return Size(rows=rows, columns=columns)
