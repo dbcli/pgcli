@@ -188,7 +188,13 @@ def delete_char(event):
 @register('backward-delete-char')
 def backward_delete_char(event):
     " Delete the character behind the cursor. "
-    deleted = event.current_buffer.delete_before_cursor(count=event.arg)
+    if event.arg < 0:
+        # When a negative argument has been given, this should delete in front
+        # of the cursor.
+        deleted = event.current_buffer.delete(count=-event.arg)
+    else:
+        deleted = event.current_buffer.delete_before_cursor(count=event.arg)
+
     if not deleted:
         event.cli.output.bell()
 
