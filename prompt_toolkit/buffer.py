@@ -563,7 +563,8 @@ class Buffer(object):
 
     def delete_before_cursor(self, count=1):
         """
-        Delete character before cursor, return deleted character.
+        Delete specified number of characters before cursor and return the
+        deleted text.
         """
         assert count >= 0
         deleted = ''
@@ -581,7 +582,7 @@ class Buffer(object):
 
     def delete(self, count=1):
         """
-        Delete one character. Return deleted character.
+        Delete specified number of characters and Return the deleted text.
         """
         if self.cursor_position < len(self.text):
             deleted = self.document.text_after_cursor[:count]

@@ -272,7 +272,10 @@ def kill_line(event):
     Kill the text from the cursor to the end of the line.
     """
     buff = event.current_buffer
-    deleted = buff.delete(count=buff.document.get_end_of_line_position())
+    if event.arg < 0:
+        deleted = buff.delete_before_cursor(count=-buff.document.get_start_of_line_position())
+    else:
+        deleted = buff.delete(count=buff.document.get_end_of_line_position())
     event.cli.clipboard.set_text(deleted)
 
 
