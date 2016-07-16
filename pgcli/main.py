@@ -84,6 +84,8 @@ class NullHandler(logging.Handler):
 
 class PGCli(object):
 
+    default_prompt = '\\u@\\h:\\d> '
+
     def set_default_pager(self, config):
         configured_pager = config['main'].get('pager')
         os_environ_pager = os.environ.get('PAGER')
@@ -130,7 +132,7 @@ class PGCli(object):
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
         self.less_chatty = c['main'].as_bool('less_chatty')
-        self.prompt_format = c['main']['prompt']
+        self.prompt_format = c['main'].get('prompt', self.default_prompt)
 
         self.on_error = c['main']['on_error'].upper()
 
