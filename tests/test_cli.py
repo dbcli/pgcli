@@ -5,16 +5,29 @@ instance, feed it with some input and check the result.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.application import Application
+from prompt_toolkit.buffer import Buffer, AcceptAction
+from prompt_toolkit.clipboard import InMemoryClipboard, ClipboardData
 from prompt_toolkit.enums import DEFAULT_BUFFER, EditingMode
 from prompt_toolkit.eventloop.posix import PosixEventLoop
+from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.input import PipeInput
 from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.output import DummyOutput
-from prompt_toolkit.clipboard import InMemoryClipboard, ClipboardData
+from prompt_toolkit.key_binding.manager import KeyBindingManager
 from functools import partial
+import pytest
 
 
-def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS, clipboard=None):
+def _history():
+    h = InMemoryHistory()
+    h.append('line1 first input')
+    h.append('line2 second input')
+    h.append('line3 third input')
+    return h
+
+
+def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS, clipboard=None,
+                         history=None):
     """
     Create a CommandLineInterface, feed it with the given user input and return
     the CLI object.
@@ -30,8 +43,11 @@ def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS, clipboard=None):
         inp.send_text(text)
         cli = CommandLineInterface(
             application=Application(
+                buffer=Buffer(accept_action=AcceptAction.RETURN_DOCUMENT,
+                              history=history),
                 editing_mode=editing_mode,
                 clipboard=clipboard or InMemoryClipboard(),
+                key_bindings_registry=KeyBindingManager.for_prompt().registry,
             ),
             eventloop=loop,
             input=inp,
@@ -90,11 +106,21 @@ def test_emacs_cursor_movements():
     result, cli = _feed_cli_with_input('hello\x01\x06X\n')
     assert result.text == 'hXello'
 
-    # ControlC: ignored by default, unless the prompt-bindings are loaded.
-    result, cli = _feed_cli_with_input('hello\x03\n')
-    assert result.text == 'hello'
+    # ControlC: raise KeyboardInterrupt.
+    with pytest.raises(KeyboardInterrupt):
+        result, cli = _feed_cli_with_input('hello\x03\n')
+        assert result.text == 'hello'
 
-    # ControlD: ignored by default, unless the prompt-bindings are loaded.
+    # ControlD without any input: raises EOFError.
+    with pytest.raises(EOFError):
+        result, cli = _feed_cli_with_input('\x04\n')
+        assert result.text == 'hello'
+
+    # ControlD: delete after cursor.
+    result, cli = _feed_cli_with_input('hello\x01\x04\n')
+    assert result.text == 'ello'
+
+    # ControlD at the end of the input ssshould not do anything.
     result, cli = _feed_cli_with_input('hello\x04\n')
     assert result.text == 'hello'
 
@@ -204,6 +230,38 @@ def test_emacs_other_bindings():
     # (with argument.)
     result, cli = _feed_cli_with_input('hello world test\x1b2\x17X\n')
     assert result.text == 'hello X'
+
+
+def test_emacs_history_bindings():
+    # Adding a new item to the history.
+    history = _history()
+    result, cli = _feed_cli_with_input('new input\n', history=history)
+    assert result.text == 'new input'
+    history.strings[-1] == 'new input'
+
+    # Go up in history, and accept the last item.
+    result, cli = _feed_cli_with_input('hello\x1b[A\n', history=history)
+    assert result.text == 'new input'
+
+    # Esc< (beginning-of-history)
+    result, cli = _feed_cli_with_input('hello\x1b<\n', history=history)
+    assert result.text == 'line1 first input'
+
+    # Esc> (end-of-history)
+    result, cli = _feed_cli_with_input('another item\x1b[A\x1b[a\x1b>\n', history=history)
+    assert result.text == 'another item'
+
+
+def test_emacs_reverse_search():
+    history = _history()
+
+    # ControlR  (reverse-search-history)
+    result, cli = _feed_cli_with_input('\x12input\n\n', history=history)
+    assert result.text == 'line3 third input'
+
+    # Hitting ControlR twice.
+    result, cli = _feed_cli_with_input('\x12input\x12\n\n', history=history)
+    assert result.text == 'line2 second input'
 
 
 def test_vi_cursor_movements():
