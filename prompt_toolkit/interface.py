@@ -66,7 +66,7 @@ class CommandLineInterface(object):
     """
     def __init__(self, application, eventloop=None, input=None, output=None):
         assert isinstance(application, Application)
-        assert isinstance(eventloop, EventLoop)
+        assert isinstance(eventloop, EventLoop), 'Passing an eventloop is required.'
         assert output is None or isinstance(output, Output)
         assert input is None or isinstance(input, Input)
 

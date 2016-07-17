@@ -15,11 +15,11 @@ them together.
 Running the application
 -----------------------
 
-To run our final Full screen Application, need three optional I/O objects. And
+To run our final Full screen Application, we need three I/O objects, and
 an :class:`~prompt_toolkit.application.Application` instance. These are passed
 as arguments to :class:`~prompt_toolkit.interface.CommandLineInterface`.
 
-The three optional I/O objects are:
+The three I/O objects are:
 
     - An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is
       basically a while-true loop that waits for user input, and when it receives
@@ -29,8 +29,8 @@ The three optional I/O objects are:
     - An :class:`~prompt_toolkit.output.Output` instance. This is an
       abstraction on the output stream, and is called by the renderer.
 
-As hinted before all three of the I/O objects are optional, and prompt_toolkit uses the
-obvious default.
+The input and output objects are optional. However, the eventloop is always
+required.
 
 We'll come back at what the :class:`~prompt_toolkit.application.Application`
 instance is later.
@@ -41,9 +41,11 @@ So, the only thing we actually need in order to run an application is the follow
 
     from prompt_toolkit.interface import CommandLineInterface
     from prompt_toolkit.application import Application
+    from prompt_toolkit.shortcuts import create_eventloop
 
+    loop = create_eventloop()
     application = Application()
-    cli = CommandLineInterface(application=application)
+    cli = CommandLineInterface(application=application, eventloop=loop)
     # cli.run()
     print('Exiting')
 
