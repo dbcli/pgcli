@@ -84,6 +84,8 @@ class NullHandler(logging.Handler):
 
 class PGCli(object):
 
+    default_prompt = '\\u@\\h:\\d> '
+
     def set_default_pager(self, config):
         configured_pager = config['main'].get('pager')
         os_environ_pager = os.environ.get('PAGER')
@@ -130,6 +132,7 @@ class PGCli(object):
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
         self.less_chatty = c['main'].as_bool('less_chatty')
+        self.prompt_format = c['main'].get('prompt', self.default_prompt)
 
         self.on_error = c['main']['on_error'].upper()
 
@@ -463,7 +466,7 @@ class PGCli(object):
             set_vi_mode_enabled=set_vi_mode)
 
         def prompt_tokens(_):
-            return [(Token.Prompt, '%s> ' % self.pgexecute.dbname)]
+            return [(Token.Prompt, self.get_prompt(self.prompt_format))]
 
         def get_continuation_tokens(cli, width):
             return [(Token.Continuation, '.' * (width - 1) + ' ')]
@@ -656,6 +659,13 @@ class PGCli(object):
         with self._completer_lock:
             return self.completer.get_completions(
                 Document(text=text, cursor_position=cursor_positition), None)
+
+    def get_prompt(self, string):
+        string = string.replace('\\u', self.pgexecute.user or '(none)')
+        string = string.replace('\\h', self.pgexecute.host or '(none)')
+        string = string.replace('\\d', self.pgexecute.dbname or '(none)')
+        string = string.replace('\\n', "\n")
+        return string
 
 
 @click.command()
