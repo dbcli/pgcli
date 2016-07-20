@@ -259,6 +259,14 @@ def test_emacs_history_bindings():
     result, cli = _feed_cli_with_input('another item\x1b[A\x1b[a\x1b>\n', history=history)
     assert result.text == 'another item'
 
+    # ControlUp (previous-history)
+    result, cli = _feed_cli_with_input('\x1b[1;5A\n', history=history)
+    assert result.text == 'another item'
+
+    # Esc< ControlDown (beginning-of-history, next-history)
+    result, cli = _feed_cli_with_input('\x1b<\x1b[1;5B\n', history=history)
+    assert result.text == 'line2 second input'
+
 
 def test_emacs_reverse_search():
     history = _history()

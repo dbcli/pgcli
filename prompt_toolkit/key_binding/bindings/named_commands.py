@@ -130,14 +130,14 @@ def accept_line(event):
 @register('previous-history')
 def previous_history(event):
     " Move `back' through the history list, fetching the previous command.  "
-    event.current_buffer.history_backward(count=event.count)
+    event.current_buffer.history_backward(count=event.arg)
 
 
 
 @register('next-history')
 def next_history(event):
     " Move `forward' through the history list, fetching the next command. "
-    event.current_buffer.history_forward(count=event.count)
+    event.current_buffer.history_forward(count=event.arg)
 
 
 @register('beginning-of-history')
