@@ -149,11 +149,19 @@ def test_emacs_cursor_movements():
     assert result.text == 'test '
 
     # Escape Backspace (unix-word-rubout)
+    result, cli = _feed_cli_with_input('hello world\x1b\x7f\n')
+    assert result.text == 'hello '
+    assert cli.clipboard.get_data().text == 'world'
+
     result, cli = _feed_cli_with_input('hello world\x1b\x08\n')
     assert result.text == 'hello '
     assert cli.clipboard.get_data().text == 'world'
 
     # Backspace (backward-delete-char)
+    result, cli = _feed_cli_with_input('hello world\x7f\n')
+    assert result.text == 'hello worl'
+    assert result.cursor_position == len('hello worl')
+
     result, cli = _feed_cli_with_input('hello world\x08\n')
     assert result.text == 'hello worl'
     assert result.cursor_position == len('hello worl')
