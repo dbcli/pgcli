@@ -296,7 +296,7 @@ def parse_partial_identifier(word):
     n_tok = len(p.tokens)
     if n_tok == 1 and isinstance(p.tokens[0], Identifier):
         return p.tokens[0]
-    elif p.token_next_match(0, Error, '"'):
+    elif p.token_next_by(m=(Error, '"'))[1]:
         # An unmatched double quote, e.g. '"foo', 'foo."', or 'foo."bar'
         # Close the double quote, then reparse
         return parse_partial_identifier(word + '"')
