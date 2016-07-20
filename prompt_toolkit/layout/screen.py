@@ -61,7 +61,7 @@ class Char(object):
         '\x1c': '^\\',
         '\x1d': '^]',
         '\x1f': '^_',
-        '\x7f': '^?',  # Control backspace
+        '\x7f': '^?',  # Backspace
     }
 
     def __init__(self, char=' ', token=Token):

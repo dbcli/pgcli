@@ -72,7 +72,7 @@ class Keys(object):
     Insert      = Key('<Insert>')
 
     Tab         = ControlI
-    Backspace   = ControlH
+    Backspace   = Key('<Backspace>')
 
     F1 = Key('<F1>')
     F2 = Key('<F2>')

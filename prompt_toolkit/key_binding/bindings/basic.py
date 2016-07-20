@@ -128,6 +128,8 @@ def load_basic_bindings(registry, filter=Always()):
     handle(Keys.ControlU, filter=insert_mode)(get_by_name('unix-line-discard'))
     handle(Keys.ControlH, filter=insert_mode, save_before=if_no_repeat)(
         get_by_name('backward-delete-char'))
+    handle(Keys.Backspace, filter=insert_mode, save_before=if_no_repeat)(
+        get_by_name('backward-delete-char'))
     handle(Keys.Delete, filter=insert_mode, save_before=if_no_repeat)(
         get_by_name('delete-char'))
     handle(Keys.ShiftDelete, filter=insert_mode, save_before=if_no_repeat)(

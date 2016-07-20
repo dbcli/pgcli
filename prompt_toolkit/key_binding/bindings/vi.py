@@ -231,6 +231,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         b = event.current_buffer
         b.auto_down(count=event.arg)
 
+    @handle(Keys.ControlH, filter=navigation_mode)
     @handle(Keys.Backspace, filter=navigation_mode)
     def _(event):
         """
@@ -1640,6 +1641,7 @@ def load_vi_search_bindings(registry, get_search_state=None,
 
     @handle(Keys.Escape, filter=has_focus)
     @handle(Keys.ControlC, filter=has_focus)
+    @handle(Keys.ControlH, filter=has_focus & Condition(search_buffer_is_empty))
     @handle(Keys.Backspace, filter=has_focus & Condition(search_buffer_is_empty))
     def _(event):
         """
