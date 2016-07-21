@@ -129,6 +129,10 @@ def test_emacs_cursor_movements():
     result, cli = _feed_cli_with_input('hello\x1b[D\x1b[D\x0b\n')
     assert result.text == 'hel'
 
+    # Left, Left Esc- ControlK (kill-line, but negative)
+    result, cli = _feed_cli_with_input('hello\x1b[D\x1b[D\x1b-\x0b\n')
+    assert result.text == 'lo'
+
     # ControlL: should not influence the result.
     result, cli = _feed_cli_with_input('hello\x0c\n')
     assert result.text == 'hello'
