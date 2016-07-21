@@ -270,12 +270,19 @@ def capitalize_word(event):
 def kill_line(event):
     """
     Kill the text from the cursor to the end of the line.
+
+    If we are at the end of the line, this should remove the newline.
+    (That way, it is possible to delete multiple lines by executing this
+    command multiple times.)
     """
     buff = event.current_buffer
     if event.arg < 0:
         deleted = buff.delete_before_cursor(count=-buff.document.get_start_of_line_position())
     else:
-        deleted = buff.delete(count=buff.document.get_end_of_line_position())
+        if buff.document.current_char == '\n':
+            deleted = buff.delete(1)
+        else:
+            deleted = buff.delete(count=buff.document.get_end_of_line_position())
     event.cli.clipboard.set_text(deleted)
 
 
