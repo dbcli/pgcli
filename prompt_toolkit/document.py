@@ -594,12 +594,18 @@ class Document(object):
         """
         Relative position for cursor left.
         """
+        if count < 0:
+            return self.get_cursor_right_position(-count)
+
         return - min(self.cursor_position_col, count)
 
     def get_cursor_right_position(self, count=1):
         """
         Relative position for cursor_right.
         """
+        if count < 0:
+            return self.get_cursor_left_position(-count)
+
         return min(count, len(self.current_line_after_cursor))
 
     def get_cursor_up_position(self, count=1, preferred_column=None):

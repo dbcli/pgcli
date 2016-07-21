@@ -12,8 +12,9 @@ from prompt_toolkit.eventloop.posix import PosixEventLoop
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.input import PipeInput
 from prompt_toolkit.interface import CommandLineInterface
-from prompt_toolkit.output import DummyOutput
 from prompt_toolkit.key_binding.manager import KeyBindingManager
+from prompt_toolkit.output import DummyOutput
+from prompt_toolkit.terminal.vt100_input import ANSI_SEQUENCES
 from functools import partial
 import pytest
 
@@ -278,6 +279,29 @@ def test_emacs_reverse_search():
     # Hitting ControlR twice.
     result, cli = _feed_cli_with_input('\x12input\x12\n\n', history=history)
     assert result.text == 'line2 second input'
+
+
+def test_emacs_arguments():
+    """
+    Test all Emacs commands with Meta-[0-9] arguments (both positive and
+    negative). No one should crash.
+    """
+    for key in ANSI_SEQUENCES:
+        # Ignore BracketedPaste. This would hang forever, because it waits for
+        # the end sequence.
+        if key != '\x1b[200~':
+            try:
+                # Note: we add an 'X' after the key, because Ctrl-Q (quoted-insert)
+                # expects something to follow. We add an additional \n, because
+                # Ctrl-R and Ctrl-S (reverse-search) expect that.
+                result, cli = _feed_cli_with_input(
+                    'hello\x1b4' + key + 'X\n\n')
+
+                result, cli = _feed_cli_with_input(
+                    'hello\x1b-' + key + 'X\n\n')
+            except KeyboardInterrupt:
+                # This exception should only be raised for Ctrl-C
+                assert key == '\x03'
 
 
 def test_vi_cursor_movements():
