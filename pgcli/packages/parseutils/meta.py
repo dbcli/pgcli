@@ -3,6 +3,7 @@ from collections import namedtuple
 ColumnMetadata = namedtuple('ColumnMetadata', ['name', 'datatype', 'foreignkeys'])
 ForeignKey = namedtuple('ForeignKey', ['parentschema', 'parenttable',
     'parentcolumn', 'childschema', 'childtable', 'childcolumn'])
+TableMetadata = namedtuple('TableMetadata', 'name columns')
 
 
 class FunctionMetadata(object):
