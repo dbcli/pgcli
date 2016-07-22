@@ -12,7 +12,8 @@ from .packages.sqlcompletion import (FromClauseItem,
     suggest_type, Special, Database, Schema, Table, Function, Column, View,
     Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join)
 from .packages.function_metadata import ColumnMetadata, ForeignKey
-from .packages.parseutils import last_word, TableReference
+from .packages.parseutils.utils import last_word
+from .packages.parseutils.tables import TableReference
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
 from .config import load_config, config_location

@@ -4,8 +4,9 @@ import re
 import sqlparse
 from collections import namedtuple
 from sqlparse.sql import Comparison, Identifier, Where
-from .parseutils import (
-    last_word, extract_tables, find_prev_keyword, parse_partial_identifier)
+from .parseutils.utils import (
+    last_word, find_prev_keyword, parse_partial_identifier)
+from .parseutils.tables import extract_tables
 from pgspecial.main import parse_special_command
 
 PY2 = sys.version_info[0] == 2
