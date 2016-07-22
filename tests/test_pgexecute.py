@@ -3,7 +3,7 @@
 import pytest
 import psycopg2
 from pgspecial.main import PGSpecial
-from pgcli.packages.function_metadata import FunctionMetadata
+from pgcli.packages.parseutils.meta import FunctionMetadata
 from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
 

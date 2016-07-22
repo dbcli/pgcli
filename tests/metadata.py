@@ -1,4 +1,4 @@
-from pgcli.packages.function_metadata import FunctionMetadata, ForeignKey
+from pgcli.packages.parseutils.meta import FunctionMetadata, ForeignKey
 from prompt_toolkit.completion import Completion
 from functools import partial
 
