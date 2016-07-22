@@ -364,7 +364,7 @@ class PGCompleter(Completer):
 
 
     def get_column_matches(self, suggestion, word_before_cursor):
-        tables = suggestion.tables
+        tables = suggestion.table_refs
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables)
         colit = scoped_cols.items
@@ -420,7 +420,7 @@ class PGCompleter(Completer):
         return next(a for a in aliases if normalize_ref(a) not in tbls)
 
     def get_join_matches(self, suggestion, word_before_cursor):
-        tbls = suggestion.tables
+        tbls = suggestion.table_refs
         cols = self.populate_scoped_cols(tbls)
         # Set up some data structures for efficient access
         qualified = dict((normalize_ref(t.ref), t.schema) for t in tbls)
@@ -442,7 +442,7 @@ class PGCompleter(Completer):
                 continue
             c = self.case
             if self.generate_aliases or normalize_ref(left.tbl) in refs:
-                lref = self.alias(left.tbl, suggestion.tables)
+                lref = self.alias(left.tbl, suggestion.table_refs)
                 join = '{0} {4} ON {4}.{1} = {2}.{3}'.format(
                     c(left.tbl), c(left.col), rtbl.ref, c(right.col), lref)
             else:
@@ -463,10 +463,10 @@ class PGCompleter(Completer):
 
     def get_join_condition_matches(self, suggestion, word_before_cursor):
         col = namedtuple('col', 'schema tbl col')
-        tbls = self.populate_scoped_cols(suggestion.tables).items
+        tbls = self.populate_scoped_cols(suggestion.table_refs).items
         cols = [(t, c) for t, cs in tbls() for c in cs]
         try:
-            lref = (suggestion.parent or suggestion.tables[-1]).ref
+            lref = (suggestion.parent or suggestion.table_refs[-1]).ref
             ltbl, lcols = [(t, cs) for (t, cs) in tbls() if t.ref == lref][-1]
         except IndexError: # The user typed an incorrect table qualifier
             return []
@@ -488,7 +488,7 @@ class PGCompleter(Completer):
 
         # Tables that are closer to the cursor get higher prio
         ref_prio = dict((tbl.ref, num) for num, tbl
-            in enumerate(suggestion.tables))
+            in enumerate(suggestion.table_refs))
         # Map (schema, table, col) to tables
         coldict = list_dict(((t.schema, t.name, c.name), t)
             for t, c in cols if t.ref != lref)
@@ -523,7 +523,7 @@ class PGCompleter(Completer):
             funcs = self.populate_functions(suggestion.schema, filt)
             if alias:
                 funcs = [self.case(f) + '() ' + self.alias(f,
-                    suggestion.tables) for f in funcs]
+                    suggestion.table_refs) for f in funcs]
             else:
                 funcs = [self.case(f) + '()' for f in funcs]
         else:
@@ -573,7 +573,7 @@ class PGCompleter(Completer):
                 not word_before_cursor.startswith('pg_')):
             tables = [t for t in tables if not t.startswith('pg_')]
         if alias:
-            tables = [self.case(t) + ' ' + self.alias(t, suggestion.tables)
+            tables = [self.case(t) + ' ' + self.alias(t, suggestion.table_refs)
                 for t in tables]
         return self.find_matches(word_before_cursor, tables, meta='table')
 
@@ -585,7 +585,7 @@ class PGCompleter(Completer):
                 not word_before_cursor.startswith('pg_')):
             views = [v for v in views if not v.startswith('pg_')]
         if alias:
-            views = [self.case(v) + ' ' + self.alias(v, suggestion.tables)
+            views = [self.case(v) + ' ' + self.alias(v, suggestion.table_refs)
                 for v in views]
         return self.find_matches(word_before_cursor, views, meta='view')
 

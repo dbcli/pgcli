@@ -6,7 +6,7 @@ import pytest
 # Returns the expected select-clause suggestions for a single-table select
 def cols_etc(table, schema=None, alias=None, is_function=False, parent=None):
     return set([
-        Column(tables=((schema, table, alias, is_function),)),
+        Column(table_refs=((schema, table, alias, is_function),)),
         Function(schema=parent),
         Keyword()])
 
@@ -65,13 +65,13 @@ def test_where_equals_any_suggests_columns_or_keywords():
 def test_lparen_suggests_cols():
     suggestion = suggest_type('SELECT MAX( FROM tbl', 'SELECT MAX(')
     assert set(suggestion) == set([
-        Column(tables=((None, 'tbl', None, False),))])
+        Column(table_refs=((None, 'tbl', None, False),))])
 
 
 def test_select_suggests_cols_and_funcs():
     suggestions = suggest_type('SELECT ', 'SELECT ')
     assert set(suggestions) == set([
-         Column(tables=()),
+         Column(table_refs=()),
          Function(schema=None),
          Keyword(),
     ])
@@ -111,7 +111,7 @@ def test_suggest_after_join_with_two_tables(expression):
     suggestions = suggest_type(expression, expression)
     tables = tuple([(None, 'foo', None, False), (None, 'bar', None, False)])
     assert set(suggestions) == set([
-        FromClauseItem(schema=None, tables=tables),
+        FromClauseItem(schema=None, table_refs=tables),
         Join(tables, None),
         Schema(),
     ])
@@ -125,7 +125,7 @@ def test_suggest_after_join_with_one_table(expression):
     suggestions = suggest_type(expression, expression)
     tables = ((None, 'foo', None, False),)
     assert set(suggestions) == set([
-        FromClauseItem(schema=None, tables=tables),
+        FromClauseItem(schema=None, table_refs=tables),
         Join(((None, 'foo', None, False),), None),
         Schema(),
     ])
@@ -174,7 +174,7 @@ def test_suggest_qualified_tables_views_functions_and_joins(expression):
     suggestions = suggest_type(expression, expression)
     tbls = tuple([(None, 'foo', None, False)])
     assert set(suggestions) == set([
-        FromClauseItem(schema='sch', tables=tbls),
+        FromClauseItem(schema='sch', table_refs=tbls),
         Join(tbls, 'sch'),
     ])
 
@@ -197,13 +197,13 @@ def test_truncate_suggests_qualified_tables():
 ])
 def test_distinct_suggests_cols(text):
     suggestions = suggest_type(text, text)
-    assert suggestions ==(Column(tables=()),)
+    assert suggestions ==(Column(table_refs=()),)
 
 
 def test_col_comma_suggests_cols():
     suggestions = suggest_type('SELECT a, b, FROM tbl', 'SELECT a, b,')
     assert set(suggestions) == set([
-        Column(tables=((None, 'tbl', None, False),)),
+        Column(table_refs=((None, 'tbl', None, False),)),
         Function(schema=None),
         Keyword(),
     ])
@@ -232,17 +232,17 @@ def test_into_suggests_tables_and_schemas():
 ])
 def test_insert_into_lparen_suggests_cols(text):
     suggestions = suggest_type(text, 'INSERT INTO abc (')
-    assert suggestions ==(Column(tables=((None, 'abc', None, False),)),)
+    assert suggestions ==(Column(table_refs=((None, 'abc', None, False),)),)
 
 
 def test_insert_into_lparen_partial_text_suggests_cols():
     suggestions = suggest_type('INSERT INTO abc (i', 'INSERT INTO abc (i')
-    assert suggestions ==(Column(tables=((None, 'abc', None, False),)),)
+    assert suggestions ==(Column(table_refs=((None, 'abc', None, False),)),)
 
 
 def test_insert_into_lparen_comma_suggests_cols():
     suggestions = suggest_type('INSERT INTO abc (id,', 'INSERT INTO abc (id,')
-    assert suggestions ==(Column(tables=((None, 'abc', None, False),)),)
+    assert suggestions ==(Column(table_refs=((None, 'abc', None, False),)),)
 
 
 def test_partially_typed_col_name_suggests_col_names():
@@ -254,7 +254,7 @@ def test_partially_typed_col_name_suggests_col_names():
 def test_dot_suggests_cols_of_a_table_or_schema_qualified_table():
     suggestions = suggest_type('SELECT tabl. FROM tabl', 'SELECT tabl.')
     assert set(suggestions) == set([
-        Column(tables=((None, 'tabl', None, False),)),
+        Column(table_refs=((None, 'tabl', None, False),)),
         Table(schema='tabl'),
         View(schema='tabl'),
         Function(schema='tabl'),
@@ -272,7 +272,7 @@ def test_dot_suggests_cols_of_an_alias(sql):
     assert set(suggestions) == set([
         Table(schema='t1'),
         View(schema='t1'),
-        Column(tables=((None, 'tabl1', 't1', False),)),
+        Column(table_refs=((None, 'tabl1', 't1', False),)),
         Function(schema='t1'),
     ])
 
@@ -288,7 +288,7 @@ def test_dot_suggests_cols_of_an_alias_where(sql):
     assert set(suggestions) == set([
         Table(schema='t1'),
         View(schema='t1'),
-        Column(tables=((None, 'tabl1', 't1', False),)),
+        Column(table_refs=((None, 'tabl1', 't1', False),)),
         Function(schema='t1'),
     ])
 
@@ -297,7 +297,7 @@ def test_dot_col_comma_suggests_cols_or_schema_qualified_table():
     suggestions = suggest_type('SELECT t1.a, t2. FROM tabl1 t1, tabl2 t2',
             'SELECT t1.a, t2.')
     assert set(suggestions) == set([
-        Column(tables=((None, 'tabl2', 't2', False),)),
+        Column(table_refs=((None, 'tabl2', 't2', False),)),
         Table(schema='t2'),
         View(schema='t2'),
         Function(schema='t2'),
@@ -328,7 +328,7 @@ def test_outer_table_reference_in_exists_subquery_suggests_columns():
     q = 'SELECT * FROM foo f WHERE EXISTS (SELECT 1 FROM bar WHERE f.'
     suggestions = suggest_type(q, q)
     assert set(suggestions) == set([
-        Column(tables=((None, 'foo', 'f', False),)),
+        Column(table_refs=((None, 'foo', 'f', False),)),
         Table(schema='f'),
         View(schema='f'),
         Function(schema='f'),
@@ -354,7 +354,7 @@ def test_sub_select_table_name_completion_with_outer_table(expression):
     suggestion = suggest_type(expression, expression)
     tbls = tuple([(None, 'foo', None, False)])
     assert set(suggestion) == set([
-        FromClauseItem(schema=None, tables=tbls),
+        FromClauseItem(schema=None, table_refs=tbls),
         Schema(),
     ])
 
@@ -363,7 +363,7 @@ def test_sub_select_col_name_completion():
     suggestions = suggest_type('SELECT * FROM (SELECT  FROM abc',
             'SELECT * FROM (SELECT ')
     assert set(suggestions) == set([
-        Column(tables=((None, 'abc', None, False),)),
+        Column(table_refs=((None, 'abc', None, False),)),
         Function(schema=None),
         Keyword(),
     ])
@@ -380,7 +380,7 @@ def test_sub_select_dot_col_name_completion():
     suggestions = suggest_type('SELECT * FROM (SELECT t. FROM tabl t',
             'SELECT * FROM (SELECT t.')
     assert set(suggestions) == set([
-        Column(tables=((None, 'tabl', 't', False),)),
+        Column(table_refs=((None, 'tabl', 't', False),)),
         Table(schema='t'),
         View(schema='t'),
         Function(schema='t'),
@@ -394,7 +394,7 @@ def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
     suggestion = suggest_type(text, text)
     tbls = tuple([(None, 'abc', tbl_alias or None, False)])
     assert set(suggestion) == set([
-        FromClauseItem(schema=None, tables=tbls),
+        FromClauseItem(schema=None, table_refs=tbls),
         Schema(),
         Join(tbls, None),
     ])
@@ -407,7 +407,7 @@ def test_left_join_with_comma():
     # but there's a bug with commas
     tbls = tuple([(None, 'foo', 'f', False)])
     assert set(suggestions) == set([
-         FromClauseItem(schema=None, tables=tbls),
+         FromClauseItem(schema=None, table_refs=tbls),
          Schema(),
     ])
 
@@ -420,11 +420,11 @@ def test_join_alias_dot_suggests_cols1(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, 'abc', 'a', False), (None, 'def', 'd', False))
     assert set(suggestions) == set([
-        Column(tables=((None, 'abc', 'a', False),)),
+        Column(table_refs=((None, 'abc', 'a', False),)),
         Table(schema='a'),
         View(schema='a'),
         Function(schema='a'),
-        JoinCondition(tables=tables, parent=(None, 'abc', 'a', False))
+        JoinCondition(table_refs=tables, parent=(None, 'abc', 'a', False))
     ])
 
 
@@ -435,7 +435,7 @@ def test_join_alias_dot_suggests_cols1(sql):
 def test_join_alias_dot_suggests_cols2(sql):
     suggestion = suggest_type(sql, sql)
     assert set(suggestion) == set([
-        Column(tables=((None, 'def', 'd', False),)),
+        Column(table_refs=((None, 'def', 'd', False),)),
         Table(schema='d'),
         View(schema='d'),
         Function(schema='d'),
@@ -457,7 +457,7 @@ on ''',
 def test_on_suggests_aliases_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, 'abc', 'a', False), (None, 'bcd', 'b', False))
-    assert set(suggestions) == set((JoinCondition(tables=tables, parent=None),
+    assert set(suggestions) == set((JoinCondition(table_refs=tables, parent=None),
         Alias(aliases=('a', 'b',)),))
 
 @pytest.mark.parametrize('sql', [
@@ -467,7 +467,7 @@ def test_on_suggests_aliases_and_join_conditions(sql):
 def test_on_suggests_tables_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, 'abc', None, False), (None, 'bcd', None, False))
-    assert set(suggestions) == set((JoinCondition(tables=tables, parent=None),
+    assert set(suggestions) == set((JoinCondition(table_refs=tables, parent=None),
         Alias(aliases=('abc', 'bcd',)),))
 
 
@@ -487,7 +487,7 @@ def test_on_suggests_aliases_right_side(sql):
 def test_on_suggests_tables_and_join_conditions_right_side(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, 'abc', None, False), (None, 'bcd', None, False))
-    assert set(suggestions) == set((JoinCondition(tables=tables, parent=None),
+    assert set(suggestions) == set((JoinCondition(table_refs=tables, parent=None),
       Alias(aliases=('abc', 'bcd',)),))
 
 
@@ -503,7 +503,7 @@ def test_on_suggests_tables_and_join_conditions_right_side(sql):
 def test_join_using_suggests_common_columns(text):
     tables = ((None, 'abc', None, False), (None, 'def', None, False))
     assert set(suggest_type(text, text)) == set([
-        Column(tables=tables, require_last_table=True),])
+        Column(table_refs=tables, require_last_table=True),])
 
 
 def test_suggest_columns_after_multiple_joins():
@@ -513,7 +513,7 @@ def test_suggest_columns_after_multiple_joins():
             inner join t3 ON
               t2.id = t3.'''
     suggestions = suggest_type(sql, sql)
-    assert Column(tables=((None, 't3', None, False),)) in set(suggestions)
+    assert Column(table_refs=((None, 't3', None, False),)) in set(suggestions)
 
 
 def test_2_statements_2nd_current():
@@ -527,7 +527,7 @@ def test_2_statements_2nd_current():
     suggestions = suggest_type('select * from a; select  from b',
                                'select * from a; select ')
     assert set(suggestions) == set([
-        Column(tables=((None, 'b', None, False),)),
+        Column(table_refs=((None, 'b', None, False),)),
         Function(schema=None),
         Keyword()
     ])
@@ -684,7 +684,7 @@ def test_suggest_where_keyword(text):
 
 @pytest.mark.parametrize('text, before, expected', [
     ('\\ns abc SELECT ', 'SELECT ', [
-        Column(tables=()),
+        Column(table_refs=()),
         Function(schema=None),
         Keyword()
     ]),
@@ -692,7 +692,7 @@ def test_suggest_where_keyword(text):
     ('\\ns abc SELECT t1. FROM tabl1 t1', 'SELECT t1.', [
         Table(schema='t1'),
         View(schema='t1'),
-        Column(tables=((None, 'tabl1', 't1', False),)),
+        Column(table_refs=((None, 'tabl1', 't1', False),)),
         Function(schema='t1')
     ])
 ])
@@ -725,6 +725,6 @@ def test_ignore_leading_double_quotes(sql):
 def test_column_keyword_suggests_columns(sql):
     suggestions = suggest_type(sql, sql)
     assert set(suggestions) == set([
-        Column(tables=((None, 'foo', None, False),)),
+        Column(table_refs=((None, 'foo', None, False),)),
     ])
 
