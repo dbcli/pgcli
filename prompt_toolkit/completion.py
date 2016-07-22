@@ -66,6 +66,22 @@ class Completion(object):
         else:
             return ''
 
+    def new_completion_from_position(self, position):
+        """
+        (Only for internal use!)
+        Get a new completion by splitting this one. Used by
+        `CommandLineInterface` when it needs to have a list of new completions
+        after inserting the common prefix.
+        """
+        assert isinstance(position, int)
+
+        return Completion(
+            text=self.text[position + self.start_position:],
+            display=self.display,
+            display_meta=self._display_meta,
+            get_display_meta=self._get_display_meta)
+
+
 
 class CompleteEvent(object):
     """
