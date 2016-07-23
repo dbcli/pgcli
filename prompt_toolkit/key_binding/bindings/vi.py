@@ -1486,6 +1486,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         try:
             # Lookup.
             code = (event.cli.vi_state.digraph_symbol1, event.data)
+            if code not in DIGRAPHS:
+                code = code[::-1]  # Try reversing.
             symbol = DIGRAPHS[code]
         except KeyError:
             # Unkown digraph.

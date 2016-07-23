@@ -402,6 +402,14 @@ def test_vi_digraphs():
     result, cli = feed('hello\x0bo/\n')
     assert result.text == 'helloø'
 
+    #C-K /o  (reversed input.)
+    result, cli = feed('hello\x0b/o\n')
+    assert result.text == 'helloø'
+
     # C-K e:
     result, cli = feed('hello\x0be:\n')
     assert result.text == 'helloë'
+
+    # C-K xxy (Unknown digraph.)
+    result, cli = feed('hello\x0bxxy\n')
+    assert result.text == 'helloy'
