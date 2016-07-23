@@ -24,8 +24,8 @@ Schema = namedtuple('Schema', [])
 # FromClauseItem is a table/view/function used in the FROM clause
 # `table_refs` contains the list of tables/... already in the statement,
 # used to ensure that the alias we suggest is unique
-FromClauseItem = namedtuple('FromClauseItem', 'schema table_refs')
-Table = namedtuple('Table', ['schema', 'table_refs'])
+FromClauseItem = namedtuple('FromClauseItem', 'schema table_refs local_tables')
+Table = namedtuple('Table', ['schema', 'table_refs', 'local_tables'])
 View = namedtuple('View', ['schema', 'table_refs'])
 # JoinConditions are suggested after ON, e.g. 'foo.barid = bar.barid'
 JoinCondition = namedtuple('JoinCondition', ['table_refs', 'parent'])
@@ -35,12 +35,13 @@ Join = namedtuple('Join', ['table_refs', 'schema'])
 Function = namedtuple('Function', ['schema', 'table_refs', 'filter'])
 # For convenience, don't require the `filter` argument in Function constructor
 Function.__new__.__defaults__ = (None, tuple(), None)
-Table.__new__.__defaults__ = (None, tuple())
+Table.__new__.__defaults__ = (None, tuple(), tuple())
 View.__new__.__defaults__ = (None, tuple())
-FromClauseItem.__new__.__defaults__ = (None, tuple())
+FromClauseItem.__new__.__defaults__ = (None, tuple(), tuple())
 
-Column = namedtuple('Column', ['table_refs', 'require_last_table'])
-Column.__new__.__defaults__ = (None, None)
+Column = namedtuple(
+    'Column', ['table_refs', 'require_last_table', 'local_tables'])
+Column.__new__.__defaults__ = (None, None, tuple())
 
 Keyword = namedtuple('Keyword', [])
 NamedQuery = namedtuple('NamedQuery', [])

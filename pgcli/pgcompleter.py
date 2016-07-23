@@ -557,9 +557,10 @@ class PGCompleter(Completer):
 
     def get_from_clause_item_matches(self, suggestion, word_before_cursor):
         alias = self.generate_aliases
-        t_sug = Table(*suggestion)
-        v_sug = View(*suggestion)
-        f_sug = Function(*suggestion, filter='for_from_clause')
+        s = suggestion
+        t_sug = Table(s.schema, s.table_refs, s.local_tables)
+        v_sug = View(s.schema, s.table_refs)
+        f_sug = Function(s.schema, s.table_refs, filter='for_from_clause')
         return (self.get_table_matches(t_sug, word_before_cursor, alias)
             + self.get_view_matches(v_sug, word_before_cursor, alias)
             + self.get_function_matches(f_sug, word_before_cursor, alias))
