@@ -1,10 +1,8 @@
 from __future__ import unicode_literals
 import datetime
-import errno
 import fcntl
 import os
 import random
-import select
 import signal
 import threading
 
@@ -16,6 +14,7 @@ from .callbacks import EventLoopCallbacks
 from .inputhook import InputHookContext
 from .posix_utils import PosixStdinReader
 from .utils import TimeIt
+from .select import select_fds
 
 __all__ = (
     'PosixEventLoop',
@@ -181,8 +180,8 @@ class PosixEventLoop(EventLoop):
         Return the file descriptors that are ready for reading.
         """
         read_fds = list(self._read_fds.keys())
-        r, _, _ =_select(read_fds, [], [], timeout)
-        return r
+        fds = select_fds(read_fds, timeout)
+        return fds
 
     def received_winch(self):
         """
@@ -264,24 +263,6 @@ class PosixEventLoop(EventLoop):
         " Remove read file descriptor from the event loop. "
         if fd in self._read_fds:
             del self._read_fds[fd]
-
-
-def _select(*args, **kwargs):
-    """
-    Wrapper around select.select.
-
-    When the SIGWINCH signal is handled, other system calls, like select
-    are aborted in Python. This wrapper will retry the system call.
-    """
-    while True:
-        try:
-            return select.select(*args, **kwargs)
-        except select.error as e:
-            # Retry select call when EINTR
-            if e.args and e.args[0] == errno.EINTR:
-                continue
-            else:
-                raise
 
 
 class call_on_sigwinch(object):
