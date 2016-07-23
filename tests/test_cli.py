@@ -245,6 +245,21 @@ def test_emacs_other_bindings():
     assert result.text == 'hello X'
 
 
+def test_controlx_controlx():
+    # At the end: go to the start of the line.
+    result, cli = _feed_cli_with_input('hello world\x18\x18X\n')
+    assert result.text == 'Xhello world'
+    assert result.cursor_position == 1
+
+    # At the start: go to the end of the line.
+    result, cli = _feed_cli_with_input('hello world\x01\x18\x18X\n')
+    assert result.text == 'hello worldX'
+
+    # Left, Left Control-X Control-X: go to the end of the line.
+    result, cli = _feed_cli_with_input('hello world\x1b[D\x1b[D\x18\x18X\n')
+    assert result.text == 'hello worldX'
+
+
 def test_emacs_history_bindings():
     # Adding a new item to the history.
     history = _history()

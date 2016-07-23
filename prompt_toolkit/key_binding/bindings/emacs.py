@@ -198,7 +198,7 @@ def load_emacs_bindings(registry, filter=Always()):
         """
         buffer = event.current_buffer
 
-        if buffer.document.current_char == '\n':
+        if buffer.document.is_cursor_at_the_end_of_line:
             buffer.cursor_position += buffer.document.get_start_of_line_position(after_whitespace=False)
         else:
             buffer.cursor_position += buffer.document.get_end_of_line_position()
