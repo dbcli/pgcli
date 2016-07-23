@@ -359,8 +359,10 @@ class InputStream(object):
 
                 # Quit bracketed paste mode and handle remaining input.
                 self._in_bracketed_paste = False
+                remaining = self._paste_buffer[end_index + len(end_mark):]
                 self._paste_buffer = ''
-                self.feed(self._paste_buffer[end_index + len(end_mark):])
+
+                self.feed(remaining)
 
         # Handle normal input character by character.
         else:

@@ -308,6 +308,14 @@ def test_emacs_arguments():
                 assert key == '\x03'
 
 
+def test_bracketed_paste():
+    result, cli = _feed_cli_with_input('\x1b[200~hello world\x1b[201~\n')
+    assert result.text == 'hello world'
+
+    result, cli = _feed_cli_with_input('\x1b[200~hello\nworld\x1b[201~\x1b\n')
+    assert result.text == 'hello\nworld'
+
+
 def test_vi_cursor_movements():
     """
     Test cursor movements with Vi key bindings.
