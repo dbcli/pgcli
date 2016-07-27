@@ -206,17 +206,24 @@ class Win32Output(Output):
     def set_attributes(self, attrs):
         fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
 
+        # Start from the default attributes.
+        attrs = self.default_attrs
+
+        # Override the last four bits: foreground color.
+        if fgcolor is not None:
+            attrs = attrs & ~0xf
+            attrs |= self.color_lookup_table.lookup_fg_color(fgcolor)
+
+        # Override the next four bits: background color.
+        if bgcolor is not None:
+            attrs = attrs & ~0xf0
+            attrs |= self.color_lookup_table.lookup_bg_color(bgcolor)
+
+        # Reverse: swap these four bits groups.
         if reverse:
-            fgcolor, bgcolor = bgcolor, fgcolor
+            attrs = (attrs & ~0xff) | ((attrs & 0xf) << 4) | ((attrs & 0xf0) >> 4)
 
-            # Make sure to reverse, even when no values were specified.
-            if fgcolor is None:
-                fgcolor = '000000'
-            if bgcolor is None:
-                bgcolor = 'ffffff'
-
-        i = self.color_lookup_table.lookup_color(fgcolor, bgcolor)
-        self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole, i)
+        self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole, attrs)
 
     def disable_autowrap(self):
         # Not supported by Windows.
@@ -497,29 +504,28 @@ class ColorLookupTable(object):
             self.best_match[color] = indexes
         return indexes
 
-    def lookup_color(self, fg_color, bg_color):
+    def lookup_fg_color(self, fg_color):
         """
         Return the color for use in the
         `windll.kernel32.SetConsoleTextAttribute` API call.
 
         :param fg_color: Foreground as text. E.g. 'ffffff' or 'red'
+        """
+        # Foreground.
+        if fg_color in FG_ANSI_COLORS:
+            return FG_ANSI_COLORS[fg_color]
+        else:
+            return self._color_indexes(fg_color)[0]
+
+    def lookup_bg_color(self, bg_color):
+        """
+        Return the color for use in the
+        `windll.kernel32.SetConsoleTextAttribute` API call.
+
         :param bg_color: Background as text. E.g. 'ffffff' or 'red'
         """
-        # Set the default foreground color. (Otherwise, many things will be
-        # invisible.) Note that gray is the default on Windows, not GRAY|INTENSITY!
-        if fg_color is None:
-            fg_index = FOREGROUND_COLOR.GRAY
-        else:
-            # Foreground.
-            if fg_color in FG_ANSI_COLORS:
-                fg_index = FG_ANSI_COLORS[fg_color]
-            else:
-                fg_index = self._color_indexes(fg_color)[0]
-
         # Background.
         if bg_color in BG_ANSI_COLORS:
-            bg_index = BG_ANSI_COLORS[bg_color]
+            return BG_ANSI_COLORS[bg_color]
         else:
-            bg_index = self._color_indexes(bg_color)[1]
-
-        return fg_index | bg_index
+            return self._color_indexes(bg_color)[1]
