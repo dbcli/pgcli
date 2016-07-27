@@ -134,7 +134,7 @@ def expanded(request):
 @dbtest
 def test_unicode_support_in_output(executor, expanded):
     run(executor, "create table unicodechars(t text)")
-    run(executor, "insert into unicodechars (t) values ('é')")
+    run(executor, u"insert into unicodechars (t) values ('é')")
 
     # See issue #24, this raises an exception without proper handling
     assert u'é' in run(executor, "select * from unicodechars",
@@ -187,20 +187,20 @@ def test_bytea_field_support_in_output(executor):
 
 @dbtest
 def test_unicode_support_in_unknown_type(executor):
-    assert u'日本語' in run(executor, "SELECT '日本語' AS japanese;", join=True)
+    assert u'日本語' in run(executor, u"SELECT '日本語' AS japanese;", join=True)
 
 @dbtest
 def test_unicode_support_in_enum_type(executor):
-    run(executor, "CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy', '日本語')")
-    run(executor, "CREATE TABLE person (name TEXT, current_mood mood)")
-    run(executor, "INSERT INTO person VALUES ('Moe', '日本語')")
-    assert u'日本語' in run(executor, "SELECT * FROM person", join=True)
+    run(executor, u"CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy', '日本語')")
+    run(executor, u"CREATE TABLE person (name TEXT, current_mood mood)")
+    run(executor, u"INSERT INTO person VALUES ('Moe', '日本語')")
+    assert u'日本語' in run(executor, u"SELECT * FROM person", join=True)
 
 @requires_json
 def test_json_renders_without_u_prefix(executor, expanded):
-    run(executor, "create table jsontest(d json)")
-    run(executor, """insert into jsontest (d) values ('{"name": "Éowyn"}')""")
-    result = run(executor, "SELECT d FROM jsontest LIMIT 1",
+    run(executor, u"create table jsontest(d json)")
+    run(executor, u"""insert into jsontest (d) values ('{"name": "Éowyn"}')""")
+    result = run(executor, u"SELECT d FROM jsontest LIMIT 1",
                  join=True, expanded=expanded)
 
     assert u'{"name": "Éowyn"}' in result
@@ -209,7 +209,7 @@ def test_json_renders_without_u_prefix(executor, expanded):
 @requires_jsonb
 def test_jsonb_renders_without_u_prefix(executor, expanded):
     run(executor, "create table jsonbtest(d jsonb)")
-    run(executor, """insert into jsonbtest (d) values ('{"name": "Éowyn"}')""")
+    run(executor, u"""insert into jsonbtest (d) values ('{"name": "Éowyn"}')""")
     result = run(executor, "SELECT d FROM jsonbtest LIMIT 1",
                  join=True, expanded=expanded)
 
