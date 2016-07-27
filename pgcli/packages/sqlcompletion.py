@@ -81,7 +81,7 @@ class SqlStatement(object):
         self.text_before_cursor = text_before_cursor
         self.parsed = parsed
 
-        self.last_token = parsed and parsed.token_prev(len(parsed.tokens)) or ''
+        self.last_token = parsed and parsed.token_prev(len(parsed.tokens))[1] or ''
 
     def is_insert(self):
         return self.parsed.token_first().value.lower() == 'insert'
@@ -164,7 +164,7 @@ def _split_multiple_statements(full_text, text_before_cursor, parsed):
         stmt_start, stmt_end = 0, 0
 
         for statement in parsed:
-            stmt_len = len(statement.to_unicode())
+            stmt_len = len(str(statement))
             stmt_start, stmt_end = stmt_end, stmt_end + stmt_len
 
             if stmt_end >= current_pos:
@@ -292,7 +292,7 @@ def suggest_based_on_last_token(token, stmt):
 
             # Check for a subquery expression (cases 3 & 4)
             where = p.tokens[-1]
-            prev_tok = where.token_prev(len(where.tokens) - 1)
+            prev_tok = where.token_prev(len(where.tokens) - 1)[1]
 
             if isinstance(prev_tok, Comparison):
                 # e.g. "SELECT foo FROM bar WHERE foo = ANY("
@@ -305,7 +305,7 @@ def suggest_based_on_last_token(token, stmt):
                 return column_suggestions
 
         # Get the token before the parens
-        prev_tok = p.token_prev(len(p.tokens) - 1)
+        prev_tok = p.token_prev(len(p.tokens) - 1)[1]
 
         if (prev_tok and prev_tok.value
           and prev_tok.value.lower().split(' ')[-1] == 'using'):
@@ -321,7 +321,7 @@ def suggest_based_on_last_token(token, stmt):
             if last_word(stmt.text_before_cursor,
                          'all_punctuations').startswith('('):
                 return (Keyword(),)
-        prev_prev_tok = p.token_prev(p.token_index(prev_tok))
+        prev_prev_tok = p.token_prev(p.token_index(prev_tok))[1]
         if prev_prev_tok and prev_prev_tok.normalized == 'INTO':
             return (Column(tables=stmt.get_tables('insert')),)
         # We're probably in a function argument list
@@ -461,7 +461,7 @@ def _allow_join_condition(statement):
     if not statement or not statement.tokens:
         return False
 
-    last_tok = statement.token_prev(len(statement.tokens))
+    last_tok = statement.token_prev(len(statement.tokens))[1]
     return last_tok.value.lower() in ('on', 'and', 'or')
 
 
@@ -480,6 +480,6 @@ def _allow_join(statement):
     if not statement or not statement.tokens:
         return False
 
-    last_tok = statement.token_prev(len(statement.tokens))
+    last_tok = statement.token_prev(len(statement.tokens))[1]
     return (last_tok.value.lower().endswith('join')
         and last_tok.value.lower() not in('cross join', 'natural join'))
