@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import sys
 import select
 import errno
@@ -12,6 +13,7 @@ def _fd_to_int(fd):
     else:
         return fd.fileno()
 
+
 def select_fds(read_fds, timeout):
     """
     Wait for a list of file descriptors (`read_fds`) to become ready for
@@ -23,7 +25,7 @@ def select_fds(read_fds, timeout):
     # Map to ensure that we return the objects that were passed in originally.
     # Whether they are a fd integer or an object that has a fileno().
     # (The 'poll' implementation for instance, returns always integers.)
-    fd_map = {_fd_to_int(fd): fd for fd in read_fds}
+    fd_map = dict((_fd_to_int(fd), fd) for fd in read_fds)
 
     if sys.version_info >= (3, 5):
         # Use of the 'select' module, that was introduced in Python3.4.
@@ -67,9 +69,7 @@ def _poll(read_fds, timeout):
     """
     Use 'poll', to wait for any of the given `read_fds` to become ready.
     """
-    from select import poll
-
-    p = poll()
+    p = select.poll()
     for fd in read_fds:
         p.register(fd, select.POLLIN)
 
