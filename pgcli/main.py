@@ -85,6 +85,7 @@ class NullHandler(logging.Handler):
 class PGCli(object):
 
     default_prompt = '\\u@\\h:\\d> '
+    default_null_string = '<null>'
 
     def set_default_pager(self, config):
         configured_pager = config['main'].get('pager')
@@ -132,8 +133,8 @@ class PGCli(object):
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
         self.less_chatty = c['main'].as_bool('less_chatty')
+        self.null_string = c['main'].get('null_string', self.default_null_string).decode('utf-8')
         self.prompt_format = c['main'].get('prompt', self.default_prompt)
-
         self.on_error = c['main']['on_error'].upper()
 
         self.completion_refresher = CompletionRefresher()
@@ -561,7 +562,7 @@ class PGCli(object):
                 max_width = None
 
             formatted = format_output(
-                title, cur, headers, status, self.table_format,
+                title, cur, headers, status, self.table_format, self.null_string,
                 self.pgspecial.expanded_output, max_width)
 
             output.extend(formatted)
@@ -761,21 +762,21 @@ def obfuscate_process_password():
 
     setproctitle.setproctitle(process_title)
 
-def format_output(title, cur, headers, status, table_format, expanded=False, max_width=None):
+def format_output(title, cur, headers, status, table_format, missingval, expanded=False, max_width=None):
     output = []
     if title:  # Only print the title if it's not None.
         output.append(title)
     if cur:
         headers = [utf8tounicode(x) for x in headers]
         if expanded and headers:
-            output.append(expanded_table(cur, headers))
+            output.append(expanded_table(cur, headers, missingval))
         else:
             tabulated, rows = tabulate(cur, headers, tablefmt=table_format,
-                missingval='<null>')
+                missingval=missingval)
             if (max_width and rows and
                     content_exceeds_width(rows[0], max_width) and
                     headers):
-                output.append(expanded_table(rows, headers))
+                output.append(expanded_table(rows, headers, missingval))
             else:
                 output.append(tabulated)
     if status:  # Only print the status if it's not None.
