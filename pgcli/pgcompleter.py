@@ -470,15 +470,16 @@ class PGCompleter(Completer):
             ltbl, lcols = [(t, cs) for (t, cs) in tbls() if t.ref == lref][-1]
         except IndexError: # The user typed an incorrect table qualifier
             return []
-        conds, found_conds = [], set()
+        conds, prios, found_conds = [], [], set()
 
-        def add_cond(lcol, rcol, rref, meta, prio):
+        def add_cond(lcol, rcol, rref, prio):
             prefix = '' if suggestion.parent else ltbl.ref + '.'
             case = self.case
             cond = prefix + case(lcol) + ' = ' + rref + '.' + case(rcol)
             if cond not in found_conds:
                 found_conds.add(cond)
-                conds.append((cond, meta, prio + ref_prio[rref]))
+                conds.append(cond)
+                prios.append(prio + ref_prio[rref])
 
         def list_dict(pairs): # Turns [(a, b), (a, c)] into {a: [b, c]}
             d = defaultdict(list)
@@ -501,20 +502,21 @@ class PGCompleter(Completer):
             par = col(fk.parentschema, fk.parenttable, fk.parentcolumn)
             left, right = (child, par) if left == child else (par, child)
             for rtbl in coldict[right]:
-                add_cond(left.col, right.col, rtbl.ref, 'fk join', 2000)
+                add_cond(left.col, right.col, rtbl.ref, 2000)
+        matches = self.find_matches(word_before_cursor, conds,
+          meta='fk join', type_priority=100, priority_collection=prios)
         # For name matching, use a {(colname, coltype): TableReference} dict
         coltyp = namedtuple('coltyp', 'name datatype')
         col_table = list_dict((coltyp(c.name, c.datatype), t) for t, c in cols)
+        conds, prios = [], []
         # Find all name-match join conditions
         for c in (coltyp(c.name, c.datatype) for c in lcols):
             for rtbl in (t for t in col_table[c] if t.ref != ltbl.ref):
-                add_cond(c.name, c.name, rtbl.ref, 'name join', 1000
+                add_cond(c.name, c.name, rtbl.ref, 1000
                     if c.datatype in ('integer', 'bigint', 'smallint') else 0)
 
-        conds, metas, prios = zip(*conds) if conds else ([], [], [])
-
-        return self.find_matches(word_before_cursor, conds,
-          meta_collection=metas, type_priority=100, priority_collection=prios)
+        return matches + self.find_matches(word_before_cursor, conds,
+          meta='name join', type_priority=100, priority_collection=prios)
 
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
         if suggestion.filter == 'for_from_clause':
