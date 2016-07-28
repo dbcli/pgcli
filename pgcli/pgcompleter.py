@@ -233,7 +233,7 @@ class PGCompleter(Completer):
 
     def find_matches(self, text, collection, mode='fuzzy',
                      meta=None, meta_collection=None,
-                     type_priority=0, priority_collection = None):
+                     priority_collection = None):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -249,6 +249,10 @@ class PGCompleter(Completer):
 
         """
 
+        type_priority = [
+            'keyword', 'function', 'view', 'table', 'datatype', 'database',
+            'schema', 'column', 'table alias', 'join', 'name join', 'fk join'
+        ].index(meta) if meta else -1
         text = last_word(text, include='most_punctuations').lower()
         text_len = len(text)
 
@@ -400,7 +404,7 @@ class PGCompleter(Completer):
                 display_meta='columns', display='*'), priority=(1,1,1))]
 
         return self.find_matches(word_before_cursor, flat_cols,
-            meta='column', type_priority=90)
+            meta='column')
 
     def alias(self, tbl, tbls):
         """ Generate a unique table alias
@@ -459,7 +463,7 @@ class PGCompleter(Completer):
                 0 if (left.schema, left.tbl) in other_tbls else 1))
 
         return self.find_matches(word_before_cursor, joins, meta='join',
-            priority_collection=prios, type_priority=100)
+            priority_collection=prios)
 
     def get_join_condition_matches(self, suggestion, word_before_cursor):
         col = namedtuple('col', 'schema tbl col')
@@ -504,7 +508,7 @@ class PGCompleter(Completer):
             for rtbl in coldict[right]:
                 add_cond(left.col, right.col, rtbl.ref, 2000)
         matches = self.find_matches(word_before_cursor, conds,
-          meta='fk join', type_priority=100, priority_collection=prios)
+          meta='fk join', priority_collection=prios)
         # For name matching, use a {(colname, coltype): TableReference} dict
         coltyp = namedtuple('coltyp', 'name datatype')
         col_table = list_dict((coltyp(c.name, c.datatype), t) for t, c in cols)
@@ -516,7 +520,7 @@ class PGCompleter(Completer):
                     if c.datatype in ('integer', 'bigint', 'smallint') else 0)
 
         return matches + self.find_matches(word_before_cursor, conds,
-          meta='name join', type_priority=100, priority_collection=prios)
+          meta='name join', priority_collection=prios)
 
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
         if suggestion.filter == 'for_from_clause':
@@ -556,7 +560,7 @@ class PGCompleter(Completer):
             schema_names = [s for s in schema_names if not s.startswith('pg_')]
 
         return self.find_matches(word_before_cursor, schema_names,
-            meta='schema', type_priority=50)
+            meta='schema')
 
     def get_from_clause_item_matches(self, suggestion, word_before_cursor):
         alias = self.generate_aliases
@@ -579,7 +583,7 @@ class PGCompleter(Completer):
             tables = [self.case(t) + ' ' + self.alias(t, suggestion.tables)
                 for t in tables]
         return self.find_matches(word_before_cursor, tables,
-            meta='table', type_priority=40)
+            meta='table')
 
 
     def get_view_matches(self, suggestion, word_before_cursor, alias=False):
@@ -591,8 +595,7 @@ class PGCompleter(Completer):
         if alias:
             views = [self.case(v) + ' ' + self.alias(v, suggestion.tables)
                 for v in views]
-        return self.find_matches(word_before_cursor, views,
-            meta='view', type_priority=30)
+        return self.find_matches(word_before_cursor, views, meta='view')
 
     def get_alias_matches(self, suggestion, word_before_cursor):
         aliases = suggestion.aliases
@@ -601,7 +604,7 @@ class PGCompleter(Completer):
 
     def get_database_matches(self, _, word_before_cursor):
         return self.find_matches(word_before_cursor, self.databases,
-                                 meta='database', type_priority=45)
+                                 meta='database')
 
     def get_keyword_matches(self, _, word_before_cursor):
         return self.find_matches(word_before_cursor, self.keywords,
