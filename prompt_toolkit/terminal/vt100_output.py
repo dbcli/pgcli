@@ -314,7 +314,7 @@ def _get_size(fileno):
     buf = array.array(b'h' if six.PY2 else u'h', [0, 0, 0, 0])
 
     # Do TIOCGWINSZ (Get)
-    fcntl.ioctl(fileno, termios.TIOCGWINSZ, buf, True)
+    fcntl.ioctl(fileno, termios.TIOCGWINSZ, buf)
 
     # Return rows, cols
     return buf[0], buf[1]
