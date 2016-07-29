@@ -561,17 +561,17 @@ def test_table_names_after_from(completer, complete_event, text):
     assert set(result) == set(testdata.schemas() + testdata.tables()
         + testdata.views() + testdata.functions())
     assert [c.text for c in result] == [
+        'public',
+        'orders',
+        '"select"',
+        'users',
+        '"Users"',
+        'user_emails',
         '_custom_fun()',
         'custom_fun()',
         'custom_func1()',
         'custom_func2()',
-        'orders',
-        'public',
-        '"select"',
         'set_returning_func()',
-        'user_emails',
-        'users',
-        '"Users"',
         ]
 
 def test_auto_escaped_col_names(completer, complete_event):
