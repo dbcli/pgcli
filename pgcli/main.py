@@ -674,7 +674,7 @@ class PGCli(object):
         default=False, help='Never prompt for password.')
 @click.option('--single-connection', 'single_connection', is_flag=True,
         default=False,
-        help='Don''t use a separate connection for completions.')
+        help='Do not use a separate connection for completions.')
 @click.option('-v', '--version', is_flag=True, help='Version of pgcli.')
 @click.option('-d', '--dbname', default='', envvar='PGDATABASE',
         help='database name to connect to.')
