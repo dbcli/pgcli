@@ -889,7 +889,8 @@ def tabulate(tabular_data, headers=[], tablefmt="simple",
     _text_type_encode = lambda x: _text_type(utf8tounicode(x))
     plain_text = '\n'.join(['\t'.join(map(_text_type_encode, headers))] + \
                             ['\t'.join(map(_text_type_encode, row)) for row in list_of_lists])
-    has_invisible = re.search(_invisible_codes, plain_text)
+    has_invisible = (re.search(_invisible_codes, plain_text) or
+      re.search(_invisible_codes, missingval))
     if has_invisible:
         width_fn = _visible_width
     else:
