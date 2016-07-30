@@ -310,7 +310,16 @@ class KeyPressEvent(object):
         """
         Repetition argument.
         """
-        return self._arg or 1
+        if self._arg == '-':
+            return -1
+
+        result = int(self._arg or 1)
+
+        # Don't exceed a million.
+        if int(result) >= 1000000:
+            result = 1
+
+        return result
 
     def append_to_arg_count(self, data):
         """
@@ -321,15 +330,12 @@ class KeyPressEvent(object):
         assert data in '-0123456789'
         current = self._arg
 
-        if current is None:
-            if data == '-':
-                data = '-1'
-            result = int(data)
+        if data == '-':
+            assert current is None or current == '-'
+            result = data
+        elif current is None:
+            result = data
         else:
-            result = int("%s%s" % (current, data))
-
-        # Don't exceed a million.
-        if int(result) >= 1000000:
-            result = None
+            result = "%s%s" % (current, data)
 
         self.input_processor.arg = result

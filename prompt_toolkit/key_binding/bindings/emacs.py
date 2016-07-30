@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
-from prompt_toolkit.filters import Always, Condition, EmacsMode, to_cli_filter, HasSelection, EmacsInsertMode, HasFocus
+from prompt_toolkit.filters import Always, Condition, EmacsMode, to_cli_filter, HasSelection, EmacsInsertMode, HasFocus, HasArg
 from prompt_toolkit.completion import CompleteEvent
 
 from .utils import create_handle_decorator
@@ -109,21 +109,31 @@ def load_emacs_bindings(registry, filter=Always()):
 
     def handle_digit(c):
         """
-        Handle Alt + digit in the `meta_digit` method.
+        Handle input of arguments.
+        The first number needs to be preceeded by escape.
         """
-        @handle(Keys.Escape, c)
+        @handle(c, filter=HasArg())
+        @handle(Keys.Escape, c, filter=~HasArg())
         def _(event):
             event.append_to_arg_count(c)
 
     for c in '0123456789':
         handle_digit(c)
 
-    @handle(Keys.Escape, '-')
+    @handle(Keys.Escape, '-', filter=~HasArg())
     def _(event):
         """
         """
         if event._arg is None:
             event.append_to_arg_count('-')
+
+    @handle('-', filter=Condition(lambda cli: cli.input_processor.arg == '-'))
+    def _(event):
+        """
+        When '-' is typed again, after exactly '-' has been given as an
+        argument, ignore this.
+        """
+        event.cli.input_processor.arg = '-'
 
     is_returnable = Condition(
         lambda cli: cli.current_buffer.accept_action.is_returnable)

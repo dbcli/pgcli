@@ -56,9 +56,13 @@ class SystemToolbar(ConditionalContainer):
 class ArgToolbarControl(TokenListControl):
     def __init__(self):
         def get_tokens(cli):
+            arg = cli.input_processor.arg
+            if arg == '-':
+                arg = '-1'
+
             return [
                 (Token.Toolbar.Arg, 'Repeat: '),
-                (Token.Toolbar.Arg.Text, str(cli.input_processor.arg)),
+                (Token.Toolbar.Arg.Text, arg),
             ]
 
         super(ArgToolbarControl, self).__init__(get_tokens)
