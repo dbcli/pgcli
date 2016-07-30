@@ -302,6 +302,31 @@ def test_emacs_reverse_search():
 
 def test_emacs_arguments():
     """
+    Test various combinations of arguments in Emacs mode.
+    """
+    # esc 4
+    result, cli = _feed_cli_with_input('\x1b4x\n')
+    assert result.text == 'xxxx'
+
+    # esc 4 4
+    result, cli = _feed_cli_with_input('\x1b44x\n')
+    assert result.text == 'x' * 44
+
+    # esc - right (-1 position to the right, equals 1 to the left.)
+    result, cli = _feed_cli_with_input('aaaa\x1b-\x1b[Cbbbb\n')
+    assert result.text == 'aaabbbba'
+
+    # esc - 3 right
+    result, cli = _feed_cli_with_input('aaaa\x1b-3\x1b[Cbbbb\n')
+    assert result.text == 'abbbbaaa'
+
+    # esc - - - 3 right
+    result, cli = _feed_cli_with_input('aaaa\x1b---3\x1b[Cbbbb\n')
+    assert result.text == 'abbbbaaa'
+
+
+def test_emacs_arguments_for_all_commands():
+    """
     Test all Emacs commands with Meta-[0-9] arguments (both positive and
     negative). No one should crash.
     """
