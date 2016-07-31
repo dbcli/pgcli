@@ -382,6 +382,9 @@ class InputStream(object):
                     #      (We remove ICRNL/INLCR/IGNCR below.)
                     #      However, this breaks IPython and maybe other applications,
                     #      because they bind ControlJ (\n) for handling the Enter key.
+
+                    #      When this is removed, replace Enter=ControlJ by
+                    #      Enter=ControlM in keys.py.
                     if c == '\r':
                         c = '\n'
                     self._input_parser.send(c)

@@ -70,9 +70,19 @@ class Keys(object):
     PageDown    = Key('<PageDown>')
     BackTab     = Key('<BackTab>')  # shift + tab
     Insert      = Key('<Insert>')
-
-    Tab         = ControlI
     Backspace   = Key('<Backspace>')
+
+    # Aliases.
+    Tab         = ControlI
+    Enter       = ControlJ
+        # XXX: Actually Enter equals ControlM, not ControlJ,
+        #      However, in prompt_toolkit, we made the mistake of translating
+        #      \r into \n during the input, so everyone is now handling the
+        #      enter key by binding ControlJ.
+
+        #      From now on, it's better to bind `Keys.Enter` everywhere,
+        #      because that's future compatible, and will still work when we
+        #      stop replacing \r by \n.
 
     F1 = Key('<F1>')
     F2 = Key('<F2>')
