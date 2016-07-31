@@ -74,12 +74,11 @@ class InputHookContext(object):
 
         # Flush the read end of the pipe.
         try:
-            # Before calling 'os.read', call select.select. This fixes a bug
-            # with Gevent where the following read call blocked the select call
-            # from the eventloop that we call through 'input_is_ready_func' in
-            # the above thread.
-            # This appears to be only required when gevent.monkey.patch_all()
-            # has been executed. Otherwise it doesn't do much.
+            # Before calling 'os.read', call select.select. This is required
+            # when the gevent monkey patch has been applied. 'os.read' is never
+            # monkey patched and won't be cooperative, so that would block all
+            # other select() calls otherwise.
+            # See: http://www.gevent.org/gevent.os.html
             select_fds([self._r], timeout=None)
 
             os.read(self._r, 1024)
