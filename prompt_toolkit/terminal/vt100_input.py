@@ -375,8 +375,13 @@ class InputStream(object):
                 else:
                     # Replace \r by \n. (Some clients send \r instead of \n
                     # when enter is pressed. E.g. telnet and some other
-                    # terminals.) It's also too complicated to handle \r and \n
-                    # separetely in the key bindings.
+                    # terminals.)
+
+                    # XXX: We should remove this in a future version. It *is*
+                    #      now possible to recognise the difference.
+                    #      (We remove ICRNL/INLCR/IGNCR below.)
+                    #      However, this breaks IPython and maybe other applications,
+                    #      because they bind ControlJ (\n) for handling the Enter key.
                     if c == '\r':
                         c = '\n'
                     self._input_parser.send(c)
@@ -417,14 +422,26 @@ class raw_mode(object):
     def __enter__(self):
         # NOTE: On os X systems, using pty.setraw() fails. Therefor we are using this:
         newattr = termios.tcgetattr(self.fileno)
-        newattr[tty.LFLAG] = self._patch(newattr[tty.LFLAG])
+        newattr[tty.LFLAG] = self._patch_lflag(newattr[tty.LFLAG])
+        newattr[tty.IFLAG] = self._patch_iflag(newattr[tty.IFLAG])
         termios.tcsetattr(self.fileno, termios.TCSANOW, newattr)
 
         # Put the terminal in cursor mode. (Instead of application mode.)
         os.write(self.fileno, b'\x1b[?1l')
 
-    def _patch(self, attrs):
+    def _patch_lflag(self, attrs):
         return attrs & ~(termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
+
+    def _patch_iflag(self, attrs):
+        return attrs & ~(
+            # Disable XON/XOFF flow control on output and input.
+            # (Don't capture Ctrl-S and Ctrl-Q.)
+            # Like executing: "stty -ixon."
+            termios.IXON | termios.IXOFF |
+
+            # Don't translate carriage return into newline on input.
+            termios.ICRNL | termios.INLCR | termios.IGNCR
+        )
 
     def __exit__(self, *a, **kw):
         termios.tcsetattr(self.fileno, termios.TCSANOW, self.attrs_before)
@@ -440,5 +457,9 @@ class cooked_mode(raw_mode):
         with cooked_mode(stdin):
             ''' the pseudo-terminal stdin is now used in cooked mode. '''
     """
-    def _patch(self, attrs):
+    def _patch_lflag(self, attrs):
         return attrs | (termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
+
+    def _patch_iflag(self, attrs):
+        # Don't change any.
+        return attrs
