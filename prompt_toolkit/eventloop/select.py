@@ -27,12 +27,22 @@ def select_fds(read_fds, timeout):
     # (The 'poll' implementation for instance, returns always integers.)
     fd_map = dict((_fd_to_int(fd), fd) for fd in read_fds)
 
+    # Use of the 'select' module, that was introduced in Python3.4. We don't
+    # use it before 3.5 however, because this is the point where this module
+    # retries interrupted system calls.
     if sys.version_info >= (3, 5):
-        # Use of the 'select' module, that was introduced in Python3.4.
-        # We don't use it before 3.5 however, because this is the point where
-        # this module retries interrupted system calls.
-        result = _python3_selectors(read_fds, timeout)
+        try:
+            result = _python3_selectors(read_fds, timeout)
+        except PermissionError:
+            # We had a situation (in pypager) where epoll raised a
+            # PermissionError when a local file descriptor was registered,
+            # however poll and select worked fine. So, in that case, just try
+            # using select below.
+            result = None
     else:
+        result = None
+
+    if result is None:
         try:
             # First, try the 'select' module. This is the most universal, and
             # powerful enough in our case.
