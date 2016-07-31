@@ -14,12 +14,12 @@ Ptpython
 ********
 
 `ptpython <http://github.com/jonathanslenders/ptpython/>`_ is an interactive
-Python Shell, build on top of prompt-toolkit.
+Python Shell, build on top of prompt_toolkit.
 
 .. image :: https://github.com/jonathanslenders/python-prompt-toolkit/raw/master/docs/images/ptpython.png
 
 
-prompt-toolkit features
+prompt_toolkit features
 ***********************
 
 ``prompt_toolkit`` could be a replacement for `GNU readline
@@ -73,7 +73,7 @@ Installation
 
 ::
 
-    pip install prompt-toolkit
+    pip install prompt_toolkit
 
 For Conda, do:
 
@@ -105,7 +105,7 @@ put a small ``u`` in front of every string or put ``from __future__ import
 unicode_literals`` at the start of the above example.
 
 
-Projects using prompt-toolkit
+Projects using prompt_toolkit
 *****************************
 
 Shells:
