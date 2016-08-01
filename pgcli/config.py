@@ -14,7 +14,7 @@ def config_location():
 def load_config(usr_cfg, def_cfg=None):
     cfg = ConfigObj()
     cfg.merge(ConfigObj(def_cfg, interpolation=False))
-    cfg.merge(ConfigObj(expanduser(usr_cfg), interpolation=False))
+    cfg.merge(ConfigObj(expanduser(usr_cfg), interpolation=False, encoding='utf-8'))
     cfg.filename = expanduser(usr_cfg)
 
     return cfg
