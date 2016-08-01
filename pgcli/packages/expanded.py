@@ -3,7 +3,7 @@ from .tabulate import _text_type
 def pad(field, total, char=u" "):
     return field + (char * (total - len(field)))
 
-def expanded_table(rows, headers):
+def expanded_table(rows, headers, missingval=u""):
     header_len = max([len(x) for x in headers])
     max_row_len = 0
     results = []
@@ -19,7 +19,7 @@ def expanded_table(rows, headers):
             max_row_len = row_len
 
         for header, value in zip(padded_headers, row):
-            value = '<null>' if value is None else value
+            value = missingval if value is None else value
             row_result.append((u"%s" % header) + " " + (u"%s" % value).strip())
 
         results.append('\n'.join(row_result))
