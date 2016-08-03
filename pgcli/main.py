@@ -11,7 +11,7 @@ import threading
 import shutil
 import functools
 import humanize
-from time import time
+from time import time, sleep
 from codecs import open
 
 
@@ -346,6 +346,70 @@ class PGCli(object):
             continue
         return document
 
+    def execute_command(self, text):
+        logger = self.logger
+
+        try:
+            output, query = self._evaluate_command(text)
+        except KeyboardInterrupt:
+            # Restart connection to the database
+            self.pgexecute.connect()
+            logger.debug("cancelled query, sql: %r", text)
+            click.secho("cancelled query", err=True, fg='red')
+        except NotImplementedError:
+            click.secho('Not Yet Implemented.', fg="yellow")
+        except OperationalError as e:
+            if ('server closed the connection'
+                    in utf8tounicode(e.args[0])):
+                self._handle_server_closed_connection()
+            else:
+                logger.error("sql: %r, error: %r", text, e)
+                logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg='red')
+        except Exception as e:
+            logger.error("sql: %r, error: %r", text, e)
+            logger.error("traceback: %r", traceback.format_exc())
+            click.secho(str(e), err=True, fg='red')
+        else:
+            try:
+                if self.output_file and not text.startswith(('\\o ', '\\? ')):
+                    try:
+                        with open(self.output_file, 'a', encoding='utf-8') as f:
+                            click.echo(text, file=f)
+                            click.echo('\n'.join(output), file=f)
+                            click.echo('', file=f)  # extra newline
+                    except IOError as e:
+                        click.secho(str(e), err=True, fg='red')
+                else:
+                    click.echo_via_pager('\n'.join(output))
+            except KeyboardInterrupt:
+                pass
+
+            if self.pgspecial.timing_enabled:
+                # Only add humanized time display if > 1 second
+                if query.total_time > 1:
+                    print('Time: %0.03fs (%s)' % (query.total_time,
+                          humanize.time.naturaldelta(query.total_time)))
+                else:
+                    print('Time: %0.03fs' % query.total_time)
+
+            # Check if we need to update completions, in order of most
+            # to least drastic changes
+            if query.db_changed:
+                with self._completer_lock:
+                    self.completer.reset_completions()
+                self.refresh_completions(persist_priorities='keywords')
+            elif query.meta_changed:
+                self.refresh_completions(persist_priorities='all')
+            elif query.path_changed:
+                logger.debug('Refreshing search path')
+                with self._completer_lock:
+                    self.completer.set_search_path(
+                        self.pgexecute.search_path())
+                logger.debug('Search path: %r',
+                             self.completer.search_path)
+        return query
+
     def run_cli(self):
         logger = self.logger
 
@@ -386,65 +450,17 @@ class PGCli(object):
                 # Initialize default metaquery in case execution fails
                 query = MetaQuery(query=document.text, successful=False)
 
-                try:
-                    output, query = self._evaluate_command(document.text)
-                except KeyboardInterrupt:
-                    # Restart connection to the database
-                    self.pgexecute.connect()
-                    logger.debug("cancelled query, sql: %r", document.text)
-                    click.secho("cancelled query", err=True, fg='red')
-                except NotImplementedError:
-                    click.secho('Not Yet Implemented.', fg="yellow")
-                except OperationalError as e:
-                    if ('server closed the connection'
-                            in utf8tounicode(e.args[0])):
-                        self._handle_server_closed_connection()
-                    else:
-                        logger.error("sql: %r, error: %r", document.text, e)
-                        logger.error("traceback: %r", traceback.format_exc())
-                        click.secho(str(e), err=True, fg='red')
-                except Exception as e:
-                    logger.error("sql: %r, error: %r", document.text, e)
-                    logger.error("traceback: %r", traceback.format_exc())
-                    click.secho(str(e), err=True, fg='red')
+                watch_command, timing = special.get_watch_command(document.text)
+                if watch_command:
+                    while watch_command:
+                        try:
+                            query = self.execute_command(watch_command)
+                            watch_command, timing = special.get_watch_command(document.text)
+                            sleep(timing)
+                        except KeyboardInterrupt:
+                            watch_command = None
                 else:
-                    try:
-                        if self.output_file and not document.text.startswith(('\\o ', '\\? ')):
-                            try:
-                                with open(self.output_file, 'a', encoding='utf-8') as f:
-                                    click.echo(document.text, file=f)
-                                    click.echo('\n'.join(output), file=f)
-                                    click.echo('', file=f) # extra newline
-                            except IOError as e:
-                                click.secho(str(e), err=True, fg='red')
-                        else:
-                            click.echo_via_pager('\n'.join(output))
-                    except KeyboardInterrupt:
-                        pass
-
-                    if self.pgspecial.timing_enabled:
-                        # Only add humanized time display if > 1 second
-                        if query.total_time > 1:
-                            print('Time: %0.03fs (%s)' % (query.total_time,
-                                  humanize.time.naturaldelta(query.total_time)))
-                        else:
-                            print('Time: %0.03fs' % query.total_time)
-
-                    # Check if we need to update completions, in order of most
-                    # to least drastic changes
-                    if query.db_changed:
-                        with self._completer_lock:
-                            self.completer.reset_completions()
-                        self.refresh_completions(persist_priorities='keywords')
-                    elif query.meta_changed:
-                        self.refresh_completions(persist_priorities='all')
-                    elif query.path_changed:
-                        logger.debug('Refreshing search path')
-                        with self._completer_lock:
-                            self.completer.set_search_path(
-                                self.pgexecute.search_path())
-                        logger.debug('Search path: %r',
-                                     self.completer.search_path)
+                    query = self.execute_command(document.text)
 
                 # Allow PGCompleter to learn user's preferred keywords, etc.
                 with self._completer_lock:
