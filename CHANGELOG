@@ -22,8 +22,8 @@ Fixes:
       * Distinguish backspace from Control-H. They are not the same.
       * Delete in front of the cursor when a negative argument has been given
         to backspace.
-- Performance optimizations:
       * Handle arrow keys correctly in emacs-term.
+- Performance optimizations:
       * Performance optimization in Registry.
       * Several performance optimization in filters.
       * Import asyncio inline (only if required).
