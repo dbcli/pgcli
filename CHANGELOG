@@ -1,6 +1,60 @@
 CHANGELOG
 =========
 
+1.0.4: 2016-08-03
+-----------------
+
+Fixes:
+- Key binding fixes:
+      * Improved handling of repeat arguments in Emacs mode. Pressing sequences
+        like 'esc---123' do now work (like GNU Readline):
+              - repetition of the minus sign is ignored.
+              - No esc prefix is required for each digit.
+      * Fix in ControlX-ControlX binding.
+      * Fix in bracketed paste.
+      * Pressing Control-U at the start of the line now deletes the newline.
+      * Pressing Control-K at the end of the line, deletes the newline after
+        the cursor.
+      * Support negative argument for Control-K
+      * Fixed cash when left/right were pressed with a negative argument. (In
+        Emacs mode.)
+      * Fix in ControlUp/ControlDown key bindings.
+      * Distinguish backspace from Control-H. They are not the same.
+      * Delete in front of the cursor when a negative argument has been given
+        to backspace.
+- Performance optimizations:
+      * Handle arrow keys correctly in emacs-term.
+      * Performance optimization in Registry.
+      * Several performance optimization in filters.
+      * Import asyncio inline (only if required).
+- Use the best possible selector in the event loop. This fixes bugs in
+  situations where we have too many open file descriptors.
+- Fix UI freeze when gevent monkey patch has been applied.
+- Fix segmentation fault in Alpine Linux. (Regarding the use of ioctl.)
+- Use the correct colors on Windows. (When the foreground/background colors
+  have been modified.)
+- Display a better error message when running in Idle.
+- Additional flags for vt100 inputs: disable flow control.
+- Also patch stderr in CommandLineInterface.patch_stdout_context.
+
+New features:
+- Allow users to enter Vi digraphs in reverse order.
+- Improved autocompletion behaviour. See IPython issue #9658.
+- Added a 'clear' function in the shortcuts module.
+
+For future compatibility:
+- `Keys.Enter` has been added. This is the key that should be bound for
+  handling the enter key.
+
+  Right now, prompt_toolkit translates \r into \n during the handling of the
+  input; this is not correct and makes it impossible to distinguish between
+  ControlJ and ControlM. Some applications bind ControlJ for custom handling of
+  the enter key, because this equals \n. However, in a future version we will
+  stop replacing \r by \n and at that point, the enter key will be ControlM. 
+  So better is to use `Keys.Enter`, which becomes an alias for whatever the
+  enter key translates into.
+
+
 1.0.3: 2016-06-20
 -----------------
 
