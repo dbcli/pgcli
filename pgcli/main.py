@@ -103,7 +103,8 @@ class PGCli(object):
         os.environ['LESS'] = '-SRXF'
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
-                 pgexecute=None, pgclirc_file=None, row_limit=None):
+                 pgexecute=None, pgclirc_file=None, row_limit=None,
+                 single_connection=False):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
@@ -145,7 +146,8 @@ class PGCli(object):
         self.settings = {'casing_file': get_casing_file(c),
           'generate_casing_file': c['main'].as_bool('generate_casing_file'),
           'generate_aliases': c['main'].as_bool('generate_aliases'),
-          'asterisk_column_order': c['main']['asterisk_column_order']}
+          'asterisk_column_order': c['main']['asterisk_column_order'],
+          'single_connection': single_connection}
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial,
             settings=self.settings)
         self.completer = completer
@@ -680,6 +682,9 @@ class PGCli(object):
         help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
         default=False, help='Never prompt for password.')
+@click.option('--single-connection', 'single_connection', is_flag=True,
+        default=False,
+        help='Do not use a separate connection for completions.')
 @click.option('-v', '--version', is_flag=True, help='Version of pgcli.')
 @click.option('-d', '--dbname', default='', envvar='PGDATABASE',
         help='database name to connect to.')
@@ -691,8 +696,8 @@ class PGCli(object):
         help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
-def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
-        username, version, pgclirc, dsn, row_limit):
+def cli(database, user, host, port, prompt_passwd, never_prompt,
+    single_connection, dbname, username, version, pgclirc, dsn, row_limit):
 
     if version:
         print('Version:', __version__)
@@ -715,7 +720,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt, dbname,
                    config_full_path)
 
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc,
-                  row_limit=row_limit)
+                  row_limit=row_limit, single_connection=single_connection)
 
     # Choose which ever one has a valid value.
     database = database or dbname
