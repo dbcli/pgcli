@@ -7,6 +7,7 @@ from .utils import DummyContext, is_windows
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
+import io
 import os
 import sys
 
