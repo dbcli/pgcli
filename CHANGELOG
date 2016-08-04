@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+1.0.5: 2016-08-04
+-----------------
+
+Fixes:
+- Critical fix for running on Windows. The gevent work-around in the inputhook
+  caused 'An operation was attempted on something that is not a socket'.
+
+
 1.0.4: 2016-08-03
 -----------------
 
