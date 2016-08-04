@@ -25,6 +25,7 @@ controls everything.
 from __future__ import unicode_literals
 import os
 import threading
+from prompt_toolkit.utils import is_windows
 from .select import select_fds
 
 __all__ = (
@@ -79,7 +80,13 @@ class InputHookContext(object):
             # monkey patched and won't be cooperative, so that would block all
             # other select() calls otherwise.
             # See: http://www.gevent.org/gevent.os.html
-            select_fds([self._r], timeout=None)
+
+            # Note: On Windows, this is apparently not an issue.
+            #       However, if we would ever want to add a select call, it
+            #       should use `windll.kernel32.WaitForMultipleObjects`,
+            #       because `select.select` can't wait for a pipe on Windows.
+            if not is_windows():
+                select_fds([self._r], timeout=None)
 
             os.read(self._r, 1024)
         except OSError:
