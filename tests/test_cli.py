@@ -355,6 +355,14 @@ def test_bracketed_paste():
     result, cli = _feed_cli_with_input('\x1b[200~hello\nworld\x1b[201~\x1b\n')
     assert result.text == 'hello\nworld'
 
+    # With \r\n endings.
+    result, cli = _feed_cli_with_input('\x1b[200~hello\r\nworld\x1b[201~\x1b\n')
+    assert result.text == 'hello\nworld'
+
+    # With \r endings.
+    result, cli = _feed_cli_with_input('\x1b[200~hello\rworld\x1b[201~\x1b\n')
+    assert result.text == 'hello\nworld'
+
 
 def test_vi_cursor_movements():
     """

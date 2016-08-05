@@ -222,7 +222,15 @@ def load_basic_bindings(registry, filter=Always()):
     @registry.add_binding(Keys.BracketedPaste)
     def _(event):
         " Pasting from clipboard. "
-        event.current_buffer.insert_text(event.data)
+        data = event.data
+
+        # Be sure to use \n as line ending.
+        # Some terminals (Like iTerm2) seem to paste \r\n line endings in a
+        # bracketed paste. See: https://github.com/ipython/ipython/issues/9737
+        data = data.replace('\r\n', '\n')
+        data = data.replace('\r', '\n')
+
+        event.current_buffer.insert_text(data)
 
 
 def load_mouse_bindings(registry, filter=Always()):
