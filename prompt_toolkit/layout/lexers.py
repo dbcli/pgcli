@@ -230,9 +230,17 @@ class PygmentsLexer(Lexer):
             Create a generator that yields the lexed lines.
             Each iteration it yields a (line_number, [(token, text), ...]) tuple.
             """
-            text = '\n'.join(document.lines[start_lineno:])[column:]
-            return enumerate(split_lines(self.pygments_lexer.get_tokens(text)),
-                                  start_lineno)
+            def get_tokens():
+                text = '\n'.join(document.lines[start_lineno:])[column:]
+
+                # We call `get_tokens_unprocessed`, because `get_tokens` will
+                # still replace \r\n and \r by \n.  (We don't want that,
+                # Pygments should return exactly the same amount of text, as we
+                # have given as input.)
+                for _, t, v in self.pygments_lexer.get_tokens_unprocessed(text):
+                    yield t, v
+
+            return enumerate(split_lines(get_tokens()), start_lineno)
 
         def get_generator(i):
             """
