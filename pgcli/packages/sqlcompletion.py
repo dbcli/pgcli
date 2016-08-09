@@ -4,8 +4,10 @@ import re
 import sqlparse
 from collections import namedtuple
 from sqlparse.sql import Comparison, Identifier, Where
-from .parseutils import (
-    last_word, extract_tables, find_prev_keyword, parse_partial_identifier)
+from .parseutils.utils import (
+    last_word, find_prev_keyword, parse_partial_identifier)
+from .parseutils.tables import extract_tables
+from .parseutils.ctes import isolate_query_ctes
 from pgspecial.main import parse_special_command
 
 PY2 = sys.version_info[0] == 2
@@ -21,25 +23,26 @@ Special = namedtuple('Special', [])
 Database = namedtuple('Database', [])
 Schema = namedtuple('Schema', [])
 # FromClauseItem is a table/view/function used in the FROM clause
-# `tables` contains the list of tables/... already in the statement,
+# `table_refs` contains the list of tables/... already in the statement,
 # used to ensure that the alias we suggest is unique
-FromClauseItem = namedtuple('FromClauseItem', 'schema tables')
-Table = namedtuple('Table', ['schema', 'tables'])
-View = namedtuple('View', ['schema', 'tables'])
+FromClauseItem = namedtuple('FromClauseItem', 'schema table_refs local_tables')
+Table = namedtuple('Table', ['schema', 'table_refs', 'local_tables'])
+View = namedtuple('View', ['schema', 'table_refs'])
 # JoinConditions are suggested after ON, e.g. 'foo.barid = bar.barid'
-JoinCondition = namedtuple('JoinCondition', ['tables', 'parent'])
+JoinCondition = namedtuple('JoinCondition', ['table_refs', 'parent'])
 # Joins are suggested after JOIN, e.g. 'foo ON foo.barid = bar.barid'
-Join = namedtuple('Join', ['tables', 'schema'])
+Join = namedtuple('Join', ['table_refs', 'schema'])
 
-Function = namedtuple('Function', ['schema', 'tables', 'filter'])
+Function = namedtuple('Function', ['schema', 'table_refs', 'filter'])
 # For convenience, don't require the `filter` argument in Function constructor
 Function.__new__.__defaults__ = (None, tuple(), None)
-Table.__new__.__defaults__ = (None, tuple())
+Table.__new__.__defaults__ = (None, tuple(), tuple())
 View.__new__.__defaults__ = (None, tuple())
-FromClauseItem.__new__.__defaults__ = (None, tuple())
+FromClauseItem.__new__.__defaults__ = (None, tuple(), tuple())
 
-Column = namedtuple('Column', ['tables', 'require_last_table'])
-Column.__new__.__defaults__ = (None, None)
+Column = namedtuple(
+    'Column', ['table_refs', 'require_last_table', 'local_tables'])
+Column.__new__.__defaults__ = (None, None, tuple())
 
 Keyword = namedtuple('Keyword', [])
 NamedQuery = namedtuple('NamedQuery', [])
@@ -56,6 +59,10 @@ class SqlStatement(object):
             text_before_cursor, include='many_punctuations')
         full_text = _strip_named_query(full_text)
         text_before_cursor = _strip_named_query(text_before_cursor)
+
+        full_text, text_before_cursor, self.local_tables = \
+            isolate_query_ctes(full_text, text_before_cursor)
+
         self.text_before_cursor_including_last_word = text_before_cursor
 
         # If we've partially typed a word then word_before_cursor won't be an
@@ -313,7 +320,9 @@ def suggest_based_on_last_token(token, stmt):
             tables = stmt.get_tables('before')
 
             # suggest columns that are present in more than one table
-            return (Column(tables=tables, require_last_table=True),)
+            return (Column(table_refs=tables,
+                           require_last_table=True,
+                           local_tables=stmt.local_tables),)
 
         elif p.token_first().value.lower() == 'select':
             # If the lparen is preceeded by a space chances are we're about to
@@ -323,23 +332,25 @@ def suggest_based_on_last_token(token, stmt):
                 return (Keyword(),)
         prev_prev_tok = p.token_prev(p.token_index(prev_tok))[1]
         if prev_prev_tok and prev_prev_tok.normalized == 'INTO':
-            return (Column(tables=stmt.get_tables('insert')),)
+            return (Column(table_refs=stmt.get_tables('insert')),)
         # We're probably in a function argument list
-        return (Column(tables=extract_tables(stmt.full_text)),)
+        return (Column(table_refs=extract_tables(stmt.full_text),
+                       local_tables=stmt.local_tables),)
     elif token_v in ('set', 'by', 'distinct'):
-        return (Column(tables=stmt.get_tables()),)
+        return (Column(table_refs=stmt.get_tables(),
+                       local_tables=stmt.local_tables),)
     elif token_v in ('select', 'where', 'having'):
         # Check for a table alias or schema qualification
         parent = (stmt.identifier and stmt.identifier.get_parent_name()) or []
         tables = stmt.get_tables()
         if parent:
             tables = tuple(t for t in tables if identifies(parent, t))
-            return (Column(tables=tables),
+            return (Column(table_refs=tables, local_tables=stmt.local_tables),
                     Table(schema=parent),
                     View(schema=parent),
                     Function(schema=parent),)
         else:
-            return (Column(tables=tables),
+            return (Column(table_refs=tables, local_tables=stmt.local_tables),
                     Function(schema=None),
                     Keyword(),)
 
@@ -358,9 +369,10 @@ def suggest_based_on_last_token(token, stmt):
             # Suggest schemas
             suggest.insert(0, Schema())
 
-        # Suggest set-returning functions in the FROM clause
         if token_v == 'from' or is_join:
-            suggest.append(FromClauseItem(schema=schema, tables=tables))
+            suggest.append(FromClauseItem(schema=schema,
+                                          table_refs=tables,
+                                          local_tables=stmt.local_tables))
         elif token_v == 'truncate':
             suggest.append(Table(schema))
         else:
@@ -368,7 +380,7 @@ def suggest_based_on_last_token(token, stmt):
 
         if is_join and _allow_join(stmt.parsed):
             tables = stmt.get_tables('before')
-            suggest.append(Join(tables=tables, schema=schema))
+            suggest.append(Join(table_refs=tables, schema=schema))
 
         return tuple(suggest)
 
@@ -383,7 +395,7 @@ def suggest_based_on_last_token(token, stmt):
 
     elif token_v == 'column':
         # E.g. 'ALTER TABLE foo ALTER COLUMN bar
-        return (Column(tables=stmt.get_tables()),)
+        return (Column(table_refs=stmt.get_tables()),)
 
     elif token_v == 'on':
         tables = stmt.get_tables('before')
@@ -392,12 +404,13 @@ def suggest_based_on_last_token(token, stmt):
             # "ON parent.<suggestion>"
             # parent can be either a schema name or table alias
             filteredtables = tuple(t for t in tables if identifies(parent, t))
-            sugs = [Column(tables=filteredtables),
+            sugs = [Column(table_refs=filteredtables,
+                           local_tables=stmt.local_tables),
                     Table(schema=parent),
                     View(schema=parent),
                     Function(schema=parent)]
             if filteredtables and _allow_join_condition(stmt.parsed):
-                sugs.append(JoinCondition(tables=tables,
+                sugs.append(JoinCondition(table_refs=tables,
                                           parent=filteredtables[-1]))
             return tuple(sugs)
         else:
@@ -406,7 +419,7 @@ def suggest_based_on_last_token(token, stmt):
             aliases = tuple(t.ref for t in tables)
             if _allow_join_condition(stmt.parsed):
                 return (Alias(aliases=aliases), JoinCondition(
-                    tables=tables, parent=None))
+                    table_refs=tables, parent=None))
             else:
                 return (Alias(aliases=aliases),)
 

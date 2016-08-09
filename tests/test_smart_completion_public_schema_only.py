@@ -3,6 +3,7 @@ import pytest
 from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
     schema, table, view, function, column, wildcard_expansion)
 from prompt_toolkit.document import Document
+from prompt_toolkit.completion import Completion
 
 metadata = {
     'tables': {
@@ -867,3 +868,49 @@ def test_insert(completer, complete_event, text):
     result = completer.get_completions(Document(text=text, cursor_position=pos),
                                        complete_event)
     assert set(result) == set(testdata.columns('users'))
+
+
+def test_suggest_cte_names(completer, complete_event):
+    text = '''
+        WITH cte1 AS (SELECT a, b, c FROM foo),
+             cte2 AS (SELECT d, e, f FROM bar)
+        SELECT * FROM
+    '''
+    pos = len(text)
+    result = completer.get_completions(
+        Document(text=text, cursor_position=pos),
+        complete_event)
+    expected = set([
+        Completion('cte1', 0, display_meta='table'),
+        Completion('cte2', 0, display_meta='table'),
+    ])
+    assert expected <= set(result)
+
+
+def test_suggest_columns_from_cte(completer, complete_event):
+    text = 'WITH cte AS (SELECT foo, bar FROM baz) SELECT  FROM cte'
+    pos = len('WITH cte AS (SELECT foo, bar FROM baz) SELECT ')
+    result = completer.get_completions(Document(text=text, cursor_position=pos),
+                                       complete_event)
+    expected = ([Completion('foo', 0, display_meta='column'),
+                 Completion('bar', 0, display_meta='column'),
+                 ] +
+                testdata.functions() +
+                testdata.builtin_functions() +
+                testdata.keywords()
+                )
+
+    assert set(expected) == set(result)
+
+
+@pytest.mark.parametrize('text', [
+    'WITH cte AS (SELECT foo FROM bar) SELECT * FROM cte WHERE cte.',
+    'WITH cte AS (SELECT foo FROM bar) SELECT * FROM cte c WHERE c.',
+])
+def test_cte_qualified_columns(completer, complete_event, text):
+    pos = len(text)
+    result = completer.get_completions(
+        Document(text=text, cursor_position=pos),
+        complete_event)
+    expected = [Completion('foo', 0, display_meta='column')]
+    assert set(expected) == set(result)

@@ -1,6 +1,6 @@
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.filters import Condition
-from .packages.parseutils import is_open_quote
+from .packages.parseutils.utils import is_open_quote
 
 
 class PGBuffer(Buffer):

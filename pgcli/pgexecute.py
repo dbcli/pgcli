@@ -6,7 +6,7 @@ import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
-from .packages.function_metadata import FunctionMetadata, ForeignKey
+from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 from .encodingutils import unicode2utf8, PY2, utf8tounicode
 
 

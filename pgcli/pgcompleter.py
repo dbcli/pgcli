@@ -11,8 +11,9 @@ from prompt_toolkit.document import Document
 from .packages.sqlcompletion import (FromClauseItem,
     suggest_type, Special, Database, Schema, Table, Function, Column, View,
     Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join)
-from .packages.function_metadata import ColumnMetadata, ForeignKey
-from .packages.parseutils import last_word, TableReference
+from .packages.parseutils.meta import ColumnMetadata, ForeignKey
+from .packages.parseutils.utils import last_word
+from .packages.parseutils.tables import TableReference
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
 from .config import load_config, config_location
@@ -367,9 +368,10 @@ class PGCompleter(Completer):
 
 
     def get_column_matches(self, suggestion, word_before_cursor):
-        tables = suggestion.tables
+        tables = suggestion.table_refs
         _logger.debug("Completion column scope: %r", tables)
-        scoped_cols = self.populate_scoped_cols(tables)
+        scoped_cols = self.populate_scoped_cols(tables, suggestion.local_tables)
+
         colit = scoped_cols.items
         flat_cols = list(chain(*((c.name for c in cols)
             for t, cols in colit())))
@@ -424,7 +426,7 @@ class PGCompleter(Completer):
         return next(a for a in aliases if normalize_ref(a) not in tbls)
 
     def get_join_matches(self, suggestion, word_before_cursor):
-        tbls = suggestion.tables
+        tbls = suggestion.table_refs
         cols = self.populate_scoped_cols(tbls)
         # Set up some data structures for efficient access
         qualified = dict((normalize_ref(t.ref), t.schema) for t in tbls)
@@ -446,7 +448,7 @@ class PGCompleter(Completer):
                 continue
             c = self.case
             if self.generate_aliases or normalize_ref(left.tbl) in refs:
-                lref = self.alias(left.tbl, suggestion.tables)
+                lref = self.alias(left.tbl, suggestion.table_refs)
                 join = '{0} {4} ON {4}.{1} = {2}.{3}'.format(
                     c(left.tbl), c(left.col), rtbl.ref, c(right.col), lref)
             else:
@@ -467,10 +469,10 @@ class PGCompleter(Completer):
 
     def get_join_condition_matches(self, suggestion, word_before_cursor):
         col = namedtuple('col', 'schema tbl col')
-        tbls = self.populate_scoped_cols(suggestion.tables).items
+        tbls = self.populate_scoped_cols(suggestion.table_refs).items
         cols = [(t, c) for t, cs in tbls() for c in cs]
         try:
-            lref = (suggestion.parent or suggestion.tables[-1]).ref
+            lref = (suggestion.parent or suggestion.table_refs[-1]).ref
             ltbl, lcols = [(t, cs) for (t, cs) in tbls() if t.ref == lref][-1]
         except IndexError: # The user typed an incorrect table qualifier
             return []
@@ -493,7 +495,7 @@ class PGCompleter(Completer):
 
         # Tables that are closer to the cursor get higher prio
         ref_prio = dict((tbl.ref, num) for num, tbl
-            in enumerate(suggestion.tables))
+            in enumerate(suggestion.table_refs))
         # Map (schema, table, col) to tables
         coldict = list_dict(((t.schema, t.name, c.name), t)
             for t, c in cols if t.ref != lref)
@@ -529,7 +531,7 @@ class PGCompleter(Completer):
             funcs = self.populate_functions(suggestion.schema, filt)
             if alias:
                 funcs = [self.case(f) + '() ' + self.alias(f,
-                    suggestion.tables) for f in funcs]
+                    suggestion.table_refs) for f in funcs]
             else:
                 funcs = [self.case(f) + '()' for f in funcs]
         else:
@@ -564,15 +566,17 @@ class PGCompleter(Completer):
 
     def get_from_clause_item_matches(self, suggestion, word_before_cursor):
         alias = self.generate_aliases
-        t_sug = Table(*suggestion)
-        v_sug = View(*suggestion)
-        f_sug = Function(*suggestion, filter='for_from_clause')
+        s = suggestion
+        t_sug = Table(s.schema, s.table_refs, s.local_tables)
+        v_sug = View(s.schema, s.table_refs)
+        f_sug = Function(s.schema, s.table_refs, filter='for_from_clause')
         return (self.get_table_matches(t_sug, word_before_cursor, alias)
             + self.get_view_matches(v_sug, word_before_cursor, alias)
             + self.get_function_matches(f_sug, word_before_cursor, alias))
 
     def get_table_matches(self, suggestion, word_before_cursor, alias=False):
         tables = self.populate_schema_objects(suggestion.schema, 'tables')
+        tables.extend(tbl.name for tbl in suggestion.local_tables)
 
         # Unless we're sure the user really wants them, don't suggest the
         # pg_catalog tables that are implicitly on the search path
@@ -580,7 +584,7 @@ class PGCompleter(Completer):
                 not word_before_cursor.startswith('pg_')):
             tables = [t for t in tables if not t.startswith('pg_')]
         if alias:
-            tables = [self.case(t) + ' ' + self.alias(t, suggestion.tables)
+            tables = [self.case(t) + ' ' + self.alias(t, suggestion.table_refs)
                 for t in tables]
         return self.find_matches(word_before_cursor, tables,
             meta='table')
@@ -593,7 +597,7 @@ class PGCompleter(Completer):
                 not word_before_cursor.startswith('pg_')):
             views = [v for v in views if not v.startswith('pg_')]
         if alias:
-            views = [self.case(v) + ' ' + self.alias(v, suggestion.tables)
+            views = [self.case(v) + ' ' + self.alias(v, suggestion.table_refs)
                 for v in views]
         return self.find_matches(word_before_cursor, views, meta='view')
 
@@ -661,9 +665,10 @@ class PGCompleter(Completer):
         Path: get_path_matches,
     }
 
-    def populate_scoped_cols(self, scoped_tbls):
+    def populate_scoped_cols(self, scoped_tbls, local_tbls=()):
         """ Find all columns in a set of scoped_tables
         :param scoped_tbls: list of TableReference namedtuples
+        :param local_tbls: tuple(TableMetadata)
         :return: {TableReference:{colname:ColumnMetaData}}
         """
 
@@ -696,6 +701,10 @@ class PGCompleter(Completer):
                             cols = cols.values()
                             addcols(schema, relname, tbl.alias, reltype, cols)
                             break
+                            
+        # Local tables should shadow database tables
+        for tbl in local_tbls:
+            columns[tbl.name] = tbl.columns
 
         return columns
 
