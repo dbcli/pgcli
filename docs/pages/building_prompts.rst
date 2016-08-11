@@ -621,7 +621,7 @@ Enabling can be done by passing the ``mouse_support=True`` option.
 Line wrapping
 ^^^^^^^^^^^^^
 
-Line wrapping is enabled by default. This is what most people are used too and
+Line wrapping is enabled by default. This is what most people are used to and
 this is what GNU readline does. When it is disabled, the input string will
 scroll horizontally.
 
