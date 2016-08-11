@@ -21,7 +21,7 @@ class SentenceValidator(Validator):
         self.move_cursor_to_end = move_cursor_to_end
 
         if ignore_case:
-            self.sentences = {s.lower() for s in self.sentences}
+            self.sentences = set([s.lower() for s in self.sentences])
 
     def validate(self, document):
         if document.text not in self.sentences:
