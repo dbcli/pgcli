@@ -346,7 +346,7 @@ class PGCli(object):
             continue
         return document
 
-    def execute_command(self, text):
+    def execute_command(self, text, query):
         logger = self.logger
 
         try:
@@ -454,13 +454,13 @@ class PGCli(object):
                 if watch_command:
                     while watch_command:
                         try:
-                            query = self.execute_command(watch_command)
-                            watch_command, timing = special.get_watch_command(document.text)
+                            query = self.execute_command(watch_command, query)
+                            click.echo('Waiting for {0} seconds before repeating'.format(timing))
                             sleep(timing)
                         except KeyboardInterrupt:
                             watch_command = None
                 else:
-                    query = self.execute_command(document.text)
+                    query = self.execute_command(document.text, query)
 
                 # Allow PGCompleter to learn user's preferred keywords, etc.
                 with self._completer_lock:
