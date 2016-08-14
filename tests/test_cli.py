@@ -312,6 +312,10 @@ def test_emacs_arguments():
     result, cli = _feed_cli_with_input('\x1b44x\n')
     assert result.text == 'x' * 44
 
+    # esc 4 esc 4
+    result, cli = _feed_cli_with_input('\x1b4\x1b4x\n')
+    assert result.text == 'x' * 44
+
     # esc - right (-1 position to the right, equals 1 to the left.)
     result, cli = _feed_cli_with_input('aaaa\x1b-\x1b[Cbbbb\n')
     assert result.text == 'aaabbbba'

@@ -113,7 +113,7 @@ def load_emacs_bindings(registry, filter=Always()):
         The first number needs to be preceeded by escape.
         """
         @handle(c, filter=HasArg())
-        @handle(Keys.Escape, c, filter=~HasArg())
+        @handle(Keys.Escape, c)
         def _(event):
             event.append_to_arg_count(c)
 
