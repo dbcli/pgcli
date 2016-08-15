@@ -88,7 +88,6 @@ ANSI_COLORS_TO_RGB = {
     'ansiturquoise':   (0x00, 0xcd, 0xcd),
     'ansilightgray':   (0xe5, 0xe5, 0xe5),
 
-
     # High intensity.
     'ansidarkgray':    (0x7f, 0x7f, 0x7f),  # Bright black.
     'ansidarkred':     (0xff, 0x00, 0x00),
@@ -105,6 +104,40 @@ assert set(BG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
 assert set(ANSI_COLORS_TO_RGB) == set(ANSI_COLOR_NAMES)
 
 
+def _get_closest_ansi_color(r, g, b, exclude=()):
+    """
+    Find closest ANSI color. Return it by name.
+
+    :param r: Red (Between 0 and 255.)
+    :param g: Green (Between 0 and 255.)
+    :param b: Blue (Between 0 and 255.)
+    :param exclude: A tuple of color names to exclude. (E.g. ``('ansired', )``.)
+    """
+    assert isinstance(exclude, tuple)
+
+    # When we have a bit of saturation, avoid the gray-like colors, otherwise,
+    # too often the distance to the gray color is less.
+    saturation = abs(r - g) + abs(g - b) + abs(b - r)  # Between 0..510
+
+    if saturation > 30:
+        exclude += ('ansilightgray', 'ansidarkgray', 'ansiwhite', 'ansiblack')
+
+    # Take the closest color.
+    # (Thanks to Pygments for this part.)
+    distance = 257*257*3  # "infinity" (>distance from #000000 to #ffffff)
+    match = 'ansidefault'
+
+    for name, (r2, g2, b2) in ANSI_COLORS_TO_RGB.items():
+        if name != 'ansidefault' and name not in exclude:
+            d = (r - r2) ** 2 + (g - g2) ** 2 + (b - b2) ** 2
+
+            if d < distance:
+                match = name
+                distance = d
+
+    return match
+
+
 class _16ColorCache(dict):
     """
     Cache which maps (r, g, b) tuples to 16 ansi colors.
@@ -115,21 +148,19 @@ class _16ColorCache(dict):
         assert isinstance(bg, bool)
         self.bg = bg
 
-    def __missing__(self, value):
+    def get_code(self, value, exclude=()):
+        """
+        Return a (ansi_code, ansi_name) tuple. (E.g. ``(44, 'ansiblue')``.) for
+        a given (r,g,b) value.
+        """
+        key = (value, exclude)
+        if key not in self:
+            self[key] = self._get(value, exclude)
+        return self[key]
+
+    def _get(self, value, exclude=()):
         r, g, b = value
-
-        # Find closest color.
-        # (Thanks to Pygments for this!)
-        distance = 257*257*3  # "infinity" (>distance from #000000 to #ffffff)
-        match = 'default'
-
-        for name, (r2, g2, b2) in ANSI_COLORS_TO_RGB.items():
-            if name != 'default':
-                d = (r - r2) ** 2 + (g - g2) ** 2 + (b - b2) ** 2
-
-                if d < distance:
-                    match = name
-                    distance = d
+        match = _get_closest_ansi_color(r, g, b, exclude=exclude)
 
         # Turn color name into code.
         if self.bg:
@@ -138,7 +169,7 @@ class _16ColorCache(dict):
             code = FG_ANSI_COLORS[match]
 
         self[value] = code
-        return code
+        return code, match
 
 
 class _256ColorCache(dict):
@@ -224,10 +255,8 @@ class _EscapeCodeCache(dict):
         fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
         parts = []
 
-        if fgcolor:
-            parts.extend(self._color_to_code(fgcolor))
-        if bgcolor:
-            parts.extend(self._color_to_code(bgcolor, True))
+        parts.extend(self._colors_to_code(fgcolor, bgcolor))
+
         if bold:
             parts.append('1')
         if italic:
@@ -259,36 +288,56 @@ class _EscapeCodeCache(dict):
             b = rgb & 0xff
             return r, g, b
 
-    def _color_to_code(self, color, bg=False):
+    def _colors_to_code(self, fg_color, bg_color):
         " Return a tuple with the vt100 values  that represent this color. "
-        table = BG_ANSI_COLORS if bg else FG_ANSI_COLORS
+        # When requesting ANSI colors only, and both fg/bg color were converted
+        # to ANSI, ensure that the foreground and background color are not the
+        # same. (Unless they were explicitely defined to be the same color.)
+        fg_ansi = [()]
 
-        # 16 ANSI colors. (Given by name.)
-        if color in table:
-            result = (table[color], )
+        def get(color, bg):
+            table = BG_ANSI_COLORS if bg else FG_ANSI_COLORS
 
-        # RGB colors. (Defined as 'ffffff'.)
-        else:
-            try:
-                rgb = self._color_name_to_rgb(color)
-            except ValueError:
+            if color is None:
                 return ()
 
-            # When only 16 colors are supported, use that.
-            if self.ansi_colors_only():
-                if bg:
-                    result = (_16_bg_colors[rgb], )
-                else:
-                    result = (_16_fg_colors[rgb], )
+            # 16 ANSI colors. (Given by name.)
+            elif color in table:
+                return (table[color], )
 
-            # True colors. (Only when this feature is enabled.)
-            elif self.true_color:
-                r, g, b = rgb
-                result = (48 if bg else 38, 2, r, g, b)
-
-            # 256 RGB colors.
+            # RGB colors. (Defined as 'ffffff'.)
             else:
-                result = (48 if bg else 38, 5, _256_colors[rgb])
+                try:
+                    rgb = self._color_name_to_rgb(color)
+                except ValueError:
+                    return ()
+
+                # When only 16 colors are supported, use that.
+                if self.ansi_colors_only():
+                    if bg:  # Background.
+                        if fg_color != bg_color:
+                            exclude = (fg_ansi[0], )
+                        else:
+                            exclude = ()
+                        code, name = _16_bg_colors.get_code(rgb, exclude=exclude)
+                        return (code, )
+                    else:  # Foreground.
+                        code, name = _16_fg_colors.get_code(rgb)
+                        fg_ansi[0] = name
+                        return (code, )
+
+                # True colors. (Only when this feature is enabled.)
+                elif self.true_color:
+                    r, g, b = rgb
+                    return (48 if bg else 38, 2, r, g, b)
+
+                # 256 RGB colors.
+                else:
+                    return (48 if bg else 38, 5, _256_colors[rgb])
+
+        result = []
+        result.extend(get(fg_color, False))
+        result.extend(get(bg_color, True))
 
         return map(six.text_type, result)
 
