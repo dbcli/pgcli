@@ -480,6 +480,9 @@ class Document(object):
         Return an index relative to the cursor position pointing to the start
         of the next word. Return `None` if nothing was found.
         """
+        if count < 0:
+            return self.find_previous_word_beginning(count=-count, WORD=WORD)
+
         regex = _FIND_BIG_WORD_RE if WORD else _FIND_WORD_RE
         iterator = regex.finditer(self.text_after_cursor)
 
@@ -499,6 +502,9 @@ class Document(object):
         Return an index relative to the cursor position pointing to the end
         of the next word. Return `None` if nothing was found.
         """
+        if count < 0:
+            return self.find_previous_word_ending(count=-count, WORD=WORD)
+
         if include_current_position:
             text = self.text_after_cursor
         else:
@@ -525,6 +531,9 @@ class Document(object):
         Return an index relative to the cursor position pointing to the start
         of the previous word. Return `None` if nothing was found.
         """
+        if count < 0:
+            return self.find_next_word_beginning(count=-count, WORD=WORD)
+
         regex = _FIND_BIG_WORD_RE if WORD else _FIND_WORD_RE
         iterator = regex.finditer(self.text_before_cursor[::-1])
 
@@ -540,6 +549,9 @@ class Document(object):
         Return an index relative to the cursor position pointing to the end
         of the previous word. Return `None` if nothing was found.
         """
+        if count < 0:
+            return self.find_next_word_ending(count=-count, WORD=WORD)
+
         text_before_cursor = self.text_after_cursor[:1] + self.text_before_cursor[::-1]
 
         regex = _FIND_BIG_WORD_RE if WORD else _FIND_WORD_RE
