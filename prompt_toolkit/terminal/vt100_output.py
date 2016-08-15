@@ -8,7 +8,7 @@ http://pygments.org/
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit.filters import to_simple_filter
+from prompt_toolkit.filters import to_simple_filter, Condition
 from prompt_toolkit.layout.screen import Size
 from prompt_toolkit.renderer import Output
 from prompt_toolkit.styles import ANSI_COLOR_NAMES
@@ -16,6 +16,7 @@ from prompt_toolkit.styles import ANSI_COLOR_NAMES
 from six.moves import range
 import array
 import errno
+import os
 import six
 
 __all__ = (
@@ -214,10 +215,10 @@ class _EscapeCodeCache(dict):
 
     :param true_color: When True, use 24bit colors instead of 256 colors.
     """
-    def __init__(self, true_color=False, term='xterm'):
+    def __init__(self, true_color=False, ansi_colors_only=False):
         assert isinstance(true_color, bool)
         self.true_color = true_color
-        self.term = term
+        self.ansi_colors_only = to_simple_filter(ansi_colors_only)
 
     def __missing__(self, attrs):
         fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
@@ -274,7 +275,7 @@ class _EscapeCodeCache(dict):
                 return ()
 
             # When only 16 colors are supported, use that.
-            if self._supports_only_16_colors():
+            if self.ansi_colors_only():
                 if bg:
                     result = (_16_bg_colors[rgb], )
                 else:
@@ -290,10 +291,6 @@ class _EscapeCodeCache(dict):
                 result = (48 if bg else 38, 5, _256_colors[rgb])
 
         return map(six.text_type, result)
-
-    def _supports_only_16_colors(self):
-        " True when the given terminal only supports 16 colors. "
-        return self.term in ('linux', 'eterm-color')
 
 
 def _get_size(fileno):
@@ -328,11 +325,14 @@ class Vt100_Output(Output):
     :param get_size: A callable which returns the `Size` of the output terminal.
     :param stdout: Any object with has a `write` and `flush` method + an 'encoding' property.
     :param true_color: Use 24bit color instead of 256 colors. (Can be a :class:`SimpleFilter`.)
+        When `ansi_colors_only` is set, only 16 colors are used.
+    :param ansi_colors_only: Restrict to 16 ANSI colors only.
     :param term: The terminal environment variable. (xterm, xterm-256color, linux, ...)
     :param write_binary: Encode the output before writing it. If `True` (the
         default), the `stdout` object is supposed to expose an `encoding` attribute.
     """
-    def __init__(self, stdout, get_size, true_color=False, term=None, write_binary=True):
+    def __init__(self, stdout, get_size, true_color=False,
+                 ansi_colors_only=None, term=None, write_binary=True):
         assert callable(get_size)
         assert term is None or isinstance(term, six.text_type)
         assert all(hasattr(stdout, a) for a in ('write', 'flush'))
@@ -347,12 +347,27 @@ class Vt100_Output(Output):
         self.true_color = to_simple_filter(true_color)
         self.term = term or 'xterm'
 
+        # ANSI colors only?
+        if ansi_colors_only is None:
+            # When not given, use the following default.
+            ANSI_COLORS_ONLY = bool(os.environ.get(
+                'PROMPT_TOOLKIT_ANSI_COLORS_ONLY', False))
+
+            @Condition
+            def ansi_colors_only():
+                return ANSI_COLORS_ONLY or term in ('linux', 'eterm-color')
+        else:
+            ansi_colors_only = to_simple_filter(ansi_colors_only)
+
+        self.ansi_colors_only = ansi_colors_only
+
         # Cache for escape codes.
-        self._escape_code_cache = _EscapeCodeCache(true_color=False, term=term)
-        self._escape_code_cache_true_color = _EscapeCodeCache(true_color=True, term=term)
+        self._escape_code_cache = _EscapeCodeCache(ansi_colors_only=ansi_colors_only)
+        self._escape_code_cache_true_color = _EscapeCodeCache(
+            true_color=True, ansi_colors_only=ansi_colors_only)
 
     @classmethod
-    def from_pty(cls, stdout, true_color=False, term=None):
+    def from_pty(cls, stdout, true_color=False, ansi_colors_only=None, term=None):
         """
         Create an Output class from a pseudo terminal.
         (This will take the dimensions by reading the pseudo
@@ -363,7 +378,8 @@ class Vt100_Output(Output):
             rows, columns = _get_size(stdout.fileno())
             return Size(rows=rows, columns=columns)
 
-        return cls(stdout, get_size, true_color=true_color, term=term)
+        return cls(stdout, get_size, true_color=true_color,
+                   ansi_colors_only=ansi_colors_only, term=term)
 
     def fileno(self):
         " Return file descriptor. "
@@ -448,7 +464,7 @@ class Vt100_Output(Output):
 
         :param attrs: `Attrs` instance.
         """
-        if self.true_color():
+        if self.true_color() and not self.ansi_colors_only():
             self.write_raw(self._escape_code_cache_true_color[attrs])
         else:
             self.write_raw(self._escape_code_cache[attrs])

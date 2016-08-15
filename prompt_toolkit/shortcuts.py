@@ -96,12 +96,14 @@ def create_eventloop(inputhook=None, recognize_win32_paste=True):
         return Loop(inputhook=inputhook)
 
 
-def create_output(stdout=None, true_color=False):
+def create_output(stdout=None, true_color=False, ansi_colors_only=None):
     """
     Return an :class:`~prompt_toolkit.output.Output` instance for the command
     line.
 
     :param true_color: When True, use 24bit colors instead of 256 colors.
+        (`bool` or :class:`~prompt_toolkit.filters.SimpleFilter`.)
+    :param ansi_colors_only: When True, restrict to 16 ANSI colors only.
         (`bool` or :class:`~prompt_toolkit.filters.SimpleFilter`.)
     """
     stdout = stdout or sys.__stdout__
@@ -117,7 +119,9 @@ def create_output(stdout=None, true_color=False):
         if PY2:
             term = term.decode('utf-8')
 
-        return Vt100_Output.from_pty(stdout, true_color=true_color, term=term)
+        return Vt100_Output.from_pty(
+            stdout, true_color=true_color,
+            ansi_colors_only=ansi_colors_only, term=term)
 
 
 def create_asyncio_eventloop(loop=None):
