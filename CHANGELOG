@@ -1,6 +1,31 @@
 CHANGELOG
 =========
 
+1.0.6: 2016-08-15
+-----------------
+
+Fixes:
+- Go to the start of the line in Vi nagivation mode, when 'j' or 'k' have been
+  pressed to navigate to a new history entry.
+- Don't crash when pasting text that contains \r\n characters. (This could
+  happen in iTerm2.)
+- Python 2.6 compatibility fix.
+- Allow pressing <esc> before each -ve argument.
+- Better support for conversion from #ffffff values to ANSI colors in
+  Vt100_Output.
+    * Prefer colors with some saturation, instead of gray colors, if the given
+      color was not gray.
+    * Prefer a different foreground and background color if they were
+      originally not the same. (This avoids concealing text.)
+
+New features:
+- Improved ANSI color support.
+    * If the $PROMPT_TOOLKIT_ANSI_COLORS_ONLY environment variable has been
+      set, use the 16 ANSI colors only.
+    * Take an `ansi_colors_only` parameter in `Vt100_Output` and
+      `shortcuts.create_output`.
+
+
 1.0.5: 2016-08-04
 -----------------
 
