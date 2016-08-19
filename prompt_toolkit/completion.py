@@ -78,14 +78,13 @@ class Completion(object):
         `CommandLineInterface` when it needs to have a list of new completions
         after inserting the common prefix.
         """
-        assert isinstance(position, int)
+        assert isinstance(position, int) and position - self.start_position >= 0
 
         return Completion(
-            text=self.text[position + self.start_position:],
+            text=self.text[position - self.start_position:],
             display=self.display,
             display_meta=self._display_meta,
             get_display_meta=self._get_display_meta)
-
 
 
 class CompleteEvent(object):
