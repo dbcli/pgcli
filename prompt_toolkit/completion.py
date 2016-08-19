@@ -40,8 +40,13 @@ class Completion(object):
         assert self.start_position <= 0
 
     def __repr__(self):
-        return '%s(text=%r, start_position=%r)' % (
-            self.__class__.__name__, self.text, self.start_position)
+        if self.display == self.text:
+            return '%s(text=%r, start_position=%r)' % (
+                self.__class__.__name__, self.text, self.start_position)
+        else:
+            return '%s(text=%r, start_position=%r, display=%r)' % (
+                self.__class__.__name__, self.text, self.start_position,
+                self.display)
 
     def __eq__(self, other):
         return (
