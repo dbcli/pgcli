@@ -145,6 +145,22 @@ def test_emacs_cursor_movements():
     result, cli = _feed_cli_with_input('hello world\x1b[1;5DY\n')
     assert result.text == 'hello Yworld'
 
+    # <esc>-f with argument. (forward-word)
+    result, cli = _feed_cli_with_input('hello world abc def\x01\x1b3\x1bfX\n')
+    assert result.text == 'hello world abcX def'
+
+    # <esc>-f with negative argument. (forward-word)
+    result, cli = _feed_cli_with_input('hello world abc def\x1b-\x1b3\x1bfX\n')
+    assert result.text == 'hello Xworld abc def'
+
+    # <esc>-b with argument. (backward-word)
+    result, cli = _feed_cli_with_input('hello world abc def\x1b3\x1bbX\n')
+    assert result.text == 'hello Xworld abc def'
+
+    # <esc>-b with negative argument. (backward-word)
+    result, cli = _feed_cli_with_input('hello world abc def\x01\x1b-\x1b3\x1bbX\n')
+    assert result.text == 'hello world abc Xdef'
+
     # ControlW (kill-word / unix-word-rubout)
     result, cli = _feed_cli_with_input('hello world\x17\n')
     assert result.text == 'hello '
