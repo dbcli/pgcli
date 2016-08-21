@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+1.0.7: 2016-08-21
+-----------------
+
+Fixes:
+- Bugfix in completion. When calculating the common completion to be inserted,
+  the new completions were calculated wrong.
+- On Windows, avoid extra vertical scrolling if the cursor is already on screen.
+
+New features:
+- Support negative arguments for next/previous word ending/beginning.
+
+
 1.0.6: 2016-08-15
 -----------------
 
