@@ -305,7 +305,11 @@ class Win32Output(Output):
 
         # Scroll vertical
         win_height = sr.Bottom - sr.Top
-        result.Bottom = max(win_height, cursor_pos.Y)
+        if 0 < sr.Bottom - cursor_pos.Y < win_height - 1:
+            # no vertical scroll if cursor already on the screen
+            result.Bottom = sr.Bottom
+        else:
+            result.Bottom = max(win_height, cursor_pos.Y)
         result.Top = result.Bottom - win_height
 
         # Scroll API
