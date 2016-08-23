@@ -133,6 +133,8 @@ def suggest_type(full_text, text_before_cursor):
     if full_text.startswith('\\i '):
         return (Path(),)
 
+    # This is a temporary hack; the exception handling
+    # here should be removed once sqlparse has been fixed
     try:
         stmt = SqlStatement(full_text, text_before_cursor)
     except (TypeError, AttributeError):
