@@ -250,10 +250,11 @@ class PGCompleter(Completer):
 
         """
 
-        type_priority = [
+        prio_order = [
             'keyword', 'function', 'view', 'table', 'datatype', 'database',
             'schema', 'column', 'table alias', 'join', 'name join', 'fk join'
-        ].index(meta) if meta else -1
+        ]
+        type_priority = prio_order.index(meta) if meta in prio_order else -1
         text = last_word(text, include='most_punctuations').lower()
         text_len = len(text)
 
