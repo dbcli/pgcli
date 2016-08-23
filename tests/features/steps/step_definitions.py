@@ -56,6 +56,26 @@ def step_send_help(context):
     """
     context.cli.sendline('\?')
 
+@when('we save a named query')
+def step_save_named_query(context):
+    """
+    Send \ns command
+    """
+    context.cli.sendline('\\ns foo SELECT 12345')
+
+@when('we use a named query')
+def step_use_named_query(context):
+    """
+    Send \n command
+    """
+    context.cli.sendline('\\n foo')
+
+@when('we delete a named query')
+def step_delete_named_query(context):
+    """
+    Send \nd command
+    """
+    context.cli.sendline('\\nd foo')
 
 @when('we create database')
 def step_db_create(context):
@@ -281,6 +301,31 @@ def step_see_table_dropped(context):
     Wait to see drop output.
     """
     _expect_exact(context, 'DROP TABLE', timeout=2)
+
+
+@then('we see the named query saved')
+def step_see_named_query_saved(context):
+    """
+    Wait to see query saved.
+    """
+    _expect_exact(context, 'Saved.', timeout=1)
+
+
+@then('we see the named query executed')
+def step_see_named_query_executed(context):
+    """
+    Wait to see select output.
+    """
+    _expect_exact(context, '12345', timeout=1)
+    _expect_exact(context, 'SELECT 1', timeout=1)
+
+
+@then('we see the named query deleted')
+def step_see_named_query_deleted(context):
+    """
+    Wait to see query deleted.
+    """
+    _expect_exact(context, 'foo: Deleted', timeout=1)
 
 
 @then('we see completions refresh started')
