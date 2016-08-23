@@ -163,6 +163,6 @@ Special thanks to
 .. |Build Status| image:: https://api.travis-ci.org/jonathanslenders/python-prompt-toolkit.svg?branch=master
     :target: https://travis-ci.org/jonathanslenders/python-prompt-toolkit#
 
-.. |PyPI| image:: https://pypip.in/version/prompt-toolkit/badge.svg
+.. |PyPI| image:: https://img.shields.io/pypi/v/prompt_toolkit.svg
     :target: https://pypi.python.org/pypi/prompt-toolkit/
     :alt: Latest Version
