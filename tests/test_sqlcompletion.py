@@ -55,6 +55,14 @@ def test_where_in_suggests_columns(expression):
     suggestions = suggest_type(expression, expression)
     assert set(suggestions) == cols_etc('tabl')
 
+@pytest.mark.parametrize('expression', [
+    'SELECT 1 AS ',
+    'SELECT 1 FROM tabl AS ',
+])
+def test_after_as(expression):
+    suggestions = suggest_type(expression, expression)
+    assert set(suggestions) == set()
+
 
 def test_where_equals_any_suggests_columns_or_keywords():
     text = 'SELECT * FROM tabl WHERE foo = ANY('
