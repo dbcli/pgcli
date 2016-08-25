@@ -1,14 +1,14 @@
 import traceback
 import logging
-import itertools
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
+import select
+from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 from .encodingutils import unicode2utf8, PY2, utf8tounicode
-
 
 _logger = logging.getLogger(__name__)
 
@@ -25,9 +25,36 @@ ext.register_type(ext.new_type((2249,), "RECORD", ext.UNICODE))
 # Postgres 9+ and as escaped binary in earlier versions.
 ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 
+# TODO: Get default timeout from pgclirc?
+_WAIT_SELECT_TIMEOUT = 1
+
+
+def _wait_select(conn):
+    """
+        copy-pasted from psycopg2.extras.wait_select
+        the default implementation doesn't define a timeout in the select calls
+    """
+    while 1:
+        try:
+            state = conn.poll()
+            if state == POLL_OK:
+                break
+            elif state == POLL_READ:
+                select.select([conn.fileno()], [], [], _WAIT_SELECT_TIMEOUT)
+            elif state == POLL_WRITE:
+                select.select([], [conn.fileno()], [], _WAIT_SELECT_TIMEOUT)
+            else:
+                raise conn.OperationalError("bad state from poll: %s" % state)
+        except KeyboardInterrupt:
+            conn.cancel()
+            # the loop will be broken by a server error
+            continue
+
+
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
-ext.set_wait_callback(psycopg2.extras.wait_select)
+# See also https://github.com/psycopg/psycopg2/issues/468
+ext.set_wait_callback(_wait_select)
 
 
 def register_date_typecasters(connection):
