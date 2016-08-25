@@ -143,10 +143,10 @@ class PGExecute(object):
             cursor = conn.cursor()
             # When we connect using a DSN, we don't really know what db,
             # user, etc. we connected to. Let's read it.
-            db = self._select_one(cursor, 'select current_database()')
-            user = self._select_one(cursor, 'select current_user')
-            host = self._select_one(cursor, 'select inet_server_addr()')
-            port = self._select_one(cursor, 'select inet_server_port()')
+            db = self._select_one(cursor, 'select current_database()')[0]
+            user = self._select_one(cursor, 'select current_user')[0]
+            host = self._select_one(cursor, 'select inet_server_addr()')[0]
+            port = self._select_one(cursor, 'select inet_server_port()')[0]
         else:
             conn = psycopg2.connect(
                     database=unicode2utf8(db),
