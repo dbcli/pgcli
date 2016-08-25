@@ -682,6 +682,9 @@ class PGCli(object):
         string = string.replace('\\u', self.pgexecute.user or '(none)')
         string = string.replace('\\h', self.pgexecute.host or '(none)')
         string = string.replace('\\d', self.pgexecute.dbname or '(none)')
+        string = string.replace('\\p', str(self.pgexecute.port) or '(none)')
+        string = string.replace('\\i', str(self.pgexecute.pid) or '(none)')
+        string = string.replace('\\#', "#" if (self.pgexecute.superuser) else ">")
         string = string.replace('\\n', "\n")
         return string
 
