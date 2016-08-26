@@ -136,6 +136,8 @@ class PGExecute(object):
         host = (host or self.host)
         port = (port or self.port)
         dsn = (dsn or self.dsn)
+        pid = -1
+        superuser = False
         if dsn:
             if password:
                 dsn = "{0} password={1}".format(dsn, password)
@@ -143,10 +145,10 @@ class PGExecute(object):
             cursor = conn.cursor()
             # When we connect using a DSN, we don't really know what db,
             # user, etc. we connected to. Let's read it.
-            db = self._select_one(cursor, 'select current_database()')
-            user = self._select_one(cursor, 'select current_user')
-            host = self._select_one(cursor, 'select inet_server_addr()')
-            port = self._select_one(cursor, 'select inet_server_port()')
+            db = self._select_one(cursor, 'select current_database()')[0]
+            user = self._select_one(cursor, 'select current_user')[0]
+            host = self._select_one(cursor, 'select inet_server_addr()')[0]
+            port = self._select_one(cursor, 'select inet_server_port()')[0]
         else:
             conn = psycopg2.connect(
                     database=unicode2utf8(db),
@@ -154,6 +156,11 @@ class PGExecute(object):
                     password=unicode2utf8(password),
                     host=unicode2utf8(host),
                     port=unicode2utf8(port))
+
+            cursor = conn.cursor()
+
+        superuser = self._select_one(cursor, "select current_setting('is_superuser')::bool")[0]
+        pid = self._select_one(cursor, 'select pg_backend_pid()')[0]
         conn.set_client_encoding('utf8')
         if hasattr(self, 'conn'):
             self.conn.close()
@@ -164,6 +171,8 @@ class PGExecute(object):
         self.password = password
         self.host = host
         self.port = port
+        self.pid = pid
+        self.superuser = superuser
 
         register_date_typecasters(conn)
         register_json_typecasters(self.conn, self._json_typecaster)
