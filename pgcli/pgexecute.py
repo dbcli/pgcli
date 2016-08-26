@@ -138,7 +138,6 @@ class PGExecute(object):
         dsn = (dsn or self.dsn)
         pid = -1
         superuser = False
-        print("dsn: %s" % dsn)
         if dsn:
             if password:
                 dsn = "{0} password={1}".format(dsn, password)
