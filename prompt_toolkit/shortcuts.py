@@ -292,7 +292,7 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
             # Reserve the space, either when there are completions, or when
             # `complete_while_typing` is true and we expect completions very
             # soon.
-            if buff.complete_while_typing(cli) or buff.complete_state is not None:
+            if buff.complete_while_typing() or buff.complete_state is not None:
                 return LayoutDimension(min=reserve_space_for_menu)
 
         return LayoutDimension()
@@ -407,10 +407,10 @@ def create_prompt_application(
     :param editing_mode: ``EditingMode.VI`` or ``EditingMode.EMACS``.
     :param vi_mode: `bool`, if True, Identical to ``editing_mode=EditingMode.VI``.
     :param complete_while_typing: `bool` or
-        :class:`~prompt_toolkit.filters.CLIFilter`. Enable autocompletion while
-        typing.
+        :class:`~prompt_toolkit.filters.SimpleFilter`. Enable autocompletion
+        while typing.
     :param enable_history_search: `bool` or
-        :class:`~prompt_toolkit.filters.CLIFilter`. Enable up-arrow parting
+        :class:`~prompt_toolkit.filters.SimpleFilter`. Enable up-arrow parting
         string matching.
     :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` to be used for
         the syntax highlighting.
