@@ -47,7 +47,7 @@ class NoConsoleScreenBufferError(Exception):
     """
     def __init__(self):
         # Are we running in 'xterm' on Windows, like git-bash for instance?
-        xterm = 'xterm' in os.environ.get('TERM')
+        xterm = 'xterm' in os.environ.get('TERM', '')
 
         if xterm:
             message = ('Found %s, while expecting a Windows console. '
