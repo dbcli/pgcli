@@ -20,7 +20,7 @@ __all__ = (
 )
 
 
-def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_char=None,
+def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_token=None,
                         is_done=False, attrs_for_token=None, size=None, previous_width=0):  # XXX: drop is_done
     """
     Render the diff between this screen and the previous screen.
@@ -35,7 +35,7 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
     Don't change things without profiling first.
 
     :param current_pos: Current cursor position.
-    :param last_char: `Char` instance that represents the output attributes of
+    :param last_token: `Token` instance that represents the output attributes of
             the last drawn character. (Color/attributes.)
     :param attrs_for_token: :class:`._TokenToAttrsCache` instance.
     :param width: The width of the terminal.
@@ -44,7 +44,7 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
     width, height = size.columns, size.rows
 
     #: Remember the last printed character.
-    last_char = [last_char]  # nonlocal
+    last_token = [last_token]  # nonlocal
 
     #: Variable for capturing the output.
     write = output.write
@@ -64,7 +64,7 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
     def reset_attributes():
         " Wrapper around Output.reset_attributes. "
         _output_reset_attributes()
-        last_char[0] = None  # Forget last char after resetting attributes.
+        last_token[0] = None  # Forget last char after resetting attributes.
 
     def move_cursor(new):
         " Move cursor to this `new` point. Returns the given Point. "
@@ -99,15 +99,14 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
         """
         # If the last printed character has the same token, it also has the
         # same style, so we don't output it.
-        if last_char[0] and last_char[0].token == char.token:
+        the_last_token = last_token[0]
+
+        if the_last_token and the_last_token == char.token:
             write(char.char)
         else:
-            attrs = attrs_for_token[char.token]
-
-            _output_set_attributes(attrs)
+            _output_set_attributes(attrs_for_token[char.token])
             write(char.char)
-
-        last_char[0] = char
+            last_token[0] = char.token
 
     # Disable autowrap
     if not previous_screen:
@@ -200,7 +199,7 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
     if screen.show_cursor or is_done:
         output.show_cursor()
 
-    return current_pos, last_char[0]
+    return current_pos, last_token[0]
 
 
 class HeightIsUnknownError(Exception):
@@ -264,7 +263,7 @@ class Renderer(object):
         # instance a toolbar at the bottom position.)
         self._last_screen = None
         self._last_size = None
-        self._last_char = None
+        self._last_token = None
 
         # When the style hash changes, we have to do a full redraw as well as
         # clear the `_attrs_for_token` dictionary.
@@ -435,9 +434,9 @@ class Renderer(object):
             screen.replace_all_tokens(Token.Aborted)
 
         # Process diff and write to output.
-        self._cursor_pos, self._last_char = _output_screen_diff(
+        self._cursor_pos, self._last_token = _output_screen_diff(
             output, screen, self._cursor_pos,
-            self._last_screen, self._last_char, is_done,
+            self._last_screen, self._last_token, is_done,
             attrs_for_token=self._attrs_for_token,
             size=size,
             previous_width=(self._last_size.columns if self._last_size else 0))
