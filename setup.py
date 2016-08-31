@@ -28,7 +28,7 @@ install_requirements = [
 # But this is not necessary in Windows since the password is never shown in the
 # task manager. Also setproctitle is a hard dependency to install in Windows,
 # so we'll only install it if we're not in Windows.
-if platform.system() != 'Windows':
+if platform.system() != 'Windows' and not platform.system().startswith("CYGWIN"):
     install_requirements.append('setproctitle >= 1.1.9')
 
 setup(
