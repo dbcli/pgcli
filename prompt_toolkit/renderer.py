@@ -45,7 +45,6 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
 
     #: Remember the last printed character.
     last_char = [last_char]  # nonlocal
-    background_turned_on = [False]  # Nonlocal
 
     #: Variable for capturing the output.
     write = output.write
@@ -106,10 +105,6 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
             attrs = attrs_for_token[char.token]
 
             _output_set_attributes(attrs)
-
-            # If we print something with a background color, remember that.
-            background_turned_on[0] = bool(attrs.bgcolor)
-
             write(char.char)
 
         last_char[0] = char
@@ -194,14 +189,13 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
         current_pos = move_cursor(screen.cursor_position)
 
     if is_done:
-        reset_attributes()
         output.enable_autowrap()
 
-    # If the last printed character has a background color, always reset.
-    # (Many terminals give weird artifacs on resize events when there is an
-    # active background color.)
-    if background_turned_on[0]:
-        reset_attributes()
+    # Always reset the color attributes. This is important because a background
+    # thread could print data to stdout and we want that to be displayed in the
+    # default colors. (Also, if a background color has been set, many terminals
+    # give weird artifacs on resize events.)
+    reset_attributes()
 
     if screen.show_cursor or is_done:
         output.show_cursor()
