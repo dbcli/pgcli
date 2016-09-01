@@ -1,3 +1,35 @@
+1.2.0
+=====
+
+Features:
+---------
+
+* Add more specifiers to pgcli prompt. (Thanks: `Julien Rouhaud`_).
+   ``\p`` for port info ``\#`` for super user and ``\i`` for pid.
+* Add `\watch` command to periodically execute a command. (Thanks: `Stuart Quin`_).
+    ``> SELECT * FROM django_migrations; \watch 1  /* Runs the command every second */``
+* Add command-line option --single-connection to prevent pgcli from using multiple connections. (Thanks: `Joakim Koljonen`_).
+* Add priority to the suggestions to sort based on relevance. (Thanks: `Joakim Koljonen`_).
+* Configurable null format via the config file. (Thanks: `Adrian Dries`_).
+* Add support for CTE aware auto-completion. (Thanks: `Darik Gamble`_).
+* Add host and user information to default pgcli prompt. (Thanks: `Lim H`_).
+* Better scoping for tables in insert statements to improve suggestions. (Thanks: `Joakim Koljonen`_).
+
+Bug Fixes:
+----------
+
+* Do not install setproctitle on cygwin. (Thanks: `Janus Troelsen`_).
+* Work around sqlparse crashing after AS keyword. (Thanks: `Joakim Koljonen`_).
+* Fix a crashing bug with named queries. (Thanks: `Joakim Koljonen`_).
+* Replace  timestampz alias since AWS Redshift does not support it. (Thanks: `Tahir Butt`_).
+
+Internal Changes:
+-----------------
+
+* Upgrade to sqlparse-0.2.0. (Thanks: `Tiziano Müller`_).
+* Upgrade to pgspecial 1.6.0. (Thanks: `Stuart Quin`_).
+
+
 1.1.0
 =====
 
@@ -505,10 +537,16 @@ Improvements:
 .. _`James Munson`: https://github.com/jmunson
 .. _`Jonathan Slenders`: https://github.com/jonathanslenders
 .. _`Fernando Mora`: https://github.com/fernandomora
-.. _`Stuart Quin`: https://github.com/stuartquin
 .. _`Timothy Cleaver`: Timothy Cleaver
 .. _`gtxx`: gtxx
 .. _`Joakim Koljonen`: https://github.com/koljonen
 .. _`Anže Pečar`: https://github.com/Smotko
 .. _`Catherine Devlin`: https://github.com/catherinedevlin
 .. _`Eric Wald`: https://github.com/eswald
+.. _`avdd`: https://github.com/avdd
+.. _`Adrian Dries`: Adrian Dries
+.. _`Julien Rouhaud`: https://github.com/rjuju
+.. _`Lim H`: Lim H
+.. _`Tahir Butt`: Tahir Butt
+.. _`Tiziano Müller`: https://github.com/dev-zero
+.. _`Janus Troelsen`: https://github.com/ysangkok
