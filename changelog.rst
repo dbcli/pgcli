@@ -22,6 +22,7 @@ Bug Fixes:
 * Work around sqlparse crashing after AS keyword. (Thanks: `Joakim Koljonen`_).
 * Fix a crashing bug with named queries. (Thanks: `Joakim Koljonen`_).
 * Replace  timestampz alias since AWS Redshift does not support it. (Thanks: `Tahir Butt`_).
+* Prevent pgcli from hanging indefinitely when Postgres instance is not running. (Thanks: `Darik Gamble`_)
 
 Internal Changes:
 -----------------
