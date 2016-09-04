@@ -121,6 +121,7 @@ class PGCli(object):
         self.pgspecial = PGSpecial()
 
         self.multi_line = c['main'].as_bool('multi_line')
+        self.multiline_mode = c['main'].get('multi_line_mode', 'psql')
         self.vi_mode = c['main'].as_bool('vi')
         self.pgspecial.timing_enabled = c['main'].as_bool('timing')
         if row_limit is not None:
@@ -515,6 +516,7 @@ class PGCli(object):
         with self._completer_lock:
             buf = PGBuffer(
                 always_multiline=self.multi_line,
+                multiline_mode=self.multiline_mode,
                 completer=self.completer,
                 history=history,
                 complete_while_typing=Always(),

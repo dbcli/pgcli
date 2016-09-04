@@ -4,13 +4,20 @@ from .packages.parseutils.utils import is_open_quote
 
 
 class PGBuffer(Buffer):
-    def __init__(self, always_multiline, *args, **kwargs):
+    def __init__(self, always_multiline, multiline_mode, *args, **kwargs):
         self.always_multiline = always_multiline
+        self.multiline_mode = multiline_mode
 
         @Condition
         def is_multiline():
             doc = self.document
-            return self.always_multiline and not _multiline_exception(doc.text)
+            if not self.always_multiline:
+                return False
+            if self.multiline_mode == 'safe':
+                return True
+            else:
+                return not _multiline_exception(doc.text)
+
 
         super(self.__class__, self).__init__(*args, is_multiline=is_multiline,
                                              tempfile_suffix='.sql', **kwargs)

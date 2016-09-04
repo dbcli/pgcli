@@ -15,6 +15,13 @@ wider_completion_menu = False
 # lines. End of line (return) is considered as the end of the statement.
 multi_line = False
 
+# If multi_line_mode is set to "psql", in multi-line mode, [Enter] will execute
+# the current input if the input ends in a semicolon.
+# If multi_line_mode is set to "safe", in multi-line mode, [Enter] will always
+# insert a newline, and [Esc] [Enter] or [Alt]-[Enter] must be used to execute
+# a command.
+multi_line_mode = psql
+
 # If set to True, table suggestions will include a table alias
 generate_aliases = False
 
