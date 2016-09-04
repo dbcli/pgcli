@@ -24,6 +24,9 @@ generate_aliases = False
 # %USERPROFILE% is typically C:\Users\{username}
 log_file = default
 
+# keyword casing preference. Possible values "lower", "upper", "auto"
+keyword_casing = upper
+
 # casing_file location.
 # In Unix/Linux: ~/.config/pgcli/casing
 # In Windows: %USERPROFILE%\AppData\Local\dbcli\pgcli\casing
