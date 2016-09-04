@@ -60,6 +60,11 @@ class PGCompleter(Completer):
         self.asterisk_column_order = settings.get(
             'asterisk_column_order', 'table_order')
 
+        keyword_casing = settings.get('keyword_casing', 'upper').lower()
+        if keyword_casing not in ('upper', 'lower', 'auto'):
+            keyword_casing = 'upper'
+        self.keyword_casing = keyword_casing
+
         self.reserved_words = set()
         for x in self.keywords:
             self.reserved_words.update(x.split())
@@ -612,7 +617,19 @@ class PGCompleter(Completer):
                                  meta='database')
 
     def get_keyword_matches(self, _, word_before_cursor):
-        return self.find_matches(word_before_cursor, self.keywords,
+        casing = self.keyword_casing
+        if casing == 'auto':
+            if word_before_cursor and word_before_cursor[-1].islower():
+                casing = 'lower'
+            else:
+                casing = 'upper'
+
+        if casing == 'upper':
+            keywords = [k.upper() for k in self.keywords]
+        else:
+            keywords = [k.lower() for k in self.keywords]
+
+        return self.find_matches(word_before_cursor, keywords,
                                  mode='strict', meta='keyword')
 
     def get_path_matches(self, _, word_before_cursor):

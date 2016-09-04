@@ -914,3 +914,18 @@ def test_cte_qualified_columns(completer, complete_event, text):
         complete_event)
     expected = [Completion('foo', 0, display_meta='column')]
     assert set(expected) == set(result)
+
+
+@pytest.mark.parametrize('keyword_casing,expected,texts', [
+    ('upper', 'SELECT', ('', 's', 'S', 'Sel')),
+    ('lower', 'select', ('', 's', 'S', 'Sel')),
+    ('auto', 'SELECT', ('', 'S', 'SEL', 'seL')),
+    ('auto', 'select', ('s', 'sel', 'SEl')),
+])
+def test_keyword_casing_upper(keyword_casing, expected, texts):
+    for text in texts:
+        completer_ = testdata.get_completer({'keyword_casing': keyword_casing})
+        completions = completer_.get_completions(
+            Document(text=text, cursor_position=len(text)), complete_event)
+        assert expected in [cpl.text for cpl in completions]
+

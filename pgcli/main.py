@@ -143,11 +143,16 @@ class PGCli(object):
 
         # Initialize completer
         smart_completion = c['main'].as_bool('smart_completion')
-        self.settings = {'casing_file': get_casing_file(c),
-          'generate_casing_file': c['main'].as_bool('generate_casing_file'),
-          'generate_aliases': c['main'].as_bool('generate_aliases'),
-          'asterisk_column_order': c['main']['asterisk_column_order'],
-          'single_connection': single_connection}
+        keyword_casing = c['main']['keyword_casing']
+        self.settings = {
+            'casing_file': get_casing_file(c),
+            'generate_casing_file': c['main'].as_bool('generate_casing_file'),
+            'generate_aliases': c['main'].as_bool('generate_aliases'),
+            'asterisk_column_order': c['main']['asterisk_column_order'],
+            'single_connection': single_connection,
+            'keyword_casing': keyword_casing,
+        }
+
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial,
             settings=self.settings)
         self.completer = completer
