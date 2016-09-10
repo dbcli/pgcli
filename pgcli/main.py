@@ -588,8 +588,7 @@ class PGCli(object):
                 self.pgspecial.expanded_output, max_width)
 
             output.extend(formatted)
-            end = time()
-            total += end - start
+            total = time() - start
 
             # Keep track of whether any of the queries are mutating or changing
             # the database
