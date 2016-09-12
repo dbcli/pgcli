@@ -335,7 +335,7 @@ def suggest_based_on_last_token(token, stmt):
             if last_word(stmt.text_before_cursor,
                          'all_punctuations').startswith('('):
                 return (Keyword(),)
-        prev_prev_tok = p.token_prev(p.token_index(prev_tok))[1]
+        prev_prev_tok = prev_tok and p.token_prev(p.token_index(prev_tok))[1]
         if prev_prev_tok and prev_prev_tok.normalized == 'INTO':
             return (Column(table_refs=stmt.get_tables('insert')),)
         # We're probably in a function argument list

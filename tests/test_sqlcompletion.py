@@ -716,6 +716,14 @@ def test_select_suggests_fields_from_function():
 
 
 @pytest.mark.parametrize('sql', [
+    '(',
+])
+def test_leading_parenthesis(sql):
+    # No assertion for now; just make sure it doesn't crash
+    suggest_type(sql, sql)
+
+
+@pytest.mark.parametrize('sql', [
     'select * from "',
     'select * from "foo',
 ])
