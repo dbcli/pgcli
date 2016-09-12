@@ -25,8 +25,10 @@ def create_toolbar_tokens_func(get_vi_mode_enabled, get_is_refreshing):
             result.append((token.Off, '[F3] Multiline: OFF  '))
 
         if cli.buffers[DEFAULT_BUFFER].always_multiline:
-            result.append((token,
-                ' (Semi-colon [;] will end the line)'))
+            if cli.buffers[DEFAULT_BUFFER].multiline_mode == 'safe':
+                result.append((token,' ([Esc] [Enter] to execute]) '))
+            else:
+                result.append((token,' (Semi-colon [;] will end the line) '))
 
         if get_vi_mode_enabled():
             result.append((token.On, '[F4] Vi-mode'))
