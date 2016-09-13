@@ -8,6 +8,8 @@ from configobj import ConfigObj
 def config_location():
     if platform.system() == 'Windows':
         return os.getenv('USERPROFILE') + '\\AppData\\Local\\dbcli\\pgcli\\'
+    elif 'XDG_CONFIG_HOME' in os.environ:
+        return '%s/pgcli/' % expanduser(os.environ['XDG_CONFIG_HOME'])
     else:
         return expanduser('~/.config/pgcli/')
 
