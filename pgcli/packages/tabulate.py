@@ -5,7 +5,6 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 from collections import namedtuple
-from decimal import Decimal
 from platform import python_version_tuple
 from wcwidth import wcswidth
 from ..encodingutils import utf8tounicode
@@ -334,7 +333,7 @@ def _type(string, has_invisible=True):
 
     if string is None:
         return _none_type
-    if isinstance(string, (bool, Decimal,)):
+    if isinstance(string, bool):
         return _text_type
     elif hasattr(string, "isoformat"):  # datetime.datetime, date, and time
         return _text_type
@@ -512,7 +511,9 @@ def _format(val, valtype, floatfmt, missingval=""):
     if val is None:
         return missingval
 
-    if valtype in [int, _text_type]:
+    if valtype is int:
+        return "{0:,d}".format(val)
+    elif valtype is _text_type:
         return "{0}".format(val)
     elif valtype is _binary_type:
         try:
@@ -648,7 +649,7 @@ def _normalize_tabular_data(tabular_data, headers):
 
 
 def tabulate(tabular_data, headers=[], tablefmt="simple",
-             floatfmt="g", numalign="decimal", stralign="left",
+             floatfmt=",g", numalign="decimal", stralign="left",
              missingval=""):
     """Format a fixed width table for pretty printing.
 
