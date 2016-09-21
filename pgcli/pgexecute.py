@@ -164,7 +164,6 @@ class PGExecute(object):
         port = (port or self.port)
         dsn = (dsn or self.dsn)
         pid = -1
-        superuser = False
         if dsn:
             if password:
                 dsn = "{0} password={1}".format(dsn, password)
@@ -186,7 +185,9 @@ class PGExecute(object):
 
             cursor = conn.cursor()
 
-        superuser = self._select_one(cursor, "select current_setting('is_superuser')::bool")[0]
+        cursor.execute("SHOW ALL")
+        db_parameters = dict(cursor.fetchall())
+
         pid = self._select_one(cursor, 'select pg_backend_pid()')[0]
         conn.set_client_encoding('utf8')
         if hasattr(self, 'conn'):
@@ -199,7 +200,7 @@ class PGExecute(object):
         self.host = host
         self.port = port
         self.pid = pid
-        self.superuser = superuser
+        self.superuser = db_parameters.get('is_superuser') == '1'
 
         register_date_typecasters(conn)
         register_json_typecasters(self.conn, self._json_typecaster)
