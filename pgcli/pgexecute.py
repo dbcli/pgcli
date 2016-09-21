@@ -186,7 +186,7 @@ class PGExecute(object):
             cursor = conn.cursor()
 
         cursor.execute("SHOW ALL")
-        db_parameters = dict(cursor.fetchall())
+        db_parameters = dict(name_val_desc[:2] for name_val_desc in cursor.fetchall())
 
         pid = self._select_one(cursor, 'select pg_backend_pid()')[0]
         conn.set_client_encoding('utf8')
