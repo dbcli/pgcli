@@ -137,7 +137,8 @@ class PGCli(object):
         self.null_string = c['main'].get('null_string', '<null>')
         self.prompt_format = c['main'].get('prompt', self.default_prompt)
         self.on_error = c['main']['on_error'].upper()
-
+        self.decimal_format = c['data_formats']['decimal']
+        self.float_format = c['data_formats']['float']
         self.completion_refresher = CompletionRefresher()
 
         self.query_history = []
@@ -586,8 +587,8 @@ class PGCli(object):
                 max_width = None
 
             formatted = format_output(
-                title, cur, headers, status, self.table_format, self.null_string,
-                self.pgspecial.expanded_output, max_width)
+                title, cur, headers, status, self.table_format, self.decimal_format,
+                self.float_format, self.null_string,  self.pgspecial.expanded_output, max_width)
 
             output.extend(formatted)
             total = time() - start
@@ -791,7 +792,9 @@ def obfuscate_process_password():
 
     setproctitle.setproctitle(process_title)
 
-def format_output(title, cur, headers, status, table_format, missingval='<null>', expanded=False, max_width=None):
+
+def format_output(title, cur, headers, status, table_format, dcmlfmt, floatfmt,
+                  missingval='<null>', expanded=False, max_width=None):
     output = []
     if title:  # Only print the title if it's not None.
         output.append(title)
@@ -801,7 +804,7 @@ def format_output(title, cur, headers, status, table_format, missingval='<null>'
             output.append(expanded_table(cur, headers, missingval))
         else:
             tabulated, rows = tabulate(cur, headers, tablefmt=table_format,
-                missingval=missingval)
+                missingval=missingval, dcmlfmt=dcmlfmt, floatfmt=floatfmt)
             if (max_width and rows and
                     content_exceeds_width(rows[0], max_width) and
                     headers):
