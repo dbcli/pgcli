@@ -29,7 +29,7 @@ def main():
     result = prompt('Say something: ', patch_stdout=True)
     print('You said: %s' % result)
 
-    # Stop thrad.
+    # Stop thread.
     running = False
 
 
