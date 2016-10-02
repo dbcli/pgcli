@@ -422,25 +422,51 @@ class raw_mode(object):
 
         with raw_mode(stdin):
             ''' the pseudo-terminal stdin is now used in raw mode '''
+
+    We ignore errors when executing `tcgetattr` fails.
     """
+    # There are several reasons for ignoring errors:
+    # 1. To avoid the "Inappropriate ioctl for device" crash if somebody would
+    #    execute this code (In a Python REPL, for instance):
+    #
+    #         import os; f = open(os.devnull); os.dup2(f.fileno(), 0)
+    #
+    #    The result is that the eventloop will stop correctly, because it has
+    #    to logic to quit when stdin is closed. However, we should not fail at
+    #    this point. See:
+    #      https://github.com/jonathanslenders/python-prompt-toolkit/pull/393
+    #      https://github.com/jonathanslenders/python-prompt-toolkit/issues/392
+
+    # 2. Related, when stdin is an SSH pipe, and no full terminal was allocated.
+    #    See: https://github.com/jonathanslenders/python-prompt-toolkit/pull/165
     def __init__(self, fileno):
         self.fileno = fileno
-        self.attrs_before = termios.tcgetattr(fileno)
+        try:
+            self.attrs_before = termios.tcgetattr(fileno)
+        except termios.error:
+            # Ignore attribute errors.
+            self.attrs_before = None
 
     def __enter__(self):
         # NOTE: On os X systems, using pty.setraw() fails. Therefor we are using this:
-        newattr = termios.tcgetattr(self.fileno)
-        newattr[tty.LFLAG] = self._patch_lflag(newattr[tty.LFLAG])
-        newattr[tty.IFLAG] = self._patch_iflag(newattr[tty.IFLAG])
-        termios.tcsetattr(self.fileno, termios.TCSANOW, newattr)
+        try:
+            newattr = termios.tcgetattr(self.fileno)
+        except termios.error:
+            pass
+        else:
+            newattr[tty.LFLAG] = self._patch_lflag(newattr[tty.LFLAG])
+            newattr[tty.IFLAG] = self._patch_iflag(newattr[tty.IFLAG])
+            termios.tcsetattr(self.fileno, termios.TCSANOW, newattr)
 
-        # Put the terminal in cursor mode. (Instead of application mode.)
-        os.write(self.fileno, b'\x1b[?1l')
+            # Put the terminal in cursor mode. (Instead of application mode.)
+            os.write(self.fileno, b'\x1b[?1l')
 
-    def _patch_lflag(self, attrs):
+    @classmethod
+    def _patch_lflag(cls, attrs):
         return attrs & ~(termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
 
-    def _patch_iflag(self, attrs):
+    @classmethod
+    def _patch_iflag(cls, attrs):
         return attrs & ~(
             # Disable XON/XOFF flow control on output and input.
             # (Don't capture Ctrl-S and Ctrl-Q.)
@@ -452,10 +478,14 @@ class raw_mode(object):
         )
 
     def __exit__(self, *a, **kw):
-        termios.tcsetattr(self.fileno, termios.TCSANOW, self.attrs_before)
+        if self.attrs_before is not None:
+            try:
+                termios.tcsetattr(self.fileno, termios.TCSANOW, self.attrs_before)
+            except termios.error:
+                pass
 
-        # # Put the terminal in application mode.
-        # self._stdout.write('\x1b[?1h')
+            # # Put the terminal in application mode.
+            # self._stdout.write('\x1b[?1h')
 
 
 class cooked_mode(raw_mode):
@@ -465,9 +495,11 @@ class cooked_mode(raw_mode):
         with cooked_mode(stdin):
             ''' the pseudo-terminal stdin is now used in cooked mode. '''
     """
-    def _patch_lflag(self, attrs):
+    @classmethod
+    def _patch_lflag(cls, attrs):
         return attrs | (termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
 
-    def _patch_iflag(self, attrs):
+    @classmethod
+    def _patch_iflag(cls, attrs):
         # Don't change any.
         return attrs
