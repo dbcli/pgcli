@@ -496,7 +496,7 @@ def _column_type(strings, has_invisible=True):
     return reduce(_more_generic, types, int)
 
 
-def _format(val, valtype, dcmlfmt ,floatfmt, missingval=""):
+def _format(val, valtype, dcmlfmt, floatfmt, missingval=""):
     """Format a value accoding to its type.
 
     Unicode is supported:
@@ -512,7 +512,7 @@ def _format(val, valtype, dcmlfmt ,floatfmt, missingval=""):
         return missingval
 
     if valtype is int:
-        return format(val, dcmlfmt)
+        return format(int(val), dcmlfmt)
     elif valtype is _text_type:
         return "{0}".format(val)
     elif valtype is _binary_type:
