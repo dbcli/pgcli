@@ -74,6 +74,7 @@ function:
 .. code:: python
 
     from prompt_toolkit.shortcuts import prompt
+    from prompt_toolkit.token import Token
     from prompt_toolkit.styles import style_from_dict
 
     our_style = style_from_dict({
