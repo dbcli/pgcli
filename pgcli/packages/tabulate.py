@@ -8,6 +8,7 @@ from collections import namedtuple
 from platform import python_version_tuple
 from wcwidth import wcswidth
 from ..encodingutils import utf8tounicode
+from decimal import Decimal
 import re
 
 
@@ -301,15 +302,14 @@ def _isnumber(string):
 
 def _isint(string):
     """
-    >>> _isint("123")
+    >>> _isint(123)
     True
+    >>> _isint("123")
+    False
     >>> _isint("123.45")
     False
     """
-    return type(string) is _int_type or type(string) is _long_type or \
-           (isinstance(string, _binary_type) or isinstance(string, _text_type)) and \
-           _isconvertible(int, string)
-
+    return type(string) is _int_type or type(string) is _long_type
 
 def _type(string, has_invisible=True):
     """The least generic type (type(None), int, float, str, unicode).
@@ -319,7 +319,7 @@ def _type(string, has_invisible=True):
     >>> _type("foo") is type("")
     True
     >>> _type("1") is type(1)
-    True
+    False
     >>> _type('\x1b[31m42\x1b[0m') is type(42)
     True
     >>> _type('\x1b[31m42\x1b[0m') is type(42)
@@ -339,7 +339,7 @@ def _type(string, has_invisible=True):
         return _text_type
     elif _isint(string):
         return int
-    elif _isnumber(string):
+    elif isinstance(string, (float, Decimal)):
         return float
     elif isinstance(string, _binary_type):
         return _binary_type
@@ -496,7 +496,7 @@ def _column_type(strings, has_invisible=True):
     return reduce(_more_generic, types, int)
 
 
-def _format(val, valtype, dcmlfmt ,floatfmt, missingval=""):
+def _format(val, valtype, dcmlfmt, floatfmt, missingval=""):
     """Format a value accoding to its type.
 
     Unicode is supported:
@@ -512,7 +512,7 @@ def _format(val, valtype, dcmlfmt ,floatfmt, missingval=""):
         return missingval
 
     if valtype is int:
-        return format(val, dcmlfmt)
+        return format(int(val), dcmlfmt)
     elif valtype is _text_type:
         return "{0}".format(val)
     elif valtype is _binary_type:
