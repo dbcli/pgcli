@@ -74,8 +74,12 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         Call this function in the main event loop. Similar to Twisted's
         ``callFromThread``.
 
-        :param _max_postpone_until: `None` or `datetime` instance. For interal
+        :param _max_postpone_until: `None` or `time.time` value. For interal
             use. If the eventloop is saturated, consider this task to be low
             priority and postpone maximum until this timestamp. (For instance,
             repaint is done using low priority.)
+
+            Note: In the past, this used to be a datetime.datetime instance,
+                  but apparently, executing `time.time` is more efficient: it
+                  does fewer system calls. (It doesn't read /etc/localtime.)
         """

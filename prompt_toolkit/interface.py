@@ -3,7 +3,6 @@ The main `CommandLineInterface` class and logic.
 """
 from __future__ import unicode_literals
 
-import datetime
 import functools
 import os
 import signal
@@ -11,6 +10,7 @@ import six
 import sys
 import textwrap
 import threading
+import time
 import types
 import weakref
 
@@ -326,11 +326,16 @@ class CommandLineInterface(object):
                 self._redraw()
 
             # Call redraw in the eventloop (thread safe).
-            # Give it low priority. If there is other I/O or CPU intensive
-            # stuff to handle, give that priority, but max postpone x seconds.
-            _max_postpone_until = datetime.datetime.now() + datetime.timedelta(
-                seconds=self.max_render_postpone_time)
-            self.eventloop.call_from_executor(redraw, _max_postpone_until=_max_postpone_until)
+            # Usually with the high priority, in order to make the application
+            # feel responsive, but this can be tuned by changing the value of
+            # `max_render_postpone_time`.
+            if self.max_render_postpone_time:
+                _max_postpone_until = time.time() + self.max_render_postpone_time
+            else:
+                _max_postpone_until = None
+
+            self.eventloop.call_from_executor(
+                redraw, _max_postpone_until=_max_postpone_until)
 
     # Depracated alias for 'invalidate'.
     request_redraw = invalidate

@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
-import datetime
 import fcntl
 import os
 import random
 import signal
 import threading
+import time
 
 from prompt_toolkit.terminal.vt100_input import InputStream
 from prompt_toolkit.utils import DummyContext, in_main_thread
@@ -20,7 +20,7 @@ __all__ = (
     'PosixEventLoop',
 )
 
-_now = datetime.datetime.now
+_now = time.time
 
 
 class PosixEventLoop(EventLoop):
@@ -125,17 +125,23 @@ class PosixEventLoop(EventLoop):
                     # case.
                     tasks = []
                     low_priority_tasks = []
-                    now = _now()
+                    now = None  # Lazy load time. (Fewer system calls.)
 
                     for fd in fds:
                         # For the 'call_from_executor' fd, put each pending
                         # item on either the high or low priority queue.
                         if fd == self._schedule_pipe[0]:
                             for c, max_postpone_until in self._calls_from_executor:
-                                if max_postpone_until is None or max_postpone_until < now:
+                                if max_postpone_until is None:
+                                    # Execute now.
                                     tasks.append(c)
                                 else:
-                                    low_priority_tasks.append((c, max_postpone_until))
+                                    # Execute soon, if `max_postpone_until` is in the future.
+                                    now = now or _now()
+                                    if max_postpone_until < now:
+                                        tasks.append(c)
+                                    else:
+                                        low_priority_tasks.append((c, max_postpone_until))
                             self._calls_from_executor = []
 
                             # Flush all the pipe content.
@@ -228,11 +234,12 @@ class PosixEventLoop(EventLoop):
         Call this function in the main event loop.
         Similar to Twisted's ``callFromThread``.
 
-        :param _max_postpone_until: `None` or `datetime` instance. For interal
+        :param _max_postpone_until: `None` or `time.time` value. For interal
             use. If the eventloop is saturated, consider this task to be low
             priority and postpone maximum until this timestamp. (For instance,
             repaint is done using low priority.)
         """
+        assert _max_postpone_until is None or isinstance(_max_postpone_until, float)
         self._calls_from_executor.append((callback, _max_postpone_until))
 
         if self._schedule_pipe:
