@@ -93,18 +93,21 @@ class PosixEventLoop(EventLoop):
         with ctx:
             while self._running:
                 # Call inputhook.
-                with TimeIt() as inputhook_timer:
-                    if self._inputhook_context:
+                if self._inputhook_context:
+                    with TimeIt() as inputhook_timer:
                         def ready(wait):
                             " True when there is input ready. The inputhook should return control. "
                             return self._ready_for_reading(current_timeout[0] if wait else 0) != []
                         self._inputhook_context.call_inputhook(ready)
+                    inputhook_duration = inputhook_timer.duration
+                else:
+                    inputhook_duration = 0
 
                 # Calculate remaining timeout. (The inputhook consumed some of the time.)
                 if current_timeout[0] is None:
                     remaining_timeout = None
                 else:
-                    remaining_timeout = max(0, current_timeout[0] - inputhook_timer.duration)
+                    remaining_timeout = max(0, current_timeout[0] - inputhook_duration)
 
                 # Wait until input is ready.
                 fds = self._ready_for_reading(remaining_timeout)
