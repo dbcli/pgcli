@@ -4,7 +4,7 @@ from prompt_toolkit.buffer import ClipboardData, indent, unindent, reshape_text
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter, IsReadOnly
-from prompt_toolkit.filters.cli import ViNavigationMode, ViInsertMode, ViReplaceMode, ViSelectionMode, ViWaitingForTextObjectMode, ViDigraphMode, ViMode
+from prompt_toolkit.filters.cli import ViNavigationMode, ViInsertMode, ViInsertSelectionMode, ViReplaceMode, ViSelectionMode, ViWaitingForTextObjectMode, ViDigraphMode, ViMode
 from prompt_toolkit.key_binding.digraphs import DIGRAPHS
 from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
@@ -161,6 +161,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
     #  ViState says different.)
     navigation_mode = ViNavigationMode()
     insert_mode = ViInsertMode()
+    insert_selection_mode = ViInsertSelectionMode()
     replace_mode = ViReplaceMode()
     selection_mode = ViSelectionMode()
     operator_given = ViWaitingForTextObjectMode()
@@ -407,6 +408,18 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         event.cli.vi_state.input_mode = InputMode.INSERT
         event.current_buffer.cursor_position += \
             event.current_buffer.document.get_start_of_line_position(after_whitespace=True)
+
+    @handle('I', filter=selection_mode & ~IsReadOnly())
+    def _(event):
+        event.current_buffer.selection_cursor_positions = []
+        for i, from_to in enumerate(event.current_buffer.document.selection_ranges()):
+            event.current_buffer.selection_cursor_positions.append(from_to[0])
+            if i == 0:
+                event.current_buffer.cursor_position = from_to[0]
+        event.cli.vi_state.input_mode = InputMode.INSERT_SELECTION
+        buffer = event.current_buffer
+        if bool(buffer.selection_state):
+            buffer.exit_selection()
 
     @handle('J', filter=navigation_mode & ~IsReadOnly())
     def _(event):
@@ -1463,6 +1476,17 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         Insert data at cursor position.
         """
         event.current_buffer.insert_text(event.data, overwrite=True)
+
+    @handle(Keys.Any, filter=insert_selection_mode)
+    def _(event):
+        """
+        Insert data at left cursor positions of the selection.
+        """
+        cursor_position = event.current_buffer.cursor_position
+        for i, cp in enumerate(event.current_buffer.selection_cursor_positions):
+            event.current_buffer.cursor_position = cp + (cursor_position - event.current_buffer.selection_cursor_positions[0]) * (1 + i) + i
+            event.current_buffer.insert_text(event.data)
+        event.current_buffer.cursor_position = cursor_position + 1
 
     @handle(Keys.ControlX, Keys.ControlL, filter=insert_mode)
     def _(event):
