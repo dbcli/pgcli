@@ -424,25 +424,35 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         buff = cli.current_buffer
         return buff.selection_state and buff.selection_state.type == SelectionType.BLOCK
 
-
     @handle('I', filter=in_block_selection & ~IsReadOnly())
-    def _(event):
+    def go_to_block_selection(event, after=False):
         " Insert in block selection mode. "
         buff = event.current_buffer
 
         # Store all cursor positions.
         positions = []
 
+        if after:
+            def get_pos(from_to):
+                return from_to[1] + 1
+        else:
+            def get_pos(from_to):
+                return from_to[0]
+
         for i, from_to in enumerate(buff.document.selection_ranges()):
-            positions.append(from_to[0])
+            positions.append(get_pos(from_to))
             if i == 0:
-                buff.cursor_position = from_to[0]
+                buff.cursor_position = get_pos(from_to)
 
         buff.multiple_cursor_positions = positions
 
         # Go to 'INSERT_MULTIPLE' mode.
         event.cli.vi_state.input_mode = InputMode.INSERT_MULTIPLE
         buff.exit_selection()
+
+    @handle('A', filter=in_block_selection & ~IsReadOnly())
+    def _(event):
+        go_to_block_selection(event, after=True)
 
     @handle('J', filter=navigation_mode & ~IsReadOnly())
     def _(event):
