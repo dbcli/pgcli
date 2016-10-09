@@ -9,7 +9,7 @@ __all__ = (
 
 class InputMode(object):
     INSERT = 'vi-insert'
-    INSERT_SELECTION = 'vi-insert-selection'
+    INSERT_MULTIPLE = 'vi-insert-multiple'
     NAVIGATION = 'vi-navigation'
     REPLACE = 'vi-replace'
 

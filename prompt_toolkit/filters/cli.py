@@ -27,7 +27,7 @@ __all__ = (
     'ViMode',
     'ViNavigationMode',
     'ViInsertMode',
-    'ViInsertSelectionMode',
+    'ViInsertMultipleMode',
     'ViReplaceMode',
     'ViSelectionMode',
     'ViWaitingForTextObjectMode',
@@ -295,7 +295,7 @@ class ViInsertMode(Filter):
 
 
 @memoized()
-class ViInsertSelectionMode(Filter):
+class ViInsertMultipleMode(Filter):
     def __call__(self, cli):
         if (cli.editing_mode != EditingMode.VI
                 or cli.vi_state.operator_func
@@ -304,10 +304,10 @@ class ViInsertSelectionMode(Filter):
                 or cli.current_buffer.read_only()):
             return False
 
-        return cli.vi_state.input_mode == ViInputMode.INSERT_SELECTION
+        return cli.vi_state.input_mode == ViInputMode.INSERT_MULTIPLE
 
     def __repr__(self):
-        return 'ViInputSelectionMode()'
+        return 'ViInsertMultipleMode()'
 
 
 @memoized()

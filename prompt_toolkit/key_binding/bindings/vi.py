@@ -4,7 +4,7 @@ from prompt_toolkit.buffer import ClipboardData, indent, unindent, reshape_text
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYSTEM_BUFFER
 from prompt_toolkit.filters import Filter, Condition, HasArg, Always, to_cli_filter, IsReadOnly
-from prompt_toolkit.filters.cli import ViNavigationMode, ViInsertMode, ViInsertSelectionMode, ViReplaceMode, ViSelectionMode, ViWaitingForTextObjectMode, ViDigraphMode, ViMode
+from prompt_toolkit.filters.cli import ViNavigationMode, ViInsertMode, ViInsertMultipleMode, ViReplaceMode, ViSelectionMode, ViWaitingForTextObjectMode, ViDigraphMode, ViMode
 from prompt_toolkit.key_binding.digraphs import DIGRAPHS
 from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
@@ -19,6 +19,16 @@ from six.moves import range
 import codecs
 import six
 import string
+
+try:
+    from itertools import accumulate
+except ImportError: # < Python 3.2
+    def accumulate(iterable):
+        " Super simpel 'accumulate' implementation. "
+        total = 0
+        for item in iterable:
+            total += item
+            yield total
 
 __all__ = (
     'load_vi_bindings',
@@ -161,7 +171,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
     #  ViState says different.)
     navigation_mode = ViNavigationMode()
     insert_mode = ViInsertMode()
-    insert_selection_mode = ViInsertSelectionMode()
+    insert_multiple_mode = ViInsertMultipleMode()
     replace_mode = ViReplaceMode()
     selection_mode = ViSelectionMode()
     operator_given = ViWaitingForTextObjectMode()
@@ -409,17 +419,30 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         event.current_buffer.cursor_position += \
             event.current_buffer.document.get_start_of_line_position(after_whitespace=True)
 
-    @handle('I', filter=selection_mode & ~IsReadOnly())
+    @Condition
+    def in_block_selection(cli):
+        buff = cli.current_buffer
+        return buff.selection_state and buff.selection_state.type == SelectionType.BLOCK
+
+
+    @handle('I', filter=in_block_selection & ~IsReadOnly())
     def _(event):
-        event.current_buffer.selection_cursor_positions = []
-        for i, from_to in enumerate(event.current_buffer.document.selection_ranges()):
-            event.current_buffer.selection_cursor_positions.append(from_to[0])
+        " Insert in block selection mode. "
+        buff = event.current_buffer
+
+        # Store all cursor positions.
+        positions = []
+
+        for i, from_to in enumerate(buff.document.selection_ranges()):
+            positions.append(from_to[0])
             if i == 0:
-                event.current_buffer.cursor_position = from_to[0]
-        event.cli.vi_state.input_mode = InputMode.INSERT_SELECTION
-        buffer = event.current_buffer
-        if bool(buffer.selection_state):
-            buffer.exit_selection()
+                buff.cursor_position = from_to[0]
+
+        buff.multiple_cursor_positions = positions
+
+        # Go to 'INSERT_MULTIPLE' mode.
+        event.cli.vi_state.input_mode = InputMode.INSERT_MULTIPLE
+        buff.exit_selection()
 
     @handle('J', filter=navigation_mode & ~IsReadOnly())
     def _(event):
@@ -1477,16 +1500,101 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         """
         event.current_buffer.insert_text(event.data, overwrite=True)
 
-    @handle(Keys.Any, filter=insert_selection_mode)
+    @handle(Keys.Any, filter=insert_multiple_mode)
     def _(event):
         """
-        Insert data at left cursor positions of the selection.
+        Insert data at multiple cursor positions at once.
+        (Usually a result of pressing 'I' or 'A' in block-selection mode.)
         """
-        cursor_position = event.current_buffer.cursor_position
-        for i, cp in enumerate(event.current_buffer.selection_cursor_positions):
-            event.current_buffer.cursor_position = cp + (cursor_position - event.current_buffer.selection_cursor_positions[0]) * (1 + i) + i
-            event.current_buffer.insert_text(event.data)
-        event.current_buffer.cursor_position = cursor_position + 1
+        buff = event.current_buffer
+        original_text = buff.text
+
+        # Construct new text.
+        text = []
+        p = 0
+
+        for p2 in buff.multiple_cursor_positions:
+            text.append(original_text[p:p2])
+            text.append(event.data)
+            p = p2
+
+        text.append(original_text[p:])
+
+        # Shift all cursor positions.
+        new_cursor_positions = [
+            p + i + 1 for i, p in enumerate(buff.multiple_cursor_positions)]
+
+        # Set result.
+        buff.text = ''.join(text)
+        buff.multiple_cursor_positions = new_cursor_positions
+        buff.cursor_position += 1
+
+    @handle(Keys.Backspace, filter=insert_multiple_mode)
+    def _(event):
+        " Backspace, using multiple cursors. "
+        buff = event.current_buffer
+        original_text = buff.text
+
+        # Construct new text.
+        deleted_something = False
+        text = []
+        p = 0
+
+        for p2 in buff.multiple_cursor_positions:
+            if p2 > 0 and original_text[p2 - 1] != '\n':  # Don't delete across lines.
+                text.append(original_text[p:p2 - 1])
+                deleted_something = True
+            else:
+                text.append(original_text[p:p2])
+            p = p2
+
+        text.append(original_text[p:])
+
+        if deleted_something:
+            # Shift all cursor positions.
+            lengths = [len(part) for part in text[:-1]]
+            new_cursor_positions = list(accumulate(lengths))
+
+            # Set result.
+            buff.text = ''.join(text)
+            buff.multiple_cursor_positions = new_cursor_positions
+            buff.cursor_position -= 1
+        else:
+            event.cli.output.bell()
+
+    @handle(Keys.Delete, filter=insert_multiple_mode)
+    def _(event):
+        " Delete, using multiple cursors. "
+        buff = event.current_buffer
+        original_text = buff.text
+
+        # Construct new text.
+        deleted_something = False
+        text = []
+        new_cursor_positions = []
+        p = 0
+
+        for p2 in buff.multiple_cursor_positions:
+            text.append(original_text[p:p2])
+            if original_text[p2] == '\n':  # Don't delete across lines.
+                p = p2
+            else:
+                p = p2 + 1
+                deleted_something = True
+
+        text.append(original_text[p:])
+
+        if deleted_something:
+            # Shift all cursor positions.
+            lengths = [len(part) for part in text[:-1]]
+            new_cursor_positions = list(accumulate(lengths))
+
+            # Set result.
+            buff.text = ''.join(text)
+            buff.multiple_cursor_positions = new_cursor_positions
+        else:
+            event.cli.output.bell()
+
 
     @handle(Keys.ControlX, Keys.ControlL, filter=insert_mode)
     def _(event):

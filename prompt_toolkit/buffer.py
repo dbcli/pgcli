@@ -256,6 +256,11 @@ class Buffer(object):
         # State of the selection.
         self.selection_state = None
 
+        # Multiple cursor mode. (When we press 'I' or 'A' in visual-block mode,
+        # we can insert text on multiple lines at once. This is implemented by
+        # using multiple cursors.)
+        self.multiple_cursor_positions = []
+
         # When doing consecutive up/down movements, prefer to stay at this column.
         self.preferred_column = None
 
