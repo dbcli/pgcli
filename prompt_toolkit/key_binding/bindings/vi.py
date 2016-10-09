@@ -1510,7 +1510,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         """
         event.current_buffer.insert_text(event.data, overwrite=True)
 
-    @handle(Keys.Any, filter=insert_multiple_mode)
+    @handle(Keys.Any, filter=insert_multiple_mode,
+            save_before=(lambda e: not e.is_repeat))
     def _(event):
         """
         Insert data at multiple cursor positions at once.
