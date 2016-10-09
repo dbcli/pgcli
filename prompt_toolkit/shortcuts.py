@@ -37,7 +37,7 @@ from .layout.dimension import LayoutDimension
 from .layout.lexers import PygmentsLexer
 from .layout.margins import PromptMargin, ConditionalMargin
 from .layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
-from .layout.processors import PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor
+from .layout.processors import PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors
 from .layout.prompt import DefaultPrompt
 from .layout.screen import Char
 from .layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
@@ -260,7 +260,8 @@ def create_prompt_layout(message='', lexer=None, is_password=False,
             HasFocus(SEARCH_BUFFER)),
         HighlightSelectionProcessor(),
         ConditionalProcessor(AppendAutoSuggestion(), HasFocus(DEFAULT_BUFFER) & ~IsDone()),
-        ConditionalProcessor(PasswordProcessor(), is_password)
+        ConditionalProcessor(PasswordProcessor(), is_password),
+        DisplayMultipleCursors(DEFAULT_BUFFER),
     ]
 
     if extra_input_processors:
