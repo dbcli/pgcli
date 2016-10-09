@@ -843,6 +843,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         """
         filter = kw.pop('filter', Always())
         no_move_handler = kw.pop('no_move_handler', False)
+        no_selection_handler = kw.pop('no_selection_handler', False)
         assert not kw
 
         def decorator(text_object_func):
@@ -874,30 +875,32 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
                     text_object = text_object_func(event)
                     event.current_buffer.cursor_position += text_object.start
 
-            @handle(*keys, filter=~operator_given & filter & selection_mode)
-            def _(event):
-                " Move handler for selection mode. "
-                text_object = text_object_func(event)
-                buff = event.current_buffer
+            # Register a move selection operation.
+            if not no_selection_handler:
+                @handle(*keys, filter=~operator_given & filter & selection_mode)
+                def _(event):
+                    " Move handler for selection mode. "
+                    text_object = text_object_func(event)
+                    buff = event.current_buffer
 
-                # When the text object has both a start and end position, like 'i(' or 'iw',
-                # Turn this into a selection, otherwise the cursor.
-                if text_object.end:
-                    # Take selection positions from text object.
-                    start, end = text_object.operator_range(buff.document)
-                    start += buff.cursor_position
-                    end += buff.cursor_position
+                    # When the text object has both a start and end position, like 'i(' or 'iw',
+                    # Turn this into a selection, otherwise the cursor.
+                    if text_object.end:
+                        # Take selection positions from text object.
+                        start, end = text_object.operator_range(buff.document)
+                        start += buff.cursor_position
+                        end += buff.cursor_position
 
-                    buff.selection_state.original_cursor_position = start
-                    buff.cursor_position = end
+                        buff.selection_state.original_cursor_position = start
+                        buff.cursor_position = end
 
-                    # Take selection type from text object.
-                    if text_object.type == TextObjectType.LINEWISE:
-                        buff.selection_state.type = SelectionType.LINES
+                        # Take selection type from text object.
+                        if text_object.type == TextObjectType.LINEWISE:
+                            buff.selection_state.type = SelectionType.LINES
+                        else:
+                            buff.selection_state.type = SelectionType.CHARACTERS
                     else:
-                        buff.selection_state.type = SelectionType.CHARACTERS
-                else:
-                    event.current_buffer.cursor_position += text_object.start
+                        event.current_buffer.cursor_position += text_object.start
 
             # Make it possible to chain @text_object decorators.
             return text_object_func
@@ -1249,15 +1252,20 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         """ Implements 'ch', 'dh', 'h': Cursor left. """
         return TextObject(event.current_buffer.document.get_cursor_left_position(count=event.arg))
 
-    @text_object('j', no_move_handler=True)
+    @text_object('j', no_move_handler=True, no_selection_handler=True)
+            # Note: We also need `no_selection_handler`, because we in
+            #       selection mode, we prefer the other 'j' binding that keeps
+            #       `buffer.preferred_column`.
     def _(event):
         """ Implements 'cj', 'dj', 'j', ... Cursor up. """
-        return TextObject(event.current_buffer.document.get_cursor_down_position(count=event.arg), type=TextObjectType.LINEWISE)
+        return TextObject(event.current_buffer.document.get_cursor_down_position(count=event.arg),
+                          type=TextObjectType.LINEWISE)
 
-    @text_object('k', no_move_handler=True)
+    @text_object('k', no_move_handler=True, no_selection_handler=True)
     def _(event):
         """ Implements 'ck', 'dk', 'k', ... Cursor up. """
-        return TextObject(event.current_buffer.document.get_cursor_up_position(count=event.arg), type=TextObjectType.LINEWISE)
+        return TextObject(event.current_buffer.document.get_cursor_up_position(count=event.arg),
+                          type=TextObjectType.LINEWISE)
 
     @text_object('l')
     @text_object(' ')
