@@ -30,6 +30,8 @@ DEFAULT_STYLE_EXTENSIONS = {
     Token.MatchingBracket.Other:                  '#000000 bg:#aacccc',
     Token.MatchingBracket.Cursor:                 '#ff8888 bg:#880000',
 
+    Token.MultipleCursors.Cursor:                 '#000000 bg:#ccccaa',
+
     # Line numbers.
     Token.LineNumber:                             '#888888',
     Token.LineNumber.Current:                     'bold',
