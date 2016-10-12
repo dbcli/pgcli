@@ -14,7 +14,7 @@ from .callbacks import EventLoopCallbacks
 from .inputhook import InputHookContext
 from .posix_utils import PosixStdinReader
 from .utils import TimeIt
-from .select import select_fds
+from .select import AutoSelector, Selector, fd_to_int
 
 __all__ = (
     'PosixEventLoop',
@@ -27,8 +27,9 @@ class PosixEventLoop(EventLoop):
     """
     Event loop for posix systems (Linux, Mac os X).
     """
-    def __init__(self, inputhook=None):
+    def __init__(self, inputhook=None, selector=AutoSelector):
         assert inputhook is None or callable(inputhook)
+        assert issubclass(selector, Selector)
 
         self.running = False
         self.closed = False
@@ -37,6 +38,7 @@ class PosixEventLoop(EventLoop):
 
         self._calls_from_executor = []
         self._read_fds = {} # Maps fd to handler.
+        self.selector = selector()
 
         # Create a pipe for inter thread communication.
         self._schedule_pipe = os.pipe()
@@ -188,8 +190,7 @@ class PosixEventLoop(EventLoop):
         """
         Return the file descriptors that are ready for reading.
         """
-        read_fds = list(self._read_fds.keys())
-        fds = select_fds(read_fds, timeout)
+        fds = self.selector.select(timeout)
         return fds
 
     def received_winch(self):
@@ -267,12 +268,18 @@ class PosixEventLoop(EventLoop):
 
     def add_reader(self, fd, callback):
         " Add read file descriptor to the event loop. "
+        fd = fd_to_int(fd)
         self._read_fds[fd] = callback
+        self.selector.register(fd)
 
     def remove_reader(self, fd):
         " Remove read file descriptor from the event loop. "
+        fd = fd_to_int(fd)
+
         if fd in self._read_fds:
             del self._read_fds[fd]
+
+        self.selector.unregister(fd)
 
 
 class call_on_sigwinch(object):
