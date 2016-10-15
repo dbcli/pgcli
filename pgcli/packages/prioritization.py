@@ -11,7 +11,7 @@ white_space_regex = re.compile('\\s+', re.MULTILINE)
 def _compile_regex(keyword):
     # Surround the keyword with word boundaries and replace interior whitespace
     # with whitespace wildcards
-    pattern = '\\b' + re.sub(white_space_regex, '\\s+', keyword) + '\\b'
+    pattern = '\\b' + white_space_regex.sub(r'\\s+', keyword) + '\\b'
     return re.compile(pattern, re.MULTILINE | re.IGNORECASE)
 
 keywords = get_literals('keywords')
