@@ -129,7 +129,7 @@ Running the integration tests
 Integration tests use `behave package http://pythonhosted.org/behave/`_ and
 pytest.
 Configuration settings for this package are provided via ``behave.ini`` file
-in root directory.
+in the ``tests`` directory.
 
 The database user (``pg_test_user = postgres`` in .ini file) has to have
 permissions to create and drop test database. Default user is ``postgres``
