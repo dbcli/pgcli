@@ -1,6 +1,31 @@
 CHANGELOG
 =========
 
+1.0.8: 2016-10-16
+-----------------
+
+Fixes:
+- In 'shortcuts': complete_while_typing was a SimpleFilter, not a CLIFilter.
+- Always reset color attributes after rendering.
+- Handle bug in Windows when '$TERM' is not defined.
+- Ignore errors when calling tcgetattr/tcsetattr.
+  (This handles the "Inappropriate ioctl for device" crash in some scenarios.)
+- Fix for Windows. Correctly recognize all Chinese and Lithuanian characters.
+
+New features:
+- Added shift+left/up/down/right keys.
+- Small performance optimization in the renderer.
+- Small optimization in the posix event loop. Don't call time.time() if we
+  don't have an inputhook. (Less syscalls.)
+- Turned the _max_postpone_until argument of call_from_executor into a float.
+  (As returned by `time.time`.) This will do less system calls. It's
+  backwards-incompatible, but this is still a private API, used only by pymux.)
+- Added Shift-I/A commands in Vi block selection mode for inserting text at the
+  beginning of each line of the block.
+- Refactoring of the 'selectors' module for the posix event loop. (Reuse the
+  same selector object in one loop, don't recreate it for each select.)
+
+
 1.0.7: 2016-08-21
 -----------------
 
