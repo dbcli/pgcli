@@ -28,7 +28,7 @@ def _history():
 
 
 def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS, clipboard=None,
-                         history=None):
+                         history=None, multiline=False):
     """
     Create a CommandLineInterface, feed it with the given user input and return
     the CLI object.
@@ -45,7 +45,7 @@ def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS, clipboard=None,
         cli = CommandLineInterface(
             application=Application(
                 buffer=Buffer(accept_action=AcceptAction.RETURN_DOCUMENT,
-                              history=history),
+                              history=history, is_multiline=multiline),
                 editing_mode=editing_mode,
                 clipboard=clipboard or InMemoryClipboard(),
                 key_bindings_registry=KeyBindingManager.for_prompt().registry,
@@ -489,3 +489,39 @@ def test_vi_digraphs():
     # C-K xxy (Unknown digraph.)
     result, cli = feed('hello\x0bxxy\n')
     assert result.text == 'helloy'
+
+
+def test_vi_block_editing():
+    " Test Vi Control-V style block insertion. "
+    feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI,
+                   multiline=True)
+
+    operations = (
+        # Three lines of text.
+        '-line1\n-line2\n-line3\n-line4\n-line5\n-line6'
+        # Go to the second character of the second line.
+        '\x1bkkkkkkkj0l'
+        # Enter Visual block mode.
+        '\x16'
+        # Go down two more lines.
+        'jj'
+        # Go 3 characters to the right.
+        'lll'
+        # Go to insert mode.
+        'insert'  # (Will be replaced.)
+        # Insert stars.
+        '***'
+        # Escape again.
+        '\x1b\n')
+
+    # Control-I
+    result, cli = feed(operations.replace('insert', 'I'))
+
+    assert (result.text ==
+        '-line1\n-***line2\n-***line3\n-***line4\n-line5\n-line6')
+
+    # Control-A
+    result, cli = feed(operations.replace('insert', 'A'))
+
+    assert (result.text ==
+        '-line1\n-line***2\n-line***3\n-line***4\n-line5\n-line6')
