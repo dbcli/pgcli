@@ -219,7 +219,12 @@ class ConsoleInputReader(object):
         result = None
 
         u_char = ev.uChar.UnicodeChar
-        ascii_char = ev.uChar.AsciiChar
+        ascii_char = u_char.encode('utf-8')
+
+        # NOTE: We don't use `ev.uChar.AsciiChar`. That appears to be latin-1
+        #       encoded. See also:
+        # https://github.com/ipython/ipython/issues/10004
+        # https://github.com/jonathanslenders/python-prompt-toolkit/issues/389
 
         if u_char == '\x00':
             if ev.VirtualKeyCode in self.keycodes:
