@@ -116,9 +116,9 @@ class SqlStatement(object):
 
         return schema
 
-    def reduce_to_prev_keyword(self):
+    def reduce_to_prev_keyword(self, n_skip=0):
         prev_keyword, self.text_before_cursor = \
-            find_prev_keyword(self.text_before_cursor)
+            find_prev_keyword(self.text_before_cursor, n_skip=n_skip)
         return prev_keyword
 
 
