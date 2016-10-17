@@ -456,7 +456,10 @@ def suggest_based_on_last_token(token, stmt):
         # token is a keyword we haven't implemented any special handling for
         # go backwards in the query until we find one we do recognize
         prev_keyword = stmt.reduce_to_prev_keyword(n_skip=1)
-        return suggest_based_on_last_token(prev_keyword, stmt)
+        if prev_keyword:
+            return suggest_based_on_last_token(prev_keyword, stmt)
+        else:
+            return (Keyword(),)
     else:
         return (Keyword(),)
 
