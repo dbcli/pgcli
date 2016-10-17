@@ -129,7 +129,7 @@ Token.Toolbar.Arg.Text = 'nobold'
 # example_dsn = postgresql://[user[:password]@][netloc][:port][/dbname]
 
 # Format for number representation
-# for decimal "d" - 12345678, ",d" - 123,456,78
+# for decimal "d" - 12345678, ",d" - 12,345,678
 # for float "g" - 123456.78, ",g" - 123,456.78
 [data_formats]
 decimal = ",d"
