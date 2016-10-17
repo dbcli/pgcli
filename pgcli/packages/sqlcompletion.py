@@ -452,6 +452,11 @@ def suggest_based_on_last_token(token, stmt):
         if not schema:
             suggestions.append(Schema())
         return tuple(suggestions)
+    elif token.is_keyword:
+        # token is a keyword we haven't implemented any special handling for
+        # go backwards in the query until we find one we do recognize
+        prev_keyword = stmt.reduce_to_prev_keyword(n_skip=1)
+        return suggest_based_on_last_token(prev_keyword, stmt)
     else:
         return (Keyword(),)
 
