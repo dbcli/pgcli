@@ -476,24 +476,6 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         " Join selected lines without space. "
         event.current_buffer.join_selected_lines(separator='')
 
-    @handle('n', filter=navigation_mode)
-    def _(event):  # XXX: use `text_object`
-        """
-        Search next.
-        """
-        event.current_buffer.apply_search(
-            get_search_state(event.cli), include_current_position=False,
-            count=event.arg)
-
-    @handle('N', filter=navigation_mode)
-    def _(event):  # TODO: use `text_object`
-        """
-        Search previous.
-        """
-        event.current_buffer.apply_search(
-            ~get_search_state(event.cli), include_current_position=False,
-            count=event.arg)
-
     @handle('p', filter=navigation_mode)
     def _(event):
         """
@@ -1335,6 +1317,38 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
             # Otherwise, move to the end of the input.
             pos = len(b.document.text_after_cursor)
         return TextObject(pos, type=TextObjectType.LINEWISE)
+
+    @text_object('n', no_move_handler=True)
+    def _(event):
+        " Search next. "
+        buff = event.current_buffer
+        cursor_position = buff.get_search_position(
+            get_search_state(event.cli), include_current_position=False,
+            count=event.arg)
+        return TextObject(cursor_position - buff.cursor_position)
+
+    @handle('n', filter=navigation_mode)
+    def _(event):
+        " Search next in navigation mode. (This goes through the history.) "
+        event.current_buffer.apply_search(
+            get_search_state(event.cli), include_current_position=False,
+            count=event.arg)
+
+    @text_object('N', no_move_handler=True)
+    def _(event):
+        " Search previous. "
+        buff = event.current_buffer
+        cursor_position = buff.get_search_position(
+            ~get_search_state(event.cli), include_current_position=False,
+            count=event.arg)
+        return TextObject(cursor_position - buff.cursor_position)
+
+    @handle('N', filter=navigation_mode)
+    def _(event):
+        " Search previous in navigation mode. (This goes through the history.) "
+        event.current_buffer.apply_search(
+            ~get_search_state(event.cli), include_current_position=False,
+            count=event.arg)
 
     @handle('z', '+', filter=navigation_mode|selection_mode)
     @handle('z', 't', filter=navigation_mode|selection_mode)

@@ -1094,6 +1094,21 @@ class Buffer(object):
             working_index, cursor_position = search_result
             return Document(self._working_lines[working_index], cursor_position)
 
+    def get_search_position(self, search_state, include_current_position=True, count=1):
+        """
+        Get the cursor position for this search.
+        (This operation won't change the `working_index`. It's won't go through
+        the history. Vi text objects can't span multiple items.)
+        """
+        search_result = self._search(
+            search_state, include_current_position=include_current_position, count=count)
+
+        if search_result is None:
+            return self.cursor_position
+        else:
+            working_index, cursor_position = search_result
+            return cursor_position
+
     def apply_search(self, search_state, include_current_position=True, count=1):
         """
         Apply search. If something is found, set `working_index` and
