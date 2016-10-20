@@ -744,3 +744,12 @@ def test_column_keyword_suggests_columns(sql):
         Column(table_refs=((None, 'foo', None, False),)),
     ])
 
+
+def test_handle_unrecognized_kw_generously():
+    sql = 'SELECT * FROM sessions WHERE session = 1 AND '
+    suggestions = suggest_type(sql, sql)
+    expected = Column(table_refs=((None, 'sessions', None, False),))
+
+    assert expected in set(suggestions)
+
+

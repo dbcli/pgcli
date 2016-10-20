@@ -63,7 +63,7 @@ def last_word(text, include='alphanum_underscore'):
             return ''
 
 
-def find_prev_keyword(sql):
+def find_prev_keyword(sql, n_skip=0):
     """ Find the last sql keyword in an SQL statement
 
     Returns the value of the last keyword, and the text of the query with
@@ -74,6 +74,7 @@ def find_prev_keyword(sql):
 
     parsed = sqlparse.parse(sql)[0]
     flattened = list(parsed.flatten())
+    flattened = flattened[:len(flattened)-n_skip]
 
     logical_operators = ('AND', 'OR', 'NOT', 'BETWEEN')
 

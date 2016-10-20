@@ -116,9 +116,9 @@ class SqlStatement(object):
 
         return schema
 
-    def reduce_to_prev_keyword(self):
+    def reduce_to_prev_keyword(self, n_skip=0):
         prev_keyword, self.text_before_cursor = \
-            find_prev_keyword(self.text_before_cursor)
+            find_prev_keyword(self.text_before_cursor, n_skip=n_skip)
         return prev_keyword
 
 
@@ -452,6 +452,14 @@ def suggest_based_on_last_token(token, stmt):
         if not schema:
             suggestions.append(Schema())
         return tuple(suggestions)
+    elif token.is_keyword:
+        # token is a keyword we haven't implemented any special handling for
+        # go backwards in the query until we find one we do recognize
+        prev_keyword = stmt.reduce_to_prev_keyword(n_skip=1)
+        if prev_keyword:
+            return suggest_based_on_last_token(prev_keyword, stmt)
+        else:
+            return (Keyword(),)
     else:
         return (Keyword(),)
 
