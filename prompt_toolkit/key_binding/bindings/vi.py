@@ -1741,9 +1741,10 @@ def load_vi_search_bindings(registry, get_search_state=None,
 
     has_focus = filters.HasFocus(search_buffer_name)
     navigation_mode = ViNavigationMode()
+    selection_mode = ViSelectionMode()
     handle = create_handle_decorator(registry, filter & ViMode())
 
-    @handle('/', filter=navigation_mode)
+    @handle('/', filter=navigation_mode|selection_mode)
     @handle(Keys.ControlS, filter=~has_focus)
     def _(event):
         """
@@ -1756,7 +1757,7 @@ def load_vi_search_bindings(registry, get_search_state=None,
         # Focus search buffer.
         event.cli.push_focus(search_buffer_name)
 
-    @handle('?', filter=navigation_mode)
+    @handle('?', filter=navigation_mode|selection_mode)
     @handle(Keys.ControlR, filter=~has_focus)
     def _(event):
         """
