@@ -71,30 +71,20 @@ def load_emacs_bindings(registry, filter=Always()):
     handle(Keys.Escape, '<', filter= ~has_selection)(get_by_name('beginning-of-history'))
     handle(Keys.Escape, '>', filter= ~has_selection)(get_by_name('end-of-history'))
 
-    @handle(Keys.ControlN, filter= ~has_selection)
+    @handle(Keys.ControlN)
     def _(event):
         " Next line. "
         event.current_buffer.auto_down()
-
-    @handle(Keys.ControlN, filter=has_selection)
-    def _(event):
-        " Next line (but don't cycle through history.) "
-        event.current_buffer.cursor_down()
 
     @handle(Keys.ControlO, filter=insert_mode)
     def _(event):
         " Insert newline, but don't move the cursor. "
         event.current_buffer.insert_text('\n', move_cursor=False)
 
-    @handle(Keys.ControlP, filter= ~has_selection)
+    @handle(Keys.ControlP)
     def _(event):
         " Previous line. "
         event.current_buffer.auto_up(count=event.arg)
-
-    @handle(Keys.ControlP, filter=has_selection)
-    def _(event):
-        " Previous line. "
-        event.current_buffer.cursor_up(count=event.arg)
 
     @handle(Keys.ControlQ, Keys.Any, filter= ~has_selection)
     def _(event):

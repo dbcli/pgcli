@@ -175,21 +175,13 @@ def load_basic_bindings(registry, filter=Always()):
 
     # Delete the word before the cursor.
 
-    @handle(Keys.Up, filter= ~has_selection)
+    @handle(Keys.Up)
     def _(event):
         event.current_buffer.auto_up(count=event.arg)
 
-    @handle(Keys.Up, filter=has_selection)
-    def _(event):
-        event.current_buffer.cursor_up(count=event.arg)
-
-    @handle(Keys.Down, filter= ~has_selection)
+    @handle(Keys.Down)
     def _(event):
         event.current_buffer.auto_down(count=event.arg)
-
-    @handle(Keys.Down, filter=has_selection)
-    def _(event):
-        event.current_buffer.cursor_down(count=event.arg)
 
     @handle(Keys.Delete, filter=has_selection)
     def _(event):
