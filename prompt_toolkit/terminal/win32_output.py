@@ -407,28 +407,27 @@ class BACKROUND_COLOR:
 def _create_ansi_color_dict(color_cls):
     " Create a table that maps the 16 named ansi colors to their Windows code. "
     return {
-        'ansiblack':   color_cls.BLACK,
-        'ansidefault': color_cls.BLACK,
-        'ansiwhite':   color_cls.GRAY | color_cls.INTENSITY,
-
+        'ansidefault':   color_cls.BLACK,
+        'ansiblack':     color_cls.BLACK,
+        'ansidarkgray':  color_cls.BLACK | color_cls.INTENSITY,
+        'ansilightgray': color_cls.GRAY,
+        'ansiwhite':     color_cls.GRAY | color_cls.INTENSITY,
+        
         # Low intensity.
-        'ansired':         color_cls.RED,
-        'ansigreen':       color_cls.GREEN,
-        'ansiyellow':      color_cls.YELLOW,
-        'ansiblue':        color_cls.BLUE,
-        'ansifuchsia':     color_cls.MAGENTA,
-        'ansiturquoise':   color_cls.CYAN,
-        'ansilightgray':   color_cls.GRAY,
-
+        'ansidarkred':     color_cls.RED,
+        'ansidarkgreen':   color_cls.GREEN,
+        'ansibrown':       color_cls.YELLOW,
+        'ansidarkblue':    color_cls.BLUE,
+        'ansipurple':      color_cls.MAGENTA,
+        'ansiteal':        color_cls.CYAN,
 
         # High intensity.
-        'ansidarkgray':    color_cls.BLACK | color_cls.INTENSITY,
-        'ansidarkred':     color_cls.RED | color_cls.INTENSITY,
-        'ansidarkgreen':   color_cls.GREEN | color_cls.INTENSITY,
-        'ansibrown':       color_cls.YELLOW | color_cls.INTENSITY,
-        'ansidarkblue':    color_cls.BLUE | color_cls.INTENSITY,
-        'ansipurple':      color_cls.MAGENTA | color_cls.INTENSITY,
-        'ansiteal':        color_cls.CYAN | color_cls.INTENSITY,
+        'ansired':        color_cls.RED | color_cls.INTENSITY,
+        'ansigreen':      color_cls.GREEN | color_cls.INTENSITY,
+        'ansiyellow':     color_cls.YELLOW | color_cls.INTENSITY,
+        'ansiblue':       color_cls.BLUE | color_cls.INTENSITY,
+        'ansifuchsia':    color_cls.MAGENTA | color_cls.INTENSITY,
+        'ansiturquoise':  color_cls.CYAN | color_cls.INTENSITY,
     }
 
 FG_ANSI_COLORS = _create_ansi_color_dict(FOREGROUND_COLOR)
