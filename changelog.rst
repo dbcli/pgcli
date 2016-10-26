@@ -1,3 +1,11 @@
+1.3.1
+=====
+
+Bug Fixes:
+----------
+* Fix a crashing bug due to sqlparse upgrade. (Thanks: `Darik Gamble`_)
+
+
 1.3.0
 =====
 
