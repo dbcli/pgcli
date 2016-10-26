@@ -358,7 +358,9 @@ def suggest_based_on_last_token(token, stmt):
             return (Column(table_refs=tables, local_tables=stmt.local_tables),
                     Function(schema=None),
                     Keyword(),)
-
+    elif token_v == 'as':
+        # Don't suggest anything for aliases
+        return ()
     elif (token_v.endswith('join') and token.is_keyword) or (token_v in
             ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
 

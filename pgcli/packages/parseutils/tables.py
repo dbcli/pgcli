@@ -14,7 +14,7 @@ TableReference.ref = property(lambda self: self.alias or (
 # This code is borrowed from sqlparse example script.
 # <url>
 def is_subselect(parsed):
-    if not parsed.is_group():
+    if not parsed.is_group:
         return False
     for item in parsed.tokens:
         if item.ttype is DML and item.value.upper() in ('SELECT', 'INSERT',

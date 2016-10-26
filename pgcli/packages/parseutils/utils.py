@@ -112,30 +112,8 @@ def is_open_quote(sql):
 
 
 def _parsed_is_open_quote(parsed):
-    tokens = list(parsed.flatten())
-
-    i = 0
-    while i < len(tokens):
-        tok = tokens[i]
-        if tok.match(Token.Error, "'"):
-            # An unmatched single quote
-            return True
-        elif (tok.ttype in Token.Name.Builtin
-                and dollar_quote_regex.match(tok.value)):
-            # Find the matching closing dollar quote sign
-            for (j, tok2) in enumerate(tokens[i+1:], i+1):
-                if tok2.match(Token.Name.Builtin, tok.value):
-                    # Found the matching closing quote - continue our scan for
-                    # open quotes thereafter
-                    i = j
-                    break
-            else:
-                # No matching dollar sign quote
-                return True
-
-        i += 1
-
-    return False
+    # Look for unmatched single quotes, or unmatched dollar sign quotes
+    return any(tok.match(Token.Error, ("'", "$")) for tok in parsed.flatten())
 
 
 def parse_partial_identifier(word):
