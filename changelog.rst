@@ -1,3 +1,29 @@
+1.3.0
+=====
+
+IMPORTANT: Python 2.6 is not officially supported anymore.
+
+Features:
+---------
+* Add delimiters to displayed numbers. This can be configured via the config file. (Thanks: `Sergii`_).
+* Fix broken 'SHOW ALL' in redshift. (Thanks: `Manuel Barkhau`_).
+* Support configuring keyword casing preferences. (Thanks: `Darik Gamble`_).
+* Add a new multi_line_mode option in config file. The values can be `psql` or `safe`. (Thanks: `Joakim Koljonen`_)
+  Setting ``multi_line_mode = safe`` will make sure that a query will only be executed when Alt+Enter is pressed.
+
+Bug Fixes:
+----------
+* Fix crash bug with leading parenthesis. (Thanks: `Joakim Koljonen`_).
+* Remove cumulative addition of timing data. (Thanks: `Amjith Ramanujam`_).
+* Handle unrecognized keywords gracefully. (Thanks: `Darik Gamble`_)
+* Use raw strings in regex specifiers. This preemptively fixes a crash in Python 3.6. (Thanks `Emanuele Gaifas`_)
+
+Internal Changes:
+-----------------
+* Set sqlparse version dependency to >0.2.0, <0.3.0. (Thanks: `Amjith Ramanujam`_).
+* XDG_CONFIG_HOME support for config file location. (Thanks: `Fabien Meghazi`_).
+* Remove Python 2.6 from travis test suite. (Thanks: `Amjith Ramanujam`_)
+
 1.2.0
 =====
 
@@ -551,3 +577,7 @@ Improvements:
 .. _`Tahir Butt`: Tahir Butt
 .. _`Tiziano Müller`: https://github.com/dev-zero
 .. _`Janus Troelsen`: https://github.com/ysangkok
+.. _`Fabien Meghazi`: https://github.com/amigrave
+.. _`Manuel Barkhau`: https://github.com/mbarkhau
+.. _`Sergii`: https://github.com/foxyterkel 
+.. _`Emanuele Gaifas`: https://github.com/lelit
