@@ -25,77 +25,76 @@ __all__ = (
 
 
 FG_ANSI_COLORS = {
-    'ansiblack':   30,
     'ansidefault': 39,
+    'ansiblack':   30,
+    'ansidarkgray': 37,
+    'ansilightgray':90,
     'ansiwhite':   97,
 
     # Low intensity.
-    'ansired':         31,
-    'ansigreen':       32,
-    'ansiyellow':      33,
-    'ansiblue':        34,
-    'ansifuchsia':     35,
-    'ansiturquoise':   36,
-    'ansilightgray':   37,
-
+    'ansidarkred':     31,
+    'ansidarkgreen':   32,
+    'ansibrown':       33,
+    'ansidarkblue':    34,
+    'ansipurple':      35,
+    'ansiteal':        36,
 
     # High intensity.
-    'ansidarkgray':    90,  # Bright black.
-    'ansidarkred':     91,
-    'ansidarkgreen':   92,
-    'ansibrown':       93,
-    'ansidarkblue':    94,
-    'ansipurple':      95,
-    'ansiteal':        96,
+    'ansired':         91,
+    'ansigreen':       92,
+    'ansiyellow':      93,
+    'ansiblue':        94,
+    'ansifuchsia':     95,
+    'ansiturquoise':   96,
 }
 
 BG_ANSI_COLORS = {
-    'ansiblack':       40,
     'ansidefault':     49,
+    'ansiblack':       40,
+    'ansidarkgray':    47,
     'ansiwhite':       107,
+    'ansilightgray':   100,
 
     # Low intensity.
-    'ansired':         41,
-    'ansigreen':       42,
-    'ansiyellow':      43,
-    'ansiblue':        44,
-    'ansifuchsia':     45,
-    'ansiturquoise':   46,
-    'ansilightgray':   47,
+    'ansidarkred':     41,
+    'ansidarkgreen':   42,
+    'ansibrown':       43,
+    'ansidarkblue':    44,
+    'ansipurple':      45,
+    'ansiteal':        46,
 
     # High intensity.
-    'ansidarkgray':    100,  # bright black.
-    'ansidarkred':     101,
-    'ansidarkgreen':   102,
-    'ansibrown':       103,
-    'ansidarkblue':    104,
-    'ansipurple':      105,
-    'ansiteal':        106,
+    'ansired':         101,
+    'ansigreen':       102,
+    'ansiyellow':      103,
+    'ansiblue':        104,
+    'ansifuchsia':     105,
+    'ansiturquoise':   106,
 }
 
 
 ANSI_COLORS_TO_RGB = {
-    'ansiblack':   (0x00, 0x00, 0x00),
-    'ansidefault': (0x00, 0x00, 0x00),  # Don't use, 'default' doesn't really have a value.
-    'ansiwhite':   (0xff, 0xff, 0xff),
+    'ansidefault':   (0x00, 0x00, 0x00),  # Don't use, 'default' doesn't really have a value.
+    'ansiblack':     (0x00, 0x00, 0x00),
+    'ansidarkgray':  (0x7f, 0x7f, 0x7f), 
+    'ansiwhite':     (0xff, 0xff, 0xff),
+    'ansilightgray': (0xe5, 0xe5, 0xe5),
 
     # Low intensity.
-    'ansired':         (0xcd, 0x00, 0x00),
-    'ansigreen':       (0x00, 0xcd, 0x00),
-    'ansiyellow':      (0xcd, 0xcd, 0x00),
-    'ansiblue':        (0x00, 0x00, 0xcd),
-    'ansifuchsia':     (0xcd, 0x00, 0xcd),
-    'ansiturquoise':   (0x00, 0xcd, 0xcd),
-    'ansilightgray':   (0xe5, 0xe5, 0xe5),
+    'ansidarkred':     (0xcd, 0x00, 0x00),
+    'ansidarkgreen':   (0x00, 0xcd, 0x00),
+    'ansibrown':       (0xcd, 0xcd, 0x00),
+    'ansidarkblue':    (0x00, 0x00, 0xcd),
+    'ansipurple':      (0xcd, 0x00, 0xcd),
+    'ansiteal':        (0x00, 0xcd, 0xcd),
 
     # High intensity.
-    'ansidarkgray':    (0x7f, 0x7f, 0x7f),  # Bright black.
-    'ansidarkred':     (0xff, 0x00, 0x00),
-    'ansidarkgreen':   (0x00, 0xff, 0x00),
-    'ansibrown':       (0xff, 0xff, 0x00),
-    'ansidarkblue':    (0x00, 0x00, 0xff),
-    'ansipurple':      (0xff, 0x00, 0xff),
-    'ansiteal':        (0x00, 0xff, 0xff),
+    'ansired':         (0xff, 0x00, 0x00),
+    'ansigreen':       (0x00, 0xff, 0x00),
+    'ansiyellow':      (0xff, 0xff, 0x00),
+    'ansiblue':        (0x00, 0x00, 0xff),
+    'ansifuchsia':     (0xff, 0x00, 0xff),
+    'ansiturquoise':   (0x00, 0xff, 0xff),
 }
 
 
