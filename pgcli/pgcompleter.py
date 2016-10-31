@@ -637,7 +637,7 @@ class PGCompleter(Completer):
         document = Document(text=word_before_cursor,
                             cursor_position=len(word_before_cursor))
         for c in completer.get_completions(document, None):
-            yield Match(completion=c, priority = None)
+            yield Match(completion=c, priority=(0,))
 
     def get_special_matches(self, _, word_before_cursor):
         if not self.pgspecial:

@@ -46,3 +46,12 @@ def test_column_name_completion(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert result == set(map(Completion, completer.all_completions))
+
+def test_paths_completion(completer, complete_event):
+    text = '\i '
+    position = len(text)
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event,
+        smart_completion=True))
+    assert result > set([Completion(text="setup.py", start_position=0)])
