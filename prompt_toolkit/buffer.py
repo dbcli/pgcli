@@ -150,6 +150,24 @@ class CompletionState(object):
             return self.current_completions[self.complete_index]
 
 
+_QUOTED_WORDS_RE = re.compile(r"""(\s+|".*?"|'.*?')""")
+
+
+class YankNthArgState(object):
+    """
+    For yank-last-arg/yank-nth-arg: Keep track of where we are in the history.
+    """
+    def __init__(self, history_position=0, n=-1, previous_inserted_word=''):
+        self.history_position = history_position
+        self.previous_inserted_word = previous_inserted_word
+        self.n = n
+
+    def __repr__(self):
+        return '%s(history_position=%r, n=%r, previous_inserted_word=%r)' % (
+            self.__class__.__name__, self.history_position, self.n,
+            self.previous_inserted_word)
+
+
 class Buffer(object):
     """
     The core data structure that holds the text and cursor position of the
@@ -267,6 +285,9 @@ class Buffer(object):
         # State of complete browser
         self.complete_state = None  # For interactive completion through Ctrl-N/Ctrl-P.
 
+        # State of Emacs yank-nth-arg completion.
+        self.yank_nth_arg_state = None  # for yank-nth-arg.
+
         # Current suggestion.
         self.suggestion = None
 
@@ -373,6 +394,7 @@ class Buffer(object):
         # Remove any validation errors and complete state.
         self.validation_error = None
         self.complete_state = None
+        self.yank_nth_arg_state = None
         self.selection_state = None
         self.suggestion = None
         self.preferred_column = None
@@ -384,6 +406,7 @@ class Buffer(object):
         # Remove any validation errors and complete state.
         self.validation_error = None
         self.complete_state = None
+        self.yank_nth_arg_state = None
 
         # Unset preferred_column. (Will be set after the cursor movement, if
         # required.)
@@ -858,6 +881,63 @@ class Buffer(object):
         # If we move to another entry, move cursor to the end of the line.
         if found_something:
             self.cursor_position = len(self.text)
+
+    def yank_nth_arg(self, n=None, _yank_last_arg=False):
+        """
+        Pick nth word from previous history entry (depending on current
+        `yank_nth_arg_state`) and insert it at current position. Rotate through
+        history if called repeatedly. If no `n` has been given, take the first
+        argument. (The second word.)
+
+        :param n: (None or int), The index of the word from the previous line
+            to take.
+        """
+        assert isinstance(n, int)
+
+        if not len(self.history):
+            return
+
+        # Make sure we have a `YankNthArgState`.
+        if self.yank_nth_arg_state is None:
+            state = YankNthArgState(n=-1 if _yank_last_arg else 1)
+        else:
+            state = self.yank_nth_arg_state
+
+        if n is not None:
+            state.n = n
+
+        # Get new history position.
+        new_pos = state.history_position - 1
+        if -new_pos > len(self.history):
+            new_pos = -1
+
+        # Take argument from line.
+        line = self.history[new_pos]
+
+        words = [w.strip() for w in _QUOTED_WORDS_RE.split(line)]
+        words = [w for w in words if w]
+        try:
+            word = words[state.n]
+        except IndexError:
+            word = ''
+
+        # Insert new argument.
+        if state.previous_inserted_word:
+            self.delete_before_cursor(len(state.previous_inserted_word))
+        self.insert_text(word)
+
+        # Save state again for next completion. (Note that the 'insert'
+        # operation from above clears `self.yank_nth_arg_state`.)
+        state.previous_inserted_word = word
+        state.history_position = new_pos
+        self.yank_nth_arg_state = state
+
+    def yank_last_arg(self, n=None):
+        """
+        Like `yank_nth_arg`, but if no argument has been given, yank the last
+        word by default.
+        """
+        self.yank_nth_arg(n=n, _yank_last_arg=True)
 
     def start_selection(self, selection_type=SelectionType.CHARACTERS):
         """

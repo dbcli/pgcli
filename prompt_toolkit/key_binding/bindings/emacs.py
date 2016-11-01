@@ -71,6 +71,10 @@ def load_emacs_bindings(registry, filter=Always()):
     handle(Keys.Escape, '<', filter= ~has_selection)(get_by_name('beginning-of-history'))
     handle(Keys.Escape, '>', filter= ~has_selection)(get_by_name('end-of-history'))
 
+    handle(Keys.Escape, '.', filter=insert_mode)(get_by_name('yank-last-arg'))
+    handle(Keys.Escape, '_', filter=insert_mode)(get_by_name('yank-last-arg'))
+    handle(Keys.Escape, Keys.ControlY, filter=insert_mode)(get_by_name('yank-nth-arg'))
+
     @handle(Keys.ControlN)
     def _(event):
         " Next line. "
@@ -165,13 +169,6 @@ def load_emacs_bindings(registry, filter=Always()):
     def _(event):
         """
         Swap the last two words before the cursor.
-        """
-        # TODO
-
-    @handle(Keys.Escape, '.', filter=insert_mode)
-    def _(event):
-        """
-        Rotate through the last word (white-space delimited) of the previous lines in history.
         """
         # TODO
 

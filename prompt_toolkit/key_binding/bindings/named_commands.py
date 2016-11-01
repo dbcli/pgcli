@@ -366,6 +366,25 @@ def yank(event):
     event.current_buffer.paste_clipboard_data(
         event.cli.clipboard.get_data(), count=event.arg, before=True)
 
+@register('yank-nth-arg')
+def yank_nth_arg(event):
+    """
+    Insert the first argument of the previous command. With an argument, insert
+    the nth word from the previous command (start counting at 0).
+    """
+    n = (event.arg if event.arg_present else None)
+    event.current_buffer.yank_nth_arg(n)
+
+
+@register('yank-last-arg')
+def yank_last_arg(event):
+    """
+    Like `yank_nth_arg`, but if no argument has been given, yank the last word
+    of each line.
+    """
+    n = (event.arg if event.arg_present else None)
+    event.current_buffer.yank_last_arg(n)
+
 #
 # Completion.
 #
