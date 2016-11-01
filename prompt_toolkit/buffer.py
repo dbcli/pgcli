@@ -892,7 +892,7 @@ class Buffer(object):
         :param n: (None or int), The index of the word from the previous line
             to take.
         """
-        assert isinstance(n, int)
+        assert n is None or isinstance(n, int)
 
         if not len(self.history):
             return
