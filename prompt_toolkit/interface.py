@@ -620,7 +620,6 @@ class CommandLineInterface(object):
         with self.input.cooked_mode():
             result = func()
 
-
         # Redraw interface again.
         self.renderer.reset()
         self.renderer.request_absolute_cursor_position()

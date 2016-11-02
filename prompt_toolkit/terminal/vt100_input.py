@@ -490,7 +490,8 @@ class raw_mode(object):
 
 class cooked_mode(raw_mode):
     """
-    (The opposide of ``raw_mode``::
+    The opposide of ``raw_mode``, used when we need cooked mode inside a
+    `raw_mode` block.  Used in `CommandLineInterface.run_in_terminal`.::
 
         with cooked_mode(stdin):
             ''' the pseudo-terminal stdin is now used in cooked mode. '''
@@ -501,5 +502,8 @@ class cooked_mode(raw_mode):
 
     @classmethod
     def _patch_iflag(cls, attrs):
-        # Don't change any.
-        return attrs
+        # Turn the ICRNL flag back on. (Without this, calling `input()` in
+        # run_in_terminal doesn't work and displays ^M instead. Ptpython
+        # evaluates commands using `run_in_terminal`, so it's important that
+        # they translate ^M back into ^J.)
+        return attrs | termios.ICRNL
