@@ -162,7 +162,7 @@ def load_basic_bindings(registry, filter=Always()):
     is_multiline = Condition(lambda cli: cli.current_buffer.is_multiline())
     is_returnable = Condition(lambda cli: cli.current_buffer.accept_action.is_returnable)
 
-    @handle(Keys.ControlJ, filter=is_multiline)
+    @handle(Keys.ControlJ, filter=is_multiline & insert_mode)
     def _(event):
         " Newline (in case of multiline input. "
         event.current_buffer.newline(copy_margin=not event.cli.in_paste_mode)
