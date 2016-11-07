@@ -244,7 +244,14 @@ class PosixEventLoop(EventLoop):
         self._calls_from_executor.append((callback, _max_postpone_until))
 
         if self._schedule_pipe:
-            os.write(self._schedule_pipe[1], b'x')
+            try:
+                os.write(self._schedule_pipe[1], b'x')
+            except (AttributeError, IndexError, OSError):
+                # Handle race condition. We're in a different thread.
+                # - `_schedule_pipe` could have become None in the meantime.
+                # - We catch `OSError` (actually BrokenPipeError), because the
+                #   main thread could have closed the pipe already.
+                pass
 
     def stop(self):
         """
