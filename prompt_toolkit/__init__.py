@@ -19,4 +19,4 @@ from .shortcuts import prompt, prompt_async
 
 
 # Don't forget to update in `docs/conf.py`!
-__version__ = '1.0.8'
+__version__ = '1.0.9'

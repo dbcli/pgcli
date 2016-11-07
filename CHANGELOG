@@ -1,6 +1,23 @@
 CHANGELOG
 =========
 
+1.0.9: 2016-11-07
+-----------------
+
+Fixes:
+- Fixed a bug in the `cooked_mode` context manager. This caused a bug in
+  ptpython where executing `input()` would display ^M instead of accepting the
+  input.
+- Handle race condition in eventloop/posix.py
+- Updated ANSI color names for vt100. (High and low intensity colors were
+  swapped.)
+
+New features:
+- Added yank-nth-arg and yank-last-arg readline commands + Emacs bindings.
+- Allow searching in Vi selection mode.
+- Made text objects of the Vi 'n' and 'N' search bindings. This adds for
+  instance the following bindings: cn, cN, dn, dN, yn, yN
+
 1.0.8: 2016-10-16
 -----------------
 
