@@ -1609,7 +1609,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
 
         for p2 in buff.multiple_cursor_positions:
             text.append(original_text[p:p2])
-            if original_text[p2] == '\n':  # Don't delete across lines.
+            if p2 >= len(original_text) or original_text[p2] == '\n':
+                # Don't delete across lines.
                 p = p2
             else:
                 p = p2 + 1
