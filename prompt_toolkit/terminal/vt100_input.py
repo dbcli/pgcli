@@ -170,6 +170,9 @@ ANSI_SEQUENCES = {
     '\x1b[5C': Keys.ControlRight,
     '\x1b[5D': Keys.ControlLeft,
 
+    '\x1bOc': Keys.ControlRight, # rxvt
+    '\x1bOd': Keys.ControlLeft,  # rxvt
+
     '\x1b[200~': Keys.BracketedPaste,  # Start of bracketed paste.
 
     # Meta + arrow keys. Several terminals handle this differently.
