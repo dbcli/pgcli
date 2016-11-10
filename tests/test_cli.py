@@ -506,7 +506,7 @@ def test_vi_digraphs():
     result, cli = feed('hello\x0bo/\n')
     assert result.text == 'helloø'
 
-    #C-K /o  (reversed input.)
+    # C-K /o  (reversed input.)
     result, cli = feed('hello\x0b/o\n')
     assert result.text == 'helloø'
 
@@ -546,13 +546,13 @@ def test_vi_block_editing():
     result, cli = feed(operations.replace('insert', 'I'))
 
     assert (result.text ==
-        '-line1\n-***line2\n-***line3\n-***line4\n-line5\n-line6')
+            '-line1\n-***line2\n-***line3\n-***line4\n-line5\n-line6')
 
     # Control-A
     result, cli = feed(operations.replace('insert', 'A'))
 
     assert (result.text ==
-        '-line1\n-line***2\n-line***3\n-line***4\n-line5\n-line6')
+            '-line1\n-line***2\n-line***3\n-line***4\n-line5\n-line6')
 
 
 def test_vi_character_paste():
