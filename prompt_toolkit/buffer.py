@@ -12,7 +12,7 @@ from .enums import IncrementalSearchDirection
 from .filters import to_simple_filter
 from .history import History, InMemoryHistory
 from .search_state import SearchState
-from .selection import SelectionType, SelectionState
+from .selection import SelectionType, SelectionState, PasteMode
 from .utils import Event
 from .cache import FastDictCache
 from .validation import ValidationError
@@ -288,6 +288,10 @@ class Buffer(object):
         # State of Emacs yank-nth-arg completion.
         self.yank_nth_arg_state = None  # for yank-nth-arg.
 
+        # Remember the document that we had *right before* the last paste
+        # operation. This is used for rotating through the kill ring.
+        self.document_before_paste = None
+
         # Current suggestion.
         self.suggestion = None
 
@@ -395,6 +399,7 @@ class Buffer(object):
         self.validation_error = None
         self.complete_state = None
         self.yank_nth_arg_state = None
+        self.document_before_paste = None
         self.selection_state = None
         self.suggestion = None
         self.preferred_column = None
@@ -407,6 +412,7 @@ class Buffer(object):
         self.validation_error = None
         self.complete_state = None
         self.yank_nth_arg_state = None
+        self.document_before_paste = None
 
         # Unset preferred_column. (Will be set after the cursor movement, if
         # required.)
@@ -962,12 +968,19 @@ class Buffer(object):
         """
         return self.copy_selection(_cut=True)
 
-    def paste_clipboard_data(self, data, before=False, count=1):
+    def paste_clipboard_data(self, data, paste_mode=PasteMode.EMACS, count=1):
         """
         Insert the data from the clipboard.
         """
         assert isinstance(data, ClipboardData)
-        self.document = self.document.paste_clipboard_data(data, before=before, count=count)
+        assert paste_mode in (PasteMode.VI_BEFORE, PasteMode.VI_AFTER, PasteMode.EMACS)
+
+        original_document = self.document
+        self.document = self.document.paste_clipboard_data(data, paste_mode=paste_mode, count=count)
+
+        # Remember original document. This assignment should come at the end,
+        # because assigning to 'document' will erase it.
+        self.document_before_paste = original_document
 
     def newline(self, copy_margin=True):
         """

@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 __all__ = (
     'SelectionType',
+    'PasteMode',
     'SelectionState',
 )
 
@@ -21,6 +22,12 @@ class SelectionType(object):
 
     #: A block selection. (Visual-Block in Vi.)
     BLOCK = 'BLOCK'
+
+
+class PasteMode(object):
+    EMACS = 'EMACS'  # Yank like emacs.
+    VI_AFTER = 'VI_AFTER'  # When pressing 'p' in Vi.
+    VI_BEFORE = 'VI_BEFORE'  # When pressing 'P' in Vi.
 
 
 class SelectionState(object):

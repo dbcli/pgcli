@@ -203,7 +203,7 @@ def test_emacs_yank():
     c = InMemoryClipboard(ClipboardData('XYZ'))
     result, cli = _feed_cli_with_input('hello\x02\x19\n', clipboard=c)
     assert result.text == 'hellXYZo'
-    assert result.cursor_position == len('hellXY')
+    assert result.cursor_position == len('hellXYZ')
 
 
 def test_quoted_insert():
@@ -368,6 +368,34 @@ def test_emacs_arguments_for_all_commands():
                 assert key == '\x03'
 
 
+def test_emacs_kill_ring():
+    operations = (
+        # abc ControlA ControlK
+        'abc\x01\x0b'
+
+        # def ControlA ControlK
+        'def\x01\x0b'
+
+        # ghi ControlA ControlK
+        'ghi\x01\x0b'
+
+        # ControlY (yank)
+        '\x19'
+    )
+
+    result, cli = _feed_cli_with_input(operations + '\n')
+    assert result.text == 'ghi'
+
+    result, cli = _feed_cli_with_input(operations + '\x1by\n')
+    assert result.text == 'def'
+
+    result, cli = _feed_cli_with_input(operations + '\x1by\x1by\n')
+    assert result.text == 'abc'
+
+    result, cli = _feed_cli_with_input(operations + '\x1by\x1by\x1by\n')
+    assert result.text == 'ghi'
+
+
 def test_bracketed_paste():
     result, cli = _feed_cli_with_input('\x1b[200~hello world\x1b[201~\n')
     assert result.text == 'hello world'
@@ -525,3 +553,17 @@ def test_vi_block_editing():
 
     assert (result.text ==
         '-line1\n-line***2\n-line***3\n-line***4\n-line5\n-line6')
+
+
+def test_vi_character_paste():
+    feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI)
+
+    # Test 'p' character paste.
+    result, cli = feed('abcde\x1bhhxp\n')
+    assert result.text == 'abdce'
+    assert result.cursor_position == 3
+
+    # Test 'P' character paste.
+    result, cli = feed('abcde\x1bhhxP\n')
+    assert result.text == 'abcde'
+    assert result.cursor_position == 2

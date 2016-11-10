@@ -9,7 +9,7 @@ from prompt_toolkit.key_binding.digraphs import DIGRAPHS
 from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
-from prompt_toolkit.selection import SelectionType, SelectionState
+from prompt_toolkit.selection import SelectionType, SelectionState, PasteMode
 
 from .utils import create_handle_decorator
 from .scroll import scroll_forward, scroll_backward, scroll_half_page_up, scroll_half_page_down, scroll_one_line_up, scroll_one_line_down, scroll_page_up, scroll_page_down
@@ -483,7 +483,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         """
         event.current_buffer.paste_clipboard_data(
             event.cli.clipboard.get_data(),
-            count=event.arg)
+            count=event.arg,
+            paste_mode=PasteMode.VI_AFTER)
 
     @handle('P', filter=navigation_mode)
     def _(event):
@@ -492,8 +493,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         """
         event.current_buffer.paste_clipboard_data(
             event.cli.clipboard.get_data(),
-            before=True,
-            count=event.arg)
+            count=event.arg,
+            paste_mode=PasteMode.VI_BEFORE)
 
     @handle('"', Keys.Any, 'p', filter=navigation_mode)
     def _(event):
@@ -502,7 +503,8 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
         if c in vi_register_names:
             data = event.cli.vi_state.named_registers.get(c)
             if data:
-                event.current_buffer.paste_clipboard_data(data, count=event.arg)
+                event.current_buffer.paste_clipboard_data(
+                    data, count=event.arg, paste_mode=PasteMode.VI_AFTER)
 
     @handle('"', Keys.Any, 'P', filter=navigation_mode)
     def _(event):
@@ -512,7 +514,7 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
             data = event.cli.vi_state.named_registers.get(c)
             if data:
                 event.current_buffer.paste_clipboard_data(
-                    data, before=True, count=event.arg)
+                    data, count=event.arg, paste_mode=PasteMode.VI_BEFORE)
 
     @handle('r', Keys.Any, filter=navigation_mode)
     def _(event):

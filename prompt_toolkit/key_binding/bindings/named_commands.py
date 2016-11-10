@@ -5,6 +5,7 @@ See: http://www.delorie.com/gnu/docs/readline/rlman_13.html
 """
 from __future__ import unicode_literals
 from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER
+from prompt_toolkit.selection import PasteMode
 from six.moves import range
 import six
 
@@ -358,13 +359,12 @@ def unix_line_discard(event):
 
 
 @register('yank')
-@register('yank-pop')
 def yank(event):
     """
     Paste before cursor.
     """
     event.current_buffer.paste_clipboard_data(
-        event.cli.clipboard.get_data(), count=event.arg, before=True)
+        event.cli.clipboard.get_data(), count=event.arg, paste_mode=PasteMode.EMACS)
 
 @register('yank-nth-arg')
 def yank_nth_arg(event):
@@ -384,6 +384,22 @@ def yank_last_arg(event):
     """
     n = (event.arg if event.arg_present else None)
     event.current_buffer.yank_last_arg(n)
+
+@register('yank-pop')
+def yank_pop(event):
+    """
+    Rotate the kill ring, and yank the new top. Only works following yank or
+    yank-pop.
+    """
+    buff = event.current_buffer
+    doc_before_paste = buff.document_before_paste
+    clipboard = event.cli.clipboard
+
+    if doc_before_paste is not None:
+        buff.document = doc_before_paste
+        clipboard.rotate()
+        buff.paste_clipboard_data(
+            clipboard.get_data(), paste_mode=PasteMode.EMACS)
 
 #
 # Completion.

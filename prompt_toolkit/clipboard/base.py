@@ -50,6 +50,11 @@ class Clipboard(with_metaclass(ABCMeta, object)):
         assert isinstance(text, six.string_types)
         self.set_data(ClipboardData(text))
 
+    def rotate(self):
+        """
+        For Emacs mode, rotate the kill ring.
+        """
+
     @abstractmethod
     def get_data(self):
         """
