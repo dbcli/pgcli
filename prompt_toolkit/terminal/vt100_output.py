@@ -26,50 +26,50 @@ __all__ = (
 
 FG_ANSI_COLORS = {
     'ansidefault': 39,
-    'ansiblack':   30,
-    'ansidarkgray': 37,
-    'ansilightgray':90,
-    'ansiwhite':   97,
 
     # Low intensity.
+    'ansiblack':       30,
     'ansidarkred':     31,
     'ansidarkgreen':   32,
     'ansibrown':       33,
     'ansidarkblue':    34,
     'ansipurple':      35,
     'ansiteal':        36,
+    'ansilightgray':   37,
 
     # High intensity.
+    'ansidarkgray':    90,
     'ansired':         91,
     'ansigreen':       92,
     'ansiyellow':      93,
     'ansiblue':        94,
     'ansifuchsia':     95,
     'ansiturquoise':   96,
+    'ansiwhite':       97,
 }
 
 BG_ANSI_COLORS = {
     'ansidefault':     49,
-    'ansiblack':       40,
-    'ansidarkgray':    47,
-    'ansiwhite':       107,
-    'ansilightgray':   100,
 
     # Low intensity.
+    'ansiblack':       40,
     'ansidarkred':     41,
     'ansidarkgreen':   42,
     'ansibrown':       43,
     'ansidarkblue':    44,
     'ansipurple':      45,
     'ansiteal':        46,
+    'ansilightgray':   47,
 
     # High intensity.
+    'ansidarkgray':    100,
     'ansired':         101,
     'ansigreen':       102,
     'ansiyellow':      103,
     'ansiblue':        104,
     'ansifuchsia':     105,
     'ansiturquoise':   106,
+    'ansiwhite':       107,
 }
 
 
