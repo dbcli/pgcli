@@ -104,7 +104,7 @@ class PGCli(object):
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
                  pgexecute=None, pgclirc_file=None, row_limit=None,
-                 single_connection=False):
+                 single_connection=False, prompt=None):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
@@ -135,7 +135,7 @@ class PGCli(object):
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
         self.less_chatty = c['main'].as_bool('less_chatty')
         self.null_string = c['main'].get('null_string', '<null>')
-        self.prompt_format = c['main'].get('prompt', self.default_prompt)
+        self.prompt_format = prompt if prompt is not None else c['main'].get('prompt', self.default_prompt)
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
@@ -720,10 +720,11 @@ class PGCli(object):
         help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
 @click.option('-R', '--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
         help='Set threshold for row limit prompt. Use 0 to disable prompt.')
+@click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, user, host, port, prompt_passwd, never_prompt,
-    single_connection, dbname, username, version, pgclirc, dsn, row_limit):
+    single_connection, dbname, username, version, pgclirc, dsn, row_limit, prompt):
 
     if version:
         print('Version:', __version__)
@@ -746,7 +747,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt,
                    config_full_path)
 
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc,
-                  row_limit=row_limit, single_connection=single_connection)
+                  row_limit=row_limit, single_connection=single_connection, prompt=prompt)
 
     # Choose which ever one has a valid value.
     database = database or dbname
