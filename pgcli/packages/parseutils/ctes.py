@@ -65,6 +65,8 @@ def extract_ctes(sql):
 
     # Get the next (meaningful) token, which should be the first CTE
     idx, tok = p.token_next(idx)
+    if not tok:
+        return ([], '')
     start_pos = token_start_pos(p.tokens, idx)
     ctes = []
 
