@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import pytest
 import itertools
 from metadata import (MetaData, alias, name_join, fk_join, join,
-    schema, table, function, wildcard_expansion)
+    schema, table, function, wildcard_expansion, column)
 from prompt_toolkit.document import Document
 
 metadata = {
@@ -90,9 +90,12 @@ def test_suggested_column_names_from_shadowed_visible_table(completer, complete_
         testdata.keywords())
         )
 
-def test_suggested_column_names_from_qualified_shadowed_table(completer, complete_event):
-    text = 'SELECT  from custom.users'
-    position = len('SELECT ')
+@pytest.mark.parametrize('text', [
+    'SELECT  from custom.users',
+    'WITH users as (SELECT 1 AS foo) SELECT  from custom.users',
+    ])
+def test_suggested_column_names_from_qualified_shadowed_table(completer, complete_event, text):
+    position = text.find('  ') + 1
     result = set(completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event))
@@ -101,6 +104,18 @@ def test_suggested_column_names_from_qualified_shadowed_table(completer, complet
         list(testdata.builtin_functions() +
         testdata.keywords())
         )
+
+@pytest.mark.parametrize('text', [
+    'WITH users as (SELECT 1 AS foo) SELECT  from users',
+    ])
+def test_suggested_column_names_from_cte(completer, complete_event, text):
+    position = text.find('  ') + 1
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set([column('foo')] + testdata.functions() +
+        list(testdata.builtin_functions() + testdata.keywords())
+    )
 
 @pytest.mark.parametrize('text', [
     'SELECT * FROM users JOIN custom.shipments ON ',

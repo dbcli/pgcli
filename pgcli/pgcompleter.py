@@ -689,7 +689,7 @@ class PGCompleter(Completer):
         :param local_tbls: tuple(TableMetadata)
         :return: {TableReference:{colname:ColumnMetaData}}
         """
-
+        ctes = dict((normalize_ref(t.name), t.columns) for t in local_tbls)
         columns = OrderedDict()
         meta = self.dbmetadata
 
@@ -700,6 +700,11 @@ class PGCompleter(Completer):
             columns[tbl].extend(cols)
 
         for tbl in scoped_tbls:
+            # Local tables should shadow database tables
+            if tbl.schema is None and normalize_ref(tbl.name) in ctes:
+                cols = ctes[normalize_ref(tbl.name)]
+                addcols(None, tbl.name, 'CTE', tbl.alias, cols)
+                continue
             schemas = [tbl.schema] if tbl.schema else self.search_path
             for schema in schemas:
                 relname = self.escape_name(tbl.name)
@@ -719,10 +724,6 @@ class PGCompleter(Completer):
                             cols = cols.values()
                             addcols(schema, relname, tbl.alias, reltype, cols)
                             break
-                            
-        # Local tables should shadow database tables
-        for tbl in local_tbls:
-            columns[tbl.name] = tbl.columns
 
         return columns
 
