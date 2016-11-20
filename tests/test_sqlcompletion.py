@@ -20,6 +20,12 @@ def test_select_suggests_cols_with_qualified_table_scope():
     assert set(suggestions) == cols_etc('tabl', 'sch')
 
 
+def test_cte_does_not_crash():
+    sql = 'WITH CTE AS (SELECT F.* FROM Foo F WHERE F.Bar > 23) SELECT C.* FROM CTE C WHERE C.FooID BETWEEN 123 AND 234;'
+    for i in range(len(sql)):
+        suggestions = suggest_type(sql[:i+1], sql[:i+1])
+
+
 @pytest.mark.parametrize('expression', [
     'SELECT * FROM "tabl" WHERE ',
 ])
