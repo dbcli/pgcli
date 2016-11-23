@@ -11,6 +11,13 @@ The sections below describe the components required for full screen
 applications (or custom, non full screen applications), and how to assemble
 them together.
 
+.. warning:: This is going to change.
+
+    The information below is still up to date, but we are planning to
+    refactor some of the internal architecture of prompt_toolkit, to make it
+    easier to build full screen applications. This will however be
+    backwards-incompatible. The refactoring should probably be complete
+    somewhere around half 2017.
 
 Running the application
 -----------------------
