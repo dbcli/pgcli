@@ -691,6 +691,8 @@ def print_tokens(tokens, style=None, true_color=False):
     :param style: :class:`.Style` instance for the color scheme.
     :param true_color: When True, use 24bit colors instead of 256 colors.
     """
+    if style is None:
+        style = DEFAULT_STYLE
     assert isinstance(style, Style)
 
     output = create_output(true_color=true_color)
