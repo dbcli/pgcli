@@ -672,7 +672,7 @@ def confirm(message='Confirm (y or n) '):
     return run_application(app)
 
 
-def print_tokens(tokens, style=None, true_color=False):
+def print_tokens(tokens, style=None, true_color=False, file=None):
     """
     Print a list of (Token, text) tuples in the given style to the output.
     E.g.::
@@ -690,12 +690,13 @@ def print_tokens(tokens, style=None, true_color=False):
     :param tokens: List of ``(Token, text)`` tuples.
     :param style: :class:`.Style` instance for the color scheme.
     :param true_color: When True, use 24bit colors instead of 256 colors.
+    :param file: The output file. This can be `sys.stdout` or `sys.stderr`.
     """
     if style is None:
         style = DEFAULT_STYLE
     assert isinstance(style, Style)
 
-    output = create_output(true_color=true_color)
+    output = create_output(true_color=true_color, stdout=file)
     renderer_print_tokens(output, tokens, style)
 
 
