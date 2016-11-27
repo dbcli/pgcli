@@ -39,7 +39,7 @@ The three I/O objects are:
 The input and output objects are optional. However, the eventloop is always
 required.
 
-We'll come back at what the :class:`~prompt_toolkit.application.Application`
+We'll come back to what the :class:`~prompt_toolkit.application.Application`
 instance is later.
 
 So, the only thing we actually need in order to run an application is the following:
