@@ -252,13 +252,29 @@ def test_emacs_other_bindings():
     result, cli = _feed_cli_with_input('hello\x1b[D\x1b[D\x15X\n')
     assert result.text == 'Xlo'
 
-    # Delete word before the cursor.
+    # unix-word-rubout: delete word before the cursor.
+    # (ControlW).
     result, cli = _feed_cli_with_input('hello world test\x17X\n')
+    assert result.text == 'hello world X'
+
+    result, cli = _feed_cli_with_input('hello world /some/very/long/path\x17X\n')
     assert result.text == 'hello world X'
 
     # (with argument.)
     result, cli = _feed_cli_with_input('hello world test\x1b2\x17X\n')
     assert result.text == 'hello X'
+
+    result, cli = _feed_cli_with_input('hello world /some/very/long/path\x1b2\x17X\n')
+    assert result.text == 'hello X'
+
+    # backward-kill-word: delete word before the cursor.
+    # (Esc-ControlH).
+    result, cli = _feed_cli_with_input('hello world /some/very/long/path\x1b\x08X\n')
+    assert result.text == 'hello world /some/very/long/X'
+
+    # (with arguments.)
+    result, cli = _feed_cli_with_input('hello world /some/very/long/path\x1b3\x1b\x08X\n')
+    assert result.text == 'hello world /some/very/X'
 
 
 def test_controlx_controlx():

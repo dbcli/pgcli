@@ -58,8 +58,8 @@ def load_emacs_bindings(registry, filter=Always()):
     handle(Keys.Escape, 'l', filter=insert_mode)(get_by_name('downcase-word'))
     handle(Keys.Escape, 'u', filter=insert_mode)(get_by_name('uppercase-word'))
     handle(Keys.Escape, 'y', filter=insert_mode)(get_by_name('yank-pop'))
-    handle(Keys.Escape, Keys.ControlH, filter=insert_mode)(get_by_name('unix-word-rubout'))
-    handle(Keys.Escape, Keys.Backspace, filter=insert_mode)(get_by_name('unix-word-rubout'))
+    handle(Keys.Escape, Keys.ControlH, filter=insert_mode)(get_by_name('backward-kill-word'))
+    handle(Keys.Escape, Keys.Backspace, filter=insert_mode)(get_by_name('backward-kill-word'))
     handle(Keys.Escape, '\\', filter=insert_mode)(get_by_name('delete-horizontal-space'))
 
     handle(Keys.ControlUnderscore, save_before=(lambda e: False), filter=insert_mode)(

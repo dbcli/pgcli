@@ -302,13 +302,13 @@ def kill_word(event):
 
 
 @register('unix-word-rubout')
-@register('backward-kill-word')  # XXX: backward-kill-word is actually slightly different.
-def unix_word_rubout(event):
+def unix_word_rubout(event, WORD=True):
     """
-    Kill the word behind point. Word boundaries are the same as backward-word.
+    Kill the word behind point, using whitespace as a word boundary.
+    Usually bound to ControlW.
     """
     buff = event.current_buffer
-    pos = buff.document.find_start_of_previous_word(count=event.arg)
+    pos = buff.document.find_start_of_previous_word(count=event.arg, WORD=WORD)
 
     if pos is None:
         # Nothing found? delete until the start of the document.  (The
@@ -328,6 +328,15 @@ def unix_word_rubout(event):
     else:
         # Nothing to delete. Bell.
         event.cli.output.bell()
+
+
+@register('backward-kill-word')
+def backward_kill_word(event):
+    """
+    Kills the word before point, using “not a letter nor a digit” as a word boundary.
+    Usually bound to M-Del or M-Backspace.
+    """
+    unix_word_rubout(event, WORD=False)
 
 
 @register('delete-horizontal-space')
