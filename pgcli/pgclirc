@@ -120,6 +120,8 @@ Token.Toolbar.Search.Text = 'nobold'
 Token.Toolbar.System = 'noinherit bold'
 Token.Toolbar.Arg = 'noinherit bold'
 Token.Toolbar.Arg.Text = 'nobold'
+Token.Toolbar.Transaction.Valid = "bg:#222222 #aaffcc bold"
+Token.Toolbar.Transaction.Failed = "bg:#222222 #ffbbbb bold"
 
 # Named queries are queries you can execute by name.
 [named queries]

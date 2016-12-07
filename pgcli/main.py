@@ -497,7 +497,9 @@ class PGCli(object):
             return [(Token.Continuation, '.' * (width - 1) + ' ')]
 
         get_toolbar_tokens = create_toolbar_tokens_func(
-            lambda: self.vi_mode, self.completion_refresher.is_refreshing)
+            lambda: self.vi_mode, self.completion_refresher.is_refreshing,
+            self.pgexecute.failed_transaction,
+            self.pgexecute.valid_transaction)
 
         layout = create_prompt_layout(
             lexer=PygmentsLexer(PostgresLexer),
