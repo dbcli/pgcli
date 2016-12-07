@@ -1,6 +1,14 @@
 from pygments.token import Token
 from prompt_toolkit.enums import DEFAULT_BUFFER
+from prompt_toolkit.key_binding.vi_state import InputMode
 
+def _get_vi_mode(cli):
+    return {
+        InputMode.INSERT: 'I',
+        InputMode.NAVIGATION: 'N',
+        InputMode.REPLACE: 'R',
+        InputMode.INSERT_MULTIPLE: 'M',
+    }[cli.vi_state.input_mode]
 
 def create_toolbar_tokens_func(get_vi_mode_enabled, get_is_refreshing):
     """
@@ -31,7 +39,7 @@ def create_toolbar_tokens_func(get_vi_mode_enabled, get_is_refreshing):
                 result.append((token,' (Semi-colon [;] will end the line) '))
 
         if get_vi_mode_enabled():
-            result.append((token.On, '[F4] Vi-mode'))
+            result.append((token.On, '[F4] Vi-mode (' + _get_vi_mode(cli) + ')'))
         else:
             result.append((token.On, '[F4] Emacs-mode'))
 
