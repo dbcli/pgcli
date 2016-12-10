@@ -311,10 +311,11 @@ class PGCompleter(Completer):
         for cand in collection:
             if isinstance(cand, _Candidate):
                 item, prio, display_meta, synonyms = cand
+                sort_key = max(_match(x) for x in synonyms)
             else:
-                item, display_meta, prio, synonyms = cand, meta, 0, [cand]
+                item, display_meta, prio = cand, meta, 0
+                sort_key = _match(cand)
 
-            sort_key = max(_match(x) for x in synonyms)
             if sort_key:
                 if display_meta and len(display_meta) > 50:
                     # Truncate meta-text to 50 characters, if necessary
