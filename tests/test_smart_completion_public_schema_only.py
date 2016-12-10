@@ -31,19 +31,19 @@ metadata = dict((k, {'public': v}) for k, v in metadata.items())
 
 testdata = MetaData(metadata)
 
-cased_users_cols = ['ID', 'PARENTID', 'Email', 'First_Name', 'last_name']
-cased_users2_cols = ['UserID', 'UserName']
+cased_users_col_names = ['ID', 'PARENTID', 'Email', 'First_Name', 'last_name']
+cased_users2_col_names = ['UserID', 'UserName']
 cased_funcs = ['Custom_Fun', '_custom_fun', 'Custom_Func1',
     'custom_func2', 'set_returning_func']
 cased_tbls = ['Users', 'Orders']
 cased_views = ['User_Emails']
 casing =  (['SELECT', 'PUBLIC'] + cased_funcs + cased_tbls + cased_views
-    + cased_users_cols + cased_users2_cols)
+    + cased_users_col_names + cased_users2_col_names)
 # Lists for use in assertions
 cased_funcs = [function(f + '()') for f in cased_funcs]
 cased_tbls = [table(t) for t in (cased_tbls + ['"Users"', '"select"'])]
 cased_rels = [view(t) for t in cased_views] + cased_funcs + cased_tbls
-cased_users_cols = [column(c) for c in cased_users_cols]
+cased_users_cols = [column(c) for c in cased_users_col_names]
 aliased_rels = [table(t) for t in ('users u', '"Users" U', 'orders o',
     '"select" s')] + [view('user_emails ue')] + [function(f) for f in (
     '_custom_fun() cf', 'custom_fun() cf', 'custom_func1() cf',
@@ -67,8 +67,17 @@ def aliased_completer():
     return testdata.get_completer({'generate_aliases': True})
 
 @pytest.fixture
-def cased_aliased_completer(request):
+def cased_aliased_completer():
     return testdata.get_completer({'generate_aliases': True}, casing)
+
+@pytest.fixture
+def cased_always_qualifying_completer():
+    return testdata.get_completer({'qualify_columns': 'always'}, casing)
+
+@pytest.fixture
+def auto_qualifying_completer():
+    return testdata.get_completer({'qualify_columns': 'if_more_than_one_table'})
+
 
 @pytest.fixture
 def complete_event():
@@ -172,6 +181,67 @@ def test_suggested_cased_column_names(cased_completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set(cased_funcs + cased_users_cols
+        + testdata.builtin_functions() + testdata.keywords())
+
+
+@pytest.mark.parametrize('text', [
+    'SELECT  from users',
+    'INSERT INTO Orders SELECT  from users',
+])
+def test_suggested_auto_qualified_column_names(
+    text, auto_qualifying_completer, complete_event
+):
+    pos = text.index('  ') + 1
+    cols = [column(c.lower()) for c in cased_users_col_names]
+    result = set(auto_qualifying_completer.get_completions(
+        Document(text=text, cursor_position=pos),
+        complete_event))
+    assert set(result) == set(testdata.functions() + cols
+        + testdata.builtin_functions() + testdata.keywords())
+
+
+@pytest.mark.parametrize('text', [
+    'SELECT  from users U NATURAL JOIN "Users"',
+    'INSERT INTO Orders SELECT  from users U NATURAL JOIN "Users"',
+])
+def test_suggested_auto_qualified_column_names_two_tables(
+    text, auto_qualifying_completer, complete_event
+):
+    pos = text.index('  ') + 1
+    cols = [column('U.' + c.lower()) for c in cased_users_col_names]
+    cols += [column('"Users".' + c.lower()) for c in cased_users2_col_names]
+    result = set(auto_qualifying_completer.get_completions(
+        Document(text=text, cursor_position=pos),
+        complete_event))
+    assert set(result) == set(testdata.functions() + cols
+        + testdata.builtin_functions() + testdata.keywords())
+
+
+@pytest.mark.parametrize('text', [
+    'UPDATE users SET ',
+    'INSERT INTO users(',
+])
+def test_no_column_qualification(
+    text, cased_always_qualifying_completer, complete_event
+):
+    pos = len(text)
+    cols = [column(c) for c in cased_users_col_names]
+    result = set(cased_always_qualifying_completer.get_completions(
+        Document(text=text, cursor_position=pos),
+        complete_event))
+    assert set(result) == set(cols)
+
+
+def test_suggested_cased_always_qualified_column_names(
+    cased_always_qualifying_completer, complete_event
+):
+    text = 'SELECT  from users'
+    position = len('SELECT ')
+    cols = [column('users.' + c) for c in cased_users_col_names]
+    result = set(cased_always_qualifying_completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    assert set(result) == set(cased_funcs + cols
         + testdata.builtin_functions() + testdata.keywords())
 
 

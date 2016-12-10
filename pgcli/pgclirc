@@ -58,6 +58,10 @@ log_level = INFO
 # Possible values: "table_order" and "alphabetic"
 asterisk_column_order = table_order
 
+# Whether to qualify with table alias/name when suggesting columns
+# Possible values: "always", never" and "if_more_than_one_table"
+qualify_columns = if_more_than_one_table
+
 # Default pager.
 # By default 'PAGER' environment variable is used
 # pager = less -SRXF

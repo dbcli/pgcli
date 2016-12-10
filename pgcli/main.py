@@ -151,6 +151,7 @@ class PGCli(object):
             'generate_casing_file': c['main'].as_bool('generate_casing_file'),
             'generate_aliases': c['main'].as_bool('generate_aliases'),
             'asterisk_column_order': c['main']['asterisk_column_order'],
+            'qualify_columns': c['main']['qualify_columns'],
             'single_connection': single_connection,
             'keyword_casing': keyword_casing,
         }

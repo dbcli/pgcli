@@ -1,12 +1,14 @@
 from pgcli.packages.sqlcompletion import (
     suggest_type, Special, Database, Schema, Table, Column, View, Keyword,
     FromClauseItem, Function, Datatype, Alias, JoinCondition, Join)
+from pgcli.packages.parseutils.tables import TableReference
 import pytest
 
 # Returns the expected select-clause suggestions for a single-table select
 def cols_etc(table, schema=None, alias=None, is_function=False, parent=None):
     return set([
-        Column(table_refs=((schema, table, alias, is_function),)),
+        Column(table_refs=(TableReference(schema, table, alias, is_function),),
+               qualifiable=True),
         Function(schema=parent),
         Keyword()])
 
@@ -79,13 +81,13 @@ def test_where_equals_any_suggests_columns_or_keywords():
 def test_lparen_suggests_cols():
     suggestion = suggest_type('SELECT MAX( FROM tbl', 'SELECT MAX(')
     assert set(suggestion) == set([
-        Column(table_refs=((None, 'tbl', None, False),))])
+        Column(table_refs=((None, 'tbl', None, False),), qualifiable=True)])
 
 
 def test_select_suggests_cols_and_funcs():
     suggestions = suggest_type('SELECT ', 'SELECT ')
     assert set(suggestions) == set([
-         Column(table_refs=()),
+         Column(table_refs=(), qualifiable=True),
          Function(schema=None),
          Keyword(),
     ])
@@ -211,13 +213,13 @@ def test_truncate_suggests_qualified_tables():
 ])
 def test_distinct_suggests_cols(text):
     suggestions = suggest_type(text, text)
-    assert suggestions ==(Column(table_refs=()),)
+    assert suggestions ==(Column(table_refs=(), qualifiable=True),)
 
 
 def test_col_comma_suggests_cols():
     suggestions = suggest_type('SELECT a, b, FROM tbl', 'SELECT a, b,')
     assert set(suggestions) == set([
-        Column(table_refs=((None, 'tbl', None, False),)),
+        Column(table_refs=((None, 'tbl', None, False),), qualifiable=True),
         Function(schema=None),
         Keyword(),
     ])
@@ -377,7 +379,7 @@ def test_sub_select_col_name_completion():
     suggestions = suggest_type('SELECT * FROM (SELECT  FROM abc',
             'SELECT * FROM (SELECT ')
     assert set(suggestions) == set([
-        Column(table_refs=((None, 'abc', None, False),)),
+        Column(table_refs=((None, 'abc', None, False),), qualifiable=True),
         Function(schema=None),
         Keyword(),
     ])
@@ -541,7 +543,7 @@ def test_2_statements_2nd_current():
     suggestions = suggest_type('select * from a; select  from b',
                                'select * from a; select ')
     assert set(suggestions) == set([
-        Column(table_refs=((None, 'b', None, False),)),
+        Column(table_refs=((None, 'b', None, False),), qualifiable=True),
         Function(schema=None),
         Keyword()
     ])
@@ -698,7 +700,7 @@ def test_suggest_where_keyword(text):
 
 @pytest.mark.parametrize('text, before, expected', [
     ('\\ns abc SELECT ', 'SELECT ', [
-        Column(table_refs=()),
+        Column(table_refs=(), qualifiable=True),
         Function(schema=None),
         Keyword()
     ]),
@@ -754,7 +756,8 @@ def test_column_keyword_suggests_columns(sql):
 def test_handle_unrecognized_kw_generously():
     sql = 'SELECT * FROM sessions WHERE session = 1 AND '
     suggestions = suggest_type(sql, sql)
-    expected = Column(table_refs=((None, 'sessions', None, False),))
+    expected = Column(table_refs=((None, 'sessions', None, False),),
+                      qualifiable=True)
 
     assert expected in set(suggestions)
 

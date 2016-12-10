@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 import logging
 import re
-from itertools import count, repeat, chain
+from itertools import count, repeat
 import operator
 from collections import namedtuple, defaultdict
 from pgspecial.namedqueries import NamedQueries
@@ -31,6 +31,10 @@ NamedQueries.instance = NamedQueries.from_config(
 
 Match = namedtuple('Match', ['completion', 'priority'])
 
+_Candidate = namedtuple('Candidate', ['completion', 'priority', 'meta', 'synonyms'])
+def Candidate(completion, priority, meta, synonyms = None):
+    return _Candidate(completion, priority, meta, synonyms or [completion])
+
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
 def generate_alias(tbl, tbs):
@@ -57,6 +61,8 @@ class PGCompleter(Completer):
         self.generate_aliases = settings.get('generate_aliases')
         self.casing_file = settings.get('casing_file')
         self.generate_casing_file = settings.get('generate_casing_file')
+        self.qualify_columns = settings.get(
+            'qualify_columns', 'if_more_than_one_table')
         self.asterisk_column_order = settings.get(
             'asterisk_column_order', 'table_order')
 
@@ -237,15 +243,15 @@ class PGCompleter(Completer):
                            'datatypes': {}}
         self.all_completions = set(self.keywords + self.functions)
 
-    def find_matches(self, text, collection, mode='fuzzy',
-                     meta=None, meta_collection=None,
-                     priority_collection = None):
+    def find_matches(self, text, collection, mode='fuzzy', meta=None):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
         completions, find completions matching the last word of the
         text.
 
+        `collection` can be either a list of strings or a list of Candidate
+        namedtuples.
         `mode` can be either 'fuzzy', or 'strict'
             'fuzzy': fuzzy matching, ties broken by name prevalance
             `keyword`: start only matching, ties broken by keyword prevalance
@@ -254,7 +260,8 @@ class PGCompleter(Completer):
         in the collection of available completions.
 
         """
-
+        if not collection:
+            return []
         prio_order = [
             'keyword', 'function', 'view', 'table', 'datatype', 'database',
             'schema', 'column', 'table alias', 'join', 'name join', 'fk join'
@@ -300,21 +307,19 @@ class PGCompleter(Completer):
                     # fuzzy matches
                     return -float('Infinity'), -match_point
 
-        # Fallback to meta param if meta_collection param is None
-        meta_collection = meta_collection or repeat(meta)
-        # Fallback to 0 if priority_collection param is None
-        priority_collection = priority_collection or repeat(0)
-
-        collection = zip(collection, meta_collection, priority_collection)
-
         matches = []
+        for cand in collection:
+            if isinstance(cand, _Candidate):
+                item, prio, display_meta, synonyms = cand
+                sort_key = max(_match(x) for x in synonyms)
+            else:
+                item, display_meta, prio = cand, meta, 0
+                sort_key = _match(cand)
 
-        for item, meta, prio in collection:
-            sort_key = _match(item)
             if sort_key:
-                if meta and len(meta) > 50:
+                if display_meta and len(display_meta) > 50:
                     # Truncate meta-text to 50 characters, if necessary
-                    meta = meta[:47] + u'...'
+                    display_meta = display_meta[:47] + u'...'
 
                 # Lexical order of items in the collection, used for
                 # tiebreaking items with the same match group length and start
@@ -333,7 +338,8 @@ class PGCompleter(Completer):
                 priority = sort_key, type_priority, prio, priority_func(item), lexical_priority
 
                 matches.append(Match(
-                    completion=Completion(item, -text_len, display_meta=meta),
+                    completion=Completion(item, -text_len,
+                    display_meta=display_meta),
                     priority=priority))
         return matches
 
@@ -375,12 +381,20 @@ class PGCompleter(Completer):
 
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.table_refs
+        do_qualify = suggestion.qualifiable and {'always': True, 'never': False,
+            'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
+        qualify = lambda col, tbl: (
+            (tbl + '.' + self.case(col)) if do_qualify else self.case(col))
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables, suggestion.local_tables)
 
         colit = scoped_cols.items
-        flat_cols = list(chain(*((c.name for c in cols)
-            for t, cols in colit())))
+        def make_cand(name, ref):
+            return Candidate(qualify(name, ref), 0, 'column', [name])
+        flat_cols = []
+        for t, cols in colit():
+            for c in cols:
+                flat_cols.append(make_cand(c.name, t.ref))
         if suggestion.require_last_table:
             # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
             # suggest only columns that appear in the last table and one more
@@ -399,14 +413,10 @@ class PGCompleter(Completer):
                 # User typed x.*; replicate "x." for all columns except the
                 # first, which gets the original (as we only replace the "*"")
                 sep = ', ' + word_before_cursor[:-1]
-                collist = sep.join(self.case(c) for c in flat_cols)
-            elif len(scoped_cols) > 1:
-                # Multiple tables; qualify all columns
-                collist = ', '.join(t.ref + '.' + self.case(c.name)
-                    for t, cs in colit() for c in cs)
+                collist = sep.join(self.case(c.completion) for c in flat_cols)
             else:
-                # Plain columns
-                collist = ', '.join(self.case(c) for c in flat_cols)
+                collist = ', '.join(qualify(c.name, t.ref)
+                    for t, cs in colit() for c in cs)
 
             return [Match(completion=Completion(collist, -1,
                 display_meta='columns', display='*'), priority=(1,1,1))]
@@ -440,7 +450,7 @@ class PGCompleter(Completer):
         refs = set(normalize_ref(t.ref) for t in tbls)
         other_tbls = set((t.schema, t.name)
             for t in list(cols)[:-1])
-        joins, prios = [], []
+        joins = []
         # Iterate over FKs in existing tables to find potential joins
         fks = ((fk, rtbl, rcol) for rtbl, rcols in cols.items()
             for rcol in rcols for fk in rcol.foreignkeys)
@@ -466,12 +476,11 @@ class PGCompleter(Completer):
                 and left.schema == right.schema
                 or left.schema not in(right.schema, 'public')):
                 join = left.schema + '.' + join
-            joins.append(join)
-            prios.append(ref_prio[normalize_ref(rtbl.ref)] * 2 + (
-                0 if (left.schema, left.tbl) in other_tbls else 1))
+            prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (
+                0 if (left.schema, left.tbl) in other_tbls else 1)
+            joins.append(Candidate(join, prio, 'join'))
 
-        return self.find_matches(word_before_cursor, joins, meta='join',
-            priority_collection=prios)
+        return self.find_matches(word_before_cursor, joins, meta='join')
 
     def get_join_condition_matches(self, suggestion, word_before_cursor):
         col = namedtuple('col', 'schema tbl col')
@@ -482,16 +491,15 @@ class PGCompleter(Completer):
             ltbl, lcols = [(t, cs) for (t, cs) in tbls() if t.ref == lref][-1]
         except IndexError: # The user typed an incorrect table qualifier
             return []
-        conds, prios, found_conds = [], [], set()
+        conds, found_conds = [], set()
 
-        def add_cond(lcol, rcol, rref, prio):
+        def add_cond(lcol, rcol, rref, prio, meta):
             prefix = '' if suggestion.parent else ltbl.ref + '.'
             case = self.case
             cond = prefix + case(lcol) + ' = ' + rref + '.' + case(rcol)
             if cond not in found_conds:
                 found_conds.add(cond)
-                conds.append(cond)
-                prios.append(prio + ref_prio[rref])
+                conds.append(Candidate(cond, prio + ref_prio[rref], meta))
 
         def list_dict(pairs): # Turns [(a, b), (a, c)] into {a: [b, c]}
             d = defaultdict(list)
@@ -514,21 +522,18 @@ class PGCompleter(Completer):
             par = col(fk.parentschema, fk.parenttable, fk.parentcolumn)
             left, right = (child, par) if left == child else (par, child)
             for rtbl in coldict[right]:
-                add_cond(left.col, right.col, rtbl.ref, 2000)
-        matches = self.find_matches(word_before_cursor, conds,
-          meta='fk join', priority_collection=prios)
+                add_cond(left.col, right.col, rtbl.ref, 2000, 'fk join')
         # For name matching, use a {(colname, coltype): TableReference} dict
         coltyp = namedtuple('coltyp', 'name datatype')
         col_table = list_dict((coltyp(c.name, c.datatype), t) for t, c in cols)
-        conds, prios = [], []
         # Find all name-match join conditions
         for c in (coltyp(c.name, c.datatype) for c in lcols):
             for rtbl in (t for t in col_table[c] if t.ref != ltbl.ref):
-                add_cond(c.name, c.name, rtbl.ref, 1000
-                    if c.datatype in ('integer', 'bigint', 'smallint') else 0)
+                prio = 1000 if c.datatype in (
+                    'integer', 'bigint', 'smallint') else 0
+                add_cond(c.name, c.name, rtbl.ref, prio, 'name join')
 
-        return matches + self.find_matches(word_before_cursor, conds,
-          meta='name join', priority_collection=prios)
+        return self.find_matches(word_before_cursor, conds, meta='join')
 
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
         if suggestion.filter == 'for_from_clause':
@@ -644,10 +649,9 @@ class PGCompleter(Completer):
             return []
 
         commands = self.pgspecial.commands
-        cmd_names = commands.keys()
-        desc = [commands[cmd].description for cmd in cmd_names]
-        return self.find_matches(word_before_cursor, cmd_names, mode='strict',
-                                 meta_collection=desc)
+        cmds = commands.keys()
+        cmds = [Candidate(cmd, 0, commands[cmd].description) for cmd in cmds]
+        return self.find_matches(word_before_cursor, cmds, mode='strict')
 
     def get_datatype_matches(self, suggestion, word_before_cursor):
         # suggest custom datatypes
