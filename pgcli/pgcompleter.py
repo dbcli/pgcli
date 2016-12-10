@@ -32,7 +32,7 @@ NamedQueries.instance = NamedQueries.from_config(
 Match = namedtuple('Match', ['completion', 'priority'])
 
 _Candidate = namedtuple('Candidate', ['completion', 'priority', 'meta', 'synonyms'])
-def Candidate(completion, priority, meta, synonyms = None):
+def Candidate(completion, priority = None, meta = None, synonyms = None):
     return _Candidate(completion, priority, meta, synonyms or [completion])
 
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
@@ -293,6 +293,9 @@ class PGCompleter(Completer):
             pat = re.compile('(%s)' % regex)
 
             def _match(item):
+                if item.lower()[:len(text) + 1] in (text, text + ' '):
+                    # Exact match of first word in suggestion
+                    return float('Infinity'), -1
                 r = pat.search(self.unescape_name(item.lower()))
                 if r:
                     return -len(r.group()), -r.start()
@@ -310,7 +313,10 @@ class PGCompleter(Completer):
         for cand in collection:
             if isinstance(cand, _Candidate):
                 item, prio, display_meta, synonyms = cand
-                sort_key = max(_match(x) for x in synonyms)
+                if display_meta is None:
+                    display_meta = meta
+                syn_matches = [m for m in (_match(x) for x in synonyms) if m]
+                sort_key = max(syn_matches) if syn_matches else None
             else:
                 item, display_meta, prio = cand, meta, 0
                 sort_key = _match(cand)
@@ -469,6 +475,9 @@ class PGCompleter(Completer):
             else:
                 join = '{0} ON {0}.{1} = {2}.{3}'.format(
                     c(left.tbl), c(left.col), rtbl.ref, c(right.col))
+            alias = generate_alias(self.case(left.tbl))
+            synonyms = [join, '{0} ON {0}.{1} = {2}.{3}'.format(
+                alias, c(left.col), rtbl.ref, c(right.col))]
             # Schema-qualify if (1) new table in same schema as old, and old
             # is schema-qualified, or (2) new in other schema, except public
             if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)]
@@ -477,7 +486,7 @@ class PGCompleter(Completer):
                 join = left.schema + '.' + join
             prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (
                 0 if (left.schema, left.tbl) in other_tbls else 1)
-            joins.append(Candidate(join, prio, 'join'))
+            joins.append(Candidate(join, prio, 'join', synonyms=synonyms))
 
         return self.find_matches(word_before_cursor, joins, meta='join')
 
@@ -538,12 +547,8 @@ class PGCompleter(Completer):
         if suggestion.filter == 'for_from_clause':
             # Only suggest functions allowed in FROM clause
             filt = lambda f: not f.is_aggregate and not f.is_window
-            funcs = self.populate_functions(suggestion.schema, filt)
-            if alias:
-                funcs = [self.case(f) + '() ' + self.alias(f,
-                    suggestion.table_refs) for f in funcs]
-            else:
-                funcs = [self.case(f) + '()' for f in funcs]
+            funcs = [self.make_table_cand(f, alias, suggestion, True)
+                     for f in self.populate_functions(suggestion.schema, filt)]
         else:
             funcs = [f + '()' for f in self.populate_schema_objects(
                 suggestion.schema, 'functions')]
@@ -584,6 +589,15 @@ class PGCompleter(Completer):
             + self.get_view_matches(v_sug, word_before_cursor, alias)
             + self.get_function_matches(f_sug, word_before_cursor, alias))
 
+    def make_table_cand(self, tbl, do_alias, suggestion, function = False):
+        cased_tbl = self.case(tbl)
+        alias = self.alias(cased_tbl, suggestion.table_refs)
+        synonyms = (cased_tbl, generate_alias(cased_tbl))
+        maybe_parens = '()' if function else ''
+        maybe_alias = (' ' + alias) if do_alias else ''
+        item = cased_tbl + maybe_parens + maybe_alias
+        return Candidate(item, synonyms=synonyms)
+
     def get_table_matches(self, suggestion, word_before_cursor, alias=False):
         tables = self.populate_schema_objects(suggestion.schema, 'tables')
         tables.extend(tbl.name for tbl in suggestion.local_tables)
@@ -593,11 +607,8 @@ class PGCompleter(Completer):
         if not suggestion.schema and (
                 not word_before_cursor.startswith('pg_')):
             tables = [t for t in tables if not t.startswith('pg_')]
-        if alias:
-            tables = [self.case(t) + ' ' + self.alias(t, suggestion.table_refs)
-                for t in tables]
-        return self.find_matches(word_before_cursor, tables,
-            meta='table')
+        tables = [self.make_table_cand(t, alias, suggestion) for t in tables]
+        return self.find_matches(word_before_cursor, tables, meta='table')
 
 
     def get_view_matches(self, suggestion, word_before_cursor, alias=False):
@@ -606,9 +617,7 @@ class PGCompleter(Completer):
         if not suggestion.schema and (
                 not word_before_cursor.startswith('pg_')):
             views = [v for v in views if not v.startswith('pg_')]
-        if alias:
-            views = [self.case(v) + ' ' + self.alias(v, suggestion.table_refs)
-                for v in views]
+        views = [self.make_table_cand(v, alias, suggestion) for v in views]
         return self.find_matches(word_before_cursor, views, meta='view')
 
     def get_alias_matches(self, suggestion, word_before_cursor):
