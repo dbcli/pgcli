@@ -333,7 +333,7 @@ def unix_word_rubout(event, WORD=True):
 @register('backward-kill-word')
 def backward_kill_word(event):
     """
-    Kills the word before point, using “not a letter nor a digit” as a word boundary.
+    Kills the word before point, using "not a letter nor a digit" as a word boundary.
     Usually bound to M-Del or M-Backspace.
     """
     unix_word_rubout(event, WORD=False)
