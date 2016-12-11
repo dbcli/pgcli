@@ -395,7 +395,8 @@ class PGCompleter(Completer):
 
         colit = scoped_cols.items
         def make_cand(name, ref):
-            return Candidate(qualify(name, ref), 0, 'column', [name])
+            synonyms = (name, generate_alias(self.case(name)))
+            return Candidate(qualify(name, ref), 0, 'column', synonyms)
         flat_cols = []
         for t, cols in colit():
             for c in cols:
@@ -547,11 +548,11 @@ class PGCompleter(Completer):
         if suggestion.filter == 'for_from_clause':
             # Only suggest functions allowed in FROM clause
             filt = lambda f: not f.is_aggregate and not f.is_window
-            funcs = [self.make_table_cand(f, alias, suggestion, True)
+            funcs = [self._make_cand(f, alias, suggestion, True)
                      for f in self.populate_functions(suggestion.schema, filt)]
         else:
-            funcs = [f + '()' for f in self.populate_schema_objects(
-                suggestion.schema, 'functions')]
+            funcs = [self._make_cand(f, False, suggestion, True) for f in
+                self.populate_schema_objects(suggestion.schema, 'functions')]
 
         # Function overloading means we way have multiple functions of the same
         # name at this point, so keep unique names only
@@ -589,7 +590,7 @@ class PGCompleter(Completer):
             + self.get_view_matches(v_sug, word_before_cursor, alias)
             + self.get_function_matches(f_sug, word_before_cursor, alias))
 
-    def make_table_cand(self, tbl, do_alias, suggestion, function = False):
+    def _make_cand(self, tbl, do_alias, suggestion, function = False):
         cased_tbl = self.case(tbl)
         alias = self.alias(cased_tbl, suggestion.table_refs)
         synonyms = (cased_tbl, generate_alias(cased_tbl))
@@ -607,7 +608,7 @@ class PGCompleter(Completer):
         if not suggestion.schema and (
                 not word_before_cursor.startswith('pg_')):
             tables = [t for t in tables if not t.startswith('pg_')]
-        tables = [self.make_table_cand(t, alias, suggestion) for t in tables]
+        tables = [self._make_cand(t, alias, suggestion) for t in tables]
         return self.find_matches(word_before_cursor, tables, meta='table')
 
 
@@ -617,7 +618,7 @@ class PGCompleter(Completer):
         if not suggestion.schema and (
                 not word_before_cursor.startswith('pg_')):
             views = [v for v in views if not v.startswith('pg_')]
-        views = [self.make_table_cand(v, alias, suggestion) for v in views]
+        views = [self._make_cand(v, alias, suggestion) for v in views]
         return self.find_matches(word_before_cursor, views, meta='view')
 
     def get_alias_matches(self, suggestion, word_before_cursor):

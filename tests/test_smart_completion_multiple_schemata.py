@@ -569,3 +569,32 @@ def test_join_alias_search_without_aliases2(completer_with_casing,
         Document(text=text), complete_event)
     assert result[0] == join(
         'EntryTags ON EntryTags.EntryID = Entries.EntryID', -2)
+
+def test_function_alias_search_without_aliases(completer_with_casing,
+                                               complete_event):
+    text = 'SELECT blog.ees'
+    result = completer_with_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[0] == function('extract_entry_symbols()', -3)
+
+def test_function_alias_search_with_aliases(completer_aliases_casing,
+                                            complete_event):
+    text = 'SELECT blog.ee'
+    result = completer_aliases_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[0] == function('enter_entry()', -2)
+
+def test_column_alias_search(completer_aliases_casing, complete_event):
+    text = 'SELECT et FROM blog.Entries E'
+    result = completer_aliases_casing.get_completions(
+        Document(text, cursor_position=len('SELECT et')), complete_event)
+    cols = ('EntryText', 'EntryTitle', 'EntryID')
+    assert result[:3] == [column(c, -2) for c in cols]
+
+def test_column_alias_search_qualified(completer_aliases_casing,
+                                       complete_event):
+    text = 'SELECT E.ei FROM blog.Entries E'
+    result = completer_aliases_casing.get_completions(
+        Document(text, cursor_position=len('SELECT E.ei')), complete_event)
+    cols = ('EntryID', 'EntryTitle')
+    assert result[:3] == [column(c, -2) for c in cols]
