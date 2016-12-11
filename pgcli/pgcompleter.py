@@ -37,12 +37,11 @@ def Candidate(completion, priority, meta, synonyms = None):
 
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
-def generate_alias(tbl, tbs):
+def generate_alias(tbl):
     """ Generate a table alias, consisting of all upper-case letters in
     the table name, or, if there are no upper-case letters, the first letter +
     all letters preceded by _
     param tbl - unescaped name of the table to alias
-    param tbls - set TableReference objects for tables already in query
     """
     return ''.join([l for l in tbl if l.isupper()] or
         [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and l != '_'])
@@ -432,7 +431,7 @@ class PGCompleter(Completer):
         tbl = self.case(tbl)
         tbls = set(normalize_ref(t.ref) for t in tbls)
         if self.generate_aliases:
-            tbl = generate_alias(self.unescape_name(tbl), tbls)
+            tbl = generate_alias(self.unescape_name(tbl))
         if normalize_ref(tbl) not in tbls:
             return tbl
         elif tbl[0] == '"':
