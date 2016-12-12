@@ -230,6 +230,18 @@ class PGExecute(object):
         else:
             return json_data
 
+
+    def failed_transaction(self):
+        status = self.conn.get_transaction_status()
+        return status == ext.TRANSACTION_STATUS_INERROR
+
+
+    def valid_transaction(self):
+        status = self.conn.get_transaction_status()
+        return (status == ext.TRANSACTION_STATUS_ACTIVE or
+                status == ext.TRANSACTION_STATUS_INTRANS)
+
+
     def run(self, statement, pgspecial=None, exception_formatter=None,
             on_error_resume=False):
         """Execute the sql in the database and return the results.

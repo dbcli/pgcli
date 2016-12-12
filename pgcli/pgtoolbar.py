@@ -10,7 +10,8 @@ def _get_vi_mode(cli):
         InputMode.INSERT_MULTIPLE: 'M',
     }[cli.vi_state.input_mode]
 
-def create_toolbar_tokens_func(get_vi_mode_enabled, get_is_refreshing):
+def create_toolbar_tokens_func(get_vi_mode_enabled, get_is_refreshing,
+                               failed_transaction, valid_transaction):
     """
     Return a function that generates the toolbar tokens.
     """
@@ -42,6 +43,12 @@ def create_toolbar_tokens_func(get_vi_mode_enabled, get_is_refreshing):
             result.append((token.On, '[F4] Vi-mode (' + _get_vi_mode(cli) + ')'))
         else:
             result.append((token.On, '[F4] Emacs-mode'))
+
+        if failed_transaction():
+            result.append((token.Transaction.Failed, '     Failed transaction'))
+
+        if valid_transaction():
+            result.append((token.Transaction.Valid, '     Transaction'))
 
         if get_is_refreshing():
             result.append((token, '     Refreshing completions...'))
