@@ -93,6 +93,13 @@ AcceptAction.RETURN_DOCUMENT = AcceptAction(_return_document_handler)
 AcceptAction.IGNORE = AcceptAction(handler=None)
 
 
+class ValidationState(object):
+    " The validation state of a buffer. This is set after the validation. "
+    VALID = 'VALID'
+    INVALID = 'INVALID'
+    UNKNOWN = 'UNKNOWN'
+
+
 class CompletionState(object):
     """
     Immutable class that contains a completion state.
@@ -270,6 +277,7 @@ class Buffer(object):
 
         # `ValidationError` instance. (Will be set when the input is wrong.)
         self.validation_error = None
+        self.validation_state = ValidationState.UNKNOWN
 
         # State of the selection.
         self.selection_state = None
@@ -397,6 +405,7 @@ class Buffer(object):
     def _text_changed(self):
         # Remove any validation errors and complete state.
         self.validation_error = None
+        self.validation_state = ValidationState.UNKNOWN
         self.complete_state = None
         self.yank_nth_arg_state = None
         self.document_before_paste = None
@@ -410,6 +419,7 @@ class Buffer(object):
     def _cursor_position_changed(self):
         # Remove any validation errors and complete state.
         self.validation_error = None
+        self.validation_state = ValidationState.UNKNOWN
         self.complete_state = None
         self.yank_nth_arg_state = None
         self.document_before_paste = None
@@ -1075,7 +1085,10 @@ class Buffer(object):
         """
         Returns `True` if valid.
         """
-        self.validation_error = None
+        # Don't call the validator again, if it was already called for the
+        # current input.
+        if self.validation_state != ValidationState.UNKNOWN:
+            return self.validation_state == ValidationState.VALID
 
         # Validate first. If not valid, set validation exception.
         if self.validator:
@@ -1086,9 +1099,12 @@ class Buffer(object):
                 cursor_position = e.cursor_position
                 self.cursor_position = min(max(0, cursor_position), len(self.text))
 
+                self.validation_state = ValidationState.INVALID
                 self.validation_error = e
                 return False
 
+        self.validation_state = ValidationState.VALID
+        self.validation_error = None
         return True
 
     def append_to_history(self):
