@@ -231,7 +231,10 @@ class PromptMargin(Margin):
 
         # Next lines. (Show line numbering when numbering is enabled.)
         if self.get_continuation_tokens:
-            tokens2 = self.get_continuation_tokens(cli, width)
+            # Note: we turn this into a list, to make sure that we fail early
+            #       in case `get_continuation_tokens` returns something else,
+            #       like `None`.
+            tokens2 = list(self.get_continuation_tokens(cli, width))
         else:
             tokens2 = []
 
