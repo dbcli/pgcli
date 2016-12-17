@@ -87,6 +87,9 @@ class CommandLineInterface(object):
         #: EditingMode.VI or EditingMode.EMACS
         self.editing_mode = application.editing_mode
 
+        #: Quoted insert. This flag is set if we go into quoted insert mode.
+        self.quoted_insert = False
+
         #: Vi state. (For Vi key bindings.)
         self.vi_state = ViState()
 

@@ -138,7 +138,6 @@ def previous_history(event):
     event.current_buffer.history_backward(count=event.arg)
 
 
-
 @register('next-history')
 def next_history(event):
     " Move `forward' through the history list, fetching the next command. "
@@ -266,6 +265,16 @@ def capitalize_word(event):
         pos = buff.document.find_next_word_ending()
         words = buff.document.text_after_cursor[:pos]
         buff.insert_text(words.title(), overwrite=True)
+
+
+@register('quoted-insert')
+def quoted_insert(event):
+    """
+    Add the next character typed to the line verbatim. This is how to insert
+    key sequences like C-q, for example.
+    """
+    event.cli.quoted_insert = True
+
 
 #
 # Killing and yanking.

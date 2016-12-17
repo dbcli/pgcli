@@ -78,6 +78,11 @@ def load_emacs_bindings():
     handle(Keys.Escape, '#', filter=insert_mode)(get_by_name('insert-comment'))
     handle(Keys.ControlO)(get_by_name('operate-and-get-next'))
 
+    # ControlQ does a quoted insert. Not that for vt100 terminals, you have to
+    # disable flow control by running ``stty -ixon``, otherwise Ctrl-Q and
+    # Ctrl-S are captured by the terminal.
+    handle(Keys.ControlQ, filter= ~has_selection)(get_by_name('quoted-insert'))
+
     @handle(Keys.ControlN)
     def _(event):
         " Next line. "
@@ -87,17 +92,6 @@ def load_emacs_bindings():
     def _(event):
         " Previous line. "
         event.current_buffer.auto_up(count=event.arg)
-
-    @handle(Keys.ControlQ, Keys.Any, filter= ~has_selection)
-    def _(event):
-        """
-        Quoted insert.
-
-        For vt100 terminals, you have to disable flow control by running
-        ``stty -ixon``, otherwise Ctrl-Q and Ctrl-S are captured by the
-        terminal.
-        """
-        event.current_buffer.insert_text(event.data, overwrite=False)
 
     def handle_digit(c):
         """

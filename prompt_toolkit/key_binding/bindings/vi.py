@@ -348,6 +348,9 @@ def load_vi_bindings(get_search_state=None):
         (('~', ), Condition(lambda cli: cli.vi_state.tilde_operator), lambda string: string.swapcase()),
     ]
 
+    # Insert a character literally (quoted insert).
+    handle(Keys.ControlV, filter=insert_mode)(get_by_name('quoted-insert'))
+
     @handle(Keys.Escape)
     def _(event):
         """
@@ -419,13 +422,6 @@ def load_vi_bindings(get_search_state=None):
         """
         event.current_buffer.cursor_position += \
             event.current_buffer.document.get_cursor_left_position(count=event.arg)
-
-    @handle(Keys.ControlV, Keys.Any, filter=insert_mode)
-    def _(event):
-        """
-        Insert a character literally (quoted insert).
-        """
-        event.current_buffer.insert_text(event.data, overwrite=False)
 
     @handle(Keys.ControlN, filter=insert_mode)
     def _(event):

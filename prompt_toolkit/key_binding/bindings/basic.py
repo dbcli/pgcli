@@ -221,6 +221,14 @@ def load_basic_bindings():
 
         event.current_buffer.insert_text(data)
 
+    @handle(Keys.Any, filter=Condition(lambda cli: cli.quoted_insert), eager=True)
+    def _(event):
+        """
+        Handle quoted insert.
+        """
+        event.current_buffer.insert_text(event.data, overwrite=False)
+        event.cli.quoted_insert = False
+
     return registry
 
 
