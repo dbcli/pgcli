@@ -76,16 +76,12 @@ def load_emacs_bindings(registry, filter=Always()):
     handle(Keys.Escape, '_', filter=insert_mode)(get_by_name('yank-last-arg'))
     handle(Keys.Escape, Keys.ControlY, filter=insert_mode)(get_by_name('yank-nth-arg'))
     handle(Keys.Escape, '#', filter=insert_mode)(get_by_name('insert-comment'))
+    handle(Keys.ControlO)(get_by_name('operate-and-get-next'))
 
     @handle(Keys.ControlN)
     def _(event):
         " Next line. "
         event.current_buffer.auto_down()
-
-    @handle(Keys.ControlO, filter=insert_mode)
-    def _(event):
-        " Insert newline, but don't move the cursor. "
-        event.current_buffer.insert_text('\n', move_cursor=False)
 
     @handle(Keys.ControlP)
     def _(event):

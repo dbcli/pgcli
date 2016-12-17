@@ -480,3 +480,23 @@ def prefix_meta(event):
         registry.add_key_binding('j', 'j', filter=ViInsertMode())(prefix_meta)
     """
     event.cli.input_processor.feed(KeyPress(Keys.Escape))
+
+
+@register('operate-and-get-next')
+def operate_and_get_next(event):
+    """
+    Accept the current line for execution and fetch the next line relative to
+    the current line from the history for editing.
+    """
+    buff = event.current_buffer
+    new_index = buff.working_index + 1
+
+    # Accept the current input. (This will also redraw the interface in the
+    # 'done' state.)
+    buff.accept_action.validate_and_handle(event.cli, buff)
+
+    # Set the new index at the start of the next run.
+    def set_working_index():
+        buff.working_index = new_index
+
+    event.cli.pre_run_callables.append(set_working_index)
