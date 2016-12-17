@@ -1046,6 +1046,8 @@ class Window(Container):
 
     def _get_digraph_char(self, cli):
         " Return `False`, or the Digraph symbol to be used. "
+        if cli.quoted_insert:
+            return '^'
         if cli.vi_state.waiting_for_digraph:
             if cli.vi_state.digraph_symbol1:
                 return cli.vi_state.digraph_symbol1
