@@ -1296,11 +1296,13 @@ class Buffer(object):
 
         Return True when we received a zero return code.
         """
-        # If the 'EDITOR' environment variable has been set, use that one.
+        # If the 'VISUAL' or 'EDITOR' environment variable has been set, use that.
         # Otherwise, fall back to the first available editor that we can find.
+        visual = os.environ.get('VISUAL')
         editor = os.environ.get('EDITOR')
 
         editors = [
+            visual,
             editor,
 
             # Order of preference.
