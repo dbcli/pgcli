@@ -9,7 +9,7 @@ from prompt_toolkit.selection import PasteMode
 from six.moves import range
 import six
 
-from .completion import generate_completions
+from .completion import generate_completions, display_completions_like_readline
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.key_binding.input_processor import KeyPress
@@ -420,7 +420,23 @@ def yank_pop(event):
 
 @register('complete')
 def complete(event):
+    " Attempt to perform completion. "
+    display_completions_like_readline(event)
+
+
+@register('menu-complete')
+def menu_complete(event):
+    """
+    Generate completions, or go to the next completion. (This is the default
+    way of completing input in prompt_toolkit.)
+    """
     generate_completions(event)
+
+
+@register('menu-complete-backward')
+def menu_complete_backward(event):
+    " Move backward through the list of possible completions. "
+    event.current_buffer.complete_previous()
 
 
 #

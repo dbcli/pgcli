@@ -141,7 +141,8 @@ def load_basic_bindings():
         get_by_name('self-insert'))
     handle(Keys.ControlT, filter=insert_mode)(get_by_name('transpose-chars'))
     handle(Keys.ControlW, filter=insert_mode)(get_by_name('unix-word-rubout'))
-    handle(Keys.ControlI, filter=insert_mode)(get_by_name('complete'))
+    handle(Keys.ControlI, filter=insert_mode)(get_by_name('menu-complete'))
+    handle(Keys.BackTab, filter=insert_mode)(get_by_name('menu-complete-backward'))
 
     handle(Keys.PageUp, filter= ~has_selection)(get_by_name('previous-history'))
     handle(Keys.PageDown, filter= ~has_selection)(get_by_name('next-history'))
@@ -150,13 +151,6 @@ def load_basic_bindings():
 
     text_before_cursor = Condition(lambda cli: cli.current_buffer.text)
     handle(Keys.ControlD, filter=text_before_cursor & insert_mode)(get_by_name('delete-char'))
-
-    @handle(Keys.BackTab, filter=insert_mode)
-    def _(event):
-        """
-        Shift+Tab: go to previous completion.
-        """
-        event.current_buffer.complete_previous()
 
     is_multiline = Condition(lambda cli: cli.current_buffer.is_multiline())
     is_returnable = Condition(lambda cli: cli.current_buffer.accept_action.is_returnable)
