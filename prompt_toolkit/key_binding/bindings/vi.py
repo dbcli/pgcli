@@ -13,6 +13,7 @@ from prompt_toolkit.selection import SelectionType, SelectionState, PasteMode
 
 from .utils import create_handle_decorator
 from .scroll import scroll_forward, scroll_backward, scroll_half_page_up, scroll_half_page_down, scroll_one_line_up, scroll_one_line_down, scroll_page_up, scroll_page_down
+from .named_commands import get_by_name
 
 import prompt_toolkit.filters as filters
 from six.moves import range
@@ -1691,9 +1692,7 @@ def load_vi_open_in_editor_bindings(registry, filter=None):
     navigation_mode = ViNavigationMode()
     handle = create_handle_decorator(registry, filter & ViMode())
 
-    @handle('v', filter=navigation_mode)
-    def _(event):
-        event.current_buffer.open_in_editor(event.cli)
+    handle('v', filter=navigation_mode)(get_by_name('edit-and-execute-command'))
 
 
 def load_vi_system_bindings(registry, filter=None):

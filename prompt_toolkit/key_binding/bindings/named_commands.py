@@ -500,3 +500,14 @@ def operate_and_get_next(event):
         buff.working_index = new_index
 
     event.cli.pre_run_callables.append(set_working_index)
+
+
+@register('edit-and-execute-command')
+def edit_and_execute(event):
+    """
+    Invoke an editor on the current command line, and accept the result.
+    """
+    buff = event.current_buffer
+
+    buff.open_in_editor(event.cli)
+    buff.accept_action.validate_and_handle(event.cli, buff)
