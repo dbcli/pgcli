@@ -13,7 +13,7 @@ from prompt_toolkit.selection import SelectionType, SelectionState, PasteMode
 
 from .scroll import scroll_forward, scroll_backward, scroll_half_page_up, scroll_half_page_down, scroll_one_line_up, scroll_one_line_down, scroll_page_up, scroll_page_down
 from .named_commands import get_by_name
-from ..registry import Registry, ConditionalRegistry
+from ..registry import Registry, ConditionalRegistry, BaseRegistry
 
 import prompt_toolkit.filters as filters
 from six.moves import range
@@ -135,6 +135,164 @@ class TextObject(object):
 
         new_document, clipboard_data = document.cut_selection()
         return new_document, clipboard_data
+
+
+def create_text_object_decorator(registry):
+    """
+    Create a decorator that can be used to register Vi text object implementations.
+    """
+    assert isinstance(registry, BaseRegistry)
+
+    operator_given = ViWaitingForTextObjectMode()
+    navigation_mode = ViNavigationMode()
+    selection_mode = ViSelectionMode()
+
+    def text_object_decorator(*keys, **kw):
+        """
+        Register a text object function.
+
+        Usage::
+
+            @text_object('w', filter=..., no_move_handler=False)
+            def handler(event):
+                # Return a text object for this key.
+                return TextObject(...)
+
+        :param no_move_handler: Disable the move handler in navigation mode.
+            (It's still active in selection mode.)
+        """
+        filter = kw.pop('filter', Always())
+        no_move_handler = kw.pop('no_move_handler', False)
+        no_selection_handler = kw.pop('no_selection_handler', False)
+        assert not kw
+
+        def decorator(text_object_func):
+            assert callable(text_object_func)
+
+            @registry.add_binding(*keys, filter=operator_given & filter)
+            def _(event):
+                # Arguments are multiplied.
+                vi_state = event.cli.vi_state
+                event._arg = (vi_state.operator_arg or 1) * (event.arg or 1)
+
+                # Call the text object handler.
+                text_obj = text_object_func(event)
+                if text_obj is not None:
+                    assert isinstance(text_obj, TextObject)
+
+                    # Call the operator function with the text object.
+                    vi_state.operator_func(event, text_obj)
+
+                # Clear operator.
+                event.cli.vi_state.operator_func = None
+                event.cli.vi_state.operator_arg = None
+
+            # Register a move operation. (Doesn't need an operator.)
+            if not no_move_handler:
+                @registry.add_binding(*keys, filter=~operator_given & filter & navigation_mode)
+                def _(event):
+                    " Move handler for navigation mode. "
+                    text_object = text_object_func(event)
+                    event.current_buffer.cursor_position += text_object.start
+
+            # Register a move selection operation.
+            if not no_selection_handler:
+                @registry.add_binding(*keys, filter=~operator_given & filter & selection_mode)
+                def _(event):
+                    " Move handler for selection mode. "
+                    text_object = text_object_func(event)
+                    buff = event.current_buffer
+
+                    # When the text object has both a start and end position, like 'i(' or 'iw',
+                    # Turn this into a selection, otherwise the cursor.
+                    if text_object.end:
+                        # Take selection positions from text object.
+                        start, end = text_object.operator_range(buff.document)
+                        start += buff.cursor_position
+                        end += buff.cursor_position
+
+                        buff.selection_state.original_cursor_position = start
+                        buff.cursor_position = end
+
+                        # Take selection type from text object.
+                        if text_object.type == TextObjectType.LINEWISE:
+                            buff.selection_state.type = SelectionType.LINES
+                        else:
+                            buff.selection_state.type = SelectionType.CHARACTERS
+                    else:
+                        event.current_buffer.cursor_position += text_object.start
+
+            # Make it possible to chain @text_object decorators.
+            return text_object_func
+
+        return decorator
+    return text_object_decorator
+
+
+def create_operator_decorator(registry):
+    """
+    Create a decorator that can be used for registering Vi operators.
+    """
+    assert isinstance(registry, BaseRegistry)
+
+    operator_given = ViWaitingForTextObjectMode()
+    navigation_mode = ViNavigationMode()
+    selection_mode = ViSelectionMode()
+
+    def operator_decorator(*keys, **kw):
+        """
+        Register a Vi operator.
+
+        Usage::
+
+            @operator('d', filter=...)
+            def handler(cli, text_object):
+                # Do something with the text object here.
+        """
+        filter = kw.pop('filter', Always())
+        assert not kw
+
+        def decorator(operator_func):
+            @registry.add_binding(*keys, filter=~operator_given & filter & navigation_mode)
+            def _(event):
+                """
+                Handle operator in navigation mode.
+                """
+                # When this key binding is matched, only set the operator
+                # function in the ViState. We should execute it after a text
+                # object has been received.
+                event.cli.vi_state.operator_func = operator_func
+                event.cli.vi_state.operator_arg = event.arg
+
+            @registry.add_binding(*keys, filter=~operator_given & filter & selection_mode)
+            def _(event):
+                """
+                Handle operator in selection mode.
+                """
+                buff = event.current_buffer
+                selection_state = buff.selection_state
+
+                # Create text object from selection.
+                if selection_state.type == SelectionType.LINES:
+                    text_obj_type = TextObjectType.LINEWISE
+                elif selection_state.type == SelectionType.BLOCK:
+                    text_obj_type = TextObjectType.BLOCK
+                else:
+                    text_obj_type = TextObjectType.INCLUSIVE
+
+                text_object = TextObject(
+                    selection_state.original_cursor_position - buff.cursor_position,
+                    type=text_obj_type)
+
+                # Execute operator.
+                operator_func(event, text_object)
+
+                # Quit selection mode.
+                buff.selection_state = None
+
+            return operator_func
+        return decorator
+    return operator_decorator
 
 
 def load_vi_bindings(get_search_state=None):
@@ -754,138 +912,8 @@ def load_vi_bindings(get_search_state=None):
         # XXX: should become text_object.
         pass
 
-    def operator(*keys, **kw):
-        """
-        Register a Vi operator.
-
-        Usage::
-
-            @operator('d', filter=...)
-            def handler(cli, text_object):
-                # Do something with the text object here.
-        """
-        filter = kw.pop('filter', Always())
-        assert not kw
-
-        def decorator(operator_func):
-            @handle(*keys, filter=~operator_given & filter & navigation_mode)
-            def _(event):
-                """
-                Handle operator in navigation mode.
-                """
-                # When this key binding is matched, only set the operator
-                # function in the ViState. We should execute it after a text
-                # object has been received.
-                event.cli.vi_state.operator_func = operator_func
-                event.cli.vi_state.operator_arg = event.arg
-
-            @handle(*keys, filter=~operator_given & filter & selection_mode)
-            def _(event):
-                """
-                Handle operator in selection mode.
-                """
-                buff = event.current_buffer
-                selection_state = buff.selection_state
-
-                # Create text object from selection.
-                if selection_state.type == SelectionType.LINES:
-                    text_obj_type = TextObjectType.LINEWISE
-                elif selection_state.type == SelectionType.BLOCK:
-                    text_obj_type = TextObjectType.BLOCK
-                else:
-                    text_obj_type = TextObjectType.INCLUSIVE
-
-                text_object = TextObject(
-                    selection_state.original_cursor_position - buff.cursor_position,
-                    type=text_obj_type)
-
-                # Execute operator.
-                operator_func(event, text_object)
-
-                # Quit selection mode.
-                buff.selection_state = None
-
-        return decorator
-
-    def text_object(*keys, **kw):
-        """
-        Register a text object function.
-
-        Usage::
-
-            @text_object('w', filter=..., no_move_handler=False)
-            def handler(event):
-                # Return a text object for this key.
-                return TextObject(...)
-
-        :param no_move_handler: Disable the move handler in navigation mode.
-            (It's still active in selection mode.)
-        """
-        filter = kw.pop('filter', Always())
-        no_move_handler = kw.pop('no_move_handler', False)
-        no_selection_handler = kw.pop('no_selection_handler', False)
-        assert not kw
-
-        def decorator(text_object_func):
-            assert callable(text_object_func)
-
-            @handle(*keys, filter=operator_given & filter)
-            def _(event):
-                # Arguments are multiplied.
-                vi_state = event.cli.vi_state
-                event._arg = (vi_state.operator_arg or 1) * (event.arg or 1)
-
-                # Call the text object handler.
-                text_obj = text_object_func(event)
-                if text_obj is not None:
-                    assert isinstance(text_obj, TextObject)
-
-                    # Call the operator function with the text object.
-                    vi_state.operator_func(event, text_obj)
-
-                # Clear operator.
-                event.cli.vi_state.operator_func = None
-                event.cli.vi_state.operator_arg = None
-
-            # Register a move operation. (Doesn't need an operator.)
-            if not no_move_handler:
-                @handle(*keys, filter=~operator_given & filter & navigation_mode)
-                def _(event):
-                    " Move handler for navigation mode. "
-                    text_object = text_object_func(event)
-                    event.current_buffer.cursor_position += text_object.start
-
-            # Register a move selection operation.
-            if not no_selection_handler:
-                @handle(*keys, filter=~operator_given & filter & selection_mode)
-                def _(event):
-                    " Move handler for selection mode. "
-                    text_object = text_object_func(event)
-                    buff = event.current_buffer
-
-                    # When the text object has both a start and end position, like 'i(' or 'iw',
-                    # Turn this into a selection, otherwise the cursor.
-                    if text_object.end:
-                        # Take selection positions from text object.
-                        start, end = text_object.operator_range(buff.document)
-                        start += buff.cursor_position
-                        end += buff.cursor_position
-
-                        buff.selection_state.original_cursor_position = start
-                        buff.cursor_position = end
-
-                        # Take selection type from text object.
-                        if text_object.type == TextObjectType.LINEWISE:
-                            buff.selection_state.type = SelectionType.LINES
-                        else:
-                            buff.selection_state.type = SelectionType.CHARACTERS
-                    else:
-                        event.current_buffer.cursor_position += text_object.start
-
-            # Make it possible to chain @text_object decorators.
-            return text_object_func
-
-        return decorator
+    operator = create_operator_decorator(registry)
+    text_object = create_text_object_decorator(registry)
 
     @text_object(Keys.Any, filter=operator_given)
     def _(event):
