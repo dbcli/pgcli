@@ -28,7 +28,7 @@ def _history():
 
 
 def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS, clipboard=None,
-                         history=None, multiline=False):
+                         history=None, multiline=False, check_line_ending=True):
     """
     Create a CommandLineInterface, feed it with the given user input and return
     the CLI object.
@@ -36,7 +36,8 @@ def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS, clipboard=None,
     This returns a (result, CLI) tuple.
     """
     # If the given text doesn't end with a newline, the interface won't finish.
-    assert text.endswith('\n')
+    if check_line_ending:
+        assert text.endswith('\n')
 
     loop = PosixEventLoop()
     try:
@@ -410,6 +411,16 @@ def test_emacs_kill_ring():
 
     result, cli = _feed_cli_with_input(operations + '\x1by\x1by\x1by\n')
     assert result.text == 'ghi'
+
+
+def test_emacs_insert_comment():
+    # Test insert-comment (M-#) binding.
+    result, cli = _feed_cli_with_input('hello\x1b#', check_line_ending=False)
+    assert result.text == '#hello'
+
+    result, cli = _feed_cli_with_input(
+        'hello\nworld\x1b#', check_line_ending=False, multiline=True)
+    assert result.text == '#hello\n#world'
 
 
 def test_bracketed_paste():

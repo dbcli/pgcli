@@ -10,6 +10,7 @@ from six.moves import range
 import six
 
 from .completion import generate_completions
+from prompt_toolkit.document import Document
 
 __all__ = (
     'get_by_name',
@@ -427,3 +428,28 @@ def complete(event):
 def undo(event):
     " Incremental undo. "
     event.current_buffer.undo()
+
+
+@register('insert-comment')
+def insert_comment(event):
+    """
+    Without numeric argument, comment all lines.
+    With numeric argument, uncomment all lines.
+    In any case accept the input.
+    """
+    buff = event.current_buffer
+
+    # Transform all lines.
+    if event.arg != 1:
+        def change(line):
+            return line[1:] if line.startswith('#') else line
+    else:
+        def change(line):
+            return '#' + line
+
+    buff.document = Document(
+        text='\n'.join(map(change, buff.text.splitlines())),
+        cursor_position=0)
+
+    # Accept input.
+    buff.accept_action.validate_and_handle(event.cli, buff)

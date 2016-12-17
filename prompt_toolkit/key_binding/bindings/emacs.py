@@ -75,6 +75,7 @@ def load_emacs_bindings(registry, filter=Always()):
     handle(Keys.Escape, '.', filter=insert_mode)(get_by_name('yank-last-arg'))
     handle(Keys.Escape, '_', filter=insert_mode)(get_by_name('yank-last-arg'))
     handle(Keys.Escape, Keys.ControlY, filter=insert_mode)(get_by_name('yank-nth-arg'))
+    handle(Keys.Escape, '#', filter=insert_mode)(get_by_name('insert-comment'))
 
     @handle(Keys.ControlN)
     def _(event):
