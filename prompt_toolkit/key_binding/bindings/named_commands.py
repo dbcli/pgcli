@@ -447,6 +447,44 @@ def menu_complete_backward(event):
     " Move backward through the list of possible completions. "
     event.current_buffer.complete_previous()
 
+#
+# Keyboard macros.
+#
+
+@register('start-kbd-macro')
+def start_kbd_macro(event):
+    """
+    Begin saving the characters typed into the current keyboard macro.
+    """
+    event.cli.input_processor.start_macro()
+
+
+@register('end-kbd-macro')
+def start_kbd_macro(event):
+    """
+    Stop saving the characters typed into the current keyboard macro and save
+    the definition.
+    """
+    event.cli.input_processor.end_macro()
+
+
+@register('call-last-kbd-macro')
+def start_kbd_macro(event):
+    """
+    Re-execute the last keyboard macro defined, by making the characters in the
+    macro appear as if typed at the keyboard.
+    """
+    event.cli.input_processor.call_macro()
+
+
+@register('print-last-kbd-macro')
+def print_last_kbd_macro(event):
+    " Print the last keboard macro. "
+    # TODO: Make the format suitable for the inputrc file.
+    def print_macro():
+        for k in event.cli.input_processor.macro:
+            print(k)
+    event.cli.run_in_terminal(print_macro)
 
 #
 # Miscellaneous Commands.

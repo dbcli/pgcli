@@ -83,6 +83,10 @@ def load_emacs_bindings():
     # Ctrl-S are captured by the terminal.
     handle(Keys.ControlQ, filter= ~has_selection)(get_by_name('quoted-insert'))
 
+    handle(Keys.ControlX, '(')(get_by_name('start-kbd-macro'))
+    handle(Keys.ControlX, ')')(get_by_name('end-kbd-macro'))
+    handle(Keys.ControlX, 'e')(get_by_name('call-last-kbd-macro'))
+
     @handle(Keys.ControlN)
     def _(event):
         " Next line. "

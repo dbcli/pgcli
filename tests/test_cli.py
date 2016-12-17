@@ -428,6 +428,22 @@ def test_emacs_insert_comment():
     assert result.text == '#hello\n#world'
 
 
+def test_emacs_record_macro():
+    operations = (
+        '  '
+        '\x18('  # Start recording macro. C-X(
+        'hello'
+        '\x18)'  # Stop recording macro.
+        '  '
+        '\x18e'  # Execute macro.
+        '\x18e'  # Execute macro.
+        '\n'
+    )
+
+    result, cli = _feed_cli_with_input(operations)
+    assert result.text == '  hello  hellohello'
+
+
 def test_prefix_meta():
     # Test the prefix-meta command.
     def setup_keybindings(cli):

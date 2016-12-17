@@ -86,9 +86,11 @@ class InputProcessor(object):
         # (This is at at most the amount of keys that make up for one key binding.)
         self.key_buffer = []
 
-        self.reset()
+        # Simple macro recording. (Like readline does.)
+        self.record_macro = False
+        self.macro = []
 
-#        print(' '.join(set(''.join(map(str, kb.keys)) for kb in registry.key_bindings if all(isinstance(X, unicode) for X in kb.keys))))
+        self.reset()
 
     def reset(self):
         self._previous_key_sequence = None
@@ -100,6 +102,19 @@ class InputProcessor(object):
         #: Readline argument (for repetition of commands.)
         #: https://www.gnu.org/software/bash/manual/html_node/Readline-Arguments.html
         self.arg = None
+
+    def start_macro(self):
+        " Start recording macro. "
+        self.record_macro = True
+        self.macro = []
+
+    def end_macro(self):
+        " End recording macro. "
+        self.record_macro = False
+
+    def call_macro(self):
+        for k in self.macro:
+            self.feed(k)
 
     def _get_matches(self, key_presses):
         """
@@ -212,6 +227,7 @@ class InputProcessor(object):
             cli.invalidate()
 
     def _call_handler(self, handler, key_sequence=None):
+        was_recording = self.record_macro
         arg = self.arg
         self.arg = None
 
@@ -238,6 +254,11 @@ class InputProcessor(object):
 
         self._previous_key_sequence = key_sequence
         self._previous_handler = handler
+
+        # Record the key sequence in our macro. (Only if we're in macro mode
+        # before and after executing the key.)
+        if self.record_macro and was_recording:
+            self.macro.extend(key_sequence)
 
     def _fix_vi_cursor_position(self, event):
         """
