@@ -164,12 +164,13 @@ def create_text_object_decorator(registry):
         filter = kw.pop('filter', Always())
         no_move_handler = kw.pop('no_move_handler', False)
         no_selection_handler = kw.pop('no_selection_handler', False)
+        eager = kw.pop('eager', False)
         assert not kw
 
         def decorator(text_object_func):
             assert callable(text_object_func)
 
-            @registry.add_binding(*keys, filter=operator_given & filter)
+            @registry.add_binding(*keys, filter=operator_given & filter, eager=eager)
             def _(event):
                 # Arguments are multiplied.
                 vi_state = event.cli.vi_state
@@ -189,7 +190,7 @@ def create_text_object_decorator(registry):
 
             # Register a move operation. (Doesn't need an operator.)
             if not no_move_handler:
-                @registry.add_binding(*keys, filter=~operator_given & filter & navigation_mode)
+                @registry.add_binding(*keys, filter=~operator_given & filter & navigation_mode, eager=eager)
                 def _(event):
                     " Move handler for navigation mode. "
                     text_object = text_object_func(event)
@@ -197,7 +198,7 @@ def create_text_object_decorator(registry):
 
             # Register a move selection operation.
             if not no_selection_handler:
-                @registry.add_binding(*keys, filter=~operator_given & filter & selection_mode)
+                @registry.add_binding(*keys, filter=~operator_given & filter & selection_mode, eager=eager)
                 def _(event):
                     " Move handler for selection mode. "
                     text_object = text_object_func(event)
@@ -250,10 +251,11 @@ def create_operator_decorator(registry):
                 # Do something with the text object here.
         """
         filter = kw.pop('filter', Always())
+        eager = kw.pop('eager', False)
         assert not kw
 
         def decorator(operator_func):
-            @registry.add_binding(*keys, filter=~operator_given & filter & navigation_mode)
+            @registry.add_binding(*keys, filter=~operator_given & filter & navigation_mode, eager=eager)
             def _(event):
                 """
                 Handle operator in navigation mode.
@@ -264,7 +266,7 @@ def create_operator_decorator(registry):
                 event.cli.vi_state.operator_func = operator_func
                 event.cli.vi_state.operator_arg = event.arg
 
-            @registry.add_binding(*keys, filter=~operator_given & filter & selection_mode)
+            @registry.add_binding(*keys, filter=~operator_given & filter & selection_mode, eager=eager)
             def _(event):
                 """
                 Handle operator in selection mode.
