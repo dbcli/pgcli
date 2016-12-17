@@ -77,8 +77,7 @@ def load_default_key_bindings(
                             enable_extra_page_navigation),
 
         # Load Vi bindings.
-        load_vi_bindings(enable_visual_key=~enable_open_in_editor,
-                         get_search_state=get_search_state),
+        load_vi_bindings(get_search_state=get_search_state),
 
         ConditionalRegistry(load_vi_open_in_editor_bindings(),
                             enable_open_in_editor),

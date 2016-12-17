@@ -137,16 +137,13 @@ class TextObject(object):
         return new_document, clipboard_data
 
 
-def load_vi_bindings(enable_visual_key=Always(), get_search_state=None):
+def load_vi_bindings(get_search_state=None):
     """
     Vi extensions.
 
     # Overview of Readline Vi commands:
     # http://www.catonmat.net/download/bash-vi-editing-mode-cheat-sheet.pdf
 
-    :param enable_visual_key: Filter to enable lowercase 'v' bindings. A reason
-        to disable these are to support open-in-editor functionality. These key
-        bindings conflict.
      :param get_search_state: None or a callable that takes a
         CommandLineInterface and returns a SearchState.
     """
@@ -161,8 +158,6 @@ def load_vi_bindings(enable_visual_key=Always(), get_search_state=None):
 
     registry = ConditionalRegistry(Registry(), ViMode())
     handle = registry.add_binding
-
-    enable_visual_key = to_cli_filter(enable_visual_key)
 
     # Default get_search_state.
     if get_search_state is None:
@@ -572,7 +567,7 @@ def load_vi_bindings(enable_visual_key=Always(), get_search_state=None):
         else:
             event.current_buffer.exit_selection()
 
-    @handle('v', filter=navigation_mode & enable_visual_key)
+    @handle('v', filter=navigation_mode)
     def _(event):
         " Enter character selection mode. "
         event.current_buffer.start_selection(selection_type=SelectionType.CHARACTERS)
