@@ -146,11 +146,13 @@ def load_emacs_bindings(registry, filter=Always()):
     @handle(Keys.ControlSquareClose, Keys.Any)
     def _(event):
         " When Ctl-] + a character is pressed. go to that character. "
+        # Also named 'character-search'
         character_search(event.current_buffer, event.data, event.arg)
 
     @handle(Keys.Escape, Keys.ControlSquareClose, Keys.Any)
     def _(event):
         " Like Ctl-], but backwards. "
+        # Also named 'character-search-backward'
         character_search(event.current_buffer, event.data, -event.arg)
 
     @handle(Keys.Escape, 'a')
