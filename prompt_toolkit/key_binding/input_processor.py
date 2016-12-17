@@ -148,9 +148,12 @@ class InputProcessor(object):
                 is_prefix_of_longer_match = self._is_prefix_of_longer_match(buffer)
                 matches = self._get_matches(buffer)
 
-                # When longer matches were found, but the current match is
-                # 'eager', ignore all the longer matches.
-                if matches and matches[-1].eager(self._cli_ref()):
+                # When eager matches were found, give priority to them and also
+                # ignore all the longer matches.
+                eager_matches = [m for m in matches if m.eager(self._cli_ref())]
+
+                if eager_matches:
+                    matches = eager_matches
                     is_prefix_of_longer_match = False
 
                 # Exact matches found, call handler.
