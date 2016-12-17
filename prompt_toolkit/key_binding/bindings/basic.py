@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.enums import DEFAULT_BUFFER
-from prompt_toolkit.filters import CLIFilter, Always, HasSelection, Condition, EmacsInsertMode, ViInsertMode
+from prompt_toolkit.filters import HasSelection, Condition, EmacsInsertMode, ViInsertMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.screen import Point
 from prompt_toolkit.mouse_events import MouseEventType, MouseEvent
