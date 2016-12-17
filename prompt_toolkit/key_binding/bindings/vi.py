@@ -11,9 +11,9 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
 from prompt_toolkit.selection import SelectionType, SelectionState, PasteMode
 
-from .utils import create_handle_decorator
 from .scroll import scroll_forward, scroll_backward, scroll_half_page_up, scroll_half_page_down, scroll_one_line_up, scroll_one_line_down, scroll_page_up, scroll_page_down
 from .named_commands import get_by_name
+from ..registry import Registry, ConditionalRegistry
 
 import prompt_toolkit.filters as filters
 from six.moves import range
@@ -137,8 +137,7 @@ class TextObject(object):
         return new_document, clipboard_data
 
 
-def load_vi_bindings(registry, enable_visual_key=Always(),
-                     get_search_state=None, filter=Always()):
+def load_vi_bindings(enable_visual_key=Always(), get_search_state=None):
     """
     Vi extensions.
 
@@ -160,13 +159,14 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
     #       handled correctly. There is no need to add "~IsReadOnly" to all key
     #       bindings that do text manipulation.
 
+    registry = ConditionalRegistry(Registry(), ViMode())
+    handle = registry.add_binding
+
     enable_visual_key = to_cli_filter(enable_visual_key)
 
     # Default get_search_state.
     if get_search_state is None:
         def get_search_state(cli): return cli.search_state
-
-    handle = create_handle_decorator(registry, filter & ViMode())
 
     # (Note: Always take the navigation bindings in read-only mode, even when
     #  ViState says different.)
@@ -1684,22 +1684,26 @@ def load_vi_bindings(registry, enable_visual_key=Always(),
             event.cli.vi_state.waiting_for_digraph = False
             event.cli.vi_state.digraph_symbol1 = None
 
+    return registry
 
-def load_vi_open_in_editor_bindings(registry, filter=None):
+
+def load_vi_open_in_editor_bindings():
     """
     Pressing 'v' in navigation mode will open the buffer in an external editor.
     """
-    navigation_mode = ViNavigationMode()
-    handle = create_handle_decorator(registry, filter & ViMode())
+    registry = Registry()
+    navigation_mode = ViMode() & ViNavigationMode()
 
-    handle('v', filter=navigation_mode)(get_by_name('edit-and-execute-command'))
+    registry.add_binding('v')(get_by_name('edit-and-execute-command'))
+    return registry
 
 
-def load_vi_system_bindings(registry, filter=None):
+def load_vi_system_bindings():
+    registry = ConditionalRegistry(Registry(), ViMode())
+    handle = registry.add_binding
+
     has_focus = filters.HasFocus(SYSTEM_BUFFER)
     navigation_mode = ViNavigationMode()
-
-    handle = create_handle_decorator(registry, filter & ViMode())
 
     @handle('!', filter=~has_focus & navigation_mode)
     def _(event):
@@ -1733,18 +1737,22 @@ def load_vi_system_bindings(registry, filter=None):
         # Focus previous buffer again.
         event.cli.pop_focus()
 
+    return registry
 
-def load_vi_search_bindings(registry, get_search_state=None,
-                            filter=None, search_buffer_name=SEARCH_BUFFER):
+
+def load_vi_search_bindings(get_search_state=None,
+                            search_buffer_name=SEARCH_BUFFER):
     assert get_search_state is None or callable(get_search_state)
 
     if not get_search_state:
         def get_search_state(cli): return cli.search_state
 
+    registry = ConditionalRegistry(Registry(), ViMode())
+    handle = registry.add_binding
+
     has_focus = filters.HasFocus(search_buffer_name)
     navigation_mode = ViNavigationMode()
     selection_mode = ViSelectionMode()
-    handle = create_handle_decorator(registry, filter & ViMode())
 
     @handle('/', filter=navigation_mode|selection_mode)
     @handle(Keys.ControlS, filter=~has_focus)
@@ -1835,13 +1843,16 @@ def load_vi_search_bindings(registry, get_search_state=None,
         event.cli.pop_focus()
         event.cli.buffers[search_buffer_name].reset()
 
+    return registry
 
-def load_extra_vi_page_navigation_bindings(registry, filter=None):
+
+def load_extra_vi_page_navigation_bindings():
     """
     Key bindings, for scrolling up and down through pages.
     This are separate bindings, because GNU readline doesn't have them.
     """
-    handle = create_handle_decorator(registry, filter & ViMode())
+    registry = ConditionalRegistry(Registry(), ViMode())
+    handle = registry.add_binding
 
     handle(Keys.ControlF)(scroll_forward)
     handle(Keys.ControlB)(scroll_backward)
@@ -1851,6 +1862,8 @@ def load_extra_vi_page_navigation_bindings(registry, filter=None):
     handle(Keys.ControlY)(scroll_one_line_up)
     handle(Keys.PageDown)(scroll_page_down)
     handle(Keys.PageUp)(scroll_page_up)
+
+    return registry
 
 
 class ViStateFilter(Filter):

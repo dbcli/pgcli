@@ -12,7 +12,7 @@ from prompt_toolkit.filters.cli import ViNavigationMode
 from prompt_toolkit.keys import Keys, Key
 from prompt_toolkit.utils import Event
 
-from .registry import Registry
+from .registry import BaseRegistry
 
 from collections import deque
 from six.moves import range
@@ -67,11 +67,11 @@ class InputProcessor(object):
         # Now the ControlX-ControlC callback will be called if this sequence is
         # registered in the registry.
 
-    :param registry: `Registry` instance.
+    :param registry: `BaseRegistry` instance.
     :param cli_ref: weakref to `CommandLineInterface`.
     """
     def __init__(self, registry, cli_ref):
-        assert isinstance(registry, Registry)
+        assert isinstance(registry, BaseRegistry)
 
         self._registry = registry
         self._cli_ref = cli_ref

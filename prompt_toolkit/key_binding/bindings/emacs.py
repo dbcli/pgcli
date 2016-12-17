@@ -6,9 +6,9 @@ from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER, SYST
 from prompt_toolkit.filters import Always, Condition, EmacsMode, to_cli_filter, HasSelection, EmacsInsertMode, HasFocus, HasArg
 from prompt_toolkit.completion import CompleteEvent
 
-from .utils import create_handle_decorator
 from .scroll import scroll_page_up, scroll_page_down
 from .named_commands import get_by_name
+from ..registry import Registry, ConditionalRegistry
 
 __all__ = (
     'load_emacs_bindings',
@@ -18,15 +18,15 @@ __all__ = (
 )
 
 
-def load_emacs_bindings(registry, filter=Always()):
+def load_emacs_bindings():
     """
     Some e-macs extensions.
     """
     # Overview of Readline emacs commands:
     # http://www.catonmat.net/download/readline-emacs-editing-mode-cheat-sheet.pdf
-    filter = to_cli_filter(filter)
+    registry = ConditionalRegistry(Registry(), EmacsMode())
+    handle = registry.add_binding
 
-    handle = create_handle_decorator(registry, filter & EmacsMode())
     insert_mode = EmacsInsertMode()
     has_selection = HasSelection()
 
@@ -298,24 +298,26 @@ def load_emacs_bindings(registry, filter=Always()):
 
         unindent(buffer, from_, to + 1, count=event.arg)
 
+    return registry
 
-def load_emacs_open_in_editor_bindings(registry, filter=None):
+
+def load_emacs_open_in_editor_bindings():
     """
     Pressing C-X C-E will open the buffer in an external editor.
     """
-    handle = create_handle_decorator(registry, filter & EmacsMode())
-    has_selection = HasSelection()
+    registry = Registry()
 
-    @handle(Keys.ControlX, Keys.ControlE, filter= ~has_selection)
-    def _(event):
-        """
-        Open editor.
-        """
-        event.current_buffer.open_in_editor(event.cli)
+    registry.add_binding(Keys.ControlX, Keys.ControlE,
+                         filter=EmacsMode() & ~HasSelection())(
+         get_by_name('edit-and-execute-command'))
+
+    return registry
 
 
-def load_emacs_system_bindings(registry, filter=None):
-    handle = create_handle_decorator(registry, filter & EmacsMode())
+def load_emacs_system_bindings():
+    registry = ConditionalRegistry(Registry(), EmacsMode())
+    handle = registry.add_binding
+
     has_focus = HasFocus(SYSTEM_BUFFER)
 
     @handle(Keys.Escape, '!', filter= ~has_focus)
@@ -347,11 +349,13 @@ def load_emacs_system_bindings(registry, filter=None):
         # Focus previous buffer again.
         event.cli.pop_focus()
 
+    return registry
 
-def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
-    filter = to_cli_filter(filter)
 
-    handle = create_handle_decorator(registry, filter & EmacsMode())
+def load_emacs_search_bindings(get_search_state=None):
+    registry = ConditionalRegistry(Registry(), EmacsMode())
+    handle = registry.add_binding
+
     has_focus = HasFocus(SEARCH_BUFFER)
 
     assert get_search_state is None or callable(get_search_state)
@@ -430,16 +434,20 @@ def load_emacs_search_bindings(registry, get_search_state=None, filter=None):
     def _(event):
         incremental_search(event.cli, IncrementalSearchDirection.FORWARD, count=event.arg)
 
+    return registry
 
-def load_extra_emacs_page_navigation_bindings(registry, filter=None):
+
+def load_extra_emacs_page_navigation_bindings():
     """
     Key bindings, for scrolling up and down through pages.
     This are separate bindings, because GNU readline doesn't have them.
     """
-    filter = to_cli_filter(filter)
-    handle = create_handle_decorator(registry, filter & EmacsMode())
+    registry = ConditionalRegistry(Registry(), EmacsMode())
+    handle = registry.add_binding
 
     handle(Keys.ControlV)(scroll_page_down)
     handle(Keys.PageDown)(scroll_page_down)
     handle(Keys.Escape, 'v')(scroll_page_up)
     handle(Keys.PageUp)(scroll_page_up)
+
+    return registry

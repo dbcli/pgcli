@@ -9,8 +9,8 @@ from prompt_toolkit.mouse_events import MouseEventType, MouseEvent
 from prompt_toolkit.renderer import HeightIsUnknownError
 from prompt_toolkit.utils import suspend_to_background_supported, is_windows
 
-from .utils import create_handle_decorator
 from .named_commands import get_by_name
+from ..registry import Registry
 
 
 __all__ = (
@@ -26,11 +26,10 @@ def if_no_repeat(event):
     return not event.is_repeat
 
 
-def load_basic_bindings(registry, filter=Always()):
-    assert isinstance(filter, CLIFilter)
-
+def load_basic_bindings():
+    registry = Registry()
     insert_mode = ViInsertMode() | EmacsInsertMode()
-    handle = create_handle_decorator(registry, filter)
+    handle = registry.add_binding
     has_selection = HasSelection()
 
     @handle(Keys.ControlA)
@@ -228,12 +227,16 @@ def load_basic_bindings(registry, filter=Always()):
 
         event.current_buffer.insert_text(data)
 
+    return registry
 
-def load_mouse_bindings(registry, filter=Always()):
+
+def load_mouse_bindings():
     """
     Key bindings, required for mouse support.
     (Mouse events enter through the key binding system.)
     """
+    registry = Registry()
+
     @registry.add_binding(Keys.Vt100MouseEvent)
     def _(event):
         """
@@ -330,13 +333,15 @@ def load_mouse_bindings(registry, filter=Always()):
         handler(event.cli, MouseEvent(position=Point(x=x, y=y),
                                       event_type=event_type))
 
+    return registry
 
-def load_abort_and_exit_bindings(registry, filter=Always()):
+
+def load_abort_and_exit_bindings():
     """
     Basic bindings for abort (Ctrl-C) and exit (Ctrl-D).
     """
-    assert isinstance(filter, CLIFilter)
-    handle = create_handle_decorator(registry, filter)
+    registry = Registry()
+    handle = registry.add_binding
 
     @handle(Keys.ControlC)
     def _(event):
@@ -352,31 +357,34 @@ def load_abort_and_exit_bindings(registry, filter=Always()):
 
     handle(Keys.ControlD, filter=ctrl_d_condition)(get_by_name('end-of-file'))
 
+    return registry
 
-def load_basic_system_bindings(registry, filter=Always()):
+
+def load_basic_system_bindings():
     """
     Basic system bindings (For both Emacs and Vi mode.)
     """
-    assert isinstance(filter, CLIFilter)
-    handle = create_handle_decorator(registry, filter)
+    registry = Registry()
 
     suspend_supported = Condition(
         lambda cli: suspend_to_background_supported())
 
-    @handle(Keys.ControlZ, filter=suspend_supported)
+    @registry.add_binding(Keys.ControlZ, filter=suspend_supported)
     def _(event):
         """
         Suspend process to background.
         """
         event.cli.suspend_to_background()
 
+    return registry
 
-def load_auto_suggestion_bindings(registry, filter=Always()):
+
+def load_auto_suggestion_bindings():
     """
     Key bindings for accepting auto suggestion text.
     """
-    assert isinstance(filter, CLIFilter)
-    handle = create_handle_decorator(registry, filter)
+    registry = Registry()
+    handle = registry.add_binding
 
     suggestion_available = Condition(
         lambda cli:
@@ -393,3 +401,5 @@ def load_auto_suggestion_bindings(registry, filter=Always()):
 
         if suggestion:
             b.insert_text(suggestion.text)
+
+    return registry

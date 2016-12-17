@@ -8,7 +8,8 @@ from .filters import CLIFilter, to_cli_filter
 from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
 from .key_binding.bindings.vi import load_vi_bindings
-from .key_binding.registry import Registry
+from .key_binding.registry import BaseRegistry
+from .key_binding.defaults import load_default_key_bindings
 from .layout import Window
 from .layout.containers import Container
 from .layout.controls import BufferControl
@@ -49,8 +50,8 @@ class Application(object):
     :param buffer: A :class:`~prompt_toolkit.buffer.Buffer` instance for the default buffer.
     :param initial_focussed_buffer: Name of the buffer that is focussed during start-up.
     :param key_bindings_registry:
-        :class:`~prompt_toolkit.key_binding.registry.Registry` instance for the
-        key bindings.
+        :class:`~prompt_toolkit.key_binding.registry.BaseRegistry` instance for
+        the key bindings.
     :param clipboard: :class:`~prompt_toolkit.clipboard.base.Clipboard` to use.
     :param on_abort: What to do when Control-C is pressed.
     :param on_exit: What to do when Control-D is pressed.
@@ -102,7 +103,7 @@ class Application(object):
         assert layout is None or isinstance(layout, Container)
         assert buffer is None or isinstance(buffer, Buffer)
         assert buffers is None or isinstance(buffers, (dict, BufferMapping))
-        assert key_bindings_registry is None or isinstance(key_bindings_registry, Registry)
+        assert key_bindings_registry is None or isinstance(key_bindings_registry, BaseRegistry)
         assert clipboard is None or isinstance(clipboard, Clipboard)
         assert on_abort in AbortAction._all
         assert on_exit in AbortAction._all
@@ -145,10 +146,7 @@ class Application(object):
         self.style = style or DEFAULT_STYLE
 
         if key_bindings_registry is None:
-            key_bindings_registry = Registry()
-            load_basic_bindings(key_bindings_registry)
-            load_emacs_bindings(key_bindings_registry)
-            load_vi_bindings(key_bindings_registry)
+            key_bindings_registry = load_default_key_bindings()
 
         if get_title is None:
             get_title = lambda: None
