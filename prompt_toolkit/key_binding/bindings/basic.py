@@ -181,7 +181,7 @@ def load_basic_bindings():
         data = event.current_buffer.cut_selection()
         event.cli.clipboard.set_data(data)
 
-    # Global bindings. These are never disabled and don't include the default filter.
+    # Global bindings.
 
     @handle(Keys.ControlZ)
     def _(event):
@@ -196,7 +196,7 @@ def load_basic_bindings():
         """
         event.current_buffer.insert_text(event.data)
 
-    @registry.add_binding(Keys.CPRResponse)
+    @handle(Keys.CPRResponse)
     def _(event):
         """
         Handle incoming Cursor-Position-Request response.
@@ -208,7 +208,7 @@ def load_basic_bindings():
         # Report absolute cursor position to the renderer.
         event.cli.renderer.report_absolute_cursor_row(row)
 
-    @registry.add_binding(Keys.BracketedPaste)
+    @handle(Keys.BracketedPaste)
     def _(event):
         " Pasting from clipboard. "
         data = event.data
