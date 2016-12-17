@@ -77,8 +77,10 @@ __all__ = (
     'prompt',
     'prompt_async',
     'create_confirm_application',
+    'run_application',
     'confirm',
     'print_tokens',
+    'clear',
 )
 
 
