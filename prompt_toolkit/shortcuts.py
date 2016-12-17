@@ -609,7 +609,7 @@ def run_application(
             @asyncio.coroutine
             def run():
                 with patch_context:
-                    result = yield from cli.run_async(reset_current_buffer=False)
+                    result = yield from cli.run_async()
 
                 if isinstance(result, Document):  # Backwards-compatibility.
                     return result.text
@@ -619,13 +619,9 @@ def run_application(
 
         return exec_context['prompt_coro']()
     else:
-        # Note: We pass `reset_current_buffer=False`, because that way it's easy to
-        #       give DEFAULT_BUFFER a default value, without it getting erased. We
-        #       don't have to reset anyway, because this is the first and only time
-        #       that this CommandLineInterface will run.
         try:
             with patch_context:
-                result = cli.run(reset_current_buffer=False)
+                result = cli.run()
 
             if isinstance(result, Document):  # Backwards-compatibility.
                 return result.text

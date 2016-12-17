@@ -272,7 +272,10 @@ class CommandLineInterface(object):
         """
         Reset everything, for reading the next input.
 
-        :param reset_current_buffer: If True, also reset the focussed buffer.
+        :param reset_current_buffer: XXX: not used anymore. The reason for
+            having this option in the past was when this CommandLineInterface
+            is run multiple times, that we could reset the buffer content from
+            the previous run. This is now handled in the AcceptAction.
         """
         # Notice that we don't reset the buffers. (This happens just before
         # returning, and when we have multiple buffers, we clearly want the
@@ -288,9 +291,6 @@ class CommandLineInterface(object):
         self.input_processor.reset()
         self.layout.reset()
         self.vi_state.reset()
-
-        if reset_current_buffer:
-            self.current_buffer.reset()
 
         # Search new search state. (Does also remember what has to be
         # highlighted.)
@@ -389,7 +389,7 @@ class CommandLineInterface(object):
         Read input from the command line.
         This runs the eventloop until a return value has been set.
 
-        :param reset_current_buffer: Reset content of current buffer.
+        :param reset_current_buffer: XXX: Not used anymore.
         :param pre_run: Callable that is called right after the reset has taken
             place. This allows custom initialisation.
         """
@@ -399,7 +399,7 @@ class CommandLineInterface(object):
             self._is_running = True
 
             self.on_start.fire()
-            self.reset(reset_current_buffer=reset_current_buffer)
+            self.reset()
 
             # Call pre_run.
             self._pre_run(pre_run)
@@ -451,7 +451,7 @@ class CommandLineInterface(object):
                     self._is_running = True
 
                     self.on_start.fire()
-                    self.reset(reset_current_buffer=reset_current_buffer)
+                    self.reset()
 
                     # Call pre_run.
                     self._pre_run(pre_run)

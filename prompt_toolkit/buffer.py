@@ -86,7 +86,14 @@ class AcceptAction(object):
 
 
 def _return_document_handler(cli, buffer):
+    # Set return value.
     cli.set_return_value(buffer.document)
+
+    # Make sure that if we run this UI again, that we reset this buffer, next
+    # time.
+    def reset_this_buffer():
+        buffer.reset()
+    cli.pre_run_callables.append(reset_this_buffer)
 
 
 AcceptAction.RETURN_DOCUMENT = AcceptAction(_return_document_handler)
