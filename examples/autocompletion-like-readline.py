@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.key_binding.bindings.completion import display_completions_like_readline
-from prompt_toolkit.key_binding.manager import KeyBindingManager
+from prompt_toolkit.key_binding.defaults import load_default_key_bindings
 from prompt_toolkit.keys import Keys
 
 
@@ -20,14 +20,16 @@ animal_completer = WordCompleter([
     'turtle',
 ], ignore_case=True)
 
+
 # Create key bindings registry with a custom binding for the Tab key that
 # displays completions like GNU readline.
-key_bindings_manager = KeyBindingManager.for_prompt()
-key_bindings_manager.registry.add_binding(Keys.ControlI)(display_completions_like_readline)
+registry = load_default_key_bindings()
+registry.add_binding(Keys.ControlI)(display_completions_like_readline)
+
 
 def main():
     text = prompt('Give some animals: ', completer=animal_completer,
-                  key_bindings_registry=key_bindings_manager.registry,
+                  key_bindings_registry=registry,
 
                   # Important: for this to work: `complete_while_typing` needs
                   #            to be False.

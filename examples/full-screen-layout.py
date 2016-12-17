@@ -11,7 +11,7 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.interface import CommandLineInterface
-from prompt_toolkit.key_binding.manager import KeyBindingManager
+from prompt_toolkit.key_binding.defaults import load_default_key_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, FillControl, TokenListControl
@@ -89,12 +89,11 @@ layout = HSplit([
 
 # As a demonstration, we will add just a ControlQ key binding to exit the
 # application.  Key bindings are registered in a
-# `prompt_toolkit.key_bindings.registry.Registry` instance. However instead of
-# starting with an empty `Registry` instance, usually you'd use a
-# `KeyBindingmanager`, because it prefills the registry with all of the key
-# bindings that are required for basic text editing.
+# `prompt_toolkit.key_bindings.registry.Registry` instance. We use the
+# `load_default_key_bindings` utility function to create a registry that
+# already contains the default key bindings.
 
-manager = KeyBindingManager()  # Start with the `KeyBindingManager`.
+registry = load_default_key_bindings()
 
 # Now add the Ctrl-Q binding. We have to pass `eager=True` here. The reason is
 # that there is another key *sequence* that starts with Ctrl-Q as well. Yes, a
@@ -113,8 +112,8 @@ manager = KeyBindingManager()  # Start with the `KeyBindingManager`.
 # `eager=True` to all key bindings, but do it when it conflicts with another
 # existing key binding, and you definitely want to override that behaviour.
 
-@manager.registry.add_binding(Keys.ControlC, eager=True)
-@manager.registry.add_binding(Keys.ControlQ, eager=True)
+@registry.add_binding(Keys.ControlC, eager=True)
+@registry.add_binding(Keys.ControlQ, eager=True)
 def _(event):
     """
     Pressing Ctrl-Q or Ctrl-C will exit the user interface.
@@ -160,7 +159,7 @@ buffers[DEFAULT_BUFFER].on_text_changed += default_buffer_changed
 application = Application(
     layout=layout,
     buffers=buffers,
-    key_bindings_registry=manager.registry,
+    key_bindings_registry=registry,
 
     # Let's add mouse support!
     mouse_support=True,

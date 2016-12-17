@@ -4,24 +4,23 @@ Example of adding a custom key binding to a prompt.
 """
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
-from prompt_toolkit.key_binding.manager import KeyBindingManager
+from prompt_toolkit.key_binding.defaults import load_default_key_bindings_for_prompt
 from prompt_toolkit.keys import Keys
 
 
 def main():
-    # We start with a `KeyBindingManager` instance, because this will already
-    # nicely load all the default key bindings.
-    key_bindings_manager = KeyBindingManager.for_prompt()
+    # We start with a `Registry` of default key bindings.
+    registry = load_default_key_bindings_for_prompt()
 
     # Add our own key binding to the registry of the key bindings manager.
-    @key_bindings_manager.registry.add_binding(Keys.F4)
+    @registry.add_binding(Keys.F4)
     def _(event):
         """
         When F4 has been pressed. Insert "hello world" as text.
         """
         event.cli.current_buffer.insert_text('hello world')
 
-    @key_bindings_manager.registry.add_binding('x', 'y')
+    @registry.add_binding('x', 'y')
     def _(event):
         """
         (Useless, but for demoing.)
@@ -34,12 +33,12 @@ def main():
         """
         event.cli.current_buffer.insert_text('z')
 
-    @key_bindings_manager.registry.add_binding('a', 'b', 'c')
+    @registry.add_binding('a', 'b', 'c')
     def _(event):
         " Typing 'abc' should insert 'd'. "
         event.cli.current_buffer.insert_text('d')
 
-    @key_bindings_manager.registry.add_binding(Keys.ControlT)
+    @registry.add_binding(Keys.ControlT)
     def _(event):
         """
         Print 'hello world' in the terminal when ControlT is pressed.
@@ -55,7 +54,7 @@ def main():
 
     # Read input.
     print('Press F4 to insert "hello world", type "xy" to insert "z":')
-    text = prompt('> ', key_bindings_registry=key_bindings_manager.registry)
+    text = prompt('> ', key_bindings_registry=registry)
     print('You said: %s' % text)
 
 
