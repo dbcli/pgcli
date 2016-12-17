@@ -177,3 +177,12 @@ class Application(object):
         self.on_buffer_changed = on_buffer_changed or dummy_handler
         self.on_render = on_render or dummy_handler
         self.on_invalidate = on_invalidate or dummy_handler
+
+        # List of 'extra' functions to execute before a CommandLineInterface.run.
+        # Note: It's important to keep this here, and not in the
+        #       CommandLineInterface itself. shortcuts.run_application creates
+        #       a new Application instance everytime. (Which is correct, it
+        #       could be that we want to detach from one IO backend and attach
+        #       the UI on a different backend.) But important is to keep as
+        #       much state as possible between runs.
+        self.pre_run_callables = []

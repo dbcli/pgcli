@@ -145,6 +145,10 @@ class CommandLineInterface(object):
     def clipboard(self):
         return self.application.clipboard
 
+    @property
+    def pre_run_callables(self):
+        return self.application.pre_run_callables
+
     def add_buffer(self, name, buffer, focus=False):
         """
         Insert a new buffer.
@@ -365,6 +369,21 @@ class CommandLineInterface(object):
         self.renderer.request_absolute_cursor_position()
         self._redraw()
 
+    def _load_next_buffer_indexes(self):
+        for buff, index in self._next_buffer_indexes.items():
+            if buff in self.buffers:
+                self.buffers[buff].working_index = index
+
+    def _pre_run(self, pre_run=None):
+        " Called during `run`. "
+        if pre_run:
+            pre_run()
+
+        # Process registered "pre_run_callables" and clear list.
+        for c in self.pre_run_callables:
+            c()
+        del self.pre_run_callables[:]
+
     def run(self, reset_current_buffer=False, pre_run=None):
         """
         Read input from the command line.
@@ -383,8 +402,7 @@ class CommandLineInterface(object):
             self.reset(reset_current_buffer=reset_current_buffer)
 
             # Call pre_run.
-            if pre_run:
-                pre_run()
+            self._pre_run(pre_run)
 
             # Run eventloop in raw mode.
             with self.input.raw_mode():
@@ -436,8 +454,7 @@ class CommandLineInterface(object):
                     self.reset(reset_current_buffer=reset_current_buffer)
 
                     # Call pre_run.
-                    if pre_run:
-                        pre_run()
+                    self._pre_run(pre_run)
 
                     with self.input.raw_mode():
                         self.renderer.request_absolute_cursor_position()
