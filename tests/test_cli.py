@@ -28,7 +28,8 @@ def _history():
 
 
 def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS, clipboard=None,
-                         history=None, multiline=False, check_line_ending=True):
+                         history=None, multiline=False, check_line_ending=True,
+                         pre_run_callback=None):
     """
     Create a CommandLineInterface, feed it with the given user input and return
     the CLI object.
@@ -54,6 +55,10 @@ def _feed_cli_with_input(text, editing_mode=EditingMode.EMACS, clipboard=None,
             eventloop=loop,
             input=inp,
             output=DummyOutput())
+
+        if pre_run_callback:
+            pre_run_callback(cli)
+
         result = cli.run()
         return result, cli
     finally:
@@ -421,6 +426,18 @@ def test_emacs_insert_comment():
     result, cli = _feed_cli_with_input(
         'hello\nworld\x1b#', check_line_ending=False, multiline=True)
     assert result.text == '#hello\n#world'
+
+
+def test_prefix_meta():
+    # Test the prefix-meta command.
+    def setup_keybindings(cli):
+        from prompt_toolkit.key_binding.bindings.named_commands import prefix_meta
+        from prompt_toolkit.filters import ViInsertMode
+        cli.application.key_bindings_registry.add_binding('j', 'j', filter=ViInsertMode())(prefix_meta)
+
+    result, cli = _feed_cli_with_input(
+        'hellojjIX\n', pre_run_callback=setup_keybindings, editing_mode=EditingMode.VI)
+    assert result.text == 'Xhello'
 
 
 def test_bracketed_paste():

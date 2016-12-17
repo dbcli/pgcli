@@ -12,6 +12,8 @@ import six
 from .completion import generate_completions
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import EditingMode
+from prompt_toolkit.key_binding.input_processor import KeyPress
+from prompt_toolkit.keys import Keys
 
 __all__ = (
     'get_by_name',
@@ -466,3 +468,15 @@ def vi_editing_mode(event):
 def emacs_editing_mode(event):
     " Switch to Emacs editing mode. "
     event.cli.editing_mode = EditingMode.EMACS
+
+
+@register('prefix-meta')
+def prefix_meta(event):
+    """
+    Metafy the next character typed. This is for keyboards without a meta key.
+
+    Sometimes people also want to bind other keys to Meta, e.g. 'jj'::
+
+        registry.add_key_binding('j', 'j', filter=ViInsertMode())(prefix_meta)
+    """
+    event.cli.input_processor.feed(KeyPress(Keys.Escape))
