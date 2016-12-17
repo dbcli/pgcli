@@ -9,7 +9,7 @@ from .key_binding.bindings.basic import load_basic_bindings
 from .key_binding.bindings.emacs import load_emacs_bindings
 from .key_binding.bindings.vi import load_vi_bindings
 from .key_binding.registry import BaseRegistry
-from .key_binding.defaults import load_default_key_bindings
+from .key_binding.defaults import load_key_bindings
 from .layout import Window
 from .layout.containers import Container
 from .layout.controls import BufferControl
@@ -146,7 +146,7 @@ class Application(object):
         self.style = style or DEFAULT_STYLE
 
         if key_bindings_registry is None:
-            key_bindings_registry = load_default_key_bindings()
+            key_bindings_registry = load_key_bindings()
 
         if get_title is None:
             get_title = lambda: None

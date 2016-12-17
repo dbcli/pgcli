@@ -27,7 +27,7 @@ from .enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
 from .filters import IsDone, HasFocus, RendererHeightIsKnown, to_simple_filter, to_cli_filter, Condition
 from .history import InMemoryHistory
 from .interface import CommandLineInterface, Application, AbortAction
-from .key_binding.defaults import load_default_key_bindings_for_prompt
+from .key_binding.defaults import load_key_bindings_for_prompt
 from .key_binding.registry import Registry
 from .keys import Keys
 from .layout import Window, HSplit, FloatContainer, Float
@@ -449,7 +449,7 @@ def create_prompt_application(
         be edited by the user.)
     """
     if key_bindings_registry is None:
-        key_bindings_registry = load_default_key_bindings_for_prompt(
+        key_bindings_registry = load_key_bindings_for_prompt(
             enable_system_bindings=enable_system_bindings,
             enable_open_in_editor=enable_open_in_editor)
 

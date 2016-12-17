@@ -5,14 +5,14 @@ Example of adding a custom Vi operator and text object.
 """
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
-from prompt_toolkit.key_binding.defaults import load_default_key_bindings_for_prompt
+from prompt_toolkit.key_binding.defaults import load_key_bindings_for_prompt
 from prompt_toolkit.key_binding.bindings.vi import create_operator_decorator, create_text_object_decorator, TextObject
 from prompt_toolkit.enums import EditingMode
 
 
 def main():
     # We start with a `Registry` of default key bindings.
-    registry = load_default_key_bindings_for_prompt()
+    registry = load_key_bindings_for_prompt()
 
     # Create the decorators to be used for registering text objects and
     # operators in this registry.

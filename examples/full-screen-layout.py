@@ -11,7 +11,7 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.interface import CommandLineInterface
-from prompt_toolkit.key_binding.defaults import load_default_key_bindings
+from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, FillControl, TokenListControl
@@ -93,7 +93,7 @@ layout = HSplit([
 # `load_default_key_bindings` utility function to create a registry that
 # already contains the default key bindings.
 
-registry = load_default_key_bindings()
+registry = load_key_bindings()
 
 # Now add the Ctrl-Q binding. We have to pass `eager=True` here. The reason is
 # that there is another key *sequence* that starts with Ctrl-Q as well. Yes, a

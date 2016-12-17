@@ -1,6 +1,6 @@
 """
 DEPRECATED:
-Use `prompt_toolkit.key_binding.defaults.load_default_key_bindings` instead.
+Use `prompt_toolkit.key_binding.defaults.load_key_bindings` instead.
 
 :class:`KeyBindingManager` is a utility (or shortcut) for loading all the key
 bindings in a key binding registry, with a logic set of filters to quickly to
@@ -14,7 +14,7 @@ Usage::
     app = Application(key_bindings_registry=manager.registry)
 """
 from __future__ import unicode_literals
-from .defaults import load_default_key_bindings
+from .defaults import load_key_bindings
 from prompt_toolkit.filters import to_cli_filter
 from prompt_toolkit.key_binding.registry import Registry, ConditionalRegistry, MergedRegistry
 
@@ -56,7 +56,7 @@ class KeyBindingManager(object):
         assert get_search_state is None or callable(get_search_state)
         enable_all = to_cli_filter(enable_all)
 
-        defaults = load_default_key_bindings(
+        defaults = load_key_bindings(
              get_search_state=get_search_state,
              enable_abort_and_exit_bindings=enable_abort_and_exit_bindings,
              enable_system_bindings=enable_system_bindings,

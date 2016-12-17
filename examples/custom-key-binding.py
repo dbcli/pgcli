@@ -4,13 +4,13 @@ Example of adding a custom key binding to a prompt.
 """
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
-from prompt_toolkit.key_binding.defaults import load_default_key_bindings_for_prompt
+from prompt_toolkit.key_binding.defaults import load_key_bindings_for_prompt
 from prompt_toolkit.keys import Keys
 
 
 def main():
     # We start with a `Registry` of default key bindings.
-    registry = load_default_key_bindings_for_prompt()
+    registry = load_key_bindings_for_prompt()
 
     # Add our own key binding to the registry of the key bindings manager.
     @registry.add_binding(Keys.F4)

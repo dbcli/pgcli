@@ -1,7 +1,7 @@
 """
 Default key bindings.::
 
-    registry = load_default_key_bindings()
+    registry = load_key_bindings()
     app = Application(key_bindings_registry=registry)
 """
 from __future__ import unicode_literals
@@ -12,12 +12,12 @@ from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_sys
 from prompt_toolkit.filters import to_cli_filter
 
 __all__ = (
-    'load_default_key_bindings',
-    'load_default_key_bindings_for_prompt',
+    'load_key_bindings',
+    'load_key_bindings_for_prompt',
 )
 
 
-def load_default_key_bindings(
+def load_key_bindings(
         get_search_state=None,
         enable_abort_and_exit_bindings=False,
         enable_system_bindings=False,
@@ -102,7 +102,7 @@ def load_default_key_bindings(
     return registry
 
 
-def load_default_key_bindings_for_prompt(**kw):
+def load_key_bindings_for_prompt(**kw):
     """
     Create a ``Registry`` object with the defaults key bindings for an input
     prompt.
@@ -116,4 +116,4 @@ def load_default_key_bindings_for_prompt(**kw):
     kw.setdefault('enable_search', True)
     kw.setdefault('enable_auto_suggest_bindings', True)
 
-    return load_default_key_bindings(**kw)
+    return load_key_bindings(**kw)

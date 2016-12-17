@@ -169,6 +169,7 @@ def reverse_search_history(event):
     event.cli.current_search_state.direction = IncrementalSearchDirection.BACKWARD
     event.cli.push_focus(SEARCH_BUFFER)
 
+
 #
 # Commands for changing text
 #

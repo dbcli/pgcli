@@ -5,14 +5,14 @@ Example that displays how to switch between Emacs and Vi input mode.
 """
 from prompt_toolkit import prompt
 from prompt_toolkit.enums import EditingMode
-from prompt_toolkit.key_binding.defaults import load_default_key_bindings_for_prompt
+from prompt_toolkit.key_binding.defaults import load_key_bindings_for_prompt
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.token import Token
 
 def run():
     # Create a `Registry` that contains the default key bindings.
-    registry = load_default_key_bindings_for_prompt()
+    registry = load_key_bindings_for_prompt()
 
     # Add an additional key binding for toggling this flag.
     @registry.add_binding(Keys.F4)

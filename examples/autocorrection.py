@@ -5,7 +5,7 @@ Example of implementing auto correction while typing.
 The word "impotr" will be corrected when the user types a space afterwards.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.key_binding.defaults import load_default_key_bindings_for_prompt
+from prompt_toolkit.key_binding.defaults import load_key_bindings_for_prompt
 from prompt_toolkit import prompt
 
 # Database of words to be replaced by typing.
@@ -17,7 +17,7 @@ corrections = {
 
 def main():
     # We start with a `Registry` that contains the default key bindings.
-    registry = load_default_key_bindings_for_prompt()
+    registry = load_key_bindings_for_prompt()
 
     # We add a custom key binding to space.
     @registry.add_binding(' ')
