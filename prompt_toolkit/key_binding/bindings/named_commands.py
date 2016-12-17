@@ -11,6 +11,7 @@ import six
 
 from .completion import generate_completions
 from prompt_toolkit.document import Document
+from prompt_toolkit.enums import EditingMode
 
 __all__ = (
     'get_by_name',
@@ -453,3 +454,15 @@ def insert_comment(event):
 
     # Accept input.
     buff.accept_action.validate_and_handle(event.cli, buff)
+
+
+@register('vi-editing-mode')
+def vi_editing_mode(event):
+    " Switch to Vi editing mode. "
+    event.cli.editing_mode = EditingMode.VI
+
+
+@register('emacs-editing-mode')
+def emacs_editing_mode(event):
+    " Switch to Emacs editing mode. "
+    event.cli.editing_mode = EditingMode.EMACS
