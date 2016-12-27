@@ -506,6 +506,7 @@ def create_prompt_application(
         mouse_support=mouse_support,
         editing_mode=editing_mode,
         erase_when_done=erase_when_done,
+        reverse_vi_search_direction=True,
         on_abort=on_abort,
         on_exit=on_exit)
 

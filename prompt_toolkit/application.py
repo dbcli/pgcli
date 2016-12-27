@@ -58,6 +58,9 @@ class Application(object):
     :param use_alternate_screen: When True, run the application on the alternate screen buffer.
     :param get_title: Callable that returns the current title to be displayed in the terminal.
     :param erase_when_done: (bool) Clear the application output when it finishes.
+    :param reverse_vi_search_direction: Normally, in Vi mode, a '/' searches
+        forward and a '?' searches backward. In readline mode, this is usually
+        reversed.
 
     Filters:
 
@@ -91,6 +94,7 @@ class Application(object):
 
                  paste_mode=False, ignore_case=False, editing_mode=EditingMode.EMACS,
                  erase_when_done=False,
+                 reverse_vi_search_direction=False,
 
                  on_input_timeout=None, on_start=None, on_stop=None,
                  on_reset=None, on_initialize=None, on_buffer_changed=None,
@@ -99,6 +103,7 @@ class Application(object):
         paste_mode = to_cli_filter(paste_mode)
         ignore_case = to_cli_filter(ignore_case)
         mouse_support = to_cli_filter(mouse_support)
+        reverse_vi_search_direction = to_cli_filter(reverse_vi_search_direction)
 
         assert layout is None or isinstance(layout, Container)
         assert buffer is None or isinstance(buffer, Buffer)
@@ -163,6 +168,7 @@ class Application(object):
         self.ignore_case = ignore_case
         self.editing_mode = editing_mode
         self.erase_when_done = erase_when_done
+        self.reverse_vi_search_direction = reverse_vi_search_direction
 
         def dummy_handler(cli):
             " Dummy event handler. "

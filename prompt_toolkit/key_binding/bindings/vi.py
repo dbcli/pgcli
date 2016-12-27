@@ -1775,7 +1775,11 @@ def load_vi_search_bindings(get_search_state=None,
     navigation_mode = ViNavigationMode()
     selection_mode = ViSelectionMode()
 
-    @handle('/', filter=navigation_mode|selection_mode)
+    reverse_vi_search_direction = Condition(
+        lambda cli: cli.application.reverse_vi_search_direction(cli))
+
+    @handle('/', filter=(navigation_mode|selection_mode)&~reverse_vi_search_direction)
+    @handle('?', filter=(navigation_mode|selection_mode)&reverse_vi_search_direction)
     @handle(Keys.ControlS, filter=~has_focus)
     def _(event):
         """
@@ -1788,7 +1792,8 @@ def load_vi_search_bindings(get_search_state=None,
         # Focus search buffer.
         event.cli.push_focus(search_buffer_name)
 
-    @handle('?', filter=navigation_mode|selection_mode)
+    @handle('?', filter=(navigation_mode|selection_mode)&~reverse_vi_search_direction)
+    @handle('/', filter=(navigation_mode|selection_mode)&reverse_vi_search_direction)
     @handle(Keys.ControlR, filter=~has_focus)
     def _(event):
         """
