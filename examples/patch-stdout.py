@@ -22,7 +22,9 @@ def main():
             i += 1
             print('i=%i' % i)
             time.sleep(1)
-    threading.Thread(target=thread).start()
+    t = threading.Thread(target=thread)
+    t.daemon = True
+    t.start()
 
     # Now read the input. The print statements of the other thread
     # should not disturb anything.
