@@ -594,7 +594,7 @@ def run_application(
         cli.on_stop += stop_refresh_loop
 
     # Replace stdout.
-    patch_context = cli.patch_stdout_context() if patch_stdout else DummyContext()
+    patch_context = cli.patch_stdout_context(raw=True) if patch_stdout else DummyContext()
 
     # Read input and return it.
     if return_asyncio_coroutine:
