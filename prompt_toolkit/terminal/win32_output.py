@@ -141,9 +141,31 @@ class Win32Output(Output):
         """
         Return Screen buffer info.
         """
+        # NOTE: We don't call the `GetConsoleScreenBufferInfo` API through
+        #     `self._winapi`. Doing so causes Python to crash on certain 64bit
+        #     Python versions. (Reproduced with 64bit Python 2.7.6, on Windows
+        #     10). It is not clear why. Possibly, it has to do with passing
+        #     these objects as an argument, or through *args.
+
+        # The Python documentation contains the following - possibly related - warning:
+        #     ctypes does not support passing unions or structures with
+        #     bit-fields to functions by value. While this may work on 32-bit
+        #     x86, it's not guaranteed by the library to work in the general
+        #     case. Unions and structures with bit-fields should always be
+        #     passed to functions by pointer.
+
+        # Also see:
+        #    - https://github.com/ipython/ipython/issues/10070
+        #    - https://github.com/jonathanslenders/python-prompt-toolkit/issues/406
+        #    - https://github.com/jonathanslenders/python-prompt-toolkit/issues/86
+
+        self.flush()
         sbinfo = CONSOLE_SCREEN_BUFFER_INFO()
-        success = self._winapi(windll.kernel32.GetConsoleScreenBufferInfo,
-                               self.hconsole, byref(sbinfo))
+        success = windll.kernel32.GetConsoleScreenBufferInfo(self.hconsole, byref(sbinfo))
+
+        # success = self._winapi(windll.kernel32.GetConsoleScreenBufferInfo,
+        #                        self.hconsole, byref(sbinfo))
+
         if success:
             return sbinfo
         else:
