@@ -150,6 +150,17 @@ class PygmentsLexer(Lexer):
     """
     Lexer that calls a pygments lexer.
 
+    Example::
+
+        from pygments.lexers import HtmlLexer
+        lexer = PygmentsLexer(HtmlLexer)
+
+    Note: Don't forget to also load a Pygments compatible style. E.g.::
+
+        from prompt_toolkit.styles.from_pygments import style_from_pygments
+        from pygments.styles import get_style_by_name
+        style = style_from_pygments(get_style_by_name('monokai'))
+
     :param pygments_lexer_cls: A `Lexer` from Pygments.
     :param sync_from_start: Start lexing at the start of the document. This
         will always give the best results, but it will be slow for bigger
