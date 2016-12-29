@@ -69,13 +69,7 @@ class BaseRegistry(with_metaclass(ABCMeta, object)):
     """
     Interface for a Registry.
     """
-    @abstractmethod
-    def add_binding(self, *keys, **kwargs):
-        pass
-
-    @abstractmethod
-    def remove_binding(self, function):
-        pass
+    _version = 0  # For cache invalidation.
 
     @abstractmethod
     def get_bindings_for_keys(self, keys):
@@ -84,6 +78,9 @@ class BaseRegistry(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def get_bindings_starting_with_keys(self, keys):
         pass
+
+    # `add_binding` and `remove_binding` don't have to be part of this
+    # interface.
 
 
 class Registry(BaseRegistry):
