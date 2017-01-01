@@ -3,14 +3,13 @@ Posix asyncio event loop.
 """
 from __future__ import unicode_literals
 
-from ..terminal.vt100_input import InputStream
-from .asyncio_base import AsyncioTimeout
+from ..input import Input
 from .base import EventLoop, INPUT_TIMEOUT
-from .callbacks import EventLoopCallbacks
-from .posix_utils import PosixStdinReader
-
+from .future import Future
+from .utils import AsyncioTimeout
 import asyncio
-import signal
+import six
+import textwrap
 
 __all__ = (
     'PosixAsyncioEventLoop',
@@ -22,77 +21,54 @@ class PosixAsyncioEventLoop(EventLoop):
         self.loop = loop or asyncio.get_event_loop()
         self.closed = False
 
-        self._stopped_f = asyncio.Future()
+        self._input = None
+        self._input_ready_cb = None
 
-    @asyncio.coroutine
-    def run_as_coroutine(self, stdin, callbacks):
-        """
-        The input 'event loop'.
-        """
-        assert isinstance(callbacks, EventLoopCallbacks)
+        self._timeout = AsyncioTimeout(
+            INPUT_TIMEOUT, self._timeout_handler, self.loop)
 
-        # Create reader class.
-        stdin_reader = PosixStdinReader(stdin.fileno())
-
+    try:
+        six.exec_(textwrap.dedent('''
+    async def run_as_coroutine(self, future):
+        " Run the loop. "
+        assert isinstance(future, Future)
         if self.closed:
             raise Exception('Event loop already closed.')
 
-        inputstream = InputStream(callbacks.feed_key)
-
         try:
-            # Create a new Future every time.
-            self._stopped_f = asyncio.Future()
-
-            # Handle input timouts
-            def timeout_handler():
-                """
-                When no input has been received for INPUT_TIMEOUT seconds,
-                flush the input stream and fire the timeout event.
-                """
-                inputstream.flush()
-
-                callbacks.input_timeout()
-
-            timeout = AsyncioTimeout(INPUT_TIMEOUT, timeout_handler, self.loop)
-
-            # Catch sigwinch
-            def received_winch():
-                self.call_from_executor(callbacks.terminal_size_changed)
-
-            self.loop.add_signal_handler(signal.SIGWINCH, received_winch)
-
-            # Read input data.
-            def stdin_ready():
-                data = stdin_reader.read()
-                inputstream.feed(data)
-                timeout.reset()
-
-                # Quit when the input stream was closed.
-                if stdin_reader.closed:
-                    self.stop()
-
-            self.loop.add_reader(stdin.fileno(), stdin_ready)
+            # Create a new asyncio Future that blocks this coroutine until the
+            # prompt_toolkit Future is ready.
+            stopped_f = loop.create_future()
 
             # Block this coroutine until stop() has been called.
-            for f in self._stopped_f:
-                yield f
+            @future.add_done_callback
+            def done(_):
+                stopped_f.set_result(None)
 
+            # Wait until f has been set.
+            await stopped_f
         finally:
-            # Clean up.
-            self.loop.remove_reader(stdin.fileno())
-            self.loop.remove_signal_handler(signal.SIGWINCH)
-
             # Don't trigger any timeout events anymore.
-            timeout.stop()
-
-    def stop(self):
-        # Trigger the 'Stop' future.
-        self._stopped_f.set_result(True)
+            self._timeout.stop()
+    '''), globals(), locals())
+    except SyntaxError:
+        def run_as_coroutine(self, future):
+            " Run the loop. "
+            assert isinstance(future, Future)
+            raise NotImplementedError('`run_as_coroutine` requires at least Python 3.5.')
 
     def close(self):
         # Note: we should not close the asyncio loop itself, because that one
         # was not created here.
         self.closed = True
+
+    def _timeout_handler(self):
+        """
+        When no input has been received for INPUT_TIMEOUT seconds,
+        flush the input stream and fire the timeout event.
+        """
+        if self._input is not None:
+            self._input.flush()
 
     def run_in_executor(self, callback):
         self.loop.run_in_executor(None, callback)
@@ -111,3 +87,48 @@ class PosixAsyncioEventLoop(EventLoop):
     def remove_reader(self, fd):
         " Stop watching the file descriptor for read availability. "
         self.loop.remove_reader(fd)
+
+    def add_signal_handler(self, signum, handler):
+        return self.loop.add_signal_handler(signum, handler)
+
+    def set_input(self, input, input_ready_callback):
+        """
+        Tell the eventloop to read from this input object.
+
+        :param input: `Input` object.
+        :param input_ready_callback: Called when the input is ready to read.
+        """
+        assert isinstance(input, Input)
+        assert callable(input_ready_callback)
+
+        # Remove previous
+        if self._input:
+            previous_input = self._input
+            previous_cb = self._input_ready_cb
+            self.remove_input()
+        else:
+            previous_input = None
+            previous_cb = None
+
+        # Set current.
+        self._input = input
+        self._input_ready_cb = input_ready_callback
+
+        # Add reader.
+        def ready():
+            # Tell the callback that input's ready.
+            input_ready_callback()
+
+            # Reset timeout.
+            self._timeout.reset()
+
+        self.add_reader(input.stdin.fileno(), ready)
+
+        return previous_input, previous_cb
+
+    def remove_input(self):
+        if self._input:
+            self.remove_reader(self._input.fileno())
+            self._input = None
+            self._input_ready_cb = None
+

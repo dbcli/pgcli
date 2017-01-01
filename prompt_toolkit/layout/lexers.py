@@ -7,8 +7,8 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 from six.moves import range
 
-from prompt_toolkit.token import Token
-from prompt_toolkit.filters import to_cli_filter
+from prompt_toolkit.token import Token, _TokenType
+from prompt_toolkit.filters import to_app_filter
 from .utils import split_lines
 
 import re
@@ -21,6 +21,7 @@ __all__ = (
     'SyntaxSync',
     'SyncFromStart',
     'RegexSync',
+    'DynamicLexer',
 )
 
 
@@ -29,7 +30,7 @@ class Lexer(with_metaclass(ABCMeta, object)):
     Base class for all lexers.
     """
     @abstractmethod
-    def lex_document(self, cli, document):
+    def lex_document(self, app, document):
         """
         Takes a :class:`~prompt_toolkit.document.Document` and returns a
         callable that takes a line number and returns the tokens for that line.
@@ -38,18 +39,16 @@ class Lexer(with_metaclass(ABCMeta, object)):
 
 class SimpleLexer(Lexer):
     """
-    Lexer that doesn't do any tokenizing and returns the whole input as one token.
+    Lexer that doesn't do any tokenizing and returns the whole input as one
+    token.
 
     :param token: The `Token` for this lexer.
     """
-    # `default_token` parameter is deprecated!
-    def __init__(self, token=Token, default_token=None):
+    def __init__(self, token=Token):
+        assert isinstance(token, _TokenType)
         self.token = token
 
-        if default_token is not None:
-            self.token = default_token
-
-    def lex_document(self, cli, document):
+    def lex_document(self, app, document):
         lines = document.lines
 
         def get_line(lineno):
@@ -146,6 +145,22 @@ class RegexSync(SyntaxSync):
         return cls(p)
 
 
+class _TokenCache(dict):
+    """
+    Cache that converts Pygments tokens into `prompt_toolkit` token objects.
+
+    This is required because prompt_toolkit has some additional functionality,
+    like an `|` operator that it implements.
+    """
+    def __missing__(self, key):
+        # Cache from Pygments Tokens to prompt_toolkit Tokens.
+        value = _TokenType(key)
+        self[key] = value
+        return value
+
+_token_cache = _TokenCache()
+
+
 class PygmentsLexer(Lexer):
     """
     Lexer that calls a pygments lexer.
@@ -186,7 +201,7 @@ class PygmentsLexer(Lexer):
         assert syntax_sync is None or isinstance(syntax_sync, SyntaxSync)
 
         self.pygments_lexer_cls = pygments_lexer_cls
-        self.sync_from_start = to_cli_filter(sync_from_start)
+        self.sync_from_start = to_app_filter(sync_from_start)
 
         # Instantiate the Pygments lexer.
         self.pygments_lexer = pygments_lexer_cls(
@@ -213,7 +228,7 @@ class PygmentsLexer(Lexer):
         else:
             return cls(pygments_lexer.__class__, sync_from_start=sync_from_start)
 
-    def lex_document(self, cli, document):
+    def lex_document(self, app, document):
         """
         Create a lexer function that takes a line number and returns the list
         of (Token, text) tuples as the Pygments lexer returns for that line.
@@ -226,7 +241,7 @@ class PygmentsLexer(Lexer):
 
         def get_syntax_sync():
             " The Syntax synchronisation objcet that we currently use. "
-            if self.sync_from_start(cli):
+            if self.sync_from_start(app):
                 return SyncFromStart()
             else:
                 return self.syntax_sync
@@ -250,7 +265,9 @@ class PygmentsLexer(Lexer):
                 # Pygments should return exactly the same amount of text, as we
                 # have given as input.)
                 for _, t, v in self.pygments_lexer.get_tokens_unprocessed(text):
-                    yield t, v
+                    # Turn Pygments `Token` object into prompt_toolkit `Token`
+                    # objects.
+                    yield _token_cache[t], v
 
             return enumerate(split_lines(get_tokens()), start_lineno)
 
@@ -318,3 +335,18 @@ class PygmentsLexer(Lexer):
             return []
 
         return get_line
+
+
+class DynamicLexer(Lexer):
+    """
+    Lexer class that can dynamically returns any Lexer.
+
+    :param get_lexer: Callable that returns a :class:`.Lexer` instance.
+    """
+    def __init__(self, get_lexer):
+        self.get_lexer = get_lexer
+
+    def lex_document(self, app, document):
+        lexer = self.get_lexer() or SimpleLexer()
+        assert isinstance(lexer, Lexer)
+        return lexer.lex_document(app, document)

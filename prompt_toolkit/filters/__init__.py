@@ -11,12 +11,12 @@ state of what they are observing. Only when a filter is called (it's actually a
 callable), it will calculate its value. So, its not really reactive
 programming, but it's made to fit for this framework.
 
-One class of filters observe a `CommandLineInterface` instance. However, they
-are not attached to such an instance. (We have to pass this instance to the
-filter when calling it.) The reason for this is to allow declarative
-programming: for key bindings, we can attach a filter to a key binding without
-knowing yet which `CommandLineInterface` instance it will observe in the end.
-Examples are `HasSearch` or `IsExiting`.
+One class of filters observe an `Application` instance. However, they are not
+attached to such an instance. (We have to pass this instance to the filter when
+calling it.) The reason for this is to allow declarative programming: for key
+bindings, we can attach a filter to a key binding without knowing yet which
+`Application` instance it will observe in the end.  Examples are `HasSearch` or
+`IsExiting`.
 
 Another class of filters doesn't take anything as input. And a third class of
 filters are universal, for instance `Always` and `Never`.
@@ -31,6 +31,9 @@ Filters can be chained using ``&`` and ``|`` operations, and inverted using the
 from __future__ import unicode_literals
 
 from .base import *
-from .cli import *
+from .app import *
 from .types import *
 from .utils import *
+
+# For backwards-compatibility. Keep this import.
+from .cli import *

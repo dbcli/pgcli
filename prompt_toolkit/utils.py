@@ -8,6 +8,7 @@ import weakref
 
 from wcwidth import wcwidth
 from six.moves import range
+from .cache import memoized
 
 
 __all__ = (
@@ -67,7 +68,7 @@ class Event(object):
         """
         # Test handler.
         assert callable(handler)
-        if not test_callable_args(handler, [None]):
+        if not _func_takes_one_arg(handler):
             raise TypeError("%r doesn't take exactly one argument." % handler)
 
         # Add to list of event handlers.
@@ -78,12 +79,15 @@ class Event(object):
         """
         Remove a handler from this callback.
         """
-        self._handlers.remove(handler)
+        if handler in self._handlers:
+            self._handlers.remove(handler)
         return self
 
 
 # Cache of signatures. Improves the performance of `test_callable_args`.
 _signatures_cache = weakref.WeakKeyDictionary()
+
+_inspect_signature = getattr(inspect, 'signature', None)  # Only on Python 3.
 
 
 def test_callable_args(func, args):
@@ -91,14 +95,13 @@ def test_callable_args(func, args):
     Return True when this function can be called with the given arguments.
     """
     assert isinstance(args, (list, tuple))
-    signature = getattr(inspect, 'signature', None)
 
-    if signature is not None:
+    if _inspect_signature is not None:
         # For Python 3, use inspect.signature.
         try:
             sig = _signatures_cache[func]
         except KeyError:
-            sig = signature(func)
+            sig = _inspect_signature(func)
             _signatures_cache[func] = sig
 
         try:
@@ -127,6 +130,14 @@ def test_callable_args(func, args):
         # Test whether the given amount of args is between the min and max
         # accepted argument counts.
         return len(spec.args) - len(spec.defaults or []) <= len(args) <= len(spec.args)
+
+
+@memoized(maxsize=1024)
+def _func_takes_one_arg(func):
+    """
+    Test whether the given function can be called with exactly one argument.
+    """
+    return test_callable_args(func, [None])
 
 
 class DummyContext(object):
@@ -220,6 +231,22 @@ def take_using_weights(items, weights):
     assert len(items) == len(weights)
     assert len(items) > 0
 
+    # Remove items with zero-weight.
+    items2 = []
+    weights2 = []
+    for i, w in zip(items, weights):
+        if w > 0:
+            items2.append(i)
+            weights2.append(w)
+
+    items = items2
+    weights = weights2
+
+    # Make sure that we have some items left.
+    if not items:
+        raise ValueError("Did't got any items with a positive weight.")
+
+    #
     already_taken = [0 for i in items]
     item_count = len(items)
     max_weight = max(weights)

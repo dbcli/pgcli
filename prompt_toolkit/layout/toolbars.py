@@ -1,17 +1,18 @@
 from __future__ import unicode_literals
 
-from ..enums import IncrementalSearchDirection
-
-from .processors import BeforeInput
-
-from .lexers import SimpleLexer
-from .dimension import LayoutDimension
-from .controls import BufferControl, TokenListControl, UIControl, UIContent
 from .containers import Window, ConditionalContainer
-from .screen import Char
+from .controls import BufferControl, TokenListControl, UIControl, UIContent, UIControlKeyBindings
+from .dimension import Dimension
+from .lexers import SimpleLexer
+from .processors import BeforeInput
 from .utils import token_list_len
-from prompt_toolkit.enums import SEARCH_BUFFER, SYSTEM_BUFFER
-from prompt_toolkit.filters import HasFocus, HasArg, HasCompletions, HasValidationError, HasSearch, Always, IsDone
+from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.enums import SYSTEM_BUFFER, SearchDirection
+from prompt_toolkit.filters import has_focus, has_arg, has_completions, has_validation_error, is_searching, Always, is_done, emacs_mode, vi_mode, vi_navigation_mode
+from prompt_toolkit.filters import to_app_filter
+from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings, ConditionalKeyBindings
+from prompt_toolkit.key_binding.vi_state import InputMode
+from prompt_toolkit.keys import Keys
 from prompt_toolkit.token import Token
 
 __all__ = (
@@ -24,39 +25,119 @@ __all__ = (
 )
 
 
-class TokenListToolbar(ConditionalContainer):
+class TokenListToolbar(ConditionalContainer):  # XXX: don't wrap in ConditionalContainer!
     def __init__(self, get_tokens, filter=Always(), **kw):
         super(TokenListToolbar, self).__init__(
             content=Window(
                 TokenListControl(get_tokens, **kw),
-                height=LayoutDimension.exact(1)),
+                height=Dimension.exact(1)),
             filter=filter)
 
 
 class SystemToolbarControl(BufferControl):
-    def __init__(self):
+    """
+    :param enable: filter that enables the key bindings.
+    """
+    def __init__(self, loop, enable=True):
+        self.enable = to_app_filter(enable)
         token = Token.Toolbar.System
+        self.system_buffer = Buffer(name=SYSTEM_BUFFER, loop=loop)
 
         super(SystemToolbarControl, self).__init__(
-            buffer_name=SYSTEM_BUFFER,
-            default_char=Char(token=token),
-            lexer=SimpleLexer(token=token.Text),
-            input_processors=[BeforeInput.static('Shell command: ', token)],)
+            buffer=self.system_buffer,
+            lexer=SimpleLexer(token=Token.Toolbar.System.Text),
+            input_processor=BeforeInput.static('Shell command: ', token))
+
+        self._global_bindings = self._build_global_key_bindings()
+        self._bindings = self._build_key_bindings()
+
+    def _build_global_key_bindings(self):
+        focussed = has_focus(self.system_buffer)
+
+        bindings = KeyBindings()
+
+        @bindings.add(Keys.Escape, '!', filter= ~focussed & emacs_mode &
+                self.enable)
+        def _(event):
+            " M-'!' will focus this user control. "
+            event.app.layout.current_control = self
+
+        @bindings.add('!', filter=~focussed & vi_mode & vi_navigation_mode)
+        def _(event):
+            " Focus. "
+            event.app.vi_state.input_mode = InputMode.INSERT
+            event.app.layout.current_control = self
+
+        return bindings
+
+    def _build_key_bindings(self):
+        focussed = has_focus(self.system_buffer)
+
+        # Emacs
+        emacs_bindings = KeyBindings()
+        handle = emacs_bindings.add
+
+        @handle(Keys.Escape, filter=focussed)
+        @handle(Keys.ControlG, filter=focussed)
+        @handle(Keys.ControlC, filter=focussed)
+        def _(event):
+            " Hide system prompt. "
+            self.system_buffer.reset()
+            event.app.layout.pop_focus()
+
+        @handle(Keys.Enter, filter=focussed)
+        def _(event):
+            " Run system command. "
+            event.app.run_system_command(self.system_buffer.text)
+            self.system_buffer.reset(append_to_history=True)
+            event.app.layout.pop_focus()
+
+        # Vi.
+        vi_bindings = KeyBindings()
+        handle = vi_bindings.add
+
+        @handle(Keys.Escape, filter=focussed)
+        @handle(Keys.ControlC, filter=focussed)
+        def _(event):
+            " Hide system prompt. "
+            event.app.vi_state.input_mode = InputMode.NAVIGATION
+            self.system_buffer.reset()
+            event.app.layout.pop_focus()
+
+        @handle(Keys.Enter, filter=focussed)
+        def _(event):
+            " Run system command. "
+            event.app.vi_state.input_mode = InputMode.NAVIGATION
+            event.app.run_system_command(self.system_buffer.text)
+            self.system_buffer.reset(append_to_history=True)
+            event.app.layout.pop_focus()
+
+        return merge_key_bindings([
+            ConditionalKeyBindings(emacs_bindings, emacs_mode),
+            ConditionalKeyBindings(vi_bindings, vi_mode),
+        ])
+
+    def get_key_bindings(self, app):
+        return UIControlKeyBindings(
+            global_key_bindings=self._global_bindings,
+            key_bindings=self._bindings,
+            modal=False)
 
 
 class SystemToolbar(ConditionalContainer):
-    def __init__(self):
+    def __init__(self, loop, enable=True):
+        self.control = SystemToolbarControl(loop=loop, enable=enable)
         super(SystemToolbar, self).__init__(
-            content=Window(
-                SystemToolbarControl(),
-                height=LayoutDimension.exact(1)),
-            filter=HasFocus(SYSTEM_BUFFER) & ~IsDone())
+            content=Window(self.control,
+                height=Dimension.exact(1),
+                token=Token.Toolbar.System),
+            filter=has_focus(self.control.system_buffer) & ~is_done)
 
 
 class ArgToolbarControl(TokenListControl):
     def __init__(self):
-        def get_tokens(cli):
-            arg = cli.input_processor.arg
+        def get_tokens(app):
+            arg = app.key_processor.arg
             if arg == '-':
                 arg = '-1'
 
@@ -73,21 +154,23 @@ class ArgToolbar(ConditionalContainer):
         super(ArgToolbar, self).__init__(
             content=Window(
                 ArgToolbarControl(),
-                height=LayoutDimension.exact(1)),
-            filter=HasArg())
+                height=Dimension.exact(1)),
+            filter=has_arg)
 
 
 class SearchToolbarControl(BufferControl):
     """
     :param vi_mode: Display '/' and '?' instead of I-search.
     """
-    def __init__(self, vi_mode=False):
+    def __init__(self, search_buffer, vi_mode=False):
+        assert isinstance(search_buffer, Buffer)
+
         token = Token.Toolbar.Search
 
-        def get_before_input(cli):
-            if not cli.is_searching:
+        def get_before_input(app):
+            if not is_searching(app):
                 text = ''
-            elif cli.search_state.direction == IncrementalSearchDirection.BACKWARD:
+            elif app.current_search_state.direction == SearchDirection.BACKWARD:
                 text = ('?' if vi_mode else 'I-search backward: ')
             else:
                 text = ('/' if vi_mode else 'I-search: ')
@@ -95,26 +178,26 @@ class SearchToolbarControl(BufferControl):
             return [(token, text)]
 
         super(SearchToolbarControl, self).__init__(
-            buffer_name=SEARCH_BUFFER,
-            input_processors=[BeforeInput(get_before_input)],
-            default_char=Char(token=token),
+            buffer=search_buffer,
+            input_processor=BeforeInput(get_before_input),
             lexer=SimpleLexer(token=token.Text))
 
 
 class SearchToolbar(ConditionalContainer):
-    def __init__(self, vi_mode=False):
+    def __init__(self, search_buffer, vi_mode=False):
+        control = SearchToolbarControl(search_buffer, vi_mode=vi_mode)
         super(SearchToolbar, self).__init__(
-            content=Window(
-                SearchToolbarControl(vi_mode=vi_mode),
-                height=LayoutDimension.exact(1)),
-            filter=HasSearch() & ~IsDone())
+            content=Window(control, height=Dimension.exact(1), token=Token.Toolbar.Search),
+            filter=is_searching & ~is_done)
+
+        self.control = control
 
 
 class CompletionsToolbarControl(UIControl):
     token = Token.Toolbar.Completions
 
-    def create_content(self, cli, width, height):
-        complete_state = cli.current_buffer.complete_state
+    def create_content(self, app, width, height):
+        complete_state = app.current_buffer.complete_state
         if complete_state:
             completions = complete_state.current_completions
             index = complete_state.complete_index  # Can be None!
@@ -172,16 +255,16 @@ class CompletionsToolbar(ConditionalContainer):
         super(CompletionsToolbar, self).__init__(
             content=Window(
                 CompletionsToolbarControl(),
-                height=LayoutDimension.exact(1)),
-            filter=HasCompletions() & ~IsDone() & extra_filter)
+                height=Dimension.exact(1)),
+            filter=has_completions & ~is_done & extra_filter)
 
 
 class ValidationToolbarControl(TokenListControl):
     def __init__(self, show_position=False):
         token = Token.Toolbar.Validation
 
-        def get_tokens(cli):
-            buffer = cli.current_buffer
+        def get_tokens(app):
+            buffer = app.current_buffer
 
             if buffer.validation_error:
                 row, column = buffer.document.translate_index_to_position(
@@ -205,5 +288,5 @@ class ValidationToolbar(ConditionalContainer):
         super(ValidationToolbar, self).__init__(
             content=Window(
                 ValidationToolbarControl(show_position=show_position),
-                height=LayoutDimension.exact(1)),
-            filter=HasValidationError() & ~IsDone())
+                height=Dimension.exact(1)),
+            filter=has_validation_error & ~is_done)

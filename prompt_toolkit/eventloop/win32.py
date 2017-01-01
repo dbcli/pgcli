@@ -1,12 +1,9 @@
 """
 Win32 event loop.
-
-Windows notes:
-    - Somehow it doesn't seem to work with the 'ProactorEventLoop'.
 """
 from __future__ import unicode_literals
 
-from ..terminal.win32_input import ConsoleInputReader
+from ..input.win32 import Win32Input
 from ..win32_types import SECURITY_ATTRIBUTES
 from .base import EventLoop, INPUT_TIMEOUT
 from .inputhook import InputHookContext
@@ -37,73 +34,110 @@ class Win32EventLoop(EventLoop):
         assert inputhook is None or callable(inputhook)
 
         self._event = _create_event()
-        self._console_input_reader = ConsoleInputReader(recognize_paste=recognize_paste)
         self._calls_from_executor = []
 
         self.closed = False
         self._running = False
 
+        # The `Input` object that's currently attached.
+        self._input = None
+        self._input_ready_cb = None
+
         # Additional readers.
         self._read_fds = {} # Maps fd to handler.
+
+        self._current_timeout = -1
 
         # Create inputhook context.
         self._inputhook_context = InputHookContext(inputhook) if inputhook else None
 
-    def run(self, stdin, callbacks):
+    def run_until_complete(self, future):
         if self.closed:
             raise Exception('Event loop already closed.')
 
-        current_timeout = INPUT_TIMEOUT_MS
-        self._running = True
+        try:
+            self._current_timeout = INPUT_TIMEOUT_MS
+            self._running = True
 
-        while self._running:
-            # Call inputhook.
-            with TimeIt() as inputhook_timer:
-                if self._inputhook_context:
-                    def ready(wait):
-                        " True when there is input ready. The inputhook should return control. "
-                        return bool(self._ready_for_reading(current_timeout if wait else 0))
-                    self._inputhook_context.call_inputhook(ready)
+            while not future.done():
+                self._run_once()
 
-            # Calculate remaining timeout. (The inputhook consumed some of the time.)
-            if current_timeout == -1:
-                remaining_timeout = -1
-            else:
-                remaining_timeout = max(0, current_timeout - int(1000 * inputhook_timer.duration))
+            # Run one last time, to flush the pending `_calls_from_executor`s.
+            if self._calls_from_executor:
+                self._run_once()
 
-            # Wait for the next event.
-            handle = self._ready_for_reading(remaining_timeout)
+        finally:
+            self._running = False
 
-            if handle == self._console_input_reader.handle:
-                # When stdin is ready, read input and reset timeout timer.
-                keys = self._console_input_reader.read()
-                for k in keys:
-                    callbacks.feed_key(k)
-                current_timeout = INPUT_TIMEOUT_MS
+    def _run_once(self):
+        # Call inputhook.
+        with TimeIt() as inputhook_timer:
+            if self._inputhook_context:
+                def ready(wait):
+                    " True when there is input ready. The inputhook should return control. "
+                    return bool(self._ready_for_reading(self._current_timeout if wait else 0))
+                self._inputhook_context.call_inputhook(ready)
 
-            elif handle == self._event:
-                # When the Windows Event has been trigger, process the messages in the queue.
-                windll.kernel32.ResetEvent(self._event)
-                self._process_queued_calls_from_executor()
+        # Calculate remaining timeout. (The inputhook consumed some of the time.)
+        if self._current_timeout == -1:
+            remaining_timeout = -1
+        else:
+            remaining_timeout = max(0, self._current_timeout - int(1000 * inputhook_timer.duration))
 
-            elif handle in self._read_fds:
-                callback = self._read_fds[handle]
-                callback()
-            else:
-                # Fire input timeout event.
-                callbacks.input_timeout()
-                current_timeout = -1
+        # Wait for the next event.
+        handle = self._ready_for_reading(remaining_timeout)
+
+        if self._input and handle == self._input.handle:
+            # When stdin is ready, read input and reset timeout timer.
+            self._input_ready_cb()
+            self._current_timeout = INPUT_TIMEOUT_MS
+
+        elif handle == self._event:
+            # When the Windows Event has been trigger, process the messages in the queue.
+            windll.kernel32.ResetEvent(self._event)
+            self._process_queued_calls_from_executor()
+
+        elif handle in self._read_fds:
+            callback = self._read_fds[handle]
+            callback()
+        else:
+            # Timeout happened.
+            # Flush all pending keys on a timeout. (This is most important
+            # to flush the vt100 'Escape' key early when nothing else
+            # follows.)
+            if self._input is not None:
+                self._input.flush()
+
+            self._current_timeout = -1
 
     def _ready_for_reading(self, timeout=None):
         """
         Return the handle that is ready for reading or `None` on timeout.
         """
-        handles = [self._event, self._console_input_reader.handle]
+        handles = [self._event]
+        if self._input:
+            handles.append(self._input.handle)
         handles.extend(self._read_fds.keys())
         return _wait_for_handles(handles, timeout)
 
-    def stop(self):
-        self._running = False
+    def set_input(self, input, input_ready_callback):
+        """
+        Tell the eventloop to read from this input object.
+        """
+        assert isinstance(input, Win32Input)
+        previous_values = self._input, self._input_ready_cb
+
+        self._input = input
+        self._input_ready_cb = input_ready_callback
+
+        return previous_values
+
+    def remove_input(self):
+        """
+        Remove the currently attached `Input`.
+        """
+        self._input = None
+        self._input_ready_cb = None
 
     def close(self):
         self.closed = True
@@ -113,8 +147,6 @@ class Win32EventLoop(EventLoop):
 
         if self._inputhook_context:
             self._inputhook_context.close()
-
-        self._console_input_reader.close()
 
     def run_in_executor(self, callback):
         """

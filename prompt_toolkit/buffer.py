@@ -5,29 +5,30 @@ It holds the text, cursor position, history, etc...
 from __future__ import unicode_literals
 
 from .auto_suggest import AutoSuggest
+from .cache import FastDictCache
 from .clipboard import ClipboardData
-from .completion import Completer, Completion, CompleteEvent
+from .completion import CompleteEvent, get_common_complete_suffix, Completer, Completion, DummyCompleter
 from .document import Document
-from .enums import IncrementalSearchDirection
+from .enums import SearchDirection
+from .eventloop import EventLoop, get_event_loop
 from .filters import to_simple_filter
 from .history import History, InMemoryHistory
 from .search_state import SearchState
 from .selection import SelectionType, SelectionState, PasteMode
 from .utils import Event
-from .cache import FastDictCache
-from .validation import ValidationError
+from .validation import ValidationError, Validator
 
 from six.moves import range
 
 import os
 import re
+import shlex
 import six
 import subprocess
 import tempfile
 
 __all__ = (
     'EditReadOnlyBuffer',
-    'AcceptAction',
     'Buffer',
     'indent',
     'unindent',
@@ -37,67 +38,6 @@ __all__ = (
 
 class EditReadOnlyBuffer(Exception):
     " Attempt editing of read-only :class:`.Buffer`. "
-
-
-class AcceptAction(object):
-    """
-    What to do when the input is accepted by the user.
-    (When Enter was pressed in the command line.)
-
-    :param handler: (optional) A callable which takes a
-        :class:`~prompt_toolkit.interface.CommandLineInterface` and
-        :class:`~prompt_toolkit.document.Document`. It is called when the user
-        accepts input.
-    """
-    def __init__(self, handler=None):
-        assert handler is None or callable(handler)
-        self.handler = handler
-
-    @classmethod
-    def run_in_terminal(cls, handler, render_cli_done=False):
-        """
-        Create an :class:`.AcceptAction` that runs the given handler in the
-        terminal.
-
-        :param render_cli_done: When True, render the interface in the 'Done'
-                state first, then execute the function. If False, erase the
-                interface instead.
-        """
-        def _handler(cli, buffer):
-            cli.run_in_terminal(lambda: handler(cli, buffer), render_cli_done=render_cli_done)
-        return AcceptAction(handler=_handler)
-
-    @property
-    def is_returnable(self):
-        """
-        True when there is something handling accept.
-        """
-        return bool(self.handler)
-
-    def validate_and_handle(self, cli, buffer):
-        """
-        Validate buffer and handle the accept action.
-        """
-        if buffer.validate():
-            if self.handler:
-                self.handler(cli, buffer)
-
-            buffer.append_to_history()
-
-
-def _return_document_handler(cli, buffer):
-    # Set return value.
-    cli.set_return_value(buffer.document)
-
-    # Make sure that if we run this UI again, that we reset this buffer, next
-    # time.
-    def reset_this_buffer():
-        buffer.reset()
-    cli.pre_run_callables.append(reset_this_buffer)
-
-
-AcceptAction.RETURN_DOCUMENT = AcceptAction(_return_document_handler)
-AcceptAction.IGNORE = AcceptAction(handler=None)
 
 
 class ValidationState(object):
@@ -188,23 +128,26 @@ class Buffer(object):
     current input line and implements all text manupulations on top of it. It
     also implements the history, undo stack and the completion state.
 
+    :param eventloop: :class:`~prompt_toolkit.eventloop.base.EventLoop` instance.
     :param completer: :class:`~prompt_toolkit.completion.Completer` instance.
     :param history: :class:`~prompt_toolkit.history.History` instance.
-    :param tempfile_suffix: Suffix to be appended to the tempfile for the 'open
-                           in editor' function.
+    :param get_tempfile_suffix: Callable that returns the tempfile suffix to be
+        used for the 'open in editor' function.
+    :param tempfile_suffix: The tempfile suffix.
+    :param name: Name for this buffer. E.g. DEFAULT_BUFFER. This is mostly
+        useful for key bindings where we sometimes prefer to refer to a buffer
+        by their name instead of by reference.
 
     Events:
 
     :param on_text_changed: When the buffer text changes. (Callable on None.)
     :param on_text_insert: When new text is inserted. (Callable on None.)
     :param on_cursor_position_changed: When the cursor moves. (Callable on None.)
+    :param on_completions_changed: When the completions were changed. (Callable on None.)
+    :param on_suggestion_set: When an auto-suggestion text has been set. (Callable on None.)
 
     Filters:
 
-    :param is_multiline: :class:`~prompt_toolkit.filters.SimpleFilter` to
-        indicate whether we should consider this buffer a multiline input. If
-        so, key bindings can decide to insert newlines when pressing [Enter].
-        (Instead of accepting the input.)
     :param complete_while_typing: :class:`~prompt_toolkit.filters.SimpleFilter`
         instance. Decide whether or not to do asynchronous autocompleting while
         typing.
@@ -215,39 +158,53 @@ class Buffer(object):
         browse through the completions, rather than through the history.
     :param read_only: :class:`~prompt_toolkit.filters.SimpleFilter`. When True,
         changes will not be allowed.
+    :param multiline: When set, pressing `Enter` will call the `accept_handler`.
+        Otherwise, pressing `Esc-Enter` is required.
     """
-    def __init__(self, completer=None, auto_suggest=None, history=None,
-                 validator=None, tempfile_suffix='',
-                 is_multiline=False, complete_while_typing=False,
-                 enable_history_search=False, initial_document=None,
-                 accept_action=AcceptAction.IGNORE, read_only=False,
-                 on_text_changed=None, on_text_insert=None, on_cursor_position_changed=None):
+    def __init__(self, loop=None, completer=None, auto_suggest=None, history=None,
+                 validator=None, get_tempfile_suffix=None, tempfile_suffix='', name='',
+                 complete_while_typing=False,
+                 enable_history_search=False, document=None,
+                 accept_handler=None, read_only=False, multiline=True,
+                 on_text_changed=None, on_text_insert=None, on_cursor_position_changed=None,
+                 on_completions_changed=None, on_suggestion_set=None):
 
         # Accept both filters and booleans as input.
         enable_history_search = to_simple_filter(enable_history_search)
-        is_multiline = to_simple_filter(is_multiline)
         complete_while_typing = to_simple_filter(complete_while_typing)
         read_only = to_simple_filter(read_only)
+        multiline = to_simple_filter(multiline)
 
         # Validate input.
+        assert loop is None or isinstance(loop, EventLoop)
         assert completer is None or isinstance(completer, Completer)
         assert auto_suggest is None or isinstance(auto_suggest, AutoSuggest)
         assert history is None or isinstance(history, History)
+        assert validator is None or isinstance(validator, Validator)
+        assert get_tempfile_suffix is None or callable(get_tempfile_suffix)
+        assert isinstance(tempfile_suffix, six.text_type)
+        assert isinstance(name, six.text_type)
+        assert not (get_tempfile_suffix and tempfile_suffix)
         assert on_text_changed is None or callable(on_text_changed)
         assert on_text_insert is None or callable(on_text_insert)
         assert on_cursor_position_changed is None or callable(on_cursor_position_changed)
+        assert on_completions_changed is None or callable(on_completions_changed)
+        assert on_suggestion_set is None or callable(on_suggestion_set)
+        assert document is None or isinstance(document, Document)
 
-        self.completer = completer
+        self.loop = loop or get_event_loop()
+        self.completer = completer or DummyCompleter()
         self.auto_suggest = auto_suggest
         self.validator = validator
-        self.tempfile_suffix = tempfile_suffix
-        self.accept_action = accept_action
+        self.get_tempfile_suffix = get_tempfile_suffix or (lambda: tempfile_suffix)
+        self.name = name
+        self.accept_handler = accept_handler
 
         # Filters. (Usually, used by the key bindings to drive the buffer.)
-        self.is_multiline = is_multiline
         self.complete_while_typing = complete_while_typing
         self.enable_history_search = enable_history_search
         self.read_only = read_only
+        self.multiline = multiline
 
         # Text width. (For wrapping, used by the Vi 'gq' operator.)
         self.text_width = 0
@@ -263,24 +220,30 @@ class Buffer(object):
         self.on_text_changed = Event(self, on_text_changed)
         self.on_text_insert = Event(self, on_text_insert)
         self.on_cursor_position_changed = Event(self, on_cursor_position_changed)
+        self.on_completions_changed = Event(self, on_completions_changed)
+        self.on_suggestion_set = Event(self, on_suggestion_set)
 
         # Document cache. (Avoid creating new Document instances.)
         self._document_cache = FastDictCache(Document, size=10)
 
-        self.reset(initial_document=initial_document)
+        # Create asynchronous completer / auto suggestion.
+        self._async_suggester = self._create_auto_suggest_function()
+        self._async_completer = self._create_async_completer()
 
-    def reset(self, initial_document=None, append_to_history=False):
+        self.reset(document=document)
+
+    def reset(self, document=None, append_to_history=False):
         """
         :param append_to_history: Append current input to history first.
         """
-        assert initial_document is None or isinstance(initial_document, Document)
+        assert document is None or isinstance(document, Document)
 
         if append_to_history:
             self.append_to_history()
 
-        initial_document = initial_document or Document()
+        document = document or Document()
 
-        self.__cursor_position = initial_document.cursor_position
+        self.__cursor_position = document.cursor_position
 
         # `ValidationError` instance. (Will be set when the input is wrong.)
         self.validation_error = None
@@ -324,7 +287,7 @@ class Buffer(object):
         #: Enter should process the current command and append to the real
         #: history.
         self._working_lines = self.history.strings[:]
-        self._working_lines.append(initial_document.text)
+        self._working_lines.append(document.text)
         self.__working_index = len(self._working_lines) - 1
 
     # <getters/setters>
@@ -486,6 +449,13 @@ class Buffer(object):
 
         if cursor_position_changed:
             self._cursor_position_changed()
+
+    @property
+    def is_returnable(self):
+        """
+        True when there is something handling accept.
+        """
+        return bool(self.accept_handler)
 
     # End of <getters/setters>
 
@@ -780,6 +750,9 @@ class Buffer(object):
         else:
             self.complete_state = None
 
+        # Trigger event. This should eventually invalidate the layout.
+        self.on_completions_changed.fire()
+
     def start_history_lines_completion(self):
         """
         Start a completion based on all the other lines in the document and the
@@ -1060,8 +1033,16 @@ class Buffer(object):
             self.cursor_position += len(data)
 
         # Fire 'on_text_insert' event.
-        if fire_event:
+        if fire_event:  # XXX: rename to `start_complete`.
             self.on_text_insert.fire()
+
+            # Only complete when "complete_while_typing" is enabled.
+            if self.completer and self.complete_while_typing():
+                self._async_completer()
+
+            # Call auto_suggest.
+            if self.auto_suggest:
+                self._async_suggester()
 
     def undo(self):
         # Pop from the undo-stack until we find a text that if different from
@@ -1145,7 +1126,7 @@ class Buffer(object):
             Do search one time.
             Return (working_index, document) or `None`
             """
-            if direction == IncrementalSearchDirection.FORWARD:
+            if direction == SearchDirection.FORWARD:
                 # Try find at the current input.
                 new_index = document.find(
                    text, include_current_position=include_current_position,
@@ -1252,26 +1233,26 @@ class Buffer(object):
     def exit_selection(self):
         self.selection_state = None
 
-    def open_in_editor(self, cli):
+    def open_in_editor(self, app):
         """
         Open code in editor.
 
-        :param cli: :class:`~prompt_toolkit.interface.CommandLineInterface`
+        :param app: :class:`~prompt_toolkit.application.Application`
             instance.
         """
         if self.read_only():
             raise EditReadOnlyBuffer()
 
         # Write to temporary file
-        descriptor, filename = tempfile.mkstemp(self.tempfile_suffix)
+        descriptor, filename = tempfile.mkstemp(self.get_tempfile_suffix())
         os.write(descriptor, self.text.encode('utf-8'))
         os.close(descriptor)
 
         # Open in editor
-        # (We need to use `cli.run_in_terminal`, because not all editors go to
+        # (We need to use `app.run_in_terminal`, because not all editors go to
         # the alternate screen buffer, and some could influence the cursor
         # position.)
-        succes = cli.run_in_terminal(lambda: self._open_file_in_editor(filename))
+        succes = app.run_in_terminal(lambda: self._open_file_in_editor(filename))
 
         # Read content again.
         if succes:
@@ -1316,7 +1297,7 @@ class Buffer(object):
         for e in editors:
             if e:
                 try:
-                    returncode = subprocess.call([e, filename])
+                    returncode = subprocess.call([shlex.split(e), filename])
                     return returncode == 0
 
                 except OSError:
@@ -1324,6 +1305,172 @@ class Buffer(object):
                     pass
 
         return False
+
+    def start_completion(self, select_first=False, select_last=False,
+                         insert_common_part=False, complete_event=None):
+        """
+        Start asynchronous autocompletion of this buffer.
+        (This will do nothing if a previous completion was still in progress.)
+        """
+        self._async_completer(
+            select_first=select_first,
+            select_last=select_last,
+            insert_common_part=insert_common_part,
+            complete_event=CompleteEvent(completion_requested=True))
+
+    def _create_async_completer(self):
+        """
+        Create function for asynchronous autocompletion.
+        (Autocomplete in other thread.)
+        """
+        complete_thread_running = [False]  # By ref.
+
+        def completion_does_nothing(document, completion):
+            """
+            Return `True` if applying this completion doesn't have any effect.
+            (When it doesn't insert any new text.
+            """
+            text_before_cursor = document.text_before_cursor
+            replaced_text = text_before_cursor[
+                len(text_before_cursor) + completion.start_position:]
+            return replaced_text == completion.text
+
+        def async_completer(select_first=False, select_last=False,
+                            insert_common_part=False, complete_event=None):
+            document = self.document
+            complete_event = complete_event or CompleteEvent(text_inserted=True)
+
+            # Don't start two threads at the same time.
+            if complete_thread_running[0]:
+                return
+
+            # Don't complete when we already have completions.
+            if self.complete_state or not self.completer:
+                return
+
+            # Otherwise, get completions in other thread.
+            complete_thread_running[0] = True
+
+            def run():
+                completions = list(self.completer.get_completions(document, complete_event))
+
+                def callback():
+                    """
+                    Set the new complete_state in a safe way. Don't replace an
+                    existing complete_state if we had one. (The user could have
+                    pressed 'Tab' in the meantime. Also don't set it if the text
+                    was changed in the meantime.
+                    """
+                    complete_thread_running[0] = False
+
+                    # When there is only one completion, which has nothing to add, ignore it.
+                    if (len(completions) == 1 and
+                            completion_does_nothing(document, completions[0])):
+                        del completions[:]
+
+                    # Set completions if the text was not yet changed.
+                    if self.text == document.text and \
+                            self.cursor_position == document.cursor_position and \
+                            not self.complete_state:
+
+                        set_completions = True
+                        select_first_anyway = False
+
+                        # When the common part has to be inserted, and there
+                        # is a common part.
+                        if insert_common_part:
+                            common_part = get_common_complete_suffix(document, completions)
+                            if common_part:
+                                # Insert the common part, update completions.
+                                self.insert_text(common_part)
+                                if len(completions) > 1:
+                                    # (Don't call `async_completer` again, but
+                                    # recalculate completions. See:
+                                    # https://github.com/ipython/ipython/issues/9658)
+                                    completions[:] = [
+                                        c.new_completion_from_position(len(common_part))
+                                        for c in completions]
+                                else:
+                                    set_completions = False
+                            else:
+                                # When we were asked to insert the "common"
+                                # prefix, but there was no common suffix but
+                                # still exactly one match, then select the
+                                # first. (It could be that we have a completion
+                                # which does * expansion, like '*.py', with
+                                # exactly one match.)
+                                if len(completions) == 1:
+                                    select_first_anyway = True
+
+                        if set_completions:
+                            self.set_completions(
+                                completions=completions,
+                                go_to_first=select_first or select_first_anyway,
+                                go_to_last=select_last)
+                    elif not self.complete_state:
+                        # Otherwise, restart thread.
+                        async_completer()
+
+                if self.loop:
+                    self.loop.call_from_executor(callback)
+
+            if self.loop:
+                self.loop.run_in_executor(run)
+        return async_completer
+
+    def _create_auto_suggest_function(self):
+        """
+        Create function for asynchronous auto suggestion.
+        (AutoSuggest in other thread.)
+        """
+        suggest_thread_running = [False]  # By ref.
+
+        def async_suggestor():
+            document = self.document
+
+            # Don't start two threads at the same time.
+            if suggest_thread_running[0]:
+                return
+
+            # Don't suggest when we already have a suggestion.
+            if self.suggestion or not self.auto_suggest:
+                return
+
+            # Otherwise, get completions in other thread.
+            suggest_thread_running[0] = True
+
+            def run():
+                suggestion = self.auto_suggest.get_suggestion(self, self, document)
+
+                def callback():
+                    suggest_thread_running[0] = False
+
+                    # Set suggestion only if the text was not yet changed.
+                    if self.text == document.text and \
+                            self.cursor_position == document.cursor_position:
+
+                        # Set suggestion and redraw interface.
+                        self.suggestion = suggestion
+                        self.on_suggestion_set.fire()
+                    else:
+                        # Otherwise, restart thread.
+                        async_suggestor()
+
+                if self.loop:
+                    self.loop.call_from_executor(callback)
+
+            if self.loop:
+                self.loop.run_in_executor(run)
+        return async_suggestor
+
+    def validate_and_handle(self, app):
+        """
+        Validate buffer and handle the accept action.
+        """
+        if self.validate():
+            if self.accept_handler:
+                self.accept_handler(app, self)
+            self.append_to_history()
 
 
 def indent(buffer, from_row, to_row, count=1):

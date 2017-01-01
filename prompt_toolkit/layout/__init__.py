@@ -25,7 +25,6 @@ Control classes::
 
     - UIControl (Abstract base class)
        |- TokenListControl (Renders a simple list of tokens)
-       |- FillControl (Fills control with one token/character.)
        `- BufferControl (Renders an input buffer.)
 
 
@@ -47,5 +46,6 @@ And one prepared menu:
 """
 from __future__ import unicode_literals
 
-from .containers import Float, FloatContainer, HSplit, VSplit, Window, ConditionalContainer
-from .controls import TokenListControl, FillControl, BufferControl
+from .layout import *
+from .containers import *
+from .controls import *

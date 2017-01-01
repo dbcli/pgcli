@@ -1,11 +1,14 @@
 """
-The Token class, interchangeable with ``pygments.token``.
+The Token class.
 
 A `Token` has some semantics for a piece of text that is given a style through
 a :class:`~prompt_toolkit.styles.Style` class. A pygments lexer for instance,
 returns a list of (Token, text) tuples. Each fragment of text has a token
 assigned, which when combined with a style sheet, will determine the fine
 style.
+
+This used to be interchangeable with ``pygments.token``, but our `Token` class
+got some additional functionality.
 """
 
 # If we don't need any lexers or style classes from Pygments, we don't want
@@ -17,6 +20,7 @@ __all__ = (
     'ZeroWidthEscape',
 )
 
+_token_or_cache = {}
 
 class _TokenType(tuple):
     def __getattr__(self, val):
@@ -30,13 +34,23 @@ class _TokenType(tuple):
     def __repr__(self):
         return 'Token' + (self and '.' or '') + '.'.join(self)
 
+    def __or__(self, other):
+        """
+        Concatenate two token types. (Compare it with an HTML element that has
+        two classnames.) The styling of those two tokens will be combined.
+        """
+        # NOTE: Don't put an assertion on _TokenType here. We want to be
+        #       compatible with Pygments tokens as well.
 
-# Prefer the Token class from Pygments. If Pygments is not installed, use our
-# minimalistic Token class.
-try:
-    from pygments.token import Token
-except ImportError:
-    Token = _TokenType()
+        try:
+            return _token_or_cache[self, other]
+        except KeyError:
+            result = _TokenType(tuple(self) + (':', ) + tuple(other))
+            _token_or_cache[self, other] = result
+            return result
+
+
+Token = _TokenType()
 
 
 # Built-in tokens:

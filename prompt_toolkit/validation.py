@@ -12,6 +12,8 @@ __all__ = (
     'ConditionalValidator',
     'ValidationError',
     'Validator',
+    'DummyValidator',
+    'DynamicValidator',
 )
 
 
@@ -47,6 +49,14 @@ class Validator(with_metaclass(ABCMeta, object)):
         pass
 
 
+class DummyValidator(Validator):
+    """
+    Validator class that accepts any input.
+    """
+    def validate(self, document):
+        pass  # Don't raise any exception.
+
+
 class ConditionalValidator(Validator):
     """
     Validator that can be switched on/off according to
@@ -62,3 +72,19 @@ class ConditionalValidator(Validator):
         # Call the validator only if the filter is active.
         if self.filter():
             self.validator.validate(document)
+
+
+class DynamicValidator(Validator):
+    """
+    Validator class that can dynamically returns any Validator.
+
+    :param get_validator: Callable that returns a :class:`.Validator` instance.
+    """
+    def __init__(self, get_validator):
+        assert callable(get_validator)
+        self.get_validator = get_validator
+
+    def validate(self, document):
+        validator = self.get_validator() or DummyValidator()
+        assert isinstance(validator, Validator)
+        return validator.validate(document)

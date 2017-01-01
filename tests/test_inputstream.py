@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from prompt_toolkit.terminal.vt100_input import InputStream
+from prompt_toolkit.input.vt100 import Vt100Parser
 from prompt_toolkit.keys import Keys
 
 import pytest
@@ -22,7 +22,7 @@ def processor():
 
 @pytest.fixture
 def stream(processor):
-    return InputStream(processor.feed_key)
+    return Vt100Parser(processor.feed_key)
 
 
 def test_control_keys(processor, stream):

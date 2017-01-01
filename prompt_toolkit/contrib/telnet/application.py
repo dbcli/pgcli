@@ -20,9 +20,9 @@ class TelnetApplication(with_metaclass(ABCMeta, object)):
         """
         Called when a new client was connected.
 
-        Probably you want to call `telnet_connection.set_cli` here to set a
-        the CommandLineInterface instance to be used.
-        Hint: Use the following shortcut: `prompt_toolkit.shortcuts.create_cli`
+        Probably you want to call `telnet_connection.set_cli` here to set a the
+        Application instance to be used.  Hint: Use the following shortcut:
+        `prompt_toolkit.shortcuts.create_cli`
         """
 
     @abstractmethod

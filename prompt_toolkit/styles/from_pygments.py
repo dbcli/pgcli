@@ -7,26 +7,14 @@ Usage::
     style = style_from_pygments(pygments_style_cls=TangoStyle)
 """
 from __future__ import unicode_literals
-
-from .base import Style
 from .from_dict import style_from_dict
 
 __all__ = (
-    'PygmentsStyle',
     'style_from_pygments',
 )
 
 
-# Following imports are only needed when a ``PygmentsStyle`` class is used.
-try:
-    from pygments.style import Style as pygments_Style
-    from pygments.styles.default import DefaultStyle as pygments_DefaultStyle
-except ImportError:
-    pygments_Style = None
-    pygments_DefaultStyle = None
-
-
-def style_from_pygments(style_cls=pygments_DefaultStyle,
+def style_from_pygments(style_cls=None,
                         style_dict=None,
                         include_defaults=True):
     """
@@ -43,6 +31,13 @@ def style_from_pygments(style_cls=pygments_DefaultStyle,
     :param style_dict: Dictionary for this style. `{Token: style}`.
     :param include_defaults: (`bool`) Include prompt_toolkit extensions.
     """
+    # Import inline.
+    from pygments.style import Style as pygments_Style
+    from pygments.styles.default import DefaultStyle as pygments_DefaultStyle
+
+    if style_cls is None:
+        style_cls = pygments_DefaultStyle
+
     assert style_dict is None or isinstance(style_dict, dict)
     assert style_cls is None or issubclass(style_cls, pygments_Style)
 
@@ -55,23 +50,3 @@ def style_from_pygments(style_cls=pygments_DefaultStyle,
         styles_dict.update(style_dict)
 
     return style_from_dict(styles_dict, include_defaults=include_defaults)
-
-
-class PygmentsStyle(Style):
-    " Deprecated. "
-    def __new__(cls, pygments_style_cls):
-        assert issubclass(pygments_style_cls, pygments_Style)
-        return style_from_dict(pygments_style_cls.styles)
-
-    def invalidation_hash(self):
-        pass
-
-    @classmethod
-    def from_defaults(cls, style_dict=None,
-                      pygments_style_cls=pygments_DefaultStyle,
-                      include_extensions=True):
-        " Deprecated. "
-        return style_from_pygments(
-            style_cls=pygments_style_cls,
-            style_dict=style_dict,
-            include_defaults=include_extensions)

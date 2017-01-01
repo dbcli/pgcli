@@ -10,11 +10,11 @@ def test_style_from_dict():
         Token.B: 'bg:#00ff00 blink reverse',
     })
 
-    expected = Attrs(color='ff0000', bgcolor=None, bold=True,
+    expected = Attrs(color='ff0000', bgcolor='', bold=True,
                      underline=True, italic=True, blink=False, reverse=False)
     assert style.get_attrs_for_token(Token.A) == expected
 
-    expected = Attrs(color=None, bgcolor='00ff00', bold=False,
+    expected = Attrs(color='', bgcolor='00ff00', bold=False,
                      underline=False, italic=False, blink=True, reverse=True)
     assert style.get_attrs_for_token(Token.B) == expected
 
@@ -27,14 +27,14 @@ def test_style_inheritance():
         Token.A.B.C.D.E: 'noinherit blink'
     })
 
-    expected = Attrs(color='ff0000', bgcolor=None, bold=True,
+    expected = Attrs(color='ff0000', bgcolor='', bold=True,
                      underline=False, italic=False, blink=False, reverse=False)
     assert style.get_attrs_for_token(Token.A.B.C) == expected
 
-    expected = Attrs(color='ansired', bgcolor=None, bold=True,
+    expected = Attrs(color='ansired', bgcolor='', bold=True,
                      underline=False, italic=False, blink=False, reverse=False)
     assert style.get_attrs_for_token(Token.A.B.C.D) == expected
 
-    expected = Attrs(color=None, bgcolor=None, bold=False,
+    expected = Attrs(color='', bgcolor='', bold=False,
                      underline=False, italic=False, blink=True, reverse=False)
     assert style.get_attrs_for_token(Token.A.B.C.D.E) == expected

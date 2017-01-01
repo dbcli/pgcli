@@ -13,7 +13,7 @@ class MouseHandlers(object):
     Two dimentional raster of callbacks for mouse events.
     """
     def __init__(self):
-        def dummy_callback(cli, mouse_event):
+        def dummy_callback(app, mouse_event):
             """
             :param mouse_event: `MouseEvent` instance.
             """

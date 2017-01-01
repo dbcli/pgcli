@@ -5,7 +5,8 @@ patches are applied.
 """
 from __future__ import unicode_literals
 from gevent.monkey import patch_all
-from prompt_toolkit.shortcuts import prompt, create_eventloop
+from prompt_toolkit.shortcuts import Prompt
+from prompt_toolkit.eventloop.defaults import create_event_loop
 
 
 if __name__ == '__main__':
@@ -15,8 +16,9 @@ if __name__ == '__main__':
     # There were some issues in the past when the event loop had an input hook.
     def dummy_inputhook(*a):
         pass
-    eventloop = create_eventloop(inputhook=dummy_inputhook)
+    eventloop = create_event_loop(inputhook=dummy_inputhook)
 
     # Ask for input.
-    answer = prompt('Give me some input: ', eventloop=eventloop)
+    prompt = Prompt('Give me some input: ', loop=eventloop)
+    answer = prompt.prompt()
     print('You said: %s' % answer)

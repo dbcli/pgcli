@@ -7,6 +7,8 @@ from six import with_metaclass
 __all__ = (
     'Completion',
     'Completer',
+    'DummyCompleter',
+    'DynamicCompleter',
     'CompleteEvent',
     'get_common_complete_suffix',
 )
@@ -74,9 +76,9 @@ class Completion(object):
     def new_completion_from_position(self, position):
         """
         (Only for internal use!)
-        Get a new completion by splitting this one. Used by
-        `CommandLineInterface` when it needs to have a list of new completions
-        after inserting the common prefix.
+        Get a new completion by splitting this one. Used by `Application` when
+        it needs to have a list of new completions after inserting the common
+        prefix.
         """
         assert isinstance(position, int) and position - self.start_position >= 0
 
@@ -129,6 +131,32 @@ class Completer(with_metaclass(ABCMeta, object)):
         """
         while False:
             yield
+
+
+class DummyCompleter(Completer):
+    """
+    A completer that doesn't return any completion.
+    """
+    def get_completions(self, document, complete_event):
+        return []
+
+
+class DynamicCompleter(Completer):
+    """
+    Completer class that can dynamically returns any Completer.
+
+    :param get_completer: Callable that returns a :class:`.Completer` instance.
+    """
+    def __init__(self, get_completer):
+        assert callable(get_completer)
+        self.get_completer = get_completer
+
+    def get_completions(self, *a, **kw):
+        completer = self.get_completer()
+        if completer:
+            return completer.get_completions(*a, **kw)
+        else:
+            return []
 
 
 def get_common_complete_suffix(document, completions):

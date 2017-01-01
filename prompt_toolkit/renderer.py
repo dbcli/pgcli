@@ -4,7 +4,7 @@ Renders the command line on the console.
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit.filters import to_cli_filter
+from prompt_toolkit.filters import to_app_filter
 from prompt_toolkit.layout.mouse_handlers import MouseHandlers
 from prompt_toolkit.layout.screen import Point, Screen, WritePosition
 from prompt_toolkit.output import Output
@@ -20,7 +20,7 @@ __all__ = (
 )
 
 
-def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_token=None,
+def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, last_token=None,
                         is_done=False, attrs_for_token=None, size=None, previous_width=0):  # XXX: drop is_done
     """
     Render the diff between this screen and the previous screen.
@@ -157,7 +157,7 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
                     write_raw(zero_width_escapes_row[c])
 
                 output_char(new_char)
-                current_pos = current_pos._replace(x=current_pos.x + char_width)
+                current_pos = Point(x=current_pos.x + char_width, y=current_pos.y)
 
             c += char_width
 
@@ -185,7 +185,8 @@ def _output_screen_diff(output, screen, current_pos, previous_screen=None, last_
         current_pos = move_cursor(Point(y=current_height, x=0))
         output.erase_down()
     else:
-        current_pos = move_cursor(screen.cursor_position)
+        current_pos = move_cursor(
+            screen.get_cursor_position(app.layout.current_window))
 
     if is_done:
         output.enable_autowrap()
@@ -232,7 +233,7 @@ class Renderer(object):
 
         output = Vt100_Output.from_pty(sys.stdout)
         r = Renderer(style, output)
-        r.render(cli, layout=...)
+        r.render(app, layout=...)
     """
     def __init__(self, style, output, use_alternate_screen=False, mouse_support=False):
         assert isinstance(style, Style)
@@ -241,7 +242,7 @@ class Renderer(object):
         self.style = style
         self.output = output
         self.use_alternate_screen = use_alternate_screen
-        self.mouse_support = to_cli_filter(mouse_support)
+        self.mouse_support = to_app_filter(mouse_support)
 
         self._in_alternate_screen = False
         self._mouse_support_enabled = False
@@ -250,6 +251,10 @@ class Renderer(object):
         # Waiting for CPR flag. True when we send the request, but didn't got a
         # response.
         self.waiting_for_cpr = False
+
+        # Cache for the style.
+        self._attrs_for_token = None
+        self._last_style_hash = None
 
         self.reset(_scroll=True)
 
@@ -264,11 +269,6 @@ class Renderer(object):
         self._last_screen = None
         self._last_size = None
         self._last_token = None
-
-        # When the style hash changes, we have to do a full redraw as well as
-        # clear the `_attrs_for_token` dictionary.
-        self._last_style_hash = None
-        self._attrs_for_token = None
 
         # Default MouseHandlers. (Just empty.)
         self.mouse_handlers = MouseHandlers()
@@ -302,6 +302,14 @@ class Renderer(object):
 
         # Flush output. `disable_mouse_support` needs to write to stdout.
         self.output.flush()
+
+    @property
+    def last_rendered_screen(self):
+        """
+        The `Screen` class that was generated during the last rendering.
+        This can be `None`.
+        """
+        return self._last_screen
 
     @property
     def height_is_known(self):
@@ -364,7 +372,7 @@ class Renderer(object):
 
         self.waiting_for_cpr = False
 
-    def render(self, cli, layout, is_done=False):
+    def render(self, app, layout, is_done=False):
         """
         Render the current interface to the output.
 
@@ -372,6 +380,7 @@ class Renderer(object):
                 won't print any changes to this part.
         """
         output = self.output
+        output.start_rendering()
 
         # Enter alternate screen.
         if self.use_alternate_screen and not self._in_alternate_screen:
@@ -384,7 +393,7 @@ class Renderer(object):
             self._bracketed_paste_enabled = True
 
         # Enable/disable mouse support.
-        needs_mouse_support = self.mouse_support(cli)
+        needs_mouse_support = self.mouse_support(app)
 
         if needs_mouse_support and not self._mouse_support_enabled:
             output.enable_mouse_support()
@@ -421,21 +430,21 @@ class Renderer(object):
             self._attrs_for_token = _TokenToAttrsCache(self.style.get_attrs_for_token)
         self._last_style_hash = self.style.invalidation_hash()
 
-        layout.write_to_screen(cli, screen, mouse_handlers, WritePosition(
+        layout.container.write_to_screen(app, screen, mouse_handlers, WritePosition(
             xpos=0,
             ypos=0,
             width=size.columns,
             height=(size.rows if self.use_alternate_screen else height),
             extended_height=size.rows,
-        ))
+        ), Token)
 
         # When grayed. Replace all tokens in the new screen.
-        if cli.is_aborting or cli.is_exiting:
+        if app.is_aborting or app.is_exiting:
             screen.replace_all_tokens(Token.Aborted)
 
         # Process diff and write to output.
         self._cursor_pos, self._last_token = _output_screen_diff(
-            output, screen, self._cursor_pos,
+            app, output, screen, self._cursor_pos,
             self._last_screen, self._last_token, is_done,
             attrs_for_token=self._attrs_for_token,
             size=size,
@@ -445,7 +454,7 @@ class Renderer(object):
         self.mouse_handlers = mouse_handlers
 
         # Write title if it changed.
-        new_title = cli.terminal_title
+        new_title = app.terminal_title
 
         if new_title != self._last_title:
             if new_title is None:
@@ -455,6 +464,11 @@ class Renderer(object):
             self._last_title = new_title
 
         output.flush()
+
+        if is_done:
+            self.reset()
+
+        output.stop_rendering()
 
     def erase(self, leave_alternate_screen=True, erase_title=True):
         """

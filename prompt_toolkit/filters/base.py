@@ -207,18 +207,18 @@ class Never(Filter):
 
 class Condition(Filter):
     """
-    Turn any callable (which takes a cli and returns a boolean) into a Filter.
+    Turn any callable (which takes a app and returns a boolean) into a Filter.
 
     This can be used as a decorator::
 
         @Condition
-        def feature_is_active(cli):  # `feature_is_active` becomes a Filter.
+        def feature_is_active(app):  # `feature_is_active` becomes a Filter.
             return True
 
     :param func: Callable which takes either a
-        :class:`~prompt_toolkit.interface.CommandLineInterface` or nothing and
+        :class:`~prompt_toolkit.application.Application` or nothing and
         returns a boolean. (Depending on what it takes, this will become a
-        :class:`.Filter` or :class:`~prompt_toolkit.filters.CLIFilter`.)
+        :class:`.Filter` or :class:`~prompt_toolkit.filters.AppFilter`.)
     """
     def __init__(self, func):
         assert callable(func)

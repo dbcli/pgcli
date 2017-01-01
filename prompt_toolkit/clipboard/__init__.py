@@ -1,5 +1,5 @@
-from .base import Clipboard, ClipboardData
-from .in_memory import InMemoryClipboard
+from .base import *
+from .in_memory import *
 
 
 # We are not importing `PyperclipClipboard` here, because it would require the

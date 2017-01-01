@@ -9,9 +9,9 @@ Example usage::
             telnet_connection.set_application(
                 telnet_connection.create_prompt_application(...))
 
-        def handle_command(self, telnet_connection, document):
+        def handle_command(self, telnet_connection, text):
             # When the client enters a command, just reply.
-            telnet_connection.send('You said: %r\n\n' % document.text)
+            telnet_connection.send('You said: %r\n\n' % text)
 
         ...
 
@@ -30,13 +30,12 @@ import fcntl
 from six import int2byte, text_type, binary_type
 from codecs import getincrementaldecoder
 
-from prompt_toolkit.enums import DEFAULT_BUFFER
+from prompt_toolkit.application import Application
 from prompt_toolkit.eventloop.base import EventLoop
-from prompt_toolkit.interface import CommandLineInterface, Application
+from prompt_toolkit.input.vt100 import InputStream
 from prompt_toolkit.layout.screen import Size
-from prompt_toolkit.shortcuts import create_prompt_application
-from prompt_toolkit.terminal.vt100_input import InputStream
-from prompt_toolkit.terminal.vt100_output import Vt100_Output
+from prompt_toolkit.output.vt100 import Vt100_Output
+from prompt_toolkit.shortcuts import Prompt
 
 from .log import logger
 from .protocol import IAC, DO, LINEMODE, SB, MODE, SE, WILL, ECHO, NAWS, SUPPRESS_GO_AHEAD
@@ -121,40 +120,41 @@ class TelnetConnection(object):
         def get_size():
             return self.size
         self.stdout = _ConnectionStdout(conn, encoding=encoding)
-        self.vt100_output = Vt100_Output(self.stdout, get_size, write_binary=False)
+        self.vt100_output = Vt100_Output(
+            self.stdout, get_size, write_binary=False)
 
-        # Create an eventloop (adaptor) for the CommandLineInterface.
+        # Create an eventloop (adaptor) for the Application
         self.eventloop = _TelnetEventLoopInterface(server)
 
-        # Set default CommandLineInterface.
-        self.set_application(create_prompt_application())
+        # Set default application.
+        self.set_application(Prompt(loop=self.eventloop).app)
 
         # Call client_connected
         application.client_connected(self)
 
         # Draw for the first time.
         self.handling_command = False
-        self.cli._redraw()
+        self.app._redraw()
 
     def set_application(self, app, callback=None):
         """
-        Set ``CommandLineInterface`` instance for this connection.
+        Set ``Application`` instance for this connection.
         (This can be replaced any time.)
 
-        :param cli: CommandLineInterface instance.
+        :param app: Application instance.
         :param callback: Callable that takes the result of the CLI.
         """
         assert isinstance(app, Application)
         assert callback is None or callable(callback)
 
-        self.cli = CommandLineInterface(
-            application=app,
-            eventloop=self.eventloop,
-            output=self.vt100_output)
+        app.loop = self.eventloop
+        app.output = self.vt100_output
+
+        self.app = app
         self.callback = callback
 
         # Create a parser, and parser callbacks.
-        cb = self.cli.create_eventloop_callbacks()
+        cb = self.app.create_eventloop_callbacks()
         inputstream = InputStream(cb.feed_key)
 
         # Input decoder for stdin. (Required when working with multibyte
@@ -164,7 +164,7 @@ class TelnetConnection(object):
 
         # Tell the CLI that it's running. We don't start it through the run()
         # call, but will still want _redraw() to work.
-        self.cli._is_running = True
+        self.app._is_running = True
 
         def data_received(data):
             """ TelnetProtocolParser 'data_received' callback """
@@ -193,12 +193,12 @@ class TelnetConnection(object):
         self.parser.feed(data)
 
         # Render again.
-        self.cli._redraw()
+        self.app._redraw()
 
         # When a return value has been set (enter was pressed), handle command.
-        if self.cli.is_returning:
+        if self.app.is_returning:
             try:
-                return_value = self.cli.return_value()
+                return_value = self.app.return_value()
             except (EOFError, KeyboardInterrupt) as e:
                 # Control-D or Control-C was pressed.
                 logger.info('%s, closing connection.', type(e).__name__)
@@ -208,18 +208,18 @@ class TelnetConnection(object):
             # Handle CLI command
             self._handle_command(return_value)
 
-    def _handle_command(self, command):
+    def _handle_command(self, text):
         """
         Handle command. This will run in a separate thread, in order not
         to block the event loop.
         """
-        logger.info('Handle command %r', command)
+        logger.info('Handle command %r', text)
 
         def in_executor():
             self.handling_command = True
             try:
                 if self.callback is not None:
-                    self.callback(self, command)
+                    self.callback(self, text)
             finally:
                 self.server.call_from_executor(done)
 
@@ -229,11 +229,11 @@ class TelnetConnection(object):
             # Reset state and draw again. (If the connection is still open --
             # the application could have called TelnetConnection.close()
             if not self.closed:
-                self.cli.reset()
-                self.cli.buffers[DEFAULT_BUFFER].reset()
-                self.cli.renderer.request_absolute_cursor_position()
+                self.app.reset()
+#                self.app.buffers[DEFAULT_BUFFER].reset()
+                self.app.renderer.request_absolute_cursor_position()
                 self.vt100_output.flush()
-                self.cli._redraw()
+                self.app._redraw()
 
         self.server.run_in_executor(in_executor)
 
@@ -269,7 +269,7 @@ class TelnetConnection(object):
 
 class _TelnetEventLoopInterface(EventLoop):
     """
-    Eventloop object to be assigned to `CommandLineInterface`.
+    Eventloop object to be assigned to `Application`.
     """
     def __init__(self, server):
         self._server = server

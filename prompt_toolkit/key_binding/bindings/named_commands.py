@@ -4,7 +4,7 @@ Key bindings which are also known by GNU readline by the given names.
 See: http://www.delorie.com/gnu/docs/readline/rlman_13.html
 """
 from __future__ import unicode_literals
-from prompt_toolkit.enums import IncrementalSearchDirection, SEARCH_BUFFER
+from prompt_toolkit.enums import SearchDirection
 from prompt_toolkit.selection import PasteMode
 from six.moves import range
 import six
@@ -12,7 +12,7 @@ import six
 from .completion import generate_completions, display_completions_like_readline
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import EditingMode
-from prompt_toolkit.key_binding.input_processor import KeyPress
+from prompt_toolkit.key_binding.key_processor import KeyPress
 from prompt_toolkit.keys import Keys
 
 __all__ = (
@@ -109,7 +109,7 @@ def clear_screen(event):
     """
     Clear the screen and redraw everything at the top of the screen.
     """
-    event.cli.renderer.clear()
+    event.app.renderer.clear()
 
 
 @register('redraw-current-line')
@@ -128,8 +128,7 @@ def redraw_current_line(event):
 @register('accept-line')
 def accept_line(event):
     " Accept the line regardless of where the cursor is. "
-    b = event.current_buffer
-    b.accept_action.validate_and_handle(event.cli, b)
+    event.current_buffer.validate_and_handle(event.app)
 
 
 @register('previous-history')
@@ -166,8 +165,11 @@ def reverse_search_history(event):
     Search backward starting at the current line and moving `up` through
     the history as necessary. This is an incremental search.
     """
-    event.cli.current_search_state.direction = IncrementalSearchDirection.BACKWARD
-    event.cli.push_focus(SEARCH_BUFFER)
+    control = event.app.layout.current_control
+
+    if control.search_buffer_control:
+        event.app.current_search_state.direction = SearchDirection.BACKWARD
+        event.app.layout.current_control = control.search_buffer_control
 
 
 #
@@ -179,7 +181,7 @@ def end_of_file(event):
     """
     Exit.
     """
-    event.cli.exit()
+    event.app.exit()
 
 
 @register('delete-char')
@@ -187,7 +189,7 @@ def delete_char(event):
     " Delete character before the cursor. "
     deleted = event.current_buffer.delete(count=event.arg)
     if not deleted:
-        event.cli.output.bell()
+        event.app.output.bell()
 
 
 @register('backward-delete-char')
@@ -201,7 +203,7 @@ def backward_delete_char(event):
         deleted = event.current_buffer.delete_before_cursor(count=event.arg)
 
     if not deleted:
-        event.cli.output.bell()
+        event.app.output.bell()
 
 
 @register('self-insert')
@@ -274,7 +276,7 @@ def quoted_insert(event):
     Add the next character typed to the line verbatim. This is how to insert
     key sequences like C-q, for example.
     """
-    event.cli.quoted_insert = True
+    event.app.quoted_insert = True
 
 
 #
@@ -298,7 +300,7 @@ def kill_line(event):
             deleted = buff.delete(1)
         else:
             deleted = buff.delete(count=buff.document.get_end_of_line_position())
-    event.cli.clipboard.set_text(deleted)
+    event.app.clipboard.set_text(deleted)
 
 
 @register('kill-word')
@@ -312,7 +314,7 @@ def kill_word(event):
 
     if pos:
         deleted = buff.delete(count=pos)
-        event.cli.clipboard.set_text(deleted)
+        event.app.clipboard.set_text(deleted)
 
 
 @register('unix-word-rubout')
@@ -336,12 +338,12 @@ def unix_word_rubout(event, WORD=True):
         # If the previous key press was also Control-W, concatenate deleted
         # text.
         if event.is_repeat:
-            deleted += event.cli.clipboard.get_data().text
+            deleted += event.app.clipboard.get_data().text
 
-        event.cli.clipboard.set_text(deleted)
+        event.app.clipboard.set_text(deleted)
     else:
         # Nothing to delete. Bell.
-        event.cli.output.bell()
+        event.app.output.bell()
 
 
 @register('backward-kill-word')
@@ -378,7 +380,7 @@ def unix_line_discard(event):
         buff.delete_before_cursor(count=1)
     else:
         deleted = buff.delete_before_cursor(count=-buff.document.get_start_of_line_position())
-        event.cli.clipboard.set_text(deleted)
+        event.app.clipboard.set_text(deleted)
 
 
 @register('yank')
@@ -387,7 +389,7 @@ def yank(event):
     Paste before cursor.
     """
     event.current_buffer.paste_clipboard_data(
-        event.cli.clipboard.get_data(), count=event.arg, paste_mode=PasteMode.EMACS)
+        event.app.clipboard.get_data(), count=event.arg, paste_mode=PasteMode.EMACS)
 
 @register('yank-nth-arg')
 def yank_nth_arg(event):
@@ -416,7 +418,7 @@ def yank_pop(event):
     """
     buff = event.current_buffer
     doc_before_paste = buff.document_before_paste
-    clipboard = event.cli.clipboard
+    clipboard = event.app.clipboard
 
     if doc_before_paste is not None:
         buff.document = doc_before_paste
@@ -457,25 +459,25 @@ def start_kbd_macro(event):
     """
     Begin saving the characters typed into the current keyboard macro.
     """
-    event.cli.input_processor.start_macro()
+    event.app.key_processor.start_macro()
 
 
 @register('end-kbd-macro')
-def start_kbd_macro(event):
+def end_kbd_macro(event):
     """
     Stop saving the characters typed into the current keyboard macro and save
     the definition.
     """
-    event.cli.input_processor.end_macro()
+    event.app.key_processor.end_macro()
 
 
 @register('call-last-kbd-macro')
-def start_kbd_macro(event):
+def call_last_kbd_macro(event):
     """
     Re-execute the last keyboard macro defined, by making the characters in the
     macro appear as if typed at the keyboard.
     """
-    event.cli.input_processor.call_macro()
+    event.app.key_processor.call_macro()
 
 
 @register('print-last-kbd-macro')
@@ -483,9 +485,9 @@ def print_last_kbd_macro(event):
     " Print the last keboard macro. "
     # TODO: Make the format suitable for the inputrc file.
     def print_macro():
-        for k in event.cli.input_processor.macro:
+        for k in event.app.key_processor.macro:
             print(k)
-    event.cli.run_in_terminal(print_macro)
+    event.app.run_in_terminal(print_macro)
 
 #
 # Miscellaneous Commands.
@@ -519,19 +521,19 @@ def insert_comment(event):
         cursor_position=0)
 
     # Accept input.
-    buff.accept_action.validate_and_handle(event.cli, buff)
+    buff.validate_and_handle(event.app)
 
 
 @register('vi-editing-mode')
 def vi_editing_mode(event):
     " Switch to Vi editing mode. "
-    event.cli.editing_mode = EditingMode.VI
+    event.app.editing_mode = EditingMode.VI
 
 
 @register('emacs-editing-mode')
 def emacs_editing_mode(event):
     " Switch to Emacs editing mode. "
-    event.cli.editing_mode = EditingMode.EMACS
+    event.app.editing_mode = EditingMode.EMACS
 
 
 @register('prefix-meta')
@@ -541,9 +543,11 @@ def prefix_meta(event):
 
     Sometimes people also want to bind other keys to Meta, e.g. 'jj'::
 
-        registry.add_key_binding('j', 'j', filter=ViInsertMode())(prefix_meta)
+        key_bindings.add_key_binding('j', 'j', filter=ViInsertMode())(prefix_meta)
     """
-    event.cli.input_processor.feed(KeyPress(Keys.Escape))
+    # ('first' should be true, because we want to insert it at the current
+    # position in the queue.)
+    event.app.key_processor.feed(KeyPress(Keys.Escape), first=True)
 
 
 @register('operate-and-get-next')
@@ -557,14 +561,14 @@ def operate_and_get_next(event):
 
     # Accept the current input. (This will also redraw the interface in the
     # 'done' state.)
-    buff.accept_action.validate_and_handle(event.cli, buff)
+    buff.validate_and_handle(event.app)
 
     # Set the new index at the start of the next run.
     def set_working_index():
         if new_index < len(buff._working_lines):
             buff.working_index = new_index
 
-    event.cli.pre_run_callables.append(set_working_index)
+    event.app.pre_run_callables.append(set_working_index)
 
 
 @register('edit-and-execute-command')
@@ -574,5 +578,5 @@ def edit_and_execute(event):
     """
     buff = event.current_buffer
 
-    buff.open_in_editor(event.cli)
-    buff.accept_action.validate_and_handle(event.cli, buff)
+    buff.open_in_editor(event.app)
+    buff.validate_and_handle(event.app)

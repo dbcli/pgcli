@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 
-class IncrementalSearchDirection(object):
+class SearchDirection(object):
     FORWARD = 'FORWARD'
     BACKWARD = 'BACKWARD'
 
@@ -21,9 +21,5 @@ DEFAULT_BUFFER = 'DEFAULT_BUFFER'
 #: Name of the system buffer.
 SYSTEM_BUFFER = 'SYSTEM_BUFFER'
 
-# Dummy buffer. This is the buffer returned by
-# `CommandLineInterface.current_buffer` when the top of the `FocusStack` is
-# `None`. This could be the case when there is some widget has the focus and no
-# actual text editing is possible. This buffer should also never be displayed.
-# (It will never contain any actual text.)
-DUMMY_BUFFER = 'DUMMY_BUFFER'
+# For backward compatibility:
+IncrementalSearchDirection = SearchDirection

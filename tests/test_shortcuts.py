@@ -1,4 +1,4 @@
-from prompt_toolkit.shortcuts import _split_multiline_prompt
+from prompt_toolkit.shortcuts.prompt import _split_multiline_prompt
 from prompt_toolkit.token import Token
 
 

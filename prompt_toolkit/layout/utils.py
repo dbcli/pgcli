@@ -9,7 +9,6 @@ __all__ = (
     'token_list_to_text',
     'explode_tokens',
     'split_lines',
-    'find_window_for_buffer_name',
 )
 
 
@@ -161,21 +160,3 @@ def explode_tokens(tokenlist):
             result.append((token, c))
 
     return _ExplodedList(result)
-
-
-def find_window_for_buffer_name(cli, buffer_name):
-    """
-    Look for a :class:`~prompt_toolkit.layout.containers.Window` in the Layout
-    that contains the :class:`~prompt_toolkit.layout.controls.BufferControl`
-    for the given buffer and return it. If no such Window is found, return None.
-    """
-    from prompt_toolkit.interface import CommandLineInterface
-    assert isinstance(cli, CommandLineInterface)
-
-    from .containers import Window
-    from .controls import BufferControl
-
-    for l in cli.layout.walk(cli):
-        if isinstance(l, Window) and isinstance(l.content, BufferControl):
-            if l.content.buffer_name == buffer_name:
-                return l

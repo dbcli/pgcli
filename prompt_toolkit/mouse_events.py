@@ -30,9 +30,6 @@ class MouseEventType:
     SCROLL_DOWN = 'SCROLL_DOWN'
 
 
-MouseEventTypes = MouseEventType  # Deprecated: plural for backwards compatibility.
-
-
 class MouseEvent(object):
     """
     Mouse event, sent to `UIControl.mouse_handler`.

@@ -11,6 +11,8 @@ from prompt_toolkit.selection import SelectionType
 __all__ = (
     'Clipboard',
     'ClipboardData',
+    'DummyClipboard',
+    'DynamicClipboard',
 )
 
 
@@ -60,3 +62,48 @@ class Clipboard(with_metaclass(ABCMeta, object)):
         """
         Return clipboard data.
         """
+
+
+class DummyClipboard(Clipboard):
+    """
+    Clipboard implementation that doesn't remember anything.
+    """
+    def set_data(self, data):
+        pass
+
+    def set_text(self, text):
+        pass
+
+    def rotate(self):
+        pass
+
+    def get_data(self):
+        return ClipboardData()
+
+
+class DynamicClipboard(Clipboard):
+    """
+    Clipboard class that can dynamically returns any Clipboard.
+
+    :param get_clipboard: Callable that returns a :class:`.Clipboard` instance.
+    """
+    def __init__(self, get_clipboard):
+        assert callable(get_clipboard)
+        self.get_clipboard = get_clipboard
+
+    def _clipboard(self):
+        clipboard = self.get_clipboard() or DummyClipboard()
+        assert isinstance(clipboard, Clipboard)
+        return clipboard
+
+    def set_data(self, data):
+        self._clipboard().set_data(data)
+
+    def set_text(self, text):
+        self._clipboard().set_text(text)
+
+    def rotate(self):
+        self._clipboard().rotate()
+
+    def get_data(self):
+        return self._clipboard().get_data()

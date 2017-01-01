@@ -5,13 +5,14 @@ dimensions for containers and controls.
 from __future__ import unicode_literals
 
 __all__ = (
-    'LayoutDimension',
+    'Dimension',
     'sum_layout_dimensions',
     'max_layout_dimensions',
+    'to_dimension',
 )
 
 
-class LayoutDimension(object):
+class Dimension(object):
     """
     Specified dimension (width/height) of a user control or window.
 
@@ -29,7 +30,10 @@ class LayoutDimension(object):
     :param preferred: Preferred size.
     """
     def __init__(self, min=None, max=None, weight=1, preferred=None):
-        assert isinstance(weight, int) and weight > 0   # Cannot be a float.
+        assert isinstance(weight, int) and weight >= 0   # Cannot be a float.
+        assert min is None or min >= 0
+        assert max is None or max >= 0
+        assert preferred is None or preferred >= 0
 
         self.min_specified = min is not None
         self.max_specified = max is not None
@@ -57,36 +61,81 @@ class LayoutDimension(object):
     @classmethod
     def exact(cls, amount):
         """
-        Return a :class:`.LayoutDimension` with an exact size. (min, max and
+        Return a :class:`.Dimension` with an exact size. (min, max and
         preferred set to ``amount``).
         """
         return cls(min=amount, max=amount, preferred=amount)
 
-    def __repr__(self):
-        return 'LayoutDimension(min=%r, max=%r, preferred=%r, weight=%r)' % (
-            self.min, self.max, self.preferred, self.weight)
+    @classmethod
+    def zero(cls):
+        """
+        Create a dimension that represents a zero size. (Used for 'invisible'
+        controls.)
+        """
+        return cls.exact(amount=0)
 
-    def __add__(self, other):
-        return sum_layout_dimensions([self, other])
+    def is_zero(self):
+        " True if this `Dimension` represents a zero size. "
+        return self.preferred == 0 or self.max == 0
+
+    def __repr__(self):
+        return 'Dimension(min=%r, max=%r, preferred=%r, weight=%r)' % (
+            self.min, self.max, self.preferred, self.weight)
 
 
 def sum_layout_dimensions(dimensions):
     """
-    Sum a list of :class:`.LayoutDimension` instances.
+    Sum a list of :class:`.Dimension` instances.
     """
-    min = sum([d.min for d in dimensions if d.min is not None])
-    max = sum([d.max for d in dimensions if d.max is not None])
-    preferred = sum([d.preferred for d in dimensions])
+    min = sum(d.min for d in dimensions)
+    max = sum(d.max for d in dimensions)
+    preferred = sum(d.preferred for d in dimensions)
 
-    return LayoutDimension(min=min, max=max, preferred=preferred)
+    return Dimension(min=min, max=max, preferred=preferred)
 
 
 def max_layout_dimensions(dimensions):
     """
-    Take the maximum of a list of :class:`.LayoutDimension` instances.
+    Take the maximum of a list of :class:`.Dimension` instances.
+    Used when we have a HSplit/VSplit, and we want to get the best width/height.)
     """
-    min_ = max([d.min for d in dimensions if d.min is not None])
-    max_ = max([d.max for d in dimensions if d.max is not None])
-    preferred = max([d.preferred for d in dimensions])
+    if not len(dimensions):
+        return Dimension.zero()
 
-    return LayoutDimension(min=min_, max=max_, preferred=preferred)
+    # If all dimensions are size zero. Return zero.
+    # (This is important for HSplit/VSplit, to report the right values to their
+    # parent when all children are invisible.)
+    if all(d.is_zero() for d in dimensions):
+        return dimensions[0]
+
+    # Ignore empty dimensions. (They should not reduce the size of others.)
+    dimensions = [d for d in dimensions if not d.is_zero()]
+
+    if dimensions:
+        # The the maximum dimension.
+        # But we can't go larger than the smallest 'max'.
+        min_ = max(d.min for d in dimensions)
+        max_ = min(d.max for d in dimensions)
+        preferred = max(d.preferred for d in dimensions)
+
+        return Dimension(min=min_, max=max_, preferred=preferred)
+    else:
+        return Dimension()
+
+
+def to_dimension(value):
+    """
+    Turn the given object into a `Dimension` object.
+    """
+    if value is None:
+        return Dimension()
+    if isinstance(value, int):
+        return Dimension.exact(value)
+    if isinstance(value, Dimension):
+        return value
+
+    raise ValueError('Not an integer or Dimension object.')
+
+
+# For backward-compatibility.
+LayoutDimension = Dimension

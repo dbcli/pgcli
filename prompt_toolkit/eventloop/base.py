@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
-from six import with_metaclass
+from six import with_metaclass, exec_
+import textwrap
 
 __all__ = (
     'EventLoop',
@@ -16,29 +17,26 @@ class EventLoop(with_metaclass(ABCMeta, object)):
     """
     Eventloop interface.
     """
-    def run(self, stdin, callbacks):
+    def run_until_complete(self, future):
         """
-        Run the eventloop until stop() is called. Report all
-        input/timeout/terminal-resize events to the callbacks.
+        Keep running until this future has been set.
+        Return the Future's result, or raise its exception.
+        """
+        raise NotImplementedError(
+            "This eventloop doesn't implement synchronous 'run_until_complete()'.")
 
-        :param stdin: :class:`~prompt_toolkit.input.Input` instance.
-        :param callbacks: :class:`~prompt_toolkit.eventloop.callbacks.EventLoopCallbacks` instance.
-        """
-        raise NotImplementedError("This eventloop doesn't implement synchronous 'run()'.")
-
-    def run_as_coroutine(self, stdin, callbacks):
-        """
-        Similar to `run`, but this is a coroutine. (For asyncio integration.)
-        """
-        raise NotImplementedError("This eventloop doesn't implement 'run_as_coroutine()'.")
-
-    @abstractmethod
-    def stop(self):
-        """
-        Stop the `run` call. (Normally called by
-        :class:`~prompt_toolkit.interface.CommandLineInterface`, when a result
-        is available, or Abort/Quit has been called.)
-        """
+    try:
+        exec_(textwrap.dedent('''
+    async def run_as_coroutine(self, future):
+        " Similar to `run`, but this is a coroutine. (For asyncio integration.) "
+        raise NotImplementedError(
+            "This eventloop doesn't implement 'run_as_coroutine()'.")
+    '''), globals(), locals())
+    except SyntaxError:
+        def run_as_coroutine(self, future):
+            """ Similar to `run`, but this is a coroutine. (For asyncio
+            integration.) """
+            pass
 
     @abstractmethod
     def close(self):
@@ -58,6 +56,21 @@ class EventLoop(with_metaclass(ABCMeta, object)):
     def remove_reader(self, fd):
         """
         Stop watching the file descriptor for read availability.
+        """
+
+    @abstractmethod
+    def set_input(self, input, input_ready_callback):
+        """
+        Tell the eventloop to read from this input object.
+
+        :param input: :class:`~prompt_toolkit.input.Input` object.
+        :param input_ready_callback: Called when the input is ready to read.
+        """
+
+    @abstractmethod
+    def remove_input(self):
+        """
+        Remove the currently attached `Input`.
         """
 
     @abstractmethod
@@ -83,3 +96,11 @@ class EventLoop(with_metaclass(ABCMeta, object)):
                   but apparently, executing `time.time` is more efficient: it
                   does fewer system calls. (It doesn't read /etc/localtime.)
         """
+
+    def create_future(self):
+        """
+        Create a `Future` object that is attached to this loop.
+        This is the preferred way of creating futures.
+        """
+        from .future import Future
+        return Future(self)

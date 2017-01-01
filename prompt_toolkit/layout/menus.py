@@ -1,21 +1,21 @@
 from __future__ import unicode_literals
 
 from six.moves import zip_longest, range
-from prompt_toolkit.filters import HasCompletions, IsDone, Condition, to_cli_filter
+from prompt_toolkit.filters import HasCompletions, IsDone, Condition, to_app_filter
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
 from .containers import Window, HSplit, ConditionalContainer, ScrollOffsets
 from .controls import UIControl, UIContent
-from .dimension import LayoutDimension
+from .dimension import Dimension
 from .margins import ScrollbarMargin
-from .screen import Point, Char
+from .screen import Point
 
 import math
 
 __all__ = (
-    'CompletionsMenu',
+    'CompletionsMenu',  # XXX: rename to CompletionMenu
     'MultiColumnCompletionsMenu',
 )
 
@@ -37,11 +37,11 @@ class CompletionsMenuControl(UIControl):
     def __init__(self):
         self.token = Token.Menu.Completions
 
-    def has_focus(self, cli):
+    def has_focus(self, app):
         return False
 
-    def preferred_width(self, cli, max_available_width):
-        complete_state = cli.current_buffer.complete_state
+    def preferred_width(self, app, max_available_width):
+        complete_state = app.current_buffer.complete_state
         if complete_state:
             menu_width = self._get_menu_width(500, complete_state)
             menu_meta_width = self._get_menu_meta_width(500, complete_state)
@@ -50,18 +50,18 @@ class CompletionsMenuControl(UIControl):
         else:
             return 0
 
-    def preferred_height(self, cli, width, max_available_height, wrap_lines):
-        complete_state = cli.current_buffer.complete_state
+    def preferred_height(self, app, width, max_available_height, wrap_lines):
+        complete_state = app.current_buffer.complete_state
         if complete_state:
             return len(complete_state.current_completions)
         else:
             return 0
 
-    def create_content(self, cli, width, height):
+    def create_content(self, app, width, height):
         """
         Create a UIContent object for this control.
         """
-        complete_state = cli.current_buffer.complete_state
+        complete_state = app.current_buffer.complete_state
         if complete_state:
             completions = complete_state.current_completions
             index = complete_state.complete_index  # Can be None!
@@ -82,8 +82,7 @@ class CompletionsMenuControl(UIControl):
 
             return UIContent(get_line=get_line,
                              cursor_position=Point(x=0, y=index or 0),
-                             line_count=len(completions),
-                             default_char=Char(' ', self.token))
+                             line_count=len(completions))
 
         return UIContent()
 
@@ -130,11 +129,11 @@ class CompletionsMenuControl(UIControl):
         padding = ' ' * (width - 2 - tw)
         return [(token, ' %s%s ' % (text, padding))]
 
-    def mouse_handler(self, cli, mouse_event):
+    def mouse_handler(self, app, mouse_event):
         """
         Handle mouse events: clicking and scrolling.
         """
-        b = cli.current_buffer
+        b = app.current_buffer
 
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
             # Select completion.
@@ -180,17 +179,18 @@ def _trim_text(text, max_width):
 
 class CompletionsMenu(ConditionalContainer):
     def __init__(self, max_height=None, scroll_offset=0, extra_filter=True, display_arrows=False):
-        extra_filter = to_cli_filter(extra_filter)
-        display_arrows = to_cli_filter(display_arrows)
+        extra_filter = to_app_filter(extra_filter)
+        display_arrows = to_app_filter(display_arrows)
 
         super(CompletionsMenu, self).__init__(
             content=Window(
                 content=CompletionsMenuControl(),
-                width=LayoutDimension(min=8),
-                height=LayoutDimension(min=1, max=max_height),
+                width=Dimension(min=8),
+                height=Dimension(min=1, max=max_height),
                 scroll_offsets=ScrollOffsets(top=scroll_offset, bottom=scroll_offset),
                 right_margins=[ScrollbarMargin(display_arrows=display_arrows)],
                 dont_extend_width=True,
+                token=Token.Menu.Completions,
             ),
             # Show when there are completions but not at the point we are
             # returning the input.
@@ -241,15 +241,15 @@ class MultiColumnCompletionMenuControl(UIControl):
     def reset(self):
         self.scroll = 0
 
-    def has_focus(self, cli):
+    def has_focus(self, app):
         return False
 
-    def preferred_width(self, cli, max_available_width):
+    def preferred_width(self, app, max_available_width):
         """
         Preferred width: prefer to use at least min_rows, but otherwise as much
         as possible horizontally.
         """
-        complete_state = cli.current_buffer.complete_state
+        complete_state = app.current_buffer.complete_state
         column_width = self._get_column_width(complete_state)
         result = int(column_width * math.ceil(len(complete_state.current_completions) / float(self.min_rows)))
 
@@ -260,21 +260,21 @@ class MultiColumnCompletionMenuControl(UIControl):
             result -= column_width
         return result + self._required_margin
 
-    def preferred_height(self, cli, width, max_available_height, wrap_lines):
+    def preferred_height(self, app, width, max_available_height, wrap_lines):
         """
         Preferred height: as much as needed in order to display all the completions.
         """
-        complete_state = cli.current_buffer.complete_state
+        complete_state = app.current_buffer.complete_state
         column_width = self._get_column_width(complete_state)
         column_count = max(1, (width - self._required_margin) // column_width)
 
         return int(math.ceil(len(complete_state.current_completions) / float(column_count)))
 
-    def create_content(self, cli, width, height):
+    def create_content(self, app, width, height):
         """
         Create a UIContent object for this menu.
         """
-        complete_state = cli.current_buffer.complete_state
+        complete_state = app.current_buffer.complete_state
         column_width = self._get_column_width(complete_state)
         self._render_pos_to_completion = {}
 
@@ -379,11 +379,11 @@ class MultiColumnCompletionMenuControl(UIControl):
 
         return [(token, ' %s%s' % (text, padding))]
 
-    def mouse_handler(self, cli, mouse_event):
+    def mouse_handler(self, app, mouse_event):
         """
         Handle scoll and click events.
         """
-        b = cli.current_buffer
+        b = app.current_buffer
 
         def scroll_left():
             b.complete_previous(count=self._rendered_rows, disable_wrap_around=True)
@@ -423,27 +423,27 @@ class MultiColumnCompletionMenuControl(UIControl):
 class MultiColumnCompletionsMenu(HSplit):
     """
     Container that displays the completions in several columns.
-    When `show_meta` (a :class:`~prompt_toolkit.filters.CLIFilter`) evaluates
+    When `show_meta` (a :class:`~prompt_toolkit.filters.AppFilter`) evaluates
     to True, it shows the meta information at the bottom.
     """
     def __init__(self, min_rows=3, suggested_max_column_width=30, show_meta=True, extra_filter=True):
-        show_meta = to_cli_filter(show_meta)
-        extra_filter = to_cli_filter(extra_filter)
+        show_meta = to_app_filter(show_meta)
+        extra_filter = to_app_filter(extra_filter)
 
         # Display filter: show when there are completions but not at the point
         # we are returning the input.
         full_filter = HasCompletions() & ~IsDone() & extra_filter
 
-        any_completion_has_meta = Condition(lambda cli:
-                any(c.display_meta for c in cli.current_buffer.complete_state.current_completions))
+        any_completion_has_meta = Condition(lambda app:
+                any(c.display_meta for c in app.current_buffer.complete_state.current_completions))
 
         # Create child windows.
         completions_window = ConditionalContainer(
             content=Window(
                 content=MultiColumnCompletionMenuControl(
                     min_rows=min_rows, suggested_max_column_width=suggested_max_column_width),
-                width=LayoutDimension(min=8),
-                height=LayoutDimension(min=1)),
+                width=Dimension(min=8),
+                height=Dimension(min=1)),
             filter=full_filter)
 
         meta_window = ConditionalContainer(
@@ -461,7 +461,7 @@ class _SelectedCompletionMetaControl(UIControl):
     """
     Control that shows the meta information of the selected token.
     """
-    def preferred_width(self, cli, max_available_width):
+    def preferred_width(self, app, max_available_width):
         """
         Report the width of the longest meta text as the preferred width of this control.
 
@@ -469,26 +469,26 @@ class _SelectedCompletionMetaControl(UIControl):
         layout doesn't change when we select another completion (E.g. that
         completions are suddenly shown in more or fewer columns.)
         """
-        if cli.current_buffer.complete_state:
-            state = cli.current_buffer.complete_state
+        if app.current_buffer.complete_state:
+            state = app.current_buffer.complete_state
             return 2 + max(get_cwidth(c.display_meta) for c in state.current_completions)
         else:
             return 0
 
-    def preferred_height(self, cli, width, max_available_height, wrap_lines):
+    def preferred_height(self, app, width, max_available_height, wrap_lines):
         return 1
 
-    def create_content(self, cli, width, height):
-        tokens = self._get_tokens(cli)
+    def create_content(self, app, width, height):
+        tokens = self._get_tokens(app)
 
         def get_line(i):
             return tokens
 
         return UIContent(get_line=get_line, line_count=1 if tokens else 0)
 
-    def _get_tokens(self, cli):
+    def _get_tokens(self, app):
         token = Token.Menu.Completions.MultiColumnMeta
-        state = cli.current_buffer.complete_state
+        state = app.current_buffer.complete_state
 
         if state and state.current_completion and state.current_completion.display_meta:
             return [(token, ' %s ' % state.current_completion.display_meta)]

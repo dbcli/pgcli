@@ -6,12 +6,15 @@ Windows notes:
 """
 from __future__ import unicode_literals
 
+from ..input import Input
+from .utils import AsyncioTimeout
 from .base import EventLoop, INPUT_TIMEOUT
-from ..terminal.win32_input import ConsoleInputReader
-from .callbacks import EventLoopCallbacks
-from .asyncio_base import AsyncioTimeout
+from .future import Future
+from .win32 import _wait_for_handles
 
 import asyncio
+import six
+import textwrap
 
 __all__ = (
     'Win32AsyncioEventLoop',
@@ -20,53 +23,100 @@ __all__ = (
 
 class Win32AsyncioEventLoop(EventLoop):
     def __init__(self, loop=None):
-        self._console_input_reader = ConsoleInputReader()
-        self.running = False
-        self.closed = False
         self.loop = loop or asyncio.get_event_loop()
+        self.closed = False
 
-    @asyncio.coroutine
-    def run_as_coroutine(self, stdin, callbacks):
-        """
-        The input 'event loop'.
-        """
-        # Note: We cannot use "yield from", because this package also
-        #       installs on Python 2.
-        assert isinstance(callbacks, EventLoopCallbacks)
+        self._input = None
+        self._input_ready_cb = None
 
+        self._timeout = AsyncioTimeout(
+            INPUT_TIMEOUT, self._timeout_handler, self.loop)
+
+    try:
+        six.exec_(textwrap.dedent('''
+    async def run_as_coroutine(self, future):
+        " Run the loop. "
+        assert isinstance(future, Future)
         if self.closed:
             raise Exception('Event loop already closed.')
 
-        timeout = AsyncioTimeout(INPUT_TIMEOUT, callbacks.input_timeout, self.loop)
-        self.running = True
-
         try:
-            while self.running:
-                timeout.reset()
+            # Wait for input in a different thread.
+            if self._input:
+                def wait_for_input():
+                    input_handle = self._input.handle
+                    cb = self._input_ready_cb
+                    while not future.done():
+                        h = _wait_for_handles([input_handle], 1000)
+                        if h == input_handle and not future.done():
+                            cb()
+                            self._timeout.reset()
 
-                # Get keys
-                try:
-                    g = iter(self.loop.run_in_executor(None, self._console_input_reader.read))
-                    while True:
-                        yield next(g)
-                except StopIteration as e:
-                    keys = e.args[0]
+                self.run_in_executor(wait_for_input)
 
-                # Feed keys to input processor.
-                for k in keys:
-                    callbacks.feed_key(k)
+            # Create a new asyncio Future that blocks this coroutine until the
+            # prompt_toolkit Future is ready.
+            stopped_f = loop.create_future()
+
+            # Block this coroutine until stop() has been called.
+            @future.add_done_callback
+            def done(_):
+                stopped_f.set_result(None)
+
+            # Wait until f has been set.
+            await stopped_f
         finally:
-            timeout.stop()
-
-    def stop(self):
-        self.running = False
+            # Don't trigger any timeout events anymore.
+            self._timeout.stop()
+    '''), globals(), locals())
+    except SyntaxError:
+        def run_as_coroutine(self, future):
+            " Run the loop. "
+            assert isinstance(future, Future)
+            raise NotImplementedError('`run_as_coroutine` requires at least Python 3.5.')
 
     def close(self):
         # Note: we should not close the asyncio loop itself, because that one
         # was not created here.
         self.closed = True
 
-        self._console_input_reader.close()
+    def _timeout_handler(self):
+        """
+        When no input has been received for INPUT_TIMEOUT seconds,
+        flush the input stream and fire the timeout event.
+        """
+        if self._input is not None:
+            self._input.flush()
+
+    def set_input(self, input, input_ready_callback):
+        """
+        Tell the eventloop to read from this input object.
+
+        :param input: `Input` object.
+        :param input_ready_callback: Called when the input is ready to read.
+        """
+        assert isinstance(input, Input)
+        assert callable(input_ready_callback)
+
+        # Remove previous
+        if self._input:
+            previous_input = self._input
+            previous_cb = self._input_ready_cb
+            self.remove_input()
+        else:
+            previous_input = None
+            previous_cb = None
+
+        # Set current.
+        self._input = input
+        self._input_ready_cb = input_ready_callback
+
+        return previous_input, previous_cb
+
+    def remove_input(self):
+        if self._input:
+            self._input = None
+            self._input_ready_cb = None
 
     def run_in_executor(self, callback):
         self.loop.run_in_executor(None, callback)
@@ -81,3 +131,6 @@ class Win32AsyncioEventLoop(EventLoop):
     def remove_reader(self, fd):
         " Stop watching the file descriptor for read availability. "
         self.loop.remove_reader(fd)
+
+    def add_signal_handler(self, signum, handler):
+        return self.loop.add_signal_handler(signum, handler)

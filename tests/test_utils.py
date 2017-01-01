@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.utils import take_using_weights
 
 import itertools
+import pytest
 
 
 def test_using_weights():
@@ -37,3 +38,7 @@ def test_using_weights():
     assert data.count('A') == 0
     assert data.count('B') == 70
     assert data.count('C') == 0
+
+    # All zero-weight items.
+    with pytest.raises(ValueError):
+        take(take_using_weights(['A', 'B', 'C'], [0, 0, 0]), 70)

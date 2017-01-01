@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
-from prompt_toolkit.key_binding.input_processor import InputProcessor, KeyPress
-from prompt_toolkit.key_binding.registry import Registry
+from prompt_toolkit.key_binding.key_processor import KeyProcessor, KeyPress
+from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.keys import Keys
 
 import pytest
@@ -24,21 +24,21 @@ def handlers():
 
 
 @pytest.fixture
-def registry(handlers):
-    registry = Registry()
-    registry.add_binding(
+def bindings(handlers):
+    bindings = KeyBindings()
+    bindings.add(
         Keys.ControlX, Keys.ControlC)(handlers.controlx_controlc)
-    registry.add_binding(Keys.ControlX)(handlers.control_x)
-    registry.add_binding(Keys.ControlD)(handlers.control_d)
-    registry.add_binding(
+    bindings.add(Keys.ControlX)(handlers.control_x)
+    bindings.add(Keys.ControlD)(handlers.control_d)
+    bindings.add(
         Keys.ControlSquareClose, Keys.Any)(handlers.control_square_close_any)
 
-    return registry
+    return bindings
 
 
 @pytest.fixture
-def processor(registry):
-    return InputProcessor(registry, lambda: None)
+def processor(bindings):
+    return KeyProcessor(bindings, lambda: None)
 
 
 def test_feed_simple(processor, handlers):

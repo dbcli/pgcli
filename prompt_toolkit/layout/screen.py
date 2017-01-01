@@ -105,7 +105,7 @@ class Screen(object):
         self.zero_width_escapes = defaultdict(lambda: defaultdict(lambda: ''))
 
         #: Position of the cursor.
-        self.cursor_position = Point(y=0, x=0)
+        self.cursor_positions = {}  # Map `Window` objects to `Point` objects.
 
         #: Visibility of the cursor.
         self.show_cursor = True
@@ -114,22 +114,80 @@ class Screen(object):
         #: (We can't use the cursor position, because we don't want the
         #: completion menu to change its position when we browse through all the
         #: completions.)
-        self.menu_position = None
+        self.menu_positions = {}  # Map `Window` objects to `Point` objects.
 
         #: Currently used width/height of the screen. This will increase when
         #: data is written to the screen.
         self.width = initial_width or 0
         self.height = initial_height or 0
 
+        # Windows that have been drawn. (Each `Window` class will add itself to
+        # this list.)
+        self.visible_windows = []
+
+    def set_cursor_position(self, window, position):
+        " Set the cursor position for a given window. "
+        self.cursor_positions[window] = position
+
+    def set_menu_position(self, window, position):
+        " Set the cursor position for a given window. "
+        self.menu_positions[window] = position
+
+    def get_cursor_position(self, window):
+        """
+        Get the cursor position for a given window.
+        Returns a `Point`.
+        """
+        try:
+            return self.cursor_positions[window]
+        except KeyError:
+            return Point(0, 0)
+
+    def get_menu_position(self, window):
+        """
+        Get the menu position for a given window.
+        (This falls back to the cursor position if no menu position was set.)
+        """
+        try:
+            return self.menu_positions[window]
+        except KeyError:
+            try:
+                return self.cursor_positions[window]
+            except KeyError:
+                return Point(0, 0)
+
     def replace_all_tokens(self, token):
         """
         For all the characters in the screen. Set the token to the given `token`.
         """
         b = self.data_buffer
+        char_cache = _CHAR_CACHE
+
+        prepend_token = tuple(token) + (':', )
 
         for y, row in b.items():
             for x, char in row.items():
-                b[y][x] = _CHAR_CACHE[char.char, token]
+                b[y][x] = char_cache[char.char, prepend_token + char.token]
+
+    def fill_area(self, write_position, token=None):
+        """
+        Fill the content of this area, using the given `token` and character.
+        """
+        xmin = write_position.xpos
+        xmax = write_position.xpos + write_position.width
+        char_cache = _CHAR_CACHE
+        data_buffer = self.data_buffer
+
+        if token:
+            prepend_token = tuple(token) + (':', )
+        else:
+            prepend_token = ()
+
+        for y in range(write_position.ypos, write_position.ypos + write_position.height):
+            row = data_buffer[y]
+            for x in range(xmin, xmax):
+                cell = row[x]
+                row[x] = char_cache[cell.char, prepend_token + cell.token]
 
 
 class WritePosition(object):
