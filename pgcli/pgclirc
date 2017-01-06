@@ -138,5 +138,5 @@ Token.Toolbar.Transaction.Failed = 'bg:#222222 #ff005f bold'
 # for decimal "d" - 12345678, ",d" - 12,345,678
 # for float "g" - 123456.78, ",g" - 123,456.78
 [data_formats]
-decimal = ",d"
-float = ",g"
+decimal = ""
+float = ""
