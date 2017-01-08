@@ -32,7 +32,7 @@ NamedQueries.instance = NamedQueries.from_config(
 Match = namedtuple('Match', ['completion', 'priority'])
 
 _Candidate = namedtuple('Candidate', ['completion', 'priority', 'meta', 'synonyms'])
-def Candidate(completion, priority = None, meta = None, synonyms = None):
+def Candidate(completion, priority=None, meta=None, synonyms=None):
     return _Candidate(completion, priority, meta, synonyms or [completion])
 
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
@@ -295,6 +295,9 @@ class PGCompleter(Completer):
             def _match(item):
                 if item.lower()[:len(text) + 1] in (text, text + ' '):
                     # Exact match of first word in suggestion
+                    # This is to get exact alias matches to the top
+                    # E.g. for input `e`, 'Entries E' should be on top
+                    # (before e.g. `EndUsers EU`)
                     return float('Infinity'), -1
                 r = pat.search(self.unescape_name(item.lower()))
                 if r:
@@ -315,7 +318,9 @@ class PGCompleter(Completer):
                 item, prio, display_meta, synonyms = cand
                 if display_meta is None:
                     display_meta = meta
-                syn_matches = [m for m in (_match(x) for x in synonyms) if m]
+                syn_matches = (_match(x) for x in synonyms)
+                # Nones need to be removed to avoid max() crashing in Python 3
+                syn_matches = [m for m in syn_matches if m]
                 sort_key = max(syn_matches) if syn_matches else None
             else:
                 item, display_meta, prio = cand, meta, 0
@@ -545,14 +550,16 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, conds, meta='join')
 
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
+        def _cand(func_name, alias):
+            return self._make_cand(func_name, alias, suggestion, function=True)
         if suggestion.filter == 'for_from_clause':
             # Only suggest functions allowed in FROM clause
             filt = lambda f: not f.is_aggregate and not f.is_window
-            funcs = [self._make_cand(f, alias, suggestion, True)
+            funcs = [_cand(f, alias)
                      for f in self.populate_functions(suggestion.schema, filt)]
         else:
-            funcs = [self._make_cand(f, False, suggestion, True) for f in
-                self.populate_schema_objects(suggestion.schema, 'functions')]
+            fs = self.populate_schema_objects(suggestion.schema, 'functions')
+            funcs = [_cand(f, alias=False) for f in fs]
 
         # Function overloading means we way have multiple functions of the same
         # name at this point, so keep unique names only
@@ -590,7 +597,7 @@ class PGCompleter(Completer):
             + self.get_view_matches(v_sug, word_before_cursor, alias)
             + self.get_function_matches(f_sug, word_before_cursor, alias))
 
-    def _make_cand(self, tbl, do_alias, suggestion, function = False):
+    def _make_cand(self, tbl, do_alias, suggestion, function=False):
         cased_tbl = self.case(tbl)
         alias = self.alias(cased_tbl, suggestion.table_refs)
         synonyms = (cased_tbl, generate_alias(cased_tbl))
