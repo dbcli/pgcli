@@ -20,7 +20,14 @@ metadata = {
         },
         'Custom': {
             'projects': ['projectid', 'name']
-        }},
+        },
+        'blog': {
+            'entries': ['entryid', 'entrytitle', 'entrytext'],
+            'tags': ['tagid', 'name'],
+            'entrytags': ['entryid', 'tagid'],
+            'entacclog': ['entryid', 'username', 'datestamp'],
+        }
+    },
     'functions': {
         'public': [
             ['func1', [], [], [], '', False, False, False],
@@ -30,7 +37,13 @@ metadata = {
             ['set_returning_func', ['x'], ['integer'], ['o'],
                 'integer', False, False, True]],
         'Custom': [
-            ['func4', [], [], [], '', False, False, False]]
+            ['func4', [], [], [], '', False, False, False]],
+        'blog': [
+            ['extract_entry_symbols', ['_entryid', 'symbol'],
+                ['integer', 'text'], ['i', 'o'], '', False, False, True],
+            ['enter_entry', ['_title', '_text', 'entryid'],
+                ['text', 'text', 'integer'], ['i', 'i', 'o'],
+                '', False, False, False]],
      },
     'datatypes': {
         'public': ['typ1', 'typ2'],
@@ -39,16 +52,25 @@ metadata = {
     'foreignkeys': {
         'custom': [
             ('public', 'users', 'id', 'custom', 'shipments', 'user_id')
-    ]},
+        ],
+        'blog': [
+            ('blog', 'entries', 'entryid', 'blog', 'entacclog', 'entryid'),
+            ('blog', 'entries', 'entryid', 'blog', 'entrytags', 'entryid'),
+            ('blog', 'tags', 'tagid', 'blog', 'entrytags', 'tagid'),
+        ],
+    },
 }
 
 testdata = MetaData(metadata)
+cased_schemas = [schema(x) for x in ('public', 'blog', 'CUSTOM', '"Custom"')]
 
 @pytest.fixture
 def completer():
     return testdata.completer
 
-casing = ('SELECT', 'Orders', 'User_Emails', 'CUSTOM', 'Func1')
+casing = ('SELECT', 'Orders', 'User_Emails', 'CUSTOM', 'Func1', 'Entries',
+          'Tags', 'EntryTags', 'EntAccLog',
+          'EntryID', 'EntryTitle', 'EntryText')
 
 @pytest.fixture
 def completer_with_casing():
@@ -475,10 +497,7 @@ def test_table_aliases(completer_with_aliases, complete_event, text):
 def test_aliases_with_casing(completer_aliases_casing, complete_event, text):
     result = completer_aliases_casing.get_completions(
         Document(text=text), complete_event)
-    assert set(result) == set([
-        schema('public'),
-        schema('CUSTOM'),
-        schema('"Custom"'),
+    assert set(result) == set(cased_schemas + [
         table('users u'),
         table('Orders O' if text == 'SELECT * FROM ' else 'Orders O2'),
         table('"select" s'),
@@ -489,12 +508,93 @@ def test_aliases_with_casing(completer_aliases_casing, complete_event, text):
 def test_table_casing(completer_with_casing, complete_event, text):
     result = completer_with_casing.get_completions(
         Document(text=text), complete_event)
-    assert set(result) == set([
-        schema('public'),
-        schema('CUSTOM'),
-        schema('"Custom"'),
+    assert set(result) == set(cased_schemas + [
         table('users'),
         table('Orders'),
         table('"select"'),
         function('Func1()'),
         function('func2()')])
+
+def test_alias_search_without_aliases2(completer_with_casing, complete_event):
+    text = 'SELECT * FROM blog.et'
+    result = completer_with_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[0] == table('EntryTags', -2)
+
+def test_alias_search_without_aliases1(completer_with_casing, complete_event):
+    text = 'SELECT * FROM blog.e'
+    result = completer_with_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[0] == table('Entries', -1)
+
+def test_alias_search_with_aliases2(completer_aliases_casing, complete_event):
+    text = 'SELECT * FROM blog.et'
+    result = completer_aliases_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[0] == table('EntryTags ET', -2)
+
+def test_alias_search_with_aliases1(completer_aliases_casing, complete_event):
+    text = 'SELECT * FROM blog.e'
+    result = completer_aliases_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[0] == table('Entries E', -1)
+
+def test_join_alias_search_with_aliases1(completer_aliases_casing,
+                                         complete_event):
+    text = 'SELECT * FROM blog.Entries E JOIN blog.e'
+    result = completer_aliases_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[:2] == [table('Entries E2', -1), join(
+        'EntAccLog EAL ON EAL.EntryID = E.EntryID', -1)]
+
+def test_join_alias_search_without_aliases1(completer_with_casing,
+                                            complete_event):
+    text = 'SELECT * FROM blog.Entries JOIN blog.e'
+    result = completer_with_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[:2] == [table('Entries', -1), join(
+        'EntAccLog ON EntAccLog.EntryID = Entries.EntryID', -1)]
+
+def test_join_alias_search_with_aliases2(completer_aliases_casing,
+                                         complete_event):
+    text = 'SELECT * FROM blog.Entries E JOIN blog.et'
+    result = completer_aliases_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[0] == join('EntryTags ET ON ET.EntryID = E.EntryID', -2)
+
+def test_join_alias_search_without_aliases2(completer_with_casing,
+                                            complete_event):
+    text = 'SELECT * FROM blog.Entries JOIN blog.et'
+    result = completer_with_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[0] == join(
+        'EntryTags ON EntryTags.EntryID = Entries.EntryID', -2)
+
+def test_function_alias_search_without_aliases(completer_with_casing,
+                                               complete_event):
+    text = 'SELECT blog.ees'
+    result = completer_with_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[0] == function('extract_entry_symbols()', -3)
+
+def test_function_alias_search_with_aliases(completer_aliases_casing,
+                                            complete_event):
+    text = 'SELECT blog.ee'
+    result = completer_aliases_casing.get_completions(
+        Document(text=text), complete_event)
+    assert result[0] == function('enter_entry()', -2)
+
+def test_column_alias_search(completer_aliases_casing, complete_event):
+    text = 'SELECT et FROM blog.Entries E'
+    result = completer_aliases_casing.get_completions(
+        Document(text, cursor_position=len('SELECT et')), complete_event)
+    cols = ('EntryText', 'EntryTitle', 'EntryID')
+    assert result[:3] == [column(c, -2) for c in cols]
+
+def test_column_alias_search_qualified(completer_aliases_casing,
+                                       complete_event):
+    text = 'SELECT E.ei FROM blog.Entries E'
+    result = completer_aliases_casing.get_completions(
+        Document(text, cursor_position=len('SELECT E.ei')), complete_event)
+    cols = ('EntryID', 'EntryTitle')
+    assert result[:3] == [column(c, -2) for c in cols]
