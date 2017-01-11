@@ -1,3 +1,30 @@
+1.4.0
+=====
+
+Features:
+---------
+
+* Search table suggestions using initialisms. (Thanks: `Joakim Koljonen`_).
+* Support for table-qualifying column suggestions. (Thanks: `Joakim Koljonen`_).
+* Display transaction status in the toolbar. (Thanks: `Joakim Koljonen`_).
+* Display vi mode in the toolbar. (Thanks: `Joakim Koljonen`_).
+* Added --prompt option. (Thanks: `Irina Truong`_).
+
+Bug Fixes:
+----------
+
+* Fix scoping for columns from CTEs. (Thanks: `Joakim Koljonen`_)
+* Fix crash after `with`. (Thanks: `Joakim Koljonen`_).
+* Fix issue #603 (`\i` raises a TypeError). (Thanks: `Emanuele Gaifas`_).
+
+
+Internal Changes:
+-----------------
+
+* Set default data_formatting to nothing. (Thanks: `Amjith Ramanujam`_).
+* Increased minimum prompt_toolkit requirement to 1.0.9. (Thanks: `Irina Truong`_).
+
+
 1.3.1
 =====
 
@@ -350,7 +377,7 @@ Features:
   eg: When you type 'mig', 'django_migrations' will be suggested. 
 * Completion for built-in tables and temporary tables are suggested after entering a prefix of ``pg_``. (Thanks: `Darik Gamble`_)
 * Add place holder doc strings for special commands that are planned for implementation. (Thanks: `Iryna Cherniavska`_)
-* Updated version of prompt_toolkit, now matching braces are highlighted. (Thanks: `Jonathan Slenders`)
+* Updated version of prompt_toolkit, now matching braces are highlighted. (Thanks: `Jonathan Slenders`_)
 * Added support of ``\\e`` command. Queries can be edited in an external editor. (Thanks: `Iryna Cherniavska`_)
   eg: When you type ``SELECT * FROM \e`` it will be opened in an external editor.
 * Add special command ``\dT`` to show datatypes. (Thanks: `Darik Gamble`_)
@@ -433,11 +460,11 @@ Bug Fixes:
 * Override the LESS options completely instead of appending to it. 
 
 0.15.2
-=======
+======
 * Revert back to using psycopg2 as the postgres adapter. psycopg2cffi fails for some tests in Python 3. 
 
 0.15.0
-=======
+======
 
 Features:
 ---------
@@ -570,7 +597,6 @@ Improvements:
 .. _`Tim Sanders`: https://github.com/Gollum999
 .. _`Irina Truong`: https://github.com/j-bennet
 .. _`James Munson`: https://github.com/jmunson
-.. _`Jonathan Slenders`: https://github.com/jonathanslenders
 .. _`Fernando Mora`: https://github.com/fernandomora
 .. _`Timothy Cleaver`: Timothy Cleaver
 .. _`gtxx`: gtxx
