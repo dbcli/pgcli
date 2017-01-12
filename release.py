@@ -63,10 +63,6 @@ def create_git_tag(tag_name):
     run_step('git', 'tag', tag_name)
 
 
-def register_with_pypi():
-    run_step('python', 'setup.py', 'register')
-
-
 def create_source_tarball():
     run_step('python', 'setup.py', 'sdist')
 
@@ -111,7 +107,6 @@ if __name__ == '__main__':
 
     commit_for_release('pgcli/__init__.py', ver)
     create_git_tag('v%s' % ver)
-    register_with_pypi()
     create_source_tarball()
     push_to_github()
     push_tags_to_github()
