@@ -77,10 +77,10 @@ MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     'OutputSettings',
-    'table_format dcmlfmt floatfmt missingval expanded max_width'
+    'table_format dcmlfmt floatfmt missingval expanded max_width case_function'
 )
 OutputSettings.__new__.__defaults__ = (
-    None, None, None, '<null>', False, None
+    None, None, None, '<null>', False, None, lambda x: x
 )
 
 # no-op logging handler
@@ -164,6 +164,7 @@ class PGCli(object):
             'generate_aliases': c['main'].as_bool('generate_aliases'),
             'asterisk_column_order': c['main']['asterisk_column_order'],
             'qualify_columns': c['main']['qualify_columns'],
+            'case_column_headers': c['main'].as_bool('case_column_headers'),
             'search_path_filter': c['main'].as_bool('search_path_filter'),
             'single_connection': single_connection,
             'less_chatty': less_chatty,
@@ -610,7 +611,11 @@ class PGCli(object):
                 floatfmt=self.float_format,
                 missingval=self.null_string,
                 expanded=expanded,
-                max_width=max_width
+                max_width=max_width,
+                case_function=(
+                    self.completer.case if self.settings['case_column_headers']
+                    else lambda x: x
+                )
             )
             formatted = format_output(title, cur, headers, status, settings)
 
@@ -831,10 +836,11 @@ def format_output(title, cur, headers, status, settings):
     floatfmt = settings.floatfmt
     expanded = settings.expanded
     max_width = settings.max_width
+    case_function = settings.case_function
     if title:  # Only print the title if it's not None.
         output.append(title)
     if cur:
-        headers = [utf8tounicode(x) for x in headers]
+        headers = [case_function(utf8tounicode(x)) for x in headers]
         if expanded and headers:
             output.append(expanded_table(cur, headers, missingval))
         else:

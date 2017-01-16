@@ -50,6 +50,9 @@ casing_file = default
 # location, one will be generated based on usage in SQL/PLPGSQL functions.
 generate_casing_file = False
 
+# Casing of column headers based on the casing_file described above
+case_column_headers = True
+
 # history_file location.
 # In Unix/Linux: ~/.config/pgcli/history
 # In Windows: %USERPROFILE%\AppData\Local\dbcli\pgcli\history

@@ -4,6 +4,7 @@ Upcoming
 Features:
 ---------
 * Suggest objects from all schemas (not just those in search_path) (Thanks: `Joakim Koljonen`_)
+* Casing for column headers (Thanks: `Joakim Koljonen`_)
 
 1.5.1
 =====
