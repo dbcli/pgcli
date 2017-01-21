@@ -123,6 +123,8 @@ class PGCli(object):
         self.multi_line = c['main'].as_bool('multi_line')
         self.multiline_mode = c['main'].get('multi_line_mode', 'psql')
         self.vi_mode = c['main'].as_bool('vi')
+        self.auto_expand = c['main'].as_bool('auto_expand')
+        self.expanded_output = c['main'].as_bool('expand')
         self.pgspecial.timing_enabled = c['main'].as_bool('timing')
         if row_limit is not None:
             self.row_limit = row_limit
@@ -584,14 +586,15 @@ class PGCli(object):
                     click.secho("Aborted!", err=True, fg='red')
                     break
 
-            if self.pgspecial.auto_expand:
+            if self.pgspecial.auto_expand or self.auto_expand:
                 max_width = self.cli.output.get_size().columns
             else:
                 max_width = None
 
+            expanded = self.pgspecial.expanded_output or self.expanded_output
             formatted = format_output(
                 title, cur, headers, status, self.table_format, self.decimal_format,
-                self.float_format, self.null_string,  self.pgspecial.expanded_output, max_width)
+                self.float_format, self.null_string, expanded, max_width)
 
             output.extend(formatted)
             total = time() - start
