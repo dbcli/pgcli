@@ -22,7 +22,7 @@ class PosixAsyncioEventLoop(EventLoop):
         self.loop = loop or asyncio.get_event_loop()
         self.closed = False
 
-        self._stopped_f = asyncio.Future()
+        self._stopped_f = asyncio.Future(loop=self.loop)
 
     @asyncio.coroutine
     def run_as_coroutine(self, stdin, callbacks):
@@ -41,7 +41,7 @@ class PosixAsyncioEventLoop(EventLoop):
 
         try:
             # Create a new Future every time.
-            self._stopped_f = asyncio.Future()
+            self._stopped_f = asyncio.Future(loop=self.loop)
 
             # Handle input timouts
             def timeout_handler():
