@@ -1,6 +1,47 @@
 CHANGELOG
 =========
 
+1.0.10: 2017-01-30
+------------------
+
+Fixes:
+- Fixed the `NoConsoleScreenBuffer` error that appeared on some 64bit Python
+  versions.
+- Fix mixup in the mapping from ANSI color names for vt100 output.
+
+New features:
+- Added a `reverse_vi_search_direction` option.
+- Handle Ctrl-Left/Right in rxvt.
+- Implemented difference between `backward-kill-word` and `unix-word-rubout`.
+- Implementation of the Emacs kill-ring (yank-pop command).
+- Take a 'file' argument in 'print_tokens'.
+- Implemented the `operate-and-get-next` command, bound to C-O in Emacs mode.
+- Added multiple named commands:
+     * Added `insert-comment` command, bound to M-#.
+     * Added `vi-editing-mode` and `emacs-editing-mode` commands.
+     * Added `prefix-meta` command.
+     * Added `edit-and-execute` command.
+     * Added `complete`/`menu_complete`/`menu-complete-backward` commands.
+     * Added `quoted-insert` command.
+- Take $VISUAL into account.
+- Display a quoted inserted using the `^` character, just like Vi does.
+- Implemented keyboard macros.  (Like Readline.)
+- Extracted the Vi `create_operator_decorator` and
+  `create_text_object_decorator` functions. (This makes it easier to implement
+  custom Vi bindings.)
+- Pass `raw=True` to the `stdout_context` in `prompt_toolkit.shortcuts`.
+- Added `Buffer.validation_state`. (Don't call the validator again if the input
+  didn't change.)
+
+Changes:
+- Refactoring of the key bindings.
+  * All the load functions now create a new `Registry` object.
+  * Added `MergedRegistry` and `ConditionalRegistry`.
+  * Added `prompt_toolkit.key_binding.defaults` for loading the default key
+    bindings.
+  * `prompt_toolkit.key_binding.manager` has been deprecated.
+
+
 1.0.9: 2016-11-07
 -----------------
 
