@@ -39,7 +39,6 @@ Changes:
   * Added `MergedRegistry` and `ConditionalRegistry`.
   * Added `prompt_toolkit.key_binding.defaults` for loading the default key
     bindings.
-  * `prompt_toolkit.key_binding.manager` has been deprecated.
 
 
 1.0.9: 2016-11-07
