@@ -1713,9 +1713,10 @@ def load_vi_open_in_editor_bindings():
     Pressing 'v' in navigation mode will open the buffer in an external editor.
     """
     registry = Registry()
-    navigation_mode = ViMode() & ViNavigationMode()
+    navigation_mode = ViNavigationMode()
 
-    registry.add_binding('v')(get_by_name('edit-and-execute-command'))
+    registry.add_binding('v', filter=navigation_mode)(
+        get_by_name('edit-and-execute-command'))
     return registry
 
 
