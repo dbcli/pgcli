@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+1.0.11: 2017-02-02
+------------------
+
+Fixes:
+- Only handle 'edit-and-execute-command' in Vi navigation mode.
+  (This affects every tool that uses `enable_open_in_editor=True`.)
+
+
 1.0.10: 2017-01-30
 ------------------
 
