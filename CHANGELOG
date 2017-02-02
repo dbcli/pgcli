@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+1.0.13: 2017-02-02
+------------------
+
+Fixes:
+- The 1.0.11 and 1.0.12 builds went wrong. (1.0.11 contained an additional
+  empty directory `prompt_toolkit/input/` which did hide the
+  `prompt_toolkit/input.py` file, and 1.0.12 contained an additional
+  broken `widgets.py` test file.)
+
+
 1.0.11: 2017-02-02
 ------------------
 
