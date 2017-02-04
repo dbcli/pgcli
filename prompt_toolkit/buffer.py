@@ -1316,7 +1316,7 @@ class Buffer(object):
         for e in editors:
             if e:
                 try:
-                    returncode = subprocess.call([e, filename])
+                    returncode = subprocess.call(e.split(' ') + [filename])
                     return returncode == 0
 
                 except OSError:
