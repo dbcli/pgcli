@@ -66,6 +66,10 @@ The `pgcli` is written using prompt_toolkit_.
 * Config file is automatically created at ``~/.config/pgcli/config`` at first launch.
 * Primitive support for ``psql`` back-slash commands. 
 * Pretty prints tabular data.
+  Note: `pgcli` uses [tabulate](https://github.com/dbcli/pgcli/blob/master/pgcli/packages/tabulate.py)
+  package to pretty-print tables. This library does smart formatting of numbers,
+  which can sometimes lead to unexpected output. See
+  [this issue](https://github.com/dbcli/pgcli/issues/617) for more details.
 
 .. _prompt_toolkit: https://github.com/jonathanslenders/python-prompt-toolkit
 
