@@ -424,7 +424,9 @@ class Vt100_Output(Output):
         assert stdout.isatty()
         def get_size():
             rows, columns = _get_size(stdout.fileno())
-            return Size(rows=rows, columns=columns)
+            # If terminal (incorrectly) reports its size as 0, pick a reasonable default.
+            # See https://github.com/ipython/ipython/issues/10071
+            return Size(rows=(rows or 24), columns=(columns or 80))
 
         return cls(stdout, get_size, true_color=true_color,
                    ansi_colors_only=ansi_colors_only, term=term)
