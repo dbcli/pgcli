@@ -127,6 +127,7 @@ Shells:
 - `haxor-news <https://github.com/donnemartin/haxor-news>`_: A Hacker News CLI.
 - `gitsome <https://github.com/donnemartin/gitsome>`_: A Git/Shell Autocompleter with GitHub Integration.
 - `http-prompt <https://github.com/eliangcs/http-prompt>`_: An interactive command-line HTTP client.
+- `coconut <http://coconut-lang.org/>`_: Functional programming in Python.
 
 Full screen applications:
 
