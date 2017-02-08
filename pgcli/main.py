@@ -85,6 +85,7 @@ class NullHandler(logging.Handler):
 class PGCli(object):
 
     default_prompt = '\\u@\\h:\\d> '
+    max_len_prompt = 30
 
     def set_default_pager(self, config):
         configured_pager = config['main'].get('pager')
@@ -494,7 +495,11 @@ class PGCli(object):
             set_vi_mode_enabled=set_vi_mode)
 
         def prompt_tokens(_):
-            return [(Token.Prompt, self.get_prompt(self.prompt_format))]
+            prompt = self.get_prompt(self.prompt_format)
+            if (self.prompt_format == self.default_prompt and
+               len(prompt) > self.max_len_prompt):
+                prompt = self.get_prompt('\\d> ')
+            return [(Token.Prompt, prompt)]
 
         def get_continuation_tokens(cli, width):
             return [(Token.Continuation, '.' * (width - 1) + ' ')]
