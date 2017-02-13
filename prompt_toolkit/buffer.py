@@ -21,6 +21,7 @@ from six.moves import range
 
 import os
 import re
+import shlex
 import six
 import subprocess
 import tempfile
@@ -1316,7 +1317,9 @@ class Buffer(object):
         for e in editors:
             if e:
                 try:
-                    returncode = subprocess.call(e.split(' ') + [filename])
+                    # Use 'shlex.split()', because $VISUAL can contain spaces
+                    # and quotes.
+                    returncode = subprocess.call(shlex.split(e) + [filename])
                     return returncode == 0
 
                 except OSError:
