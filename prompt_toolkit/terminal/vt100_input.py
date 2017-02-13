@@ -459,6 +459,8 @@ class raw_mode(object):
         else:
             newattr[tty.LFLAG] = self._patch_lflag(newattr[tty.LFLAG])
             newattr[tty.IFLAG] = self._patch_iflag(newattr[tty.IFLAG])
+            newattr[tty.CC][termios.VMIN] = 1
+
             termios.tcsetattr(self.fileno, termios.TCSANOW, newattr)
 
             # Put the terminal in cursor mode. (Instead of application mode.)
