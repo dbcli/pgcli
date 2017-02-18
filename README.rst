@@ -19,7 +19,7 @@ If you already know how to install python packages, then you can simply do:
 
 ::
 
-    $ pip install pgcli
+    $ pip install -U pgcli
 
     or
 
