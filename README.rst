@@ -128,6 +128,7 @@ Shells:
 - `gitsome <https://github.com/donnemartin/gitsome>`_: A Git/Shell Autocompleter with GitHub Integration.
 - `http-prompt <https://github.com/eliangcs/http-prompt>`_: An interactive command-line HTTP client.
 - `coconut <http://coconut-lang.org/>`_: Functional programming in Python.
+- `Ergonomica <https://ergonomica.github.io/>`_: A Bash alternative written in Python.
 
 Full screen applications:
 
