@@ -110,6 +110,9 @@ less_chatty = False
 # \n - Newline
 prompt = '\u@\h:\d> '
 
+# Number of lines to reserve for the suggestion menu
+min_num_menu_lines = 4
+
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
 Token.Menu.Completions.Completion.Current = 'bg:#ffffff #000000'
