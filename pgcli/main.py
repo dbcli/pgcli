@@ -132,6 +132,7 @@ class PGCli(object):
         else:
             self.row_limit = c['main'].as_int('row_limit')
 
+        self.min_num_menu_lines = c['main'].as_int('min_num_menu_lines')
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
@@ -142,6 +143,7 @@ class PGCli(object):
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
+
         self.completion_refresher = CompletionRefresher()
 
         self.query_history = []
@@ -511,7 +513,7 @@ class PGCli(object):
 
         layout = create_prompt_layout(
             lexer=PygmentsLexer(PostgresLexer),
-            reserve_space_for_menu=4,
+            reserve_space_for_menu=self.min_num_menu_lines,
             get_prompt_tokens=prompt_tokens,
             get_continuation_tokens=get_continuation_tokens,
             get_bottom_toolbar_tokens=get_toolbar_tokens,
