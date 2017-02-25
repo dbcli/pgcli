@@ -762,3 +762,9 @@ def test_handle_unrecognized_kw_generously():
     assert expected in set(suggestions)
 
 
+@pytest.mark.parametrize('sql', [
+    'ALTER ',
+    'ALTER TABLE foo ALTER ',
+])
+def test_keyword_after_alter(sql):
+    assert Keyword() in set(suggest_type(sql, sql))

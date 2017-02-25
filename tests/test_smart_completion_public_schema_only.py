@@ -999,3 +999,10 @@ def test_keyword_casing_upper(keyword_casing, expected, texts):
             Document(text=text, cursor_position=len(text)), complete_event)
         assert expected in [cpl.text for cpl in completions]
 
+
+def test_keyword_after_alter(completer):
+    sql = 'ALTER TABLE users ALTER '
+    expected = Completion('COLUMN', start_position=0, display_meta='keyword')
+    completions = completer.get_completions(
+        Document(text=sql, cursor_position=len(sql)), complete_event)
+    assert expected in set(completions)
