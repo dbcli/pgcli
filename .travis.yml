@@ -3,6 +3,8 @@ python:
   - "2.7"
   - "3.3"
   - "3.4"
+  - "3.5"
+  - "3.6"
 
 install: 
   - pip install . pytest mock codecov==1.5.1 behave pexpect==3.3
