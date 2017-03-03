@@ -374,13 +374,9 @@ class PGCli(object):
         except NotImplementedError:
             click.secho('Not Yet Implemented.', fg="yellow")
         except OperationalError as e:
-            if ('server closed the connection'
-                    in utf8tounicode(e.args[0])):
-                self._handle_server_closed_connection()
-            else:
-                logger.error("sql: %r, error: %r", text, e)
-                logger.error("traceback: %r", traceback.format_exc())
-                click.secho(str(e), err=True, fg='red')
+            logger.error("sql: %r, error: %r", text, e)
+            logger.error("traceback: %r", traceback.format_exc())
+            self._handle_server_closed_connection()
         except Exception as e:
             logger.error("sql: %r, error: %r", text, e)
             logger.error("traceback: %r", traceback.format_exc())
