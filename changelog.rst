@@ -1,3 +1,24 @@
+1.5.0
+=====
+
+Features:
+---------
+* Upgraded pgspecial to 1.7.0. (See `pgspecial changelog <https://github.com/dbcli/pgspecial/blob/master/changelog.rst>`_ for list of fixes)
+* Add a new config setting to allow expandable mode (Thanks: `Jonathan Boudreau <https://github.com/AGhost-7>`_)
+* Make pgcli prompt width short when the prompt is too long (Thanks: `Jonathan Virga <https://github.com/jnth>`_)
+* Add additional completion for ``ALTER`` keyword (Thanks: `Darik Gamble`_)
+* Make the menu size configurable. (Thanks `Darik Gamble`_)
+
+Bug Fixes:
+----------
+* Handle more connection failure cases. (Thanks: `Amjith Ramanujam`_)
+* Fix the connection failure issues with latest psycopg2. (Thanks: `Amjith Ramanujam`_)
+
+Internal Changes:
+-----------------
+
+* Add testing for Python 3.5 and 3.6. (Thanks: `Amjith Ramanujam`_)
+
 1.4.0
 =====
 
