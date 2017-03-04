@@ -1,6 +1,7 @@
 from pgcli.packages.parseutils.meta import FunctionMetadata, ForeignKey
 from prompt_toolkit.completion import Completion
 from functools import partial
+from itertools import product
 
 escape = lambda name: ('"' + name + '"' if not name.islower() or name in (
     'select', 'insert') else name)
@@ -66,6 +67,44 @@ class MetaData(object):
     @property
     def completer(self):
         return self.get_completer()
+
+    def get_completers(self, casing):
+        '''
+        Returns a function taking three bools `casing`, `filtr`, `alias` and
+        the list `qualify`, all defaulting to None.
+        Returns a list of completers.
+        These parameters specify the allowed values for the corresponding
+        completer parameters, `None` meaning any, i.e. (None, None, None, None)
+        results in all 24 possible completers, whereas e.g.
+        (True, False, True, ['never']) results in the one completer with casing,
+        without `search_path` filtering of objects, with table aliasing, and
+        without column qualification.
+        '''
+        def _cfg(_casing, filtr, alias, qualify):
+            cfg = {'settings':{}}
+            if _casing:
+                cfg['casing'] = casing
+            cfg['settings']['search_path_filter'] = filtr
+            cfg['settings']['generate_aliases'] = alias
+            cfg['settings']['qualify_columns'] = qualify
+            return cfg
+
+        def _cfgs(casing, filtr, alias, qualify):
+            casings = [True, False] if casing is None else [casing]
+            filtrs = [True, False] if filtr is None else [filtr]
+            aliases = [True, False] if alias is None else [alias]
+            qualifys = qualify or ['always', 'if_more_than_one_table', 'never']
+            return [
+                _cfg(*p) for p in product(casings, filtrs, aliases, qualifys)
+            ]
+
+        def completers(casing=None, filtr=None, alias=None, qualify=None):
+            get_comp = self.get_completer
+            return [
+                get_comp(**c) for c in _cfgs(casing, filtr, alias, qualify)
+            ]
+
+        return completers
 
     def get_completer(self, settings=None, casing=None):
         metadata = self.metadata
