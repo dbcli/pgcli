@@ -29,9 +29,9 @@ NamedQueries.instance = NamedQueries.from_config(
     load_config(config_location() + 'config'))
 
 Match = namedtuple('Match', ['completion', 'priority'])
-_SchemaObject = namedtuple('SchemaObject', ['name', 'function'])
-def SchemaObject(name, function=False):
-    return _SchemaObject(name, function)
+_SchemaObject = namedtuple('SchemaObject', ['name', 'schema', 'function'])
+def SchemaObject(name, schema=None, function=False):
+    return _SchemaObject(name, schema, function)
 
 _Candidate = namedtuple('Candidate', ['completion', 'priority', 'meta', 'synonyms'])
 def Candidate(completion, priority=None, meta=None, synonyms=None):
@@ -59,6 +59,7 @@ class PGCompleter(Completer):
         self.pgspecial = pgspecial
         self.prioritizer = PrevalenceCounter()
         settings = settings or {}
+        self.search_path_filter = settings.get('search_path_filter')
         self.generate_aliases = settings.get('generate_aliases')
         self.casing_file = settings.get('casing_file')
         self.generate_casing_file = settings.get('generate_casing_file')
@@ -601,11 +602,13 @@ class PGCompleter(Completer):
 
     def _make_cand(self, tbl, do_alias, suggestion):
         cased_tbl = self.case(tbl.name)
-        alias = self.alias(cased_tbl, suggestion.table_refs)
+        if do_alias:
+            alias = self.alias(cased_tbl, suggestion.table_refs)
         synonyms = (cased_tbl, generate_alias(cased_tbl))
         maybe_parens = '()' if tbl.function else ''
         maybe_alias = (' ' + alias) if do_alias else ''
-        item = cased_tbl + maybe_parens + maybe_alias
+        maybe_schema = (self.case(tbl.schema) + '.') if tbl.schema else ''
+        item = maybe_schema + cased_tbl + maybe_parens + maybe_alias
         return Candidate(item, synonyms=synonyms)
 
     def get_table_matches(self, suggestion, word_before_cursor, alias=False):
@@ -674,7 +677,7 @@ class PGCompleter(Completer):
     def get_datatype_matches(self, suggestion, word_before_cursor):
         # suggest custom datatypes
         types = self.populate_schema_objects(suggestion.schema, 'datatypes')
-        types = [t.name for t in types]
+        types = [self._make_cand(t, False, suggestion) for t in types]
         matches = self.find_matches(word_before_cursor, types, meta='datatype')
 
         if not suggestion.schema:
@@ -755,15 +758,22 @@ class PGCompleter(Completer):
         if schema:
             schema = self.escape_name(schema)
             return [schema] if schema in metadata else []
-        return self.search_path
+        return self.search_path if self.search_path_filter else metadata.keys()
+
+    def _maybe_schema(self, schema, parent):
+        return None if parent or schema in self.search_path else schema
 
     def populate_schema_objects(self, schema, obj_type):
         """Returns list of tables or functions for a (optional) schema"""
 
         return [
-            SchemaObject(obj, obj_type == 'functions')
-            for schema in self._get_schemas(obj_type, schema)
-            for obj in self.dbmetadata[obj_type][schema].keys()
+            SchemaObject(
+                name=obj,
+                schema=(self._maybe_schema(schema=sch, parent=schema)),
+                function=(obj_type == 'functions')
+            )
+            for sch in self._get_schemas(obj_type, schema)
+            for obj in self.dbmetadata[obj_type][sch].keys()
         ]
 
     def populate_functions(self, schema, filter_func):
@@ -778,9 +788,13 @@ class PGCompleter(Completer):
         # with the same name, which is why `for meta in metas` is necessary
         # in the comprehensions below
         return [
-            SchemaObject(func, True)
-            for schema in self._get_schemas('functions', schema)
-            for (func, metas) in self.dbmetadata['functions'][schema].items()
+            SchemaObject(
+                name=func,
+                schema=(self._maybe_schema(schema=sch, parent=schema)),
+                function=True
+            )
+            for sch in self._get_schemas('functions', schema)
+            for (func, metas) in self.dbmetadata['functions'][sch].items()
             for meta in metas
             if filter_func(meta)
         ]
