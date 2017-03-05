@@ -4,9 +4,14 @@ from functools import partial
 from itertools import product
 from prompt_toolkit.document import Document
 from mock import Mock
+import pytest
 
 escape = lambda name: ('"' + name + '"' if not name.islower() or name in (
     'select', 'insert') else name)
+
+parametrize = pytest.mark.parametrize
+qual = ['if_more_than_one_table', 'always']
+no_qual = ['if_more_than_one_table', 'never']
 
 def completion(display_meta, text, pos=0):
     return Completion(text, start_position=pos, display_meta=display_meta)
