@@ -2,13 +2,24 @@ from pgcli.packages.parseutils.meta import FunctionMetadata, ForeignKey
 from prompt_toolkit.completion import Completion
 from functools import partial
 from itertools import product
+from prompt_toolkit.document import Document
+from mock import Mock
 
 escape = lambda name: ('"' + name + '"' if not name.islower() or name in (
     'select', 'insert') else name)
 
 def completion(display_meta, text, pos=0):
-    return Completion(text, start_position=pos,
-        display_meta=display_meta)
+    return Completion(text, start_position=pos, display_meta=display_meta)
+
+def get_result(completer, text, position=None):
+    position = len(text) if position is None else position
+    return completer.get_completions(
+        Document(text=text, cursor_position=position), Mock()
+    )
+
+def result_set(completer, text, position=None):
+    return set(get_result(completer, text, position))
+
 
 # The code below is quivalent to
 # def schema(text, pos=0):
