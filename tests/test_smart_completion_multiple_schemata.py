@@ -322,8 +322,8 @@ def test_suggested_aliases_after_on_right_side(completer, complete_event):
 
 @parametrize('completer', completers(filtr=True, casing=False, alias=False))
 def test_table_names_after_from(completer, complete_event):
-    text = 'SELECT * FROM '
-    position = len('SELECT * FROM ')
+    text = ('SELECT * FROM ')
+    position = len(text)
     result = set(completer.get_completions(Document(text=text, cursor_position=position),
         complete_event))
     assert set(result) == set(testdata.schemas() + testdata.tables()
@@ -682,8 +682,8 @@ def test_schema_object_order(completer, complete_event):
 
 @parametrize('completer', completers(casing=False, filtr=False, alias=False))
 def test_all_schema_objects(completer, complete_event):
-    text = 'SELECT * FROM '
-    position = len('SELECT * FROM ')
+    text = ('SELECT * FROM ')
+    position = len(text)
     result = set(
         completer.get_completions(
             Document(text=text, cursor_position=position),
@@ -698,8 +698,8 @@ def test_all_schema_objects(completer, complete_event):
 
 @parametrize('completer', completers(filtr=False, alias=False, casing=True))
 def test_all_schema_objects_with_casing(completer, complete_event):
-    text = 'SELECT * FROM '
-    position = len('SELECT * FROM ')
+    text = ('SELECT * FROM ')
+    position = len(text)
     result = set(
         completer.get_completions(
             Document(text=text, cursor_position=position),
@@ -714,8 +714,8 @@ def test_all_schema_objects_with_casing(completer, complete_event):
 
 @parametrize('completer', completers(casing=False, filtr=False, alias=True))
 def test_all_schema_objects_with_aliases(completer, complete_event):
-    text = 'SELECT * FROM '
-    position = len('SELECT * FROM ')
+    text = ('SELECT * FROM ')
+    position = len(text)
     result = set(
         completer.get_completions(
             Document(text=text, cursor_position=position),

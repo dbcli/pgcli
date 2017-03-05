@@ -76,8 +76,8 @@ def test_empty_string_completion(completer, complete_event):
 
 @parametrize('completer', completers())
 def test_select_keyword_completion(completer, complete_event):
-    text = 'SEL'
-    position = len('SEL')
+    text = ('SEL')
+    position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position),
         complete_event)
@@ -86,8 +86,8 @@ def test_select_keyword_completion(completer, complete_event):
 
 @parametrize('completer', completers())
 def test_builtin_function_name_completion(completer, complete_event):
-    text = 'SELECT MA'
-    position = len('SELECT MA')
+    text = ('SELECT MA')
+    position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([
@@ -98,8 +98,8 @@ def test_builtin_function_name_completion(completer, complete_event):
 
 @parametrize('completer', completers())
 def test_builtin_function_matches_only_at_start(completer, complete_event):
-    text = 'SELECT IN'
-    position = len('SELECT IN')
+    text = ('SELECT IN')
+    position = len(text)
     document = Document(text=text, cursor_position=position)
 
     result = [c.text for c in
@@ -110,8 +110,8 @@ def test_builtin_function_matches_only_at_start(completer, complete_event):
 
 @parametrize('completer', completers(casing=False, alias=False))
 def test_user_function_name_completion(completer, complete_event):
-    text = 'SELECT cu'
-    position = len('SELECT cu')
+    text = ('SELECT cu')
+    position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([
@@ -126,8 +126,8 @@ def test_user_function_name_completion(completer, complete_event):
 @parametrize('completer', completers(casing=False, alias=False))
 def test_user_function_name_completion_matches_anywhere(completer,
                                                         complete_event):
-    text = 'SELECT om'
-    position = len('SELECT om')
+    text = ('SELECT om')
+    position = len(text)
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
     assert set(result) == set([
