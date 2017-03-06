@@ -107,9 +107,10 @@ def test_builtin_function_name_completion(completer, complete_event):
     position = len('SELECT MA')
     result = completer.get_completions(
         Document(text=text, cursor_position=position), complete_event)
-    assert set(result) == set([function('MAX', -2),
-                               keyword('MAXEXTENTS', -2),
-                              ])
+    assert set(result) == set([
+        function('MAX', -2),
+        keyword('MAXEXTENTS', -2), keyword('MATERIALIZED VIEW', -2),
+    ])
 
 
 def test_builtin_function_matches_only_at_start(completer, complete_event):
