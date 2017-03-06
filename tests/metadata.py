@@ -80,6 +80,31 @@ class MetaData(object):
         schemas = set(sch for schs in self.metadata.values() for sch in schs)
         return [schema(escape(s), pos=pos) for s in schemas]
 
+    def functions_and_keywords(self, schema='public', pos=0):
+        return (
+            self.functions(schema, pos) + self.builtin_functions(pos) +
+            self.keywords(pos)
+        )
+
+    # Note that the filtering parameters here only apply to the columns
+    def columns_functions_and_keywords(self, parent, schema='public', typ='tables', pos=0):
+        return (
+            self.functions_and_keywords(pos=pos) +
+            self.columns(parent, schema, typ, pos)
+        )
+
+    def from_clause_items(self, schema='public', pos=0):
+        return (
+            self.functions(schema, pos) + self.views(schema, pos) +
+            self.tables(schema, pos)
+        )
+
+    def schemas_and_from_clause_items(self, schema='public', pos=0):
+        return self.from_clause_items(schema, pos) + self.schemas(pos)
+
+    def types(self, schema='public', pos=0):
+        return self.datatypes(schema, pos) + self.tables(schema, pos)
+
     @property
     def completer(self):
         return self.get_completer()
