@@ -73,18 +73,13 @@ completers = testdata.get_completers(casing)
     'users',
     '"users"',
     ])
-def test_suggested_column_names_from_shadowed_visible_table(
-    completer, table
-):
-    text = 'SELECT  FROM ' + table
-    position = len('SELECT ')
-    result = result_set(completer, text, position)
-
-    assert set(result) == set(testdata.columns('users') +
+def test_suggested_column_names_from_shadowed_visible_table(completer, table):
+    result = result_set(completer, 'SELECT  FROM ' + table, len('SELECT '))
+    assert result == set(testdata.columns('users') +
         testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
-        )
+    )
 
 
 @parametrize('completer', completers(filtr=True, casing=False, qualify=no_qual))
@@ -93,9 +88,8 @@ def test_suggested_column_names_from_shadowed_visible_table(
     'WITH users as (SELECT 1 AS foo) SELECT  from custom.users',
     ])
 def test_suggested_column_names_from_qualified_shadowed_table(completer, text):
-    position = text.find('  ') + 1
-    result = result_set(completer, text, position)
-    assert set(result) == set(testdata.columns('users', 'custom') +
+    result = result_set(completer, text, position = text.find('  ') + 1)
+    assert result == set(testdata.columns('users', 'custom') +
         testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
@@ -107,9 +101,8 @@ def test_suggested_column_names_from_qualified_shadowed_table(completer, text):
     'WITH users as (SELECT 1 AS foo) SELECT  from users',
     ])
 def test_suggested_column_names_from_cte(completer, text):
-    position = text.find('  ') + 1
-    result = result_set(completer, text, position)
-    assert set(result) == set([column('foo')] + testdata.functions() +
+    result = result_set(completer, text, text.find('  ') + 1)
+    assert result == set([column('foo')] + testdata.functions() +
         list(testdata.builtin_functions() + testdata.keywords())
     )
 
@@ -123,7 +116,7 @@ def test_suggested_column_names_from_cte(completer, text):
 ])
 def test_suggested_join_conditions(completer, text):
     result = result_set(completer, text)
-    assert set(result) == set([
+    assert result == set([
         alias('users'),
         alias('shipments'),
         name_join('shipments.id = users.id'),
@@ -138,19 +131,18 @@ def test_suggested_join_conditions(completer, text):
     JOIN '''
 ), ('users', '"users"', 'Users')))
 def test_suggested_joins(completer, query, tbl):
-    text = query.format(tbl)
-    result = result_set(completer, text)
-    assert set(result) == set(testdata.schemas() + testdata.tables() + [
+    result = result_set(completer, query.format(tbl))
+    assert result == set(testdata.schemas() + testdata.tables() + [
         join('custom.shipments ON shipments.user_id = {0}.id'.format(tbl)),
         ] + testdata.functions())
 
 
 @parametrize('completer', completers(filtr=True, casing=False, qualify=no_qual))
 def test_suggested_column_names_from_schema_qualifed_table(completer):
-    text = 'SELECT  from custom.products'
-    position = len('SELECT ')
-    result = result_set(completer, text, position)
-    assert set(result) == set(
+    result = result_set(
+        completer, 'SELECT  from custom.products', len('SELECT ')
+    )
+    assert result == set(
         testdata.columns('products', 'custom') + testdata.functions() +
         list(testdata.builtin_functions() + testdata.keywords())
     )
@@ -158,10 +150,10 @@ def test_suggested_column_names_from_schema_qualifed_table(completer):
 
 @parametrize('completer', completers(filtr=True, casing=False, qualify=no_qual))
 def test_suggested_column_names_in_function(completer):
-    text = 'SELECT MAX( from custom.products'
-    position = len('SELECT MAX(')
-    result = result_set(completer, text, position)
-    assert set(result) == set(testdata.columns('products', 'custom'))
+    result = result_set(
+        completer, 'SELECT MAX( from custom.products', len('SELECT MAX(')
+    )
+    assert result == set(testdata.columns('products', 'custom'))
 
 
 @parametrize('completer', completers(casing=False, alias=False))
@@ -181,7 +173,7 @@ def test_suggested_table_names_with_schema_dot(
         start_position = 0
 
     result = result_set(completer, text)
-    assert set(result) == set(testdata.tables('custom', start_position)
+    assert result == set(testdata.tables('custom', start_position)
         + testdata.functions('custom', start_position))
 
 
@@ -200,24 +192,24 @@ def test_suggested_table_names_with_schema_dot2(
         start_position = 0
 
     result = result_set(completer, text)
-    assert set(result) == set(testdata.functions('Custom', start_position) +
+    assert result == set(testdata.functions('Custom', start_position) +
         testdata.tables('Custom', start_position))
 
 
 @parametrize('completer', completers(filtr=True, casing=False))
 def test_suggested_column_names_with_qualified_alias(completer):
-    text = 'SELECT p. from custom.products p'
-    position = len('SELECT p.')
-    result = result_set(completer, text, position)
-    assert set(result) == set(testdata.columns('products', 'custom'))
+    result = result_set(
+        completer, 'SELECT p. from custom.products p', len('SELECT p.')
+    )
+    assert result == set(testdata.columns('products', 'custom'))
 
 
 @parametrize('completer', completers(filtr=True, casing=False, qualify=no_qual))
 def test_suggested_multiple_column_names(completer):
-    text = 'SELECT id,  from custom.products'
-    position = len('SELECT id, ')
-    result = result_set(completer, text, position)
-    assert set(result) == set(testdata.columns('products', 'custom') +
+    result = result_set(
+        completer, 'SELECT id,  from custom.products', len('SELECT id, ')
+    )
+    assert result == set(testdata.columns('products', 'custom') +
         testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
@@ -226,10 +218,12 @@ def test_suggested_multiple_column_names(completer):
 
 @parametrize('completer', completers(filtr=True, casing=False))
 def test_suggested_multiple_column_names_with_alias(completer):
-    text = 'SELECT p.id, p. from custom.products p'
-    position = len('SELECT u.id, u.')
-    result = result_set(completer, text, position)
-    assert set(result) == set(testdata.columns('products', 'custom'))
+    result = result_set(
+        completer,
+        'SELECT p.id, p. from custom.products p',
+        len('SELECT u.id, u.')
+    )
+    assert result == set(testdata.columns('products', 'custom'))
 
 
 @parametrize('completer', completers(filtr=True, casing=False))
@@ -240,7 +234,7 @@ def test_suggested_multiple_column_names_with_alias(completer):
 def test_suggestions_after_on(completer, text):
     position = len('SELECT x.id, y.product_name FROM custom.products x JOIN custom.products y ON ')
     result = result_set(completer, text, position)
-    assert set(result) == set([
+    assert result == set([
         alias('x'),
         alias('y'),
         name_join('y.price = x.price'),
@@ -252,16 +246,16 @@ def test_suggestions_after_on(completer, text):
 def test_suggested_aliases_after_on_right_side(completer):
     text = 'SELECT x.id, y.product_name FROM custom.products x JOIN custom.products y ON x.id = '
     result = result_set(completer, text)
-    assert set(result) == set([
+    assert result == set([
         alias('x'),
         alias('y')])
 
 
 @parametrize('completer', completers(filtr=True, casing=False, alias=False))
 def test_table_names_after_from(completer):
-    text = ('SELECT * FROM ')
+    text = 'SELECT * FROM '
     result = result_set(completer, text)
-    assert set(result) == set(testdata.schemas() + testdata.tables()
+    assert result == set(testdata.schemas() + testdata.tables()
         + testdata.functions())
 
 
@@ -283,16 +277,18 @@ def test_schema_qualified_function_name(completer):
 ])
 def test_schema_qualified_type_name(completer, text):
     result = result_set(completer, text)
-    assert set(result) == set(testdata.datatypes('custom')
+    assert result == set(testdata.datatypes('custom')
         + testdata.tables('custom'))
 
 
 @parametrize('completer', completers(filtr=True, casing=False))
 def test_suggest_columns_from_aliased_set_returning_function(completer):
-    text = 'select f. from custom.set_returning_func() f'
-    position = len('select f.')
-    result = result_set(completer, text, position)
-    assert set(result) == set(
+    result = result_set(
+        completer,
+        'select f. from custom.set_returning_func() f',
+        len('select f.')
+    )
+    assert result == set(
         testdata.columns('set_returning_func', 'custom', 'functions'))
 
 
@@ -415,7 +411,7 @@ def test_wildcard_column_expansion_with_two_tables_and_parent(completer):
 def test_suggest_columns_from_unquoted_table(completer, text):
     position = len('SELECT U.')
     result = result_set(completer, text, position)
-    assert set(result) == set(testdata.columns('users', 'custom'))
+    assert result == set(testdata.columns('users', 'custom'))
 
 
 @parametrize('completer', completers(filtr=True, casing=False))
@@ -426,7 +422,7 @@ def test_suggest_columns_from_unquoted_table(completer, text):
 def test_suggest_columns_from_quoted_table(completer, text):
     position = len('SELECT U.')
     result = result_set(completer, text, position)
-    assert set(result) == set(testdata.columns('Users', 'custom'))
+    assert result == set(testdata.columns('Users', 'custom'))
 
 texts = ['SELECT * FROM ', 'SELECT * FROM public.Orders O CROSS JOIN ']
 
@@ -434,16 +430,16 @@ texts = ['SELECT * FROM ', 'SELECT * FROM public.Orders O CROSS JOIN ']
 @parametrize('completer', completers(filtr=True, casing=False, alias=False))
 @parametrize('text', texts)
 def test_schema_or_visible_table_completion(completer, text):
-    result = get_result(completer, text)
-    assert set(result) == set(testdata.schemas()
+    result = result_set(completer, text)
+    assert result == set(testdata.schemas()
         + testdata.views() + testdata.tables() + testdata.functions())
 
 
 @parametrize('completer', completers(alias=True, casing=False, filtr=True))
 @parametrize('text', texts)
 def test_table_aliases(completer, text):
-    result = get_result(completer, text)
-    assert set(result) == set(testdata.schemas() + [
+    result = result_set(completer, text)
+    assert result == set(testdata.schemas() + [
         table('users u'),
         table('orders o' if text == 'SELECT * FROM ' else 'orders o2'),
         table('"select" s'),
@@ -454,8 +450,8 @@ def test_table_aliases(completer, text):
 @parametrize('completer', completers(alias=True, casing=True, filtr=True))
 @parametrize('text', texts)
 def test_aliases_with_casing(completer, text):
-    result = get_result(completer, text)
-    assert set(result) == set(cased_schemas + [
+    result = result_set(completer, text)
+    assert result == set(cased_schemas + [
         table('users u'),
         table('Orders O' if text == 'SELECT * FROM ' else 'Orders O2'),
         table('"select" s'),
@@ -466,8 +462,8 @@ def test_aliases_with_casing(completer, text):
 @parametrize('completer', completers(alias=False, casing=True, filtr=True))
 @parametrize('text', texts)
 def test_table_casing(completer, text):
-    result = get_result(completer, text)
-    assert set(result) == set(cased_schemas + [
+    result = result_set(completer, text)
+    assert result == set(cased_schemas + [
         table('users'),
         table('Orders'),
         table('"select"'),
@@ -550,27 +546,25 @@ def test_function_alias_search_with_aliases(completer):
 
 @parametrize('completer',completers(filtr=True, casing=True, qualify=no_qual))
 def test_column_alias_search(completer):
-    text = 'SELECT et FROM blog.Entries E'
-    position = len('SELECT et')
-    result = get_result(completer, text, position)
+    result = get_result(
+        completer, 'SELECT et FROM blog.Entries E', len('SELECT et')
+    )
     cols = ('EntryText', 'EntryTitle', 'EntryID')
     assert result[:3] == [column(c, -2) for c in cols]
 
 
 @parametrize('completer', completers(casing=True))
 def test_column_alias_search_qualified(completer):
-    text = 'SELECT E.ei FROM blog.Entries E'
-    position = len('SELECT E.ei')
-    result = get_result(completer, text, position)
+    result = get_result(
+        completer, 'SELECT E.ei FROM blog.Entries E', len('SELECT E.ei')
+    )
     cols = ('EntryID', 'EntryTitle')
     assert result[:3] == [column(c, -2) for c in cols]
 
 
 @parametrize('completer', completers(casing=False, filtr=False, alias=False))
 def test_schema_object_order(completer):
-    text = 'SELECT * FROM u'
-    position = len('SELECT * FROM u')
-    result = get_result(completer, text, position)
+    result = get_result(completer, 'SELECT * FROM u')
     assert result[:3] == [
         table(t, pos=-1) for t in ('users', 'custom."Users"', 'custom.users')
     ]
@@ -587,7 +581,7 @@ def test_all_schema_objects(completer):
 
 @parametrize('completer', completers(filtr=False, alias=False, casing=True))
 def test_all_schema_objects_with_casing(completer):
-    text = ('SELECT * FROM ')
+    text = 'SELECT * FROM '
     result = result_set(completer, text)
     assert result >= set(
         [table(x) for x in ('Orders', '"select"', 'CUSTOM.shipments')]

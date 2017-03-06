@@ -57,31 +57,27 @@ completers = testdata.get_completers(casing)
 
 @parametrize('completer', completers())
 def test_empty_string_completion(completer):
-    text = ''
-    result = result_set(completer, text)
+    result = result_set(completer, '')
     assert set(testdata.keywords()) == result
 
 
 @parametrize('completer', completers())
 def test_select_keyword_completion(completer):
-    text = ('SEL')
-    result = result_set(completer, text)
+    result = result_set(completer, 'SEL')
     assert result == set([keyword('SELECT', -3)])
 
 
 @parametrize('completer', completers())
 def test_builtin_function_name_completion(completer):
-    text = ('SELECT MA')
-    result = result_set(completer, text)
+    result = result_set(completer, 'SELECT MA')
     assert result == set([
         function('MAX', -2),
         keyword('MAXEXTENTS', -2), keyword('MATERIALIZED VIEW', -2)
     ])
 
-
 @parametrize('completer', completers())
 def test_builtin_function_matches_only_at_start(completer):
-    text = ('SELECT IN')
+    text = 'SELECT IN'
 
     result = [c.text for c in get_result(completer, text)]
 
@@ -90,8 +86,7 @@ def test_builtin_function_matches_only_at_start(completer):
 
 @parametrize('completer', completers(casing=False, alias=False))
 def test_user_function_name_completion(completer):
-    text = ('SELECT cu')
-    result = result_set(completer, text)
+    result = result_set(completer, 'SELECT cu')
     assert result == set([
         function('custom_fun()', -2),
         function('_custom_fun()', -2),
@@ -103,8 +98,7 @@ def test_user_function_name_completion(completer):
 
 @parametrize('completer', completers(casing=False, alias=False))
 def test_user_function_name_completion_matches_anywhere(completer):
-    text = ('SELECT om')
-    result = result_set(completer, text)
+    result = result_set(completer, 'SELECT om')
     assert result == set([
         function('custom_fun()', -2),
         function('_custom_fun()', -2),
@@ -114,9 +108,7 @@ def test_user_function_name_completion_matches_anywhere(completer):
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
 def test_suggested_column_names_from_visible_table(completer):
-    text = 'SELECT  from users'
-    position = len('SELECT ')
-    result = result_set(completer, text, position)
+    result = result_set(completer, 'SELECT  from users', len('SELECT '))
     assert result == set(testdata.columns('users') + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
@@ -125,9 +117,7 @@ def test_suggested_column_names_from_visible_table(completer):
 
 @parametrize('completer', completers(casing=True, qualify=no_qual))
 def test_suggested_cased_column_names(completer):
-    text = 'SELECT  from users'
-    position = len('SELECT ')
-    result = result_set(completer, text, position)
+    result = result_set(completer, 'SELECT  from users', len('SELECT '))
     assert result == set(cased_funcs + cased_users_cols
         + testdata.builtin_functions() + testdata.keywords())
 
@@ -184,33 +174,31 @@ def test_suggested_cased_always_qualified_column_names(
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
 def test_suggested_column_names_in_function(completer):
-    text = 'SELECT MAX( from users'
-    position = len('SELECT MAX(')
-    result = result_set(completer, text, position)
+    result = result_set(
+        completer, 'SELECT MAX( from users', len('SELECT MAX(')
+    )
     assert result == set(testdata.columns('users'))
 
 
 @parametrize('completer', completers(casing=False))
 def test_suggested_column_names_with_table_dot(completer):
-    text = 'SELECT users. from users'
-    position = len('SELECT users.')
-    result = result_set(completer, text, position)
+    result = result_set(
+        completer, 'SELECT users. from users', len('SELECT users.')
+    )
     assert result == set(testdata.columns('users'))
 
 
 @parametrize('completer', completers(casing=False))
 def test_suggested_column_names_with_alias(completer):
-    text = 'SELECT u. from users u'
-    position = len('SELECT u.')
-    result = result_set(completer, text, position)
+    result = result_set(completer, 'SELECT u. from users u', len('SELECT u.'))
     assert result == set(testdata.columns('users'))
 
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
 def test_suggested_multiple_column_names(completer):
-    text = 'SELECT id,  from users u'
-    position = len('SELECT id, ')
-    result = result_set(completer, text, position)
+    result = result_set(
+        completer, 'SELECT id,  from users u', len('SELECT id, ')
+    )
     assert result == set(testdata.columns('users') + testdata.functions() +
         list(testdata.builtin_functions() +
         testdata.keywords())
@@ -219,26 +207,28 @@ def test_suggested_multiple_column_names(completer):
 
 @parametrize('completer', completers(casing=False))
 def test_suggested_multiple_column_names_with_alias(completer):
-    text = 'SELECT u.id, u. from users u'
-    position = len('SELECT u.id, u.')
-    result = result_set(completer, text, position)
+    result = result_set(
+        completer, 'SELECT u.id, u. from users u', len('SELECT u.id, u.')
+    )
     assert result == set(testdata.columns('users'))
 
 
 
 @parametrize('completer', completers(casing=True))
 def test_suggested_cased_column_names_with_alias(completer):
-    text = 'SELECT u.id, u. from users u'
-    position = len('SELECT u.id, u.')
-    result = result_set(completer, text, position)
+    result = result_set(
+        completer, 'SELECT u.id, u. from users u', len('SELECT u.id, u.')
+    )
     assert result == set(cased_users_cols)
 
 
 @parametrize('completer', completers(casing=False))
 def test_suggested_multiple_column_names_with_dot(completer):
-    text = 'SELECT users.id, users. from users u'
-    position = len('SELECT users.id, users.')
-    result = result_set(completer, text, position)
+    result = result_set(
+        completer,
+        'SELECT users.id, users. from users u',
+        len('SELECT users.id, users.')
+    )
     assert result == set(testdata.columns('users'))
 
 
@@ -249,6 +239,7 @@ def test_suggest_columns_after_three_way_join(completer):
               INNER JOIN users u3 ON u2.id = u3.'''
     result = result_set(completer, text)
     assert (column('id') in result)
+
 
 join_condition_texts = [
     'INSERT INTO orders SELECT * FROM users U JOIN "Users" U2 ON ',
@@ -274,19 +265,17 @@ join_condition_texts = [
 def test_suggested_join_conditions(completer, text):
     result = result_set(completer, text)
     assert result == set([
-        alias('U'),
-        alias('U2'),
-        fk_join('U2.userid = U.id')])
+        alias('U'), alias('U2'), fk_join('U2.userid = U.id')
+    ])
 
 
 @parametrize('completer', completers(casing=True))
 @parametrize('text', join_condition_texts)
 def test_cased_join_conditions(completer, text):
     result = result_set(completer, text)
-    assert result == set([
-        alias('U'),
-        alias('U2'),
-        fk_join('U2.UserID = U.ID')])
+    assert result == set(
+        [alias('U'), alias('U2'), fk_join('U2.UserID = U.ID')]
+    )
 
 
 @parametrize('completer', completers(casing=False))
@@ -375,9 +364,7 @@ def test_suggested_joins(completer, text):
 @parametrize('completer', completers(casing=True, alias=False))
 @parametrize('text', join_texts)
 def test_cased_joins(completer, text):
-    result = set(
-        result_set(completer, text)
-    )
+    result = result_set(completer, text)
     assert result == set([schema('PUBLIC')] + cased_rels + [
         join('"Users" ON "Users".UserID = Users.ID'),
         join('Users Users2 ON Users2.ID = Users.PARENTID'),
@@ -388,9 +375,7 @@ def test_cased_joins(completer, text):
 @parametrize('completer', completers(casing=False, alias=True))
 @parametrize('text', join_texts)
 def test_aliased_joins(completer, text):
-    result = set(
-        result_set(completer, text)
-    )
+    result = result_set(completer, text)
     assert result == set(testdata.schemas() + aliased_rels + [
         join('"Users" U ON U.userid = Users.id'),
         join('users u ON u.id = Users.parentid'),
@@ -411,7 +396,7 @@ def test_suggested_joins_quoted_schema_qualified_table(completer, text):
     assert result == set(testdata.schemas() + testdata.tables()
         + testdata.views() + [
         join('public.users ON users.id = "Users".userid'),
-        ] + testdata.functions())
+    ] + testdata.functions())
 
 
 @parametrize('completer', completers(casing=False))
@@ -435,11 +420,11 @@ def test_suggested_aliases_after_on(completer, text):
     'SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id =  JOIN orders o2 ON'
 ])
 def test_suggested_aliases_after_on_right_side(completer, text):
-    position = len('SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = ')
+    position = len(
+        'SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = '
+    )
     result = result_set(completer, text, position)
-    assert result == set([
-        alias('u'),
-        alias('o')])
+    assert result == set([alias('u'), alias('o')])
 
 
 @parametrize('completer', completers(casing=False))
@@ -454,7 +439,8 @@ def test_suggested_tables_after_on(completer, text):
         name_join('orders.id = users.id'),
         name_join('orders.email = users.email'),
         alias('users'),
-        alias('orders')])
+        alias('orders')
+    ])
 
 
 @parametrize('completer', completers(casing=False))
@@ -465,9 +451,7 @@ def test_suggested_tables_after_on(completer, text):
 def test_suggested_tables_after_on_right_side(completer, text):
     position = len('SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = ')
     result = result_set(completer, text, position)
-    assert result == set([
-        alias('users'),
-        alias('orders')])
+    assert result == set([alias('users'), alias('orders')])
 
 
 @parametrize('completer', completers(casing=False))
@@ -477,10 +461,7 @@ def test_suggested_tables_after_on_right_side(completer, text):
 ])
 def test_join_using_suggests_common_columns(completer, text):
     result = result_set(completer, text)
-    assert result == set([
-        column('id'),
-        column('email'),
-    ])
+    assert result == set([column('id'), column('email')])
 
 
 @parametrize('completer', completers(casing=False))
@@ -493,10 +474,7 @@ def test_join_using_suggests_common_columns(completer, text):
 def test_join_using_suggests_from_last_table(completer, text):
     position = text.index('()') + 1
     result = result_set(completer, text, position)
-    assert result == set([
-        column('id'),
-        column('email'),
-    ])
+    assert result == set([column('id'), column('email')])
 
 
 @parametrize('completer', completers(casing=False))
@@ -506,10 +484,7 @@ def test_join_using_suggests_from_last_table(completer, text):
 ])
 def test_join_using_suggests_columns_after_first_column(completer, text):
     result = result_set(completer, text)
-    assert result == set([
-        column('id'),
-        column('email'),
-    ])
+    assert result == set([column('id'), column('email')])
 
 
 @parametrize('completer', completers(casing=False, alias=False))
@@ -539,9 +514,7 @@ def test_table_names_after_from(completer, text):
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
 def test_auto_escaped_col_names(completer):
-    text = 'SELECT  from "select"'
-    position = len('SELECT ')
-    result = result_set(completer, text, position)
+    result = result_set(completer, 'SELECT  from "select"', len('SELECT '))
     assert result == set(testdata.columns('select') + [
         ] + testdata.functions() +
         list(testdata.builtin_functions() +
@@ -551,8 +524,7 @@ def test_auto_escaped_col_names(completer):
 
 @parametrize('completer', completers(alias=False))
 def test_allow_leading_double_quote_in_last_word(completer):
-    text = 'SELECT * from "sele'
-    result = result_set(completer, text)
+    result = result_set(completer, 'SELECT * from "sele')
 
     expected = table('"select"', -5)
 
@@ -574,29 +546,31 @@ def test_suggest_datatype(text, completer):
 
 @parametrize('completer', completers(casing=False))
 def test_suggest_columns_from_escaped_table_alias(completer):
-    text = 'select * from "select" s where s.'
-    result = result_set(completer, text)
+    result = result_set(completer, 'select * from "select" s where s.')
     assert result == set(testdata.columns('select'))
 
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
 def test_suggest_columns_from_set_returning_function(completer):
-    text = 'select  from set_returning_func()'
-    position = len('select ')
-    result = result_set(completer, text, position)
+    result = result_set(
+        completer, 'select  from set_returning_func()', len('select ')
+    )
     assert result == set(
         testdata.columns('set_returning_func', typ='functions')
         + testdata.functions()
         + list(testdata.builtin_functions()
-        + testdata.keywords()))
+        + testdata.keywords())
+    )
 
 
 @parametrize('completer', completers(casing=False))
 def test_suggest_columns_from_aliased_set_returning_function(completer):
-    text = 'select f. from set_returning_func() f'
-    position = len('select f.')
-    result = result_set(completer, text, position)
-    assert result == set(testdata.columns('set_returning_func', typ='functions'))
+    result = result_set(
+        completer, 'select f. from set_returning_func() f', len('select f.')
+    )
+    assert result == set(
+        testdata.columns('set_returning_func', typ='functions')
+    )
 
 
 @parametrize('completer', completers(casing=False))
@@ -605,7 +579,8 @@ def test_join_functions_using_suggests_common_columns(completer):
               INNER JOIN set_returning_func() f2 USING ('''
     result = result_set(completer, text)
     assert result == set(
-        testdata.columns('set_returning_func', typ='functions'))
+        testdata.columns('set_returning_func', typ='functions')
+    )
 
 
 @parametrize('completer', completers(casing=False))
@@ -613,10 +588,10 @@ def test_join_functions_on_suggests_columns_and_join_conditions(completer):
     text = '''SELECT * FROM set_returning_func() f1
               INNER JOIN set_returning_func() f2 ON f1.'''
     result = result_set(completer, text)
-    assert result == set([
-         name_join('y = f2.y'),
-         name_join('x = f2.x'),
-         ] + testdata.columns('set_returning_func', typ='functions'))
+    assert result == set(
+        [name_join('y = f2.y'), name_join('x = f2.x')] +
+        testdata.columns('set_returning_func', typ='functions')
+    )
 
 
 @parametrize('completer', completers())
@@ -702,7 +677,9 @@ def test_wildcard_column_expansion_with_alias(completer, text):
     ('SELECT Users.* FROM Users',
         'id, Users.parentid, Users.email, Users.first_name, Users.last_name'),
 ])
-def test_wildcard_column_expansion_with_table_qualifier(completer, text, expected):
+def test_wildcard_column_expansion_with_table_qualifier(
+    completer, text, expected
+):
     position = len('SELECT users.*')
 
     completions = get_result(completer, text, position)
@@ -752,9 +729,9 @@ def test_suggest_columns_from_unquoted_table(completer, text):
 
 @parametrize('completer', completers(casing=False))
 def test_suggest_columns_from_quoted_table(completer):
-    text = 'SELECT U. FROM "Users" U'
-    position = len('SELECT U.')
-    result = result_set(completer, text, position)
+    result = result_set(
+        completer, 'SELECT U. FROM "Users" U', len('SELECT U.')
+    )
     assert result == set(testdata.columns('Users'))
 
 
@@ -853,16 +830,18 @@ def test_suggest_cte_names(completer):
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
 def test_suggest_columns_from_cte(completer):
-    text = 'WITH cte AS (SELECT foo, bar FROM baz) SELECT  FROM cte'
-    position = len('WITH cte AS (SELECT foo, bar FROM baz) SELECT ')
-    result = result_set(completer, text, position)
-    expected = ([Completion('foo', 0, display_meta='column'),
-                 Completion('bar', 0, display_meta='column'),
-                 ] +
-                testdata.functions() +
-                testdata.builtin_functions() +
-                testdata.keywords()
-                )
+    result = result_set(
+        completer,
+        'WITH cte AS (SELECT foo, bar FROM baz) SELECT  FROM cte',
+        len('WITH cte AS (SELECT foo, bar FROM baz) SELECT ')
+    )
+    expected = (
+        [
+            Completion('foo', 0, display_meta='column'),
+            Completion('bar', 0, display_meta='column'),
+        ] + testdata.functions() + testdata.builtin_functions() +
+        testdata.keywords()
+    )
 
     assert set(expected) == result
 
