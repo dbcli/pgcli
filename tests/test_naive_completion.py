@@ -36,6 +36,7 @@ def test_function_name_completion(completer, complete_event):
         Document(text=text, cursor_position=position),
         complete_event))
     assert result == set([
+        Completion(text='MATERIALIZED VIEW', start_position=-2),
         Completion(text='MAX', start_position=-2),
         Completion(text='MAXEXTENTS', start_position=-2)])
 
