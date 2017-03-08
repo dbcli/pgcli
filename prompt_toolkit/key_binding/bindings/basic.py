@@ -196,7 +196,7 @@ def load_basic_bindings():
         """
         event.current_buffer.insert_text(event.data)
 
-    @handle(Keys.CPRResponse)
+    @handle(Keys.CPRResponse, save_before=lambda e: False)
     def _(event):
         """
         Handle incoming Cursor-Position-Request response.
