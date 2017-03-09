@@ -168,6 +168,26 @@ def _strip_named_query(txt):
         txt = named_query_regex.sub('', txt)
     return txt
 
+function_body_pattern = re.compile('(\\$.*?\\$)([\s\S]*?)\\1', re.M)
+
+
+def _find_function_body(text):
+    split = function_body_pattern.search(text)
+    return (split.start(2), split.end(2)) if split else (None, None)
+
+
+def _statement_from_function(full_text, text_before_cursor, statement):
+    current_pos = len(text_before_cursor)
+    body_start, body_end = _find_function_body(full_text)
+    if body_start is None:
+        return full_text, text_before_cursor, statement
+    if not body_start <= current_pos < body_end:
+        return full_text, text_before_cursor, statement
+    full_text = full_text[body_start:body_end]
+    text_before_cursor = text_before_cursor[body_start:]
+    parsed = sqlparse.parse(text_before_cursor)
+    return _split_multiple_statements(full_text, text_before_cursor, parsed)
+
 
 def _split_multiple_statements(full_text, text_before_cursor, parsed):
     if len(parsed) > 1:
@@ -191,8 +211,18 @@ def _split_multiple_statements(full_text, text_before_cursor, parsed):
         statement = parsed[0]
     else:
         # The empty string
-        statement = None
+        return full_text, text_before_cursor, None
 
+    token2 = None
+    if statement.get_type() in ('CREATE', 'CREATE OR REPLACE'):
+        token1 = statement.token_first()
+        if token1:
+            token1_idx = statement.token_index(token1)
+            token2 = statement.token_next(token1_idx)[1]
+    if token2 and token2.value.upper() == 'FUNCTION':
+        full_text, text_before_cursor, statement = _statement_from_function(
+            full_text, text_before_cursor, statement
+        )
     return full_text, text_before_cursor, statement
 
 

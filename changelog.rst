@@ -1,3 +1,10 @@
+Upcoming
+=====
+
+Features:
+---------
+* Better suggestions when editing functions (Thanks: `Joakim Koljonen`_)
+
 1.5.0
 =====
 

@@ -387,6 +387,17 @@ def test_wildcard_column_expansion_with_alias_qualifier(completer, complete_even
     assert expected == completions
 
 @pytest.mark.parametrize('text', [
+    '''
+    SELECT count(1) FROM users;
+    CREATE FUNCTION foo(custom.products _products) returns custom.shipments
+    LANGUAGE SQL
+    AS $foo$
+    SELECT 1 FROM custom.shipments;
+    INSERT INTO public.orders(*) values(-1, now(), 'preliminary');
+    SELECT 2 FROM custom.users;
+    $foo$;
+    SELECT count(1) FROM custom.shipments;
+    ''',
     'INSERT INTO public.orders(*',
     'INSERT INTO public.Orders(*',
     'INSERT INTO public.orders (*',
