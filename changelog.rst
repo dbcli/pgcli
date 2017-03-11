@@ -1,9 +1,15 @@
 Upcoming
-=====
+========
 
 Features:
 ---------
 * Better suggestions when editing functions (Thanks: `Joakim Koljonen`_)
+* Command line option for ``--less-chatty``. (Thanks: `tk`_)
+
+Bug fixes:
+----------
+
+* Support unicode chars in expanded mode. (Thanks: `Amjith Ramanujam`_)
 
 1.5.0
 =====
@@ -643,3 +649,4 @@ Improvements:
 .. _`Manuel Barkhau`: https://github.com/mbarkhau
 .. _`Sergii`: https://github.com/foxyterkel 
 .. _`Emanuele Gaifas`: https://github.com/lelit
+.. _`tk`: https://github.com/kanet77
