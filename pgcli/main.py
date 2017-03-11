@@ -137,11 +137,7 @@ class PGCli(object):
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
-        if less_chatty is not None:
-            self.less_chatty = less_chatty
-        else:
-            self.less_chatty = c['main'].as_bool('less_chatty') or False
-
+        self.less_chatty = bool(less_chatty) or c['main'].as_bool('less_chatty')
         self.null_string = c['main'].get('null_string', '<null>')
         self.prompt_format = prompt if prompt is not None else c['main'].get('prompt', self.default_prompt)
         self.on_error = c['main']['on_error'].upper()
@@ -735,7 +731,7 @@ class PGCli(object):
 @click.option('-R', '--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
         help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.option('--less-chatty', 'less_chatty', is_flag=True,
-        default=None,
+        default=False,
         help='Skip intro on startup and goodbye on exit.')
 @click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
