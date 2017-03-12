@@ -611,7 +611,7 @@ class CommandLineInterface(object):
         if self.eventloop:
             self.eventloop.stop()
 
-    def run_in_terminal(self, func, render_cli_done=False):
+    def run_in_terminal(self, func, render_cli_done=False, cooked_mode=True):
         """
         Run function on the terminal above the prompt.
 
@@ -624,6 +624,8 @@ class CommandLineInterface(object):
         :param render_cli_done: When True, render the interface in the
                 'Done' state first, then execute the function. If False,
                 erase the interface first.
+        :param cooked_mode: When True (the default), switch the input to
+                cooked mode while executing the function.
 
         :returns: the result of `func`.
         """
@@ -637,7 +639,10 @@ class CommandLineInterface(object):
         self._return_value = None
 
         # Run system command.
-        with self.input.cooked_mode():
+        if cooked_mode:
+            with self.input.cooked_mode():
+                result = func()
+        else:
             result = func()
 
         # Redraw interface again.
