@@ -169,12 +169,6 @@ class PGExecute(object):
                 dsn = "{0} password={1}".format(dsn, password)
             conn = psycopg2.connect(dsn=unicode2utf8(dsn))
             cursor = conn.cursor()
-            # When we connect using a DSN, we don't really know what db,
-            # user, etc. we connected to. Let's read it.
-            db = self._select_one(cursor, 'select current_database()')[0]
-            user = self._select_one(cursor, 'select current_user')[0]
-            host = self._select_one(cursor, 'select inet_server_addr()')[0]
-            port = self._select_one(cursor, 'select inet_server_port()')[0]
         else:
             conn = psycopg2.connect(
                     database=unicode2utf8(db),
@@ -190,6 +184,16 @@ class PGExecute(object):
             self.conn.close()
         self.conn = conn
         self.conn.autocommit = True
+
+        if dsn:
+            # When we connect using a DSN, we don't really know what db,
+            # user, etc. we connected to. Let's read it.
+            # Note: moved this after setting autocommit because of #664.
+            db = self._select_one(cursor, 'select current_database()')[0]
+            user = self._select_one(cursor, 'select current_user')[0]
+            host = self._select_one(cursor, 'select inet_server_addr()')[0]
+            port = self._select_one(cursor, 'select inet_server_port()')[0]
+
         self.dbname = db
         self.user = user
         self.password = password
