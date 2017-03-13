@@ -33,9 +33,11 @@ _SchemaObject = namedtuple('SchemaObject', ['name', 'schema', 'function'])
 def SchemaObject(name, schema=None, function=False):
     return _SchemaObject(name, schema, function)
 
-_Candidate = namedtuple('Candidate', ['completion', 'priority', 'meta', 'synonyms'])
-def Candidate(completion, priority=None, meta=None, synonyms=None):
-    return _Candidate(completion, priority, meta, synonyms or [completion])
+_Candidate = namedtuple(
+    'Candidate', ['completion', 'prio', 'meta', 'synonyms', 'prio2']
+)
+def Candidate(completion, prio=None, meta=None, synonyms=None, prio2=None):
+    return _Candidate(completion, prio, meta, synonyms or [completion], prio2)
 
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
@@ -318,7 +320,7 @@ class PGCompleter(Completer):
         matches = []
         for cand in collection:
             if isinstance(cand, _Candidate):
-                item, prio, display_meta, synonyms = cand
+                item, prio, display_meta, synonyms, prio2 = cand
                 if display_meta is None:
                     display_meta = meta
                 syn_matches = (_match(x) for x in synonyms)
@@ -326,7 +328,7 @@ class PGCompleter(Completer):
                 syn_matches = [m for m in syn_matches if m]
                 sort_key = max(syn_matches) if syn_matches else None
             else:
-                item, display_meta, prio = cand, meta, 0
+                item, display_meta, prio, prio2 = cand, meta, 0, 0
                 sort_key = _match(cand)
 
             if sort_key:
@@ -348,7 +350,10 @@ class PGCompleter(Completer):
                     + tuple(c for c in item))
 
                 item = self.case(item)
-                priority = sort_key, type_priority, prio, priority_func(item), lexical_priority
+                priority = (
+                    sort_key, type_priority, prio, priority_func(item),
+                    prio2, lexical_priority
+                )
 
                 matches.append(Match(
                     completion=Completion(item, -text_len,
@@ -609,7 +614,8 @@ class PGCompleter(Completer):
         maybe_alias = (' ' + alias) if do_alias else ''
         maybe_schema = (self.case(tbl.schema) + '.') if tbl.schema else ''
         item = maybe_schema + cased_tbl + maybe_parens + maybe_alias
-        return Candidate(item, synonyms=synonyms)
+        prio2 = 0 if tbl.schema else 1
+        return Candidate(item, synonyms=synonyms, prio2=prio2)
 
     def get_table_matches(self, suggestion, word_before_cursor, alias=False):
         tables = self.populate_schema_objects(suggestion.schema, 'tables')

@@ -619,6 +619,17 @@ def test_column_alias_search_qualified(completer_aliases_casing,
     cols = ('EntryID', 'EntryTitle')
     assert result[:3] == [column(c, -2) for c in cols]
 
+def test_schema_object_order(completer_all_schemas, complete_event):
+    text = 'SELECT * FROM u'
+    position = len('SELECT * FROM u')
+    result = completer_all_schemas.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event
+    )
+    assert result[:3] == [
+        table(t, pos=-1) for t in ('users', 'custom."Users"', 'custom.users')
+    ]
+
 def test_all_schema_objects(completer_all_schemas, complete_event):
     text = 'SELECT * FROM '
     position = len('SELECT * FROM ')
