@@ -605,6 +605,7 @@ class PGCompleter(Completer):
             + self.get_view_matches(v_sug, word_before_cursor, alias)
             + self.get_function_matches(f_sug, word_before_cursor, alias))
 
+    # Note: tbl is a SchemaObject
     def _make_cand(self, tbl, do_alias, suggestion):
         cased_tbl = self.case(tbl.name)
         if do_alias:
@@ -760,6 +761,9 @@ class PGCompleter(Completer):
         return columns
 
     def _get_schemas(self, obj_typ, schema):
+        """ Returns a list of schemas from which to suggest objects
+        schema is the schema qualification input by the user (if any)
+        """
         metadata = self.dbmetadata[obj_typ]
         if schema:
             schema = self.escape_name(schema)
@@ -770,7 +774,9 @@ class PGCompleter(Completer):
         return None if parent or schema in self.search_path else schema
 
     def populate_schema_objects(self, schema, obj_type):
-        """Returns list of tables or functions for a (optional) schema"""
+        """Returns a list of SchemaObjects representing tables, views, funcs
+        schema is the schema qualification input by the user (if any)
+        """
 
         return [
             SchemaObject(
