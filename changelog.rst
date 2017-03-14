@@ -1,15 +1,17 @@
-Upcoming
-========
+1.5.1
+=====
 
 Features:
 ---------
 * Better suggestions when editing functions (Thanks: `Joakim Koljonen`_)
 * Command line option for ``--less-chatty``. (Thanks: `tk`_)
+* Added ``MATERIALIZED VIEW`` keywords. (Thanks: `Joakim Koljonen`_).
 
 Bug fixes:
 ----------
 
 * Support unicode chars in expanded mode. (Thanks: `Amjith Ramanujam`_)
+* Fixed "set_session cannot be used inside a transaction" when using dsn. (Thanks: `Irina Truong`_).
 
 1.5.0
 =====
