@@ -66,7 +66,7 @@ cased_schemas = [schema(x) for x in ('public', 'blog', 'CUSTOM', '"Custom"')]
 
 @pytest.fixture
 def completer():
-    return testdata.completer
+    return testdata.get_completer(settings={'search_path_filter': True})
 
 casing = ('SELECT', 'Orders', 'User_Emails', 'CUSTOM', 'Func1', 'Entries',
           'Tags', 'EntryTags', 'EntAccLog',
@@ -74,15 +74,35 @@ casing = ('SELECT', 'Orders', 'User_Emails', 'CUSTOM', 'Func1', 'Entries',
 
 @pytest.fixture
 def completer_with_casing():
-    return testdata.get_completer(casing=casing)
+    return testdata.get_completer(
+        settings={'search_path_filter': True},
+        casing=casing
+    )
 
 @pytest.fixture
 def completer_with_aliases():
-    return testdata.get_completer({'generate_aliases': True})
+    return testdata.get_completer(
+        settings={'generate_aliases': True, 'search_path_filter': True}
+    )
 
 @pytest.fixture
-def completer_aliases_casing(request):
-    return testdata.get_completer({'generate_aliases': True}, casing)
+def completer_aliases_casing():
+    return testdata.get_completer(
+        settings={'generate_aliases': True, 'search_path_filter': True},
+        casing=casing
+    )
+
+@pytest.fixture
+def completer_all_schemas():
+    return testdata.get_completer()
+
+@pytest.fixture
+def completer_all_schemas_casing():
+    return testdata.get_completer(casing=casing)
+
+@pytest.fixture
+def completer_all_schemas_aliases():
+    return testdata.get_completer(settings={'generate_aliases': True})
 
 @pytest.fixture
 def complete_event():
@@ -609,3 +629,60 @@ def test_column_alias_search_qualified(completer_aliases_casing,
         Document(text, cursor_position=len('SELECT E.ei')), complete_event)
     cols = ('EntryID', 'EntryTitle')
     assert result[:3] == [column(c, -2) for c in cols]
+
+def test_schema_object_order(completer_all_schemas, complete_event):
+    text = 'SELECT * FROM u'
+    position = len('SELECT * FROM u')
+    result = completer_all_schemas.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event
+    )
+    assert result[:3] == [
+        table(t, pos=-1) for t in ('users', 'custom."Users"', 'custom.users')
+    ]
+
+def test_all_schema_objects(completer_all_schemas, complete_event):
+    text = 'SELECT * FROM '
+    position = len('SELECT * FROM ')
+    result = set(
+        completer_all_schemas.get_completions(
+            Document(text=text, cursor_position=position),
+            complete_event
+        )
+    )
+    assert result >= set(
+        [table(x) for x in ('orders', '"select"', 'custom.shipments')]
+        + [function(x+'()') for x in ('func2', 'custom.func3')]
+    )
+
+def test_all_schema_objects_with_casing(
+    completer_all_schemas_casing, complete_event
+):
+    text = 'SELECT * FROM '
+    position = len('SELECT * FROM ')
+    result = set(
+        completer_all_schemas_casing.get_completions(
+            Document(text=text, cursor_position=position),
+            complete_event
+        )
+    )
+    assert result >= set(
+        [table(x) for x in ('Orders', '"select"', 'CUSTOM.shipments')]
+        + [function(x+'()') for x in ('func2', 'CUSTOM.func3')]
+    )
+
+def test_all_schema_objects_with_aliases(
+    completer_all_schemas_aliases, complete_event
+):
+    text = 'SELECT * FROM '
+    position = len('SELECT * FROM ')
+    result = set(
+        completer_all_schemas_aliases.get_completions(
+            Document(text=text, cursor_position=position),
+            complete_event
+        )
+    )
+    assert result >= set(
+        [table(x) for x in ('orders o', '"select" s', 'custom.shipments s')]
+        + [function(x) for x in ('func2() f', 'custom.func3() f')]
+    )

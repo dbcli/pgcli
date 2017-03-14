@@ -157,6 +157,7 @@ class PGCli(object):
             'generate_aliases': c['main'].as_bool('generate_aliases'),
             'asterisk_column_order': c['main']['asterisk_column_order'],
             'qualify_columns': c['main']['qualify_columns'],
+            'search_path_filter': c['main'].as_bool('search_path_filter'),
             'single_connection': single_connection,
             'less_chatty': less_chatty,
             'keyword_casing': keyword_casing,

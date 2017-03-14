@@ -28,12 +28,16 @@ _logger = logging.getLogger(__name__)
 NamedQueries.instance = NamedQueries.from_config(
     load_config(config_location() + 'config'))
 
-
 Match = namedtuple('Match', ['completion', 'priority'])
+_SchemaObject = namedtuple('SchemaObject', ['name', 'schema', 'function'])
+def SchemaObject(name, schema=None, function=False):
+    return _SchemaObject(name, schema, function)
 
-_Candidate = namedtuple('Candidate', ['completion', 'priority', 'meta', 'synonyms'])
-def Candidate(completion, priority=None, meta=None, synonyms=None):
-    return _Candidate(completion, priority, meta, synonyms or [completion])
+_Candidate = namedtuple(
+    'Candidate', ['completion', 'prio', 'meta', 'synonyms', 'prio2']
+)
+def Candidate(completion, prio=None, meta=None, synonyms=None, prio2=None):
+    return _Candidate(completion, prio, meta, synonyms or [completion], prio2)
 
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
@@ -57,6 +61,7 @@ class PGCompleter(Completer):
         self.pgspecial = pgspecial
         self.prioritizer = PrevalenceCounter()
         settings = settings or {}
+        self.search_path_filter = settings.get('search_path_filter')
         self.generate_aliases = settings.get('generate_aliases')
         self.casing_file = settings.get('casing_file')
         self.generate_casing_file = settings.get('generate_casing_file')
@@ -315,7 +320,7 @@ class PGCompleter(Completer):
         matches = []
         for cand in collection:
             if isinstance(cand, _Candidate):
-                item, prio, display_meta, synonyms = cand
+                item, prio, display_meta, synonyms, prio2 = cand
                 if display_meta is None:
                     display_meta = meta
                 syn_matches = (_match(x) for x in synonyms)
@@ -323,7 +328,7 @@ class PGCompleter(Completer):
                 syn_matches = [m for m in syn_matches if m]
                 sort_key = max(syn_matches) if syn_matches else None
             else:
-                item, display_meta, prio = cand, meta, 0
+                item, display_meta, prio, prio2 = cand, meta, 0, 0
                 sort_key = _match(cand)
 
             if sort_key:
@@ -345,7 +350,10 @@ class PGCompleter(Completer):
                     + tuple(c for c in item))
 
                 item = self.case(item)
-                priority = sort_key, type_priority, prio, priority_func(item), lexical_priority
+                priority = (
+                    sort_key, type_priority, prio, priority_func(item),
+                    prio2, lexical_priority
+                )
 
                 matches.append(Match(
                     completion=Completion(item, -text_len,
@@ -550,8 +558,8 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, conds, meta='join')
 
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
-        def _cand(func_name, alias):
-            return self._make_cand(func_name, alias, suggestion, function=True)
+        def _cand(func, alias):
+            return self._make_cand(func, alias, suggestion)
         if suggestion.filter == 'for_from_clause':
             # Only suggest functions allowed in FROM clause
             filt = lambda f: not f.is_aggregate and not f.is_window
@@ -597,24 +605,28 @@ class PGCompleter(Completer):
             + self.get_view_matches(v_sug, word_before_cursor, alias)
             + self.get_function_matches(f_sug, word_before_cursor, alias))
 
-    def _make_cand(self, tbl, do_alias, suggestion, function=False):
-        cased_tbl = self.case(tbl)
-        alias = self.alias(cased_tbl, suggestion.table_refs)
+    # Note: tbl is a SchemaObject
+    def _make_cand(self, tbl, do_alias, suggestion):
+        cased_tbl = self.case(tbl.name)
+        if do_alias:
+            alias = self.alias(cased_tbl, suggestion.table_refs)
         synonyms = (cased_tbl, generate_alias(cased_tbl))
-        maybe_parens = '()' if function else ''
+        maybe_parens = '()' if tbl.function else ''
         maybe_alias = (' ' + alias) if do_alias else ''
-        item = cased_tbl + maybe_parens + maybe_alias
-        return Candidate(item, synonyms=synonyms)
+        maybe_schema = (self.case(tbl.schema) + '.') if tbl.schema else ''
+        item = maybe_schema + cased_tbl + maybe_parens + maybe_alias
+        prio2 = 0 if tbl.schema else 1
+        return Candidate(item, synonyms=synonyms, prio2=prio2)
 
     def get_table_matches(self, suggestion, word_before_cursor, alias=False):
         tables = self.populate_schema_objects(suggestion.schema, 'tables')
-        tables.extend(tbl.name for tbl in suggestion.local_tables)
+        tables.extend(SchemaObject(tbl.name) for tbl in suggestion.local_tables)
 
         # Unless we're sure the user really wants them, don't suggest the
         # pg_catalog tables that are implicitly on the search path
         if not suggestion.schema and (
                 not word_before_cursor.startswith('pg_')):
-            tables = [t for t in tables if not t.startswith('pg_')]
+            tables = [t for t in tables if not t.name.startswith('pg_')]
         tables = [self._make_cand(t, alias, suggestion) for t in tables]
         return self.find_matches(word_before_cursor, tables, meta='table')
 
@@ -624,7 +636,7 @@ class PGCompleter(Completer):
 
         if not suggestion.schema and (
                 not word_before_cursor.startswith('pg_')):
-            views = [v for v in views if not v.startswith('pg_')]
+            views = [v for v in views if not v.name.startswith('pg_')]
         views = [self._make_cand(v, alias, suggestion) for v in views]
         return self.find_matches(word_before_cursor, views, meta='view')
 
@@ -672,6 +684,7 @@ class PGCompleter(Completer):
     def get_datatype_matches(self, suggestion, word_before_cursor):
         # suggest custom datatypes
         types = self.populate_schema_objects(suggestion.schema, 'datatypes')
+        types = [self._make_cand(t, False, suggestion) for t in types]
         matches = self.find_matches(word_before_cursor, types, meta='datatype')
 
         if not suggestion.schema:
@@ -747,22 +760,33 @@ class PGCompleter(Completer):
 
         return columns
 
-    def populate_schema_objects(self, schema, obj_type):
-        """Returns list of tables or functions for a (optional) schema"""
-
-        metadata = self.dbmetadata[obj_type]
+    def _get_schemas(self, obj_typ, schema):
+        """ Returns a list of schemas from which to suggest objects
+        schema is the schema qualification input by the user (if any)
+        """
+        metadata = self.dbmetadata[obj_typ]
         if schema:
-            try:
-                objects = metadata[self.escape_name(schema)].keys()
-            except KeyError:
-                # schema doesn't exist
-                objects = []
-        else:
-            schemas = self.search_path
-            objects = [obj for schema in schemas
-                           for obj in metadata[schema].keys()]
+            schema = self.escape_name(schema)
+            return [schema] if schema in metadata else []
+        return self.search_path if self.search_path_filter else metadata.keys()
 
-        return [self.case(o) for o in objects]
+    def _maybe_schema(self, schema, parent):
+        return None if parent or schema in self.search_path else schema
+
+    def populate_schema_objects(self, schema, obj_type):
+        """Returns a list of SchemaObjects representing tables, views, funcs
+        schema is the schema qualification input by the user (if any)
+        """
+
+        return [
+            SchemaObject(
+                name=obj,
+                schema=(self._maybe_schema(schema=sch, parent=schema)),
+                function=(obj_type == 'functions')
+            )
+            for sch in self._get_schemas(obj_type, schema)
+            for obj in self.dbmetadata[obj_type][sch].keys()
+        ]
 
     def populate_functions(self, schema, filter_func):
         """Returns a list of function names
@@ -772,24 +796,20 @@ class PGCompleter(Completer):
         kept or discarded
         """
 
-        metadata = self.dbmetadata['functions']
-
         # Because of multiple dispatch, we can have multiple functions
         # with the same name, which is why `for meta in metas` is necessary
         # in the comprehensions below
-        if schema:
-            schema = self.escape_name(schema)
-            try:
-                return [func for (func, metas) in metadata[schema].items()
-                                for meta in metas
-                                    if filter_func(meta)]
-            except KeyError:
-                return []
-        else:
-            return [func for schema in self.search_path
-                            for (func, metas) in metadata[schema].items()
-                                for meta in metas
-                                    if filter_func(meta)]
+        return [
+            SchemaObject(
+                name=func,
+                schema=(self._maybe_schema(schema=sch, parent=schema)),
+                function=True
+            )
+            for sch in self._get_schemas('functions', schema)
+            for (func, metas) in self.dbmetadata['functions'][sch].items()
+            for meta in metas
+            if filter_func(meta)
+        ]
 
 
 
