@@ -525,13 +525,16 @@ class PGCli(object):
             ])
 
         with self._completer_lock:
+            def _accept_handler(cli, buffer):
+                cli.set_return_value(buffer.document)
+            accept_action = AcceptAction(_accept_handler)
             buf = PGBuffer(
                 always_multiline=self.multi_line,
                 multiline_mode=self.multiline_mode,
                 completer=self.completer,
                 history=history,
                 complete_while_typing=Always(),
-                accept_action=AcceptAction.RETURN_DOCUMENT)
+                accept_action=accept_action)
 
             editing_mode = EditingMode.VI if self.vi_mode else EditingMode.EMACS
 
