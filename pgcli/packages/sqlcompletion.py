@@ -34,8 +34,8 @@ JoinCondition = namedtuple('JoinCondition', ['table_refs', 'parent'])
 # Joins are suggested after JOIN, e.g. 'foo ON foo.barid = bar.barid'
 Join = namedtuple('Join', ['table_refs', 'schema'])
 
-Function = namedtuple('Function', ['schema', 'table_refs', 'filter'])
-# For convenience, don't require the `filter` argument in Function constructor
+Function = namedtuple('Function', ['schema', 'table_refs', 'usage'])
+# For convenience, don't require the `usage` argument in Function constructor
 Function.__new__.__defaults__ = (None, tuple(), None)
 Table.__new__.__defaults__ = (None, tuple(), tuple())
 View.__new__.__defaults__ = (None, tuple())

@@ -569,7 +569,7 @@ class PGCompleter(Completer):
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
         def _cand(func, alias):
             return self._make_cand(func, alias, suggestion)
-        if suggestion.filter == 'for_from_clause':
+        if suggestion.usage == 'from':
             # Only suggest functions allowed in FROM clause
             filt = lambda f: not f.is_aggregate and not f.is_window
             funcs = [_cand(f, alias)
@@ -584,7 +584,7 @@ class PGCompleter(Completer):
 
         funcs = self.find_matches(word_before_cursor, funcs, meta='function')
 
-        if not suggestion.schema and not suggestion.filter:
+        if not suggestion.schema and not suggestion.usage:
             # also suggest hardcoded functions using startswith matching
             predefined_funcs = self.find_matches(
                 word_before_cursor, self.functions, mode='strict',
@@ -613,7 +613,7 @@ class PGCompleter(Completer):
         s = suggestion
         t_sug = Table(s.schema, s.table_refs, s.local_tables)
         v_sug = View(s.schema, s.table_refs)
-        f_sug = Function(s.schema, s.table_refs, filter='for_from_clause')
+        f_sug = Function(s.schema, s.table_refs, usage='from')
         return (self.get_table_matches(t_sug, word_before_cursor, alias)
             + self.get_view_matches(v_sug, word_before_cursor, alias)
             + self.get_function_matches(f_sug, word_before_cursor, alias))
