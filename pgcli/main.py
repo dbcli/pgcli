@@ -351,6 +351,7 @@ class PGCli(object):
         :param document: Document
         :return: Document
         """
+        saved_callables = cli.application.pre_run_callables
         while special.editor_command(document.text):
             filename = special.get_filename(document.text)
             sql, message = special.open_external_editor(filename,
@@ -359,8 +360,10 @@ class PGCli(object):
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
             cli.current_buffer.document = Document(sql, cursor_position=len(sql))
-            document = cli.run(False)
+            cli.application.pre_run_callables = []
+            document = cli.run()
             continue
+        cli.application.pre_run_callables = saved_callables
         return document
 
     def execute_command(self, text, query):
@@ -443,7 +446,7 @@ class PGCli(object):
 
         try:
             while True:
-                document = self.cli.run(True)
+                document = self.cli.run()
 
                 # The reason we check here instead of inside the pgexecute is
                 # because we want to raise the Exit exception which will be
