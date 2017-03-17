@@ -110,7 +110,7 @@ def test_suggested_join_conditions(completer, text):
         fk_join('shipments.user_id = users.id')])
 
 
-@parametrize('completer', completers(filtr=True, casing=False, alias=False))
+@parametrize('completer', completers(filtr=True, casing=False, aliasing=False))
 @parametrize(('query', 'tbl'), itertools.product((
     'SELECT * FROM public.{0} RIGHT OUTER JOIN ',
     '''SELECT *
@@ -143,7 +143,7 @@ def test_suggested_column_names_in_function(completer):
     assert result == set(testdata.columns('products', 'custom'))
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 @parametrize('text', [
     'SELECT * FROM Custom.',
     'SELECT * FROM custom.',
@@ -163,7 +163,7 @@ def test_suggested_table_names_with_schema_dot(
     assert result == set(testdata.from_clause_items('custom', start_position))
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 @parametrize('text', [
     'SELECT * FROM "Custom".',
 ])
@@ -232,7 +232,7 @@ def test_suggested_aliases_after_on_right_side(completer):
     assert result == set([alias('x'), alias('y')])
 
 
-@parametrize('completer', completers(filtr=True, casing=False, alias=False))
+@parametrize('completer', completers(filtr=True, casing=False, aliasing=False))
 def test_table_names_after_from(completer):
     text = 'SELECT * FROM '
     result = result_set(completer, text)
@@ -406,14 +406,14 @@ def test_suggest_columns_from_quoted_table(completer, text):
 texts = ['SELECT * FROM ', 'SELECT * FROM public.Orders O CROSS JOIN ']
 
 
-@parametrize('completer', completers(filtr=True, casing=False, alias=False))
+@parametrize('completer', completers(filtr=True, casing=False, aliasing=False))
 @parametrize('text', texts)
 def test_schema_or_visible_table_completion(completer, text):
     result = result_set(completer, text)
     assert result == set(testdata.schemas_and_from_clause_items())
 
 
-@parametrize('completer', completers(alias=True, casing=False, filtr=True))
+@parametrize('completer', completers(aliasing=True, casing=False, filtr=True))
 @parametrize('text', texts)
 def test_table_aliases(completer, text):
     result = result_set(completer, text)
@@ -425,7 +425,7 @@ def test_table_aliases(completer, text):
         function('func2() f')])
 
 
-@parametrize('completer', completers(alias=True, casing=True, filtr=True))
+@parametrize('completer', completers(aliasing=True, casing=True, filtr=True))
 @parametrize('text', texts)
 def test_aliases_with_casing(completer, text):
     result = result_set(completer, text)
@@ -437,7 +437,7 @@ def test_aliases_with_casing(completer, text):
         function('func2() f')])
 
 
-@parametrize('completer', completers(alias=False, casing=True, filtr=True))
+@parametrize('completer', completers(aliasing=False, casing=True, filtr=True))
 @parametrize('text', texts)
 def test_table_casing(completer, text):
     result = result_set(completer, text)
@@ -449,35 +449,35 @@ def test_table_casing(completer, text):
         function('func2()')])
 
 
-@parametrize('completer', completers(alias=False, casing=True))
+@parametrize('completer', completers(aliasing=False, casing=True))
 def test_alias_search_without_aliases2(completer):
     text = 'SELECT * FROM blog.et'
     result = get_result(completer, text)
     assert result[0] == table('EntryTags', -2)
 
 
-@parametrize('completer', completers(alias=False, casing=True))
+@parametrize('completer', completers(aliasing=False, casing=True))
 def test_alias_search_without_aliases1(completer):
     text = 'SELECT * FROM blog.e'
     result = get_result(completer, text)
     assert result[0] == table('Entries', -1)
 
 
-@parametrize('completer', completers(alias=True, casing=True))
+@parametrize('completer', completers(aliasing=True, casing=True))
 def test_alias_search_with_aliases2(completer):
     text = 'SELECT * FROM blog.et'
     result = get_result(completer, text)
     assert result[0] == table('EntryTags ET', -2)
 
 
-@parametrize('completer', completers(alias=True, casing=True))
+@parametrize('completer', completers(aliasing=True, casing=True))
 def test_alias_search_with_aliases1(completer):
     text = 'SELECT * FROM blog.e'
     result = get_result(completer, text)
     assert result[0] == table('Entries E', -1)
 
 
-@parametrize('completer', completers(alias=True, casing=True))
+@parametrize('completer', completers(aliasing=True, casing=True))
 def test_join_alias_search_with_aliases1(completer):
     text = 'SELECT * FROM blog.Entries E JOIN blog.e'
     result = get_result(completer, text)
@@ -485,7 +485,7 @@ def test_join_alias_search_with_aliases1(completer):
         'EntAccLog EAL ON EAL.EntryID = E.EntryID', -1)]
 
 
-@parametrize('completer', completers(alias=False, casing=True))
+@parametrize('completer', completers(aliasing=False, casing=True))
 def test_join_alias_search_without_aliases1(completer):
     text = 'SELECT * FROM blog.Entries JOIN blog.e'
     result = get_result(completer, text)
@@ -493,14 +493,14 @@ def test_join_alias_search_without_aliases1(completer):
         'EntAccLog ON EntAccLog.EntryID = Entries.EntryID', -1)]
 
 
-@parametrize('completer', completers(alias=True, casing=True))
+@parametrize('completer', completers(aliasing=True, casing=True))
 def test_join_alias_search_with_aliases2(completer):
     text = 'SELECT * FROM blog.Entries E JOIN blog.et'
     result = get_result(completer, text)
     assert result[0] == join('EntryTags ET ON ET.EntryID = E.EntryID', -2)
 
 
-@parametrize('completer', completers(alias=False, casing=True))
+@parametrize('completer', completers(aliasing=False, casing=True))
 def test_join_alias_search_without_aliases2(completer):
     text = 'SELECT * FROM blog.Entries JOIN blog.et'
     result = get_result(completer, text)
@@ -540,14 +540,14 @@ def test_column_alias_search_qualified(completer):
     assert result[:3] == [column(c, -2) for c in cols]
 
 
-@parametrize('completer', completers(casing=False, filtr=False, alias=False))
+@parametrize('completer', completers(casing=False, filtr=False, aliasing=False))
 def test_schema_object_order(completer):
     result = get_result(completer, 'SELECT * FROM u')
     assert result[:3] == [
         table(t, pos=-1) for t in ('users', 'custom."Users"', 'custom.users')
     ]
 
-@parametrize('completer', completers(casing=False, filtr=False, alias=False))
+@parametrize('completer', completers(casing=False, filtr=False, aliasing=False))
 def test_all_schema_objects(completer):
     text = ('SELECT * FROM ')
     result = result_set(completer, text)
@@ -557,7 +557,7 @@ def test_all_schema_objects(completer):
     )
 
 
-@parametrize('completer', completers(filtr=False, alias=False, casing=True))
+@parametrize('completer', completers(filtr=False, aliasing=False, casing=True))
 def test_all_schema_objects_with_casing(completer):
     text = 'SELECT * FROM '
     result = result_set(completer, text)
@@ -567,7 +567,7 @@ def test_all_schema_objects_with_casing(completer):
     )
 
 
-@parametrize('completer', completers(casing=False, filtr=False, alias=True))
+@parametrize('completer', completers(casing=False, filtr=False, aliasing=True))
 def test_all_schema_objects_with_aliases(completer):
     text = ('SELECT * FROM ')
     result = result_set(completer, text)

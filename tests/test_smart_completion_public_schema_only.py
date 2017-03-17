@@ -84,7 +84,7 @@ def test_builtin_function_matches_only_at_start(completer):
     assert 'MIN' not in result
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 def test_user_function_name_completion(completer):
     result = result_set(completer, 'SELECT cu')
     assert result == set([
@@ -96,7 +96,7 @@ def test_user_function_name_completion(completer):
     ])
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 def test_user_function_name_completion_matches_anywhere(completer):
     result = result_set(completer, 'SELECT om')
     assert result == set([
@@ -312,7 +312,7 @@ def test_suggested_join_conditions_with_invalid_table(completer, text, ref):
     assert result == set([alias('users'), alias(ref)])
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 @parametrize('text', [
     'SELECT * FROM "Users" u JOIN u',
     'SELECT * FROM "Users" u JOIN uid',
@@ -341,7 +341,7 @@ join_texts = [
 ]
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 @parametrize('text', join_texts)
 def test_suggested_joins(completer, text):
     result = result_set(completer, text)
@@ -354,7 +354,7 @@ def test_suggested_joins(completer, text):
     )
 
 
-@parametrize('completer', completers(casing=True, alias=False))
+@parametrize('completer', completers(casing=True, aliasing=False))
 @parametrize('text', join_texts)
 def test_cased_joins(completer, text):
     result = result_set(completer, text)
@@ -365,7 +365,7 @@ def test_cased_joins(completer, text):
     ])
 
 
-@parametrize('completer', completers(casing=False, alias=True))
+@parametrize('completer', completers(casing=False, aliasing=True))
 @parametrize('text', join_texts)
 def test_aliased_joins(completer, text):
     result = result_set(completer, text)
@@ -376,7 +376,7 @@ def test_aliased_joins(completer, text):
     ])
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 @parametrize('text', [
     'SELECT * FROM public."Users" JOIN ',
     'SELECT * FROM public."Users" RIGHT OUTER JOIN ',
@@ -480,7 +480,7 @@ def test_join_using_suggests_columns_after_first_column(completer, text):
     assert result == set([column('id'), column('email')])
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 @parametrize('text', [
     'SELECT * FROM ',
     'SELECT * FROM users CROSS JOIN ',
@@ -510,7 +510,7 @@ def test_auto_escaped_col_names(completer):
     assert result == set(testdata.columns_functions_and_keywords('select'))
 
 
-@parametrize('completer', completers(alias=False))
+@parametrize('completer', completers(aliasing=False))
 def test_allow_leading_double_quote_in_last_word(completer):
     result = result_set(completer, 'SELECT * from "sele')
 
@@ -592,7 +592,7 @@ def test_learn_keywords(completer):
     assert completions[0].text == 'VIEW'
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 def test_learn_table_names(completer):
     history = 'SELECT * FROM users; SELECT * FROM orders; SELECT * FROM users'
     completer.extend_query_history(history)
@@ -721,7 +721,7 @@ def test_suggest_columns_from_quoted_table(completer):
     assert result == set(testdata.columns('Users'))
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 @parametrize('text', ['SELECT * FROM ',
     'SELECT * FROM Orders o CROSS JOIN '])
 def test_schema_or_visible_table_completion(completer, text):
@@ -729,14 +729,14 @@ def test_schema_or_visible_table_completion(completer, text):
     assert result == set(testdata.schemas_and_from_clause_items())
 
 
-@parametrize('completer', completers(casing=False, alias=True))
+@parametrize('completer', completers(casing=False, aliasing=True))
 @parametrize('text', ['SELECT * FROM '])
 def test_table_aliases(completer, text):
     result = result_set(completer, text)
     assert result == set(testdata.schemas() + aliased_rels)
 
 
-@parametrize('completer', completers(casing=False, alias=True))
+@parametrize('completer', completers(casing=False, aliasing=True))
 @parametrize('text', ['SELECT * FROM Orders o CROSS JOIN '])
 def test_duplicate_table_aliases(completer, text):
     result = result_set(completer, text)
@@ -753,7 +753,7 @@ def test_duplicate_table_aliases(completer, text):
         function('set_returning_func() srf')])
 
 
-@parametrize('completer', completers(casing=True, alias=True))
+@parametrize('completer', completers(casing=True, aliasing=True))
 @parametrize('text', ['SELECT * FROM Orders o CROSS JOIN '])
 def test_duplicate_aliases_with_casing(completer, text):
     result = result_set(completer, text)
@@ -771,14 +771,14 @@ def test_duplicate_aliases_with_casing(completer, text):
         function('set_returning_func() srf')])
 
 
-@parametrize('completer', completers(casing=True, alias=True))
+@parametrize('completer', completers(casing=True, aliasing=True))
 @parametrize('text', ['SELECT * FROM '])
 def test_aliases_with_casing(completer, text):
     result = result_set(completer, text)
     assert result == set([schema('PUBLIC')] + cased_aliased_rels)
 
 
-@parametrize('completer', completers(casing=True, alias=False))
+@parametrize('completer', completers(casing=True, aliasing=False))
 @parametrize('text', ['SELECT * FROM '])
 def test_table_casing(completer, text):
     result = result_set(completer, text)
@@ -798,7 +798,7 @@ def test_insert(completer, text):
     assert result == set(testdata.columns('users'))
 
 
-@parametrize('completer', completers(casing=False, alias=False))
+@parametrize('completer', completers(casing=False, aliasing=False))
 def test_suggest_cte_names(completer):
     text = '''
         WITH cte1 AS (SELECT a, b, c FROM foo),
