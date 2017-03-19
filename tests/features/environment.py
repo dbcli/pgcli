@@ -85,3 +85,8 @@ def after_scenario(context, _):
     if hasattr(context, 'cli') and not context.exit_sent:
         # Terminate nicely.
         context.cli.terminate()
+
+# TODO: uncomment to debug a failure
+# def after_step(context, step):
+#     if step.status == "failed":
+#         import ipdb; ipdb.set_trace()
