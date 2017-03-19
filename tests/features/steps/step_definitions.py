@@ -14,15 +14,6 @@ import re
 from behave import given, when, then
 
 
-@given('we have pgcli installed')
-def step_install_cli(_):
-    """
-    Check that pgcli is in installed modules.
-    """
-    dists = set([di.key for di in pip.get_installed_distributions()])
-    assert 'pgcli' in dists
-
-
 @when('we run pgcli')
 def step_run_cli(context):
     """

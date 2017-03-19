@@ -2,8 +2,7 @@ Feature: manipulate tables:
   create, insert, update, select, delete from, drop
 
   Scenario: create, insert, select from, update, drop table
-     Given we have pgcli installed
-      when we run pgcli
+     When we run pgcli
       and we wait for prompt
       and we connect to test database
       then we see database connected

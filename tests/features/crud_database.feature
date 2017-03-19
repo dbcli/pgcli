@@ -2,8 +2,7 @@ Feature: manipulate databases:
   create, drop, connect, disconnect
 
   Scenario: create and drop temporary database
-     Given we have pgcli installed
-      when we run pgcli
+     When we run pgcli
       and we wait for prompt
       and we create database
       then we see database created
@@ -13,8 +12,7 @@ Feature: manipulate databases:
       then we see database connected
 
   Scenario: connect and disconnect from test database
-     Given we have pgcli installed
-      when we run pgcli
+     When we run pgcli
       and we wait for prompt
       and we connect to test database
       then we see database connected
