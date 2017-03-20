@@ -351,6 +351,9 @@ class PGCli(object):
         :param document: Document
         :return: Document
         """
+        # FIXME: using application.pre_run_callables like this here is not the best solution.
+        # It's internal api of prompt_toolkit that may change. This was added to fix #668.
+        # We may find a better way to do it in the future.
         saved_callables = cli.application.pre_run_callables
         while special.editor_command(document.text):
             filename = special.get_filename(document.text)
