@@ -567,31 +567,30 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, conds, meta='join')
 
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
-        def _cand(func, alias):
-            return self._make_cand(func, alias, suggestion)
         if suggestion.usage == 'from':
             # Only suggest functions allowed in FROM clause
             filt = lambda f: not f.is_aggregate and not f.is_window
-            funcs = [_cand(f, alias)
-                     for f in self.populate_functions(suggestion.schema, filt)]
         else:
-            fs = self.populate_schema_objects(suggestion.schema, 'functions')
-            funcs = [_cand(f, alias=False) for f in fs]
+            alias = False
+            filt = lambda f: True
 
         # Function overloading means we way have multiple functions of the same
         # name at this point, so keep unique names only
-        funcs = set(funcs)
+        funcs = set(
+            self._make_cand(f, alias, suggestion)
+            for f in self.populate_functions(suggestion.schema, filt)
+        )
 
-        funcs = self.find_matches(word_before_cursor, funcs, meta='function')
+        matches = self.find_matches(word_before_cursor, funcs, meta='function')
 
         if not suggestion.schema and not suggestion.usage:
             # also suggest hardcoded functions using startswith matching
             predefined_funcs = self.find_matches(
                 word_before_cursor, self.functions, mode='strict',
                 meta='function')
-            funcs.extend(predefined_funcs)
+            matches.extend(predefined_funcs)
 
-        return funcs
+        return matches
 
     def get_schema_matches(self, suggestion, word_before_cursor):
         schema_names = self.dbmetadata['tables'].keys()
@@ -794,22 +793,21 @@ class PGCompleter(Completer):
         return None if parent or schema in self.search_path else schema
 
     def populate_schema_objects(self, schema, obj_type):
-        """Returns a list of SchemaObjects representing tables, views, funcs
+        """Returns a list of SchemaObjects representing tables or views
         schema is the schema qualification input by the user (if any)
         """
 
         return [
             SchemaObject(
                 name=obj,
-                schema=(self._maybe_schema(schema=sch, parent=schema)),
-                function=(obj_type == 'functions')
+                schema=(self._maybe_schema(schema=sch, parent=schema))
             )
             for sch in self._get_schemas(obj_type, schema)
             for obj in self.dbmetadata[obj_type][sch].keys()
         ]
 
     def populate_functions(self, schema, filter_func):
-        """Returns a list of function names
+        """Returns a list of function SchemaObjects
 
         filter_func is a function that accepts a FunctionMetadata namedtuple
         and returns a boolean indicating whether that function should be
