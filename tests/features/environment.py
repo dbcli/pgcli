@@ -16,6 +16,7 @@ def before_all(context):
     os.environ['COLUMNS'] = "100"
     os.environ['PAGER'] = 'cat'
     os.environ['EDITOR'] = 'nano'
+    os.environ["COVERAGE_PROCESS_START"] = os.getcwd() + "/../.coveragerc"
 
     context.exit_sent = False
 
@@ -30,7 +31,10 @@ def before_all(context):
         'pass': context.config.userdata.get('pg_test_pass', None),
         'dbname': db_name_full,
         'dbname_tmp': db_name_full + '_tmp',
-        'vi': vi
+        'vi': vi,
+        'cli_command': context.config.userdata.get('pg_cli_command', None) or
+                       sys.executable +
+                       ' -c "import coverage; coverage.process_startup(); import pgcli.main; pgcli.main.cli()"'
     }
 
     # Store old env vars.
