@@ -29,17 +29,31 @@ NamedQueries.instance = NamedQueries.from_config(
     load_config(config_location() + 'config'))
 
 Match = namedtuple('Match', ['completion', 'priority'])
-_SchemaObject = namedtuple('SchemaObject', ['name', 'schema', 'function'])
+
+_SchemaObject = namedtuple('SchemaObject', 'name schema meta')
 
 
-def SchemaObject(name, schema=None, function=False):
-    return _SchemaObject(name, schema, function)
+def SchemaObject(name, schema=None, meta=None):
+    return _SchemaObject(name, schema, meta)
+
 
 _Candidate = namedtuple(
-    'Candidate', ['completion', 'prio', 'meta', 'synonyms', 'prio2']
+    'Candidate', 'completion prio meta synonyms prio2 display'
 )
-def Candidate(completion, prio=None, meta=None, synonyms=None, prio2=None):
-    return _Candidate(completion, prio, meta, synonyms or [completion], prio2)
+
+
+def Candidate(
+        completion, prio=None, meta=None, synonyms=None, prio2=None,
+        display=None
+):
+    return _Candidate(
+        completion, prio, meta, synonyms or [completion], prio2,
+        display or completion
+    )
+
+
+# Used to strip trailing '::some_type' from default-value expressions
+arg_default_type_strip_regex = re.compile(r'::[\w\.]+(\[\])?$')
 
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
@@ -67,6 +81,16 @@ class PGCompleter(Completer):
         self.pgspecial = pgspecial
         self.prioritizer = PrevalenceCounter()
         settings = settings or {}
+        self.signature_arg_style = settings.get(
+            'signature_arg_style', '{arg_name} {arg_type}'
+        )
+        self.call_arg_style = settings.get(
+            'call_arg_style', '{arg_name: <{max_arg_len}} := {arg_default}'
+        )
+        self.call_arg_display_style = settings.get(
+            'call_arg_display_style', '{arg_name}'
+        )
+        self.call_arg_oneliner_max = settings.get('call_arg_oneliner_max', 2)
         self.search_path_filter = settings.get('search_path_filter')
         self.generate_aliases = settings.get('generate_aliases')
         self.casing_file = settings.get('casing_file')
@@ -186,8 +210,6 @@ class PGCompleter(Completer):
     def extend_functions(self, func_data):
 
         # func_data is a list of function metadata namedtuples
-        # with fields schema_name, func_name, arg_list, result,
-        # is_aggregate, is_window, is_set_returning
 
         # dbmetadata['schema_name']['functions']['function_name'] should return
         # the function metadata namedtuple for the corresponding function
@@ -202,6 +224,22 @@ class PGCompleter(Completer):
                 metadata[schema][func] = [f]
 
             self.all_completions.add(func)
+
+        self._refresh_arg_list_cache()
+
+    def _refresh_arg_list_cache(self):
+        # We keep a cache of {function_usage:{function_metadata: function_arg_list_string}}
+        # This is used when suggesting functions, to avoid the latency that would result
+        # if we'd recalculate the arg lists each time we suggest functions (in large DBs)
+        self._arg_list_cache = {
+            usage: {
+                meta: self._arg_list(meta, usage)
+                for sch, funcs in self.dbmetadata['functions'].items()
+                for func, metas in funcs.items()
+                for meta in metas
+            }
+            for usage in ('call', 'call_display', 'signature')
+        }
 
     def extend_foreignkeys(self, fk_data):
 
@@ -329,7 +367,7 @@ class PGCompleter(Completer):
         matches = []
         for cand in collection:
             if isinstance(cand, _Candidate):
-                item, prio, display_meta, synonyms, prio2 = cand
+                item, prio, display_meta, synonyms, prio2, display = cand
                 if display_meta is None:
                     display_meta = meta
                 syn_matches = (_match(x) for x in synonyms)
@@ -337,7 +375,7 @@ class PGCompleter(Completer):
                 syn_matches = [m for m in syn_matches if m]
                 sort_key = max(syn_matches) if syn_matches else None
             else:
-                item, display_meta, prio, prio2 = cand, meta, 0, 0
+                item, display_meta, prio, prio2, display = cand, meta, 0, 0, cand
                 sort_key = _match(cand)
 
             if sort_key:
@@ -359,15 +397,22 @@ class PGCompleter(Completer):
                     + tuple(c for c in item))
 
                 item = self.case(item)
+                display = self.case(display)
                 priority = (
                     sort_key, type_priority, prio, priority_func(item),
                     prio2, lexical_priority
                 )
-
-                matches.append(Match(
-                    completion=Completion(item, -text_len,
-                    display_meta=display_meta),
-                    priority=priority))
+                matches.append(
+                    Match(
+                        completion=Completion(
+                            text=item,
+                            start_position=-text_len,
+                            display_meta=display_meta,
+                            display=display
+                        ),
+                        priority=priority
+                    )
+                )
         return matches
 
     def case(self, word):
@@ -404,7 +449,6 @@ class PGCompleter(Completer):
                          reverse=True)
 
         return [m.completion for m in matches]
-
 
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.table_refs
@@ -569,15 +613,16 @@ class PGCompleter(Completer):
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
         if suggestion.usage == 'from':
             # Only suggest functions allowed in FROM clause
-            filt = lambda f: not f.is_aggregate and not f.is_window
+            def filt(f): return not f.is_aggregate and not f.is_window
         else:
             alias = False
-            filt = lambda f: True
 
+            def filt(f): return True
+        arg_mode = 'signature' if suggestion.usage == 'signature' else 'call'
         # Function overloading means we way have multiple functions of the same
         # name at this point, so keep unique names only
         funcs = set(
-            self._make_cand(f, alias, suggestion)
+            self._make_cand(f, alias, suggestion, arg_mode)
             for f in self.populate_functions(suggestion.schema, filt)
         )
 
@@ -613,22 +658,84 @@ class PGCompleter(Completer):
         t_sug = Table(s.schema, s.table_refs, s.local_tables)
         v_sug = View(s.schema, s.table_refs)
         f_sug = Function(s.schema, s.table_refs, usage='from')
-        return (self.get_table_matches(t_sug, word_before_cursor, alias)
+        return (
+            self.get_table_matches(t_sug, word_before_cursor, alias)
             + self.get_view_matches(v_sug, word_before_cursor, alias)
-            + self.get_function_matches(f_sug, word_before_cursor, alias))
+            + self.get_function_matches(f_sug, word_before_cursor, alias)
+        )
 
-    # Note: tbl is a SchemaObject
-    def _make_cand(self, tbl, do_alias, suggestion):
+    def _arg_list(self, func, usage):
+        """Returns a an arg list string, e.g. `(_foo:=23)` for a func.
+
+        :param func is a FunctionMetadata object
+        :param usage is 'call', 'call_display' or 'signature'
+
+        """
+        template = {
+            'call':  self.call_arg_style,
+            'call_display': self.call_arg_display_style,
+            'signature': self.signature_arg_style
+        }[usage]
+        args = func.args()
+        if not template:
+            return '()'
+        elif usage == 'call' and len(args) < 2:
+            return '()'
+        elif usage == 'call' and func.has_variadic():
+            return '()'
+        multiline = usage == 'call' and len(args) > self.call_arg_oneliner_max
+        max_arg_len = max(len(a.name) for a in args) if multiline else 0
+        args = (
+            self._format_arg(template, arg, arg_num + 1, max_arg_len)
+            for arg_num, arg in enumerate(args)
+        )
+        if multiline:
+            return '(' + ','.join('\n    ' + a for a in args if a) + '\n)'
+        else:
+            return '(' + ', '.join(a for a in args if a) + ')'
+
+    def _format_arg(self, template, arg, arg_num, max_arg_len):
+        if not template:
+            return None
+        if arg.has_default:
+            arg_default = 'NULL' if arg.default is None else arg.default
+            # Remove trailing ::(schema.)type
+            arg_default = arg_default_type_strip_regex.sub('', arg_default)
+        else:
+            arg_default = ''
+        return template.format(
+            max_arg_len=max_arg_len,
+            arg_name=self.case(arg.name),
+            arg_num=arg_num,
+            arg_type=arg.datatype,
+            arg_default=arg_default
+        )
+
+    def _make_cand(self, tbl, do_alias, suggestion, arg_mode=None):
+        """Returns a Candidate namedtuple.
+
+        :param tbl is a SchemaObject
+        :param arg_mode determines what type of arg list to suffix for functions.
+        Possible values: call, signature
+
+        """
         cased_tbl = self.case(tbl.name)
         if do_alias:
             alias = self.alias(cased_tbl, suggestion.table_refs)
         synonyms = (cased_tbl, generate_alias(cased_tbl))
-        maybe_parens = '()' if tbl.function else ''
         maybe_alias = (' ' + alias) if do_alias else ''
         maybe_schema = (self.case(tbl.schema) + '.') if tbl.schema else ''
-        item = maybe_schema + cased_tbl + maybe_parens + maybe_alias
+        suffix = self._arg_list_cache[arg_mode][tbl.meta] if arg_mode else ''
+        if arg_mode == 'call':
+            display_suffix = self._arg_list_cache['call_display'][tbl.meta]
+        elif arg_mode == 'signature':
+            display_suffix = self._arg_list_cache['signature'][tbl.meta]
+        else:
+            display_suffix = ''
+        item = maybe_schema + cased_tbl + suffix + maybe_alias
+        display = maybe_schema + cased_tbl + display_suffix + maybe_alias
         prio2 = 0 if tbl.schema else 1
-        return Candidate(item, synonyms=synonyms, prio2=prio2)
+        return Candidate(item, synonyms=synonyms, prio2=prio2, display=display)
 
     def get_table_matches(self, suggestion, word_before_cursor, alias=False):
         tables = self.populate_schema_objects(suggestion.schema, 'tables')
@@ -736,10 +843,12 @@ class PGCompleter(Completer):
     }
 
     def populate_scoped_cols(self, scoped_tbls, local_tbls=()):
-        """ Find all columns in a set of scoped_tables
+        """Find all columns in a set of scoped_tables.
+
         :param scoped_tbls: list of TableReference namedtuples
         :param local_tbls: tuple(TableMetadata)
         :return: {TableReference:{colname:ColumnMetaData}}
+
         """
         ctes = dict((normalize_ref(t.name), t.columns) for t in local_tbls)
         columns = OrderedDict()
@@ -780,8 +889,10 @@ class PGCompleter(Completer):
         return columns
 
     def _get_schemas(self, obj_typ, schema):
-        """ Returns a list of schemas from which to suggest objects
-        schema is the schema qualification input by the user (if any)
+        """Returns a list of schemas from which to suggest objects.
+
+        :param schema is the schema qualification input by the user (if any)
+
         """
         metadata = self.dbmetadata[obj_typ]
         if schema:
@@ -793,8 +904,10 @@ class PGCompleter(Completer):
         return None if parent or schema in self.search_path else schema
 
     def populate_schema_objects(self, schema, obj_type):
-        """Returns a list of SchemaObjects representing tables or views
-        schema is the schema qualification input by the user (if any)
+        """Returns a list of SchemaObjects representing tables or views.
+
+        :param schema is the schema qualification input by the user (if any)
+
         """
 
         return [
@@ -807,11 +920,12 @@ class PGCompleter(Completer):
         ]
 
     def populate_functions(self, schema, filter_func):
-        """Returns a list of function SchemaObjects
+        """Returns a list of function SchemaObjects.
 
-        filter_func is a function that accepts a FunctionMetadata namedtuple
-        and returns a boolean indicating whether that function should be
-        kept or discarded
+        :param filter_func is a function that accepts a FunctionMetadata
+        namedtuple and returns a boolean indicating whether that
+        function should be kept or discarded
+
         """
 
         # Because of multiple dispatch, we can have multiple functions
@@ -821,7 +935,7 @@ class PGCompleter(Completer):
             SchemaObject(
                 name=func,
                 schema=(self._maybe_schema(schema=sch, parent=schema)),
-                function=True
+                meta=meta
             )
             for sch in self._get_schemas('functions', schema)
             for (func, metas) in self.dbmetadata['functions'][sch].items()

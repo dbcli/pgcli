@@ -22,6 +22,15 @@ def completion(display_meta, text, pos=0):
     return Completion(text, start_position=pos, display_meta=display_meta)
 
 
+def function(text, pos=0, display=None):
+    return Completion(
+        text,
+        display=display or text,
+        start_position=pos,
+        display_meta='function'
+    )
+
+
 def get_result(completer, text, position=None):
     position = len(text) if position is None else position
     return completer.get_completions(
@@ -40,7 +49,6 @@ def result_set(completer, text, position=None):
 schema = partial(completion, 'schema')
 table = partial(completion, 'table')
 view = partial(completion, 'view')
-function = partial(completion, 'function')
 column = partial(completion, 'column')
 keyword = partial(completion, 'keyword')
 datatype = partial(completion, 'datatype')
@@ -93,8 +101,21 @@ class MetaData(object):
 
     def functions(self, parent='public', pos=0):
         return [
-            function(escape(x[0] + '()'), pos)
-            for x in self.metadata.get('functions', {}).get(parent, [])]
+            function(
+                escape(x[0]) + '(' + ', '.join(
+                    arg_name + ' := '
+                    for (arg_name, arg_mode) in zip(x[1], x[3])
+                    if arg_mode in ('b', 'i')
+                ) + ')',
+                pos,
+                escape(x[0]) + '(' + ', '.join(
+                    arg_name
+                    for (arg_name, arg_mode) in zip(x[1], x[3])
+                    if arg_mode in ('b', 'i')
+                ) + ')'
+            )
+            for x in self.metadata.get('functions', {}).get(parent, [])
+        ]
 
     def schemas(self, pos=0):
         schemas = set(sch for schs in self.metadata.values() for sch in schs)
@@ -191,7 +212,7 @@ class MetaData(object):
                 view_cols.extend([(sch, tbl, col, 'text') for col in cols])
 
         functions = [
-            FunctionMetadata(sch, *func_meta)
+            FunctionMetadata(sch, *func_meta, arg_defaults=None)
             for sch, funcs in metadata['functions'].items()
             for func_meta in funcs]
 
