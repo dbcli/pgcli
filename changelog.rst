@@ -5,6 +5,10 @@ Features:
 ---------
 * Suggest objects from all schemas (not just those in search_path) (Thanks: `Joakim Koljonen`_)
 
+Bug fixes:
+----------
+* Fixed external editor bug (issue #668). (Thanks: `Irina Truong`_).
+
 1.5.1
 =====
 
