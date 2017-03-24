@@ -2,7 +2,7 @@ Feature: named queries:
   save, use and delete named queries
 
   Scenario: save, use and delete named queries
-     When we run pgcli
+     When we run dbcli
       and we wait for prompt
       and we connect to test database
       then we see database connected

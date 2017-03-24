@@ -2,7 +2,7 @@ Feature: manipulate tables:
   create, insert, update, select, delete from, drop
 
   Scenario: create, insert, select from, update, drop table
-     When we run pgcli
+     When we run dbcli
       and we wait for prompt
       and we connect to test database
       then we see database connected
@@ -18,5 +18,5 @@ Feature: manipulate tables:
       then we see record deleted
       when we drop table
       then we see table dropped
-      when we connect to postgres
+      when we connect to dbserver
       then we see database connected

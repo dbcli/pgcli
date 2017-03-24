@@ -3,17 +3,17 @@ Feature: run the cli,
   exit the cli
 
   Scenario: run the cli
-     When we run pgcli
-      then we see pgcli prompt
+     When we run dbcli
+      then we see dbcli prompt
 
   Scenario: run "\?" command
-     When we run pgcli
+     When we run dbcli
       and we wait for prompt
       and we send "\?" command
       then we see help output
 
   Scenario: run the cli and exit
-     When we run pgcli
+     When we run dbcli
       and we wait for prompt
       and we send "ctrl + d"
-      then pgcli exits
+      then dbcli exits

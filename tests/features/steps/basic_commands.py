@@ -12,7 +12,7 @@ from behave import when
 import wrappers
 
 
-@when('we run pgcli')
+@when('we run dbcli')
 def step_run_cli(context):
     """
     Run the process using pexpect.
