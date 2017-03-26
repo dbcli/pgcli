@@ -93,7 +93,7 @@ class InputProcessor(object):
         self.reset()
 
     def reset(self):
-        self._previous_key_sequence = None
+        self._previous_key_sequence = []
         self._previous_handler = None
 
         self._process_coroutine = self._process()
@@ -173,7 +173,7 @@ class InputProcessor(object):
 
                 # Exact matches found, call handler.
                 if not is_prefix_of_longer_match and matches:
-                    self._call_handler(matches[-1], key_sequence=buffer)
+                    self._call_handler(matches[-1], key_sequence=buffer[:])
                     del buffer[:]  # Keep reference.
 
                 # No match found.

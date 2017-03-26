@@ -96,3 +96,45 @@ def test_common_prefix(processor, handlers):
     processor.process_keys()
 
     assert handlers.called == ['control_x', 'control_d']
+
+
+def test_previous_key_sequence(processor, handlers):
+    """
+    test whether we receive the correct previous_key_sequence.
+    """
+    events = []
+    def handler(event):
+        events.append(event)
+
+    # Build registry.
+    registry = Registry()
+    registry.add_binding('a', 'a')(handler)
+    registry.add_binding('b', 'b')(handler)
+    processor = InputProcessor(registry, lambda: None)
+
+    # Create processor and feed keys.
+    processor.feed(KeyPress('a', 'a'))
+    processor.feed(KeyPress('a', 'a'))
+    processor.feed(KeyPress('b', 'b'))
+    processor.feed(KeyPress('b', 'b'))
+    processor.process_keys()
+
+    # Test.
+    assert len(events) == 2
+    assert len(events[0].key_sequence) == 2
+    assert events[0].key_sequence[0].key == 'a'
+    assert events[0].key_sequence[0].data == 'a'
+    assert events[0].key_sequence[1].key == 'a'
+    assert events[0].key_sequence[1].data == 'a'
+    assert events[0].previous_key_sequence == []
+
+    assert len(events[1].key_sequence) == 2
+    assert events[1].key_sequence[0].key == 'b'
+    assert events[1].key_sequence[0].data == 'b'
+    assert events[1].key_sequence[1].key == 'b'
+    assert events[1].key_sequence[1].data == 'b'
+    assert len(events[1].previous_key_sequence) == 2
+    assert events[1].previous_key_sequence[0].key == 'a'
+    assert events[1].previous_key_sequence[0].data == 'a'
+    assert events[1].previous_key_sequence[1].key == 'a'
+    assert events[1].previous_key_sequence[1].data == 'a'
