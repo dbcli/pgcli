@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+1.0.14: 2017-03-26
+------------------
+
+Fixes:
+- Handle arguments in the $EDITOR and $VISUAL env variable.
+- Added missing explicit loops for Futures in asyncio_posix eventloop.
+- Fallback to default terminal size if reported as 0.
+- Don't save undo state when receiving CPRResponse.
+- Set VMIN terminal flag to 1 when entering raw mode.
+  (Fixes a bug on Solaris.)
+- Fix `previous_key_sequences`.
+
+
 1.0.13: 2017-02-02
 ------------------
 
