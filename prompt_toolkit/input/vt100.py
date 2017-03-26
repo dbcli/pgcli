@@ -157,6 +157,14 @@ class raw_mode(object):
         else:
             newattr[tty.LFLAG] = self._patch_lflag(newattr[tty.LFLAG])
             newattr[tty.IFLAG] = self._patch_iflag(newattr[tty.IFLAG])
+
+            # VMIN defines the number of characters read at a time in
+            # non-canonical mode. It seems to default to 1 on Linux, but on
+            # Solaris and derived operating systems it defaults to 4. (This is
+            # because the VMIN slot is the same as the VEOF slot, which
+            # defaults to ASCII EOT = Ctrl-D = 4.)
+            newattr[tty.CC][termios.VMIN] = 1
+
             termios.tcsetattr(self.fileno, termios.TCSANOW, newattr)
 
             # Put the terminal in cursor mode. (Instead of application mode.)
