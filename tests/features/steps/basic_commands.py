@@ -18,7 +18,7 @@ def step_run_cli(context):
     Run the process using pexpect.
     """
     cli_cmd = context.conf.get('cli_command')
-    context.cli = pexpect.spawnu(cli_cmd)
+    context.cli = pexpect.spawnu(cli_cmd, cwd='..')
     context.exit_sent = False
 
 

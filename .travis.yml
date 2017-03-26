@@ -17,8 +17,10 @@ script:
   - coverage run --source pgcli -m py.test
   - cd tests
   - behave
+  - cd ..
 
 after_success:
+  - coverage combine
   - codecov
 
 notifications:

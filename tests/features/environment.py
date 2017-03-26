@@ -42,7 +42,7 @@ def before_all(context):
         'PGDATABASE': os.environ.get('PGDATABASE', None),
         'PGUSER': os.environ.get('PGUSER', None),
         'PGHOST': os.environ.get('PGHOST', None),
-        'PGPASS': os.environ.get('PGPASS', None),
+        'PGPASSWORD': os.environ.get('PGPASSWORD', None),
     }
 
     # Set new env vars.
@@ -51,10 +51,10 @@ def before_all(context):
     os.environ['PGHOST'] = context.conf['host']
 
     if context.conf['pass']:
-        os.environ['PGPASS'] = context.conf['pass']
+        os.environ['PGPASSWORD'] = context.conf['pass']
     else:
-        if 'PGPASS' in os.environ:
-            del os.environ['PGPASS']
+        if 'PGPASSWORD' in os.environ:
+            del os.environ['PGPASSWORD']
         if 'PGHOST' in os.environ:
             del os.environ['PGHOST']
 
