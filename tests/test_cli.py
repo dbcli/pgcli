@@ -53,6 +53,7 @@ def _feed_cli_with_input(
 
     finally:
         inp.close()
+        p.close()
 
 
 def test_simple_text_input():

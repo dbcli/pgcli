@@ -11,7 +11,6 @@ from prompt_toolkit.renderer import HeightIsUnknownError
 from prompt_toolkit.utils import suspend_to_background_supported, is_windows
 
 from .named_commands import get_by_name
-from .scroll import scroll_one_line_down, scroll_one_line_up
 from ..key_bindings import KeyBindings
 
 
@@ -33,80 +32,80 @@ def load_basic_bindings():
     insert_mode = vi_insert_mode | emacs_insert_mode
     handle = key_bindings.add
 
-    @handle(Keys.ControlA)
-    @handle(Keys.ControlB)
-    @handle(Keys.ControlC)
-    @handle(Keys.ControlD)
-    @handle(Keys.ControlE)
-    @handle(Keys.ControlF)
-    @handle(Keys.ControlG)
-    @handle(Keys.ControlH)
-    @handle(Keys.ControlI)
-    @handle(Keys.ControlJ)
-    @handle(Keys.ControlK)
-    @handle(Keys.ControlL)
-    @handle(Keys.ControlM)
-    @handle(Keys.ControlN)
-    @handle(Keys.ControlO)
-    @handle(Keys.ControlP)
-    @handle(Keys.ControlQ)
-    @handle(Keys.ControlR)
-    @handle(Keys.ControlS)
-    @handle(Keys.ControlT)
-    @handle(Keys.ControlU)
-    @handle(Keys.ControlV)
-    @handle(Keys.ControlW)
-    @handle(Keys.ControlX)
-    @handle(Keys.ControlY)
-    @handle(Keys.ControlZ)
-    @handle(Keys.F1)
-    @handle(Keys.F2)
-    @handle(Keys.F3)
-    @handle(Keys.F4)
-    @handle(Keys.F5)
-    @handle(Keys.F6)
-    @handle(Keys.F7)
-    @handle(Keys.F8)
-    @handle(Keys.F9)
-    @handle(Keys.F10)
-    @handle(Keys.F11)
-    @handle(Keys.F12)
-    @handle(Keys.F13)
-    @handle(Keys.F14)
-    @handle(Keys.F15)
-    @handle(Keys.F16)
-    @handle(Keys.F17)
-    @handle(Keys.F18)
-    @handle(Keys.F19)
-    @handle(Keys.F20)
-    @handle(Keys.ControlSpace)
-    @handle(Keys.ControlBackslash)
-    @handle(Keys.ControlSquareClose)
-    @handle(Keys.ControlCircumflex)
-    @handle(Keys.ControlUnderscore)
-    @handle(Keys.Backspace)
-    @handle(Keys.Up)
-    @handle(Keys.Down)
-    @handle(Keys.Right)
-    @handle(Keys.Left)
-    @handle(Keys.ShiftUp)
-    @handle(Keys.ShiftDown)
-    @handle(Keys.ShiftRight)
-    @handle(Keys.ShiftLeft)
-    @handle(Keys.Home)
-    @handle(Keys.End)
-    @handle(Keys.Delete)
-    @handle(Keys.ShiftDelete)
-    @handle(Keys.ControlDelete)
-    @handle(Keys.PageUp)
-    @handle(Keys.PageDown)
-    @handle(Keys.BackTab)
-    @handle(Keys.Tab)
-    @handle(Keys.ControlLeft)
-    @handle(Keys.ControlRight)
-    @handle(Keys.ControlUp)
-    @handle(Keys.ControlDown)
-    @handle(Keys.Insert)
+    @handle('c-a')
+    @handle('c-b')
+    @handle('c-c')
+    @handle('c-d')
+    @handle('c-e')
+    @handle('c-f')
+    @handle('c-g')
+    @handle('c-h')
+    @handle('c-i')
+    @handle('c-j')
+    @handle('c-k')
+    @handle('c-l')
+    @handle('c-m')
+    @handle('c-n')
+    @handle('c-o')
+    @handle('c-p')
+    @handle('c-q')
+    @handle('c-r')
+    @handle('c-s')
+    @handle('c-t')
+    @handle('c-u')
+    @handle('c-v')
+    @handle('c-w')
+    @handle('c-x')
+    @handle('c-y')
+    @handle('c-z')
+    @handle('f1')
+    @handle('f2')
+    @handle('f3')
+    @handle('f4')
+    @handle('f5')
+    @handle('f6')
+    @handle('f7')
+    @handle('f8')
+    @handle('f9')
+    @handle('f10')
+    @handle('f11')
+    @handle('f12')
+    @handle('f13')
+    @handle('f14')
+    @handle('f15')
+    @handle('f16')
+    @handle('f17')
+    @handle('f18')
+    @handle('f19')
+    @handle('f20')
+    @handle('c-@')  # Also c-space.
+    @handle('c-\\')
+    @handle('c-]')
+    @handle('c-^')
+    @handle('c-_')
+    @handle('backspace')
+    @handle('up')
+    @handle('down')
+    @handle('right')
+    @handle('left')
+    @handle('s-up')
+    @handle('s-down')
+    @handle('s-right')
+    @handle('s-left')
+    @handle('home')
+    @handle('end')
+    @handle('delete')
+    @handle('s-delete')
+    @handle('c-delete')
+    @handle('pageup')
+    @handle('pagedown')
+    @handle('s-tab')
+    @handle('tab')
+    @handle('c-left')
+    @handle('c-right')
+    @handle('c-up')
+    @handle('c-down')
+    @handle('insert')
     @handle(Keys.Ignore)
     def _(event):
         """
@@ -120,45 +119,43 @@ def load_basic_bindings():
         pass
 
     # Readline-style bindings.
-    handle(Keys.Home)(get_by_name('beginning-of-line'))
-    handle(Keys.End)(get_by_name('end-of-line'))
-    handle(Keys.Left)(get_by_name('backward-char'))
-    handle(Keys.Right)(get_by_name('forward-char'))
-    handle(Keys.ControlUp)(get_by_name('previous-history'))
-    handle(Keys.ControlDown)(get_by_name('next-history'))
-    handle(Keys.ControlL)(get_by_name('clear-screen'))
+    handle('home')(get_by_name('beginning-of-line'))
+    handle('end')(get_by_name('end-of-line'))
+    handle('left')(get_by_name('backward-char'))
+    handle('right')(get_by_name('forward-char'))
+    handle('c-up')(get_by_name('previous-history'))
+    handle('c-down')(get_by_name('next-history'))
+    handle('c-l')(get_by_name('clear-screen'))
 
-    handle(Keys.ControlK, filter=insert_mode)(get_by_name('kill-line'))
-    handle(Keys.ControlU, filter=insert_mode)(get_by_name('unix-line-discard'))
-    handle(Keys.ControlH, filter=insert_mode, save_before=if_no_repeat)(
+    handle('c-k', filter=insert_mode)(get_by_name('kill-line'))
+    handle('c-u', filter=insert_mode)(get_by_name('unix-line-discard'))
+    handle('backspace', filter=insert_mode, save_before=if_no_repeat)(
         get_by_name('backward-delete-char'))
-    handle(Keys.Backspace, filter=insert_mode, save_before=if_no_repeat)(
-        get_by_name('backward-delete-char'))
-    handle(Keys.Delete, filter=insert_mode, save_before=if_no_repeat)(
+    handle('delete', filter=insert_mode, save_before=if_no_repeat)(
         get_by_name('delete-char'))
-    handle(Keys.ShiftDelete, filter=insert_mode, save_before=if_no_repeat)(
+    handle('c-delete', filter=insert_mode, save_before=if_no_repeat)(
         get_by_name('delete-char'))
     handle(Keys.Any, filter=insert_mode, save_before=if_no_repeat)(
         get_by_name('self-insert'))
-    handle(Keys.ControlT, filter=insert_mode)(get_by_name('transpose-chars'))
-    handle(Keys.ControlW, filter=insert_mode)(get_by_name('unix-word-rubout'))
-    handle(Keys.ControlI, filter=insert_mode)(get_by_name('menu-complete'))
-    handle(Keys.BackTab, filter=insert_mode)(get_by_name('menu-complete-backward'))
+    handle('c-t', filter=insert_mode)(get_by_name('transpose-chars'))
+    handle('c-w', filter=insert_mode)(get_by_name('unix-word-rubout'))
+    handle('c-i', filter=insert_mode)(get_by_name('menu-complete'))
+    handle('s-tab', filter=insert_mode)(get_by_name('menu-complete-backward'))
 
-    handle(Keys.PageUp, filter= ~has_selection)(get_by_name('previous-history'))
-    handle(Keys.PageDown, filter= ~has_selection)(get_by_name('next-history'))
+    handle('pageup', filter= ~has_selection)(get_by_name('previous-history'))
+    handle('pagedown', filter= ~has_selection)(get_by_name('next-history'))
 
     # CTRL keys.
 
     text_before_cursor = Condition(lambda app: app.current_buffer.text)
-    handle(Keys.ControlD, filter=text_before_cursor & insert_mode)(get_by_name('delete-char'))
+    handle('c-d', filter=text_before_cursor & insert_mode)(get_by_name('delete-char'))
 
-    @handle(Keys.Enter, filter=insert_mode & is_multiline)
+    @handle('enter', filter=insert_mode & is_multiline)
     def _(event):
         " Newline (in case of multiline input. "
         event.current_buffer.newline(copy_margin=not in_paste_mode(event.app))
 
-    @handle(Keys.ControlJ)
+    @handle('c-j')
     def _(event):
         r"""
         By default, handle \n as if it were a \r (enter).
@@ -170,22 +167,22 @@ def load_basic_bindings():
 
     # Delete the word before the cursor.
 
-    @handle(Keys.Up)
+    @handle('up')
     def _(event):
         event.current_buffer.auto_up(count=event.arg)
 
-    @handle(Keys.Down)
+    @handle('down')
     def _(event):
         event.current_buffer.auto_down(count=event.arg)
 
-    @handle(Keys.Delete, filter=has_selection)
+    @handle('delete', filter=has_selection)
     def _(event):
         data = event.current_buffer.cut_selection()
         event.app.clipboard.set_data(data)
 
     # Global bindings.
 
-    @handle(Keys.ControlZ)
+    @handle('c-z')
     def _(event):
         """
         By default, control-Z should literally insert Ctrl-Z.
@@ -318,21 +315,13 @@ def load_mouse_bindings():
     @key_bindings.add(Keys.ScrollUp)
     def _(event):
         " Scroll up event without cursor position. "
-#        from prompt_toolkit.layout.controls import BufferControl
-#        if isinstance(event.app.layout.current_control, BufferControl):
-#            scroll_one_line_up(event)
-#        else:
-#            event.key_processor.feed(KeyPress(Keys.Up))
+        # We don't receive a cursor position, so we don't know which window to
+        # scroll. Just send an 'up' key press instead.
         event.key_processor.feed(KeyPress(Keys.Up))
 
     @key_bindings.add(Keys.ScrollDown)
     def _(event):
         " Scroll down event without cursor position. "
-#        from prompt_toolkit.layout.controls import BufferControl
-#        if isinstance(event.app.layout.current_control, BufferControl):
-#            scroll_one_line_down(event)
-#        else:
-#            event.key_processor.feed(KeyPress(Keys.Down))
         event.key_processor.feed(KeyPress(Keys.Down))
 
     @key_bindings.add(Keys.WindowsMouseEvent)
@@ -367,7 +356,7 @@ def load_abort_and_exit_bindings():
     key_bindings = KeyBindings()
     handle = key_bindings.add
 
-    @handle(Keys.ControlC)
+    @handle('c-c')
     def _(event):
         " Abort when Control-C has been pressed. "
         event.app.abort()
@@ -379,7 +368,7 @@ def load_abort_and_exit_bindings():
         return (app.current_buffer.name == DEFAULT_BUFFER and
                 not app.current_buffer.text)
 
-    handle(Keys.ControlD, filter=ctrl_d_condition)(get_by_name('end-of-file'))
+    handle('c-d', filter=ctrl_d_condition)(get_by_name('end-of-file'))
 
     return key_bindings
 
@@ -393,7 +382,7 @@ def load_basic_system_bindings():
     suspend_supported = Condition(
         lambda app: suspend_to_background_supported())
 
-    @key_bindings.add(Keys.ControlZ, filter=suspend_supported)
+    @key_bindings.add('c-z', filter=suspend_supported)
     def _(event):
         """
         Suspend process to background.
@@ -415,9 +404,9 @@ def load_auto_suggestion_bindings():
             app.current_buffer.suggestion is not None and
             app.current_buffer.document.is_cursor_at_the_end)
 
-    @handle(Keys.ControlF, filter=suggestion_available)
-    @handle(Keys.ControlE, filter=suggestion_available)
-    @handle(Keys.Right, filter=suggestion_available)
+    @handle('c-f', filter=suggestion_available)
+    @handle('c-e', filter=suggestion_available)
+    @handle('right', filter=suggestion_available)
     def _(event):
         " Accept suggestion. "
         b = event.current_buffer

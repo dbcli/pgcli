@@ -107,10 +107,10 @@ def test_previous_key_sequence(processor, handlers):
         events.append(event)
 
     # Build registry.
-    registry = Registry()
-    registry.add_binding('a', 'a')(handler)
-    registry.add_binding('b', 'b')(handler)
-    processor = InputProcessor(registry, lambda: None)
+    registry = KeyBindings()
+    registry.add('a', 'a')(handler)
+    registry.add('b', 'b')(handler)
+    processor = KeyProcessor(registry, lambda: None)
 
     # Create processor and feed keys.
     processor.feed(KeyPress('a', 'a'))

@@ -3,9 +3,10 @@ Search related key bindings.
 """
 from __future__ import unicode_literals
 from ..key_bindings import key_binding
-from prompt_toolkit.filters import is_searching, control_is_searchable
 from prompt_toolkit.enums import SearchDirection
+from prompt_toolkit.filters import is_searching, control_is_searchable, Condition
 from prompt_toolkit.key_binding.vi_state import InputMode
+from prompt_toolkit.layout.controls import BufferControl
 
 
 @key_binding(filter=is_searching)
@@ -119,3 +120,23 @@ def forward_incremental_search(event):
     """
     _incremental_search(
         event.app, SearchDirection.FORWARD, count=event.arg)
+
+
+@Condition
+def _previous_buffer_is_returnable(cli):
+    """
+    True if the previously focussed buffer has a return handler.
+    """
+    prev_control = cli.layout.previous_control
+    if isinstance(prev_control, BufferControl):
+        return prev_control.buffer.is_returnable
+    return False
+
+
+@key_binding(filter=is_searching & _previous_buffer_is_returnable)
+def accept_search_and_accept_input(event):
+    """
+    Accept the search operation first, then accept the input.
+    """
+    accept_search.call(event)
+    event.current_buffer.validate_and_handle(event.app)

@@ -32,6 +32,13 @@ class Input(with_metaclass(ABCMeta, object)):
         Return a list of Key objects which are read/parsed from the input.
         """
 
+    def flush_keys(self):
+        """
+        Flush the underlying parser. and return the pending keys.
+        (Used for vt100 input.)
+        """
+        return []
+
     def flush(self):
         " The event loop can call this when the input has to be flushed. "
         pass

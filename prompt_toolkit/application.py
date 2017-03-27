@@ -69,8 +69,6 @@ class Application(object):
     Callbacks (all of these should accept a
     :class:`~prompt_toolkit.application.Application` object as input.)
 
-    :param on_input_timeout: Called when there is no input for x seconds.
-                    (Fired when any eventloop.onInputTimeout is fired.)
     :param on_reset: Called during reset.
     :param on_render: Called right after rendering.
     :param on_invalidate: Called when the UI has been invalidated.
@@ -96,7 +94,6 @@ class Application(object):
                  erase_when_done=False,
                  reverse_vi_search_direction=False,
 
-                 on_input_timeout=None,
                  on_reset=None, on_render=None, on_invalidate=None,
 
                  # I/O.
@@ -113,7 +110,6 @@ class Application(object):
         assert get_title is None or callable(get_title)
         assert isinstance(paste_mode, AppFilter)
         assert isinstance(editing_mode, six.string_types)
-        assert on_input_timeout is None or callable(on_input_timeout)
         assert style is None or isinstance(style, Style)
         assert isinstance(erase_when_done, bool)
 
@@ -146,7 +142,6 @@ class Application(object):
         self.reverse_vi_search_direction = reverse_vi_search_direction
 
         # Events.
-        self.on_input_timeout = Event(self, on_input_timeout)
         self.on_invalidate = Event(self, on_invalidate)
         self.on_render = Event(self, on_render)
         self.on_reset = Event(self, on_reset)
@@ -168,6 +163,13 @@ class Application(object):
         #: Vi state. (For Vi key bindings.)
         self.vi_state = ViState()
 
+        #: When to flush the input (For flushing escape keys.) This is important
+        #: on terminals that use vt100 input. We can't distinguish the escape
+        #: key from for instance the left-arrow key, if we don't know what follows
+        #: after "\x1b". This little timer will consider "\x1b" to be escape if
+        #: nothing did follow in this time span.
+        self.input_timeout = .5
+
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
         self.renderer = Renderer(
@@ -185,7 +187,7 @@ class Application(object):
         #: visible controls.)
         self.rendered_user_controls = []
 
-        #: When there is high CPU, postpone the renderering max x seconds.
+        #: When there is high CPU, postpone the rendering max x seconds.
         #: '0' means: don't postpone. '.5' means: try to draw at least twice a second.
         self.max_render_postpone_time = 0  # E.g. .5
 
@@ -442,13 +444,32 @@ class Application(object):
             # Get keys from the input object.
             keys = self.input.read_keys()
 
-            # Feed to input processor.
+            # Feed to key processor.
             self.key_processor.feed_multiple(keys)
             self.key_processor.process_keys()
 
             # Quit when the input stream was closed.
             if self.input.closed:
             	f.set_exception(EOFError)
+            else:
+                # Automatically flush keys.
+                loop.run_in_executor(auto_flush_input)
+
+        def auto_flush_input():
+            # Flush input after timeout.
+            # (Used for flushing the enter key.)
+            time.sleep(self.input_timeout)
+            loop.call_from_executor(flush_input)
+
+        def flush_input():
+            if not self.is_done:
+                # Get keys, and feed to key processor.
+                keys = self.input.flush_keys()
+                self.key_processor.feed_multiple(keys)
+                self.key_processor.process_keys()
+
+                if self.input.closed:
+                    f.set_exception(EOFError)
 
         # Set event loop handlers.
         previous_input, previous_cb = loop.set_input(self.input, read_from_input)

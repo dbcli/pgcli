@@ -1297,7 +1297,9 @@ class Buffer(object):
         for e in editors:
             if e:
                 try:
-                    returncode = subprocess.call([shlex.split(e), filename])
+                    # Use 'shlex.split()', because $VISUAL can contain spaces
+                    # and quotes.
+                    returncode = subprocess.call(shlex.split(e) + [filename])
                     return returncode == 0
 
                 except OSError:

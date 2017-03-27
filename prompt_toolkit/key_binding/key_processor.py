@@ -9,7 +9,7 @@ correct callbacks when new key presses are feed through `feed`.
 from __future__ import unicode_literals
 from prompt_toolkit.buffer import EditReadOnlyBuffer
 from prompt_toolkit.filters.app import vi_navigation_mode
-from prompt_toolkit.keys import Keys
+from prompt_toolkit.keys import Keys, ALL_KEYS
 from prompt_toolkit.utils import Event
 
 from .key_bindings import KeyBindingsBase
@@ -31,7 +31,7 @@ class KeyPress(object):
     :param data: The received string on stdin. (Often vt100 escape codes.)
     """
     def __init__(self, key, data=None):
-        assert isinstance(key, six.text_type)
+        assert key in ALL_KEYS or len(key) == 1
         assert data is None or isinstance(data, six.text_type)
 
         if data is None:

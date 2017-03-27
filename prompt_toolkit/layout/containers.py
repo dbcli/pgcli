@@ -1038,9 +1038,9 @@ class Window(Container):
         if `cursorcolumn` is True.
     :param align: alignment of content.
     :param token: If given, apply this token to all of the cells in this window.
-    :param char: Character to be used for filling the background.
     :param get_token: Callable that takes an `Application` and returns the token
         to be applied to all the cells in this window.
+    :param char: Character to be used for filling the background.
     :param transparent: When `False`, first erase everything underneath. (This
         is mainly useful if this Window is displayed inside a `Float`.)
         (when `char` or `get_char` is geven, it will never be transparant
@@ -1591,7 +1591,7 @@ class Window(Container):
         """
         digraph_char = self._get_digraph_char(app)
         if digraph_char:
-            cpos = new_screen.cursor_position
+            cpos = new_screen.get_cursor_position(self)
             new_screen.data_buffer[cpos.y][cpos.x] = \
                 _CHAR_CACHE[digraph_char, Token.Digraph]
 
@@ -1612,7 +1612,7 @@ class Window(Container):
 
             # Display only if this is a 1 cell width character.
             if get_cwidth(data) == 1:
-                cpos = new_screen.cursor_position
+                cpos = new_screen.get_cursor_position(self)
                 new_screen.data_buffer[cpos.y][cpos.x] = \
                     _CHAR_CACHE[data, Token.PartialKeyBinding]
 

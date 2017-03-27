@@ -7,11 +7,10 @@ import threading
 import time
 
 from prompt_toolkit.input import Input
-from .base import EventLoop, INPUT_TIMEOUT
+from .base import EventLoop
 from .future import Future
 from .inputhook import InputHookContext
 from .select import AutoSelector, Selector, fd_to_int
-from .utils import TimeIt
 
 __all__ = (
     'PosixEventLoop',
@@ -34,10 +33,6 @@ class PosixEventLoop(EventLoop):
         # The `Input` object that's currently attached.
         self._input = None
         self._input_ready_cb = None
-
-        # Timeout to be used for the select() call.
-        # (Used for flushing the input stream.)
-        self._current_timeout = None  # Or INPUT_TIMEOUT.
 
         self._calls_from_executor = []
         self._read_fds = {}  # Maps fd to handler.
@@ -66,7 +61,6 @@ class PosixEventLoop(EventLoop):
 
         try:
             self._running = True
-            self._current_timeout = INPUT_TIMEOUT
 
             while not future.done():
                 self._run_once()
@@ -81,23 +75,13 @@ class PosixEventLoop(EventLoop):
     def _run_once(self):
         # Call inputhook.
         if self._inputhook_context:
-            with TimeIt() as inputhook_timer:
-                def ready(wait):
-                    " True when there is input ready. The inputhook should return control. "
-                    return self._ready_for_reading(self._current_timeout if wait else 0) != []
-                self._inputhook_context.call_inputhook(ready)
-            inputhook_duration = inputhook_timer.duration
-        else:
-            inputhook_duration = 0
-
-        # Calculate remaining timeout. (The inputhook consumed some of the time.)
-        if self._current_timeout is None:
-            remaining_timeout = None
-        else:
-            remaining_timeout = max(0, self._current_timeout - inputhook_duration)
+            def ready(wait):
+                " True when there is input ready. The inputhook should return control. "
+                return self._ready_for_reading(None if wait else 0) != []
+            self._inputhook_context.call_inputhook(ready)
 
         # Wait until input is ready.
-        fds = self._ready_for_reading(remaining_timeout)
+        fds = self._ready_for_reading(None)
 
         # When any of the FDs are ready. Call the appropriate callback.
         if fds:
@@ -155,15 +139,6 @@ class PosixEventLoop(EventLoop):
                 for t, _ in low_priority_tasks:
                     t()
 
-        else:
-            # Flush all pending keys on a timeout. (This is most important to
-            # flush the vt100 'Escape' key early when nothing else follows.)
-            if self._input is not None:
-                self._input.flush()
-
-            # Fire input timeout event.
-            self._current_timeout = None
-
     def _ready_for_reading(self, timeout=None):
         """
         Return the file descriptors that are ready for reading.
@@ -196,11 +171,7 @@ class PosixEventLoop(EventLoop):
 
         # Add reader.
         def ready():
-            # Tell the callback that input's ready.
             input_ready_callback()
-
-            # Reset timeout.
-            self._current_timeout = INPUT_TIMEOUT
 
         self.add_reader(input.stdin.fileno(), ready)
 

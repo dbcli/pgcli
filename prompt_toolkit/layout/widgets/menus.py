@@ -5,7 +5,6 @@ from .base import BORDER
 from prompt_toolkit.eventloop import EventLoop
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import HSplit, Window, FloatContainer, Float, ConditionalContainer
 from prompt_toolkit.layout.controls import TokenListControl
 from prompt_toolkit.layout.widgets import Shadow
@@ -45,28 +44,28 @@ class MenuContainer(object):
 
         # Navigation through the main menu.
 
-        @kb.add(Keys.Left, filter=in_main_menu)
+        @kb.add('left', filter=in_main_menu)
         def _(event):
             self.selected_menu[0] = max(0, self.selected_menu[0] - 1)
 
-        @kb.add(Keys.Right, filter=in_main_menu)
+        @kb.add('right', filter=in_main_menu)
         def _(event):
             self.selected_menu[0] = min(
                 len(self.menu_items) - 1, self.selected_menu[0] + 1)
 
-        @kb.add(Keys.Down, filter=in_main_menu)
+        @kb.add('down', filter=in_main_menu)
         def _(event):
             self.selected_menu.append(0)
 
         # Sub menu navigation.
 
-        @kb.add(Keys.Left, filter=in_sub_menu)
+        @kb.add('left', filter=in_sub_menu)
         def _(event):
             " Go back to parent menu. "
             if len(self.selected_menu) > 1:
                 self.selected_menu.pop()
 
-        @kb.add(Keys.Right, filter=in_sub_menu)
+        @kb.add('right', filter=in_sub_menu)
         def _(event):
             " go into sub menu. "
             if self._get_menu(len(self.selected_menu) - 1).children:
@@ -79,19 +78,19 @@ class MenuContainer(object):
                 if self.menu_items[self.selected_menu[0]].children:
                     self.selected_menu.append(0)
 
-        @kb.add(Keys.Up, filter=in_sub_menu)
+        @kb.add('up', filter=in_sub_menu)
         def _(event):
             if len(self.selected_menu) == 2 and self.selected_menu[1] == 0:
                 self.selected_menu.pop()
             elif self.selected_menu[-1] > 0:
                 self.selected_menu[-1] -= 1
 
-        @kb.add(Keys.Down, filter=in_sub_menu)
+        @kb.add('down', filter=in_sub_menu)
         def _(event):
             if self.selected_menu[-1] < len(self._get_menu(len(self.selected_menu) - 2).children) - 1:
                 self.selected_menu[-1] += 1
 
-        @kb.add(Keys.Enter)
+        @kb.add('enter')
         def _(event):
             " Click the selected menu item. "
             item = self._get_menu(len(self.selected_menu) - 1)

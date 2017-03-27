@@ -100,7 +100,7 @@ class ConsoleInputReader(object):
         b'\x1d': Keys.ControlSquareClose,  # Control-]
         b'\x1e': Keys.ControlCircumflex,  # Control-^
         b'\x1f': Keys.ControlUnderscore,  # Control-underscore (Also for Ctrl-hypen.)
-        b'\x7f': Keys.Backspace,  # (127) Backspace
+        b'\x7f': Keys.Backspace,  # (127) Backspace   (ASCII Delete.)
     }
 
     # Keys that don't carry character data.

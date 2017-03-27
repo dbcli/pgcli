@@ -55,10 +55,19 @@ class Vt100Input(Input):
         self._buffer = []
         return result
 
-    def flush(self):
+    def flush_keys(self):
+        """
+        Flush pending keys and return them.
+        (Used for flushing the 'escape' key.)
+        """
         # Flush all pending keys. (This is most important to flush the vt100
         # 'Escape' key early when nothing else follows.)
         self.vt100_parser.flush()
+
+        # Return result.
+        result = self._buffer
+        self._buffer = []
+        return result
 
     @property
     def closed(self):
@@ -78,7 +87,7 @@ class PipeInput(Vt100Input):
     """
     Input that is send through a pipe.
     This is useful if we want to send the input programatically into the
-    interface. Mostly useful for unit testing.
+    application. Mostly useful for unit testing.
 
     Usage::
 

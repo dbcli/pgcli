@@ -2,12 +2,14 @@ from __future__ import unicode_literals
 
 __all__ = (
     'Keys',
+    'ALL_KEYS',
 )
 
-class Keys(object):
-    Escape = 'escape'
 
-    ControlAt = 'c-@'
+class Keys(object):
+    Escape = 'escape'  # Also Control-[
+
+    ControlAt = 'c-@'  # Also Control-Space.
 
     ControlA = 'c-a'
     ControlB = 'c-b'
@@ -36,7 +38,6 @@ class Keys(object):
     ControlY = 'c-y'
     ControlZ = 'c-z'
 
-    ControlSquareOpen  = 'c-['
     ControlBackslash   = 'c-\\'
     ControlSquareClose = 'c-]'
     ControlCircumflex  = 'c-^'
@@ -66,7 +67,6 @@ class Keys(object):
     PageUp      = 'pageup'
     PageDown    = 'pagedown'
     Insert      = 'insert'
-    Backspace   = 'backspace'
 
     F1 = 'f1'
     F2 = 'f2'
@@ -94,22 +94,37 @@ class Keys(object):
     F24 = 'f24'
 
     # Matches any key.
-    Any = '<Any>'
+    Any = '<any>'
 
-    # Special3
-    ScrollUp    = '<ScrollUp>'
-    ScrollDown  = '<ScrollDown>'
+    # Special.
+    ScrollUp    = '<scroll-up>'
+    ScrollDown  = '<scroll-down>'
 
-    CPRResponse = '<Cursor-Position-Response>'
-    Vt100MouseEvent = '<Vt100-Mouse-Event>'
-    WindowsMouseEvent = '<Windows-Mouse-Event>'
-    BracketedPaste = '<Bracketed-Paste>'
+    CPRResponse = '<cursor-position-response>'
+    Vt100MouseEvent = '<vt100-mouse-event>'
+    WindowsMouseEvent = '<windows-mouse-event>'
+    BracketedPaste = '<bracketed-paste>'
 
     # For internal use: key which is ignored.
     # (The key binding for this key should not do anything.)
-    Ignore = '<Ignore>'
+    Ignore = '<ignore>'
 
-    # Aliases.
-    ControlSpace = ControlAt
-    Tab          = ControlI
-    Enter        = ControlM
+
+ALL_KEYS = [getattr(Keys, k) for k in dir(Keys) if not k.startswith('_')]
+
+
+# Aliases.
+KEY_ALIASES = {
+    'backspace': 'c-h',
+    'c-space': 'c-@',
+    'enter': 'c-m',
+    'tab': 'c-i',
+}
+
+
+# The following should not end up in ALL_KEYS, but we still want them in Keys
+# for backwards-compatibility.
+Keys.ControlSpace = Keys.ControlAt
+Keys.Tab          = Keys.ControlI
+Keys.Enter        = Keys.ControlM
+Keys.Backspace    = Keys.ControlH

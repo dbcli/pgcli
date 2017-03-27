@@ -40,8 +40,6 @@ class _Flush(object):
 
 # Mapping of vt100 escape codes to Keys.
 ANSI_SEQUENCES = {
-    '\x1b': Keys.Escape,
-
     '\x00': Keys.ControlAt,  # Control-At (Also for Ctrl-Space)
     '\x01': Keys.ControlA,  # Control-A (home)
     '\x02': Keys.ControlB,  # Control-B (emacs cursor left)
@@ -70,13 +68,21 @@ ANSI_SEQUENCES = {
     '\x19': Keys.ControlY,  # Control-Y (25)
     '\x1a': Keys.ControlZ,  # Control-Z
 
-    '\x1b': Keys.ControlSquareOpen,  # Both Control-[
+    '\x1b': Keys.Escape,            # Also Control-[
     '\x1c': Keys.ControlBackslash,  # Both Control-\ (also Ctrl-| )
     '\x1d': Keys.ControlSquareClose,  # Control-]
     '\x1e': Keys.ControlCircumflex,  # Control-^
     '\x1f': Keys.ControlUnderscore,  # Control-underscore (Also for Ctrl-hypen.)
 
-    '\x7f': Keys.Backspace,  # (127) Backspace
+    # ASCII Delete (0x7f)
+    # Vt220 (and Linux terminal) send this when pressing backspace. We map this
+    # to ControlH, because that will make it easier to create key bindings that
+    # work everywhere, with the trade-off that it's no longer possible to
+    # handle backspace and control-h individually for the few terminals that
+    # support it. (Most terminals send ControlH when backspace is pressed.)
+    # See: http://www.ibb.net/~anne/keyboard.html
+    '\x7f': Keys.ControlH,
+
     '\x1b[A': Keys.Up,
     '\x1b[B': Keys.Down,
     '\x1b[C': Keys.Right,

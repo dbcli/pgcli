@@ -77,15 +77,15 @@ class SystemToolbarControl(BufferControl):
         emacs_bindings = KeyBindings()
         handle = emacs_bindings.add
 
-        @handle(Keys.Escape, filter=focussed)
-        @handle(Keys.ControlG, filter=focussed)
-        @handle(Keys.ControlC, filter=focussed)
+        @handle('escape', filter=focussed)
+        @handle('c-g', filter=focussed)
+        @handle('c-c', filter=focussed)
         def _(event):
             " Hide system prompt. "
             self.system_buffer.reset()
             event.app.layout.pop_focus()
 
-        @handle(Keys.Enter, filter=focussed)
+        @handle('enter', filter=focussed)
         def _(event):
             " Run system command. "
             event.app.run_system_command(self.system_buffer.text)
@@ -96,15 +96,15 @@ class SystemToolbarControl(BufferControl):
         vi_bindings = KeyBindings()
         handle = vi_bindings.add
 
-        @handle(Keys.Escape, filter=focussed)
-        @handle(Keys.ControlC, filter=focussed)
+        @handle('escape', filter=focussed)
+        @handle('c-c', filter=focussed)
         def _(event):
             " Hide system prompt. "
             event.app.vi_state.input_mode = InputMode.NAVIGATION
             self.system_buffer.reset()
             event.app.layout.pop_focus()
 
-        @handle(Keys.Enter, filter=focussed)
+        @handle('enter', filter=focussed)
         def _(event):
             " Run system command. "
             event.app.vi_state.input_mode = InputMode.NAVIGATION

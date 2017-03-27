@@ -5,12 +5,7 @@ import textwrap
 
 __all__ = (
     'EventLoop',
-    'INPUT_TIMEOUT',
 )
-
-
-#: When to trigger the `onInputTimeout` event.
-INPUT_TIMEOUT = .5
 
 
 class EventLoop(with_metaclass(ABCMeta, object)):

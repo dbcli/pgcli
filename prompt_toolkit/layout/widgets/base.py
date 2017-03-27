@@ -14,7 +14,6 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.eventloop import EventLoop, get_event_loop
 from prompt_toolkit.filters import to_app_filter
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
@@ -86,7 +85,7 @@ class TextArea(object):
                  focussable=True, wrap_lines=True,
                  width=None, height=None,
                  dont_extend_height=False, dont_extend_width=False,
-                 scrollbar=False, token=Token, loop=None):
+                 scrollbar=False, token=Token, loop=None, _label=False):
         assert isinstance(text, six.text_type)
         assert loop is None or isinstance(loop, EventLoop)
 
@@ -118,13 +117,17 @@ class TextArea(object):
             height = D.exact(1)
             margins = []
 
+        if not _label:
+            # (In case of a Label, we don't want to apply the TextArea token.)
+            token = Token.TextArea | token
+
         self.window = Window(
             height=height,
             width=width,
             dont_extend_height=dont_extend_height,
             dont_extend_width=dont_extend_width,
             content=self.control,
-            token=Token.TextArea|token,
+            token=token,
             wrap_lines=wrap_lines,
             right_margins=margins)
 
@@ -159,7 +162,6 @@ class Label(object):
             longest_line = max(get_cwidth(line) for line in text.splitlines())
             width = D(preferred=longest_line)
 
-
         self.text_area = TextArea(
             text=text,
             width=width,
@@ -167,9 +169,18 @@ class Label(object):
             focussable=False,
             dont_extend_height=dont_extend_height,
             dont_extend_width=dont_extend_width,
-            loop=loop)
+            loop=loop,
+            _label=True)
 
         loop = loop or get_event_loop()
+
+    @property
+    def text(self):
+        return self.text_area.buffer.text
+
+    @text.setter
+    def text(self, value):
+        self.text_area.buffer.text = value
 
     def __pt_container__(self):
         return self.text_area
@@ -222,7 +233,7 @@ class Button(object):
         kb = KeyBindings()
 
         @kb.add(' ')
-        @kb.add(Keys.Enter)
+        @kb.add('enter')
         def _(event):
             if self.handler is not None:
                 self.handler(event.app)
@@ -370,7 +381,7 @@ class Checkbox(object):
         kb = KeyBindings()
 
         @kb.add(' ')
-        @kb.add(Keys.Enter)
+        @kb.add('enter')
         def _(event):
             self.checked = not self.checked
 
@@ -417,16 +428,16 @@ class RadioList(object):
         # Key bindings.
         kb = KeyBindings()
 
-        @kb.add(Keys.Up)
+        @kb.add('up')
         def _(event):
             self._selected_index = max(0, self._selected_index - 1)
 
-        @kb.add(Keys.Down)
+        @kb.add('down')
         def _(event):
             self._selected_index = min(
                 len(self.values) - 1, self._selected_index + 1)
 
-        @kb.add(Keys.Enter)
+        @kb.add('enter')
         @kb.add(' ')
         def _(event):
             self.current_value = self.values[self._selected_index][0]
@@ -535,7 +546,7 @@ class ProgressBar(object):
     def percentage(self, value):
         assert isinstance(value, int)
         self._percentage = value
-        self.label.buffer.text = '{}%'.format(value)
+        self.label.text = '{}%'.format(value)
 
     def __pt_container__(self):
         return self.container

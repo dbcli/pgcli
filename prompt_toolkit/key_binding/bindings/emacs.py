@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.filters import Condition, emacs_mode, has_selection, emacs_insert_mode, has_arg, control_is_searchable, is_multiline
+from prompt_toolkit.filters import Condition, emacs_mode, has_selection, emacs_insert_mode, has_arg, is_multiline
 from prompt_toolkit.completion import CompleteEvent
 
 from .scroll import scroll_page_up, scroll_page_down
@@ -27,7 +27,7 @@ def load_emacs_bindings():
 
     insert_mode = emacs_insert_mode
 
-    @handle(Keys.Escape)
+    @handle('escape')
     def _(event):
         """
         By default, ignore escape key.
@@ -39,57 +39,56 @@ def load_emacs_bindings():
         """
         pass
 
-    handle(Keys.ControlA)(get_by_name('beginning-of-line'))
-    handle(Keys.ControlB)(get_by_name('backward-char'))
-    handle(Keys.ControlDelete, filter=insert_mode)(get_by_name('kill-word'))
-    handle(Keys.ControlE)(get_by_name('end-of-line'))
-    handle(Keys.ControlF)(get_by_name('forward-char'))
-    handle(Keys.ControlLeft)(get_by_name('backward-word'))
-    handle(Keys.ControlRight)(get_by_name('forward-word'))
-    handle(Keys.ControlX, 'r', 'y', filter=insert_mode)(get_by_name('yank'))
-    handle(Keys.ControlY, filter=insert_mode)(get_by_name('yank'))
-    handle(Keys.Escape, 'b')(get_by_name('backward-word'))
-    handle(Keys.Escape, 'c', filter=insert_mode)(get_by_name('capitalize-word'))
-    handle(Keys.Escape, 'd', filter=insert_mode)(get_by_name('kill-word'))
-    handle(Keys.Escape, 'f')(get_by_name('forward-word'))
-    handle(Keys.Escape, 'l', filter=insert_mode)(get_by_name('downcase-word'))
-    handle(Keys.Escape, 'u', filter=insert_mode)(get_by_name('uppercase-word'))
-    handle(Keys.Escape, 'y', filter=insert_mode)(get_by_name('yank-pop'))
-    handle(Keys.Escape, Keys.ControlH, filter=insert_mode)(get_by_name('backward-kill-word'))
-    handle(Keys.Escape, Keys.Backspace, filter=insert_mode)(get_by_name('backward-kill-word'))
-    handle(Keys.Escape, '\\', filter=insert_mode)(get_by_name('delete-horizontal-space'))
+    handle('c-a')(get_by_name('beginning-of-line'))
+    handle('c-b')(get_by_name('backward-char'))
+    handle('c-delete', filter=insert_mode)(get_by_name('kill-word'))
+    handle('c-e')(get_by_name('end-of-line'))
+    handle('c-f')(get_by_name('forward-char'))
+    handle('c-left')(get_by_name('backward-word'))
+    handle('c-right')(get_by_name('forward-word'))
+    handle('c-x', 'r', 'y', filter=insert_mode)(get_by_name('yank'))
+    handle('c-y', filter=insert_mode)(get_by_name('yank'))
+    handle('escape', 'b')(get_by_name('backward-word'))
+    handle('escape', 'c', filter=insert_mode)(get_by_name('capitalize-word'))
+    handle('escape', 'd', filter=insert_mode)(get_by_name('kill-word'))
+    handle('escape', 'f')(get_by_name('forward-word'))
+    handle('escape', 'l', filter=insert_mode)(get_by_name('downcase-word'))
+    handle('escape', 'u', filter=insert_mode)(get_by_name('uppercase-word'))
+    handle('escape', 'y', filter=insert_mode)(get_by_name('yank-pop'))
+    handle('escape', 'backspace', filter=insert_mode)(get_by_name('backward-kill-word'))
+    handle('escape', '\\', filter=insert_mode)(get_by_name('delete-horizontal-space'))
 
-    handle(Keys.ControlUnderscore, save_before=(lambda e: False), filter=insert_mode)(
+    handle('c-_', save_before=(lambda e: False), filter=insert_mode)(
         get_by_name('undo'))
 
-    handle(Keys.ControlX, Keys.ControlU, save_before=(lambda e: False), filter=insert_mode)(
+    handle('c-x', 'c-u', save_before=(lambda e: False), filter=insert_mode)(
         get_by_name('undo'))
 
 
-    handle(Keys.Escape, '<', filter= ~has_selection)(get_by_name('beginning-of-history'))
-    handle(Keys.Escape, '>', filter= ~has_selection)(get_by_name('end-of-history'))
+    handle('escape', '<', filter= ~has_selection)(get_by_name('beginning-of-history'))
+    handle('escape', '>', filter= ~has_selection)(get_by_name('end-of-history'))
 
-    handle(Keys.Escape, '.', filter=insert_mode)(get_by_name('yank-last-arg'))
-    handle(Keys.Escape, '_', filter=insert_mode)(get_by_name('yank-last-arg'))
-    handle(Keys.Escape, Keys.ControlY, filter=insert_mode)(get_by_name('yank-nth-arg'))
-    handle(Keys.Escape, '#', filter=insert_mode)(get_by_name('insert-comment'))
-    handle(Keys.ControlO)(get_by_name('operate-and-get-next'))
+    handle('escape', '.', filter=insert_mode)(get_by_name('yank-last-arg'))
+    handle('escape', '_', filter=insert_mode)(get_by_name('yank-last-arg'))
+    handle('escape', 'c-y', filter=insert_mode)(get_by_name('yank-nth-arg'))
+    handle('escape', '#', filter=insert_mode)(get_by_name('insert-comment'))
+    handle('c-o')(get_by_name('operate-and-get-next'))
 
     # ControlQ does a quoted insert. Not that for vt100 terminals, you have to
     # disable flow control by running ``stty -ixon``, otherwise Ctrl-Q and
     # Ctrl-S are captured by the terminal.
-    handle(Keys.ControlQ, filter= ~has_selection)(get_by_name('quoted-insert'))
+    handle('c-q', filter= ~has_selection)(get_by_name('quoted-insert'))
 
-    handle(Keys.ControlX, '(')(get_by_name('start-kbd-macro'))
-    handle(Keys.ControlX, ')')(get_by_name('end-kbd-macro'))
-    handle(Keys.ControlX, 'e')(get_by_name('call-last-kbd-macro'))
+    handle('c-x', '(')(get_by_name('start-kbd-macro'))
+    handle('c-x', ')')(get_by_name('end-kbd-macro'))
+    handle('c-x', 'e')(get_by_name('call-last-kbd-macro'))
 
-    @handle(Keys.ControlN)
+    @handle('c-n')
     def _(event):
         " Next line. "
         event.current_buffer.auto_down()
 
-    @handle(Keys.ControlP)
+    @handle('c-p')
     def _(event):
         " Previous line. "
         event.current_buffer.auto_up(count=event.arg)
@@ -100,14 +99,14 @@ def load_emacs_bindings():
         The first number needs to be preceeded by escape.
         """
         @handle(c, filter=has_arg)
-        @handle(Keys.Escape, c)
+        @handle('escape', c)
         def _(event):
             event.append_to_arg_count(c)
 
     for c in '0123456789':
         handle_digit(c)
 
-    @handle(Keys.Escape, '-', filter=~has_arg)
+    @handle('escape', '-', filter=~has_arg)
     def _(event):
         """
         """
@@ -127,11 +126,11 @@ def load_emacs_bindings():
         return app.current_buffer.is_returnable
 
     # Meta + Enter: always accept input.
-    handle(Keys.Escape, Keys.Enter, filter=insert_mode & is_returnable)(
+    handle('escape', 'enter', filter=insert_mode & is_returnable)(
         get_by_name('accept-line'))
 
     # Enter: accept input in single line mode.
-    handle(Keys.Enter, filter=insert_mode & is_returnable & ~is_multiline)(
+    handle('enter', filter=insert_mode & is_returnable & ~is_multiline)(
         get_by_name('accept-line'))
 
     def character_search(buff, char, count):
@@ -143,36 +142,36 @@ def load_emacs_bindings():
         if match is not None:
             buff.cursor_position += match
 
-    @handle(Keys.ControlSquareClose, Keys.Any)
+    @handle('c-]', Keys.Any)
     def _(event):
         " When Ctl-] + a character is pressed. go to that character. "
         # Also named 'character-search'
         character_search(event.current_buffer, event.data, event.arg)
 
-    @handle(Keys.Escape, Keys.ControlSquareClose, Keys.Any)
+    @handle('escape', 'c-]', Keys.Any)
     def _(event):
         " Like Ctl-], but backwards. "
         # Also named 'character-search-backward'
         character_search(event.current_buffer, event.data, -event.arg)
 
-    @handle(Keys.Escape, 'a')
+    @handle('escape', 'a')
     def _(event):
         " Previous sentence. "
         # TODO:
 
-    @handle(Keys.Escape, 'e')
+    @handle('escape', 'e')
     def _(event):
         " Move to end of sentence. "
         # TODO:
 
-    @handle(Keys.Escape, 't', filter=insert_mode)
+    @handle('escape', 't', filter=insert_mode)
     def _(event):
         """
         Swap the last two words before the cursor.
         """
         # TODO
 
-    @handle(Keys.Escape, '*', filter=insert_mode)
+    @handle('escape', '*', filter=insert_mode)
     def _(event):
         """
         `meta-*`: Insert all possible completions of the preceding text.
@@ -187,7 +186,7 @@ def load_emacs_bindings():
         text_to_insert = ' '.join(c.text for c in completions)
         buff.insert_text(text_to_insert)
 
-    @handle(Keys.ControlX, Keys.ControlX)
+    @handle('c-x', 'c-x')
     def _(event):
         """
         Move cursor back and forth between the start and end of the current
@@ -200,7 +199,7 @@ def load_emacs_bindings():
         else:
             buffer.cursor_position += buffer.document.get_end_of_line_position()
 
-    @handle(Keys.ControlSpace)
+    @handle('c-@')  # Control-space or Control-@
     def _(event):
         """
         Start of the selection (if the current buffer is not empty).
@@ -210,7 +209,7 @@ def load_emacs_bindings():
         if buff.text:
             buff.start_selection(selection_type=SelectionType.CHARACTERS)
 
-    @handle(Keys.ControlG, filter= ~has_selection)
+    @handle('c-g', filter= ~has_selection)
     def _(event):
         """
         Control + G: Cancel completion menu and validation state.
@@ -218,15 +217,15 @@ def load_emacs_bindings():
         event.current_buffer.complete_state = None
         event.current_buffer.validation_error = None
 
-    @handle(Keys.ControlG, filter=has_selection)
+    @handle('c-g', filter=has_selection)
     def _(event):
         """
         Cancel selection.
         """
         event.current_buffer.exit_selection()
 
-    @handle(Keys.ControlW, filter=has_selection)
-    @handle(Keys.ControlX, 'r', 'k', filter=has_selection)
+    @handle('c-w', filter=has_selection)
+    @handle('c-x', 'r', 'k', filter=has_selection)
     def _(event):
         """
         Cut selected text.
@@ -234,7 +233,7 @@ def load_emacs_bindings():
         data = event.current_buffer.cut_selection()
         event.app.clipboard.set_data(data)
 
-    @handle(Keys.Escape, 'w', filter=has_selection)
+    @handle('escape', 'w', filter=has_selection)
     def _(event):
         """
         Copy selected text.
@@ -242,7 +241,7 @@ def load_emacs_bindings():
         data = event.current_buffer.copy_selection()
         event.app.clipboard.set_data(data)
 
-    @handle(Keys.Escape, Keys.Left)
+    @handle('escape', 'left')
     def _(event):
         """
         Cursor to start of previous word.
@@ -250,7 +249,7 @@ def load_emacs_bindings():
         buffer = event.current_buffer
         buffer.cursor_position += buffer.document.find_previous_word_beginning(count=event.arg) or 0
 
-    @handle(Keys.Escape, Keys.Right)
+    @handle('escape', 'right')
     def _(event):
         """
         Cursor to start of next word.
@@ -259,7 +258,7 @@ def load_emacs_bindings():
         buffer.cursor_position += buffer.document.find_next_word_beginning(count=event.arg) or \
             buffer.document.get_end_of_document_position()
 
-    @handle(Keys.Escape, '/', filter=insert_mode)
+    @handle('escape', '/', filter=insert_mode)
     def _(event):
         """
         M-/: Complete.
@@ -270,7 +269,7 @@ def load_emacs_bindings():
         else:
             b.start_completion(select_first=True)
 
-    @handle(Keys.ControlC, '>', filter=has_selection)
+    @handle('c-c', '>', filter=has_selection)
     def _(event):
         """
         Indent selected text.
@@ -285,7 +284,7 @@ def load_emacs_bindings():
 
         indent(buffer, from_, to + 1, count=event.arg)
 
-    @handle(Keys.ControlC, '<', filter=has_selection)
+    @handle('c-c', '<', filter=has_selection)
     def _(event):
         """
         Unindent selected text.
@@ -307,8 +306,7 @@ def load_emacs_open_in_editor_bindings():
     """
     key_bindings = KeyBindings()
 
-    key_bindings.add(Keys.ControlX, Keys.ControlE,
-                         filter=emacs_mode & ~has_selection)(
+    key_bindings.add('c-x', 'c-e', filter=emacs_mode & ~has_selection)(
          get_by_name('edit-and-execute-command'))
 
     return key_bindings
@@ -322,16 +320,18 @@ def load_emacs_search_bindings():
     # NOTE: We don't bind 'Escape' to 'abort_search'. The reason is that we
     #       want Alt+Enter to accept input directly in incremental search mode.
 
-    handle(Keys.ControlR)(search.start_reverse_incremental_search)
-    handle(Keys.ControlS)(search.start_forward_incremental_search)
+    handle('c-r')(search.start_reverse_incremental_search)
+    handle('c-s')(search.start_forward_incremental_search)
 
-    handle(Keys.ControlC)(search.abort_search)
-    handle(Keys.ControlG)(search.abort_search)
-    handle(Keys.ControlR)(search.reverse_incremental_search)
-    handle(Keys.ControlS)(search.forward_incremental_search)
-    handle(Keys.Up)(search.reverse_incremental_search)
-    handle(Keys.Down)(search.forward_incremental_search)
-    handle(Keys.Enter)(search.accept_search)
+    handle('c-c')(search.abort_search)
+    handle('c-g')(search.abort_search)
+    handle('escape', 'escape', eager=True)(search.abort_search)
+    handle('escape', 'enter', eager=True)(search.accept_search_and_accept_input)
+    handle('c-r')(search.reverse_incremental_search)
+    handle('c-s')(search.forward_incremental_search)
+    handle('up')(search.reverse_incremental_search)
+    handle('down')(search.forward_incremental_search)
+    handle('enter')(search.accept_search)
 
     return ConditionalKeyBindings(key_bindings, emacs_mode)
 
@@ -344,9 +344,9 @@ def load_extra_emacs_page_navigation_bindings():
     key_bindings = KeyBindings()
     handle = key_bindings.add
 
-    handle(Keys.ControlV)(scroll_page_down)
-    handle(Keys.PageDown)(scroll_page_down)
-    handle(Keys.Escape, 'v')(scroll_page_up)
-    handle(Keys.PageUp)(scroll_page_up)
+    handle('c-v')(scroll_page_down)
+    handle('pagedown')(scroll_page_down)
+    handle('escape', 'v')(scroll_page_up)
+    handle('pageup')(scroll_page_up)
 
     return ConditionalKeyBindings(key_bindings, emacs_mode)

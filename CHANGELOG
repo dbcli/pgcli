@@ -20,9 +20,8 @@ Changes:
   are two different keys that can be handled independently. This is a big
   backward-incompatibility, because the `Enter` key is `ControlM`, not
   `ControlJ`. So, now that we stopped translating \r into \n, it could be that
-  custom key bindings for `Enter` don't work anymore. Make sure to use
-  `Keys.Enter` instead of `Keys.ControlJ` in the key bindings for handling the
-  `Enter` key.
+  custom key bindings for `Enter` don't work anymore. Make sure to bind
+  `Keys.Enter` instead of `Keys.ControlJ` for handling the `Enter` key.
 
 - The `CommandLineInterface` and the `Application` classes are merged. First,
   `CommandLineInterface` contained all the I/O objects (like the input, output
@@ -30,22 +29,25 @@ Changes:
   no practical reason to keep this separation. (`CommandLineInterface` was
   mostly a proxy to `Application`.)
 
-  A consequence is that all almost code which received a
+  A consequence is that all almost code which used to received a
   `CommandLineInterface`, will now receive an `Application`. Usually, where we
   had an attribute `cli`, we'll now have an attribute `app`.
 
   * `CLIFilter` will now take an `Application`, so it was renamed to `AppFilter`.
   * `to_cli_filter` was renamed to `to_app_filter`.
 
+  (For backwards-compatibility, we have aliases to the old names, whenever
+  possible.)
+
 - The `buffers` dictionary (`CommandLineInterface.buffers`) does not exist
   anymore. Further, `buffers` was a `BufferMapping` that keeps track of which
   buffer has the focus. This significantly reduces the freedom for creating
   complex applications. We wanted to move toward a layout that can be defined
-  as a collection of and relation between user widgets. A user widget does not
-  need to have a `Buffer` underneath and any widget should be focussable.
+  as a (hierarchical) collection of user widgets. A user widget does not need
+  to have a `Buffer` underneath and any widget should be focusable.
 
-  * `layout.focus.Focus` was introduced and `Application.focussed_control` was
-    added.
+  * `layout.Layout` was introduced to contain the root layout widget and keep
+    track of the focus.
 
 - The key bindings were refactored. It became much more flexible to combine
   sets of key bindings.
@@ -63,6 +65,15 @@ Changes:
   * `KeyBindingManager` has been removed completely.
   * `input_processor` was renamed to `key_processor`.
 
+  Further:
+
+  * The `Key` class does not exist anymore. Every key is a string and it's
+    considered fine to use string literals in the key bindings. This is more
+    readible, but we still have run-time validation. The `Keys` enum still
+    exist (for backwards-compatibility, but also to have an overview of which
+    keys are supported.)
+  * 'enter' and 'tab' are key aliases for 'c-m' and 'c-i'.
+
 - User controls can define key bindings, which are active when the user control
   is focussed.
 
@@ -76,7 +87,7 @@ Changes:
     (TOP/CENTER/BOTTOM/JUSTIFY) or (LEFT/CENTER/RIGHT/JUSTIFY).
   * `Float` now takes `allow_cover_cursor` and `attach_to_window` arguments.
   * `Window` got an `Align` argument. This can be used for the alignment of the
-    content. `TokenListControl` does not have an allignment argument anymore.
+    content. `TokenListControl` does not have an alignment argument anymore.
   * `Window` got a `token` and `get_token` argument. This is used to fill the
     window's background using the given `Token`. That way, a window can for
     instance be given a background color.
@@ -90,17 +101,31 @@ Changes:
 
   * `BufferControl` now takes a `input_processor` as argument. (Singular
     instead of plural). If you want to combine multiple, they have to be merged
-    together using `merge_input_processors`.
+    together using `merge_input_processors`. (Similar to `merge_key_bindings`.)
 
   * The `InputProcessor` class has been refactored. The `apply_transformation`
-    method should now accept a `TransformationInput` object.
+    method should now takes a `TransformationInput` object as input.
 
   * The text `(reverse-i-search)` is now displayed through a processor. (See
     the `shortcuts` module for an example of the usage.)
 
+- `widgets` and `dialogs` modules:
+
+  * A small collection of widgets was added. These are more complex collections
+    of user controls that are ready to embed in a layout. A `shortcuts.dialogs`
+    module was added with shortcuts for displaying input, confirmation and
+    message dialogs.
+
+  * Every class that exposes a ``__pt_container__`` method (which is supposed
+    to return a ``Container`` instance) is considered a widget.  The
+    ``to_container`` shortcut will call this method in situations where a
+    ``Container`` object is expected. This avoids inheritance from other
+    ``Container`` types, but also having to unpack the container object from
+    the widget, in case we would have used composition.
+
 - Changes related to `shortcuts.prompt`:
 
-  * There is now a class `Prompt` that which has a method `prompt`. Both the
+  * There is now a class `Prompt` which also has a method `prompt`. Both the
     class and the method take about the same arguments. This can be used to
     create a session. Every `prompt` call of the same instance will reuse all
     the arguments given to the class itself. This can be used for instance to
@@ -111,6 +136,7 @@ Changes:
 
   * The `prompt` function now takes an `extra_key_bindings` argument instead of
     `key_bindings_registry`. This should only contain the additional bindings.
+    (The default bindings are always included.)
 
 - Changes to the event loops:
 
@@ -123,9 +149,9 @@ Changes:
     event loop until the `Future` is set and returns that result.
 
   * The asyncio adaptors (like the asyncio event loop integration) now require
-    Python 3.5.
+    Python 3.5. (We use the async/await syntax internally.)
 
-  * The `Input` and `Output` classes has some changes. (Not really important.)
+  * The `Input` and `Output` classes have some changes. (Not really important.)
 
 - Changes to the `filters` module:
 
@@ -153,13 +179,8 @@ Changes:
 
   * `to_container` and `to_window` utilities were added.
 
-  * Added a small collection of widgets. These are more complex collections of
-    user controls that are ready to embed in a layout.
-
 ****
 - `run_sub_applications` returns a future instead of taking a callback.
-
-- Key() object does not exist anymore. Keys are all strings.
 
 
 

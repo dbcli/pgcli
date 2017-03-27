@@ -9,7 +9,6 @@ from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.key_binding.bindings.completion import display_completions_like_readline
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.keys import Keys
 
 
 animal_completer = WordCompleter([
@@ -24,7 +23,7 @@ animal_completer = WordCompleter([
 # Create key bindings registry with a custom binding for the Tab key that
 # displays completions like GNU readline.
 bindings = KeyBindings()
-bindings.add(Keys.ControlI)(display_completions_like_readline)
+bindings.add('tab')(display_completions_like_readline)
 
 
 def main():

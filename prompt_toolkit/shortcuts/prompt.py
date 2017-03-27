@@ -40,7 +40,6 @@ from prompt_toolkit.input.defaults import create_input
 from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, DynamicKeyBindings, merge_key_bindings, ConditionalKeyBindings, KeyBindingsBase
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
 from prompt_toolkit.layout.containers import ConditionalContainer, Align
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
@@ -254,6 +253,7 @@ class Prompt(object):
         assert extra_key_bindings is None or isinstance(extra_key_bindings, KeyBindingsBase)
 
         # Defaults.
+        self._close_loop = loop is None
         loop = loop or create_event_loop()
 
         output = output or create_output(true_color)
@@ -468,7 +468,7 @@ class Prompt(object):
             return (not _true(self.multiline) and
                     self.app.layout.current_control == self._default_buffer_control)
 
-        @prompt_bindings.add(Keys.Enter, filter=do_accept)
+        @prompt_bindings.add('enter', filter=do_accept)
         def _(event):
             " Accept input when enter has been pressed. "
             self._default_buffer.validate_and_handle(event.app)
@@ -559,7 +559,7 @@ class Prompt(object):
             auto_suggest=None, validator=None, clipboard=None,
             mouse_support=None, get_title=None, extra_input_processor=None,
             reserve_space_for_menu=None,
-            enable_system_bindings=False, enable_open_in_editor=False,
+            enable_system_bindings=None, enable_open_in_editor=None,
             tempfile_suffix=None):
         """
         Display the prompt.
@@ -688,7 +688,8 @@ class Prompt(object):
             return self.get_title()
 
     def close(self):
-        return#self.loop.close()
+        if self._close_loop:
+            self.loop.close()
 
 
 def prompt(*a, **kw):
@@ -732,14 +733,14 @@ def create_confirm_prompt(message, loop=None):
 
     @bindings.add('y')
     @bindings.add('Y')
-    def _(event):
+    def yes(event):
         prompt._default_buffer.text = 'y'
         event.app.set_return_value(True)
 
     @bindings.add('n')
     @bindings.add('N')
-    @bindings.add(Keys.ControlC)
-    def _(event):
+    @bindings.add('c-c')
+    def no(event):
         prompt._default_buffer.text = 'n'
         event.app.set_return_value(False)
 

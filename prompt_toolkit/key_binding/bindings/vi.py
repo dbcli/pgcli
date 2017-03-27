@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.buffer import ClipboardData, indent, unindent, reshape_text
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SearchDirection
-from prompt_toolkit.filters import Condition, has_arg, Always, is_read_only, is_searching, control_is_searchable
+from prompt_toolkit.filters import Condition, has_arg, Always, is_read_only, is_searching
 from prompt_toolkit.filters.app import vi_navigation_mode, vi_insert_mode, vi_insert_multiple_mode, vi_replace_mode, vi_selection_mode, vi_waiting_for_text_object_mode, vi_digraph_mode, vi_mode, in_paste_mode, is_multiline
 from prompt_toolkit.key_binding.digraphs import DIGRAPHS
 from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
@@ -324,9 +324,9 @@ def load_vi_bindings():
     ]
 
     # Insert a character literally (quoted insert).
-    handle(Keys.ControlV, filter=vi_insert_mode)(get_by_name('quoted-insert'))
+    handle('c-v', filter=vi_insert_mode)(get_by_name('quoted-insert'))
 
-    @handle(Keys.Escape)
+    @handle('escape')
     def _(event):
         """
         Escape goes to vi navigation mode.
@@ -356,8 +356,8 @@ def load_vi_bindings():
         """
         event.current_buffer.cursor_down(count=event.arg)
 
-    @handle(Keys.Up, filter=vi_navigation_mode)
-    @handle(Keys.ControlP, filter=vi_navigation_mode)
+    @handle('up', filter=vi_navigation_mode)
+    @handle('c-p', filter=vi_navigation_mode)
     def _(event):
         """
         Arrow up and ControlP in navigation mode go up.
@@ -373,8 +373,8 @@ def load_vi_bindings():
         event.current_buffer.auto_up(
             count=event.arg, go_to_start_of_line_if_history_changes=True)
 
-    @handle(Keys.Down, filter=vi_navigation_mode)
-    @handle(Keys.ControlN, filter=vi_navigation_mode)
+    @handle('down', filter=vi_navigation_mode)
+    @handle('c-n', filter=vi_navigation_mode)
     def _(event):
         """
         Arrow down and Control-N in navigation mode.
@@ -389,8 +389,7 @@ def load_vi_bindings():
         event.current_buffer.auto_down(
             count=event.arg, go_to_start_of_line_if_history_changes=True)
 
-    @handle(Keys.ControlH, filter=vi_navigation_mode)
-    @handle(Keys.Backspace, filter=vi_navigation_mode)
+    @handle('backspace', filter=vi_navigation_mode)
     def _(event):
         """
         In navigation-mode, move cursor.
@@ -398,7 +397,7 @@ def load_vi_bindings():
         event.current_buffer.cursor_position += \
             event.current_buffer.document.get_cursor_left_position(count=event.arg)
 
-    @handle(Keys.ControlN, filter=vi_insert_mode)
+    @handle('c-n', filter=vi_insert_mode)
     def _(event):
         b = event.current_buffer
 
@@ -407,7 +406,7 @@ def load_vi_bindings():
         else:
             b.start_completion(select_first=True)
 
-    @handle(Keys.ControlP, filter=vi_insert_mode)
+    @handle('c-p', filter=vi_insert_mode)
     def _(event):
         """
         Control-P: To previous completion.
@@ -419,14 +418,14 @@ def load_vi_bindings():
         else:
             b.start_completion(select_last=True)
 
-    @handle(Keys.ControlY, filter=vi_insert_mode)
+    @handle('c-y', filter=vi_insert_mode)
     def _(event):
         """
         Accept current completion.
         """
         event.current_buffer.complete_state = None
 
-    @handle(Keys.ControlE, filter=vi_insert_mode)
+    @handle('c-e', filter=vi_insert_mode)
     def _(event):
         """
         Cancel completion. Go back to originally typed text.
@@ -438,19 +437,19 @@ def load_vi_bindings():
         return app.current_buffer.is_returnable
 
     # In navigation mode, pressing enter will always return the input.
-    handle(Keys.Enter, filter=vi_navigation_mode & is_returnable)(
+    handle('enter', filter=vi_navigation_mode & is_returnable)(
         get_by_name('accept-line'))
 
     # In insert mode, also accept input when enter is pressed, and the buffer
     # has been marked as single line.
-    handle(Keys.Enter, filter=is_returnable & ~is_multiline)(
+    handle('enter', filter=is_returnable & ~is_multiline)(
         get_by_name('accept-line'))
 
     # ** In navigation mode **
 
     # List of navigation commands: http://hea-www.harvard.edu/~fine/Tech/vi.html
 
-    @handle(Keys.Insert, filter=vi_navigation_mode)
+    @handle('insert', filter=vi_navigation_mode)
     def _(event):
         " Presing the Insert key. "
         event.app.vi_state.input_mode = InputMode.INSERT
@@ -683,7 +682,7 @@ def load_vi_bindings():
         """
         event.current_buffer.start_selection(selection_type=SelectionType.LINES)
 
-    @handle(Keys.ControlV, filter=vi_navigation_mode)
+    @handle('c-v', filter=vi_navigation_mode)
     def _(event):
         " Enter block selection mode. "
         event.current_buffer.start_selection(selection_type=SelectionType.BLOCK)
@@ -719,7 +718,7 @@ def load_vi_bindings():
         else:
             event.current_buffer.exit_selection()
 
-    @handle(Keys.ControlV, filter=vi_selection_mode)
+    @handle('c-v', filter=vi_selection_mode)
     def _(event):
         """
         Exit block selection mode, or go from non block selection mode to block
@@ -1231,7 +1230,7 @@ def load_vi_bindings():
     repeat(False)
 
     @text_object('h')
-    @text_object(Keys.Left)
+    @text_object('left')
     def _(event):
         """ Implements 'ch', 'dh', 'h': Cursor left. """
         return TextObject(event.current_buffer.document.get_cursor_left_position(count=event.arg))
@@ -1253,7 +1252,7 @@ def load_vi_bindings():
 
     @text_object('l')
     @text_object(' ')
-    @text_object(Keys.Right)
+    @text_object('right')
     def _(event):
         """ Implements 'cl', 'dl', 'l', 'c ', 'd ', ' '. Cursor right. """
         return TextObject(event.current_buffer.document.get_cursor_right_position(count=event.arg))
@@ -1358,7 +1357,7 @@ def load_vi_bindings():
 
     @handle('z', '+', filter=vi_navigation_mode|vi_selection_mode)
     @handle('z', 't', filter=vi_navigation_mode|vi_selection_mode)
-    @handle('z', Keys.Enter, filter=vi_navigation_mode|vi_selection_mode)
+    @handle('z', 'enter', filter=vi_navigation_mode|vi_selection_mode)
     def _(event):
         """
         Scrolls the window to makes the current line the first line in the visible region.
@@ -1565,7 +1564,7 @@ def load_vi_bindings():
         buff.multiple_cursor_positions = new_cursor_positions
         buff.cursor_position += 1
 
-    @handle(Keys.Backspace, filter=vi_insert_multiple_mode)
+    @handle('backspace', filter=vi_insert_multiple_mode)
     def _(event):
         " Backspace, using multiple cursors. "
         buff = event.current_buffer
@@ -1598,7 +1597,7 @@ def load_vi_bindings():
         else:
             event.app.output.bell()
 
-    @handle(Keys.Delete, filter=vi_insert_multiple_mode)
+    @handle('delete', filter=vi_insert_multiple_mode)
     def _(event):
         " Delete, using multiple cursors. "
         buff = event.current_buffer
@@ -1633,7 +1632,7 @@ def load_vi_bindings():
             event.app.output.bell()
 
 
-    @handle(Keys.ControlX, Keys.ControlL, filter=vi_insert_mode)
+    @handle('c-x', 'c-l', filter=vi_insert_mode)
     def _(event):
         """
         Pressing the ControlX - ControlL sequence in Vi mode does line
@@ -1641,7 +1640,7 @@ def load_vi_bindings():
         """
         event.current_buffer.start_history_lines_completion()
 
-    @handle(Keys.ControlX, Keys.ControlF, filter=vi_insert_mode)
+    @handle('c-x', 'c-f', filter=vi_insert_mode)
     def _(event):
         """
         Complete file names.
@@ -1649,7 +1648,7 @@ def load_vi_bindings():
         # TODO
         pass
 
-    @handle(Keys.ControlK, filter=vi_insert_mode|vi_replace_mode)
+    @handle('c-k', filter=vi_insert_mode|vi_replace_mode)
     def _(event):
         " Go into digraph mode. "
         event.app.vi_state.waiting_for_digraph = True
@@ -1716,26 +1715,24 @@ def load_vi_search_bindings():
         (search.start_forward_incremental_search)
     handle('?', filter=(vi_navigation_mode|vi_selection_mode)&reverse_vi_search_direction) \
         (search.start_forward_incremental_search)
-    handle(Keys.ControlS) \
-        (search.start_forward_incremental_search)
+    handle('c-s')(search.start_forward_incremental_search)
 
     # Vi-style backward search.
     handle('?', filter=(vi_navigation_mode|vi_selection_mode)&~reverse_vi_search_direction) \
         (search.start_reverse_incremental_search)
     handle('/', filter=(vi_navigation_mode|vi_selection_mode)&reverse_vi_search_direction) \
         (search.start_reverse_incremental_search)
-    handle(Keys.ControlR)(search.start_reverse_incremental_search)
+    handle('c-r')(search.start_reverse_incremental_search)
 
     # Apply the search. (At the / or ? prompt.)
-    handle(Keys.Enter, filter=is_searching)(search.accept_search)
+    handle('enter', filter=is_searching)(search.accept_search)
 
-    handle(Keys.ControlR, filter=is_searching)(search.reverse_incremental_search)
-    handle(Keys.ControlS, filter=is_searching)(search.forward_incremental_search)
+    handle('c-r', filter=is_searching)(search.reverse_incremental_search)
+    handle('c-s', filter=is_searching)(search.forward_incremental_search)
 
-    handle(Keys.Escape)(search.abort_search)
-    handle(Keys.ControlC)(search.abort_search)
-    handle(Keys.ControlH, filter=search_buffer_is_empty)(search.abort_search)
-    handle(Keys.Backspace, filter=search_buffer_is_empty)(search.abort_search)
+    handle('escape')(search.abort_search)
+    handle('c-c')(search.abort_search)
+    handle('backspace', filter=search_buffer_is_empty)(search.abort_search)
 
     return ConditionalKeyBindings(key_bindings, vi_mode)
 
@@ -1748,13 +1745,13 @@ def load_extra_vi_page_navigation_bindings():
     key_bindings = KeyBindings()
     handle = key_bindings.add
 
-    handle(Keys.ControlF)(scroll_forward)
-    handle(Keys.ControlB)(scroll_backward)
-    handle(Keys.ControlD)(scroll_half_page_down)
-    handle(Keys.ControlU)(scroll_half_page_up)
-    handle(Keys.ControlE)(scroll_one_line_down)
-    handle(Keys.ControlY)(scroll_one_line_up)
-    handle(Keys.PageDown)(scroll_page_down)
-    handle(Keys.PageUp)(scroll_page_up)
+    handle('c-f')(scroll_forward)
+    handle('c-b')(scroll_backward)
+    handle('c-d')(scroll_half_page_down)
+    handle('c-u')(scroll_half_page_up)
+    handle('c-e')(scroll_one_line_down)
+    handle('c-y')(scroll_one_line_up)
+    handle('pagedown')(scroll_page_down)
+    handle('pageup')(scroll_page_up)
 
     return ConditionalKeyBindings(key_bindings, vi_mode)
