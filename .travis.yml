@@ -6,10 +6,6 @@ python:
   - "3.5"
   - "3.6"
 
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y nano
-
 install: 
   - pip install . pytest mock codecov==1.5.1 behave pexpect==3.3
 

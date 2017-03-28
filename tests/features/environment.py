@@ -15,7 +15,7 @@ def before_all(context):
     os.environ['LINES'] = "100"
     os.environ['COLUMNS'] = "100"
     os.environ['PAGER'] = 'cat'
-    os.environ['EDITOR'] = 'nano'
+    os.environ['EDITOR'] = 'ex'
     os.environ["COVERAGE_PROCESS_START"] = os.getcwd() + "/../.coveragerc"
 
     context.exit_sent = False
