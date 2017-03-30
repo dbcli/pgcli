@@ -133,6 +133,7 @@ class PGCli(object):
             self.row_limit = c['main'].as_int('row_limit')
 
         self.min_num_menu_lines = c['main'].as_int('min_num_menu_lines')
+        self.multiline_continuation_char = c['main']['multiline_continuation_char']
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
@@ -508,7 +509,8 @@ class PGCli(object):
             return [(Token.Prompt, prompt)]
 
         def get_continuation_tokens(cli, width):
-            return [(Token.Continuation, '.' * (width - 1) + ' ')]
+            continuation=self.multiline_continuation_char * (width - 1) + ' '
+            return [(Token.Continuation, continuation)]
 
         get_toolbar_tokens = create_toolbar_tokens_func(
             lambda: self.vi_mode, self.completion_refresher.is_refreshing,
