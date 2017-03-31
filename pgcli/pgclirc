@@ -116,6 +116,9 @@ prompt = '\u@\h:\d> '
 # Number of lines to reserve for the suggestion menu
 min_num_menu_lines = 4
 
+# Character used to left pad multi-line queries to match the prompt size.
+multiline_continuation_char = '.'
+
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
 Token.Menu.Completions.Completion.Current = 'bg:#ffffff #000000'

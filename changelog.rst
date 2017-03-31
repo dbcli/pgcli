@@ -4,6 +4,7 @@ Upcoming
 Features:
 ---------
 * Suggest objects from all schemas (not just those in search_path) (Thanks: `Joakim Koljonen`_)
+* Allow configurable character to be used for multi-line query continuations. (Thanks: `Owen Stephens`_)
 
 Bug fixes:
 ----------
@@ -663,3 +664,4 @@ Improvements:
 .. _`Sergii`: https://github.com/foxyterkel 
 .. _`Emanuele Gaifas`: https://github.com/lelit
 .. _`tk`: https://github.com/kanet77
+.. _`Owen Stephens`: https://github.com/owst
