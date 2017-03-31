@@ -1,7 +1,6 @@
 # -*- coding: utf-8
 from __future__ import unicode_literals
 import os
-import re
 import wrappers
 
 from behave import when, then
@@ -36,8 +35,8 @@ def step_edit_quit(context):
 
 @then('we see the sql in prompt')
 def step_edit_done_sql(context):
-    colored_expr = re.compile('select(.+?)\*(.+?)from(.+?)abc')
-    wrappers.expect(context, colored_expr, timeout=2)
+    for match in 'select * from abc'.split(' '):
+        wrappers.expect_exact(context, match, timeout=1)
     # Cleanup the command line.
     context.cli.sendcontrol('u')
     # Cleanup the edited file.
