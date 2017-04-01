@@ -15,7 +15,8 @@ def before_all(context):
     os.environ['LINES'] = "100"
     os.environ['COLUMNS'] = "100"
     os.environ['PAGER'] = 'cat'
-    os.environ['EDITOR'] = 'nano'
+    os.environ['EDITOR'] = 'ex'
+    os.environ["COVERAGE_PROCESS_START"] = os.getcwd() + "/../.coveragerc"
 
     context.exit_sent = False
 
@@ -30,7 +31,10 @@ def before_all(context):
         'pass': context.config.userdata.get('pg_test_pass', None),
         'dbname': db_name_full,
         'dbname_tmp': db_name_full + '_tmp',
-        'vi': vi
+        'vi': vi,
+        'cli_command': context.config.userdata.get('pg_cli_command', None) or
+                       sys.executable +
+                       ' -c "import coverage; coverage.process_startup(); import pgcli.main; pgcli.main.cli()"'
     }
 
     # Store old env vars.
@@ -38,7 +42,7 @@ def before_all(context):
         'PGDATABASE': os.environ.get('PGDATABASE', None),
         'PGUSER': os.environ.get('PGUSER', None),
         'PGHOST': os.environ.get('PGHOST', None),
-        'PGPASS': os.environ.get('PGPASS', None),
+        'PGPASSWORD': os.environ.get('PGPASSWORD', None),
     }
 
     # Set new env vars.
@@ -47,10 +51,10 @@ def before_all(context):
     os.environ['PGHOST'] = context.conf['host']
 
     if context.conf['pass']:
-        os.environ['PGPASS'] = context.conf['pass']
+        os.environ['PGPASSWORD'] = context.conf['pass']
     else:
-        if 'PGPASS' in os.environ:
-            del os.environ['PGPASS']
+        if 'PGPASSWORD' in os.environ:
+            del os.environ['PGPASSWORD']
         if 'PGHOST' in os.environ:
             del os.environ['PGHOST']
 
@@ -85,3 +89,8 @@ def after_scenario(context, _):
     if hasattr(context, 'cli') and not context.exit_sent:
         # Terminate nicely.
         context.cli.terminate()
+
+# TODO: uncomment to debug a failure
+# def after_step(context, step):
+#     if step.status == "failed":
+#         import ipdb; ipdb.set_trace()
