@@ -76,8 +76,8 @@ class KeyProcessor(object):
         self._bindings = key_bindings
         self._app_ref = app_ref
 
-        self.beforeKeyPress = Event(self)
-        self.afterKeyPress = Event(self)
+        self.before_key_press = Event(self)
+        self.after_key_press = Event(self)
 
         # The queue of keys not yet send to our _process generator/state machine.
         self.input_queue = deque()
@@ -224,12 +224,12 @@ class KeyProcessor(object):
             key_press = self.input_queue.popleft()
 
             if key_press.key != Keys.CPRResponse:
-                self.beforeKeyPress.fire()
+                self.before_key_press.fire()
 
             self._process_coroutine.send(key_press)
 
             if key_press.key != Keys.CPRResponse:
-                self.afterKeyPress.fire()
+                self.after_key_press.fire()
 
         # Invalidate user interface.
         app = self._app_ref()

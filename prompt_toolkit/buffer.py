@@ -137,6 +137,8 @@ class Buffer(object):
     :param name: Name for this buffer. E.g. DEFAULT_BUFFER. This is mostly
         useful for key bindings where we sometimes prefer to refer to a buffer
         by their name instead of by reference.
+    :param accept_handler: Callback that takes (app, buffer) as input. Called when
+        the buffer input is accepted. (Usually when the user presses `enter`.)
 
     Events:
 
