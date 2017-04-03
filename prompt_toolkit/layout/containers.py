@@ -84,6 +84,14 @@ class Container(with_metaclass(ABCMeta, object)):
         Walk through all the layout nodes (and their children) and yield them.
         """
 
+    def get_invalidate_events(self):
+        """
+        Return a list of `Event` objects. This can be a generator.
+        (The application collects all these events, in order to bind redraw
+        handlers to these events.)
+        """
+        return []
+
 
 def _window_too_small():
     " Create a `Window` that displays the 'Window too small' text. "
@@ -1866,6 +1874,17 @@ class Window(Container):
                 self.content.move_cursor_up(app)
 
             self.vertical_scroll -= 1
+
+    def get_invalidate_events(self):
+        """
+        Return the Window invalidate events.
+        """
+        # Whenever the buffer changes, the UI has to be updated.
+        from .controls import BufferControl
+        if isinstance(self.content, BufferControl):
+            buff = self.content.buffer
+            yield buff.on_completions_changed
+            yield buff.on_suggestion_set
 
     def walk(self):
         # Only yield self. A window doesn't have children.

@@ -15,6 +15,7 @@ from .key_binding.key_bindings import KeyBindings, KeyBindingsBase, merge_key_bi
 from .key_binding.vi_state import ViState
 from .keys import Keys
 from .layout.layout import Layout
+from .layout.containers import Container
 from .layout.controls import BufferControl
 from .output import Output
 from .output.defaults import create_output
@@ -365,14 +366,11 @@ class Application(object):
             ev -= self.invalidate
 
         # Gather all new events.
-        # TODO: probably, we want a better more universal way of invalidation
-        #       event propagation. (Any control should be able to invalidate
-        #       itself.)
+        # (All controls are able to invalidate themself.)
         def gather_events():
-            for c in self.layout.find_all_controls():
-                if isinstance(c, BufferControl):
-                    yield c.buffer.on_completions_changed
-                    yield c.buffer.on_suggestion_set
+            for c in self.layout.walk():
+                for ev in c.get_invalidate_events():
+                    yield ev
 
         self._invalidate_events = list(gather_events())
 
