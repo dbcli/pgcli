@@ -721,8 +721,8 @@ class PGCli(object):
         help='Host address of the postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
         'postgres instance is listening.', envvar='PGPORT')
-@click.option('-U', '--user', envvar='PGUSER', help='User name to '
-        'connect to the postgres database.')
+@click.option('-U', '--username', 'username_opt', envvar='PGUSER',
+        help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
         help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
@@ -737,7 +737,7 @@ class PGCli(object):
         envvar='PGCLIRC', help='Location of pgclirc file.')
 @click.option('-D', '--dsn', default='', envvar='DSN',
         help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
-@click.option('-R', '--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
+@click.option('--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
         help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.option('--less-chatty', 'less_chatty', is_flag=True,
         default=False,
@@ -745,7 +745,7 @@ class PGCli(object):
 @click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
-def cli(database, user, host, port, prompt_passwd, never_prompt,
+def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
     single_connection, dbname, username, version, pgclirc, dsn, row_limit,
     less_chatty, prompt):
 
@@ -775,7 +775,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt,
 
     # Choose which ever one has a valid value.
     database = database or dbname
-    user = username or user
+    user = username or username_opt
 
     if dsn is not '':
         try:
