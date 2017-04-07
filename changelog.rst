@@ -9,6 +9,7 @@ Features:
 Bug fixes:
 ----------
 * Fixed external editor bug (issue #668). (Thanks: `Irina Truong`_).
+* Standardize command line option names. (Thanks: `Russell Davies`_)
 
 1.5.1
 =====
@@ -665,3 +666,4 @@ Improvements:
 .. _`Emanuele Gaifas`: https://github.com/lelit
 .. _`tk`: https://github.com/kanet77
 .. _`Owen Stephens`: https://github.com/owst
+.. _`Russell Davies`: https://github.com/russelldavies
