@@ -11,6 +11,10 @@ Bug fixes:
 * Fixed external editor bug (issue #668). (Thanks: `Irina Truong`_).
 * Standardize command line option names. (Thanks: `Russell Davies`_)
 
+Internal changes:
+-----------------
+* Run pep8 checks in travis (Thanks: `Irina Truong`_).
+
 1.5.1
 =====
 
