@@ -372,6 +372,10 @@ class Buffer(object):
     def working_index(self, value):
         if self.__working_index != value:
             self.__working_index = value
+            # Make sure to reset the cursor position, otherwise we end up in
+            # sitations where the cursor position is out of the bounds of the
+            # text.
+            self.cursor_position = 0
             self._text_changed()
 
     def _text_changed(self):
