@@ -94,9 +94,17 @@ class UIControl(with_metaclass(ABCMeta, object)):
         """
         The key bindings that are specific for this user control.
 
-        Return a `UIControlKeybindings` object if some key bindings are
+        Return a `UIControlKeyBindings` object if some key bindings are
         specified, or `None` otherwise.
         """
+
+    def get_invalidate_events(self):
+        """
+        Return a list of `Event` objects. This can be a generator.
+        (The application collects all these events, in order to bind redraw
+        handlers to these events.)
+        """
+        return []
 
 
 class UIControlKeyBindings(object):
@@ -721,3 +729,13 @@ class BufferControl(UIControl):
         """
         return UIControlKeyBindings(key_bindings=self.key_bindings)
 
+    def get_invalidate_events(self):
+        """
+        Return the Window invalidate events.
+        """
+        # Whenever the buffer changes, the UI has to be updated.
+        yield self.buffer.on_text_changed
+        yield self.buffer.on_cursor_position_changed
+
+        yield self.buffer.on_completions_changed
+        yield self.buffer.on_suggestion_set
