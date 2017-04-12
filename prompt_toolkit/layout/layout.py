@@ -7,6 +7,7 @@ from .containers import Window, to_container, to_window
 
 __all__ = (
     'Layout',
+    'InvalidLayoutError',
 )
 
 
@@ -24,7 +25,10 @@ class Layout(object):
         self._stack = []
 
         if focussed_window is None:
-            self._stack.append(next(self.find_all_windows()))
+            try:
+                self._stack.append(next(self.find_all_windows()))
+            except StopIteration:
+                raise InvalidLayoutError('Invalid layout. The layout does not contain any Window object.')
         else:
             self._stack.append(to_window(focussed_window))
 
@@ -113,3 +117,8 @@ class Layout(object):
 
     def reset(self):
         return self.container.reset()
+
+
+class InvalidLayoutError(Exception):
+    pass
+
