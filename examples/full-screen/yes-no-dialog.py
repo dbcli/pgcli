@@ -9,7 +9,6 @@ from prompt_toolkit.eventloop import create_event_loop, set_event_loop
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import VSplit, HSplit, Float
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
@@ -140,8 +139,8 @@ root_container = MenuContainer(loop=loop, body=root_container, menu_items=[
 
 # Global key bindings.
 bindings = KeyBindings()
-bindings.add(Keys.Tab)(focus_next)
-bindings.add(Keys.BackTab)(focus_previous)
+bindings.add('tab')(focus_next)
+bindings.add('s-tab')(focus_previous)
 
 
 style = style_from_pygments(style_dict={

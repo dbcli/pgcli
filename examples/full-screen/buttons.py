@@ -7,7 +7,6 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import VSplit, HSplit, Layout
 from prompt_toolkit.layout.widgets import Button, Box, TextArea, Label, Frame
 from prompt_toolkit.styles.from_dict import style_from_dict
@@ -67,8 +66,8 @@ layout = Layout(
 
 # Key bindings.
 kb = KeyBindings()
-kb.add(Keys.Tab)(focus_next)
-kb.add(Keys.BackTab)(focus_previous)
+kb.add('tab')(focus_next)
+kb.add('s-tab')(focus_previous)
 
 
 # This step is not necessary for this application.

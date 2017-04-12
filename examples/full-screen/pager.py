@@ -9,7 +9,6 @@ from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
@@ -65,7 +64,7 @@ root_container = HSplit([
 # Key bindings.
 bindings = KeyBindings()
 
-@bindings.add(Keys.ControlC)
+@bindings.add('c-c')
 @bindings.add('q')
 def _(event):
     " Quit. "

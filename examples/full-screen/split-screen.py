@@ -12,7 +12,6 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.layout import Layout
@@ -113,8 +112,8 @@ kb = KeyBindings()
 # `eager=True` to all key bindings, but do it when it conflicts with another
 # existing key binding, and you definitely want to override that behaviour.
 
-@kb.add(Keys.ControlC, eager=True)
-@kb.add(Keys.ControlQ, eager=True)
+@kb.add('c-c', eager=True)
+@kb.add('c-q', eager=True)
 def _(event):
     """
     Pressing Ctrl-Q or Ctrl-C will exit the user interface.

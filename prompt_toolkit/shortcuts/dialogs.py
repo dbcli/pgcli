@@ -184,8 +184,8 @@ def _run_dialog(dialog, style):
 def _create_app(dialog, style):
     # Key bindings.
     bindings = KeyBindings()
-    bindings.add(Keys.Tab)(focus_next)
-    bindings.add(Keys.BackTab)(focus_previous)
+    bindings.add('tab')(focus_next)
+    bindings.add('s-tab')(focus_previous)
 
     return Application(
         layout=Layout(dialog),
