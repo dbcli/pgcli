@@ -231,6 +231,11 @@ class KeyProcessor(object):
             if key_press.key != Keys.CPRResponse:
                 self.after_key_press.fire()
 
+        # Invalidate user interface.
+        app = self._app_ref()
+        if app:
+            app.invalidate()
+
     def _call_handler(self, handler, key_sequence=None):
         was_recording = self.record_macro
         arg = self.arg
