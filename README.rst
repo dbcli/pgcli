@@ -63,7 +63,6 @@ The `pgcli` is written using prompt_toolkit_.
     - ``SELECT * FROM <tab>`` will only show table names. 
     - ``SELECT * FROM users WHERE <tab>`` will only show column names. 
 
-* Config file is automatically created at ``~/.config/pgcli/config`` at first launch.
 * Primitive support for ``psql`` back-slash commands. 
 * Pretty prints tabular data.
   Note: `pgcli` uses [tabulate](https://github.com/dbcli/pgcli/blob/master/pgcli/packages/tabulate.py)
@@ -72,6 +71,11 @@ The `pgcli` is written using prompt_toolkit_.
   [this issue](https://github.com/dbcli/pgcli/issues/617) for more details.
 
 .. _prompt_toolkit: https://github.com/jonathanslenders/python-prompt-toolkit
+
+Config
+------
+A config file is automatically created at ``~/.config/pgcli/config`` at first launch.
+See the file itself for a description of all available options.
 
 Contributions:
 --------------
