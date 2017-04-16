@@ -7,7 +7,6 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 from six.moves import range
 
-from prompt_toolkit.token import Token, _TokenType
 from prompt_toolkit.filters import to_app_filter
 from .utils import split_lines
 
@@ -33,7 +32,11 @@ class Lexer(with_metaclass(ABCMeta, object)):
     def lex_document(self, app, document):
         """
         Takes a :class:`~prompt_toolkit.document.Document` and returns a
-        callable that takes a line number and returns the tokens for that line.
+        callable that takes a line number and returns a list of
+        ``(style_str, text)`` tuples for that line.
+
+        XXX: Note that in the past, this was supposed to return a list
+             of ``(Token, text)`` tuples, just like a Pygments lexer.
         """
 
 
@@ -42,11 +45,11 @@ class SimpleLexer(Lexer):
     Lexer that doesn't do any tokenizing and returns the whole input as one
     token.
 
-    :param token: The `Token` for this lexer.
+    :param style: The style string for this lexer.
     """
-    def __init__(self, token=Token):
-        assert isinstance(token, _TokenType)
-        self.token = token
+    def __init__(self, style=''):
+        assert isinstance(style, six.text_type)
+        self.style = style
 
     def lex_document(self, app, document):
         lines = document.lines
@@ -54,7 +57,7 @@ class SimpleLexer(Lexer):
         def get_line(lineno):
             " Return the tokens for the given line. "
             try:
-                return [(self.token, lines[lineno])]
+                return [(self.style, lines[lineno])]
             except IndexError:
                 return []
         return get_line
@@ -147,16 +150,21 @@ class RegexSync(SyntaxSync):
 
 class _TokenCache(dict):
     """
-    Cache that converts Pygments tokens into `prompt_toolkit` token objects.
+    Cache that converts Pygments tokens into `prompt_toolkit` style objects.
 
-    This is required because prompt_toolkit has some additional functionality,
-    like an `|` operator that it implements.
+    ``Token.A.B.C`` will be converted into:
+    ``class:pygments,pygments.A,pygments.A.B,pygments.A.B.C``
     """
     def __missing__(self, key):
-        # Cache from Pygments Tokens to prompt_toolkit Tokens.
-        value = _TokenType(key)
-        self[key] = value
-        return value
+        parts = ('pygments',) + key
+
+        classnames = []
+        for i in range(1, len(parts) + 1):
+            classnames.append('.'.join(parts[:i]).lower())
+
+        result = 'class:' + ','.join(classnames)
+        self[key] = result
+        return result
 
 _token_cache = _TokenCache()
 
@@ -231,7 +239,7 @@ class PygmentsLexer(Lexer):
     def lex_document(self, app, document):
         """
         Create a lexer function that takes a line number and returns the list
-        of (Token, text) tuples as the Pygments lexer returns for that line.
+        of (style_str, text) tuples as the Pygments lexer returns for that line.
         """
         # Cache of already lexed lines.
         cache = {}
@@ -257,10 +265,10 @@ class PygmentsLexer(Lexer):
             Create a generator that yields the lexed lines.
             Each iteration it yields a (line_number, [(token, text), ...]) tuple.
             """
-            def get_tokens():
+            def get_text_fragments():
                 text = '\n'.join(document.lines[start_lineno:])[column:]
 
-                # We call `get_tokens_unprocessed`, because `get_tokens` will
+                # We call `get_text_fragments_unprocessed`, because `get_tokens` will
                 # still replace \r\n and \r by \n.  (We don't want that,
                 # Pygments should return exactly the same amount of text, as we
                 # have given as input.)
@@ -269,7 +277,7 @@ class PygmentsLexer(Lexer):
                     # objects.
                     yield _token_cache[t], v
 
-            return enumerate(split_lines(get_tokens()), start_lineno)
+            return enumerate(split_lines(get_text_fragments()), start_lineno)
 
         def get_generator(i):
             """

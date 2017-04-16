@@ -20,8 +20,7 @@ from prompt_toolkit.contrib.regular_languages.compiler import compile
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
 from prompt_toolkit.layout.lexers import SimpleLexer
-from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.token import Token
+from prompt_toolkit.styles import Style
 
 import math
 
@@ -37,11 +36,11 @@ def create_grammar():
     """)
 
 
-example_style = style_from_dict({
-    Token.Operator:       '#33aa33 bold',
-    Token.Number:         '#aa3333 bold',
+example_style = Style.from_dict({
+    'operator':       '#33aa33 bold',
+    'number':         '#ff0000 bold',
 
-    Token.TrailingInput: 'bg:#662222 #ffffff',
+    'trailing-input': 'bg:#662222 #ffffff',
 })
 
 
@@ -49,10 +48,10 @@ if __name__ == '__main__':
     g = create_grammar()
 
     lexer = GrammarLexer(g, lexers={
-        'operator1': SimpleLexer(Token.Operator),
-        'operator2': SimpleLexer(Token.Operator),
-        'var1': SimpleLexer(Token.Number),
-        'var2': SimpleLexer(Token.Number),
+        'operator1': SimpleLexer('class:operator'),
+        'operator2': SimpleLexer('class:operator'),
+        'var1': SimpleLexer('class:number'),
+        'var2': SimpleLexer('class:number'),
     })
 
     completer = GrammarCompleter(g, {

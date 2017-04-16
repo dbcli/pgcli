@@ -6,7 +6,7 @@ See: https://iterm2.com/finalterm.html
 from __future__ import unicode_literals
 
 from prompt_toolkit import prompt
-from prompt_toolkit.token import Token
+from prompt_toolkit.token import ZeroWidthEscape
 import sys
 
 
@@ -22,9 +22,9 @@ def get_prompt_tokens(app):
     #            writing this as raw text to the output will not introduce any
     #            cursor movements.
     return [
-        (Token.ZeroWidthEscape, BEFORE_PROMPT),
-        (Token, 'Say something: # '),
-        (Token.ZeroWidthEscape, AFTER_PROMPT),
+        (ZeroWidthEscape, BEFORE_PROMPT),
+        ('', 'Say something: # '),
+        (ZeroWidthEscape, AFTER_PROMPT),
     ]
 
 

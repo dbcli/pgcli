@@ -5,18 +5,17 @@ Example of printing colored text to the output.
 from __future__ import unicode_literals
 from prompt_toolkit.shortcuts import print_tokens
 from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.token import Token
 
 
 def main():
     style = style_from_dict({
-        Token.Hello: '#ff0066',
-        Token.World: '#44ff44 italic',
+        'hello': '#ff0066',
+        'world': '#44ff44 italic',
     })
     tokens = [
-        (Token.Hello, 'Hello '),
-        (Token.World, 'World'),
-        (Token, '\n'),
+        ('class:hello', 'Hello '),
+        ('class:world', 'World'),
+        ('', '\n'),
     ]
     print_tokens(tokens, style=style)
 

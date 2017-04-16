@@ -1,10 +1,9 @@
 """
-Test `shortcuts.print_tokens`.
+Test `shortcuts.print_text_fragments`.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.shortcuts import print_tokens
-from prompt_toolkit.token import Token
-from prompt_toolkit.styles import style_from_dict
+from prompt_toolkit.shortcuts import print_text_fragments
+from prompt_toolkit.styles import Style
 
 
 class _Capture:
@@ -28,23 +27,23 @@ class _Capture:
         return True
 
 
-def test_print_tokens():
+def test_print_text_fragments():
     f = _Capture()
-    print_tokens([(Token, 'hello'), (Token, 'world')], file=f)
+    print_text_fragments([('', 'hello'), ('', 'world')], file=f)
     assert b'hello' in f.data
     assert b'world' in f.data
 
 
 def test_with_style():
     f = _Capture()
-    style = style_from_dict({
-        Token.Hello: '#ff0066',
-        Token.World: '#44ff44 italic',
+    style = Style.from_dict({
+        'hello': '#ff0066',
+        'world': '#44ff44 italic',
     })
     tokens = [
-        (Token.Hello, 'Hello '),
-        (Token.World, 'world'),
+        ('class:hello', 'Hello '),
+        ('class:world', 'world'),
     ]
-    print_tokens(tokens, style=style, file=f)
+    print_text_fragments(tokens, style=style, file=f)
     assert b'\x1b[0;38;5;197mHello' in f.data
     assert b'\x1b[0;38;5;83;3mworld' in f.data

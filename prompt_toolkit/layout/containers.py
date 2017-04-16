@@ -8,16 +8,15 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass, text_type
 from six.moves import range
 
-from .controls import UIControl, TokenListControl, UIContent, DummyControl
+from .controls import UIControl, TextFragmentsControl, UIContent, DummyControl
 from .dimension import Dimension, sum_layout_dimensions, max_layout_dimensions, to_dimension
 from .margins import Margin
 from .screen import Point, WritePosition, _CHAR_CACHE
-from .utils import token_list_to_text, explode_tokens, token_list_width
+from .utils import fragment_list_to_text, explode_text_fragments, fragment_list_width
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.filters import to_app_filter, ViInsertMode, EmacsInsertMode
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from prompt_toolkit.reactive import Integer
-from prompt_toolkit.token import Token
 from prompt_toolkit.utils import take_using_weights, get_cwidth
 
 __all__ = (
@@ -66,16 +65,16 @@ class Container(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
         """
         Write the actual content to the screen.
 
         :param app: :class:`~prompt_toolkit.application.Application`.
         :param screen: :class:`~prompt_toolkit.layout.screen.Screen`
         :param mouse_handlers: :class:`~prompt_toolkit.layout.mouse_handlers.MouseHandlers`.
-        :param token: Token to pass to the `Window` object. This will be
+        :param parent_style: Style string to pass to the `Window` object. This will be
             applied to all content of the windows. `VSplit` and `HSplit` can
-            use it to pass tokens down to the windows that they contain.
+            use it to pass their style down to the windows that they contain.
         """
 
     @abstractmethod
@@ -87,8 +86,8 @@ class Container(with_metaclass(ABCMeta, object)):
 
 def _window_too_small():
     " Create a `Window` that displays the 'Window too small' text. "
-    return Window(TokenListControl.static(
-        [(Token.WindowTooSmall, ' Window too small... ')]))
+    return Window(TextFragmentsControl.static(
+        [('class:window-too-small', ' Window too small... ')]))
 
 
 class VerticalAlign:
@@ -126,12 +125,14 @@ class HSplit(Container):
         list of integers.)
     :param width: When given, use this width instead of looking at the children.
     :param height: When given, use this width instead of looking at the children.
+    :param style: A style string.
     """
     def __init__(self, children, window_too_small=None, align=VerticalAlign.JUSTIFY,
                  report_dimensions_callback=None, padding=0, width=None,
-                 height=None, token=None):
+                 height=None, style=''):
         assert window_too_small is None or isinstance(window_too_small, Container)
         assert report_dimensions_callback is None or callable(report_dimensions_callback)
+        assert isinstance(style, text_type)
 
         self.children = [to_container(c) for c in children]
         self.window_too_small = window_too_small or _window_too_small()
@@ -141,7 +142,7 @@ class HSplit(Container):
         self.padding = to_dimension(padding)
         self.width = width
         self.height = height
-        self.token = token
+        self.style = style
 
         self._children_cache = SimpleCache(maxsize=1)
 
@@ -194,7 +195,7 @@ class HSplit(Container):
 
         return self._children_cache.get(tuple(self.children), get)
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
         """
         Render the prompt to a `Screen` instance.
 
@@ -206,12 +207,11 @@ class HSplit(Container):
         if self.report_dimensions_callback:
             self.report_dimensions_callback(app, sizes)
 
-        if self.token:
-            token = token | self.token
+        style = '{} {}'.format(parent_style, self.style)
 
         if sizes is None:
             self.window_too_small.write_to_screen(
-                app, screen, mouse_handlers, write_position, token)
+                app, screen, mouse_handlers, write_position, style)
         else:
             #
             ypos = write_position.ypos
@@ -221,7 +221,7 @@ class HSplit(Container):
             # Draw child panes.
             for s, c in zip(sizes, self._all_children):
                 c.write_to_screen(app, screen, mouse_handlers,
-                                  WritePosition(xpos, ypos, width, s), token)
+                                  WritePosition(xpos, ypos, width, s), style)
                 ypos += s
 
     def _divide_heigths(self, app, write_position):
@@ -306,12 +306,14 @@ class VSplit(Container):
         list of integers.)
     :param width: When given, use this width instead of looking at the children.
     :param height: When given, use this width instead of looking at the children.
+    :param style: A style string.
     """
     def __init__(self, children, window_too_small=None, align=HorizontalAlign.JUSTIFY,
                  report_dimensions_callback=None, padding=Dimension.exact(0),
-                 width=None, height=None, token=None):
+                 width=None, height=None, style=''):
         assert window_too_small is None or isinstance(window_too_small, Container)
         assert report_dimensions_callback is None or callable(report_dimensions_callback)
+        assert isinstance(style, text_type)
 
         self.children = [to_container(c) for c in children]
         self.window_too_small = window_too_small or _window_too_small()
@@ -322,7 +324,8 @@ class VSplit(Container):
 
         self.width = width
         self.height = height
-        self.token = token
+
+        self.style = style
 
         self._children_cache = SimpleCache(maxsize=1)
 
@@ -431,7 +434,7 @@ class VSplit(Container):
 
         return sizes
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
         """
         Render the prompt to a `Screen` instance.
 
@@ -448,13 +451,12 @@ class VSplit(Container):
         if self.report_dimensions_callback:
             self.report_dimensions_callback(app, sizes)  # XXX: substract sizes of additional children!!!
 
-        if self.token:
-            token = token | self.token
+        style = '{} {}'.format(parent_style, self.style)
 
         # If there is not enough space.
         if sizes is None:
             self.window_too_small.write_to_screen(
-                app, screen, mouse_handlers, write_position, token)
+                app, screen, mouse_handlers, write_position, style)
             return
 
         # Calculate heights, take the largest possible, but not larger than
@@ -470,7 +472,7 @@ class VSplit(Container):
         # Draw all child panes.
         for s, c in zip(sizes, children):
             c.write_to_screen(app, screen, mouse_handlers,
-                              WritePosition(xpos, ypos, s, height), token)
+                              WritePosition(xpos, ypos, s, height), style)
             xpos += s
 
     def walk(self):
@@ -518,8 +520,9 @@ class FloatContainer(Container):
         """
         return self.content.preferred_height(app, width, max_available_height)
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
-        self.content.write_to_screen(app, screen, mouse_handlers, write_position, token)
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
+        style = parent_style
+        self.content.write_to_screen(app, screen, mouse_handlers, write_position, style)
 
         for fl in self.floats:
             # When a menu_position was given, use this instead of the cursor
@@ -633,7 +636,7 @@ class FloatContainer(Container):
                                    width=width, height=height)
 
                 if not fl.hide_when_covering_content or self._area_is_empty(screen, wp):
-                    fl.content.write_to_screen(app, screen, mouse_handlers, wp, token)
+                    fl.content.write_to_screen(app, screen, mouse_handlers, wp, style)
 
     def _area_is_empty(self, screen, write_position):
         """
@@ -969,9 +972,12 @@ class ScrollOffsets(object):
 
 
 class ColorColumn(object):
-    def __init__(self, position, token=Token.ColorColumn):
+    def __init__(self, position, style=''):
+        assert isinstance(position, int)
+        assert isinstance(style, text_type)
+
         self.position = position
-        self.token = token
+        self.style = style
 
 
 _in_insert_mode = ViInsertMode() | EmacsInsertMode()
@@ -1032,14 +1038,9 @@ class Window(Container):
     :param get_colorcolumns: A callable that takes a `Application` and
         returns a a list of :class:`.ColorColumn` instances that describe the
         columns to be highlighted.
-    :param cursorline_token: The token to be used for highlighting the current line,
-        if `cursorline` is True.
-    :param cursorcolumn_token: The token to be used for highlighting the current line,
-        if `cursorcolumn` is True.
     :param align: alignment of content.
-    :param token: If given, apply this token to all of the cells in this window.
-    :param get_token: Callable that takes an `Application` and returns the token
-        to be applied to all the cells in this window.
+    :param style: A string string. Style to be applied to all the cells in this
+        window.
     :param char: Character to be used for filling the background.
     :param transparent: When `False`, first erase everything underneath. (This
         is mainly useful if this Window is displayed inside a `Float`.)
@@ -1052,8 +1053,7 @@ class Window(Container):
                  allow_scroll_beyond_bottom=False, wrap_lines=False,
                  get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False,
                  cursorline=False, cursorcolumn=False, get_colorcolumns=None,
-                 cursorline_token=Token.CursorLine, cursorcolumn_token=Token.CursorColumn,
-                 align=Align.LEFT, token=None, get_token=None, char=None,
+                 align=Align.LEFT, style='', char=None,
                  get_char=None, transparent=True):
         assert content is None or isinstance(content, UIControl)
         assert width is None or isinstance(width, (Dimension, int))
@@ -1069,9 +1069,7 @@ class Window(Container):
         assert get_horizontal_scroll is None or callable(get_horizontal_scroll)
         assert get_colorcolumns is None or callable(get_colorcolumns)
         assert align in Align._ALL
-        assert token is None or isinstance(token, tuple)
-        assert get_token is None or callable(get_token)
-        assert not (token and get_token)
+        assert isinstance(style, text_type)
         assert char is None or isinstance(char, text_type)
         assert get_char is None or callable(get_char)
         assert not (char and get_char)
@@ -1092,11 +1090,8 @@ class Window(Container):
         self.get_vertical_scroll = get_vertical_scroll
         self.get_horizontal_scroll = get_horizontal_scroll
         self.get_colorcolumns = get_colorcolumns or (lambda app: [])
-        self.cursorline_token = cursorline_token
-        self.cursorcolumn_token = cursorcolumn_token
         self.align = align
-        self.token = token
-        self.get_token = get_token
+        self.style = style
         self.char = char
         self.get_char = get_char
         self.transparent = transparent
@@ -1251,7 +1246,7 @@ class Window(Container):
             return '?'
         return False
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
         """
         Write window to screen. This renders the user control, the margins and
         copies everything over to the absolute position at the given screen.
@@ -1361,12 +1356,12 @@ class Window(Container):
 
         def render_margin(m, width):
             " Render margin. Return `Screen`. "
-            # Retrieve margin tokens.
-            tokens = m.create_margin(app, self.render_info, width, write_position.height)
+            # Retrieve margin fragments.
+            fragments = m.create_margin(app, self.render_info, width, write_position.height)
 
             # Turn it into a UIContent object.
-            # already rendered those tokens using this size.)
-            return TokenListControl.static(tokens).create_content(
+            # already rendered those fragments using this size.)
+            return TextFragmentsControl.static(fragments).create_content(
                 app, width + 1, write_position.height)
 
         for m, width in zip(self.left_margins, left_margin_widths):
@@ -1388,8 +1383,8 @@ class Window(Container):
             self._copy_margin(app, margin_screen, screen, write_position, move_x, width)
             move_x += width
 
-        # Apply 'self.token'
-        self._apply_token(app, screen, write_position, token)
+        # Apply 'self.style'
+        self._apply_style(app, screen, write_position, parent_style)
 
         # Tell the screen that this user control has been painted.
         screen.visible_windows.append(self)
@@ -1406,8 +1401,7 @@ class Window(Container):
         ypos = write_position.ypos
         line_count = ui_content.line_count
         new_buffer = new_screen.data_buffer
-        empty_char = _CHAR_CACHE['', Token]
-        ZeroWidthEscape = Token.ZeroWidthEscape
+        empty_char = _CHAR_CACHE['', '']
 
         # Map visible line number to (row, col) of input.
         # 'col' will always be zero if line wrapping is off.
@@ -1431,24 +1425,24 @@ class Window(Container):
 
                 # Align this line.
                 if align == Align.CENTER:
-                    line_width = token_list_width(line)
+                    line_width = fragment_list_width(line)
                     if line_width < width:
                         x += (width - line_width) // 2
                 elif align == Align.RIGHT:
-                    line_width = token_list_width(line)
+                    line_width = fragment_list_width(line)
                     if line_width < width:
                         x += (width - line_width) + 1
 
                 # Copy line.
-                for token, text in line:
+                for style, text in line:
                     # Remember raw VT escape sequences. (E.g. FinalTerm's
                     # escape sequences.)
-                    if token == ZeroWidthEscape:
+                    if style == '[ZeroWidthEscape]':
                         new_screen.zero_width_escapes[y + ypos][x + xpos] += text
                         continue
 
                     for c in text:
-                        char = _CHAR_CACHE[c, token]
+                        char = _CHAR_CACHE[c, style]
                         char_width = char.width
 
                         # Wrap when the line width is exceeded.
@@ -1481,7 +1475,7 @@ class Window(Container):
                             # Merge it in the previous cell.
                             elif char_width == 0 and x - 1 >= 0:
                                 prev_char = new_buffer_row[x + xpos - 1]
-                                char2 = _CHAR_CACHE[prev_char.char + c, prev_char.token]
+                                char2 = _CHAR_CACHE[prev_char.char + c, prev_char.style]
                                 new_buffer_row[x + xpos - 1] = char2
 
                             # Keep track of write position for each character.
@@ -1558,31 +1552,27 @@ class Window(Container):
 
         if not self.transparent or char:
             wp = write_position
-            char = _CHAR_CACHE[char or ' ', Token]
+            char = _CHAR_CACHE[char or ' ', '']
 
             for y in range(wp.ypos, wp.ypos + wp.height):
                 row = screen.data_buffer[y]
                 for x in range(wp.xpos, wp.xpos + wp.width):
                     row[x] = char
 
-    def _apply_token(self, app, new_screen, write_position, token):
-        # Apply `self.token`.
-        if self.get_token:
-            token = token | self.get_token(app)
-        if self.token:
-            token = token | self.token
+    def _apply_style(self, app, new_screen, write_position, parent_style):
+        # Apply `self.style`.
+        style = '{} {}'.format(parent_style, self.style)
 
         if app.layout.current_window == self:
-            token = token | Token.Focussed
+            style += ' class:focussed'
 
-        if len(token):
-            new_screen.fill_area(write_position, token=token)
+        new_screen.fill_area(write_position, style=style)
 
-        # Apply the 'LastLine' token to the last line of each Window. This can
+        # Apply the 'last-line' class to the last line of each Window. This can
         # be used to apply an 'underline' to the user control.
         wp = WritePosition(write_position.xpos, write_position.ypos + write_position.height - 1,
                            write_position.width, 1)
-        new_screen.fill_area(wp, token=Token.LastLine)
+        new_screen.fill_area(wp, 'class:last-line')
 
     def _highlight_digraph(self, app, new_screen):
         """
@@ -1593,7 +1583,7 @@ class Window(Container):
         if digraph_char:
             cpos = new_screen.get_cursor_position(self)
             new_screen.data_buffer[cpos.y][cpos.x] = \
-                _CHAR_CACHE[digraph_char, Token.Digraph]
+                _CHAR_CACHE[digraph_char, 'class:digraph']
 
     def _show_key_processor_key_buffer(self, app, new_screen):
         """
@@ -1614,14 +1604,14 @@ class Window(Container):
             if get_cwidth(data) == 1:
                 cpos = new_screen.get_cursor_position(self)
                 new_screen.data_buffer[cpos.y][cpos.x] = \
-                    _CHAR_CACHE[data, Token.PartialKeyBinding]
+                    _CHAR_CACHE[data, 'class:partial-key-binding']
 
     def _highlight_cursorlines(self, app, new_screen, cpos, x, y, width, height):
         """
         Highlight cursor row/column.
         """
-        cursor_line_token = (':', ) + self.cursorline_token
-        cursor_column_token = (':', ) + self.cursorcolumn_token
+        cursor_line_style = ' class:cursor-line '
+        cursor_column_style = ' class:cursor-column '
 
         data_buffer = new_screen.data_buffer
 
@@ -1631,7 +1621,7 @@ class Window(Container):
             for x in range(x, x + width):
                 original_char = row[x]
                 row[x] = _CHAR_CACHE[
-                    original_char.char, original_char.token + cursor_line_token]
+                    original_char.char, original_char.style + cursor_line_style]
 
         # Highlight cursor column.
         if self.cursorcolumn(app):
@@ -1639,19 +1629,19 @@ class Window(Container):
                 row = data_buffer[y2]
                 original_char = row[cpos.x]
                 row[cpos.x] = _CHAR_CACHE[
-                   original_char.char, original_char.token + cursor_column_token]
+                   original_char.char, original_char.style + cursor_column_style]
 
         # Highlight color columns
         for cc in self.get_colorcolumns(app):
             assert isinstance(cc, ColorColumn)
-            color_column_token = (':', ) + cc.token
+            color_column_style = ' ' + cc.style
             column = cc.position
 
             for y2 in range(y, y + height):
                 row = data_buffer[y2]
                 original_char = row[column]
                 row[column] = _CHAR_CACHE[
-                   original_char.char, original_char.token + color_column_token]
+                   original_char.char, original_char.style + color_column_style]
 
     def _copy_margin(self, app, lazy_screen, new_screen, write_position, move_x, width):
         """
@@ -1685,8 +1675,8 @@ class Window(Container):
             # Calculate the height of the text before the cursor, with the line
             # containing the cursor included, and the character belowe the
             # cursor included as well.
-            line = explode_tokens(ui_content.get_line(ui_content.cursor_position.y))
-            text_before_cursor = token_list_to_text(line[:ui_content.cursor_position.x + 1])
+            line = explode_text_fragments(ui_content.get_line(ui_content.cursor_position.y))
+            text_before_cursor = fragment_list_to_text(line[:ui_content.cursor_position.x + 1])
             text_before_height = UIContent.get_height_for_text(text_before_cursor, width)
 
             # Adjust scroll offset.
@@ -1775,7 +1765,7 @@ class Window(Container):
             self.horizontal_scroll = 0
             return
         else:
-            current_line_text = token_list_to_text(ui_content.get_line(cursor_position.y))
+            current_line_text = fragment_list_to_text(ui_content.get_line(cursor_position.y))
 
         def do_scroll(current_scroll, scroll_offset_start, scroll_offset_end,
                       cursor_pos, window_size, content_size):
@@ -1903,10 +1893,10 @@ class ConditionalContainer(Container):
         else:
             return Dimension.zero()
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, token):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
         if self.filter(app):
             return self.content.write_to_screen(
-                app, screen, mouse_handlers, write_position, token)
+                app, screen, mouse_handlers, write_position, parent_style)
 
     def walk(self):
         return self.content.walk()

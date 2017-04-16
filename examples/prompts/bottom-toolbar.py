@@ -4,18 +4,17 @@ Simple example showing a bottom toolbar.
 """
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
-from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.token import Token
+from prompt_toolkit.styles import Style
 
 
-test_style = style_from_dict({
-    Token.Toolbar: '#ffffff bg:#333333',
+test_style = Style.from_dict({
+    'toolbar': '#ffffff bg:#333333',
 })
 
 
 def main():
     def get_bottom_toolbar_tokens(app):
-        return [(Token.Toolbar, ' This is a toolbar. ')]
+        return [('class:toolbar', ' This is a toolbar. ')]
 
     text = prompt('Say something: ',
                   get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,

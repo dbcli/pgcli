@@ -14,8 +14,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, Dialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
-from prompt_toolkit.styles.from_pygments import style_from_pygments
-from prompt_toolkit.token import Token
+from prompt_toolkit.styles import Style
 from pygments.lexers import HtmlLexer
 
 
@@ -85,7 +84,7 @@ root_container = HSplit([
             yes_button,
             no_button,
         ], align='CENTER', padding=3),
-        token=Token.Buttonbar,
+        style='class:button-bar',
         height=3,
     ),
 ])
@@ -143,24 +142,24 @@ bindings.add('tab')(focus_next)
 bindings.add('s-tab')(focus_previous)
 
 
-style = style_from_pygments(style_dict={
-    Token.Window.Border: '#888888',
-    Token.Shadow: 'bg:#222222',
+style = Style.from_dict({
+    'window.border': '#888888',
+    'shadow': 'bg:#222222',
 
-    Token.MenuBar: 'bg:#aaaaaa #888888',
-    Token.MenuBar.SelectedItem: 'bg:#ffffff #000000',
-    Token.Menu: 'bg:#888888 #ffffff',
-    Token.Menu.Border: '#aaaaaa',
-    Token.Window.Border|Token.Shadow: '#444444',
+    'menubar': 'bg:#aaaaaa #888888',
+    'menubar.selecteditem': 'bg:#ffffff #000000',
+    'menu': 'bg:#888888 #ffffff',
+    'menu.border': '#aaaaaa',
+    'window.border shadow': '#444444',
 
-    Token.Focussed | Token.Button: 'bg:#880000 #ffffff noinherit',
+    'focussed  button': 'bg:#880000 #ffffff noinherit',
 
     # Styling for Dialog widgets.
 
-    Token.RadioList | Token.Focussed: 'noreverse',
-    Token.RadioList | Token.Focussed | Token.Radio.Selected: 'reverse',
+    'radiolist focussed': 'noreverse',
+    'radiolist focussed radio.selected': 'reverse',
 
-    Token.Buttonbar: 'bg:#aaaaff'
+    'button-bar': 'bg:#aaaaff'
 })
 
 

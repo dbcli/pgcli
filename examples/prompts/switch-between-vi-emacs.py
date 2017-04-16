@@ -6,8 +6,8 @@ Example that displays how to switch between Emacs and Vi input mode.
 from prompt_toolkit import prompt
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.token import Token
+from prompt_toolkit.styles import Style
+
 
 def run():
     # Create a `KeyBindings` that contains the default key bindings.
@@ -23,15 +23,15 @@ def run():
             event.app.editing_mode = EditingMode.VI
 
     # Add a bottom toolbar to display the status.
-    style = style_from_dict({
-        Token.Toolbar: 'reverse',
+    style = Style.from_dict({
+        'toolbar': 'reverse',
     })
 
     def get_bottom_toolbar_tokens(app):
         " Display the current input mode. "
         text = 'Vi' if app.editing_mode == EditingMode.VI else 'Emacs'
         return [
-            (Token.Toolbar, ' [F4] %s ' % text)
+            ('class:toolbar', ' [F4] %s ' % text)
         ]
 
     prompt('> ', extra_key_bindings=bindings,

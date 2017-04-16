@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.cache import FastDictCache
-from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
 from collections import defaultdict, namedtuple
@@ -23,8 +22,11 @@ class Char(object):
     Represent a single character in a :class:`.Screen`.
 
     This should be considered immutable.
+
+    :param char: A single character (can be a double-width character).
+    :param style: A style string. (Can contain classnames.)
     """
-    __slots__ = ('char', 'token', 'width')
+    __slots__ = ('char', 'style', 'width')
 
     # If we end up having one of these special control sequences in the input string,
     # we should display them as follows:
@@ -64,31 +66,31 @@ class Char(object):
         '\x7f': '^?',  # ASCII Delete (backspace).
     }
 
-    def __init__(self, char=' ', token=Token):
+    def __init__(self, char=' ', style=''):
         # If this character has to be displayed otherwise, take that one.
         char = self.display_mappings.get(char, char)
 
         self.char = char
-        self.token = token
+        self.style = style
 
         # Calculate width. (We always need this, so better to store it directly
         # as a member for performance.)
         self.width = get_cwidth(char)
 
     def __eq__(self, other):
-        return self.char == other.char and self.token == other.token
+        return self.char == other.char and self.style == other.style
 
     def __ne__(self, other):
         # Not equal: We don't do `not char.__eq__` here, because of the
         # performance of calling yet another function.
-        return self.char != other.char or self.token != other.token
+        return self.char != other.char or self.style != other.style
 
     def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__, self.char, self.token)
+        return '%s(%r, %r)' % (self.__class__.__name__, self.char, self.style)
 
 
 _CHAR_CACHE = FastDictCache(Char, size=1000 * 1000)
-Transparent = Token.Transparent
+Transparent = '[transparent]'
 
 
 class Screen(object):
@@ -156,38 +158,40 @@ class Screen(object):
             except KeyError:
                 return Point(0, 0)
 
-    def replace_all_tokens(self, token):
+    def replace_all_styles(self, style_str):  # TODO: this is used for Aborted. shouldn't this be an append????
         """
-        For all the characters in the screen. Set the token to the given `token`.
+        For all the characters in the screen.
+        Set the style string to the given `style_str`.
         """
         b = self.data_buffer
         char_cache = _CHAR_CACHE
 
-        prepend_token = tuple(token) + (':', )
+        prepend_style = style_str + ' '
 
         for y, row in b.items():
             for x, char in row.items():
-                b[y][x] = char_cache[char.char, prepend_token + char.token]
+                b[y][x] = char_cache[char.char, prepend_style + char.style]
 
-    def fill_area(self, write_position, token=None):
+    def fill_area(self, write_position, style=''):
         """
-        Fill the content of this area, using the given `token` and character.
+        Fill the content of this area, using the given `style`.
+        The style is prepended before whatever was here before.
         """
+        if not style.strip():
+            return
+
         xmin = write_position.xpos
         xmax = write_position.xpos + write_position.width
         char_cache = _CHAR_CACHE
         data_buffer = self.data_buffer
 
-        if token:
-            prepend_token = tuple(token) + (':', )
-        else:
-            prepend_token = ()
+        prepend_style = style + ' '
 
         for y in range(write_position.ypos, write_position.ypos + write_position.height):
             row = data_buffer[y]
             for x in range(xmin, xmax):
                 cell = row[x]
-                row[x] = char_cache[cell.char, prepend_token + cell.token]
+                row[x] = char_cache[cell.char, prepend_style + cell.style]
 
 
 class WritePosition(object):

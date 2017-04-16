@@ -1,15 +1,15 @@
 """
-`GrammarLexer` is compatible with Pygments lexers and can be used to highlight
-the input using a regular grammar with token annotations.
+`GrammarLexer` is compatible with other lexers and can be used to highlight
+the input using a regular grammar with annotations.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.document import Document
 from prompt_toolkit.layout.lexers import Lexer
 from prompt_toolkit.layout.utils import split_lines
-from prompt_toolkit.token import Token
 
 from .compiler import _CompiledGrammar
 from six.moves import range
+import six
 
 __all__ = (
     'GrammarLexer',
@@ -18,7 +18,7 @@ __all__ = (
 
 class GrammarLexer(Lexer):
     """
-    Lexer which can be used for highlighting of tokens according to variables in the grammar.
+    Lexer which can be used for highlighting of fragments according to variables in the grammar.
 
     (It does not actual lexing of the string, but it exposes an API, compatible
     with the Pygments lexer class.)
@@ -27,24 +27,24 @@ class GrammarLexer(Lexer):
     :param lexers: Dictionary mapping variable names of the regular grammar to
                    the lexers that should be used for this part. (This can
                    call other lexers recursively.) If you wish a part of the
-                   grammar to just get one token, use a
+                   grammar to just get one fragment, use a
                    `prompt_toolkit.layout.lexers.SimpleLexer`.
     """
-    def __init__(self, compiled_grammar, default_token=None, lexers=None):
+    def __init__(self, compiled_grammar, default_style='', lexers=None):
         assert isinstance(compiled_grammar, _CompiledGrammar)
-        assert default_token is None or isinstance(default_token, tuple)
+        assert isinstance(default_style, six.text_type)
         assert lexers is None or all(isinstance(v, Lexer) for k, v in lexers.items())
         assert lexers is None or isinstance(lexers, dict)
 
         self.compiled_grammar = compiled_grammar
-        self.default_token = default_token or Token
+        self.default_style = default_style
         self.lexers = lexers or {}
 
-    def _get_tokens(self, app, text):
+    def _get_text_fragments(self, app, text):
         m = self.compiled_grammar.match_prefix(text)
 
         if m:
-            characters = [[self.default_token, c] for c in text]
+            characters = [[self.default_style, c] for c in text]
 
             for v in m.variables():
                 # If we have a `Lexer` instance for this part of the input.
@@ -54,17 +54,17 @@ class GrammarLexer(Lexer):
                 if lexer:
                     document = Document(text[v.start:v.stop])
                     lexer_tokens_for_line = lexer.lex_document(app, document)
-                    lexer_tokens = []
+                    text_fragments = []
                     for i in range(len(document.lines)):
-                        lexer_tokens.extend(lexer_tokens_for_line(i))
-                        lexer_tokens.append((Token, '\n'))
-                    if lexer_tokens:
-                        lexer_tokens.pop()
+                        text_fragments.extend(lexer_tokens_for_line(i))
+                        text_fragments.append(('', '\n'))
+                    if text_fragments:
+                        text_fragments.pop()
 
                     i = v.start
-                    for t, s in lexer_tokens:
+                    for t, s in text_fragments:
                         for c in s:
-                            if characters[i][0] == self.default_token:
+                            if characters[i][0] == self.default_style:
                                 characters[i][0] = t
                             i += 1
 
@@ -72,14 +72,14 @@ class GrammarLexer(Lexer):
             trailing_input = m.trailing_input()
             if trailing_input:
                 for i in range(trailing_input.start, trailing_input.stop):
-                    characters[i][0] = Token.TrailingInput
+                    characters[i][0] = 'class:trailing-input'
 
             return characters
         else:
-            return [(Token, text)]
+            return [('', text)]
 
     def lex_document(self, app, document):
-        lines = list(split_lines(self._get_tokens(app, document.text)))
+        lines = list(split_lines(self._get_text_fragments(app, document.text)))
 
         def get_line(lineno):
             try:

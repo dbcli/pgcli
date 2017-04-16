@@ -1,11 +1,11 @@
 from __future__ import unicode_literals
 
 from .containers import Window, ConditionalContainer
-from .controls import BufferControl, TokenListControl, UIControl, UIContent, UIControlKeyBindings
+from .controls import BufferControl, TextFragmentsControl, UIControl, UIContent, UIControlKeyBindings
 from .dimension import Dimension
 from .lexers import SimpleLexer
 from .processors import BeforeInput
-from .utils import token_list_len
+from .utils import fragment_list_len
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import SYSTEM_BUFFER, SearchDirection
 from prompt_toolkit.filters import has_focus, has_arg, has_completions, has_validation_error, is_searching, Always, is_done, emacs_mode, vi_mode, vi_navigation_mode
@@ -13,10 +13,9 @@ from prompt_toolkit.filters import to_app_filter
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings, ConditionalKeyBindings
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.token import Token
 
 __all__ = (
-    'TokenListToolbar',
+    'TextFragmentsToolbar',
     'ArgToolbar',
     'CompletionsToolbar',
     'SearchToolbar',
@@ -25,13 +24,11 @@ __all__ = (
 )
 
 
-class TokenListToolbar(ConditionalContainer):  # XXX: don't wrap in ConditionalContainer!
-    def __init__(self, get_tokens, filter=Always(), **kw):
-        super(TokenListToolbar, self).__init__(
-            content=Window(
-                TokenListControl(get_tokens, **kw),
-                height=Dimension.exact(1)),
-            filter=filter)
+class TextFragmentsToolbar(Window):
+    def __init__(self, get_text_fragments, **kw):
+        super(TextFragmentsToolbar, self).__init__(
+            TextFragmentsControl(get_text_fragments, **kw),
+            height=Dimension.exact(1))
 
 
 class SystemToolbarControl(BufferControl):
@@ -40,13 +37,12 @@ class SystemToolbarControl(BufferControl):
     """
     def __init__(self, loop, enable=True):
         self.enable = to_app_filter(enable)
-        token = Token.Toolbar.System
         self.system_buffer = Buffer(name=SYSTEM_BUFFER, loop=loop)
 
         super(SystemToolbarControl, self).__init__(
             buffer=self.system_buffer,
-            lexer=SimpleLexer(token=Token.Toolbar.System.Text),
-            input_processor=BeforeInput.static('Shell command: ', token))
+            lexer=SimpleLexer(style='class:system-toolbar-text'),
+            input_processor=BeforeInput.static('Shell command: ', 'class:system-toolbar'))
 
         self._global_bindings = self._build_global_key_bindings()
         self._bindings = self._build_key_bindings()
@@ -130,23 +126,23 @@ class SystemToolbar(ConditionalContainer):
         super(SystemToolbar, self).__init__(
             content=Window(self.control,
                 height=Dimension.exact(1),
-                token=Token.Toolbar.System),
+                style='class:system-toolbar'),
             filter=has_focus(self.control.system_buffer) & ~is_done)
 
 
-class ArgToolbarControl(TokenListControl):
+class ArgToolbarControl(TextFragmentsControl):
     def __init__(self):
-        def get_tokens(app):
+        def get_text_fragments(app):
             arg = app.key_processor.arg
             if arg == '-':
                 arg = '-1'
 
             return [
-                (Token.Toolbar.Arg, 'Repeat: '),
-                (Token.Toolbar.Arg.Text, arg),
+                ('class:arg-toolbar', 'Repeat: '),
+                ('class:arg-toolbar,arg-toolbar-text', arg),
             ]
 
-        super(ArgToolbarControl, self).__init__(get_tokens)
+        super(ArgToolbarControl, self).__init__(get_text_fragments)
 
 
 class ArgToolbar(ConditionalContainer):
@@ -165,8 +161,6 @@ class SearchToolbarControl(BufferControl):
     def __init__(self, search_buffer, vi_mode=False):
         assert isinstance(search_buffer, Buffer)
 
-        token = Token.Toolbar.Search
-
         def get_before_input(app):
             if not is_searching(app):
                 text = ''
@@ -175,27 +169,27 @@ class SearchToolbarControl(BufferControl):
             else:
                 text = ('/' if vi_mode else 'I-search: ')
 
-            return [(token, text)]
+            return [('class:search-toolbar', text)]
 
         super(SearchToolbarControl, self).__init__(
             buffer=search_buffer,
             input_processor=BeforeInput(get_before_input),
-            lexer=SimpleLexer(token=token.Text))
+            lexer=SimpleLexer(
+                style='class:search-toolbar,search-toolbar-text'))
 
 
 class SearchToolbar(ConditionalContainer):
     def __init__(self, search_buffer, vi_mode=False):
         control = SearchToolbarControl(search_buffer, vi_mode=vi_mode)
         super(SearchToolbar, self).__init__(
-            content=Window(control, height=Dimension.exact(1), token=Token.Toolbar.Search),
+            content=Window(control, height=Dimension.exact(1),
+                           style='class:search-toolbar'),
             filter=is_searching & ~is_done)
 
         self.control = control
 
 
 class CompletionsToolbarControl(UIControl):
-    token = Token.Toolbar.Completions
-
     def create_content(self, app, width, height):
         complete_state = app.current_buffer.complete_state
         if complete_state:
@@ -210,42 +204,43 @@ class CompletionsToolbarControl(UIControl):
             cut_right = False
 
             # Create Menu content.
-            tokens = []
+            fragments = []
 
             for i, c in enumerate(completions):
                 # When there is no more place for the next completion
-                if token_list_len(tokens) + len(c.display) >= content_width:
+                if fragment_list_len(fragments) + len(c.display) >= content_width:
                     # If the current one was not yet displayed, page to the next sequence.
                     if i <= (index or 0):
-                        tokens = []
+                        fragments = []
                         cut_left = True
                     # If the current one is visible, stop here.
                     else:
                         cut_right = True
                         break
 
-                tokens.append((self.token.Completion.Current if i == index else self.token.Completion, c.display))
-                tokens.append((self.token, ' '))
+                fragments.append(('class:current-completion' if i == index
+                               else 'class:completion', c.display))
+                fragments.append(('', ' '))
 
             # Extend/strip until the content width.
-            tokens.append((self.token, ' ' * (content_width - token_list_len(tokens))))
-            tokens = tokens[:content_width]
+            fragments.append(('', ' ' * (content_width - fragment_list_len(fragments))))
+            fragments = fragments[:content_width]
 
-            # Return tokens
-            all_tokens = [
-                (self.token, ' '),
-                (self.token.Arrow, '<' if cut_left else ' '),
-                (self.token, ' '),
-            ] + tokens + [
-                (self.token, ' '),
-                (self.token.Arrow, '>' if cut_right else ' '),
-                (self.token, ' '),
+            # Return fragments
+            all_fragments = [
+                ('', ' '),
+                ('class:arrow', '<' if cut_left else ' '),
+                ('', ' '),
+            ] + fragments + [
+                ('', ' '),
+                ('class:arrow', '>' if cut_right else ' '),
+                ('', ' '),
             ]
         else:
-            all_tokens = []
+            all_fragments = []
 
         def get_line(i):
-            return all_tokens
+            return all_fragments
 
         return UIContent(get_line=get_line, line_count=1)
 
@@ -255,32 +250,31 @@ class CompletionsToolbar(ConditionalContainer):
         super(CompletionsToolbar, self).__init__(
             content=Window(
                 CompletionsToolbarControl(),
-                height=Dimension.exact(1)),
+                height=Dimension.exact(1),
+                style='class:completions-toolbar'),
             filter=has_completions & ~is_done & extra_filter)
 
 
-class ValidationToolbarControl(TokenListControl):
+class ValidationToolbarControl(TextFragmentsControl):
     def __init__(self, show_position=False):
-        token = Token.Toolbar.Validation
+        def get_text_fragments(app):
+            buff = app.current_buffer
 
-        def get_tokens(app):
-            buffer = app.current_buffer
-
-            if buffer.validation_error:
-                row, column = buffer.document.translate_index_to_position(
-                    buffer.validation_error.cursor_position)
+            if buff.validation_error:
+                row, column = buff.document.translate_index_to_position(
+                    buff.validation_error.cursor_position)
 
                 if show_position:
                     text = '%s (line=%s column=%s)' % (
-                        buffer.validation_error.message, row + 1, column + 1)
+                        buff.validation_error.message, row + 1, column + 1)
                 else:
-                    text = buffer.validation_error.message
+                    text = buff.validation_error.message
 
-                return [(token, text)]
+                return [('class:validation-toolbar', text)]
             else:
                 return []
 
-        super(ValidationToolbarControl, self).__init__(get_tokens)
+        super(ValidationToolbarControl, self).__init__(get_text_fragments)
 
 
 class ValidationToolbar(ConditionalContainer):

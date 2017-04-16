@@ -8,20 +8,19 @@ from prompt_toolkit.filters import to_app_filter
 from prompt_toolkit.layout.mouse_handlers import MouseHandlers
 from prompt_toolkit.layout.screen import Point, Screen, WritePosition
 from prompt_toolkit.output import Output
-from prompt_toolkit.styles import Style
-from prompt_toolkit.token import Token
+from prompt_toolkit.styles import BaseStyle
 from prompt_toolkit.utils import is_windows
 
 from six.moves import range
 
 __all__ = (
     'Renderer',
-    'print_tokens',
+    'print_text_fragments',
 )
 
 
-def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, last_token=None,
-                        is_done=False, attrs_for_token=None, size=None, previous_width=0):  # XXX: drop is_done
+def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, last_style=None,
+                        is_done=False, attrs_for_style_string=None, size=None, previous_width=0):  # XXX: drop is_done
     """
     Render the diff between this screen and the previous screen.
 
@@ -35,16 +34,16 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
     Don't change things without profiling first.
 
     :param current_pos: Current cursor position.
-    :param last_token: `Token` instance that represents the output attributes of
-            the last drawn character. (Color/attributes.)
-    :param attrs_for_token: :class:`._TokenToAttrsCache` instance.
+    :param last_style: The style string, used for drawing the last drawn
+        character.  (Color/attributes.)
+    :param attrs_for_style_string: :class:`._StyleStringToAttrsCache` instance.
     :param width: The width of the terminal.
     :param prevous_width: The width of the terminal during the last rendering.
     """
     width, height = size.columns, size.rows
 
     #: Remember the last printed character.
-    last_token = [last_token]  # nonlocal
+    last_style = [last_style]  # nonlocal
 
     #: Variable for capturing the output.
     write = output.write
@@ -64,7 +63,7 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
     def reset_attributes():
         " Wrapper around Output.reset_attributes. "
         _output_reset_attributes()
-        last_token[0] = None  # Forget last char after resetting attributes.
+        last_style[0] = None  # Forget last char after resetting attributes.
 
     def move_cursor(new):
         " Move cursor to this `new` point. Returns the given Point. "
@@ -97,16 +96,16 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
         """
         Write the output of this character.
         """
-        # If the last printed character has the same token, it also has the
-        # same style, so we don't output it.
-        the_last_token = last_token[0]
+        # If the last printed character has the same style, don't output the
+        # style again.
+        the_last_style = last_style[0]
 
-        if the_last_token and the_last_token == char.token:
+        if the_last_style and the_last_style == char.style:
             write(char.char)
         else:
-            _output_set_attributes(attrs_for_token[char.token])
+            _output_set_attributes(attrs_for_style_string[char.style])
             write(char.char)
-            last_token[0] = char.token
+            last_style[0] = char.style
 
     # Disable autowrap
     if not previous_screen:
@@ -149,7 +148,7 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
             # When the old and new character at this position are different,
             # draw the output. (Because of the performance, we don't call
             # `Char.__ne__`, but inline the same expression.)
-            if new_char.char != old_char.char or new_char.token != old_char.token:
+            if new_char.char != old_char.char or new_char.style != old_char.style:
                 current_pos = move_cursor(Point(y=y, x=c))
 
                 # Send injected escape sequences to output.
@@ -200,28 +199,28 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
     if screen.show_cursor or is_done:
         output.show_cursor()
 
-    return current_pos, last_token[0]
+    return current_pos, last_style[0]
 
 
 class HeightIsUnknownError(Exception):
     " Information unavailable. Did not yet receive the CPR response. "
 
 
-class _TokenToAttrsCache(dict):
+class _StyleStringToAttrsCache(dict):
     """
-    A cache structure that maps Pygments Tokens to :class:`.Attr`.
+    A cache structure that maps style strings to :class:`.Attr`.
     (This is an important speed up.)
     """
-    def __init__(self, get_style_for_token):
-        self.get_style_for_token = get_style_for_token
+    def __init__(self, get_attrs_for_style_str):
+        self.get_attrs_for_style_str = get_attrs_for_style_str
 
-    def __missing__(self, token):
+    def __missing__(self, style_str):
         try:
-            result = self.get_style_for_token(token)
+            result = self.get_attrs_for_style_str(style_str)
         except KeyError:
             result = None
 
-        self[token] = result
+        self[style_str] = result
         return result
 
 
@@ -236,7 +235,7 @@ class Renderer(object):
         r.render(app, layout=...)
     """
     def __init__(self, style, output, use_alternate_screen=False, mouse_support=False):
-        assert isinstance(style, Style)
+        assert isinstance(style, BaseStyle)
         assert isinstance(output, Output)
 
         self.style = style
@@ -253,7 +252,7 @@ class Renderer(object):
         self.waiting_for_cpr = False
 
         # Cache for the style.
-        self._attrs_for_token = None
+        self._attrs_for_style = None
         self._last_style_hash = None
 
         self.reset(_scroll=True)
@@ -268,7 +267,7 @@ class Renderer(object):
         # instance a toolbar at the bottom position.)
         self._last_screen = None
         self._last_size = None
-        self._last_token = None
+        self._last_style = None
 
         # Default MouseHandlers. (Just empty.)
         self.mouse_handlers = MouseHandlers()
@@ -425,9 +424,9 @@ class Renderer(object):
         # (But note that we still use _last_screen to calculate the height.)
         if self.style.invalidation_hash() != self._last_style_hash:
             self._last_screen = None
-            self._attrs_for_token = None
-        if self._attrs_for_token is None:
-            self._attrs_for_token = _TokenToAttrsCache(self.style.get_attrs_for_token)
+            self._attrs_for_style = None
+        if self._attrs_for_style is None:
+            self._attrs_for_style = _StyleStringToAttrsCache(self.style.get_attrs_for_style_str)
         self._last_style_hash = self.style.invalidation_hash()
 
         layout.container.write_to_screen(app, screen, mouse_handlers, WritePosition(
@@ -436,17 +435,17 @@ class Renderer(object):
             width=size.columns,
             height=(size.rows if self.use_alternate_screen else height),
             extended_height=size.rows,
-        ), Token)
+        ), parent_style='')
 
-        # When grayed. Replace all tokens in the new screen.
+        # When grayed. Replace all styles in the new screen.
         if app.is_aborting or app.is_exiting:
-            screen.replace_all_tokens(Token.Aborted)
+            screen.replace_all_styles('class:aborted')
 
         # Process diff and write to output.
-        self._cursor_pos, self._last_token = _output_screen_diff(
+        self._cursor_pos, self._last_style = _output_screen_diff(
             app, output, screen, self._cursor_pos,
-            self._last_screen, self._last_token, is_done,
-            attrs_for_token=self._attrs_for_token,
+            self._last_screen, self._last_style, is_done,
+            attrs_for_style_string=self._attrs_for_style,
             size=size,
             previous_width=(self._last_size.columns if self._last_size else 0))
         self._last_screen = screen
@@ -511,22 +510,22 @@ class Renderer(object):
         self.request_absolute_cursor_position()
 
 
-def print_tokens(output, tokens, style):
+def print_text_fragments(output, fragments, style):
     """
-    Print a list of (Token, text) tuples in the given style to the output.
+    Print a list of (style_str, text) tuples in the given style to the output.
     """
     assert isinstance(output, Output)
-    assert isinstance(style, Style)
+    assert isinstance(style, BaseStyle)
 
     # Reset first.
     output.reset_attributes()
     output.enable_autowrap()
 
-    # Print all (token, text) tuples.
-    attrs_for_token = _TokenToAttrsCache(style.get_attrs_for_token)
+    # Print all (style_str, text) tuples.
+    attrs_for_style_string = _StyleStringToAttrsCache(style.get_attrs_for_style_str)
 
-    for token, text in tokens:
-        attrs = attrs_for_token[token]
+    for style_str, text in fragments:
+        attrs = attrs_for_style_string[style_str]
 
         if attrs:
             output.set_attributes(attrs)
@@ -538,3 +537,5 @@ def print_tokens(output, tokens, style):
     # Reset again.
     output.reset_attributes()
     output.flush()
+
+

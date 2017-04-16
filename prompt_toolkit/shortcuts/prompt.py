@@ -42,7 +42,7 @@ from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, DynamicKeyBindings, merge_key_bindings, ConditionalKeyBindings, KeyBindingsBase
 from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
 from prompt_toolkit.layout.containers import ConditionalContainer, Align
-from prompt_toolkit.layout.controls import BufferControl, TokenListControl
+from prompt_toolkit.layout.controls import BufferControl, TextFragmentsControl
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import DynamicLexer
@@ -50,10 +50,9 @@ from prompt_toolkit.layout.margins import PromptMargin, ConditionalMargin
 from prompt_toolkit.layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
 from prompt_toolkit.layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
 from prompt_toolkit.layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
-from prompt_toolkit.layout.utils import explode_tokens
+from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.output.defaults import create_output
-from prompt_toolkit.styles import DEFAULT_STYLE, Style, DynamicStyle
-from prompt_toolkit.token import Token
+from prompt_toolkit.styles import default_style, BaseStyle, DynamicStyle, merge_styles
 from prompt_toolkit.utils import DummyContext
 from prompt_toolkit.validation import DynamicValidator
 
@@ -73,15 +72,15 @@ __all__ = (
 )
 
 
-def _split_multiline_prompt(get_prompt_tokens):
+def _split_multiline_prompt(get_prompt_fragments):
     """
-    Take a `get_prompt_tokens` function and return three new functions instead.
+    Take a `get_prompt_fragments` function and return three new functions instead.
     One that tells whether this prompt consists of multiple lines; one that
-    returns the tokens to be shown on the lines above the input; and another
-    one with the tokens to be shown at the first line of the input.
+    returns the fragments to be shown on the lines above the input; and another
+    one with the fragments to be shown at the first line of the input.
     """
-    def has_before_tokens(app):
-        for token, char in get_prompt_tokens(app):
+    def has_before_fragments(app):
+        for fragment, char in get_prompt_fragments(app):
             if '\n' in char:
                 return True
         return False
@@ -89,30 +88,30 @@ def _split_multiline_prompt(get_prompt_tokens):
     def before(app):
         result = []
         found_nl = False
-        for token, char in reversed(explode_tokens(get_prompt_tokens(app))):
+        for fragment, char in reversed(explode_text_fragments(get_prompt_fragments(app))):
             if found_nl:
-                result.insert(0, (token, char))
+                result.insert(0, (fragment, char))
             elif char == '\n':
                 found_nl = True
         return result
 
     def first_input_line(app):
         result = []
-        for token, char in reversed(explode_tokens(get_prompt_tokens(app))):
+        for fragment, char in reversed(explode_text_fragments(get_prompt_fragments(app))):
             if char == '\n':
                 break
             else:
-                result.insert(0, (token, char))
+                result.insert(0, (fragment, char))
         return result
 
-    return has_before_tokens, before, first_input_line
+    return has_before_fragments, before, first_input_line
 
 
 class _RPrompt(Window):
     " The prompt that is displayed on the right side of the Window. "
-    def __init__(self, get_tokens):
+    def __init__(self, get_text_fragments):
         super(_RPrompt, self).__init__(
-            TokenListControl(get_tokens),
+            TextFragmentsControl(get_text_fragments),
             align=Align.RIGHT)
 
 
@@ -165,14 +164,15 @@ class Prompt(object):
     :param history: :class:`~prompt_toolkit.history.History` instance.
     :param clipboard: :class:`~prompt_toolkit.clipboard.base.Clipboard` instance.
         (e.g. :class:`~prompt_toolkit.clipboard.in_memory.InMemoryClipboard`)
-    :param get_bottom_toolbar_tokens: Optional callable which takes a
+    :param get_bottom_toolbar_fragments: Optional callable which takes a
         :class:`~prompt_toolkit.application.Application` and returns a
-        list of tokens for the bottom toolbar.
-    :param get_continuation_tokens: An optional callable that takes a
-        Application and width as input and returns a list of (Token,
+        list of ``(style_str, text)`` tuples for the bottom toolbar.
+    :param get_continuation_fragments: An optional callable that takes a
+        Application and width as input and returns a list of (style_str,
         text) tuples to be used for the continuation.
-    :param get_prompt_tokens: An optional callable that returns the tokens to be
-        shown in the menu. (To be used instead of a `message`.)
+    :param get_prompt_fragments: An optional callable that returns the
+        ``(style_str, text)`` tuples to be shown in the menu. (To be used
+        instead of a `message`.)
     :param display_completions_in_columns: `bool` or
         :class:`~prompt_toolkit.filters.AppFilter`. Display the completions in
         multiple columns.
@@ -192,8 +192,8 @@ class Prompt(object):
     _fields = (
         'message', 'lexer', 'completer', 'is_password', 'editing_mode',
         'extra_key_bindings', 'include_default_key_bindings', 'is_password',
-        'get_bottom_toolbar_tokens', 'style', 'get_prompt_tokens',
-        'get_rprompt_tokens', 'multiline', 'get_continuation_tokens',
+        'get_bottom_toolbar_fragments', 'style', 'get_prompt_fragments',
+        'get_rprompt_fragments', 'multiline', 'get_continuation_fragments',
         'wrap_lines', 'history', 'enable_history_search',
         'complete_while_typing',
         'display_completions_in_columns', 'mouse_support', 'auto_suggest',
@@ -224,10 +224,10 @@ class Prompt(object):
             style=None,
             history=None,
             clipboard=None,
-            get_prompt_tokens=None,
-            get_continuation_tokens=None,
-            get_rprompt_tokens=None,
-            get_bottom_toolbar_tokens=None,
+            get_prompt_fragments=None,
+            get_continuation_fragments=None,
+            get_rprompt_fragments=None,
+            get_bottom_toolbar_fragments=None,
             display_completions_in_columns=False,
             get_title=None,
             mouse_support=False,
@@ -244,11 +244,11 @@ class Prompt(object):
             output=None):
         assert isinstance(message, text_type), 'Please provide a unicode string.'
         assert loop is None or isinstance(loop, EventLoop)
-        assert get_bottom_toolbar_tokens is None or callable(get_bottom_toolbar_tokens)
-        assert get_prompt_tokens is None or callable(get_prompt_tokens)
-        assert get_rprompt_tokens is None or callable(get_rprompt_tokens)
-        assert not (message and get_prompt_tokens)
-        assert style is None or isinstance(style, Style)
+        assert get_bottom_toolbar_fragments is None or callable(get_bottom_toolbar_fragments)
+        assert get_prompt_fragments is None or callable(get_prompt_fragments)
+        assert get_rprompt_fragments is None or callable(get_rprompt_fragments)
+        assert not (message and get_prompt_fragments)
+        assert style is None or isinstance(style, BaseStyle)
         assert extra_input_processor is None or isinstance(extra_input_processor, Processor)
         assert extra_key_bindings is None or isinstance(extra_key_bindings, KeyBindingsBase)
 
@@ -299,8 +299,8 @@ class Prompt(object):
 
         # Create functions that will dynamically split the prompt. (If we have
         # a multiline prompt.)
-        has_before_tokens, get_prompt_tokens_1, get_prompt_tokens_2 = \
-            _split_multiline_prompt(self._get_prompt_tokens)
+        has_before_fragments, get_prompt_fragments_1, get_prompt_fragments_2 = \
+            _split_multiline_prompt(self._get_prompt_fragments)
 
         # Create buffers list.
         def accept(app, buff):
@@ -352,7 +352,7 @@ class Prompt(object):
             # For single line mode, show the prompt before the input.
             ConditionalProcessor(
                 merge_processors([
-                    BeforeInput(get_prompt_tokens_2),
+                    BeforeInput(get_prompt_fragments_2),
                     ShowArg(),
                 ]),
                 ~dyncond('multiline'))
@@ -360,11 +360,11 @@ class Prompt(object):
 
         # Create bottom toolbars.
         bottom_toolbar = ConditionalContainer(
-            Window(TokenListControl(lambda app: self.get_bottom_toolbar_tokens(app)),
-                                    token=Token.Toolbar,
+            Window(TextFragmentsControl(lambda app: self.get_bottom_toolbar_fragments(app)),
+                                    style='class:toolbar',
                                     height=Dimension.exact(1)),
             filter=~is_done & RendererHeightIsKnown() &
-                    Condition(lambda app: self.get_bottom_toolbar_tokens is not None))
+                    Condition(lambda app: self.get_bottom_toolbar_fragments is not None))
 
         search_toolbar = SearchToolbar(search_buffer)
         search_buffer_control = BufferControl(
@@ -393,9 +393,9 @@ class Prompt(object):
             get_height=self._get_default_buffer_control_height,
             left_margins=[
                 # In multiline mode, use the window margin to display
-                # the prompt and continuation tokens.
+                # the prompt and continuation fragments.
                 ConditionalMargin(
-                    PromptMargin(get_prompt_tokens_2, self._get_continuation_tokens),
+                    PromptMargin(get_prompt_fragments_2, self._get_continuation_fragments),
                     filter=dyncond('multiline'),
                 )
             ],
@@ -408,9 +408,9 @@ class Prompt(object):
                 HSplit([
                     ConditionalContainer(
                         Window(
-                            TokenListControl(get_prompt_tokens_1),
+                            TextFragmentsControl(get_prompt_fragments_1),
                             dont_extend_height=True),
-                        Condition(has_before_tokens)
+                        Condition(has_before_fragments)
                     ),
                     ConditionalContainer(
                         default_buffer_window,
@@ -442,7 +442,7 @@ class Prompt(object):
                     )),
                     # The right prompt.
                     Float(right=0, top=0, hide_when_covering_content=True,
-                          content=_RPrompt(self._get_rprompt_tokens)),
+                          content=_RPrompt(self._get_rprompt_fragments)),
                 ]
             ),
             ValidationToolbar(),
@@ -476,7 +476,10 @@ class Prompt(object):
         # Create application
         application = Application(
             layout=Layout(layout, default_buffer_window),
-            style=DynamicStyle(lambda: self.style or DEFAULT_STYLE),
+            style=merge_styles([
+                default_style(),
+                DynamicStyle(lambda: self.style),
+            ]),
             clipboard=DynamicClipboard(lambda: self.clipboard),
             key_bindings=merge_key_bindings([
                 ConditionalKeyBindings(
@@ -551,9 +554,9 @@ class Prompt(object):
             default='', patch_stdout=None, true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
             is_password=None, extra_key_bindings=None, include_default_key_bindings=None,
-            get_bottom_toolbar_tokens=None, style=None, get_prompt_tokens=None,
-            get_rprompt_tokens=None, multiline=None,
-            get_continuation_tokens=None, wrap_lines=None, history=None,
+            get_bottom_toolbar_fragments=None, style=None, get_prompt_fragments=None,
+            get_rprompt_fragments=None, multiline=None,
+            get_continuation_fragments=None, wrap_lines=None, history=None,
             enable_history_search=None,
             complete_while_typing=None, display_completions_in_columns=None,
             auto_suggest=None, validator=None, clipboard=None,
@@ -594,9 +597,9 @@ class Prompt(object):
             default='', patch_stdout=None, true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
             is_password=None, extra_key_bindings=None, include_default_key_bindings=None,
-            get_bottom_toolbar_tokens=None, style=None, get_prompt_tokens=None,
-            get_rprompt_tokens=None, multiline=None,
-            get_continuation_tokens=None, wrap_lines=None, history=None,
+            get_bottom_toolbar_fragments=None, style=None, get_prompt_fragments=None,
+            get_rprompt_fragments=None, multiline=None,
+            get_continuation_fragments=None, wrap_lines=None, history=None,
             enable_history_search=None,
             complete_while_typing=None, display_completions_in_columns=None,
             auto_suggest=None, validator=None, clipboard=None,
@@ -665,20 +668,20 @@ class Prompt(object):
 
         return Dimension()
 
-    def _get_prompt_tokens(self, app):
-        if self.get_prompt_tokens is None:
-            return [(Token.Prompt, self.message or '')]
+    def _get_prompt_fragments(self, app):
+        if self.get_prompt_fragments is None:
+            return [('class:prompt', self.message or '')]
         else:
-            return self.get_prompt_tokens(app)
+            return self.get_prompt_fragments(app)
 
-    def _get_rprompt_tokens(self, app):
-        if self.get_rprompt_tokens:
-            return self.get_rprompt_tokens(app)
+    def _get_rprompt_fragments(self, app):
+        if self.get_rprompt_fragments:
+            return self.get_rprompt_fragments(app)
         return []
 
-    def _get_continuation_tokens(self, app, width):
-        if self.get_continuation_tokens:
-            return self.get_continuation_tokens(app, width)
+    def _get_continuation_fragments(self, app, width):
+        if self.get_continuation_fragments:
+            return self.get_continuation_fragments(app, width)
         return []
 
     def _get_title(self):

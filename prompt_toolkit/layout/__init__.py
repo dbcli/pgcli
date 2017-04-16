@@ -24,7 +24,7 @@ Container classes::
 Control classes::
 
     - UIControl (Abstract base class)
-       |- TokenListControl (Renders a simple list of tokens)
+       |- TextFragmentsControl (Renders a simple list of text fragments)
        `- BufferControl (Renders an input buffer.)
 
 

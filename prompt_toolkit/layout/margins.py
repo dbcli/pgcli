@@ -8,9 +8,8 @@ from six import with_metaclass
 from six.moves import range
 
 from prompt_toolkit.filters import to_app_filter
-from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
-from .utils import token_list_to_text
+from .utils import fragment_list_to_text
 
 __all__ = (
     'Margin',
@@ -41,7 +40,7 @@ class Margin(with_metaclass(ABCMeta, object)):
     def create_margin(self, app, window_render_info, width, height):
         """
         Creates a margin.
-        This should return a list of (Token, text) tuples.
+        This should return a list of (style_str, text) tuples.
 
         :param app: :class:`.Application` instance.
         :param window_render_info:
@@ -77,8 +76,8 @@ class NumberredMargin(Margin):
     def create_margin(self, app, window_render_info, width, height):
         relative = self.relative(app)
 
-        token = Token.LineNumber
-        token_current = Token.LineNumber.Current
+        style = 'class:line-number'
+        style_current = 'class:line-number,current-line-number'
 
         # Get current line number.
         current_lineno = window_render_info.ui_content.cursor_position.y
@@ -96,23 +95,23 @@ class NumberredMargin(Margin):
                     # Current line.
                     if relative:
                         # Left align current number in relative mode.
-                        result.append((token_current, '%i' % (lineno + 1)))
+                        result.append((style_current, '%i' % (lineno + 1)))
                     else:
-                        result.append((token_current, ('%i ' % (lineno + 1)).rjust(width)))
+                        result.append((style_current, ('%i ' % (lineno + 1)).rjust(width)))
                 else:
                     # Other lines.
                     if relative:
                         lineno = abs(lineno - current_lineno) - 1
 
-                    result.append((token, ('%i ' % (lineno + 1)).rjust(width)))
+                    result.append((style, ('%i ' % (lineno + 1)).rjust(width)))
 
             last_lineno = lineno
-            result.append((Token, '\n'))
+            result.append(('', '\n'))
 
         # Fill with tildes.
         if self.display_tildes(app):
             while y < window_render_info.window_height:
-                result.append((Token.Tilde, '~\n'))
+                result.append(('class:tilde', '~\n'))
                 y += 1
 
         return result
@@ -175,34 +174,34 @@ class ScrollbarMargin(Margin):
             result = []
             if display_arrows:
                 result.extend([
-                    (Token.Scrollbar.Arrow, '^'),
-                    (Token.Scrollbar, '\n')
+                    ('class:scrollbar.arrow', '^'),
+                    ('class:scrollbar', '\n')
                 ])
 
             # Scrollbar body.
-            Button = Token.Scrollbar.Button
-            Background = Token.Scrollbar.Background
-            Start = Token.Scrollbar.Start
-            End = Token.Scrollbar.End
+            scrollbar_background = 'class:scrollbar,scrollbar-background'
+            scrollbar_background_start = 'class:scrollbar,scrollbar-background,scrollbar-background-start'
+            scrollbar_button = 'class:scrollbar,scrollbar-button'
+            scrollbar_button_end = 'class:scrollbar,scrollbar-button,scrollbar-button-end'
 
             for i in range(window_height):
                 if is_scroll_button(i):
                     if not is_scroll_button(i + 1):
-                        # Give the last cell a different token, because we
+                        # Give the last cell a different style, because we
                         # want to underline this.
-                        result.append((Button | End, ' '))
+                        result.append((scrollbar_button_end, ' '))
                     else:
-                        result.append((Button, ' '))
+                        result.append((scrollbar_button, ' '))
                 else:
                     if is_scroll_button(i + 1):
-                        result.append((Background | Start, ' '))
+                        result.append((scrollbar_background_start, ' '))
                     else:
-                        result.append((Background, ' '))
-                result.append((Token, '\n'))
+                        result.append((scrollbar_background, ' '))
+                result.append(('', '\n'))
 
             # Down arrow
             if display_arrows:
-                result.append((Token.Scrollbar.Arrow, 'v'))
+                result.append(('class:scrollbar,scrollbar-arrow', 'v'))
 
             return result
 
@@ -213,54 +212,54 @@ class PromptMargin(Margin):
     This can display one prompt at the first line, and a continuation prompt
     (e.g, just dots) on all the following lines.
 
-    :param get_prompt_tokens: Callable that takes an Application as
-        input and returns a list of (Token, type) tuples to be shown as the
+    :param get_prompt_fragments: Callable that takes an Application as
+        input and returns a list of (style_str, type) tuples to be shown as the
         prompt at the first line.
-    :param get_continuation_tokens: Callable that takes an Application
-        and a width as input and returns a list of (Token, type) tuples for the
+    :param get_continuation_fragments: Callable that takes an Application
+        and a width as input and returns a list of (style_str, type) tuples for the
         next lines of the input.
     :param show_numbers: (bool or :class:`~prompt_toolkit.filters.AppFilter`)
         Display line numbers instead of the continuation prompt.
     """
-    def __init__(self, get_prompt_tokens, get_continuation_tokens=None,
+    def __init__(self, get_prompt_fragments, get_continuation_fragments=None,
                  show_numbers=False):
-        assert callable(get_prompt_tokens)
-        assert get_continuation_tokens is None or callable(get_continuation_tokens)
+        assert callable(get_prompt_fragments)
+        assert get_continuation_fragments is None or callable(get_continuation_fragments)
         show_numbers = to_app_filter(show_numbers)
 
-        self.get_prompt_tokens = get_prompt_tokens
-        self.get_continuation_tokens = get_continuation_tokens
+        self.get_prompt_fragments = get_prompt_fragments
+        self.get_continuation_fragments = get_continuation_fragments
         self.show_numbers = show_numbers
 
     def get_width(self, app, ui_content):
         " Width to report to the `Window`. "
         # Take the width from the first line.
-        text = token_list_to_text(self.get_prompt_tokens(app))
+        text = fragment_list_to_text(self.get_prompt_fragments(app))
         return get_cwidth(text)
 
     def create_margin(self, app, window_render_info, width, height):
         # First line.
-        tokens = self.get_prompt_tokens(app)[:]
+        fragments = self.get_prompt_fragments(app)[:]
 
         # Next lines. (Show line numbering when numbering is enabled.)
-        if self.get_continuation_tokens:
+        if self.get_continuation_fragments:
             # Note: we turn this into a list, to make sure that we fail early
-            #       in case `get_continuation_tokens` returns something else,
+            #       in case `get_continuation_fragments` returns something else,
             #       like `None`.
-            tokens2 = list(self.get_continuation_tokens(app, width))
+            fragments2 = list(self.get_continuation_fragments(app, width))
         else:
-            tokens2 = []
+            fragments2 = []
 
         show_numbers = self.show_numbers(app)
         last_y = None
 
         for y in window_render_info.displayed_lines[1:]:
-            tokens.append((Token, '\n'))
+            fragments.append(('', '\n'))
             if show_numbers:
                 if y != last_y:
-                    tokens.append((Token.LineNumber, ('%i ' % (y + 1)).rjust(width)))
+                    fragments.append(('class:line-number', ('%i ' % (y + 1)).rjust(width)))
             else:
-                tokens.extend(tokens2)
+                fragments.extend(fragments2)
             last_y = y
 
-        return tokens
+        return fragments

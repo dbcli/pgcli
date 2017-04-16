@@ -6,16 +6,15 @@ styling.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.shortcuts.dialogs import message_dialog
-from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.token import Token
+from prompt_toolkit.styles import Style
 
 
 # Custom color scheme.
-example_style = style_from_dict({
-    Token.Dialog:        'bg:#88ff88',
-    Token.Dialog.Body:   'bg:#000000 #00ff00',
-    Token.Dialog | Token.Frame.Label: 'bg:#ffffff #000000',
-    Token.Dialog.Body | Token.Shadow: 'bg:#00aa00',
+example_style = Style.from_dict({
+    'dialog':        'bg:#88ff88',
+    'dialog frame label': 'bg:#ffffff #000000',
+    'dialog-body':   'bg:#000000 #00ff00',
+    'dialog-body shadow': 'bg:#00aa00',
 })
 
 

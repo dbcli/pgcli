@@ -6,9 +6,8 @@ from prompt_toolkit.eventloop import EventLoop
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, Window, FloatContainer, Float, ConditionalContainer
-from prompt_toolkit.layout.controls import TokenListControl
+from prompt_toolkit.layout.controls import TextFragmentsControl
 from prompt_toolkit.layout.widgets import Shadow
-from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
 __all__ = (
@@ -98,15 +97,15 @@ class MenuContainer(object):
                 item.handler(event.app)
 
         # Controls.
-        self.control = TokenListControl(
-            self._get_menu_tokens,
+        self.control = TextFragmentsControl(
+            self._get_menu_fragments,
             key_bindings=kb,
             focussable=True)
 
         self.window = Window(
             height=1,
             content=self.control,
-            token=Token.MenuBar)
+            style='class:menu-bar')
 
         submenu = self._submenu(0)
         submenu2 = self._submenu(1)
@@ -158,30 +157,30 @@ class MenuContainer(object):
 
         return menu
 
-    def _get_menu_tokens(self, app):
+    def _get_menu_fragments(self, app):
         result = []
         focussed = (app.layout.current_window == self.window)
 
         for i, item in enumerate(self.menu_items):
-            result.append((Token.MenuBar, ' '))
+            result.append(('class:menu-bar', ' '))
             if i == self.selected_menu[0] and focussed:
-                result.append((Token.SetMenuPosition, ''))
-                token = Token.MenuBar.SelectedItem
+                result.append(('[SetMenuPosition]', ''))
+                style = 'class:menu-bar,selected-item'
             else:
-                token = Token.MenuBar
-            result.append((token, item.text))
+                style = 'class:menu-bar'
+            result.append((style, item.text))
         return result
 
     def _submenu(self, level=0):
-        def get_tokens(app):
+        def get_text_fragments(app):
             result = []
             if level < len(self.selected_menu):
                 menu = self._get_menu(level)
                 if menu.children:
-                    result.append((Token.Menu, BORDER.TOP_LEFT))
-                    result.append((Token.Menu, BORDER.HORIZONTAL * (menu.width + 4)))
-                    result.append((Token.Menu, BORDER.TOP_RIGHT))
-                    result.append((Token, '\n'))
+                    result.append(('class:menu', BORDER.TOP_LEFT))
+                    result.append(('class:menu', BORDER.HORIZONTAL * (menu.width + 4)))
+                    result.append(('class:menu', BORDER.TOP_RIGHT))
+                    result.append(('', '\n'))
                     try:
                         selected_item = self.selected_menu[level + 1]
                     except IndexError:
@@ -189,37 +188,37 @@ class MenuContainer(object):
 
                     for i, item in enumerate(menu.children):
                         if i == selected_item:
-                            result.append((Token.SetCursorPosition, ''))
-                            token = Token.MenuBar.SelectedItem
+                            result.append(('[SetCursorPosition]', ''))
+                            style = 'class:menu-bar,selected-item'
                         else:
-                            token = Token
+                            style = ''
 
-                        result.append((Token.Menu, BORDER.VERTICAL))
+                        result.append(('class:menu', BORDER.VERTICAL))
                         if item.text == '-':
-                            result.append((token | Token.Menu.Border, '{}'.format(BORDER.HORIZONTAL * (menu.width + 3))))
+                            result.append((style + 'class:menu-border', '{}'.format(BORDER.HORIZONTAL * (menu.width + 3))))
                         else:
-                            result.append((token, ' {}'.format(item.text).ljust(menu.width + 3)))
+                            result.append((style, ' {}'.format(item.text).ljust(menu.width + 3)))
 
                         if item.children:
-                            result.append((token, '>'))
+                            result.append((style, '>'))
                         else:
-                            result.append((token, ' '))
+                            result.append((style, ' '))
 
                         if i == selected_item:
-                            result.append((Token.SetMenuPosition, ''))
-                        result.append((Token.Menu, BORDER.VERTICAL))
+                            result.append(('[SetMenuPosition]', ''))
+                        result.append(('class:menu', BORDER.VERTICAL))
 
-                        result.append((Token, '\n'))
+                        result.append(('', '\n'))
 
-                    result.append((Token.Menu, BORDER.BOTTOM_LEFT))
-                    result.append((Token.Menu, BORDER.HORIZONTAL * (menu.width + 4)))
-                    result.append((Token.Menu, BORDER.BOTTOM_RIGHT))
+                    result.append(('class:menu', BORDER.BOTTOM_LEFT))
+                    result.append(('class:menu', BORDER.HORIZONTAL * (menu.width + 4)))
+                    result.append(('class:menu', BORDER.BOTTOM_RIGHT))
             return result
 
         return Window(
-                    TokenListControl(get_tokens),
-                    token=Token.Menu,
-                    transparent=False)
+            TextFragmentsControl(get_text_fragments),
+            style='class:menu',
+            transparent=False)
 
     def __pt_container__(self):
         return self.container

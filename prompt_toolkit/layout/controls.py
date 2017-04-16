@@ -14,14 +14,13 @@ from prompt_toolkit.filters import to_app_filter
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
-from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
 from .lexers import Lexer, SimpleLexer
 from .processors import Processor, TransformationInput, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, merge_processors
 
 from .screen import Point
-from .utils import split_lines, token_list_to_text
+from .utils import split_lines, fragment_list_to_text
 
 import six
 import time
@@ -30,7 +29,7 @@ import time
 __all__ = (
     'BufferControl',
     'DummyControl',
-    'TokenListControl',
+    'TextFragmentsControl',
     'UIControl',
     'UIControlKeyBindings',
     'UIContent',
@@ -135,7 +134,7 @@ class UIContent(object):
     lines.
 
     :param get_line: Callable that takes a line number and returns the current
-        line. This is a list of (Token, text) tuples.
+        line. This is a list of (style_str, text) tuples.
     :param line_count: The number of lines.
     :param cursor_position: a :class:`.Point` for the cursor position.
     :param menu_position: a :class:`.Point` for the menu position.
@@ -172,7 +171,7 @@ class UIContent(object):
         try:
             return self._line_heights[lineno, width]
         except KeyError:
-            text = token_list_to_text(self.get_line(lineno))
+            text = fragment_list_to_text(self.get_line(lineno))
             result = self.get_height_for_text(text, width)
 
             # Cache and return
@@ -197,42 +196,42 @@ class UIContent(object):
             return max(1, quotient)
 
 
-class TokenListControl(UIControl):
+class TextFragmentsControl(UIControl):
     """
-    Control that displays a list of (Token, text) tuples.
+    Control that displays a list of (style_str, text) tuples.
     (It's mostly optimized for rather small widgets, like toolbars, menus, etc...)
 
     When this UI control has the focus, the cursor will be shown in the upper
-    left corner of this control, unless `get_token` returns a
-    ``Token.SetCursorPosition`` token somewhere in the token list, then the
+    left corner of this control, unless `get_fragment` returns a
+    ``'[SetCursorPosition]'`` fragment somewhere in the fragment list, then the
     cursor will be shown there.
 
     Mouse support:
 
-        The list of tokens can also contain tuples of three items, looking like:
-        (Token, text, handler). When mouse support is enabled and the user
-        clicks on this token, then the given handler is called. That handler
+        The list of fragments can also contain tuples of three items, looking like:
+        (style_str, text, handler). When mouse support is enabled and the user
+        clicks on this fragment, then the given handler is called. That handler
         should accept two inputs: (Application, MouseEvent) and it should
         either handle the event or return `NotImplemented` in case we want the
         containing Window to handle this event.
 
     :param focussable: `bool` or `AppFilter`: Tell whether this control is focussable.
 
-    :param get_tokens: Callable that takes an `Application` instance and
-        returns the list of (Token, text) tuples to be displayed right now.
+    :param get_text_fragments: Callable that takes an `Application` instance and
+        returns the list of (style_str, text) tuples to be displayed right now.
     :param key_bindings: a `KeyBindings` object.
     :param global_key_bindings: a `KeyBindings` object that contains always on
         key bindings.
     """
-    def __init__(self, get_tokens, focussable=False, key_bindings=None,
+    def __init__(self, get_text_fragments, focussable=False, key_bindings=None,
                  global_key_bindings=None, modal=False):
         from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
-        assert callable(get_tokens)
+        assert callable(get_text_fragments)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert global_key_bindings is None or isinstance(global_key_bindings, KeyBindingsBase)
         assert isinstance(modal, bool)
 
-        self.get_tokens = get_tokens
+        self.get_text_fragments = get_text_fragments
         self.focussable = to_app_filter(focussable)
 
         # Key bindings.
@@ -242,36 +241,36 @@ class TokenListControl(UIControl):
 
         #: Cache for the content.
         self._content_cache = SimpleCache(maxsize=18)
-        self._token_cache = SimpleCache(maxsize=1)
-            # Only cache one token list. We don't need the previous item.
+        self._fragment_cache = SimpleCache(maxsize=1)
+            # Only cache one fragment list. We don't need the previous item.
 
         # Render info for the mouse support.
-        self._tokens = None
+        self._fragments = None
 
     def reset(self):
-        self._tokens = None
+        self._fragments = None
 
     def is_focussable(self, app):
         return self.focussable(app)
 
     def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.get_tokens)
+        return '%s(%r)' % (self.__class__.__name__, self.get_text_fragments)
 
-    def _get_tokens_cached(self, app):
+    def _get_text_fragments_cached(self, app):
         """
-        Get tokens, but only retrieve tokens once during one render run.
+        Get fragments, but only retrieve fragments once during one render run.
         (This function is called several times during one rendering, because
         we also need those for calculating the dimensions.)
         """
-        return self._token_cache.get(
-            app.render_counter, lambda: self.get_tokens(app))
+        return self._fragment_cache.get(
+            app.render_counter, lambda: self.get_text_fragments(app))
 
     def preferred_width(self, app, max_available_width):
         """
         Return the preferred width for this control.
         That is the width of the longest line.
         """
-        text = token_list_to_text(self._get_tokens_cached(app))
+        text = fragment_list_to_text(self._get_text_fragments_cached(app))
         line_lengths = [get_cwidth(l) for l in text.split('\n')]
         return max(line_lengths)
 
@@ -280,76 +279,76 @@ class TokenListControl(UIControl):
         return content.line_count
 
     def create_content(self, app, width, height):
-        # Get tokens
-        tokens_with_mouse_handlers = self._get_tokens_cached(app)
-        token_lines_with_mouse_handlers = list(split_lines(tokens_with_mouse_handlers))
+        # Get fragments
+        fragments_with_mouse_handlers = self._get_text_fragments_cached(app)
+        fragment_lines_with_mouse_handlers = list(split_lines(fragments_with_mouse_handlers))
 
-        # Strip mouse handlers from tokens.
-        token_lines = [
+        # Strip mouse handlers from fragments.
+        fragment_lines = [
             [tuple(item[:2]) for item in line]
-            for line in token_lines_with_mouse_handlers
+            for line in fragment_lines_with_mouse_handlers
         ]
 
-        # Keep track of the tokens with mouse handler, for later use in
+        # Keep track of the fragments with mouse handler, for later use in
         # `mouse_handler`.
-        self._tokens = tokens_with_mouse_handlers
+        self._fragments = fragments_with_mouse_handlers
 
-        # If there is a `Token.SetCursorPosition` in the token list, set the
+        # If there is a `[SetCursorPosition]` in the fragment list, set the
         # cursor position here.
-        def get_cursor_position(token=Token.SetCursorPosition):
-            for y, line in enumerate(token_lines):
+        def get_cursor_position(fragment='[SetCursorPosition]'):
+            for y, line in enumerate(fragment_lines):
                 x = 0
                 for t, text in line:
-                    if t == token:
+                    if t == fragment:
                         return Point(x=x, y=y)
                     x += len(text)
             return None
 
-        # If there is a `Token.SetMenuPosition`, set the menu over here.
+        # If there is a `[SetMenuPosition]`, set the menu over here.
         def get_menu_position():
-            return get_cursor_position(Token.SetMenuPosition)
+            return get_cursor_position('[SetMenuPosition]')
 
         # Create content, or take it from the cache.
-        key = (tuple(tokens_with_mouse_handlers), width)
+        key = (tuple(fragments_with_mouse_handlers), width)
 
         def get_content():
-            return UIContent(get_line=lambda i: token_lines[i],
-                             line_count=len(token_lines),
+            return UIContent(get_line=lambda i: fragment_lines[i],
+                             line_count=len(fragment_lines),
                              cursor_position=get_cursor_position(),
                              menu_position=get_menu_position())
 
         return self._content_cache.get(key, get_content)
 
     @classmethod
-    def static(cls, tokens):
-        def get_static_tokens(app):
-            return tokens
-        return cls(get_static_tokens)
+    def static(cls, fragments):
+        def get_static_fragments(app):
+            return fragments
+        return cls(get_static_fragments)
 
     def mouse_handler(self, app, mouse_event):
         """
         Handle mouse events.
 
-        (When the token list contained mouse handlers and the user clicked on
+        (When the fragment list contained mouse handlers and the user clicked on
         on any of these, the matching handler is called. This handler can still
         return `NotImplemented` in case we want the `Window` to handle this
         particular event.)
         """
-        if self._tokens:
+        if self._fragments:
             # Read the generator.
-            tokens_for_line = list(split_lines(self._tokens))
+            fragments_for_line = list(split_lines(self._fragments))
 
             try:
-                tokens = tokens_for_line[mouse_event.position.y]
+                fragments = fragments_for_line[mouse_event.position.y]
             except IndexError:
                 return NotImplemented
             else:
-                # Find position in the token list.
+                # Find position in the fragment list.
                 xpos = mouse_event.position.x
 
                 # Find mouse handler for this character.
                 count = 0
-                for item in tokens:
+                for item in fragments:
                     count += len(item[1])
                     if count >= xpos:
                         if len(item) >= 3:
@@ -375,7 +374,7 @@ class DummyControl(UIControl):
     """
     A dummy control object that doesn't paint any content.
 
-    Useful for filling a Window. (The `token` and `char` attributes of the
+    Useful for filling a Window. (The `fragment` and `char` attributes of the
     `Window` class can be used to define the filling.)
     """
     def create_content(self, app, width, height):
@@ -390,7 +389,7 @@ class DummyControl(UIControl):
         return False
 
 
-_ProcessedLine = namedtuple('_ProcessedLine', 'tokens source_to_display display_to_source')
+_ProcessedLine = namedtuple('_ProcessedLine', 'fragments source_to_display display_to_source')
 
 
 class BufferControl(UIControl):
@@ -462,7 +461,7 @@ class BufferControl(UIControl):
         #: Often, due to cursor movement, undo/redo and window resizing
         #: operations, it happens that a short time, the same document has to be
         #: lexed. This is a faily easy way to cache such an expensive operation.
-        self._token_cache = SimpleCache(maxsize=8)
+        self._fragment_cache = SimpleCache(maxsize=8)
 
         self._xy_to_cursor_position = None
         self._last_click_timestamp = None
@@ -525,26 +524,26 @@ class BufferControl(UIControl):
 
         return height
 
-    def _get_tokens_for_line_func(self, app, document):
+    def _get_text_fragments_for_line_func(self, app, document):
         """
-        Create a function that returns the tokens for a given line.
+        Create a function that returns the fragments for a given line.
         """
         # Cache using `document.text`.
-        def get_tokens_for_line():
+        def get_text_fragments_for_line():
             return self.lexer.lex_document(app, document)
 
-        return self._token_cache.get(document.text, get_tokens_for_line)
+        return self._fragment_cache.get(document.text, get_text_fragments_for_line)
 
     def _create_get_processed_line_func(self, app, document, width, height):
         """
         Create a function that takes a line number of the current document and
-        returns a _ProcessedLine(processed_tokens, source_to_display, display_to_source)
+        returns a _ProcessedLine(processed_fragments, source_to_display, display_to_source)
         tuple.
         """
         merged_processor = self.input_processor
 
-        def transform(lineno, tokens):
-            " Transform the tokens for a given line number. "
+        def transform(lineno, fragments):
+            " Transform the fragments for a given line number. "
             # Get cursor position at this line.
             if document.cursor_position_row == lineno:
                 cursor_column = document.cursor_position_col
@@ -553,25 +552,25 @@ class BufferControl(UIControl):
 
             def source_to_display(i):
                 """ X position from the buffer to the x position in the
-                processed token list. By default, we start from the 'identity'
+                processed fragment list. By default, we start from the 'identity'
                 operation. """
                 return i
 
             transformation = merged_processor.apply_transformation(
                 TransformationInput(
-                    app, self, document, lineno, source_to_display, tokens,
+                    app, self, document, lineno, source_to_display, fragments,
                     width, height))
 
             if cursor_column:
                 cursor_column = transformation.source_to_display(cursor_column)
 
             return _ProcessedLine(
-                transformation.tokens,
+                transformation.fragments,
                 transformation.source_to_display,
                 transformation.display_to_source)
 
         def create_func():
-            get_line = self._get_tokens_for_line_func(app, document)
+            get_line = self._get_text_fragments_for_line_func(app, document)
             cache = {}
 
             def get_processed_line(i):
@@ -618,16 +617,16 @@ class BufferControl(UIControl):
             return Point(y=row, x=get_processed_line(row).source_to_display(col))
 
         def get_line(i):
-            " Return the tokens for a given line number. "
-            tokens = get_processed_line(i).tokens
+            " Return the fragments for a given line number. "
+            fragments = get_processed_line(i).fragments
 
             # Add a space at the end, because that is a possible cursor
             # position. (When inserting after the input.) We should do this on
             # all the lines, not just the line containing the cursor. (Because
             # otherwise, line wrapping/scrolling could change when moving the
             # cursor around.)
-            tokens = tokens + [(Token, ' ')]
-            return tokens
+            fragments = fragments + [('', ' ')]
+            return fragments
 
         content = UIContent(
             get_line=get_line,

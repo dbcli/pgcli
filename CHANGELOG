@@ -74,6 +74,15 @@ Changes:
     keys are supported.)
   * 'enter' and 'tab' are key aliases for 'c-m' and 'c-i'.
 
+- Changes in the `Style` classes.
+
+  * `style.from_dict` does not exist anymore. Instantiate the ``Style`` class
+    directory to create a new style. ``Style.from_dict`` can be used to create
+    a style from a dictionary, where the dictionary keys are a space separated
+    list of class names, and the values, style strings (like before).
+
+  * `print_tokens` was renamed to `print_text_fragments`.
+
 - User controls can define key bindings, which are active when the user control
   is focussed.
 

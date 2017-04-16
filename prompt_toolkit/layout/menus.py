@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from six.moves import zip_longest, range
 from prompt_toolkit.filters import HasCompletions, IsDone, Condition, to_app_filter
 from prompt_toolkit.mouse_events import MouseEventType
-from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
 from .containers import Window, HSplit, ConditionalContainer, ScrollOffsets
@@ -33,9 +32,6 @@ class CompletionsMenuControl(UIControl):
     # The CompletionsMenu class defines a width of 8, and there is a scrollbar
     # of 1.)
     MIN_WIDTH = 7
-
-    def __init__(self):
-        self.token = Token.Menu.Completions
 
     def has_focus(self, app):
         return False
@@ -74,10 +70,10 @@ class CompletionsMenuControl(UIControl):
             def get_line(i):
                 c = completions[i]
                 is_current_completion = (i == index)
-                result = self._get_menu_item_tokens(c, is_current_completion, menu_width)
+                result = self._get_menu_item_fragments(c, is_current_completion, menu_width)
 
                 if show_meta:
-                    result += self._get_menu_item_meta_tokens(c, is_current_completion, menu_meta_width)
+                    result += self._get_menu_item_meta_fragments(c, is_current_completion, menu_meta_width)
                 return result
 
             return UIContent(get_line=get_line,
@@ -109,25 +105,25 @@ class CompletionsMenuControl(UIControl):
         else:
             return 0
 
-    def _get_menu_item_tokens(self, completion, is_current_completion, width):
+    def _get_menu_item_fragments(self, completion, is_current_completion, width):
         if is_current_completion:
-            token = self.token.Completion.Current
+            style_str = 'class:current-completion'
         else:
-            token = self.token.Completion
+            style_str = 'class:completion'
 
         text, tw = _trim_text(completion.display, width - 2)
         padding = ' ' * (width - 2 - tw)
-        return [(token, ' %s%s ' % (text, padding))]
+        return [(style_str, ' %s%s ' % (text, padding))]
 
-    def _get_menu_item_meta_tokens(self, completion, is_current_completion, width):
+    def _get_menu_item_meta_fragments(self, completion, is_current_completion, width):
         if is_current_completion:
-            token = self.token.Meta.Current
+            style_str = 'class:completion-meta,current-completion'
         else:
-            token = self.token.Meta
+            style_str = 'class:completion-meta,completion'
 
         text, tw = _trim_text(completion.display_meta, width - 2)
         padding = ' ' * (width - 2 - tw)
-        return [(token, ' %s%s ' % (text, padding))]
+        return [(style_str, ' %s%s ' % (text, padding))]
 
     def mouse_handler(self, app, mouse_event):
         """
@@ -190,7 +186,7 @@ class CompletionsMenu(ConditionalContainer):
                 scroll_offsets=ScrollOffsets(top=scroll_offset, bottom=scroll_offset),
                 right_margins=[ScrollbarMargin(display_arrows=display_arrows)],
                 dont_extend_width=True,
-                token=Token.Menu.Completions,
+                style='class:completion-menu',
             ),
             # Show when there are completions but not at the point we are
             # returning the input.
@@ -226,7 +222,6 @@ class MultiColumnCompletionMenuControl(UIControl):
 
         self.min_rows = min_rows
         self.suggested_max_column_width = suggested_max_column_width
-        self.token = Token.Menu.Completions
         self.scroll = 0
 
         # Info of last rendering.
@@ -316,39 +311,39 @@ class MultiColumnCompletionMenuControl(UIControl):
             render_right_arrow = self.scroll < len(rows_[0]) - visible_columns
 
             # Write completions to screen.
-            tokens_for_line = []
+            fragments_for_line = []
 
             for row_index, row in enumerate(rows_):
-                tokens = []
+                fragments = []
                 middle_row = row_index == len(rows_) // 2
 
                 # Draw left arrow if we have hidden completions on the left.
                 if render_left_arrow:
-                    tokens += [(Token.Scrollbar, '<' if middle_row else ' ')]
+                    fragments += [('class:scrollbar', '<' if middle_row else ' ')]
 
                 # Draw row content.
                 for column_index, c in enumerate(row[self.scroll:][:visible_columns]):
                     if c is not None:
-                        tokens += self._get_menu_item_tokens(c, is_current_completion(c), column_width)
+                        fragments += self._get_menu_item_fragments(c, is_current_completion(c), column_width)
 
                         # Remember render position for mouse click handler.
                         for x in range(column_width):
                             self._render_pos_to_completion[(column_index * column_width + x, row_index)] = c
                     else:
-                        tokens += [(self.token.Completion, ' ' * column_width)]
+                        fragments += [('class:completion', ' ' * column_width)]
 
-                # Draw trailing padding. (_get_menu_item_tokens only returns padding on the left.)
-                tokens += [(self.token.Completion, ' ')]
+                # Draw trailing padding. (_get_menu_item_fragments only returns padding on the left.)
+                fragments += [('class:completion', ' ')]
 
                 # Draw right arrow if we have hidden completions on the right.
                 if render_right_arrow:
-                    tokens += [(Token.Scrollbar, '>' if middle_row else ' ')]
+                    fragments += [('class:scrollbar', '>' if middle_row else ' ')]
 
                 # Newline.
-                tokens_for_line.append(tokens)
+                fragments_for_line.append(fragments)
 
         else:
-            tokens = []
+            fragments = []
 
         self._rendered_rows = height
         self._rendered_columns = visible_columns
@@ -358,7 +353,7 @@ class MultiColumnCompletionMenuControl(UIControl):
         self._render_width = column_width * visible_columns + render_left_arrow + render_right_arrow + 1
 
         def get_line(i):
-            return tokens_for_line[i]
+            return fragments_for_line[i]
 
         return UIContent(get_line=get_line, line_count=len(rows_))
 
@@ -368,16 +363,16 @@ class MultiColumnCompletionMenuControl(UIControl):
         """
         return max(get_cwidth(c.display) for c in complete_state.current_completions) + 1
 
-    def _get_menu_item_tokens(self, completion, is_current_completion, width):
+    def _get_menu_item_fragments(self, completion, is_current_completion, width):
         if is_current_completion:
-            token = self.token.Completion.Current
+            style_str = 'class:current-completion'
         else:
-            token = self.token.Completion
+            style_str = 'class:completion'
 
         text, tw = _trim_text(completion.display, width)
         padding = ' ' * (width - tw - 1)
 
-        return [(token, ' %s%s' % (text, padding))]
+        return [(style_str, ' %s%s' % (text, padding))]
 
     def mouse_handler(self, app, mouse_event):
         """
@@ -443,7 +438,8 @@ class MultiColumnCompletionsMenu(HSplit):
                 content=MultiColumnCompletionMenuControl(
                     min_rows=min_rows, suggested_max_column_width=suggested_max_column_width),
                 width=Dimension(min=8),
-                height=Dimension(min=1)),
+                height=Dimension(min=1),
+                style='class:completion-menu'),
             filter=full_filter)
 
         meta_window = ConditionalContainer(
@@ -459,7 +455,7 @@ class MultiColumnCompletionsMenu(HSplit):
 
 class _SelectedCompletionMetaControl(UIControl):
     """
-    Control that shows the meta information of the selected token.
+    Control that shows the meta information of the selected completion.
     """
     def preferred_width(self, app, max_available_width):
         """
@@ -479,18 +475,18 @@ class _SelectedCompletionMetaControl(UIControl):
         return 1
 
     def create_content(self, app, width, height):
-        tokens = self._get_tokens(app)
+        fragments = self._get_text_fragments(app)
 
         def get_line(i):
-            return tokens
+            return fragments
 
-        return UIContent(get_line=get_line, line_count=1 if tokens else 0)
+        return UIContent(get_line=get_line, line_count=1 if fragments else 0)
 
-    def _get_tokens(self, app):
-        token = Token.Menu.Completions.MultiColumnMeta
+    def _get_text_fragments(self, app):
+        style = 'class:completion-menu,multi-column-completion-meta'
         state = app.current_buffer.complete_state
 
         if state and state.current_completion and state.current_completion.display_meta:
-            return [(token, ' %s ' % state.current_completion.display_meta)]
+            return [(style, ' %s ' % state.current_completion.display_meta)]
 
         return []

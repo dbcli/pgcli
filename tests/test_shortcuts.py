@@ -1,50 +1,49 @@
 from prompt_toolkit.shortcuts.prompt import _split_multiline_prompt
-from prompt_toolkit.token import Token
 
 
 def test_split_multiline_prompt():
     # Test 1: no newlines:
-    tokens = [(Token, 'ab')]
+    tokens = [('class:testclass', 'ab')]
     has_before_tokens, before, first_input_line = _split_multiline_prompt(lambda cli: tokens)
     assert has_before_tokens(None) is False
     assert before(None) == []
     assert first_input_line(None) == [
-        (Token, 'a'),
-        (Token, 'b'),
+        ('class:testclass', 'a'),
+        ('class:testclass', 'b'),
     ]
 
     # Test 1: multiple lines.
-    tokens = [(Token, 'ab\ncd\nef')]
+    tokens = [('class:testclass', 'ab\ncd\nef')]
     has_before_tokens, before, first_input_line = _split_multiline_prompt(lambda cli: tokens)
     assert has_before_tokens(None) is True
     assert before(None) == [
-        (Token, 'a'),
-        (Token, 'b'),
-        (Token, '\n'),
-        (Token, 'c'),
-        (Token, 'd'),
+        ('class:testclass', 'a'),
+        ('class:testclass', 'b'),
+        ('class:testclass', '\n'),
+        ('class:testclass', 'c'),
+        ('class:testclass', 'd'),
     ]
     assert first_input_line(None) == [
-        (Token, 'e'),
-        (Token, 'f'),
+        ('class:testclass', 'e'),
+        ('class:testclass', 'f'),
     ]
 
     # Edge case 1: starting with a newline.
-    tokens = [(Token, '\nab')]
+    tokens = [('class:testclass', '\nab')]
     has_before_tokens, before, first_input_line = _split_multiline_prompt(lambda cli: tokens)
     assert has_before_tokens(None) is True
     assert before(None) == []
     assert first_input_line(None) == [
-        (Token, 'a'),
-        (Token, 'b')
+        ('class:testclass', 'a'),
+        ('class:testclass', 'b')
     ]
 
     # Edge case 2: starting with two newlines.
-    tokens = [(Token, '\n\nab')]
+    tokens = [('class:testclass', '\n\nab')]
     has_before_tokens, before, first_input_line = _split_multiline_prompt(lambda cli: tokens)
     assert has_before_tokens(None) is True
-    assert before(None) == [(Token, '\n')]
+    assert before(None) == [('class:testclass', '\n')]
     assert first_input_line(None) == [
-        (Token, 'a'),
-        (Token, 'b')
+        ('class:testclass', 'a'),
+        ('class:testclass', 'b')
     ]

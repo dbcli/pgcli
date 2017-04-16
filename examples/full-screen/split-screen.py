@@ -15,7 +15,6 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindi
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.token import Token
 
 
 # 1. Create an event loop
@@ -51,7 +50,7 @@ body = VSplit([
     # A vertical line in the middle. We explicitely specify the width, to make
     # sure that the layout engine will not try to divide the whole width by
     # three for all these windows.
-    Window(width=1, char='|', token=Token.Line),
+    Window(width=1, char='|', style='class:line'),
 
     # Display the Result buffer on the right.
     right_window,
@@ -66,8 +65,8 @@ body = VSplit([
 
 def get_titlebar_tokens(app):
     return [
-        (Token.Title, ' Hello world '),
-        (Token.Title, ' (Press [Ctrl-Q] to quit.)'),
+        ('class:title', ' Hello world '),
+        ('class:title', ' (Press [Ctrl-Q] to quit.)'),
     ]
 
 root_container = HSplit([
@@ -77,7 +76,7 @@ root_container = HSplit([
            align=Align.CENTER),
 
     # Horizontal separator.
-    Window(height=1, char='-', token=Token.Line),
+    Window(height=1, char='-', style='class:line'),
 
     # The 'body', like defined above.
     body,

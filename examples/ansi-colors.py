@@ -3,93 +3,53 @@
 Demonstration of all the ANSI colors.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.shortcuts import print_tokens
-from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.token import Token
+from prompt_toolkit.shortcuts import print_text_fragments
 
 
 def main():
-    style = style_from_dict({
-        Token.Title: 'underline',
-
-        Token.Black: '#ansiblack',
-        Token.White: '#ansiwhite',
-        Token.Red: '#ansired',
-        Token.Green: '#ansigreen',
-        Token.Yellow: '#ansiyellow',
-        Token.Blue: '#ansiblue',
-        Token.Fuchsia: '#ansifuchsia',
-        Token.Turquoise: '#ansiturquoise',
-        Token.LightGray: '#ansilightgray',
-
-        Token.DarkGray: '#ansidarkgray',
-        Token.DarkRed: '#ansidarkred',
-        Token.DarkGreen: '#ansidarkgreen',
-        Token.Brown: '#ansibrown',
-        Token.DarkBlue: '#ansidarkblue',
-        Token.Purple: '#ansipurple',
-        Token.Teal: '#ansiteal',
-
-        Token.BgBlack: 'bg:#ansiblack',
-        Token.BgWhite: 'bg:#ansiwhite',
-        Token.BgRed: 'bg:#ansired',
-        Token.BgGreen: 'bg:#ansigreen',
-        Token.BgYellow: 'bg:#ansiyellow',
-        Token.BgBlue: 'bg:#ansiblue',
-        Token.BgFuchsia: 'bg:#ansifuchsia',
-        Token.BgTurquoise: 'bg:#ansiturquoise',
-        Token.BgLightGray: 'bg:#ansilightgray',
-
-        Token.BgDarkGray: 'bg:#ansidarkgray',
-        Token.BgDarkRed: 'bg:#ansidarkred',
-        Token.BgDarkGreen: 'bg:#ansidarkgreen',
-        Token.BgBrown: 'bg:#ansibrown',
-        Token.BgDarkBlue: 'bg:#ansidarkblue',
-        Token.BgPurple: 'bg:#ansipurple',
-        Token.BgTeal: 'bg:#ansiteal',
-    })
+    nl = ('', '\n')
     tokens = [
-        (Token.Title, 'Foreground colors'), (Token, '\n'),
-        (Token.Black, '#ansiblack'), (Token, '\n'),
-        (Token.White, '#ansiwhite'), (Token, '\n'),
-        (Token.Red, '#ansired'), (Token, '\n'),
-        (Token.Green, '#ansigreen'), (Token, '\n'),
-        (Token.Yellow, '#ansiyellow'), (Token, '\n'),
-        (Token.Blue, '#ansiblue'), (Token, '\n'),
-        (Token.Fuchsia, '#ansifuchsia'), (Token, '\n'),
-        (Token.Turquoise, '#ansiturquoise'), (Token, '\n'),
-        (Token.LightGray, '#ansilightgray'), (Token, '\n'),
+        ('underline', 'Foreground colors'), nl,
+        ('#ansiblack', '#ansiblack'), nl,
+        ('#ansiwhite', '#ansiwhite'), nl,
+        ('#ansired', '#ansired'), nl,
+        ('#ansigreen', '#ansigreen'), nl,
+        ('#ansiyellow', '#ansiyellow'), nl,
+        ('#ansiblue', '#ansiblue'), nl,
+        ('#ansifuchsia', '#ansifuchsia'), nl,
+        ('#ansiturquoise', '#ansiturquoise'), nl,
+        ('#ansilightgray', '#ansilightgray'), nl,
 
-        (Token.DarkGray, '#ansidarkgray'), (Token, '\n'),
-        (Token.DarkRed, '#ansidarkred'), (Token, '\n'),
-        (Token.DarkGreen, '#ansidarkgreen'), (Token, '\n'),
-        (Token.Brown, '#ansibrown'), (Token, '\n'),
-        (Token.DarkBlue, '#ansidarkblue'), (Token, '\n'),
-        (Token.Purple, '#ansipurple'), (Token, '\n'),
-        (Token.Teal, '#ansiteal'), (Token, '\n'),
+        ('#ansidarkgray', '#ansidarkgray'), nl,
+        ('#ansidarkred', '#ansidarkred'), nl,
+        ('#ansidarkgreen', '#ansidarkgreen'), nl,
+        ('#ansibrown', '#ansibrown'), nl,
+        ('#ansidarkblue', '#ansidarkblue'), nl,
+        ('#ansipurple', '#ansipurple'), nl,
+        ('#ansiteal', '#ansiteal'), nl,
 
-        (Token.Title, 'Background colors'), (Token, '\n'),
-        (Token.BgBlack, '#ansiblack'), (Token, '\n'),
-        (Token.BgWhite, '#ansiwhite'), (Token, '\n'),
-        (Token.BgRed, '#ansired'), (Token, '\n'),
-        (Token.BgGreen, '#ansigreen'), (Token, '\n'),
-        (Token.BgYellow, '#ansiyellow'), (Token, '\n'),
-        (Token.BgBlue, '#ansiblue'), (Token, '\n'),
-        (Token.BgFuchsia, '#ansifuchsia'), (Token, '\n'),
-        (Token.BgTurquoise, '#ansiturquoise'), (Token, '\n'),
-        (Token.BgLightGray, '#ansilightgray'), (Token, '\n'),
+        ('underline', 'background colors'), nl,
+        ('bg:#ansiblack', '#ansiblack'), nl,
+        ('bg:#ansiwhite', '#ansiwhite'), nl,
+        ('bg:#ansired', '#ansired'), nl,
+        ('bg:#ansigreen', '#ansigreen'), nl,
+        ('bg:#ansiyellow', '#ansiyellow'), nl,
+        ('bg:#ansiblue', '#ansiblue'), nl,
+        ('bg:#ansifuchsia', '#ansifuchsia'), nl,
+        ('bg:#ansiturquoise', '#ansiturquoise'), nl,
+        ('bg:#ansilightgray', '#ansilightgray'), nl,
 
-        (Token.BgDarkGray, '#ansidarkgray'), (Token, '\n'),
-        (Token.BgDarkRed, '#ansidarkred'), (Token, '\n'),
-        (Token.BgDarkGreen, '#ansidarkgreen'), (Token, '\n'),
-        (Token.BgBrown, '#ansibrown'), (Token, '\n'),
-        (Token.BgDarkBlue, '#ansidarkblue'), (Token, '\n'),
-        (Token.BgPurple, '#ansipurple'), (Token, '\n'),
-        (Token.BgTeal, '#ansiteal'), (Token, '\n'),
+        ('bg:#ansidarkgray', '#ansidarkgray'), nl,
+        ('bg:#ansidarkred', '#ansidarkred'), nl,
+        ('bg:#ansidarkgreen', '#ansidarkgreen'), nl,
+        ('bg:#ansibrown', '#ansibrown'), nl,
+        ('bg:#ansidarkblue', '#ansidarkblue'), nl,
+        ('bg:#ansipurple', '#ansipurple'), nl,
+        ('bg:#ansiteal', '#ansiteal'), nl,
 
-        (Token, '\n'),
+        nl,
     ]
-    print_tokens(tokens, style=style)
+    print_text_fragments(tokens)
 
 
 if __name__ == '__main__':

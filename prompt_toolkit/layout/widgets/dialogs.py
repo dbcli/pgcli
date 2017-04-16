@@ -4,7 +4,6 @@ Collection of reusable components for building full screen applications.
 from __future__ import unicode_literals
 import six
 from prompt_toolkit.eventloop import EventLoop
-from prompt_toolkit.token import Token
 from .base import Box, Shadow, Frame
 from ..containers import VSplit, HSplit
 from ..dimension import Dimension as D
@@ -47,9 +46,9 @@ class Dialog(object):
                 body=Frame(
                     title=title,
                     body=frame_body,
-                    token=Token.Dialog.Body)),
+                    style='class:dialog-body')),
             padding=D(min=3),
-            token=Token.Dialog)
+            style='class:dialog')
 
     def __pt_container__(self):
         return self.container

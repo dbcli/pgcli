@@ -9,18 +9,17 @@ This is similar to RPROMPT is Zsh.
 from __future__ import unicode_literals
 
 from prompt_toolkit import prompt
-from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.token import Token
+from prompt_toolkit.styles import Style
 
-example_style = style_from_dict({
-    Token.RPrompt: 'bg:#ff0066 #ffffff',
+example_style = Style.from_dict({
+    'rprompt': 'bg:#ff0066 #ffffff',
 })
 
 
 def get_rprompt_tokens(app):
     return [
-        (Token, ' '),
-        (Token.RPrompt, '<rprompt>'),
+        ('', ' '),
+        ('class:rprompt', '<rprompt>'),
     ]
 
 

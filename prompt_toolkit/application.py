@@ -18,9 +18,9 @@ from .layout.layout import Layout
 from .layout.controls import BufferControl
 from .output import Output
 from .output.defaults import create_output
-from .renderer import Renderer, print_tokens
+from .renderer import Renderer, print_text_fragments
 from .search_state import SearchState
-from .styles import DEFAULT_STYLE, Style
+from .styles import BaseStyle, default_style
 from .utils import Event
 
 from subprocess import Popen
@@ -110,7 +110,7 @@ class Application(object):
         assert get_title is None or callable(get_title)
         assert isinstance(paste_mode, AppFilter)
         assert isinstance(editing_mode, six.string_types)
-        assert style is None or isinstance(style, Style)
+        assert style is None or isinstance(style, BaseStyle)
         assert isinstance(erase_when_done, bool)
 
         assert on_reset is None or callable(on_reset)
@@ -121,7 +121,7 @@ class Application(object):
         assert output is None or isinstance(output, Output)
         assert input is None or isinstance(input, Input)
 
-        self.style = style or DEFAULT_STYLE
+        self.style = style or default_style()
 
         if key_bindings is None:
             key_bindings = load_key_bindings()
@@ -771,15 +771,16 @@ class Application(object):
 
             self.run_in_terminal(run)
 
-    def print_tokens(self, tokens, style=None):
+    def print_text_fragments(self, text_fragments, style=None):
         """
-        Print a list of (Token, text) tuples to the output.
+        Print a list of (style_str, text) tuples to the output.
         (When the UI is running, this method has to be called through
         `run_in_terminal`, otherwise it will destroy the UI.)
 
+        :param text_fragments: List of ``(style_str, text)`` tuples.
         :param style: Style class to use. Defaults to the active style in the CLI.
         """
-        print_tokens(self.output, tokens, style or self.style)
+        print_text_fragments(self.output, text_fragments, style or self.style)
 
     @property
     def is_exiting(self):

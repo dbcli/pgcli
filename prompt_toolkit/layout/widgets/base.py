@@ -14,11 +14,10 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.eventloop import EventLoop, get_event_loop
 from prompt_toolkit.filters import to_app_filter
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from prompt_toolkit.token import Token
 from prompt_toolkit.utils import get_cwidth
 
 from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align
-from ..controls import BufferControl, TokenListControl
+from ..controls import BufferControl, TextFragmentsControl
 from ..dimension import Dimension as D
 from ..dimension import to_dimension
 from ..margins import ScrollbarMargin
@@ -76,6 +75,7 @@ class TextArea(object):
     :param password: When `True`, display using asteriks.
     :param accept_handler: Called when `Enter` is pressed.
     :param scrollbar: When `True`, display a scroll bar.
+    :param style: A style string.
     :param dont_extend_height:
     :param dont_extend_width:
     :param loop: The `EventLoop` to be used.
@@ -85,7 +85,7 @@ class TextArea(object):
                  focussable=True, wrap_lines=True,
                  width=None, height=None,
                  dont_extend_height=False, dont_extend_width=False,
-                 scrollbar=False, token=Token, loop=None, _label=False):
+                 scrollbar=False, style='', loop=None, _label=False):
         assert isinstance(text, six.text_type)
         assert loop is None or isinstance(loop, EventLoop)
 
@@ -118,8 +118,8 @@ class TextArea(object):
             margins = []
 
         if not _label:
-            # (In case of a Label, we don't want to apply the TextArea token.)
-            token = Token.TextArea | token
+            # (In case of a Label, we don't want to apply the text-area style.)
+            style = 'class:text-area ' + style
 
         self.window = Window(
             height=height,
@@ -127,7 +127,7 @@ class TextArea(object):
             dont_extend_height=dont_extend_height,
             dont_extend_width=dont_extend_width,
             content=self.control,
-            token=token,
+            style=style,
             wrap_lines=wrap_lines,
             right_margins=margins)
 
@@ -148,12 +148,12 @@ class Label(object):
     Widget that displays the given text. It is not editable or focussable.
 
     :param text: The text to be displayed. (This can be multiline.)
-    :param token: A `Token` to be used for the highlighting.
+    :param style: A style string.
     :param width: When given, use this width, rather than calculating it from
         the text size.
     :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, text, token=Token, width=None, loop=None,
+    def __init__(self, text, style='', width=None, loop=None,
                  dont_extend_height=True, dont_extend_width=False):
         assert isinstance(text, six.text_type)
         assert loop is None or isinstance(loop, EventLoop)
@@ -165,7 +165,7 @@ class Label(object):
         self.text_area = TextArea(
             text=text,
             width=width,
-            token=Token.Label | token,
+            style='class:label ' + style,
             focussable=False,
             dont_extend_height=dont_extend_height,
             dont_extend_width=dont_extend_width,
@@ -204,8 +204,8 @@ class Button(object):
         self.text = text
         self.handler = handler
         self.width = width
-        self.control = TokenListControl(
-            self._get_tokens,
+        self.control = TextFragmentsControl(
+            self._get_text_fragments,
             key_bindings=self._get_key_bindings(),
             focussable=True)
 
@@ -214,18 +214,17 @@ class Button(object):
             align=Align.CENTER,
             height=1,
             width=width,
-            token=Token.Button,
+            style='class:button',
             dont_extend_width=True,
             dont_extend_height=True)
 
-    def _get_tokens(self, app):
-        token = Token.Button
+    def _get_text_fragments(self, app):
         text = ('{:^%s}' % (self.width - 2)).format(self.text)
 
         return [
-            (token.Arrow, '<', self.handler),
-            (token.Text, text, self.handler),
-            (token.Arrow, '>', self.handler),
+            ('class:button,button-arrow', '<', self.handler),
+            ('class:button,button-text', text, self.handler),
+            ('class:button,button-arrow', '>', self.handler),
         ]
 
     def _get_key_bindings(self):
@@ -252,20 +251,20 @@ class Frame(object):
     :param title: Text to be displayed in the top of the frame.
     :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, body, title='', token=None, loop=None):
+    def __init__(self, body, title='', style='', loop=None):
         assert loop is None or isinstance(loop, EventLoop)
 
         loop = loop or get_event_loop()
 
-        fill = partial(Window, token=Token.Window.Border)
-        token = Token.Frame | (token or Token)
+        fill = partial(Window, style='class:frame-border')
+        style = 'class:frame ' + style
 
         if title:
             top_row = VSplit([
                 fill(width=1, height=1, char=BORDER.TOP_LEFT),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char='|'),
-                Label(' {} '.format(title), token=Token.Frame.Label, loop=loop,
+                Label(' {} '.format(title), style='class:frame-label', loop=loop,
                       dont_extend_width=True),
                 fill(width=1, height=1, char='|'),
                 fill(char=BORDER.HORIZONTAL),
@@ -290,7 +289,7 @@ class Frame(object):
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char=BORDER.BOTTOM_RIGHT),
             ]),
-        ], token=token)
+        ], style=style)
 
     def __pt_container__(self):
         return self.container
@@ -299,7 +298,7 @@ class Frame(object):
 class Shadow(object):
     """
     Draw a shadow underneath/behind this container.
-    (This applies `Token.Shadow` the the cells under the shadow. The Style
+    (This applies `class:shadow` the the cells under the shadow. The Style
     should define the colors for the shadow.)
 
     :param body: Another container object.
@@ -309,9 +308,9 @@ class Shadow(object):
             content=body,
             floats=[
                 Float(bottom=-1, height=1, left=1, right=-1,
-                      content=Window(token=Token.Shadow)),
+                      content=Window(style='class:shadow')),
                 Float(bottom=-1, top=1, width=1, right=-1,
-                      content=Window(token=Token.Shadow)),
+                      content=Window(style='class:shadow')),
                 ]
             )
 
@@ -333,7 +332,7 @@ class Box(object):
     :param padding: The margin to be used around the body. This can be
         overridden by `padding_left`, padding_right`, `padding_top` and
         `padding_bottom`.
-    :param token: Token to be applied to this widget.
+    :param style: A style string.
     :param char: Character to be used for filling the space around the body.
         (This is supposed to be a character with a terminal width of 1.)
     """
@@ -341,7 +340,7 @@ class Box(object):
                  padding_left=None, padding_right=None,
                  padding_top=None, padding_bottom=None,
                  width=None, height=None,
-                 token=None, char=None):
+                 style='', char=None):
         if padding is None:
             padding = D(preferred=0)
 
@@ -364,7 +363,7 @@ class Box(object):
                 Window(width=self.padding_right, char=char),
             ]),
             Window(height=self.padding_bottom, char=char),
-        ], width=width, height=height, token=token)
+        ], width=width, height=height, style=style)
 
     def __pt_container__(self):
         return self.container
@@ -385,8 +384,8 @@ class Checkbox(object):
         def _(event):
             self.checked = not self.checked
 
-        self.control = TokenListControl(
-            self._get_tokens,
+        self.control = TextFragmentsControl(
+            self._get_text_fragments,
             key_bindings=kb,
             focussable=True)
 
@@ -395,11 +394,11 @@ class Checkbox(object):
         self.container = VSplit([
             self.window,
             Label(loop=loop, text=' {}'.format(text))
-        ], token=Token.Checkbox)
+        ], style='class:checkbox')
 
-    def _get_tokens(self, app):
+    def _get_text_fragments(self, app):
         text = '*' if self.checked else ' '
-        return [(Token, '[%s]' % text)]
+        return [('', '[%s]' % text)]
 
     def __pt_container__(self):
         return self.container
@@ -443,45 +442,45 @@ class RadioList(object):
             self.current_value = self.values[self._selected_index][0]
 
         # Control and window.
-        self.control = TokenListControl(
-            self._get_tokens,
+        self.control = TextFragmentsControl(
+            self._get_text_fragments,
             key_bindings=kb,
             focussable=True)
 
         self.window = Window(
             content=self.control,
-            token=Token.RadioList,
+            style='class:radio-list',
             right_margins=[
                 ScrollbarMargin(display_arrows=True),
             ],
             dont_extend_height=True)
 
-    def _get_tokens(self, app):
+    def _get_text_fragments(self, app):
         result = []
         for i, value in enumerate(self.values):
             checked = (value[0] == self.current_value)
             selected = (i == self._selected_index)
 
-            token = Token
+            style = ''
             if checked:
-                token |= Token.Radio.Checked
+                style += ' class:radio-checked'
             if selected:
-                token |= Token.Radio.Selected
+                style += ' class:radio-selected'
 
-            result.append((token, '('))
+            result.append((style, '('))
 
             if selected:
-                result.append((Token.SetCursorPosition, ''))
+                result.append(('[SetCursorPosition]', ''))
 
             if checked:
-                result.append((token, '*'))
+                result.append((style, '*'))
             else:
-                result.append((token, ' '))
+                result.append((style, ' '))
 
-            result.append((token, ')'))
-            result.append((Token.Radio, ' '))
-            result.append((Token.Radio, value[1]))
-            result.append((Token, '\n'))
+            result.append((style, ')'))
+            result.append(('class:radio', ' '))
+            result.append(('class:radio', value[1]))
+            result.append(('', '\n'))
 
         return result
 
@@ -496,7 +495,7 @@ class VerticalLine(object):
     def __init__(self):
         self.window = Window(
             char=BORDER.VERTICAL,
-            token=Token.Line,
+            style='class:line,vertical-line',
             width=1)
 
     def __pt_container__(self):
@@ -510,7 +509,7 @@ class HorizontalLine(object):
     def __init__(self):
         self.window = Window(
             char=BORDER.HORIZONTAL,
-            token=Token.Line,
+            style='class:line,horizontal-line',
             height=1)
 
     def __pt_container__(self):
@@ -533,8 +532,8 @@ class ProgressBar(object):
                 Float(content=self.label, top=0, bottom=0),
 
                 Float(left=0, top=0, right=0, bottom=0, content=VSplit([
-                    Window(token=Token.ProgressBar.Used, get_width=lambda app: D(weight=int(self._percentage))),
-                    Window(token=Token.ProgressBar, get_width=lambda app: D(weight=int(100 - self._percentage))),
+                    Window(style='class:progress-bar,progressbar-used', get_width=lambda app: D(weight=int(self._percentage))),
+                    Window(style='class:progress-bar', get_width=lambda app: D(weight=int(100 - self._percentage))),
                 ])),
             ])
 

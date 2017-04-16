@@ -1,7 +1,7 @@
 """
 The base classes for the styling.
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 from six import with_metaclass
@@ -10,9 +10,10 @@ __all__ = (
     'Attrs',
     'DEFAULT_ATTRS',
     'ANSI_COLOR_NAMES',
-    'Style',
+    'BaseStyle',
     'DummyStyle',
     'DynamicStyle',
+    'merge_styles',
 )
 
 
@@ -49,14 +50,18 @@ ANSI_COLOR_NAMES = [
 ]
 
 
-class Style(with_metaclass(ABCMeta, object)):
+class BaseStyle(with_metaclass(ABCMeta, object)):
     """
     Abstract base class for prompt_toolkit styles.
     """
     @abstractmethod
-    def get_attrs_for_token(self, token):
+    def get_attrs_for_style_str(self, style_str, default=DEFAULT_ATTRS):
         """
-        Return :class:`.Attrs` for the given token.
+        Return :class:`.Attrs` for the given style string.
+
+        :param style_str: The style string. This can contain inline styling as
+            well as classnames (e.g. "class:title").
+        :param default: `Attrs` to be used if no styling was defined.
         """
 
     @abstractmethod
@@ -68,18 +73,18 @@ class Style(with_metaclass(ABCMeta, object)):
         """
 
 
-class DummyStyle(Style):
+class DummyStyle(BaseStyle):
     """
     A style that doesn't style anything.
     """
-    def get_attrs_for_token(self, token):
-        return DEFAULT_ATTRS
+    def get_attrs_for_style_str(self, style_str, default=DEFAULT_ATTRS):
+        return default
 
     def invalidation_hash(self):
         return 1  # Always the same value.
 
 
-class DynamicStyle(Style):
+class DynamicStyle(BaseStyle):
     """
     Style class that can dynamically returns an other Style.
 
@@ -87,12 +92,36 @@ class DynamicStyle(Style):
     """
     def __init__(self, get_style):
         self.get_style = get_style
+        self._dummy = DummyStyle()
 
-    def get_attrs_for_token(self, token):
-        style = self.get_style()
-        assert isinstance(style, Style)
+    def get_attrs_for_style_str(self, style_str, default=DEFAULT_ATTRS):
+        style = self.get_style() or self._dummy
 
-        return style.get_attrs_for_token(token)
+        assert isinstance(style, BaseStyle)
+        return style.get_attrs_for_style_str(style_str, default)
 
     def invalidation_hash(self):
-        return self.get_style().invalidation_hash()
+        return (self.get_style() or self._dummy).invalidation_hash()
+
+
+def merge_styles(styles):
+    """
+    Merge multiple `Style` objects.
+    """
+    return _MergedStyle(styles)
+
+
+class _MergedStyle(BaseStyle):
+    def __init__(self, styles):
+        self.styles = styles
+
+    def get_attrs_for_style_str(self, style_str, default=DEFAULT_ATTRS):
+        result = default
+
+        for s in self.styles:
+            result = s.get_attrs_for_style_str(style_str, result)
+
+        return result
+
+    def invalidation_hash(self):
+        return tuple(s.invalidation_hash() for s in self.styles)

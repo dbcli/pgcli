@@ -9,8 +9,7 @@ from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout import VSplit, HSplit, Layout
 from prompt_toolkit.layout.widgets import Button, Box, TextArea, Label, Frame
-from prompt_toolkit.styles.from_dict import style_from_dict
-from prompt_toolkit.token import Token
+from prompt_toolkit.styles import Style
 
 
 # Event handlers for all the buttons.
@@ -50,11 +49,11 @@ root_container = Box(
                     [button1, button2, button3, button4],
                     padding=1),
                 padding=1,
-                token=Token.LeftPane),
+                style='class:left-pane'),
             Box(
                 body=Frame(text_area),
                 padding=1,
-                token=Token.RightPane),
+                style='class:right-pane'),
         ]),
     ]),
 )
@@ -82,11 +81,11 @@ kb = merge_key_bindings([
 
 
 # Styling.
-style = style_from_dict({
-    Token.LeftPane: 'bg:#888800 #000000',
-    Token.RightPane: 'bg:#00aa00 #000000',
-    Token.Button: '#000000',
-    Token.Button.Arrow: '#000000',
+style = Style.from_dict({
+    'left-pane': 'bg:#888800 #000000',
+    'right-pane': 'bg:#00aa00 #000000',
+    'button': '#000000',
+    'button-arrow': '#000000',
 })
 
 
