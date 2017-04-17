@@ -450,7 +450,9 @@ class Application(object):
             	f.set_exception(EOFError)
             else:
                 # Automatically flush keys.
-                loop.run_in_executor(auto_flush_input)
+                # (_daemon needs to be set, otherwise, this will hang the
+                # application for .5 seconds before exiting.)
+                loop.run_in_executor(auto_flush_input, _daemon=True)
 
         def auto_flush_input():
             # Flush input after timeout.

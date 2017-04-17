@@ -148,7 +148,7 @@ class Win32EventLoop(EventLoop):
         if self._inputhook_context:
             self._inputhook_context.close()
 
-    def run_in_executor(self, callback):
+    def run_in_executor(self, callback, _daemon=False):
         """
         Run a long running function in a background thread.
         (This is recommended for code that could block the event loop.)
@@ -158,7 +158,10 @@ class Win32EventLoop(EventLoop):
         # executor. (Like in eventloop/posix.py, we start the executor using
         # `call_from_executor`.)
         def start_executor():
-            threading.Thread(target=callback).start()
+            t = threading.Thread(target=callback)
+            if _daemon:
+                t.daemon = True
+            t.start()
         self.call_from_executor(start_executor)
 
     def call_from_executor(self, callback, _max_postpone_until=None):

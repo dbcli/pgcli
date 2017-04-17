@@ -221,7 +221,7 @@ class PosixEventLoop(EventLoop):
         # Return the previous signal handler.
         return self._signal_handler_mappings.get(signum, previous)
 
-    def run_in_executor(self, callback):
+    def run_in_executor(self, callback, _daemon=False):
         """
         Run a long running function in a background thread.
         (This is recommended for code that could block the event loop.)
@@ -237,7 +237,10 @@ class PosixEventLoop(EventLoop):
         # It is mostly noticable when pasting large portions of text while
         # having real time autocompletion while typing on.
         def start_executor():
-            threading.Thread(target=callback).start()
+            t = threading.Thread(target=callback)
+            if _daemon:
+                t.daemon = True
+            t.start()
         self.call_from_executor(start_executor)
 
     def call_from_executor(self, callback, _max_postpone_until=None):

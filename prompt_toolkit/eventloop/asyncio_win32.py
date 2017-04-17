@@ -118,7 +118,7 @@ class Win32AsyncioEventLoop(EventLoop):
             self._input = None
             self._input_ready_cb = None
 
-    def run_in_executor(self, callback):
+    def run_in_executor(self, callback, _daemon=False):
         self.loop.run_in_executor(None, callback)
 
     def call_from_executor(self, callback, _max_postpone_until=None):

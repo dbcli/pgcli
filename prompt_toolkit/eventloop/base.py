@@ -69,7 +69,7 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def run_in_executor(self, callback):
+    def run_in_executor(self, callback, _daemon=False):
         """
         Run a long running function in a background thread. (This is
         recommended for code that could block the event loop.)
