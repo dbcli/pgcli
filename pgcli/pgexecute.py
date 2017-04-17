@@ -118,6 +118,18 @@ def register_hstore_typecaster(conn):
         except Exception:
             pass
 
+def register_enum_typecaster(conn):
+    """
+    Enums are custom datatypes defined by the user.
+    They can have unicode characters. So we need special type casters to handle
+    enums.
+    """
+    with conn.cursor() as cur:
+        try:
+            cur.execute("SELECT DISTINCT t.oid, t.typname from pg_type t JOIN pg_enum e ON t.oid=e.enumtypid")
+            map(lambda x: ext.register_type(ext.new_type((x[0],), str(x[1]), ext.UNICODE)), cur.fetchall())
+        except Exception:
+            pass
 
 class PGExecute(object):
 
@@ -209,6 +221,7 @@ class PGExecute(object):
         register_date_typecasters(conn)
         register_json_typecasters(self.conn, self._json_typecaster)
         register_hstore_typecaster(self.conn)
+        register_enum_typecaster(self.conn)
 
     def _select_one(self, cur, sql):
         """
