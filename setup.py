@@ -33,8 +33,8 @@ if platform.system() != 'Windows' and not platform.system().startswith("CYGWIN")
 
 setup(
         name='pgcli',
-        author='Amjith Ramanujam',
-        author_email='amjith.r+pgcli@gmail.com',
+        author='Pgcli Core Team',
+        author_email='i.chernyavska+pgcli@gmail.com',
         version=version,
         license='LICENSE.txt',
         url='http://pgcli.com',
