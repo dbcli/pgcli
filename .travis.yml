@@ -8,13 +8,18 @@ python:
 
 install: 
   - pip install . pytest mock codecov==1.5.1 behave pexpect==3.3
+  - pip install git+https://github.com/hayd/pep8radius.git
 
 script:
   - coverage run --source pgcli -m py.test
   - cd tests
   - behave
+  - cd ..
+  # check for pep8 errors, only looking at branch vs master. If there are errors, show diff and return an error code.
+  - pep8radius master --docformatter --error-status || ( pep8radius master --docformatter --diff; false )
 
 after_success:
+  - coverage combine
   - codecov
 
 notifications:

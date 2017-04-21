@@ -140,6 +140,7 @@ class PGCli(object):
             self.row_limit = c['main'].as_int('row_limit')
 
         self.min_num_menu_lines = c['main'].as_int('min_num_menu_lines')
+        self.multiline_continuation_char = c['main']['multiline_continuation_char']
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
@@ -359,6 +360,10 @@ class PGCli(object):
         :param document: Document
         :return: Document
         """
+        # FIXME: using application.pre_run_callables like this here is not the best solution.
+        # It's internal api of prompt_toolkit that may change. This was added to fix #668.
+        # We may find a better way to do it in the future.
+        saved_callables = cli.application.pre_run_callables
         while special.editor_command(document.text):
             filename = special.get_filename(document.text)
             sql, message = special.open_external_editor(filename,
@@ -367,8 +372,10 @@ class PGCli(object):
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
             cli.current_buffer.document = Document(sql, cursor_position=len(sql))
-            document = cli.run(False)
+            cli.application.pre_run_callables = []
+            document = cli.run()
             continue
+        cli.application.pre_run_callables = saved_callables
         return document
 
     def execute_command(self, text, query):
@@ -451,7 +458,7 @@ class PGCli(object):
 
         try:
             while True:
-                document = self.cli.run(True)
+                document = self.cli.run()
 
                 # The reason we check here instead of inside the pgexecute is
                 # because we want to raise the Exit exception which will be
@@ -510,7 +517,8 @@ class PGCli(object):
             return [(Token.Prompt, prompt)]
 
         def get_continuation_tokens(cli, width):
-            return [(Token.Continuation, '.' * (width - 1) + ' ')]
+            continuation=self.multiline_continuation_char * (width - 1) + ' '
+            return [(Token.Continuation, continuation)]
 
         get_toolbar_tokens = create_toolbar_tokens_func(
             lambda: self.vi_mode, self.completion_refresher.is_refreshing,
@@ -731,8 +739,8 @@ class PGCli(object):
         help='Host address of the postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
         'postgres instance is listening.', envvar='PGPORT')
-@click.option('-U', '--user', envvar='PGUSER', help='User name to '
-        'connect to the postgres database.')
+@click.option('-U', '--username', 'username_opt', envvar='PGUSER',
+        help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
         help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
@@ -747,7 +755,7 @@ class PGCli(object):
         envvar='PGCLIRC', help='Location of pgclirc file.')
 @click.option('-D', '--dsn', default='', envvar='DSN',
         help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
-@click.option('-R', '--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
+@click.option('--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
         help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.option('--less-chatty', 'less_chatty', is_flag=True,
         default=False,
@@ -755,7 +763,7 @@ class PGCli(object):
 @click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
-def cli(database, user, host, port, prompt_passwd, never_prompt,
+def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
     single_connection, dbname, username, version, pgclirc, dsn, row_limit,
     less_chatty, prompt):
 
@@ -785,7 +793,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt,
 
     # Choose which ever one has a valid value.
     database = database or dbname
-    user = username or user
+    user = username or username_opt
 
     if dsn is not '':
         try:

@@ -6,6 +6,18 @@ Features:
 * Suggest objects from all schemas (not just those in search_path) (Thanks: `Joakim Koljonen`_)
 * Casing for column headers (Thanks: `Joakim Koljonen`_)
 
+=======
+* Allow configurable character to be used for multi-line query continuations. (Thanks: `Owen Stephens`_)
+
+Bug fixes:
+----------
+* Fixed external editor bug (issue #668). (Thanks: `Irina Truong`_).
+* Standardize command line option names. (Thanks: `Russell Davies`_)
+
+Internal changes:
+-----------------
+* Run pep8 checks in travis (Thanks: `Irina Truong`_).
+
 1.5.1
 =====
 
@@ -660,3 +672,5 @@ Improvements:
 .. _`Sergii`: https://github.com/foxyterkel 
 .. _`Emanuele Gaifas`: https://github.com/lelit
 .. _`tk`: https://github.com/kanet77
+.. _`Owen Stephens`: https://github.com/owst
+.. _`Russell Davies`: https://github.com/russelldavies
