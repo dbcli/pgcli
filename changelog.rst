@@ -4,6 +4,9 @@ Upcoming
 Features:
 ---------
 * Suggest objects from all schemas (not just those in search_path) (Thanks: `Joakim Koljonen`_)
+* Casing for column headers (Thanks: `Joakim Koljonen`_)
+
+=======
 * Allow configurable character to be used for multi-line query continuations. (Thanks: `Owen Stephens`_)
 
 Bug fixes:

@@ -1,7 +1,7 @@
 import pytest
 import psycopg2
 import psycopg2.extras
-from pgcli.main import format_output
+from pgcli.main import format_output, OutputSettings
 from pgcli.pgexecute import register_json_typecasters
 
 # TODO: should this be somehow be divined from environment?
@@ -64,10 +64,10 @@ def run(executor, sql, join=False, expanded=False, pgspecial=None,
 
     results = executor.run(sql, pgspecial, exception_formatter)
     formatted = []
-
+    settings = OutputSettings(table_format='psql', dcmlfmt='d', floatfmt='g',
+                expanded=expanded)
     for title, rows, headers, status, sql, success in results:
-        formatted.extend(format_output(title, rows, headers, status, 'psql', dcmlfmt='d', floatfmt='g',
-                                       expanded=expanded))
+        formatted.extend(format_output(title, rows, headers, status, settings))
     if join:
         formatted = '\n'.join(formatted)
 
