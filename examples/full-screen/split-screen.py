@@ -13,7 +13,7 @@ from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align
-from prompt_toolkit.layout.controls import BufferControl, TokenListControl
+from prompt_toolkit.layout.controls import BufferControl, TextFragmentsControl
 from prompt_toolkit.layout.layout import Layout
 
 
@@ -72,7 +72,7 @@ def get_titlebar_tokens(app):
 root_container = HSplit([
     # The titlebar.
     Window(height=1,
-           content=TokenListControl(get_titlebar_tokens),
+           content=TextFragmentsControl(get_titlebar_tokens),
            align=Align.CENTER),
 
     # Horizontal separator.

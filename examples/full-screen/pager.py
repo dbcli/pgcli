@@ -10,13 +10,12 @@ from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import HSplit, Window
-from prompt_toolkit.layout.controls import BufferControl, TokenListControl
+from prompt_toolkit.layout.controls import BufferControl, TextFragmentsControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.margins import ScrollbarMargin, NumberredMargin
-from prompt_toolkit.styles.pygments import PygmentsStyle
-from prompt_toolkit.token import Token
+from prompt_toolkit.styles import Style
 
 from pygments.lexers import PythonLexer
 
@@ -33,29 +32,29 @@ with open('./pager.py', 'rb') as f:
 
 def get_statusbar_tokens(app):
     return [
-        (Token.Status, './pager.py - '),
-        (Token.Status.Position, '{}:{}'.format(
+        ('class:status', './pager.py - '),
+        ('class:status.position', '{}:{}'.format(
             default_buffer.document.cursor_position_row + 1,
             default_buffer.document.cursor_position_col + 1)),
-        (Token.Status, ' - Press Ctrl-C to exit. ')
+        ('class:status', ' - Press Ctrl-C to exit. ')
     ]
 
 
-buffer_control = BufferControl(buffer=default_buffer, lexer=PygmentsLexer(PythonLexer))
+buffer_window = Window(
+    content=BufferControl(buffer=default_buffer, lexer=PygmentsLexer(PythonLexer)),
+    left_margins=[NumberredMargin()],
+    right_margins=[ScrollbarMargin()])
 
 
 root_container = HSplit([
     # The top toolbar.
-    Window(content=TokenListControl(
+    Window(content=TextFragmentsControl(
         get_statusbar_tokens),
         height=D.exact(1),
-        token=Token.Status),
+        style='class:status'),
 
     # The main content.
-    Window(
-        content=buffer_control,
-        left_margins=[NumberredMargin()],
-        right_margins=[ScrollbarMargin()]),
+    buffer_window,
 
     #SearchToolbar(),
 ])
@@ -71,9 +70,9 @@ def _(event):
     event.app.set_return_value(None)
 
 
-style = PygmentsStyle.from_defaults({
-    Token.Status: 'bg:#444444 #ffffff',
-    Token.Status.Position: '#aaaa44',
+style = Style.from_dict({
+    'status': 'bg:#444444 #ffffff',
+    'status.position': '#aaaa44',
 })
 
 # create application.
@@ -81,7 +80,7 @@ application = Application(
     loop=loop,
     layout=Layout(
         root_container,
-        focussed_control=buffer_control,
+        focussed_window=buffer_window,
     ),
     key_bindings=merge_key_bindings([
         load_key_bindings(enable_search=True, enable_extra_page_navigation=True),
