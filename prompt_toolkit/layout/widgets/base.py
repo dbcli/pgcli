@@ -283,7 +283,9 @@ class Frame(object):
                 fill(width=1, char=BORDER.VERTICAL),
                 body,
                 fill(width=1, char=BORDER.VERTICAL),
-            ]),
+                    # Padding is required to make sure that if the content is
+                    # too small, that the right frame border is still aligned.
+            ], padding=D(preferred=0)),
             VSplit([
                 fill(width=1, height=1, char=BORDER.BOTTOM_LEFT),
                 fill(char=BORDER.HORIZONTAL),
