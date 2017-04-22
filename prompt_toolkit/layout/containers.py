@@ -342,7 +342,15 @@ class VSplit(Container):
         if self.height is not None:
             return to_dimension(self.height)
 
-        sizes = self._divide_widths(app, width, preferred=True)
+        # At the point where we want to calculate the heights, the widths have
+        # already been decided. So we can trust `width` to be the actual
+        # `width` that's going to be used for the rendering. So,
+        # `divide_widths` is supposed to use all of the available width.
+        # Using only the `preferred` width caused a bug where the reported
+        # height was more than required. (we had a `BufferControl` which did
+        # wrap lines because of the smaller width returned by `_divide_widths`.
+
+        sizes = self._divide_widths(app, width)
         children = self._all_children
 
         if sizes is None:
@@ -382,7 +390,7 @@ class VSplit(Container):
 
         return self._children_cache.get(tuple(self.children), get)
 
-    def _divide_widths(self, app, width, preferred=False):
+    def _divide_widths(self, app, width):
         """
         Return the widths for all columns.
         Or None when there is not enough space.
@@ -423,14 +431,13 @@ class VSplit(Container):
             i = next(child_generator)
 
         # Increase until we use all the available space.
-        if not preferred:
-            max_dimensions = [d.max for d in dimensions]
-            max_stop = min(width, sum_dimensions.max)
+        max_dimensions = [d.max for d in dimensions]
+        max_stop = min(width, sum_dimensions.max)
 
-            while sum(sizes) < max_stop:
-                if sizes[i] < max_dimensions[i]:
-                    sizes[i] += 1
-                i = next(child_generator)
+        while sum(sizes) < max_stop:
+            if sizes[i] < max_dimensions[i]:
+                sizes[i] += 1
+            i = next(child_generator)
 
         return sizes
 
