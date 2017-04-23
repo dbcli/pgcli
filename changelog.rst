@@ -5,6 +5,7 @@ Features:
 ---------
 * Suggest objects from all schemas (not just those in search_path) (Thanks: `Joakim Koljonen`_)
 * Allow configurable character to be used for multi-line query continuations. (Thanks: `Owen Stephens`_)
+* Completions after ORDER BY and DISTINCT now take account of table aliases. (Thanks: `Owen Stephens`_)
 
 Bug fixes:
 ----------
