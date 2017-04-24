@@ -145,6 +145,7 @@ class HSplit(Container):
         self.style = style
 
         self._children_cache = SimpleCache(maxsize=1)
+        self._remaining_space_window = Window()  # Dummy window.
 
     def preferred_width(self, app, max_available_width):
         if self.width is not None:
@@ -223,6 +224,17 @@ class HSplit(Container):
                 c.write_to_screen(app, screen, mouse_handlers,
                                   WritePosition(xpos, ypos, width, s), style)
                 ypos += s
+
+            # Fill in the remaining space. This happens when a child control
+            # refuses to take more space and we don't have any padding. Adding a
+            # dummy child control for this (in `self._all_children`) is not
+            # desired, because in some situations, it would take more space, even
+            # when it's not required. This is required to apply the styling.
+            remaining_height = write_position.ypos + write_position.height - ypos
+            if remaining_height > 0:
+                self._remaining_space_window.write_to_screen(
+                    app, screen, mouse_handlers,
+                    WritePosition(xpos, ypos, width, remaining_height), style)
 
     def _divide_heigths(self, app, write_position):
         """
@@ -328,6 +340,7 @@ class VSplit(Container):
         self.style = style
 
         self._children_cache = SimpleCache(maxsize=1)
+        self._remaining_space_window = Window()  # Dummy window.
 
     def preferred_width(self, app, max_available_width):
         if self.width is not None:
@@ -481,6 +494,17 @@ class VSplit(Container):
             c.write_to_screen(app, screen, mouse_handlers,
                               WritePosition(xpos, ypos, s, height), style)
             xpos += s
+
+        # Fill in the remaining space. This happens when a child control
+        # refuses to take more space and we don't have any padding. Adding a
+        # dummy child control for this (in `self._all_children`) is not
+        # desired, because in some situations, it would take more space, even
+        # when it's not required. This is required to apply the styling.
+        remaining_width = write_position.xpos + write_position.width - xpos
+        if remaining_width > 0:
+            self._remaining_space_window.write_to_screen(
+                app, screen, mouse_handlers,
+                WritePosition(xpos, ypos, remaining_width, height), style)
 
     def walk(self):
         """ Walk through children. """
