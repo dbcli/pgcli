@@ -147,3 +147,10 @@ def explode_text_fragments(fragments):
             result.append((style, c))
 
     return _ExplodedList(result)
+
+
+# Deprecated aliases.
+explode_tokens = explode_text_fragments
+token_list_len = fragment_list_len
+token_list_to_text = fragment_list_to_text
+token_list_width = fragment_list_width

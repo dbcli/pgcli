@@ -284,3 +284,7 @@ class ValidationToolbar(ConditionalContainer):
                 ValidationToolbarControl(show_position=show_position),
                 height=Dimension.exact(1)),
             filter=has_validation_error & ~is_done)
+
+
+# Deprecated aliases.
+TokenListToolbar = TextFragmentsToolbar

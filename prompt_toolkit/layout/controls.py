@@ -738,3 +738,7 @@ class BufferControl(UIControl):
 
         yield self.buffer.on_completions_changed
         yield self.buffer.on_suggestion_set
+
+
+# Deprecated aliases.
+TokenListControl = TextFragmentsControl
