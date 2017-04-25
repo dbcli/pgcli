@@ -253,7 +253,7 @@ def suggest_special(text):
         schema = None
 
     if cmd[1:] == 'd':
-        # \d can descibe tables or views
+        # \d can describe tables or views
         if schema:
             return (Table(schema=schema),
                     View(schema=schema),)
