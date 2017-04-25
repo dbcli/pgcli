@@ -120,6 +120,7 @@
         "SESSION",
         "SET",
         "SHARE",
+        "SHOW",
         "SIZE",
         "SMALLINT",
         "START",

@@ -8,6 +8,7 @@ Features:
 * Allow configurable character to be used for multi-line query continuations. (Thanks: `Owen Stephens`_)
 * Completions after ORDER BY and DISTINCT now take account of table aliases. (Thanks: `Owen Stephens`_)
 * Complete ``ALTER SYSTEM`` keywords (Thanks: `Étienne BERSAC`_)
+* Add ``SHOW`` keyword (Thanks: `Étienne BERSAC`_)
 
 Bug fixes:
 ----------
