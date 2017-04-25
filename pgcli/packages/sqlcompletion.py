@@ -226,6 +226,14 @@ def _split_multiple_statements(full_text, text_before_cursor, parsed):
     return full_text, text_before_cursor, statement
 
 
+SPECIALS_SUGGESTION = {
+    'dT': Datatype,
+    'df': Function,
+    'dt': Table,
+    'dv': View,
+    'sf': Function,
+}
+
 def suggest_special(text):
     text = text.lstrip()
     cmd, _, arg = parse_special_command(text)
@@ -261,12 +269,8 @@ def suggest_special(text):
             return (Schema(),
                     Table(schema=None),
                     View(schema=None),)
-    elif cmd[1:] in ('dt', 'dv', 'df', 'dT'):
-        rel_type = {'dt': Table,
-                    'dv': View,
-                    'df': Function,
-                    'dT': Datatype,
-                    }[cmd[1:]]
+    elif cmd[1:] in SPECIALS_SUGGESTION:
+        rel_type = SPECIALS_SUGGESTION[cmd[1:]]
         if schema:
             return (rel_type(schema=schema),)
         else:
