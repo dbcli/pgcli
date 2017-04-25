@@ -13,3 +13,8 @@ def expect_exact(context, expected, timeout):
         raise Exception('Expected:\n---\n{0!r}\n---\n\nActual:\n---\n{1!r}\n---'.format(
             expected,
             actual))
+
+
+def expect_pager(context, expected, timeout):
+    expect_exact(context, "{0}\r\n{1}{0}\r\n".format(
+        context.conf['pager_boundary'], expected), timeout=timeout)

@@ -34,8 +34,13 @@ def before_all(context):
         'vi': vi,
         'cli_command': context.config.userdata.get('pg_cli_command', None) or
                        sys.executable +
-                       ' -c "import coverage; coverage.process_startup(); import pgcli.main; pgcli.main.cli()"'
+        ' -c "import coverage; coverage.process_startup(); import pgcli.main; pgcli.main.cli()"',
+        'pager_boundary': '---boundary---',
     }
+    os.environ['PAGER'] = "{0} {1} {2}".format(
+        sys.executable, "tests/features/wrappager.py",
+        context.conf['pager_boundary']
+    )
 
     # Store old env vars.
     context.pgenv = {
