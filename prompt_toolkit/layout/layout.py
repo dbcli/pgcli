@@ -2,8 +2,10 @@
 Wrapper for the layout.
 """
 from __future__ import unicode_literals
-from .controls import UIControl
+from .controls import UIControl, BufferControl
 from .containers import Window, to_container, to_window
+from prompt_toolkit.buffer import Buffer
+import six
 
 __all__ = (
     'Layout',
@@ -65,6 +67,10 @@ class Layout(object):
         Check whether the given control has the focus.
         :param value: `UIControl` or `Window` instance.
         """
+        if isinstance(value, six.text_type):
+            return self.current_buffer.name == value
+        if isinstance(value, Buffer):
+            return self.current_buffer == value
         if isinstance(value, UIControl):
             return self.current_control == value
         else:
@@ -102,6 +108,15 @@ class Layout(object):
         " Set the `Window` object to be currently focussed. "
         assert isinstance(value, Window)
         self._stack.append(value)
+
+    @property
+    def current_buffer(self):
+        """
+        The currently focussed :class:`~.Buffer` or `None`.
+        """
+        ui_control = self.current_control
+        if isinstance(ui_control, BufferControl):
+            return ui_control.buffer
 
     @property
     def previous_control(self):

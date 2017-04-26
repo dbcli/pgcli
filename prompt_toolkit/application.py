@@ -213,11 +213,7 @@ class Application(object):
         has the focus. In this case, it's really not practical to check for
         `None` values or catch exceptions every time.)
         """
-        ui_control = self.layout.current_control
-        if isinstance(ui_control, BufferControl):
-            return ui_control.buffer
-        else:
-            return Buffer(loop=self.loop)  # Dummy buffer.
+        return self.layout.current_buffer or Buffer(loop=self.loop)  # Dummy buffer.
 
     @property
     def current_search_state(self):

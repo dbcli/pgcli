@@ -46,7 +46,7 @@ def has_focus(value):
     """
     from prompt_toolkit.buffer import Buffer
     from prompt_toolkit.layout.controls import UIControl
-    assert isinstance(value, (six.text_type, Buffer, UIControl)), value
+    from prompt_toolkit.layout.containers import to_window
 
     if isinstance(value, six.text_type):
         def test(app):
@@ -57,6 +57,10 @@ def has_focus(value):
     elif isinstance(value, UIControl):
         def test(app):
             return app.layout.current_control == value
+    else:
+        value = to_window(value)
+        def test(app):
+            return app.layout.current_window == value
 
     @Condition
     def has_focus_filter(app):
