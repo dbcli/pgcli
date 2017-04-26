@@ -149,6 +149,14 @@ class TextArea(object):
     def text(self, value):
         self.buffer.document = Document(value, 0)
 
+    @property
+    def document(self):
+        return self.buffer.document
+
+    @document.setter
+    def document(self, value):
+        self.buffer.document = value
+
     def __pt_container__(self):
         return self.window
 
