@@ -72,7 +72,7 @@ def main():
         key_bindings=all_bindings,
         style=style,
         mouse_support=True,
-        use_alternate_screen=True)
+        full_screen=True)
 
     application.run()
 

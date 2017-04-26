@@ -52,7 +52,7 @@ class Application(object):
     :param clipboard: :class:`~prompt_toolkit.clipboard.base.Clipboard` to use.
     :param on_abort: What to do when Control-C is pressed.
     :param on_exit: What to do when Control-D is pressed.
-    :param use_alternate_screen: When True, run the application on the alternate screen buffer.
+    :param full_screen: When True, run the application on the alternate screen buffer.
     :param get_title: Callable that returns the current title to be displayed in the terminal.
     :param erase_when_done: (bool) Clear the application output when it finishes.
     :param reverse_vi_search_direction: Normally, in Vi mode, a '/' searches
@@ -86,7 +86,7 @@ class Application(object):
     def __init__(self, layout=None,
                  style=None,
                  key_bindings=None, clipboard=None,
-                 use_alternate_screen=False, mouse_support=False,
+                 full_screen=False, mouse_support=False,
                  get_title=None,
 
                  paste_mode=False,
@@ -106,7 +106,7 @@ class Application(object):
         assert isinstance(layout, Layout)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert clipboard is None or isinstance(clipboard, Clipboard)
-        assert isinstance(use_alternate_screen, bool)
+        assert isinstance(full_screen, bool)
         assert get_title is None or callable(get_title)
         assert isinstance(paste_mode, AppFilter)
         assert isinstance(editing_mode, six.string_types)
@@ -132,7 +132,7 @@ class Application(object):
         self.layout = layout
         self.key_bindings = key_bindings
         self.clipboard = clipboard or InMemoryClipboard()
-        self.use_alternate_screen = use_alternate_screen
+        self.full_screen = full_screen
         self.mouse_support = mouse_support
         self.get_title = get_title
 
@@ -175,7 +175,7 @@ class Application(object):
         self.renderer = Renderer(
             self.style,
             self.output,
-            use_alternate_screen=use_alternate_screen,
+            full_screen=full_screen,
             mouse_support=mouse_support)
 
         #: Render counter. This one is increased every time the UI is rendered.

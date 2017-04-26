@@ -94,7 +94,7 @@ application = Application(
 
     # Using an alternate screen buffer means as much as: "run full screen".
     # It switches the terminal to an alternate screen.
-    use_alternate_screen=True)
+    full_screen=True)
 
 
 def run():

@@ -191,6 +191,7 @@ Changes:
 ****
 - `run_sub_applications` returns a future instead of taking a callback.
 
+- `use_alternate_screen` has been renamed to `full_screen`.
 
 
 - Deprecated 

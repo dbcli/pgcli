@@ -194,7 +194,7 @@ def _create_app(dialog, style):
         ]),
         mouse_support=True,
         style=style,
-        use_alternate_screen=True)
+        full_screen=True)
 
 
 def _return_none(app):

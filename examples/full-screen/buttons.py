@@ -96,7 +96,7 @@ application = Application(
     layout=layout,
     key_bindings=kb,
     style=style,
-    use_alternate_screen=True)
+    full_screen=True)
 
 
 def main():

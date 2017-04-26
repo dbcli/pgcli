@@ -234,13 +234,13 @@ class Renderer(object):
         r = Renderer(style, output)
         r.render(app, layout=...)
     """
-    def __init__(self, style, output, use_alternate_screen=False, mouse_support=False):
+    def __init__(self, style, output, full_screen=False, mouse_support=False):
         assert isinstance(style, BaseStyle)
         assert isinstance(output, Output)
 
         self.style = style
         self.output = output
-        self.use_alternate_screen = use_alternate_screen
+        self.full_screen = full_screen
         self.mouse_support = to_app_filter(mouse_support)
 
         self._in_alternate_screen = False
@@ -317,7 +317,7 @@ class Renderer(object):
         is known. (It's often nicer to draw bottom toolbars only if the height
         is known, in order to avoid flickering when the CPR response arrives.)
         """
-        return self.use_alternate_screen or self._min_available_height > 0 or \
+        return self.full_screen or self._min_available_height > 0 or \
             is_windows()  # On Windows, we don't have to wait for a CPR.
 
     @property
@@ -349,7 +349,7 @@ class Renderer(object):
         if is_windows():
             self._min_available_height = self.output.get_rows_below_cursor_position()
         else:
-            if self.use_alternate_screen:
+            if self.full_screen:
                 self._min_available_height = self.output.get_size().rows
             else:
                 # Asks for a cursor position report (CPR).
@@ -382,7 +382,7 @@ class Renderer(object):
         output.start_rendering()
 
         # Enter alternate screen.
-        if self.use_alternate_screen and not self._in_alternate_screen:
+        if self.full_screen and not self._in_alternate_screen:
             self._in_alternate_screen = True
             output.enter_alternate_screen()
 
@@ -433,7 +433,7 @@ class Renderer(object):
             xpos=0,
             ypos=0,
             width=size.columns,
-            height=(size.rows if self.use_alternate_screen else height),
+            height=(size.rows if self.full_screen else height),
             extended_height=size.rows,
         ), parent_style='')
 
