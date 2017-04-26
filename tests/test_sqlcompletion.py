@@ -4,23 +4,24 @@ from pgcli.packages.sqlcompletion import (
 from pgcli.packages.parseutils.tables import TableReference
 import pytest
 
-def cols_etc(table, schema=None, alias=None, is_function=False, parent=None):
+def cols_etc(table, schema=None, alias=None, is_function=False, parent=None,
+             last_keyword=None):
     """Returns the expected select-clause suggestions for a single-table
     select."""
     return set([
         Column(table_refs=(TableReference(schema, table, alias, is_function),),
                qualifiable=True),
         Function(schema=parent),
-        Keyword()])
+        Keyword(last_keyword)])
 
 def test_select_suggests_cols_with_visible_table_scope():
     suggestions = suggest_type('SELECT  FROM tabl', 'SELECT ')
-    assert set(suggestions) == cols_etc('tabl')
+    assert set(suggestions) == cols_etc('tabl', last_keyword='SELECT')
 
 
 def test_select_suggests_cols_with_qualified_table_scope():
     suggestions = suggest_type('SELECT  FROM sch.tabl', 'SELECT ')
-    assert set(suggestions) == cols_etc('tabl', 'sch')
+    assert set(suggestions) == cols_etc('tabl', 'sch', last_keyword='SELECT')
 
 
 def test_cte_does_not_crash():
@@ -34,7 +35,7 @@ def test_cte_does_not_crash():
 ])
 def test_where_suggests_columns_functions_quoted_table(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == cols_etc('tabl', alias='"tabl"')
+    assert set(suggestions) == cols_etc('tabl', alias='"tabl"', last_keyword='WHERE')
 
 
 @pytest.mark.parametrize('expression', [
@@ -53,7 +54,7 @@ def test_where_suggests_columns_functions_quoted_table(expression):
 ])
 def test_where_suggests_columns_functions(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == cols_etc('tabl')
+    assert set(suggestions) == cols_etc('tabl', last_keyword='WHERE')
 
 
 @pytest.mark.parametrize('expression', [
@@ -62,7 +63,7 @@ def test_where_suggests_columns_functions(expression):
 ])
 def test_where_in_suggests_columns(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == cols_etc('tabl')
+    assert set(suggestions) == cols_etc('tabl', last_keyword='WHERE')
 
 @pytest.mark.parametrize('expression', [
     'SELECT 1 AS ',
@@ -76,7 +77,7 @@ def test_after_as(expression):
 def test_where_equals_any_suggests_columns_or_keywords():
     text = 'SELECT * FROM tabl WHERE foo = ANY('
     suggestions = suggest_type(text, text)
-    assert set(suggestions) == cols_etc('tabl')
+    assert set(suggestions) == cols_etc('tabl', last_keyword='WHERE')
 
 
 def test_lparen_suggests_cols():
@@ -90,7 +91,7 @@ def test_select_suggests_cols_and_funcs():
     assert set(suggestions) == set([
          Column(table_refs=(), qualifiable=True),
          Function(schema=None),
-         Keyword(),
+         Keyword('SELECT'),
     ])
 
 
@@ -217,21 +218,24 @@ def test_distinct_suggests_cols(text):
     assert set(suggestions) == set([
         Column(table_refs=(), local_tables=(), qualifiable=True),
         Function(schema=None),
-        Keyword()
+        Keyword('DISTINCT')
     ])
 
 
-@pytest.mark.parametrize('text, text_before', [
+@pytest.mark.parametrize('text, text_before, last_keyword', [
     (
         'SELECT DISTINCT FROM tbl x JOIN tbl1 y',
-        'SELECT DISTINCT'
+        'SELECT DISTINCT',
+        'SELECT',
     ),
     (
         'SELECT * FROM tbl x JOIN tbl1 y ORDER BY ',
-        'SELECT * FROM tbl x JOIN tbl1 y ORDER BY '
+        'SELECT * FROM tbl x JOIN tbl1 y ORDER BY ',
+        'BY',
     )
 ])
-def test_distinct_and_order_by_suggestions_with_aliases(text, text_before):
+def test_distinct_and_order_by_suggestions_with_aliases(text, text_before,
+                                                        last_keyword):
     suggestions = suggest_type(text, text_before)
     assert set(suggestions) == set([
         Column(
@@ -243,7 +247,7 @@ def test_distinct_and_order_by_suggestions_with_aliases(text, text_before):
             qualifiable=True
         ),
         Function(schema=None),
-        Keyword()
+        Keyword(last_keyword)
     ])
 
 
@@ -275,7 +279,7 @@ def test_col_comma_suggests_cols():
     assert set(suggestions) == set([
         Column(table_refs=((None, 'tbl', None, False),), qualifiable=True),
         Function(schema=None),
-        Keyword(),
+        Keyword('SELECT'),
     ])
 
 
@@ -318,7 +322,7 @@ def test_insert_into_lparen_comma_suggests_cols():
 def test_partially_typed_col_name_suggests_col_names():
     suggestions = suggest_type('SELECT * FROM tabl WHERE col_n',
             'SELECT * FROM tabl WHERE col_n')
-    assert set(suggestions) == cols_etc('tabl')
+    assert set(suggestions) == cols_etc('tabl', last_keyword='WHERE')
 
 
 def test_dot_suggests_cols_of_a_table_or_schema_qualified_table():
@@ -435,7 +439,7 @@ def test_sub_select_col_name_completion():
     assert set(suggestions) == set([
         Column(table_refs=((None, 'abc', None, False),), qualifiable=True),
         Function(schema=None),
-        Keyword(),
+        Keyword('SELECT'),
     ])
 
 
@@ -599,7 +603,7 @@ def test_2_statements_2nd_current():
     assert set(suggestions) == set([
         Column(table_refs=((None, 'b', None, False),), qualifiable=True),
         Function(schema=None),
-        Keyword()
+        Keyword('SELECT')
     ])
 
     # Should work even if first statement is invalid
@@ -621,7 +625,7 @@ def test_2_statements_1st_current():
 
     suggestions = suggest_type('select  from a; select * from b',
                                'select ')
-    assert set(suggestions) == cols_etc('a')
+    assert set(suggestions) == cols_etc('a', last_keyword='SELECT')
 
 
 def test_3_statements_2nd_current():
@@ -634,7 +638,7 @@ def test_3_statements_2nd_current():
 
     suggestions = suggest_type('select * from a; select  from b; select * from c',
                                'select * from a; select ')
-    assert set(suggestions) == cols_etc('b')
+    assert set(suggestions) == cols_etc('b', last_keyword='SELECT')
 
 @pytest.mark.parametrize('text', [
 '''
@@ -685,7 +689,7 @@ def test_statements_in_function_body(text):
     assert set(suggestions) == set([
         Column(table_refs=((None, 'foo', None, False),), qualifiable=True),
         Function(schema=None),
-        Keyword()
+        Keyword('SELECT'),
     ])
 
 functions = [
@@ -709,12 +713,12 @@ SELECT 1 FROM foo;
 @pytest.mark.parametrize('text', functions)
 def test_statements_with_cursor_after_function_body(text):
     suggestions = suggest_type(text, text[:text.find('; ') + 1])
-    assert set(suggestions) == set([Keyword()])
+    assert set(suggestions) == set([Keyword(), Special()])
 
 @pytest.mark.parametrize('text', functions)
 def test_statements_with_cursor_before_function_body(text):
     suggestions = suggest_type(text, '')
-    assert set(suggestions) == set([Keyword()])
+    assert set(suggestions) == set([Keyword(), Special()])
 
 def test_create_db_with_template():
     suggestions = suggest_type('create database foo with template ',
@@ -828,16 +832,16 @@ def test_invalid_sql():
 def test_suggest_where_keyword(text):
     # https://github.com/dbcli/mycli/issues/135
     suggestions = suggest_type(text, text)
-    assert set(suggestions) == cols_etc('foo')
+    assert set(suggestions) == cols_etc('foo', last_keyword='WHERE')
 
 
 @pytest.mark.parametrize('text, before, expected', [
     ('\\ns abc SELECT ', 'SELECT ', [
         Column(table_refs=(), qualifiable=True),
         Function(schema=None),
-        Keyword()
+        Keyword('SELECT')
     ]),
-    ('\\ns abc SELECT foo ', 'SELECT foo ',(Keyword(),)),
+    ('\\ns abc SELECT foo ', 'SELECT foo ', (Keyword(),)),
     ('\\ns abc SELECT t1. FROM tabl1 t1', 'SELECT t1.', [
         Table(schema='t1'),
         View(schema='t1'),
@@ -853,7 +857,7 @@ def test_named_query_completion(text, before, expected):
 def test_select_suggests_fields_from_function():
     suggestions = suggest_type('SELECT  FROM func()', 'SELECT ')
     assert set(suggestions) == cols_etc(
-        'func', is_function=True)
+        'func', is_function=True, last_keyword='SELECT')
 
 
 @pytest.mark.parametrize('sql', [
@@ -900,4 +904,4 @@ def test_handle_unrecognized_kw_generously():
     'ALTER TABLE foo ALTER ',
 ])
 def test_keyword_after_alter(sql):
-    assert Keyword() in set(suggest_type(sql, sql))
+    assert Keyword('ALTER') in set(suggest_type(sql, sql))

@@ -7,6 +7,7 @@ Features:
 * Casing for column headers (Thanks: `Joakim Koljonen`_)
 * Allow configurable character to be used for multi-line query continuations. (Thanks: `Owen Stephens`_)
 * Completions after ORDER BY and DISTINCT now take account of table aliases. (Thanks: `Owen Stephens`_)
+* Narrow keyword candidates based on previous keyword. (Thanks: `Étienne Bersac`_)
 
 Bug fixes:
 ----------
@@ -675,3 +676,4 @@ Improvements:
 .. _`Owen Stephens`: https://github.com/owst
 .. _`Russell Davies`: https://github.com/russelldavies
 .. _`Dick Marinus`: https://github.com/meeuw
+.. _`Étienne Bersac`: https://github.com/bersace
