@@ -21,7 +21,7 @@ from ..controls import BufferControl, TextFragmentsControl
 from ..dimension import Dimension as D
 from ..dimension import to_dimension
 from ..margins import ScrollbarMargin
-from ..processors import PasswordProcessor, ConditionalProcessor
+from ..processors import PasswordProcessor, ConditionalProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, merge_processors
 
 
 __all__ = (
@@ -85,11 +85,15 @@ class TextArea(object):
                  focussable=True, wrap_lines=True,
                  width=None, height=None,
                  dont_extend_height=False, dont_extend_width=False,
-                 scrollbar=False, style='', loop=None, _label=False):
+                 scrollbar=False, style='', input_processor=None,
+                 prompt='', loop=None, _label=False):
         assert isinstance(text, six.text_type)
         assert loop is None or isinstance(loop, EventLoop)
 
         loop = loop or get_event_loop()
+
+        def get_prompt_text_fragments(app):
+            return [('class:text-area.prompt', prompt)]
 
         self.buffer = Buffer(
             loop=loop,
@@ -102,10 +106,16 @@ class TextArea(object):
         self.control = BufferControl(
             buffer=self.buffer,
             lexer=lexer,
-            input_processor=ConditionalProcessor(
-                processor=PasswordProcessor(),
-                filter=to_app_filter(password)
-            ),
+            input_processor=merge_processors([
+                ConditionalProcessor(
+                    processor=PasswordProcessor(),
+                    filter=to_app_filter(password)
+                ),
+                HighlightSearchProcessor(),
+                HighlightSelectionProcessor(),
+                DisplayMultipleCursors(),
+                BeforeInput(get_text_fragments=get_prompt_text_fragments),
+            ]),
             focussable=focussable)
 
         if multiline:

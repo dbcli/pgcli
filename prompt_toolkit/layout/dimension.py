@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 __all__ = (
     'Dimension',
+    'D',
     'sum_layout_dimensions',
     'max_layout_dimensions',
     'to_dimension',
@@ -136,6 +137,8 @@ def to_dimension(value):
 
     raise ValueError('Not an integer or Dimension object.')
 
+# Common alias.
+D = Dimension
 
 # For backward-compatibility.
 LayoutDimension = Dimension
