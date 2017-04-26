@@ -36,6 +36,22 @@ def _colorformat(text):
 _EMPTY_ATTRS = Attrs(color=None, bgcolor=None, bold=None, underline=None,
                      italic=None, blink=None, reverse=None)
 
+
+def _expand_classname(classname):
+    """
+    Split a single class name at the `.` operator, and build a list of classes.
+
+    E.g. 'a.b.c' becomes ['a', 'a.b', 'a.b.c']
+    """
+    result = []
+    parts = classname.split('.')
+
+    for i in range(1, len(parts) + 1):
+        result.append('.'.join(parts[:i]).lower())
+
+    return result
+
+
 def _parse_style_str(style_str, style=None):
     """
     Take a style string, e.g.  'bg:red #88ff00 class:title'
@@ -83,8 +99,10 @@ def _parse_style_str(style_str, style=None):
             pass
 
         # Inclusion of class names.
+        # E.g.  'class:name1,name2.subclass,name3'
         elif part.startswith('class:'):
-            class_names.extend(part[6:].lower().split(','))
+            for name in part[6:].lower().split(','):
+                class_names.extend(_expand_classname(name))
 
         # Ignore pieces in between square brackets. This is internal stuff.
         # Like '[transparant]' or '[set-cursor-position]'.
@@ -96,6 +114,9 @@ def _parse_style_str(style_str, style=None):
             attrs = attrs._replace(bgcolor=_colorformat(part[3:]))
         else:
             attrs = attrs._replace(color=_colorformat(part))
+
+    # Make sure to sort the class names. (The order doesn't matter.)
+    class_names = list(sorted(class_names))
 
     return attrs, class_names
 
@@ -128,6 +149,7 @@ class Style(BaseStyle):
         # Rules that are defined later get priority.
         for class_names, style_str in style_rules:
             # The order of the class names doesn't matter.
+            # (But the order of rules does matter.)
             class_names = tuple(sorted(class_names.lower().split()))
 
             attrs, class_names_2 = _parse_style_str(style_str, style=None)

@@ -46,6 +46,12 @@ def test_class_combinations_1():
     expected = Attrs(color='ff0000', bgcolor='', bold=False,
                      underline=False, italic=False, blink=False, reverse=False)
     assert style.get_attrs_for_style_str('class:a class:b') == expected
+    assert style.get_attrs_for_style_str('class:a,b') == expected
+    assert style.get_attrs_for_style_str('class:a,b,c') == expected
+
+    # Changing the order shouldn't matter.
+    assert style.get_attrs_for_style_str('class:b class:a') == expected
+    assert style.get_attrs_for_style_str('class:b,a') == expected
 
 
 def test_class_combinations_2():
@@ -59,3 +65,39 @@ def test_class_combinations_2():
     expected = Attrs(color='0000ff', bgcolor='', bold=False,
                      underline=False, italic=False, blink=False, reverse=False)
     assert style.get_attrs_for_style_str('class:a class:b') == expected
+    assert style.get_attrs_for_style_str('class:a,b') == expected
+    assert style.get_attrs_for_style_str('class:a,b,c') == expected
+
+    # Changing the order shouldn't matter.
+    assert style.get_attrs_for_style_str('class:b class:a') == expected
+    assert style.get_attrs_for_style_str('class:b,a') == expected
+
+
+def test_substyles():
+    style = Style.from_dict(OrderedDict([
+        ('a.b', '#ff0000 bold'),
+        ('a', '#0000ff'),  # This should override the color specified in 'a.b'.
+        ('b', '#00ff00'),  # This doesn't override 'b.c'. (Mentionned before.)
+        ('b.c', '#0000ff italic'),
+    ]))
+
+    # Starting with a.*
+    expected = Attrs(color='0000ff', bgcolor='', bold=False,
+                     underline=False, italic=False, blink=False, reverse=False)
+    assert style.get_attrs_for_style_str('class:a') == expected
+
+    expected = Attrs(color='0000ff', bgcolor='', bold=True,
+                     underline=False, italic=False, blink=False, reverse=False)
+    assert style.get_attrs_for_style_str('class:a.b') == expected
+    assert style.get_attrs_for_style_str('class:a.b.c') == expected
+
+    # Starting with b.*
+    expected = Attrs(color='00ff00', bgcolor='', bold=False,
+                     underline=False, italic=False, blink=False, reverse=False)
+    assert style.get_attrs_for_style_str('class:b') == expected
+    assert style.get_attrs_for_style_str('class:b.a') == expected
+
+    expected = Attrs(color='0000ff', bgcolor='', bold=False,
+                     underline=False, italic=True, blink=False, reverse=False)
+    assert style.get_attrs_for_style_str('class:b.c') == expected
+    assert style.get_attrs_for_style_str('class:b.c.d') == expected

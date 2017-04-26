@@ -158,11 +158,7 @@ class _TokenCache(dict):
     def __missing__(self, key):
         parts = ('pygments',) + key
 
-        classnames = []
-        for i in range(1, len(parts) + 1):
-            classnames.append('.'.join(parts[:i]).lower())
-
-        result = 'class:' + ','.join(classnames)
+        result = ('class:' + '.'.join(parts)).lower()
         self[key] = result
         return result
 
