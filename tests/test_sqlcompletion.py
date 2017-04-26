@@ -4,8 +4,9 @@ from pgcli.packages.sqlcompletion import (
 from pgcli.packages.parseutils.tables import TableReference
 import pytest
 
-# Returns the expected select-clause suggestions for a single-table select
 def cols_etc(table, schema=None, alias=None, is_function=False, parent=None):
+    """Returns the expected select-clause suggestions for a single-table
+    select."""
     return set([
         Column(table_refs=(TableReference(schema, table, alias, is_function),),
                qualifiable=True),
@@ -213,8 +214,61 @@ def test_truncate_suggests_qualified_tables():
 ])
 def test_distinct_suggests_cols(text):
     suggestions = suggest_type(text, text)
-    assert suggestions ==(Column(table_refs=(), qualifiable=True),)
+    assert set(suggestions) == set([
+        Column(table_refs=(), local_tables=(), qualifiable=True),
+        Function(schema=None),
+        Keyword()
+    ])
 
+
+@pytest.mark.parametrize('text, text_before', [
+    (
+        'SELECT DISTINCT FROM tbl x JOIN tbl1 y',
+        'SELECT DISTINCT'
+    ),
+    (
+        'SELECT * FROM tbl x JOIN tbl1 y ORDER BY ',
+        'SELECT * FROM tbl x JOIN tbl1 y ORDER BY '
+    )
+])
+def test_distinct_and_order_by_suggestions_with_aliases(text, text_before):
+    suggestions = suggest_type(text, text_before)
+    assert set(suggestions) == set([
+        Column(
+            table_refs=(
+                TableReference(None, 'tbl', 'x', False),
+                TableReference(None, 'tbl1', 'y', False),
+            ),
+            local_tables=(),
+            qualifiable=True
+        ),
+        Function(schema=None),
+        Keyword()
+    ])
+
+
+@pytest.mark.parametrize('text, text_before', [
+    (
+        'SELECT DISTINCT x. FROM tbl x JOIN tbl1 y',
+        'SELECT DISTINCT x.'
+    ),
+    (
+        'SELECT * FROM tbl x JOIN tbl1 y ORDER BY x.',
+        'SELECT * FROM tbl x JOIN tbl1 y ORDER BY x.'
+    )
+])
+def test_distinct_and_order_by_suggestions_with_alias_given(text, text_before):
+    suggestions = suggest_type(text, text_before)
+    assert set(suggestions) == set([
+        Column(
+            table_refs=(TableReference(None, 'tbl', 'x', False),),
+            local_tables=(),
+            qualifiable=False
+        ),
+        Table(schema='x'),
+        View(schema='x'),
+        Function(schema='x'),
+    ])
 
 def test_col_comma_suggests_cols():
     suggestions = suggest_type('SELECT a, b, FROM tbl', 'SELECT a, b,')

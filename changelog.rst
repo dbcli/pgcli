@@ -8,6 +8,7 @@ Features:
 
 =======
 * Allow configurable character to be used for multi-line query continuations. (Thanks: `Owen Stephens`_)
+* Completions after ORDER BY and DISTINCT now take account of table aliases. (Thanks: `Owen Stephens`_)
 
 Bug fixes:
 ----------
