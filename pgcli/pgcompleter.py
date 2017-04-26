@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 import logging
 import re
-from itertools import count, repeat
+from itertools import count, repeat, chain
 import operator
 from collections import namedtuple, defaultdict
 from pgspecial.namedqueries import NamedQueries
@@ -51,7 +51,8 @@ def generate_alias(tbl):
         [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and l != '_'])
 
 class PGCompleter(Completer):
-    keywords = get_literals('keywords')
+    keywords_tree = get_literals('keywords', type_=dict)
+    keywords = tuple(chain(keywords_tree.keys(), *keywords_tree.values()))
     functions = get_literals('functions')
     datatypes = get_literals('datatypes')
 
