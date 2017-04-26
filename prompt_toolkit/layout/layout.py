@@ -60,6 +60,17 @@ class Layout(object):
             value = to_window(value)
             self.current_window = value
 
+    def has_focus(self, value):
+        """
+        Check whether the given control has the focus.
+        :param value: `UIControl` or `Window` instance.
+        """
+        if isinstance(value, UIControl):
+            return self.current_control == value
+        else:
+            value = to_window(value)
+            return self.current_window == value
+
     @property
     def current_control(self):
         """
