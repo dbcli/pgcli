@@ -15,7 +15,7 @@ from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.margins import ScrollbarMargin, NumberredMargin
-from prompt_toolkit.styles import Style
+from prompt_toolkit.styles import Style, merge_styles, default_style
 
 from pygments.lexers import PythonLexer
 
@@ -70,10 +70,13 @@ def _(event):
     event.app.set_return_value(None)
 
 
-style = Style.from_dict({
-    'status': 'bg:#444444 #ffffff',
-    'status.position': '#aaaa44',
-})
+style = merge_styles([
+    default_style(),
+    Style.from_dict({
+        'status': 'bg:#444444 #ffffff',
+        'status.position': '#aaaa44',
+    })
+])
 
 # create application.
 application = Application(

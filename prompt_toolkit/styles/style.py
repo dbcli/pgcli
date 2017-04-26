@@ -3,6 +3,7 @@ Tool for creating styles from a dictionary.
 """
 from __future__ import unicode_literals, absolute_import
 import itertools
+import re
 from .base import BaseStyle, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
 
 __all__ = (
@@ -121,6 +122,9 @@ def _parse_style_str(style_str, style=None):
     return attrs, class_names
 
 
+CLASS_NAMES_RE = re.compile(r'^[a-z0-9.\s-]*$')  # This one can't contain a comma!
+
+
 class Style(BaseStyle):
     """
     Create a ``Style`` instance from a list of style rules.
@@ -148,6 +152,8 @@ class Style(BaseStyle):
         # Loop through the rules in the order they were defined.
         # Rules that are defined later get priority.
         for class_names, style_str in style_rules:
+            assert CLASS_NAMES_RE.match(class_names), repr(class_names)
+
             # The order of the class names doesn't matter.
             # (But the order of rules does matter.)
             class_names = tuple(sorted(class_names.lower().split()))

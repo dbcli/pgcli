@@ -41,7 +41,7 @@ class SystemToolbarControl(BufferControl):
 
         super(SystemToolbarControl, self).__init__(
             buffer=self.system_buffer,
-            lexer=SimpleLexer(style='class:system-toolbar-text'),
+            lexer=SimpleLexer(style='class:system-toolbar.text'),
             input_processor=BeforeInput.static('Shell command: ', 'class:system-toolbar'))
 
         self._global_bindings = self._build_global_key_bindings()
@@ -139,7 +139,7 @@ class ArgToolbarControl(TextFragmentsControl):
 
             return [
                 ('class:arg-toolbar', 'Repeat: '),
-                ('class:arg-toolbar,arg-toolbar-text', arg),
+                ('class:arg-toolbar.text', arg),
             ]
 
         super(ArgToolbarControl, self).__init__(get_text_fragments)
@@ -175,7 +175,7 @@ class SearchToolbarControl(BufferControl):
             buffer=search_buffer,
             input_processor=BeforeInput(get_before_input),
             lexer=SimpleLexer(
-                style='class:search-toolbar,search-toolbar-text'))
+                style='class:search-toolbar.text'))
 
 
 class SearchToolbar(ConditionalContainer):
@@ -218,7 +218,7 @@ class CompletionsToolbarControl(UIControl):
                         cut_right = True
                         break
 
-                fragments.append(('class:current-completion' if i == index
+                fragments.append(('class:completion,current-completion' if i == index
                                else 'class:completion', c.display))
                 fragments.append(('', ' '))
 
@@ -229,11 +229,11 @@ class CompletionsToolbarControl(UIControl):
             # Return fragments
             all_fragments = [
                 ('', ' '),
-                ('class:arrow', '<' if cut_left else ' '),
+                ('class:completions-toolbar.arrow', '<' if cut_left else ' '),
                 ('', ' '),
             ] + fragments + [
                 ('', ' '),
-                ('class:arrow', '>' if cut_right else ' '),
+                ('class:completions-toolbar.arrow', '>' if cut_right else ' '),
                 ('', ' '),
             ]
         else:

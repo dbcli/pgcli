@@ -13,8 +13,8 @@ __all__ = (
 #: Default styling. Mapping from classnames to their style definition.
 PROMPT_TOOLKIT_STYLE = [
     # Highlighting of search matches in document.
-    ('searchmatch',                             'noinherit reverse'),
-    ('searchmatch.current',                     'noinherit #ffffff bg:#448844 underline'),
+    ('search-match',                             'noinherit reverse'),
+    ('search-match.current',                     'noinherit #ffffff bg:#448844 underline'),
 
     # Highlighting of select text in document.
     ('selected',                                'reverse'),
@@ -44,15 +44,15 @@ PROMPT_TOOLKIT_STYLE = [
 
     # Search toolbar.
     ('search-toolbar',                          'bold'),
-    ('search-toolbar search-toolbar-text',      'nobold'),
+    ('search-toolbar.text',                     'nobold'),
 
     # System toolbar
     ('system-toolbar',                          'bold'),
-    ('system-toolbar,system-toolbar-text',      'nobold'),
+    ('system-toolbar.text',                     'nobold'),
 
     # "arg" toolbar.
     ('arg-toolbar',                             'bold'),
-    ('arg-toolbar,arg-toolbar-text',            'nobold'),
+    ('arg-toolbar.text',                        'nobold'),
 
     # Validation toolbar.
     ('validation-toolbar',                      'bg:#550000 #ffffff'),
@@ -60,9 +60,9 @@ PROMPT_TOOLKIT_STYLE = [
 
     # Completions toolbar.
     ('completions-toolbar',                     'bg:#bbbbbb #000000'),
-    ('completions-toolbar,arrow',               'bg:#bbbbbb #000000 bold'),
-    ('completions-toolbar,completion',          'bg:#bbbbbb #000000'),
-    ('completions-toolbar,current-completion',  'bg:#444444 #ffffff'),
+    ('completions-toolbar.arrow',               'bg:#bbbbbb #000000 bold'),
+    ('completions-toolbar completion',          'bg:#bbbbbb #000000'),
+    ('completions-toolbar current-completion',  'bg:#444444 #ffffff'),
 
     # Completions menu.
     ('completion-menu',                         'bg:#bbbbbb #000000'),
@@ -74,11 +74,11 @@ PROMPT_TOOLKIT_STYLE = [
     ('completion-menu multi-column-completion-meta', 'bg:#aaaaaa #000000'),
 
     # Scrollbars.
-    ('scrollbar scrollbar-background',          ''),
-    ('scrollbar scrollbar-button',              'bg:#888888'),
-    ('scrollbar scrollbar-start',               'underline #ffffff'),
-    ('scrollbar scrollbar-end',                 'underline #000000'),
-    ('scrollbar scrollbar-arrow',               'noinherit bold'),
+    ('scrollbar.background',                     ''),
+    ('scrollbar.button',                         'bg:#888888'),
+    ('scrollbar.start',                          'underline #ffffff'),
+    ('scrollbar.end',                            'underline #000000'),
+    ('scrollbar.arrow',                          'noinherit bold'),
 
     # Auto suggestion text.
     ('auto-suggestion',                         '#666666'),
@@ -98,29 +98,30 @@ PROMPT_TOOLKIT_STYLE = [
 WIDGETS_STYLE = [
     # Dialog windows.
     ('dialog',                                  'bg:#4444ff'),
-    ('dialog dialog-body',                      'bg:#ffffff #000000'),
-    ('dialog frame label',                      '#ff0000 bold'),
-    ('dialog-body textarea',                    'bg:#cccccc'),
-    ('dialog-body textarea last-line',          'underline'),
+    ('dialog.body',                             'bg:#ffffff #000000'),
+    ('dialog.body text-area',                    'bg:#cccccc'),
+    ('dialog.body text-area last-line',          'underline'),
+
+    ('dialog frame-label',                      '#ff0000 bold'),
 
     # Scrollbars in dialogs.
-    ('dialog-body scrollbar-background',        ''),
-    ('dialog-body scrollbar-button',            'bg:#000000'),
-    ('dialog-body scrollbar-arrow',             ''),
-    ('dialog-body scrollbar-start',             'nounderline'),
-    ('dialog-body scrollbar-end',               'nounderline'),
+    ('dialog.body scrollbar.background',        ''),
+    ('dialog.body scrollbar.button',            'bg:#000000'),
+    ('dialog.body scrollbar.arrow',             ''),
+    ('dialog.body scrollbar.start',             'nounderline'),
+    ('dialog.body scrollbar.end',               'nounderline'),
 
     # Buttons.
     ('button',                                  ''),
-    ('button-arrow',                            'bold'),
+    ('button.arrow',                            'bold'),
     ('button focussed',                         'bg:#880000 #ffffff'),
 
     # Shadows.
     ('dialog shadow',                           'bg:#000088'),
-    ('dialog-body shadow',                      'bg:#aaaaaa'),
+    ('dialog.body shadow',                      'bg:#aaaaaa'),
 
-    ('progressbar',                             'bg:#000088'),
-    ('progressbar-used',                        'bg:#ff0000'),
+    ('progress-bar',                             'bg:#000088'),
+    ('progress-bar.used',                        'bg:#ff0000'),
 ]
 
 

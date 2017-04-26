@@ -81,12 +81,14 @@ kb = merge_key_bindings([
 
 
 # Styling.
-style = Style.from_dict({
-    'left-pane': 'bg:#888800 #000000',
-    'right-pane': 'bg:#00aa00 #000000',
-    'button': '#000000',
-    'button-arrow': '#000000',
-})
+style = Style([
+    ('left-pane', 'bg:#888800 #000000'),
+    ('right-pane',      'bg:#00aa00 #000000'),
+    ('button',          '#000000'),
+    ('button-arrow',    '#000000'),
+    ('button focussed', 'bg:#ff0000'),
+    ('text-area focussed', 'bg:#ff0000'),
+])
 
 
 # Build a main application object.

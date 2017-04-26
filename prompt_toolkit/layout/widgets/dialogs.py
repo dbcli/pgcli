@@ -46,7 +46,7 @@ class Dialog(object):
                 body=Frame(
                     title=title,
                     body=frame_body,
-                    style='class:dialog-body')),
+                    style='class:dialog.body')),
             padding=D(min=3),
             style='class:dialog')
 

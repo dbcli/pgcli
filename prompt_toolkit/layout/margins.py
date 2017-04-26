@@ -179,10 +179,10 @@ class ScrollbarMargin(Margin):
                 ])
 
             # Scrollbar body.
-            scrollbar_background = 'class:scrollbar,scrollbar-background'
-            scrollbar_background_start = 'class:scrollbar,scrollbar-background,scrollbar-background-start'
-            scrollbar_button = 'class:scrollbar,scrollbar-button'
-            scrollbar_button_end = 'class:scrollbar,scrollbar-button,scrollbar-button-end'
+            scrollbar_background = 'class:scrollbar.background'
+            scrollbar_background_start = 'class:scrollbar.background,scrollbar.start'
+            scrollbar_button = 'class:scrollbar.button'
+            scrollbar_button_end = 'class:scrollbar.button,scrollbar.end'
 
             for i in range(window_height):
                 if is_scroll_button(i):
@@ -201,7 +201,7 @@ class ScrollbarMargin(Margin):
 
             # Down arrow
             if display_arrows:
-                result.append(('class:scrollbar,scrollbar-arrow', 'v'))
+                result.append(('class:scrollbar.arrow', 'v'))
 
             return result
 

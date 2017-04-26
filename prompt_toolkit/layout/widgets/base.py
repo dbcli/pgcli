@@ -222,9 +222,9 @@ class Button(object):
         text = ('{:^%s}' % (self.width - 2)).format(self.text)
 
         return [
-            ('class:button,button-arrow', '<', self.handler),
-            ('class:button,button-text', text, self.handler),
-            ('class:button,button-arrow', '>', self.handler),
+            ('class:button.arrow', '<', self.handler),
+            ('class:button.text', text, self.handler),
+            ('class:button.arrow', '>', self.handler),
         ]
 
     def _get_key_bindings(self):
@@ -534,7 +534,7 @@ class ProgressBar(object):
                 Float(content=self.label, top=0, bottom=0),
 
                 Float(left=0, top=0, right=0, bottom=0, content=VSplit([
-                    Window(style='class:progress-bar,progressbar-used', get_width=lambda app: D(weight=int(self._percentage))),
+                    Window(style='class:progress-bar.used', get_width=lambda app: D(weight=int(self._percentage))),
                     Window(style='class:progress-bar', get_width=lambda app: D(weight=int(100 - self._percentage))),
                 ])),
             ])

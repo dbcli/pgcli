@@ -144,8 +144,8 @@ class HighlightSearchProcessor(Processor):
         app, buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
 
         search_text = self._get_search_text(app, buffer_control)
-        searchmatch_current_fragment = ' class:search.match.current '
-        searchmatch_fragment = ' class:search.match '
+        searchmatch_current_fragment = ' class:search-match.current '
+        searchmatch_fragment = ' class:search-match '
 
         if search_text and not app.is_done:
             # For each search match, replace the style string.
@@ -700,13 +700,13 @@ class ReverseSearchProcessor(Processor):
                 direction_text = 'reverse-i-search'
 
             fragments_before = [
-                ('prompt.search', '('),
-                ('prompt.search', direction_text),
-                ('prompt.search', ')`'),
+                ('class:prompt.search', '('),
+                ('class:prompt.search', direction_text),
+                ('class:prompt.search', ')`'),
             ]
 
             fragments = fragments_before + [
-                ('prompt.search.text', fragment_list_to_text(ti.fragments)),
+                ('class:prompt.search.text', fragment_list_to_text(ti.fragments)),
                 ('', "': "),
             ] + line_fragments
 
