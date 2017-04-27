@@ -11,12 +11,14 @@ install:
   - pip install git+https://github.com/hayd/pep8radius.git
 
 script:
+  - set -e
   - coverage run --source pgcli -m py.test
   - cd tests
   - behave
   - cd ..
   # check for pep8 errors, only looking at branch vs master. If there are errors, show diff and return an error code.
   - pep8radius master --docformatter --error-status || ( pep8radius master --docformatter --diff; false )
+  - set +e
 
 after_success:
   - coverage combine
