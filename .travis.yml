@@ -12,7 +12,6 @@ install:
 
 script:
   - set -e
-  - sh -c "exit 1"
   - coverage run --source pgcli -m py.test
   - cd tests
   - behave
