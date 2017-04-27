@@ -4,6 +4,7 @@ from pgcli.packages.sqlcompletion import (
 from pgcli.packages.parseutils.tables import TableReference
 import pytest
 
+
 def cols_etc(table, schema=None, alias=None, is_function=False, parent=None,
              last_keyword=None):
     """Returns the expected select-clause suggestions for a single-table
@@ -13,6 +14,7 @@ def cols_etc(table, schema=None, alias=None, is_function=False, parent=None,
                qualifiable=True),
         Function(schema=parent),
         Keyword(last_keyword)])
+
 
 def test_select_suggests_cols_with_visible_table_scope():
     suggestions = suggest_type('SELECT  FROM tabl', 'SELECT ')
@@ -34,8 +36,9 @@ def test_cte_does_not_crash():
     'SELECT * FROM "tabl" WHERE ',
 ])
 def test_where_suggests_columns_functions_quoted_table(expression):
+    expected = cols_etc('tabl', alias='"tabl"', last_keyword='WHERE')
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == cols_etc('tabl', alias='"tabl"', last_keyword='WHERE')
+    assert expected == set(suggestions)
 
 
 @pytest.mark.parametrize('expression', [
@@ -89,9 +92,9 @@ def test_lparen_suggests_cols():
 def test_select_suggests_cols_and_funcs():
     suggestions = suggest_type('SELECT ', 'SELECT ')
     assert set(suggestions) == set([
-         Column(table_refs=(), qualifiable=True),
-         Function(schema=None),
-         Keyword('SELECT'),
+        Column(table_refs=(), qualifiable=True),
+        Function(schema=None),
+        Keyword('SELECT'),
     ])
 
 
@@ -714,6 +717,7 @@ SELECT 1 FROM foo;
 def test_statements_with_cursor_after_function_body(text):
     suggestions = suggest_type(text, text[:text.find('; ') + 1])
     assert set(suggestions) == set([Keyword(), Special()])
+
 
 @pytest.mark.parametrize('text', functions)
 def test_statements_with_cursor_before_function_body(text):
