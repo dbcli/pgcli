@@ -1,12 +1,10 @@
 Upcoming
-=====
+========
 
 Features:
 ---------
 * Suggest objects from all schemas (not just those in search_path) (Thanks: `Joakim Koljonen`_)
 * Casing for column headers (Thanks: `Joakim Koljonen`_)
-
-=======
 * Allow configurable character to be used for multi-line query continuations. (Thanks: `Owen Stephens`_)
 * Completions after ORDER BY and DISTINCT now take account of table aliases. (Thanks: `Owen Stephens`_)
 
@@ -676,3 +674,4 @@ Improvements:
 .. _`tk`: https://github.com/kanet77
 .. _`Owen Stephens`: https://github.com/owst
 .. _`Russell Davies`: https://github.com/russelldavies
+.. _`Dick Marinus`: https://github.com/meeuw
