@@ -674,3 +674,4 @@ Improvements:
 .. _`tk`: https://github.com/kanet77
 .. _`Owen Stephens`: https://github.com/owst
 .. _`Russell Davies`: https://github.com/russelldavies
+.. _`Dick Marinus`: https://github.com/meeuw
