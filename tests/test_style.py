@@ -25,12 +25,12 @@ def test_style_from_dict():
                      underline=False, italic=False, blink=False, reverse=False)
     assert style.get_attrs_for_style_str('#ff0000') == expected
 
-    # Combine class name and inline style (inline attributes always get priority.)
+    # Combine class name and inline style (Whatever is defined later gets priority.)
     expected = Attrs(color='00ff00', bgcolor='', bold=True,
                      underline=True, italic=True, blink=False, reverse=False)
     assert style.get_attrs_for_style_str('class:a #00ff00') == expected
 
-    expected = Attrs(color='00ff00', bgcolor='', bold=True,
+    expected = Attrs(color='ff0000', bgcolor='', bold=True,
                      underline=True, italic=True, blink=False, reverse=False)
     assert style.get_attrs_for_style_str('#00ff00 class:a') == expected
 
@@ -55,20 +55,22 @@ def test_class_combinations_1():
 
 
 def test_class_combinations_2():
-    # In this case, our style has both class 'a' and 'b', but the style for 'a'
-    # is defined at the end. Because of that, this gets priority.
+    # In this case, our style has both class 'a' and 'b'.
+    # The style that is defined the latest get priority.
     style = Style.from_dict(OrderedDict([
         ('a b', '#ff0000'),
         ('b', '#00ff00'),
         ('a', '#0000ff'),
     ]))
-    expected = Attrs(color='0000ff', bgcolor='', bold=False,
+    expected = Attrs(color='00ff00', bgcolor='', bold=False,
                      underline=False, italic=False, blink=False, reverse=False)
     assert style.get_attrs_for_style_str('class:a class:b') == expected
     assert style.get_attrs_for_style_str('class:a,b') == expected
     assert style.get_attrs_for_style_str('class:a,b,c') == expected
 
-    # Changing the order shouldn't matter.
+    # Defining 'a' latest should give priority to 'a'.
+    expected = Attrs(color='0000ff', bgcolor='', bold=False,
+                     underline=False, italic=False, blink=False, reverse=False)
     assert style.get_attrs_for_style_str('class:b class:a') == expected
     assert style.get_attrs_for_style_str('class:b,a') == expected
 
@@ -76,8 +78,8 @@ def test_class_combinations_2():
 def test_substyles():
     style = Style.from_dict(OrderedDict([
         ('a.b', '#ff0000 bold'),
-        ('a', '#0000ff'),  # This should override the color specified in 'a.b'.
-        ('b', '#00ff00'),  # This doesn't override 'b.c'. (Mentionned before.)
+        ('a', '#0000ff'),
+        ('b', '#00ff00'),
         ('b.c', '#0000ff italic'),
     ]))
 
@@ -86,7 +88,7 @@ def test_substyles():
                      underline=False, italic=False, blink=False, reverse=False)
     assert style.get_attrs_for_style_str('class:a') == expected
 
-    expected = Attrs(color='0000ff', bgcolor='', bold=True,
+    expected = Attrs(color='ff0000', bgcolor='', bold=True,
                      underline=False, italic=False, blink=False, reverse=False)
     assert style.get_attrs_for_style_str('class:a.b') == expected
     assert style.get_attrs_for_style_str('class:a.b.c') == expected

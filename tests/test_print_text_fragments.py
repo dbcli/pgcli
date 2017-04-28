@@ -1,8 +1,8 @@
 """
-Test `shortcuts.print_text_fragments`.
+Test `shortcuts.print_formatted_text`.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.shortcuts import print_text_fragments
+from prompt_toolkit.shortcuts import print_formatted_text
 from prompt_toolkit.styles import Style
 
 
@@ -27,9 +27,9 @@ class _Capture:
         return True
 
 
-def test_print_text_fragments():
+def test_print_formatted_text():
     f = _Capture()
-    print_text_fragments([('', 'hello'), ('', 'world')], file=f)
+    print_formatted_text([('', 'hello'), ('', 'world')], file=f)
     assert b'hello' in f.data
     assert b'world' in f.data
 
@@ -44,6 +44,6 @@ def test_with_style():
         ('class:hello', 'Hello '),
         ('class:world', 'world'),
     ]
-    print_text_fragments(tokens, style=style, file=f)
+    print_formatted_text(tokens, style=style, file=f)
     assert b'\x1b[0;38;5;197mHello' in f.data
     assert b'\x1b[0;38;5;83;3mworld' in f.data
