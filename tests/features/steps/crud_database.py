@@ -49,6 +49,7 @@ def step_db_connect_dbserver(context):
     Send connect to database.
     """
     context.cli.sendline('\\connect postgres')
+    context.currentdb = 'postgres'
 
 
 @then('dbcli exits')
@@ -65,6 +66,7 @@ def step_see_prompt(context):
     Wait to see the prompt.
     """
     wrappers.expect_exact(context, '{0}> '.format(context.conf['dbname']), timeout=5)
+    context.atprompt = True
 
 
 @then('we see help output')
@@ -78,7 +80,7 @@ def step_see_db_created(context):
     """
     Wait to see create database output.
     """
-    wrappers.expect_exact(context, 'CREATE DATABASE', timeout=2)
+    wrappers.expect_pager(context, 'CREATE DATABASE\r\n', timeout=5)
 
 
 @then('we see database dropped')
@@ -86,7 +88,7 @@ def step_see_db_dropped(context):
     """
     Wait to see drop database output.
     """
-    wrappers.expect_exact(context, 'DROP DATABASE', timeout=2)
+    wrappers.expect_pager(context, 'DROP DATABASE\r\n', timeout=2)
 
 
 @then('we see database connected')

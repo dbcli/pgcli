@@ -20,6 +20,7 @@ def step_run_cli(context):
     cli_cmd = context.conf.get('cli_command')
     context.cli = pexpect.spawnu(cli_cmd, cwd='..')
     context.exit_sent = False
+    context.currentdb = context.conf['dbname']
 
 
 @when('we wait for prompt')

@@ -6,6 +6,7 @@ import os
 import sys
 import db_utils as dbutils
 import fixture_utils as fixutils
+import pexpect
 
 
 def before_all(context):
@@ -86,14 +87,23 @@ def after_all(context):
             os.environ[k] = v
 
 
+def before_step(context, _):
+    context.atprompt = False
+
+
 def after_scenario(context, _):
-    """
-    Cleans up after each test complete.
-    """
+    """Cleans up after each test complete."""
 
     if hasattr(context, 'cli') and not context.exit_sent:
-        # Terminate nicely.
-        context.cli.terminate()
+        # Quit nicely.
+        if not context.atprompt:
+            dbname = context.currentdb
+            context.cli.expect_exact(
+                '{0}> '.format(dbname),
+                timeout=5
+            )
+        context.cli.sendcontrol('d')
+        context.cli.expect_exact(pexpect.EOF, timeout=5)
 
 # TODO: uncomment to debug a failure
 # def after_step(context, step):
