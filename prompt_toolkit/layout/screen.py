@@ -172,7 +172,7 @@ class Screen(object):
             for x, char in row.items():
                 b[y][x] = char_cache[char.char, prepend_style + char.style]
 
-    def fill_area(self, write_position, style=''):
+    def fill_area(self, write_position, style='', after=False):
         """
         Fill the content of this area, using the given `style`.
         The style is prepended before whatever was here before.
@@ -185,13 +185,18 @@ class Screen(object):
         char_cache = _CHAR_CACHE
         data_buffer = self.data_buffer
 
-        prepend_style = style + ' '
+        if after:
+            append_style = ' ' + style
+            prepend_style = ''
+        else:
+            append_style = ''
+            prepend_style = style + ' '
 
         for y in range(write_position.ypos, write_position.ypos + write_position.height):
             row = data_buffer[y]
             for x in range(xmin, xmax):
                 cell = row[x]
-                row[x] = char_cache[cell.char, prepend_style + cell.style]
+                row[x] = char_cache[cell.char, prepend_style + cell.style + append_style]
 
 
 class WritePosition(object):
@@ -208,6 +213,6 @@ class WritePosition(object):
         self.extended_height = extended_height or height
 
     def __repr__(self):
-        return '%s(%r, %r, %r, %r, %r)' % (
+        return '%s(x=%r, y=%r, width=%r, height=%r, extended_height=%r)' % (
             self.__class__.__name__,
             self.xpos, self.ypos, self.width, self.height, self.extended_height)

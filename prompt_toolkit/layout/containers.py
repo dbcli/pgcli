@@ -1602,13 +1602,13 @@ class Window(Container):
         if app.layout.current_window == self:
             style += ' class:focussed'
 
-        new_screen.fill_area(write_position, style=style)
+        new_screen.fill_area(write_position, style=style, after=False)
 
         # Apply the 'last-line' class to the last line of each Window. This can
         # be used to apply an 'underline' to the user control.
         wp = WritePosition(write_position.xpos, write_position.ypos + write_position.height - 1,
                            write_position.width, 1)
-        new_screen.fill_area(wp, 'class:last-line')
+        new_screen.fill_area(wp, 'class:last-line', after=True)
 
     def _highlight_digraph(self, app, new_screen):
         """
