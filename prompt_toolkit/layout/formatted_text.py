@@ -62,6 +62,7 @@ class HTML(object):
     """
     def __init__(self, value):
         assert isinstance(value, six.text_type)
+        self.value = value
         document = minidom.parseString('<html-root>%s</html-root>' % (value, ))
 
         result = []

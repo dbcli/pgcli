@@ -56,5 +56,9 @@ def token_list_to_formatted_text(token_list):
     Turn a pygments token list into a list of prompt_toolkit text fragments
     (``(style_str, text)`` tuples).
     """
+    result = []
+
     for token, text in token_list:
-        yield 'class:' + _pygments_token_to_classname(token), text
+        result.append(('class:' + _pygments_token_to_classname(token), text))
+
+    return result

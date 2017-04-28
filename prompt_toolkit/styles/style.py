@@ -105,6 +105,8 @@ def _parse_style_str(style_str):
         # Colors.
         elif part.startswith('bg:'):
             attrs = attrs._replace(bgcolor=_colorformat(part[3:]))
+        elif part.startswith('fg:'):  # The 'fg:' prefix is optional.
+            attrs = attrs._replace(color=_colorformat(part[3:]))
         else:
             attrs = attrs._replace(color=_colorformat(part))
 
