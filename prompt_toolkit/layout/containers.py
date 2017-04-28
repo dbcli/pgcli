@@ -1282,6 +1282,11 @@ class Window(Container):
         Write window to screen. This renders the user control, the margins and
         copies everything over to the absolute position at the given screen.
         """
+        # Don't bother writing invisible windows.
+        # (We save some time, but also avoid applying last-line styling.)
+        if write_position.height <= 0 or write_position.width <= 0:
+            return
+
         # Add current user control to the list of rendered user controls.
         app.rendered_user_controls.append(self.content)
 
