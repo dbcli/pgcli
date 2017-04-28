@@ -38,7 +38,7 @@ def step_edit_done_sql(context):
     for match in 'select * from abc'.split(' '):
         wrappers.expect_exact(context, match, timeout=1)
     # Cleanup the command line.
-    context.cli.sendcontrol('u')
+    context.cli.sendcontrol('c')
     # Cleanup the edited file.
     if context.editor_file_name and os.path.exists(context.editor_file_name):
         os.remove(context.editor_file_name)
