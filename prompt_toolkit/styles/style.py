@@ -53,13 +53,11 @@ def _expand_classname(classname):
     return result
 
 
-def _parse_style_str(style_str, style=None):
+def _parse_style_str(style_str):
     """
     Take a style string, e.g.  'bg:red #88ff00 class:title'
-    and return a (`Attrs`, class_names) tuple.
+    and return a `Attrs` instance.
     """
-    class_names = []
-
     # Start from default Attrs.
     if 'noinherit' in style_str:
         attrs = DEFAULT_ATTRS
@@ -99,12 +97,6 @@ def _parse_style_str(style_str, style=None):
         elif part.startswith('border:'):
             pass
 
-        # Inclusion of class names.
-        # E.g.  'class:name1,name2.subclass,name3'
-        elif part.startswith('class:'):
-            for name in part[6:].lower().split(','):
-                class_names.extend(_expand_classname(name))
-
         # Ignore pieces in between square brackets. This is internal stuff.
         # Like '[transparant]' or '[set-cursor-position]'.
         elif part.startswith('[') and part.endswith(']'):
@@ -116,10 +108,7 @@ def _parse_style_str(style_str, style=None):
         else:
             attrs = attrs._replace(color=_colorformat(part))
 
-    # Make sure to sort the class names. (The order doesn't matter.)
-    class_names = list(sorted(class_names))
-
-    return attrs, class_names
+    return attrs
 
 
 CLASS_NAMES_RE = re.compile(r'^[a-z0-9.\s-]*$')  # This one can't contain a comma!
@@ -156,10 +145,8 @@ class Style(BaseStyle):
 
             # The order of the class names doesn't matter.
             # (But the order of rules does matter.)
-            class_names = tuple(sorted(class_names.lower().split()))
-
-            attrs, class_names_2 = _parse_style_str(style_str, style=None)
-            assert not class_names_2
+            class_names = frozenset(class_names.lower().split())
+            attrs = _parse_style_str(style_str)
 
             class_names_and_attrs.append((class_names, attrs))
 
@@ -177,27 +164,46 @@ class Style(BaseStyle):
         """
         Get `Attrs` for the given style string.
         """
-        # Parse style string.
-        inline_attrs, class_names = _parse_style_str(style_str, style=None)
-
-        # Build a set of all possible class combinations.
-        combos = set()
-        combos.add(('', ))  # Add the default.
-
-        for count in range(1, len(class_names) + 1):
-            for combo in itertools.combinations(class_names, count):
-                combos.add(combo)
-
-        # Get list of Attrs, according to matches in our Style.
         list_of_attrs = [default]
+        class_names = set()
 
-        # Loop through the list of styles that apply.
-        for class_names, attr in self.class_names_and_attrs:
-            if class_names in combos:
+        # Apply default styling.
+        for names, attr in self.class_names_and_attrs:
+            if not names:
                 list_of_attrs.append(attr)
 
-        # Add the inline style.
-        list_of_attrs.append(inline_attrs)
+        # Go from left to right through the style string. Things on the right
+        # take precedence.
+        for part in style_str.split():
+            # This part represents a class.
+            # Do lookup of this class name in the style definition, as well
+            # as all class combinations that we have so far.
+            if part.startswith('class:'):
+                # Expand all class names (comma separated list).
+                new_class_names = []
+                for p in part[6:].lower().split(','):
+                    new_class_names.extend(_expand_classname(p))
+
+                for new_name in new_class_names:
+                    # Build a set of all possible class combinations to be applied.
+                    combos = set()
+                    combos.add(frozenset([new_name]))
+
+                    for count in range(1, len(class_names) + 1):
+                        for c2 in itertools.combinations(class_names, count):
+                            combos.add(frozenset(c2 + (new_name, )))
+
+                    # Apply the styles that match these class names.
+                    for names, attr in self.class_names_and_attrs:
+                        if names in combos:
+                            list_of_attrs.append(attr)
+
+                    class_names.add(new_name)
+
+            # Process inline style.
+            else:
+                inline_attrs = _parse_style_str(part)
+                list_of_attrs.append(inline_attrs)
 
         return _merge_attrs(list_of_attrs)
 
