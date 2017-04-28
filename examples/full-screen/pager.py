@@ -10,7 +10,7 @@ from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import HSplit, Window
-from prompt_toolkit.layout.controls import BufferControl, TextFragmentsControl
+from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
@@ -30,7 +30,7 @@ with open('./pager.py', 'rb') as f:
     default_buffer.text = f.read().decode('utf-8')
 
 
-def get_statusbar_tokens(app):
+def get_statusbar_text(app):
     return [
         ('class:status', './pager.py - '),
         ('class:status.position', '{}:{}'.format(
@@ -48,8 +48,8 @@ buffer_window = Window(
 
 root_container = HSplit([
     # The top toolbar.
-    Window(content=TextFragmentsControl(
-        get_statusbar_tokens),
+    Window(content=FormattedTextControl(
+        get_statusbar_text),
         height=D.exact(1),
         style='class:status'),
 

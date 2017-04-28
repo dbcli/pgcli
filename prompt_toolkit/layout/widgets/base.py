@@ -17,7 +17,7 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.utils import get_cwidth
 
 from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align
-from ..controls import BufferControl, TextFragmentsControl
+from ..controls import BufferControl, FormattedTextControl
 from ..dimension import Dimension as D
 from ..dimension import to_dimension
 from ..margins import ScrollbarMargin
@@ -222,7 +222,7 @@ class Button(object):
         self.text = text
         self.handler = handler
         self.width = width
-        self.control = TextFragmentsControl(
+        self.control = FormattedTextControl(
             self._get_text_fragments,
             key_bindings=self._get_key_bindings(),
             focussable=True)
@@ -404,7 +404,7 @@ class Checkbox(object):
         def _(event):
             self.checked = not self.checked
 
-        self.control = TextFragmentsControl(
+        self.control = FormattedTextControl(
             self._get_text_fragments,
             key_bindings=kb,
             focussable=True)
@@ -462,7 +462,7 @@ class RadioList(object):
             self.current_value = self.values[self._selected_index][0]
 
         # Control and window.
-        self.control = TextFragmentsControl(
+        self.control = FormattedTextControl(
             self._get_text_fragments,
             key_bindings=kb,
             focussable=True)

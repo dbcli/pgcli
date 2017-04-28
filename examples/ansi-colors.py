@@ -3,7 +3,7 @@
 Demonstration of all the ANSI colors.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.shortcuts import print_text_fragments
+from prompt_toolkit.shortcuts import print_formatted_text
 
 
 def main():
@@ -49,7 +49,7 @@ def main():
 
         nl,
     ]
-    print_text_fragments(tokens)
+    print_formatted_text(tokens)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from .containers import Window, ConditionalContainer
-from .controls import BufferControl, TextFragmentsControl, UIControl, UIContent, UIControlKeyBindings
+from .controls import BufferControl, FormattedTextControl, UIControl, UIContent, UIControlKeyBindings
 from .dimension import Dimension
 from .lexers import SimpleLexer
 from .processors import BeforeInput
@@ -15,7 +15,7 @@ from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 
 __all__ = (
-    'TextFragmentsToolbar',
+    'FormattedTextToolbar',
     'ArgToolbar',
     'CompletionsToolbar',
     'SearchToolbar',
@@ -24,10 +24,10 @@ __all__ = (
 )
 
 
-class TextFragmentsToolbar(Window):
+class FormattedTextToolbar(Window):
     def __init__(self, get_text_fragments, **kw):
-        super(TextFragmentsToolbar, self).__init__(
-            TextFragmentsControl(get_text_fragments, **kw),
+        super(FormattedTextToolbar, self).__init__(
+            FormattedTextControl(get_text_fragments, **kw),
             height=Dimension.exact(1))
 
 
@@ -130,9 +130,9 @@ class SystemToolbar(ConditionalContainer):
             filter=has_focus(self.control.system_buffer) & ~is_done)
 
 
-class ArgToolbarControl(TextFragmentsControl):
+class ArgToolbarControl(FormattedTextControl):
     def __init__(self):
-        def get_text_fragments(app):
+        def get_formatted_text(app):
             arg = app.key_processor.arg
             if arg == '-':
                 arg = '-1'
@@ -142,7 +142,7 @@ class ArgToolbarControl(TextFragmentsControl):
                 ('class:arg-toolbar.text', arg),
             ]
 
-        super(ArgToolbarControl, self).__init__(get_text_fragments)
+        super(ArgToolbarControl, self).__init__(get_formatted_text)
 
 
 class ArgToolbar(ConditionalContainer):
@@ -255,9 +255,9 @@ class CompletionsToolbar(ConditionalContainer):
             filter=has_completions & ~is_done & extra_filter)
 
 
-class ValidationToolbarControl(TextFragmentsControl):
+class ValidationToolbarControl(FormattedTextControl):
     def __init__(self, show_position=False):
-        def get_text_fragments(app):
+        def get_formatted_text(app):
             buff = app.current_buffer
 
             if buff.validation_error:
@@ -274,7 +274,7 @@ class ValidationToolbarControl(TextFragmentsControl):
             else:
                 return []
 
-        super(ValidationToolbarControl, self).__init__(get_text_fragments)
+        super(ValidationToolbarControl, self).__init__(get_formatted_text)
 
 
 class ValidationToolbar(ConditionalContainer):
@@ -287,4 +287,4 @@ class ValidationToolbar(ConditionalContainer):
 
 
 # Deprecated aliases.
-TokenListToolbar = TextFragmentsToolbar
+TokenListToolbar = FormattedTextToolbar

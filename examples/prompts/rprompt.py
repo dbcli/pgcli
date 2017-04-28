@@ -16,13 +16,14 @@ example_style = Style.from_dict({
 })
 
 
-def get_rprompt_tokens(app):
+def get_rprompt_text(app):
     return [
         ('', ' '),
         ('class:rprompt', '<rprompt>'),
+        ('', ' '),
     ]
 
 
 if __name__ == '__main__':
-    answer = prompt('> ', get_rprompt_tokens=get_rprompt_tokens, style=example_style)
+    answer = prompt('> ', get_rprompt_text=get_rprompt_text, style=example_style)
     print('You said: %s' % answer)

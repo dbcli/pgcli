@@ -27,7 +27,7 @@ def run():
         'toolbar': 'reverse',
     })
 
-    def get_bottom_toolbar_tokens(app):
+    def get_bottom_toolbar_text(app):
         " Display the current input mode. "
         text = 'Vi' if app.editing_mode == EditingMode.VI else 'Emacs'
         return [
@@ -35,7 +35,7 @@ def run():
         ]
 
     prompt('> ', extra_key_bindings=bindings,
-           get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
+           get_bottom_toolbar_text=get_bottom_toolbar_text,
            style=style)
 
 

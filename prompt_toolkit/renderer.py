@@ -5,6 +5,7 @@ Renders the command line on the console.
 from __future__ import unicode_literals
 
 from prompt_toolkit.filters import to_app_filter
+from prompt_toolkit.layout.formatted_text import to_formatted_text
 from prompt_toolkit.layout.mouse_handlers import MouseHandlers
 from prompt_toolkit.layout.screen import Point, Screen, WritePosition
 from prompt_toolkit.output import Output
@@ -15,7 +16,7 @@ from six.moves import range
 
 __all__ = (
     'Renderer',
-    'print_text_fragments',
+    'print_formatted_text',
 )
 
 
@@ -510,12 +511,13 @@ class Renderer(object):
         self.request_absolute_cursor_position()
 
 
-def print_text_fragments(output, fragments, style):
+def print_formatted_text(output, formatted_text, style):
     """
     Print a list of (style_str, text) tuples in the given style to the output.
     """
     assert isinstance(output, Output)
     assert isinstance(style, BaseStyle)
+    fragments = to_formatted_text(formatted_text)
 
     # Reset first.
     output.reset_attributes()

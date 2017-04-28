@@ -13,11 +13,11 @@ test_style = Style.from_dict({
 
 
 def main():
-    def get_bottom_toolbar_tokens(app):
+    def get_bottom_toolbar_text(app):
         return [('class:toolbar', ' This is a toolbar. ')]
 
     text = prompt('Say something: ',
-                  get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
+                  get_bottom_toolbar_text=get_bottom_toolbar_text,
                   style=test_style)
     print('You said: %s' % text)
 

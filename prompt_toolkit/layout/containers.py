@@ -8,7 +8,7 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass, text_type
 from six.moves import range
 
-from .controls import UIControl, TextFragmentsControl, UIContent, DummyControl
+from .controls import UIControl, FormattedTextControl, UIContent, DummyControl
 from .dimension import Dimension, sum_layout_dimensions, max_layout_dimensions, to_dimension
 from .margins import Margin
 from .screen import Point, WritePosition, _CHAR_CACHE
@@ -86,7 +86,7 @@ class Container(with_metaclass(ABCMeta, object)):
 
 def _window_too_small():
     " Create a `Window` that displays the 'Window too small' text. "
-    return Window(TextFragmentsControl.static(
+    return Window(FormattedTextControl(formatted_text=
         [('class:window-too-small', ' Window too small... ')]))
 
 
@@ -1397,7 +1397,7 @@ class Window(Container):
 
             # Turn it into a UIContent object.
             # already rendered those fragments using this size.)
-            return TextFragmentsControl.static(fragments).create_content(
+            return FormattedTextControl(fragments).create_content(
                 app, width + 1, write_position.height)
 
         for m, width in zip(self.left_margins, left_margin_widths):
@@ -1473,7 +1473,7 @@ class Window(Container):
                 for style, text in line:
                     # Remember raw VT escape sequences. (E.g. FinalTerm's
                     # escape sequences.)
-                    if style == '[ZeroWidthEscape]':
+                    if '[ZeroWidthEscape]' in style:
                         new_screen.zero_width_escapes[y + ypos][x + xpos] += text
                         continue
 

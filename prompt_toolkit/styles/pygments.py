@@ -11,7 +11,7 @@ from .style import Style
 
 __all__ = (
     'style_from_pygments',
-    'token_list_to_text_fragments',
+    'token_list_to_formatted_text',
 )
 
 
@@ -51,7 +51,7 @@ def _pygments_token_to_classname(token):
     return 'pygments.' + '.'.join(token).lower()
 
 
-def token_list_to_text_fragments(token_list):
+def token_list_to_formatted_text(token_list):
     """
     Turn a pygments token list into a list of prompt_toolkit text fragments
     (``(style_str, text)`` tuples).

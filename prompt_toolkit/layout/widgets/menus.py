@@ -6,7 +6,7 @@ from prompt_toolkit.eventloop import EventLoop
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, Window, FloatContainer, Float, ConditionalContainer
-from prompt_toolkit.layout.controls import TextFragmentsControl
+from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.widgets import Shadow
 from prompt_toolkit.utils import get_cwidth
 
@@ -97,7 +97,7 @@ class MenuContainer(object):
                 item.handler(event.app)
 
         # Controls.
-        self.control = TextFragmentsControl(
+        self.control = FormattedTextControl(
             self._get_menu_fragments,
             key_bindings=kb,
             focussable=True)
@@ -216,7 +216,7 @@ class MenuContainer(object):
             return result
 
         return Window(
-            TextFragmentsControl(get_text_fragments),
+            FormattedTextControl(get_text_fragments),
             style='class:menu',
             transparent=False)
 

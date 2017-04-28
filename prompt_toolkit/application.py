@@ -18,7 +18,7 @@ from .layout.layout import Layout
 from .layout.controls import BufferControl
 from .output import Output
 from .output.defaults import create_output
-from .renderer import Renderer, print_text_fragments
+from .renderer import Renderer, print_formatted_text
 from .search_state import SearchState
 from .styles import BaseStyle, default_style
 from .utils import Event
@@ -769,16 +769,16 @@ class Application(object):
 
             self.run_in_terminal(run)
 
-    def print_text_fragments(self, text_fragments, style=None):
+    def print_formatted_text(self, formatted_text, style=None):
         """
         Print a list of (style_str, text) tuples to the output.
         (When the UI is running, this method has to be called through
         `run_in_terminal`, otherwise it will destroy the UI.)
 
-        :param text_fragments: List of ``(style_str, text)`` tuples.
+        :param formatted_text: List of ``(style_str, text)`` tuples.
         :param style: Style class to use. Defaults to the active style in the CLI.
         """
-        print_text_fragments(self.output, text_fragments, style or self.style)
+        print_formatted_text(self.output, formatted_text, style or self.style)
 
     @property
     def is_exiting(self):

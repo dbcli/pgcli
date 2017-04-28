@@ -6,7 +6,6 @@ See: https://iterm2.com/finalterm.html
 from __future__ import unicode_literals
 
 from prompt_toolkit import prompt
-from prompt_toolkit.token import ZeroWidthEscape
 import sys
 
 
@@ -16,20 +15,20 @@ BEFORE_OUTPUT = '\033]133;C\a'
 AFTER_OUTPUT = '\033]133;D;{command_status}\a' # command_status is the command status, 0-255
 
 
-def get_prompt_tokens(app):
-    # Generate the tokens for the prompt.
-    # Important: use the `ZeroWidthEscape` token only if you are sure that
+def get_prompt_text(app):
+    # Generate the text fragments for the prompt.
+    # Important: use the `ZeroWidthEscape` fragment only if you are sure that
     #            writing this as raw text to the output will not introduce any
     #            cursor movements.
     return [
-        (ZeroWidthEscape, BEFORE_PROMPT),
+        ('[ZeroWidthEscape]', BEFORE_PROMPT),
         ('', 'Say something: # '),
-        (ZeroWidthEscape, AFTER_PROMPT),
+        ('[ZeroWidthEscape]', AFTER_PROMPT),
     ]
 
 
 if __name__ == '__main__':
-    answer = prompt(get_prompt_tokens=get_prompt_tokens)
+    answer = prompt(get_prompt_text=get_prompt_text)
 
     sys.stdout.write(BEFORE_OUTPUT)
     print('You said: %s' % answer)

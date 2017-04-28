@@ -18,6 +18,7 @@ from prompt_toolkit.utils import get_cwidth
 
 from .lexers import Lexer, SimpleLexer
 from .processors import Processor, TransformationInput, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, merge_processors
+from .formatted_text import to_formatted_text
 
 from .screen import Point
 from .utils import split_lines, fragment_list_to_text
@@ -29,7 +30,7 @@ import time
 __all__ = (
     'BufferControl',
     'DummyControl',
-    'TextFragmentsControl',
+    'FormattedTextControl',
     'UIControl',
     'UIControlKeyBindings',
     'UIContent',
@@ -196,7 +197,7 @@ class UIContent(object):
             return max(1, quotient)
 
 
-class TextFragmentsControl(UIControl):
+class FormattedTextControl(UIControl):
     """
     Control that displays a list of (style_str, text) tuples.
     (It's mostly optimized for rather small widgets, like toolbars, menus, etc...)
@@ -217,21 +218,25 @@ class TextFragmentsControl(UIControl):
 
     :param focussable: `bool` or `AppFilter`: Tell whether this control is focussable.
 
-    :param get_text_fragments: Callable that takes an `Application` instance and
+    :param get_formatted_text: Callable that takes an `Application` instance and
         returns the list of (style_str, text) tuples to be displayed right now.
     :param key_bindings: a `KeyBindings` object.
     :param global_key_bindings: a `KeyBindings` object that contains always on
         key bindings.
     """
-    def __init__(self, get_text_fragments, focussable=False, key_bindings=None,
+    def __init__(self, formatted_text='', focussable=False, key_bindings=None,
                  global_key_bindings=None, modal=False):
         from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
-        assert callable(get_text_fragments)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert global_key_bindings is None or isinstance(global_key_bindings, KeyBindingsBase)
         assert isinstance(modal, bool)
 
-        self.get_text_fragments = get_text_fragments
+        if callable(formatted_text):
+            self.get_formatted_text = formatted_text
+        else:
+            formatted_text = to_formatted_text(formatted_text)
+            self.get_formatted_text = (lambda app: formatted_text)
+
         self.focussable = to_app_filter(focussable)
 
         # Key bindings.
@@ -254,23 +259,24 @@ class TextFragmentsControl(UIControl):
         return self.focussable(app)
 
     def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.get_text_fragments)
+        return '%s(%r)' % (self.__class__.__name__, self.get_formatted_text)
 
-    def _get_text_fragments_cached(self, app):
+    def _get_formatted_text_cached(self, app):
         """
         Get fragments, but only retrieve fragments once during one render run.
         (This function is called several times during one rendering, because
         we also need those for calculating the dimensions.)
         """
         return self._fragment_cache.get(
-            app.render_counter, lambda: self.get_text_fragments(app))
+            app.render_counter,
+            lambda: to_formatted_text(self.get_formatted_text(app)))
 
     def preferred_width(self, app, max_available_width):
         """
         Return the preferred width for this control.
         That is the width of the longest line.
         """
-        text = fragment_list_to_text(self._get_text_fragments_cached(app))
+        text = fragment_list_to_text(self._get_formatted_text_cached(app))
         line_lengths = [get_cwidth(l) for l in text.split('\n')]
         return max(line_lengths)
 
@@ -280,7 +286,7 @@ class TextFragmentsControl(UIControl):
 
     def create_content(self, app, width, height):
         # Get fragments
-        fragments_with_mouse_handlers = self._get_text_fragments_cached(app)
+        fragments_with_mouse_handlers = self._get_formatted_text_cached(app)
         fragment_lines_with_mouse_handlers = list(split_lines(fragments_with_mouse_handlers))
 
         # Strip mouse handlers from fragments.
@@ -318,12 +324,6 @@ class TextFragmentsControl(UIControl):
                              menu_position=get_menu_position())
 
         return self._content_cache.get(key, get_content)
-
-    @classmethod
-    def static(cls, fragments):
-        def get_static_fragments(app):
-            return fragments
-        return cls(get_static_fragments)
 
     def mouse_handler(self, app, mouse_event):
         """
@@ -524,15 +524,15 @@ class BufferControl(UIControl):
 
         return height
 
-    def _get_text_fragments_for_line_func(self, app, document):
+    def _get_formatted_text_for_line_func(self, app, document):
         """
         Create a function that returns the fragments for a given line.
         """
         # Cache using `document.text`.
-        def get_text_fragments_for_line():
+        def get_formatted_text_for_line():
             return self.lexer.lex_document(app, document)
 
-        return self._fragment_cache.get(document.text, get_text_fragments_for_line)
+        return self._fragment_cache.get(document.text, get_formatted_text_for_line)
 
     def _create_get_processed_line_func(self, app, document, width, height):
         """
@@ -570,7 +570,7 @@ class BufferControl(UIControl):
                 transformation.display_to_source)
 
         def create_func():
-            get_line = self._get_text_fragments_for_line_func(app, document)
+            get_line = self._get_formatted_text_for_line_func(app, document)
             cache = {}
 
             def get_processed_line(i):
@@ -741,4 +741,4 @@ class BufferControl(UIControl):
 
 
 # Deprecated aliases.
-TokenListControl = TextFragmentsControl
+TokenListControl = FormattedTextControl

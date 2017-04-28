@@ -13,7 +13,7 @@ from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align
-from prompt_toolkit.layout.controls import BufferControl, TextFragmentsControl
+from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 
 
@@ -63,7 +63,7 @@ body = VSplit([
 # but the user doesn't see any feedback. We will add the search toolbar to the
 # bottom by using an HSplit.
 
-def get_titlebar_tokens(app):
+def get_titlebar_text(app):
     return [
         ('class:title', ' Hello world '),
         ('class:title', ' (Press [Ctrl-Q] to quit.)'),
@@ -72,7 +72,7 @@ def get_titlebar_tokens(app):
 root_container = HSplit([
     # The titlebar.
     Window(height=1,
-           content=TextFragmentsControl(get_titlebar_tokens),
+           content=FormattedTextControl(get_titlebar_text),
            align=Align.CENTER),
 
     # Horizontal separator.
