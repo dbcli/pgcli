@@ -1,6 +1,7 @@
 # -*- coding: utf-8
 from __future__ import unicode_literals
 import os
+import os.path
 import wrappers
 
 from behave import when, then
@@ -8,14 +9,16 @@ from behave import when, then
 
 @when('we start external editor providing a file name')
 def step_edit_file(context):
-    """
-    Edit file with external editor.
-    """
-    context.editor_file_name = 'test_file_{0}.sql'.format(context.conf['vi'])
-    if os.path.exists(context.editor_file_name):
-        os.remove(context.editor_file_name)
-    context.cli.sendline('\e {0}'.format(context.editor_file_name))
-    wrappers.expect_exact(context, 'Entering Ex mode.  Type "visual" to go to Normal mode.', timeout=2)
+    """Edit file with external editor."""
+    context.editor_file_name = [
+        '..',
+        'test_file_{0}.sql'.format(context.conf['vi'])
+    ]
+    if os.path.exists(os.path.join(*context.editor_file_name)):
+        os.remove(os.path.join(*context.editor_file_name))
+    context.cli.sendline('\e {0}'.format(context.editor_file_name[1]))
+    wrappers.expect_exact(
+        context, 'Entering Ex mode.  Type "visual" to go to Normal mode.', timeout=2)
     wrappers.expect_exact(context, '\r\n:', timeout=2)
 
 
@@ -40,8 +43,8 @@ def step_edit_done_sql(context):
     # Cleanup the command line.
     context.cli.sendcontrol('c')
     # Cleanup the edited file.
-    if context.editor_file_name and os.path.exists(context.editor_file_name):
-        os.remove(context.editor_file_name)
+    if os.path.join(*context.editor_file_name) and os.path.exists(os.path.join(*context.editor_file_name)):
+        os.remove(os.path.join(*context.editor_file_name))
 
 
 @when(u'we tee output')
