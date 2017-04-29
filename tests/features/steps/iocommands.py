@@ -43,9 +43,8 @@ def step_edit_done_sql(context):
     # Cleanup the command line.
     context.cli.sendcontrol('c')
     # Cleanup the edited file.
-    full_tmp_file_name = os.path.join(*context.editor_file_name)
-    if full_tmp_file_name and os.path.exists(full_tmp_file_name):
-        os.remove(full_tmp_file_name)
+    if os.path.join(*context.editor_file_name) and os.path.exists(os.path.join(*context.editor_file_name)):
+        os.remove(os.path.join(*context.editor_file_name))
 
 
 @when(u'we tee output')
