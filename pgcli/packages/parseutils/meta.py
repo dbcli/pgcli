@@ -67,7 +67,7 @@ class FunctionMetadata(object):
             # E.g. 'SELECT unnest FROM unnest(...);'
             return [ColumnMetadata(self.func_name, self.return_type, [])]
 
-        return [ColumnMetadata(name, type, [])
+        return [ColumnMetadata(name, typ, [])
             for name, typ, mode in zip(
                 self.arg_names, self.arg_types, self.arg_modes)
             if mode in ('o', 'b', 't')] # OUT, INOUT, TABLE
