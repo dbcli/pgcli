@@ -199,7 +199,11 @@ class UIContent(object):
 
 class FormattedTextControl(UIControl):
     """
-    Control that displays a list of (style_str, text) tuples.
+    Control that displays formatted text. This can be either plain text, an
+    ``HTML`` object an ``ANSI`` object or a list of (style_str, text) tuples,
+    depending on how you prefer to do the formatting. See
+    ``prompt_toolkit.layout.formatted_text`` for more information.
+
     (It's mostly optimized for rather small widgets, like toolbars, menus, etc...)
 
     When this UI control has the focus, the cursor will be shown in the upper
