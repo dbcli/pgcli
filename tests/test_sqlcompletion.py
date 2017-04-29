@@ -709,6 +709,7 @@ SELECT 1 FROM foo;
 @pytest.mark.parametrize('text', functions)
 def test_statements_with_cursor_after_function_body(text):
     suggestions = suggest_type(text, text[:text.find('; ') + 1])
+    assert 1 == len(suggestions)
     assert set(suggestions) == set([Keyword()])
 
 @pytest.mark.parametrize('text', functions)
