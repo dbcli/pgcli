@@ -1,10 +1,25 @@
+"""
+Many places in prompt_toolkit can take either plain text, or formatted text.
+For instance the ``shortcuts.prompt()`` function takes either plain text or
+formatted text for the prompt. The ``FormattedTextControl`` can also take
+either plain text or formatted text.
+
+In any case, there is an input that can either be just plain text (a string),
+an `HTML` object, an `ANSI` object or a sequence of ``(style_string, text)``
+tuples. The ``to_formatted_text`` conversion function takes any of these and
+turns all of them into such a tuple sequence.
+"""
 from __future__ import unicode_literals
+from prompt_toolkit.output.vt100 import FG_ANSI_COLORS, BG_ANSI_COLORS
+from prompt_toolkit.output.vt100 import _256_colors as _256_colors_table
+
 import six
 import xml.dom.minidom as minidom
 
 __all__ = (
     'to_formatted_text',
     'HTML',
+    'ANSI',
 )
 
 
@@ -119,3 +134,187 @@ class HTML(object):
 
     def __pt_formatted_text__(self):
         return self.formatted_text
+
+
+class ANSI(object):
+    """
+    ANSI formatted text.
+    Take something ANSI escaped text, for use as a formatted string.
+    """
+    # TODO: Turn text between \001 and \002 into '[ZeroWidthEscape]'.
+    #       https://github.com/jonathanslenders/python-prompt-toolkit/issues/148
+    def __init__(self, value):
+        self.value = value
+        self._formatted_text = []
+
+        # Default style attributes.
+        self._color = None
+        self._bgcolor = None
+        self._bold = False
+        self._underline = False
+        self._italic = False
+        self._blink = False
+        self._reverse = False
+
+        # Process received text.
+        parser = self._parse_corot()
+        parser.send(None)
+        for c in value:
+            parser.send(c)
+
+    def _parse_corot(self):
+        """
+        Coroutine that parses the ANSI escape sequences.
+        """
+        style = ''
+        formatted_text = self._formatted_text
+
+        while True:
+            csi = False
+            c = yield
+
+            if c == '\x1b':
+                # Start of color escape sequence.
+                square_bracket = yield
+                if square_bracket == '[':
+                    csi = True
+                else:
+                    continue
+            elif c == '\x9b':
+                csi = True
+
+            if csi:
+                # Got a CSI sequence. Color codes are following.
+                current = ''
+                params = []
+                while True:
+                    char = yield
+                    if char.isdigit():
+                        current += char
+                    else:
+                        params.append(min(int(current or 0), 9999))
+                        if char == ';':
+                            current = ''
+                        elif char == 'm':
+                            # Set attributes and token.
+                            self._select_graphic_rendition(params)
+                            style = self._create_style_string()
+                            break
+                        else:
+                            # Ignore unspported sequence.
+                            break
+            else:
+                formatted_text.append((style, c))
+
+    def _select_graphic_rendition(self, attrs):
+        """
+        Taken a list of graphics attributes and apply changes.
+        """
+        replace = {}
+
+        if not attrs:
+            attrs = [0]
+        else:
+            attrs = list(attrs[::-1])
+
+        while attrs:
+            attr = attrs.pop()
+
+            if attr in _fg_colors:
+                self._color = _fg_colors[attr]
+            elif attr in _bg_colors:
+                self._bgcolor = _bg_colors[attr]
+            elif attr == 1:
+                self._bold = True
+            elif attr == 3:
+                self._italic = True
+            elif attr == 4:
+                self._underline = True
+            elif attr == 5:
+                self._blink = True
+            elif attr == 6:
+                self._blink = True  # Fast blink.
+            elif attr == 7:
+                self._reverse = True
+            elif attr == 22:
+                self._bold = False
+            elif attr == 23:
+                self._italic = False
+            elif attr == 24:
+                self._underline = False
+            elif attr == 25:
+                self._blink = False
+            elif attr == 27:
+                self._reverse = False
+            elif not attr:
+                self._color = None
+                self._bgcolor = None
+                self._bold = False
+                self._underline = False
+                self._italic = False
+                self._blink = False
+                self._reverse = False
+
+            elif attr in (38, 48):
+                n = attrs.pop()
+
+                # 256 colors.
+                if n == 5:
+                    if attr == 38:
+                        m = attrs.pop()
+                        self._color = _256_colors.get(m)
+                    elif attr == 48:
+                        m = attrs.pop()
+                        self._bgcolor = _256_colors.get(m)
+
+                # True colors.
+                if n == 2:
+                    try:
+                        color_str = '%02x%02x%02x' % (
+                            attrs.pop(), attrs.pop(), attrs.pop())
+                    except IndexError:
+                        pass
+                    else:
+                        if attr == 38:
+                            self._color = color_str
+                        elif attr == 48:
+                            self._bgcolor = color_str
+
+    def _create_style_string(self):
+        """
+        Turn current style flags into a string for usage in a formatted text.
+        """
+        result = []
+        if self._color:
+            result.append('#' + self._color)
+        if self._bgcolor:
+            result.append('bg: #' + self._bgcolor)
+        if self._bold:
+            result.append('bold')
+        if self._underline:
+            result.append('underline')
+        if self._italic:
+            result.append('italic')
+        if self._blink:
+            result.append('blink')
+        if self._reverse:
+            result.append('reverse')
+
+        return ' '.join(result)
+
+    def __repr__(self):
+        return 'ANSI(%r)' % (self.value, )
+
+    def __pt_formatted_text__(self):
+        return self._formatted_text
+
+
+# Mapping of the ANSI color codes to their names.
+_fg_colors = dict((v, k) for k, v in FG_ANSI_COLORS.items())
+_bg_colors = dict((v, k) for k, v in BG_ANSI_COLORS.items())
+
+# Mapping of the escape codes for 256colors to their 'ffffff' value.
+_256_colors = {}
+
+for i, (r, g, b) in enumerate(_256_colors_table.colors):
+    _256_colors[i] = '%02x%02x%02x' % (r, g, b)
