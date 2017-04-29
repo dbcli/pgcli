@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 import logging
 import re
-from itertools import count, repeat
+from itertools import count, repeat, chain
 import operator
 from collections import namedtuple, defaultdict
 from pgspecial.namedqueries import NamedQueries
@@ -51,7 +51,10 @@ def generate_alias(tbl):
         [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and l != '_'])
 
 class PGCompleter(Completer):
-    keywords = get_literals('keywords')
+    # keywords_tree: A dict mapping keywords to well known following keywords.
+    # e.g. 'CREATE': ['TABLE', 'USER', ...],
+    keywords_tree = get_literals('keywords', type_=dict)
+    keywords = tuple(set(chain(keywords_tree.keys(), *keywords_tree.values())))
     functions = get_literals('functions')
     datatypes = get_literals('datatypes')
 
@@ -649,7 +652,14 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, self.databases,
                                  meta='database')
 
-    def get_keyword_matches(self, _, word_before_cursor):
+    def get_keyword_matches(self, suggestion, word_before_cursor):
+        keywords = self.keywords_tree.keys()
+        # Get well known following keywords for the last token. If any, narrow
+        # candidates to this list.
+        next_keywords = self.keywords_tree.get(suggestion.last_token, [])
+        if next_keywords:
+            keywords = next_keywords
+
         casing = self.keyword_casing
         if casing == 'auto':
             if word_before_cursor and word_before_cursor[-1].islower():
@@ -658,9 +668,9 @@ class PGCompleter(Completer):
                 casing = 'upper'
 
         if casing == 'upper':
-            keywords = [k.upper() for k in self.keywords]
+            keywords = [k.upper() for k in keywords]
         else:
-            keywords = [k.lower() for k in self.keywords]
+            keywords = [k.lower() for k in keywords]
 
         return self.find_matches(word_before_cursor, keywords,
                                  mode='strict', meta='keyword')
