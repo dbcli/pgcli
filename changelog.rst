@@ -18,6 +18,7 @@ Internal changes:
 * Run pep8 checks in travis (Thanks: `Irina Truong`_).
 * Add pager wrapper for behave tests (Thanks: `Dick Marinus`_).
 * Behave quit pgcli nicely (Thanks: `Dick Marinus`_).
+* Behave test source command (Thanks: `Dick Marinus`_).
 
 1.5.1
 =====

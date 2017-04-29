@@ -7,6 +7,7 @@ This string is used to call the step in "*.feature" file.
 from __future__ import unicode_literals
 
 import pexpect
+import tempfile
 
 from behave import when
 import wrappers
@@ -19,6 +20,7 @@ def step_run_cli(context):
     """
     cli_cmd = context.conf.get('cli_command')
     context.cli = pexpect.spawnu(cli_cmd, cwd='..')
+    context.cli.logfile = open('/tmp/dmtest', 'a')
     context.exit_sent = False
     context.currentdb = context.conf['dbname']
 
@@ -46,3 +48,13 @@ def step_send_help(context):
     Send \? to see help.
     """
     context.cli.sendline('\?')
+
+
+@when(u'we send source command')
+def step_send_source_command(context):
+    with tempfile.NamedTemporaryFile() as f:
+        f.write(b'\?')
+        f.flush()
+        context.cli.sendline('\i {0}'.format(f.name))
+        wrappers.expect_exact(
+            context, context.conf['pager_boundary'] + '\r\n', timeout=5)

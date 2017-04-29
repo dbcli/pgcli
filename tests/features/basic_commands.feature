@@ -12,6 +12,12 @@ Feature: run the cli,
       and we send "\?" command
       then we see help output
 
+  Scenario: run source command
+     When we run dbcli
+      and we wait for prompt
+      and we send source command
+      then we see help output
+
   Scenario: run the cli and exit
      When we run dbcli
       and we wait for prompt
