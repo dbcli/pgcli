@@ -43,5 +43,43 @@ def step_edit_done_sql(context):
     # Cleanup the command line.
     context.cli.sendcontrol('c')
     # Cleanup the edited file.
-    if os.path.join(*context.editor_file_name) and os.path.exists(os.path.join(*context.editor_file_name)):
-        os.remove(os.path.join(*context.editor_file_name))
+    full_tmp_file_name = os.path.join(*context.editor_file_name)
+    if full_tmp_file_name and os.path.exists(full_tmp_file_name):
+        os.remove(full_tmp_file_name)
+
+
+@when(u'we tee output')
+def step_tee_ouptut(context):
+    context.tee_file_name = [
+        '..',
+        'tee_file_{0}.sql'.format(context.conf['vi'])
+    ]
+    if os.path.exists(os.path.join(*context.tee_file_name)):
+        os.remove(os.path.join(*context.tee_file_name))
+    context.cli.sendline('\o {0}'.format(context.tee_file_name[1]))
+    wrappers.expect_exact(
+        context, context.conf['pager_boundary'] + '\r\n', timeout=5)
+    wrappers.expect_exact(context, "Writing to file", timeout=5)
+    wrappers.expect_exact(
+        context, context.conf['pager_boundary'] + '\r\n', timeout=5)
+    wrappers.expect_exact(context, "Time", timeout=5)
+
+
+@when(u'we query "select 123456"')
+def step_query_select_123456(context):
+    context.cli.sendline('select 123456')
+
+
+@when(u'we notee output')
+def step_notee_output(context):
+    context.cli.sendline('notee')
+    wrappers.expect_exact(context, "Time", timeout=5)
+
+
+@then(u'we see 123456 in tee output')
+def step_see_123456_in_ouput(context):
+    with open(os.path.join(*context.tee_file_name)) as f:
+        assert '123456' in f.read()
+    if os.path.exists(os.path.join(*context.tee_file_name)):
+        os.remove(os.path.join(*context.tee_file_name))
+    context.atprompt = True
