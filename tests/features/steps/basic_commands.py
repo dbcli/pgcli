@@ -20,7 +20,6 @@ def step_run_cli(context):
     """
     cli_cmd = context.conf.get('cli_command')
     context.cli = pexpect.spawnu(cli_cmd, cwd='..')
-    context.cli.logfile = open('/tmp/dmtest', 'a')
     context.exit_sent = False
     context.currentdb = context.conf['dbname']
 
