@@ -46,7 +46,8 @@ Column = namedtuple(
 )
 Column.__new__.__defaults__ = (None, None, tuple(), False)
 
-Keyword = namedtuple('Keyword', [])
+Keyword = namedtuple('Keyword', ['last_token'])
+Keyword.__new__.__defaults__ = (None,)
 NamedQuery = namedtuple('NamedQuery', [])
 Datatype = namedtuple('Datatype', ['schema'])
 Alias = namedtuple('Alias', ['aliases'])
@@ -491,8 +492,8 @@ def suggest_based_on_last_token(token, stmt):
         if not schema:
             suggestions.append(Schema())
         return tuple(suggestions)
-    elif token_v == 'alter':
-        return (Keyword(),)
+    elif token_v in {'alter', 'create', 'drop'}:
+        return (Keyword(token_v.upper()),)
     elif token.is_keyword:
         # token is a keyword we haven't implemented any special handling for
         # go backwards in the query until we find one we do recognize
