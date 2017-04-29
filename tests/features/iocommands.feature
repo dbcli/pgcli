@@ -8,3 +8,14 @@ Feature: I/O commands
       and we exit the editor
       then we see dbcli prompt
       and we see the sql in prompt
+
+  Scenario: tee output from query
+     When we run dbcli
+      and we wait for prompt
+      and we tee output
+      and we wait for prompt
+      and we query "select 123456"
+      and we wait for prompt
+      and we notee output
+      and we wait for prompt
+      then we see 123456 in tee output

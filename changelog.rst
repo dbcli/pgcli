@@ -19,6 +19,7 @@ Internal changes:
 * Add pager wrapper for behave tests (Thanks: `Dick Marinus`_).
 * Behave quit pgcli nicely (Thanks: `Dick Marinus`_).
 * Behave test source command (Thanks: `Dick Marinus`_).
+* Test using behave the tee command (Thanks: `Dick Marinus`_).
 
 1.5.1
 =====
