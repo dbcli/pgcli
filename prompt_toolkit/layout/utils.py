@@ -19,7 +19,7 @@ def fragment_list_len(fragments):
         ``(style_str, text, mouse_handler)`` tuples.
     """
     ZeroWidthEscape = '[ZeroWidthEscape]'
-    return sum(len(item[1]) for item in fragments if item[0] != ZeroWidthEscape)
+    return sum(len(item[1]) for item in fragments if ZeroWidthEscape not in item[0])
 
 
 def fragment_list_width(fragments):
@@ -31,7 +31,7 @@ def fragment_list_width(fragments):
         ``(style_str, text, mouse_handler)`` tuples.
     """
     ZeroWidthEscape = '[ZeroWidthEscape]'
-    return sum(get_cwidth(c) for item in fragments for c in item[1] if item[0] != ZeroWidthEscape)
+    return sum(get_cwidth(c) for item in fragments for c in item[1] if ZeroWidthEscape not in item[0])
 
 
 def fragment_list_to_text(fragments):
@@ -42,7 +42,7 @@ def fragment_list_to_text(fragments):
         ``(style_str, text, mouse_handler)`` tuples.
     """
     ZeroWidthEscape = '[ZeroWidthEscape]'
-    return ''.join(item[1] for item in fragments if item[0] != ZeroWidthEscape)
+    return ''.join(item[1] for item in fragments if ZeroWidthEscape not in item[0])
 
 
 def split_lines(fragments):
