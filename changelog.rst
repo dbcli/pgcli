@@ -13,6 +13,7 @@ Bug fixes:
 ----------
 * Fixed external editor bug (issue #668). (Thanks: `Irina Truong`_).
 * Standardize command line option names. (Thanks: `Russell Davies`_)
+* Improve handling of ``lock_not_available`` error (issue #700). (Thanks: `Jackson Popkin <https://github.com/jdpopkin>`_)
 
 Internal changes:
 -----------------
