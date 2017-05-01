@@ -417,6 +417,12 @@ class Application(object):
         f = loop.create_future()
         self.future = f  # XXX: make sure to set this before calling '_redraw'.
 
+        # Counter for cancelling 'flush' timeouts. Every time when a key is
+        # pressed, we start a 'flush' timer for flushing our escape key. But
+        # when any subsequent input is received, a new timer is started and
+        # the current timer will be ignored.
+        flush_counter = [0]  # Non local.
+
         # Reset.
         self.reset()
         self._pre_run(pre_run)
@@ -445,16 +451,23 @@ class Application(object):
             if self.input.closed:
             	f.set_exception(EOFError)
             else:
+                # Increase this flush counter.
+                flush_counter[0] += 1
+                counter = flush_counter[0]
+
                 # Automatically flush keys.
                 # (_daemon needs to be set, otherwise, this will hang the
                 # application for .5 seconds before exiting.)
-                loop.run_in_executor(auto_flush_input, _daemon=True)
+                loop.run_in_executor(
+                    lambda: auto_flush_input(counter), _daemon=True)
 
-        def auto_flush_input():
+        def auto_flush_input(counter):
             # Flush input after timeout.
             # (Used for flushing the enter key.)
             time.sleep(self.input_timeout)
-            loop.call_from_executor(flush_input)
+
+            if flush_counter[0] == counter:
+                loop.call_from_executor(flush_input)
 
         def flush_input():
             if not self.is_done:
