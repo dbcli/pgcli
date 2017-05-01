@@ -793,7 +793,7 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
 
     # Choose which ever one has a valid value.
     database = database or dbname
-    user = username or username_opt
+    user = username_opt or username
 
     if dsn is not '':
         try:
