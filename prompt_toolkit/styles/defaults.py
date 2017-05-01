@@ -92,6 +92,13 @@ PROMPT_TOOLKIT_STYLE = [
 
     # Entering a Vi digraph.
     ('digraph',                                 '#4444ff'),
+
+    # Default styling of HTML elements.
+    ('i',                                       'italic'),
+    ('u',                                       'underline'),
+    ('b',                                       'bold'),
+    ('em',                                      'italic'),
+    ('strong',                                  'bold'),
 ]
 
 
