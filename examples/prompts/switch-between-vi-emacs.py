@@ -22,21 +22,14 @@ def run():
         else:
             event.app.editing_mode = EditingMode.VI
 
-    # Add a bottom toolbar to display the status.
-    style = Style.from_dict({
-        'toolbar': 'reverse',
-    })
-
-    def get_bottom_toolbar_text(app):
+    def bottom_toolbar(app):
         " Display the current input mode. "
-        text = 'Vi' if app.editing_mode == EditingMode.VI else 'Emacs'
-        return [
-            ('class:toolbar', ' [F4] %s ' % text)
-        ]
+        if app.editing_mode == EditingMode.VI:
+            return ' [F4] Vi '
+        else:
+            return ' [F4] Emacs '
 
-    prompt('> ', extra_key_bindings=bindings,
-           get_bottom_toolbar_text=get_bottom_toolbar_text,
-           style=style)
+    prompt('> ', extra_key_bindings=bindings, bottom_toolbar=bottom_toolbar)
 
 
 if __name__ == '__main__':

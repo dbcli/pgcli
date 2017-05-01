@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""
+The most simple prompt example.
+"""
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
 

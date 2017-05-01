@@ -30,7 +30,7 @@ def get_prompt_text(app):
 
 if __name__ == '__main__':
     # Option 1: Using a `get_prompt_text` function:
-    answer = prompt(get_prompt_text=get_prompt_text)
+    answer = prompt(get_prompt_text)
 
     # Option 2: Using ANSI escape sequences.
     before = '\001' + BEFORE_PROMPT + '\002'

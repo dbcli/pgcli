@@ -167,12 +167,12 @@ class Prompt(object):
     :param history: :class:`~prompt_toolkit.history.History` instance.
     :param clipboard: :class:`~prompt_toolkit.clipboard.base.Clipboard` instance.
         (e.g. :class:`~prompt_toolkit.clipboard.in_memory.InMemoryClipboard`)
-    :param get_bottom_toolbar_text: Optional callable which takes an
+    :param bottom_toolbar: Formatted text or callable which takes an
         :class:`~prompt_toolkit.application.Application` and is supposed to
         return formatted text.
     :param get_continuation_text: An optional callable that takes a
         Application and width as input and should return formatted text.
-    :param get_prompt_text: An optional callable that takes an 
+    :param get_prompt_text: An optional callable that takes an
         :class:`~prompt_toolkit.application.Application` and is supposed to
         return formatted text. (To be used instead of passing ``message``.)
     :param display_completions_in_columns: `bool` or
@@ -194,8 +194,8 @@ class Prompt(object):
     _fields = (
         'message', 'lexer', 'completer', 'is_password', 'editing_mode',
         'extra_key_bindings', 'include_default_key_bindings', 'is_password',
-        'get_bottom_toolbar_text', 'style', 'get_prompt_text',
-        'get_rprompt_text', 'multiline', 'get_continuation_text',
+        'bottom_toolbar', 'style',
+        'rprompt', 'multiline', 'get_continuation_text',
         'wrap_lines', 'history', 'enable_history_search',
         'complete_while_typing',
         'display_completions_in_columns', 'mouse_support', 'auto_suggest',
@@ -226,10 +226,9 @@ class Prompt(object):
             style=None,
             history=None,
             clipboard=None,
-            get_prompt_text=None,
             get_continuation_text=None,
-            get_rprompt_text=None,
-            get_bottom_toolbar_text=None,
+            rprompt=None,
+            bottom_toolbar=None,
             display_completions_in_columns=False,
             get_title=None,
             mouse_support=False,
@@ -245,14 +244,9 @@ class Prompt(object):
             input=None,
             output=None):
         assert loop is None or isinstance(loop, EventLoop)
-        assert get_bottom_toolbar_text is None or callable(get_bottom_toolbar_text)
-        assert get_prompt_text is None or callable(get_prompt_text)
-        assert get_rprompt_text is None or callable(get_rprompt_text)
-        assert not (message and get_prompt_text)
         assert style is None or isinstance(style, BaseStyle)
         assert extra_input_processor is None or isinstance(extra_input_processor, Processor)
         assert extra_key_bindings is None or isinstance(extra_key_bindings, KeyBindingsBase)
-        message = to_formatted_text(message)
 
         # Defaults.
         self._close_loop = loop is None
@@ -362,11 +356,11 @@ class Prompt(object):
 
         # Create bottom toolbars.
         bottom_toolbar = ConditionalContainer(
-            Window(FormattedTextControl(lambda app: self.get_bottom_toolbar_text(app)),
-                                    style='class:toolbar',
+            Window(FormattedTextControl(lambda app: self._get_bottom_toolbar(app)),
+                                    style='class:bottom-toolbar',
                                     height=Dimension.exact(1)),
             filter=~is_done & RendererHeightIsKnown() &
-                    Condition(lambda app: self.get_bottom_toolbar_text is not None))
+                    Condition(lambda app: self.bottom_toolbar is not None))
 
         search_toolbar = SearchToolbar(search_buffer)
         search_buffer_control = BufferControl(
@@ -556,8 +550,8 @@ class Prompt(object):
             default='', patch_stdout=None, true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
             is_password=None, extra_key_bindings=None, include_default_key_bindings=None,
-            get_bottom_toolbar_text=None, style=None, get_prompt_text=None,
-            get_rprompt_text=None, multiline=None,
+            bottom_toolbar=None, style=None,
+            rprompt=None, multiline=None,
             get_continuation_text=None, wrap_lines=None, history=None,
             enable_history_search=None,
             complete_while_typing=None, display_completions_in_columns=None,
@@ -599,8 +593,8 @@ class Prompt(object):
             default='', patch_stdout=None, true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
             is_password=None, extra_key_bindings=None, include_default_key_bindings=None,
-            get_bottom_toolbar_text=None, style=None, get_prompt_text=None,
-            get_rprompt_text=None, multiline=None,
+            bottom_toolbar=None, style=None,
+            rprompt=None, multiline=None,
             get_continuation_text=None, wrap_lines=None, history=None,
             enable_history_search=None,
             complete_while_typing=None, display_completions_in_columns=None,
@@ -671,27 +665,42 @@ class Prompt(object):
         return Dimension()
 
     def _get_prompt_text(self, app):
-        if self.get_prompt_text is None:
-            prompt = self.message 
+        if callable(self.message):
+            message = self.message(app)
         else:
-            prompt = self.get_prompt_text(app)
+            message = self.message
 
-        return to_formatted_text(prompt, style='class:prompt')
+        return to_formatted_text(message, style='class:prompt')
 
     def _get_rprompt_text(self, app):
-        if self.get_rprompt_text:
-            return to_formatted_text(self.get_rprompt_text(app), style='class:rprompt')
-        return []
+        if self.rprompt is None:
+            return []
+
+        if callable(self.rprompt):
+            rprompt = self.rprompt(app)
+        else:
+            rprompt = self.rprompt
+
+        return to_formatted_text(rprompt, style='class:rprompt')
 
     def _get_continuation_text(self, app, width):
         if self.get_continuation_text:
             return to_formatted_text(self.get_continuation_text(app, width))
         return []
 
+    def _get_bottom_toolbar(self, app):
+        bottom_toolbar = self.bottom_toolbar
+
+        if bottom_toolbar is None:
+            return []
+
+        if callable(bottom_toolbar):
+            bottom_toolbar = bottom_toolbar(app)
+
+        return to_formatted_text(bottom_toolbar, style='class:bottom-toolbar.text')
+
     def _get_title(self):
-        if self.get_title is None:
-            return
-        else:
+        if self.get_title is not None:
             return self.get_title()
 
     def close(self):

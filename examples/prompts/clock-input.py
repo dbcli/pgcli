@@ -7,7 +7,7 @@ from prompt_toolkit.shortcuts import prompt
 import datetime
 
 
-def get_prompt_text(app):
+def get_prompt(app):
     " Tokens to be shown before the prompt. "
     now = datetime.datetime.now()
     return [
@@ -17,7 +17,7 @@ def get_prompt_text(app):
 
 
 def main():
-    result = prompt(get_prompt_text=get_prompt_text, refresh_interval=.5)
+    result = prompt(get_prompt, refresh_interval=.5)
     print('You said: %s' % result)
 
 

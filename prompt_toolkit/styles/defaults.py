@@ -99,6 +99,9 @@ PROMPT_TOOLKIT_STYLE = [
     ('b',                                       'bold'),
     ('em',                                      'italic'),
     ('strong',                                  'bold'),
+
+    # Prompt bottom toolbar
+    ('bottom-toolbar',                          'reverse'),
 ]
 
 
