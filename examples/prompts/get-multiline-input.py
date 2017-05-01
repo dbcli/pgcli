@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit import prompt
 
 
-def continuation_text(app, width):
+def prompt_continuation(app, width):
     " The continuation: display dots before all the following lines. "
 
     # (make sure that the width of the continuation does not exceed the given
@@ -14,5 +14,5 @@ def continuation_text(app, width):
 if __name__ == '__main__':
     print('Press [Meta+Enter] or [Esc] followed by [Enter] to accept input.')
     answer = prompt('Multiline input: ', multiline=True,
-                    get_continuation_text=continuation_text)
+                    prompt_continuation=prompt_continuation)
     print('You said: %s' % answer)

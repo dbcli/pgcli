@@ -131,6 +131,9 @@ class Prompt(object):
     (a unicode object), a list of ``(style_str, text)`` tuples or an HTML object.
 
     :param message: Plain text or formatted text to be shown before the prompt.
+        This can also be a callable that takes an
+        :class:`~prompt_toolkit.application.Application` and returns formatted
+        text.
     :param multiline: `bool` or :class:`~prompt_toolkit.filters.AppFilter`.
         When True, prefer a layout that is more adapted for multiline input.
         Text after newlines is automatically indented, and search/arg input is
@@ -170,11 +173,9 @@ class Prompt(object):
     :param bottom_toolbar: Formatted text or callable which takes an
         :class:`~prompt_toolkit.application.Application` and is supposed to
         return formatted text.
-    :param get_continuation_text: An optional callable that takes a
-        Application and width as input and should return formatted text.
-    :param get_prompt_text: An optional callable that takes an
-        :class:`~prompt_toolkit.application.Application` and is supposed to
-        return formatted text. (To be used instead of passing ``message``.)
+    :param prompt_continuation: Text that needs to be displayed for a multiline
+        prompt continuation. This can either be formatted text or a callable
+        that takes a Application and width as input and returns formatted text.
     :param display_completions_in_columns: `bool` or
         :class:`~prompt_toolkit.filters.AppFilter`. Display the completions in
         multiple columns.
@@ -195,7 +196,7 @@ class Prompt(object):
         'message', 'lexer', 'completer', 'is_password', 'editing_mode',
         'extra_key_bindings', 'include_default_key_bindings', 'is_password',
         'bottom_toolbar', 'style',
-        'rprompt', 'multiline', 'get_continuation_text',
+        'rprompt', 'multiline', 'prompt_continuation',
         'wrap_lines', 'history', 'enable_history_search',
         'complete_while_typing',
         'display_completions_in_columns', 'mouse_support', 'auto_suggest',
@@ -226,7 +227,7 @@ class Prompt(object):
             style=None,
             history=None,
             clipboard=None,
-            get_continuation_text=None,
+            prompt_continuation=None,
             rprompt=None,
             bottom_toolbar=None,
             display_completions_in_columns=False,
@@ -296,7 +297,7 @@ class Prompt(object):
         # Create functions that will dynamically split the prompt. (If we have
         # a multiline prompt.)
         has_before_fragments, get_prompt_text_1, get_prompt_text_2 = \
-            _split_multiline_prompt(self._get_prompt_text)
+            _split_multiline_prompt(self._get_prompt)
 
         # Create buffers list.
         def accept(app, buff):
@@ -391,7 +392,7 @@ class Prompt(object):
                 # In multiline mode, use the window margin to display
                 # the prompt and continuation fragments.
                 ConditionalMargin(
-                    PromptMargin(get_prompt_text_2, self._get_continuation_text),
+                    PromptMargin(get_prompt_text_2, self._get_continuation),
                     filter=dyncond('multiline'),
                 )
             ],
@@ -438,7 +439,7 @@ class Prompt(object):
                     )),
                     # The right prompt.
                     Float(right=0, top=0, hide_when_covering_content=True,
-                          content=_RPrompt(self._get_rprompt_text)),
+                          content=_RPrompt(self._get_rprompt)),
                 ]
             ),
             ValidationToolbar(),
@@ -552,7 +553,7 @@ class Prompt(object):
             is_password=None, extra_key_bindings=None, include_default_key_bindings=None,
             bottom_toolbar=None, style=None,
             rprompt=None, multiline=None,
-            get_continuation_text=None, wrap_lines=None, history=None,
+            prompt_continuation=None, wrap_lines=None, history=None,
             enable_history_search=None,
             complete_while_typing=None, display_completions_in_columns=None,
             auto_suggest=None, validator=None, clipboard=None,
@@ -595,7 +596,7 @@ class Prompt(object):
             is_password=None, extra_key_bindings=None, include_default_key_bindings=None,
             bottom_toolbar=None, style=None,
             rprompt=None, multiline=None,
-            get_continuation_text=None, wrap_lines=None, history=None,
+            prompt_continuation=None, wrap_lines=None, history=None,
             enable_history_search=None,
             complete_while_typing=None, display_completions_in_columns=None,
             auto_suggest=None, validator=None, clipboard=None,
@@ -664,7 +665,7 @@ class Prompt(object):
 
         return Dimension()
 
-    def _get_prompt_text(self, app):
+    def _get_prompt(self, app):
         if callable(self.message):
             message = self.message(app)
         else:
@@ -672,7 +673,7 @@ class Prompt(object):
 
         return to_formatted_text(message, style='class:prompt')
 
-    def _get_rprompt_text(self, app):
+    def _get_rprompt(self, app):
         if self.rprompt is None:
             return []
 
@@ -683,10 +684,17 @@ class Prompt(object):
 
         return to_formatted_text(rprompt, style='class:rprompt')
 
-    def _get_continuation_text(self, app, width):
-        if self.get_continuation_text:
-            return to_formatted_text(self.get_continuation_text(app, width))
-        return []
+    def _get_continuation(self, app, width):
+        prompt_continuation = self.prompt_continuation
+
+        if prompt_continuation is None:
+            return []
+
+        if callable(prompt_continuation):
+            prompt_continuation = prompt_continuation(app, width)
+
+        return to_formatted_text(
+            prompt_continuation, style='class:prompt-continuation')
 
     def _get_bottom_toolbar(self, app):
         bottom_toolbar = self.bottom_toolbar
@@ -697,7 +705,8 @@ class Prompt(object):
         if callable(bottom_toolbar):
             bottom_toolbar = bottom_toolbar(app)
 
-        return to_formatted_text(bottom_toolbar, style='class:bottom-toolbar.text')
+        return to_formatted_text(
+            bottom_toolbar, style='class:bottom-toolbar.text')
 
     def _get_title(self):
         if self.get_title is not None:
