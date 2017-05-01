@@ -4,9 +4,8 @@ Posix asyncio event loop.
 from __future__ import unicode_literals
 
 from ..input import Input
-from .base import EventLoop, INPUT_TIMEOUT
+from .base import EventLoop
 from .future import Future
-from .utils import AsyncioTimeout
 import asyncio
 import six
 import textwrap
@@ -24,9 +23,6 @@ class PosixAsyncioEventLoop(EventLoop):
         self._input = None
         self._input_ready_cb = None
 
-        self._timeout = AsyncioTimeout(
-            INPUT_TIMEOUT, self._timeout_handler, self.loop)
-
     try:
         six.exec_(textwrap.dedent('''
     async def run_as_coroutine(self, future):
@@ -35,21 +31,17 @@ class PosixAsyncioEventLoop(EventLoop):
         if self.closed:
             raise Exception('Event loop already closed.')
 
-        try:
-            # Create a new asyncio Future that blocks this coroutine until the
-            # prompt_toolkit Future is ready.
-            stopped_f = loop.create_future()
+        # Create a new asyncio Future that blocks this coroutine until the
+        # prompt_toolkit Future is ready.
+        stopped_f = self.loop.create_future()
 
-            # Block this coroutine until stop() has been called.
-            @future.add_done_callback
-            def done(_):
-                stopped_f.set_result(None)
+        # Block this coroutine until stop() has been called.
+        @future.add_done_callback
+        def done(_):
+            stopped_f.set_result(None)
 
-            # Wait until f has been set.
-            await stopped_f
-        finally:
-            # Don't trigger any timeout events anymore.
-            self._timeout.stop()
+        # Wait until f has been set.
+        await stopped_f
     '''), globals(), locals())
     except SyntaxError:
         def run_as_coroutine(self, future):
@@ -118,9 +110,6 @@ class PosixAsyncioEventLoop(EventLoop):
         def ready():
             # Tell the callback that input's ready.
             input_ready_callback()
-
-            # Reset timeout.
-            self._timeout.reset()
 
         self.add_reader(input.stdin.fileno(), ready)
 
