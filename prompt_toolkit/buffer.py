@@ -1031,12 +1031,20 @@ class Buffer(object):
             if '\n' in overwritten_text:
                 overwritten_text = overwritten_text[:overwritten_text.find('\n')]
 
-            self.text = otext[:ocpos] + data + otext[ocpos + len(overwritten_text):]
+            text = otext[:ocpos] + data + otext[ocpos + len(overwritten_text):]
         else:
-            self.text = otext[:ocpos] + data + otext[ocpos:]
+            text = otext[:ocpos] + data + otext[ocpos:]
 
         if move_cursor:
-            self.cursor_position += len(data)
+            cpos = self.cursor_position + len(data)
+        else:
+            cpos = self.cursor_position
+
+        # Set new document.
+        # (Set text and cursor position at the same time. Otherwise, setting
+        # the text will fire a change event before the cursor position has been
+        # set. It works better to have this atomic.)
+        self.document = Document(text, cpos)
 
         # Fire 'on_text_insert' event.
         if fire_event:  # XXX: rename to `start_complete`.
