@@ -282,7 +282,7 @@ class Frame(object):
                 fill(width=1, height=1, char=BORDER.TOP_LEFT),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char='|'),
-                Label(' {} '.format(title), style='class:frame-label', loop=loop,
+                Label(' {0} '.format(title), style='class:frame-label', loop=loop,
                       dont_extend_width=True),
                 fill(width=1, height=1, char='|'),
                 fill(char=BORDER.HORIZONTAL),
@@ -413,7 +413,7 @@ class Checkbox(object):
 
         self.container = VSplit([
             self.window,
-            Label(loop=loop, text=' {}'.format(text))
+            Label(loop=loop, text=' {0}'.format(text))
         ], style='class:checkbox')
 
     def _get_text_fragments(self, app):
@@ -565,7 +565,7 @@ class ProgressBar(object):
     def percentage(self, value):
         assert isinstance(value, int)
         self._percentage = value
-        self.label.text = '{}%'.format(value)
+        self.label.text = '{0}%'.format(value)
 
     def __pt_container__(self):
         return self.container

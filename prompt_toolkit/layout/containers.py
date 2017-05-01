@@ -208,7 +208,7 @@ class HSplit(Container):
         if self.report_dimensions_callback:
             self.report_dimensions_callback(app, sizes)
 
-        style = '{} {}'.format(parent_style, self.style)
+        style = parent_style + ' ' + self.style
 
         if sizes is None:
             self.window_too_small.write_to_screen(
@@ -471,7 +471,7 @@ class VSplit(Container):
         if self.report_dimensions_callback:
             self.report_dimensions_callback(app, sizes)  # XXX: substract sizes of additional children!!!
 
-        style = '{} {}'.format(parent_style, self.style)
+        style = parent_style + ' ' + self.style
 
         # If there is not enough space.
         if sizes is None:
@@ -1597,7 +1597,7 @@ class Window(Container):
 
     def _apply_style(self, app, new_screen, write_position, parent_style):
         # Apply `self.style`.
-        style = '{} {}'.format(parent_style, self.style)
+        style = parent_style + ' ' + self.style
 
         if app.layout.current_window == self:
             style += ' class:focussed'
