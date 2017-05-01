@@ -308,8 +308,8 @@ class FormattedTextControl(UIControl):
         def get_cursor_position(fragment='[SetCursorPosition]'):
             for y, line in enumerate(fragment_lines):
                 x = 0
-                for t, text in line:
-                    if t == fragment:
+                for style_str, text in line:
+                    if fragment in style_str:
                         return Point(x=x, y=y)
                     x += len(text)
             return None
