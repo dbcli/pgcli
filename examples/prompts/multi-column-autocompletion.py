@@ -5,7 +5,7 @@ Similar to the autocompletion example. But display all the completions in multip
 from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit import prompt
+from prompt_toolkit.shortcuts import prompt, CompleteStyle
 
 
 animal_completer = WordCompleter([
@@ -45,7 +45,8 @@ animal_completer = WordCompleter([
 
 
 def main():
-    text = prompt('Give some animals: ', completer=animal_completer, display_completions_in_columns=True)
+    text = prompt('Give some animals: ', completer=animal_completer,
+                  complete_style=CompleteStyle.MULTI_COLUMN)
     print('You said: %s' % text)
 
 

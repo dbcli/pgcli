@@ -5,10 +5,8 @@ binding a custom handler to the Tab key.
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit import prompt
+from prompt_toolkit.shortcuts import prompt, CompleteStyle
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.key_binding.bindings.completion import display_completions_like_readline
-from prompt_toolkit.key_binding import KeyBindings
 
 
 animal_completer = WordCompleter([
@@ -20,19 +18,9 @@ animal_completer = WordCompleter([
 ], ignore_case=True)
 
 
-# Create key bindings registry with a custom binding for the Tab key that
-# displays completions like GNU readline.
-bindings = KeyBindings()
-bindings.add('tab')(display_completions_like_readline)
-
-
 def main():
     text = prompt('Give some animals: ', completer=animal_completer,
-                  extra_key_bindings=bindings,
-
-                  # Important: for this to work: `complete_while_typing` needs
-                  #            to be False.
-                  complete_while_typing=False)
+                  complete_style=CompleteStyle.READLINE_LIKE)
     print('You said: %s' % text)
 
 

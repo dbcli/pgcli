@@ -39,6 +39,7 @@ from prompt_toolkit.eventloop.defaults import create_event_loop #, create_asynci
 from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_simple_filter, Condition
 from prompt_toolkit.history import InMemoryHistory, DynamicHistory
 from prompt_toolkit.input.defaults import create_input
+from prompt_toolkit.key_binding.bindings.completion import display_completions_like_readline
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, DynamicKeyBindings, merge_key_bindings, ConditionalKeyBindings, KeyBindingsBase
 from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
@@ -70,6 +71,7 @@ __all__ = (
     'prompt_async',
     'confirm',
     'create_confirm_prompt',  # Used by '_display_completions_like_readline'.
+    'CompleteStyle',
 )
 
 
@@ -118,6 +120,13 @@ class _RPrompt(Window):
 def _true(value):
     " Test whether `value` is True. In case of a SimpleFilter, call it. "
     return to_simple_filter(value)()
+
+
+class CompleteStyle:
+    " How to display autocompletions for the prompt. "
+    COLUMN = 'COLUMN'
+    MULTI_COLUMN = 'MULTI_COLUMN'
+    READLINE_LIKE = 'READLINE_LIKE'
 
 
 class Prompt(object):
@@ -176,9 +185,8 @@ class Prompt(object):
     :param prompt_continuation: Text that needs to be displayed for a multiline
         prompt continuation. This can either be formatted text or a callable
         that takes a Application and width as input and returns formatted text.
-    :param display_completions_in_columns: `bool` or
-        :class:`~prompt_toolkit.filters.AppFilter`. Display the completions in
-        multiple columns.
+    :param complete_style: ``CompleteStyle.COLUMN``,
+        ``CompleteStyle.MULTI_COLUMN`` or ``CompleteStyle.READLINE_LIKE``.
     :param get_title: Callable that returns the title to be displayed in the
         terminal.
     :param mouse_support: `bool` or :class:`~prompt_toolkit.filters.AppFilter`
@@ -199,7 +207,7 @@ class Prompt(object):
         'rprompt', 'multiline', 'prompt_continuation',
         'wrap_lines', 'history', 'enable_history_search',
         'complete_while_typing',
-        'display_completions_in_columns', 'mouse_support', 'auto_suggest',
+        'complete_style', 'mouse_support', 'auto_suggest',
         'clipboard', 'get_title', 'validator', 'patch_stdout',
         'refresh_interval', 'extra_input_processor', 'default',
         'enable_system_bindings', 'enable_open_in_editor',
@@ -223,6 +231,7 @@ class Prompt(object):
             validator=None,
             completer=None,
             reserve_space_for_menu=8,
+            complete_style=None,
             auto_suggest=None,
             style=None,
             history=None,
@@ -230,7 +239,6 @@ class Prompt(object):
             prompt_continuation=None,
             rprompt=None,
             bottom_toolbar=None,
-            display_completions_in_columns=False,
             get_title=None,
             mouse_support=False,
             extra_input_processor=None,
@@ -317,7 +325,8 @@ class Prompt(object):
                 # objects.)
             complete_while_typing=Condition(lambda:
                 _true(self.complete_while_typing) and not
-                _true(self.enable_history_search)),
+                _true(self.enable_history_search) and not
+                self.complete_style == CompleteStyle.READLINE_LIKE),
             enable_history_search=dyncond('enable_history_search'),
             validator=DynamicValidator(lambda: self.validator),
             completer=DynamicCompleter(lambda: self.completer),
@@ -398,6 +407,14 @@ class Prompt(object):
             ],
             wrap_lines=dyncond('wrap_lines'))
 
+        @Condition
+        def multi_column_complete_style(app):
+            return self.complete_style == CompleteStyle.MULTI_COLUMN
+
+        @Condition
+        def readline_complete_style(app):
+            return self.complete_style == CompleteStyle.READLINE_LIKE
+
         # Build the layout.
         layout = HSplit([
             # The main input, with completion menus floating on top of it.
@@ -428,15 +445,13 @@ class Prompt(object):
                               max_height=16,
                               scroll_offset=1,
                               extra_filter=has_focus(default_buffer) &
-                                  ~dyncond('display_completions_in_columns'),
-                    )),
+                                  ~multi_column_complete_style)),
                     Float(xcursor=True,
                           ycursor=True,
                           content=MultiColumnCompletionsMenu(
                               show_meta=True,
                               extra_filter=has_focus(default_buffer) &
-                                  dyncond('display_completions_in_columns'),
-                    )),
+                                  multi_column_complete_style)),
                     # The right prompt.
                     Float(right=0, top=0, hide_when_covering_content=True,
                           content=_RPrompt(self._get_rprompt)),
@@ -469,6 +484,11 @@ class Prompt(object):
         def _(event):
             " Accept input when enter has been pressed. "
             self._default_buffer.validate_and_handle(event.app)
+
+        @prompt_bindings.add('tab', filter=readline_complete_style)
+        def _(event):
+            " Display completions (like readline). "
+            display_completions_like_readline(event)
 
         # Create application
         application = Application(
@@ -555,7 +575,7 @@ class Prompt(object):
             rprompt=None, multiline=None,
             prompt_continuation=None, wrap_lines=None, history=None,
             enable_history_search=None,
-            complete_while_typing=None, display_completions_in_columns=None,
+            complete_while_typing=None, complete_style=None,
             auto_suggest=None, validator=None, clipboard=None,
             mouse_support=None, get_title=None, extra_input_processor=None,
             reserve_space_for_menu=None,
@@ -598,7 +618,7 @@ class Prompt(object):
             rprompt=None, multiline=None,
             prompt_continuation=None, wrap_lines=None, history=None,
             enable_history_search=None,
-            complete_while_typing=None, display_completions_in_columns=None,
+            complete_while_typing=None, complete_style=None,
             auto_suggest=None, validator=None, clipboard=None,
             mouse_support=None, get_title=None, extra_input_processor=None,
             reserve_space_for_menu=None,
@@ -649,7 +669,8 @@ class Prompt(object):
     def _get_default_buffer_control_height(self, app):
         # If there is an autocompletion menu to be shown, make sure that our
         # layout has at least a minimal height in order to display it.
-        if self.completer is not None:
+        if (self.completer is not None and
+                self.complete_style != CompleteStyle.READLINE_LIKE):
             space = self.reserve_space_for_menu
         else:
             space = 0
