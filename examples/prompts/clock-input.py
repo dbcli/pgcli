@@ -12,7 +12,7 @@ def get_prompt_text(app):
     now = datetime.datetime.now()
     return [
         ('bg:#008800 #ffffff', '%s:%s:%s' % (now.hour, now.minute, now.second)),
-        ('', ' Enter something: ')
+        ('bg:cornsilk fg:maroon', ' Enter something: ')
     ]
 
 

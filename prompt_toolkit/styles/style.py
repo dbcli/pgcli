@@ -5,10 +5,14 @@ from __future__ import unicode_literals, absolute_import
 import itertools
 import re
 from .base import BaseStyle, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
+from .named_colors import NAMED_COLORS
 
 __all__ = (
     'Style',
 )
+
+_named_colors_lowercase = dict(
+    (k.lower(), v.lstrip('#')) for k, v in NAMED_COLORS.items())
 
 
 def _colorformat(text):
@@ -18,14 +22,30 @@ def _colorformat(text):
     Like in Pygments, but also support the ANSI color names.
     (These will map to the colors of the 16 color palette.)
     """
+    # ANSI color names.
+    if text in ANSI_COLOR_NAMES:
+        return text
+
+    # 140 named colors.
+    try:
+        # Replace by 'hex' value.
+        return _named_colors_lowercase[text.lower()]
+    except KeyError:
+        pass
+
+    # Hex codes.
     if text[0:1] == '#':
         col = text[1:]
         if col in ANSI_COLOR_NAMES:
+            # Keep this for backwards-compatibility (Pygments does it).
+            # I don't like the '#' prefix for named colors.
             return col
         elif len(col) == 6:
             return col
         elif len(col) == 3:
             return col[0]*2 + col[1]*2 + col[2]*2
+
+    # Default.
     elif text in ('', 'default'):
         return text
 
