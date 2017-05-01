@@ -116,7 +116,7 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
     # When the previous screen has a different size, redraw everything anyway.
     # Also when we are done. (We meight take up less rows, so clearing is important.)
     if is_done or not previous_screen or previous_width != width:  # XXX: also consider height??
-        current_pos = move_cursor(Point(0, 0))
+        current_pos = move_cursor(Point(x=0, y=0))
         reset_attributes()
         output.erase_down()
 
@@ -150,7 +150,7 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
             # draw the output. (Because of the performance, we don't call
             # `Char.__ne__`, but inline the same expression.)
             if new_char.char != old_char.char or new_char.style != old_char.style:
-                current_pos = move_cursor(Point(y=y, x=c))
+                current_pos = move_cursor(Point(x=c, y=y))
 
                 # Send injected escape sequences to output.
                 if c in zero_width_escapes_row:
@@ -163,7 +163,7 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
 
         # If the new line is shorter, trim it.
         if previous_screen and new_max_line_len < previous_max_line_len:
-            current_pos = move_cursor(Point(y=y, x=new_max_line_len+1))
+            current_pos = move_cursor(Point(x=new_max_line_len+1, y=y))
             reset_attributes()
             output.erase_end_of_line()
 
@@ -178,11 +178,11 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
     # (If the scrolling is actually wanted, the layout can still be build in a
     # way to behave that way by setting a dynamic height.)
     if current_height > previous_screen.height:
-        current_pos = move_cursor(Point(y=current_height - 1, x=0))
+        current_pos = move_cursor(Point(x=0, y=current_height - 1))
 
     # Move cursor:
     if is_done:
-        current_pos = move_cursor(Point(y=current_height, x=0))
+        current_pos = move_cursor(Point(x=0, y=current_height))
         output.erase_down()
     else:
         current_pos = move_cursor(

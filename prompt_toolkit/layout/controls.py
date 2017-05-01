@@ -150,7 +150,7 @@ class UIContent(object):
 
         self.get_line = get_line
         self.line_count = line_count
-        self.cursor_position = cursor_position or Point(0, 0)
+        self.cursor_position = cursor_position or Point(x=0, y=0)
         self.menu_position = menu_position
         self.show_cursor = show_cursor
 
@@ -618,7 +618,7 @@ class BufferControl(UIControl):
 
         def translate_rowcol(row, col):
             " Return the content column for this coordinate. "
-            return Point(y=row, x=get_processed_line(row).source_to_display(col))
+            return Point(x=get_processed_line(row).source_to_display(col), y=row)
 
         def get_line(i):
             " Return the fragments for a given line number. "

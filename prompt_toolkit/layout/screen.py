@@ -13,7 +13,7 @@ __all__ = (
 )
 
 
-Point = namedtuple('Point', 'y x')
+Point = namedtuple('Point', 'x y')
 Size = namedtuple('Size', 'rows columns')
 
 
@@ -143,7 +143,7 @@ class Screen(object):
         try:
             return self.cursor_positions[window]
         except KeyError:
-            return Point(0, 0)
+            return Point(x=0, y=0)
 
     def get_menu_position(self, window):
         """
@@ -156,7 +156,7 @@ class Screen(object):
             try:
                 return self.cursor_positions[window]
             except KeyError:
-                return Point(0, 0)
+                return Point(x=0, y=0)
 
     def replace_all_styles(self, style_str):  # TODO: this is used for Aborted. shouldn't this be an append????
         """

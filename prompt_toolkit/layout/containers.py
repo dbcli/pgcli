@@ -1533,14 +1533,14 @@ class Window(Container):
             except KeyError:
                 # Normally this should never happen. (It is a bug, if it happens.)
                 # But to be sure, return (0, 0)
-                return Point(y=0, x=0)
+                return Point(x=0, y=0)
 
                 # raise ValueError(
                 #     'Invalid position. row=%r col=%r, vertical_scroll=%r, '
                 #     'horizontal_scroll=%r, height=%r' %
                 #     (row, col, vertical_scroll, horizontal_scroll, write_position.height))
             else:
-                return Point(y=y, x=x)
+                return Point(x=x, y=y)
 
         # Set cursor and menu positions.
         if ui_content.cursor_position:
@@ -1790,7 +1790,7 @@ class Window(Container):
 
         Set `self.horizontal_scroll/vertical_scroll`.
         """
-        cursor_position = ui_content.cursor_position or Point(0, 0)
+        cursor_position = ui_content.cursor_position or Point(x=0, y=0)
 
         # Without line wrapping, we will never have to scroll vertically inside
         # a single line.
