@@ -140,9 +140,12 @@ class ANSI(object):
     """
     ANSI formatted text.
     Take something ANSI escaped text, for use as a formatted string.
+
+    Characters between \001 and \002 are supposed to have a zero width when
+    printed, but these are literally sent to the terminal output. This can be
+    used for instance, for inserting Final Term prompt commands.
+    They will be translated into a prompt_toolkit '[ZeroWidthEscape]' fragment.
     """
-    # TODO: Turn text between \001 and \002 into '[ZeroWidthEscape]'.
-    #       https://github.com/jonathanslenders/python-prompt-toolkit/issues/148
     def __init__(self, value):
         self.value = value
         self._formatted_text = []
@@ -172,6 +175,18 @@ class ANSI(object):
         while True:
             csi = False
             c = yield
+
+            # Everything between \001 and \002 should become a ZeroWidthEscape.
+            if c == '\001':
+                escaped_text = ''
+                while c != '\002':
+                    c = yield
+                    if c == '\002':
+                        formatted_text.append(('[ZeroWidthEscape]', escaped_text))
+                        c = yield
+                        break
+                    else:
+                        escaped_text += c
 
             if c == '\x1b':
                 # Start of color escape sequence.
@@ -204,6 +219,12 @@ class ANSI(object):
                             # Ignore unspported sequence.
                             break
             else:
+                # Add current character.
+                # NOTE: At this point, we could merge the current character
+                #       into the previous tuple if the style did not change,
+                #       however, it's not worth the effort given that it will
+                #       be "Exploded" once again when it's rendered to the
+                #       output.
                 formatted_text.append((style, c))
 
     def _select_graphic_rendition(self, attrs):
@@ -288,7 +309,7 @@ class ANSI(object):
         if self._color:
             result.append('#' + self._color)
         if self._bgcolor:
-            result.append('bg: #' + self._bgcolor)
+            result.append('bg:#' + self._bgcolor)
         if self._bold:
             result.append('bold')
         if self._underline:

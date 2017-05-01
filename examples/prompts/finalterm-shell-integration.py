@@ -6,6 +6,7 @@ See: https://iterm2.com/finalterm.html
 from __future__ import unicode_literals
 
 from prompt_toolkit import prompt
+from prompt_toolkit.layout.formatted_text import ANSI
 import sys
 
 
@@ -28,8 +29,15 @@ def get_prompt_text(app):
 
 
 if __name__ == '__main__':
+    # Option 1: Using a `get_prompt_text` function:
     answer = prompt(get_prompt_text=get_prompt_text)
 
+    # Option 2: Using ANSI escape sequences.
+    before = '\001' + BEFORE_PROMPT + '\002'
+    after = '\001' + AFTER_PROMPT + '\002'
+    answer = prompt(ANSI('{}Say something: # {}'.format(before, after)))
+
+    # Output.
     sys.stdout.write(BEFORE_OUTPUT)
     print('You said: %s' % answer)
     sys.stdout.write(AFTER_OUTPUT.format(command_status=0))

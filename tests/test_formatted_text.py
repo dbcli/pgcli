@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from prompt_toolkit.layout.formatted_text import HTML, to_formatted_text
+from prompt_toolkit.layout.formatted_text import HTML, ANSI, to_formatted_text
 
 
 def test_basic_html():
@@ -32,4 +32,27 @@ def test_html_with_fg_bg():
     assert to_formatted_text(html) == [
         ('fg:#ff0000 bg:ansired', 'hello '),
         ('class:world fg:ansiblue bg:ansired', 'world'),
+    ]
+
+
+def test_ansi_formatting():
+    value = ANSI('\x1b[32mHe\x1b[45mllo')
+
+    assert to_formatted_text(value) == [
+        ('#ansidarkgreen', 'H'),
+        ('#ansidarkgreen', 'e'),
+        ('#ansidarkgreen bg:#ansipurple', 'l'),
+        ('#ansidarkgreen bg:#ansipurple', 'l'),
+        ('#ansidarkgreen bg:#ansipurple', 'o'),
+    ]
+
+    # Zero width escapes.
+    value = ANSI('ab\001cd\002ef')
+
+    assert to_formatted_text(value) == [
+        ('', 'a'),
+        ('', 'b'),
+        ('[ZeroWidthEscape]', 'cd'),
+        ('', 'e'),
+        ('', 'f'),
     ]
