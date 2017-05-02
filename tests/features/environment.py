@@ -8,6 +8,8 @@ import db_utils as dbutils
 import fixture_utils as fixutils
 import pexpect
 
+from steps.wrappers import run_cli, wait_prompt
+
 
 def before_all(context):
     """
@@ -89,6 +91,11 @@ def after_all(context):
 
 def before_step(context, _):
     context.atprompt = False
+
+
+def before_scenario(context, _):
+    run_cli(context)
+    wait_prompt(context)
 
 
 def after_scenario(context, _):
