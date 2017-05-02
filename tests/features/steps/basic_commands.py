@@ -6,7 +6,6 @@ This string is used to call the step in "*.feature" file.
 """
 from __future__ import unicode_literals
 
-import pexpect
 import tempfile
 
 from behave import when
@@ -15,22 +14,12 @@ import wrappers
 
 @when('we run dbcli')
 def step_run_cli(context):
-    """
-    Run the process using pexpect.
-    """
-    cli_cmd = context.conf.get('cli_command')
-    context.cli = pexpect.spawnu(cli_cmd, cwd='..')
-    context.exit_sent = False
-    context.currentdb = context.conf['dbname']
+    wrappers.run_cli(context)
 
 
 @when('we wait for prompt')
 def step_wait_prompt(context):
-    """
-    Make sure prompt is displayed.
-    """
-    wrappers.expect_exact(context, '{0}> '.format(context.conf['dbname']), timeout=5)
-
+    wrappers.wait_prompt(context)
 
 @when('we send "ctrl + d"')
 def step_ctrl_d(context):

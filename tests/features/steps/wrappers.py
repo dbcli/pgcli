@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import re
+import pexpect
 
 
 def expect_exact(context, expected, timeout):
@@ -18,3 +19,16 @@ def expect_exact(context, expected, timeout):
 def expect_pager(context, expected, timeout):
     expect_exact(context, "{0}\r\n{1}{0}\r\n".format(
         context.conf['pager_boundary'], expected), timeout=timeout)
+
+
+def run_cli(context):
+    """Run the process using pexpect."""
+    cli_cmd = context.conf.get('cli_command')
+    context.cli = pexpect.spawnu(cli_cmd, cwd='..')
+    context.exit_sent = False
+    context.currentdb = context.conf['dbname']
+
+
+def wait_prompt(context):
+    """Make sure prompt is displayed."""
+    expect_exact(context, '{0}> '.format(context.conf['dbname']), timeout=5)

@@ -2,24 +2,14 @@ Feature: run the cli,
   call the help command,
   exit the cli
 
-  Scenario: run the cli
-     When we run dbcli
-      then we see dbcli prompt
-
   Scenario: run "\?" command
-     When we run dbcli
-      and we wait for prompt
-      and we send "\?" command
+     When we send "\?" command
       then we see help output
 
   Scenario: run source command
-     When we run dbcli
-      and we wait for prompt
-      and we send source command
+     When we send source command
       then we see help output
 
   Scenario: run the cli and exit
-     When we run dbcli
-      and we wait for prompt
-      and we send "ctrl + d"
+     When we send "ctrl + d"
       then dbcli exits
