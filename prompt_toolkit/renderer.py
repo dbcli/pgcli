@@ -486,6 +486,7 @@ class Renderer(object):
         output.cursor_up(self._cursor_pos.y)
         output.erase_down()
         output.reset_attributes()
+        output.enable_autowrap()
         output.flush()
 
         # Erase title.
