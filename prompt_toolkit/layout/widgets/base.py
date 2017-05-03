@@ -124,6 +124,7 @@ class TextArea(object):
             else:
                 margins = []
         else:
+            wrap_lines = False  # Never wrap for single line input.
             height = D.exact(1)
             margins = []
 
