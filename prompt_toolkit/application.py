@@ -491,8 +491,12 @@ class Application(object):
             try:
                 # Render UI in 'done' state.
                 raw_mode.__exit__(None, None, None)
-                self._redraw(render_as_done=True)
-                self.renderer.reset()
+                try:
+                    self._redraw(render_as_done=True)
+                finally:
+                    # _redraw has a good chance to fail if it calls widgets
+                    # with bad code. Make sure to reset the renderer anyway.
+                    self.renderer.reset()
 
                 # Clear event loop handlers.
                 if previous_input:
