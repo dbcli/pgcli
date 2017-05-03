@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """
+A simple application that shows a Pager application.
 """
 from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.enums import DEFAULT_BUFFER
-from prompt_toolkit.eventloop.defaults import create_event_loop
+from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import HSplit, Window
@@ -19,15 +19,13 @@ from prompt_toolkit.styles import Style, merge_styles, default_style
 
 from pygments.lexers import PythonLexer
 
-# The main event loop. (Every application needs one.)
-loop = create_event_loop()
-
 
 # Create one text buffer for the main content.
-default_buffer = Buffer(name=DEFAULT_BUFFER, loop=loop)
 
 with open('./pager.py', 'rb') as f:
-    default_buffer.text = f.read().decode('utf-8')
+    text = f.read().decode('utf-8')
+
+default_buffer = Buffer(read_only=True, document=Document(text, 0))
 
 
 def get_statusbar_text(app):
@@ -80,7 +78,6 @@ style = merge_styles([
 
 # create application.
 application = Application(
-    loop=loop,
     layout=Layout(
         root_container,
         focussed_window=buffer_window,
@@ -98,11 +95,7 @@ application = Application(
 
 
 def run():
-    try:
-        application.run()
-
-    finally:
-        loop.close()
+    application.run()
 
 if __name__ == '__main__':
     run()
