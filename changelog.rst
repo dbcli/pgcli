@@ -8,6 +8,7 @@ Features:
 * Allow configurable character to be used for multi-line query continuations. (Thanks: `Owen Stephens`_)
 * Completions after ORDER BY and DISTINCT now take account of table aliases. (Thanks: `Owen Stephens`_)
 * Narrow keyword candidates based on previous keyword. (Thanks: `Étienne Bersac`_)
+* Opening an external editor will edit the last-run query. (Thanks: `Thomas Roten`_)
 
 Bug fixes:
 ----------
@@ -256,12 +257,12 @@ Features:
   than the display window.
 * Don't hide functions from pg_catalog. (Thanks: `Darik Gamble`_).
 * Suggest set-returning functions as tables. (Thanks: `Darik Gamble`_).
-  Functions that return table like results will now be suggested in places of tables. 
+  Functions that return table like results will now be suggested in places of tables.
 * Suggest fields from functions used as tables. (Thanks: `Darik Gamble`_).
 * Using ``pgspecial`` as a separate module. (Thanks: `Iryna Cherniavska`_).
 * Make "enter" key behave as "tab" key when the completion menu is displayed. (Thanks: `Matheus Rosa`_).
 * Support different error-handling options when running multiple queries. (Thanks: `Darik Gamble`_).
-  When ``on_error = STOP`` in the config file, pgcli will abort execution if one of the queries results in an error. 
+  When ``on_error = STOP`` in the config file, pgcli will abort execution if one of the queries results in an error.
 * Hide the password displayed in the process name in ``ps``. (Thanks: `Stuart Quin`_)
 
 Bug Fixes:
@@ -334,7 +335,7 @@ Features:
 * Completion menu now has metadata information such as schema, table, column, view, etc., next to the suggestions. (Thanks: `Darik Gamble`_)
 * Customizable history file location via config file. (Thanks: `Çağatay Yüksel`_)
 
-  Add this line to your config file (~/.pgclirc) to customize where to store the history file. 
+  Add this line to your config file (~/.pgclirc) to customize where to store the history file.
 
 ::
 
@@ -365,16 +366,16 @@ Internal Changes:
 Features:
 ---------
 
-* Add fuzzy matching for the table names and column names. 
+* Add fuzzy matching for the table names and column names.
 
   Matching very long table/column names are now easier with fuzzy matching. The
-  fuzzy match works like the fuzzy open in SublimeText or Vim's Ctrl-P plugin. 
+  fuzzy match works like the fuzzy open in SublimeText or Vim's Ctrl-P plugin.
 
   eg: Typing ``djmv`` will match `django_migration_views` since it is able to
   match parts of the input to the full table name.
 
-* Change the timing information to seconds. 
-  
+* Change the timing information to seconds.
+
   The ``Command Time`` and ``Format Time`` are now displayed in seconds instead
   of a unitless number displayed in scientific notation.
 
@@ -383,7 +384,7 @@ Features:
   Frequently typed queries can now be saved and recalled using a name using
   newly added special commands (``\n[+]``, ``\ns``, ``\nd``).
 
-  eg: 
+  eg:
 
 ::
 
@@ -414,17 +415,17 @@ Bug Fixes:
 
 * Fix an error when running ``\d table_name`` when running on a table with rules. (Thanks: `Ali Kargın`_)
 * Fix a pgcli crash when entering non-ascii characters in Windows. (Thanks: `Darik Gamble`_, `Jonathan Slenders`_)
-* Faster rendering of expanded mode output by making the horizontal separator a fixed length string. 
-* Completion suggestions for the ``\c`` command are not auto-escaped by default. 
+* Faster rendering of expanded mode output by making the horizontal separator a fixed length string.
+* Completion suggestions for the ``\c`` command are not auto-escaped by default.
 
 Internal Changes:
 -----------------
 
-* Complete refactor of handling the back-slash commands. 
+* Complete refactor of handling the back-slash commands.
 * Upgrade prompt_toolkit to 0.42. (Thanks: `Jonathan Slenders`_)
 * Change the config file management to use ConfigObj.(Thanks: `Brett Atoms`_)
 * Add integration tests using ``behave``. (Thanks: `Iryna Cherniavska`_)
- 
+
 0.17.0
 ======
 
@@ -437,16 +438,16 @@ Features:
   Previously completions only matched a table name if it started with the
   partially typed word. Now completions will match even if the partially typed
   word is in the middle of a suggestion.
-  eg: When you type 'mig', 'django_migrations' will be suggested. 
+  eg: When you type 'mig', 'django_migrations' will be suggested.
 * Completion for built-in tables and temporary tables are suggested after entering a prefix of ``pg_``. (Thanks: `Darik Gamble`_)
 * Add place holder doc strings for special commands that are planned for implementation. (Thanks: `Iryna Cherniavska`_)
 * Updated version of prompt_toolkit, now matching braces are highlighted. (Thanks: `Jonathan Slenders`_)
 * Added support of ``\\e`` command. Queries can be edited in an external editor. (Thanks: `Iryna Cherniavska`_)
   eg: When you type ``SELECT * FROM \e`` it will be opened in an external editor.
 * Add special command ``\dT`` to show datatypes. (Thanks: `Darik Gamble`_)
-* Add auto-completion support for datatypes in CREATE, SELECT etc. (Thanks: `Darik Gamble`_) 
+* Add auto-completion support for datatypes in CREATE, SELECT etc. (Thanks: `Darik Gamble`_)
 * Improve the auto-completion in WHERE clause with logical operators. (Thanks: `Darik Gamble`_)
-* 
+*
 
 Bug Fixes:
 ----------
@@ -478,7 +479,7 @@ Bug Fixes:
   As a result the suggestions for tables vs functions are cleaner. (Thanks: `Darik Gamble`_)
 * Remove scientific notation when formatting large numbers. (Thanks: `Daniel Rocco`_)
 * Add the FUNCTION keyword to auto-completion.
-* Display NULL values as <null> instead of empty strings. 
+* Display NULL values as <null> instead of empty strings.
 * Fix the completion refresh when ``\connect`` is executed.
 
 0.16.1
@@ -494,10 +495,10 @@ Bug Fixes:
 
 Features:
 ---------
-* Add \ds special command to show sequences. 
+* Add \ds special command to show sequences.
 * Add Vi mode for keybindings. This can be enabled by adding 'vi = True' in ~/.pgclirc. (Thanks: `Jay Zeng`_)
 * Add a -v/--version flag to pgcli.
-* Add completion for TEMPLATE keyword and smart-completion for 
+* Add completion for TEMPLATE keyword and smart-completion for
   'CREATE DATABASE blah WITH TEMPLATE <tab>'. (Thanks: `Daniel Rocco`_)
 * Add custom decoders to json/jsonb to emulate the behavior of psql. This
   removes the unicode prefix (eg: u'Éowyn') in the output. (Thanks: `Daniel Rocco`_)
@@ -512,7 +513,7 @@ Bug Fixes:
 * Print BIGSERIAL type as Integer instead of Float.
 * Show completions for special commands at the beginning of a statement. (Thanks: `Daniel Rocco`_)
 * Allow special commands to work in a multi-statement case where multiple sql
-  statements are separated by semi-colon in the same line. 
+  statements are separated by semi-colon in the same line.
 
 0.15.4
 ======
@@ -520,11 +521,11 @@ Bug Fixes:
 
 0.15.3
 ======
-* Override the LESS options completely instead of appending to it. 
+* Override the LESS options completely instead of appending to it.
 
 0.15.2
 ======
-* Revert back to using psycopg2 as the postgres adapter. psycopg2cffi fails for some tests in Python 3. 
+* Revert back to using psycopg2 as the postgres adapter. psycopg2cffi fails for some tests in Python 3.
 
 0.15.0
 ======
@@ -533,14 +534,14 @@ Features:
 ---------
 * Add syntax color styles to config.
 * Add auto-completion for COPY statements.
-* Change Postgres adapter to psycopg2cffi, to make it PyPy compatible. 
+* Change Postgres adapter to psycopg2cffi, to make it PyPy compatible.
   Now pgcli can be run by PyPy.
 
 Bug Fixes:
 ----------
 * Treat boolean values as strings instead of ints.
 * Make \di, \dv and \dt to be schema aware. (Thanks: `Darik Gamble`_)
-* Make column name display unicode compatible. 
+* Make column name display unicode compatible.
 
 0.14.0
 ======
@@ -548,14 +549,14 @@ Bug Fixes:
 Features:
 ---------
 * Add alias completion support to ON keyword. (Thanks: `Iryna Cherniavska`_)
-* Add LIMIT keyword to completion. 
+* Add LIMIT keyword to completion.
 * Auto-completion for Postgres schemas. (Thanks: `Darik Gamble`_)
-* Better unicode handling for datatypes, dbname and roles. 
-* Add \timing command to time the sql commands. 
+* Better unicode handling for datatypes, dbname and roles.
+* Add \timing command to time the sql commands.
   This can be set via config file (~/.pgclirc) using `timing = True`.
-* Add different table styles for displaying output. 
+* Add different table styles for displaying output.
   This can be changed via config file (~/.pgclirc) using `table_format = fancy_grid`.
-* Add confirmation before printing results that have more than 1000 rows. 
+* Add confirmation before printing results that have more than 1000 rows.
 
 Bug Fixes:
 ----------
@@ -572,7 +573,7 @@ Bug Fixes:
 Features:
 ---------
 
-* Add -d/--dbname option to the commandline. 
+* Add -d/--dbname option to the commandline.
   eg: pgcli -d database
 * Add the username as an argument after the database.
   eg: pgcli dbname user
@@ -589,12 +590,12 @@ Bug Fixes:
 Features:
 ---------
 
-* Upgrade to prompt_toolkit version 0.26 (Thanks: https://github.com/macobo) 
+* Upgrade to prompt_toolkit version 0.26 (Thanks: https://github.com/macobo)
   * Adds Ctrl-left/right to move the cursor one word left/right respectively.
   * Internal API changes.
 * IPython integration through `ipython-sql`_ (Thanks: `Darik Gamble`_)
-  * Add an ipython magic extension to embed pgcli inside ipython. 
-  * Results from a pgcli query are sent back to ipython. 
+  * Add an ipython magic extension to embed pgcli inside ipython.
+  * Results from a pgcli query are sent back to ipython.
 * Multiple sql statments in the same line separated by semi-colon. (Thanks: https://github.com/macobo)
 
 .. _`ipython-sql`: https://github.com/catherinedevlin/ipython-sql
@@ -633,15 +634,15 @@ Improvements:
 .. _`Amjith Ramanujam`: https://github.com/amjith
 .. _`Darik Gamble`: https://github.com/darikg
 .. _`Iryna Cherniavska`: https://github.com/j-bennet
-.. _`Daniel Rocco`: https://github.com/drocco007 
-.. _`Jay Zeng`:  https://github.com/jayzeng 
+.. _`Daniel Rocco`: https://github.com/drocco007
+.. _`Jay Zeng`:  https://github.com/jayzeng
 .. _`蔡佳男`: https://github.com/xalley
 .. _dp: https://github.com/ceocoder
 .. _`Jonathan Slenders`: https://github.com/jonathanslenders
 .. _`Dimitar Roustchev`: https://github.com/droustchev
 .. _`François Pietka`: https://github.com/fpietka
 .. _`Ali Kargın`: https://github.com/sancopanco
-.. _`Brett Atoms`: https://github.com/brettatoms 
+.. _`Brett Atoms`: https://github.com/brettatoms
 .. _`Nathan Jhaveri`: https://github.com/nathanjhaveri
 .. _`Çağatay Yüksel`: https://github.com/cagatay
 .. _`Michael Kaminsky`: https://github.com/mikekaminsky
@@ -676,10 +677,11 @@ Improvements:
 .. _`Janus Troelsen`: https://github.com/ysangkok
 .. _`Fabien Meghazi`: https://github.com/amigrave
 .. _`Manuel Barkhau`: https://github.com/mbarkhau
-.. _`Sergii`: https://github.com/foxyterkel 
+.. _`Sergii`: https://github.com/foxyterkel
 .. _`Emanuele Gaifas`: https://github.com/lelit
 .. _`tk`: https://github.com/kanet77
 .. _`Owen Stephens`: https://github.com/owst
 .. _`Russell Davies`: https://github.com/russelldavies
 .. _`Dick Marinus`: https://github.com/meeuw
 .. _`Étienne Bersac`: https://github.com/bersace
+.. _`Thomas Roten`: https://github.com/tsroten

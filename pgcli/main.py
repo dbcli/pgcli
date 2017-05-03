@@ -366,8 +366,9 @@ class PGCli(object):
         saved_callables = cli.application.pre_run_callables
         while special.editor_command(document.text):
             filename = special.get_filename(document.text)
-            sql, message = special.open_external_editor(filename,
-                                                          sql=document.text)
+            sql, message = special.open_external_editor(
+                filename, sql=document.text,
+                default_text=self.get_last_query() or '')
             if message:
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
@@ -731,6 +732,11 @@ class PGCli(object):
         string = string.replace('\\#', "#" if (self.pgexecute.superuser) else ">")
         string = string.replace('\\n', "\n")
         return string
+
+    def get_last_query(self):
+        """Get the last query executed or None."""
+        return self.query_history[-1][0] if self.query_history else None
+
 
 
 @click.command()
