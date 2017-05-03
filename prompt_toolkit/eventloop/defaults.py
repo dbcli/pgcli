@@ -63,7 +63,7 @@ def get_event_loop():
     if _loop is not None:
         return _loop
     else:
-        raise ValueError('The event loop has been cleared. Passing the explicitely is required.')
+        raise ValueError('The event loop has been removed. Passing it explicitely is required.')
 
 
 def set_event_loop(loop):
