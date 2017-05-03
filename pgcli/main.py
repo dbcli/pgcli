@@ -366,9 +366,9 @@ class PGCli(object):
         saved_callables = cli.application.pre_run_callables
         while special.editor_command(document.text):
             filename = special.get_filename(document.text)
-            sql, message = special.open_external_editor(
-                filename, sql=document.text,
-                default_text=self.get_last_query() or '')
+            query = (special.get_editor_query(document.text) or
+                     self.get_last_query())
+            sql, message = special.open_external_editor(filename, sql=query)
             if message:
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
