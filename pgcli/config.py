@@ -11,7 +11,7 @@ def config_location():
     elif 'XDG_CONFIG_HOME' in os.environ:
         return '%s/pgcli/' % expanduser(os.environ['XDG_CONFIG_HOME'])
     else:
-        return expanduser('~/.config/pgcli/')
+        return expanduser(os.path.join(os.environ.get('XDG_CONFIG_HOME', '~/.config'),  "pgcli/"))
 
 def load_config(usr_cfg, def_cfg=None):
     cfg = ConfigObj()
