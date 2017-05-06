@@ -129,10 +129,18 @@ def max_layout_dimensions(dimensions):
     dimensions = [d for d in dimensions if not d.is_zero()]
 
     if dimensions:
-        # The the maximum dimension.
-        # But we can't go larger than the smallest 'max'.
+        # Take the highest minimum dimension.
         min_ = max(d.min for d in dimensions)
+
+        # For the maximum, we would prefer not to go larger than then smallest
+        # 'max' value, unless other dimensions have a bigger preferred value.
+        # This seems to werk best:
+        #  - We don't want that a widget with a small height in a VSplit would
+        #    shrink other widgets in the split.
+        # If it doosn't work well enough, then it's up to the UI designer to
+        # explicitely pass dimensions.
         max_ = min(d.max for d in dimensions)
+        max_ = max(max_, max(d.preferred for d in dimensions))
 
         # Make sure that min>=max. In some scenarios, when certain min..max
         # ranges don't have any overlap, we can end up in such an impossible
