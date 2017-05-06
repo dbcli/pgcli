@@ -229,10 +229,11 @@ class FormattedTextControl(UIControl):
         key bindings.
     """
     def __init__(self, formatted_text='', focussable=False, key_bindings=None,
-                 global_key_bindings=None, modal=False):
+                 global_key_bindings=None, show_cursor=True, modal=False):
         from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert global_key_bindings is None or isinstance(global_key_bindings, KeyBindingsBase)
+        assert isinstance(show_cursor, bool)
         assert isinstance(modal, bool)
 
         if callable(formatted_text):
@@ -246,6 +247,7 @@ class FormattedTextControl(UIControl):
         # Key bindings.
         self.key_bindings = key_bindings
         self.global_key_bindings = global_key_bindings
+        self.show_cursor = show_cursor
         self.modal = modal
 
         #: Cache for the content.
@@ -324,6 +326,7 @@ class FormattedTextControl(UIControl):
         def get_content():
             return UIContent(get_line=lambda i: fragment_lines[i],
                              line_count=len(fragment_lines),
+                             show_cursor=self.show_cursor,
                              cursor_position=get_cursor_position(),
                              menu_position=get_menu_position())
 
