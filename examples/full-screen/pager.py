@@ -5,17 +5,15 @@ A simple application that shows a Pager application.
 from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
-from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import HSplit, Window
-from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
+from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
-from prompt_toolkit.layout.margins import ScrollbarMargin, NumberredMargin
 from prompt_toolkit.styles import Style, merge_styles, default_style
+from prompt_toolkit.layout.widgets import TextArea, SearchField
 
 from pygments.lexers import PythonLexer
 
@@ -25,23 +23,30 @@ from pygments.lexers import PythonLexer
 with open('./pager.py', 'rb') as f:
     text = f.read().decode('utf-8')
 
-default_buffer = Buffer(read_only=True, document=Document(text, 0))
-
 
 def get_statusbar_text(app):
     return [
         ('class:status', './pager.py - '),
         ('class:status.position', '{}:{}'.format(
-            default_buffer.document.cursor_position_row + 1,
-            default_buffer.document.cursor_position_col + 1)),
-        ('class:status', ' - Press Ctrl-C to exit. ')
+            text_area.document.cursor_position_row + 1,
+            text_area.document.cursor_position_col + 1)),
+        ('class:status', ' - Press '),
+        ('class:status.key', 'Ctrl-C'),
+        ('class:status', ' to exit, '),
+        ('class:status.key', '/'),
+        ('class:status', ' for searching.'),
     ]
 
+search_field = SearchField(text_if_not_searching=[
+    ('class:not-searching', "Press '/' to start searching.")])
 
-buffer_window = Window(
-    content=BufferControl(buffer=default_buffer, lexer=PygmentsLexer(PythonLexer)),
-    left_margins=[NumberredMargin()],
-    right_margins=[ScrollbarMargin()])
+text_area = TextArea(
+    text=text,
+    read_only=True,
+    scrollbar=True,
+    line_numbers=True,
+    search_field=search_field,
+    lexer=PygmentsLexer(PythonLexer))
 
 
 root_container = HSplit([
@@ -52,9 +57,8 @@ root_container = HSplit([
         style='class:status'),
 
     # The main content.
-    buffer_window,
-
-    #SearchToolbar(),
+    text_area,
+    search_field,
 ])
 
 
@@ -71,16 +75,19 @@ def _(event):
 style = merge_styles([
     default_style(),
     Style.from_dict({
-        'status': 'bg:#444444 #ffffff',
-        'status.position': '#aaaa44',
+        'status': 'reverse',
+        'status.position': '#aaaa00',
+        'status.key': '#ffaa00',
+        'not-searching': '#888888',
     })
 ])
+
 
 # create application.
 application = Application(
     layout=Layout(
         root_container,
-        focussed_window=buffer_window,
+        focussed_window=text_area,
     ),
     key_bindings=merge_key_bindings([
         load_key_bindings(enable_search=True, enable_extra_page_navigation=True),
@@ -88,9 +95,6 @@ application = Application(
     ]),
     mouse_support=True,
     style=style,
-
-    # Using an alternate screen buffer means as much as: "run full screen".
-    # It switches the terminal to an alternate screen.
     full_screen=True)
 
 

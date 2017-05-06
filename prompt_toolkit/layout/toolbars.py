@@ -163,13 +163,11 @@ class SearchToolbarControl(BufferControl):
 
         def get_before_input(app):
             if not is_searching(app):
-                text = ''
+                return ''
             elif app.current_search_state.direction == SearchDirection.BACKWARD:
-                text = ('?' if vi_mode else 'I-search backward: ')
+                return ('?' if vi_mode else 'I-search backward: ')
             else:
-                text = ('/' if vi_mode else 'I-search: ')
-
-            return [('class:search-toolbar', text)]
+                return ('/' if vi_mode else 'I-search: ')
 
         super(SearchToolbarControl, self).__init__(
             buffer=search_buffer,

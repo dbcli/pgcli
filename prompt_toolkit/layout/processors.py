@@ -14,6 +14,7 @@ from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SearchDirection
 from prompt_toolkit.filters import to_app_filter, ViInsertMultipleMode
+from prompt_toolkit.layout.formatted_text import to_formatted_text
 from prompt_toolkit.layout.utils import fragment_list_to_text
 from prompt_toolkit.reactive import Integer
 
@@ -123,6 +124,9 @@ class HighlightSearchProcessor(Processor):
     :param preview_search: A Filter; when active it indicates that we take
         the search text in real time while the user is typing, instead of the
         last active search state.
+
+        When this is `True`, maybe you also want to set
+        `BufferControl.preview_search`, otherwise the cursor position won't move.
     """
     def __init__(self, preview_search=False):
         self.preview_search = to_app_filter(preview_search)
@@ -338,19 +342,25 @@ class DisplayMultipleCursors(Processor):
 
 class BeforeInput(Processor):
     """
-    Insert fragments before the input.
+    Insert text before the input.
 
-    :param get_text_fragments: Callable that takes a
-        :class:`~prompt_toolkit.application.Application` and returns the
-        list of fragments to be inserted.
+    :param text: This can be either plain text or formatted text.
+        Or a callable that takes a
+        :class:`~prompt_toolkit.application.Application` and returns any of those.
+    :param style: style to be applied to this prompt/prefix.
     """
-    def __init__(self, get_text_fragments):
-        assert callable(get_text_fragments)
-        self.get_text_fragments = get_text_fragments
+    def __init__(self, text, style=''):
+        self.text = text
+        self.style = style
 
     def apply_transformation(self, ti):
         if ti.lineno == 0:
-            fragments_before = self.get_text_fragments(ti.app)
+            # Get fragments.
+            if callable(self.text):
+                fragments_before = to_formatted_text(self.text(ti.app), self.style)
+            else:
+                fragments_before = to_formatted_text(self.text, self.style)
+
             fragments = fragments_before + ti.fragments
 
             shift_position = fragment_list_len(fragments_before)
@@ -400,20 +410,27 @@ class ShowArg(BeforeInput):
 
 class AfterInput(Processor):
     """
-    Insert fragments after the input.
+    Insert text after the input.
 
-    :param get_text_fragments: Callable that takes a
-        :class:`~prompt_toolkit.application.Application` and returns the
-        list of fragments to be appended.
+    :param text: This can be either plain text or formatted text.
+        Or a callable that takes a
+        :class:`~prompt_toolkit.application.Application` and returns any of those.
+    :param style: style to be applied to this prompt/prefix.
     """
-    def __init__(self, get_text_fragments):
-        assert callable(get_text_fragments)
-        self.get_text_fragments = get_text_fragments
+    def __init__(self, text, style=''):
+        self.text = text
+        self.style = style
 
     def apply_transformation(self, ti):
         # Insert fragments after the last line.
         if ti.lineno == ti.document.line_count - 1:
-            return Transformation(fragments=ti.fragments + self.get_text_fragments(ti.app))
+            # Get fragments.
+            if callable(self.text):
+                fragments_after = to_formatted_text(self.text(ti.app), self.style)
+            else:
+                fragments_after = to_formatted_text(self.text, self.style)
+
+            return Transformation(fragments=ti.fragments + fragments_after)
         else:
             return Transformation(fragments=ti.fragments)
 

@@ -126,6 +126,13 @@ WIDGETS_STYLE = [
     ('button.arrow',                            'bold'),
     ('button focussed',                         'bg:#880000 #ffffff'),
 
+    # Menu bars.
+    ('menu-bar',                                'bg:#aaaaaa #000000'),
+    ('menu-bar.selected-item',                  'bg:#ffffff #000000'),
+    ('menu',                                    'bg:#888888 #ffffff'),
+    ('menu.border',                             '#aaaaaa'),
+    ('menu.border shadow',                      '#444444'),
+
     # Shadows.
     ('dialog shadow',                           'bg:#000088'),
     ('dialog.body shadow',                      'bg:#aaaaaa'),

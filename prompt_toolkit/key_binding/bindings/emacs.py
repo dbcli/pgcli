@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from prompt_toolkit.buffer import SelectionType, indent, unindent
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.filters import Condition, emacs_mode, has_selection, emacs_insert_mode, has_arg, is_multiline
+from prompt_toolkit.filters import Condition, emacs_mode, has_selection, emacs_insert_mode, has_arg, is_multiline, is_read_only, vi_search_direction_reversed
 from prompt_toolkit.completion import CompleteEvent
 
 from .scroll import scroll_page_up, scroll_page_down
@@ -319,6 +319,7 @@ def load_emacs_search_bindings():
 
     # NOTE: We don't bind 'Escape' to 'abort_search'. The reason is that we
     #       want Alt+Enter to accept input directly in incremental search mode.
+    #       Instead, we have double escape.
 
     handle('c-r')(search.start_reverse_incremental_search)
     handle('c-s')(search.start_forward_incremental_search)
@@ -332,6 +333,30 @@ def load_emacs_search_bindings():
     handle('up')(search.reverse_incremental_search)
     handle('down')(search.forward_incremental_search)
     handle('enter')(search.accept_search)
+
+    # If Read-only: also include the following key bindigs:
+
+    # '/' and '?' key bindings for searching, just like Vi mode.
+    handle('?', filter=is_read_only & ~vi_search_direction_reversed)(search.start_reverse_incremental_search)
+    handle('/', filter=is_read_only & ~vi_search_direction_reversed)(search.start_forward_incremental_search)
+    handle('?', filter=is_read_only & vi_search_direction_reversed)(search.start_forward_incremental_search)
+    handle('/', filter=is_read_only & vi_search_direction_reversed)(search.start_reverse_incremental_search)
+
+    @handle('n', filter=is_read_only)
+    def _(event):
+        " Jump to next match. "
+        event.current_buffer.apply_search(
+            event.app.current_search_state,
+            include_current_position=False,
+            count=event.arg)
+
+    @handle('N', filter=is_read_only)
+    def _(event):
+        " Jump to previous match. "
+        event.current_buffer.apply_search(
+            ~event.app.current_search_state,
+            include_current_position=False,
+            count=event.arg)
 
     return ConditionalKeyBindings(key_bindings, emacs_mode)
 

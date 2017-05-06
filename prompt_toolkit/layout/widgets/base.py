@@ -11,8 +11,9 @@ import six
 
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
+from prompt_toolkit.enums import SearchDirection
 from prompt_toolkit.eventloop import EventLoop, get_event_loop
-from prompt_toolkit.filters import to_app_filter
+from prompt_toolkit.filters import to_app_filter, is_searching
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.utils import get_cwidth
 
@@ -20,12 +21,13 @@ from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align
 from ..controls import BufferControl, FormattedTextControl
 from ..dimension import Dimension as D
 from ..dimension import to_dimension
-from ..margins import ScrollbarMargin
+from ..margins import ScrollbarMargin, NumberredMargin
 from ..processors import PasswordProcessor, ConditionalProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, merge_processors
 
 
 __all__ = (
     'TextArea',
+    'SearchField',
     'Label',
     'Button',
     'Frame',
@@ -82,26 +84,31 @@ class TextArea(object):
     """
     def __init__(self, text='', multiline=True, password=False,
                  lexer=None, completer=None, accept_handler=None,
-                 focussable=True, wrap_lines=True,
+                 focussable=True, wrap_lines=True, read_only=False,
                  width=None, height=None,
                  dont_extend_height=False, dont_extend_width=False,
-                 scrollbar=False, style='', input_processor=None,
+                 line_numbers=False, scrollbar=False, style='',
+                 input_processor=None, search_field=None, preview_search=True,
                  prompt='', loop=None, _label=False):
         assert isinstance(text, six.text_type)
         assert loop is None or isinstance(loop, EventLoop)
+        assert search_field is None or isinstance(search_field, SearchField)
 
         loop = loop or get_event_loop()
-
-        def get_prompt_text(app):
-            return [('class:text-area.prompt', prompt)]
 
         self.buffer = Buffer(
             loop=loop,
             document=Document(text, 0),
             multiline=multiline,
+            read_only=read_only,
             completer=completer,
             complete_while_typing=True,
-            accept_handler=lambda app, buffer: accept_handler(app))
+            accept_handler=lambda app, buffer: accept_handler and accept_handler(app))
+
+        if search_field:
+            search_buffer = search_field.text_area.control
+        else:
+            search_buffer = None
 
         self.control = BufferControl(
             buffer=self.buffer,
@@ -111,22 +118,29 @@ class TextArea(object):
                     processor=PasswordProcessor(),
                     filter=to_app_filter(password)
                 ),
-                HighlightSearchProcessor(),
+                HighlightSearchProcessor(preview_search=preview_search),
                 HighlightSelectionProcessor(),
                 DisplayMultipleCursors(),
-                BeforeInput(get_text_fragments=get_prompt_text),
+                BeforeInput(prompt, style='class:text-area.prompt'),
             ]),
+            search_buffer_control=search_buffer,
+            preview_search=preview_search,
             focussable=(not _label and focussable))
 
         if multiline:
             if scrollbar:
-                margins = [ScrollbarMargin(display_arrows=True)]
+                right_margins = [ScrollbarMargin(display_arrows=True)]
             else:
-                margins = []
+                right_margins = []
+            if line_numbers:
+                left_margins = [NumberredMargin()]
+            else:
+                left_margins = []
         else:
             wrap_lines = False  # Never wrap for single line input.
             height = D.exact(1)
-            margins = []
+            left_margins = []
+            right_margins = []
 
         if not _label:
             # (In case of a Label, we don't want to apply the text-area style.)
@@ -140,7 +154,8 @@ class TextArea(object):
             content=self.control,
             style=style,
             wrap_lines=wrap_lines,
-            right_margins=margins)
+            left_margins=left_margins,
+            right_margins=right_margins)
 
     @property
     def text(self):
@@ -160,6 +175,27 @@ class TextArea(object):
 
     def __pt_container__(self):
         return self.window
+
+
+class SearchField(object):
+    """
+    A simple text field that can be used for searching.
+    Attach to all searchable text fields, by passing it to the `search_field`
+    parameter.
+    """
+    def __init__(self, vi_display=True, text_if_not_searching=''):
+        def before_input(app):
+            if not is_searching(app):
+                return text_if_not_searching
+            elif app.current_search_state.direction == SearchDirection.BACKWARD:
+                return ('?' if vi_display else 'I-search backward: ')
+            else:
+                return ('/' if vi_display else 'I-search: ')
+
+        self.text_area = TextArea(prompt=before_input, height=1)
+
+    def __pt_container__(self):
+        return self.text_area
 
 
 class Label(object):

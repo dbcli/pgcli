@@ -2,7 +2,7 @@
 Filters that accept a `Application` as argument.
 """
 from __future__ import unicode_literals
-from .base import Filter, Condition
+from .base import Condition
 from prompt_toolkit.cache import memoized
 from prompt_toolkit.enums import EditingMode
 import six
@@ -36,6 +36,7 @@ __all__ = (
 
     'is_searching',
     'control_is_searchable',
+    'vi_search_direction_reversed',
 )
 
 
@@ -286,3 +287,9 @@ def control_is_searchable(app):
 
     return (isinstance(control, BufferControl) and
             control.search_buffer_control is not None)
+
+
+@Condition
+def vi_search_direction_reversed(app):
+    " When the '/' and '?' key bindings for Vi-style searching have been reversed. "
+    return app.reverse_vi_search_direction(app)

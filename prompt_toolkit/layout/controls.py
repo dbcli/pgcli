@@ -409,6 +409,10 @@ class BufferControl(UIControl):
         to apply multiple processors.)
     :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` instance for syntax highlighting.
     :param preview_search: `bool` or `AppFilter`: Show search while typing.
+        When this is `True`, probably you want to add a
+        ``HighlightSearchProcessor`` with ``preview_search=True`` as well.
+        Otherwise only the cursor position will move, but the text won't be
+        highlighted.
     :param focussable: `bool` or `AppFilter`: Tell whether this control is focussable.
     :param get_search_state: Callable that returns the SearchState to be used.
     :param focus_on_click: Focus this buffer when it's click, but not yet focussed.
