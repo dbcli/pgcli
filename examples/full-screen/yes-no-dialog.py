@@ -65,6 +65,7 @@ root_container = HSplit([
         Frame(body=Label(text='Left frame\ncontent')),
         Dialog(title='The custom window',
                body=Label('hello\ntest')),
+        textfield,
     ], height=D()),
     VSplit([
         Frame(body=ProgressBar(),

@@ -158,7 +158,7 @@ class Screen(object):
             except KeyError:
                 return Point(x=0, y=0)
 
-    def replace_all_styles(self, style_str):  # TODO: this is used for Aborted. shouldn't this be an append????
+    def append_style_to_content(self, style_str):
         """
         For all the characters in the screen.
         Set the style string to the given `style_str`.
@@ -166,11 +166,11 @@ class Screen(object):
         b = self.data_buffer
         char_cache = _CHAR_CACHE
 
-        prepend_style = style_str + ' '
+        append_style = ' ' + style_str
 
         for y, row in b.items():
             for x, char in row.items():
-                b[y][x] = char_cache[char.char, prepend_style + char.style]
+                b[y][x] = char_cache[char.char, char.style + append_style]
 
     def fill_area(self, write_position, style='', after=False):
         """

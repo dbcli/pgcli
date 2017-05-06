@@ -13,7 +13,6 @@ __all__ = (
     'BaseStyle',
     'DummyStyle',
     'DynamicStyle',
-    'merge_styles',
 )
 
 
@@ -102,26 +101,3 @@ class DynamicStyle(BaseStyle):
 
     def invalidation_hash(self):
         return (self.get_style() or self._dummy).invalidation_hash()
-
-
-def merge_styles(styles):
-    """
-    Merge multiple `Style` objects.
-    """
-    return _MergedStyle(styles)
-
-
-class _MergedStyle(BaseStyle):
-    def __init__(self, styles):
-        self.styles = styles
-
-    def get_attrs_for_style_str(self, style_str, default=DEFAULT_ATTRS):
-        result = default
-
-        for s in self.styles:
-            result = s.get_attrs_for_style_str(style_str, result)
-
-        return result
-
-    def invalidation_hash(self):
-        return tuple(s.invalidation_hash() for s in self.styles)

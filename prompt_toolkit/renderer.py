@@ -439,8 +439,10 @@ class Renderer(object):
         ), parent_style='')
 
         # When grayed. Replace all styles in the new screen.
-        if app.is_aborting or app.is_exiting:
-            screen.replace_all_styles('class:aborted')
+        if app.is_aborting:
+            screen.append_style_to_content('class:aborting')
+        if app.is_exiting:
+            screen.append_style_to_content('class:exiting')
 
         # Process diff and write to output.
         self._cursor_pos, self._last_style = _output_screen_diff(

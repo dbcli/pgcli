@@ -2,8 +2,7 @@
 The default styling.
 """
 from __future__ import unicode_literals, absolute_import
-from .base import merge_styles
-from .style import Style
+from .style import Style, merge_styles
 from prompt_toolkit.cache import memoized
 
 __all__ = (
@@ -87,8 +86,9 @@ PROMPT_TOOLKIT_STYLE = [
     ('trailing-whitespace',                     '#999999'),
     ('tab',                                     '#999999'),
 
-    # When Control-C has been pressed. Grayed.
-    ('aborted',                                 '#888888'),
+    # When Control-C/D has been pressed. Grayed.
+    ('aborting',                                '#888888'),
+    ('exiting',                                 '#888888'),
 
     # Entering a Vi digraph.
     ('digraph',                                 '#4444ff'),

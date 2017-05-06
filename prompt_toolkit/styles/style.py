@@ -6,9 +6,11 @@ import itertools
 import re
 from .base import BaseStyle, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
 from .named_colors import NAMED_COLORS
+from prompt_toolkit.cache import SimpleCache
 
 __all__ = (
     'Style',
+    'merge_styles',
 )
 
 _named_colors_lowercase = dict(
@@ -172,6 +174,7 @@ class Style(BaseStyle):
 
             class_names_and_attrs.append((class_names, attrs))
 
+        self.style_rules = style_rules
         self.class_names_and_attrs = class_names_and_attrs
 
     @classmethod
@@ -253,3 +256,52 @@ def _merge_attrs(list_of_attrs):
         italic=_or(False, *[a.italic for a in list_of_attrs]),
         blink=_or(False, *[a.blink for a in list_of_attrs]),
         reverse=_or(False, *[a.reverse for a in list_of_attrs]))
+
+
+def merge_styles(styles):
+    """
+    Merge multiple `Style` objects.
+    """
+    return _MergedStyle(styles)
+
+
+class _MergedStyle(BaseStyle):
+    """
+    Merge multiple `Style` objects into one.
+    This is supposed to ensure consistency: if any of the given styles changes,
+    then this style will be updated.
+    """
+    # NOTE: previously, we used an algorithm where we did not generate the
+    #       combined style. Instead this was a proxy that called one style
+    #       after the other, passing the outcome of the previous style as the
+    #       defalut for the next one. This did not work, because that way, the
+    #       priorities like described in the `Style` class don't work.
+    #       'class:aborted' was for instance never displayed in gray, because
+    #       the next style specified a default color for any text. (The
+    #       explicit styling of class:aborted should have taken priority,
+    #       because it was more precise.)
+    def __init__(self, styles):
+        assert all(isinstance(style, (Style, _MergedStyle)) for style in styles)
+
+        self.styles = styles
+        self._style = SimpleCache(maxsize=1)
+
+    @property
+    def _merged_style(self):
+        " The `Style` object that has the other styles merged together. "
+        def get():
+            return Style(self.style_rules)
+        return self._style.get(self.invalidation_hash, get)
+
+    @property
+    def style_rules(self):
+        style_rules = []
+        for s in self.styles:
+            style_rules.extend(s.style_rules)
+        return style_rules
+
+    def get_attrs_for_style_str(self, style_str, default=DEFAULT_ATTRS):
+        return self._merged_style.get_attrs_for_style_str(style_str, default)
+
+    def invalidation_hash(self):
+        return tuple(s.invalidation_hash() for s in self.styles)
