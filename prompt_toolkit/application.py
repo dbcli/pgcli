@@ -183,10 +183,6 @@ class Application(object):
         #: rendering.
         self.render_counter = 0
 
-        #: List of which user controls have been painted to the screen. (The
-        #: visible controls.)
-        self.rendered_user_controls = []
-
         #: When there is high CPU, postpone the rendering max x seconds.
         #: '0' means: don't postpone. '.5' means: try to draw at least twice a second.
         self.max_render_postpone_time = 0  # E.g. .5

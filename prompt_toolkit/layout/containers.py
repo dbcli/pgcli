@@ -1287,9 +1287,6 @@ class Window(Container):
         if write_position.height <= 0 or write_position.width <= 0:
             return
 
-        # Add current user control to the list of rendered user controls.
-        app.rendered_user_controls.append(self.content)
-
         # Calculate margin sizes.
         left_margin_widths = [self._get_margin_width(app, m) for m in self.left_margins]
         right_margin_widths = [self._get_margin_width(app, m) for m in self.right_margins]
