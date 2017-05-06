@@ -2,7 +2,7 @@
 The base classes for the styling.
 """
 from __future__ import unicode_literals, absolute_import
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
 from six import with_metaclass
 
@@ -63,6 +63,14 @@ class BaseStyle(with_metaclass(ABCMeta, object)):
         :param default: `Attrs` to be used if no styling was defined.
         """
 
+    @abstractproperty
+    def style_rules(self):
+        """
+        The list of style rules, used to create this style.
+        (Required for `DynamicStyle` and `_MergedStyle` to work.)
+        """
+        return []
+
     @abstractmethod
     def invalidation_hash(self):
         """
@@ -81,6 +89,10 @@ class DummyStyle(BaseStyle):
 
     def invalidation_hash(self):
         return 1  # Always the same value.
+
+    @property
+    def style_rules(self):
+        return []
 
 
 class DynamicStyle(BaseStyle):
@@ -101,3 +113,7 @@ class DynamicStyle(BaseStyle):
 
     def invalidation_hash(self):
         return (self.get_style() or self._dummy).invalidation_hash()
+
+    @property
+    def style_rules(self):
+        return (self.get_style() or self._dummy).style_rules

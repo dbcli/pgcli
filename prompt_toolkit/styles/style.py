@@ -174,8 +174,12 @@ class Style(BaseStyle):
 
             class_names_and_attrs.append((class_names, attrs))
 
-        self.style_rules = style_rules
+        self._style_rules = style_rules
         self.class_names_and_attrs = class_names_and_attrs
+
+    @property
+    def style_rules(self):
+        return self._style_rules
 
     @classmethod
     def from_dict(cls, style_dict):
@@ -281,7 +285,7 @@ class _MergedStyle(BaseStyle):
     #       explicit styling of class:aborted should have taken priority,
     #       because it was more precise.)
     def __init__(self, styles):
-        assert all(isinstance(style, (Style, _MergedStyle)) for style in styles)
+        assert all(isinstance(style, BaseStyle) for style in styles)
 
         self.styles = styles
         self._style = SimpleCache(maxsize=1)
