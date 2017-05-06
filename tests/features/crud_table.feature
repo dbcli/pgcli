@@ -2,9 +2,7 @@ Feature: manipulate tables:
   create, insert, update, select, delete from, drop
 
   Scenario: create, insert, select from, update, drop table
-     When we run dbcli
-      and we wait for prompt
-      and we connect to test database
+     When we connect to test database
       then we see database connected
       when we create table
       then we see table created

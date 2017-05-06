@@ -25,6 +25,7 @@ Internal changes:
 * Behave test source command (Thanks: `Dick Marinus`_).
 * Behave fix clean up. (Thanks: `Dick Marinus`_).
 * Test using behave the tee command (Thanks: `Dick Marinus`_).
+* Behave remove boiler plate code (Thanks: `Dick Marinus`_).
 
 1.5.1
 =====
