@@ -168,8 +168,15 @@ class MenuContainer(object):
         return menu
 
     def _get_menu_fragments(self, app):
+        focussed = app.layout.has_focus(self.window)
+
+        # This is called during the rendering. When we discover that this
+        # widget doesn't have the focus anymore. Reset menu state.
+        if not focussed:
+            self.selected_menu = [0]
+
+        # Generate text fragments for the main menu.
         result = []
-        focussed = (app.layout.current_window == self.window)
 
         for i, item in enumerate(self.menu_items):
             result.append(('class:menu-bar', ' '))

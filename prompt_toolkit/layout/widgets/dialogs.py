@@ -32,11 +32,11 @@ class Dialog(object):
 
         if buttons:
             frame_body = HSplit([
-                # Wrap the content in a `Box`, so that the Dialog can
-                # be larger than the content.
-                Box(body=body, padding=1),
+                # Add optional padding around the body.
+                Box(body=body, padding=D(preferred=1, max=1), padding_bottom=0),
                 # The buttons.
-                Box(body=VSplit(buttons, padding=1), height=3)
+                Box(body=VSplit(buttons, padding=1),
+                    height=D(min=1, max=3, preferred=3))
             ])
         else:
             frame_body = body
@@ -47,7 +47,6 @@ class Dialog(object):
                     title=title,
                     body=frame_body,
                     style='class:dialog.body')),
-            padding=D(min=3),
             style='class:dialog')
 
     def __pt_container__(self):

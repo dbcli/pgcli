@@ -92,7 +92,7 @@ class TextArea(object):
 
         loop = loop or get_event_loop()
 
-        def get_prompt_text_fragments(app):
+        def get_prompt_text(app):
             return [('class:text-area.prompt', prompt)]
 
         self.buffer = Buffer(
@@ -114,9 +114,9 @@ class TextArea(object):
                 HighlightSearchProcessor(),
                 HighlightSelectionProcessor(),
                 DisplayMultipleCursors(),
-                BeforeInput(get_text_fragments=get_prompt_text_fragments),
+                BeforeInput(get_text_fragments=get_prompt_text),
             ]),
-            focussable=focussable)
+            focussable=(not _label and focussable))
 
         if multiline:
             if scrollbar:
@@ -288,13 +288,13 @@ class Frame(object):
                 fill(width=1, height=1, char='|'),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char=BORDER.TOP_RIGHT),
-            ])
+            ], height=1)
         else:
             top_row = VSplit([
                 fill(width=1, height=1, char=BORDER.TOP_LEFT),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char=BORDER.TOP_RIGHT),
-            ])
+            ], height=1)
 
         self.container = HSplit([
             top_row,
@@ -304,7 +304,7 @@ class Frame(object):
                 fill(width=1, char=BORDER.VERTICAL),
                     # Padding is required to make sure that if the content is
                     # too small, that the right frame border is still aligned.
-            ], padding=D(preferred=0)),
+            ], padding=0),
             VSplit([
                 fill(width=1, height=1, char=BORDER.BOTTOM_LEFT),
                 fill(char=BORDER.HORIZONTAL),
@@ -410,7 +410,8 @@ class Checkbox(object):
             key_bindings=kb,
             focussable=True)
 
-        self.window = Window(width=3, content=self.control)
+        self.window = Window(
+            width=3, content=self.control, height=1)
 
         self.container = VSplit([
             self.window,
@@ -503,6 +504,7 @@ class RadioList(object):
             result.append(('class:radio', value[1]))
             result.append(('', '\n'))
 
+        result.pop()  # Remove last newline.
         return result
 
     def __pt_container__(self):

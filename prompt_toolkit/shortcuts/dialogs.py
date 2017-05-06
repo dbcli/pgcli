@@ -72,11 +72,9 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
         loop=loop,
         title=title,
         body=HSplit([
-            Box(body=
-                Label(loop=loop, text=text, dont_extend_height=True),
-                padding_left=0, padding_top=1, padding_bottom=1),
+            Label(loop=loop, text=text, dont_extend_height=True),
             textfield,
-        ]),
+        ], padding=D(preferred=1, max=1)),
         buttons=[ok_button, cancel_button])
 
     return _run_dialog(dialog, style)

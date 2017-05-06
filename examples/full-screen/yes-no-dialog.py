@@ -11,6 +11,7 @@ from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import VSplit, HSplit, Float
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, Dialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
@@ -39,7 +40,6 @@ def do_exit(app):
 yes_button = Button(text='Yes', handler=accept_yes)
 no_button = Button(text='No', handler=accept_no)
 textfield  = TextArea(lexer=PygmentsLexer(HtmlLexer))
-textfield2 = TextArea()
 checkbox1 = Checkbox(text='Checkbox')
 checkbox2 = Checkbox(text='Checkbox')
 
@@ -64,20 +64,17 @@ root_container = HSplit([
     VSplit([
         Frame(body=Label(text='Left frame\ncontent')),
         Dialog(title='The custom window',
-               body=Label('hello')),
-    ]),
+               body=Label('hello\ntest')),
+    ], height=D()),
     VSplit([
-        Frame(body=HSplit([
-            textfield,
-            ProgressBar(),
-        ])),
-        #VerticalLine(),
-        Frame(body=HSplit([
-            checkbox1,
-            checkbox2,
-            TextArea(),  # XXX: remove
-        ], align='TOP')),
-        Frame(body=radios),
+        Frame(body=ProgressBar(),
+              title='Progress bar'),
+        Frame(title='Checkbox list',
+              body=HSplit([
+                  checkbox1,
+                  checkbox2,
+              ])),
+        Frame(title='Radio list', body=radios),
     ], padding=1),
     Box(
         body=VSplit([
