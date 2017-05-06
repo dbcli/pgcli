@@ -30,8 +30,8 @@ class Dimension(object):
                    twice as big as the first, if the min/max values allow it.
     :param preferred: Preferred size.
     """
-    def __init__(self, min=None, max=None, weight=1, preferred=None):
-        assert isinstance(weight, int) and weight >= 0   # Cannot be a float.
+    def __init__(self, min=None, max=None, weight=None, preferred=None):
+        assert weight is None or (isinstance(weight, int) and weight >= 0)   # Cannot be a float.
         assert min is None or min >= 0
         assert max is None or max >= 0
         assert preferred is None or preferred >= 0
@@ -39,6 +39,7 @@ class Dimension(object):
         self.min_specified = min is not None
         self.max_specified = max is not None
         self.preferred_specified = preferred is not None
+        self.weight_specified = weight is not None
 
         if min is None:
             min = 0  # Smallest possible value.
@@ -46,6 +47,8 @@ class Dimension(object):
             max = 1000 ** 10  # Something huge.
         if preferred is None:
             preferred = min
+        if weight is None:
+            weight = 1
 
         self.min = min
         self.max = max
@@ -80,8 +83,17 @@ class Dimension(object):
         return self.preferred == 0 or self.max == 0
 
     def __repr__(self):
-        return 'Dimension(min=%r, max=%r, preferred=%r, weight=%r)' % (
-            self.min, self.max, self.preferred, self.weight)
+        fields= []
+        if self.min_specified:
+            fields.append('min=%r' % self.min)
+        if self.max_specified:
+            fields.append('max=%r' % self.max)
+        if self.preferred_specified:
+            fields.append('preferred=%r' % self.preferred)
+        if self.weight_specified:
+            fields.append('weight=%r' % self.weight)
+
+        return 'Dimension(%s)' % ', '.join(fields)
 
 
 def sum_layout_dimensions(dimensions):
