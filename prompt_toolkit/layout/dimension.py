@@ -55,6 +55,10 @@ class Dimension(object):
         self.preferred = preferred
         self.weight = weight
 
+        # Don't allow situations where max < min. (This would be a bug.)
+        if max < min:
+            raise ValueError('Invalid Dimension: max < min.')
+
         # Make sure that the 'preferred' size is always in the min..max range.
         if self.preferred < self.min:
             self.preferred = self.min
@@ -129,6 +133,14 @@ def max_layout_dimensions(dimensions):
         # But we can't go larger than the smallest 'max'.
         min_ = max(d.min for d in dimensions)
         max_ = min(d.max for d in dimensions)
+
+        # Make sure that min>=max. In some scenarios, when certain min..max
+        # ranges don't have any overlap, we can end up in such an impossible
+        # situation. In that case, give priority to the max value.
+        # E.g. taking (1..5) and (8..9) would return (8..5). Instead take (8..8).
+        if min_ > max_:
+            max_ = min_
+
         preferred = max(d.preferred for d in dimensions)
 
         return Dimension(min=min_, max=max_, preferred=preferred)
