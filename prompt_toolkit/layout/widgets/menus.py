@@ -56,9 +56,18 @@ class MenuContainer(object):
         def _(event):
             self.selected_menu.append(0)
 
+        @kb.add('c-c', filter=in_main_menu)
+        @kb.add('c-g', filter=in_main_menu)
+        def _(event):
+            " Leave menu. "
+            layout = event.app.layout
+            layout.focus(layout.previous_control)
+
         # Sub menu navigation.
 
         @kb.add('left', filter=in_sub_menu)
+        @kb.add('c-g', filter=in_sub_menu)
+        @kb.add('c-c', filter=in_sub_menu)
         def _(event):
             " Go back to parent menu. "
             if len(self.selected_menu) > 1:
@@ -100,7 +109,8 @@ class MenuContainer(object):
         self.control = FormattedTextControl(
             self._get_menu_fragments,
             key_bindings=kb,
-            focussable=True)
+            focussable=True,
+            show_cursor=False)
 
         self.window = Window(
             height=1,
@@ -165,7 +175,7 @@ class MenuContainer(object):
             result.append(('class:menu-bar', ' '))
             if i == self.selected_menu[0] and focussed:
                 result.append(('[SetMenuPosition]', ''))
-                style = 'class:menu-bar,selected-item'
+                style = 'class:menu-bar.selected-item'
             else:
                 style = 'class:menu-bar'
             result.append((style, item.text))
@@ -189,7 +199,7 @@ class MenuContainer(object):
                     for i, item in enumerate(menu.children):
                         if i == selected_item:
                             result.append(('[SetCursorPosition]', ''))
-                            style = 'class:menu-bar,selected-item'
+                            style = 'class:menu-bar.selected-item'
                         else:
                             style = ''
 

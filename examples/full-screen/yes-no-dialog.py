@@ -14,7 +14,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, Dialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
-from prompt_toolkit.styles import Style
+from prompt_toolkit.styles import Style, merge_styles, default_style
 from pygments.lexers import HtmlLexer
 
 
@@ -146,8 +146,8 @@ style = Style.from_dict({
     'window.border': '#888888',
     'shadow': 'bg:#222222',
 
-    'menubar': 'bg:#aaaaaa #888888',
-    'menubar.selecteditem': 'bg:#ffffff #000000',
+    'menu-bar': 'bg:#aaaaaa #888888',
+    'menu-bar.selected-item': 'bg:#ffffff #000000',
     'menu': 'bg:#888888 #ffffff',
     'menu.border': '#aaaaaa',
     'window.border shadow': '#444444',
@@ -173,7 +173,10 @@ application = Application(
         load_key_bindings(),
         bindings,
     ]),
-    style=style,
+    style=merge_styles([
+        default_style(),
+        style,
+    ]),
     mouse_support=True,
     full_screen=True)
 
