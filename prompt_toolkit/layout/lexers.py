@@ -39,6 +39,13 @@ class Lexer(with_metaclass(ABCMeta, object)):
              of ``(Token, text)`` tuples, just like a Pygments lexer.
         """
 
+    def invalidation_hash(self):
+        """
+        When this changes, `lex_document` could give a different output.
+        (Only used for `DynamicLexer`.)
+        """
+        return id(self)
+
 
 class SimpleLexer(Lexer):
     """
@@ -349,8 +356,13 @@ class DynamicLexer(Lexer):
     """
     def __init__(self, get_lexer):
         self.get_lexer = get_lexer
+        self._dummy = SimpleLexer()
 
     def lex_document(self, app, document):
-        lexer = self.get_lexer() or SimpleLexer()
+        lexer = self.get_lexer() or self._dummy
         assert isinstance(lexer, Lexer)
         return lexer.lex_document(app, document)
+
+    def invalidation_hash(self):
+        lexer = self.get_lexer() or self._dummy
+        return id(lexer)

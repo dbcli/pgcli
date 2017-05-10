@@ -543,7 +543,8 @@ class BufferControl(UIControl):
         def get_formatted_text_for_line():
             return self.lexer.lex_document(app, document)
 
-        return self._fragment_cache.get(document.text, get_formatted_text_for_line)
+        key = (document.text, self.lexer.invalidation_hash())
+        return self._fragment_cache.get(key, get_formatted_text_for_line)
 
     def _create_get_processed_line_func(self, app, document, width, height):
         """
