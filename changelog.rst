@@ -3,6 +3,7 @@ Upcoming
 
 Features:
 ---------
+* Add time option for prompt (Thanks: `Gustavo Castro`_)
 * Suggest objects from all schemas (not just those in search_path) (Thanks: `Joakim Koljonen`_)
 * Casing for column headers (Thanks: `Joakim Koljonen`_)
 * Allow configurable character to be used for multi-line query continuations. (Thanks: `Owen Stephens`_)
@@ -687,3 +688,4 @@ Improvements:
 .. _`Dick Marinus`: https://github.com/meeuw
 .. _`Étienne Bersac`: https://github.com/bersace
 .. _`Thomas Roten`: https://github.com/tsroten
+.. _`Gustavo Castro`: https://github.com/gustavo-castro

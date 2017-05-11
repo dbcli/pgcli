@@ -11,6 +11,7 @@ import threading
 import shutil
 import functools
 import humanize
+import datetime as dt
 from time import time, sleep
 from codecs import open
 
@@ -151,6 +152,8 @@ class PGCli(object):
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
+
+        self.now = dt.datetime.today()
 
         self.completion_refresher = CompletionRefresher()
 
@@ -491,6 +494,8 @@ class PGCli(object):
                 else:
                     query = self.execute_command(document.text, query)
 
+                self.now = dt.datetime.today()
+
                 # Allow PGCompleter to learn user's preferred keywords, etc.
                 with self._completer_lock:
                     self.completer.extend_query_history(document.text)
@@ -724,6 +729,7 @@ class PGCli(object):
                 Document(text=text, cursor_position=cursor_positition), None)
 
     def get_prompt(self, string):
+        string = string.replace('\\t', self.now.strftime('%x %X'))
         string = string.replace('\\u', self.pgexecute.user or '(none)')
         string = string.replace('\\h', self.pgexecute.host or '(none)')
         string = string.replace('\\d', self.pgexecute.dbname or '(none)')
