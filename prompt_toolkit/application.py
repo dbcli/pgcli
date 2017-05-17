@@ -705,14 +705,14 @@ class Application(object):
         # Start processing coroutine.
         step_next()
 
-    def run_system_command(self, command):
+    def run_system_command(self, command, wait_for_enter=True):
         """
         Run system command (While hiding the prompt. When finished, all the
         output will scroll above the prompt.)
 
         :param command: Shell command to be executed.
         """
-        def wait_for_enter():
+        def do_wait_for_enter():
             """
             Create a sub application to wait for the enter key press.
             This has two advantages over using 'input'/'raw_input':
@@ -753,10 +753,13 @@ class Application(object):
                       stdin=input_fd, stdout=output_fd)
             p.wait()
 
-            # Wait for the user to press enter.
-            wait_for_enter()
-
         self.run_in_terminal(run)
+
+        # Wait for the user to press enter.
+        # (This needs to go out of `run_in_terminal`. Otherwise, the sub
+        # application runs in cooked mode and the CPR will be printed.)
+        if wait_for_enter:
+            do_wait_for_enter()
 
     def suspend_to_background(self, suspend_group=True):
         """
