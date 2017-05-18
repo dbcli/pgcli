@@ -238,7 +238,9 @@ class Application(object):
         """
         Return a list of `Window` objects that are focussable.
         """
-        return [w for w in self.visible_windows if w.content.is_focussable(self)]
+        # Focussable windows are windows that are visible, but also part of the modal container.
+        focussable_windows = set(self.visible_windows) & set(self.layout.get_focussable_windows())
+        return [w for w in focussable_windows if w.content.is_focussable(self)]
 
     @property
     def terminal_title(self):

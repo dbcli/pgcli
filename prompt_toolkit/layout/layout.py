@@ -144,14 +144,16 @@ class Layout(object):
         """
         Walk through all the layout nodes (and their children) and yield them.
         """
-        def _walk(container):
-            yield container
-            for c in container.get_children():
-                # yield from _walk(c)
-                for i in _walk(c):
-                    yield i
+        return self._walk(self.container)
 
-        return _walk(self.container)
+    @classmethod
+    def _walk(cls, container):
+        " Walk, starting at this container. "
+        yield container
+        for c in container.get_children():
+            # yield from _walk(c)
+            for i in cls._walk(c):
+                yield i
 
     def update_parents_relations(self):
         """
@@ -180,6 +182,16 @@ class Layout(object):
             return self._child_to_parent[container]
         except KeyError:
             return
+
+    def get_focussable_windows(self):
+        # Go up in the tree, and find the root. (it will be a part of the
+        # layout, if the focus is in a modal part.)
+        root = self.current_window
+        while not root.is_modal() and root in self._child_to_parent:
+            root = self._child_to_parent[root]
+
+        # Now traverse and collect all the children of this root.
+        return self._walk(root)
 
 
 class InvalidLayoutError(Exception):
