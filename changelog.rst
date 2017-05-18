@@ -1,6 +1,11 @@
 Upcoming
 ========
 
+* TBD
+
+1.6.0
+=====
+
 Features:
 ---------
 * Add time option for prompt (Thanks: `Gustavo Castro`_)
