@@ -6,12 +6,11 @@ from .clipboard import Clipboard, InMemoryClipboard
 from .enums import EditingMode
 from .eventloop import EventLoop, get_event_loop
 from .filters import AppFilter, to_app_filter
-from .filters import Condition
 from .input.base import Input
 from .input.defaults import create_input
 from .key_binding.defaults import load_key_bindings
 from .key_binding.key_processor import KeyProcessor
-from .key_binding.key_bindings import KeyBindings, KeyBindingsBase, merge_key_bindings, ConditionalKeyBindings
+from .key_binding.key_bindings import KeyBindings, KeyBindingsBase, merge_key_bindings
 from .key_binding.vi_state import ViState
 from .keys import Keys
 from .layout.layout import Layout
@@ -340,6 +339,8 @@ class Application(object):
                     self.renderer.render(self, self.layout, is_done=render_as_done)
             else:
                 self.renderer.render(self, self.layout)
+
+            self.layout.update_parents_relations()
 
             # Fire render event.
             self.on_render.fire()
@@ -705,7 +706,8 @@ class Application(object):
         # Start processing coroutine.
         step_next()
 
-    def run_system_command(self, command, wait_for_enter=True):
+    def run_system_command(self, command, wait_for_enter=True,
+                           wait_text='Press <b>ENTER</b> to continue...'):
         """
         Run system command (While hiding the prompt. When finished, all the
         output will scroll above the prompt.)
@@ -729,7 +731,7 @@ class Application(object):
                 event.app.set_return_value(None)
 
             prompt = Prompt(
-                message='Press ENTER to continue...',
+                message=wait_text,
                 loop=self.loop,
                 extra_key_bindings=key_bindings,
                 include_default_key_bindings=False)
@@ -753,13 +755,14 @@ class Application(object):
                       stdin=input_fd, stdout=output_fd)
             p.wait()
 
-        self.run_in_terminal(run)
+            # Wait for the user to press enter.
+            if wait_for_enter:
+                # (Go back to raw mode. Otherwise, the sub application runs in
+                # cooked mode and the CPR will be printed.)
+                with self.input.raw_mode():
+                    do_wait_for_enter()
 
-        # Wait for the user to press enter.
-        # (This needs to go out of `run_in_terminal`. Otherwise, the sub
-        # application runs in cooked mode and the CPR will be printed.)
-        if wait_for_enter:
-            do_wait_for_enter()
+        self.run_in_terminal(run)
 
     def suspend_to_background(self, suspend_group=True):
         """
@@ -950,44 +953,42 @@ class _CombinedRegistry(KeyBindingsBase):
         KeyBindings object. """
         raise NotImplementedError
 
-    def _create_key_bindings(self, current_control, other_controls):
+    def _create_key_bindings(self, current_window, other_controls):
         """
         Create a `KeyBindings` object that merges the `KeyBindings` from the
-        `UIControl` with the other user controls and the global key bindings.
+        `UIControl` with all the parent controls and the global key bindings.
         """
-        # Collect global key bindings of other visible user controls.
-        key_bindings = [c.get_key_bindings(self.app) for c in other_controls]
-        key_bindings = [b.global_key_bindings for b in key_bindings
-                        if b and b.global_key_bindings]
+        key_bindings = []
 
-        others_key_bindings = merge_key_bindings(
-            [self.app.key_bindings] + key_bindings)
+        # Collect key bindings from currently focussed control and all parent
+        # controls. Don't include key bindings of container parent controls.
+        container = current_window
+        while container is not None:
+            kb = container.get_key_bindings()
+            if kb is not None:
+                key_bindings.append(kb)
 
-        ui_key_bindings = current_control.get_key_bindings(self.app)
+            if container.is_modal():
+                break
+            container = self.app.layout.get_parent(container)
 
-        if ui_key_bindings is None:
-            # No bindings for this user control. Just return everything else.
-            return others_key_bindings
-        else:
-            # Bindings for this user control found.
-            # Keep the 'modal' parameter into account.
-            @Condition
-            def is_not_modal(app):
-                return not ui_key_bindings.modal
+        # Add key bindings
+        key_bindings.append(self.app.key_bindings)
 
-            return merge_key_bindings([
-                ConditionalKeyBindings(others_key_bindings, is_not_modal),
-                ui_key_bindings.key_bindings or KeyBindings(),
-            ])
+        # Reverse this list. The current control's key bindings should come
+        # last. They need priority.
+        key_bindings = key_bindings[::-1]
+
+        return merge_key_bindings(key_bindings)
 
     @property
     def _key_bindings(self):
-        current_control = self.app.layout.current_control
+        current_window = self.app.layout.current_window
         other_controls = list(self.app.layout.find_all_controls())
-        key = current_control, frozenset(other_controls)
+        key = current_window, frozenset(other_controls)
 
         return self._cache.get(
-            key, lambda: self._create_key_bindings(current_control, other_controls))
+            key, lambda: self._create_key_bindings(current_window, other_controls))
 
     def get_bindings_for_keys(self, keys):
         return self._key_bindings.get_bindings_for_keys(keys)

@@ -32,7 +32,6 @@ __all__ = (
     'DummyControl',
     'FormattedTextControl',
     'UIControl',
-    'UIControlKeyBindings',
     'UIContent',
 )
 
@@ -90,11 +89,11 @@ class UIControl(with_metaclass(ABCMeta, object)):
         Request to move the cursor up.
         """
 
-    def get_key_bindings(self, app):
+    def get_key_bindings(self):
         """
         The key bindings that are specific for this user control.
 
-        Return a `UIControlKeyBindings` object if some key bindings are
+        Return a `KeyBindings` object if some key bindings are
         specified, or `None` otherwise.
         """
 
@@ -105,28 +104,6 @@ class UIControl(with_metaclass(ABCMeta, object)):
         handlers to these events.)
         """
         return []
-
-
-class UIControlKeyBindings(object):
-    """
-    Key bindings for a user control.
-
-    :param key_bindings: `KeyBindings` object that contains the key bindings
-        which are active when this user control has the focus.
-    :param global_key_bindings: `KeyBindings` object that contains the bindings
-        which are always active, even when other user controls have the focus.
-        (Except if another 'modal' control has the focus.)
-    :param modal: If true, mark this user control as modal.
-    """
-    def __init__(self, key_bindings=None, global_key_bindings=None, modal=False):
-        from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
-        assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
-        assert global_key_bindings is None or isinstance(global_key_bindings, KeyBindingsBase)
-        assert isinstance(modal, bool)
-
-        self.key_bindings = key_bindings
-        self.global_key_bindings = global_key_bindings
-        self.modal = modal
 
 
 class UIContent(object):
@@ -225,14 +202,11 @@ class FormattedTextControl(UIControl):
     :param get_formatted_text: Callable that takes an `Application` instance and
         returns the list of (style_str, text) tuples to be displayed right now.
     :param key_bindings: a `KeyBindings` object.
-    :param global_key_bindings: a `KeyBindings` object that contains always on
-        key bindings.
     """
     def __init__(self, formatted_text='', focussable=False, key_bindings=None,
-                 global_key_bindings=None, show_cursor=True, modal=False):
+                 show_cursor=True, modal=False):
         from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
-        assert global_key_bindings is None or isinstance(global_key_bindings, KeyBindingsBase)
         assert isinstance(show_cursor, bool)
         assert isinstance(modal, bool)
 
@@ -246,7 +220,6 @@ class FormattedTextControl(UIControl):
 
         # Key bindings.
         self.key_bindings = key_bindings
-        self.global_key_bindings = global_key_bindings
         self.show_cursor = show_cursor
         self.modal = modal
 
@@ -370,11 +343,11 @@ class FormattedTextControl(UIControl):
         # Otherwise, don't handle here.
         return NotImplemented
 
-    def get_key_bindings(self, app):
-        return UIControlKeyBindings(
-            key_bindings=self.key_bindings,
-            global_key_bindings=self.global_key_bindings,
-            modal=self.modal)
+    def is_modal(self, app):
+        return self.modal
+
+    def get_key_bindings(self):
+        return self.key_bindings
 
 
 class DummyControl(UIControl):
@@ -734,11 +707,11 @@ class BufferControl(UIControl):
         b = self.buffer
         b.cursor_position += b.document.get_cursor_up_position()
 
-    def get_key_bindings(self, app):
+    def get_key_bindings(self):
         """
         When additional key bindings are given. Return these.
         """
-        return UIControlKeyBindings(key_bindings=self.key_bindings)
+        return self.key_bindings
 
     def get_invalidate_events(self):
         """

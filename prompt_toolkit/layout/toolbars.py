@@ -1,23 +1,22 @@
 from __future__ import unicode_literals
 
 from .containers import Window, ConditionalContainer
-from .controls import BufferControl, FormattedTextControl, UIControl, UIContent, UIControlKeyBindings
+from .controls import BufferControl, FormattedTextControl, UIControl, UIContent
 from .dimension import Dimension
 from .lexers import SimpleLexer
 from .processors import BeforeInput
 from .utils import fragment_list_len
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import SYSTEM_BUFFER, SearchDirection
-from prompt_toolkit.filters import has_focus, has_arg, has_completions, has_validation_error, is_searching, Always, is_done, emacs_mode, vi_mode, vi_navigation_mode
-from prompt_toolkit.filters import to_app_filter
+from prompt_toolkit.filters import has_focus, has_completions, has_validation_error, is_searching, Always, is_done, emacs_mode, vi_mode, vi_navigation_mode, has_arg
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings, ConditionalKeyBindings
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 
 __all__ = (
-    'FormattedTextToolbar',
     'ArgToolbar',
     'CompletionsToolbar',
+    'FormattedTextToolbar',
     'SearchToolbar',
     'SystemToolbar',
     'ValidationToolbar',
@@ -31,38 +30,45 @@ class FormattedTextToolbar(Window):
             height=Dimension.exact(1))
 
 
-class SystemToolbarControl(BufferControl):
+class SystemToolbar(object):
     """
-    :param enable: filter that enables the key bindings.
+    :param prompt: Prompt to be displayed to the user.
     """
-    def __init__(self, loop, enable=True):
-        self.enable = to_app_filter(enable)
+    def __init__(self, loop, prompt='Shell command: '):
         self.system_buffer = Buffer(name=SYSTEM_BUFFER, loop=loop)
-
-        super(SystemToolbarControl, self).__init__(
-            buffer=self.system_buffer,
-            lexer=SimpleLexer(style='class:system-toolbar.text'),
-            input_processor=BeforeInput.static('Shell command: ', 'class:system-toolbar'))
 
         self._global_bindings = self._build_global_key_bindings()
         self._bindings = self._build_key_bindings()
+
+        self.buffer_control = BufferControl(
+            buffer=self.system_buffer,
+            lexer=SimpleLexer(style='class:system-toolbar.text'),
+            input_processor=BeforeInput.static(prompt, 'class:system-toolbar'),
+            key_bindings=self._bindings)
+
+        self.window = Window(
+            self.buffer_control, height=1,
+            style='class:system-toolbar')
+
+        self.container = ConditionalContainer(
+            content=self.window,
+            filter=has_focus(self.system_buffer))
 
     def _build_global_key_bindings(self):
         focussed = has_focus(self.system_buffer)
 
         bindings = KeyBindings()
 
-        @bindings.add(Keys.Escape, '!', filter= ~focussed & emacs_mode &
-                self.enable)
+        @bindings.add(Keys.Escape, '!', filter= ~focussed & emacs_mode)
         def _(event):
             " M-'!' will focus this user control. "
-            event.app.layout.current_control = self
+            event.app.layout.focus(self.window)
 
         @bindings.add('!', filter=~focussed & vi_mode & vi_navigation_mode)
         def _(event):
             " Focus. "
             event.app.vi_state.input_mode = InputMode.INSERT
-            event.app.layout.current_control = self
+            event.app.layout.focus(self.window)
 
         return bindings
 
@@ -113,27 +119,17 @@ class SystemToolbarControl(BufferControl):
             ConditionalKeyBindings(vi_bindings, vi_mode),
         ])
 
-    def get_key_bindings(self, app):
-        return UIControlKeyBindings(
-            global_key_bindings=self._global_bindings,
-            key_bindings=self._bindings,
-            modal=False)
+    def get_global_key_bindings(self):
+        return self._global_bindings
+
+    def __pt_container__(self):
+        return self.container
 
 
-class SystemToolbar(ConditionalContainer):
-    def __init__(self, loop, enable=True):
-        self.control = SystemToolbarControl(loop=loop, enable=enable)
-        super(SystemToolbar, self).__init__(
-            content=Window(self.control,
-                height=Dimension.exact(1),
-                style='class:system-toolbar'),
-            filter=has_focus(self.control.system_buffer) & ~is_done)
-
-
-class ArgToolbarControl(FormattedTextControl):
+class ArgToolbar(object):
     def __init__(self):
         def get_formatted_text(app):
-            arg = app.key_processor.arg
+            arg = app.key_processor.arg or ''
             if arg == '-':
                 arg = '-1'
 
@@ -142,16 +138,16 @@ class ArgToolbarControl(FormattedTextControl):
                 ('class:arg-toolbar.text', arg),
             ]
 
-        super(ArgToolbarControl, self).__init__(get_formatted_text)
+        self.window = Window(
+            FormattedTextControl(get_formatted_text),
+            height=1)
 
-
-class ArgToolbar(ConditionalContainer):
-    def __init__(self):
-        super(ArgToolbar, self).__init__(
-            content=Window(
-                ArgToolbarControl(),
-                height=Dimension.exact(1)),
+        self.container = ConditionalContainer(
+            content=self.window,
             filter=has_arg)
+
+    def __pt_container__(self):
+        return self.container
 
 
 class SearchToolbarControl(BufferControl):

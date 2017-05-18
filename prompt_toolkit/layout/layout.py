@@ -26,6 +26,11 @@ class Layout(object):
         self.container = to_container(container)
         self._stack = []
 
+        # Mapping that maps the children in the layout to their parent.
+        # This relationship is calculated dynamically, each time when the UI
+        # is rendered.  (UI elements have only references to their children.)
+        self._child_to_parent = {}
+
         if focussed_window is None:
             try:
                 self._stack.append(next(self.find_all_windows()))
@@ -35,14 +40,14 @@ class Layout(object):
             self._stack.append(to_window(focussed_window))
 
     def __repr__(self):
-        return 'Layout(%r, current_control=%r)' % (
-            self.container, self.current_control)
+        return 'Layout(%r, focussed_window=%r)' % (
+            self.container, self.current_window)
 
     def find_all_windows(self):
         """
         Find all the `UIControl` objects in this layout.
         """
-        for item in self.container.walk():
+        for item in self.walk():
             if isinstance(item, Window):
                 yield item
 
@@ -139,10 +144,42 @@ class Layout(object):
         """
         Walk through all the layout nodes (and their children) and yield them.
         """
-        return self.container.walk()
+        def _walk(container):
+            yield container
+            for c in container.get_children():
+                # yield from _walk(c)
+                for i in _walk(c):
+                    yield i
+
+        return _walk(self.container)
+
+    def update_parents_relations(self):
+        """
+        Update child->parent relationships mapping.
+        """
+        parents = {}
+
+        def walk(e):
+            for c in e.get_children():
+                parents[c] = e
+                walk(c)
+
+        walk(self.container)
+
+        self._child_to_parent = parents
 
     def reset(self):
         return self.container.reset()
+
+    def get_parent(self, container):
+        """
+        Return the parent container for the given container, or ``None``, if it
+        wasn't found.
+        """
+        try:
+            return self._child_to_parent[container]
+        except KeyError:
+            return
 
 
 class InvalidLayoutError(Exception):

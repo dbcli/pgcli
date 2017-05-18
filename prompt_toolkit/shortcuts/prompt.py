@@ -36,7 +36,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
 from prompt_toolkit.eventloop.base import EventLoop
 from prompt_toolkit.eventloop.defaults import create_event_loop #, create_asyncio_event_loop
-from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_simple_filter, Condition
+from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_simple_filter, Condition, has_arg
 from prompt_toolkit.history import InMemoryHistory, DynamicHistory
 from prompt_toolkit.input.defaults import create_input
 from prompt_toolkit.key_binding.bindings.completion import display_completions_like_readline
@@ -52,7 +52,7 @@ from prompt_toolkit.layout.lexers import DynamicLexer
 from prompt_toolkit.layout.margins import PromptMargin, ConditionalMargin
 from prompt_toolkit.layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
 from prompt_toolkit.layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
-from prompt_toolkit.layout.toolbars import ValidationToolbar, SystemToolbar, ArgToolbar, SearchToolbar
+from prompt_toolkit.layout.toolbars import ValidationToolbar, SystemToolbar, SearchToolbar
 from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.output.defaults import create_output
 from prompt_toolkit.styles import default_style, BaseStyle, DynamicStyle, merge_styles
@@ -380,6 +380,8 @@ class Prompt(object):
                 ShowArg(),
             ]))
 
+        system_toolbar = SystemToolbar(self.loop)
+
         def get_search_buffer_control():
             " Return the UIControl to be focussed when searching start. "
             if _true(self.multiline):
@@ -458,10 +460,14 @@ class Prompt(object):
                 ]
             ),
             ValidationToolbar(),
-            SystemToolbar(self.loop, enable=dyncond('enable_system_bindings')),
+            ConditionalContainer(
+                system_toolbar,
+                dyncond('enable_system_bindings') & ~is_done),
 
             # In multiline mode, we use two toolbars for 'arg' and 'search'.
-            ConditionalContainer(ArgToolbar(), dyncond('multiline')),
+            ConditionalContainer(
+                Window(FormattedTextControl(self._get_arg_text), height=1),
+                dyncond('multiline') & has_arg),
             ConditionalContainer(search_toolbar, dyncond('multiline')),
             bottom_toolbar,
         ])
@@ -490,6 +496,7 @@ class Prompt(object):
             " Display completions (like readline). "
             display_completions_like_readline(event)
 
+
         # Create application
         application = Application(
             layout=Layout(layout, default_buffer_window),
@@ -502,6 +509,7 @@ class Prompt(object):
                 ConditionalKeyBindings(
                     merge_key_bindings([default_bindings, prompt_bindings]),
                     dyncond('include_default_key_bindings')),
+                system_toolbar.get_global_key_bindings(),
                 DynamicKeyBindings(lambda: self.extra_key_bindings),
             ]),
             get_title=self._get_title,
@@ -732,6 +740,16 @@ class Prompt(object):
     def _get_title(self):
         if self.get_title is not None:
             return self.get_title()
+
+    def _get_arg_text(self, app):
+        arg = app.key_processor.arg
+        if arg == '-':
+            arg = '-1'
+
+        return [
+            ('class:arg-toolbar', 'Repeat: '),
+            ('class:arg-toolbar.text', arg)
+        ]
 
     def close(self):
         if self._close_loop:

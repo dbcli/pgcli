@@ -77,11 +77,27 @@ class Container(with_metaclass(ABCMeta, object)):
             use it to pass their style down to the windows that they contain.
         """
 
+    def is_modal(self):
+        """
+        When this container is modal, key bindings from parent containers are
+        not taken into account if a user control in this container is focussed.
+        """
+        return False
+
+    def get_key_bindings(self):
+        """
+        Returns a `KeyBindings` object. These bindings become active when any
+        user control in this container has the focus, except if any containers
+        between this container and the focussed user control is modal.
+        """
+        return None
+
     @abstractmethod
-    def walk(self):
+    def get_children(self):
         """
-        Walk through all the layout nodes (and their children) and yield them.
+        Return the list of child :class:`.Container` objects.
         """
+        return []
 
 
 def _window_too_small():
@@ -106,7 +122,39 @@ class HorizontalAlign:
     JUSTIFY = 'JUSTIFY'
 
 
-class HSplit(Container):
+class _Split(Container):
+    """
+    The common parts of `VSplit` and `HSplit`.
+    """
+    def __init__(self, children, window_too_small=None, padding=Dimension.exact(0),
+                 width=None, height=None, modal=False, key_bindings=None, style=''):
+        assert window_too_small is None or isinstance(window_too_small, Container)
+        assert isinstance(children, list)
+        assert isinstance(modal, bool)
+        assert isinstance(style, text_type)
+
+        self.children = [to_container(c) for c in children]
+        self.window_too_small = window_too_small or _window_too_small()
+        self.padding = to_dimension(padding)
+
+        self.width = width
+        self.height = height
+
+        self.modal = modal
+        self.key_bindings = key_bindings
+        self.style = style
+
+    def is_modal(self):
+        return self.modal
+
+    def get_key_bindings(self):
+        return self.key_bindings
+
+    def get_children(self):
+        return self.children
+
+
+class HSplit(_Split):
     """
     Several layouts, one stacked above/under the other. ::
 
@@ -126,23 +174,21 @@ class HSplit(Container):
     :param width: When given, use this width instead of looking at the children.
     :param height: When given, use this width instead of looking at the children.
     :param style: A style string.
+    :param modal: ``True`` or ``False``.
+    :param key_bindings: ``None`` or a ``KeyBindings`` object.
     """
     def __init__(self, children, window_too_small=None, align=VerticalAlign.JUSTIFY,
                  report_dimensions_callback=None, padding=0, width=None,
-                 height=None, style=''):
-        assert window_too_small is None or isinstance(window_too_small, Container)
+                 height=None, modal=False, key_bindings=None, style=''):
         assert report_dimensions_callback is None or callable(report_dimensions_callback)
-        assert isinstance(style, text_type)
 
-        self.children = [to_container(c) for c in children]
-        self.window_too_small = window_too_small or _window_too_small()
+        super(HSplit, self).__init__(
+            children=children, window_too_small=window_too_small,
+            padding=padding, width=width, height=height, modal=modal,
+            key_bindings=key_bindings, style=style)
+
         self.align = align
         self.report_dimensions_callback = report_dimensions_callback
-
-        self.padding = to_dimension(padding)
-        self.width = width
-        self.height = height
-        self.style = style
 
         self._children_cache = SimpleCache(maxsize=1)
         self._remaining_space_window = Window()  # Dummy window.
@@ -292,15 +338,8 @@ class HSplit(Container):
 
         return sizes
 
-    def walk(self):
-        """ Walk through children. """
-        yield self
-        for c in self.children:
-            for i in c.walk():
-                yield i
 
-
-class VSplit(Container):
+class VSplit(_Split):
     """
     Several layouts, one stacked left/right of the other. ::
 
@@ -319,25 +358,21 @@ class VSplit(Container):
     :param width: When given, use this width instead of looking at the children.
     :param height: When given, use this width instead of looking at the children.
     :param style: A style string.
+    :param modal: ``True`` or ``False``.
+    :param key_bindings: ``None`` or a ``KeyBindings`` object.
     """
     def __init__(self, children, window_too_small=None, align=HorizontalAlign.JUSTIFY,
                  report_dimensions_callback=None, padding=Dimension.exact(0),
-                 width=None, height=None, style=''):
-        assert window_too_small is None or isinstance(window_too_small, Container)
+                 width=None, height=None, modal=False, key_bindings=None, style=''):
         assert report_dimensions_callback is None or callable(report_dimensions_callback)
-        assert isinstance(style, text_type)
 
-        self.children = [to_container(c) for c in children]
-        self.window_too_small = window_too_small or _window_too_small()
+        super(VSplit, self).__init__(
+            children=children, window_too_small=window_too_small,
+            padding=padding, width=width, height=height, modal=modal,
+            key_bindings=key_bindings, style=style)
+
         self.align = align
         self.report_dimensions_callback = report_dimensions_callback
-
-        self.padding = to_dimension(padding)
-
-        self.width = width
-        self.height = height
-
-        self.style = style
 
         self._children_cache = SimpleCache(maxsize=1)
         self._remaining_space_window = Window()  # Dummy window.
@@ -505,13 +540,6 @@ class VSplit(Container):
             self._remaining_space_window.write_to_screen(
                 app, screen, mouse_handlers,
                 WritePosition(xpos, ypos, remaining_width, height), style)
-
-    def walk(self):
-        """ Walk through children. """
-        yield self
-        for c in self.children:
-            for i in c.walk():
-                yield i
 
 
 class FloatContainer(Container):
@@ -687,16 +715,10 @@ class FloatContainer(Container):
 
         return True
 
-    def walk(self):
-        """ Walk through children. """
-        yield self
-
-        for i in self.content.walk():
-            yield i
-
-        for f in self.floats:
-            for i in f.content.walk():
-                yield i
+    def get_children(self):
+        children = [self.content]
+        children.extend(f.content for f in self.floats)
+        return children
 
 
 class Float(object):
@@ -1890,9 +1912,11 @@ class Window(Container):
 
             self.vertical_scroll -= 1
 
-    def walk(self):
-        # Only yield self. A window doesn't have children.
-        yield self
+    def get_key_bindings(self):
+        return self.content.get_key_bindings()
+
+    def get_children(self):
+        return []
 
 
 class ConditionalContainer(Container):
@@ -1931,8 +1955,8 @@ class ConditionalContainer(Container):
             return self.content.write_to_screen(
                 app, screen, mouse_handlers, write_position, parent_style)
 
-    def walk(self):
-        return self.content.walk()
+    def get_children(self):
+        return [self.content]
 
 
 def to_container(container):
