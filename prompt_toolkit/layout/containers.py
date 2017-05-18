@@ -65,7 +65,7 @@ class Container(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
         """
         Write the actual content to the screen.
 
@@ -242,7 +242,7 @@ class HSplit(_Split):
 
         return self._children_cache.get(tuple(self.children), get)
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
         """
         Render the prompt to a `Screen` instance.
 
@@ -258,7 +258,7 @@ class HSplit(_Split):
 
         if sizes is None:
             self.window_too_small.write_to_screen(
-                app, screen, mouse_handlers, write_position, style)
+                app, screen, mouse_handlers, write_position, style, erase_bg)
         else:
             #
             ypos = write_position.ypos
@@ -268,7 +268,7 @@ class HSplit(_Split):
             # Draw child panes.
             for s, c in zip(sizes, self._all_children):
                 c.write_to_screen(app, screen, mouse_handlers,
-                                  WritePosition(xpos, ypos, width, s), style)
+                                  WritePosition(xpos, ypos, width, s), style, erase_bg)
                 ypos += s
 
             # Fill in the remaining space. This happens when a child control
@@ -280,7 +280,7 @@ class HSplit(_Split):
             if remaining_height > 0:
                 self._remaining_space_window.write_to_screen(
                     app, screen, mouse_handlers,
-                    WritePosition(xpos, ypos, width, remaining_height), style)
+                    WritePosition(xpos, ypos, width, remaining_height), style, erase_bg)
 
     def _divide_heigths(self, app, write_position):
         """
@@ -489,7 +489,7 @@ class VSplit(_Split):
 
         return sizes
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
         """
         Render the prompt to a `Screen` instance.
 
@@ -511,7 +511,7 @@ class VSplit(_Split):
         # If there is not enough space.
         if sizes is None:
             self.window_too_small.write_to_screen(
-                app, screen, mouse_handlers, write_position, style)
+                app, screen, mouse_handlers, write_position, style, erase_bg)
             return
 
         # Calculate heights, take the largest possible, but not larger than
@@ -527,7 +527,7 @@ class VSplit(_Split):
         # Draw all child panes.
         for s, c in zip(sizes, children):
             c.write_to_screen(app, screen, mouse_handlers,
-                              WritePosition(xpos, ypos, s, height), style)
+                              WritePosition(xpos, ypos, s, height), style, erase_bg)
             xpos += s
 
         # Fill in the remaining space. This happens when a child control
@@ -539,7 +539,7 @@ class VSplit(_Split):
         if remaining_width > 0:
             self._remaining_space_window.write_to_screen(
                 app, screen, mouse_handlers,
-                WritePosition(xpos, ypos, remaining_width, height), style)
+                WritePosition(xpos, ypos, remaining_width, height), style, erase_bg)
 
 
 class FloatContainer(Container):
@@ -579,9 +579,9 @@ class FloatContainer(Container):
         """
         return self.content.preferred_height(app, width, max_available_height)
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
         style = parent_style
-        self.content.write_to_screen(app, screen, mouse_handlers, write_position, style)
+        self.content.write_to_screen(app, screen, mouse_handlers, write_position, style, erase_bg)
 
         for fl in self.floats:
             # When a menu_position was given, use this instead of the cursor
@@ -695,7 +695,7 @@ class FloatContainer(Container):
                                    width=width, height=height)
 
                 if not fl.hide_when_covering_content or self._area_is_empty(screen, wp):
-                    fl.content.write_to_screen(app, screen, mouse_handlers, wp, style)
+                    fl.content.write_to_screen(app, screen, mouse_handlers, wp, style, erase_bg=True)
 
     def _area_is_empty(self, screen, write_position):
         """
@@ -1107,7 +1107,7 @@ class Window(Container):
                  get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False,
                  cursorline=False, cursorcolumn=False, get_colorcolumns=None,
                  align=Align.LEFT, style='', char=None,
-                 get_char=None, transparent=True):
+                 get_char=None, transparent=False):
         assert content is None or isinstance(content, UIControl)
         assert width is None or isinstance(width, (Dimension, int))
         assert height is None or isinstance(height, (Dimension, int))
@@ -1299,7 +1299,7 @@ class Window(Container):
             return '?'
         return False
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
         """
         Write window to screen. This renders the user control, the margins and
         copies everything over to the absolute position at the given screen.
@@ -1327,7 +1327,7 @@ class Window(Container):
             ui_content, write_position.width - total_margin_width, write_position.height, app)
 
         # Erase background and fill with `char`.
-        self._fill_bg(app, screen, write_position)
+        self._fill_bg(app, screen, write_position, erase_bg)
 
         # Write body
         visible_line_to_row_col, rowcol_to_yx = self._copy_body(
@@ -1595,7 +1595,7 @@ class Window(Container):
 
         return visible_line_to_row_col, rowcol_to_yx
 
-    def _fill_bg(self, app, screen, write_position):
+    def _fill_bg(self, app, screen, write_position, erase_bg):
         """
         Erase/fill the background.
         (Useful for floats and when a `char` has been given.)
@@ -1605,7 +1605,7 @@ class Window(Container):
         else:
             char = self.char
 
-        if not self.transparent or char:
+        if (erase_bg or char) and not self.transparent:
             wp = write_position
             char = _CHAR_CACHE[char or ' ', '']
 
@@ -1950,10 +1950,10 @@ class ConditionalContainer(Container):
         else:
             return Dimension.zero()
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style):
+    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
         if self.filter(app):
             return self.content.write_to_screen(
-                app, screen, mouse_handlers, write_position, parent_style)
+                app, screen, mouse_handlers, write_position, parent_style, erase_bg)
 
     def get_children(self):
         return [self.content]
