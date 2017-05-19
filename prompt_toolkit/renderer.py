@@ -436,7 +436,7 @@ class Renderer(object):
             width=size.columns,
             height=(size.rows if self.full_screen else height),
             extended_height=size.rows,
-        ), parent_style='')
+        ), parent_style='', erase_bg=False)
 
         # When grayed. Replace all styles in the new screen.
         if app.is_aborting:

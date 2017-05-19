@@ -3,6 +3,7 @@ Future implementation for the prompt_toolkit eventloop.
 """
 from __future__ import unicode_literals
 from .base import EventLoop
+from .defaults import get_event_loop
 
 __all__ = (
     'Future',
@@ -20,9 +21,9 @@ class Future(object):
     accident very similar to asyncio -- but much more limited in functionality.
     They are however not meant to be used interchangeable.)
     """
-    def __init__(self, loop):
-        assert isinstance(loop, EventLoop)
-        self.loop = loop
+    def __init__(self, loop=None):
+        assert loop is None or isinstance(loop, EventLoop)
+        self.loop = loop or get_event_loop()
         self.done_callbacks = []
         self._result = None
         self._exception = None

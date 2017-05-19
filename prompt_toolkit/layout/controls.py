@@ -10,7 +10,7 @@ from six.moves import range
 
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.cache import SimpleCache
-from prompt_toolkit.filters import to_app_filter
+from prompt_toolkit.filters import to_simple_filter
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
@@ -50,7 +50,7 @@ class UIControl(with_metaclass(ABCMeta, object)):
     def preferred_height(self, app, width, max_available_height, wrap_lines):
         return None
 
-    def is_focussable(self, app):
+    def is_focussable(self):
         """
         Tell whether this user control is focussable.
         """
@@ -197,26 +197,20 @@ class FormattedTextControl(UIControl):
         either handle the event or return `NotImplemented` in case we want the
         containing Window to handle this event.
 
-    :param focussable: `bool` or `AppFilter`: Tell whether this control is focussable.
+    :param focussable: `bool` or `SimpleFilter`: Tell whether this control is focussable.
 
-    :param get_formatted_text: Callable that takes an `Application` instance and
-        returns the list of (style_str, text) tuples to be displayed right now.
+    :param text: Text or formatted text to be displayed.
     :param key_bindings: a `KeyBindings` object.
     """
-    def __init__(self, formatted_text='', focussable=False, key_bindings=None,
+    def __init__(self, text='', focussable=False, key_bindings=None,
                  show_cursor=True, modal=False):
         from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert isinstance(show_cursor, bool)
         assert isinstance(modal, bool)
 
-        if callable(formatted_text):
-            self.get_formatted_text = formatted_text
-        else:
-            formatted_text = to_formatted_text(formatted_text)
-            self.get_formatted_text = (lambda app: formatted_text)
-
-        self.focussable = to_app_filter(focussable)
+        self.text = text  # No type check on 'text'. This is done dynamically.
+        self.focussable = to_simple_filter(focussable)
 
         # Key bindings.
         self.key_bindings = key_bindings
@@ -234,11 +228,11 @@ class FormattedTextControl(UIControl):
     def reset(self):
         self._fragments = None
 
-    def is_focussable(self, app):
-        return self.focussable(app)
+    def is_focussable(self):
+        return self.focussable()
 
     def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.get_formatted_text)
+        return '%s(%r)' % (self.__class__.__name__, self.text)
 
     def _get_formatted_text_cached(self, app):
         """
@@ -248,7 +242,7 @@ class FormattedTextControl(UIControl):
         """
         return self._fragment_cache.get(
             app.render_counter,
-            lambda: to_formatted_text(self.get_formatted_text(app)))
+            lambda: to_formatted_text(self.text, app))
 
     def preferred_width(self, app, max_available_width):
         """
@@ -365,7 +359,7 @@ class DummyControl(UIControl):
             get_line=get_line,
             line_count=100 ** 100)  # Something very big.
 
-    def is_focussable(self, app):
+    def is_focussable(self):
         return False
 
 
@@ -381,12 +375,12 @@ class BufferControl(UIControl):
         :func:`~prompt_toolkit.layout.processors.merge_processors` if you want
         to apply multiple processors.)
     :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` instance for syntax highlighting.
-    :param preview_search: `bool` or `AppFilter`: Show search while typing.
+    :param preview_search: `bool` or `SimpleFilter`: Show search while typing.
         When this is `True`, probably you want to add a
         ``HighlightSearchProcessor`` with ``preview_search=True`` as well.
         Otherwise only the cursor position will move, but the text won't be
         highlighted.
-    :param focussable: `bool` or `AppFilter`: Tell whether this control is focussable.
+    :param focussable: `bool` or `SimpleFilter`: Tell whether this control is focussable.
     :param get_search_state: Callable that returns the SearchState to be used.
     :param focus_on_click: Focus this buffer when it's click, but not yet focussed.
     :param key_bindings: a `KeyBindings` object.
@@ -428,10 +422,10 @@ class BufferControl(UIControl):
                 DisplayMultipleCursors(),
             ])
 
-        self.preview_search = to_app_filter(preview_search)
-        self.focussable = to_app_filter(focussable)
+        self.preview_search = to_simple_filter(preview_search)
+        self.focussable = to_simple_filter(focussable)
         self.get_search_state = get_search_state
-        self.focus_on_click = to_app_filter(focus_on_click)
+        self.focus_on_click = to_simple_filter(focus_on_click)
 
         self.input_processor = input_processor
         self.buffer = buffer
@@ -468,8 +462,8 @@ class BufferControl(UIControl):
     def search_state(self):
         return self.get_search_state()
 
-    def is_focussable(self, app):
-        return self.focussable(app)
+    def is_focussable(self):
+        return self.focussable()
 
     def preferred_width(self, app, max_available_width):
         """
@@ -581,7 +575,7 @@ class BufferControl(UIControl):
         # text/cursor position.)
         search_control = self.search_buffer_control
         preview_now = bool(
-            search_control and search_control.buffer.text and self.preview_search(app))
+            search_control and search_control.buffer.text and self.preview_search())
 
         if preview_now:
             ss = self.search_state
@@ -691,7 +685,7 @@ class BufferControl(UIControl):
 
         # Not focussed, but focussing on click events.
         else:
-            if self.focus_on_click(app) and mouse_event.event_type == MouseEventType.MOUSE_UP:
+            if self.focus_on_click() and mouse_event.event_type == MouseEventType.MOUSE_UP:
                 # Focus happens on mouseup. (If we did this on mousedown, the
                 # up event will be received at the point where this widget is
                 # focussed and be handled anyway.)

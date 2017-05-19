@@ -34,11 +34,11 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None, l
     dialog = Dialog(
         loop=loop,
         title=title,
-        body=Label(loop=loop, text=text, dont_extend_height=True),
+        body=Label(text=text, dont_extend_height=True),
         buttons=[
             Button(loop=loop, text=yes_text, handler=yes_handler),
             Button(loop=loop, text=no_text, handler=no_handler),
-        ])
+        ], with_background=True)
 
 
     return _run_dialog(dialog, style)
@@ -72,10 +72,11 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
         loop=loop,
         title=title,
         body=HSplit([
-            Label(loop=loop, text=text, dont_extend_height=True),
+            Label(text=text, dont_extend_height=True),
             textfield,
         ], padding=D(preferred=1, max=1)),
-        buttons=[ok_button, cancel_button])
+        buttons=[ok_button, cancel_button],
+        with_background=True)
 
     return _run_dialog(dialog, style)
 
@@ -89,10 +90,11 @@ def message_dialog(title='', text='', ok_text='Ok', style=None, loop=None):
     dialog = Dialog(
         loop=loop,
         title=title,
-        body=Label(loop=loop, text=text, dont_extend_height=True),
+        body=Label(text=text, dont_extend_height=True),
         buttons=[
             Button(loop=loop, text=ok_text, handler=_return_none),
-        ])
+        ],
+        with_background=True)
 
     return _run_dialog(dialog, style)
 
@@ -113,13 +115,14 @@ def radiolist_dialog(title='', text='', ok_text='Ok', cancel_text='Cancel',
         loop=loop,
         title=title,
         body=HSplit([
-            Label(loop=loop, text=text, dont_extend_height=True),
+            Label(text=text, dont_extend_height=True),
             radio_list,
         ], padding=1),
         buttons=[
             Button(loop=loop, text=ok_text, handler=ok_handler),
             Button(loop=loop, text=cancel_text, handler=_return_none),
-        ])
+        ],
+        with_background=True)
 
     return _run_dialog(dialog, style)
 
@@ -143,12 +146,13 @@ def progress_dialog(title='', text='', run_callback=None, style=None, loop=None)
 
     dialog = Dialog(
         body=HSplit([
-            Box(Label(loop=loop, text=text)),
+            Box(Label(text=text)),
             Box(text_area, padding=D.exact(1)),
             progressbar,
         ]),
         title=title,
-        loop=loop)
+        loop=loop,
+        with_background=True)
     app = _create_app(dialog, style)
 
     def set_percentage(value):

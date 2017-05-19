@@ -64,8 +64,15 @@ class Layout(object):
         if isinstance(value, UIControl):
             self.current_control = value
         else:
-            value = to_window(value)
-            self.current_window = value
+            value = to_container(value)
+            if isinstance(value, Window):
+                self.current_window = value
+            else:
+                # Take the first window of this container.
+                for c in self._walk(value):
+                    if isinstance(c, Window) and c.content.is_focussable():
+                        self.current_window = c
+                        break
 
     def has_focus(self, value):
         """
@@ -190,8 +197,10 @@ class Layout(object):
         while not root.is_modal() and root in self._child_to_parent:
             root = self._child_to_parent[root]
 
-        # Now traverse and collect all the children of this root.
-        return self._walk(root)
+        # Now traverse and collect all the focussable children of this root.
+        for w in self._walk(root):
+            if isinstance(w, Window) and w.content.is_focussable():
+                yield w
 
 
 class InvalidLayoutError(Exception):

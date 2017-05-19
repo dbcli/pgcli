@@ -102,7 +102,7 @@ class Container(with_metaclass(ABCMeta, object)):
 
 def _window_too_small():
     " Create a `Window` that displays the 'Window too small' text. "
-    return Window(FormattedTextControl(formatted_text=
+    return Window(FormattedTextControl(text=
         [('class:window-too-small', ' Window too small... ')]))
 
 
@@ -556,11 +556,17 @@ class FloatContainer(Container):
                                 layout=CompletionMenu(...))
                        ])
     """
-    def __init__(self, content, floats):
+    def __init__(self, content, floats, modal=False, key_bindings=None, style=''):
         assert all(isinstance(f, Float) for f in floats)
+        assert isinstance(modal, bool)
+        assert isinstance(style, text_type)
 
         self.content = to_container(content)
         self.floats = floats
+
+        self.modal = modal
+        self.key_bindings = key_bindings
+        self.style = style
 
     def reset(self):
         self.content.reset()
@@ -580,7 +586,8 @@ class FloatContainer(Container):
         return self.content.preferred_height(app, width, max_available_height)
 
     def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
-        style = parent_style
+        style = parent_style + ' ' + self.style
+
         self.content.write_to_screen(app, screen, mouse_handlers, write_position, style, erase_bg)
 
         for fl in self.floats:
@@ -714,6 +721,12 @@ class FloatContainer(Container):
                         return False
 
         return True
+
+    def is_modal(self):
+        return self.modal
+
+    def get_key_bindings(self):
+        return self.key_bindings
 
     def get_children(self):
         children = [self.content]

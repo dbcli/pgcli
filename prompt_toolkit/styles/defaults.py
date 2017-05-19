@@ -192,7 +192,7 @@ PYGMENTS_DEFAULT_STYLE = {
     'pygments.generic.output':            "#888",
     'pygments.generic.traceback':         "#04d",
 
-    'pygments.error':                     "border:#ff0000"
+    'pygments.error':                     "border:#ff0000",
 }
 
 

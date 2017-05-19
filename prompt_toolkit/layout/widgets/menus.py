@@ -20,7 +20,7 @@ class MenuContainer(object):
     """
     :param floats: List of extra Float objects to display.
     """
-    def __init__(self, body, menu_items=None, floats=None, loop=None):
+    def __init__(self, body, menu_items=None, floats=None, key_bindings=None, loop=None):
         assert isinstance(menu_items, list) and \
             all(isinstance(i, MenuItem) for i in menu_items)
         assert floats is None or all(isinstance(f, Float) for f in floats)
@@ -152,7 +152,8 @@ class MenuContainer(object):
                           filter=has_focus & Condition(lambda app: len(self.selected_menu) >= 2))),
 
                 # --
-            ] + (floats or [])
+            ] + (floats or []),
+            key_bindings=key_bindings,
         )
 
     def _get_menu(self, level):
@@ -236,6 +237,10 @@ class MenuContainer(object):
             FormattedTextControl(get_text_fragments),
             style='class:menu',
             transparent=False)
+
+    @property
+    def floats(self):
+        return self.container.floats
 
     def __pt_container__(self):
         return self.container

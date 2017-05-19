@@ -356,11 +356,7 @@ class BeforeInput(Processor):
     def apply_transformation(self, ti):
         if ti.lineno == 0:
             # Get fragments.
-            if callable(self.text):
-                fragments_before = to_formatted_text(self.text(ti.app), self.style)
-            else:
-                fragments_before = to_formatted_text(self.text, self.style)
-
+            fragments_before = to_formatted_text(self.text, ti.app, self.style)
             fragments = fragments_before + ti.fragments
 
             shift_position = fragment_list_len(fragments_before)
@@ -425,11 +421,7 @@ class AfterInput(Processor):
         # Insert fragments after the last line.
         if ti.lineno == ti.document.line_count - 1:
             # Get fragments.
-            if callable(self.text):
-                fragments_after = to_formatted_text(self.text(ti.app), self.style)
-            else:
-                fragments_after = to_formatted_text(self.text, self.style)
-
+            fragments_after = to_formatted_text(self.text, ti.app, self.style)
             return Transformation(fragments=ti.fragments + fragments_after)
         else:
             return Transformation(fragments=ti.fragments)

@@ -21,8 +21,10 @@ from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align
 from ..controls import BufferControl, FormattedTextControl
 from ..dimension import Dimension as D
 from ..dimension import to_dimension
+from ..formatted_text import to_formatted_text
 from ..margins import ScrollbarMargin, NumberredMargin
 from ..processors import PasswordProcessor, ConditionalProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, merge_processors
+from ..utils import fragment_list_to_text
 
 
 __all__ = (
@@ -89,7 +91,7 @@ class TextArea(object):
                  dont_extend_height=False, dont_extend_width=False,
                  line_numbers=False, scrollbar=False, style='',
                  input_processor=None, search_field=None, preview_search=True,
-                 prompt='', loop=None, _label=False):
+                 prompt='', loop=None):
         assert isinstance(text, six.text_type)
         assert loop is None or isinstance(loop, EventLoop)
         assert search_field is None or isinstance(search_field, SearchField)
@@ -125,7 +127,7 @@ class TextArea(object):
             ]),
             search_buffer_control=search_buffer,
             preview_search=preview_search,
-            focussable=(not _label and focussable))
+            focussable=focussable)
 
         if multiline:
             if scrollbar:
@@ -142,9 +144,7 @@ class TextArea(object):
             left_margins = []
             right_margins = []
 
-        if not _label:
-            # (In case of a Label, we don't want to apply the text-area style.)
-            style = 'class:text-area ' + style
+        style = 'class:text-area ' + style
 
         self.window = Window(
             height=height,
@@ -202,43 +202,47 @@ class Label(object):
     """
     Widget that displays the given text. It is not editable or focussable.
 
-    :param text: The text to be displayed. (This can be multiline.)
+    :param text: The text to be displayed. (This can be multiline. This can be
+        formatted text as well.)
     :param style: A style string.
     :param width: When given, use this width, rather than calculating it from
         the text size.
     :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, text, style='', width=None, loop=None,
+    def __init__(self, text, style='', width=None,
                  dont_extend_height=True, dont_extend_width=False):
         assert isinstance(text, six.text_type)
-        assert loop is None or isinstance(loop, EventLoop)
+        self.text = text
 
-        if width is None:
-            longest_line = max(get_cwidth(line) for line in text.splitlines())
-            width = D(preferred=longest_line)
+        def get_width(app):
+            if width is None:
+                text_fragments = to_formatted_text(self.text, app)
+                text = fragment_list_to_text(text_fragments)
+                longest_line = max(get_cwidth(line) for line in text.splitlines())
+                return D(preferred=longest_line)
+            else:
+                return width
 
-        self.text_area = TextArea(
-            text=text,
-            width=width,
+        self.formatted_text_control = FormattedTextControl(
+            text=lambda app: self.text)
+
+        self.window = Window(
+            content=self.formatted_text_control,
+            get_width=get_width,
             style='class:label ' + style,
-            focussable=False,
             dont_extend_height=dont_extend_height,
-            dont_extend_width=dont_extend_width,
-            loop=loop,
-            _label=True)
+            dont_extend_width=dont_extend_width)
 
-        loop = loop or get_event_loop()
-
-    @property
-    def text(self):
-        return self.text_area.buffer.text
-
-    @text.setter
-    def text(self, value):
-        self.text_area.buffer.text = value
-
+#    @property
+#    def text(self):
+#        return self.text_area.buffer.text
+#
+#    @text.setter
+#    def text(self, value):
+#        self.text_area.buffer.text = value
+#
     def __pt_container__(self):
-        return self.text_area
+        return self.window
 
 
 class Button(object):
@@ -306,8 +310,10 @@ class Frame(object):
     :param title: Text to be displayed in the top of the frame.
     :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, body, title='', style='', loop=None):
+    def __init__(self, body, title='', style='', width=None, height=None,
+                 key_bindings=None, modal=False, loop=None):
         assert loop is None or isinstance(loop, EventLoop)
+        assert isinstance(title, six.text_type)
 
         loop = loop or get_event_loop()
 
@@ -319,7 +325,8 @@ class Frame(object):
                 fill(width=1, height=1, char=BORDER.TOP_LEFT),
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char='|'),
-                Label(' {0} '.format(title), style='class:frame-label', loop=loop,
+                Label(' {0} '.format(title),
+                      style='class:frame-label',
                       dont_extend_width=True),
                 fill(width=1, height=1, char='|'),
                 fill(char=BORDER.HORIZONTAL),
@@ -346,7 +353,8 @@ class Frame(object):
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char=BORDER.BOTTOM_RIGHT),
             ]),
-        ], style=style)
+        ], width=width, height=height, style=style, key_bindings=key_bindings,
+        modal=modal)
 
     def __pt_container__(self):
         return self.container
@@ -365,9 +373,9 @@ class Shadow(object):
             content=body,
             floats=[
                 Float(bottom=-1, height=1, left=1, right=-1,
-                      content=Window(style='class:shadow')),
+                      content=Window(style='class:shadow', transparent=True)),
                 Float(bottom=-1, top=1, width=1, right=-1,
-                      content=Window(style='class:shadow')),
+                      content=Window(style='class:shadow', transparent=True)),
                 ]
             )
 
@@ -397,7 +405,7 @@ class Box(object):
                  padding_left=None, padding_right=None,
                  padding_top=None, padding_bottom=None,
                  width=None, height=None,
-                 style='', char=None):
+                 style='', char=None, modal=False, key_bindings=None):
         if padding is None:
             padding = D(preferred=0)
 
@@ -420,7 +428,9 @@ class Box(object):
                 Window(width=self.padding_right, char=char),
             ]),
             Window(height=self.padding_bottom, char=char),
-        ], width=width, height=height, style=style)
+        ],
+        width=width, height=height, style=style, modal=modal,
+        key_bindings=None)
 
     def __pt_container__(self):
         return self.container
@@ -451,7 +461,7 @@ class Checkbox(object):
 
         self.container = VSplit([
             self.window,
-            Label(loop=loop, text=' {0}'.format(text))
+            Label(text=' {0}'.format(text))
         ], style='class:checkbox')
 
     def _get_text_fragments(self, app):

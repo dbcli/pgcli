@@ -23,7 +23,7 @@ __all__ = (
 )
 
 
-def to_formatted_text(value, style=''):
+def to_formatted_text(value, app, style=''):
     """
     Convert the given value (which can be formatted text) into a list of text
     fragments. (Which is the canonical form of formatted text.) The outcome is
@@ -32,12 +32,20 @@ def to_formatted_text(value, style=''):
     It can take an `HTML` object, a plain text string, or anything that
     implements `__pt_formatted_text__`.
 
+    :param app: The `Applicatin` object.
     :param style: An additional style string which is applied to all text
         fragments.
     """
+    # NOTE: The reason that we require `app` to be passed around here, is that
+    #       in many situations the value of the formatted string depends on the
+    #       value of 'app'. (E.g. `MenuContainer._get_menu_fragments` displays
+    #       a different value, depending on whether it's focussed or not. It
+    #       needs a reference to 'app' for this.)
     assert isinstance(style, six.text_type)
 
-    if isinstance(value, six.text_type):
+    if value is None:
+        return []
+    elif isinstance(value, six.text_type):
         result = [('', value)]
     elif isinstance(value, list):
         if len(value):
@@ -46,6 +54,8 @@ def to_formatted_text(value, style=''):
         result = value
     elif hasattr(value, '__pt_formatted_text__'):
         result = value.__pt_formatted_text__()
+    elif callable(value):
+        return to_formatted_text(value(app), app, style=style)
     else:
         raise ValueError('No formatted text given. Expecting a unicode object, '
                          'a list of text fragments or an HTML object.')

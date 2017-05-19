@@ -695,35 +695,19 @@ class Prompt(object):
         return Dimension()
 
     def _get_prompt(self, app):
-        if callable(self.message):
-            message = self.message(app)
-        else:
-            message = self.message
-
-        return to_formatted_text(message, style='class:prompt')
+        return to_formatted_text(self.message, app, style='class:prompt')
 
     def _get_rprompt(self, app):
-        if self.rprompt is None:
-            return []
-
-        if callable(self.rprompt):
-            rprompt = self.rprompt(app)
-        else:
-            rprompt = self.rprompt
-
-        return to_formatted_text(rprompt, style='class:rprompt')
+        return to_formatted_text(self.rprompt, app, style='class:rprompt')
 
     def _get_continuation(self, app, width):
         prompt_continuation = self.prompt_continuation
-
-        if prompt_continuation is None:
-            return []
 
         if callable(prompt_continuation):
             prompt_continuation = prompt_continuation(app, width)
 
         return to_formatted_text(
-            prompt_continuation, style='class:prompt-continuation')
+            prompt_continuation, app, style='class:prompt-continuation')
 
     def _get_bottom_toolbar(self, app):
         bottom_toolbar = self.bottom_toolbar
@@ -735,7 +719,7 @@ class Prompt(object):
             bottom_toolbar = bottom_toolbar(app)
 
         return to_formatted_text(
-            bottom_toolbar, style='class:bottom-toolbar.text')
+            bottom_toolbar, app, style='class:bottom-toolbar.text')
 
     def _get_title(self):
         if self.get_title is not None:

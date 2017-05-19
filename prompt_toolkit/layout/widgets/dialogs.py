@@ -7,6 +7,8 @@ from prompt_toolkit.eventloop import EventLoop
 from .base import Box, Shadow, Frame
 from ..containers import VSplit, HSplit
 from ..dimension import Dimension as D
+from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
+from prompt_toolkit.key_binding.key_bindings import KeyBindings
 
 __all__ = (
     'Dialog',
@@ -23,7 +25,7 @@ class Dialog(object):
     :param buttons: A list of `Button` widgets, displayed at the bottom.
     :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, body, title='', buttons=None, loop=None):
+    def __init__(self, body, title='', buttons=None, modal=True, loop=None, width=None, with_background=False):
         assert loop is None or isinstance(loop, EventLoop)
         assert isinstance(title, six.text_type)
         assert buttons is None or isinstance(buttons, list)
@@ -41,13 +43,27 @@ class Dialog(object):
         else:
             frame_body = body
 
-        self.container = Box(
-            body=Shadow(
-                body=Frame(
-                    title=title,
-                    body=frame_body,
-                    style='class:dialog.body')),
-            style='class:dialog')
+        # Key bindings.
+        kb = KeyBindings()
+        kb.add('tab')(focus_next)
+        kb.add('s-tab')(focus_previous)
+
+        frame = Shadow(body=Frame(
+            title=title,
+            body=frame_body,
+            style='class:dialog.body',
+            width=(None if with_background is None else width),
+            key_bindings=kb,
+            modal=modal,
+        ))
+
+        if with_background:
+            self.container = Box(
+                body=frame,
+                style='class:dialog',
+                width=width)
+        else:
+            self.container = frame
 
     def __pt_container__(self):
         return self.container

@@ -240,7 +240,7 @@ class Application(object):
         """
         # Focussable windows are windows that are visible, but also part of the modal container.
         focussable_windows = set(self.visible_windows) & set(self.layout.get_focussable_windows())
-        return [w for w in focussable_windows if w.content.is_focussable(self)]
+        return list(focussable_windows)
 
     @property
     def terminal_title(self):
@@ -279,9 +279,9 @@ class Application(object):
         # (The `Layout` class can't determine this.)
         layout = self.layout
 
-        if not layout.current_control.is_focussable(self):
+        if not layout.current_control.is_focussable():
             for w in layout.find_all_windows():
-                if w.content.is_focussable(self):
+                if w.content.is_focussable():
                     layout.current_window = w
                     break
 
