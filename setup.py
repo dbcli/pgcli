@@ -12,16 +12,16 @@ with open('pgcli/__init__.py', 'rb') as f:
 description = 'CLI for Postgres Database. With auto-completion and syntax highlighting.'
 
 install_requirements = [
-            'pgspecial>=1.8.0',
-            'click >= 4.1',
-            'Pygments >= 2.0',  # Pygments has to be Capitalcased. WTF?
-            'prompt_toolkit>=1.0.10,<1.1.0',
-            'psycopg2 >= 2.5.4',
-            'sqlparse >=0.2.2,<0.3.0',
-            'configobj >= 5.0.6',
-            'humanize >= 0.5.1',
-            'wcwidth >= 0.1.6',
-            ]
+    'pgspecial>=1.8.0',
+    'click >= 4.1',
+    'Pygments >= 2.0',  # Pygments has to be Capitalcased. WTF?
+    'prompt_toolkit>=1.0.10,<1.1.0',
+    'psycopg2 >= 2.5.4',
+    'sqlparse >=0.2.2,<0.3.0',
+    'configobj >= 5.0.6',
+    'humanize >= 0.5.1',
+    'wcwidth >= 0.1.6',
+]
 
 
 # setproctitle is used to mask the password when running `ps` in command line.
