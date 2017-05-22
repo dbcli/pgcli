@@ -1,3 +1,10 @@
+Upcoming
+========
+
+Internal changes:
+-----------------
+* Add behave to tox (Thanks: `Dick Marinus`_).
+
 1.5.1
 =====
 

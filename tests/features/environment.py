@@ -17,17 +17,29 @@ def before_all(context):
     os.environ['PAGER'] = 'cat'
     os.environ['EDITOR'] = 'nano'
 
+    context.package_root = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
     context.exit_sent = False
 
     vi = '_'.join([str(x) for x in sys.version_info[:3]])
-    db_name = context.config.userdata.get('pg_test_db', None)
+    db_name = context.config.userdata.get('pg_test_db', 'pgcli_behave_tests')
     db_name_full = '{0}_{1}'.format(db_name, vi)
 
     # Store get params from config.
     context.conf = {
-        'host': context.config.userdata.get('pg_test_host', 'localhost'),
-        'user': context.config.userdata.get('pg_test_user', 'postgres'),
-        'pass': context.config.userdata.get('pg_test_pass', None),
+        'host': context.config.userdata.get(
+            'pg_test_host',
+            os.getenv('PGHOST', 'localhost')
+        ),
+        'user': context.config.userdata.get(
+            'pg_test_user',
+            os.getenv('PGUSER', 'postgres')
+        ),
+        'pass': context.config.userdata.get(
+            'pg_test_pass',
+            os.getenv('PGPASSWORD', None)
+        ),
         'dbname': db_name_full,
         'dbname_tmp': db_name_full + '_tmp',
         'vi': vi
