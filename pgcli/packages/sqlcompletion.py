@@ -46,7 +46,8 @@ Column = namedtuple(
 )
 Column.__new__.__defaults__ = (None, None, tuple(), False)
 
-Keyword = namedtuple('Keyword', [])
+Keyword = namedtuple('Keyword', ['last_token'])
+Keyword.__new__.__defaults__ = (None,)
 NamedQuery = namedtuple('NamedQuery', [])
 Datatype = namedtuple('Datatype', ['schema'])
 Alias = namedtuple('Alias', ['aliases'])
@@ -226,6 +227,14 @@ def _split_multiple_statements(full_text, text_before_cursor, parsed):
     return full_text, text_before_cursor, statement
 
 
+SPECIALS_SUGGESTION = {
+    'dT': Datatype,
+    'df': Function,
+    'dt': Table,
+    'dv': View,
+    'sf': Function,
+}
+
 def suggest_special(text):
     text = text.lstrip()
     cmd, _, arg = parse_special_command(text)
@@ -253,7 +262,7 @@ def suggest_special(text):
         schema = None
 
     if cmd[1:] == 'd':
-        # \d can descibe tables or views
+        # \d can describe tables or views
         if schema:
             return (Table(schema=schema),
                     View(schema=schema),)
@@ -261,12 +270,8 @@ def suggest_special(text):
             return (Schema(),
                     Table(schema=None),
                     View(schema=None),)
-    elif cmd[1:] in ('dt', 'dv', 'df', 'dT'):
-        rel_type = {'dt': Table,
-                    'dv': View,
-                    'df': Function,
-                    'dT': Datatype,
-                    }[cmd[1:]]
+    elif cmd[1:] in SPECIALS_SUGGESTION:
+        rel_type = SPECIALS_SUGGESTION[cmd[1:]]
         if schema:
             return (rel_type(schema=schema),)
         else:
@@ -376,10 +381,7 @@ def suggest_based_on_last_token(token, stmt):
     elif token_v == 'set':
         return (Column(table_refs=stmt.get_tables(),
                        local_tables=stmt.local_tables),)
-    elif token_v in ('by', 'distinct'):
-        return (Column(table_refs=stmt.get_tables(),
-                       local_tables=stmt.local_tables, qualifiable=True),)
-    elif token_v in ('select', 'where', 'having'):
+    elif token_v in ('select', 'where', 'having', 'by', 'distinct'):
         # Check for a table alias or schema qualification
         parent = (stmt.identifier and stmt.identifier.get_parent_name()) or []
         tables = stmt.get_tables()
@@ -393,7 +395,7 @@ def suggest_based_on_last_token(token, stmt):
             return (Column(table_refs=tables, local_tables=stmt.local_tables,
                            qualifiable=True),
                     Function(schema=None),
-                    Keyword(),)
+                    Keyword(token_v.upper()),)
     elif token_v == 'as':
         # Don't suggest anything for aliases
         return ()
@@ -490,8 +492,8 @@ def suggest_based_on_last_token(token, stmt):
         if not schema:
             suggestions.append(Schema())
         return tuple(suggestions)
-    elif token_v == 'alter':
-        return (Keyword(),)
+    elif token_v in {'alter', 'create', 'drop'}:
+        return (Keyword(token_v.upper()),)
     elif token.is_keyword:
         # token is a keyword we haven't implemented any special handling for
         # go backwards in the query until we find one we do recognize
@@ -499,7 +501,7 @@ def suggest_based_on_last_token(token, stmt):
         if prev_keyword:
             return suggest_based_on_last_token(prev_keyword, stmt)
         else:
-            return (Keyword(),)
+            return (Keyword(token_v.upper()),)
     else:
         return (Keyword(),)
 

@@ -63,7 +63,6 @@ The `pgcli` is written using prompt_toolkit_.
     - ``SELECT * FROM <tab>`` will only show table names. 
     - ``SELECT * FROM users WHERE <tab>`` will only show column names. 
 
-* Config file is automatically created at ``~/.config/pgcli/config`` at first launch.
 * Primitive support for ``psql`` back-slash commands. 
 * Pretty prints tabular data.
   Note: `pgcli` uses [tabulate](https://github.com/dbcli/pgcli/blob/master/pgcli/packages/tabulate.py)
@@ -72,6 +71,11 @@ The `pgcli` is written using prompt_toolkit_.
   [this issue](https://github.com/dbcli/pgcli/issues/617) for more details.
 
 .. _prompt_toolkit: https://github.com/jonathanslenders/python-prompt-toolkit
+
+Config
+------
+A config file is automatically created at ``~/.config/pgcli/config`` at first launch.
+See the file itself for a description of all available options.
 
 Contributions:
 --------------
@@ -175,6 +179,39 @@ Then you can install pgcli:
 
     $ sudo pip install pgcli
 
+
+Docker
+======
+
+Pgcli can be run from within Docker. This can be useful to try pgcli without
+installing it, or any dependencies, system-wide.
+
+To build the image:
+
+::
+
+    $ docker build -t pgcli .
+
+To create a container from the image:
+
+::
+
+    $ docker run --rm -ti pgcli pgcli <ARGS>
+
+To access postgresql databases listening on localhost, make sure to run the
+docker in "host net mode". E.g. to access a database called "foo" on the
+postgresql server running on localhost:5432 (the standard port):
+
+::
+
+    $ docker run --rm -ti --net host pgcli pgcli -h localhost foo
+
+To connect to a locally running instance over a unix socket, bind the socket to
+the docker container:
+
+::
+
+    $ docker run --rm -ti -v /var/run/postgres:/var/run/postgres pgcli pgcli foo
 
 Thanks:
 -------

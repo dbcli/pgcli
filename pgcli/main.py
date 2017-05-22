@@ -11,6 +11,7 @@ import threading
 import shutil
 import functools
 import humanize
+import datetime as dt
 from time import time, sleep
 from codecs import open
 
@@ -75,6 +76,13 @@ MetaQuery = namedtuple(
     ])
 MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
+OutputSettings = namedtuple(
+    'OutputSettings',
+    'table_format dcmlfmt floatfmt missingval expanded max_width case_function'
+)
+OutputSettings.__new__.__defaults__ = (
+    None, None, None, '<null>', False, None, lambda x: x
+)
 
 # no-op logging handler
 class NullHandler(logging.Handler):
@@ -133,6 +141,7 @@ class PGCli(object):
             self.row_limit = c['main'].as_int('row_limit')
 
         self.min_num_menu_lines = c['main'].as_int('min_num_menu_lines')
+        self.multiline_continuation_char = c['main']['multiline_continuation_char']
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
@@ -143,6 +152,8 @@ class PGCli(object):
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
+
+        self.now = dt.datetime.today()
 
         self.completion_refresher = CompletionRefresher()
 
@@ -157,6 +168,8 @@ class PGCli(object):
             'generate_aliases': c['main'].as_bool('generate_aliases'),
             'asterisk_column_order': c['main']['asterisk_column_order'],
             'qualify_columns': c['main']['qualify_columns'],
+            'case_column_headers': c['main'].as_bool('case_column_headers'),
+            'search_path_filter': c['main'].as_bool('search_path_filter'),
             'single_connection': single_connection,
             'less_chatty': less_chatty,
             'keyword_casing': keyword_casing,
@@ -350,16 +363,23 @@ class PGCli(object):
         :param document: Document
         :return: Document
         """
+        # FIXME: using application.pre_run_callables like this here is not the best solution.
+        # It's internal api of prompt_toolkit that may change. This was added to fix #668.
+        # We may find a better way to do it in the future.
+        saved_callables = cli.application.pre_run_callables
         while special.editor_command(document.text):
             filename = special.get_filename(document.text)
-            sql, message = special.open_external_editor(filename,
-                                                          sql=document.text)
+            query = (special.get_editor_query(document.text) or
+                     self.get_last_query())
+            sql, message = special.open_external_editor(filename, sql=query)
             if message:
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
             cli.current_buffer.document = Document(sql, cursor_position=len(sql))
-            document = cli.run(False)
+            cli.application.pre_run_callables = []
+            document = cli.run()
             continue
+        cli.application.pre_run_callables = saved_callables
         return document
 
     def execute_command(self, text, query):
@@ -442,7 +462,7 @@ class PGCli(object):
 
         try:
             while True:
-                document = self.cli.run(True)
+                document = self.cli.run()
 
                 # The reason we check here instead of inside the pgexecute is
                 # because we want to raise the Exit exception which will be
@@ -474,6 +494,8 @@ class PGCli(object):
                 else:
                     query = self.execute_command(document.text, query)
 
+                self.now = dt.datetime.today()
+
                 # Allow PGCompleter to learn user's preferred keywords, etc.
                 with self._completer_lock:
                     self.completer.extend_query_history(document.text)
@@ -501,7 +523,8 @@ class PGCli(object):
             return [(Token.Prompt, prompt)]
 
         def get_continuation_tokens(cli, width):
-            return [(Token.Continuation, '.' * (width - 1) + ' ')]
+            continuation=self.multiline_continuation_char * (width - 1) + ' '
+            return [(Token.Continuation, continuation)]
 
         get_toolbar_tokens = create_toolbar_tokens_func(
             lambda: self.vi_mode, self.completion_refresher.is_refreshing,
@@ -596,9 +619,19 @@ class PGCli(object):
                 max_width = None
 
             expanded = self.pgspecial.expanded_output or self.expanded_output
-            formatted = format_output(
-                title, cur, headers, status, self.table_format, self.decimal_format,
-                self.float_format, self.null_string, expanded, max_width)
+            settings = OutputSettings(
+                table_format=self.table_format,
+                dcmlfmt=self.decimal_format,
+                floatfmt=self.float_format,
+                missingval=self.null_string,
+                expanded=expanded,
+                max_width=max_width,
+                case_function=(
+                    self.completer.case if self.settings['case_column_headers']
+                    else lambda x: x
+                )
+            )
+            formatted = format_output(title, cur, headers, status, settings)
 
             output.extend(formatted)
             total = time() - start
@@ -696,6 +729,7 @@ class PGCli(object):
                 Document(text=text, cursor_position=cursor_positition), None)
 
     def get_prompt(self, string):
+        string = string.replace('\\t', self.now.strftime('%x %X'))
         string = string.replace('\\u', self.pgexecute.user or '(none)')
         string = string.replace('\\h', self.pgexecute.host or '(none)')
         string = string.replace('\\d', self.pgexecute.dbname or '(none)')
@@ -705,6 +739,11 @@ class PGCli(object):
         string = string.replace('\\n', "\n")
         return string
 
+    def get_last_query(self):
+        """Get the last query executed or None."""
+        return self.query_history[-1][0] if self.query_history else None
+
+
 
 @click.command()
 # Default host is '' so psycopg2 can default to either localhost or unix socket
@@ -712,8 +751,8 @@ class PGCli(object):
         help='Host address of the postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
         'postgres instance is listening.', envvar='PGPORT')
-@click.option('-U', '--user', envvar='PGUSER', help='User name to '
-        'connect to the postgres database.')
+@click.option('-U', '--username', 'username_opt', envvar='PGUSER',
+        help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
         help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
@@ -728,7 +767,7 @@ class PGCli(object):
         envvar='PGCLIRC', help='Location of pgclirc file.')
 @click.option('-D', '--dsn', default='', envvar='DSN',
         help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
-@click.option('-R', '--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
+@click.option('--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
         help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.option('--less-chatty', 'less_chatty', is_flag=True,
         default=False,
@@ -736,7 +775,7 @@ class PGCli(object):
 @click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
-def cli(database, user, host, port, prompt_passwd, never_prompt,
+def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
     single_connection, dbname, username, version, pgclirc, dsn, row_limit,
     less_chatty, prompt):
 
@@ -766,7 +805,7 @@ def cli(database, user, host, port, prompt_passwd, never_prompt,
 
     # Choose which ever one has a valid value.
     database = database or dbname
-    user = username or user
+    user = username_opt or username
 
     if dsn is not '':
         try:
@@ -809,13 +848,19 @@ def obfuscate_process_password():
     setproctitle.setproctitle(process_title)
 
 
-def format_output(title, cur, headers, status, table_format, dcmlfmt, floatfmt,
-                  missingval='<null>', expanded=False, max_width=None):
+def format_output(title, cur, headers, status, settings):
     output = []
+    missingval = settings.missingval
+    table_format = settings.table_format
+    dcmlfmt = settings.dcmlfmt
+    floatfmt = settings.floatfmt
+    expanded = settings.expanded
+    max_width = settings.max_width
+    case_function = settings.case_function
     if title:  # Only print the title if it's not None.
         output.append(title)
     if cur:
-        headers = [utf8tounicode(x) for x in headers]
+        headers = [case_function(utf8tounicode(x)) for x in headers]
         if expanded and headers:
             output.append(expanded_table(cur, headers, missingval))
         else:

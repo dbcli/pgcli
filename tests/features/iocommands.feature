@@ -1,10 +1,17 @@
 Feature: I/O commands
 
   Scenario: edit sql in file with external editor
-     Given we have pgcli installed
-      when we run pgcli
-      and we wait for prompt
-      and we start external editor providing a file name
+     When we start external editor providing a file name
       and we type sql in the editor
       and we exit the editor
-      then we see the sql in prompt
+      then we see dbcli prompt
+      and we see the sql in prompt
+
+  Scenario: tee output from query
+     When we tee output
+      and we wait for prompt
+      and we query "select 123456"
+      and we wait for prompt
+      and we notee output
+      and we wait for prompt
+      then we see 123456 in tee output

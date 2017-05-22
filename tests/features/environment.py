@@ -6,6 +6,9 @@ import os
 import sys
 import db_utils as dbutils
 import fixture_utils as fixutils
+import pexpect
+
+from steps.wrappers import run_cli, wait_prompt
 
 
 def before_all(context):
@@ -15,10 +18,13 @@ def before_all(context):
     os.environ['LINES'] = "100"
     os.environ['COLUMNS'] = "100"
     os.environ['PAGER'] = 'cat'
-    os.environ['EDITOR'] = 'nano'
+    os.environ['EDITOR'] = 'ex'
 
     context.package_root = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
+    os.environ["COVERAGE_PROCESS_START"] = os.path.join(context.package_root,
+                                                        '.coveragerc')
 
     context.exit_sent = False
 
@@ -42,15 +48,23 @@ def before_all(context):
         ),
         'dbname': db_name_full,
         'dbname_tmp': db_name_full + '_tmp',
-        'vi': vi
+        'vi': vi,
+        'cli_command': context.config.userdata.get('pg_cli_command', None) or
+                       sys.executable +
+        ' -c "import coverage; coverage.process_startup(); import pgcli.main; pgcli.main.cli()"',
+        'pager_boundary': '---boundary---',
     }
+    os.environ['PAGER'] = "{0} {1} {2}".format(
+        sys.executable,
+        os.path.join(context.package_root, "tests/features/wrappager.py"),
+        context.conf['pager_boundary'])
 
     # Store old env vars.
     context.pgenv = {
         'PGDATABASE': os.environ.get('PGDATABASE', None),
         'PGUSER': os.environ.get('PGUSER', None),
         'PGHOST': os.environ.get('PGHOST', None),
-        'PGPASS': os.environ.get('PGPASS', None),
+        'PGPASSWORD': os.environ.get('PGPASSWORD', None),
     }
 
     # Set new env vars.
@@ -59,10 +73,10 @@ def before_all(context):
     os.environ['PGHOST'] = context.conf['host']
 
     if context.conf['pass']:
-        os.environ['PGPASS'] = context.conf['pass']
+        os.environ['PGPASSWORD'] = context.conf['pass']
     else:
-        if 'PGPASS' in os.environ:
-            del os.environ['PGPASS']
+        if 'PGPASSWORD' in os.environ:
+            del os.environ['PGPASSWORD']
         if 'PGHOST' in os.environ:
             del os.environ['PGHOST']
 
@@ -89,11 +103,30 @@ def after_all(context):
             os.environ[k] = v
 
 
+def before_step(context, _):
+    context.atprompt = False
+
+
+def before_scenario(context, _):
+    run_cli(context)
+    wait_prompt(context)
+
+
 def after_scenario(context, _):
-    """
-    Cleans up after each test complete.
-    """
+    """Cleans up after each test complete."""
 
     if hasattr(context, 'cli') and not context.exit_sent:
-        # Terminate nicely.
-        context.cli.terminate()
+        # Quit nicely.
+        if not context.atprompt:
+            dbname = context.currentdb
+            context.cli.expect_exact(
+                '{0}> '.format(dbname),
+                timeout=5
+            )
+        context.cli.sendcontrol('d')
+        context.cli.expect_exact(pexpect.EOF, timeout=5)
+
+# TODO: uncomment to debug a failure
+# def after_step(context, step):
+#     if step.status == "failed":
+#         import ipdb; ipdb.set_trace()

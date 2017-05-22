@@ -2,6 +2,7 @@ import traceback
 import logging
 import psycopg2
 import psycopg2.extras
+import psycopg2.errorcodes
 import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
@@ -296,16 +297,31 @@ class PGExecute(object):
                 _logger.error("sql: %r, error: %r", sql, e)
                 _logger.error("traceback: %r", traceback.format_exc())
 
-                if (isinstance(e, psycopg2.OperationalError)
+                if (self._must_raise(e)
                         or not exception_formatter):
-                    # Always raise operational errors, regardless of on_error
-                    # specification
                     raise
 
                 yield None, None, None, exception_formatter(e), sql, False
 
                 if not on_error_resume:
                     break
+
+    def _must_raise(self, e):
+        """Return true if e is an error that should not be caught in ``run``.
+
+        ``OperationalError``s are raised for errors that are not under the
+        control of the programmer. Usually that means unexpected disconnects,
+        which we shouldn't catch; we handle uncaught errors by prompting the
+        user to reconnect. We *do* want to catch OperationalErrors caused by a
+        lock being unavailable, as reconnecting won't solve that problem.
+
+        :param e: DatabaseError. An exception raised while executing a query.
+
+        :return: Bool. True if ``run`` must raise this exception.
+
+        """
+        return (isinstance(e, psycopg2.OperationalError) and
+                psycopg2.errorcodes.lookup(e.pgcode) != 'LOCK_NOT_AVAILABLE')
 
     def execute_normal_sql(self, split_sql):
         """Returns tuple (title, rows, headers, status)"""

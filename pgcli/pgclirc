@@ -50,6 +50,9 @@ casing_file = default
 # location, one will be generated based on usage in SQL/PLPGSQL functions.
 generate_casing_file = False
 
+# Casing of column headers based on the casing_file described above
+case_column_headers = True
+
 # history_file location.
 # In Unix/Linux: ~/.config/pgcli/history
 # In Windows: %USERPROFILE%\AppData\Local\dbcli\pgcli\history
@@ -67,6 +70,9 @@ asterisk_column_order = table_order
 # Whether to qualify with table alias/name when suggesting columns
 # Possible values: "always", never" and "if_more_than_one_table"
 qualify_columns = if_more_than_one_table
+
+# When no schema is entered, only suggest objects in search_path
+search_path_filter = False
 
 # Default pager.
 # By default 'PAGER' environment variable is used
@@ -112,6 +118,9 @@ prompt = '\u@\h:\d> '
 
 # Number of lines to reserve for the suggestion menu
 min_num_menu_lines = 4
+
+# Character used to left pad multi-line queries to match the prompt size.
+multiline_continuation_char = '.'
 
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
