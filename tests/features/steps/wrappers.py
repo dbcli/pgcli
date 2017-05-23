@@ -24,7 +24,7 @@ def expect_pager(context, expected, timeout):
 def run_cli(context):
     """Run the process using pexpect."""
     cli_cmd = context.conf.get('cli_command')
-    context.cli = pexpect.spawnu(cli_cmd, cwd='..')
+    context.cli = pexpect.spawnu(cli_cmd, cwd=context.package_root)
     context.exit_sent = False
     context.currentdb = context.conf['dbname']
 

@@ -10,13 +10,12 @@ from behave import when, then
 @when('we start external editor providing a file name')
 def step_edit_file(context):
     """Edit file with external editor."""
-    context.editor_file_name = [
-        '..',
-        'test_file_{0}.sql'.format(context.conf['vi'])
-    ]
-    if os.path.exists(os.path.join(*context.editor_file_name)):
-        os.remove(os.path.join(*context.editor_file_name))
-    context.cli.sendline('\e {0}'.format(context.editor_file_name[1]))
+    context.editor_file_name = os.path.join(
+        context.package_root, 'test_file_{0}.sql'.format(context.conf['vi']))
+    if os.path.exists(context.editor_file_name):
+        os.remove(context.editor_file_name)
+    context.cli.sendline('\e {0}'.format(
+        os.path.basename(context.editor_file_name)))
     wrappers.expect_exact(
         context, 'Entering Ex mode.  Type "visual" to go to Normal mode.', timeout=2)
     wrappers.expect_exact(context, '\r\n:', timeout=2)
@@ -43,19 +42,18 @@ def step_edit_done_sql(context):
     # Cleanup the command line.
     context.cli.sendcontrol('c')
     # Cleanup the edited file.
-    if os.path.join(*context.editor_file_name) and os.path.exists(os.path.join(*context.editor_file_name)):
-        os.remove(os.path.join(*context.editor_file_name))
+    if context.editor_file_name and os.path.exists(context.editor_file_name):
+        os.remove(context.editor_file_name)
 
 
 @when(u'we tee output')
 def step_tee_ouptut(context):
-    context.tee_file_name = [
-        '..',
-        'tee_file_{0}.sql'.format(context.conf['vi'])
-    ]
-    if os.path.exists(os.path.join(*context.tee_file_name)):
-        os.remove(os.path.join(*context.tee_file_name))
-    context.cli.sendline('\o {0}'.format(context.tee_file_name[1]))
+    context.tee_file_name = os.path.join(
+        context.package_root, 'tee_file_{0}.sql'.format(context.conf['vi']))
+    if os.path.exists(context.tee_file_name):
+        os.remove(context.tee_file_name)
+    context.cli.sendline('\o {0}'.format(
+        os.path.basename(context.tee_file_name)))
     wrappers.expect_exact(
         context, context.conf['pager_boundary'] + '\r\n', timeout=5)
     wrappers.expect_exact(context, "Writing to file", timeout=5)
@@ -77,8 +75,8 @@ def step_notee_output(context):
 
 @then(u'we see 123456 in tee output')
 def step_see_123456_in_ouput(context):
-    with open(os.path.join(*context.tee_file_name)) as f:
+    with open(context.tee_file_name) as f:
         assert '123456' in f.read()
-    if os.path.exists(os.path.join(*context.tee_file_name)):
-        os.remove(os.path.join(*context.tee_file_name))
+    if os.path.exists(context.tee_file_name):
+        os.remove(context.tee_file_name)
     context.atprompt = True

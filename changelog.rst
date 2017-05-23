@@ -28,6 +28,7 @@ Internal changes:
 * Test using behave the tee command (Thanks: `Dick Marinus`_).
 * Behave remove boiler plate code (Thanks: `Dick Marinus`_).
 * Behave fix pgspecial update (Thanks: `Dick Marinus`_).
+* Add behave to tox (Thanks: `Dick Marinus`_).
 
 1.5.1
 =====

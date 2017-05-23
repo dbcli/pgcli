@@ -19,19 +19,33 @@ def before_all(context):
     os.environ['COLUMNS'] = "100"
     os.environ['PAGER'] = 'cat'
     os.environ['EDITOR'] = 'ex'
-    os.environ["COVERAGE_PROCESS_START"] = os.getcwd() + "/../.coveragerc"
+
+    context.package_root = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
+    os.environ["COVERAGE_PROCESS_START"] = os.path.join(context.package_root,
+                                                        '.coveragerc')
 
     context.exit_sent = False
 
     vi = '_'.join([str(x) for x in sys.version_info[:3]])
-    db_name = context.config.userdata.get('pg_test_db', None)
+    db_name = context.config.userdata.get('pg_test_db', 'pgcli_behave_tests')
     db_name_full = '{0}_{1}'.format(db_name, vi)
 
     # Store get params from config.
     context.conf = {
-        'host': context.config.userdata.get('pg_test_host', 'localhost'),
-        'user': context.config.userdata.get('pg_test_user', 'postgres'),
-        'pass': context.config.userdata.get('pg_test_pass', None),
+        'host': context.config.userdata.get(
+            'pg_test_host',
+            os.getenv('PGHOST', 'localhost')
+        ),
+        'user': context.config.userdata.get(
+            'pg_test_user',
+            os.getenv('PGUSER', 'postgres')
+        ),
+        'pass': context.config.userdata.get(
+            'pg_test_pass',
+            os.getenv('PGPASSWORD', None)
+        ),
         'dbname': db_name_full,
         'dbname_tmp': db_name_full + '_tmp',
         'vi': vi,
@@ -41,9 +55,9 @@ def before_all(context):
         'pager_boundary': '---boundary---',
     }
     os.environ['PAGER'] = "{0} {1} {2}".format(
-        sys.executable, "tests/features/wrappager.py",
-        context.conf['pager_boundary']
-    )
+        sys.executable,
+        os.path.join(context.package_root, "tests/features/wrappager.py"),
+        context.conf['pager_boundary'])
 
     # Store old env vars.
     context.pgenv = {
