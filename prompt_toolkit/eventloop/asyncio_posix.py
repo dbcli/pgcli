@@ -7,8 +7,6 @@ from ..input import Input
 from .base import EventLoop
 from .future import Future
 import asyncio
-import six
-import textwrap
 
 __all__ = (
     'PosixAsyncioEventLoop',
@@ -23,47 +21,17 @@ class PosixAsyncioEventLoop(EventLoop):
         self._input = None
         self._input_ready_cb = None
 
-    try:
-        six.exec_(textwrap.dedent('''
-    async def run_as_coroutine(self, future):
-        " Run the loop. "
-        assert isinstance(future, Future)
-        if self.closed:
-            raise Exception('Event loop already closed.')
-
-        # Create a new asyncio Future that blocks this coroutine until the
-        # prompt_toolkit Future is ready.
-        stopped_f = self.loop.create_future()
-
-        # Block this coroutine until stop() has been called.
-        @future.add_done_callback
-        def done(_):
-            stopped_f.set_result(None)
-
-        # Wait until f has been set.
-        await stopped_f
-    '''), globals(), locals())
-    except SyntaxError:
-        def run_as_coroutine(self, future):
-            " Run the loop. "
-            assert isinstance(future, Future)
-            raise NotImplementedError('`run_as_coroutine` requires at least Python 3.5.')
-
     def close(self):
         # Note: we should not close the asyncio loop itself, because that one
         # was not created here.
         self.closed = True
 
-    def _timeout_handler(self):
-        """
-        When no input has been received for INPUT_TIMEOUT seconds,
-        flush the input stream and fire the timeout event.
-        """
-        if self._input is not None:
-            self._input.flush()
+    def run_until_complete(self, future):
+        return self.loop.run_until_complete(future)
 
     def run_in_executor(self, callback, _daemon=False):
-        self.loop.run_in_executor(None, callback)
+        asyncio_f = self.loop.run_in_executor(None, callback)
+        return Future.from_asyncio_future(asyncio_f, loop=self)
 
     def call_from_executor(self, callback, _max_postpone_until=None):
         """
@@ -117,7 +85,13 @@ class PosixAsyncioEventLoop(EventLoop):
 
     def remove_input(self):
         if self._input:
+            previous_input = self._input
+            previous_cb = self._input_ready_cb
+
             self.remove_reader(self._input.fileno())
             self._input = None
             self._input_ready_cb = None
 
+            return previous_input, previous_cb
+        else:
+            return None, None

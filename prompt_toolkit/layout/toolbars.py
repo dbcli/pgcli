@@ -34,8 +34,8 @@ class SystemToolbar(object):
     """
     :param prompt: Prompt to be displayed to the user.
     """
-    def __init__(self, loop, prompt='Shell command: '):
-        self.system_buffer = Buffer(name=SYSTEM_BUFFER, loop=loop)
+    def __init__(self, prompt='Shell command: '):
+        self.system_buffer = Buffer(name=SYSTEM_BUFFER)
 
         self._global_bindings = self._build_global_key_bindings()
         self._bindings = self._build_key_bindings()

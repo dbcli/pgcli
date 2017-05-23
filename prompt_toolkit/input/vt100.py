@@ -97,7 +97,6 @@ class PipeInput(Vt100Input):
     def __init__(self, text=''):
         self._r, self._w = os.pipe()
 
-
         class Stdin(object):
             def isatty(stdin):
                 return True
@@ -122,8 +121,10 @@ class PipeInput(Vt100Input):
         " Close pipe fds. "
         os.close(self._r)
         os.close(self._w)
-        self._r = None
-        self._w = None
+
+        # We should assign `None` to 'self._r` and 'self._w',
+        # The event loop still needs to know the the fileno for this input in order
+        # to properly remove it from the selectors.
 
 
 class raw_mode(object):

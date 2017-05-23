@@ -76,7 +76,7 @@ BG_ANSI_COLORS = {
 ANSI_COLORS_TO_RGB = {
     'ansidefault':   (0x00, 0x00, 0x00),  # Don't use, 'default' doesn't really have a value.
     'ansiblack':     (0x00, 0x00, 0x00),
-    'ansidarkgray':  (0x7f, 0x7f, 0x7f), 
+    'ansidarkgray':  (0x7f, 0x7f, 0x7f),
     'ansiwhite':     (0xff, 0xff, 0xff),
     'ansilightgray': (0xe5, 0xe5, 0xe5),
 
@@ -422,6 +422,7 @@ class Vt100_Output(Output):
         terminal attributes.)
         """
         assert stdout.isatty()
+
         def get_size():
             rows, columns = _get_size(stdout.fileno())
             return Size(rows=rows, columns=columns)

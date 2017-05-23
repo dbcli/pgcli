@@ -9,7 +9,6 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align
@@ -17,25 +16,11 @@ from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 
 
-# 1. Create an event loop
-#    --------------------
-
-# We need to create an eventloop for this application. An eventloop is
-# basically a while-true loop that waits for user input, and when it receives
-# something (like a key press), it will send that to the application. Usually,
-# you want to use this `create_eventloop` shortcut, which -- according to the
-# environment (Windows/posix) -- returns something that will work there. If you
-# want to run your application inside an "asyncio" environment, you'd have to
-# pass another eventloop.
-
-loop = create_event_loop()
-
-
 # 3. Create the buffers
 #    ------------------
 
-left_buffer = Buffer(loop=loop)
-right_buffer = Buffer(loop=loop)
+left_buffer = Buffer()
+right_buffer = Buffer()
 
 # 1. First we create the layout
 #    --------------------------
@@ -150,7 +135,6 @@ left_buffer.on_text_changed += default_buffer_changed
 # This glues everything together.
 
 application = Application(
-    loop=loop,
     layout=Layout(root_container, focussed_window=left_window),
     key_bindings=all_bindings,
 

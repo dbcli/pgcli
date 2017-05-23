@@ -10,7 +10,7 @@ from .clipboard import ClipboardData
 from .completion import CompleteEvent, get_common_complete_suffix, Completer, Completion, DummyCompleter
 from .document import Document
 from .enums import SearchDirection
-from .eventloop import EventLoop, get_event_loop
+from .eventloop import run_in_executor, call_from_executor
 from .filters import to_simple_filter
 from .history import History, InMemoryHistory
 from .search_state import SearchState
@@ -163,7 +163,7 @@ class Buffer(object):
     :param multiline: When set, pressing `Enter` will call the `accept_handler`.
         Otherwise, pressing `Esc-Enter` is required.
     """
-    def __init__(self, loop=None, completer=None, auto_suggest=None, history=None,
+    def __init__(self, completer=None, auto_suggest=None, history=None,
                  validator=None, get_tempfile_suffix=None, tempfile_suffix='', name='',
                  complete_while_typing=False,
                  enable_history_search=False, document=None,
@@ -178,7 +178,6 @@ class Buffer(object):
         multiline = to_simple_filter(multiline)
 
         # Validate input.
-        assert loop is None or isinstance(loop, EventLoop)
         assert completer is None or isinstance(completer, Completer)
         assert auto_suggest is None or isinstance(auto_suggest, AutoSuggest)
         assert history is None or isinstance(history, History)
@@ -194,7 +193,6 @@ class Buffer(object):
         assert on_suggestion_set is None or callable(on_suggestion_set)
         assert document is None or isinstance(document, Document)
 
-        self.loop = loop or get_event_loop()
         self.completer = completer or DummyCompleter()
         self.auto_suggest = auto_suggest
         self.validator = validator
@@ -1427,11 +1425,9 @@ class Buffer(object):
                         # Otherwise, restart thread.
                         async_completer()
 
-                if self.loop:
-                    self.loop.call_from_executor(callback)
+                call_from_executor(callback)
 
-            if self.loop:
-                self.loop.run_in_executor(run)
+            run_in_executor(run)
         return async_completer
 
     def _create_auto_suggest_function(self):
@@ -1472,11 +1468,9 @@ class Buffer(object):
                         # Otherwise, restart thread.
                         async_suggestor()
 
-                if self.loop:
-                    self.loop.call_from_executor(callback)
+                call_from_executor(callback)
 
-            if self.loop:
-                self.loop.run_in_executor(run)
+            run_in_executor(run)
         return async_suggestor
 
     def validate_and_handle(self, app):

@@ -1,17 +1,14 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.eventloop.defaults import create_event_loop
 
 import pytest
 
 
 @pytest.fixture
 def _buffer():
-    loop = create_event_loop()
-    buff = Buffer(loop)
+    buff = Buffer()
     yield buff
-    loop.close()
 
 
 def test_initial(_buffer):

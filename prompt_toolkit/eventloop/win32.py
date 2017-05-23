@@ -44,7 +44,7 @@ class Win32EventLoop(EventLoop):
         self._input_ready_cb = None
 
         # Additional readers.
-        self._read_fds = {} # Maps fd to handler.
+        self._read_fds = {}  # Maps fd to handler.
 
         self._current_timeout = -1
 
@@ -136,8 +136,16 @@ class Win32EventLoop(EventLoop):
         """
         Remove the currently attached `Input`.
         """
-        self._input = None
-        self._input_ready_cb = None
+        if self._input:
+            previous_input = self._input
+            previous_cb = self._input_ready_cb
+
+            self._input = None
+            self._input_ready_cb = None
+
+            return previous_input, previous_cb
+        else:
+            return None, None
 
     def close(self):
         self.closed = True

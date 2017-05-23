@@ -6,6 +6,7 @@ __all__ = (
     'create_input',
 )
 
+
 def create_input(stdin=None):
     stdin = stdin or sys.stdin
 

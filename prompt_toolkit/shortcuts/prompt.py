@@ -34,8 +34,7 @@ from prompt_toolkit.clipboard import DynamicClipboard, InMemoryClipboard
 from prompt_toolkit.completion import DynamicCompleter
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
-from prompt_toolkit.eventloop.base import EventLoop
-from prompt_toolkit.eventloop.defaults import create_event_loop #, create_asyncio_event_loop
+from prompt_toolkit.eventloop import ensure_future, ReturnValue
 from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_simple_filter, Condition, has_arg
 from prompt_toolkit.history import InMemoryHistory, DynamicHistory
 from prompt_toolkit.input.defaults import create_input
@@ -58,9 +57,8 @@ from prompt_toolkit.output.defaults import create_output
 from prompt_toolkit.styles import default_style, BaseStyle, DynamicStyle, merge_styles
 from prompt_toolkit.utils import DummyContext
 from prompt_toolkit.validation import DynamicValidator
-from six import text_type, exec_
+from six import text_type
 
-import textwrap
 import threading
 import time
 import sys
@@ -216,7 +214,6 @@ class Prompt(object):
     def __init__(
             self,
             message='',
-            loop=None,
             default='',
             multiline=False,
             wrap_lines=True,
@@ -252,15 +249,11 @@ class Prompt(object):
             true_color=False,
             input=None,
             output=None):
-        assert loop is None or isinstance(loop, EventLoop)
         assert style is None or isinstance(style, BaseStyle)
         assert extra_input_processor is None or isinstance(extra_input_processor, Processor)
         assert extra_key_bindings is None or isinstance(extra_key_bindings, KeyBindingsBase)
 
         # Defaults.
-        self._close_loop = loop is None
-        loop = loop or create_event_loop()
-
         output = output or create_output(true_color)
         input = input or create_input(sys.stdin)
         extra_input_processor = extra_input_processor
@@ -273,7 +266,6 @@ class Prompt(object):
             editing_mode = EditingMode.VI
 
         # Store all settings in this class.
-        self.loop = loop
         self.input = input
         self.output = output
 
@@ -318,7 +310,6 @@ class Prompt(object):
 
         default_buffer = Buffer(
             name=DEFAULT_BUFFER,
-            loop=self.loop,
                 # Make sure that complete_while_typing is disabled when
                 # enable_history_search is enabled. (First convert to
                 # SimpleFilter, to avoid doing bitwise operations on bool
@@ -335,7 +326,7 @@ class Prompt(object):
             accept_handler=accept,
             get_tempfile_suffix=lambda: self.tempfile_suffix)
 
-        search_buffer = Buffer(name=SEARCH_BUFFER, loop=self.loop)
+        search_buffer = Buffer(name=SEARCH_BUFFER)
 
         # Create processors list.
         input_processor = merge_processors([
@@ -380,7 +371,7 @@ class Prompt(object):
                 ShowArg(),
             ]))
 
-        system_toolbar = SystemToolbar(self.loop)
+        system_toolbar = SystemToolbar()
 
         def get_search_buffer_control():
             " Return the UIControl to be focussed when searching start. "
@@ -496,7 +487,6 @@ class Prompt(object):
             " Display completions (like readline). "
             display_completions_like_readline(event)
 
-
         # Create application
         application = Application(
             layout=Layout(layout, default_buffer_window),
@@ -519,7 +509,6 @@ class Prompt(object):
             reverse_vi_search_direction=True,
 
             # I/O.
-            loop=self.loop,
             input=self.input,
             output=self.output)
 
@@ -604,7 +593,6 @@ class Prompt(object):
         if vi_mode:
             self.editing_mode = EditingMode.VI
 
-
         with self._auto_refresh_context():
             with self._patch_context():
                 try:
@@ -615,9 +603,7 @@ class Prompt(object):
                     for name in self._fields:
                         setattr(self, name, backup[name])
 
-    try:
-        exec_(textwrap.dedent('''
-    async def prompt_async(self, message=None,
+    def prompt_async(self, message=None,
             # When any of these arguments are passed, this value is overwritten for the current prompt.
             default='', patch_stdout=None, true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
@@ -648,23 +634,26 @@ class Prompt(object):
         if vi_mode:
             self.editing_mode = EditingMode.VI
 
-        with self._auto_refresh_context():
-            with self._patch_context():
-                try:
-                    self._default_buffer.reset(Document(self.default))
-                    return await self.app.run_async()
-                finally:
-                    # Restore original settings.
-                    for name in self._fields:
-                        setattr(self, name, backup[name])
-        '''), globals(), locals())
-    except SyntaxError:
-        def prompt_async(self, *a, **kw):
-            """
-            Display the prompt (run in async IO coroutine).
-            This is only available in Python 3.5 or newer.
-            """
-            raise NotImplementedError
+        def run():
+            with self._auto_refresh_context():
+                with self._patch_context():
+                    try:
+                        self._default_buffer.reset(Document(self.default))
+                        result = yield self.app.run_async()
+                        raise ReturnValue(result)
+                    finally:
+                        # Restore original settings.
+                        for name in self._fields:
+                            setattr(self, name, backup[name])
+
+        return ensure_future(run())
+
+    def prompt_asyncio(self, *a, **kw):
+        """
+        For use in Asyncio. This returns an Asyncio Future.
+        """
+        f = self.prompt_async(*a, **kw)
+        return f.to_asyncio_future()
 
     @property
     def editing_mode(self):
@@ -735,44 +724,27 @@ class Prompt(object):
             ('class:arg-toolbar.text', arg)
         ]
 
-    def close(self):
-        if self._close_loop:
-            self.loop.close()
-
 
 def prompt(*a, **kw):
     """ The global `prompt` function. This will create a new `Prompt` instance
     for every call.  """
     prompt = Prompt()
-    try:
-        return prompt.prompt(*a, **kw)
-    finally:
-        prompt.close()
+    return prompt.prompt(*a, **kw)
 
 prompt.__doc__ = Prompt.prompt.__doc__
 
 
-try:
-    exec_(textwrap.dedent('''
-    async def prompt_async(*a, **kw):
-        """
-        Similar to :func:`.prompt`, but return an asyncio coroutine instead.
-        """
-        loop = create_asyncio_event_loop()
-        prompt = Prompt(loop=loop)
-        try:
-            return await prompt.prompt_async(*a, **kw)
-        finally:
-            prompt.close()
-    prompt_async.__doc__ = Prompt.prompt_async
-    '''), globals(), locals())
-except SyntaxError:
-    def prompt_async(*a, **kw):
-        raise NotImplementedError(
-            'prompt_async is only available for Python >3.5.')
+def prompt_async(*a, **kw):
+    """
+    Similar to :func:`.prompt`, but return an asyncio coroutine instead.
+    """
+    prompt = Prompt()
+    return prompt.prompt_async(*a, **kw)
+
+prompt_async.__doc__ = Prompt.prompt_async
 
 
-def create_confirm_prompt(message, loop=None):
+def create_confirm_prompt(message):
     """
     Create a `Prompt` object for the 'confirm' function.
     """
@@ -793,8 +765,7 @@ def create_confirm_prompt(message, loop=None):
         event.app.set_return_value(False)
 
     prompt = Prompt(message, extra_key_bindings=bindings,
-                    include_default_key_bindings=False,
-                    loop=loop)
+                    include_default_key_bindings=False)
     return prompt
 
 
@@ -803,7 +774,4 @@ def confirm(message='Confirm (y or n) '):
     Display a confirmation prompt that returns True/False.
     """
     p = create_confirm_prompt(message)
-    try:
-        return p.prompt()
-    finally:
-        p.close()
+    return p.prompt()

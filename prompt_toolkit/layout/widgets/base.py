@@ -82,7 +82,6 @@ class TextArea(object):
     :param style: A style string.
     :param dont_extend_height:
     :param dont_extend_width:
-    :param loop: The `EventLoop` to be used.
     """
     def __init__(self, text='', multiline=True, password=False,
                  lexer=None, completer=None, accept_handler=None,
@@ -91,15 +90,11 @@ class TextArea(object):
                  dont_extend_height=False, dont_extend_width=False,
                  line_numbers=False, scrollbar=False, style='',
                  input_processor=None, search_field=None, preview_search=True,
-                 prompt='', loop=None):
+                 prompt=''):
         assert isinstance(text, six.text_type)
-        assert loop is None or isinstance(loop, EventLoop)
         assert search_field is None or isinstance(search_field, SearchField)
 
-        loop = loop or get_event_loop()
-
         self.buffer = Buffer(
-            loop=loop,
             document=Document(text, 0),
             multiline=multiline,
             read_only=read_only,
@@ -207,7 +202,6 @@ class Label(object):
     :param style: A style string.
     :param width: When given, use this width, rather than calculating it from
         the text size.
-    :param loop: The `EventLoop` to be used.
     """
     def __init__(self, text, style='', width=None,
                  dont_extend_height=True, dont_extend_width=False):
@@ -233,14 +227,6 @@ class Label(object):
             dont_extend_height=dont_extend_height,
             dont_extend_width=dont_extend_width)
 
-#    @property
-#    def text(self):
-#        return self.text_area.buffer.text
-#
-#    @text.setter
-#    def text(self, value):
-#        self.text_area.buffer.text = value
-#
     def __pt_container__(self):
         return self.window
 
@@ -252,13 +238,11 @@ class Button(object):
     :param text: The caption for the button.
     :param handler: `None` or callable. Called when the button is clicked.
     :param width: Width of the button.
-    :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, text, handler=None, width=12, loop=None):
+    def __init__(self, text, handler=None, width=12):
         assert isinstance(text, six.text_type)
         assert handler is None or callable(handler)
         assert isinstance(width, int)
-        assert loop is None or isinstance(loop, EventLoop)
 
         self.text = text
         self.handler = handler
@@ -280,10 +264,13 @@ class Button(object):
     def _get_text_fragments(self, app):
         text = ('{:^%s}' % (self.width - 2)).format(self.text)
 
+        def handler(app, mouse_event):
+            self.handler(app)
+
         return [
-            ('class:button.arrow', '<', self.handler),
-            ('class:button.text', text, self.handler),
-            ('class:button.arrow', '>', self.handler),
+            ('class:button.arrow', '<', handler),
+            ('class:button.text', text, handler),
+            ('class:button.arrow', '>', handler),
         ]
 
     def _get_key_bindings(self):
@@ -308,15 +295,9 @@ class Frame(object):
 
     :param body: Another container object.
     :param title: Text to be displayed in the top of the frame.
-    :param loop: The `EventLoop` to be used.
     """
     def __init__(self, body, title='', style='', width=None, height=None,
-                 key_bindings=None, modal=False, loop=None):
-        assert loop is None or isinstance(loop, EventLoop)
-        assert isinstance(title, six.text_type)
-
-        loop = loop or get_event_loop()
-
+                 key_bindings=None, modal=False):
         fill = partial(Window, style='class:frame-border')
         style = 'class:frame ' + style
 
@@ -437,11 +418,7 @@ class Box(object):
 
 
 class Checkbox(object):
-    def __init__(self, text='', loop=None):
-        assert loop is None or isinstance(loop, EventLoop)
-
-        loop = loop or get_event_loop()
-
+    def __init__(self, text=''):
         self.checked = True
 
         kb = KeyBindings()
@@ -477,16 +454,12 @@ class RadioList(object):
     List of radio buttons. Only one can be checked at the same time.
 
     :param values: List of (value, label) tuples.
-    :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, values, loop=None):
+    def __init__(self, values):
         assert isinstance(values, list)
         assert len(values) > 0
         assert all(isinstance(i, tuple) and len(i) == 2
                    for i in values)
-        assert loop is None or isinstance(loop, EventLoop)
-
-        loop = loop or get_event_loop()
 
         self.values = values
         self.current_value = values[0][0]
@@ -586,8 +559,7 @@ class HorizontalLine(object):
 
 
 class ProgressBar(object):
-    def __init__(self, loop=None):
-        loop = loop or get_event_loop()
+    def __init__(self):
         self._percentage = 60
 
         self.label = Label('60%')

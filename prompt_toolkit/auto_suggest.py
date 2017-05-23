@@ -55,6 +55,7 @@ class AutoSuggest(with_metaclass(ABCMeta, object)):
         :param document: The :class:`~prompt_toolkit.document.Document` instance.
         """
 
+
 class DummyAutoSuggest(AutoSuggest):
     """
     AutoSuggest class that doesn't return any suggestion.

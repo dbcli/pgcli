@@ -60,6 +60,7 @@ def has_focus(value):
             return app.layout.current_control == value
     else:
         value = to_window(value)
+
         def test(app):
             return app.layout.current_window == value
 
@@ -125,6 +126,7 @@ def is_exiting(app):
     True when exiting. (E.g. Control-D pressed.)
     """
     return app.is_exiting
+
 
 @Condition
 def is_done(app):
@@ -234,7 +236,6 @@ def vi_waiting_for_text_object_mode(app):
         return False
 
     return app.vi_state.operator_func is not None
-
 
 
 @Condition

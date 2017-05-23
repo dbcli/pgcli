@@ -1,7 +1,7 @@
 """
 Future implementation for the prompt_toolkit eventloop.
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 from .base import EventLoop
 from .defaults import get_event_loop
 
@@ -37,6 +37,13 @@ class Future(object):
         """
         self.done_callbacks.append(callback)
 
+        # When a result has already been set. Call callback right away.
+        if self._done:
+            def call_cb():
+                callback(self)
+
+            self.loop.call_from_executor(call_cb)
+
     def set_result(self, result):
         " Mark the future done and set its result. "
         self._result = result
@@ -47,7 +54,18 @@ class Future(object):
         " Mark the future done and set an exception. "
         self._exception = exception
         self._done = True
-        self._call_callbacks()
+
+        if self.done_callbacks:
+            self._call_callbacks()
+        else:
+            # When an exception is set on a 'Future' object, but there
+            # is no callback set to handle it, print the exception.
+            # -- Uncomment for debugging. --
+
+            #import traceback, sys
+            #print(''.join(traceback.format_stack()), file=sys.__stderr__)
+            #print('Uncollected error: %r' % (exception, ), file=sys.__stderr__)
+            pass
 
     def _call_callbacks(self):
         def call_them_all():
@@ -80,3 +98,35 @@ class Future(object):
         exception are available, or that the future was cancelled.
         """
         return self._done
+
+    def to_asyncio_future(self):
+        """
+        Turn this `Future` into an asyncio `Future` object.
+        """
+        from asyncio import Future
+        asyncio_f = Future()
+
+        @self.add_done_callback
+        def _(f):
+            if f.exception():
+                asyncio_f.set_exception(f.exception())
+            else:
+                asyncio_f.set_result(f.result())
+
+        return asyncio_f
+
+    @classmethod
+    def from_asyncio_future(cls, asyncio_f, loop=None):
+        """
+        Return a prompt_toolkit `Future` from the given asyncio Future.
+        """
+        f = cls(loop=loop)
+
+        @asyncio_f.add_done_callback
+        def _(asyncio_f):
+            if asyncio_f.exception():
+                f.set_exception(asyncio_f.exception())
+            else:
+                f.set_result(asyncio_f.result())
+
+        return f

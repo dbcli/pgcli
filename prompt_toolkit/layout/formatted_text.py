@@ -23,7 +23,7 @@ __all__ = (
 )
 
 
-def to_formatted_text(value, app, style=''):
+def to_formatted_text(value, app=None, style=''):
     """
     Convert the given value (which can be formatted text) into a list of text
     fragments. (Which is the canonical form of formatted text.) The outcome is
@@ -55,6 +55,7 @@ def to_formatted_text(value, app, style=''):
     elif hasattr(value, '__pt_formatted_text__'):
         result = value.__pt_formatted_text__()
     elif callable(value):
+        assert app is not None
         return to_formatted_text(value(app), app, style=style)
     else:
         raise ValueError('No formatted text given. Expecting a unicode object, '

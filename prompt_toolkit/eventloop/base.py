@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
-from six import with_metaclass, exec_
-import textwrap
+from six import with_metaclass
 
 __all__ = (
     'EventLoop',
@@ -19,19 +18,6 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         """
         raise NotImplementedError(
             "This eventloop doesn't implement synchronous 'run_until_complete()'.")
-
-    try:
-        exec_(textwrap.dedent('''
-    async def run_as_coroutine(self, future):
-        " Similar to `run`, but this is a coroutine. (For asyncio integration.) "
-        raise NotImplementedError(
-            "This eventloop doesn't implement 'run_as_coroutine()'.")
-    '''), globals(), locals())
-    except SyntaxError:
-        def run_as_coroutine(self, future):
-            """ Similar to `run`, but this is a coroutine. (For asyncio
-            integration.) """
-            pass
 
     @abstractmethod
     def close(self):
@@ -66,6 +52,9 @@ class EventLoop(with_metaclass(ABCMeta, object)):
     def remove_input(self):
         """
         Remove the currently attached `Input`.
+
+        Return the previous (input, input_ready_callback) tuple.
+        This can be (None, None).
         """
 
     @abstractmethod
@@ -98,4 +87,4 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         This is the preferred way of creating futures.
         """
         from .future import Future
-        return Future(self)
+        return Future(loop=self)

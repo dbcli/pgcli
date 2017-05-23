@@ -434,7 +434,7 @@ def _create_ansi_color_dict(color_cls):
         'ansidarkgray':  color_cls.BLACK | color_cls.INTENSITY,
         'ansilightgray': color_cls.GRAY,
         'ansiwhite':     color_cls.GRAY | color_cls.INTENSITY,
-        
+
         # Low intensity.
         'ansidarkred':     color_cls.RED,
         'ansidarkgreen':   color_cls.GREEN,

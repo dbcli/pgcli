@@ -293,7 +293,6 @@ class Document(object):
 
         return row, col
 
-
     def translate_row_col_to_index(self, row, col):
         """
         Given a (row, col) tuple, return the corresponding index.

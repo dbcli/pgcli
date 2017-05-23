@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from prompt_toolkit.application import Application
-from prompt_toolkit.eventloop import get_event_loop
+from prompt_toolkit.eventloop import run_in_executor
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
@@ -18,13 +18,11 @@ __all__ = (
 )
 
 
-def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None, loop=None):
+def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None):
     """
     Display a Yes/No dialog.
     Return a boolean.
     """
-    loop = loop or get_event_loop()
-
     def yes_handler(app):
         app.set_return_value(True)
 
@@ -32,44 +30,38 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None, l
         app.set_return_value(False)
 
     dialog = Dialog(
-        loop=loop,
         title=title,
         body=Label(text=text, dont_extend_height=True),
         buttons=[
-            Button(loop=loop, text=yes_text, handler=yes_handler),
-            Button(loop=loop, text=no_text, handler=no_handler),
+            Button(text=yes_text, handler=yes_handler),
+            Button(text=no_text, handler=no_handler),
         ], with_background=True)
-
 
     return _run_dialog(dialog, style)
 
 
 def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
-                 completer=None, password=False, style=None, loop=None):
+                 completer=None, password=False, style=None):
     """
     Display a text input box.
     Return the given text, or None when cancelled.
     """
-    loop = loop or get_event_loop()
-
     def accept(app):
         app.layout.focus(ok_button)
 
     def ok_handler(app):
         app.set_return_value(textfield.text)
 
-    ok_button = Button(loop=loop, text=ok_text, handler=ok_handler)
-    cancel_button = Button(loop=loop, text=cancel_text, handler=_return_none)
+    ok_button = Button(text=ok_text, handler=ok_handler)
+    cancel_button = Button(text=cancel_text, handler=_return_none)
 
     textfield = TextArea(
-        loop=loop,
         multiline=False,
         password=password,
         completer=completer,
         accept_handler=accept)
 
     dialog = Dialog(
-        loop=loop,
         title=title,
         body=HSplit([
             Label(text=text, dont_extend_height=True),
@@ -81,18 +73,15 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
     return _run_dialog(dialog, style)
 
 
-def message_dialog(title='', text='', ok_text='Ok', style=None, loop=None):
+def message_dialog(title='', text='', ok_text='Ok', style=None):
     """
     Display a simple message box and wait until the user presses enter.
     """
-    loop = loop or get_event_loop()
-
     dialog = Dialog(
-        loop=loop,
         title=title,
         body=Label(text=text, dont_extend_height=True),
         buttons=[
-            Button(loop=loop, text=ok_text, handler=_return_none),
+            Button(text=ok_text, handler=_return_none),
         ],
         with_background=True)
 
@@ -100,44 +89,39 @@ def message_dialog(title='', text='', ok_text='Ok', style=None, loop=None):
 
 
 def radiolist_dialog(title='', text='', ok_text='Ok', cancel_text='Cancel',
-                     values=None, style=None, loop=None):
+                     values=None, style=None):
     """
     Display a simple message box and wait until the user presses enter.
     """
-    loop = loop or get_event_loop()
-
     def ok_handler(app):
         app.set_return_value(radio_list.current_value)
 
-    radio_list = RadioList(values, loop=loop)
+    radio_list = RadioList(values)
 
     dialog = Dialog(
-        loop=loop,
         title=title,
         body=HSplit([
             Label(text=text, dont_extend_height=True),
             radio_list,
         ], padding=1),
         buttons=[
-            Button(loop=loop, text=ok_text, handler=ok_handler),
-            Button(loop=loop, text=cancel_text, handler=_return_none),
+            Button(text=ok_text, handler=ok_handler),
+            Button(text=cancel_text, handler=_return_none),
         ],
         with_background=True)
 
     return _run_dialog(dialog, style)
 
 
-def progress_dialog(title='', text='', run_callback=None, style=None, loop=None):
+def progress_dialog(title='', text='', run_callback=None, style=None):
     """
     :param run_callback: A function that receives as input a `set_percentage`
         function and it does the work.
     """
     assert callable(run_callback)
 
-    loop = loop or get_event_loop()
     progressbar = ProgressBar()
     text_area = TextArea(
-        loop=loop,
         focussable=False,
 
         # Prefer this text area as big as possible, to avoid having a window
@@ -151,7 +135,6 @@ def progress_dialog(title='', text='', run_callback=None, style=None, loop=None)
             progressbar,
         ]),
         title=title,
-        loop=loop,
         with_background=True)
     app = _create_app(dialog, style)
 
@@ -171,7 +154,7 @@ def progress_dialog(title='', text='', run_callback=None, style=None, loop=None)
         finally:
             app.set_return_value(None)
 
-    loop.run_in_executor(start)
+    run_in_executor(start)
 
     return app.run()
 

@@ -2,13 +2,13 @@
 Collection of reusable components for building full screen applications.
 """
 from __future__ import unicode_literals
-import six
 from prompt_toolkit.eventloop import EventLoop
 from .base import Box, Shadow, Frame
 from ..containers import VSplit, HSplit
 from ..dimension import Dimension as D
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
+import six
 
 __all__ = (
     'Dialog',
@@ -23,10 +23,8 @@ class Dialog(object):
     :param body: Child container object.
     :param title: Text to be displayed in the heading of the dialog.
     :param buttons: A list of `Button` widgets, displayed at the bottom.
-    :param loop: The `EventLoop` to be used.
     """
-    def __init__(self, body, title='', buttons=None, modal=True, loop=None, width=None, with_background=False):
-        assert loop is None or isinstance(loop, EventLoop)
+    def __init__(self, body, title='', buttons=None, modal=True, width=None, with_background=False):
         assert isinstance(title, six.text_type)
         assert buttons is None or isinstance(buttons, list)
 

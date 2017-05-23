@@ -142,7 +142,6 @@ WIDGETS_STYLE = [
 ]
 
 
-
 # The default Pygments style, include this by default in case a Pygments lexer
 # is used.
 PYGMENTS_DEFAULT_STYLE = {

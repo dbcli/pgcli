@@ -105,17 +105,18 @@ def _display_completions_like_readline(app, completions):
                 except IndexError:
                     pass
             result.append('\n')
+
         app.output.write(''.join(result))
         app.output.flush()
 
     # User interaction through an application generator function.
-    def run():
+    def run_compl():
+        " Coroutine. "
         if len(completions) > completions_per_page:
             # Ask confirmation if it doesn't fit on the screen.
-            confirm_prompt = create_confirm_prompt(
+            confirm = yield create_confirm_prompt(
                 'Display all {} possibilities? (y on n) '.format(len(completions)),
-                loop=app.loop)
-            confirm = yield confirm_prompt.app
+                loop=app.loop).prompt_async()
 
             if confirm:
                 # Display pages.
@@ -124,21 +125,22 @@ def _display_completions_like_readline(app, completions):
 
                     if page != page_count - 1:
                         # Display --MORE-- and go to the next page.
-                        show_more = yield _create_more_application(app.loop)
+                        show_more = yield _create_more_prompt('--MORE--', loop=app.loop).prompt_async()
+
                         if not show_more:
                             return
             else:
-                app.output.write('\n'); app.output.flush()
+                app.output.flush()
         else:
             # Display all completions.
             display(0)
 
-    app.run_application_generator(run, render_cli_done=True)
+    app.run_in_terminal_async(run_compl, render_cli_done=True)
 
 
-def _create_more_application(loop):
+def _create_more_prompt(message='--MORE--', loop=None):
     """
-    Create an `Application` instance that displays the "--MORE--".
+    Create a `Prompt` object for displaying the "--MORE--".
     """
     from prompt_toolkit.shortcuts import Prompt
     bindings = KeyBindings()
@@ -160,6 +162,9 @@ def _create_more_application(loop):
     def _(event):
         event.app.set_return_value(False)
 
-    return Prompt('--MORE--',
-        loop=loop, extra_key_bindings=bindings,
-        include_default_key_bindings=False, erase_when_done=True).app
+    prompt = Prompt(message,
+        extra_key_bindings=bindings,
+        include_default_key_bindings=False,
+        erase_when_done=True,
+        loop=loop)
+    return prompt

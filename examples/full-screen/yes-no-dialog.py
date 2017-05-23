@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.eventloop import create_event_loop, set_event_loop
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
@@ -19,12 +18,6 @@ from prompt_toolkit.styles import Style, merge_styles, default_style
 from pygments.lexers import HtmlLexer
 
 
-loop = create_event_loop()
-set_event_loop(loop)
-
-
-# >>>
-
 def accept_yes(app):
     app.set_return_value(True)
 
@@ -35,15 +28,13 @@ def do_exit(app):
     app.set_return_value(False)
 
 
-# Make partials that pass the loop everywhere.
-
 yes_button = Button(text='Yes', handler=accept_yes)
 no_button = Button(text='No', handler=accept_no)
 textfield  = TextArea(lexer=PygmentsLexer(HtmlLexer))
 checkbox1 = Checkbox(text='Checkbox')
 checkbox2 = Checkbox(text='Checkbox')
 
-radios = RadioList(loop=loop, values=[
+radios = RadioList(values=[
     ('Red', 'red'),
     ('Green', 'green'),
     ('Blue', 'blue'),
@@ -87,7 +78,7 @@ root_container = HSplit([
     ),
 ])
 
-root_container = MenuContainer(loop=loop, body=root_container, menu_items=[
+root_container = MenuContainer(body=root_container, menu_items=[
     MenuItem('File', children=[
         MenuItem('New'),
         MenuItem('Open', children=[
@@ -162,7 +153,6 @@ style = Style.from_dict({
 
 
 application = Application(
-    loop=loop,
     layout=Layout(
         root_container,
         focussed_window=yes_button,

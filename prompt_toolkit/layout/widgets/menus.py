@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 from .base import BORDER
 
-from prompt_toolkit.eventloop import EventLoop
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, Window, FloatContainer, Float, ConditionalContainer
@@ -20,11 +19,10 @@ class MenuContainer(object):
     """
     :param floats: List of extra Float objects to display.
     """
-    def __init__(self, body, menu_items=None, floats=None, key_bindings=None, loop=None):
+    def __init__(self, body, menu_items=None, floats=None, key_bindings=None):
         assert isinstance(menu_items, list) and \
             all(isinstance(i, MenuItem) for i in menu_items)
         assert floats is None or all(isinstance(f, Float) for f in floats)
-        assert loop is None or isinstance(loop, EventLoop)
 
         self.body = body
         self.menu_items = menu_items

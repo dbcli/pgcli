@@ -170,7 +170,7 @@ ANSI_SEQUENCES = {
     '\x1b[5C': Keys.ControlRight,
     '\x1b[5D': Keys.ControlLeft,
 
-    '\x1bOc': Keys.ControlRight, # rxvt
+    '\x1bOc': Keys.ControlRight,  # rxvt
     '\x1bOd': Keys.ControlLeft,  # rxvt
 
     # Tmux (Win32 subsystem) sends the following scroll events.
@@ -315,7 +315,7 @@ class Vt100Parser(object):
                     # Loop over the input, try the longest match first and
                     # shift.
                     for i in range(len(prefix), 0, -1):
-                        match= self._get_match(prefix[:i])
+                        match = self._get_match(prefix[:i])
                         if match:
                             self._call_handler(match, prefix[:i])
                             prefix = prefix[i:]

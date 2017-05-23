@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 import fcntl
 import os
-import random
 import signal
 import threading
 import time
@@ -121,10 +120,6 @@ class PosixEventLoop(EventLoop):
                     if handler:
                         tasks.append(handler)
 
-            # Handle everything in random order. (To avoid starvation.)
-            random.shuffle(tasks)
-            random.shuffle(low_priority_tasks)
-
             # When there are high priority tasks, run all these.
             # Schedule low priority tasks for the next iteration.
             if tasks:
@@ -182,9 +177,16 @@ class PosixEventLoop(EventLoop):
         Remove the currently attached `Input`.
         """
         if self._input:
-            self.remove_reader(self._input.fileno())
+            previous_input = self._input
+            previous_cb = self._input_ready_cb
+
+            self.remove_reader(previous_input.fileno())
             self._input = None
             self._input_ready_cb = None
+
+            return previous_input, previous_cb
+        else:
+            return None, None
 
     def add_signal_handler(self, signum, handler):
         """
@@ -227,6 +229,8 @@ class PosixEventLoop(EventLoop):
         (This is recommended for code that could block the event loop.)
         Similar to Twisted's ``deferToThread``.
         """
+        f = Future()
+
         # Wait until the main thread is idle.
         # We start the thread by using `call_from_executor`. The event loop
         # favours processing input over `calls_from_executor`, so the thread
@@ -236,12 +240,22 @@ class PosixEventLoop(EventLoop):
         # background would cause a significantly slow down of the main thread.
         # It is mostly noticable when pasting large portions of text while
         # having real time autocompletion while typing on.
+        def run():
+            try:
+                result = callback()
+            except BaseException as e:
+                f.set_exception(e)
+            else:
+                f.set_result(result)
+
         def start_executor():
-            t = threading.Thread(target=callback)
+            t = threading.Thread(target=run)
             if _daemon:
                 t.daemon = True
             t.start()
         self.call_from_executor(start_executor)
+
+        return f
 
     def call_from_executor(self, callback, _max_postpone_until=None):
         """
@@ -254,6 +268,7 @@ class PosixEventLoop(EventLoop):
             repaint is done using low priority.)
         """
         assert _max_postpone_until is None or isinstance(_max_postpone_until, float)
+
         self._calls_from_executor.append((callback, _max_postpone_until))
 
         if self._schedule_pipe:

@@ -10,11 +10,8 @@ from ..input import Input
 from .utils import AsyncioTimeout
 from .base import EventLoop, INPUT_TIMEOUT
 from .future import Future
-from .win32 import _wait_for_handles
 
 import asyncio
-import six
-import textwrap
 
 __all__ = (
     'Win32AsyncioEventLoop',
@@ -29,64 +26,10 @@ class Win32AsyncioEventLoop(EventLoop):
         self._input = None
         self._input_ready_cb = None
 
-        self._timeout = AsyncioTimeout(
-            INPUT_TIMEOUT, self._timeout_handler, self.loop)
-
-    try:
-        six.exec_(textwrap.dedent('''
-    async def run_as_coroutine(self, future):
-        " Run the loop. "
-        assert isinstance(future, Future)
-        if self.closed:
-            raise Exception('Event loop already closed.')
-
-        try:
-            # Wait for input in a different thread.
-            if self._input:
-                def wait_for_input():
-                    input_handle = self._input.handle
-                    cb = self._input_ready_cb
-                    while not future.done():
-                        h = _wait_for_handles([input_handle], 1000)
-                        if h == input_handle and not future.done():
-                            cb()
-                            self._timeout.reset()
-
-                self.run_in_executor(wait_for_input)
-
-            # Create a new asyncio Future that blocks this coroutine until the
-            # prompt_toolkit Future is ready.
-            stopped_f = loop.create_future()
-
-            # Block this coroutine until stop() has been called.
-            @future.add_done_callback
-            def done(_):
-                stopped_f.set_result(None)
-
-            # Wait until f has been set.
-            await stopped_f
-        finally:
-            # Don't trigger any timeout events anymore.
-            self._timeout.stop()
-    '''), globals(), locals())
-    except SyntaxError:
-        def run_as_coroutine(self, future):
-            " Run the loop. "
-            assert isinstance(future, Future)
-            raise NotImplementedError('`run_as_coroutine` requires at least Python 3.5.')
-
     def close(self):
         # Note: we should not close the asyncio loop itself, because that one
         # was not created here.
         self.closed = True
-
-    def _timeout_handler(self):
-        """
-        When no input has been received for INPUT_TIMEOUT seconds,
-        flush the input stream and fire the timeout event.
-        """
-        if self._input is not None:
-            self._input.flush()
 
     def set_input(self, input, input_ready_callback):
         """
@@ -115,11 +58,19 @@ class Win32AsyncioEventLoop(EventLoop):
 
     def remove_input(self):
         if self._input:
+            previous_input = self._input
+            previous_cb = self._input_ready_cb
+
             self._input = None
             self._input_ready_cb = None
 
+            return previous_input, previous_cb
+        else:
+            return None, None
+
     def run_in_executor(self, callback, _daemon=False):
-        self.loop.run_in_executor(None, callback)
+        asyncio_f = self.loop.run_in_executor(None, callback)
+        return Future.from_asyncio_future(asyncio_f, loop=self)
 
     def call_from_executor(self, callback, _max_postpone_until=None):
         self.loop.call_soon_threadsafe(callback)

@@ -16,6 +16,7 @@ __all__ = (
     'fd_to_int',
 )
 
+
 def fd_to_int(fd):
     assert isinstance(fd, int) or hasattr(fd, 'fileno')
 

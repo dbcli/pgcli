@@ -15,8 +15,8 @@ sql_completer = WordCompleter(['create', 'select', 'insert', 'drop',
                                'delete', 'from', 'where', 'table'], ignore_case=True)
 
 style = Style.from_dict({
-    'completion-menu,current-completion': 'bg:#00aaaa #000000',
-    'completion-menu,completion': 'bg:#008888 #ffffff',
+    'completion-menu.current-completion': 'bg:#00aaaa #000000',
+    'completion-menu.completion': 'bg:#008888 #ffffff',
 })
 
 
