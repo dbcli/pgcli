@@ -10,6 +10,7 @@ Features:
 * Completions after ORDER BY and DISTINCT now take account of table aliases. (Thanks: `Owen Stephens`_)
 * Narrow keyword candidates based on previous keyword. (Thanks: `Étienne Bersac`_)
 * Opening an external editor will edit the last-run query. (Thanks: `Thomas Roten`_)
+* Support query options in postgres URIs such as ?sslcert=foo.pem (Thanks: `Alexander Schmolck`_)
 
 Bug fixes:
 ----------
@@ -690,3 +691,4 @@ Improvements:
 .. _`Étienne Bersac`: https://github.com/bersace
 .. _`Thomas Roten`: https://github.com/tsroten
 .. _`Gustavo Castro`: https://github.com/gustavo-castro
+.. _`Alexander Schmolck`: https://github.com/aschmolck
