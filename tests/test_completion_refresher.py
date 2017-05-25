@@ -79,6 +79,7 @@ def test_refresh_with_callbacks(refresher):
     callbacks = [Mock()]
     pgexecute_class = Mock()
     pgexecute = Mock()
+    pgexecute.extra_args = {}
     special = Mock()
 
     with patch('pgcli.completion_refresher.PGExecute', pgexecute_class):

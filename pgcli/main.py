@@ -53,9 +53,9 @@ from .__init__ import __version__
 click.disable_unicode_literals_warning = True
 
 try:
-    from urlparse import urlparse, unquote
+    from urlparse import urlparse, unquote, parse_qs
 except ImportError:
-    from urllib.parse import urlparse, unquote
+    from urllib.parse import urlparse, unquote, parse_qs
 
 from getpass import getuser
 from psycopg2 import OperationalError
@@ -292,13 +292,26 @@ class PGCli(object):
     def connect_uri(self, uri):
         uri = urlparse(uri)
         database = uri.path[1:]  # ignore the leading fwd slash
-        arguments = [database, uri.hostname, uri.username,
-                     uri.port, uri.password]
-        # unquote each URI part (they may be percent encoded)
-        self.connect(*list(map(lambda p: unquote(str(p)) if p else p, arguments)))
+
+        def fixup_possible_percent_encoding(s):
+            return unquote(str(s)) if s else s
+
+        arguments = dict(database=fixup_possible_percent_encoding(database),
+                         host=fixup_possible_percent_encoding(uri.hostname),
+                         user=fixup_possible_percent_encoding(uri.username),
+                         port=fixup_possible_percent_encoding(uri.port),
+                         passwd=fixup_possible_percent_encoding(uri.password))
+        # Deal with extra params e.g. ?sslmode=verify-ca&ssl-cert=/mycert
+        if uri.query:
+            arguments = dict(
+                {k: v for k, (v,) in parse_qs(uri.query).items()},
+                **arguments)
+
+        # unquote str(each URI part (they may be percent encoded)
+        self.connect(**arguments)
 
     def connect(self, database='', host='', user='', port='', passwd='',
-                dsn=''):
+                dsn='', **kwargs):
         # Connect to the database.
 
         if not user:
@@ -331,14 +344,15 @@ class PGCli(object):
         # a password (no -w flag), prompt for a passwd and try again.
         try:
             try:
-                pgexecute = PGExecute(database, user, passwd, host, port, dsn)
+                pgexecute = PGExecute(database, user, passwd, host, port, dsn,
+                                      **kwargs)
             except OperationalError as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
                         auto_passwd_prompt):
                     passwd = click.prompt('Password', hide_input=True,
                                           show_default=False, type=str)
                     pgexecute = PGExecute(database, user, passwd, host, port,
-                                          dsn)
+                                          dsn, **kwargs)
                 else:
                     raise e
 
