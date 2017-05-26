@@ -59,7 +59,8 @@ class CompletionRefresher(object):
             # Create a new pgexecute method to popoulate the completions.
             e = pgexecute
             executor = PGExecute(
-                e.dbname, e.user, e.password, e.host, e.port, e.dsn)
+                e.dbname, e.user, e.password, e.host, e.port, e.dsn,
+                **e.extra_args)
 
         # If callbacks is a single function then push it into a list.
         if callable(callbacks):

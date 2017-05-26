@@ -91,11 +91,36 @@ def test_quoted_db_uri(tmpdir):
     with mock.patch.object(PGCli, 'connect') as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri('postgres://bar%5E:%5Dfoo@baz.com/testdb%5B')
-    mock_connect.assert_called_with('testdb[', 'baz.com', 'bar^', None, ']foo')
+    mock_connect.assert_called_with(database='testdb[',
+                                    port=None,
+                                    host='baz.com',
+                                    user='bar^',
+                                    passwd=']foo')
+
+
+def test_ssl_db_uri(tmpdir):
+    with mock.patch.object(PGCli, 'connect') as mock_connect:
+        cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+        cli.connect_uri(
+            'postgres://bar%5E:%5Dfoo@baz.com/testdb%5B?'
+            'sslmode=verify-full&sslcert=m%79.pem&sslkey=my-key.pem&sslrootcert=c%61.pem')
+    mock_connect.assert_called_with(database='testdb[',
+                                    host='baz.com',
+                                    port=None,
+                                    user='bar^',
+                                    passwd=']foo',
+                                    sslmode='verify-full',
+                                    sslcert='my.pem',
+                                    sslkey='my-key.pem',
+                                    sslrootcert='ca.pem')
 
 
 def test_port_db_uri(tmpdir):
     with mock.patch.object(PGCli, 'connect') as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri('postgres://bar:foo@baz.com:2543/testdb')
-    mock_connect.assert_called_with('testdb', 'baz.com', 'bar', '2543', 'foo')
+    mock_connect.assert_called_with(database='testdb',
+                                    host='baz.com',
+                                    user='bar',
+                                    passwd='foo',
+                                    port='2543')

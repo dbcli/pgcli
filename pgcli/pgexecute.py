@@ -146,17 +146,18 @@ class PGExecute(object):
         FROM pg_catalog.pg_database d
         ORDER BY 1'''
 
-    def __init__(self, database, user, password, host, port, dsn):
+    def __init__(self, database, user, password, host, port, dsn, **kwargs):
         self.dbname = database
         self.user = user
         self.password = password
         self.host = host
         self.port = port
         self.dsn = dsn
+        self.extra_args = {k: unicode2utf8(v) for k, v in kwargs.items()}
         self.connect()
 
     def connect(self, database=None, user=None, password=None, host=None,
-            port=None, dsn=None):
+                port=None, dsn=None, **kwargs):
 
         db = (database or self.dbname)
         user = (user or self.user)
@@ -164,6 +165,7 @@ class PGExecute(object):
         host = (host or self.host)
         port = (port or self.port)
         dsn = (dsn or self.dsn)
+        kwargs = (kwargs or self.extra_args)
         pid = -1
         if dsn:
             if password:
@@ -172,11 +174,12 @@ class PGExecute(object):
             cursor = conn.cursor()
         else:
             conn = psycopg2.connect(
-                    database=unicode2utf8(db),
-                    user=unicode2utf8(user),
-                    password=unicode2utf8(password),
-                    host=unicode2utf8(host),
-                    port=unicode2utf8(port))
+                database=unicode2utf8(db),
+                user=unicode2utf8(user),
+                password=unicode2utf8(password),
+                host=unicode2utf8(host),
+                port=unicode2utf8(port),
+                **kwargs)
 
             cursor = conn.cursor()
 
@@ -653,4 +656,3 @@ class PGExecute(object):
             cur.execute(query)
             for row in cur:
                 yield row[0]
-
