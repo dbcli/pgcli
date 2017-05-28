@@ -112,7 +112,7 @@ WIDGETS_STYLE = [
     ('dialog.body text-area',                    'bg:#cccccc'),
     ('dialog.body text-area last-line',          'underline'),
 
-    ('dialog frame-label',                      '#ff0000 bold'),
+    ('dialog frame.label',                      '#ff0000 bold'),
 
     # Scrollbars in dialogs.
     ('dialog.body scrollbar.background',        ''),

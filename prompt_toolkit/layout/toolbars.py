@@ -150,7 +150,7 @@ class ArgToolbar(object):
         return self.container
 
 
-class SearchToolbarControl(BufferControl):
+class SearchToolbar(object):
     """
     :param vi_mode: Display '/' and '?' instead of I-search.
     """
@@ -165,25 +165,22 @@ class SearchToolbarControl(BufferControl):
             else:
                 return ('/' if vi_mode else 'I-search: ')
 
-        super(SearchToolbarControl, self).__init__(
+        self.control = BufferControl(
             buffer=search_buffer,
             input_processor=BeforeInput(get_before_input),
             lexer=SimpleLexer(
                 style='class:search-toolbar.text'))
 
-
-class SearchToolbar(ConditionalContainer):
-    def __init__(self, search_buffer, vi_mode=False):
-        control = SearchToolbarControl(search_buffer, vi_mode=vi_mode)
-        super(SearchToolbar, self).__init__(
-            content=Window(control, height=Dimension.exact(1),
+        self.container = ConditionalContainer(
+            content=Window(self.control, height=Dimension.exact(1),
                            style='class:search-toolbar'),
             filter=is_searching & ~is_done)
 
-        self.control = control
+    def __pt_container__(self):
+        return self.container
 
 
-class CompletionsToolbarControl(UIControl):
+class _CompletionsToolbarControl(UIControl):
     def create_content(self, app, width, height):
         complete_state = app.current_buffer.complete_state
         if complete_state:
@@ -239,17 +236,20 @@ class CompletionsToolbarControl(UIControl):
         return UIContent(get_line=get_line, line_count=1)
 
 
-class CompletionsToolbar(ConditionalContainer):
+class CompletionsToolbar(object):
     def __init__(self, extra_filter=Always()):
-        super(CompletionsToolbar, self).__init__(
+        self.container = ConditionalContainer(
             content=Window(
-                CompletionsToolbarControl(),
+                _CompletionsToolbarControl(),
                 height=Dimension.exact(1),
                 style='class:completions-toolbar'),
             filter=has_completions & ~is_done & extra_filter)
 
+    def __pt_container__(self):
+        return self.container
 
-class ValidationToolbarControl(FormattedTextControl):
+
+class ValidationToolbar(object):
     def __init__(self, show_position=False):
         def get_formatted_text(app):
             buff = app.current_buffer
@@ -268,17 +268,13 @@ class ValidationToolbarControl(FormattedTextControl):
             else:
                 return []
 
-        super(ValidationToolbarControl, self).__init__(get_formatted_text)
+        self.control = FormattedTextControl(get_formatted_text)
 
-
-class ValidationToolbar(ConditionalContainer):
-    def __init__(self, show_position=False):
-        super(ValidationToolbar, self).__init__(
+        self.container = ConditionalContainer(
             content=Window(
-                ValidationToolbarControl(show_position=show_position),
+                self.control,
                 height=Dimension.exact(1)),
             filter=has_validation_error & ~is_done)
 
-
-# Deprecated aliases.
-TokenListToolbar = FormattedTextToolbar
+    def __pt_container__(self):
+        return self.container

@@ -12,7 +12,6 @@ import six
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SearchDirection
-from prompt_toolkit.eventloop import EventLoop, get_event_loop
 from prompt_toolkit.filters import to_app_filter, is_searching
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.utils import get_cwidth
@@ -298,7 +297,7 @@ class Frame(object):
     """
     def __init__(self, body, title='', style='', width=None, height=None,
                  key_bindings=None, modal=False):
-        fill = partial(Window, style='class:frame-border')
+        fill = partial(Window, style='class:frame.border')
         style = 'class:frame ' + style
 
         if title:
@@ -307,7 +306,7 @@ class Frame(object):
                 fill(char=BORDER.HORIZONTAL),
                 fill(width=1, height=1, char='|'),
                 Label(' {0} '.format(title),
-                      style='class:frame-label',
+                      style='class:frame.label',
                       dont_extend_width=True),
                 fill(width=1, height=1, char='|'),
                 fill(char=BORDER.HORIZONTAL),
