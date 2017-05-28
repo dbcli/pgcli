@@ -101,6 +101,7 @@ class MenuContainer(object):
             " Click the selected menu item. "
             item = self._get_menu(len(self.selected_menu) - 1)
             if item.handler:
+                event.app.layout.pop_focus()
                 item.handler(event.app)
 
         # Controls.
