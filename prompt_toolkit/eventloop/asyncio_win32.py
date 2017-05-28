@@ -7,8 +7,7 @@ Windows notes:
 from __future__ import unicode_literals
 
 from ..input import Input
-from .utils import AsyncioTimeout
-from .base import EventLoop, INPUT_TIMEOUT
+from .base import EventLoop
 from .future import Future
 
 import asyncio

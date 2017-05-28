@@ -2,7 +2,6 @@
 Collection of reusable components for building full screen applications.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.eventloop import EventLoop
 from .base import Box, Shadow, Frame
 from ..containers import VSplit, HSplit
 from ..dimension import Dimension as D

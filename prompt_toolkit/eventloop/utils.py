@@ -3,7 +3,6 @@ import time
 
 __all__ = (
     'TimeIt',
-    'AsyncioTimeout',
 )
 
 
