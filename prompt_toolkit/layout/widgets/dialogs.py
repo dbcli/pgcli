@@ -7,6 +7,7 @@ from ..containers import VSplit, HSplit
 from ..dimension import Dimension as D
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
+from prompt_toolkit.filters import has_completions
 import six
 
 __all__ = (
@@ -42,8 +43,8 @@ class Dialog(object):
 
         # Key bindings.
         kb = KeyBindings()
-        kb.add('tab')(focus_next)
-        kb.add('s-tab')(focus_previous)
+        kb.add('tab', filter=~has_completions)(focus_next)
+        kb.add('s-tab', filter=~has_completions)(focus_previous)
 
         frame = Shadow(body=Frame(
             title=title,
