@@ -1,7 +1,7 @@
 Upcoming
 ========
 
-* TBD
+* Fixed DSN aliases not being read from custom pgclirc (issue #717). (Thanks: `Irina Truong`_).
 
 1.6.0
 =====
