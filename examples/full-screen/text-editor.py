@@ -17,7 +17,7 @@ from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.widgets import Dialog, Label, Button
-from prompt_toolkit.layout.widgets import TextArea, MenuContainer, MenuItem
+from prompt_toolkit.layout.widgets import TextArea, SearchField, MenuContainer, MenuItem
 from prompt_toolkit.styles import Style, merge_styles, default_style
 from pygments.lexers import PythonLexer
 import datetime
@@ -36,11 +36,14 @@ def get_statusbar_right_text(app):
         text_field.document.cursor_position_row + 1,
         text_field.document.cursor_position_col + 1)
 
+search_field = SearchField()
 text_field = TextArea(
     lexer=PygmentsLexer(PythonLexer),  # TODO: make lexer dynamic.
     scrollbar=True,
     line_numbers=True,
+    search_field=search_field,
 )
+
 
 
 class TextInputDialog(object):
@@ -104,13 +107,14 @@ class MessageDialog(object):
 
 body = HSplit([
     text_field,
+    search_field,
     ConditionalContainer(
         content=VSplit([
             Window(FormattedTextControl(get_statusbar_text), style='class:status'),
             Window(FormattedTextControl(get_statusbar_right_text),
                    style='class:status.right', width=9, align=Align.RIGHT),
         ], height=1),
-        filter=Condition(lambda _: show_status_bar))
+        filter=Condition(lambda _: show_status_bar)),
 ])
 
 # Global key bindings.
@@ -205,6 +209,10 @@ def do_go_to(app):
 
     ensure_future(coroutine())
 
+def do_undo(app):
+    text_field.buffer.undo()
+
+
 def do_cut(app):
     data = text_field.buffer.cut_selection()
     app.clipboard.set_data(data)
@@ -217,6 +225,18 @@ def do_copy(app):
 
 def do_delete(app):
     text_field.buffer.cut_selection()
+
+
+def do_find(app):
+    app.layout.focus(search_field)
+
+
+def do_find_next(app):
+    search_state = app.current_search_state
+
+    cursor_position = text_field.buffer.get_search_position(
+        search_state, include_current_position=False)
+    text_field.buffer.cursor_position = cursor_position
 
 
 def do_paste(app):
@@ -249,14 +269,14 @@ root_container = MenuContainer(body=body, menu_items=[
         MenuItem('Exit', handler=do_exit),
         ]),
     MenuItem('Edit', children=[
-        MenuItem('Undo'),
+        MenuItem('Undo', handler=do_undo),
         MenuItem('Cut', handler=do_cut),
         MenuItem('Copy', handler=do_copy),
         MenuItem('Paste', handler=do_paste),
         MenuItem('Delete', handler=do_delete),
         MenuItem('-', disabled=True),
-        MenuItem('Find'),
-        MenuItem('Find next'),
+        MenuItem('Find', handler=do_find),
+        MenuItem('Find next', handler=do_find_next),
         MenuItem('Replace'),
         MenuItem('Go To', handler=do_go_to),
         MenuItem('Select All', handler=do_select_all),
