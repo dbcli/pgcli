@@ -60,7 +60,7 @@ def commit_for_release(version_file, ver):
 
 
 def create_git_tag(tag_name):
-    run_step('git', 'tag', tag_name)
+    run_step('git', 'tag', '-s', tag_name)
 
 
 def create_source_tarball():

@@ -5,6 +5,7 @@ import platform
 from os.path import expanduser, exists, dirname
 from configobj import ConfigObj
 
+
 def config_location():
     if platform.system() == 'Windows':
         return os.getenv('USERPROFILE') + '\\AppData\\Local\\dbcli\\pgcli\\'
@@ -12,6 +13,7 @@ def config_location():
         return '%s/pgcli/' % expanduser(os.environ['XDG_CONFIG_HOME'])
     else:
         return expanduser('~/.config/pgcli/')
+
 
 def load_config(usr_cfg, def_cfg=None):
     cfg = ConfigObj()
@@ -40,6 +42,7 @@ def write_default_config(source, destination, overwrite=False):
     ensure_dir_exists(destination)
 
     shutil.copyfile(source, destination)
+
 
 def upgrade_config(config, def_config):
     cfg = load_config(config, def_config)
