@@ -1,7 +1,7 @@
 Upcoming
 ========
 
-* TBD
+* Refresh completions after `COMMIT` or `ROLLBACK`. (Thanks: `Irina Truong`_)
 
 1.6.0
 =====
