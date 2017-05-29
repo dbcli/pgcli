@@ -893,10 +893,10 @@ def format_output(title, cur, headers, status, settings):
 
 def has_meta_cmd(query):
     """Determines if the completion needs a refresh by checking if the sql
-    statement is an alter, create, or drop"""
+    statement is an alter, create, drop, commit or rollback."""
     try:
         first_token = query.split()[0]
-        if first_token.lower() in ('alter', 'create', 'drop'):
+        if first_token.lower() in ('alter', 'create', 'drop', 'commit', 'rollback'):
             return True
     except Exception:
         return False
