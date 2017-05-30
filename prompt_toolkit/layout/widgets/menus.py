@@ -7,6 +7,7 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, Window, FloatContainer, Float, ConditionalContainer
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.widgets import Shadow
+from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
 
 __all__ = (
@@ -59,7 +60,7 @@ class MenuContainer(object):
         def _(event):
             " Leave menu. "
             layout = event.app.layout
-            layout.focus(layout.previous_control)
+            layout.pop_focus()
 
         # Sub menu navigation.
 
@@ -176,16 +177,29 @@ class MenuContainer(object):
             self.selected_menu = [0]
 
         # Generate text fragments for the main menu.
-        result = []
+        def one_item(i, item):
+            def mouse_handler(app, mouse_event):
+                if mouse_event.event_type == MouseEventType.MOUSE_UP:
+                    # Toggle focus.
+                    if app.layout.has_focus(self.window):
+                        if self.selected_menu == [i]:
+                            app.layout.pop_focus()
+                    else:
+                        app.layout.focus(self.window)
+                    self.selected_menu = [i]
 
-        for i, item in enumerate(self.menu_items):
-            result.append(('class:menu-bar', ' '))
+            yield ('class:menu-bar', ' ', mouse_handler)
             if i == self.selected_menu[0] and focussed:
-                result.append(('[SetMenuPosition]', ''))
+                yield ('[SetMenuPosition]', '', mouse_handler)
                 style = 'class:menu-bar.selected-item'
             else:
                 style = 'class:menu-bar'
-            result.append((style, item.text))
+            yield style, item.text, mouse_handler
+
+        result = []
+        for i, item in enumerate(self.menu_items):
+            result.extend(one_item(i, item))
+
         return result
 
     def _submenu(self, level=0):
@@ -203,29 +217,43 @@ class MenuContainer(object):
                     except IndexError:
                         selected_item = -1
 
-                    for i, item in enumerate(menu.children):
+                    def one_item(i, item):
+                        def mouse_handler(app, mouse_event):
+                            if mouse_event.event_type == MouseEventType.MOUSE_UP:
+                                if item.handler:
+                                    app.layout.pop_focus()
+                                    item.handler(app)
+                                else:
+                                    self.selected_menu = self.selected_menu[:level + 1] + [i]
+
                         if i == selected_item:
-                            result.append(('[SetCursorPosition]', ''))
+                            yield ('[SetCursorPosition]', '')
                             style = 'class:menu-bar.selected-item'
                         else:
                             style = ''
 
-                        result.append(('class:menu', BORDER.VERTICAL))
+                        yield ('class:menu', BORDER.VERTICAL)
                         if item.text == '-':
-                            result.append((style + 'class:menu-border', '{}'.format(BORDER.HORIZONTAL * (menu.width + 3))))
+                            yield (style + 'class:menu-border',
+                                   '{}'.format(BORDER.HORIZONTAL * (menu.width + 3)),
+                                   mouse_handler)
                         else:
-                            result.append((style, ' {}'.format(item.text).ljust(menu.width + 3)))
+                            yield (style, ' {}'.format(item.text).ljust(menu.width + 3),
+                                   mouse_handler)
 
                         if item.children:
-                            result.append((style, '>'))
+                            yield (style, '>', mouse_handler)
                         else:
-                            result.append((style, ' '))
+                            yield (style, ' ', mouse_handler)
 
                         if i == selected_item:
-                            result.append(('[SetMenuPosition]', ''))
-                        result.append(('class:menu', BORDER.VERTICAL))
+                            yield ('[SetMenuPosition]', '')
+                        yield ('class:menu', BORDER.VERTICAL)
 
-                        result.append(('', '\n'))
+                        yield ('', '\n')
+
+                    for i, item in enumerate(menu.children):
+                        result.extend(one_item(i, item))
 
                     result.append(('class:menu', BORDER.BOTTOM_LEFT))
                     result.append(('class:menu', BORDER.HORIZONTAL * (menu.width + 4)))

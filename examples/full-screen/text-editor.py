@@ -141,8 +141,8 @@ def do_open_file(app):
 
         if path is not None:
             try:
-                with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-                    text_field.text = f.read()
+                with open(path, 'rb') as f:
+                    text_field.text = f.read().decode('utf-8', errors='ignore')
             except IOError as e:
                 show_message(app, 'Error', '{}'.format(e))
 

@@ -14,6 +14,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SearchDirection
 from prompt_toolkit.filters import to_app_filter, is_searching
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
+from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
 
 from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align
@@ -264,7 +265,8 @@ class Button(object):
         text = ('{:^%s}' % (self.width - 2)).format(self.text)
 
         def handler(app, mouse_event):
-            self.handler(app)
+            if mouse_event.event_type == MouseEventType.MOUSE_UP:
+                self.handler(app)
 
         return [
             ('class:button.arrow', '<', handler),

@@ -1374,6 +1374,11 @@ class Window(Container):
         def mouse_handler(app, mouse_event):
             """ Wrapper around the mouse_handler of the `UIControl` that turns
             screen coordinates into line coordinates. """
+            # Don't handle mouse events outside of the current modal part of
+            # the UI.
+            if self not in app.layout.walk_through_modal_area():
+                return
+
             # Find row/col position first.
             yx_to_rowcol = dict((v, k) for k, v in rowcol_to_yx.items())
             y = mouse_event.position.y

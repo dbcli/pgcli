@@ -162,6 +162,20 @@ class Layout(object):
             for i in cls._walk(c):
                 yield i
 
+    def walk_through_modal_area(self):
+        """
+        Walk through all the containers which are in the current 'modal' part
+        of the layout.
+        """
+        # Go up in the tree, and find the root. (it will be a part of the
+        # layout, if the focus is in a modal part.)
+        root = self.current_window
+        while not root.is_modal() and root in self._child_to_parent:
+            root = self._child_to_parent[root]
+
+        for container in self._walk(root):
+            yield container
+
     def update_parents_relations(self):
         """
         Update child->parent relationships mapping.
@@ -191,14 +205,8 @@ class Layout(object):
             return
 
     def get_focussable_windows(self):
-        # Go up in the tree, and find the root. (it will be a part of the
-        # layout, if the focus is in a modal part.)
-        root = self.current_window
-        while not root.is_modal() and root in self._child_to_parent:
-            root = self._child_to_parent[root]
-
         # Now traverse and collect all the focussable children of this root.
-        for w in self._walk(root):
+        for w in self.walk_through_modal_area():
             if isinstance(w, Window) and w.content.is_focussable():
                 yield w
 
