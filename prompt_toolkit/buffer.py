@@ -10,7 +10,7 @@ from .clipboard import ClipboardData
 from .completion import CompleteEvent, get_common_complete_suffix, Completer, Completion, DummyCompleter
 from .document import Document
 from .enums import SearchDirection
-from .eventloop import run_in_executor, call_from_executor
+from .eventloop import run_in_executor, call_from_executor, From, ensure_future
 from .filters import to_simple_filter
 from .history import History, InMemoryHistory
 from .search_state import SearchState
@@ -1365,69 +1365,67 @@ class Buffer(object):
             # Otherwise, get completions in other thread.
             complete_thread_running[0] = True
 
-            def run():
-                completions = list(self.completer.get_completions(document, complete_event))
+            def run_get_completions():
+                return list(self.completer.get_completions(document, complete_event))
 
-                def callback():
-                    """
-                    Set the new complete_state in a safe way. Don't replace an
-                    existing complete_state if we had one. (The user could have
-                    pressed 'Tab' in the meantime. Also don't set it if the text
-                    was changed in the meantime.
-                    """
-                    complete_thread_running[0] = False
+            def coroutine():
+                completions = yield From(run_in_executor(run_get_completions))
 
-                    # When there is only one completion, which has nothing to add, ignore it.
-                    if (len(completions) == 1 and
-                            completion_does_nothing(document, completions[0])):
-                        del completions[:]
+                # Set the new complete_state in a safe way. Don't replace an
+                # existing complete_state if we had one. (The user could have
+                # pressed 'Tab' in the meantime. Also don't set it if the text
+                # was changed in the meantime.
+                complete_thread_running[0] = False
 
-                    # Set completions if the text was not yet changed.
-                    if self.text == document.text and \
-                            self.cursor_position == document.cursor_position and \
-                            not self.complete_state:
+                # When there is only one completion, which has nothing to add, ignore it.
+                if (len(completions) == 1 and
+                        completion_does_nothing(document, completions[0])):
+                    del completions[:]
 
-                        set_completions = True
-                        select_first_anyway = False
+                # Set completions if the text was not yet changed.
+                if self.text == document.text and \
+                        self.cursor_position == document.cursor_position and \
+                        not self.complete_state:
 
-                        # When the common part has to be inserted, and there
-                        # is a common part.
-                        if insert_common_part:
-                            common_part = get_common_complete_suffix(document, completions)
-                            if common_part:
-                                # Insert the common part, update completions.
-                                self.insert_text(common_part)
-                                if len(completions) > 1:
-                                    # (Don't call `async_completer` again, but
-                                    # recalculate completions. See:
-                                    # https://github.com/ipython/ipython/issues/9658)
-                                    completions[:] = [
-                                        c.new_completion_from_position(len(common_part))
-                                        for c in completions]
-                                else:
-                                    set_completions = False
+                    set_completions = True
+                    select_first_anyway = False
+
+                    # When the common part has to be inserted, and there
+                    # is a common part.
+                    if insert_common_part:
+                        common_part = get_common_complete_suffix(document, completions)
+                        if common_part:
+                            # Insert the common part, update completions.
+                            self.insert_text(common_part)
+                            if len(completions) > 1:
+                                # (Don't call `async_completer` again, but
+                                # recalculate completions. See:
+                                # https://github.com/ipython/ipython/issues/9658)
+                                completions[:] = [
+                                    c.new_completion_from_position(len(common_part))
+                                    for c in completions]
                             else:
-                                # When we were asked to insert the "common"
-                                # prefix, but there was no common suffix but
-                                # still exactly one match, then select the
-                                # first. (It could be that we have a completion
-                                # which does * expansion, like '*.py', with
-                                # exactly one match.)
-                                if len(completions) == 1:
-                                    select_first_anyway = True
+                                set_completions = False
+                        else:
+                            # When we were asked to insert the "common"
+                            # prefix, but there was no common suffix but
+                            # still exactly one match, then select the
+                            # first. (It could be that we have a completion
+                            # which does * expansion, like '*.py', with
+                            # exactly one match.)
+                            if len(completions) == 1:
+                                select_first_anyway = True
 
-                        if set_completions:
-                            self.set_completions(
-                                completions=completions,
-                                go_to_first=select_first or select_first_anyway,
-                                go_to_last=select_last)
-                    elif not self.complete_state:
-                        # Otherwise, restart thread.
-                        async_completer()
+                    if set_completions:
+                        self.set_completions(
+                            completions=completions,
+                            go_to_first=select_first or select_first_anyway,
+                            go_to_last=select_last)
+                elif not self.complete_state:
+                    # Otherwise, restart thread.
+                    async_completer()
 
-                call_from_executor(callback)
-
-            run_in_executor(run)
+            ensure_future(coroutine())
         return async_completer
 
     def _create_auto_suggest_function(self):
@@ -1451,26 +1449,26 @@ class Buffer(object):
             # Otherwise, get completions in other thread.
             suggest_thread_running[0] = True
 
-            def run():
-                suggestion = self.auto_suggest.get_suggestion(self, self, document)
+            def run_get_suggestion():
+                return self.auto_suggest.get_suggestion(self, self, document)
 
-                def callback():
-                    suggest_thread_running[0] = False
+            def coroutine():
+                suggestion = yield From(run_in_executor(run_get_suggestion))
 
-                    # Set suggestion only if the text was not yet changed.
-                    if self.text == document.text and \
-                            self.cursor_position == document.cursor_position:
+                suggest_thread_running[0] = False
 
-                        # Set suggestion and redraw interface.
-                        self.suggestion = suggestion
-                        self.on_suggestion_set.fire()
-                    else:
-                        # Otherwise, restart thread.
-                        async_suggestor()
+                # Set suggestion only if the text was not yet changed.
+                if self.text == document.text and \
+                        self.cursor_position == document.cursor_position:
 
-                call_from_executor(callback)
+                    # Set suggestion and redraw interface.
+                    self.suggestion = suggestion
+                    self.on_suggestion_set.fire()
+                else:
+                    # Otherwise, restart thread.
+                    async_suggestor()
 
-            run_in_executor(run)
+            ensure_future(coroutine())
         return async_suggestor
 
     def validate_and_handle(self, app):
