@@ -212,7 +212,10 @@ class Label(object):
             if width is None:
                 text_fragments = to_formatted_text(self.text, app)
                 text = fragment_list_to_text(text_fragments)
-                longest_line = max(get_cwidth(line) for line in text.splitlines())
+                if text:
+                    longest_line = max(get_cwidth(line) for line in text.splitlines())
+                else:
+                    return D(preferred=0)
                 return D(preferred=longest_line)
             else:
                 return width
