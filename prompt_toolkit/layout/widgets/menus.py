@@ -60,7 +60,7 @@ class MenuContainer(object):
         def _(event):
             " Leave menu. "
             layout = event.app.layout
-            layout.pop_focus()
+            layout.focus_previous()
 
         # Sub menu navigation.
 
@@ -102,7 +102,7 @@ class MenuContainer(object):
             " Click the selected menu item. "
             item = self._get_menu(len(self.selected_menu) - 1)
             if item.handler:
-                event.app.layout.pop_focus()
+                event.app.layout.focus_previous()
                 item.handler(event.app)
 
         # Controls.
@@ -183,7 +183,7 @@ class MenuContainer(object):
                     # Toggle focus.
                     if app.layout.has_focus(self.window):
                         if self.selected_menu == [i]:
-                            app.layout.pop_focus()
+                            app.layout.focus_previous()
                     else:
                         app.layout.focus(self.window)
                     self.selected_menu = [i]
@@ -221,7 +221,7 @@ class MenuContainer(object):
                         def mouse_handler(app, mouse_event):
                             if mouse_event.event_type == MouseEventType.MOUSE_UP:
                                 if item.handler:
-                                    app.layout.pop_focus()
+                                    app.layout.focus_previous()
                                     item.handler(app)
                                 else:
                                     self.selected_menu = self.selected_menu[:level + 1] + [i]

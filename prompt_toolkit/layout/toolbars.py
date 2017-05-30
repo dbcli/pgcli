@@ -85,14 +85,14 @@ class SystemToolbar(object):
         def _(event):
             " Hide system prompt. "
             self.system_buffer.reset()
-            event.app.layout.pop_focus()
+            event.app.layout.focus_previous()
 
         @handle('enter', filter=focussed)
         def _(event):
             " Run system command. "
             event.app.run_system_command(self.system_buffer.text)
             self.system_buffer.reset(append_to_history=True)
-            event.app.layout.pop_focus()
+            event.app.layout.focus_previous()
 
         # Vi.
         vi_bindings = KeyBindings()
@@ -104,7 +104,7 @@ class SystemToolbar(object):
             " Hide system prompt. "
             event.app.vi_state.input_mode = InputMode.NAVIGATION
             self.system_buffer.reset()
-            event.app.layout.pop_focus()
+            event.app.layout.focus_previous()
 
         @handle('enter', filter=focussed)
         def _(event):
@@ -112,7 +112,7 @@ class SystemToolbar(object):
             event.app.vi_state.input_mode = InputMode.NAVIGATION
             event.app.run_system_command(self.system_buffer.text)
             self.system_buffer.reset(append_to_history=True)
-            event.app.layout.pop_focus()
+            event.app.layout.focus_previous()
 
         return merge_key_bindings([
             ConditionalKeyBindings(emacs_bindings, emacs_mode),

@@ -140,7 +140,7 @@ class Layout(object):
         except IndexError:
             return self._stack[-1].content
 
-    def pop_focus(self):
+    def focus_previous(self):
         """
         Give the focus to the previously focussed control.
         """
