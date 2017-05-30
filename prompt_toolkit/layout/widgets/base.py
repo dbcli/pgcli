@@ -44,7 +44,7 @@ __all__ = (
 )
 
 
-class BORDER:
+class Border:
     " Box drawing characters. (Thin) "
     HORIZONTAL = '\u2500'
     VERTICAL = '\u2502'
@@ -304,36 +304,36 @@ class Frame(object):
 
         if title:
             top_row = VSplit([
-                fill(width=1, height=1, char=BORDER.TOP_LEFT),
-                fill(char=BORDER.HORIZONTAL),
+                fill(width=1, height=1, char=Border.TOP_LEFT),
+                fill(char=Border.HORIZONTAL),
                 fill(width=1, height=1, char='|'),
                 Label(' {0} '.format(title),
                       style='class:frame.label',
                       dont_extend_width=True),
                 fill(width=1, height=1, char='|'),
-                fill(char=BORDER.HORIZONTAL),
-                fill(width=1, height=1, char=BORDER.TOP_RIGHT),
+                fill(char=Border.HORIZONTAL),
+                fill(width=1, height=1, char=Border.TOP_RIGHT),
             ], height=1)
         else:
             top_row = VSplit([
-                fill(width=1, height=1, char=BORDER.TOP_LEFT),
-                fill(char=BORDER.HORIZONTAL),
-                fill(width=1, height=1, char=BORDER.TOP_RIGHT),
+                fill(width=1, height=1, char=Border.TOP_LEFT),
+                fill(char=Border.HORIZONTAL),
+                fill(width=1, height=1, char=Border.TOP_RIGHT),
             ], height=1)
 
         self.container = HSplit([
             top_row,
             VSplit([
-                fill(width=1, char=BORDER.VERTICAL),
+                fill(width=1, char=Border.VERTICAL),
                 body,
-                fill(width=1, char=BORDER.VERTICAL),
+                fill(width=1, char=Border.VERTICAL),
                     # Padding is required to make sure that if the content is
                     # too small, that the right frame border is still aligned.
             ], padding=0),
             VSplit([
-                fill(width=1, height=1, char=BORDER.BOTTOM_LEFT),
-                fill(char=BORDER.HORIZONTAL),
-                fill(width=1, height=1, char=BORDER.BOTTOM_RIGHT),
+                fill(width=1, height=1, char=Border.BOTTOM_LEFT),
+                fill(char=Border.HORIZONTAL),
+                fill(width=1, height=1, char=Border.BOTTOM_RIGHT),
             ]),
         ], width=width, height=height, style=style, key_bindings=key_bindings,
         modal=modal)
@@ -537,7 +537,7 @@ class VerticalLine(object):
     """
     def __init__(self):
         self.window = Window(
-            char=BORDER.VERTICAL,
+            char=Border.VERTICAL,
             style='class:line,vertical-line',
             width=1)
 
@@ -551,7 +551,7 @@ class HorizontalLine(object):
     """
     def __init__(self):
         self.window = Window(
-            char=BORDER.HORIZONTAL,
+            char=Border.HORIZONTAL,
             style='class:line,horizontal-line',
             height=1)
 

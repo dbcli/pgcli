@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from .base import BORDER
+from .base import Border
 
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
@@ -208,9 +208,9 @@ class MenuContainer(object):
             if level < len(self.selected_menu):
                 menu = self._get_menu(level)
                 if menu.children:
-                    result.append(('class:menu', BORDER.TOP_LEFT))
-                    result.append(('class:menu', BORDER.HORIZONTAL * (menu.width + 4)))
-                    result.append(('class:menu', BORDER.TOP_RIGHT))
+                    result.append(('class:menu', Border.TOP_LEFT))
+                    result.append(('class:menu', Border.HORIZONTAL * (menu.width + 4)))
+                    result.append(('class:menu', Border.TOP_RIGHT))
                     result.append(('', '\n'))
                     try:
                         selected_item = self.selected_menu[level + 1]
@@ -232,10 +232,10 @@ class MenuContainer(object):
                         else:
                             style = ''
 
-                        yield ('class:menu', BORDER.VERTICAL)
+                        yield ('class:menu', Border.VERTICAL)
                         if item.text == '-':
                             yield (style + 'class:menu-border',
-                                   '{}'.format(BORDER.HORIZONTAL * (menu.width + 3)),
+                                   '{}'.format(Border.HORIZONTAL * (menu.width + 3)),
                                    mouse_handler)
                         else:
                             yield (style, ' {}'.format(item.text).ljust(menu.width + 3),
@@ -248,16 +248,16 @@ class MenuContainer(object):
 
                         if i == selected_item:
                             yield ('[SetMenuPosition]', '')
-                        yield ('class:menu', BORDER.VERTICAL)
+                        yield ('class:menu', Border.VERTICAL)
 
                         yield ('', '\n')
 
                     for i, item in enumerate(menu.children):
                         result.extend(one_item(i, item))
 
-                    result.append(('class:menu', BORDER.BOTTOM_LEFT))
-                    result.append(('class:menu', BORDER.HORIZONTAL * (menu.width + 4)))
-                    result.append(('class:menu', BORDER.BOTTOM_RIGHT))
+                    result.append(('class:menu', Border.BOTTOM_LEFT))
+                    result.append(('class:menu', Border.HORIZONTAL * (menu.width + 4)))
+                    result.append(('class:menu', Border.BOTTOM_RIGHT))
             return result
 
         return Window(
