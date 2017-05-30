@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.contrib.completers import PathCompleter
-from prompt_toolkit.eventloop import Future, ensure_future, ReturnValue
+from prompt_toolkit.eventloop import Future, ensure_future, Return
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import Float, HSplit, VSplit, Window, Align, ConditionalContainer
@@ -176,7 +176,7 @@ def show_dialog_as_float(app, dialog):
     if float_ in root_container.floats:
         root_container.floats.remove(float_)
 
-    raise ReturnValue(result)
+    raise Return(result)
 
 
 def do_new_file(app):

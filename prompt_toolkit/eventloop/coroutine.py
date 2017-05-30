@@ -4,8 +4,9 @@ from prompt_toolkit.eventloop.defaults import get_event_loop
 from prompt_toolkit.eventloop.future import Future
 
 __all__ = (
+    'From',
+    'Return',
     'ensure_future',
-    'ReturnValue'
 )
 
 
@@ -23,16 +24,26 @@ def ensure_future(future_or_coroutine):
                          type(future_or_coroutine))
 
 
-class ReturnValue(Exception):
+class Return(Exception):
     """
     For backwards-compatibility with Python2: when "return" is not supported in
-    a generator/coroutine.
+    a generator/coroutine.  (Like Trollius.)
+
+    Instead of ``return value``, in a coroutine do:  ``raise Return(value)``.
     """
     def __init__(self, value):
         self.value = value
 
     def __repr__(self):
-        return 'ReturnValue(%r)' % (self.value, )
+        return 'Return(%r)' % (self.value, )
+
+
+def From(obj):
+    """
+    Used to emulate 'yield from'.
+    (Like Trollius does.)
+    """
+    return obj
 
 
 def _run_coroutine(coroutine):
@@ -70,13 +81,13 @@ def _run_coroutine(coroutine):
                     new_f = coroutine.send(f.result())
         except StopIteration as e:
             result_f.set_result(e.args[0] if e.args else None)
-        except ReturnValue as e:
+        except Return as e:
             result_f.set_result(e.value)
         except BaseException as e:
             result_f.set_exception(e)
         else:
             # Process yielded value from coroutine.
-            assert isinstance(new_f, Future)
+            new_f = ensure_future(new_f)
 
             @new_f.add_done_callback
             def continue_(_):

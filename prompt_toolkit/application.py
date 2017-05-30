@@ -4,7 +4,7 @@ from .buffer import Buffer
 from .cache import SimpleCache
 from .clipboard import Clipboard, InMemoryClipboard
 from .enums import EditingMode
-from .eventloop import get_event_loop, ensure_future, ReturnValue, run_in_executor, run_until_complete, call_from_executor
+from .eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From
 from .filters import AppFilter, to_app_filter
 from .input.base import Input
 from .input.defaults import create_input
@@ -492,14 +492,14 @@ class Application(object):
                         if has_sigwinch:
                             loop.add_signal_handler(signal.SIGWINCH, previous_winch_handler)
 
-                raise ReturnValue(result)
+                raise Return(result)
 
         def _run_async2():
             try:
-                result = yield ensure_future(_run_async())
+                result = yield From(_run_async())
             finally:
                 assert not self._is_running
-            raise ReturnValue(result)
+            raise Return(result)
 
         return ensure_future(_run_async2())
 
@@ -553,7 +553,7 @@ class Application(object):
         else:
             def async_func():
                 if False: yield  # Make this a coroutine.
-                raise ReturnValue(func())
+                raise Return(func())
 
         return self.run_in_terminal_async(async_func, render_cli_done=render_cli_done)
 
@@ -592,9 +592,9 @@ class Application(object):
             previous_input, previous_cb = loop.remove_input()
             try:
                 with self.input.cooked_mode():
-                    result = yield ensure_future(async_func())
+                    result = yield From(async_func())
 
-                raise ReturnValue(result)  # Same as: "return result"
+                raise Return(result)  # Same as: "return result"
             finally:
                 # Attach input again.
                 loop.set_input(previous_input, previous_cb)
@@ -660,7 +660,7 @@ class Application(object):
 
             # Wait for the user to press enter.
             if wait_for_enter:
-                yield ensure_future(do_wait_for_enter())
+                yield From(do_wait_for_enter())
 
         self.run_in_terminal_async(run)
 

@@ -34,7 +34,7 @@ from prompt_toolkit.clipboard import DynamicClipboard, InMemoryClipboard
 from prompt_toolkit.completion import DynamicCompleter
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
-from prompt_toolkit.eventloop import ensure_future, ReturnValue
+from prompt_toolkit.eventloop import ensure_future, Return
 from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_simple_filter, Condition, has_arg
 from prompt_toolkit.history import InMemoryHistory, DynamicHistory
 from prompt_toolkit.input.defaults import create_input
@@ -640,7 +640,7 @@ class Prompt(object):
                     try:
                         self._default_buffer.reset(Document(self.default))
                         result = yield self.app.run_async()
-                        raise ReturnValue(result)
+                        raise Return(result)
                     finally:
                         # Restore original settings.
                         for name in self._fields:
