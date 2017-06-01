@@ -9,7 +9,7 @@ from prompt_toolkit.key_binding.key_bindings import ConditionalKeyBindings, merg
 from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_abort_and_exit_bindings, load_basic_system_bindings, load_auto_suggestion_bindings, load_mouse_bindings
 from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings, load_extra_emacs_page_navigation_bindings
 from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings, load_extra_vi_page_navigation_bindings
-from prompt_toolkit.filters import to_app_filter
+from prompt_toolkit.filters import to_filter
 
 __all__ = (
     'load_key_bindings',
@@ -38,12 +38,12 @@ def load_key_bindings(
     :param enable_auto_suggest_bindings: Filter to enable fish-style suggestions.
     """
     # Accept both Filters and booleans as input.
-    enable_abort_and_exit_bindings = to_app_filter(enable_abort_and_exit_bindings)
-    enable_system_bindings = to_app_filter(enable_system_bindings)
-    enable_search = to_app_filter(enable_search)
-    enable_open_in_editor = to_app_filter(enable_open_in_editor)
-    enable_extra_page_navigation = to_app_filter(enable_extra_page_navigation)
-    enable_auto_suggest_bindings = to_app_filter(enable_auto_suggest_bindings)
+    enable_abort_and_exit_bindings = to_filter(enable_abort_and_exit_bindings)
+    enable_system_bindings = to_filter(enable_system_bindings)
+    enable_search = to_filter(enable_search)
+    enable_open_in_editor = to_filter(enable_open_in_editor)
+    enable_extra_page_navigation = to_filter(enable_extra_page_navigation)
+    enable_auto_suggest_bindings = to_filter(enable_auto_suggest_bindings)
 
     return merge_key_bindings([
         # Load basic bindings.

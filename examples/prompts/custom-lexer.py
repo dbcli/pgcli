@@ -9,7 +9,7 @@ from prompt_toolkit.shortcuts import prompt
 
 
 class RainbowLexer(Lexer):
-    def lex_document(self, app, document):
+    def lex_document(self, document):
         colors = list(sorted(NAMED_COLORS, key=NAMED_COLORS.get))
 
         def get_line(lineno):

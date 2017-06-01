@@ -1,6 +1,7 @@
 # pylint: disable=function-redefined
 from __future__ import unicode_literals
 
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import has_selection, Condition, emacs_insert_mode, vi_insert_mode, in_paste_mode, is_multiline
 from prompt_toolkit.key_binding.key_processor import KeyPress
@@ -147,13 +148,13 @@ def load_basic_bindings():
 
     # CTRL keys.
 
-    text_before_cursor = Condition(lambda app: app.current_buffer.text)
+    text_before_cursor = Condition(lambda: get_app().current_buffer.text)
     handle('c-d', filter=text_before_cursor & insert_mode)(get_by_name('delete-char'))
 
     @handle('enter', filter=insert_mode & is_multiline)
     def _(event):
         " Newline (in case of multiline input. "
-        event.current_buffer.newline(copy_margin=not in_paste_mode(event.app))
+        event.current_buffer.newline(copy_margin=not in_paste_mode())
 
     @handle('c-j')
     def _(event):
@@ -220,7 +221,7 @@ def load_basic_bindings():
 
         event.current_buffer.insert_text(data)
 
-    @handle(Keys.Any, filter=Condition(lambda app: app.quoted_insert), eager=True)
+    @handle(Keys.Any, filter=Condition(lambda: get_app().quoted_insert), eager=True)
     def _(event):
         """
         Handle quoted insert.
@@ -309,8 +310,8 @@ def load_mouse_bindings():
 
             # Call the mouse handler from the renderer.
             handler = event.app.renderer.mouse_handlers.mouse_handlers[x,y]
-            handler(event.app, MouseEvent(position=Point(x=x, y=y),
-                                          event_type=mouse_event))
+            handler(MouseEvent(position=Point(x=x, y=y),
+                               event_type=mouse_event))
 
     @key_bindings.add(Keys.ScrollUp)
     def _(event):
@@ -343,8 +344,7 @@ def load_mouse_bindings():
 
         # Call the mouse event handler.
         handler = event.app.renderer.mouse_handlers.mouse_handlers[x,y]
-        handler(event.app, MouseEvent(position=Point(x=x, y=y),
-                                      event_type=event_type))
+        handler(MouseEvent(position=Point(x=x, y=y), event_type=event_type))
 
     return key_bindings
 
@@ -362,9 +362,10 @@ def load_abort_and_exit_bindings():
         event.app.abort()
 
     @Condition
-    def ctrl_d_condition(app):
+    def ctrl_d_condition():
         """ Ctrl-D binding is only active when the default buffer is selected
         and empty. """
+        app = get_app()
         return (app.current_buffer.name == DEFAULT_BUFFER and
                 not app.current_buffer.text)
 
@@ -379,8 +380,7 @@ def load_basic_system_bindings():
     """
     key_bindings = KeyBindings()
 
-    suspend_supported = Condition(
-        lambda app: suspend_to_background_supported())
+    suspend_supported = Condition(suspend_to_background_supported)
 
     @key_bindings.add('c-z', filter=suspend_supported)
     def _(event):
@@ -399,10 +399,11 @@ def load_auto_suggestion_bindings():
     key_bindings = KeyBindings()
     handle = key_bindings.add
 
-    suggestion_available = Condition(
-        lambda app:
-            app.current_buffer.suggestion is not None and
-            app.current_buffer.document.is_cursor_at_the_end)
+    @Condition
+    def suggestion_available():
+        app = get_app()
+        return (app.current_buffer.suggestion is not None and
+                app.current_buffer.document.is_cursor_at_the_end)
 
     @handle('c-f', filter=suggestion_available)
     @handle('c-e', filter=suggestion_available)

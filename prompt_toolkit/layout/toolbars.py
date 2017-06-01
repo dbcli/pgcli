@@ -6,6 +6,7 @@ from .dimension import Dimension
 from .lexers import SimpleLexer
 from .processors import BeforeInput
 from .utils import fragment_list_len
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import SYSTEM_BUFFER, SearchDirection
 from prompt_toolkit.filters import has_focus, has_completions, has_validation_error, is_searching, Always, is_done, emacs_mode, vi_mode, vi_navigation_mode, has_arg
@@ -43,7 +44,7 @@ class SystemToolbar(object):
         self.buffer_control = BufferControl(
             buffer=self.system_buffer,
             lexer=SimpleLexer(style='class:system-toolbar.text'),
-            input_processor=BeforeInput.static(prompt, 'class:system-toolbar'),
+            input_processor=BeforeInput(prompt, style='class:system-toolbar'),
             key_bindings=self._bindings)
 
         self.window = Window(
@@ -128,8 +129,8 @@ class SystemToolbar(object):
 
 class ArgToolbar(object):
     def __init__(self):
-        def get_formatted_text(app):
-            arg = app.key_processor.arg or ''
+        def get_formatted_text():
+            arg = get_app().key_processor.arg or ''
             if arg == '-':
                 arg = '-1'
 
@@ -157,7 +158,8 @@ class SearchToolbar(object):
     def __init__(self, search_buffer, vi_mode=False):
         assert isinstance(search_buffer, Buffer)
 
-        def get_before_input(app):
+        def get_before_input():
+            app = get_app()
             if not is_searching(app):
                 return ''
             elif app.current_search_state.direction == SearchDirection.BACKWARD:
@@ -181,8 +183,8 @@ class SearchToolbar(object):
 
 
 class _CompletionsToolbarControl(UIControl):
-    def create_content(self, app, width, height):
-        complete_state = app.current_buffer.complete_state
+    def create_content(self, width, height):
+        complete_state = get_app().current_buffer.complete_state
         if complete_state:
             completions = complete_state.current_completions
             index = complete_state.complete_index  # Can be None!
@@ -251,8 +253,8 @@ class CompletionsToolbar(object):
 
 class ValidationToolbar(object):
     def __init__(self, show_position=False):
-        def get_formatted_text(app):
-            buff = app.current_buffer
+        def get_formatted_text():
+            buff = get_app().current_buffer
 
             if buff.validation_error:
                 row, column = buff.document.translate_index_to_position(

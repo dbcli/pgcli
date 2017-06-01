@@ -53,10 +53,10 @@ def _run_coroutine(coroutine):
     Example:
 
         def gen():
-            yield Future()
+            yield From(...)
             print('...')
-            yield Future()
-        app.ensure_future(gen())
+            yield From(...)
+        ensure_future(gen())
 
     The values which are yielded by the given coroutine are supposed to be
     `Future` objects.

@@ -8,7 +8,7 @@ http://pygments.org/
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit.filters import to_simple_filter, Condition
+from prompt_toolkit.filters import to_filter, Condition
 from prompt_toolkit.layout.screen import Size
 from prompt_toolkit.output import Output
 from prompt_toolkit.styles import ANSI_COLOR_NAMES
@@ -248,7 +248,7 @@ class _EscapeCodeCache(dict):
     def __init__(self, true_color=False, ansi_colors_only=False):
         assert isinstance(true_color, bool)
         self.true_color = true_color
-        self.ansi_colors_only = to_simple_filter(ansi_colors_only)
+        self.ansi_colors_only = to_filter(ansi_colors_only)
 
     def __missing__(self, attrs):
         fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
@@ -392,7 +392,7 @@ class Vt100_Output(Output):
         self.stdout = stdout
         self.write_binary = write_binary
         self.get_size = get_size
-        self.true_color = to_simple_filter(true_color)
+        self.true_color = to_filter(true_color)
         self.term = term or 'xterm'
 
         # ANSI colors only?
@@ -405,7 +405,7 @@ class Vt100_Output(Output):
             def ansi_colors_only():
                 return ANSI_COLORS_ONLY or term in ('linux', 'eterm-color')
         else:
-            ansi_colors_only = to_simple_filter(ansi_colors_only)
+            ansi_colors_only = to_filter(ansi_colors_only)
 
         self.ansi_colors_only = ansi_colors_only
 

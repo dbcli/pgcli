@@ -23,7 +23,7 @@ def main():
     print('You said: %s' % text)
 
     # Example 2: fixed text from a callable:
-    def get_toolbar(app):
+    def get_toolbar():
         return 'Bottom toolbar: time=%r' % time.time()
 
     text = prompt('Say something: ', bottom_toolbar=get_toolbar,
@@ -46,7 +46,7 @@ def main():
     print('You said: %s' % text)
 
     # Example 5: Using a list of tokens.
-    def get_bottom_toolbar(app):
+    def get_bottom_toolbar():
         return [
             ('', ' '),
             ('bg:#ff0000 fg:#000000', 'This'),

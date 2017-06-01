@@ -10,10 +10,11 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 from six.moves import range
 
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SearchDirection
-from prompt_toolkit.filters import to_app_filter, ViInsertMultipleMode
+from prompt_toolkit.filters import to_filter, vi_insert_multiple_mode
 from prompt_toolkit.layout.formatted_text import to_formatted_text
 from prompt_toolkit.layout.utils import fragment_list_to_text
 from prompt_toolkit.reactive import Integer
@@ -63,7 +64,6 @@ class Processor(with_metaclass(ABCMeta, object)):
 
 class TransformationInput(object):
     """
-    :param app: :class:`.Application` instance.
     :param control: :class:`.BufferControl` instance.
     :param lineno: The number of the line to which we apply the processor.
     :param source_to_display: A function that returns the position in the
@@ -72,9 +72,8 @@ class TransformationInput(object):
     :param fragments: List of fragments that we can transform. (Received from the
         previous processor.)
     """
-    def __init__(self, app, buffer_control, document, lineno,
+    def __init__(self, buffer_control, document, lineno,
                  source_to_display, fragments, width, height):
-        self.app = app
         self.buffer_control = buffer_control
         self.document = document
         self.lineno = lineno
@@ -84,7 +83,7 @@ class TransformationInput(object):
         self.height = height
 
     def unpack(self):
-        return (self.app, self.buffer_control, self.document, self.lineno,
+        return (self.buffer_control, self.document, self.lineno,
                 self.source_to_display, self.fragments, self.width, self.height)
 
 
@@ -129,14 +128,14 @@ class HighlightSearchProcessor(Processor):
         `BufferControl.preview_search`, otherwise the cursor position won't move.
     """
     def __init__(self, preview_search=False):
-        self.preview_search = to_app_filter(preview_search)
+        self.preview_search = to_filter(preview_search)
 
-    def _get_search_text(self, app, buffer_control):
+    def _get_search_text(self, buffer_control):
         """
         The text we are searching for.
         """
         # When the search buffer has focus, take that text.
-        if self.preview_search(app):
+        if self.preview_search():
             search_buffer = buffer_control.search_buffer
             if search_buffer is not None and search_buffer.text:
                 return search_buffer.text
@@ -145,13 +144,13 @@ class HighlightSearchProcessor(Processor):
         return buffer_control.search_state.text
 
     def apply_transformation(self, transformation_input):
-        app, buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
+        buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
 
-        search_text = self._get_search_text(app, buffer_control)
+        search_text = self._get_search_text(buffer_control)
         searchmatch_current_fragment = ' class:search-match.current '
         searchmatch_fragment = ' class:search-match '
 
-        if search_text and not app.is_done:
+        if search_text and not get_app().is_done:
             # For each search match, replace the style string.
             line_text = fragment_list_to_text(fragments)
             fragments = explode_text_fragments(fragments)
@@ -188,7 +187,7 @@ class HighlightSelectionProcessor(Processor):
     Processor that highlights the selection in the document.
     """
     def apply_transformation(self, transformation_input):
-        app, buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
+        buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
 
         selected_fragment = ' class:selected '
 
@@ -278,10 +277,10 @@ class HighlightMatchingBracketProcessor(Processor):
             return []
 
     def apply_transformation(self, transformation_input):
-        app, buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
+        buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
 
         # Get the highlight positions.
-        key = (app.render_counter, document.text, document.cursor_position)
+        key = (get_app().render_counter, document.text, document.cursor_position)
         positions = self._positions_cache.get(
             key, lambda: self._get_positions_to_highlight(document))
 
@@ -307,14 +306,12 @@ class DisplayMultipleCursors(Processor):
     """
     When we're in Vi block insert mode, display all the cursors.
     """
-    _insert_multiple =  ViInsertMultipleMode()
-
     def apply_transformation(self, transformation_input):
-        app, buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
+        buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
 
         buff = buffer_control.buffer
 
-        if self._insert_multiple(app):
+        if vi_insert_multiple_mode():
             positions = buff.multiple_cursor_positions
             fragments = explode_text_fragments(fragments)
 
@@ -356,7 +353,7 @@ class BeforeInput(Processor):
     def apply_transformation(self, ti):
         if ti.lineno == 0:
             # Get fragments.
-            fragments_before = to_formatted_text(self.text, ti.app, self.style)
+            fragments_before = to_formatted_text(self.text, self.style)
             fragments = fragments_before + ti.fragments
 
             shift_position = fragment_list_len(fragments_before)
@@ -370,16 +367,6 @@ class BeforeInput(Processor):
         return Transformation(fragments, source_to_display=source_to_display,
                               display_to_source=display_to_source)
 
-    @classmethod
-    def static(cls, text, style=''):
-        """
-        Create a :class:`.BeforeInput` instance that always inserts the same
-        text.
-        """
-        def get_static_fragments(app):
-            return [(style, text)]
-        return cls(get_static_fragments)
-
     def __repr__(self):
         return 'BeforeInput(get_text_fragments=%r)' % (self.get_text_fragments, )
 
@@ -388,16 +375,17 @@ class ShowArg(BeforeInput):
     def __init__(self):
         super(ShowArg, self).__init__(self._get_text_fragments)
 
-    def _get_text_fragments(self, app):
+    def _get_text_fragments(self):
+        app = get_app()
         if app.key_processor.arg is None:
             return []
         else:
             arg = app.key_processor.arg
 
             return [
-                ('prompt.arg', '(arg: '),
-                ('prompt.arg.text', str(arg)),
-                ('prompt.arg', ') '),
+                ('class:prompt.arg', '(arg: '),
+                ('class:prompt.arg.text', str(arg)),
+                ('class:prompt.arg', ') '),
             ]
 
     def __repr__(self):
@@ -421,20 +409,10 @@ class AfterInput(Processor):
         # Insert fragments after the last line.
         if ti.lineno == ti.document.line_count - 1:
             # Get fragments.
-            fragments_after = to_formatted_text(self.text, ti.app, self.style)
+            fragments_after = to_formatted_text(self.text, self.style)
             return Transformation(fragments=ti.fragments + fragments_after)
         else:
             return Transformation(fragments=ti.fragments)
-
-    @classmethod
-    def static(cls, text, style=''):
-        """
-        Create a :class:`.AfterInput` instance that always inserts the same
-        text.
-        """
-        def get_static_fragments(app):
-            return [(style, text)]
-        return cls(get_static_fragments)
 
     def __repr__(self):
         return '%s(get_text_fragments=%r)' % (
@@ -475,8 +453,8 @@ class ShowLeadingWhiteSpaceProcessor(Processor):
         assert get_char is None or callable(get_char)
 
         if get_char is None:
-            def get_char(app):
-                if '\xb7'.encode(app.output.encoding(), 'replace') == b'?':
+            def get_char():
+                if '\xb7'.encode(get_app().output.encoding(), 'replace') == b'?':
                     return '.'
                 else:
                     return '\xb7'
@@ -485,12 +463,11 @@ class ShowLeadingWhiteSpaceProcessor(Processor):
         self.get_char = get_char
 
     def apply_transformation(self, ti):
-        app = ti.app
         fragments = ti.fragments
 
         # Walk through all te fragments.
         if fragments and fragment_list_to_text(fragments).startswith(' '):
-            t = (self.style, self.get_char(app))
+            t = (self.style, self.get_char())
             fragments = explode_text_fragments(fragments)
 
             for i in range(len(fragments)):
@@ -513,8 +490,8 @@ class ShowTrailingWhiteSpaceProcessor(Processor):
         assert get_char is None or callable(get_char)
 
         if get_char is None:
-            def get_char(app):
-                if '\xb7'.encode(app.output.encoding(), 'replace') == b'?':
+            def get_char():
+                if '\xb7'.encode(get_app().output.encoding(), 'replace') == b'?':
                     return '.'
                 else:
                     return '\xb7'
@@ -523,11 +500,10 @@ class ShowTrailingWhiteSpaceProcessor(Processor):
         self.get_char = get_char
 
     def apply_transformation(self, ti):
-        app = ti.app
         fragments = ti.fragments
 
         if fragments and fragments[-1][1].endswith(' '):
-            t = (self.style, self.get_char(app))
+            t = (self.style, self.get_char())
             fragments = explode_text_fragments(fragments)
 
             # Walk backwards through all te fragments and replace whitespace.
@@ -558,20 +534,18 @@ class TabsProcessor(Processor):
         assert get_char1 is None or callable(get_char1)
         assert get_char2 is None or callable(get_char2)
 
-        self.get_char1 = get_char1 or get_char2 or (lambda app: '|')
-        self.get_char2 = get_char2 or get_char1 or (lambda app: '\u2508')
+        self.get_char1 = get_char1 or get_char2 or (lambda: '|')
+        self.get_char2 = get_char2 or get_char1 or (lambda: '\u2508')
         self.tabstop = tabstop
         self.style = style
 
     def apply_transformation(self, ti):
-        app = ti.app
-
         tabstop = int(self.tabstop)
         style = self.style
 
         # Create separator for tabs.
-        separator1 = self.get_char1(app)
-        separator2 = self.get_char2(app)
+        separator1 = self.get_char1()
+        separator2 = self.get_char2()
 
         # Transform fragments.
         fragments = explode_text_fragments(ti.fragments)
@@ -636,9 +610,9 @@ class ReverseSearchProcessor(Processor):
         AfterInput,
     ]
 
-    def _get_main_buffer(self, app, buffer_control):
+    def _get_main_buffer(self, buffer_control):
         from prompt_toolkit.layout.controls import BufferControl
-        prev_control = app.layout.previous_control
+        prev_control = get_app().layout.previous_control
         if isinstance(prev_control, BufferControl) and \
                 prev_control.search_buffer_control == buffer_control:
             return prev_control, prev_control.search_state
@@ -690,11 +664,11 @@ class ReverseSearchProcessor(Processor):
                  preview_search=True,
                  search_buffer_control=ti.buffer_control)
 
-        return buffer_control.create_content(ti.app, ti.width, ti.height)
+        return buffer_control.create_content(ti.width, ti.height)
 
 
     def apply_transformation(self, ti):
-        main_control, search_state = self._get_main_buffer(ti.app, ti.buffer_control)
+        main_control, search_state = self._get_main_buffer(ti.buffer_control)
 
         if ti.lineno == 0 and main_control:
             content = self._content(main_control, ti)
@@ -738,7 +712,7 @@ class ConditionalProcessor(Processor):
 
         # Create a function that returns whether or not the processor should
         # currently be applied.
-        def highlight_enabled(app):
+        def highlight_enabled():
             return true_or_false
 
         # Wrapt it in a `ConditionalProcessor` for usage in a `BufferControl`.
@@ -747,17 +721,17 @@ class ConditionalProcessor(Processor):
                                  Condition(highlight_enabled))])
 
     :param processor: :class:`.Processor` instance.
-    :param filter: :class:`~prompt_toolkit.filters.AppFilter` instance.
+    :param filter: :class:`~prompt_toolkit.filters.Filter` instance.
     """
     def __init__(self, processor, filter):
         assert isinstance(processor, Processor)
 
         self.processor = processor
-        self.filter = to_app_filter(filter)
+        self.filter = to_filter(filter)
 
     def apply_transformation(self, transformation_input):
         # Run processor when enabled.
-        if self.filter(transformation_input.app):
+        if self.filter():
             return self.processor.apply_transformation(transformation_input)
         else:
             return Transformation(transformation_input.fragments)
@@ -812,7 +786,7 @@ class _MergedProcessor(Processor):
 
         for p in self.processors:
             transformation = p.apply_transformation(TransformationInput(
-                ti.app, ti.buffer_control, ti.document, ti.lineno,
+                ti.buffer_control, ti.document, ti.lineno,
                 source_to_display, fragments, ti.width, ti.height))
             fragments = transformation.fragments
             display_to_source_functions.append(transformation.display_to_source)

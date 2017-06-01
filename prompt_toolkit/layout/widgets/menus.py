@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from .base import Border
 
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, Window, FloatContainer, Float, ConditionalContainer
@@ -33,11 +34,11 @@ class MenuContainer(object):
         kb = KeyBindings()
 
         @Condition
-        def in_main_menu(app):
+        def in_main_menu():
             return len(self.selected_menu) == 1
 
         @Condition
-        def in_sub_menu(app):
+        def in_sub_menu():
             return len(self.selected_menu) > 1
 
         # Navigation through the main menu.
@@ -103,7 +104,7 @@ class MenuContainer(object):
             item = self._get_menu(len(self.selected_menu) - 1)
             if item.handler:
                 event.app.layout.focus_previous()
-                item.handler(event.app)
+                item.handler()
 
         # Controls.
         self.control = FormattedTextControl(
@@ -122,8 +123,8 @@ class MenuContainer(object):
         submenu3 = self._submenu(2)
 
         @Condition
-        def has_focus(app):
-            return app.layout.current_window == self.window
+        def has_focus():
+            return get_app().layout.current_window == self.window
 
         self.container = FloatContainer(
             content=HSplit([
@@ -143,13 +144,13 @@ class MenuContainer(object):
                       allow_cover_cursor=True,
                       content=ConditionalContainer(
                           content=Shadow(body=submenu2),
-                          filter=has_focus & Condition(lambda app: len(self.selected_menu) >= 1))),
+                          filter=has_focus & Condition(lambda: len(self.selected_menu) >= 1))),
                 Float(attach_to_window=submenu2,
                       xcursor=True, ycursor=True,
                       allow_cover_cursor=True,
                       content=ConditionalContainer(
                           content=Shadow(body=submenu3),
-                          filter=has_focus & Condition(lambda app: len(self.selected_menu) >= 2))),
+                          filter=has_focus & Condition(lambda: len(self.selected_menu) >= 2))),
 
                 # --
             ] + (floats or []),
@@ -168,8 +169,8 @@ class MenuContainer(object):
 
         return menu
 
-    def _get_menu_fragments(self, app):
-        focussed = app.layout.has_focus(self.window)
+    def _get_menu_fragments(self):
+        focussed = get_app().layout.has_focus(self.window)
 
         # This is called during the rendering. When we discover that this
         # widget doesn't have the focus anymore. Reset menu state.
@@ -178,9 +179,10 @@ class MenuContainer(object):
 
         # Generate text fragments for the main menu.
         def one_item(i, item):
-            def mouse_handler(app, mouse_event):
+            def mouse_handler(mouse_event):
                 if mouse_event.event_type == MouseEventType.MOUSE_UP:
                     # Toggle focus.
+                    app = get_app()
                     if app.layout.has_focus(self.window):
                         if self.selected_menu == [i]:
                             app.layout.focus_previous()
@@ -203,7 +205,7 @@ class MenuContainer(object):
         return result
 
     def _submenu(self, level=0):
-        def get_text_fragments(app):
+        def get_text_fragments():
             result = []
             if level < len(self.selected_menu):
                 menu = self._get_menu(level)
@@ -218,11 +220,12 @@ class MenuContainer(object):
                         selected_item = -1
 
                     def one_item(i, item):
-                        def mouse_handler(app, mouse_event):
+                        def mouse_handler(mouse_event):
                             if mouse_event.event_type == MouseEventType.MOUSE_UP:
+                                app = get_app()
                                 if item.handler:
                                     app.layout.focus_previous()
-                                    item.handler(app)
+                                    item.handler()
                                 else:
                                     self.selected_menu = self.selected_menu[:level + 1] + [i]
 

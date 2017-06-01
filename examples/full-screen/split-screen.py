@@ -48,7 +48,7 @@ body = VSplit([
 # but the user doesn't see any feedback. We will add the search toolbar to the
 # bottom by using an HSplit.
 
-def get_titlebar_text(app):
+def get_titlebar_text():
     return [
         ('class:title', ' Hello world '),
         ('class:title', ' (Press [Ctrl-Q] to quit.)'),

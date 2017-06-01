@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from .enums import SearchDirection
-from .filters import to_simple_filter
+from .filters import to_filter
 import six
 
 __all__ = (
@@ -19,7 +19,7 @@ class SearchState(object):
         assert direction in (SearchDirection.FORWARD, SearchDirection.BACKWARD)
         assert isinstance(incremental, bool)
 
-        ignore_case = to_simple_filter(ignore_case)
+        ignore_case = to_filter(ignore_case)
 
         self.text = text
         self.direction = direction

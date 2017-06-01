@@ -1,14 +1,18 @@
 from __future__ import unicode_literals
 
-from prompt_toolkit.key_binding.key_processor import KeyProcessor, KeyPress
+from prompt_toolkit.application import Application
+from prompt_toolkit.application.current import set_app
+from prompt_toolkit.input.vt100 import PipeInput
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
+from prompt_toolkit.key_binding.key_processor import KeyProcessor, KeyPress
 from prompt_toolkit.keys import Keys
+from prompt_toolkit.layout import Window, Layout
+from prompt_toolkit.output import DummyOutput
 
 import pytest
 
 
 class Handlers(object):
-
     def __init__(self):
         self.called = []
 
@@ -18,6 +22,14 @@ class Handlers(object):
         return func
 
 
+def set_dummy_app():
+    app = Application(
+        layout=Layout(Window()),
+        output=DummyOutput(),
+        input=PipeInput())
+    set_app(app)
+
+
 @pytest.fixture
 def handlers():
     return Handlers()
@@ -25,6 +37,8 @@ def handlers():
 
 @pytest.fixture
 def bindings(handlers):
+    set_dummy_app()
+
     bindings = KeyBindings()
     bindings.add(
         Keys.ControlX, Keys.ControlC)(handlers.controlx_controlc)
@@ -38,7 +52,7 @@ def bindings(handlers):
 
 @pytest.fixture
 def processor(bindings):
-    return KeyProcessor(bindings, lambda: None)
+    return KeyProcessor(bindings)
 
 
 def test_feed_simple(processor, handlers):
@@ -110,7 +124,7 @@ def test_previous_key_sequence(processor, handlers):
     registry = KeyBindings()
     registry.add('a', 'a')(handler)
     registry.add('b', 'b')(handler)
-    processor = KeyProcessor(registry, lambda: None)
+    processor = KeyProcessor(registry)
 
     # Create processor and feed keys.
     processor.feed(KeyPress('a', 'a'))

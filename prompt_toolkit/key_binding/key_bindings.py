@@ -38,7 +38,7 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from prompt_toolkit.cache import SimpleCache
-from prompt_toolkit.filters import AppFilter, to_app_filter, Never
+from prompt_toolkit.filters import Filter, to_filter, Never
 from prompt_toolkit.keys import Keys, ALL_KEYS, KEY_ALIASES
 
 from six import text_type, with_metaclass
@@ -59,8 +59,8 @@ class _Binding(object):
     def __init__(self, keys, handler, filter=None, eager=None, save_before=None):
         assert isinstance(keys, tuple)
         assert callable(handler)
-        assert isinstance(filter, AppFilter)
-        assert isinstance(eager, AppFilter)
+        assert isinstance(filter, Filter)
+        assert isinstance(eager, Filter)
         assert callable(save_before)
 
         self.keys = keys
@@ -138,9 +138,9 @@ class KeyBindings(KeyBindingsBase):
         """
         Decorator for adding a key bindings.
 
-        :param filter: :class:`~prompt_toolkit.filters.AppFilter` to determine
+        :param filter: :class:`~prompt_toolkit.filters.Filter` to determine
             when this key binding is active.
-        :param eager: :class:`~prompt_toolkit.filters.AppFilter` or `bool`.
+        :param eager: :class:`~prompt_toolkit.filters.Filter` or `bool`.
             When True, ignore potential longer matches when this key binding is
             hit. E.g. when there is an active eager key binding for Ctrl-X,
             execute the handler immediately and ignore the key binding for
@@ -149,8 +149,8 @@ class KeyBindings(KeyBindingsBase):
             we should save the current buffer, before handling the event.
             (That's the default.)
         """
-        filter = to_app_filter(kwargs.pop('filter', True))
-        eager = to_app_filter(kwargs.pop('eager', False))
+        filter = to_filter(kwargs.pop('filter', True))
+        eager = to_filter(kwargs.pop('eager', False))
         save_before = kwargs.pop('save_before', lambda e: True)
 
         assert not kwargs
@@ -286,8 +286,8 @@ def key_binding(filter=True, eager=False, save_before=None):
     Decorator that turn a function into a `_Binding` object. This can be added
     to a registry when a key binding is assigned.
     """
-    filter = to_app_filter(filter)
-    eager = to_app_filter(eager)
+    filter = to_filter(filter)
+    eager = to_filter(eager)
     save_before = save_before or (lambda e: True)
     keys = ()
 
@@ -341,7 +341,7 @@ class ConditionalKeyBindings(_Proxy):
     the given (additional) filter.::
 
         @Condition
-        def setting_is_true(app):
+        def setting_is_true():
             return True  # or False
 
         registy = ConditionalKeyBindings(registry, setting_is_true)
@@ -350,14 +350,14 @@ class ConditionalKeyBindings(_Proxy):
     enable/disabled according to the given `filter`.
 
     :param registries: List of `KeyBindings` objects.
-    :param filter: `AppFilter` object.
+    :param filter: `Filter` object.
     """
     def __init__(self, key_bindings, filter=True):
         assert isinstance(key_bindings, KeyBindingsBase)
         _Proxy.__init__(self)
 
         self.key_bindings = key_bindings
-        self.filter = to_app_filter(filter)
+        self.filter = to_filter(filter)
 
     def _update_cache(self):
         " If the original key bindings was changed. Update our copy version. "

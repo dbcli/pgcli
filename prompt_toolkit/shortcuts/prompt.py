@@ -28,6 +28,7 @@ from __future__ import unicode_literals
 
 
 from prompt_toolkit.application import Application
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.auto_suggest import DynamicAutoSuggest
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.clipboard import DynamicClipboard, InMemoryClipboard
@@ -35,7 +36,7 @@ from prompt_toolkit.completion import DynamicCompleter
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
 from prompt_toolkit.eventloop import ensure_future, Return
-from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_simple_filter, Condition, has_arg
+from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_filter, Condition, has_arg
 from prompt_toolkit.history import InMemoryHistory, DynamicHistory
 from prompt_toolkit.input.defaults import create_input
 from prompt_toolkit.key_binding.bindings.completion import display_completions_like_readline
@@ -80,25 +81,25 @@ def _split_multiline_prompt(get_prompt_text):
     returns the fragments to be shown on the lines above the input; and another
     one with the fragments to be shown at the first line of the input.
     """
-    def has_before_fragments(app):
-        for fragment, char in get_prompt_text(app):
+    def has_before_fragments():
+        for fragment, char in get_prompt_text():
             if '\n' in char:
                 return True
         return False
 
-    def before(app):
+    def before():
         result = []
         found_nl = False
-        for fragment, char in reversed(explode_text_fragments(get_prompt_text(app))):
+        for fragment, char in reversed(explode_text_fragments(get_prompt_text())):
             if found_nl:
                 result.insert(0, (fragment, char))
             elif char == '\n':
                 found_nl = True
         return result
 
-    def first_input_line(app):
+    def first_input_line():
         result = []
-        for fragment, char in reversed(explode_text_fragments(get_prompt_text(app))):
+        for fragment, char in reversed(explode_text_fragments(get_prompt_text())):
             if char == '\n':
                 break
             else:
@@ -117,7 +118,7 @@ class _RPrompt(Window):
 
 def _true(value):
     " Test whether `value` is True. In case of a SimpleFilter, call it. "
-    return to_simple_filter(value)()
+    return to_filter(value)()
 
 
 class CompleteStyle:
@@ -141,11 +142,11 @@ class Prompt(object):
         This can also be a callable that takes an
         :class:`~prompt_toolkit.application.Application` and returns formatted
         text.
-    :param multiline: `bool` or :class:`~prompt_toolkit.filters.AppFilter`.
+    :param multiline: `bool` or :class:`~prompt_toolkit.filters.Filter`.
         When True, prefer a layout that is more adapted for multiline input.
         Text after newlines is automatically indented, and search/arg input is
         shown below the input, instead of replacing the prompt.
-    :param wrap_lines: `bool` or :class:`~prompt_toolkit.filters.AppFilter`.
+    :param wrap_lines: `bool` or :class:`~prompt_toolkit.filters.Filter`.
         When True (the default), automatically wrap long lines instead of
         scrolling horizontally.
     :param is_password: Show asterisks instead of the actual typed characters.
@@ -169,25 +170,24 @@ class Prompt(object):
         instance for input suggestions.
     :param style: :class:`.Style` instance for the color scheme.
     :param enable_system_bindings: `bool` or
-        :class:`~prompt_toolkit.filters.AppFilter`. Pressing Meta+'!' will show
+        :class:`~prompt_toolkit.filters.Filter`. Pressing Meta+'!' will show
         a system prompt.
     :param enable_open_in_editor: `bool` or
-        :class:`~prompt_toolkit.filters.AppFilter`. Pressing 'v' in Vi mode or
+        :class:`~prompt_toolkit.filters.Filter`. Pressing 'v' in Vi mode or
         C-X C-E in emacs mode will open an external editor.
     :param history: :class:`~prompt_toolkit.history.History` instance.
     :param clipboard: :class:`~prompt_toolkit.clipboard.base.Clipboard` instance.
         (e.g. :class:`~prompt_toolkit.clipboard.in_memory.InMemoryClipboard`)
-    :param bottom_toolbar: Formatted text or callable which takes an
-        :class:`~prompt_toolkit.application.Application` and is supposed to
+    :param bottom_toolbar: Formatted text or callable which is supposed to
         return formatted text.
     :param prompt_continuation: Text that needs to be displayed for a multiline
         prompt continuation. This can either be formatted text or a callable
-        that takes a Application and width as input and returns formatted text.
+        that the width as input and returns formatted text.
     :param complete_style: ``CompleteStyle.COLUMN``,
         ``CompleteStyle.MULTI_COLUMN`` or ``CompleteStyle.READLINE_LIKE``.
     :param get_title: Callable that returns the title to be displayed in the
         terminal.
-    :param mouse_support: `bool` or :class:`~prompt_toolkit.filters.AppFilter`
+    :param mouse_support: `bool` or :class:`~prompt_toolkit.filters.Filter`
         to enable mouse support.
     :param default: The default input text to be shown. (This can be edited by
         the user).
@@ -286,12 +286,12 @@ class Prompt(object):
             can either be a boolean or a `SimpleFilter`.
 
             This returns something that can be used as either a `SimpleFilter`
-            or `AppFilter`.
+            or `Filter`.
             """
             @Condition
-            def dynamic(*a):
+            def dynamic():
                 value = getattr(self, attr_name)
-                return to_simple_filter(value)()
+                return to_filter(value)()
             return dynamic
 
         # Create functions that will dynamically split the prompt. (If we have
@@ -300,13 +300,13 @@ class Prompt(object):
             _split_multiline_prompt(self._get_prompt)
 
         # Create buffers list.
-        def accept(app, buff):
+        def accept(buff):
             """ Accept the content of the default buffer. This is called when
             the validation succeeds. """
-            app.set_return_value(buff.document.text)
+            self.app.set_return_value(buff.document.text)
 
             # Reset content before running again.
-            app.pre_run_callables.append(buff.reset)
+            self.app.pre_run_callables.append(buff.reset)
 
         default_buffer = Buffer(
             name=DEFAULT_BUFFER,
@@ -357,11 +357,11 @@ class Prompt(object):
 
         # Create bottom toolbars.
         bottom_toolbar = ConditionalContainer(
-            Window(FormattedTextControl(lambda app: self._get_bottom_toolbar(app)),
-                                    style='class:bottom-toolbar',
-                                    height=Dimension.exact(1)),
+            Window(FormattedTextControl(self._get_bottom_toolbar),
+                                        style='class:bottom-toolbar',
+                                        height=Dimension.exact(1)),
             filter=~is_done & RendererHeightIsKnown() &
-                    Condition(lambda app: self.bottom_toolbar is not None))
+                    Condition(lambda: self.bottom_toolbar is not None))
 
         search_toolbar = SearchToolbar(search_buffer)
         search_buffer_control = BufferControl(
@@ -401,11 +401,11 @@ class Prompt(object):
             wrap_lines=dyncond('wrap_lines'))
 
         @Condition
-        def multi_column_complete_style(app):
+        def multi_column_complete_style():
             return self.complete_style == CompleteStyle.MULTI_COLUMN
 
         @Condition
-        def readline_complete_style(app):
+        def readline_complete_style():
             return self.complete_style == CompleteStyle.READLINE_LIKE
 
         # Build the layout.
@@ -421,13 +421,13 @@ class Prompt(object):
                     ),
                     ConditionalContainer(
                         default_buffer_window,
-                        Condition(lambda app:
-                            app.layout.current_control != search_buffer_control),
+                        Condition(lambda:
+                            get_app().layout.current_control != search_buffer_control),
                     ),
                     ConditionalContainer(
                         Window(search_buffer_control),
-                        Condition(lambda app:
-                            app.layout.current_control == search_buffer_control),
+                        Condition(lambda:
+                            get_app().layout.current_control == search_buffer_control),
                     ),
                 ]),
                 [
@@ -473,14 +473,14 @@ class Prompt(object):
         prompt_bindings = KeyBindings()
 
         @Condition
-        def do_accept(app):
+        def do_accept():
             return (not _true(self.multiline) and
                     self.app.layout.current_control == self._default_buffer_control)
 
         @prompt_bindings.add('enter', filter=do_accept)
         def _(event):
             " Accept input when enter has been pressed. "
-            self._default_buffer.validate_and_handle(event.app)
+            self._default_buffer.validate_and_handle()
 
         @prompt_bindings.add('tab', filter=readline_complete_style)
         def _(event):
@@ -663,7 +663,7 @@ class Prompt(object):
     def editing_mode(self, value):
         self.app.editing_mode = value
 
-    def _get_default_buffer_control_height(self, app):
+    def _get_default_buffer_control_height(self):
         # If there is an autocompletion menu to be shown, make sure that our
         # layout has at least a minimal height in order to display it.
         if (self.completer is not None and
@@ -672,7 +672,7 @@ class Prompt(object):
         else:
             space = 0
 
-        if space and not app.is_done:
+        if space and not get_app().is_done:
             buff = self._default_buffer
 
             # Reserve the space, either when there are completions, or when
@@ -683,32 +683,32 @@ class Prompt(object):
 
         return Dimension()
 
-    def _get_prompt(self, app):
-        return to_formatted_text(self.message, app, style='class:prompt')
+    def _get_prompt(self):
+        return to_formatted_text(self.message, style='class:prompt')
 
-    def _get_rprompt(self, app):
-        return to_formatted_text(self.rprompt, app, style='class:rprompt')
+    def _get_rprompt(self):
+        return to_formatted_text(self.rprompt, style='class:rprompt')
 
-    def _get_continuation(self, app, width):
+    def _get_continuation(self, width):
         prompt_continuation = self.prompt_continuation
 
         if callable(prompt_continuation):
-            prompt_continuation = prompt_continuation(app, width)
+            prompt_continuation = prompt_continuation(width)
 
         return to_formatted_text(
-            prompt_continuation, app, style='class:prompt-continuation')
+            prompt_continuation, style='class:prompt-continuation')
 
-    def _get_bottom_toolbar(self, app):
+    def _get_bottom_toolbar(self):
         bottom_toolbar = self.bottom_toolbar
 
         if bottom_toolbar is None:
             return []
 
         if callable(bottom_toolbar):
-            bottom_toolbar = bottom_toolbar(app)
+            bottom_toolbar = bottom_toolbar()
 
         return to_formatted_text(
-            bottom_toolbar, app, style='class:bottom-toolbar.text')
+            bottom_toolbar, style='class:bottom-toolbar.text')
 
     def _get_title(self):
         if self.get_title is not None:

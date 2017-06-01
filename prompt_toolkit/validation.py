@@ -3,7 +3,7 @@ Input validation for a `Buffer`.
 (Validators will be called before accepting input.)
 """
 from __future__ import unicode_literals
-from .filters import to_simple_filter
+from .filters import to_filter
 
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
@@ -66,7 +66,7 @@ class ConditionalValidator(Validator):
         assert isinstance(validator, Validator)
 
         self.validator = validator
-        self.filter = to_simple_filter(filter)
+        self.filter = to_filter(filter)
 
     def validate(self, document):
         # Call the validator only if the filter is active.

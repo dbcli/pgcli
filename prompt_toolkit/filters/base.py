@@ -56,12 +56,6 @@ class Filter(with_metaclass(ABCMeta, object)):
 
     __nonzero__ = __bool__  # For Python 2.
 
-    def test_args(self, *args):
-        """
-        Test whether this filter can be called with the following argument list.
-        """
-        return test_callable_args(self.__call__, args)
-
 
 class _AndCache(dict):
     """
@@ -131,11 +125,8 @@ class _AndList(Filter):
 
         self.filters = all_filters
 
-    def test_args(self, *args):
-        return all(f.test_args(*args) for f in self.filters)
-
-    def __call__(self, *a, **kw):
-        return all(f(*a, **kw) for f in self.filters)
+    def __call__(self):
+        return all(f() for f in self.filters)
 
     def __repr__(self):
         return '&'.join(repr(f) for f in self.filters)
@@ -156,11 +147,8 @@ class _OrList(Filter):
 
         self.filters = all_filters
 
-    def test_args(self, *args):
-        return all(f.test_args(*args) for f in self.filters)
-
-    def __call__(self, *a, **kw):
-        return any(f(*a, **kw) for f in self.filters)
+    def __call__(self):
+        return any(f() for f in self.filters)
 
     def __repr__(self):
         return '|'.join(repr(f) for f in self.filters)
@@ -173,21 +161,18 @@ class _Invert(Filter):
     def __init__(self, filter):
         self.filter = filter
 
-    def __call__(self, *a, **kw):
-        return not self.filter(*a, **kw)
+    def __call__(self):
+        return not self.filter()
 
     def __repr__(self):
         return '~%r' % self.filter
-
-    def test_args(self, *args):
-        return self.filter.test_args(*args)
 
 
 class Always(Filter):
     """
     Always enable feature.
     """
-    def __call__(self, *a, **kw):
+    def __call__(self):
         return True
 
     def __invert__(self):
@@ -198,7 +183,7 @@ class Never(Filter):
     """
     Never enable feature.
     """
-    def __call__(self, *a, **kw):
+    def __call__(self):
         return False
 
     def __invert__(self):
@@ -207,28 +192,24 @@ class Never(Filter):
 
 class Condition(Filter):
     """
-    Turn any callable (which takes a app and returns a boolean) into a Filter.
+    Turn any callable into a Filter. The callable is supposed to not take any
+    arguments.
 
     This can be used as a decorator::
 
         @Condition
-        def feature_is_active(app):  # `feature_is_active` becomes a Filter.
+        def feature_is_active():  # `feature_is_active` becomes a Filter.
             return True
 
-    :param func: Callable which takes either a
-        :class:`~prompt_toolkit.application.Application` or nothing and
-        returns a boolean. (Depending on what it takes, this will become a
-        :class:`.Filter` or :class:`~prompt_toolkit.filters.AppFilter`.)
+    :param func: Callable which takes no inputs and returns a boolean.
     """
     def __init__(self, func):
         assert callable(func)
+        assert test_callable_args(func, [])
         self.func = func
 
-    def __call__(self, *a, **kw):
-        return self.func(*a, **kw)
+    def __call__(self):
+        return self.func()
 
     def __repr__(self):
         return 'Condition(%r)' % self.func
-
-    def test_args(self, *a):
-        return test_callable_args(self.func, a)

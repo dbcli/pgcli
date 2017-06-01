@@ -1,9 +1,10 @@
 # pylint: disable=function-redefined
 from __future__ import unicode_literals
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import SelectionType, indent, unindent
-from prompt_toolkit.keys import Keys
-from prompt_toolkit.filters import Condition, emacs_mode, has_selection, emacs_insert_mode, has_arg, is_multiline, is_read_only, vi_search_direction_reversed
 from prompt_toolkit.completion import CompleteEvent
+from prompt_toolkit.filters import Condition, emacs_mode, has_selection, emacs_insert_mode, has_arg, is_multiline, is_read_only, vi_search_direction_reversed
+from prompt_toolkit.keys import Keys
 
 from .scroll import scroll_page_up, scroll_page_down
 from .named_commands import get_by_name
@@ -113,7 +114,7 @@ def load_emacs_bindings():
         if event._arg is None:
             event.append_to_arg_count('-')
 
-    @handle('-', filter=Condition(lambda app: app.key_processor.arg == '-'))
+    @handle('-', filter=Condition(lambda: get_app().key_processor.arg == '-'))
     def _(event):
         """
         When '-' is typed again, after exactly '-' has been given as an
@@ -122,8 +123,8 @@ def load_emacs_bindings():
         event.app.key_processor.arg = '-'
 
     @Condition
-    def is_returnable(app):
-        return app.current_buffer.is_returnable
+    def is_returnable():
+        return get_app().current_buffer.is_returnable
 
     # Meta + Enter: always accept input.
     handle('escape', 'enter', filter=insert_mode & is_returnable)(

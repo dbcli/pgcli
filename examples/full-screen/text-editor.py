@@ -5,6 +5,7 @@ A simple example of a Notepad-like text editor.
 from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.eventloop import Future, ensure_future, Return
 from prompt_toolkit.key_binding.defaults import load_key_bindings
@@ -28,10 +29,10 @@ import datetime
 show_status_bar = True
 
 
-def get_statusbar_text(app):
+def get_statusbar_text():
     return ' Press Ctrl-C to open menu. '
 
-def get_statusbar_right_text(app):
+def get_statusbar_right_text():
     return ' {}:{}  '.format(
         text_field.document.cursor_position_row + 1,
         text_field.document.cursor_position_col + 1)
@@ -50,14 +51,14 @@ class TextInputDialog(object):
     def __init__(self, title='', label_text='', completer=None):
         self.future = Future()
 
-        def accept_text(app):
-            app.layout.focus(ok_button)
+        def accept_text():
+            get_app().layout.focus(ok_button)
             self.text_area.buffer.complete_state = None
 
-        def accept(app):
+        def accept():
             self.future.set_result(self.text_area.text)
 
-        def cancel(app):
+        def cancel():
             self.future.set_result(None)
 
         self.text_area = TextArea(
@@ -90,7 +91,7 @@ class MessageDialog(object):
         def set_done():
             self.future.set_result(None)
 
-        ok_button = Button(text='OK', handler=(lambda app: set_done()))
+        ok_button = Button(text='OK', handler=(lambda: set_done()))
 
         self.dialog = Dialog(
             title=title,
@@ -114,7 +115,7 @@ body = HSplit([
             Window(FormattedTextControl(get_statusbar_right_text),
                    style='class:status.right', width=9, align=Align.RIGHT),
         ], height=1),
-        filter=Condition(lambda _: show_status_bar)),
+        filter=Condition(lambda: show_status_bar)),
 ])
 
 # Global key bindings.
@@ -130,48 +131,48 @@ def _(event):
 # Handlers for menu items.
 #
 
-def do_open_file(app):
+def do_open_file():
     def coroutine():
         open_dialog = TextInputDialog(
             title='Open file',
             label_text='Enter the path of a file:',
             completer=PathCompleter())
 
-        path = yield ensure_future(show_dialog_as_float(app, open_dialog))
+        path = yield ensure_future(show_dialog_as_float(open_dialog))
 
         if path is not None:
             try:
                 with open(path, 'rb') as f:
                     text_field.text = f.read().decode('utf-8', errors='ignore')
             except IOError as e:
-                show_message(app, 'Error', '{}'.format(e))
+                show_message('Error', '{}'.format(e))
 
     ensure_future(coroutine())
 
 
-def do_about(app):
-    show_message(app, 'About', 'Text editor demo.\nCreated by Jonathan Slenders.')
+def do_about():
+    show_message('About', 'Text editor demo.\nCreated by Jonathan Slenders.')
 
 
-def show_message(app, title, text):
+def show_message(title, text):
     def coroutine():
         dialog = MessageDialog(title, text)
-        yield ensure_future(show_dialog_as_float(app, dialog))
+        yield ensure_future(show_dialog_as_float(dialog))
 
     ensure_future(coroutine())
 
 
-def show_dialog_as_float(app, dialog):
+def show_dialog_as_float(dialog):
     " Coroutine. "
     float_ = Float(content=dialog)
     root_container.floats.insert(0, float_)
 
+    app = get_app()
 
     focussed_before = app.layout.current_window
     app.layout.focus(dialog)
     result = yield dialog.future
     app.layout.focus(focussed_before)
-
 
     if float_ in root_container.floats:
         root_container.floats.remove(float_)
@@ -179,25 +180,25 @@ def show_dialog_as_float(app, dialog):
     raise Return(result)
 
 
-def do_new_file(app):
+def do_new_file():
     text_field.text = ''
 
 
-def do_exit(app):
-    app.set_return_value(None)
+def do_exit():
+    get_app().set_return_value(None)
 
-def do_time_date(app):
+def do_time_date():
     text = datetime.datetime.now().isoformat()
     text_field.buffer.insert_text(text)
 
 
-def do_go_to(app):
+def do_go_to():
     def coroutine():
         dialog = TextInputDialog(
             title='Go to line',
             label_text='Line number:')
 
-        line_number = yield ensure_future(show_dialog_as_float(app, dialog))
+        line_number = yield ensure_future(show_dialog_as_float(dialog))
 
         try:
             line_number = int(line_number)
@@ -209,47 +210,47 @@ def do_go_to(app):
 
     ensure_future(coroutine())
 
-def do_undo(app):
+def do_undo():
     text_field.buffer.undo()
 
 
-def do_cut(app):
+def do_cut():
     data = text_field.buffer.cut_selection()
-    app.clipboard.set_data(data)
+    get_app().clipboard.set_data(data)
 
 
-def do_copy(app):
+def do_copy():
     data = text_field.buffer.copy_selection()
-    app.clipboard.set_data(data)
+    get_app().clipboard.set_data(data)
 
 
-def do_delete(app):
+def do_delete():
     text_field.buffer.cut_selection()
 
 
-def do_find(app):
-    app.layout.focus(search_field)
+def do_find():
+    get_app().layout.focus(search_field)
 
 
-def do_find_next(app):
-    search_state = app.current_search_state
+def do_find_next():
+    search_state = get_app().current_search_state
 
     cursor_position = text_field.buffer.get_search_position(
         search_state, include_current_position=False)
     text_field.buffer.cursor_position = cursor_position
 
 
-def do_paste(app):
-    text_field.buffer.paste_clipboard_data(app.clipboard.get_data())
+def do_paste():
+    text_field.buffer.paste_clipboard_data(get_app().clipboard.get_data())
 
 
-def do_select_all(app):
+def do_select_all():
     text_field.buffer.cursor_position = 0
     text_field.buffer.start_selection()
     text_field.buffer.cursor_position = len(text_field.buffer.text)
 
 
-def do_status_bar(app):
+def do_status_bar():
     global show_status_bar
     show_status_bar = not show_status_bar
 

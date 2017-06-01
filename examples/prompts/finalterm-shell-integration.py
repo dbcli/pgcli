@@ -16,7 +16,7 @@ BEFORE_OUTPUT = '\033]133;C\a'
 AFTER_OUTPUT = '\033]133;D;{command_status}\a' # command_status is the command status, 0-255
 
 
-def get_prompt_text(app):
+def get_prompt_text():
     # Generate the text fragments for the prompt.
     # Important: use the `ZeroWidthEscape` fragment only if you are sure that
     #            writing this as raw text to the output will not introduce any

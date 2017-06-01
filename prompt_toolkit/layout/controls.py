@@ -8,9 +8,10 @@ from collections import namedtuple
 from six import with_metaclass
 from six.moves import range
 
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.cache import SimpleCache
-from prompt_toolkit.filters import to_simple_filter
+from prompt_toolkit.filters import to_filter
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
@@ -44,10 +45,10 @@ class UIControl(with_metaclass(ABCMeta, object)):
         # Default reset. (Doesn't have to be implemented.)
         pass
 
-    def preferred_width(self, app, max_available_width):
+    def preferred_width(self, max_available_width):
         return None
 
-    def preferred_height(self, app, width, max_available_height, wrap_lines):
+    def preferred_height(self, width, max_available_height, wrap_lines):
         return None
 
     def is_focussable(self):
@@ -57,14 +58,14 @@ class UIControl(with_metaclass(ABCMeta, object)):
         return False
 
     @abstractmethod
-    def create_content(self, app, width, height):
+    def create_content(self, width, height):
         """
         Generate the content for this user control.
 
         Returns a :class:`.UIContent` instance.
         """
 
-    def mouse_handler(self, app, mouse_event):
+    def mouse_handler(self, mouse_event):
         """
         Handle mouse events.
 
@@ -72,19 +73,18 @@ class UIControl(with_metaclass(ABCMeta, object)):
         handled by the `UIControl` itself. The `Window` or key bindings can
         decide to handle this event as scrolling or changing focus.
 
-        :param app: `Application` instance.
         :param mouse_event: `MouseEvent` instance.
         """
         return NotImplemented
 
-    def move_cursor_down(self, app):
+    def move_cursor_down(self):
         """
         Request to move the cursor down.
         This happens when scrolling down and the cursor is completely at the
         top.
         """
 
-    def move_cursor_up(self, app):
+    def move_cursor_up(self):
         """
         Request to move the cursor up.
         """
@@ -210,7 +210,7 @@ class FormattedTextControl(UIControl):
         assert isinstance(modal, bool)
 
         self.text = text  # No type check on 'text'. This is done dynamically.
-        self.focussable = to_simple_filter(focussable)
+        self.focussable = to_filter(focussable)
 
         # Key bindings.
         self.key_bindings = key_bindings
@@ -234,32 +234,32 @@ class FormattedTextControl(UIControl):
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.text)
 
-    def _get_formatted_text_cached(self, app):
+    def _get_formatted_text_cached(self):
         """
         Get fragments, but only retrieve fragments once during one render run.
         (This function is called several times during one rendering, because
         we also need those for calculating the dimensions.)
         """
         return self._fragment_cache.get(
-            app.render_counter,
-            lambda: to_formatted_text(self.text, app))
+            get_app().render_counter,
+            lambda: to_formatted_text(self.text))
 
-    def preferred_width(self, app, max_available_width):
+    def preferred_width(self, max_available_width):
         """
         Return the preferred width for this control.
         That is the width of the longest line.
         """
-        text = fragment_list_to_text(self._get_formatted_text_cached(app))
+        text = fragment_list_to_text(self._get_formatted_text_cached())
         line_lengths = [get_cwidth(l) for l in text.split('\n')]
         return max(line_lengths)
 
-    def preferred_height(self, app, width, max_available_height, wrap_lines):
-        content = self.create_content(app, width, None)
+    def preferred_height(self, width, max_available_height, wrap_lines):
+        content = self.create_content(width, None)
         return content.line_count
 
-    def create_content(self, app, width, height):
+    def create_content(self, width, height):
         # Get fragments
-        fragments_with_mouse_handlers = self._get_formatted_text_cached(app)
+        fragments_with_mouse_handlers = self._get_formatted_text_cached()
         fragment_lines_with_mouse_handlers = list(split_lines(fragments_with_mouse_handlers))
 
         # Strip mouse handlers from fragments.
@@ -299,7 +299,7 @@ class FormattedTextControl(UIControl):
 
         return self._content_cache.get(key, get_content)
 
-    def mouse_handler(self, app, mouse_event):
+    def mouse_handler(self, mouse_event):
         """
         Handle mouse events.
 
@@ -330,14 +330,14 @@ class FormattedTextControl(UIControl):
                             # (Handler can return NotImplemented, so return
                             # that result.)
                             handler = item[2]
-                            return handler(app, mouse_event)
+                            return handler(mouse_event)
                         else:
                             break
 
         # Otherwise, don't handle here.
         return NotImplemented
 
-    def is_modal(self, app):
+    def is_modal(self):
         return self.modal
 
     def get_key_bindings(self):
@@ -351,7 +351,7 @@ class DummyControl(UIControl):
     Useful for filling a Window. (The `fragment` and `char` attributes of the
     `Window` class can be used to define the filling.)
     """
-    def create_content(self, app, width, height):
+    def create_content(self, width, height):
         def get_line(i):
             return []
 
@@ -422,10 +422,10 @@ class BufferControl(UIControl):
                 DisplayMultipleCursors(),
             ])
 
-        self.preview_search = to_simple_filter(preview_search)
-        self.focussable = to_simple_filter(focussable)
+        self.preview_search = to_filter(preview_search)
+        self.focussable = to_filter(focussable)
         self.get_search_state = get_search_state
-        self.focus_on_click = to_simple_filter(focus_on_click)
+        self.focus_on_click = to_filter(focus_on_click)
 
         self.input_processor = input_processor
         self.buffer = buffer
@@ -465,7 +465,7 @@ class BufferControl(UIControl):
     def is_focussable(self):
         return self.focussable()
 
-    def preferred_width(self, app, max_available_width):
+    def preferred_width(self, max_available_width):
         """
         This should return the preferred width.
 
@@ -478,11 +478,11 @@ class BufferControl(UIControl):
         """
         return None
 
-    def preferred_height(self, app, width, max_available_height, wrap_lines):
+    def preferred_height(self, width, max_available_height, wrap_lines):
         # Calculate the content height, if it was drawn on a screen with the
         # given width.
         height = 0
-        content = self.create_content(app, width, None)
+        content = self.create_content(width, None)
 
         # When line wrapping is off, the height should be equal to the amount
         # of lines.
@@ -502,18 +502,18 @@ class BufferControl(UIControl):
 
         return height
 
-    def _get_formatted_text_for_line_func(self, app, document):
+    def _get_formatted_text_for_line_func(self, document):
         """
         Create a function that returns the fragments for a given line.
         """
         # Cache using `document.text`.
         def get_formatted_text_for_line():
-            return self.lexer.lex_document(app, document)
+            return self.lexer.lex_document(document)
 
         key = (document.text, self.lexer.invalidation_hash())
         return self._fragment_cache.get(key, get_formatted_text_for_line)
 
-    def _create_get_processed_line_func(self, app, document, width, height):
+    def _create_get_processed_line_func(self, document, width, height):
         """
         Create a function that takes a line number of the current document and
         returns a _ProcessedLine(processed_fragments, source_to_display, display_to_source)
@@ -537,7 +537,7 @@ class BufferControl(UIControl):
 
             transformation = merged_processor.apply_transformation(
                 TransformationInput(
-                    app, self, document, lineno, source_to_display, fragments,
+                    self, document, lineno, source_to_display, fragments,
                     width, height))
 
             if cursor_column:
@@ -549,7 +549,7 @@ class BufferControl(UIControl):
                 transformation.display_to_source)
 
         def create_func():
-            get_line = self._get_formatted_text_for_line_func(app, document)
+            get_line = self._get_formatted_text_for_line_func(document)
             cache = {}
 
             def get_processed_line(i):
@@ -563,7 +563,7 @@ class BufferControl(UIControl):
 
         return create_func()
 
-    def create_content(self, app, width, height):
+    def create_content(self, width, height):
         """
         Create a UIContent.
         """
@@ -588,7 +588,7 @@ class BufferControl(UIControl):
             document = buffer.document
 
         get_processed_line = self._create_get_processed_line_func(
-            app, document, width, height)
+            document, width, height)
         self._last_get_processed_line = get_processed_line
 
         def translate_rowcol(row, col):
@@ -616,8 +616,8 @@ class BufferControl(UIControl):
         # If there is an auto completion going on, use that start point for a
         # pop-up menu position. (But only when this buffer has the focus --
         # there is only one place for a menu, determined by the focussed buffer.)
-        if app.layout.current_control == self:
-            menu_position = self.menu_position(app) if self.menu_position else None
+        if get_app().layout.current_control == self:
+            menu_position = self.menu_position() if self.menu_position else None
             if menu_position is not None:
                 assert isinstance(menu_position, int)
                 menu_row, menu_col = buffer.document.translate_index_to_position(menu_position)
@@ -637,7 +637,7 @@ class BufferControl(UIControl):
 
         return content
 
-    def mouse_handler(self, app, mouse_event):
+    def mouse_handler(self, mouse_event):
         """
         Mouse handler for this control.
         """
@@ -645,7 +645,7 @@ class BufferControl(UIControl):
         position = mouse_event.position
 
         # Focus buffer when clicked.
-        if app.layout.current_control == self:
+        if get_app().layout.current_control == self:
             if self._last_get_processed_line:
                 processed_line = self._last_get_processed_line(position.y)
 
@@ -689,15 +689,15 @@ class BufferControl(UIControl):
                 # Focus happens on mouseup. (If we did this on mousedown, the
                 # up event will be received at the point where this widget is
                 # focussed and be handled anyway.)
-                app.layout.current_control = self
+                get_app().layout.current_control = self
             else:
                 return NotImplemented
 
-    def move_cursor_down(self, app):
+    def move_cursor_down(self):
         b = self.buffer
         b.cursor_position += b.document.get_cursor_down_position()
 
-    def move_cursor_up(self, app):
+    def move_cursor_up(self):
         b = self.buffer
         b.cursor_position += b.document.get_cursor_up_position()
 

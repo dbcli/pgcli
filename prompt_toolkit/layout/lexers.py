@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 from six.moves import range
 
-from prompt_toolkit.filters import to_app_filter
+from prompt_toolkit.filters import to_filter
 from .utils import split_lines
 
 import re
@@ -29,7 +29,7 @@ class Lexer(with_metaclass(ABCMeta, object)):
     Base class for all lexers.
     """
     @abstractmethod
-    def lex_document(self, app, document):
+    def lex_document(self, document):
         """
         Takes a :class:`~prompt_toolkit.document.Document` and returns a
         callable that takes a line number and returns a list of
@@ -58,7 +58,7 @@ class SimpleLexer(Lexer):
         assert isinstance(style, six.text_type)
         self.style = style
 
-    def lex_document(self, app, document):
+    def lex_document(self, document):
         lines = document.lines
 
         def get_line(lineno):
@@ -212,7 +212,7 @@ class PygmentsLexer(Lexer):
         assert syntax_sync is None or isinstance(syntax_sync, SyntaxSync)
 
         self.pygments_lexer_cls = pygments_lexer_cls
-        self.sync_from_start = to_app_filter(sync_from_start)
+        self.sync_from_start = to_filter(sync_from_start)
 
         # Instantiate the Pygments lexer.
         self.pygments_lexer = pygments_lexer_cls(
@@ -239,7 +239,7 @@ class PygmentsLexer(Lexer):
         else:
             return cls(pygments_lexer.__class__, sync_from_start=sync_from_start)
 
-    def lex_document(self, app, document):
+    def lex_document(self, document):
         """
         Create a lexer function that takes a line number and returns the list
         of (style_str, text) tuples as the Pygments lexer returns for that line.
@@ -252,7 +252,7 @@ class PygmentsLexer(Lexer):
 
         def get_syntax_sync():
             " The Syntax synchronisation objcet that we currently use. "
-            if self.sync_from_start(app):
+            if self.sync_from_start():
                 return SyncFromStart()
             else:
                 return self.syntax_sync
@@ -358,10 +358,10 @@ class DynamicLexer(Lexer):
         self.get_lexer = get_lexer
         self._dummy = SimpleLexer()
 
-    def lex_document(self, app, document):
+    def lex_document(self, document):
         lexer = self.get_lexer() or self._dummy
         assert isinstance(lexer, Lexer)
-        return lexer.lex_document(app, document)
+        return lexer.lex_document(document)
 
     def invalidation_hash(self):
         lexer = self.get_lexer() or self._dummy

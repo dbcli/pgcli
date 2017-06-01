@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from prompt_toolkit.application import Application
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.eventloop import run_in_executor
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
@@ -23,11 +24,11 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None):
     Display a Yes/No dialog.
     Return a boolean.
     """
-    def yes_handler(app):
-        app.set_return_value(True)
+    def yes_handler():
+        get_app().set_return_value(True)
 
-    def no_handler(app):
-        app.set_return_value(False)
+    def no_handler():
+        get_app().set_return_value(False)
 
     dialog = Dialog(
         title=title,
@@ -46,11 +47,11 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
     Display a text input box.
     Return the given text, or None when cancelled.
     """
-    def accept(app):
-        app.layout.focus(ok_button)
+    def accept():
+        get_app().layout.focus(ok_button)
 
-    def ok_handler(app):
-        app.set_return_value(textfield.text)
+    def ok_handler():
+        get_app().set_return_value(textfield.text)
 
     ok_button = Button(text=ok_text, handler=ok_handler)
     cancel_button = Button(text=cancel_text, handler=_return_none)
@@ -93,8 +94,8 @@ def radiolist_dialog(title='', text='', ok_text='Ok', cancel_text='Cancel',
     """
     Display a simple message box and wait until the user presses enter.
     """
-    def ok_handler(app):
-        app.set_return_value(radio_list.current_value)
+    def ok_handler():
+        get_app().set_return_value(radio_list.current_value)
 
     radio_list = RadioList(values)
 
@@ -182,6 +183,6 @@ def _create_app(dialog, style):
         full_screen=True)
 
 
-def _return_none(app):
+def _return_none():
     " Button handler that returns None. "
-    app.set_return_value(None)
+    get_app().set_return_value(None)

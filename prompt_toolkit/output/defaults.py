@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import os
 import sys
 from prompt_toolkit.utils import is_windows, is_conemu_ansi
-from prompt_toolkit.filters import to_simple_filter
+from prompt_toolkit.filters import to_filter
 from six import PY2
 
 __all__ = (
@@ -21,7 +21,7 @@ def create_output(stdout=None, true_color=False, ansi_colors_only=None):
         (`bool` or :class:`~prompt_toolkit.filters.SimpleFilter`.)
     """
     stdout = stdout or sys.__stdout__
-    true_color = to_simple_filter(true_color)
+    true_color = to_filter(true_color)
 
     if is_windows():
         from .conemu import ConEmuOutput

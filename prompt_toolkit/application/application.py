@@ -1,25 +1,26 @@
 from __future__ import unicode_literals
 
-from .buffer import Buffer
-from .cache import SimpleCache
-from .clipboard import Clipboard, InMemoryClipboard
-from .enums import EditingMode
-from .eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From
-from .filters import AppFilter, to_app_filter
-from .input.base import Input
-from .input.defaults import create_input
-from .key_binding.defaults import load_key_bindings
-from .key_binding.key_bindings import KeyBindings, KeyBindingsBase, merge_key_bindings
-from .key_binding.key_processor import KeyProcessor
-from .key_binding.vi_state import ViState
-from .layout.controls import BufferControl
-from .layout.layout import Layout
-from .output import Output
-from .output.defaults import create_output
-from .renderer import Renderer, print_formatted_text
-from .search_state import SearchState
-from .styles import BaseStyle, default_style
-from .utils import Event
+from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.cache import SimpleCache
+from prompt_toolkit.clipboard import Clipboard, InMemoryClipboard
+from prompt_toolkit.enums import EditingMode
+from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From
+from prompt_toolkit.filters import to_filter
+from prompt_toolkit.input.base import Input
+from prompt_toolkit.input.defaults import create_input
+from prompt_toolkit.key_binding.defaults import load_key_bindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings, KeyBindingsBase, merge_key_bindings
+from prompt_toolkit.key_binding.key_processor import KeyProcessor
+from prompt_toolkit.key_binding.vi_state import ViState
+from prompt_toolkit.layout.controls import BufferControl
+from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.output import Output
+from prompt_toolkit.output.defaults import create_output
+from prompt_toolkit.renderer import Renderer, print_formatted_text
+from prompt_toolkit.search_state import SearchState
+from prompt_toolkit.styles import BaseStyle, default_style
+from prompt_toolkit.utils import Event
+from .current import set_app
 
 from subprocess import Popen
 import functools
@@ -29,7 +30,6 @@ import six
 import sys
 import threading
 import time
-import weakref
 
 __all__ = (
     'Application',
@@ -57,9 +57,9 @@ class Application(object):
 
     Filters:
 
-    :param mouse_support: (:class:`~prompt_toolkit.filters.AppFilter` or
+    :param mouse_support: (:class:`~prompt_toolkit.filters.Filter` or
         boolean). When True, enable mouse support.
-    :param paste_mode: :class:`~prompt_toolkit.filters.AppFilter` or boolean.
+    :param paste_mode: :class:`~prompt_toolkit.filters.Filter` or boolean.
     :param editing_mode: :class:`~prompt_toolkit.enums.EditingMode`.
 
     Callbacks (all of these should accept a
@@ -91,16 +91,15 @@ class Application(object):
                  # I/O.
                  input=None, output=None):
 
-        paste_mode = to_app_filter(paste_mode)
-        mouse_support = to_app_filter(mouse_support)
-        reverse_vi_search_direction = to_app_filter(reverse_vi_search_direction)
+        paste_mode = to_filter(paste_mode)
+        mouse_support = to_filter(mouse_support)
+        reverse_vi_search_direction = to_filter(reverse_vi_search_direction)
 
         assert isinstance(layout, Layout)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert clipboard is None or isinstance(clipboard, Clipboard)
         assert isinstance(full_screen, bool)
         assert get_title is None or callable(get_title)
-        assert isinstance(paste_mode, AppFilter)
         assert isinstance(editing_mode, six.string_types)
         assert style is None or isinstance(style, BaseStyle)
         assert isinstance(erase_when_done, bool)
@@ -182,7 +181,7 @@ class Application(object):
         self._invalidate_events = []  # Collection of 'invalidate' Event objects.
 
         #: The `InputProcessor` instance.
-        self.key_processor = KeyProcessor(_CombinedRegistry(self), weakref.ref(self))
+        self.key_processor = KeyProcessor(_CombinedRegistry(self))
 
         # If `run_in_terminal` was called. This will point to a `Future` what will be
         # set at the point whene the previous run finishes.
@@ -396,6 +395,7 @@ class Application(object):
         """
         assert not self._is_running
         self._is_running = True
+        previous_app = set_app(self)
 
         def _run_async():
             " Coroutine. "
@@ -484,6 +484,7 @@ class Application(object):
                         # with bad code. Make sure to reset the renderer anyway.
                         self.renderer.reset()
                         self._is_running = False
+                        set_app(previous_app)
 
                         # Clear event loop handlers.
                         if previous_input:

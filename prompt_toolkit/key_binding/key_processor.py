@@ -7,6 +7,7 @@ The `KeyProcessor` will according to the implemented keybindings call the
 correct callbacks when new key presses are feed through `feed`.
 """
 from __future__ import unicode_literals
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import EditReadOnlyBuffer
 from prompt_toolkit.filters.app import vi_navigation_mode
 from prompt_toolkit.keys import Keys, ALL_KEYS
@@ -68,13 +69,11 @@ class KeyProcessor(object):
         # registered in the key bindings.
 
     :param key_bindings: `KeyBindingsBase` instance.
-    :param app_ref: weakref to `Application`.
     """
-    def __init__(self, key_bindings, app_ref):
+    def __init__(self, key_bindings):
         assert isinstance(key_bindings, KeyBindingsBase)
 
         self._bindings = key_bindings
-        self._app_ref = app_ref
 
         self.before_key_press = Event(self)
         self.after_key_press = Event(self)
@@ -122,10 +121,9 @@ class KeyProcessor(object):
         that would handle this.
         """
         keys = tuple(k.key for k in key_presses)
-        app = self._app_ref()
 
         # Try match, with mode flag
-        return [b for b in self._bindings.get_bindings_for_keys(keys) if b.filter(app)]
+        return [b for b in self._bindings.get_bindings_for_keys(keys) if b.filter()]
 
     def _is_prefix_of_longer_match(self, key_presses):
         """
@@ -133,7 +131,6 @@ class KeyProcessor(object):
         handler that is bound to a suffix of this keys.
         """
         keys = tuple(k.key for k in key_presses)
-        app = self._app_ref()
 
         # Get the filters for all the key bindings that have a longer match.
         # Note that we transform it into a `set`, because we don't care about
@@ -142,7 +139,7 @@ class KeyProcessor(object):
         filters = set(b.filter for b in self._bindings.get_bindings_starting_with_keys(keys))
 
         # When any key binding is active, return True.
-        return any(f(app) for f in filters)
+        return any(f() for f in filters)
 
     def _process(self):
         """
@@ -165,7 +162,7 @@ class KeyProcessor(object):
 
                 # When eager matches were found, give priority to them and also
                 # ignore all the longer matches.
-                eager_matches = [m for m in matches if m.eager(self._app_ref())]
+                eager_matches = [m for m in matches if m.eager()]
 
                 if eager_matches:
                     matches = eager_matches
@@ -232,9 +229,7 @@ class KeyProcessor(object):
                 self.after_key_press.fire()
 
         # Invalidate user interface.
-        app = self._app_ref()
-        if app:
-            app.invalidate()
+        get_app().invalidate()
 
     def _call_handler(self, handler, key_sequence=None):
         was_recording = self.record_macro
@@ -247,10 +242,8 @@ class KeyProcessor(object):
             is_repeat=(handler == self._previous_handler))
 
         # Save the state of the current buffer.
-        app = event.app  # Can be `None` (In unit-tests only.)
-
-        if handler.save_before(event) and app:
-            app.current_buffer.save_to_undo_stack()
+        if handler.save_before(event):
+            event.app.current_buffer.save_to_undo_stack()
 
         # Call handler.
         try:
@@ -276,20 +269,18 @@ class KeyProcessor(object):
         never put the cursor after the last character of a line. (Unless it's
         an empty line.)
         """
-        app = self._app_ref()
-        if app:
-            buff = app.current_buffer
-            preferred_column = buff.preferred_column
+        app = get_app()
+        buff = app.current_buffer
+        preferred_column = buff.preferred_column
 
-            if (vi_navigation_mode(event.app) and
-                    buff.document.is_cursor_at_the_end_of_line and
-                    len(buff.document.current_line) > 0):
-                buff.cursor_position -= 1
+        if (vi_navigation_mode() and
+                buff.document.is_cursor_at_the_end_of_line and
+                len(buff.document.current_line) > 0):
+            buff.cursor_position -= 1
 
-                # Set the preferred_column for arrow up/down again.
-                # (This was cleared after changing the cursor position.)
-                buff.preferred_column = preferred_column
-
+            # Set the preferred_column for arrow up/down again.
+            # (This was cleared after changing the cursor position.)
+            buff.preferred_column = preferred_column
 
 
 class KeyPressEvent(object):
@@ -312,6 +303,7 @@ class KeyPressEvent(object):
         self.is_repeat = is_repeat
 
         self._arg = arg
+        self._app = get_app()
 
     def __repr__(self):
         return 'KeyPressEvent(arg=%r, key_sequence=%r, is_repeat=%r)' % (
@@ -328,9 +320,9 @@ class KeyPressEvent(object):
     @property
     def app(self):
         """
-        Command line interface.
+        The current `Application` object.
         """
-        return self.key_processor._app_ref()
+        return self._app
 
     @property
     def current_buffer(self):

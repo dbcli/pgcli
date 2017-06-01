@@ -1,5 +1,6 @@
 # pylint: disable=function-redefined
 from __future__ import unicode_literals
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import ClipboardData, indent, unindent, reshape_text
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SearchDirection
@@ -236,7 +237,7 @@ def create_operator_decorator(key_bindings):
         Usage::
 
             @operator('d', filter=...)
-            def handler(app, text_object):
+            def handler(event, text_object):
                 # Do something with the text object here.
         """
         filter = kw.pop('filter', Always())
@@ -320,7 +321,7 @@ def load_vi_bindings():
 
         # Swap case.
         (('g', '~'), Always(), lambda string: string.swapcase()),
-        (('~', ), Condition(lambda app: app.vi_state.tilde_operator), lambda string: string.swapcase()),
+        (('~', ), Condition(lambda: get_app().vi_state.tilde_operator), lambda string: string.swapcase()),
     ]
 
     # Insert a character literally (quoted insert).
@@ -433,8 +434,8 @@ def load_vi_bindings():
         event.current_buffer.cancel_completion()
 
     @Condition
-    def is_returnable(app):
-        return app.current_buffer.is_returnable
+    def is_returnable():
+        return get_app().current_buffer.is_returnable
 
     # In navigation mode, pressing enter will always return the input.
     handle('enter', filter=vi_navigation_mode & is_returnable)(
@@ -549,8 +550,8 @@ def load_vi_bindings():
             event.current_buffer.document.get_start_of_line_position(after_whitespace=True)
 
     @Condition
-    def in_block_selection(app):
-        buff = app.current_buffer
+    def in_block_selection():
+        buff = get_app().current_buffer
         return buff.selection_state and buff.selection_state.type == SelectionType.BLOCK
 
     @handle('I', filter=in_block_selection & ~is_read_only)
@@ -1654,8 +1655,8 @@ def load_vi_bindings():
         event.app.vi_state.waiting_for_digraph = True
 
     @Condition
-    def digraph_symbol_1_given(app):
-        return app.vi_state.digraph_symbol1 is not None
+    def digraph_symbol_1_given():
+        return get_app().vi_state.digraph_symbol1 is not None
 
     @handle(Keys.Any, filter=vi_digraph_mode & ~digraph_symbol_1_given)
     def _(event):
@@ -1702,9 +1703,9 @@ def load_vi_search_bindings():
     from . import search
 
     @Condition
-    def search_buffer_is_empty(app):
+    def search_buffer_is_empty():
         " Returns True when the search buffer is empty. "
-        return app.current_buffer.text == ''
+        return get_app().current_buffer.text == ''
 
     # Vi-style forward search.
     handle('/', filter=(vi_navigation_mode|vi_selection_mode)&~vi_search_direction_reversed) \

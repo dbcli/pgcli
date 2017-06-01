@@ -4,18 +4,19 @@ It holds the text, cursor position, history, etc...
 """
 from __future__ import unicode_literals
 
+from .application.current import get_app
 from .auto_suggest import AutoSuggest
 from .cache import FastDictCache
 from .clipboard import ClipboardData
 from .completion import CompleteEvent, get_common_complete_suffix, Completer, Completion, DummyCompleter
 from .document import Document
 from .enums import SearchDirection
-from .eventloop import run_in_executor, call_from_executor, From, ensure_future
-from .filters import to_simple_filter
+from .eventloop import run_in_executor, From, ensure_future
+from .filters import to_filter
 from .history import History, InMemoryHistory
 from .search_state import SearchState
 from .selection import SelectionType, SelectionState, PasteMode
-from .utils import Event
+from .utils import Event, test_callable_args
 from .validation import ValidationError, Validator
 
 from six.moves import range
@@ -137,7 +138,7 @@ class Buffer(object):
     :param name: Name for this buffer. E.g. DEFAULT_BUFFER. This is mostly
         useful for key bindings where we sometimes prefer to refer to a buffer
         by their name instead of by reference.
-    :param accept_handler: Callback that takes (app, buffer) as input. Called when
+    :param accept_handler: Callback that takes this buffer as input. Called when
         the buffer input is accepted. (Usually when the user presses `enter`.)
 
     Events:
@@ -172,10 +173,10 @@ class Buffer(object):
                  on_completions_changed=None, on_suggestion_set=None):
 
         # Accept both filters and booleans as input.
-        enable_history_search = to_simple_filter(enable_history_search)
-        complete_while_typing = to_simple_filter(complete_while_typing)
-        read_only = to_simple_filter(read_only)
-        multiline = to_simple_filter(multiline)
+        enable_history_search = to_filter(enable_history_search)
+        complete_while_typing = to_filter(complete_while_typing)
+        read_only = to_filter(read_only)
+        multiline = to_filter(multiline)
 
         # Validate input.
         assert completer is None or isinstance(completer, Completer)
@@ -192,6 +193,7 @@ class Buffer(object):
         assert on_completions_changed is None or callable(on_completions_changed)
         assert on_suggestion_set is None or callable(on_suggestion_set)
         assert document is None or isinstance(document, Document)
+        assert accept_handler is None or (callable(accept_handler) and test_callable_args(accept_handler, [None]))
 
         self.completer = completer or DummyCompleter()
         self.auto_suggest = auto_suggest
@@ -1245,12 +1247,9 @@ class Buffer(object):
     def exit_selection(self):
         self.selection_state = None
 
-    def open_in_editor(self, app):
+    def open_in_editor(self):
         """
         Open code in editor.
-
-        :param app: :class:`~prompt_toolkit.application.Application`
-            instance.
         """
         if self.read_only():
             raise EditReadOnlyBuffer()
@@ -1264,7 +1263,7 @@ class Buffer(object):
         # (We need to use `app.run_in_terminal`, because not all editors go to
         # the alternate screen buffer, and some could influence the cursor
         # position.)
-        succes = app.run_in_terminal(lambda: self._open_file_in_editor(filename))
+        succes = get_app().run_in_terminal(lambda: self._open_file_in_editor(filename))
 
         # Read content again.
         if succes:
@@ -1471,13 +1470,13 @@ class Buffer(object):
             ensure_future(coroutine())
         return async_suggestor
 
-    def validate_and_handle(self, app):
+    def validate_and_handle(self):
         """
         Validate buffer and handle the accept action.
         """
         if self.validate():
             if self.accept_handler:
-                self.accept_handler(app, self)
+                self.accept_handler(self)
             self.append_to_history()
 
 

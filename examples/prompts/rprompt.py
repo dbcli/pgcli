@@ -19,7 +19,7 @@ example_style = Style.from_dict({
 })
 
 
-def get_rprompt_text(app):
+def get_rprompt_text():
     return [
         ('', ' '),
         ('underline', '<rprompt>'),

@@ -4,6 +4,7 @@ A simple example of a few buttons and click handlers.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.application import Application
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
@@ -13,20 +14,20 @@ from prompt_toolkit.styles import Style
 
 
 # Event handlers for all the buttons.
-def button1_clicked(app):
+def button1_clicked():
     text_area.text = 'Button 1 clicked'
 
 
-def button2_clicked(app):
+def button2_clicked():
     text_area.text = 'Button 2 clicked'
 
 
-def button3_clicked(app):
+def button3_clicked():
     text_area.text = 'Button 3 clicked'
 
 
-def exit_clicked(app):
-    app.set_return_value(None)
+def exit_clicked():
+    get_app().set_return_value(None)
 
 
 # All the widgets for the UI.

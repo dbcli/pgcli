@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 from six.moves import range
 
-from prompt_toolkit.filters import to_app_filter
+from prompt_toolkit.filters import to_filter
 from prompt_toolkit.utils import get_cwidth
 from .utils import fragment_list_to_text
 
@@ -25,11 +25,10 @@ class Margin(with_metaclass(ABCMeta, object)):
     Base interface for a margin.
     """
     @abstractmethod
-    def get_width(self, app, get_ui_content):
+    def get_width(self, get_ui_content):
         """
         Return the width that this margin is going to consume.
 
-        :param app: :class:`.Application` instance.
         :param get_ui_content: Callable that asks the user control to create
             a :class:`.UIContent` instance. This can be used for instance to
             obtain the number of lines.
@@ -37,12 +36,11 @@ class Margin(with_metaclass(ABCMeta, object)):
         return 0
 
     @abstractmethod
-    def create_margin(self, app, window_render_info, width, height):
+    def create_margin(self, window_render_info, width, height):
         """
         Creates a margin.
         This should return a list of (style_str, text) tuples.
 
-        :param app: :class:`.Application` instance.
         :param window_render_info:
             :class:`~prompt_toolkit.layout.containers.WindowRenderInfo`
             instance, generated after rendering and copying the visible part of
@@ -66,15 +64,15 @@ class NumberredMargin(Margin):
         like Vi does.
     """
     def __init__(self, relative=False, display_tildes=False):
-        self.relative = to_app_filter(relative)
-        self.display_tildes = to_app_filter(display_tildes)
+        self.relative = to_filter(relative)
+        self.display_tildes = to_filter(display_tildes)
 
-    def get_width(self, app, get_ui_content):
+    def get_width(self, get_ui_content):
         line_count = get_ui_content().line_count
         return max(3, len('%s' % line_count) + 1)
 
-    def create_margin(self, app, window_render_info, width, height):
-        relative = self.relative(app)
+    def create_margin(self, window_render_info, width, height):
+        relative = self.relative()
 
         style = 'class:line-number'
         style_current = 'class:line-number,current-line-number'
@@ -109,7 +107,7 @@ class NumberredMargin(Margin):
             result.append(('', '\n'))
 
         # Fill with tildes.
-        if self.display_tildes(app):
+        if self.display_tildes():
             while y < window_render_info.window_height:
                 result.append(('class:tilde', '~\n'))
                 y += 1
@@ -125,17 +123,17 @@ class ConditionalMargin(Margin):
         assert isinstance(margin, Margin)
 
         self.margin = margin
-        self.filter = to_app_filter(filter)
+        self.filter = to_filter(filter)
 
-    def get_width(self, app, ui_content):
-        if self.filter(app):
-            return self.margin.get_width(app, ui_content)
+    def get_width(self, ui_content):
+        if self.filter():
+            return self.margin.get_width(ui_content)
         else:
             return 0
 
-    def create_margin(self, app, window_render_info, width, height):
-        if width and self.filter(app):
-            return self.margin.create_margin(app, window_render_info, width, height)
+    def create_margin(self, window_render_info, width, height):
+        if width and self.filter():
+            return self.margin.create_margin(window_render_info, width, height)
         else:
             return []
 
@@ -147,14 +145,14 @@ class ScrollbarMargin(Margin):
     :param display_arrows: Display scroll up/down arrows.
     """
     def __init__(self, display_arrows=False):
-        self.display_arrows = to_app_filter(display_arrows)
+        self.display_arrows = to_filter(display_arrows)
 
-    def get_width(self, app, ui_content):
+    def get_width(self, ui_content):
         return 1
 
-    def create_margin(self, app, window_render_info, width, height):
+    def create_margin(self, window_render_info, width, height):
         total_height = window_render_info.content_height
-        display_arrows = self.display_arrows(app)
+        display_arrows = self.display_arrows()
 
         window_height = window_render_info.window_height
         if display_arrows:
@@ -215,42 +213,42 @@ class PromptMargin(Margin):
     :param get_prompt_fragments: Callable that takes an Application as
         input and returns a list of (style_str, type) tuples to be shown as the
         prompt at the first line.
-    :param get_continuation_fragments: Callable that takes an Application
-        and a width as input and returns a list of (style_str, type) tuples for the
-        next lines of the input.
-    :param show_numbers: (bool or :class:`~prompt_toolkit.filters.AppFilter`)
+    :param get_continuation_fragments: Callable that takes a width as input and
+        returns a list of (style_str, type) tuples for the next lines of the
+        input.
+    :param show_numbers: (bool or :class:`~prompt_toolkit.filters.Filter`)
         Display line numbers instead of the continuation prompt.
     """
     def __init__(self, get_prompt_fragments, get_continuation_fragments=None,
                  show_numbers=False):
         assert callable(get_prompt_fragments)
         assert get_continuation_fragments is None or callable(get_continuation_fragments)
-        show_numbers = to_app_filter(show_numbers)
+        show_numbers = to_filter(show_numbers)
 
         self.get_prompt_fragments = get_prompt_fragments
         self.get_continuation_fragments = get_continuation_fragments
         self.show_numbers = show_numbers
 
-    def get_width(self, app, ui_content):
+    def get_width(self, ui_content):
         " Width to report to the `Window`. "
         # Take the width from the first line.
-        text = fragment_list_to_text(self.get_prompt_fragments(app))
+        text = fragment_list_to_text(self.get_prompt_fragments())
         return get_cwidth(text)
 
-    def create_margin(self, app, window_render_info, width, height):
+    def create_margin(self, window_render_info, width, height):
         # First line.
-        fragments = self.get_prompt_fragments(app)[:]
+        fragments = self.get_prompt_fragments()[:]
 
         # Next lines. (Show line numbering when numbering is enabled.)
         if self.get_continuation_fragments:
             # Note: we turn this into a list, to make sure that we fail early
             #       in case `get_continuation_fragments` returns something else,
             #       like `None`.
-            fragments2 = list(self.get_continuation_fragments(app, width))
+            fragments2 = list(self.get_continuation_fragments(width))
         else:
             fragments2 = []
 
-        show_numbers = self.show_numbers(app)
+        show_numbers = self.show_numbers()
         last_y = None
 
         for y in window_render_info.displayed_lines[1:]:

@@ -4,7 +4,7 @@ Renders the command line on the console.
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit.filters import to_app_filter
+from prompt_toolkit.filters import to_filter
 from prompt_toolkit.layout.formatted_text import to_formatted_text
 from prompt_toolkit.layout.mouse_handlers import MouseHandlers
 from prompt_toolkit.layout.screen import Point, Screen, WritePosition
@@ -242,7 +242,7 @@ class Renderer(object):
         self.style = style
         self.output = output
         self.full_screen = full_screen
-        self.mouse_support = to_app_filter(mouse_support)
+        self.mouse_support = to_filter(mouse_support)
 
         self._in_alternate_screen = False
         self._mouse_support_enabled = False
@@ -393,7 +393,7 @@ class Renderer(object):
             self._bracketed_paste_enabled = True
 
         # Enable/disable mouse support.
-        needs_mouse_support = self.mouse_support(app)
+        needs_mouse_support = self.mouse_support()
 
         if needs_mouse_support and not self._mouse_support_enabled:
             output.enable_mouse_support()
@@ -430,7 +430,7 @@ class Renderer(object):
             self._attrs_for_style = _StyleStringToAttrsCache(self.style.get_attrs_for_style_str)
         self._last_style_hash = self.style.invalidation_hash()
 
-        layout.container.write_to_screen(app, screen, mouse_handlers, WritePosition(
+        layout.container.write_to_screen(screen, mouse_handlers, WritePosition(
             xpos=0,
             ypos=0,
             width=size.columns,

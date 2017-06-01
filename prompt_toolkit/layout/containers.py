@@ -13,11 +13,12 @@ from .dimension import Dimension, sum_layout_dimensions, max_layout_dimensions, 
 from .margins import Margin
 from .screen import Point, WritePosition, _CHAR_CACHE
 from .utils import fragment_list_to_text, explode_text_fragments, fragment_list_width
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.cache import SimpleCache
-from prompt_toolkit.filters import to_app_filter, ViInsertMode, EmacsInsertMode
+from prompt_toolkit.filters import to_filter, ViInsertMode, EmacsInsertMode
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from prompt_toolkit.reactive import Integer
-from prompt_toolkit.utils import take_using_weights, get_cwidth
+from prompt_toolkit.utils import take_using_weights, get_cwidth, test_callable_args
 
 __all__ = (
     'Container',
@@ -47,29 +48,24 @@ class Container(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def preferred_width(self, app, max_available_width):
+    def preferred_width(self, max_available_width):
         """
         Return a :class:`~prompt_toolkit.layout.dimension.Dimension` that
         represents the desired width for this container.
-
-        :param app: :class:`~prompt_toolkit.application.Application`.
         """
 
     @abstractmethod
-    def preferred_height(self, app, width, max_available_height):
+    def preferred_height(self, width, max_available_height):
         """
         Return a :class:`~prompt_toolkit.layout.dimension.Dimension` that
         represents the desired height for this container.
-
-        :param app: :class:`~prompt_toolkit.application.Application`.
         """
 
     @abstractmethod
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
+    def write_to_screen(self, screen, mouse_handlers, write_position, parent_style, erase_bg):
         """
         Write the actual content to the screen.
 
-        :param app: :class:`~prompt_toolkit.application.Application`.
         :param screen: :class:`~prompt_toolkit.layout.screen.Screen`
         :param mouse_handlers: :class:`~prompt_toolkit.layout.mouse_handlers.MouseHandlers`.
         :param parent_style: Style string to pass to the `Window` object. This will be
@@ -193,22 +189,22 @@ class HSplit(_Split):
         self._children_cache = SimpleCache(maxsize=1)
         self._remaining_space_window = Window()  # Dummy window.
 
-    def preferred_width(self, app, max_available_width):
+    def preferred_width(self, max_available_width):
         if self.width is not None:
             return to_dimension(self.width)
 
         if self.children:
-            dimensions = [c.preferred_width(app, max_available_width)
+            dimensions = [c.preferred_width(max_available_width)
                           for c in self.children]
             return max_layout_dimensions(dimensions)
         else:
             return Dimension()
 
-    def preferred_height(self, app, width, max_available_height):
+    def preferred_height(self, width, max_available_height):
         if self.height is not None:
             return to_dimension(self.height)
 
-        dimensions = [c.preferred_height(app, width, max_available_height)
+        dimensions = [c.preferred_height(width, max_available_height)
                       for c in self._all_children]
         return sum_layout_dimensions(dimensions)
 
@@ -242,23 +238,23 @@ class HSplit(_Split):
 
         return self._children_cache.get(tuple(self.children), get)
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
+    def write_to_screen(self, screen, mouse_handlers, write_position, parent_style, erase_bg):
         """
         Render the prompt to a `Screen` instance.
 
         :param screen: The :class:`~prompt_toolkit.layout.screen.Screen` class
             to which the output has to be written.
         """
-        sizes = self._divide_heigths(app, write_position)
+        sizes = self._divide_heigths(write_position)
 
         if self.report_dimensions_callback:
-            self.report_dimensions_callback(app, sizes)
+            self.report_dimensions_callback(sizes)
 
         style = parent_style + ' ' + self.style
 
         if sizes is None:
             self.window_too_small.write_to_screen(
-                app, screen, mouse_handlers, write_position, style, erase_bg)
+                screen, mouse_handlers, write_position, style, erase_bg)
         else:
             #
             ypos = write_position.ypos
@@ -267,7 +263,7 @@ class HSplit(_Split):
 
             # Draw child panes.
             for s, c in zip(sizes, self._all_children):
-                c.write_to_screen(app, screen, mouse_handlers,
+                c.write_to_screen(screen, mouse_handlers,
                                   WritePosition(xpos, ypos, width, s), style, erase_bg)
                 ypos += s
 
@@ -279,10 +275,10 @@ class HSplit(_Split):
             remaining_height = write_position.ypos + write_position.height - ypos
             if remaining_height > 0:
                 self._remaining_space_window.write_to_screen(
-                    app, screen, mouse_handlers,
+                    screen, mouse_handlers,
                     WritePosition(xpos, ypos, width, remaining_height), style, erase_bg)
 
-    def _divide_heigths(self, app, write_position):
+    def _divide_heigths(self, write_position):
         """
         Return the heights for all rows.
         Or None when there is not enough space.
@@ -296,7 +292,7 @@ class HSplit(_Split):
 
         # Calculate heights.
         dimensions = [
-            c.preferred_height(app, width, extended_height)
+            c.preferred_height(width, extended_height)
             for c in self._all_children]
 
         # Sum dimensions
@@ -327,7 +323,7 @@ class HSplit(_Split):
             i = next(child_generator)
 
         # Increase until we use all the available space. (or until "max")
-        if not app.is_done:
+        if not get_app().is_done:
             max_stop = min(height, sum_dimensions.max)
             max_dimensions = [d.max for d in dimensions]
 
@@ -377,16 +373,16 @@ class VSplit(_Split):
         self._children_cache = SimpleCache(maxsize=1)
         self._remaining_space_window = Window()  # Dummy window.
 
-    def preferred_width(self, app, max_available_width):
+    def preferred_width(self, max_available_width):
         if self.width is not None:
             return to_dimension(self.width)
 
-        dimensions = [c.preferred_width(app, max_available_width)
+        dimensions = [c.preferred_width(max_available_width)
                       for c in self._all_children]
 
         return sum_layout_dimensions(dimensions)
 
-    def preferred_height(self, app, width, max_available_height):
+    def preferred_height(self, width, max_available_height):
         if self.height is not None:
             return to_dimension(self.height)
 
@@ -398,13 +394,13 @@ class VSplit(_Split):
         # height was more than required. (we had a `BufferControl` which did
         # wrap lines because of the smaller width returned by `_divide_widths`.
 
-        sizes = self._divide_widths(app, width)
+        sizes = self._divide_widths(width)
         children = self._all_children
 
         if sizes is None:
             return Dimension()
         else:
-            dimensions = [c.preferred_height(app, s, max_available_height)
+            dimensions = [c.preferred_height(s, max_available_height)
                           for s, c in zip(sizes, children)]
             return max_layout_dimensions(dimensions)
 
@@ -438,7 +434,7 @@ class VSplit(_Split):
 
         return self._children_cache.get(tuple(self.children), get)
 
-    def _divide_widths(self, app, width):
+    def _divide_widths(self, width):
         """
         Return the widths for all columns.
         Or None when there is not enough space.
@@ -449,7 +445,7 @@ class VSplit(_Split):
             return []
 
         # Calculate widths.
-        dimensions = [c.preferred_width(app, width) for c in children]
+        dimensions = [c.preferred_width(width) for c in children]
         preferred_dimensions = [d.preferred for d in dimensions]
 
         # Sum dimensions
@@ -489,7 +485,7 @@ class VSplit(_Split):
 
         return sizes
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
+    def write_to_screen(self, screen, mouse_handlers, write_position, parent_style, erase_bg):
         """
         Render the prompt to a `Screen` instance.
 
@@ -501,22 +497,22 @@ class VSplit(_Split):
 
         children = self._all_children
 
-        sizes = self._divide_widths(app, write_position.width)
+        sizes = self._divide_widths(write_position.width)
 
         if self.report_dimensions_callback:
-            self.report_dimensions_callback(app, sizes)  # XXX: substract sizes of additional children!!!
+            self.report_dimensions_callback(sizes)  # XXX: substract sizes of additional children!!!
 
         style = parent_style + ' ' + self.style
 
         # If there is not enough space.
         if sizes is None:
             self.window_too_small.write_to_screen(
-                app, screen, mouse_handlers, write_position, style, erase_bg)
+                screen, mouse_handlers, write_position, style, erase_bg)
             return
 
         # Calculate heights, take the largest possible, but not larger than
         # write_position.extended_height.
-        heights = [child.preferred_height(app, width, write_position.extended_height).preferred
+        heights = [child.preferred_height(width, write_position.extended_height).preferred
                    for width, child in zip(sizes, children)]
         height = max(write_position.height, min(write_position.extended_height, max(heights)))
 
@@ -526,7 +522,7 @@ class VSplit(_Split):
 
         # Draw all child panes.
         for s, c in zip(sizes, children):
-            c.write_to_screen(app, screen, mouse_handlers,
+            c.write_to_screen(screen, mouse_handlers,
                               WritePosition(xpos, ypos, s, height), style, erase_bg)
             xpos += s
 
@@ -538,7 +534,7 @@ class VSplit(_Split):
         remaining_width = write_position.xpos + write_position.width - xpos
         if remaining_width > 0:
             self._remaining_space_window.write_to_screen(
-                app, screen, mouse_handlers,
+                screen, mouse_handlers,
                 WritePosition(xpos, ypos, remaining_width, height), style, erase_bg)
 
 
@@ -574,21 +570,21 @@ class FloatContainer(Container):
         for f in self.floats:
             f.content.reset()
 
-    def preferred_width(self, app, write_position):
-        return self.content.preferred_width(app, write_position)
+    def preferred_width(self, write_position):
+        return self.content.preferred_width(write_position)
 
-    def preferred_height(self, app, width, max_available_height):
+    def preferred_height(self, width, max_available_height):
         """
         Return the preferred height of the float container.
         (We don't care about the height of the floats, they should always fit
         into the dimensions provided by the container.)
         """
-        return self.content.preferred_height(app, width, max_available_height)
+        return self.content.preferred_height(width, max_available_height)
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
+    def write_to_screen(self, screen, mouse_handlers, write_position, parent_style, erase_bg):
         style = parent_style + ' ' + self.style
 
-        self.content.write_to_screen(app, screen, mouse_handlers, write_position, style, erase_bg)
+        self.content.write_to_screen(screen, mouse_handlers, write_position, style, erase_bg)
 
         for fl in self.floats:
             # When a menu_position was given, use this instead of the cursor
@@ -596,12 +592,12 @@ class FloatContainer(Container):
             # relative to the write_position.)
             # Note: This should be inside the for-loop, because one float could
             #       set the cursor position to be used for the next one.
-            cpos = screen.get_menu_position(fl.attach_to_window or app.layout.current_window)
+            cpos = screen.get_menu_position(fl.attach_to_window or get_app().layout.current_window)
             cursor_position = Point(x=cpos.x - write_position.xpos,
                                     y=cpos.y - write_position.ypos)
 
-            fl_width = fl.get_width(app)
-            fl_height = fl.get_height(app)
+            fl_width = fl.get_width()
+            fl_height = fl.get_height()
 
             # Left & width given.
             if fl.left is not None and fl_width is not None:
@@ -618,7 +614,7 @@ class FloatContainer(Container):
             elif fl.xcursor:
                 width = fl_width
                 if width is None:
-                    width = fl.content.preferred_width(app, write_position.width).preferred
+                    width = fl.content.preferred_width(write_position.width).preferred
                     width = min(write_position.width, width)
 
                 xpos = cursor_position.x
@@ -630,7 +626,7 @@ class FloatContainer(Container):
                 width = fl_width
             # Otherwise, take preferred width from float content.
             else:
-                width = fl.content.preferred_width(app, write_position.width).preferred
+                width = fl.content.preferred_width(write_position.width).preferred
 
                 if fl.left is not None:
                     xpos = fl.left
@@ -661,7 +657,7 @@ class FloatContainer(Container):
                 height = fl_height
                 if height is None:
                     height = fl.content.preferred_height(
-                        app, width, write_position.extended_height).preferred
+                        width, write_position.extended_height).preferred
 
                 # Reduce height if not enough space. (We can use the
                 # extended_height when the content requires it.)
@@ -682,7 +678,7 @@ class FloatContainer(Container):
             # Otherwise, take preferred height from content.
             else:
                 height = fl.content.preferred_height(
-                    app, width, write_position.extended_height).preferred
+                    width, write_position.extended_height).preferred
 
                 if fl.top is not None:
                     ypos = fl.top
@@ -702,7 +698,7 @@ class FloatContainer(Container):
                                    width=width, height=height)
 
                 if not fl.hide_when_covering_content or self._area_is_empty(screen, wp):
-                    fl.content.write_to_screen(app, screen, mouse_handlers, wp, style, erase_bg=True)
+                    fl.content.write_to_screen(screen, mouse_handlers, wp, style, erase_bg=True)
 
     def _area_is_empty(self, screen, write_position):
         """
@@ -784,17 +780,17 @@ class Float(object):
         self.hide_when_covering_content = hide_when_covering_content
         self.allow_cover_cursor = allow_cover_cursor
 
-    def get_width(self, app):
+    def get_width(self):
         if self._width:
             return self._width
         if self._get_width:
-            return self._get_width(app)
+            return self._get_width()
 
-    def get_height(self, app):
+    def get_height(self):
         if self._height:
             return self._height
         if self._get_height:
-            return self._get_height(app)
+            return self._get_height()
 
     def __repr__(self):
         return 'Float(content=%r)' % self.content
@@ -1080,12 +1076,12 @@ class Window(Container):
         cursor. When both top and bottom are a very high number, the cursor
         will be centered vertically most of the time.
     :param allow_scroll_beyond_bottom: A `bool` or
-        :class:`~prompt_toolkit.filters.AppFilter` instance. When True, allow
+        :class:`~prompt_toolkit.filters.Filter` instance. When True, allow
         scrolling so far, that the top part of the content is not visible
         anymore, while there is still empty space available at the bottom of
         the window. In the Vi editor for instance, this is possible. You will
         see tildes while the top part of the body is hidden.
-    :param wrap_lines: A `bool` or :class:`~prompt_toolkit.filters.AppFilter`
+    :param wrap_lines: A `bool` or :class:`~prompt_toolkit.filters.Filter`
         instance. When True, don't scroll horizontally, but wrap lines instead.
     :param get_vertical_scroll: Callable that takes this window
         instance as input and returns a preferred vertical scroll.
@@ -1094,12 +1090,12 @@ class Window(Container):
     :param get_horizontal_scroll: Callable that takes this window
         instance as input and returns a preferred vertical scroll.
     :param always_hide_cursor: A `bool` or
-        :class:`~prompt_toolkit.filters.AppFilter` instance. When True, never
+        :class:`~prompt_toolkit.filters.Filter` instance. When True, never
         display the cursor, even when the user control specifies a cursor
         position.
-    :param cursorline: A `bool` or :class:`~prompt_toolkit.filters.AppFilter`
+    :param cursorline: A `bool` or :class:`~prompt_toolkit.filters.Filter`
         instance. When True, display a cursorline.
-    :param cursorcolumn: A `bool` or :class:`~prompt_toolkit.filters.AppFilter`
+    :param cursorcolumn: A `bool` or :class:`~prompt_toolkit.filters.Filter`
         instance. When True, display a cursorcolumn.
     :param get_colorcolumns: A callable that takes a `Application` and
         returns a a list of :class:`.ColorColumn` instances that describe the
@@ -1141,11 +1137,11 @@ class Window(Container):
         assert not (char and get_char)
         assert isinstance(transparent, bool)
 
-        self.allow_scroll_beyond_bottom = to_app_filter(allow_scroll_beyond_bottom)
-        self.always_hide_cursor = to_app_filter(always_hide_cursor)
-        self.wrap_lines = to_app_filter(wrap_lines)
-        self.cursorline = to_app_filter(cursorline)
-        self.cursorcolumn = to_app_filter(cursorcolumn)
+        self.allow_scroll_beyond_bottom = to_filter(allow_scroll_beyond_bottom)
+        self.always_hide_cursor = to_filter(always_hide_cursor)
+        self.wrap_lines = to_filter(wrap_lines)
+        self.cursorline = to_filter(cursorline)
+        self.cursorcolumn = to_filter(cursorcolumn)
 
         self.content = content or DummyControl()
         self.dont_extend_width = dont_extend_width
@@ -1155,7 +1151,7 @@ class Window(Container):
         self.scroll_offsets = scroll_offsets or ScrollOffsets()
         self.get_vertical_scroll = get_vertical_scroll
         self.get_horizontal_scroll = get_horizontal_scroll
-        self.get_colorcolumns = get_colorcolumns or (lambda app: [])
+        self.get_colorcolumns = get_colorcolumns or (lambda: [])
         self.align = align
         self.style = style
         self.char = char
@@ -1164,8 +1160,11 @@ class Window(Container):
 
         width = to_dimension(width)
         height = to_dimension(height)
-        self._width = get_width or (lambda app: width)
-        self._height = get_height or (lambda app: height)
+        self._width = get_width or (lambda: width)
+        self._height = get_height or (lambda: height)
+
+        assert test_callable_args(self._width, [])
+        assert test_callable_args(self._height, [])
 
         # Cache for the screens generated by the margin.
         self._ui_content_cache = SimpleCache(maxsize=8)
@@ -1192,22 +1191,22 @@ class Window(Container):
         #: output.)
         self.render_info = None
 
-    def _get_margin_width(self, app, margin):
+    def _get_margin_width(self, margin):
         """
         Return the width for this margin.
         (Calculate only once per render time.)
         """
         # Margin.get_width, needs to have a UIContent instance.
         def get_ui_content():
-            return self._get_ui_content(app, width=0, height=0)
+            return self._get_ui_content(width=0, height=0)
 
         def get_width():
-            return margin.get_width(app, get_ui_content)
+            return margin.get_width(get_ui_content)
 
-        key = (margin, app.render_counter)
+        key = (margin, get_app().render_counter)
         return self._margin_width_cache.get(key, get_width)
 
-    def preferred_width(self, app, max_available_width):
+    def preferred_width(self, max_available_width):
         """
         Calculate the preferred width for this window.
         """
@@ -1215,12 +1214,12 @@ class Window(Container):
             """ Content width: is only calculated if no exact width for the
             window was given. """
             # Calculate the width of the margin.
-            total_margin_width = sum(self._get_margin_width(app, m) for m in
+            total_margin_width = sum(self._get_margin_width(m) for m in
                                      self.left_margins + self.right_margins)
 
             # Window of the content. (Can be `None`.)
             preferred_width = self.content.preferred_width(
-                app, max_available_width - total_margin_width)
+                max_available_width - total_margin_width)
 
             if preferred_width is not None:
                 # Include width of the margins.
@@ -1229,26 +1228,26 @@ class Window(Container):
 
         # Merge.
         return self._merge_dimensions(
-            dimension=self._width(app),
+            dimension=self._width(),
             get_preferred=preferred_content_width,
             dont_extend=self.dont_extend_width)
 
-    def preferred_height(self, app, width, max_available_height):
+    def preferred_height(self, width, max_available_height):
         """
         Calculate the preferred height for this window.
         """
         def preferred_content_height():
             """ Content height: is only calculated if no exact height for the
             window was given. """
-            total_margin_width = sum(self._get_margin_width(app, m) for m in
+            total_margin_width = sum(self._get_margin_width(m) for m in
                                      self.left_margins + self.right_margins)
-            wrap_lines = self.wrap_lines(app)
+            wrap_lines = self.wrap_lines()
 
             return self.content.preferred_height(
-                app, width - total_margin_width, max_available_height, wrap_lines)
+                width - total_margin_width, max_available_height, wrap_lines)
 
         return self._merge_dimensions(
-            dimension=self._height(app),
+            dimension=self._height(),
             get_preferred=preferred_content_height,
             dont_extend=self.dont_extend_height)
 
@@ -1292,18 +1291,19 @@ class Window(Container):
             min=min_, max=max_,
             preferred=preferred, weight=dimension.weight)
 
-    def _get_ui_content(self, app, width, height):
+    def _get_ui_content(self, width, height):
         """
         Create a `UIContent` instance.
         """
         def get_content():
-            return self.content.create_content(app, width=width, height=height)
+            return self.content.create_content(width=width, height=height)
 
-        key = (app.render_counter, width, height)
+        key = (get_app().render_counter, width, height)
         return self._ui_content_cache.get(key, get_content)
 
-    def _get_digraph_char(self, app):
+    def _get_digraph_char(self):
         " Return `False`, or the Digraph symbol to be used. "
+        app = get_app()
         if app.quoted_insert:
             return '^'
         if app.vi_state.waiting_for_digraph:
@@ -1312,7 +1312,7 @@ class Window(Container):
             return '?'
         return False
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
+    def write_to_screen(self, screen, mouse_handlers, write_position, parent_style, erase_bg):
         """
         Write window to screen. This renders the user control, the margins and
         copies everything over to the absolute position at the given screen.
@@ -1323,34 +1323,33 @@ class Window(Container):
             return
 
         # Calculate margin sizes.
-        left_margin_widths = [self._get_margin_width(app, m) for m in self.left_margins]
-        right_margin_widths = [self._get_margin_width(app, m) for m in self.right_margins]
+        left_margin_widths = [self._get_margin_width(m) for m in self.left_margins]
+        right_margin_widths = [self._get_margin_width(m) for m in self.right_margins]
         total_margin_width = sum(left_margin_widths + right_margin_widths)
 
         # Render UserControl.
         ui_content = self.content.create_content(
-            app, write_position.width - total_margin_width, write_position.height)
+            write_position.width - total_margin_width, write_position.height)
         assert isinstance(ui_content, UIContent)
 
         # Scroll content.
-        wrap_lines = self.wrap_lines(app)
+        wrap_lines = self.wrap_lines()
         scroll_func = self._scroll_when_linewrapping if wrap_lines else self._scroll_without_linewrapping
 
-        scroll_func(
-            ui_content, write_position.width - total_margin_width, write_position.height, app)
+        scroll_func(ui_content, write_position.width - total_margin_width, write_position.height)
 
         # Erase background and fill with `char`.
-        self._fill_bg(app, screen, write_position, erase_bg)
+        self._fill_bg(screen, write_position, erase_bg)
 
         # Write body
         visible_line_to_row_col, rowcol_to_yx = self._copy_body(
-            app, ui_content, screen, write_position,
+            ui_content, screen, write_position,
             sum(left_margin_widths), write_position.width - total_margin_width,
             self.vertical_scroll, self.horizontal_scroll,
             wrap_lines=wrap_lines, highlight_lines=True,
             vertical_scroll_2=self.vertical_scroll_2,
-            always_hide_cursor=self.always_hide_cursor(app),
-            has_focus=app.layout.current_control == self.content,
+            always_hide_cursor=self.always_hide_cursor(),
+            has_focus=get_app().layout.current_control == self.content,
             align=self.align)
 
         # Remember render info. (Set before generating the margins. They need this.)
@@ -1371,12 +1370,12 @@ class Window(Container):
             wrap_lines=wrap_lines)
 
         # Set mouse handlers.
-        def mouse_handler(app, mouse_event):
+        def mouse_handler(mouse_event):
             """ Wrapper around the mouse_handler of the `UIControl` that turns
             screen coordinates into line coordinates. """
             # Don't handle mouse events outside of the current modal part of
             # the UI.
-            if self not in app.layout.walk_through_modal_area():
+            if self not in get_app().layout.walk_through_modal_area():
                 return
 
             # Find row/col position first.
@@ -1399,8 +1398,8 @@ class Window(Container):
                 else:
                     # Found position, call handler of UIControl.
                     result = self.content.mouse_handler(
-                        app, MouseEvent(position=Point(x=col, y=row),
-                                        event_type=mouse_event.event_type))
+                        MouseEvent(position=Point(x=col, y=row),
+                                   event_type=mouse_event.event_type))
                     break
             else:
                 # nobreak.
@@ -1408,12 +1407,12 @@ class Window(Container):
                 # case of a DummyControl, that does not have any content.
                 # Report (0,0) instead.)
                 result = self.content.mouse_handler(
-                    app, MouseEvent(position=Point(x=0, y=0),
-                                    event_type=mouse_event.event_type))
+                    MouseEvent(position=Point(x=0, y=0),
+                               event_type=mouse_event.event_type))
 
             # If it returns NotImplemented, handle it here.
             if result == NotImplemented:
-                return self._mouse_handler(app, mouse_event)
+                return self._mouse_handler(mouse_event)
 
             return result
 
@@ -1430,12 +1429,12 @@ class Window(Container):
         def render_margin(m, width):
             " Render margin. Return `Screen`. "
             # Retrieve margin fragments.
-            fragments = m.create_margin(app, self.render_info, width, write_position.height)
+            fragments = m.create_margin(self.render_info, width, write_position.height)
 
             # Turn it into a UIContent object.
             # already rendered those fragments using this size.)
             return FormattedTextControl(fragments).create_content(
-                app, width + 1, write_position.height)
+                width + 1, write_position.height)
 
         for m, width in zip(self.left_margins, left_margin_widths):
             if width > 0:  # (ConditionalMargin returns a zero width. -- Don't render.)
@@ -1443,7 +1442,7 @@ class Window(Container):
                 margin_screen = render_margin(m, width)
 
                 # Copy and shift X.
-                self._copy_margin(app, margin_screen, screen, write_position, move_x, width)
+                self._copy_margin(margin_screen, screen, write_position, move_x, width)
                 move_x += width
 
         move_x = write_position.width - sum(right_margin_widths)
@@ -1453,16 +1452,16 @@ class Window(Container):
             margin_screen = render_margin(m, width)
 
             # Copy and shift X.
-            self._copy_margin(app, margin_screen, screen, write_position, move_x, width)
+            self._copy_margin(margin_screen, screen, write_position, move_x, width)
             move_x += width
 
         # Apply 'self.style'
-        self._apply_style(app, screen, write_position, parent_style)
+        self._apply_style(screen, write_position, parent_style)
 
         # Tell the screen that this user control has been painted.
         screen.visible_windows.append(self)
 
-    def _copy_body(self, app, ui_content, new_screen, write_position, move_x,
+    def _copy_body(self, ui_content, new_screen, write_position, move_x,
                    width, vertical_scroll=0, horizontal_scroll=0,
                    wrap_lines=False, highlight_lines=False,
                    vertical_scroll_2=0, always_hide_cursor=False,
@@ -1592,16 +1591,16 @@ class Window(Container):
                 else:
                     new_screen.show_cursor = ui_content.show_cursor
 
-                self._highlight_digraph(app, new_screen)
+                self._highlight_digraph(new_screen)
 
             if highlight_lines:
                 self._highlight_cursorlines(
-                    app, new_screen, screen_cursor_position, xpos, ypos, width,
+                    new_screen, screen_cursor_position, xpos, ypos, width,
                     write_position.height)
 
         # Draw input characters from the input processor queue.
         if has_focus and ui_content.cursor_position:
-            self._show_key_processor_key_buffer(app, new_screen)
+            self._show_key_processor_key_buffer(new_screen)
 
         # Set menu position.
         if ui_content.menu_position:
@@ -1613,13 +1612,13 @@ class Window(Container):
 
         return visible_line_to_row_col, rowcol_to_yx
 
-    def _fill_bg(self, app, screen, write_position, erase_bg):
+    def _fill_bg(self, screen, write_position, erase_bg):
         """
         Erase/fill the background.
         (Useful for floats and when a `char` has been given.)
         """
         if self.get_char:
-            char = self.get_char(app)
+            char = self.get_char()
         else:
             char = self.char
 
@@ -1632,11 +1631,11 @@ class Window(Container):
                 for x in range(wp.xpos, wp.xpos + wp.width):
                     row[x] = char
 
-    def _apply_style(self, app, new_screen, write_position, parent_style):
+    def _apply_style(self, new_screen, write_position, parent_style):
         # Apply `self.style`.
         style = parent_style + ' ' + self.style
 
-        if app.layout.current_window == self:
+        if get_app().layout.current_window == self:
             style += ' class:focussed'
 
         new_screen.fill_area(write_position, style=style, after=False)
@@ -1647,18 +1646,18 @@ class Window(Container):
                            write_position.width, 1)
         new_screen.fill_area(wp, 'class:last-line', after=True)
 
-    def _highlight_digraph(self, app, new_screen):
+    def _highlight_digraph(self, new_screen):
         """
         When we are in Vi digraph mode, put a question mark underneath the
         cursor.
         """
-        digraph_char = self._get_digraph_char(app)
+        digraph_char = self._get_digraph_char()
         if digraph_char:
             cpos = new_screen.get_cursor_position(self)
             new_screen.data_buffer[cpos.y][cpos.x] = \
                 _CHAR_CACHE[digraph_char, 'class:digraph']
 
-    def _show_key_processor_key_buffer(self, app, new_screen):
+    def _show_key_processor_key_buffer(self, new_screen):
         """
         When the user is typing a key binding that consists of several keys,
         display the last pressed key if the user is in insert mode and the key
@@ -1666,9 +1665,10 @@ class Window(Container):
         E.g. Some people want to bind 'jj' to escape in Vi insert mode. But the
              first 'j' needs to be displayed in order to get some feedback.
         """
+        app = get_app()
         key_buffer = app.key_processor.key_buffer
 
-        if key_buffer and _in_insert_mode(app) and not app.is_done:
+        if key_buffer and _in_insert_mode() and not app.is_done:
             # The textual data for the given key. (Can be a VT100 escape
             # sequence.)
             data = key_buffer[-1].data
@@ -1679,7 +1679,7 @@ class Window(Container):
                 new_screen.data_buffer[cpos.y][cpos.x] = \
                     _CHAR_CACHE[data, 'class:partial-key-binding']
 
-    def _highlight_cursorlines(self, app, new_screen, cpos, x, y, width, height):
+    def _highlight_cursorlines(self, new_screen, cpos, x, y, width, height):
         """
         Highlight cursor row/column.
         """
@@ -1689,7 +1689,7 @@ class Window(Container):
         data_buffer = new_screen.data_buffer
 
         # Highlight cursor line.
-        if self.cursorline(app):
+        if self.cursorline():
             row = data_buffer[cpos.y]
             for x in range(x, x + width):
                 original_char = row[x]
@@ -1697,7 +1697,7 @@ class Window(Container):
                     original_char.char, original_char.style + cursor_line_style]
 
         # Highlight cursor column.
-        if self.cursorcolumn(app):
+        if self.cursorcolumn():
             for y2 in range(y, y + height):
                 row = data_buffer[y2]
                 original_char = row[cpos.x]
@@ -1705,7 +1705,7 @@ class Window(Container):
                    original_char.char, original_char.style + cursor_column_style]
 
         # Highlight color columns
-        for cc in self.get_colorcolumns(app):
+        for cc in self.get_colorcolumns():
             assert isinstance(cc, ColorColumn)
             color_column_style = ' ' + cc.style
             column = cc.position
@@ -1716,7 +1716,7 @@ class Window(Container):
                 row[column] = _CHAR_CACHE[
                    original_char.char, original_char.style + color_column_style]
 
-    def _copy_margin(self, app, lazy_screen, new_screen, write_position, move_x, width):
+    def _copy_margin(self, lazy_screen, new_screen, write_position, move_x, width):
         """
         Copy characters from the margin screen to the real screen.
         """
@@ -1724,9 +1724,9 @@ class Window(Container):
         ypos = write_position.ypos
 
         margin_write_position = WritePosition(xpos, ypos, width, write_position.height)
-        self._copy_body(app, lazy_screen, new_screen, margin_write_position, 0, width)
+        self._copy_body(lazy_screen, new_screen, margin_write_position, 0, width)
 
-    def _scroll_when_linewrapping(self, ui_content, width, height, app):
+    def _scroll_when_linewrapping(self, ui_content, width, height):
         """
         Scroll to make sure the cursor position is visible and that we maintain
         the requested scroll offset.
@@ -1817,10 +1817,10 @@ class Window(Container):
         self.vertical_scroll = min(self.vertical_scroll, get_max_vertical_scroll())
 
         # Disallow scrolling beyond bottom?
-        if not self.allow_scroll_beyond_bottom(app):
+        if not self.allow_scroll_beyond_bottom():
             self.vertical_scroll = min(self.vertical_scroll, topmost_visible)
 
-    def _scroll_without_linewrapping(self, ui_content, width, height, app):
+    def _scroll_without_linewrapping(self, ui_content, width, height):
         """
         Scroll to make sure the cursor position is visible and that we maintain
         the requested scroll offset.
@@ -1855,7 +1855,7 @@ class Window(Container):
                 current_scroll = 0
 
             # Scroll back if we scrolled to much and there's still space to show more of the document.
-            if (not self.allow_scroll_beyond_bottom(app) and
+            if (not self.allow_scroll_beyond_bottom() and
                     current_scroll > content_size - window_size):
                 current_scroll = max(0, content_size - window_size)
 
@@ -1899,34 +1899,34 @@ class Window(Container):
             # all the lines is too expensive.
             content_size=max(get_cwidth(current_line_text), self.horizontal_scroll + width))
 
-    def _mouse_handler(self, app, mouse_event):
+    def _mouse_handler(self, mouse_event):
         """
         Mouse handler. Called when the UI control doesn't handle this
         particular event.
         """
         if mouse_event.event_type == MouseEventType.SCROLL_DOWN:
-            self._scroll_down(app)
+            self._scroll_down()
         elif mouse_event.event_type == MouseEventType.SCROLL_UP:
-            self._scroll_up(app)
+            self._scroll_up()
 
-    def _scroll_down(self, app):
+    def _scroll_down(self):
         " Scroll window down. "
         info = self.render_info
 
         if self.vertical_scroll < info.content_height - info.window_height:
             if info.cursor_position.y <= info.configured_scroll_offsets.top:
-                self.content.move_cursor_down(app)
+                self.content.move_cursor_down()
 
             self.vertical_scroll += 1
 
-    def _scroll_up(self, app):
+    def _scroll_up(self):
         " Scroll window up. "
         info = self.render_info
 
         if info.vertical_scroll > 0:
             # TODO: not entirely correct yet in case of line wrapping and long lines.
             if info.cursor_position.y >= info.window_height - 1 - info.configured_scroll_offsets.bottom:
-                self.content.move_cursor_up(app)
+                self.content.move_cursor_up()
 
             self.vertical_scroll -= 1
 
@@ -1944,11 +1944,11 @@ class ConditionalContainer(Container):
     displayed or not.
 
     :param content: :class:`.Container` instance.
-    :param filter: :class:`~prompt_toolkit.filters.AppFilter` instance.
+    :param filter: :class:`~prompt_toolkit.filters.Filter` instance.
     """
     def __init__(self, content, filter):
         self.content = to_container(content)
-        self.filter = to_app_filter(filter)
+        self.filter = to_filter(filter)
 
     def __repr__(self):
         return 'ConditionalContainer(%r, filter=%r)' % (self.content, self.filter)
@@ -1956,22 +1956,22 @@ class ConditionalContainer(Container):
     def reset(self):
         self.content.reset()
 
-    def preferred_width(self, app, max_available_width):
-        if self.filter(app):
-            return self.content.preferred_width(app, max_available_width)
+    def preferred_width(self, max_available_width):
+        if self.filter():
+            return self.content.preferred_width(max_available_width)
         else:
             return Dimension.zero()
 
-    def preferred_height(self, app, width, max_available_height):
-        if self.filter(app):
-            return self.content.preferred_height(app, width, max_available_height)
+    def preferred_height(self, width, max_available_height):
+        if self.filter():
+            return self.content.preferred_height(width, max_available_height)
         else:
             return Dimension.zero()
 
-    def write_to_screen(self, app, screen, mouse_handlers, write_position, parent_style, erase_bg):
-        if self.filter(app):
+    def write_to_screen(self, screen, mouse_handlers, write_position, parent_style, erase_bg):
+        if self.filter():
             return self.content.write_to_screen(
-                app, screen, mouse_handlers, write_position, parent_style, erase_bg)
+                screen, mouse_handlers, write_position, parent_style, erase_bg)
 
     def get_children(self):
         return [self.content]

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit import prompt
 
 
-def prompt_continuation(app, width):
+def prompt_continuation(width):
     " The continuation: display dots before all the following lines. "
 
     # (make sure that the width of the continuation does not exceed the given

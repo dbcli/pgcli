@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
-from .filters import to_app_filter
+from .filters import to_filter
 
 __all__ = (
     'Suggestion',
@@ -40,7 +40,7 @@ class AutoSuggest(with_metaclass(ABCMeta, object)):
     Base class for auto suggestion implementations.
     """
     @abstractmethod
-    def get_suggestion(self, app, buffer, document):
+    def get_suggestion(self, buffer, document):
         """
         Return `None` or a :class:`.Suggestion` instance.
 
@@ -60,7 +60,7 @@ class DummyAutoSuggest(AutoSuggest):
     """
     AutoSuggest class that doesn't return any suggestion.
     """
-    def get_suggestion(self, app, buffer, document):
+    def get_suggestion(self, buffer, document):
         return  # No suggestion
 
 
@@ -68,7 +68,7 @@ class AutoSuggestFromHistory(AutoSuggest):
     """
     Give suggestions based on the lines in the history.
     """
-    def get_suggestion(self, app, buffer, document):
+    def get_suggestion(self, buffer, document):
         history = buffer.history
 
         # Consider only the last line for the suggestion.
@@ -91,11 +91,11 @@ class ConditionalAutoSuggest(AutoSuggest):
         assert isinstance(auto_suggest, AutoSuggest)
 
         self.auto_suggest = auto_suggest
-        self.filter = to_app_filter(filter)
+        self.filter = to_filter(filter)
 
-    def get_suggestion(self, app, buffer, document):
-        if self.filter(app):
-            return self.auto_suggest.get_suggestion(app, buffer, document)
+    def get_suggestion(self, buffer, document):
+        if self.filter():
+            return self.auto_suggest.get_suggestion(buffer, document)
 
 
 class DynamicAutoSuggest(AutoSuggest):

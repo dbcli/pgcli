@@ -9,10 +9,11 @@ from __future__ import unicode_literals
 from functools import partial
 import six
 
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SearchDirection
-from prompt_toolkit.filters import to_app_filter, is_searching
+from prompt_toolkit.filters import to_filter, is_searching
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
@@ -100,7 +101,7 @@ class TextArea(object):
             read_only=read_only,
             completer=completer,
             complete_while_typing=True,
-            accept_handler=lambda app, buffer: accept_handler and accept_handler(app))
+            accept_handler=lambda buff: accept_handler and accept_handler())
 
         if search_field:
             search_buffer = search_field.text_area.control
@@ -113,7 +114,7 @@ class TextArea(object):
             input_processor=merge_processors([
                 ConditionalProcessor(
                     processor=PasswordProcessor(),
-                    filter=to_app_filter(password)
+                    filter=to_filter(password)
                 ),
                 HighlightSearchProcessor(preview_search=preview_search),
                 HighlightSelectionProcessor(),
@@ -179,10 +180,10 @@ class SearchField(object):
     parameter.
     """
     def __init__(self, vi_display=True, text_if_not_searching=''):
-        def before_input(app):
-            if not is_searching(app):
+        def before_input():
+            if not is_searching():
                 return text_if_not_searching
-            elif app.current_search_state.direction == SearchDirection.BACKWARD:
+            elif get_app().current_search_state.direction == SearchDirection.BACKWARD:
                 return ('?' if vi_display else 'I-search backward: ')
             else:
                 return ('/' if vi_display else 'I-search: ')
@@ -208,9 +209,9 @@ class Label(object):
         assert isinstance(text, six.text_type)
         self.text = text
 
-        def get_width(app):
+        def get_width():
             if width is None:
-                text_fragments = to_formatted_text(self.text, app)
+                text_fragments = to_formatted_text(self.text)
                 text = fragment_list_to_text(text_fragments)
                 if text:
                     longest_line = max(get_cwidth(line) for line in text.splitlines())
@@ -221,7 +222,7 @@ class Label(object):
                 return width
 
         self.formatted_text_control = FormattedTextControl(
-            text=lambda app: self.text)
+            text=lambda: self.text)
 
         self.window = Window(
             content=self.formatted_text_control,
@@ -264,12 +265,12 @@ class Button(object):
             dont_extend_width=True,
             dont_extend_height=True)
 
-    def _get_text_fragments(self, app):
+    def _get_text_fragments(self):
         text = ('{:^%s}' % (self.width - 2)).format(self.text)
 
-        def handler(app, mouse_event):
+        def handler(mouse_event):
             if mouse_event.event_type == MouseEventType.MOUSE_UP:
-                self.handler(app)
+                self.handler()
 
         return [
             ('class:button.arrow', '<', handler),
@@ -285,7 +286,7 @@ class Button(object):
         @kb.add('enter')
         def _(event):
             if self.handler is not None:
-                self.handler(event.app)
+                self.handler()
 
         return kb
 
@@ -445,7 +446,7 @@ class Checkbox(object):
             Label(text=' {0}'.format(text))
         ], style='class:checkbox')
 
-    def _get_text_fragments(self, app):
+    def _get_text_fragments(self):
         text = '*' if self.checked else ' '
         return [('', '[%s]' % text)]
 
@@ -500,7 +501,7 @@ class RadioList(object):
             ],
             dont_extend_height=True)
 
-    def _get_text_fragments(self, app):
+    def _get_text_fragments(self):
         result = []
         for i, value in enumerate(self.values):
             checked = (value[0] == self.current_value)
@@ -577,8 +578,8 @@ class ProgressBar(object):
                 Float(content=self.label, top=0, bottom=0),
 
                 Float(left=0, top=0, right=0, bottom=0, content=VSplit([
-                    Window(style='class:progress-bar.used', get_width=lambda app: D(weight=int(self._percentage))),
-                    Window(style='class:progress-bar', get_width=lambda app: D(weight=int(100 - self._percentage))),
+                    Window(style='class:progress-bar.used', get_width=lambda: D(weight=int(self._percentage))),
+                    Window(style='class:progress-bar', get_width=lambda: D(weight=int(100 - self._percentage))),
                 ])),
             ])
 

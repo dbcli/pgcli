@@ -4,7 +4,6 @@ from collections import defaultdict
 import weakref
 
 __all__ = (
-    'AppFilter',
     'SimpleFilter',
     'CLIFilter',
 )
@@ -38,17 +37,6 @@ class _FilterType(with_metaclass(_FilterTypeMeta)):
         raise NotImplementedError('This class should not be initiated.')
 
 
-class AppFilter(_FilterType):
-    """
-    Abstract base class for filters that accept a
-    :class:`~prompt_toolkit.application.Application` argument. It cannot
-    be instantiated, it's only to be used for instance assertions, e.g.::
-
-        isinstance(my_filter, CliFilter)
-    """
-    arguments_list = ['app']
-
-
 class SimpleFilter(_FilterType):
     """
     Abstract base class for filters that don't accept any arguments.
@@ -57,4 +45,4 @@ class SimpleFilter(_FilterType):
 
 
 # Deprecated alias.
-CLIFilter = AppFilter
+CLIFilter = SimpleFilter  # This was AppFilter before.
