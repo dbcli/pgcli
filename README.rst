@@ -23,7 +23,7 @@ If you already know how to install python packages, then you can simply do:
 
     or
 
-    $ brew install pgcli  # Only on OS X
+    $ brew tap-pin dbcli/tap && brew install pgcli  # Only on macOS
 
 If you don't know how to install python packages, please check the 
 `detailed instructions`__.
@@ -92,21 +92,18 @@ My email: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
 Detailed Installation Instructions:
 -----------------------------------
 
-OS X:
-=====
+macOS:
+======
 
-Easiest way to install pgcli is using brew. Please be aware that this will
-install postgres via brew if it wasn't installed via brew.
+The easiest way to install pgcli is using Homebrew. Please be aware that this will
+install postgres if you don't have it installed.
 
 ::
 
+    $ brew tap-pin dbcli/tap
     $ brew install pgcli
 
 Done!
-
-If you have postgres installed via a different means (such as PostgresApp), you
-can ``brew install --build-from-source pgcli`` which will skip installing
-postgres via brew if postgres is available in the path.
 
 Alternatively, you can install ``pgcli`` as a python package using a package
 manager called called ``pip``. You will need postgres installed on your system
