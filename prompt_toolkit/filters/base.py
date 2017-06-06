@@ -19,7 +19,7 @@ class Filter(with_metaclass(ABCMeta, object)):
     The return value of ``__call__`` will tell if the feature should be active.
     """
     @abstractmethod
-    def __call__(self, *a, **kw):
+    def __call__(self):
         """
         The actual call to evaluate the filter.
         """
@@ -52,7 +52,8 @@ class Filter(with_metaclass(ABCMeta, object)):
         defaults for `None` values should be done through an `is None` check
         instead of for instance ``filter1 or Always()``.
         """
-        raise TypeError
+        raise ValueError('The truth value of a Filter is ambiguous. '
+                         'Instead, call it as a function.')
 
     __nonzero__ = __bool__  # For Python 2.
 
