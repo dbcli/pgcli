@@ -84,6 +84,7 @@ OutputSettings.__new__.__defaults__ = (
     None, None, None, '<null>', False, None, lambda x: x
 )
 
+
 # no-op logging handler
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -100,16 +101,19 @@ class PGCli(object):
         os_environ_pager = os.environ.get('PAGER')
 
         if configured_pager:
-            self.logger.info('Default pager found in config file: ' + '\'' + configured_pager + '\'')
+            self.logger.info('Default pager found in config file: "{}"'.format(configured_pager))
             os.environ['PAGER'] = configured_pager
         elif os_environ_pager:
-            self.logger.info('Default pager found in PAGER environment variable: ' + '\'' + os_environ_pager + '\'')
+            self.logger.info('Default pager found in PAGER environment variable: "{}"'.format(
+                os_environ_pager))
             os.environ['PAGER'] = os_environ_pager
         else:
             self.logger.info('No default pager found in environment. Using os default pager')
-        # Always set default set of less recommended options, they are ignored if pager is
-        # different than less or is already parameterized with their own arguments
-        os.environ['LESS'] = '-SRXF'
+
+        # Set default set of less recommended options, if they are not already set.
+        # They are ignored if pager is different than less.
+        if not os.environ.get('LESS'):
+            os.environ['LESS'] = '-SRXF'
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
                  pgexecute=None, pgclirc_file=None, row_limit=None,
