@@ -101,14 +101,16 @@ class PGCli(object):
         os_environ_pager = os.environ.get('PAGER')
 
         if configured_pager:
-            self.logger.info('Default pager found in config file: "{}"'.format(configured_pager))
+            self.logger.info(
+                'Default pager found in config file: "{}"'.format(configured_pager))
             os.environ['PAGER'] = configured_pager
         elif os_environ_pager:
             self.logger.info('Default pager found in PAGER environment variable: "{}"'.format(
                 os_environ_pager))
             os.environ['PAGER'] = os_environ_pager
         else:
-            self.logger.info('No default pager found in environment. Using os default pager')
+            self.logger.info(
+                'No default pager found in environment. Using os default pager')
 
         # Set default set of less recommended options, if they are not already set.
         # They are ignored if pager is different than less.
