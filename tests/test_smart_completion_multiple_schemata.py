@@ -575,3 +575,14 @@ def test_all_schema_objects_with_aliases(completer):
         [table(x) for x in ('orders o', '"select" s', 'custom.shipments s')]
         + [function(x) for x in ('func2() f', 'custom.func3() f')]
     )
+
+
+@parametrize('completer', completers(casing=False, filtr=False, aliasing=True))
+def test_set_schema(completer):
+    text = ('SET SCHEMA ')
+    result = result_set(completer, text)
+    assert result == set([
+        schema(u"'blog'"),
+        schema(u"'Custom'"),
+        schema(u"'custom'"),
+        schema(u"'public'")])
