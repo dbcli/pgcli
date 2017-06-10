@@ -862,14 +862,6 @@ def test_keyword_after_alter(completer):
 
 
 @parametrize('completer', completers())
-def test_set_statement(completer):
-    text = ('SET ')
-    result = result_set(completer, text)
-    expected = set([schema(u"'public'")])
-    assert result == expected
-
-
-@parametrize('completer', completers())
 def test_set_schema(completer):
     text = ('SET SCHEMA ')
     result = result_set(completer, text)
