@@ -99,6 +99,9 @@ class PGCompleter(Completer):
 
         return name
 
+    def escape_schema(self, name):
+        return "'{}'".format(self.unescape_name(name))
+
     def unescape_name(self, name):
         """ Unquote a string."""
         if name and name[0] == '"' and name[-1] == '"':
@@ -587,16 +590,20 @@ class PGCompleter(Completer):
 
         return funcs
 
-    def get_schema_matches(self, _, word_before_cursor):
+    def get_schema_matches(self, suggestion, word_before_cursor):
         schema_names = self.dbmetadata['tables'].keys()
 
         # Unless we're sure the user really wants them, hide schema names
         # starting with pg_, which are mostly temporary schemas
         if not word_before_cursor.startswith('pg_'):
-            schema_names = [s for s in schema_names if not s.startswith('pg_')]
+            schema_names = [s
+                            for s in schema_names
+                            if not s.startswith('pg_')]
 
-        return self.find_matches(word_before_cursor, schema_names,
-            meta='schema')
+        if suggestion.quoted:
+            schema_names = [self.escape_schema(s) for s in schema_names]
+
+        return self.find_matches(word_before_cursor, schema_names, meta='schema')
 
     def get_from_clause_item_matches(self, suggestion, word_before_cursor):
         alias = self.generate_aliases

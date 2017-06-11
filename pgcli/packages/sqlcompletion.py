@@ -21,7 +21,8 @@ else:
 
 Special = namedtuple('Special', [])
 Database = namedtuple('Database', [])
-Schema = namedtuple('Schema', [])
+Schema = namedtuple('Schema', ['quoted'])
+Schema.__new__.__defaults__ = (False,)
 # FromClauseItem is a table/view/function used in the FROM clause
 # `table_refs` contains the list of tables/... already in the statement,
 # used to ensure that the alias we suggest is unique
@@ -473,8 +474,10 @@ def suggest_based_on_last_token(token, stmt):
         # "CREATE DATABASE <newdb> WITH TEMPLATE <db>"
         return (Database(),)
     elif token_v == 'schema':
-        # DROP SCHEMA schema_name
-        return (Schema(),)
+        # DROP SCHEMA schema_name, SET SCHEMA schema name
+        prev_keyword = stmt.reduce_to_prev_keyword(n_skip=2)
+        quoted = prev_keyword and prev_keyword.value.lower() == 'set'
+        return (Schema(quoted),)
     elif token_v.endswith(',') or token_v in ('=', 'and', 'or'):
         prev_keyword = stmt.reduce_to_prev_keyword()
         if prev_keyword:
