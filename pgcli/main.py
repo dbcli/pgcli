@@ -35,7 +35,6 @@ from prompt_toolkit.history import FileHistory
 from pygments.lexers.sql import PostgresLexer
 from pygments.token import Token
 
-from .packages.tabulate import tabulate
 from pgspecial.main import (PGSpecial, NO_QUERY, content_exceeds_width)
 import pgspecial as special
 from .pgcompleter import PGCompleter

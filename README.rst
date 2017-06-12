@@ -1,4 +1,4 @@
-A REPL for Postgres 
+A REPL for Postgres
 -------------------
 
 |Build Status| |PyPI| |Gitter|
@@ -25,25 +25,25 @@ If you already know how to install python packages, then you can simply do:
 
     $ brew tap-pin dbcli/tap && brew install pgcli  # Only on macOS
 
-If you don't know how to install python packages, please check the 
+If you don't know how to install python packages, please check the
 `detailed instructions`__.
 
-__ https://github.com/dbcli/pgcli#detailed-installation-instructions 
+__ https://github.com/dbcli/pgcli#detailed-installation-instructions
 
 Usage
 -----
 
-:: 
+::
 
     $ pgcli [database_name]
 
     or
 
-    $ pgcli postgresql://[user[:password]@][netloc][:port][/dbname] 
+    $ pgcli postgresql://[user[:password]@][netloc][:port][/dbname]
 
-Examples: 
+Examples:
 
-:: 
+::
 
     $ pgcli local_database
 
@@ -60,10 +60,10 @@ The `pgcli` is written using prompt_toolkit_.
 * Smart-completion (enabled by default) will suggest context-sensitive
   completion.
 
-    - ``SELECT * FROM <tab>`` will only show table names. 
-    - ``SELECT * FROM users WHERE <tab>`` will only show column names. 
+    - ``SELECT * FROM <tab>`` will only show table names.
+    - ``SELECT * FROM users WHERE <tab>`` will only show column names.
 
-* Primitive support for ``psql`` back-slash commands. 
+* Primitive support for ``psql`` back-slash commands.
 * Pretty prints tabular data.
   Note: `pgcli` uses [tabulate](https://github.com/dbcli/pgcli/blob/master/pgcli/packages/tabulate.py)
   package to pretty-print tables. This library does smart formatting of numbers,
@@ -86,7 +86,7 @@ get this running in a development setup.
 
 https://github.com/dbcli/pgcli/blob/master/DEVELOP.rst
 
-Please feel free to reach out to me if you need help. 
+Please feel free to reach out to me if you need help.
 My email: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
 
 Detailed Installation Instructions:
@@ -107,22 +107,22 @@ Done!
 
 Alternatively, you can install ``pgcli`` as a python package using a package
 manager called called ``pip``. You will need postgres installed on your system
-for this to work. 
+for this to work.
 
 In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/installing.html.
 
-:: 
+::
 
     $ which pip
 
 If it is installed then you can do:
 
-:: 
+::
 
     $ pip install pgcli
 
 If that fails due to permission issues, you might need to run the command with
-sudo permissions. 
+sudo permissions.
 
 ::
 
@@ -130,7 +130,7 @@ sudo permissions.
 
 If pip is not installed check if easy_install is available on the system.
 
-:: 
+::
 
     $ which easy_install
 
@@ -143,12 +143,12 @@ In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/insta
 
 Check if pip is already available in your system.
 
-:: 
+::
 
     $ which pip
 
 If it doesn't exist, use your linux package manager to install `pip`. This
-might look something like: 
+might look something like:
 
 ::
 
@@ -159,20 +159,20 @@ might look something like:
     $ sudo yum install python-pip  # RHEL, Centos, Fedora etc
 
 ``pgcli`` requires python-dev, libpq-dev and libevent-dev packages. You can
-install these via your operating system package manager. 
+install these via your operating system package manager.
 
 
 ::
 
     $ sudo apt-get install python-dev libpq-dev libevent-dev
 
-    or 
+    or
 
     $ sudo yum install python-devel postgresql-devel
 
-Then you can install pgcli: 
+Then you can install pgcli:
 
-:: 
+::
 
     $ sudo pip install pgcli
 
@@ -214,16 +214,10 @@ Thanks:
 -------
 
 A special thanks to `Jonathan Slenders <https://twitter.com/jonathan_s>`_ for
-creating `Python Prompt Toolkit <http://github.com/jonathanslenders/python-prompt-toolkit>`_, 
+creating `Python Prompt Toolkit <http://github.com/jonathanslenders/python-prompt-toolkit>`_,
 which is quite literally the backbone library, that made this app possible.
 Jonathan has also provided valuable feedback and support during the development
 of this app.
-
-This app includes the awesome `tabulate <https://pypi.python.org/pypi/tabulate>`_ 
-library for pretty printing the output of tables. The reason for vendoring this
-library rather than listing it as a dependency in setup.py, is because I had to
-make a change to the table format which is merged back into the original repo,
-but not yet released in PyPI.
 
 `Click <http://click.pocoo.org/>`_ is used for command line option parsing
 and printing error messages.
