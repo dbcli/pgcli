@@ -168,8 +168,7 @@ class HSplit(_Split):
         there is not enough space for all the children. By default, this is a
         "Window too small" message.
     :param report_dimensions_callback: When rendering, this function is called
-        with the `Application` and the list of used dimensions. (As a
-        list of integers.)
+        with the list of used dimensions. (As a list of integers.)
     :param width: When given, use this width instead of looking at the children.
     :param height: When given, use this width instead of looking at the children.
     :param style: A style string.
@@ -352,8 +351,7 @@ class VSplit(_Split):
         there is not enough space for all the children. By default, this is a
         "Window too small" message.
     :param report_dimensions_callback: When rendering, this function is called
-        with the `Application` and the list of used dimensions. (As a
-        list of integers.)
+        with the list of used dimensions. (As a list of integers.)
     :param width: When given, use this width instead of looking at the children.
     :param height: When given, use this width instead of looking at the children.
     :param style: A style string.
@@ -1059,8 +1057,8 @@ class Window(Container):
     Container that holds a control.
 
     :param content: :class:`~prompt_toolkit.layout.controls.UIControl` instance.
-    :param width: :class:`~prompt_toolkit.layout.dimension.Dimension` instance.
-    :param height: :class:`~prompt_toolkit.layout.dimension.Dimension` instance.
+    :param width: :class:`~prompt_toolkit.layout.dimension.Dimension` instance or callable.
+    :param height: :class:`~prompt_toolkit.layout.dimension.Dimension` instance or callable.
     :param dont_extend_width: When `True`, don't take up more width then the
                               preferred width reported by the control.
     :param dont_extend_height: When `True`, don't take up more width then the
@@ -1096,9 +1094,9 @@ class Window(Container):
         instance. When True, display a cursorline.
     :param cursorcolumn: A `bool` or :class:`~prompt_toolkit.filters.Filter`
         instance. When True, display a cursorcolumn.
-    :param get_colorcolumns: A callable that takes a `Application` and
-        returns a a list of :class:`.ColorColumn` instances that describe the
-        columns to be highlighted.
+    :param get_colorcolumns: A callable that should return a a list of
+        :class:`.ColorColumn` instances that describe the columns to be
+        highlighted.
     :param align: alignment of content.
     :param style: A string string. Style to be applied to all the cells in this
         window.

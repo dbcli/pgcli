@@ -341,9 +341,8 @@ class BeforeInput(Processor):
     """
     Insert text before the input.
 
-    :param text: This can be either plain text or formatted text.
-        Or a callable that takes a
-        :class:`~prompt_toolkit.application.Application` and returns any of those.
+    :param text: This can be either plain text or formatted text
+        (or a callable that returns any of those).
     :param style: style to be applied to this prompt/prefix.
     """
     def __init__(self, text, style=''):
@@ -396,9 +395,8 @@ class AfterInput(Processor):
     """
     Insert text after the input.
 
-    :param text: This can be either plain text or formatted text.
-        Or a callable that takes a
-        :class:`~prompt_toolkit.application.Application` and returns any of those.
+    :param text: This can be either plain text or formatted text
+        (or a callable that returns any of those).
     :param style: style to be applied to this prompt/prefix.
     """
     def __init__(self, text, style=''):
@@ -446,8 +444,7 @@ class ShowLeadingWhiteSpaceProcessor(Processor):
     """
     Make leading whitespace visible.
 
-    :param get_char: Callable that takes a :class:`Application`
-        instance and returns one character.
+    :param get_char: Callable that returns one character.
     """
     def __init__(self, get_char=None, style='class:leading-whitespace'):
         assert get_char is None or callable(get_char)
@@ -483,8 +480,7 @@ class ShowTrailingWhiteSpaceProcessor(Processor):
     """
     Make trailing whitespace visible.
 
-    :param get_char: Callable that takes a :class:`Application`
-        instance and returns one character.
+    :param get_char: Callable that returns one character.
     """
     def __init__(self, get_char=None, style='class:training-whitespace'):
         assert get_char is None or callable(get_char)
@@ -523,9 +519,8 @@ class TabsProcessor(Processor):
     by replacing them with dots.)
 
     :param tabstop: (Integer) Horizontal space taken by a tab.
-    :param get_char1: Callable that takes a `Application` and return a
-        character (text of length one). This one is used for the first space
-        taken by the tab.
+    :param get_char1: Callable that returns a character (text of length one).
+        This one is used for the first space taken by the tab.
     :param get_char2: Like `get_char1`, but for the rest of the space.
     """
     def __init__(self, tabstop=4, get_char1=None, get_char2=None,
