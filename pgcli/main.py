@@ -776,9 +776,9 @@ class PGCli(object):
             'sep_title': 'RECORD {n}',
             'sep_character': '-',
             'sep_length': (1, 25),
-            'dcmlfmt': settings.dcmlfmt,
-            'floatfmt': settings.floatfmt,
-            'missing_value': settings.missingval
+            'missing_value': settings.missingval,
+            'disable_numparse': True,
+            'preserve_whitespace': True
         }
 
         if title:  # Only print the title if it's not None.
