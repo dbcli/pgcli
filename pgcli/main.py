@@ -16,6 +16,7 @@ from time import time, sleep
 from codecs import open
 
 
+from cli_helpers.tabular_output import TabularOutputFormatter
 import click
 try:
     import setproctitle
@@ -35,7 +36,6 @@ from pygments.lexers.sql import PostgresLexer
 from pygments.token import Token
 
 from .packages.tabulate import tabulate
-from .packages.expanded import expanded_table
 from pgspecial.main import (PGSpecial, NO_QUERY, content_exceeds_width)
 import pgspecial as special
 from .pgcompleter import PGCompleter
@@ -162,6 +162,7 @@ class PGCli(object):
         self.now = dt.datetime.today()
 
         self.completion_refresher = CompletionRefresher()
+        self.formatter = TabularOutputFormatter()
 
         self.query_history = []
 
@@ -651,7 +652,8 @@ class PGCli(object):
                     else lambda x: x
                 )
             )
-            formatted = format_output(title, cur, headers, status, settings)
+            formatted = self.format_output(title, cur, headers, status,
+                                           settings)
 
             output.extend(formatted)
             total = time() - start
@@ -763,6 +765,43 @@ class PGCli(object):
         """Get the last query executed or None."""
         return self.query_history[-1][0] if self.query_history else None
 
+    def format_output(self, title, cur, headers, status, settings):
+        output = []
+        expanded = (settings.expanded or settings.table_format == 'vertical')
+        table_format = ('vertical' if settings.expanded else
+                        settings.table_format)
+        max_width = settings.max_width
+        case_function = settings.case_function
+
+        output_kwargs = {
+            'sep_title': 'RECORD {n}',
+            'sep_character': '-',
+            'sep_length': (1, 25),
+            'dcmlfmt': settings.dcmlfmt,
+            'floatfmt': settings.floatfmt,
+            'missing_value': settings.missingval
+        }
+
+        if title:  # Only print the title if it's not None.
+            output.append(title)
+
+        if cur:
+            headers = [case_function(x) for x in headers]
+            rows = list(cur)
+            formatted = self.formatter.format_output(
+                rows, headers, format_name= table_format, **output_kwargs)
+
+            if (not expanded and max_width and rows and
+                    content_exceeds_width(rows[0], max_width) and headers):
+                formatted = self.formatter.format_output(
+                    rows, headers, format_name='vertical', **output_kwargs)
+
+            output.append(formatted)
+
+        if status:  # Only print the status if it's not None.
+            output.append(status)
+
+        return output
 
 
 @click.command()
@@ -866,35 +905,6 @@ def obfuscate_process_password():
         process_title = re.sub(r"password=(.+?)((\s[a-zA-Z]+=)|$)", r"password=xxxx\2", process_title)
 
     setproctitle.setproctitle(process_title)
-
-
-def format_output(title, cur, headers, status, settings):
-    output = []
-    missingval = settings.missingval
-    table_format = settings.table_format
-    dcmlfmt = settings.dcmlfmt
-    floatfmt = settings.floatfmt
-    expanded = settings.expanded
-    max_width = settings.max_width
-    case_function = settings.case_function
-    if title:  # Only print the title if it's not None.
-        output.append(title)
-    if cur:
-        headers = [case_function(utf8tounicode(x)) for x in headers]
-        if expanded and headers:
-            output.append(expanded_table(cur, headers, missingval))
-        else:
-            tabulated, rows = tabulate(cur, headers, tablefmt=table_format,
-                missingval=missingval, dcmlfmt=dcmlfmt, floatfmt=floatfmt)
-            if (max_width and rows and
-                    content_exceeds_width(rows[0], max_width) and
-                    headers):
-                output.append(expanded_table(rows, headers, missingval))
-            else:
-                output.append(tabulated)
-    if status:  # Only print the status if it's not None.
-        output.append(status)
-    return output
 
 
 def has_meta_cmd(query):
