@@ -3,6 +3,7 @@ Layout dimensions are used to give the minimum, maximum and preferred
 dimensions for containers and controls.
 """
 from __future__ import unicode_literals
+from prompt_toolkit.utils import test_callable_args
 
 __all__ = (
     'Dimension',
@@ -10,6 +11,7 @@ __all__ = (
     'sum_layout_dimensions',
     'max_layout_dimensions',
     'to_dimension',
+    'is_dimension',
 )
 
 
@@ -166,8 +168,25 @@ def to_dimension(value):
         return Dimension.exact(value)
     if isinstance(value, Dimension):
         return value
+    if callable(value):
+        return to_dimension(value())
 
     raise ValueError('Not an integer or Dimension object.')
+
+
+def is_dimension(value):
+    """
+    Test whether the given value could be a valid dimension.
+    (For usage in an assertion. It's not guaranteed in case of a callable.)
+    """
+    if value is None:
+        return True
+    if callable(value):
+        return test_callable_args(value, [])
+    if isinstance(value, (int, Dimension)):
+        return True
+    return False
+
 
 # Common alias.
 D = Dimension

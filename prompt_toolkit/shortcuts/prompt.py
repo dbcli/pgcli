@@ -389,7 +389,7 @@ class Prompt(object):
 
         default_buffer_window = Window(
             default_buffer_control,
-            get_height=self._get_default_buffer_control_height,
+            height=self._get_default_buffer_control_height,
             left_margins=[
                 # In multiline mode, use the window margin to display
                 # the prompt and continuation fragments.

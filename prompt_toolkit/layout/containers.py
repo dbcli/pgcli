@@ -9,7 +9,7 @@ from six import with_metaclass, text_type
 from six.moves import range
 
 from .controls import UIControl, FormattedTextControl, UIContent, DummyControl
-from .dimension import Dimension, sum_layout_dimensions, max_layout_dimensions, to_dimension
+from .dimension import Dimension, sum_layout_dimensions, max_layout_dimensions, to_dimension, is_dimension
 from .margins import Margin
 from .screen import Point, WritePosition, _CHAR_CACHE
 from .utils import fragment_list_to_text, explode_text_fragments, fragment_list_width
@@ -18,7 +18,7 @@ from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.filters import to_filter, ViInsertMode, EmacsInsertMode
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from prompt_toolkit.reactive import Integer
-from prompt_toolkit.utils import take_using_weights, get_cwidth, test_callable_args
+from prompt_toolkit.utils import take_using_weights, get_cwidth
 
 __all__ = (
     'Container',
@@ -128,6 +128,9 @@ class _Split(Container):
         assert isinstance(children, list)
         assert isinstance(modal, bool)
         assert isinstance(style, text_type)
+        assert is_dimension(width)
+        assert is_dimension(height)
+        assert is_dimension(padding)
 
         self.children = [to_container(c) for c in children]
         self.window_too_small = window_too_small or _window_too_small()
@@ -737,6 +740,9 @@ class Float(object):
 
     :param content: :class:`.Container` instance.
 
+    :param width: `Dimension` or callable which returns a `Dimension`.
+    :param height: `Dimension` or callable which returns a `Dimension`.
+
     :param left: Distance to the left edge of the `FloatContainer`.
     :param right: Distance to the right edge of the `FloatContainer`.
     :param top: Distance to the top of the `FloatContainer`.
@@ -749,11 +755,11 @@ class Float(object):
         below the cursor. Not on top of the indicated position.
     """
     def __init__(self, content=None, top=None, right=None, bottom=None, left=None,
-                 width=None, height=None, get_width=None, get_height=None,
+                 width=None, height=None,
                  xcursor=None, ycursor=None, attach_to_window=None,
                  hide_when_covering_content=False, allow_cover_cursor=False):
-        assert width is None or get_width is None
-        assert height is None or get_height is None
+        assert is_dimension(width)
+        assert is_dimension(height)
         assert isinstance(hide_when_covering_content, bool)
         assert isinstance(allow_cover_cursor, bool)
 
@@ -762,11 +768,8 @@ class Float(object):
         self.top = top
         self.bottom = bottom
 
-        self._width = width
-        self._height = height
-
-        self._get_width = get_width
-        self._get_height = get_height
+        self.width = width
+        self.height = height
 
         self.xcursor = xcursor
         self.ycursor = ycursor
@@ -781,16 +784,14 @@ class Float(object):
         self.allow_cover_cursor = allow_cover_cursor
 
     def get_width(self):
-        if self._width:
-            return self._width
-        if self._get_width:
-            return self._get_width()
+        if callable(self.width):
+            return self.width()
+        return self.width
 
     def get_height(self):
-        if self._height:
-            return self._height
-        if self._get_height:
-            return self._get_height()
+        if callable(self.height):
+            return self.height()
+        return self.height
 
     def __repr__(self):
         return 'Float(content=%r)' % self.content
@@ -1060,8 +1061,6 @@ class Window(Container):
     :param content: :class:`~prompt_toolkit.layout.controls.UIControl` instance.
     :param width: :class:`~prompt_toolkit.layout.dimension.Dimension` instance.
     :param height: :class:`~prompt_toolkit.layout.dimension.Dimension` instance.
-    :param get_width: callable which takes a `Application` and returns a `Dimension`.
-    :param get_height: callable which takes a `Application` and returns a `Dimension`.
     :param dont_extend_width: When `True`, don't take up more width then the
                               preferred width reported by the control.
     :param dont_extend_height: When `True`, don't take up more width then the
@@ -1109,8 +1108,8 @@ class Window(Container):
         (when `char` or `get_char` is geven, it will never be transparant
         anyway, and this parameter doesn't change anything.)
     """
-    def __init__(self, content=None, width=None, height=None, get_width=None,
-                 get_height=None, dont_extend_width=False, dont_extend_height=False,
+    def __init__(self, content=None, width=None, height=None,
+                 dont_extend_width=False, dont_extend_height=False,
                  left_margins=None, right_margins=None, scroll_offsets=None,
                  allow_scroll_beyond_bottom=False, wrap_lines=False,
                  get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False,
@@ -1118,12 +1117,8 @@ class Window(Container):
                  align=Align.LEFT, style='', char=None,
                  get_char=None, transparent=False):
         assert content is None or isinstance(content, UIControl)
-        assert width is None or isinstance(width, (Dimension, int))
-        assert height is None or isinstance(height, (Dimension, int))
-        assert get_width is None or callable(get_width)
-        assert get_height is None or callable(get_height)
-        assert width is None or get_width is None
-        assert height is None or get_height is None
+        assert is_dimension(width)
+        assert is_dimension(height)
         assert scroll_offsets is None or isinstance(scroll_offsets, ScrollOffsets)
         assert left_margins is None or all(isinstance(m, Margin) for m in left_margins)
         assert right_margins is None or all(isinstance(m, Margin) for m in right_margins)
@@ -1158,13 +1153,8 @@ class Window(Container):
         self.get_char = get_char
         self.transparent = transparent
 
-        width = to_dimension(width)
-        height = to_dimension(height)
-        self._width = get_width or (lambda: width)
-        self._height = get_height or (lambda: height)
-
-        assert test_callable_args(self._width, [])
-        assert test_callable_args(self._height, [])
+        self.width = width
+        self.height = height
 
         # Cache for the screens generated by the margin.
         self._ui_content_cache = SimpleCache(maxsize=8)
@@ -1228,7 +1218,7 @@ class Window(Container):
 
         # Merge.
         return self._merge_dimensions(
-            dimension=self._width(),
+            dimension=to_dimension(self.width),
             get_preferred=preferred_content_width,
             dont_extend=self.dont_extend_width)
 
@@ -1247,7 +1237,7 @@ class Window(Container):
                 width - total_margin_width, max_available_height, wrap_lines)
 
         return self._merge_dimensions(
-            dimension=self._height(),
+            dimension=to_dimension(self.height),
             get_preferred=preferred_content_height,
             dont_extend=self.dont_extend_height)
 

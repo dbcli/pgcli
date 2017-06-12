@@ -226,7 +226,7 @@ class Label(object):
 
         self.window = Window(
             content=self.formatted_text_control,
-            get_width=get_width,
+            width=get_width,
             style='class:label ' + style,
             dont_extend_height=dont_extend_height,
             dont_extend_width=dont_extend_width)
@@ -578,8 +578,8 @@ class ProgressBar(object):
                 Float(content=self.label, top=0, bottom=0),
 
                 Float(left=0, top=0, right=0, bottom=0, content=VSplit([
-                    Window(style='class:progress-bar.used', get_width=lambda: D(weight=int(self._percentage))),
-                    Window(style='class:progress-bar', get_width=lambda: D(weight=int(100 - self._percentage))),
+                    Window(style='class:progress-bar.used', width=lambda: D(weight=int(self._percentage))),
+                    Window(style='class:progress-bar', width=lambda: D(weight=int(100 - self._percentage))),
                 ])),
             ])
 
