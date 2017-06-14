@@ -316,9 +316,23 @@ class PGCli(object):
         # unquote str(each URI part (they may be percent encoded)
         self.connect(**arguments)
 
+    def guess_socketdir(self):
+        candidates = [
+            '/var/run/postgresql',
+            '/var/pgsql_socket',
+            '/usr/local/var/postgres',
+            '/tmp',
+        ]
+
+        for candidate in candidates:
+            if os.path.isdir(candidate):
+                return candidate
+
     def connect(self, database='', host='', user='', port='', passwd='',
                 dsn='', **kwargs):
         # Connect to the database.
+        if not host:
+            host = self.guess_socketdir() or ''
 
         if not user:
             user = getuser()
