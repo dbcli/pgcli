@@ -30,6 +30,8 @@ NamedQueries.instance = NamedQueries.from_config(
 
 Match = namedtuple('Match', ['completion', 'priority'])
 _SchemaObject = namedtuple('SchemaObject', ['name', 'schema', 'function'])
+
+
 def SchemaObject(name, schema=None, function=False):
     return _SchemaObject(name, schema, function)
 
@@ -49,6 +51,7 @@ def generate_alias(tbl):
     """
     return ''.join([l for l in tbl if l.isupper()] or
         [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and l != '_'])
+
 
 class PGCompleter(Completer):
     # keywords_tree: A dict mapping keywords to well known following keywords.
@@ -827,6 +830,3 @@ class PGCompleter(Completer):
             for meta in metas
             if filter_func(meta)
         ]
-
-
-

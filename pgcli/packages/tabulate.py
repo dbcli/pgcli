@@ -311,6 +311,7 @@ def _isint(string):
     """
     return type(string) is _int_type or type(string) is _long_type
 
+
 def _type(string, has_invisible=True):
     """The least generic type (type(None), int, float, str, unicode).
 

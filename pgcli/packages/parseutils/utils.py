@@ -15,6 +15,7 @@ cleanup_regex = {
         'all_punctuations': re.compile('([^\s]+)$'),
         }
 
+
 def last_word(text, include='alphanum_underscore'):
     """
     Find the last word in a sentence.
@@ -137,4 +138,3 @@ def parse_partial_identifier(word):
         return parse_partial_identifier(word + '"')
     else:
         return None
-

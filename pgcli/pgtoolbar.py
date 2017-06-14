@@ -2,6 +2,7 @@ from pygments.token import Token
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.key_binding.vi_state import InputMode
 
+
 def _get_vi_mode(cli):
     return {
         InputMode.INSERT: 'I',
@@ -9,6 +10,7 @@ def _get_vi_mode(cli):
         InputMode.REPLACE: 'R',
         InputMode.INSERT_MULTIPLE: 'M',
     }[cli.vi_state.input_mode]
+
 
 def create_toolbar_tokens_func(get_vi_mode_enabled, get_is_refreshing,
                                failed_transaction, valid_transaction):

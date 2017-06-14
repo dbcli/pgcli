@@ -75,6 +75,7 @@ def test_builtin_function_name_completion(completer):
         keyword('MAXEXTENTS', -2), keyword('MATERIALIZED VIEW', -2)
     ])
 
+
 @parametrize('completer', completers())
 def test_builtin_function_matches_only_at_start(completer):
     text = 'SELECT IN'
@@ -205,7 +206,6 @@ def test_suggested_multiple_column_names_with_alias(completer):
     assert result == set(testdata.columns('users'))
 
 
-
 @parametrize('completer', completers(casing=True))
 def test_suggested_cased_column_names_with_alias(completer):
     result = result_set(
@@ -324,6 +324,7 @@ def test_suggested_joins_fuzzy(completer, text):
     last_word = text.split()[-1]
     expected = join('users ON users.id = u.userid', -len(last_word))
     assert expected in result
+
 
 join_texts = [
     'SELECT * FROM Users JOIN ',
@@ -852,6 +853,7 @@ def test_keyword_casing_upper(keyword_casing, expected, texts):
         completer = testdata.get_completer({'keyword_casing': keyword_casing})
         completions = get_result(completer, text)
         assert expected in [cpl.text for cpl in completions]
+
 
 @parametrize('completer', completers())
 def test_keyword_after_alter(completer):

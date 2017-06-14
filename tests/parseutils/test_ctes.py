@@ -117,5 +117,3 @@ def test_multiple_cte_extraction():
     assert tuple(ctes) == (
         ('x', ('abc', 'def'), start1, stop1),
         ('y', ('ghi', 'jkl'), start2, stop2))
-
-

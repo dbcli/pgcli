@@ -55,6 +55,7 @@ def test_format_output():
     expected = ['Title', '+---------+---------+\n| head1   | head2   |\n|---------+---------|\n| abc     | def     |\n+---------+---------+', 'test status']
     assert results == expected
 
+
 def test_format_output_auto_expand():
     settings = OutputSettings(table_format='psql', dcmlfmt='d', floatfmt='g', max_width=100)
     table_results = format_output('Title', [('abc', 'def')],

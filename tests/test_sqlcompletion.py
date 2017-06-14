@@ -68,6 +68,7 @@ def test_where_in_suggests_columns(expression):
     suggestions = suggest_type(expression, expression)
     assert set(suggestions) == cols_etc('tabl', last_keyword='WHERE')
 
+
 @pytest.mark.parametrize('expression', [
     'SELECT 1 AS ',
     'SELECT 1 FROM tabl AS ',
@@ -212,6 +213,7 @@ def test_truncate_suggests_qualified_tables():
     assert set(suggestions) == set([
         Table(schema='sch')])
 
+
 @pytest.mark.parametrize('text', [
     'SELECT DISTINCT ',
     'INSERT INTO foo SELECT DISTINCT '
@@ -277,6 +279,7 @@ def test_distinct_and_order_by_suggestions_with_alias_given(text, text_before):
         Function(schema='x'),
     ])
 
+
 def test_col_comma_suggests_cols():
     suggestions = suggest_type('SELECT a, b, FROM tbl', 'SELECT a, b,')
     assert set(suggestions) == set([
@@ -302,6 +305,7 @@ def test_into_suggests_tables_and_schemas():
         View(schema=None),
         Schema(),
     ])
+
 
 @pytest.mark.parametrize('text', [
     'INSERT INTO abc (',
@@ -537,6 +541,7 @@ def test_on_suggests_aliases_and_join_conditions(sql):
     assert set(suggestions) == set((JoinCondition(table_refs=tables, parent=None),
         Alias(aliases=('a', 'b',)),))
 
+
 @pytest.mark.parametrize('sql', [
     'select abc.x, bcd.y from abc join bcd on abc.id = bcd.id AND ',
     'select abc.x, bcd.y from abc join bcd on ',
@@ -643,6 +648,7 @@ def test_3_statements_2nd_current():
                                'select * from a; select ')
     assert set(suggestions) == cols_etc('b', last_keyword='SELECT')
 
+
 @pytest.mark.parametrize('text', [
 '''
 CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $$
@@ -695,6 +701,7 @@ def test_statements_in_function_body(text):
         Keyword('SELECT'),
     ])
 
+
 functions = [
 '''
 CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $$
@@ -713,6 +720,7 @@ SELECT 1 FROM foo;
     '''
 ]
 
+
 @pytest.mark.parametrize('text', functions)
 def test_statements_with_cursor_after_function_body(text):
     suggestions = suggest_type(text, text[:text.find('; ') + 1])
@@ -723,6 +731,7 @@ def test_statements_with_cursor_after_function_body(text):
 def test_statements_with_cursor_before_function_body(text):
     suggestions = suggest_type(text, '')
     assert set(suggestions) == set([Keyword(), Special()])
+
 
 def test_create_db_with_template():
     suggestions = suggest_type('create database foo with template ',

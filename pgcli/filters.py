@@ -1,5 +1,6 @@
 from prompt_toolkit.filters import Filter
 
+
 class HasSelectedCompletion(Filter):
     """Enable when the current buffer has a selected completion."""
 
