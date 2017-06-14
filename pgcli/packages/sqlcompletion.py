@@ -170,6 +170,7 @@ def _strip_named_query(txt):
         txt = named_query_regex.sub('', txt)
     return txt
 
+
 function_body_pattern = re.compile('(\\$.*?\\$)([\s\S]*?)\\1', re.M)
 
 
@@ -235,6 +236,7 @@ SPECIALS_SUGGESTION = {
     'dv': View,
     'sf': Function,
 }
+
 
 def suggest_special(text):
     text = text.lstrip()

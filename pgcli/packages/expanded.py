@@ -1,8 +1,10 @@
 from .tabulate import _text_type
 from ..encodingutils import utf8tounicode
 
+
 def pad(field, total, char=u" "):
     return field + (char * (total - len(field)))
+
 
 def expanded_table(rows, headers, missingval=""):
     header_len = max([len(x) for x in headers])

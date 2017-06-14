@@ -140,9 +140,3 @@ def _identifiers(tok):
                 yield t
     elif isinstance(tok, Identifier):
         yield tok
-
-
-
-
-
-

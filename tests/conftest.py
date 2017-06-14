@@ -29,5 +29,3 @@ def executor(connection):
 @pytest.fixture
 def exception_formatter():
     return lambda e: str(e)
-
-

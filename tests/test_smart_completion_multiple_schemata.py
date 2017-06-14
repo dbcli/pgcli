@@ -547,6 +547,7 @@ def test_schema_object_order(completer):
         table(t, pos=-1) for t in ('users', 'custom."Users"', 'custom.users')
     ]
 
+
 @parametrize('completer', completers(casing=False, filtr=False, aliasing=False))
 def test_all_schema_objects(completer):
     text = ('SELECT * FROM ')

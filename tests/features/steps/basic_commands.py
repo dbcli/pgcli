@@ -21,6 +21,7 @@ def step_run_cli(context):
 def step_wait_prompt(context):
     wrappers.wait_prompt(context)
 
+
 @when('we send "ctrl + d"')
 def step_ctrl_d(context):
     """

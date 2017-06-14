@@ -73,6 +73,7 @@ def test_should_break_ties_using_lexical_order(completer, collection):
 
     assert matches[1].priority > matches[0].priority
 
+
 def test_matching_should_be_case_insensitive(completer):
     """Fuzzy matching should keep matches even if letter casing doesn't match.
 
