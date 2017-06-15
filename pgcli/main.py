@@ -292,9 +292,6 @@ class PGCli(object):
         pgspecial_logger.addHandler(handler)
         pgspecial_logger.setLevel(log_level)
 
-    def connect_dsn(self, dsn):
-        self.connect(dsn=dsn)
-
     def connect_uri(self, uri):
         uri = urlparse(uri)
         database = uri.path[1:]  # ignore the leading fwd slash
@@ -854,9 +851,9 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
     elif '://' in database:
         pgcli.connect_uri(database)
     elif "=" in database:
-        pgcli.connect_dsn(database)
+        pgcli.connect(dsn=database)
     elif os.environ.get('PGSERVICE', None):
-        pgcli.connect_dsn('service={0}'.format(os.environ['PGSERVICE']))
+        pgcli.connect(dsn='service={0}'.format(os.environ['PGSERVICE']))
     else:
         pgcli.connect(database, host, user, port)
 
