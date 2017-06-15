@@ -85,12 +85,6 @@ OutputSettings.__new__.__defaults__ = (
 )
 
 
-# no-op logging handler
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
-
-
 class PGCli(object):
 
     default_prompt = '\\u@\\h:\\d> '
@@ -261,7 +255,7 @@ class PGCli(object):
         # Disable logging if value is NONE by switching to a no-op handler.
         # Set log level to a high value so it doesn't even waste cycles getting called.
         if log_level.upper() == 'NONE':
-            handler = NullHandler()
+            handler = logging.NullHandler()
         else:
             handler = logging.FileHandler(os.path.expanduser(log_file))
 
