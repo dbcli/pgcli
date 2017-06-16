@@ -20,6 +20,7 @@ __all__ = (
 class MenuContainer(object):
     """
     :param floats: List of extra Float objects to display.
+    :param menu_items: List of `MenuItem` objects.
     """
     def __init__(self, body, menu_items=None, floats=None, key_bindings=None):
         assert isinstance(menu_items, list) and \
@@ -88,15 +89,31 @@ class MenuContainer(object):
 
         @kb.add('up', filter=in_sub_menu)
         def _(event):
-            if len(self.selected_menu) == 2 and self.selected_menu[1] == 0:
+            " Select previous (enabled) menu item or return to main menu. "
+            # Look for previous enabled items in this sub menu.
+            menu = self._get_menu(len(self.selected_menu) - 2)
+            index = self.selected_menu[-1]
+
+            previous_indexes = [i for i, item in enumerate(menu.children)
+                            if i < index and not item.disabled]
+
+            if previous_indexes:
+                self.selected_menu[-1] = previous_indexes[-1]
+            elif len(self.selected_menu) == 2:
+                # Return to main menu.
                 self.selected_menu.pop()
-            elif self.selected_menu[-1] > 0:
-                self.selected_menu[-1] -= 1
 
         @kb.add('down', filter=in_sub_menu)
         def _(event):
-            if self.selected_menu[-1] < len(self._get_menu(len(self.selected_menu) - 2).children) - 1:
-                self.selected_menu[-1] += 1
+            " Select next (enabled) menu item. "
+            menu = self._get_menu(len(self.selected_menu) - 2)
+            index = self.selected_menu[-1]
+
+            next_indexes = [i for i, item in enumerate(menu.children)
+                            if i > index and not item.disabled]
+
+            if next_indexes:
+                self.selected_menu[-1] = next_indexes[0]
 
         @kb.add('enter')
         def _(event):
