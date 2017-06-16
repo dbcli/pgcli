@@ -26,9 +26,12 @@ class Completion(object):
         completion, e.g. the path or source where it's coming from.
     :param get_display_meta: Lazy `display_meta`. Retrieve meta information
         only when meta is displayed.
+    :param style: Style string.
+    :param selected_style: Style string, used for a selected completion.
+        This can override the `style` parameter.
     """
     def __init__(self, text, start_position=0, display=None, display_meta=None,
-                 get_display_meta=None):
+                 get_display_meta=None, style='', selected_style=''):
         self.text = text
         self.start_position = start_position
         self._display_meta = display_meta
@@ -38,6 +41,9 @@ class Completion(object):
             self.display = text
         else:
             self.display = display
+
+        self.style = style
+        self.selected_style = selected_style
 
         assert self.start_position <= 0
 

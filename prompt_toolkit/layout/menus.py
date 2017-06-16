@@ -108,9 +108,10 @@ class CompletionsMenuControl(UIControl):
 
     def _get_menu_item_fragments(self, completion, is_current_completion, width):
         if is_current_completion:
-            style_str = 'class:current-completion'
+            style_str = 'class:current-completion %s %s' % (
+                completion.style, completion.selected_style)
         else:
-            style_str = 'class:completion'
+            style_str = 'class:completion ' + completion.style
 
         text, tw = _trim_text(completion.display, width - 2)
         padding = ' ' * (width - 2 - tw)
@@ -366,9 +367,10 @@ class MultiColumnCompletionMenuControl(UIControl):
 
     def _get_menu_item_fragments(self, completion, is_current_completion, width):
         if is_current_completion:
-            style_str = 'class:current-completion'
+            style_str = 'class:current-completion %s %s' % (
+                completion.style, completion.selected_style)
         else:
-            style_str = 'class:completion'
+            style_str = 'class:completion ' + completion.style
 
         text, tw = _trim_text(completion.display, width)
         padding = ' ' * (width - tw - 1)
