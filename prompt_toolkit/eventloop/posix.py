@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 import fcntl
 import os
-import random
 import signal
 import threading
 import time
@@ -152,10 +151,6 @@ class PosixEventLoop(EventLoop):
                             handler = self._read_fds.get(fd)
                             if handler:
                                 tasks.append(handler)
-
-                    # Handle everything in random order. (To avoid starvation.)
-                    random.shuffle(tasks)
-                    random.shuffle(low_priority_tasks)
 
                     # When there are high priority tasks, run all these.
                     # Schedule low priority tasks for the next iteration.
