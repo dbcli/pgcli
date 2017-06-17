@@ -24,7 +24,7 @@ with open('./pager.py', 'rb') as f:
     text = f.read().decode('utf-8')
 
 
-def get_statusbar_text(app):
+def get_statusbar_text():
     return [
         ('class:status', './pager.py - '),
         ('class:status.position', '{}:{}'.format(
