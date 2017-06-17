@@ -8,6 +8,7 @@ from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.input.base import Input
 from prompt_toolkit.input.defaults import create_input
+from prompt_toolkit.key_binding.bindings.mouse import load_mouse_bindings
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, KeyBindingsBase, merge_key_bindings
 from prompt_toolkit.key_binding.key_processor import KeyProcessor
@@ -121,6 +122,7 @@ class Application(object):
 
         self.layout = layout
         self.key_bindings = key_bindings
+        self.mouse_bindings = load_mouse_bindings()
         self.clipboard = clipboard or InMemoryClipboard()
         self.full_screen = full_screen
         self.mouse_support = mouse_support
@@ -877,8 +879,11 @@ class _CombinedRegistry(KeyBindingsBase):
                 break
             container = self.app.layout.get_parent(container)
 
-        # Add key bindings
+        # Add App key bindings
         key_bindings.append(self.app.key_bindings)
+
+        # Add mouse bindings.
+        key_bindings.append(self.app.mouse_bindings)
 
         # Reverse this list. The current control's key bindings should come
         # last. They need priority.

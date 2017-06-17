@@ -12,6 +12,7 @@ __all__ = (
     'has_arg',
     'has_completions',
     'has_focus',
+    'buffer_has_focus',
     'has_selection',
     'has_validation_error',
     'is_aborting',
@@ -69,6 +70,14 @@ def has_focus(value):
     def has_focus_filter():
         return test()
     return has_focus_filter
+
+
+@Condition
+def buffer_has_focus():
+    """
+    Enabled when the currently focussed control is a `BufferControl`.
+    """
+    return get_app().layout.buffer_has_focus
 
 
 @Condition

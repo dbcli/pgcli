@@ -6,10 +6,10 @@ Default key bindings.::
 """
 from __future__ import unicode_literals
 from prompt_toolkit.key_binding.key_bindings import ConditionalKeyBindings, merge_key_bindings
-from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_abort_and_exit_bindings, load_basic_system_bindings, load_auto_suggestion_bindings, load_mouse_bindings
+from prompt_toolkit.key_binding.bindings.basic import load_basic_bindings, load_abort_and_exit_bindings, load_basic_system_bindings, load_auto_suggestion_bindings
 from prompt_toolkit.key_binding.bindings.emacs import load_emacs_bindings, load_emacs_search_bindings, load_emacs_open_in_editor_bindings, load_extra_emacs_page_navigation_bindings
 from prompt_toolkit.key_binding.bindings.vi import load_vi_bindings, load_vi_search_bindings, load_vi_open_in_editor_bindings, load_extra_vi_page_navigation_bindings
-from prompt_toolkit.filters import to_filter
+from prompt_toolkit.filters import to_filter, buffer_has_focus
 
 __all__ = (
     'load_key_bindings',
@@ -45,10 +45,9 @@ def load_key_bindings(
     enable_extra_page_navigation = to_filter(enable_extra_page_navigation)
     enable_auto_suggest_bindings = to_filter(enable_auto_suggest_bindings)
 
-    return merge_key_bindings([
+    all_bindings = merge_key_bindings([
         # Load basic bindings.
         load_basic_bindings(),
-        load_mouse_bindings(),
 
         ConditionalKeyBindings(load_abort_and_exit_bindings(),
                                enable_abort_and_exit_bindings),
@@ -87,3 +86,9 @@ def load_key_bindings(
         ConditionalKeyBindings(load_auto_suggestion_bindings(),
                                enable_auto_suggest_bindings),
     ])
+
+    # Make sure that the above key bindings are only active if the
+    # currently focussed control is a `BufferControl`. For other controls, we
+    # don't want these key bindings to intervene. (This would break "ptterm"
+    # for instance, which handles 'Keys.Any' in the user control itself.)
+    return ConditionalKeyBindings(all_bindings, buffer_has_focus)

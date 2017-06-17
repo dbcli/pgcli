@@ -131,6 +131,16 @@ class Layout(object):
             return ui_control.buffer
 
     @property
+    def buffer_has_focus(self):
+        """
+        Return `True` if the currently foccussed control is a `BufferControl`.
+        (For instance, used to determine whether the default key bindings
+        should be active or not.)
+        """
+        ui_control = self.current_control
+        return isinstance(ui_control, BufferControl)
+
+    @property
     def previous_control(self):
         """
         Get the `UIControl` to previously had the focus.
