@@ -372,8 +372,9 @@ class Vt100_Output(Output):
     """
     :param get_size: A callable which returns the `Size` of the output terminal.
     :param stdout: Any object with has a `write` and `flush` method + an 'encoding' property.
-    :param true_color: Use 24bit color instead of 256 colors. (Can be a :class:`SimpleFilter`.)
-        When `ansi_colors_only` is set, only 16 colors are used.
+    :param true_color: Use 24bit color instead of 256 colors.
+        (Can be a :class:`Filter`.) When `ansi_colors_only` is set, only 16
+        colors are used.
     :param ansi_colors_only: Restrict to 16 ANSI colors only.
     :param term: The terminal environment variable. (xterm, xterm-256color, linux, ...)
     :param write_binary: Encode the output before writing it. If `True` (the

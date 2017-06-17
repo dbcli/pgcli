@@ -197,7 +197,7 @@ class FormattedTextControl(UIControl):
         either handle the event or return `NotImplemented` in case we want the
         containing Window to handle this event.
 
-    :param focussable: `bool` or `SimpleFilter`: Tell whether this control is focussable.
+    :param focussable: `bool` or `Filter`: Tell whether this control is focussable.
 
     :param text: Text or formatted text to be displayed.
     :param key_bindings: a `KeyBindings` object.
@@ -375,12 +375,12 @@ class BufferControl(UIControl):
         :func:`~prompt_toolkit.layout.processors.merge_processors` if you want
         to apply multiple processors.)
     :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` instance for syntax highlighting.
-    :param preview_search: `bool` or `SimpleFilter`: Show search while typing.
+    :param preview_search: `bool` or `Filter`: Show search while typing.
         When this is `True`, probably you want to add a
         ``HighlightSearchProcessor`` with ``preview_search=True`` as well.
         Otherwise only the cursor position will move, but the text won't be
         highlighted.
-    :param focussable: `bool` or `SimpleFilter`: Tell whether this control is focussable.
+    :param focussable: `bool` or `Filter`: Tell whether this control is focussable.
     :param get_search_state: Callable that returns the SearchState to be used.
     :param focus_on_click: Focus this buffer when it's click, but not yet focussed.
     :param key_bindings: a `KeyBindings` object.

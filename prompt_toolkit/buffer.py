@@ -151,15 +151,15 @@ class Buffer(object):
 
     Filters:
 
-    :param complete_while_typing: :class:`~prompt_toolkit.filters.SimpleFilter`
+    :param complete_while_typing: :class:`~prompt_toolkit.filters.Filter`
         instance. Decide whether or not to do asynchronous autocompleting while
         typing.
-    :param enable_history_search: :class:`~prompt_toolkit.filters.SimpleFilter`
+    :param enable_history_search: :class:`~prompt_toolkit.filters.Filter`
         to indicate when up-arrow partial string matching is enabled. It is
         adviced to not enable this at the same time as `complete_while_typing`,
         because when there is an autocompletion found, the up arrows usually
         browse through the completions, rather than through the history.
-    :param read_only: :class:`~prompt_toolkit.filters.SimpleFilter`. When True,
+    :param read_only: :class:`~prompt_toolkit.filters.Filter`. When True,
         changes will not be allowed.
     :param multiline: When set, pressing `Enter` will call the `accept_handler`.
         Otherwise, pressing `Esc-Enter` is required.

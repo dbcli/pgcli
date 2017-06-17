@@ -16,9 +16,9 @@ def create_output(stdout=None, true_color=False, ansi_colors_only=None):
     line.
 
     :param true_color: When True, use 24bit colors instead of 256 colors.
-        (`bool` or :class:`~prompt_toolkit.filters.SimpleFilter`.)
+        (`bool` or :class:`~prompt_toolkit.filters.Filter`.)
     :param ansi_colors_only: When True, restrict to 16 ANSI colors only.
-        (`bool` or :class:`~prompt_toolkit.filters.SimpleFilter`.)
+        (`bool` or :class:`~prompt_toolkit.filters.Filter`.)
     """
     stdout = stdout or sys.__stdout__
     true_color = to_filter(true_color)

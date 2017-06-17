@@ -117,7 +117,7 @@ class _RPrompt(Window):
 
 
 def _true(value):
-    " Test whether `value` is True. In case of a SimpleFilter, call it. "
+    " Test whether `value` is True. In case of a Filter, call it. "
     return to_filter(value)()
 
 
@@ -153,10 +153,10 @@ class Prompt(object):
     :param editing_mode: ``EditingMode.VI`` or ``EditingMode.EMACS``.
     :param vi_mode: `bool`, if True, Identical to ``editing_mode=EditingMode.VI``.
     :param complete_while_typing: `bool` or
-        :class:`~prompt_toolkit.filters.SimpleFilter`. Enable autocompletion
+        :class:`~prompt_toolkit.filters.Filter`. Enable autocompletion
         while typing.
     :param enable_history_search: `bool` or
-        :class:`~prompt_toolkit.filters.SimpleFilter`. Enable up-arrow parting
+        :class:`~prompt_toolkit.filters.Filter`. Enable up-arrow parting
         string matching.
     :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` to be used for
         the syntax highlighting.
@@ -283,9 +283,9 @@ class Prompt(object):
             """
             Dynamically take this setting from this 'Prompt' class.
             `attr_name` represents an attribute name of this class. Its value
-            can either be a boolean or a `SimpleFilter`.
+            can either be a boolean or a `Filter`.
 
-            This returns something that can be used as either a `SimpleFilter`
+            This returns something that can be used as either a `Filter`
             or `Filter`.
             """
             @Condition
@@ -311,9 +311,8 @@ class Prompt(object):
         default_buffer = Buffer(
             name=DEFAULT_BUFFER,
                 # Make sure that complete_while_typing is disabled when
-                # enable_history_search is enabled. (First convert to
-                # SimpleFilter, to avoid doing bitwise operations on bool
-                # objects.)
+                # enable_history_search is enabled. (First convert to Filter,
+                # to avoid doing bitwise operations on bool objects.)
             complete_while_typing=Condition(lambda:
                 _true(self.complete_while_typing) and not
                 _true(self.enable_history_search) and not
