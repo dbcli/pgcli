@@ -781,12 +781,12 @@ class PGCli(object):
             output.append(title)
 
         if cur:
-            headers = [case_function(x) for x in headers]
+            headers = [case_function(utf8tounicode(x)) for x in headers]
             rows = list(cur)
             formatted = self.formatter.format_output(
-                rows, headers, format_name= table_format, **output_kwargs)
+                rows, headers, format_name=table_format, **output_kwargs)
 
-            if (not expanded and max_width and rows and
+            if (not expanded and max_width and
                     content_exceeds_width(rows[0], max_width) and headers):
                 formatted = self.formatter.format_output(
                     rows, headers, format_name='vertical', **output_kwargs)
