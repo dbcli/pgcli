@@ -58,12 +58,5 @@ def pgcli_line_magic(line):
         _logger.debug('Dangerous query detected -- ignoring')
         return
 
-
     ipython = get_ipython()
     return ipython.run_cell_magic('sql', line, q.query)
-
-
-
-
-
-

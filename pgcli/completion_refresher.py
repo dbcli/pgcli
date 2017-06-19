@@ -100,10 +100,12 @@ def refresher(name, refreshers=CompletionRefresher.refreshers):
         return wrapped
     return wrapper
 
+
 @refresher('schemata')
 def refresh_schemata(completer, executor):
     completer.set_search_path(executor.search_path())
     completer.extend_schemata(executor.schemata())
+
 
 @refresher('tables')
 def refresh_tables(completer, executor):
@@ -111,22 +113,27 @@ def refresh_tables(completer, executor):
     completer.extend_columns(executor.table_columns(), kind='tables')
     completer.extend_foreignkeys(executor.foreignkeys())
 
+
 @refresher('views')
 def refresh_views(completer, executor):
     completer.extend_relations(executor.views(), kind='views')
     completer.extend_columns(executor.view_columns(), kind='views')
 
+
 @refresher('functions')
 def refresh_functions(completer, executor):
     completer.extend_functions(executor.functions())
+
 
 @refresher('types')
 def refresh_types(completer, executor):
     completer.extend_datatypes(executor.datatypes())
 
+
 @refresher('databases')
 def refresh_databases(completer, executor):
     completer.extend_database_names(executor.databases())
+
 
 @refresher('casing')
 def refresh_casing(completer, executor):

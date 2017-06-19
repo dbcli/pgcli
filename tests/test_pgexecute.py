@@ -20,6 +20,7 @@ def test_conn(executor):
         +-----+
         SELECT 1""")
 
+
 @dbtest
 def test_bools_are_treated_as_strings(executor):
     run(executor, '''create table test(a boolean)''')
@@ -31,6 +32,7 @@ def test_bools_are_treated_as_strings(executor):
         | True |
         +------+
         SELECT 1""")
+
 
 @dbtest
 def test_schemata_table_views_and_columns_query(executor):
@@ -63,6 +65,7 @@ def test_schemata_table_views_and_columns_query(executor):
     assert set(executor.view_columns()) >= set([
         ('public', 'd', 'e', 'integer')])
 
+
 @dbtest
 def test_foreign_key_query(executor):
     run(executor, "create schema schema1")
@@ -72,6 +75,7 @@ def test_foreign_key_query(executor):
 
     assert set(executor.foreignkeys()) >= set([
         ('schema1', 'parent', 'parentid', 'schema2', 'child', 'motherid')])
+
 
 @dbtest
 def test_functions_query(executor):
@@ -108,16 +112,19 @@ def test_datatypes_query(executor):
     types = list(executor.datatypes())
     assert types == [('public', 'foo')]
 
+
 @dbtest
 def test_database_list(executor):
     databases = executor.databases()
     assert '_test_db' in databases
+
 
 @dbtest
 def test_invalid_syntax(executor, exception_formatter):
     result = run(executor, 'invalid syntax!',
                  exception_formatter=exception_formatter)
     assert 'syntax error at or near "invalid"' in result[0]
+
 
 @dbtest
 def test_invalid_column_name(executor, exception_formatter):
@@ -148,6 +155,7 @@ def test_multiple_queries_same_line(executor):
     assert "foo" in result[0]
     assert "bar" in result[2]
 
+
 @dbtest
 def test_multiple_queries_with_special_command_same_line(executor, pgspecial):
     result = run(executor, "select 'foo'; \d", pgspecial=pgspecial)
@@ -155,6 +163,7 @@ def test_multiple_queries_with_special_command_same_line(executor, pgspecial):
     assert "foo" in result[0]
     # This is a lame check. :(
     assert "Schema" in result[2]
+
 
 @dbtest
 def test_multiple_queries_same_line_syntaxerror(executor, exception_formatter):
@@ -189,12 +198,14 @@ def test_bytea_field_support_in_output(executor):
 def test_unicode_support_in_unknown_type(executor):
     assert u'日本語' in run(executor, u"SELECT '日本語' AS japanese;", join=True)
 
+
 @dbtest
 def test_unicode_support_in_enum_type(executor):
     run(executor, u"CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy', '日本語')")
     run(executor, u"CREATE TABLE person (name TEXT, current_mood mood)")
     run(executor, u"INSERT INTO person VALUES ('Moe', '日本語')")
     assert u'日本語' in run(executor, u"SELECT * FROM person", join=True)
+
 
 @requires_json
 def test_json_renders_without_u_prefix(executor, expanded):
@@ -215,6 +226,7 @@ def test_jsonb_renders_without_u_prefix(executor, expanded):
 
     assert u'{"name": "Éowyn"}' in result
 
+
 @dbtest
 def test_date_time_types(executor):
     run(executor, "SET TIME ZONE UTC")
@@ -230,6 +242,7 @@ def test_date_time_types(executor):
          == "| 4713-01-01 00:00:00+00 BC |"
     assert run(executor, "SELECT (CAST('-123456789 days 12:23:56' AS interval))", join=True).split("\n")[3] \
          == "| -123456789 days, 12:23:56 |"
+
 
 @dbtest
 @pytest.mark.parametrize('value', ['10000000', '10000000.0', '10000000000000'])

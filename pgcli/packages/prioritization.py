@@ -14,6 +14,7 @@ def _compile_regex(keyword):
     pattern = '\\b' + white_space_regex.sub(r'\\s+', keyword) + '\\b'
     return re.compile(pattern, re.MULTILINE | re.IGNORECASE)
 
+
 keywords = get_literals('keywords')
 keyword_regexs = dict((kw, _compile_regex(kw)) for kw in keywords)
 
@@ -48,6 +49,3 @@ class PrevalenceCounter(object):
 
     def name_count(self, name):
         return self.name_counts[name]
-
-
-
