@@ -777,7 +777,7 @@ class PGCli(object):
             'sep_character': '-',
             'sep_length': (1, 25),
             'missing_value': settings.missingval,
-            'decimal_format': settings.dcmlfmt,
+            'integer_format': settings.dcmlfmt,
             'float_format': settings.floatfmt,
             'disable_numparse': True,
             'preserve_whitespace': True
