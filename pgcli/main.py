@@ -17,6 +17,8 @@ from codecs import open
 
 
 from cli_helpers.tabular_output import TabularOutputFormatter
+from cli_helpers.tabular_output.preprocessors import (align_decimals,
+                                                      format_numbers)
 import click
 try:
     import setproctitle
@@ -773,9 +775,12 @@ class PGCli(object):
             'missing_value': settings.missingval,
             'integer_format': settings.dcmlfmt,
             'float_format': settings.floatfmt,
+            'preprocessors': (format_numbers, ),
             'disable_numparse': True,
             'preserve_whitespace': True
         }
+        if not settings.dcmlfmt and not settings.floatfmt:
+            output_kwargs['preprocessors'] = (align_decimals, )
 
         if title:  # Only print the title if it's not None.
             output.append(title)
