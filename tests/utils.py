@@ -66,9 +66,10 @@ def run(executor, sql, join=False, expanded=False, pgspecial=None,
     results = executor.run(sql, pgspecial, exception_formatter)
     formatted = []
     settings = OutputSettings(table_format='psql', dcmlfmt='d', floatfmt='g',
-                expanded=expanded)
+                              expanded=expanded)
     for title, rows, headers, status, sql, success in results:
-        formatted.extend(pgcli.format_output(title, rows, headers, status, settings))
+        formatted.extend(pgcli.format_output(
+            title, rows, headers, status, settings))
     if join:
         formatted = '\n'.join(formatted)
 
