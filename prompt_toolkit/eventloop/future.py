@@ -66,6 +66,9 @@ class Future(object):
 
     def set_result(self, result):
         " Mark the future done and set its result. "
+        if self._result:
+            raise InvalidStateError('Future result has been set already.')
+
         self._result = result
         self._done = True
         self._call_callbacks()

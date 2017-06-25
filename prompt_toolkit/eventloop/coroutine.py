@@ -80,7 +80,9 @@ def _run_coroutine(coroutine):
                 else:
                     new_f = coroutine.send(f.result())
         except StopIteration as e:
-            result_f.set_result(e.args[0] if e.args else None)
+            # Stop coroutine. Don't take a result from here,
+            # it has already been set using `raise Return()`.
+            pass
         except Return as e:
             result_f.set_result(e.value)
         except BaseException as e:
