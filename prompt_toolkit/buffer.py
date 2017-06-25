@@ -257,7 +257,6 @@ class Buffer(object):
         # `ValidationError` instance. (Will be set when the input is wrong.)
         self.validation_error = None
         self.validation_state = ValidationState.UNKNOWN
-        self.validation_in_progress = False
 
         # State of the selection.
         self.selection_state = None
@@ -344,7 +343,7 @@ class Buffer(object):
         assert self.cursor_position <= len(value)
 
         # Don't allow editing of read-only buffers.
-        if self.read_only() and not self.validation_in_progress:
+        if self.read_only():
             raise EditReadOnlyBuffer()
 
         changed = self._set_text(value)
@@ -455,7 +454,7 @@ class Buffer(object):
         assert isinstance(value, Document)
 
         # Don't allow editing of read-only buffers.
-        if not bypass_readonly and (self.read_only() or self.validation_in_progress):
+        if not bypass_readonly and self.read_only():
             raise EditReadOnlyBuffer()
 
         # Set text and cursor position first.
@@ -1097,11 +1096,47 @@ class Buffer(object):
             text, pos = self._redo_stack.pop()
             self.document = Document(text, cursor_position=pos)
 
-    def _validate(self, set_cursor=False):
+    def validate(self, set_cursor=False):
         """
         Returns `True` if valid.
 
         :param set_cursor: Set the cursor position, if an error was found.
+        """
+        # Don't call the validator again, if it was already called for the
+        # current input.
+        if self.validation_state != ValidationState.UNKNOWN:
+            return self.validation_state == ValidationState.VALID
+
+        # Call validator.
+        if self.validator:
+            try:
+                self.validator.validate(self.document)
+            except ValidationError as e:
+                # Set cursor position (don't allow invalid values.)
+                if set_cursor:
+                    self.cursor_position = min(max(0, e.cursor_position), len(self.text))
+
+                self.validation_state = ValidationState.INVALID
+                self.validation_error = e
+                return False
+
+        # Handle validation result.
+        self.validation_state = ValidationState.VALID
+        self.validation_error = None
+        return True
+
+    def _validate_async(self):
+        """
+        Asynchronous version of `validate()`.
+        This one doesn't set the cursor position.
+
+        We have both variants, because a synchronous version is required.
+        Handling the ENTER key needs to be completely synchronous, otherwise
+        stuff like type-ahead is going to give very weird results. (People
+        could type input while the ENTER key is still processed.)
+
+        An asynchronous version is required if we have `validate_while_typing`
+        enabled.
         """
         def coroutine():
             # Don't call the validator again, if it was already called for the
@@ -1126,11 +1161,6 @@ class Buffer(object):
 
             # Handle validation result.
             if error:
-                # Set cursor position (don't allow invalid values.)
-                if set_cursor:
-                    cursor_position = error.cursor_position
-                    self.cursor_position = min(max(0, cursor_position), len(self.text))
-
                 self.validation_state = ValidationState.INVALID
             else:
                 self.validation_state = ValidationState.VALID
@@ -1279,7 +1309,7 @@ class Buffer(object):
         """
         Open code in editor.
         """
-        if self.read_only() or self.validation_in_progress:
+        if self.read_only():
             raise EditReadOnlyBuffer()
 
         # Write to temporary file
@@ -1473,47 +1503,20 @@ class Buffer(object):
         """
         @_only_one_at_a_time
         def async_validator():
-            yield From(self._validate(set_cursor=False))
+            yield From(self._validate_async())
         return async_validator
 
-    def validate_and_handle(self, document=None):
+    def validate_and_handle(self):
         """
         Validate buffer and handle the accept action.
-
-        :param document: Use this document instead of the current document.
-            (This can be used to implement a custom accept key binding that
-            trims whitespace right before accepting.)
         """
-        assert document is None or isinstance(document, Document)
+        valid = self.validate(set_cursor=True)
 
-        def coroutine():
-            # If a document was given. Use this one instead.
-            if document:
-                prev_document = self.document
-                self.document = document
-
-            # Set `validation_in_progress` flag. This makes the buffer
-            # read-only until the validation is done.
-            self.validation_in_progress = True
-            valid = True
-
-            try:
-                f = self._validate(set_cursor=True)
-                valid = yield From(f)
-
-                # When the validation succeeded, accept the input.
-                if valid:
-                    if self.accept_handler:
-                        self.accept_handler(self)
-                    self.append_to_history()
-            finally:
-                self.validation_in_progress = False
-
-            # Not valid. Restore previous document.
-            if not valid and document:
-                self.document = prev_document
-
-        return ensure_future(coroutine())
+        # When the validation succeeded, accept the input.
+        if valid:
+            if self.accept_handler:
+                self.accept_handler(self)
+            self.append_to_history()
 
 
 def _only_one_at_a_time(coroutine):
