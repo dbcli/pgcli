@@ -43,6 +43,7 @@ from prompt_toolkit.key_binding.bindings.auto_suggest import load_auto_suggest_b
 from prompt_toolkit.key_binding.bindings.completion import display_completions_like_readline
 from prompt_toolkit.key_binding.bindings.open_in_editor import load_open_in_editor_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, DynamicKeyBindings, merge_key_bindings, ConditionalKeyBindings, KeyBindingsBase
+from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
 from prompt_toolkit.layout.containers import ConditionalContainer, Align
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
@@ -204,8 +205,7 @@ class Prompt(object):
     """
     _fields = (
         'message', 'lexer', 'completer', 'is_password', 'editing_mode',
-        'extra_key_bindings', 'include_default_key_bindings', 'is_password',
-        'bottom_toolbar', 'style',
+        'extra_key_bindings', 'is_password', 'bottom_toolbar', 'style',
         'rprompt', 'multiline', 'prompt_continuation',
         'wrap_lines', 'history', 'enable_history_search',
         'complete_while_typing',
@@ -245,7 +245,6 @@ class Prompt(object):
             mouse_support=False,
             extra_input_processor=None,
             extra_key_bindings=None,
-            include_default_key_bindings=True,
             erase_when_done=False,
             tempfile_suffix='.txt',
 
@@ -477,14 +476,13 @@ class Prompt(object):
             ]),
             clipboard=DynamicClipboard(lambda: self.clipboard),
             key_bindings=merge_key_bindings([
-                ConditionalKeyBindings(
-                    merge_key_bindings([
-                        auto_suggest_bindings,
-                        ConditionalKeyBindings(open_in_editor_bindings,
-                            dyncond('enable_open_in_editor') & has_focus(DEFAULT_BUFFER)),
-                        prompt_bindings
-                    ]),
-                    dyncond('include_default_key_bindings')),
+                merge_key_bindings([
+                    auto_suggest_bindings,
+                    ConditionalKeyBindings(open_in_editor_bindings,
+                        dyncond('enable_open_in_editor') &
+                        has_focus(DEFAULT_BUFFER)),
+                    prompt_bindings
+                ]),
                 system_toolbar.get_global_key_bindings(),
                 DynamicKeyBindings(lambda: self.extra_key_bindings),
             ]),
@@ -612,9 +610,8 @@ class Prompt(object):
             # When any of these arguments are passed, this value is overwritten for the current prompt.
             default='', patch_stdout=None, true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
-            is_password=None, extra_key_bindings=None, include_default_key_bindings=None,
-            bottom_toolbar=None, style=None,
-            rprompt=None, multiline=None,
+            is_password=None, extra_key_bindings=None,
+            bottom_toolbar=None, style=None, rprompt=None, multiline=None,
             prompt_continuation=None, wrap_lines=None, history=None,
             enable_history_search=None,
             complete_while_typing=None, complete_style=None,
@@ -649,12 +646,12 @@ class Prompt(object):
                         setattr(self, name, backup[name])
 
     def prompt_async(self, message=None,
-            # When any of these arguments are passed, this value is overwritten for the current prompt.
+            # When any of these arguments are passed, this value is overwritten
+            # for the current prompt.
             default='', patch_stdout=None, true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
-            is_password=None, extra_key_bindings=None, include_default_key_bindings=None,
-            bottom_toolbar=None, style=None,
-            rprompt=None, multiline=None,
+            is_password=None, extra_key_bindings=None,
+            bottom_toolbar=None, style=None, rprompt=None, multiline=None,
             prompt_continuation=None, wrap_lines=None, history=None,
             enable_history_search=None,
             complete_while_typing=None, complete_style=None,
@@ -809,8 +806,12 @@ def create_confirm_prompt(message):
         prompt._default_buffer.text = 'n'
         event.app.set_return_value(False)
 
-    prompt = Prompt(message, extra_key_bindings=bindings,
-                    include_default_key_bindings=False)
+    @bindings.add(Keys.Any)
+    def _(event):
+        " Disallow inserting other text. "
+        pass
+
+    prompt = Prompt(message, extra_key_bindings=bindings)
     return prompt
 
 

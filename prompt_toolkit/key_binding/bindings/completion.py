@@ -116,7 +116,7 @@ def _display_completions_like_readline(app, completions):
             # Ask confirmation if it doesn't fit on the screen.
             confirm = yield create_confirm_prompt(
                 'Display all {} possibilities? (y on n) '.format(len(completions)),
-                loop=app.loop).prompt_async()
+                ).prompt_async()
 
             if confirm:
                 # Display pages.
@@ -125,7 +125,7 @@ def _display_completions_like_readline(app, completions):
 
                     if page != page_count - 1:
                         # Display --MORE-- and go to the next page.
-                        show_more = yield _create_more_prompt('--MORE--', loop=app.loop).prompt_async()
+                        show_more = yield _create_more_prompt('--MORE--').prompt_async()
 
                         if not show_more:
                             return
@@ -138,7 +138,7 @@ def _display_completions_like_readline(app, completions):
     app.run_in_terminal_async(run_compl, render_cli_done=True)
 
 
-def _create_more_prompt(message='--MORE--', loop=None):
+def _create_more_prompt(message='--MORE--'):
     """
     Create a `Prompt` object for displaying the "--MORE--".
     """
@@ -162,9 +162,11 @@ def _create_more_prompt(message='--MORE--', loop=None):
     def _(event):
         event.app.set_return_value(False)
 
+    @bindings.add(Keys.Any)
+    def _(event):
+        " Disable inserting of text. "
+
     prompt = Prompt(message,
         extra_key_bindings=bindings,
-        include_default_key_bindings=False,
-        erase_when_done=True,
-        loop=loop)
+        erase_when_done=True)
     return prompt

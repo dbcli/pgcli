@@ -13,6 +13,7 @@ from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, KeyBindingsBase, merge_key_bindings
 from prompt_toolkit.key_binding.key_processor import KeyProcessor
 from prompt_toolkit.key_binding.vi_state import ViState
+from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.output import Output
@@ -644,10 +645,14 @@ class Application(object):
             def _(event):
                 event.app.set_return_value(None)
 
+            @key_bindings.add(Keys.Any)
+            def _(event):
+                " Disallow typing. "
+                pass
+
             prompt = Prompt(
                 message=wait_text,
-                extra_key_bindings=key_bindings,
-                include_default_key_bindings=False)
+                extra_key_bindings=key_bindings)
             yield prompt.app.run_async()
 
         def run():
