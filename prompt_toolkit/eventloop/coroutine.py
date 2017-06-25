@@ -80,9 +80,11 @@ def _run_coroutine(coroutine):
                 else:
                     new_f = coroutine.send(f.result())
         except StopIteration as e:
-            # Stop coroutine. Don't take a result from here,
-            # it has already been set using `raise Return()`.
-            pass
+            # Stop coroutine. Make sure that a result has been set in the future,
+            # this will call the callbacks. (Also, don't take any result from
+            # StopIteration, it has already been set using `raise Return()`.
+            if not result_f.done():
+                result_f.set_result(None)
         except Return as e:
             result_f.set_result(e.value)
         except BaseException as e:
