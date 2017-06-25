@@ -522,6 +522,12 @@ def print_formatted_text(output, formatted_text, style):
     assert isinstance(style, BaseStyle)
     fragments = to_formatted_text(formatted_text)
 
+    # Check whether the last fragment ends with a newline.
+    if fragments:
+        ends_with_newline = fragments[-1][1].endswith('\n')
+    else:
+        ends_with_newline = False
+
     # Reset first.
     output.reset_attributes()
     output.enable_autowrap()
@@ -538,6 +544,9 @@ def print_formatted_text(output, formatted_text, style):
             output.reset_attributes()
 
         output.write(text)
+
+    if not ends_with_newline:
+        output.write('\n')
 
     # Reset again.
     output.reset_attributes()

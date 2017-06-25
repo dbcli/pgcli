@@ -36,6 +36,7 @@ class SystemToolbar(object):
     :param prompt: Prompt to be displayed to the user.
     """
     def __init__(self, prompt='Shell command: '):
+        self.prompt = prompt
         self.system_buffer = Buffer(name=SYSTEM_BUFFER)
 
         self._global_bindings = self._build_global_key_bindings()
@@ -44,7 +45,8 @@ class SystemToolbar(object):
         self.buffer_control = BufferControl(
             buffer=self.system_buffer,
             lexer=SimpleLexer(style='class:system-toolbar.text'),
-            input_processor=BeforeInput(prompt, style='class:system-toolbar'),
+            input_processor=BeforeInput(
+                lambda: self.prompt, style='class:system-toolbar'),
             key_bindings=self._bindings)
 
         self.window = Window(
@@ -73,6 +75,12 @@ class SystemToolbar(object):
 
         return bindings
 
+    def _get_display_before_text(self):
+        return [
+            ('class:system-toolbar', 'Shell command: '),
+            ('class:system-toolbar.text', self.system_buffer.text),
+        ]
+
     def _build_key_bindings(self):
         focussed = has_focus(self.system_buffer)
 
@@ -91,7 +99,9 @@ class SystemToolbar(object):
         @handle('enter', filter=focussed)
         def _(event):
             " Run system command. "
-            event.app.run_system_command(self.system_buffer.text)
+            event.app.run_system_command(
+                self.system_buffer.text,
+                display_before_text=self._get_display_before_text())
             self.system_buffer.reset(append_to_history=True)
             event.app.layout.focus_previous()
 
@@ -111,7 +121,9 @@ class SystemToolbar(object):
         def _(event):
             " Run system command. "
             event.app.vi_state.input_mode = InputMode.NAVIGATION
-            event.app.run_system_command(self.system_buffer.text)
+            event.app.run_system_command(
+                self.system_buffer.text,
+                display_before_text=self._get_display_before_text())
             self.system_buffer.reset(append_to_history=True)
             event.app.layout.focus_previous()
 

@@ -161,12 +161,12 @@ class Buffer(object):
         browse through the completions, rather than through the history.
     :param read_only: :class:`~prompt_toolkit.filters.Filter`. When True,
         changes will not be allowed.
-    :param multiline: When set, pressing `Enter` will call the `accept_handler`.
+    :param multiline: When not set, pressing `Enter` will call the `accept_handler`.
         Otherwise, pressing `Esc-Enter` is required.
     """
     def __init__(self, completer=None, auto_suggest=None, history=None,
-                 validator=None, get_tempfile_suffix=None, tempfile_suffix='', name='',
-                 complete_while_typing=False,
+                 validator=None, get_tempfile_suffix=None, tempfile_suffix='',
+                 name='', complete_while_typing=False,
                  enable_history_search=False, document=None,
                  accept_handler=None, read_only=False, multiline=True,
                  on_text_changed=None, on_text_insert=None, on_cursor_position_changed=None,

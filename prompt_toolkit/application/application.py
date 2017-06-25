@@ -114,15 +114,16 @@ class Application(object):
 
         self.style = style or default_style()
 
-        if key_bindings is None:
-            key_bindings = load_key_bindings()
-
         if get_title is None:
             get_title = lambda: None
 
-        self.layout = layout
+
+        # Key bindings.
         self.key_bindings = key_bindings
-        self.mouse_bindings = load_mouse_bindings()
+        self._default_bindings = load_key_bindings()
+        self._mouse_bindings = load_mouse_bindings()
+
+        self.layout = layout
         self.clipboard = clipboard or InMemoryClipboard()
         self.full_screen = full_screen
         self.mouse_support = mouse_support
@@ -614,13 +615,20 @@ class Application(object):
         return ensure_future(_run_in_t())
 
     def run_system_command(self, command, wait_for_enter=True,
+                           display_before_text='',
                            wait_text='Press ENTER to continue...'):
         """
         Run system command (While hiding the prompt. When finished, all the
         output will scroll above the prompt.)
 
         :param command: Shell command to be executed.
+        :param wait_for_enter: FWait for the user to press enter, when the
+            command is finished.
+        :param display_before_text: If given, text to be displayed before the
+            command executes.
         """
+        assert isinstance(wait_for_enter, bool)
+
         def do_wait_for_enter():
             """
             Create a sub application to wait for the enter key press.
@@ -656,6 +664,7 @@ class Application(object):
 
             # Run sub process.
             def run_command():
+                self.print_formatted_text(display_before_text)
                 p = Popen(command, shell=True,
                           stdin=input_fd, stdout=output_fd)
                 p.wait()
@@ -883,7 +892,8 @@ class _CombinedRegistry(KeyBindingsBase):
         key_bindings.append(self.app.key_bindings)
 
         # Add mouse bindings.
-        key_bindings.append(self.app.mouse_bindings)
+        key_bindings.append(self.app._default_bindings)
+        key_bindings.append(self.app._mouse_bindings)
 
         # Reverse this list. The current control's key bindings should come
         # last. They need priority.

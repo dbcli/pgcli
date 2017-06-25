@@ -39,8 +39,9 @@ from prompt_toolkit.eventloop import ensure_future, Return
 from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_filter, Condition, has_arg
 from prompt_toolkit.history import InMemoryHistory, DynamicHistory
 from prompt_toolkit.input.defaults import create_input
+from prompt_toolkit.key_binding.bindings.auto_suggest import load_auto_suggest_bindings
 from prompt_toolkit.key_binding.bindings.completion import display_completions_like_readline
-from prompt_toolkit.key_binding.defaults import load_key_bindings
+from prompt_toolkit.key_binding.bindings.open_in_editor import load_open_in_editor_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, DynamicKeyBindings, merge_key_bindings, ConditionalKeyBindings, KeyBindingsBase
 from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
 from prompt_toolkit.layout.containers import ConditionalContainer, Align
@@ -57,6 +58,7 @@ from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.output.defaults import create_output
 from prompt_toolkit.styles import default_style, BaseStyle, DynamicStyle, merge_styles
 from prompt_toolkit.utils import DummyContext
+from prompt_toolkit.utils import suspend_to_background_supported
 from prompt_toolkit.validation import DynamicValidator
 from six import text_type
 
@@ -169,9 +171,11 @@ class Prompt(object):
     :param auto_suggest: :class:`~prompt_toolkit.auto_suggest.AutoSuggest`
         instance for input suggestions.
     :param style: :class:`.Style` instance for the color scheme.
-    :param enable_system_bindings: `bool` or
+    :param enable_system_prompt: `bool` or
         :class:`~prompt_toolkit.filters.Filter`. Pressing Meta+'!' will show
         a system prompt.
+    :param enable_suspend: `bool` or :class:`~prompt_toolkit.filters.Filter`.
+        Enable Control-Z style suspension.
     :param enable_open_in_editor: `bool` or
         :class:`~prompt_toolkit.filters.Filter`. Pressing 'v' in Vi mode or
         C-X C-E in emacs mode will open an external editor.
@@ -208,7 +212,7 @@ class Prompt(object):
         'complete_style', 'mouse_support', 'auto_suggest',
         'clipboard', 'get_title', 'validator', 'patch_stdout',
         'refresh_interval', 'extra_input_processor', 'default',
-        'enable_system_bindings', 'enable_open_in_editor',
+        'enable_system_prompt', 'enable_suspend', 'enable_open_in_editor',
         'reserve_space_for_menu', 'tempfile_suffix')
 
     def __init__(
@@ -223,7 +227,8 @@ class Prompt(object):
             complete_while_typing=True,
             enable_history_search=False,
             lexer=None,
-            enable_system_bindings=False,
+            enable_system_prompt=False,
+            enable_suspend=False,
             enable_open_in_editor=False,
             validator=None,
             completer=None,
@@ -403,10 +408,6 @@ class Prompt(object):
         def multi_column_complete_style():
             return self.complete_style == CompleteStyle.MULTI_COLUMN
 
-        @Condition
-        def readline_complete_style():
-            return self.complete_style == CompleteStyle.READLINE_LIKE
-
         # Build the layout.
         layout = HSplit([
             # The main input, with completion menus floating on top of it.
@@ -452,7 +453,7 @@ class Prompt(object):
             ValidationToolbar(),
             ConditionalContainer(
                 system_toolbar,
-                dyncond('enable_system_bindings') & ~is_done),
+                dyncond('enable_system_prompt') & ~is_done),
 
             # In multiline mode, we use two toolbars for 'arg' and 'search'.
             ConditionalContainer(
@@ -463,28 +464,9 @@ class Prompt(object):
         ])
 
         # Default key bindings.
-        default_bindings = load_key_bindings(
-            enable_abort_and_exit_bindings=True,
-            enable_search=True,
-            enable_auto_suggest_bindings=True,
-            enable_system_bindings=dyncond('enable_system_bindings'),
-            enable_open_in_editor=dyncond('enable_open_in_editor'))
-        prompt_bindings = KeyBindings()
-
-        @Condition
-        def do_accept():
-            return (not _true(self.multiline) and
-                    self.app.layout.current_control == self._default_buffer_control)
-
-        @prompt_bindings.add('enter', filter=do_accept)
-        def _(event):
-            " Accept input when enter has been pressed. "
-            self._default_buffer.validate_and_handle()
-
-        @prompt_bindings.add('tab', filter=readline_complete_style)
-        def _(event):
-            " Display completions (like readline). "
-            display_completions_like_readline(event)
+        auto_suggest_bindings = load_auto_suggest_bindings()
+        open_in_editor_bindings = load_open_in_editor_bindings()
+        prompt_bindings = self._create_prompt_bindings()
 
         # Create application
         application = Application(
@@ -496,7 +478,12 @@ class Prompt(object):
             clipboard=DynamicClipboard(lambda: self.clipboard),
             key_bindings=merge_key_bindings([
                 ConditionalKeyBindings(
-                    merge_key_bindings([default_bindings, prompt_bindings]),
+                    merge_key_bindings([
+                        auto_suggest_bindings,
+                        ConditionalKeyBindings(open_in_editor_bindings,
+                            dyncond('enable_open_in_editor') & has_focus(DEFAULT_BUFFER)),
+                        prompt_bindings
+                    ]),
                     dyncond('include_default_key_bindings')),
                 system_toolbar.get_global_key_bindings(),
                 DynamicKeyBindings(lambda: self.extra_key_bindings),
@@ -532,6 +519,65 @@ class Prompt(object):
         '''
 
         return application, default_buffer, default_buffer_control
+
+    def _create_prompt_bindings(self):
+        """
+        Create the KeyBindings for a prompt application.
+        """
+        kb = KeyBindings()
+        handle = kb.add
+
+        @Condition
+        def do_accept():
+            return (not _true(self.multiline) and
+                    self.app.layout.current_control == self._default_buffer_control)
+
+        @handle('enter', filter=do_accept)
+        def _(event):
+            " Accept input when enter has been pressed. "
+            self._default_buffer.validate_and_handle()
+
+        @Condition
+        def readline_complete_style():
+            return self.complete_style == CompleteStyle.READLINE_LIKE
+
+        @handle('tab', filter=readline_complete_style)
+        def _(event):
+            " Display completions (like readline). "
+            display_completions_like_readline(event)
+
+        @handle('c-c')
+        def _(event):
+            " Abort when Control-C has been pressed. "
+            event.app.abort()
+
+        @Condition
+        def ctrl_d_condition():
+            """ Ctrl-D binding is only active when the default buffer is selected
+            and empty. """
+            app = get_app()
+            return (app.current_buffer.name == DEFAULT_BUFFER and
+                    not app.current_buffer.text)
+
+        @handle('c-d', filter=ctrl_d_condition)
+        def _(event):
+            " Exit when Control-D has been pressed. "
+            event.app.exit()
+
+        suspend_supported = Condition(suspend_to_background_supported)
+
+        @Condition
+        def enable_suspend():
+            return to_filter(self.enable_suspend)()
+
+        @handle('c-z', filter=suspend_supported & enable_suspend)
+        def _(event):
+            """
+            Suspend process to background.
+            """
+            event.app.suspend_to_background()
+
+        return kb
 
     def _auto_refresh_context(self):
         " Return a context manager for the auto-refresh loop. "
@@ -575,7 +621,7 @@ class Prompt(object):
             auto_suggest=None, validator=None, clipboard=None,
             mouse_support=None, get_title=None, extra_input_processor=None,
             reserve_space_for_menu=None,
-            enable_system_bindings=None, enable_open_in_editor=None,
+            enable_system_prompt=None, enable_suspend=None, enable_open_in_editor=None,
             tempfile_suffix=None):
         """
         Display the prompt.
@@ -615,7 +661,7 @@ class Prompt(object):
             auto_suggest=None, validator=None, clipboard=None,
             mouse_support=None, get_title=None, extra_input_processor=None,
             reserve_space_for_menu=None,
-            enable_system_bindings=False, enable_open_in_editor=False,
+            enable_system_prompt=None, enable_suspend=None, enable_open_in_editor=None,
             tempfile_suffix=None):
         """
         Display the prompt (run in async IO coroutine).

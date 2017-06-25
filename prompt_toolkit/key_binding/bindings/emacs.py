@@ -13,7 +13,6 @@ from ..key_bindings import KeyBindings, ConditionalKeyBindings
 __all__ = (
     'load_emacs_bindings',
     'load_emacs_search_bindings',
-    'load_extra_emacs_page_navigation_bindings',
 )
 
 
@@ -301,18 +300,6 @@ def load_emacs_bindings():
     return ConditionalKeyBindings(key_bindings, emacs_mode)
 
 
-def load_emacs_open_in_editor_bindings():
-    """
-    Pressing C-X C-E will open the buffer in an external editor.
-    """
-    key_bindings = KeyBindings()
-
-    key_bindings.add('c-x', 'c-e', filter=emacs_mode & ~has_selection)(
-         get_by_name('edit-and-execute-command'))
-
-    return key_bindings
-
-
 def load_emacs_search_bindings():
     key_bindings = KeyBindings()
     handle = key_bindings.add
@@ -362,7 +349,7 @@ def load_emacs_search_bindings():
     return ConditionalKeyBindings(key_bindings, emacs_mode)
 
 
-def load_extra_emacs_page_navigation_bindings():
+def load_vi_page_navigation_bindings():
     """
     Key bindings, for scrolling up and down through pages.
     This are separate bindings, because GNU readline doesn't have them.
@@ -370,9 +357,13 @@ def load_extra_emacs_page_navigation_bindings():
     key_bindings = KeyBindings()
     handle = key_bindings.add
 
-    handle('c-v')(scroll_page_down)
+    handle('c-f')(scroll_forward)
+    handle('c-b')(scroll_backward)
+    handle('c-d')(scroll_half_page_down)
+    handle('c-u')(scroll_half_page_up)
+    handle('c-e')(scroll_one_line_down)
+    handle('c-y')(scroll_one_line_up)
     handle('pagedown')(scroll_page_down)
-    handle('escape', 'v')(scroll_page_up)
     handle('pageup')(scroll_page_up)
 
-    return ConditionalKeyBindings(key_bindings, emacs_mode)
+    return ConditionalKeyBindings(key_bindings, vi_mode)

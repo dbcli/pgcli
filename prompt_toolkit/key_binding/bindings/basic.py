@@ -2,11 +2,9 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.application.current import get_app
-from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import has_selection, Condition, emacs_insert_mode, vi_insert_mode, in_paste_mode, is_multiline
 from prompt_toolkit.key_binding.key_processor import KeyPress
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.utils import suspend_to_background_supported, is_windows
 
 from .named_commands import get_by_name
 from ..key_bindings import KeyBindings
@@ -14,10 +12,8 @@ from ..key_bindings import KeyBindings
 
 __all__ = (
     'load_basic_bindings',
-    'load_abort_and_exit_bindings',
-    'load_basic_system_bindings',
-    'load_auto_suggestion_bindings',
 )
+
 
 def if_no_repeat(event):
     """ Callable that returns True when the previous event was delivered to
@@ -225,75 +221,5 @@ def load_basic_bindings():
         """
         event.current_buffer.insert_text(event.data, overwrite=False)
         event.app.quoted_insert = False
-
-    return key_bindings
-
-
-def load_abort_and_exit_bindings():
-    """
-    Basic bindings for abort (Ctrl-C) and exit (Ctrl-D).
-    """
-    key_bindings = KeyBindings()
-    handle = key_bindings.add
-
-    @handle('c-c')
-    def _(event):
-        " Abort when Control-C has been pressed. "
-        event.app.abort()
-
-    @Condition
-    def ctrl_d_condition():
-        """ Ctrl-D binding is only active when the default buffer is selected
-        and empty. """
-        app = get_app()
-        return (app.current_buffer.name == DEFAULT_BUFFER and
-                not app.current_buffer.text)
-
-    handle('c-d', filter=ctrl_d_condition)(get_by_name('end-of-file'))
-
-    return key_bindings
-
-
-def load_basic_system_bindings():
-    """
-    Basic system bindings (For both Emacs and Vi mode.)
-    """
-    key_bindings = KeyBindings()
-
-    suspend_supported = Condition(suspend_to_background_supported)
-
-    @key_bindings.add('c-z', filter=suspend_supported)
-    def _(event):
-        """
-        Suspend process to background.
-        """
-        event.app.suspend_to_background()
-
-    return key_bindings
-
-
-def load_auto_suggestion_bindings():
-    """
-    Key bindings for accepting auto suggestion text.
-    """
-    key_bindings = KeyBindings()
-    handle = key_bindings.add
-
-    @Condition
-    def suggestion_available():
-        app = get_app()
-        return (app.current_buffer.suggestion is not None and
-                app.current_buffer.document.is_cursor_at_the_end)
-
-    @handle('c-f', filter=suggestion_available)
-    @handle('c-e', filter=suggestion_available)
-    @handle('right', filter=suggestion_available)
-    def _(event):
-        " Accept suggestion. "
-        b = event.current_buffer
-        suggestion = b.suggestion
-
-        if suggestion:
-            b.insert_text(suggestion.text)
 
     return key_bindings

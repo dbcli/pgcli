@@ -11,7 +11,6 @@ from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.selection import SelectionType, SelectionState, PasteMode
 
-from .scroll import scroll_forward, scroll_backward, scroll_half_page_up, scroll_half_page_down, scroll_one_line_up, scroll_one_line_down, scroll_page_up, scroll_page_down
 from .named_commands import get_by_name
 from ..key_bindings import KeyBindings, ConditionalKeyBindings, KeyBindingsBase
 
@@ -33,7 +32,6 @@ except ImportError: # < Python 3.2
 __all__ = (
     'load_vi_bindings',
     'load_vi_search_bindings',
-    'load_extra_vi_page_navigation_bindings',
 )
 
 if six.PY2:
@@ -807,7 +805,7 @@ def load_vi_bindings():
         Open line above and enter insertion mode
         """
         event.current_buffer.insert_line_above(
-                copy_margin=not in_paste_mode(event.app))
+                copy_margin=not in_paste_mode())
         event.app.vi_state.input_mode = InputMode.INSERT
 
     @handle('o', filter=vi_navigation_mode & ~is_read_only)
@@ -816,7 +814,7 @@ def load_vi_bindings():
         Open line below and enter insertion mode
         """
         event.current_buffer.insert_line_below(
-                copy_margin=not in_paste_mode(event.app))
+                copy_margin=not in_paste_mode())
         event.app.vi_state.input_mode = InputMode.INSERT
 
     @handle('~', filter=vi_navigation_mode)
@@ -1687,16 +1685,6 @@ def load_vi_bindings():
     return ConditionalKeyBindings(key_bindings, vi_mode)
 
 
-def load_vi_open_in_editor_bindings():
-    """
-    Pressing 'v' in navigation mode will open the buffer in an external editor.
-    """
-    key_bindings = KeyBindings()
-    key_bindings.add('v', filter=vi_navigation_mode)(
-        get_by_name('edit-and-execute-command'))
-    return key_bindings
-
-
 def load_vi_search_bindings():
     key_bindings = KeyBindings()
     handle = key_bindings.add
@@ -1730,25 +1718,5 @@ def load_vi_search_bindings():
     handle('escape')(search.abort_search)
     handle('c-c')(search.abort_search)
     handle('backspace', filter=search_buffer_is_empty)(search.abort_search)
-
-    return ConditionalKeyBindings(key_bindings, vi_mode)
-
-
-def load_extra_vi_page_navigation_bindings():
-    """
-    Key bindings, for scrolling up and down through pages.
-    This are separate bindings, because GNU readline doesn't have them.
-    """
-    key_bindings = KeyBindings()
-    handle = key_bindings.add
-
-    handle('c-f')(scroll_forward)
-    handle('c-b')(scroll_backward)
-    handle('c-d')(scroll_half_page_down)
-    handle('c-u')(scroll_half_page_up)
-    handle('c-e')(scroll_one_line_down)
-    handle('c-y')(scroll_one_line_up)
-    handle('pagedown')(scroll_page_down)
-    handle('pageup')(scroll_page_up)
 
     return ConditionalKeyBindings(key_bindings, vi_mode)
