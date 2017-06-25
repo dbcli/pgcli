@@ -118,6 +118,12 @@ class Document(object):
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.text, self.cursor_position)
 
+    def __eq__(self, other):
+        assert isinstance(other, Document)
+        return (self.text == other.text and
+                self.cursor_position == other.cursor_position and
+                self.selection == other.selection)
+
     @property
     def text(self):
         " The document text. "

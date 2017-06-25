@@ -4,6 +4,7 @@ Input validation for a `Buffer`.
 """
 from __future__ import unicode_literals
 from .filters import to_filter
+from .eventloop import Future, run_in_executor
 
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
@@ -12,6 +13,7 @@ __all__ = (
     'ConditionalValidator',
     'ValidationError',
     'Validator',
+    'ThreadedValidator',
     'DummyValidator',
     'DynamicValidator',
 )
@@ -47,6 +49,40 @@ class Validator(with_metaclass(ABCMeta, object)):
         :param document: :class:`~prompt_toolkit.document.Document` instance.
         """
         pass
+
+    def get_validate_future(self, document):
+        """
+        Return a `Future` which is set when the validation is ready.
+        This function can be overloaded in order to provide an asynchronous
+        implementation.
+        """
+        f = Future()
+        result = self.validate(document)
+        f.set_result(result)
+        return f
+
+
+class ThreadedValidator(Validator):
+    """
+    Wrapper that runs input validation in a thread.
+    (Use this to prevent the user interface from becoming unresponsive if the
+    input validation takes too much time.)
+    """
+    def __init__(self, validator):
+        assert isinstance(validator, Validator)
+        self.validator = validator
+
+    def validate(self, document):
+        return self.validator.validate(document)
+
+    def get_validate_future(self, document):
+        """
+        Run the `validate` function in a thread.
+        """
+        def run_validation_thread():
+            return self.validate(document)
+        f = run_in_executor(run_validation_thread)
+        return f
 
 
 class DummyValidator(Validator):
@@ -88,3 +124,8 @@ class DynamicValidator(Validator):
         validator = self.get_validator() or DummyValidator()
         assert isinstance(validator, Validator)
         return validator.validate(document)
+
+    def get_validate_future(self, document):
+        validator = self.get_validator() or DummyValidator()
+        assert isinstance(validator, Validator)
+        return validator.get_validate_future(document)

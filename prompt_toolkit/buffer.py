@@ -11,7 +11,7 @@ from .clipboard import ClipboardData
 from .completion import CompleteEvent, get_common_complete_suffix, Completer, Completion, DummyCompleter
 from .document import Document
 from .enums import SearchDirection
-from .eventloop import ensure_future
+from .eventloop import ensure_future, Return, From
 from .filters import to_filter
 from .history import History, InMemoryHistory
 from .search_state import SearchState
@@ -154,6 +154,9 @@ class Buffer(object):
     :param complete_while_typing: :class:`~prompt_toolkit.filters.Filter`
         instance. Decide whether or not to do asynchronous autocompleting while
         typing.
+    :param validate_while_typing: :class:`~prompt_toolkit.filters.Filter`
+        instance. Decide whether or not to do asynchronous validation while
+        typing.
     :param enable_history_search: :class:`~prompt_toolkit.filters.Filter`
         to indicate when up-arrow partial string matching is enabled. It is
         adviced to not enable this at the same time as `complete_while_typing`,
@@ -166,7 +169,7 @@ class Buffer(object):
     """
     def __init__(self, completer=None, auto_suggest=None, history=None,
                  validator=None, get_tempfile_suffix=None, tempfile_suffix='',
-                 name='', complete_while_typing=False,
+                 name='', complete_while_typing=False, validate_while_typing=False,
                  enable_history_search=False, document=None,
                  accept_handler=None, read_only=False, multiline=True,
                  on_text_changed=None, on_text_insert=None, on_cursor_position_changed=None,
@@ -175,6 +178,7 @@ class Buffer(object):
         # Accept both filters and booleans as input.
         enable_history_search = to_filter(enable_history_search)
         complete_while_typing = to_filter(complete_while_typing)
+        validate_while_typing = to_filter(validate_while_typing)
         read_only = to_filter(read_only)
         multiline = to_filter(multiline)
 
@@ -204,6 +208,7 @@ class Buffer(object):
 
         # Filters. (Usually, used by the key bindings to drive the buffer.)
         self.complete_while_typing = complete_while_typing
+        self.validate_while_typing = validate_while_typing
         self.enable_history_search = enable_history_search
         self.read_only = read_only
         self.multiline = multiline
@@ -231,6 +236,7 @@ class Buffer(object):
         # Create asynchronous completer / auto suggestion.
         self._async_suggester = self._create_auto_suggest_function()
         self._async_completer = self._create_async_completer()
+        self._async_validator = self._create_auto_validate_function()
 
         self.reset(document=document)
 
@@ -250,6 +256,7 @@ class Buffer(object):
         # `ValidationError` instance. (Will be set when the input is wrong.)
         self.validation_error = None
         self.validation_state = ValidationState.UNKNOWN
+        self.validation_in_progress = False
 
         # State of the selection.
         self.selection_state = None
@@ -336,7 +343,7 @@ class Buffer(object):
         assert self.cursor_position <= len(value)
 
         # Don't allow editing of read-only buffers.
-        if self.read_only():
+        if self.read_only() and not self.validation_in_progress:
             raise EditReadOnlyBuffer()
 
         changed = self._set_text(value)
@@ -392,10 +399,16 @@ class Buffer(object):
         # fire 'on_text_changed' event.
         self.on_text_changed.fire()
 
+        # Input validation.
+        # (This happens on all change events, unlike auto completion, also when
+        # deleting text.)
+        if self.validator and self.validate_while_typing():
+            self._async_validator()
+
     def _cursor_position_changed(self):
-        # Remove any validation errors and complete state.
-        self.validation_error = None
-        self.validation_state = ValidationState.UNKNOWN
+        # Remove any complete state.
+        # (Input validation should only be undone when the cursor position
+        # changes.)
         self.complete_state = None
         self.yank_nth_arg_state = None
         self.document_before_paste = None
@@ -441,7 +454,7 @@ class Buffer(object):
         assert isinstance(value, Document)
 
         # Don't allow editing of read-only buffers.
-        if not bypass_readonly and self.read_only():
+        if not bypass_readonly and (self.read_only() or self.validation_in_progress):
             raise EditReadOnlyBuffer()
 
         # Set text and cursor position first.
@@ -1083,41 +1096,54 @@ class Buffer(object):
             text, pos = self._redo_stack.pop()
             self.document = Document(text, cursor_position=pos)
 
-    def validate(self):
+    def _validate(self, set_cursor=False):
         """
         Returns `True` if valid.
-        """
-        # Don't call the validator again, if it was already called for the
-        # current input.
-        if self.validation_state != ValidationState.UNKNOWN:
-            return self.validation_state == ValidationState.VALID
 
-        # Validate first. If not valid, set validation exception.
-        if self.validator:
-            try:
-                self.validator.validate(self.document)
-            except ValidationError as e:
+        :param set_cursor: Set the cursor position, if an error was found.
+        """
+        def coroutine():
+            # Don't call the validator again, if it was already called for the
+            # current input.
+            if self.validation_state != ValidationState.UNKNOWN:
+                raise Return(self.validation_state == ValidationState.VALID)
+
+            # Call validator.
+            error = None
+            document = self.document
+
+            if self.validator:
+                try:
+                    yield self.validator.get_validate_future(self.document)
+                except ValidationError as e:
+                    error = e
+
+                # If the document changed during the validation, try again.
+                if self.document != document:
+                    result = yield From(coroutine())
+                    raise Return(result)
+
+            # Handle validation result.
+            if error:
                 # Set cursor position (don't allow invalid values.)
-                cursor_position = e.cursor_position
-                self.cursor_position = min(max(0, cursor_position), len(self.text))
+                if set_cursor:
+                    cursor_position = error.cursor_position
+                    self.cursor_position = min(max(0, cursor_position), len(self.text))
 
                 self.validation_state = ValidationState.INVALID
-                self.validation_error = e
-                return False
+            else:
+                self.validation_state = ValidationState.VALID
 
-        self.validation_state = ValidationState.VALID
-        self.validation_error = None
-        return True
+            self.validation_error = error
+            get_app().invalidate()  # Trigger redraw.
+            raise Return(error is None)
+
+        return ensure_future(coroutine())
 
     def append_to_history(self):
         """
         Append the current input to the history.
-        (Only if valid input.)
         """
-        # Validate first. If not valid, set validation exception.
-        if not self.validate():
-            return
-
         # Save at the tail of the history. (But don't if the last entry the
         # history is already the same.)
         if self.text and (not len(self.history) or self.history[-1] != self.text):
@@ -1251,7 +1277,7 @@ class Buffer(object):
         """
         Open code in editor.
         """
-        if self.read_only():
+        if self.read_only() or self.validation_in_progress:
             raise EditReadOnlyBuffer()
 
         # Write to temporary file
@@ -1334,7 +1360,7 @@ class Buffer(object):
     def _create_async_completer(self):
         """
         Create function for asynchronous autocompletion.
-        (Autocomplete in other thread.)
+        (This can be in another thread.)
         """
         complete_thread_running = [False]  # By ref.
 
@@ -1383,10 +1409,7 @@ class Buffer(object):
                     del completions[:]
 
                 # Set completions if the text was not yet changed.
-                if self.text == document.text and \
-                        self.cursor_position == document.cursor_position and \
-                        not self.complete_state:
-
+                if self.document == document and not self.complete_state:
                     set_completions = True
                     select_first_anyway = False
 
@@ -1431,7 +1454,7 @@ class Buffer(object):
     def _create_auto_suggest_function(self):
         """
         Create function for asynchronous auto suggestion.
-        (AutoSuggest in other thread.)
+        (This can be in another thread.)
         """
         suggest_thread_running = [False]  # By ref.
 
@@ -1457,9 +1480,7 @@ class Buffer(object):
                     suggest_thread_running[0] = False
 
                 # Set suggestion only if the text was not yet changed.
-                if self.text == document.text and \
-                        self.cursor_position == document.cursor_position:
-
+                if self.document == document:
                     # Set suggestion and redraw interface.
                     self.suggestion = suggestion
                     self.on_suggestion_set.fire()
@@ -1470,14 +1491,48 @@ class Buffer(object):
             ensure_future(coroutine())
         return async_suggestor
 
+    def _create_auto_validate_function(self):
+        """
+        Create a function for asynchronous validation while typing.
+        (This can be in another thread.)
+        """
+        validation_running = [False]  # Nonlocal.
+
+        def async_validator():
+            # Don't start two threads at the same time.
+            if validation_running[0]:
+                return
+
+            validation_running[0] = True
+            def coroutine():
+                try:
+                    yield From(self._validate(set_cursor=False))
+                finally:
+                    validation_running[0] = False
+
+            ensure_future(coroutine())
+        return async_validator
+
     def validate_and_handle(self):
         """
         Validate buffer and handle the accept action.
         """
-        if self.validate():
-            if self.accept_handler:
-                self.accept_handler(self)
-            self.append_to_history()
+        def coroutine():
+            # Set `validation_in_progress` flag. This makes the buffer
+            # read-only until the validation is done.
+            self.validation_in_progress = True
+            try:
+                valid = yield From(self._validate(set_cursor=True))
+
+                # When the validation succeeded, accept the input.
+                if valid:
+                    if self.accept_handler:
+                        self.accept_handler(self)
+                    self.append_to_history()
+            finally:
+                self.validation_in_progress = False
+
+        return ensure_future(coroutine())
 
 
 def indent(buffer, from_row, to_row, count=1):
