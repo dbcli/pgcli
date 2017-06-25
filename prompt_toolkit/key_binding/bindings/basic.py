@@ -157,7 +157,7 @@ def load_basic_bindings():
         enter. - at least the Linux subsytem for Windows.)
         """
         event.key_processor.feed(
-            KeyPress(Keys.ControlM, '\r'))
+            KeyPress(Keys.ControlM, '\r'), first=True)
 
     # Delete the word before the cursor.
 
