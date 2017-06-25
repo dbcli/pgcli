@@ -56,10 +56,12 @@ class Validator(with_metaclass(ABCMeta, object)):
         This function can be overloaded in order to provide an asynchronous
         implementation.
         """
-        f = Future()
-        result = self.validate(document)
-        f.set_result(result)
-        return f
+        try:
+            self.validate(document)
+        except ValidationError as e:
+            return Future.fail(e)
+        else:
+            return Future.succeed(None)
 
 
 class ThreadedValidator(Validator):

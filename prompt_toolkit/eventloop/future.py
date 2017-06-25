@@ -29,6 +29,26 @@ class Future(object):
         self._exception = None
         self._done = False
 
+    @classmethod
+    def succeed(cls, result):
+        """
+        Returns a Future for which the result has been set to the given result.
+        Similar to Twisted's `Deferred.succeed()`.
+        """
+        f = cls()
+        f.set_result(result)
+        return f
+
+    @classmethod
+    def fail(cls, result):
+        """
+        Returns a Future for which the error has been set to the given result.
+        Similar to Twisted's `Deferred.fail()`.
+        """
+        f = cls()
+        f.set_exception(result)
+        return f
+
     def add_done_callback(self, callback):
         """
         Add a callback to be run when the future becomes done.  (This

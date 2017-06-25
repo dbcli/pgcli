@@ -146,10 +146,7 @@ class Completer(with_metaclass(ABCMeta, object)):
         This function can be overloaded in order to provide an asynchronous
         implementation.
         """
-        f = Future()
-        result = self.get_completions(document, complete_event)
-        f.set_result(result)
-        return f
+        return Future.succeed(self.get_completions(document, complete_event))
 
 
 class ThreadedCompleter(Completer):
