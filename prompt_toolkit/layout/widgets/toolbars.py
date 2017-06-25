@@ -1,11 +1,11 @@
 from __future__ import unicode_literals
 
-from .containers import Window, ConditionalContainer
-from .controls import BufferControl, FormattedTextControl, UIControl, UIContent
-from .dimension import Dimension
-from .lexers import SimpleLexer
-from .processors import BeforeInput
-from .utils import fragment_list_len
+from ..containers import Window, ConditionalContainer
+from ..controls import BufferControl, FormattedTextControl, UIControl, UIContent
+from ..dimension import Dimension
+from ..lexers import SimpleLexer
+from ..processors import BeforeInput
+from ..utils import fragment_list_len
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import SYSTEM_BUFFER, SearchDirection
@@ -25,14 +25,16 @@ __all__ = (
 
 
 class FormattedTextToolbar(Window):
-    def __init__(self, get_text_fragments, **kw):
+    def __init__(self, text, **kw):
         super(FormattedTextToolbar, self).__init__(
-            FormattedTextControl(get_text_fragments, **kw),
+            FormattedTextControl(text, **kw),
             height=Dimension.exact(1))
 
 
 class SystemToolbar(object):
     """
+    Toolbar for a system prompt.
+
     :param prompt: Prompt to be displayed to the user.
     """
     def __init__(self, prompt='Shell command: '):
@@ -133,6 +135,10 @@ class SystemToolbar(object):
         ])
 
     def get_global_key_bindings(self):
+        """
+        Return the key bindings which need to be registered to allow this
+        toolbar to be focussed.
+        """
         return self._global_bindings
 
     def __pt_container__(self):
