@@ -112,8 +112,7 @@ class KeyProcessor(object):
         self.record_macro = False
 
     def call_macro(self):
-        for k in self.macro:
-            self.feed(k)
+        self.feed_multiple(self.macro, first=True)
 
     def _get_matches(self, key_presses):
         """
@@ -203,10 +202,14 @@ class KeyProcessor(object):
         else:
             self.input_queue.append(key_press)
 
-    def feed_multiple(self, key_presses):
+    def feed_multiple(self, key_presses, first=False):
         """
+        :param first: If true, insert before everything else.
         """
-        self.input_queue.extend(key_presses)
+        if first:
+            self.input_queue.extendleft(reversed(key_presses))
+        else:
+            self.input_queue.extend(key_presses)
 
     def process_keys(self):
         """
