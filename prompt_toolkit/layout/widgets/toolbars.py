@@ -178,7 +178,7 @@ class SearchToolbar(object):
 
         def get_before_input():
             app = get_app()
-            if not is_searching(app):
+            if not is_searching():
                 return ''
             elif app.current_search_state.direction == SearchDirection.BACKWARD:
                 return ('?' if vi_mode else 'I-search backward: ')
