@@ -1136,7 +1136,8 @@ class Buffer(object):
                 self.validation_state = ValidationState.VALID
 
             self.validation_error = error
-            get_app().invalidate()  # Trigger redraw.
+            get_app().invalidate()  # Trigger redraw (display error).
+
             raise Return(error is None)
 
         return ensure_future(coroutine())
@@ -1475,16 +1476,30 @@ class Buffer(object):
             yield From(self._validate(set_cursor=False))
         return async_validator
 
-    def validate_and_handle(self):
+    def validate_and_handle(self, document=None):
         """
         Validate buffer and handle the accept action.
+
+        :param document: Use this document instead of the current document.
+            (This can be used to implement a custom accept key binding that
+            trims whitespace right before accepting.)
         """
+        assert document is None or isinstance(document, Document)
+
         def coroutine():
+            # If a document was given. Use this one instead.
+            if document:
+                prev_document = self.document
+                self.document = document
+
             # Set `validation_in_progress` flag. This makes the buffer
             # read-only until the validation is done.
             self.validation_in_progress = True
+            valid = True
+
             try:
-                valid = yield From(self._validate(set_cursor=True))
+                f = self._validate(set_cursor=True)
+                valid = yield From(f)
 
                 # When the validation succeeded, accept the input.
                 if valid:
@@ -1493,6 +1508,10 @@ class Buffer(object):
                     self.append_to_history()
             finally:
                 self.validation_in_progress = False
+
+            # Not valid. Restore previous document.
+            if not valid and document:
+                self.document = prev_document
 
         return ensure_future(coroutine())
 
