@@ -3,10 +3,12 @@
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
+from .eventloop import Future, run_in_executor
 
 __all__ = (
     'Completion',
     'Completer',
+    'ThreadedCompleter',
     'DummyCompleter',
     'DynamicCompleter',
     'CompleteEvent',
@@ -138,6 +140,40 @@ class Completer(with_metaclass(ABCMeta, object)):
         while False:
             yield
 
+    def get_completions_future(self, document, complete_event):
+        """
+        Return a `Future` which is set when the completions are ready.
+        This function can be overloaded in order to provide an asynchronous
+        implementation.
+        """
+        f = Future()
+        result = self.get_completions(document, complete_event)
+        f.set_result(result)
+        return f
+
+
+class ThreadedCompleter(Completer):
+    """
+    Wrapper that runs completions in a thread.
+    (Use this to prevent the user interface from becoming unresponsive if the
+    generation of completions takes too much time.)
+    """
+    def __init__(self, completer):
+        assert isinstance(completer, Completer)
+        self.completer = completer
+
+    def get_completions(self, document, complete_event):
+        return self.completer.get_completions(document, complete_event)
+
+    def get_completions_future(self, document, complete_event):
+        """
+        Run the `get_completions` function in a thread.
+        """
+        def run_get_completions_thread():
+            return self.get_completions(document, complete_event)
+        f = run_in_executor(run_get_completions_thread)
+        return f
+
 
 class DummyCompleter(Completer):
     """
@@ -157,12 +193,13 @@ class DynamicCompleter(Completer):
         assert callable(get_completer)
         self.get_completer = get_completer
 
-    def get_completions(self, *a, **kw):
-        completer = self.get_completer()
-        if completer:
-            return completer.get_completions(*a, **kw)
-        else:
-            return []
+    def get_completions(self, document, complete_event):
+        completer = self.get_completer() or DummyCompleter()
+        return completer.get_completions(document, complete_event)
+
+    def get_completions_future(self, document, complete_event):
+        completer = self.get_completer() or DummyCompleter()
+        return completer.get_completions_future(document, complete_event)
 
 
 def get_common_complete_suffix(document, completions):

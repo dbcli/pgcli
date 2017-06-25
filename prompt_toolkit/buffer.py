@@ -11,7 +11,7 @@ from .clipboard import ClipboardData
 from .completion import CompleteEvent, get_common_complete_suffix, Completer, Completion, DummyCompleter
 from .document import Document
 from .enums import SearchDirection
-from .eventloop import run_in_executor, From, ensure_future
+from .eventloop import ensure_future
 from .filters import to_filter
 from .history import History, InMemoryHistory
 from .search_state import SearchState
@@ -1364,17 +1364,18 @@ class Buffer(object):
             # Otherwise, get completions in other thread.
             complete_thread_running[0] = True
 
-            def run_get_completions():
-                return list(self.completer.get_completions(document, complete_event))
-
             def coroutine():
-                completions = yield From(run_in_executor(run_get_completions))
+                try:
+                    completions = yield self.completer.get_completions_future(
+                            document, complete_event)
+                    completions = list(completions)
+                finally:
+                    complete_thread_running[0] = False
 
-                # Set the new complete_state in a safe way. Don't replace an
-                # existing complete_state if we had one. (The user could have
-                # pressed 'Tab' in the meantime. Also don't set it if the text
-                # was changed in the meantime.
-                complete_thread_running[0] = False
+                # Set the new complete_state. Don't replace an existing
+                # complete_state if we had one. (The user could have pressed
+                # 'Tab' in the meantime. Also don't set it if the text was
+                # changed in the meantime.
 
                 # When there is only one completion, which has nothing to add, ignore it.
                 if (len(completions) == 1 and
@@ -1448,13 +1449,12 @@ class Buffer(object):
             # Otherwise, get completions in other thread.
             suggest_thread_running[0] = True
 
-            def run_get_suggestion():
-                return self.auto_suggest.get_suggestion(self, self, document)
-
             def coroutine():
-                suggestion = yield From(run_in_executor(run_get_suggestion))
-
-                suggest_thread_running[0] = False
+                try:
+                    suggestion = yield self.auto_suggest.get_suggestion_future(
+                            self, document)
+                finally:
+                    suggest_thread_running[0] = False
 
                 # Set suggestion only if the text was not yet changed.
                 if self.text == document.text and \
