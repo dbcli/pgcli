@@ -439,12 +439,12 @@ def suggest_based_on_last_token(token, stmt):
         schema = stmt.get_identifier_schema()
         # stmt.get_previous_token will fail for e.g. `SELECT 1 FROM functions WHERE function:`
         try:
-            if stmt.get_previous_token(token).value.lower() in('drop', 'alter'):
+            prev = stmt.get_previous_token(token).value.lower()
+            if prev in('drop', 'alter', 'create', 'create or replace'):
                 return (Function(schema=schema, usage='signature'),)
-            else:
-                return (Function(schema=schema),)
         except ValueError:
-            return tuple()
+            pass
+        return tuple()
 
     elif token_v in ('table', 'view'):
         # E.g. 'ALTER TABLE <tablname>'

@@ -87,10 +87,10 @@ def test_function_column_name(completer):
         )
 
 
-@parametrize('text', ['ALTER FUNCTION set_ret', 'DROP FUNCTION set_ret'])
+@parametrize('action', ['ALTER', 'DROP', 'CREATE', 'CREATE OR REPLACE'])
 @parametrize('completer', completers())
-def test_drop_alter_function(completer, text):
-    assert get_result(completer, text) == [
+def test_drop_alter_function(completer, action):
+    assert get_result(completer, action + ' FUNCTION set_ret') == [
         function('set_returning_func(x integer, y integer)', -len('set_ret'))
     ]
 
