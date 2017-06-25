@@ -43,7 +43,7 @@ def From(obj):
     Used to emulate 'yield from'.
     (Like Trollius does.)
     """
-    return obj
+    return ensure_future(obj)
 
 
 def _run_coroutine(coroutine):
@@ -87,7 +87,7 @@ def _run_coroutine(coroutine):
             result_f.set_exception(e)
         else:
             # Process yielded value from coroutine.
-            new_f = ensure_future(new_f)
+            assert isinstance(new_f, Future)
 
             @new_f.add_done_callback
             def continue_(_):
