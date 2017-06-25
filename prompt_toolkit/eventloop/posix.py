@@ -168,7 +168,7 @@ class PosixEventLoop(EventLoop):
         def ready():
             input_ready_callback()
 
-        self.add_reader(input.stdin.fileno(), ready)
+        self.add_reader(input.fileno(), ready)
 
         return previous_input, previous_cb
 
