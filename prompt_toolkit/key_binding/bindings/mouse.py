@@ -99,12 +99,12 @@ def load_mouse_bindings():
         " Scroll up event without cursor position. "
         # We don't receive a cursor position, so we don't know which window to
         # scroll. Just send an 'up' key press instead.
-        event.key_processor.feed(KeyPress(Keys.Up))
+        event.key_processor.feed(KeyPress(Keys.Up), first=True)
 
     @key_bindings.add(Keys.ScrollDown)
     def _(event):
         " Scroll down event without cursor position. "
-        event.key_processor.feed(KeyPress(Keys.Down))
+        event.key_processor.feed(KeyPress(Keys.Down), first=True)
 
     @key_bindings.add(Keys.WindowsMouseEvent)
     def _(event):
