@@ -7,6 +7,7 @@ from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.input.base import Input
+from prompt_toolkit.input.typeahead import store_typeahead, get_typeahead
 from prompt_toolkit.input.defaults import create_input
 from prompt_toolkit.key_binding.bindings.mouse import load_mouse_bindings
 from prompt_toolkit.key_binding.defaults import load_key_bindings
@@ -417,11 +418,21 @@ class Application(object):
             self.reset()
             self._pre_run(pre_run)
 
+            # Feed type ahead input first.
+            self.key_processor.feed_multiple(get_typeahead(self.input))
+            self.key_processor.process_keys()
+
             def feed_keys(keys):
                 self.key_processor.feed_multiple(keys)
                 self.key_processor.process_keys()
 
             def read_from_input():
+                # Ignore when we aren't running anymore. This callback will
+                # removed from the loop next time. (It could be that it was
+                # still in the 'tasks' list of the loop.)
+                if not self._is_running:
+                    return
+
                 # Get keys from the input object.
                 keys = self.input.read_keys()
 
@@ -487,15 +498,22 @@ class Application(object):
                         # _redraw has a good chance to fail if it calls widgets
                         # with bad code. Make sure to reset the renderer anyway.
                         self.renderer.reset()
-                        self._is_running = False
-                        set_app(previous_app)
 
                         # Clear event loop handlers.
                         if previous_input:
                             loop.set_input(previous_input, previous_cb)
+                        else:
+                            loop.remove_input()
 
                         if has_sigwinch:
                             loop.add_signal_handler(signal.SIGWINCH, previous_winch_handler)
+
+                        # Unset running Application.
+                        self._is_running = False
+                        set_app(previous_app)  # Make sure to do this after removing the input.
+
+                # Store unprocessed input as typeahead for next time.
+                store_typeahead(self.input, self.key_processor.flush())
 
                 raise Return(result)
 

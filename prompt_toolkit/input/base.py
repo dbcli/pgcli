@@ -27,6 +27,12 @@ class Input(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
+    def typeahead_hash(self):
+        """
+        Identifier for storing type ahead key presses.
+        """
+
+    @abstractmethod
     def read_keys(self):
         """
         Return a list of Key objects which are read/parsed from the input.

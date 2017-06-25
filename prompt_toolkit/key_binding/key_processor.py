@@ -220,6 +220,8 @@ class KeyProcessor(object):
               possible to call `feed` from inside a key binding.
               This function keeps looping until the queue is empty.
         """
+        app = get_app()
+
         while self.input_queue:
             key_press = self.input_queue.popleft()
 
@@ -231,8 +233,25 @@ class KeyProcessor(object):
             if key_press.key != Keys.CPRResponse:
                 self.after_key_press.fire()
 
+            # When the application result is set, stop processing keys.  (E.g.
+            # if ENTER was received, followed by a few additional key strokes,
+            # leave the other keys in the queue.)
+            if app.is_done:
+                break
+
         # Invalidate user interface.
-        get_app().invalidate()
+        app.invalidate()
+
+    def flush(self):
+        """
+        Flush the input queue. Return the inprocessed input.
+        """
+        key_presses = list(self.input_queue)
+        self.input_queue.clear()
+
+        # Filter out CPRs. We don't want to return these.
+        key_presses = [k for k in key_presses if k.key != Keys.CPRResponse]
+        return key_presses
 
     def _call_handler(self, handler, key_sequence=None):
         was_recording = self.record_macro

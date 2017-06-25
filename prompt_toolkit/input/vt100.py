@@ -82,6 +82,9 @@ class Vt100Input(Input):
     def fileno(self):
         return self.stdin.fileno()
 
+    def typeahead_hash(self):
+        return 'fd-{}'.format(self.fileno())
+
 
 class PipeInput(Vt100Input):
     """

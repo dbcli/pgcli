@@ -51,6 +51,9 @@ class Win32Input(Input):
         """
         raise NotImplementedError
 
+    def typeahead_hash(self):
+        return 'win32-input'
+
     def close(self):
         self.console_input_reader.close()
 
