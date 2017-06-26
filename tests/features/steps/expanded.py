@@ -1,8 +1,9 @@
 # -*- coding: utf-8
-"""
-Steps for behavioral style tests are defined in this module.
-Each step is defined by the string decorating it.
-This string is used to call the step in "*.feature" file.
+"""Steps for behavioral style tests are defined in this module.
+
+Each step is defined by the string decorating it. This string is used
+to call the step in "*.feature" file.
+
 """
 from __future__ import unicode_literals
 
@@ -13,12 +14,11 @@ from textwrap import dedent
 
 @when('we prepare the test data')
 def step_prepare_data(context):
-    """
-    Create table, insert a record.
-    """
+    """Create table, insert a record."""
     context.cli.sendline('drop table if exists a;')
     wrappers.wait_prompt(context)
-    context.cli.sendline('create table a(x integer, y real, z numeric(10, 4));')
+    context.cli.sendline(
+        'create table a(x integer, y real, z numeric(10, 4));')
     wrappers.expect_pager(context, 'CREATE TABLE\r\n', timeout=2)
     context.cli.sendline('''insert into a(x, y, z) values(1, 1.0, 1.0);''')
     wrappers.expect_pager(context, 'INSERT 0 1\r\n', timeout=2)
@@ -26,9 +26,7 @@ def step_prepare_data(context):
 
 @when('we set expanded {mode}')
 def step_set_expanded(context, mode):
-    """
-    Set expanded to mode.
-    """
+    """Set expanded to mode."""
     context.cli.sendline('\\' + 'x {}'.format(mode))
     wrappers.expect_exact(context, 'Expanded display is', timeout=2)
     wrappers.wait_prompt(context)
@@ -36,9 +34,7 @@ def step_set_expanded(context, mode):
 
 @then('we see {which} data selected')
 def step_see_data(context, which):
-    """
-    Select data from expanded test table.
-    """
+    """Select data from expanded test table."""
     if which == 'expanded':
         wrappers.expect_pager(
             context,
