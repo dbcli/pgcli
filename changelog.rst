@@ -6,6 +6,7 @@ Upcoming
 * Use dbcli's Homebrew tap for installing pgcli on macOS (issue #718) (Thanks: `Thomas Roten`_).
 * Only set `LESS` environment variable if it's unset. (Thanks: `Irina Truong`_)
 * Quote schema in `SET SCHEMA` statement (issue #469) (Thanks: `Irina Truong`_)
+* Use CLI Helpers for pretty printing query results (Thanks: `Thomas Roten`_).
 
 1.6.0
 =====

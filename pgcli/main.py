@@ -16,6 +16,9 @@ from time import time, sleep
 from codecs import open
 
 
+from cli_helpers.tabular_output import TabularOutputFormatter
+from cli_helpers.tabular_output.preprocessors import (align_decimals,
+                                                      format_numbers)
 import click
 try:
     import setproctitle
@@ -34,9 +37,7 @@ from prompt_toolkit.history import FileHistory
 from pygments.lexers.sql import PostgresLexer
 from pygments.token import Token
 
-from .packages.tabulate import tabulate
-from .packages.expanded import expanded_table
-from pgspecial.main import (PGSpecial, NO_QUERY, content_exceeds_width)
+from pgspecial.main import (PGSpecial, NO_QUERY)
 import pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
@@ -758,7 +759,6 @@ class PGCli(object):
         return self.query_history[-1][0] if self.query_history else None
 
 
-
 @click.command()
 # Default host is '' so psycopg2 can default to either localhost or unix socket
 @click.option('-h', '--host', default='', envvar='PGHOST',
@@ -862,35 +862,6 @@ def obfuscate_process_password():
     setproctitle.setproctitle(process_title)
 
 
-def format_output(title, cur, headers, status, settings):
-    output = []
-    missingval = settings.missingval
-    table_format = settings.table_format
-    dcmlfmt = settings.dcmlfmt
-    floatfmt = settings.floatfmt
-    expanded = settings.expanded
-    max_width = settings.max_width
-    case_function = settings.case_function
-    if title:  # Only print the title if it's not None.
-        output.append(title)
-    if cur:
-        headers = [case_function(utf8tounicode(x)) for x in headers]
-        if expanded and headers:
-            output.append(expanded_table(cur, headers, missingval))
-        else:
-            tabulated, rows = tabulate(cur, headers, tablefmt=table_format,
-                missingval=missingval, dcmlfmt=dcmlfmt, floatfmt=floatfmt)
-            if (max_width and rows and
-                    content_exceeds_width(rows[0], max_width) and
-                    headers):
-                output.append(expanded_table(rows, headers, missingval))
-            else:
-                output.append(tabulated)
-    if status:  # Only print the status if it's not None.
-        output.append(status)
-    return output
-
-
 def has_meta_cmd(query):
     """Determines if the completion needs a refresh by checking if the sql
     statement is an alter, create, drop, commit or rollback."""
@@ -947,6 +918,50 @@ def quit_command(sql):
 
 def exception_formatter(e):
     return click.style(utf8tounicode(str(e)), fg='red')
+
+
+def format_output(title, cur, headers, status, settings):
+    output = []
+    expanded = (settings.expanded or settings.table_format == 'vertical')
+    table_format = ('vertical' if settings.expanded else
+                    settings.table_format)
+    max_width = settings.max_width
+    case_function = settings.case_function
+    formatter = TabularOutputFormatter(format_name=table_format)
+
+    output_kwargs = {
+        'sep_title': 'RECORD {n}',
+        'sep_character': '-',
+        'sep_length': (1, 25),
+        'missing_value': settings.missingval,
+        'integer_format': settings.dcmlfmt,
+        'float_format': settings.floatfmt,
+        'preprocessors': (format_numbers, ),
+        'disable_numparse': True,
+        'preserve_whitespace': True
+    }
+    if not settings.floatfmt:
+        output_kwargs['preprocessors'] = (align_decimals, )
+
+    if title:  # Only print the title if it's not None.
+        output.append(title)
+
+    if cur:
+        headers = [case_function(utf8tounicode(x)) for x in headers]
+        rows = list(cur)
+        formatted = formatter.format_output(rows, headers, **output_kwargs)
+        first_line = formatted[:formatted.find('\n')]
+
+        if (not expanded and max_width and len(first_line) > max_width and headers):
+            formatted = formatter.format_output(
+                rows, headers, format_name='vertical', **output_kwargs)
+
+        output.append(formatted)
+
+    if status:  # Only print the status if it's not None.
+        output.append(status)
+
+    return output
 
 
 if __name__ == "__main__":
