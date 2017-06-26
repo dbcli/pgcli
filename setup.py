@@ -37,7 +37,7 @@ setup(
     author='Pgcli Core Team',
     author_email='pgcli-dev@googlegroups.com',
     version=version,
-    license='LICENSE.txt',
+    license='BSD',
     url='http://pgcli.com',
     packages=find_packages(),
     package_data={'pgcli': ['pgclirc',
