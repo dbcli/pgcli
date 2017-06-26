@@ -10,8 +10,9 @@ from prompt_toolkit.input.base import Input
 from prompt_toolkit.input.typeahead import store_typeahead, get_typeahead
 from prompt_toolkit.input.defaults import create_input
 from prompt_toolkit.key_binding.bindings.mouse import load_mouse_bindings
+from prompt_toolkit.key_binding.bindings.page_navigation import load_page_navigation_bindings
 from prompt_toolkit.key_binding.defaults import load_key_bindings
-from prompt_toolkit.key_binding.key_bindings import KeyBindings, KeyBindingsBase, merge_key_bindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings, ConditionalKeyBindings, KeyBindingsBase, merge_key_bindings
 from prompt_toolkit.key_binding.key_processor import KeyProcessor
 from prompt_toolkit.key_binding.vi_state import ViState
 from prompt_toolkit.keys import Keys
@@ -65,6 +66,12 @@ class Application(object):
     :param paste_mode: :class:`~prompt_toolkit.filters.Filter` or boolean.
     :param editing_mode: :class:`~prompt_toolkit.enums.EditingMode`.
 
+    :param enable_page_navigation_bindings: When `True`, enable the page
+        navigation key bindings. These include both Emacs and Vi bindings like
+        page-up, page-down and so on to scroll through pages. Mostly useful for
+        creating an editor. Probably, you don't want this for the
+        implementation of a REPL.
+
     Callbacks (all of these should accept a
     :class:`~prompt_toolkit.application.Application` object as input.)
 
@@ -82,6 +89,7 @@ class Application(object):
                  style=None,
                  key_bindings=None, clipboard=None,
                  full_screen=False, mouse_support=False,
+                 enable_page_navigation_bindings=False,
                  get_title=None,
 
                  paste_mode=False,
@@ -97,6 +105,7 @@ class Application(object):
         paste_mode = to_filter(paste_mode)
         mouse_support = to_filter(mouse_support)
         reverse_vi_search_direction = to_filter(reverse_vi_search_direction)
+        enable_page_navigation_bindings = to_filter(enable_page_navigation_bindings)
 
         assert isinstance(layout, Layout)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
@@ -123,6 +132,7 @@ class Application(object):
         # Key bindings.
         self.key_bindings = key_bindings
         self._default_bindings = load_key_bindings()
+        self._page_navigation_bindings = load_page_navigation_bindings()
         self._mouse_bindings = load_mouse_bindings()
 
         self.layout = layout
@@ -135,6 +145,7 @@ class Application(object):
         self.editing_mode = editing_mode
         self.erase_when_done = erase_when_done
         self.reverse_vi_search_direction = reverse_vi_search_direction
+        self.enable_page_navigation_bindings = enable_page_navigation_bindings
 
         # Events.
         self.on_invalidate = Event(self, on_invalidate)
@@ -912,9 +923,13 @@ class _CombinedRegistry(KeyBindingsBase):
             container = self.app.layout.get_parent(container)
 
         # Add App key bindings
-        key_bindings.append(self.app.key_bindings)
+        if self.app.key_bindings:
+            key_bindings.append(self.app.key_bindings)
 
         # Add mouse bindings.
+        key_bindings.append(ConditionalKeyBindings(
+            self.app._page_navigation_bindings,
+            self.app.enable_page_navigation_bindings))
         key_bindings.append(self.app._default_bindings)
         key_bindings.append(self.app._mouse_bindings)
 

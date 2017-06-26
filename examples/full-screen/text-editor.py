@@ -309,9 +309,7 @@ layout=Layout(
 
 application = Application(
     layout=layout,
-    key_bindings=load_key_bindings(
-        enable_search=True,
-        enable_extra_page_navigation=True),
+    enable_page_navigation_bindings=True,
     style=merge_styles([
         default_style(),
         style,

@@ -89,10 +89,8 @@ application = Application(
         root_container,
         focussed_window=text_area,
     ),
-    key_bindings=merge_key_bindings([
-        load_key_bindings(enable_search=True, enable_extra_page_navigation=True),
-        bindings,
-    ]),
+    key_bindings=bindings,
+    enable_page_navigation_bindings=True,
     mouse_support=True,
     style=style,
     full_screen=True)
