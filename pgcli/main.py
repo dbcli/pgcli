@@ -646,8 +646,7 @@ class PGCli(object):
                     else lambda x: x
                 )
             )
-            formatted = self.format_output(title, cur, headers, status,
-                                           settings)
+            formatted = format_output(title, cur, headers, status, settings)
 
             output.extend(formatted)
             total = time() - start
@@ -758,49 +757,6 @@ class PGCli(object):
     def get_last_query(self):
         """Get the last query executed or None."""
         return self.query_history[-1][0] if self.query_history else None
-
-    def format_output(self, title, cur, headers, status, settings):
-        output = []
-        expanded = (settings.expanded or settings.table_format == 'vertical')
-        table_format = ('vertical' if settings.expanded else
-                        settings.table_format)
-        max_width = settings.max_width
-        case_function = settings.case_function
-        formatter = TabularOutputFormatter(format_name=table_format)
-
-        output_kwargs = {
-            'sep_title': 'RECORD {n}',
-            'sep_character': '-',
-            'sep_length': (1, 25),
-            'missing_value': settings.missingval,
-            'integer_format': settings.dcmlfmt,
-            'float_format': settings.floatfmt,
-            'preprocessors': (format_numbers, ),
-            'disable_numparse': True,
-            'preserve_whitespace': True
-        }
-        if not settings.dcmlfmt and not settings.floatfmt:
-            output_kwargs['preprocessors'] = (align_decimals, )
-
-        if title:  # Only print the title if it's not None.
-            output.append(title)
-
-        if cur:
-            headers = [case_function(utf8tounicode(x)) for x in headers]
-            rows = list(cur)
-            formatted = formatter.format_output(rows, headers, **output_kwargs)
-
-            if (not expanded and max_width and
-                    content_exceeds_width(rows[0], max_width) and headers):
-                formatted = formatter.format_output(
-                    rows, headers, format_name='vertical', **output_kwargs)
-
-            output.append(formatted)
-
-        if status:  # Only print the status if it's not None.
-            output.append(status)
-
-        return output
 
 
 @click.command()
@@ -962,6 +918,50 @@ def quit_command(sql):
 
 def exception_formatter(e):
     return click.style(utf8tounicode(str(e)), fg='red')
+
+
+def format_output(title, cur, headers, status, settings):
+    output = []
+    expanded = (settings.expanded or settings.table_format == 'vertical')
+    table_format = ('vertical' if settings.expanded else
+                    settings.table_format)
+    max_width = settings.max_width
+    case_function = settings.case_function
+    formatter = TabularOutputFormatter(format_name=table_format)
+
+    output_kwargs = {
+        'sep_title': 'RECORD {n}',
+        'sep_character': '-',
+        'sep_length': (1, 25),
+        'missing_value': settings.missingval,
+        'integer_format': settings.dcmlfmt,
+        'float_format': settings.floatfmt,
+        'preprocessors': (format_numbers, ),
+        'disable_numparse': True,
+        'preserve_whitespace': True
+    }
+    if not settings.dcmlfmt and not settings.floatfmt:
+        output_kwargs['preprocessors'] = (align_decimals, )
+
+    if title:  # Only print the title if it's not None.
+        output.append(title)
+
+    if cur:
+        headers = [case_function(utf8tounicode(x)) for x in headers]
+        rows = list(cur)
+        formatted = formatter.format_output(rows, headers, **output_kwargs)
+
+        if (not expanded and max_width and
+                content_exceeds_width(rows[0], max_width) and headers):
+            formatted = formatter.format_output(
+                rows, headers, format_name='vertical', **output_kwargs)
+
+        output.append(formatted)
+
+    if status:  # Only print the status if it's not None.
+        output.append(status)
+
+    return output
 
 
 if __name__ == "__main__":
