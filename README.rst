@@ -23,7 +23,7 @@ If you already know how to install python packages, then you can simply do:
 
     or
 
-    $ brew tap-pin dbcli/tap && brew install pgcli  # Only on macOS
+    $ brew tap dbcli/tap && brew tap-pin dbcli/tap && brew install pgcli  # Only on macOS
 
 If you don't know how to install python packages, please check the 
 `detailed instructions`__.
