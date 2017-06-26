@@ -940,7 +940,7 @@ def format_output(title, cur, headers, status, settings):
         'disable_numparse': True,
         'preserve_whitespace': True
     }
-    if not settings.dcmlfmt and not settings.floatfmt:
+    if not settings.floatfmt:
         output_kwargs['preprocessors'] = (align_decimals, )
 
     if title:  # Only print the title if it's not None.
