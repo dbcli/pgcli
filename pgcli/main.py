@@ -950,7 +950,7 @@ def format_output(title, cur, headers, status, settings):
         headers = [case_function(utf8tounicode(x)) for x in headers]
         rows = list(cur)
         formatted = formatter.format_output(rows, headers, **output_kwargs)
-        first_line = formatted[0:formatted.find('\n')]
+        first_line = formatted[:formatted.find('\n')]
 
         if (not expanded and max_width and len(first_line) <= max_width and headers):
             formatted = formatter.format_output(
