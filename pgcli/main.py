@@ -157,7 +157,6 @@ class PGCli(object):
         self.now = dt.datetime.today()
 
         self.completion_refresher = CompletionRefresher()
-        self.formatter = TabularOutputFormatter()
 
         self.query_history = []
 
@@ -767,6 +766,7 @@ class PGCli(object):
                         settings.table_format)
         max_width = settings.max_width
         case_function = settings.case_function
+        formatter = TabularOutputFormatter(format_name=table_format)
 
         output_kwargs = {
             'sep_title': 'RECORD {n}',
@@ -788,12 +788,11 @@ class PGCli(object):
         if cur:
             headers = [case_function(utf8tounicode(x)) for x in headers]
             rows = list(cur)
-            formatted = self.formatter.format_output(
-                rows, headers, format_name=table_format, **output_kwargs)
+            formatted = formatter.format_output(rows, headers, **output_kwargs)
 
             if (not expanded and max_width and
                     content_exceeds_width(rows[0], max_width) and headers):
-                formatted = self.formatter.format_output(
+                formatted = formatter.format_output(
                     rows, headers, format_name='vertical', **output_kwargs)
 
             output.append(formatted)
