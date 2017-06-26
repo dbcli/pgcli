@@ -37,7 +37,7 @@ from prompt_toolkit.history import FileHistory
 from pygments.lexers.sql import PostgresLexer
 from pygments.token import Token
 
-from pgspecial.main import (PGSpecial, NO_QUERY, content_exceeds_width)
+from pgspecial.main import (PGSpecial, NO_QUERY)
 import pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
@@ -950,9 +950,9 @@ def format_output(title, cur, headers, status, settings):
         headers = [case_function(utf8tounicode(x)) for x in headers]
         rows = list(cur)
         formatted = formatter.format_output(rows, headers, **output_kwargs)
+        first_line = formatted[0:formatted.find('\n')]
 
-        if (not expanded and max_width and
-                content_exceeds_width(rows[0], max_width) and headers):
+        if (not expanded and max_width and len(first_line) <= max_width and headers):
             formatted = formatter.format_output(
                 rows, headers, format_name='vertical', **output_kwargs)
 
