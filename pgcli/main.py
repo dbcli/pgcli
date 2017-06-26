@@ -952,7 +952,7 @@ def format_output(title, cur, headers, status, settings):
         formatted = formatter.format_output(rows, headers, **output_kwargs)
         first_line = formatted[:formatted.find('\n')]
 
-        if (not expanded and max_width and len(first_line) <= max_width and headers):
+        if (not expanded and max_width and len(first_line) > max_width and headers):
             formatted = formatter.format_output(
                 rows, headers, format_name='vertical', **output_kwargs)
 
