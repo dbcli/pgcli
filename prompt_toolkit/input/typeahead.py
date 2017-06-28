@@ -38,6 +38,7 @@ from .base import Input
 __all__ = (
     'store_typeahead',
     'get_typeahead',
+    'clear_typeahead',
 )
 
 _buffer = defaultdict(list)  # input hash -> list of key presses.
@@ -66,3 +67,13 @@ def get_typeahead(input_obj):
     result = _buffer[key]
     _buffer[key] = []
     return result
+
+
+def clear_typeahead(input_obj):
+    """
+    Clear typeahead buffer.
+    """
+    assert isinstance(input_obj, Input)
+    global _buffer
+    key = input_obj.typeahead_hash()
+    _buffer[key] = []

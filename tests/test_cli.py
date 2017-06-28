@@ -102,14 +102,6 @@ def test_emacs_cursor_movements():
     result, cli = _feed_cli_with_input('hello\x01\x06X\r')
     assert result.text == 'hXello'
 
-    # ControlC: raise KeyboardInterrupt.
-    with pytest.raises(KeyboardInterrupt):
-        result, cli = _feed_cli_with_input('hello\x03\r')
-
-    # ControlD without any input: raises EOFError.
-    with pytest.raises(EOFError):
-        result, cli = _feed_cli_with_input('\x04\r')
-
     # ControlD: delete after cursor.
     result, cli = _feed_cli_with_input('hello\x01\x04\r')
     assert result.text == 'ello'
@@ -189,6 +181,19 @@ def test_emacs_cursor_movements():
     result, cli = _feed_cli_with_input('hello     world\x1b8\x02\x1b\\\r')
     assert result.text == 'helloworld'
     assert result.cursor_position == len('hello')
+
+
+def test_interrupts():
+    # ControlC: raise KeyboardInterrupt.
+    with pytest.raises(KeyboardInterrupt):
+        result, cli = _feed_cli_with_input('hello\x03\r')
+
+    with pytest.raises(KeyboardInterrupt):
+        result, cli = _feed_cli_with_input('hello\x03\r')
+
+    # ControlD without any input: raises EOFError.
+    with pytest.raises(EOFError):
+        result, cli = _feed_cli_with_input('\x04\r')
 
 
 def test_emacs_yank():

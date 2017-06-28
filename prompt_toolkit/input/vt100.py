@@ -97,6 +97,7 @@ class PipeInput(Vt100Input):
         input = PipeInput()
         input.send('inputdata')
     """
+    _id = 0
     def __init__(self, text=''):
         self._r, self._w = os.pipe()
 
@@ -109,6 +110,10 @@ class PipeInput(Vt100Input):
 
         super(PipeInput, self).__init__(Stdin())
         self.send_text(text)
+
+        # Identifier for every PipeInput for the hash.
+        self.__class__._id += 1
+        self._id = self.__class__._id
 
     def send_text(self, data):
         " Send text to the input. "
@@ -128,6 +133,12 @@ class PipeInput(Vt100Input):
         # We should assign `None` to 'self._r` and 'self._w',
         # The event loop still needs to know the the fileno for this input in order
         # to properly remove it from the selectors.
+
+    def typeahead_hash(self):
+        """
+        This needs to be unique for every `PipeInput`.
+        """
+        return 'pipe-input-{}'.format(self._id)
 
 
 class raw_mode(object):
