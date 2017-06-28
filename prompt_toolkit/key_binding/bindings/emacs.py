@@ -347,23 +347,3 @@ def load_emacs_search_bindings():
             count=event.arg)
 
     return ConditionalKeyBindings(key_bindings, emacs_mode)
-
-
-def load_vi_page_navigation_bindings():
-    """
-    Key bindings, for scrolling up and down through pages.
-    This are separate bindings, because GNU readline doesn't have them.
-    """
-    key_bindings = KeyBindings()
-    handle = key_bindings.add
-
-    handle('c-f')(scroll_forward)
-    handle('c-b')(scroll_backward)
-    handle('c-d')(scroll_half_page_down)
-    handle('c-u')(scroll_half_page_up)
-    handle('c-e')(scroll_one_line_down)
-    handle('c-y')(scroll_one_line_up)
-    handle('pagedown')(scroll_page_down)
-    handle('pageup')(scroll_page_up)
-
-    return ConditionalKeyBindings(key_bindings, vi_mode)
