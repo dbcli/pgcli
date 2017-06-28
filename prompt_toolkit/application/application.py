@@ -612,8 +612,8 @@ class Application(object):
                 return f
         else:
             def async_func():
-                if False: yield  # Make this a coroutine.
-                raise Return(func())
+                result = func()
+                return Future.succeed(result)
 
         return self.run_in_terminal_async(async_func, render_cli_done=render_cli_done)
 
