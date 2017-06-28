@@ -78,13 +78,6 @@ class KeyProcessor(object):
         self.before_key_press = Event(self)
         self.after_key_press = Event(self)
 
-        # The queue of keys not yet send to our _process generator/state machine.
-        self.input_queue = deque()
-
-        # The key buffer that is matched in the generator state machine.
-        # (This is at at most the amount of keys that make up for one key binding.)
-        self.key_buffer = []
-
         # Simple macro recording. (Like readline does.)
         self.record_macro = False
         self.macro = []
@@ -95,12 +88,20 @@ class KeyProcessor(object):
         self._previous_key_sequence = []
         self._previous_handler = None
 
-        self._process_coroutine = self._process()
-        self._process_coroutine.send(None)
+        # The queue of keys not yet send to our _process generator/state machine.
+        self.input_queue = deque()
+
+        # The key buffer that is matched in the generator state machine.
+        # (This is at at most the amount of keys that make up for one key binding.)
+        self.key_buffer = []
 
         #: Readline argument (for repetition of commands.)
         #: https://www.gnu.org/software/bash/manual/html_node/Readline-Arguments.html
         self.arg = None
+
+        # Start the processor coroutine.
+        self._process_coroutine = self._process()
+        self._process_coroutine.send(None)
 
     def start_macro(self):
         " Start recording macro. "
@@ -228,7 +229,14 @@ class KeyProcessor(object):
             if key_press.key != Keys.CPRResponse:
                 self.before_key_press.fire()
 
-            self._process_coroutine.send(key_press)
+            try:
+                self._process_coroutine.send(key_press)
+            except Exception:
+                # If for some reason something goes wrong in the parser, (maybe
+                # an exception was raised) restart the processor for next time.
+                self.reset()
+                self.flush()
+                raise
 
             if key_press.key != Keys.CPRResponse:
                 self.after_key_press.fire()
