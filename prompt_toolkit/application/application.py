@@ -499,7 +499,7 @@ class Application(object):
 
                 # Wait for UI to finish.
                 try:
-                    result = yield f
+                    result = yield From(f)
                 finally:
                     # In any case, when the application finishes. (Successful,
                     # or because of an error.)
@@ -523,27 +523,53 @@ class Application(object):
                         self._is_running = False
                         set_app(previous_app)  # Make sure to do this after removing the input.
 
-                # Store unprocessed input as typeahead for next time.
-                store_typeahead(self.input, self.key_processor.flush())
+                        # Store unprocessed input as typeahead for next time.
+                        store_typeahead(self.input, self.key_processor.flush())
 
                 raise Return(result)
 
         def _run_async2():
             try:
-                result = yield From(_run_async())
+                f = From(_run_async())
+                result = yield f
             finally:
                 assert not self._is_running
             raise Return(result)
 
         return ensure_future(_run_async2())
 
-    def run(self, pre_run=None):
+    def run(self, pre_run=None, set_exception_handler=True):
         """
         A blocking 'run' call that waits until the UI is finished.
+
+        :param set_exception_handler: When set, in case of an exception, go out
+            of the alternate screen and hide the application, display the
+            exception, and wait for the user to press ENTER.
         """
-        f = self.run_async(pre_run=pre_run)
-        run_until_complete(f)
-        return f.result()
+        loop = get_event_loop()
+
+        def run():
+            f = self.run_async(pre_run=pre_run)
+            run_until_complete(f)
+            return f.result()
+
+        def handle_exception(context):
+            " Print the exception, using run_in_terminal. "
+            def print_exception():
+                loop.default_exception_handler(context)
+                yield From(_do_wait_for_enter('Got an exception. Press ENTER to continue...'))
+            self.run_in_terminal_async(print_exception)
+
+        if set_exception_handler:
+            # Run with patched exception handler.
+            previous_exc_handler = loop.get_exception_handler()
+            loop.set_exception_handler(handle_exception)
+            try:
+                return run()
+            finally:
+                loop.set_exception_handler(previous_exc_handler)
+        else:
+            run()
 
     def exit(self):
         " Set exit. When Control-D has been pressed. "
@@ -659,31 +685,6 @@ class Application(object):
         """
         assert isinstance(wait_for_enter, bool)
 
-        def do_wait_for_enter():
-            """
-            Create a sub application to wait for the enter key press.
-            This has two advantages over using 'input'/'raw_input':
-            - This will share the same input/output I/O.
-            - This doesn't block the event loop.
-            """
-            from .shortcuts import Prompt
-
-            key_bindings = KeyBindings()
-
-            @key_bindings.add('enter')
-            def _(event):
-                event.app.set_return_value(None)
-
-            @key_bindings.add(Keys.Any)
-            def _(event):
-                " Disallow typing. "
-                pass
-
-            prompt = Prompt(
-                message=wait_text,
-                extra_key_bindings=key_bindings)
-            yield prompt.app.run_async()
-
         def run():
             # Try to use the same input/output file descriptors as the one,
             # used to run this application.
@@ -706,7 +707,7 @@ class Application(object):
 
             # Wait for the user to press enter.
             if wait_for_enter:
-                yield From(do_wait_for_enter())
+                yield From(_do_wait_for_enter(wait_text))
 
         self.run_in_terminal_async(run)
 
@@ -953,3 +954,29 @@ class _CombinedRegistry(KeyBindingsBase):
 
     def get_bindings_starting_with_keys(self, keys):
         return self._key_bindings.get_bindings_starting_with_keys(keys)
+
+
+def _do_wait_for_enter(wait_text):
+    """
+    Create a sub application to wait for the enter key press.
+    This has two advantages over using 'input'/'raw_input':
+    - This will share the same input/output I/O.
+    - This doesn't block the event loop.
+    """
+    from prompt_toolkit.shortcuts import Prompt
+
+    key_bindings = KeyBindings()
+
+    @key_bindings.add('enter')
+    def _(event):
+        event.app.set_return_value(None)
+
+    @key_bindings.add(Keys.Any)
+    def _(event):
+        " Disallow typing. "
+        pass
+
+    prompt = Prompt(
+        message=wait_text,
+        extra_key_bindings=key_bindings)
+    yield prompt.app.run_async()

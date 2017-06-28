@@ -1,6 +1,16 @@
+"""
+Base event loop interface.
+
+The naming convension is kept similar to asyncio as much as possible.
+
+A special thanks to asyncio (tulip), Twisted, Tornado and Trollius for setting
+a good example on how to implement event loops. Possible, in the future, we'll
+run entirely on top of asyncio, but right now, we're still supporting Python 2.
+"""
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
+from prompt_toolkit.log import logger
 
 __all__ = (
     'EventLoop',
@@ -11,6 +21,9 @@ class EventLoop(with_metaclass(ABCMeta, object)):
     """
     Eventloop interface.
     """
+    def __init__(self):
+        self._exception_handler = None
+
     def run_until_complete(self, future):
         """
         Keep running until this future has been set.
@@ -88,3 +101,62 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         """
         from .future import Future
         return Future(loop=self)
+
+    def set_exception_handler(self, handler):
+        """
+        Set the exception handler.
+        """
+        assert handler is None or callable(handler)
+        self._exception_handler = handler
+
+    def get_exception_handler(self):
+        """
+        Return the exception handler.
+        """
+        return self._exception_handler
+
+    def call_exception_handler(self, context):
+        """
+        Call the current event loop exception handler.
+        (Similar to ``asyncio.BaseEventLoop.call_exception_handler``.)
+        """
+        if self._exception_handler:
+            try:
+                self._exception_handler(context)
+            except Exception:
+                 logger.error('Exception in default exception handler',
+                              exc_info=True)
+        else:
+            try:
+                self.default_exception_handler(context)
+            except Exception:
+                logger.error('Exception in default exception handler '
+                             'while handling an unexpected error '
+                             'in custom exception handler',
+                             exc_info=True)
+
+    def default_exception_handler(self, context):
+        """
+        Default exception handling.
+
+        Thanks to asyncio for this function!
+        """
+        message = context.get('message')
+        if not message:
+            message = 'Unhandled exception in event loop'
+
+        exception = context.get('exception')
+        if exception is not None:
+            exc_info = (type(exception), exception, exception.__traceback__)
+        else:
+            exc_info = False
+
+        log_lines = [message]
+        for key in sorted(context):
+            if key in {'message', 'exception'}:
+                continue
+            value = context[key]
+            value = repr(value)
+            log_lines.append('{}: {}'.format(key, value))
+
+        logger.error('\n'.join(log_lines), exc_info=exc_info)

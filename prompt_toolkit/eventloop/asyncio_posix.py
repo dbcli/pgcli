@@ -14,7 +14,12 @@ __all__ = (
 
 
 class PosixAsyncioEventLoop(EventLoop):
+    """
+    Wrapper around the Asyncio event loop, but compatible with prompt_toolkit.
+    """
     def __init__(self, loop=None):
+        super(PosixAsyncioEventLoop, self).__init__()
+
         self.loop = loop or asyncio.get_event_loop()
         self.closed = False
 
@@ -95,3 +100,15 @@ class PosixAsyncioEventLoop(EventLoop):
             return previous_input, previous_cb
         else:
             return None, None
+
+    def get_exception_handler(self):
+        return self.loop.get_exception_handler()
+
+    def set_exception_handler(self, handler):
+        self.loop.set_exception_handler(handler)
+
+    def call_exception_handler(self, context):
+        self.loop.call_exception_handler(context)
+
+    def default_exception_handler(self, context):
+        self.loop.default_exception_handler(context)

@@ -26,6 +26,8 @@ class PosixEventLoop(EventLoop):
         assert inputhook is None or callable(inputhook)
         assert issubclass(selector, Selector)
 
+        super(PosixEventLoop, self).__init__()
+
         self.closed = False
         self._running = False
 
@@ -124,7 +126,7 @@ class PosixEventLoop(EventLoop):
             # Schedule low priority tasks for the next iteration.
             if tasks:
                 for t in tasks:
-                    t()
+                    self._run_task(t)
 
                 # Postpone low priority tasks.
                 for t, max_postpone_until in low_priority_tasks:
@@ -132,7 +134,23 @@ class PosixEventLoop(EventLoop):
             else:
                 # Currently there are only low priority tasks -> run them right now.
                 for t, _ in low_priority_tasks:
-                    t()
+                    self._run_task(t)
+
+    def _run_task(self, t):
+        """
+        Run a task in the event loop. If it fails, print the exception.
+
+        By default, the event loop is not supposed to exit if one fd callback
+        raises an exception. Doing so, would leave many coroutines in a not
+        cleaned-up state. If this happens, this is a bug, and we have to print
+        the stack.
+        """
+        try:
+            t()
+        except BaseException as e:
+            self.call_exception_handler({
+                'exception': e
+            })
 
     def _ready_for_reading(self, timeout=None):
         """

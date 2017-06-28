@@ -33,6 +33,8 @@ class Win32EventLoop(EventLoop):
     def __init__(self, inputhook=None, recognize_paste=True):
         assert inputhook is None or callable(inputhook)
 
+        super(Win32EventLoop, self).__init__()
+
         self._event = _create_event()
         self._calls_from_executor = []
 
@@ -89,7 +91,7 @@ class Win32EventLoop(EventLoop):
 
         if self._input and handle == self._input.handle:
             # When stdin is ready, read input and reset timeout timer.
-            self._input_ready_cb()
+            self._run_task(self._input_ready_cb)
             self._current_timeout = INPUT_TIMEOUT_MS
 
         elif handle == self._event:
@@ -99,7 +101,7 @@ class Win32EventLoop(EventLoop):
 
         elif handle in self._read_fds:
             callback = self._read_fds[handle]
-            callback()
+            self._run_task(callback)
         else:
             # Timeout happened.
             # Flush all pending keys on a timeout. (This is most important
@@ -109,6 +111,14 @@ class Win32EventLoop(EventLoop):
                 self._input.flush()
 
             self._current_timeout = -1
+
+    def _run_task(self, t):
+        try:
+            t()
+        except BaseException as e:
+            self.call_exception_handler({
+                'exception': e
+            })
 
     def _ready_for_reading(self, timeout=None):
         """
@@ -187,7 +197,7 @@ class Win32EventLoop(EventLoop):
         # Process calls from executor.
         calls_from_executor, self._calls_from_executor = self._calls_from_executor, []
         for c in calls_from_executor:
-            c()
+            self._run_task(c)
 
     def add_reader(self, fd, callback):
         " Start watching the file descriptor for read availability. "
