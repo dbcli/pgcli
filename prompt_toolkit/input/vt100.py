@@ -83,7 +83,7 @@ class Vt100Input(Input):
         return self.stdin.fileno()
 
     def typeahead_hash(self):
-        return 'fd-{}'.format(self.fileno())
+        return 'fd-%s' % (self.fileno(), )
 
 
 class PipeInput(Vt100Input):
@@ -138,7 +138,7 @@ class PipeInput(Vt100Input):
         """
         This needs to be unique for every `PipeInput`.
         """
-        return 'pipe-input-{}'.format(self._id)
+        return 'pipe-input-%s' % (self._id, )
 
 
 class raw_mode(object):

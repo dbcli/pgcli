@@ -169,7 +169,7 @@ class KeyBindings(KeyBindingsBase):
             # Final validation.
             assert isinstance(key, text_type)
             if len(key) != 1 and key not in ALL_KEYS:
-                raise ValueError('Invalid key: {}'.format(key))
+                raise ValueError('Invalid key: %s' % (key, ))
 
             return key
 

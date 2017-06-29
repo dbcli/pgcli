@@ -153,7 +153,7 @@ class EventLoop(with_metaclass(ABCMeta, object)):
 
         log_lines = [message]
         for key in sorted(context):
-            if key in {'message', 'exception'}:
+            if key in ('message', 'exception'):
                 continue
             value = context[key]
             value = repr(value)
