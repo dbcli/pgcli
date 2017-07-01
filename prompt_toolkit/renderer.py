@@ -21,7 +21,8 @@ __all__ = (
 
 
 def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, last_style=None,
-                        is_done=False, attrs_for_style_string=None, size=None, previous_width=0):  # XXX: drop is_done
+                        is_done=False, full_screen=False, attrs_for_style_string=None, size=None,
+                        previous_width=0):  # XXX: drop is_done
     """
     Render the diff between this screen and the previous screen.
 
@@ -108,10 +109,16 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
             write(char.char)
             last_style[0] = char.style
 
-    # Disable autowrap
+    # Render for the first time: reset styling.
     if not previous_screen:
-        output.disable_autowrap()
         reset_attributes()
+
+    # Disable autowrap. (When entering a the alternate screen, or anytime when
+    # we have a prompt. - In the case of a REPL, like IPython, people can have
+    # background threads, and it's hard for debugging if their output is not
+    # wrapped.)
+    if not previous_screen or not full_screen:
+        output.disable_autowrap()
 
     # When the previous screen has a different size, redraw everything anyway.
     # Also when we are done. (We meight take up less rows, so clearing is important.)
@@ -188,7 +195,7 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
         current_pos = move_cursor(
             screen.get_cursor_position(app.layout.current_window))
 
-    if is_done:
+    if is_done or not full_screen:
         output.enable_autowrap()
 
     # Always reset the color attributes. This is important because a background
@@ -448,6 +455,7 @@ class Renderer(object):
         self._cursor_pos, self._last_style = _output_screen_diff(
             app, output, screen, self._cursor_pos,
             self._last_screen, self._last_style, is_done,
+            full_screen=self.full_screen,
             attrs_for_style_string=self._attrs_for_style,
             size=size,
             previous_width=(self._last_size.columns if self._last_size else 0))
