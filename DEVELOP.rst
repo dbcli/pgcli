@@ -110,7 +110,7 @@ The rpm package can be installed as follows:
 Running the integration tests
 -----------------------------
 
-Integration tests use `behave package http://pythonhosted.org/behave/`_ and
+Integration tests use `behave package <http://pythonhosted.org/behave/>`_ and
 pytest.
 Configuration settings for this package are provided via ``behave.ini`` file
 in the ``tests`` directory.
