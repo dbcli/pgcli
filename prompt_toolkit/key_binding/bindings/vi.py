@@ -1808,6 +1808,7 @@ def load_vi_search_bindings(get_search_state=None,
         event.cli.vi_state.input_mode = InputMode.INSERT
 
     @handle(Keys.ControlJ, filter=has_focus)
+    @handle(Keys.Escape, filter=has_focus)
     def _(event):
         """
         Apply the search. (At the / or ? prompt.)
@@ -1857,7 +1858,6 @@ def load_vi_search_bindings(get_search_state=None,
         """ Returns True when the search buffer is empty. """
         return cli.buffers[search_buffer_name].text == ''
 
-    @handle(Keys.Escape, filter=has_focus)
     @handle(Keys.ControlC, filter=has_focus)
     @handle(Keys.ControlH, filter=has_focus & Condition(search_buffer_is_empty))
     @handle(Keys.Backspace, filter=has_focus & Condition(search_buffer_is_empty))

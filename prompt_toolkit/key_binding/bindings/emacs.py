@@ -375,6 +375,7 @@ def load_emacs_search_bindings(get_search_state=None):
         event.cli.pop_focus()
 
     @handle(Keys.ControlJ, filter=has_focus)
+    @handle(Keys.Escape, filter=has_focus, eager=True)
     def _(event):
         """
         When enter pressed in isearch, quit isearch mode. (Multiline
