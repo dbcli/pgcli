@@ -33,6 +33,7 @@ __all__ = (
     'ColorColumn',
     'to_container',
     'to_window',
+    'is_container',
 )
 
 
@@ -1987,3 +1988,15 @@ def to_window(container):
         return to_window(container.__pt_container__())
     else:
         raise ValueError('Not a Window object: %r.' % (container, ))
+
+
+def is_container(value):
+    """
+    Checks whether the given value is a container object
+    (for use in assert statements).
+    """
+    if isinstance(value, Container):
+        return True
+    if hasattr(value, '__pt_container__'):
+        return is_container(value.__pt_container__())
+    return False
