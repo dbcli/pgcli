@@ -314,13 +314,20 @@ def load_emacs_search_bindings():
 
     handle('c-c')(search.abort_search)
     handle('c-g')(search.abort_search)
-    handle('escape', 'escape', eager=True)(search.abort_search)
-    handle('escape', 'enter', eager=True)(search.accept_search_and_accept_input)
     handle('c-r')(search.reverse_incremental_search)
     handle('c-s')(search.forward_incremental_search)
     handle('up')(search.reverse_incremental_search)
     handle('down')(search.forward_incremental_search)
     handle('enter')(search.accept_search)
+
+    # Handling of escape.
+    handle('escape', eager=True)(search.accept_search)
+
+    # Like readline, it's more natural to accept the search when escape has
+    # been pressed, however instead the following two bindings could be used
+    # instead.
+    # #handle('escape', 'escape', eager=True)(search.abort_search)
+    # #handle('escape', 'enter', eager=True)(search.accept_search_and_accept_input)
 
     # If Read-only: also include the following key bindigs:
 

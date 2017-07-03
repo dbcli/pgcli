@@ -1715,8 +1715,11 @@ def load_vi_search_bindings():
     handle('c-r', filter=is_searching)(search.reverse_incremental_search)
     handle('c-s', filter=is_searching)(search.forward_incremental_search)
 
-    handle('escape')(search.abort_search)
     handle('c-c')(search.abort_search)
     handle('backspace', filter=search_buffer_is_empty)(search.abort_search)
+
+    # Handle escape. This should accept the search, just like readline.
+    # `abort_search` would be a meaningful alternative.
+    handle('escape')(search.accept_search)
 
     return ConditionalKeyBindings(key_bindings, vi_mode)
