@@ -837,10 +837,13 @@ class Buffer(object):
         self.insert_text(completion.text)
 
     def _set_history_search(self):
-        """ Set `history_search_text`. """
+        """
+        Set `history_search_text`.
+        (The text before the cursor will be used for filtering the history.)
+        """
         if self.enable_history_search():
             if self.history_search_text is None:
-                self.history_search_text = self.text
+                self.history_search_text = self.document.text_before_cursor
         else:
             self.history_search_text = None
 
