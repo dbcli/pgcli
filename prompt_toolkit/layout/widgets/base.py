@@ -19,9 +19,10 @@ from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.layout.formatted_text import Template, is_formatted_text
 
-from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align
+from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align, is_container
 from ..controls import BufferControl, FormattedTextControl
 from ..dimension import Dimension as D
+from ..dimension import is_dimension
 from ..dimension import to_dimension
 from ..formatted_text import to_formatted_text
 from ..margins import ScrollbarMargin, NumberredMargin
@@ -297,14 +298,21 @@ class Button(object):
 
 class Frame(object):
     """
-    Draw a border around any container.
+    Draw a border around any container, optionally with a title text.
 
     :param body: Another container object.
-    :param title: Text to be displayed in the top of the frame.
+    :param title: Text to be displayed in the top of the frame (can be formatted text).
+    :param style: Style string to be applied to this widget.
     """
     def __init__(self, body, title='', style='', width=None, height=None,
                  key_bindings=None, modal=False):
+        assert is_container(body)
         assert is_formatted_text(title)
+        assert isinstance(style, six.text_type)
+        assert is_dimension(width)
+        assert is_dimension(height)
+        assert key_bindings is None or isinstance(key_bindings, KeyBindings)
+        assert isinstance(modal, bool)
 
         fill = partial(Window, style='class:frame.border')
         style = 'class:frame ' + style
@@ -358,6 +366,8 @@ class Shadow(object):
     :param body: Another container object.
     """
     def __init__(self, body):
+        assert is_container(body)
+
         self.container = FloatContainer(
             content=body,
             floats=[
@@ -395,6 +405,8 @@ class Box(object):
                  padding_top=None, padding_bottom=None,
                  width=None, height=None,
                  style='', char=None, modal=False, key_bindings=None):
+        assert is_container(body)
+
         if padding is None:
             padding = D(preferred=0)
 
@@ -427,6 +439,8 @@ class Box(object):
 
 class Checkbox(object):
     def __init__(self, text=''):
+        assert is_formatted_text(text)
+
         self.checked = True
 
         kb = KeyBindings()
@@ -446,7 +460,7 @@ class Checkbox(object):
 
         self.container = VSplit([
             self.window,
-            Label(text=' {0}'.format(text))
+            Label(text=Template(' {}').format(text))
         ], style='class:checkbox')
 
     def _get_text_fragments(self):
@@ -581,8 +595,11 @@ class ProgressBar(object):
                 Float(content=self.label, top=0, bottom=0),
 
                 Float(left=0, top=0, right=0, bottom=0, content=VSplit([
-                    Window(style='class:progress-bar.used', width=lambda: D(weight=int(self._percentage))),
-                    Window(style='class:progress-bar', width=lambda: D(weight=int(100 - self._percentage))),
+                    Window(style='class:progress-bar.used',
+                           width=lambda: D(weight=int(self._percentage))),
+
+                    Window(style='class:progress-bar',
+                           width=lambda: D(weight=int(100 - self._percentage))),
                 ])),
             ])
 
