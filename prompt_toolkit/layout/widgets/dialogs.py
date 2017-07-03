@@ -8,7 +8,7 @@ from ..dimension import Dimension as D
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.filters import has_completions
-import six
+from prompt_toolkit.layout.formatted_text import is_formatted_text
 
 __all__ = (
     'Dialog',
@@ -25,7 +25,7 @@ class Dialog(object):
     :param buttons: A list of `Button` widgets, displayed at the bottom.
     """
     def __init__(self, body, title='', buttons=None, modal=True, width=None, with_background=False):
-        assert isinstance(title, six.text_type)
+        assert is_formatted_text(title)
         assert buttons is None or isinstance(buttons, list)
 
         buttons = buttons or []

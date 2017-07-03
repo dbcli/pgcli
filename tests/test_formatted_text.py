@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from prompt_toolkit.layout.formatted_text import HTML, ANSI, to_formatted_text
+from prompt_toolkit.layout.formatted_text import HTML, ANSI, to_formatted_text, Template
 
 
 def test_basic_html():
@@ -55,4 +55,24 @@ def test_ansi_formatting():
         ('[ZeroWidthEscape]', 'cd'),
         ('', 'e'),
         ('', 'f'),
+    ]
+
+
+def test_interpolation():
+    value = Template(' {} ').format(HTML('<b>hello</b>'))
+
+    assert to_formatted_text(value) == [
+        ('', ' '),
+        ('class:b', 'hello'),
+        ('', ' '),
+    ]
+
+    value = Template('a{}b{}c').format(HTML('<b>hello</b>'), 'world')
+
+    assert to_formatted_text(value) == [
+        ('', 'a'),
+        ('class:b', 'hello'),
+        ('', 'b'),
+        ('', 'world'),
+        ('', 'c'),
     ]

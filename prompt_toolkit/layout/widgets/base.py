@@ -17,6 +17,7 @@ from prompt_toolkit.filters import to_filter, is_searching
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
+from prompt_toolkit.layout.formatted_text import Template, is_formatted_text
 
 from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align
 from ..controls import BufferControl, FormattedTextControl
@@ -206,7 +207,7 @@ class Label(object):
     """
     def __init__(self, text, style='', width=None,
                  dont_extend_height=True, dont_extend_width=False):
-        assert isinstance(text, six.text_type)
+        assert is_formatted_text(text)
         self.text = text
 
         def get_width():
@@ -303,6 +304,8 @@ class Frame(object):
     """
     def __init__(self, body, title='', style='', width=None, height=None,
                  key_bindings=None, modal=False):
+        assert is_formatted_text(title)
+
         fill = partial(Window, style='class:frame.border')
         style = 'class:frame ' + style
 
@@ -311,7 +314,7 @@ class Frame(object):
                 fill(width=1, height=1, char=Border.TOP_LEFT),
                 fill(char=Border.HORIZONTAL),
                 fill(width=1, height=1, char='|'),
-                Label(' {0} '.format(title),
+                Label(Template(' {} ').format(title),
                       style='class:frame.label',
                       dont_extend_width=True),
                 fill(width=1, height=1, char='|'),

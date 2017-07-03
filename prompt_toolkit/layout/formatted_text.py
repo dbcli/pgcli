@@ -18,6 +18,8 @@ import xml.dom.minidom as minidom
 
 __all__ = (
     'to_formatted_text',
+    'is_formatted_text',
+    'Template',
     'HTML',
     'ANSI',
 )
@@ -58,6 +60,51 @@ def to_formatted_text(value, style=''):
     if style:
         result = [(style + ' ' + k, v) for k, v in result]
     return result
+
+
+def is_formatted_text(value):
+    """
+    Check whether the input is valid formatted text (for use in assert
+    statements).
+    In case of a callable, it doesn't check the return type.
+    """
+    if callable(value):
+        return True
+    if isinstance(value, (six.text_type, list)):
+        return True
+    if hasattr(value, '__pt_formatted_text__'):
+        return True
+    return False
+
+
+class Template(object):
+    """
+    Template for string interpolation with formatted text.
+
+    Example::
+
+        Template(' ... {} ... ').format(HTML(...))
+
+    :param text: Plain text.
+    """
+    def __init__(self, text):
+        assert isinstance(text, six.text_type)
+        assert '{0}' not in text
+        self.text = text
+
+    def format(self, *values):
+        def get_result():
+            # Split the template in parts.
+            parts = self.text.split('{}')
+            assert len(parts) - 1 == len(values)
+
+            result = []
+            for part, val in zip(parts, values):
+                result.append(('', part))
+                result.extend(to_formatted_text(val))
+            result.append(('', parts[-1]))
+            return result
+        return get_result
 
 
 class HTML(object):
@@ -235,8 +282,6 @@ class ANSI(object):
         """
         Taken a list of graphics attributes and apply changes.
         """
-        replace = {}
-
         if not attrs:
             attrs = [0]
         else:

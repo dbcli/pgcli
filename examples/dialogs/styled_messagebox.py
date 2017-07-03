@@ -3,10 +3,14 @@
 Example of a style dialog window.
 All dialog shortcuts take a `style` argument in order to apply a custom
 styling.
+
+This also demonstrates that the `title` argument can be any kind of formatted
+text.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.shortcuts.dialogs import message_dialog
 from prompt_toolkit.styles import Style
+from prompt_toolkit.layout.formatted_text import HTML
 
 
 # Custom color scheme.
@@ -20,7 +24,8 @@ example_style = Style.from_dict({
 
 def main():
     message_dialog(
-        title='Styled dialog window',
+        title=HTML('<style bg="blue" fg="white">Styled</style> '
+                   '<style fg="ansired">dialog</style> window'),
         text='Do you want to continue?\nPress ENTER to quit.',
         style=example_style)
 
