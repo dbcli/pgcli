@@ -37,8 +37,12 @@ class Vt100Input(Input):
 
         self.stdin = stdin
 
+        # Create a backup of the fileno(). We want this to work even if the
+        # underlying file is closed, so that `typeahead_hash()` keeps working.
+        self._fileno = stdin.fileno()
+
         self._buffer = []  # Buffer to collect the Key objects.
-        self.stdin_reader = PosixStdinReader(stdin.fileno())
+        self.stdin_reader = PosixStdinReader(self._fileno)
         self.vt100_parser = Vt100Parser(
             lambda key: self._buffer.append(key))
 
@@ -83,7 +87,7 @@ class Vt100Input(Input):
         return self.stdin.fileno()
 
     def typeahead_hash(self):
-        return 'fd-%s' % (self.fileno(), )
+        return 'fd-%s' % (self._fileno, )
 
 
 class PipeInput(Vt100Input):

@@ -24,6 +24,7 @@ class PosixAsyncioEventLoop(EventLoop):
         self.closed = False
 
         self._input = None
+        self._input_fd = None
         self._input_ready_cb = None
 
     def close(self):
@@ -78,13 +79,14 @@ class PosixAsyncioEventLoop(EventLoop):
         # Set current.
         self._input = input
         self._input_ready_cb = input_ready_callback
+        self._input_fd = input.fileno()
 
         # Add reader.
         def ready():
             # Tell the callback that input's ready.
             input_ready_callback()
 
-        self.add_reader(input.stdin.fileno(), ready)
+        self.add_reader(self._input_fd, ready)
 
         return previous_input, previous_cb
 
@@ -93,8 +95,9 @@ class PosixAsyncioEventLoop(EventLoop):
             previous_input = self._input
             previous_cb = self._input_ready_cb
 
-            self.remove_reader(self._input.fileno())
+            self.remove_reader(self._input_fd)
             self._input = None
+            self._input_fd = None
             self._input_ready_cb = None
 
             return previous_input, previous_cb

@@ -33,6 +33,7 @@ class PosixEventLoop(EventLoop):
 
         # The `Input` object that's currently attached.
         self._input = None
+        self._input_fd = None
         self._input_ready_cb = None
 
         self._calls_from_executor = []
@@ -181,12 +182,18 @@ class PosixEventLoop(EventLoop):
         # Set current.
         self._input = input
         self._input_ready_cb = input_ready_callback
+        self._input_fd = input.fileno()
+
+        # NOTE: We take a backup of the fd, because there are situations where
+        #       the input can be closed (e.g. if `exit()` is called), which means
+        #       that fileno() is going to raise an exception but we still want
+        #       `remove_input()` to work.
 
         # Add reader.
         def ready():
             input_ready_callback()
 
-        self.add_reader(input.fileno(), ready)
+        self.add_reader(self._input_fd, ready)
 
         return previous_input, previous_cb
 
@@ -198,8 +205,9 @@ class PosixEventLoop(EventLoop):
             previous_input = self._input
             previous_cb = self._input_ready_cb
 
-            self.remove_reader(previous_input.fileno())
+            self.remove_reader(self._input_fd)
             self._input = None
+            self._input_fd = None
             self._input_ready_cb = None
 
             return previous_input, previous_cb
