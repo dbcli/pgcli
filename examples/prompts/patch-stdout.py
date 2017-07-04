@@ -8,6 +8,7 @@ the prompt, but instead is printed nicely above the prompt.
 from __future__ import unicode_literals
 
 from prompt_toolkit import prompt
+from prompt_toolkit.patch_stdout import patch_stdout
 import threading
 import time
 
@@ -28,7 +29,8 @@ def main():
 
     # Now read the input. The print statements of the other thread
     # should not disturb anything.
-    result = prompt('Say something: ', patch_stdout=True)
+    with patch_stdout():
+        result = prompt('Say something: ')
     print('You said: %s' % result)
 
     # Stop thread.

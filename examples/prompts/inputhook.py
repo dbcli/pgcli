@@ -13,8 +13,9 @@ There are two ways to know when input is ready. One way is to poll
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit.shortcuts import Prompt
 from prompt_toolkit.eventloop.defaults import create_event_loop
+from prompt_toolkit.patch_stdout import patch_stdout
+from prompt_toolkit.shortcuts import Prompt
 from pygments.lexers import PythonLexer
 
 import gtk, gobject
@@ -68,13 +69,13 @@ def main():
     gtk.gdk.threads_init()
 
     # Read input from the command line, using an event loop with this hook.
-    # We say `patch_stdout=True`, because clicking the button will print
-    # something; and that should print nicely 'above' the input line.
-    prompt = Prompt('Python >>> ',
-                    eventloop=create_event_loop(inputhook=inputhook),
-                    lexer=PythonLexer,
-                    patch_stdout=True)
-    result = prompt.prompt()
+    # We use `patch_stdout`, because clicking the button will print something;
+    # and that should print nicely 'above' the input line.
+    with patch_stdout():
+        prompt = Prompt('Python >>> ',
+                        eventloop=create_event_loop(inputhook=inputhook),
+                        lexer=PythonLexer)
+        result = prompt.prompt()
     print('You said: %s' % result)
 
 
