@@ -15,7 +15,7 @@ possible. ::
 """
 
 from prompt_toolkit.shortcuts import Prompt
-from prompt_toolkit.eventloop.defaults import create_asyncio_event_loop
+from prompt_toolkit.eventloop.defaults import create_asyncio_event_loop, set_event_loop
 
 import asyncio
 import sys
@@ -38,11 +38,10 @@ async def interactive_shell():
     """
     Like `interactive_shell`, but doing things manual.
     """
+    set_event_loop(create_asyncio_event_loop())
+
     # Create Prompt.
-    prompt = Prompt(
-        'Say something: ',
-        patch_stdout=True,
-        loop=create_asyncio_event_loop(loop))
+    prompt = Prompt('Say something: ', patch_stdout=True)
 
     # Patch stdout in something that will always print *above* the prompt when
     # something is written to stdout.
@@ -60,16 +59,13 @@ async def interactive_shell():
 
 
 def main():
-    shell_task = loop.create_task(interactive_shell())
-
-    # Gather all the async calls, so they can be cancelled at once
+    shell_task = asyncio.ensure_future(interactive_shell())
     background_task = asyncio.gather(print_counter(), return_exceptions=True)
 
     loop.run_until_complete(shell_task)
     background_task.cancel()
     loop.run_until_complete(background_task)
     print('Qutting event loop. Bye.')
-    loop.close()
 
 
 if __name__ == '__main__':

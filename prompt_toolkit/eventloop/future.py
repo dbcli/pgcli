@@ -153,3 +153,9 @@ class Future(object):
                 f.set_result(asyncio_f.result())
 
         return f
+
+    def __iter__(self):
+        " For compatibility with asyncio. "
+        return self.to_asyncio_future().__iter__()
+
+    __await__ = __iter__
