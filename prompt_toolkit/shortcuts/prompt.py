@@ -199,9 +199,6 @@ class Prompt(object):
         to enable mouse support.
     :param default: The default input text to be shown. (This can be edited by
         the user).
-    :param patch_stdout: Replace ``sys.stdout`` by a proxy that ensures that
-        print statements from other threads won't destroy the prompt. (They
-        will be printed above the prompt instead.)
     :param true_color: When True, use 24bit colors instead of 256 colors.
     :param refresh_interval: (number; in seconds) When given, refresh the UI
         every so many seconds.
@@ -213,7 +210,7 @@ class Prompt(object):
         'wrap_lines', 'history', 'enable_history_search',
         'complete_while_typing', 'validate_while_typing',
         'complete_style', 'mouse_support', 'auto_suggest',
-        'clipboard', 'get_title', 'validator', 'patch_stdout',
+        'clipboard', 'get_title', 'validator',
         'refresh_interval', 'extra_input_processor', 'default',
         'enable_system_prompt', 'enable_suspend', 'enable_open_in_editor',
         'reserve_space_for_menu', 'tempfile_suffix')
@@ -253,7 +250,6 @@ class Prompt(object):
             tempfile_suffix='.txt',
 
             refresh_interval=0,
-            patch_stdout=False,
             true_color=False,
             input=None,
             output=None):
@@ -604,16 +600,10 @@ class Prompt(object):
 
         return _Refresh()
 
-    def _patch_context(self):
-        if self.patch_stdout:
-            return self.app.patch_stdout_context(raw=True)
-        else:
-            return DummyContext()
-
     def prompt(
             self, message=None,
             # When any of these arguments are passed, this value is overwritten for the current prompt.
-            default='', patch_stdout=None, true_color=None, editing_mode=None,
+            default='', true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
             is_password=None, extra_key_bindings=None,
             bottom_toolbar=None, style=None, rprompt=None, multiline=None,
@@ -641,19 +631,18 @@ class Prompt(object):
             self.editing_mode = EditingMode.VI
 
         with self._auto_refresh_context():
-            with self._patch_context():
-                try:
-                    self._default_buffer.reset(Document(self.default))
-                    return self.app.run()
-                finally:
-                    # Restore original settings.
-                    for name in self._fields:
-                        setattr(self, name, backup[name])
+            try:
+                self._default_buffer.reset(Document(self.default))
+                return self.app.run()
+            finally:
+                # Restore original settings.
+                for name in self._fields:
+                    setattr(self, name, backup[name])
 
     def prompt_async(self, message=None,
             # When any of these arguments are passed, this value is overwritten
             # for the current prompt.
-            default='', patch_stdout=None, true_color=None, editing_mode=None,
+            default='', true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
             is_password=None, extra_key_bindings=None,
             bottom_toolbar=None, style=None, rprompt=None, multiline=None,
@@ -683,15 +672,14 @@ class Prompt(object):
 
         def run():
             with self._auto_refresh_context():
-                with self._patch_context():
-                    try:
-                        self._default_buffer.reset(Document(self.default))
-                        result = yield self.app.run_async()
-                        raise Return(result)
-                    finally:
-                        # Restore original settings.
-                        for name in self._fields:
-                            setattr(self, name, backup[name])
+                try:
+                    self._default_buffer.reset(Document(self.default))
+                    result = yield self.app.run_async()
+                    raise Return(result)
+                finally:
+                    # Restore original settings.
+                    for name in self._fields:
+                        setattr(self, name, backup[name])
 
         return ensure_future(run())
 

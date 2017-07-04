@@ -4,7 +4,7 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.clipboard import Clipboard, InMemoryClipboard
 from prompt_toolkit.enums import EditingMode
-from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From
+from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From, Future
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.input.base import Input
 from prompt_toolkit.input.typeahead import store_typeahead, get_typeahead
@@ -27,12 +27,10 @@ from prompt_toolkit.utils import Event
 from .current import set_app
 
 from subprocess import Popen
-import functools
 import os
 import signal
 import six
 import sys
-import threading
 import time
 
 __all__ = (
@@ -759,133 +757,6 @@ class Application(object):
     @property
     def is_done(self):
         return self.future and self.future.done()
-
-    def stdout_proxy(self, raw=False):
-        """
-        Create an :class:`_StdoutProxy` class which can be used as a patch for
-        `sys.stdout`. Writing to this proxy will make sure that the text
-        appears above the prompt, and that it doesn't destroy the output from
-        the renderer.
-
-        :param raw: (`bool`) When True, vt100 terminal escape sequences are not
-                    removed/escaped.
-        """
-        return _StdoutProxy(self, raw=raw)
-
-    def patch_stdout_context(self, raw=False, patch_stdout=True, patch_stderr=True):
-        """
-        Return a context manager that will replace ``sys.stdout`` with a proxy
-        that makes sure that all printed text will appear above the prompt, and
-        that it doesn't destroy the output from the renderer.
-
-        :param patch_stdout: Replace `sys.stdout`.
-        :param patch_stderr: Replace `sys.stderr`.
-        """
-        return _PatchStdoutContext(
-            self.stdout_proxy(raw=raw),
-            patch_stdout=patch_stdout, patch_stderr=patch_stderr)
-
-
-class _PatchStdoutContext(object):
-    def __init__(self, new_stdout, patch_stdout=True, patch_stderr=True):
-        self.new_stdout = new_stdout
-        self.patch_stdout = patch_stdout
-        self.patch_stderr = patch_stderr
-
-    def __enter__(self):
-        self.original_stdout = sys.stdout
-        self.original_stderr = sys.stderr
-
-        if self.patch_stdout:
-            sys.stdout = self.new_stdout
-        if self.patch_stderr:
-            sys.stderr = self.new_stdout
-
-    def __exit__(self, *a, **kw):
-        if self.patch_stdout:
-            sys.stdout = self.original_stdout
-
-        if self.patch_stderr:
-            sys.stderr = self.original_stderr
-
-
-class _StdoutProxy(object):
-    """
-    Proxy for stdout, as returned by
-    :class:`Application.stdout_proxy`.
-    """
-    def __init__(self, app, raw=False):
-        assert isinstance(app, Application)
-        assert isinstance(raw, bool)
-
-        self._lock = threading.RLock()
-        self._app = app
-        self._raw = raw
-        self._buffer = []
-
-        self.errors = sys.__stdout__.errors
-        self.encoding = sys.__stdout__.encoding
-
-        # This Future is set when `run_in_terminal` is executing.
-        self._busy_f = None
-
-    def _do(self, func):
-        if self._app._is_running:
-            run_in_terminal = functools.partial(
-                self._app.run_in_terminal, func, in_executor=False)
-            get_event_loop().call_from_executor(run_in_terminal)
-        else:
-            func()
-
-    def _write(self, data):
-        """
-        Note: print()-statements cause to multiple write calls.
-              (write('line') and write('\n')). Of course we don't want to call
-              `run_in_terminal` for every individual call, because that's too
-              expensive, and as long as the newline hasn't been written, the
-              text itself is again overwritter by the rendering of the input
-              command line. Therefor, we have a little buffer which holds the
-              text until a newline is written to stdout.
-        """
-        if '\n' in data:
-            # When there is a newline in the data, write everything before the
-            # newline, including the newline itself.
-            before, after = data.rsplit('\n', 1)
-            to_write = self._buffer + [before, '\n']
-            self._buffer = [after]
-
-            def run_write():
-                for s in to_write:
-                    if self._raw:
-                        self._app.output.write_raw(s)
-                    else:
-                        self._app.output.write(s)
-            self._do(run_write)
-        else:
-            # Otherwise, cache in buffer.
-            self._buffer.append(data)
-
-    def write(self, data):
-        with self._lock:
-            self._write(data)
-
-    def _flush(self):
-        def run_flush():
-            for s in self._buffer:
-                if self._raw:
-                    self._app.output.write_raw(s)
-                else:
-                    self._app.output.write(s)
-            self._buffer = []
-            self._app.output.flush()
-        self._do(run_flush)
-
-    def flush(self):
-        """
-        Flush buffered output.
-        """
-        with self._lock:
-            self._flush()
 
 
 class _CombinedRegistry(KeyBindingsBase):
