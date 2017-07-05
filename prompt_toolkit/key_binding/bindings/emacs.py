@@ -6,7 +6,6 @@ from prompt_toolkit.completion import CompleteEvent
 from prompt_toolkit.filters import Condition, emacs_mode, has_selection, emacs_insert_mode, has_arg, is_multiline, is_read_only, vi_search_direction_reversed
 from prompt_toolkit.keys import Keys
 
-from .scroll import scroll_page_up, scroll_page_down
 from .named_commands import get_by_name
 from ..key_bindings import KeyBindings, ConditionalKeyBindings
 
