@@ -157,23 +157,7 @@ class KeyBindings(KeyBindingsBase):
         assert keys
         assert callable(save_before)
 
-        def check_and_expand_key(key):
-            " Replace key by alias and verify whether it's a valid one. "
-            # Lookup aliases.
-            key = KEY_ALIASES.get(key, key)
-
-            # Replace 'space' by ' '
-            if key == 'space':
-                key = ' '
-
-            # Final validation.
-            assert isinstance(key, text_type)
-            if len(key) != 1 and key not in ALL_KEYS:
-                raise ValueError('Invalid key: %s' % (key, ))
-
-            return key
-
-        keys = tuple(check_and_expand_key(k) for k in keys)
+        keys = tuple(_check_and_expand_key(k) for k in keys)
 
         if isinstance(filter, Never):
             # When a filter is Never, it will always stay disabled, so in that
@@ -200,24 +184,48 @@ class KeyBindings(KeyBindingsBase):
                 return func
         return decorator
 
-    def remove(self, function):
+    def remove(self, *args):
         """
         Remove a key binding.
 
-        This expects a function that was given to `add` method as
-        parameter. Raises `ValueError` when the given function was not
-        registered before.
+        This expects either a function that was given to `add` method as
+        parameter or a sequence of key bindings.
+
+        Raises `ValueError` when no bindings was found.
+
+        Usage::
+
+            remove(handler)  # Pass handler.
+            remove('c-x', 'c-a')  # Or pass the key bindings.
         """
-        assert callable(function)
+        found = False
 
-        for b in self.bindings:
-            if b.handler == function:
-                self.bindings.remove(b)
-                self._clear_cache()
-                return
+        if callable(args[0]):
+            assert len(args) == 1
+            function = args[0]
 
-        # No key binding found for this function. Raise ValueError.
-        raise ValueError('Binding not found: %r' % (function, ))
+            # Remove the given function.
+            for b in self.bindings:
+                if b.handler == function:
+                    self.bindings.remove(b)
+                    found = True
+
+        else:
+            assert len(args) > 0
+
+            # Remove this sequence of key bindings.
+            keys = tuple(_check_and_expand_key(k) for k in args)
+
+            for b in self.bindings:
+                if b.keys == keys:
+                    self.bindings.remove(b)
+                    found = True
+
+        if found:
+            self._clear_cache()
+        else:
+            # No key binding found for this function. Raise ValueError.
+            raise ValueError('Binding not found: %r' % (function, ))
 
     # For backwards-compatibility.
     add_binding = add
@@ -279,6 +287,25 @@ class KeyBindings(KeyBindingsBase):
             return result
 
         return self._get_bindings_starting_with_keys_cache.get(keys, get)
+
+
+def _check_and_expand_key(key):
+    """
+    Replace key by alias and verify whether it's a valid one.
+    """
+    # Lookup aliases.
+    key = KEY_ALIASES.get(key, key)
+
+    # Replace 'space' by ' '
+    if key == 'space':
+        key = ' '
+
+    # Final validation.
+    assert isinstance(key, text_type)
+    if len(key) != 1 and key not in ALL_KEYS:
+        raise ValueError('Invalid key: %s' % (key, ))
+
+    return key
 
 
 def key_binding(filter=True, eager=False, save_before=None):

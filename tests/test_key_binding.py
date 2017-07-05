@@ -55,6 +55,28 @@ def processor(bindings):
     return KeyProcessor(bindings)
 
 
+def test_remove_bindings(handlers):
+    set_dummy_app()
+    h = handlers.controlx_controlc
+    h2 = handlers.controld
+
+    # Test passing a handler to the remove() function.
+    bindings = KeyBindings()
+    bindings.add(Keys.ControlX, Keys.ControlC)(h)
+    bindings.add(Keys.ControlD)(h2)
+    assert len(bindings.bindings) == 2
+    bindings.remove(h)
+    assert len(bindings.bindings) == 1
+
+    # Test passing a key sequence to the remove() function.
+    bindings = KeyBindings()
+    bindings.add(Keys.ControlX, Keys.ControlC)(h)
+    bindings.add(Keys.ControlD)(h2)
+    assert len(bindings.bindings) == 2
+    bindings.remove(Keys.ControlX, Keys.ControlC)
+    assert len(bindings.bindings) == 1
+
+
 def test_feed_simple(processor, handlers):
     processor.feed(KeyPress(Keys.ControlX, '\x18'))
     processor.feed(KeyPress(Keys.ControlC, '\x03'))
