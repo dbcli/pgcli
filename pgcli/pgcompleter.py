@@ -70,6 +70,12 @@ class PGCompleter(Completer):
         self.search_path_filter = settings.get('search_path_filter')
         self.generate_aliases = settings.get('generate_aliases')
         self.casing_file = settings.get('casing_file')
+        self.insert_col_skip_patterns = [
+            re.compile(pattern) for pattern in settings.get(
+                'insert_col_skip_patterns',
+                [r'^now\(\)$', r'^nextval\(']
+            )
+        ]
         self.generate_casing_file = settings.get('generate_casing_file')
         self.qualify_columns = settings.get(
             'qualify_columns', 'if_more_than_one_table')
@@ -170,16 +176,20 @@ class PGCompleter(Completer):
     def extend_columns(self, column_data, kind):
         """ extend column metadata
 
-        :param column_data: list of (schema_name, rel_name, column_name, column_type) tuples
+        :param column_data: list of (schema_name, rel_name, column_name,
+        column_type, default_value) tuples
         :param kind: either 'tables' or 'views'
         :return:
         """
         metadata = self.dbmetadata[kind]
-        for schema, relname, colname, datatype in column_data:
-            (schema, relname, colname) = self.escaped_names(
-                [schema, relname, colname])
-            column = ColumnMetadata(name=colname, datatype=datatype,
-                foreignkeys=[])
+        for schema, relname, colname, datatype, has_default, default_value in column_data:
+            (schema, relname, colname) = self.escaped_names([schema, relname, colname])
+            column = ColumnMetadata(
+                name=colname,
+                datatype=datatype,
+                has_default=has_default,
+                default_value=default_value
+            )
             metadata[schema][relname][colname] = column
             self.all_completions.add(colname)
 
@@ -433,6 +443,17 @@ class PGCompleter(Completer):
             }
         lastword = last_word(word_before_cursor, include='most_punctuations')
         if lastword == '*':
+            if suggestion.context == 'insert':
+                def filter(col):
+                    if not col.has_default:
+                        return True
+                    return not any(
+                        p.match(col.default_value)
+                        for p in self.insert_col_skip_patterns
+                    )
+                scoped_cols = {
+                    t: [col for col in cols if filter(col)] for t, cols in scoped_cols.items()
+                }
             if self.asterisk_column_order == 'alphabetic':
                 for cols in scoped_cols.values():
                     cols.sort(key=operator.attrgetter('name'))
