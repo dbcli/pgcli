@@ -1,6 +1,19 @@
 from collections import namedtuple
 
-ColumnMetadata = namedtuple('ColumnMetadata', ['name', 'datatype', 'foreignkeys'])
+_ColumnMetadata = namedtuple(
+    'ColumnMetadata',
+    ['name', 'datatype', 'foreignkeys', 'default', 'has_default', 'default_value']
+)
+
+
+def ColumnMetadata(
+        name, datatype, foreignkeys=None, default=None, has_default=False, default_value=None
+):
+    return _ColumnMetadata(
+        name, datatype, foreignkeys or [], default, has_default, default_value
+    )
+
+
 ForeignKey = namedtuple('ForeignKey', ['parentschema', 'parenttable',
     'parentcolumn', 'childschema', 'childtable', 'childcolumn'])
 TableMetadata = namedtuple('TableMetadata', 'name columns')

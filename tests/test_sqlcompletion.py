@@ -313,17 +313,32 @@ def test_into_suggests_tables_and_schemas():
 ])
 def test_insert_into_lparen_suggests_cols(text):
     suggestions = suggest_type(text, 'INSERT INTO abc (')
-    assert suggestions ==(Column(table_refs=((None, 'abc', None, False),)),)
+    assert suggestions == (
+        Column(
+            table_refs=((None, 'abc', None, False),),
+            context='insert'
+        ),
+    )
 
 
 def test_insert_into_lparen_partial_text_suggests_cols():
     suggestions = suggest_type('INSERT INTO abc (i', 'INSERT INTO abc (i')
-    assert suggestions ==(Column(table_refs=((None, 'abc', None, False),)),)
+    assert suggestions == (
+        Column(
+            table_refs=((None, 'abc', None, False),),
+            context='insert'
+        ),
+    )
 
 
 def test_insert_into_lparen_comma_suggests_cols():
     suggestions = suggest_type('INSERT INTO abc (id,', 'INSERT INTO abc (id,')
-    assert suggestions ==(Column(table_refs=((None, 'abc', None, False),)),)
+    assert suggestions == (
+        Column(
+            table_refs=((None, 'abc', None, False),),
+            context='insert'
+        ),
+    )
 
 
 def test_partially_typed_col_name_suggests_col_names():

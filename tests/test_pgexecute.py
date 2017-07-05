@@ -40,7 +40,7 @@ def test_schemata_table_views_and_columns_query(executor):
     run(executor, "create table b(z text)")
     run(executor, "create view d as select 1 as e")
     run(executor, "create schema schema1")
-    run(executor, "create table schema1.c (w text)")
+    run(executor, "create table schema1.c (w text DEFAULT 'meow')")
     run(executor, "create schema schema2")
 
     # schemata
@@ -55,15 +55,18 @@ def test_schemata_table_views_and_columns_query(executor):
     ('public', 'a'), ('public', 'b'), ('schema1', 'c')])
 
     assert set(executor.table_columns()) >= set([
-        ('public', 'a', 'x', 'text'), ('public', 'a', 'y', 'text'),
-        ('public', 'b', 'z', 'text'), ('schema1', 'c', 'w', 'text')])
+        ('public', 'a', 'x', 'text', False, None),
+        ('public', 'a', 'y', 'text', False, None),
+        ('public', 'b', 'z', 'text', False, None),
+        ('schema1', 'c', 'w', 'text', True, "'meow'::text"),
+    ])
 
     # views
     assert set(executor.views()) >= set([
         ('public', 'd')])
 
     assert set(executor.view_columns()) >= set([
-        ('public', 'd', 'e', 'integer')])
+        ('public', 'd', 'e', 'integer', False, None)])
 
 
 @dbtest
