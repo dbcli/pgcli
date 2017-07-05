@@ -415,25 +415,25 @@ class PGCompleter(Completer):
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables, suggestion.local_tables)
 
-        colit = scoped_cols.items
         def make_cand(name, ref):
             synonyms = (name, generate_alias(self.case(name)))
             return Candidate(qualify(name, ref), 0, 'column', synonyms)
-        flat_cols = []
-        for t, cols in colit():
-            for c in cols:
-                flat_cols.append(make_cand(c.name, t.ref))
+
+        def flat_cols():
+            return [make_cand(c.name, t.ref) for t, cols in scoped_cols.items() for c in cols]
         if suggestion.require_last_table:
             # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
             # suggest only columns that appear in the last table and one more
             ltbl = tables[-1].ref
-            flat_cols = list(
-              set(c.name for t, cs in colit() if t.ref == ltbl for c in cs) &
-              set(c.name for t, cs in colit() if t.ref != ltbl for c in cs))
+            other_tbl_cols = set(c.name for t, cs in scoped_cols.items() if t.ref != ltbl for c in cs)
+            scoped_cols = {
+                t: [col for col in cols if col.name in other_tbl_cols]
+                for t, cols in scoped_cols.items()
+                if t.ref == ltbl
+            }
         lastword = last_word(word_before_cursor, include='most_punctuations')
         if lastword == '*':
             if self.asterisk_column_order == 'alphabetic':
-                flat_cols.sort()
                 for cols in scoped_cols.values():
                     cols.sort(key=operator.attrgetter('name'))
             if (lastword != word_before_cursor and len(tables) == 1
@@ -441,15 +441,15 @@ class PGCompleter(Completer):
                 # User typed x.*; replicate "x." for all columns except the
                 # first, which gets the original (as we only replace the "*"")
                 sep = ', ' + word_before_cursor[:-1]
-                collist = sep.join(self.case(c.completion) for c in flat_cols)
+                collist = sep.join(self.case(c.completion) for c in flat_cols())
             else:
                 collist = ', '.join(qualify(c.name, t.ref)
-                    for t, cs in colit() for c in cs)
+                    for t, cs in scoped_cols.items() for c in cs)
 
             return [Match(completion=Completion(collist, -1,
                 display_meta='columns', display='*'), priority=(1,1,1))]
 
-        return self.find_matches(word_before_cursor, flat_cols,
+        return self.find_matches(word_before_cursor, flat_cols(),
             meta='column')
 
     def alias(self, tbl, tbls):
