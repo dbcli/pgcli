@@ -2,7 +2,7 @@
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
-from six import with_metaclass
+from six import with_metaclass, text_type
 from .eventloop import Future, run_in_executor
 
 __all__ = (
@@ -34,6 +34,14 @@ class Completion(object):
     """
     def __init__(self, text, start_position=0, display=None, display_meta=None,
                  get_display_meta=None, style='', selected_style=''):
+        assert isinstance(text, text_type)
+        assert isinstance(start_position, int)
+        assert display is None or isinstance(display, text_type)
+        assert display_meta is None or isinstance(display_meta, text_type)
+        assert get_display_meta is None or callable(get_display_meta)
+        assert isinstance(style, text_type)
+        assert isinstance(selected_style, text_type)
+
         self.text = text
         self.start_position = start_position
         self._display_meta = display_meta
