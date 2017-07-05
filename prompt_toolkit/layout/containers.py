@@ -168,26 +168,21 @@ class HSplit(_Split):
     :param window_too_small: A :class:`.Container` object that is displayed if
         there is not enough space for all the children. By default, this is a
         "Window too small" message.
-    :param report_dimensions_callback: When rendering, this function is called
-        with the list of used dimensions. (As a list of integers.)
     :param width: When given, use this width instead of looking at the children.
     :param height: When given, use this width instead of looking at the children.
     :param style: A style string.
     :param modal: ``True`` or ``False``.
     :param key_bindings: ``None`` or a ``KeyBindings`` object.
     """
-    def __init__(self, children, window_too_small=None, align=VerticalAlign.JUSTIFY,
-                 report_dimensions_callback=None, padding=0, width=None,
+    def __init__(self, children, window_too_small=None,
+                 align=VerticalAlign.JUSTIFY, padding=0, width=None,
                  height=None, modal=False, key_bindings=None, style=''):
-        assert report_dimensions_callback is None or callable(report_dimensions_callback)
-
         super(HSplit, self).__init__(
             children=children, window_too_small=window_too_small,
             padding=padding, width=width, height=height, modal=modal,
             key_bindings=key_bindings, style=style)
 
         self.align = align
-        self.report_dimensions_callback = report_dimensions_callback
 
         self._children_cache = SimpleCache(maxsize=1)
         self._remaining_space_window = Window()  # Dummy window.
@@ -249,10 +244,6 @@ class HSplit(_Split):
             to which the output has to be written.
         """
         sizes = self._divide_heigths(write_position)
-
-        if self.report_dimensions_callback:
-            self.report_dimensions_callback(sizes)
-
         style = parent_style + ' ' + self.style
 
         if sizes is None:
@@ -351,8 +342,6 @@ class VSplit(_Split):
     :param window_too_small: A :class:`.Container` object that is displayed if
         there is not enough space for all the children. By default, this is a
         "Window too small" message.
-    :param report_dimensions_callback: When rendering, this function is called
-        with the list of used dimensions. (As a list of integers.)
     :param width: When given, use this width instead of looking at the children.
     :param height: When given, use this width instead of looking at the children.
     :param style: A style string.
@@ -360,17 +349,14 @@ class VSplit(_Split):
     :param key_bindings: ``None`` or a ``KeyBindings`` object.
     """
     def __init__(self, children, window_too_small=None, align=HorizontalAlign.JUSTIFY,
-                 report_dimensions_callback=None, padding=Dimension.exact(0),
-                 width=None, height=None, modal=False, key_bindings=None, style=''):
-        assert report_dimensions_callback is None or callable(report_dimensions_callback)
-
+                 padding=Dimension.exact(0), width=None, height=None,
+                 modal=False, key_bindings=None, style=''):
         super(VSplit, self).__init__(
             children=children, window_too_small=window_too_small,
             padding=padding, width=width, height=height, modal=modal,
             key_bindings=key_bindings, style=style)
 
         self.align = align
-        self.report_dimensions_callback = report_dimensions_callback
 
         self._children_cache = SimpleCache(maxsize=1)
         self._remaining_space_window = Window()  # Dummy window.
@@ -498,12 +484,7 @@ class VSplit(_Split):
             return
 
         children = self._all_children
-
         sizes = self._divide_widths(write_position.width)
-
-        if self.report_dimensions_callback:
-            self.report_dimensions_callback(sizes)  # XXX: substract sizes of additional children!!!
-
         style = parent_style + ' ' + self.style
 
         # If there is not enough space.
