@@ -255,7 +255,7 @@ class PosixEventLoop(EventLoop):
         (This is recommended for code that could block the event loop.)
         Similar to Twisted's ``deferToThread``.
         """
-        f = Future()
+        f = self.create_future()
 
         # Wait until the main thread is idle.
         # We start the thread by using `call_from_executor`. The event loop
