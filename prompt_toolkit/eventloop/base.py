@@ -11,9 +11,11 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 from prompt_toolkit.log import logger
+import sys
 
 __all__ = (
     'EventLoop',
+    'get_traceback_from_context',
 )
 
 
@@ -147,7 +149,8 @@ class EventLoop(with_metaclass(ABCMeta, object)):
 
         exception = context.get('exception')
         if exception is not None:
-            exc_info = (type(exception), exception, exception.__traceback__)
+            tb = get_traceback_from_context(context)
+            exc_info = (type(exception), exception, tb)
         else:
             exc_info = False
 
@@ -160,3 +163,20 @@ class EventLoop(with_metaclass(ABCMeta, object)):
             log_lines.append('{}: {}'.format(key, value))
 
         logger.error('\n'.join(log_lines), exc_info=exc_info)
+
+
+def get_traceback_from_context(context):
+    """
+    Get the traceback object from the context.
+    """
+    exception = context.get('exception')
+    if exception:
+        if hasattr(exception, '__traceback__'):
+            return exception.__traceback__
+        else:
+            # call_exception_handler() is usually called indirectly
+            # from an except block. If it's not the case, the traceback
+            # is undefined...
+            return sys.exc_info()[2]
+
+    return None

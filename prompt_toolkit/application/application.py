@@ -5,6 +5,7 @@ from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.clipboard import Clipboard, InMemoryClipboard
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From, Future
+from prompt_toolkit.eventloop.base import get_traceback_from_context
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.input.base import Input
 from prompt_toolkit.input.defaults import create_input
@@ -27,6 +28,7 @@ from prompt_toolkit.utils import Event
 from .current import set_app
 
 from subprocess import Popen
+from traceback import format_tb
 import os
 import signal
 import six
@@ -556,9 +558,21 @@ class Application(object):
 
         def handle_exception(context):
             " Print the exception, using run_in_terminal. "
+            # For Python 2: we have to get traceback at this point, because
+            # we're still in the 'except:' block of the event loop where the
+            # traceback is still available. Moving this code in the
+            # 'print_exception' coroutine will loose the exception.
+            tb = get_traceback_from_context(context)
+            formatted_tb = ''.join(format_tb(tb))
+
             def print_exception():
-                loop.default_exception_handler(context)
-                yield From(_do_wait_for_enter('Got an exception. Press ENTER to continue...'))
+                # Print output. Similar to 'loop.default_exception_handler',
+                # but don't use logger. (This works better on Python 2.)
+                print('\nUnhandled exception in event loop:')
+                print(formatted_tb)
+                print('Exception %s' % (context.get('exception'), ))
+
+                yield From(_do_wait_for_enter('Press ENTER to continue...'))
             self.run_coroutine_in_terminal(print_exception)
 
         if set_exception_handler:
@@ -853,4 +867,4 @@ def _do_wait_for_enter(wait_text):
     prompt = Prompt(
         message=wait_text,
         extra_key_bindings=key_bindings)
-    yield prompt.app.run_async()
+    yield From(prompt.app.run_async())
