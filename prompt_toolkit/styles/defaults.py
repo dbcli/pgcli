@@ -100,6 +100,17 @@ PROMPT_TOOLKIT_STYLE = [
     ('em',                                      'italic'),
     ('strong',                                  'bold'),
 
+    # It should be possible to use the style names in HTML.
+    # <reverse>...</reverse>  or <noreverse>...</noreverse>.
+    ('italic',                                  'italic'),
+    ('underline',                               'underline'),
+    ('bold',                                    'bold'),
+    ('reverse',                                 'reverse'),
+    ('noitalic',                                'noitalic'),
+    ('nounderline',                             'nounderline'),
+    ('nobold',                                  'nobold'),
+    ('noreverse',                               'noreverse'),
+
     # Prompt bottom toolbar
     ('bottom-toolbar',                          'reverse'),
 ]
