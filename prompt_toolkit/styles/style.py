@@ -266,6 +266,7 @@ def merge_styles(styles):
     """
     Merge multiple `Style` objects.
     """
+    styles = [s for s in styles if s is not None]
     return _MergedStyle(styles)
 
 

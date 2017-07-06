@@ -7,8 +7,8 @@ from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From, Future
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.input.base import Input
-from prompt_toolkit.input.typeahead import store_typeahead, get_typeahead
 from prompt_toolkit.input.defaults import create_input
+from prompt_toolkit.input.typeahead import store_typeahead, get_typeahead
 from prompt_toolkit.key_binding.bindings.mouse import load_mouse_bindings
 from prompt_toolkit.key_binding.bindings.page_navigation import load_page_navigation_bindings
 from prompt_toolkit.key_binding.defaults import load_key_bindings
@@ -22,7 +22,7 @@ from prompt_toolkit.output import Output
 from prompt_toolkit.output.defaults import create_output
 from prompt_toolkit.renderer import Renderer, print_formatted_text
 from prompt_toolkit.search_state import SearchState
-from prompt_toolkit.styles import BaseStyle, default_style
+from prompt_toolkit.styles import BaseStyle, default_style, merge_styles, DynamicStyle
 from prompt_toolkit.utils import Event
 from .current import set_app
 
@@ -121,7 +121,7 @@ class Application(object):
         assert output is None or isinstance(output, Output)
         assert input is None or isinstance(input, Input)
 
-        self.style = style or default_style()
+        self.style = style
 
         if get_title is None:
             get_title = lambda: None
@@ -176,7 +176,10 @@ class Application(object):
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
         self.renderer = Renderer(
-            self.style,
+            merge_styles([
+                default_style(),
+                DynamicStyle(lambda: self.style),
+            ]),
             self.output,
             full_screen=full_screen,
             mouse_support=mouse_support)
