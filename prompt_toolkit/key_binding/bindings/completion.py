@@ -135,7 +135,7 @@ def _display_completions_like_readline(app, completions):
             # Display all completions.
             display(0)
 
-    app.run_in_terminal_async(run_compl, render_cli_done=True)
+    app.run_coroutine_in_terminal(run_compl, render_cli_done=True)
 
 
 def _create_more_prompt(message='--MORE--'):

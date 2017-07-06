@@ -559,7 +559,7 @@ class Application(object):
             def print_exception():
                 loop.default_exception_handler(context)
                 yield From(_do_wait_for_enter('Got an exception. Press ENTER to continue...'))
-            self.run_in_terminal_async(print_exception)
+            self.run_coroutine_in_terminal(print_exception)
 
         if set_exception_handler:
             # Run with patched exception handler.
@@ -616,9 +616,9 @@ class Application(object):
                 result = func()
                 return Future.succeed(result)
 
-        return self.run_in_terminal_async(async_func, render_cli_done=render_cli_done)
+        return self.run_coroutine_in_terminal(async_func, render_cli_done=render_cli_done)
 
-    def run_in_terminal_async(self, async_func, render_cli_done=False):
+    def run_coroutine_in_terminal(self, async_func, render_cli_done=False):
         """
         `async_func` can be a coroutine or a function that returns a Future.
 
@@ -710,7 +710,7 @@ class Application(object):
             if wait_for_enter:
                 yield From(_do_wait_for_enter(wait_text))
 
-        self.run_in_terminal_async(run)
+        self.run_coroutine_in_terminal(run)
 
     def suspend_to_background(self, suspend_group=True):
         """
