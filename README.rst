@@ -129,6 +129,7 @@ Shells:
 - `http-prompt <https://github.com/eliangcs/http-prompt>`_: An interactive command-line HTTP client.
 - `coconut <http://coconut-lang.org/>`_: Functional programming in Python.
 - `Ergonomica <https://ergonomica.github.io/>`_: A Bash alternative written in Python.
+- `Kube-shell <https://github.com/cloudnativelabs/kube-shell>`_: Kubernetes shell: An integrated shell for working with the Kubernetes CLI
 
 Full screen applications:
 
