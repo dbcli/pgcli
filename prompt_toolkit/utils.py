@@ -198,6 +198,15 @@ def is_windows():
     return sys.platform.startswith('win')  # E.g. 'win32', not 'darwin' or 'linux2'
 
 
+def is_windows_vt100_supported():
+    """
+    True when we are using Windows, but VT100 escape sequences are supported.
+    """
+    # Import needs to be inline. Windows libraries are not always available.
+    from prompt_toolkit.output.windows10 import is_win_vt100_enabled
+    return is_windows() and is_win_vt100_enabled()
+
+
 def is_conemu_ansi():
     """
     True when the ConEmu Windows console is used.
