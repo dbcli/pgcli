@@ -282,11 +282,10 @@ class HSplit(_Split):
 
         width = write_position.width
         height = write_position.height
-        extended_height = write_position.extended_height
 
         # Calculate heights.
         dimensions = [
-            c.preferred_height(width, extended_height)
+            c.preferred_height(width, height)
             for c in self._all_children]
 
         # Sum dimensions
@@ -294,7 +293,7 @@ class HSplit(_Split):
 
         # If there is not enough space for both.
         # Don't do anything.
-        if sum_dimensions.min > extended_height:
+        if sum_dimensions.min > height:
             return
 
         # Find optimal sizes. (Start with minimal size, increase until we cover
@@ -308,7 +307,7 @@ class HSplit(_Split):
         i = next(child_generator)
 
         # Increase until we meet at least the 'preferred' size.
-        preferred_stop = min(extended_height, sum_dimensions.preferred)
+        preferred_stop = min(height, sum_dimensions.preferred)
         preferred_dimensions = [d.preferred for d in dimensions]
 
         while sum(sizes) < preferred_stop:
@@ -494,10 +493,10 @@ class VSplit(_Split):
             return
 
         # Calculate heights, take the largest possible, but not larger than
-        # write_position.extended_height.
-        heights = [child.preferred_height(width, write_position.extended_height).preferred
+        # write_position.height.
+        heights = [child.preferred_height(width, write_position.height).preferred
                    for width, child in zip(sizes, children)]
-        height = max(write_position.height, min(write_position.extended_height, max(heights)))
+        height = max(write_position.height, min(write_position.height, max(heights)))
 
         #
         ypos = write_position.ypos
@@ -640,15 +639,15 @@ class FloatContainer(Container):
                 height = fl_height
                 if height is None:
                     height = fl.content.preferred_height(
-                        width, write_position.extended_height).preferred
+                        width, write_position.height).preferred
 
-                # Reduce height if not enough space. (We can use the
-                # extended_height when the content requires it.)
-                if height > write_position.extended_height - ypos:
-                    if write_position.extended_height - ypos + 1 >= ypos:
+                # Reduce height if not enough space. (We can use the height
+                # when the content requires it.)
+                if height > write_position.height - ypos:
+                    if write_position.height - ypos + 1 >= ypos:
                         # When the space below the cursor is more than
                         # the space above, just reduce the height.
-                        height = write_position.extended_height - ypos
+                        height = write_position.height - ypos
                     else:
                         # Otherwise, fit the float above the cursor.
                         height = min(height, cursor_position.y)
@@ -661,7 +660,7 @@ class FloatContainer(Container):
             # Otherwise, take preferred height from content.
             else:
                 height = fl.content.preferred_height(
-                    width, write_position.extended_height).preferred
+                    width, write_position.height).preferred
 
                 if fl.top is not None:
                     ypos = fl.top

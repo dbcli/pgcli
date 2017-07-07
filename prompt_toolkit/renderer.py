@@ -417,11 +417,19 @@ class Renderer(object):
                                     # containers decides to display it.
         mouse_handlers = MouseHandlers()
 
-        if is_done:
-            height = 0  # When we are done, we don't necessary want to fill up until the bottom.
+        # Calculate height.
+        if self.full_screen:
+            height = size.rows
+        elif is_done:
+            # When we are done, we don't necessary want to fill up until the bottom.
+            height = layout.container.preferred_height(size.columns, size.rows).preferred
         else:
-            height = self._last_screen.height if self._last_screen else 0
-            height = max(self._min_available_height, height)
+            last_height = self._last_screen.height if self._last_screen else 0
+            height = max(self._min_available_height,
+                         last_height,
+                         layout.container.preferred_height(size.columns, size.rows).preferred)
+
+        height = min(height, size.rows)
 
         # When te size changes, don't consider the previous screen.
         if self._last_size != size:
@@ -441,8 +449,7 @@ class Renderer(object):
             xpos=0,
             ypos=0,
             width=size.columns,
-            height=(size.rows if self.full_screen else height),
-            extended_height=size.rows,
+            height=height,
         ), parent_style='', erase_bg=False)
 
         # When grayed. Replace all styles in the new screen.

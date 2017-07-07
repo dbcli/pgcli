@@ -200,9 +200,8 @@ class Screen(object):
 
 
 class WritePosition(object):
-    def __init__(self, xpos, ypos, width, height, extended_height=None):
+    def __init__(self, xpos, ypos, width, height):
         assert height >= 0
-        assert extended_height is None or extended_height >= 0
         assert width >= 0
         # xpos and ypos can be negative. (A float can be partially visible.)
 
@@ -210,9 +209,8 @@ class WritePosition(object):
         self.ypos = ypos
         self.width = width
         self.height = height
-        self.extended_height = extended_height or height
 
     def __repr__(self):
-        return '%s(x=%r, y=%r, width=%r, height=%r, extended_height=%r)' % (
+        return '%s(x=%r, y=%r, width=%r, height=%r)' % (
             self.__class__.__name__,
-            self.xpos, self.ypos, self.width, self.height, self.extended_height)
+            self.xpos, self.ypos, self.width, self.height)
