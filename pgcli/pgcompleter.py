@@ -153,7 +153,7 @@ class PGCompleter(Completer):
         self.casing = dict((word.lower(), word) for word in words)
 
     def extend_relations(self, data, kind):
-        """ extend metadata for tables or views
+        """extend metadata for tables or views.
 
         :param data: list of (schema_name, rel_name) tuples
         :param kind: either 'tables' or 'views'
@@ -175,7 +175,7 @@ class PGCompleter(Completer):
             self.all_completions.add(relname)
 
     def extend_columns(self, column_data, kind):
-        """extend column metadata
+        """extend column metadata.
 
         :param column_data: list of (schema_name, rel_name, column_name,
         column_type, default_value) tuples
