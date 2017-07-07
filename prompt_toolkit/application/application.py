@@ -18,6 +18,7 @@ from prompt_toolkit.key_binding.key_processor import KeyProcessor
 from prompt_toolkit.key_binding.vi_state import ViState
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.controls import BufferControl
+from prompt_toolkit.layout.dummy import create_dummy_layout
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.output import Output
 from prompt_toolkit.output.defaults import create_output
@@ -84,6 +85,11 @@ class Application(object):
     :param input: :class:`~prompt_toolkit.input.Input` instance.
     :param output: :class:`~prompt_toolkit.output.Output` instance. (Probably
                    Vt100_Output or Win32Output.)
+
+    Usage:
+
+        app = Application(...)
+        app.run()
     """
     def __init__(self, layout=None,
                  style=None,
@@ -107,7 +113,7 @@ class Application(object):
         reverse_vi_search_direction = to_filter(reverse_vi_search_direction)
         enable_page_navigation_bindings = to_filter(enable_page_navigation_bindings)
 
-        assert isinstance(layout, Layout)
+        assert layout is None or isinstance(layout, Layout)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert clipboard is None or isinstance(clipboard, Clipboard)
         assert isinstance(full_screen, bool)
@@ -124,6 +130,9 @@ class Application(object):
         assert input is None or isinstance(input, Input)
 
         self.style = style
+
+        if layout is None:
+            layout = create_dummy_layout()
 
         if get_title is None:
             get_title = lambda: None
@@ -868,3 +877,4 @@ def _do_wait_for_enter(wait_text):
         message=wait_text,
         extra_key_bindings=key_bindings)
     yield From(prompt.app.run_async())
+
