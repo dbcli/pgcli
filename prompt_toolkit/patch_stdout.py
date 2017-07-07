@@ -87,7 +87,7 @@ class StdoutProxy(object):
             # If an application is running, use `run_in_terminal`, otherwise
             # call it directly.
             try:
-                app = get_app()
+                app = get_app(raise_exception=True)
             except NoRunningApplicationError:
                 write_and_flush()
             else:

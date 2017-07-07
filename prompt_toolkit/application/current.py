@@ -10,9 +10,9 @@ __all__ = (
 _current_app = None
 
 
-def get_app():
+def get_app(raise_exception=False):
     """
-    Set the current active (running) Application.
+    Get the current active (running) Application.
     An `Application` is active during the `Application.run_async` call.
 
     We assume that there can only be one :class:`.Application` active at the
@@ -20,11 +20,24 @@ def get_app():
     stdout. This makes the code significantly easier than passing around the
     `Application` everywhere.
 
+    If no `Application` is running, then return by default a
+    `DummyApplication`. For practical reasons, we prefer to not raise an
+    exception. This way, we don't have to check all over the place whether an
+    actual `Application` was returned.
+
     (For applications like pymux where we can have more than one `Application`,
     we'll use a work-around to handle that.)
+
+    :param raise_exception: When `True`, raise `NoRunningApplicationError`
+        instead of returning a `DummyApplication` if no application is running.
     """
     if _current_app is None:
-        raise NoRunningApplicationError
+        if raise_exception:
+            raise NoRunningApplicationError
+        else:
+            from .dummy import DummyApplication
+            return DummyApplication()
+
     return _current_app
 
 

@@ -771,6 +771,11 @@ class Application(object):
         print_formatted_text(self.output, formatted_text, style or self.style)
 
     @property
+    def is_running(self):
+        " `True` when the application is currently active/running. "
+        return self._is_running
+
+    @property
     def is_exiting(self):
         " ``True`` when the exit flag as been set. "
         return self._exit_flag
