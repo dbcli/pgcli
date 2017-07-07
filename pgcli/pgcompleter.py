@@ -158,6 +158,7 @@ class PGCompleter(Completer):
         :param data: list of (schema_name, rel_name) tuples
         :param kind: either 'tables' or 'views'
         :return:
+
         """
 
         data = [self.escaped_names(d) for d in data]
@@ -174,7 +175,7 @@ class PGCompleter(Completer):
             self.all_completions.add(relname)
 
     def extend_columns(self, column_data, kind):
-        """ extend column metadata
+        """extend column metadata
 
         :param column_data: list of (schema_name, rel_name, column_name,
         column_type, default_value) tuples
@@ -183,7 +184,8 @@ class PGCompleter(Completer):
         """
         metadata = self.dbmetadata[kind]
         for schema, relname, colname, datatype, has_default, default_value in column_data:
-            (schema, relname, colname) = self.escaped_names([schema, relname, colname])
+            (schema, relname, colname) = self.escaped_names(
+                [schema, relname, colname])
             column = ColumnMetadata(
                 name=colname,
                 datatype=datatype,
@@ -435,7 +437,8 @@ class PGCompleter(Completer):
             # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
             # suggest only columns that appear in the last table and one more
             ltbl = tables[-1].ref
-            other_tbl_cols = set(c.name for t, cs in scoped_cols.items() if t.ref != ltbl for c in cs)
+            other_tbl_cols = set(
+                c.name for t, cs in scoped_cols.items() if t.ref != ltbl for c in cs)
             scoped_cols = {
                 t: [col for col in cols if col.name in other_tbl_cols]
                 for t, cols in scoped_cols.items()
@@ -462,13 +465,21 @@ class PGCompleter(Completer):
                 # User typed x.*; replicate "x." for all columns except the
                 # first, which gets the original (as we only replace the "*"")
                 sep = ', ' + word_before_cursor[:-1]
-                collist = sep.join(self.case(c.completion) for c in flat_cols())
+                collist = sep.join(self.case(c.completion)
+                                   for c in flat_cols())
             else:
                 collist = ', '.join(qualify(c.name, t.ref)
-                    for t, cs in scoped_cols.items() for c in cs)
+                                    for t, cs in scoped_cols.items() for c in cs)
 
-            return [Match(completion=Completion(collist, -1,
-                display_meta='columns', display='*'), priority=(1,1,1))]
+            return [Match(
+                completion=Completion(
+                    collist,
+                    -1,
+                    display_meta='columns',
+                    display='*'
+                ),
+                priority=(1, 1, 1)
+            )]
 
         return self.find_matches(word_before_cursor, flat_cols(),
             meta='column')

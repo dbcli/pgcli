@@ -188,13 +188,15 @@ class MetaData(object):
             for tbl, cols in tbls.items():
                 tables.append((sch, tbl))
                 # Let all columns be text columns
-                tbl_cols.extend([self._make_col(sch, tbl, col) for col in cols])
+                tbl_cols.extend([self._make_col(sch, tbl, col)
+                                 for col in cols])
 
         for sch, tbls in metadata.get('views', {}).items():
             for tbl, cols in tbls.items():
                 views.append((sch, tbl))
                 # Let all columns be text columns
-                view_cols.extend([self._make_col(sch, tbl, col) for col in cols])
+                view_cols.extend([self._make_col(sch, tbl, col)
+                                  for col in cols])
 
         functions = [
             FunctionMetadata(sch, *func_meta)
