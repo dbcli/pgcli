@@ -169,7 +169,6 @@ class MetaData(object):
 
         return completers
 
-
     def _make_col(self, sch, tbl, col):
         defaults = self.metadata.get('defaults', {}).get(sch, {})
         return (sch, tbl, col, 'text', (tbl, col) in defaults, defaults.get((tbl, col)))

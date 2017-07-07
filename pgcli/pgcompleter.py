@@ -157,6 +157,7 @@ class PGCompleter(Completer):
 
         :param data: list of (schema_name, rel_name) tuples
         :param kind: either 'tables' or 'views'
+
         :return:
 
         """
