@@ -183,6 +183,7 @@ class PGCompleter(Completer):
         :param kind: either 'tables' or 'views'
 
         :return:
+
         """
         metadata = self.dbmetadata[kind]
         for schema, relname, colname, datatype, has_default, default_value in column_data:
