@@ -180,6 +180,7 @@ class PGCompleter(Completer):
         :param column_data: list of (schema_name, rel_name, column_name,
         column_type, default_value) tuples
         :param kind: either 'tables' or 'views'
+
         :return:
         """
         metadata = self.dbmetadata[kind]
