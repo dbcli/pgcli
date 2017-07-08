@@ -417,7 +417,7 @@ class PGExecute(object):
                         att.attname column_name,
                         att.atttypid::regtype::text type_name,
                         att.atthasdef AS has_default,
-                        def.adsrc as default_value
+                        def.adsrc as default
                 FROM    pg_catalog.pg_attribute att
                         INNER JOIN pg_catalog.pg_class cls
                             ON att.attrelid = cls.oid
@@ -437,7 +437,7 @@ class PGExecute(object):
                         att.attname column_name,
                         typ.typname type_name,
                         NULL AS has_default,
-                        NULL AS default_value
+                        NULL AS default
                 FROM    pg_catalog.pg_attribute att
                         INNER JOIN pg_catalog.pg_class cls
                             ON att.attrelid = cls.oid

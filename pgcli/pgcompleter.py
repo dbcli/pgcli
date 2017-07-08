@@ -179,21 +179,21 @@ class PGCompleter(Completer):
         """extend column metadata.
 
         :param column_data: list of (schema_name, rel_name, column_name,
-        column_type, default_value) tuples
+        column_type, has_default, default) tuples
         :param kind: either 'tables' or 'views'
 
         :return:
 
         """
         metadata = self.dbmetadata[kind]
-        for schema, relname, colname, datatype, has_default, default_value in column_data:
+        for schema, relname, colname, datatype, has_default, default in column_data:
             (schema, relname, colname) = self.escaped_names(
                 [schema, relname, colname])
             column = ColumnMetadata(
                 name=colname,
                 datatype=datatype,
                 has_default=has_default,
-                default_value=default_value
+                default=default
             )
             metadata[schema][relname][colname] = column
             self.all_completions.add(colname)
@@ -454,7 +454,7 @@ class PGCompleter(Completer):
                     if not col.has_default:
                         return True
                     return not any(
-                        p.match(col.default_value)
+                        p.match(col.default)
                         for p in self.insert_col_skip_patterns
                     )
                 scoped_cols = {
