@@ -70,6 +70,12 @@ class PGCompleter(Completer):
         self.search_path_filter = settings.get('search_path_filter')
         self.generate_aliases = settings.get('generate_aliases')
         self.casing_file = settings.get('casing_file')
+        self.insert_col_skip_patterns = [
+            re.compile(pattern) for pattern in settings.get(
+                'insert_col_skip_patterns',
+                [r'^now\(\)$', r'^nextval\(']
+            )
+        ]
         self.generate_casing_file = settings.get('generate_casing_file')
         self.qualify_columns = settings.get(
             'qualify_columns', 'if_more_than_one_table')
@@ -147,11 +153,13 @@ class PGCompleter(Completer):
         self.casing = dict((word.lower(), word) for word in words)
 
     def extend_relations(self, data, kind):
-        """ extend metadata for tables or views
+        """extend metadata for tables or views.
 
         :param data: list of (schema_name, rel_name) tuples
         :param kind: either 'tables' or 'views'
+
         :return:
+
         """
 
         data = [self.escaped_names(d) for d in data]
@@ -168,18 +176,25 @@ class PGCompleter(Completer):
             self.all_completions.add(relname)
 
     def extend_columns(self, column_data, kind):
-        """ extend column metadata
+        """extend column metadata.
 
-        :param column_data: list of (schema_name, rel_name, column_name, column_type) tuples
+        :param column_data: list of (schema_name, rel_name, column_name,
+        column_type, has_default, default) tuples
         :param kind: either 'tables' or 'views'
+
         :return:
+
         """
         metadata = self.dbmetadata[kind]
-        for schema, relname, colname, datatype in column_data:
+        for schema, relname, colname, datatype, has_default, default in column_data:
             (schema, relname, colname) = self.escaped_names(
                 [schema, relname, colname])
-            column = ColumnMetadata(name=colname, datatype=datatype,
-                foreignkeys=[])
+            column = ColumnMetadata(
+                name=colname,
+                datatype=datatype,
+                has_default=has_default,
+                default=default
+            )
             metadata[schema][relname][colname] = column
             self.all_completions.add(colname)
 
@@ -415,25 +430,37 @@ class PGCompleter(Completer):
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables, suggestion.local_tables)
 
-        colit = scoped_cols.items
         def make_cand(name, ref):
             synonyms = (name, generate_alias(self.case(name)))
             return Candidate(qualify(name, ref), 0, 'column', synonyms)
-        flat_cols = []
-        for t, cols in colit():
-            for c in cols:
-                flat_cols.append(make_cand(c.name, t.ref))
+
+        def flat_cols():
+            return [make_cand(c.name, t.ref) for t, cols in scoped_cols.items() for c in cols]
         if suggestion.require_last_table:
             # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
             # suggest only columns that appear in the last table and one more
             ltbl = tables[-1].ref
-            flat_cols = list(
-              set(c.name for t, cs in colit() if t.ref == ltbl for c in cs) &
-              set(c.name for t, cs in colit() if t.ref != ltbl for c in cs))
+            other_tbl_cols = set(
+                c.name for t, cs in scoped_cols.items() if t.ref != ltbl for c in cs)
+            scoped_cols = {
+                t: [col for col in cols if col.name in other_tbl_cols]
+                for t, cols in scoped_cols.items()
+                if t.ref == ltbl
+            }
         lastword = last_word(word_before_cursor, include='most_punctuations')
         if lastword == '*':
+            if suggestion.context == 'insert':
+                def filter(col):
+                    if not col.has_default:
+                        return True
+                    return not any(
+                        p.match(col.default)
+                        for p in self.insert_col_skip_patterns
+                    )
+                scoped_cols = {
+                    t: [col for col in cols if filter(col)] for t, cols in scoped_cols.items()
+                }
             if self.asterisk_column_order == 'alphabetic':
-                flat_cols.sort()
                 for cols in scoped_cols.values():
                     cols.sort(key=operator.attrgetter('name'))
             if (lastword != word_before_cursor and len(tables) == 1
@@ -441,15 +468,23 @@ class PGCompleter(Completer):
                 # User typed x.*; replicate "x." for all columns except the
                 # first, which gets the original (as we only replace the "*"")
                 sep = ', ' + word_before_cursor[:-1]
-                collist = sep.join(self.case(c.completion) for c in flat_cols)
+                collist = sep.join(self.case(c.completion)
+                                   for c in flat_cols())
             else:
                 collist = ', '.join(qualify(c.name, t.ref)
-                    for t, cs in colit() for c in cs)
+                                    for t, cs in scoped_cols.items() for c in cs)
 
-            return [Match(completion=Completion(collist, -1,
-                display_meta='columns', display='*'), priority=(1,1,1))]
+            return [Match(
+                completion=Completion(
+                    collist,
+                    -1,
+                    display_meta='columns',
+                    display='*'
+                ),
+                priority=(1, 1, 1)
+            )]
 
-        return self.find_matches(word_before_cursor, flat_cols,
+        return self.find_matches(word_before_cursor, flat_cols(),
             meta='column')
 
     def alias(self, tbl, tbls):
