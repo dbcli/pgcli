@@ -59,7 +59,7 @@ except ImportError:
     from urllib.parse import urlparse, unquote, parse_qs
 
 from getpass import getuser
-from psycopg2 import OperationalError
+from psycopg2 import OperationalError, InterfaceError
 
 from collections import namedtuple
 
