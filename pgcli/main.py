@@ -787,11 +787,13 @@ class PGCli(object):
         default=False,
         help='Skip intro on startup and goodbye on exit.')
 @click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
+@click.option('-l', '--list', 'list_databases', is_flag=True, help='list '
+              'available databases, then exit.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
-    single_connection, dbname, username, version, pgclirc, dsn, row_limit,
-    less_chatty, prompt):
+        single_connection, dbname, username, version, pgclirc, dsn, row_limit,
+        less_chatty, prompt, list_databases):
 
     if version:
         print('Version:', __version__)
@@ -839,6 +841,19 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
         pgcli.connect_dsn('service={0}'.format(os.environ['PGSERVICE']))
     else:
         pgcli.connect(database, host, user, port)
+
+    if list_databases:
+        cur, headers, status = pgcli.pgexecute.full_databases()
+
+        title = 'List of databases'
+        settings = OutputSettings(
+            table_format='ascii',
+            missingval='<null>'
+        )
+        formatted = format_output(title, cur, headers, status, settings)
+        click.echo_via_pager('\n'.join(formatted))
+
+        sys.exit(0)
 
     pgcli.logger.debug('Launch Params: \n'
             '\tdatabase: %r'
