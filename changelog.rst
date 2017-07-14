@@ -8,6 +8,7 @@ Upcoming
 * Quote schema in `SET SCHEMA` statement (issue #469) (Thanks: `Irina Truong`_)
 * Use CLI Helpers for pretty printing query results (Thanks: `Thomas Roten`_).
 * Skip serial columns when expanding * for `INSERT INTO foo(*` (Thanks: `Joakim Koljonen`_).
+* Command line option to list databases (issue #206) (Thanks: `François Pietka`_)
 
 1.6.0
 =====
