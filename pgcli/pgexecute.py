@@ -146,6 +146,16 @@ class PGExecute(object):
         FROM pg_catalog.pg_database d
         ORDER BY 1'''
 
+    full_databases_query = '''
+        SELECT d.datname as "Name",
+            pg_catalog.pg_get_userbyid(d.datdba) as "Owner",
+            pg_catalog.pg_encoding_to_char(d.encoding) as "Encoding",
+            d.datcollate as "Collate",
+            d.datctype as "Ctype",
+            pg_catalog.array_to_string(d.datacl, E'\n') AS "Access privileges"
+        FROM pg_catalog.pg_database d
+        ORDER BY 1'''
+
     def __init__(self, database, user, password, host, port, dsn, **kwargs):
         self.dbname = database
         self.user = user
@@ -470,6 +480,14 @@ class PGExecute(object):
             _logger.debug('Databases Query. sql: %r', self.databases_query)
             cur.execute(self.databases_query)
             return [x[0] for x in cur.fetchall()]
+
+    def full_databases(self):
+        with self.conn.cursor() as cur:
+            _logger.debug('Databases Query. sql: %r',
+                          self.full_databases_query)
+            cur.execute(self.full_databases_query)
+            headers = [x[0] for x in cur.description]
+            return cur.fetchall(), headers, cur.statusmessage
 
     def foreignkeys(self):
         """Yields ForeignKey named tuples"""
