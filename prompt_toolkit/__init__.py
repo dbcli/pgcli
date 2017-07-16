@@ -14,7 +14,7 @@ Probably, to get started, you meight also want to have a look at
 `prompt_toolkit.shortcuts.prompt`.
 """
 from .application import Application
-from .shortcuts import prompt, prompt_async
+from .shortcuts import *
 
 
 # Don't forget to update in `docs/conf.py`!
