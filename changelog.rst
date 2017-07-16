@@ -1,6 +1,11 @@
 Upcoming
 ========
 
+TBD
+
+1.7.0
+=====
+
 * Refresh completions after `COMMIT` or `ROLLBACK`. (Thanks: `Irina Truong`_)
 * Fixed DSN aliases not being read from custom pgclirc (issue #717). (Thanks: `Irina Truong`_).
 * Use dbcli's Homebrew tap for installing pgcli on macOS (issue #718) (Thanks: `Thomas Roten`_).
