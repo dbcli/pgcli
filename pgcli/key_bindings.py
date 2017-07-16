@@ -18,6 +18,7 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
     key_binding_manager = KeyBindingManager(
         enable_open_in_editor=True,
         enable_system_bindings=True,
+        enable_auto_suggest_bindings=True,
         enable_search=True,
         enable_abort_and_exit_bindings=True)
 

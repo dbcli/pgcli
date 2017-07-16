@@ -1,7 +1,15 @@
 Upcoming
 ========
 
-TBD
+Features:
+---------
+
+* Add fish-style auto-suggestion from history. (Thanks: `Amjith Ramanujam`_)
+
+Bug Fixes:
+----------
+
+There are no bugs :)
 
 1.7.0
 =====

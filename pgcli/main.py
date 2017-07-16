@@ -34,6 +34,7 @@ from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.processors import (ConditionalProcessor,
                                         HighlightMatchingBracketProcessor)
 from prompt_toolkit.history import FileHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from pygments.lexers.sql import PostgresLexer
 from pygments.token import Token
 
@@ -563,6 +564,7 @@ class PGCli(object):
 
         with self._completer_lock:
             buf = PGBuffer(
+                auto_suggest=AutoSuggestFromHistory(),
                 always_multiline=self.multi_line,
                 multiline_mode=self.multiline_mode,
                 completer=self.completer,
