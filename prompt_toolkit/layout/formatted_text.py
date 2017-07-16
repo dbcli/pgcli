@@ -20,6 +20,7 @@ __all__ = (
     'to_formatted_text',
     'is_formatted_text',
     'Template',
+    'merge_formatted_text',
     'HTML',
     'ANSI',
 )
@@ -93,6 +94,8 @@ class Template(object):
         self.text = text
 
     def format(self, *values):
+        assert all(is_formatted_text(v) for v in values)
+
         def get_result():
             # Split the template in parts.
             parts = self.text.split('{}')
@@ -105,6 +108,20 @@ class Template(object):
             result.append(('', parts[-1]))
             return result
         return get_result
+
+
+def merge_formatted_text(items):
+    """
+    Merge several pieces of formatted text together.
+    """
+    assert all(is_formatted_text(v) for v in items)
+
+    def _merge_formatted_text():
+        result = []
+        for i in items:
+            result.extend(to_formatted_text(i))
+        return result
+    return _merge_formatted_text
 
 
 class HTML(object):

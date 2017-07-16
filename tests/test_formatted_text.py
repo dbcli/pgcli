@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from prompt_toolkit.layout.formatted_text import HTML, ANSI, to_formatted_text, Template
+from prompt_toolkit.layout.formatted_text import HTML, ANSI, to_formatted_text, Template, merge_formatted_text
 
 
 def test_basic_html():
@@ -75,4 +75,14 @@ def test_interpolation():
         ('', 'b'),
         ('', 'world'),
         ('', 'c'),
+    ]
+
+def test_merge_formatted_text():
+    html1 = HTML('<u>hello</u>')
+    html2 = HTML('<b>world</b>')
+    result = merge_formatted_text([html1, html2])
+
+    assert to_formatted_text(result) == [
+        ('class:u', 'hello'),
+        ('class:b', 'world'),
     ]
