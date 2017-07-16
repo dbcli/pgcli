@@ -57,14 +57,16 @@ def test_format_output():
 
 
 def test_format_output_auto_expand():
-    settings = OutputSettings(table_format='psql', dcmlfmt='d', floatfmt='g', max_width=100)
+    settings = OutputSettings(
+        table_format='psql', dcmlfmt='d', floatfmt='g', max_width=100)
     table_results = format_output('Title', [('abc', 'def')],
                                   ['head1', 'head2'], 'test status', settings)
     table = ['Title', '+---------+---------+\n| head1   | head2   |\n|---------+---------|\n| abc     | def     |\n+---------+---------+', 'test status']
     assert table_results == table
     expanded_results = format_output('Title', [('abc', 'def')],
                                      ['head1', 'head2'], 'test status', settings._replace(max_width=1))
-    expanded = ['Title', u'-[ RECORD 0 ]-------------------------\nhead1 | abc\nhead2 | def\n', 'test status']
+    expanded = [
+        'Title', u'-[ RECORD 1 ]-------------------------\nhead1 | abc\nhead2 | def\n', 'test status']
     assert expanded_results == expanded
 
 

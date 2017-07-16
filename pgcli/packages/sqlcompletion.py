@@ -43,9 +43,9 @@ FromClauseItem.__new__.__defaults__ = (None, tuple(), tuple())
 
 Column = namedtuple(
     'Column',
-    ['table_refs', 'require_last_table', 'local_tables', 'qualifiable']
+    ['table_refs', 'require_last_table', 'local_tables', 'qualifiable', 'context']
 )
-Column.__new__.__defaults__ = (None, None, tuple(), False)
+Column.__new__.__defaults__ = (None, None, tuple(), False, None)
 
 Keyword = namedtuple('Keyword', ['last_token'])
 Keyword.__new__.__defaults__ = (None,)
@@ -380,7 +380,9 @@ def suggest_based_on_last_token(token, stmt):
                 return (Keyword(),)
         prev_prev_tok = prev_tok and p.token_prev(p.token_index(prev_tok))[1]
         if prev_prev_tok and prev_prev_tok.normalized == 'INTO':
-            return (Column(table_refs=stmt.get_tables('insert')),)
+            return (
+                Column(table_refs=stmt.get_tables('insert'), context='insert'),
+            )
         # We're probably in a function argument list
         return (Column(table_refs=extract_tables(stmt.full_text),
                        local_tables=stmt.local_tables, qualifiable=True),)

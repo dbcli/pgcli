@@ -415,12 +415,17 @@ class PGExecute(object):
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
                         att.attname column_name,
-                        att.atttypid::regtype::text type_name
+                        att.atttypid::regtype::text type_name,
+                        att.atthasdef AS has_default,
+                        def.adsrc as default
                 FROM    pg_catalog.pg_attribute att
                         INNER JOIN pg_catalog.pg_class cls
                             ON att.attrelid = cls.oid
                         INNER JOIN pg_catalog.pg_namespace nsp
                             ON cls.relnamespace = nsp.oid
+                        LEFT OUTER JOIN pg_attrdef def
+                            ON def.adrelid = att.attrelid
+                            AND def.adnum = att.attnum
                 WHERE   cls.relkind = ANY(%s)
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
@@ -430,7 +435,9 @@ class PGExecute(object):
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
                         att.attname column_name,
-                        typ.typname type_name
+                        typ.typname type_name,
+                        NULL AS has_default,
+                        NULL AS default
                 FROM    pg_catalog.pg_attribute att
                         INNER JOIN pg_catalog.pg_class cls
                             ON att.attrelid = cls.oid

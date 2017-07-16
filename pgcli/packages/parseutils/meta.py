@@ -14,10 +14,8 @@ def ColumnMetadata(
     )
 
 
-ForeignKey = namedtuple(
-    'ForeignKey',
-    'parentschema,parenttable,parentcolumn,childschema,childtable,childcolumn'
-)
+ForeignKey = namedtuple('ForeignKey', ['parentschema', 'parenttable',
+    'parentcolumn', 'childschema', 'childtable', 'childcolumn'])
 TableMetadata = namedtuple('TableMetadata', 'name columns')
 
 

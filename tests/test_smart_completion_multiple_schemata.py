@@ -8,7 +8,7 @@ metadata = {
     'tables': {
         'public': {
             'users': ['id', 'email', 'first_name', 'last_name'],
-            'orders': ['id', 'ordered_date', 'status'],
+            'orders': ['id', 'ordered_date', 'status', 'datestamp'],
             'select': ['id', 'insert', 'ABC']
         },
         'custom': {
@@ -57,6 +57,13 @@ metadata = {
             ('blog', 'entries', 'entryid', 'blog', 'entrytags', 'entryid'),
             ('blog', 'tags', 'tagid', 'blog', 'entrytags', 'tagid'),
         ],
+    },
+    'defaults': {
+        'public': {
+            ('orders', 'id'): "nextval('orders_id_seq'::regclass)",
+            ('orders', 'datestamp'): "now()",
+            ('orders', 'status'): "'PENDING'::text",
+        }
     },
 }
 
@@ -133,6 +140,17 @@ def test_suggested_column_names_from_schema_qualifed_table(completer):
     assert result == set(testdata.columns_functions_and_keywords(
         'products', 'custom'
     ))
+
+
+@parametrize('text', [
+    'INSERT INTO orders(',
+    'INSERT INTO orders (',
+    'INSERT INTO public.orders(',
+    'INSERT INTO public.orders ('
+])
+@parametrize('completer', completers(filtr=True, casing=False))
+def test_suggested_columns_with_insert(completer, text):
+    assert result_set(completer, text) == set(testdata.columns('orders'))
 
 
 @parametrize('completer', completers(filtr=True, casing=False, qualify=no_qual))
@@ -335,7 +353,7 @@ def test_wildcard_column_expansion_with_insert(completer, text):
     position = text.index('*') + 1
     completions = get_result(completer, text, position)
 
-    expected = [wildcard_expansion('id, ordered_date, status')]
+    expected = [wildcard_expansion('ordered_date, status')]
     assert expected == completions
 
 

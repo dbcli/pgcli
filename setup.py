@@ -21,6 +21,7 @@ install_requirements = [
     'configobj >= 5.0.6',
     'humanize >= 0.5.1',
     'wcwidth >= 0.1.6',
+    'cli_helpers >= 0.2.0, < 1.0.0',
 ]
 
 
@@ -36,7 +37,7 @@ setup(
     author='Pgcli Core Team',
     author_email='pgcli-dev@googlegroups.com',
     version=version,
-    license='LICENSE.txt',
+    license='BSD',
     url='http://pgcli.com',
     packages=find_packages(),
     package_data={'pgcli': ['pgclirc',
