@@ -542,7 +542,7 @@ class RadioList(object):
 
             result.append((style, ')'))
             result.append(('class:radio', ' '))
-            result.append(('class:radio', value[1]))
+            result.extend(to_formatted_text(value[1], style='class:radio'))
             result.append(('', '\n'))
 
         result.pop()  # Remove last newline.
