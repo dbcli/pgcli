@@ -2,9 +2,11 @@ from __future__ import unicode_literals
 from prompt_toolkit.output.defaults import create_output
 from prompt_toolkit.renderer import print_formatted_text as renderer_print_formatted_text
 from prompt_toolkit.styles import default_style, BaseStyle
+import six
 
 __all__ = (
     'print_formatted_text',
+    'set_title',
     'clear',
 )
 
@@ -48,3 +50,14 @@ def clear():
     out.erase_screen()
     out.cursor_goto(0, 0)
     out.flush()
+
+
+
+def set_title(text):
+    """
+    Set the terminal title.
+    """
+    assert isinstance(text, six.text_type)
+
+    output = create_output()
+    output.set_title(text)

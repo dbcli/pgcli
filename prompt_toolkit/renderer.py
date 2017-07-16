@@ -280,9 +280,6 @@ class Renderer(object):
         # Default MouseHandlers. (Just empty.)
         self.mouse_handlers = MouseHandlers()
 
-        # Remember the last title. Only set the title when it changes.
-        self._last_title = None
-
         #: Space from the top of the layout, until the bottom of the terminal.
         #: We don't know this until a `report_absolute_cursor_row` call.
         self._min_available_height = 0
@@ -470,16 +467,6 @@ class Renderer(object):
         self._last_size = size
         self.mouse_handlers = mouse_handlers
 
-        # Write title if it changed.
-        new_title = app.terminal_title
-
-        if new_title != self._last_title:
-            if new_title is None:
-                self.output.clear_title()
-            else:
-                self.output.set_title(new_title)
-            self._last_title = new_title
-
         output.flush()
 
         if is_done:
@@ -487,7 +474,7 @@ class Renderer(object):
 
         output.stop_rendering()
 
-    def erase(self, leave_alternate_screen=True, erase_title=True):
+    def erase(self, leave_alternate_screen=True):
         """
         Hide all output and put the cursor back at the first line. This is for
         instance used for running a system command (while hiding the CLI) and
@@ -495,7 +482,6 @@ class Renderer(object):
 
         :param leave_alternate_screen: When True, and when inside an alternate
             screen buffer, quit the alternate screen.
-        :param erase_title: When True, clear the title from the title bar.
         """
         output = self.output
 
@@ -505,10 +491,6 @@ class Renderer(object):
         output.reset_attributes()
         output.enable_autowrap()
         output.flush()
-
-        # Erase title.
-        if self._last_title and erase_title:
-            output.clear_title()
 
         self.reset(leave_alternate_screen=leave_alternate_screen)
 

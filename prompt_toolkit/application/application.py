@@ -54,7 +54,6 @@ class Application(object):
     :param on_abort: What to do when Control-C is pressed.
     :param on_exit: What to do when Control-D is pressed.
     :param full_screen: When True, run the application on the alternate screen buffer.
-    :param get_title: Callable that returns the current title to be displayed in the terminal.
     :param erase_when_done: (bool) Clear the application output when it finishes.
     :param reverse_vi_search_direction: Normally, in Vi mode, a '/' searches
         forward and a '?' searches backward. In readline mode, this is usually
@@ -96,7 +95,6 @@ class Application(object):
                  key_bindings=None, clipboard=None,
                  full_screen=False, mouse_support=False,
                  enable_page_navigation_bindings=False,
-                 get_title=None,
 
                  paste_mode=False,
                  editing_mode=EditingMode.EMACS,
@@ -117,7 +115,6 @@ class Application(object):
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert clipboard is None or isinstance(clipboard, Clipboard)
         assert isinstance(full_screen, bool)
-        assert get_title is None or callable(get_title)
         assert isinstance(editing_mode, six.string_types)
         assert style is None or isinstance(style, BaseStyle)
         assert isinstance(erase_when_done, bool)
@@ -134,10 +131,6 @@ class Application(object):
         if layout is None:
             layout = create_dummy_layout()
 
-        if get_title is None:
-            get_title = lambda: None
-
-
         # Key bindings.
         self.key_bindings = key_bindings
         self._default_bindings = load_key_bindings()
@@ -148,7 +141,6 @@ class Application(object):
         self.clipboard = clipboard or InMemoryClipboard()
         self.full_screen = full_screen
         self.mouse_support = mouse_support
-        self.get_title = get_title
 
         self.paste_mode = paste_mode
         self.editing_mode = editing_mode
@@ -263,19 +255,6 @@ class Application(object):
         # Make sure to keep the ordering.
         visible_windows = self.visible_windows
         return [w for w in self.layout.get_focussable_windows() if w in visible_windows]
-
-    @property
-    def terminal_title(self):
-        """
-        Return the current title to be displayed in the terminal.
-        When this in `None`, the terminal title remains the original.
-        """
-        result = self.get_title()
-
-        # Make sure that this function returns a unicode object,
-        # and not a byte string.
-        assert result is None or isinstance(result, six.text_type)
-        return result
 
     def reset(self):
         """
@@ -403,7 +382,7 @@ class Application(object):
         """
         # Erase, request position (when cursor is at the start position)
         # and redraw again. -- The order is important.
-        self.renderer.erase(leave_alternate_screen=False, erase_title=False)
+        self.renderer.erase(leave_alternate_screen=False)
         self.renderer.request_absolute_cursor_position()
         self._redraw()
 
@@ -610,7 +589,10 @@ class Application(object):
         Set a return value. The eventloop can retrieve the result it by calling
         `return_value`.
         """
-        self.future.set_result(value)
+        if not self.future.done():
+            self.future.set_result(value)
+        else:
+            raise Exception('Return value already set.')
 
     def run_in_terminal(self, func, render_cli_done=False, in_executor=False):
         """

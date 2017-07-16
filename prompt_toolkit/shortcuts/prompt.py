@@ -26,7 +26,6 @@ Example::
 """
 from __future__ import unicode_literals
 
-
 from prompt_toolkit.application import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.auto_suggest import DynamicAutoSuggest
@@ -35,7 +34,7 @@ from prompt_toolkit.clipboard import DynamicClipboard, InMemoryClipboard
 from prompt_toolkit.completion import DynamicCompleter
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
-from prompt_toolkit.eventloop import ensure_future, Return
+from prompt_toolkit.eventloop import ensure_future, Return, From
 from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_filter, Condition, has_arg
 from prompt_toolkit.history import InMemoryHistory, DynamicHistory
 from prompt_toolkit.input.defaults import create_input
@@ -58,7 +57,6 @@ from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.layout.widgets.toolbars import ValidationToolbar, SystemToolbar, SearchToolbar
 from prompt_toolkit.output.defaults import create_output
 from prompt_toolkit.styles import default_style, BaseStyle, DynamicStyle, merge_styles
-from prompt_toolkit.utils import DummyContext
 from prompt_toolkit.utils import suspend_to_background_supported
 from prompt_toolkit.validation import DynamicValidator
 from six import text_type
@@ -193,8 +191,6 @@ class Prompt(object):
         that the width as input and returns formatted text.
     :param complete_style: ``CompleteStyle.COLUMN``,
         ``CompleteStyle.MULTI_COLUMN`` or ``CompleteStyle.READLINE_LIKE``.
-    :param get_title: Callable that returns the title to be displayed in the
-        terminal.
     :param mouse_support: `bool` or :class:`~prompt_toolkit.filters.Filter`
         to enable mouse support.
     :param default: The default input text to be shown. (This can be edited by
@@ -210,7 +206,7 @@ class Prompt(object):
         'wrap_lines', 'history', 'enable_history_search',
         'complete_while_typing', 'validate_while_typing',
         'complete_style', 'mouse_support', 'auto_suggest',
-        'clipboard', 'get_title', 'validator',
+        'clipboard', 'validator',
         'refresh_interval', 'extra_input_processor', 'default',
         'enable_system_prompt', 'enable_suspend', 'enable_open_in_editor',
         'reserve_space_for_menu', 'tempfile_suffix')
@@ -242,7 +238,6 @@ class Prompt(object):
             prompt_continuation=None,
             rprompt=None,
             bottom_toolbar=None,
-            get_title=None,
             mouse_support=False,
             extra_input_processor=None,
             extra_key_bindings=None,
@@ -487,7 +482,6 @@ class Prompt(object):
                 system_toolbar.get_global_key_bindings(),
                 DynamicKeyBindings(lambda: self.extra_key_bindings),
             ]),
-            get_title=self._get_title,
             mouse_support=dyncond('mouse_support'),
             editing_mode=editing_mode,
             erase_when_done=erase_when_done,
@@ -602,18 +596,18 @@ class Prompt(object):
 
     def prompt(
             self, message=None,
-            # When any of these arguments are passed, this value is overwritten for the current prompt.
+            # When any of these arguments are passed, this value is overwritten
+            # for the current prompt.
             default='', true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
-            is_password=None, extra_key_bindings=None,
-            bottom_toolbar=None, style=None, rprompt=None, multiline=None,
-            prompt_continuation=None, wrap_lines=None, history=None,
-            enable_history_search=None,
-            complete_while_typing=None, validate_while_typing=None, complete_style=None,
-            auto_suggest=None, validator=None, clipboard=None,
-            mouse_support=None, get_title=None, extra_input_processor=None,
-            reserve_space_for_menu=None,
-            enable_system_prompt=None, enable_suspend=None, enable_open_in_editor=None,
+            is_password=None, extra_key_bindings=None, bottom_toolbar=None,
+            style=None, rprompt=None, multiline=None, prompt_continuation=None,
+            wrap_lines=None, history=None, enable_history_search=None,
+            complete_while_typing=None, validate_while_typing=None,
+            complete_style=None, auto_suggest=None, validator=None,
+            clipboard=None, mouse_support=None, extra_input_processor=None,
+            reserve_space_for_menu=None, enable_system_prompt=None,
+            enable_suspend=None, enable_open_in_editor=None,
             tempfile_suffix=None):
         """
         Display the prompt.
@@ -644,15 +638,14 @@ class Prompt(object):
             # for the current prompt.
             default='', true_color=None, editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
-            is_password=None, extra_key_bindings=None,
-            bottom_toolbar=None, style=None, rprompt=None, multiline=None,
-            prompt_continuation=None, wrap_lines=None, history=None,
-            enable_history_search=None,
-            complete_while_typing=None, validate_while_typing=None, complete_style=None,
-            auto_suggest=None, validator=None, clipboard=None,
-            mouse_support=None, get_title=None, extra_input_processor=None,
-            reserve_space_for_menu=None,
-            enable_system_prompt=None, enable_suspend=None, enable_open_in_editor=None,
+            is_password=None, extra_key_bindings=None, bottom_toolbar=None,
+            style=None, rprompt=None, multiline=None, prompt_continuation=None,
+            wrap_lines=None, history=None, enable_history_search=None,
+            complete_while_typing=None, validate_while_typing=None,
+            complete_style=None, auto_suggest=None, validator=None,
+            clipboard=None, mouse_support=None, extra_input_processor=None,
+            reserve_space_for_menu=None, enable_system_prompt=None,
+            enable_suspend=None, enable_open_in_editor=None,
             tempfile_suffix=None):
         """
         Display the prompt (run in async IO coroutine).
@@ -674,7 +667,7 @@ class Prompt(object):
             with self._auto_refresh_context():
                 try:
                     self._default_buffer.reset(Document(self.default))
-                    result = yield self.app.run_async()
+                    result = yield From(self.app.run_async())
                     raise Return(result)
                 finally:
                     # Restore original settings.
@@ -744,10 +737,6 @@ class Prompt(object):
 
         return to_formatted_text(
             bottom_toolbar, style='class:bottom-toolbar.text')
-
-    def _get_title(self):
-        if self.get_title is not None:
-            return self.get_title()
 
     def _get_arg_text(self, app):
         arg = app.key_processor.arg
