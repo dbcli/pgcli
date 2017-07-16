@@ -6,8 +6,9 @@ import six
 
 __all__ = (
     'print_formatted_text',
-    'set_title',
     'clear',
+    'set_title',
+    'clear_title',
 )
 
 
@@ -52,7 +53,6 @@ def clear():
     out.flush()
 
 
-
 def set_title(text):
     """
     Set the terminal title.
@@ -61,3 +61,10 @@ def set_title(text):
 
     output = create_output()
     output.set_title(text)
+
+
+def clear_title():
+    """
+    Erase the current title.
+    """
+    set_title('')
