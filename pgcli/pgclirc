@@ -38,7 +38,7 @@ generate_aliases = False
 log_file = default
 
 # keyword casing preference. Possible values "lower", "upper", "auto"
-keyword_casing = upper
+keyword_casing = auto
 
 # casing_file location.
 # In Unix/Linux: ~/.config/pgcli/casing
