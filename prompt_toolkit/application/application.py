@@ -501,6 +501,14 @@ class Application(object):
                         # with bad code. Make sure to reset the renderer anyway.
                         self.renderer.reset()
 
+                        # Unset `is_running`, this ensures that possibly
+                        # scheduled draws won't paint during the following
+                        # yield.
+                        self._is_running = False
+
+                        # Wait for CPR responses.
+                        yield From(self.renderer.wait_for_cpr_responses())
+
                         # Clear event loop handlers.
                         if previous_input:
                             loop.set_input(previous_input, previous_cb)
@@ -510,8 +518,7 @@ class Application(object):
                         if has_sigwinch:
                             loop.add_signal_handler(signal.SIGWINCH, previous_winch_handler)
 
-                        # Unset running Application.
-                        self._is_running = False
+                        # Restore previous Application.
                         set_app(previous_app)  # Make sure to do this after removing the input.
 
                         # Store unprocessed input as typeahead for next time.

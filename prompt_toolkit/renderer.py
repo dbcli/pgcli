@@ -4,6 +4,7 @@ Renders the command line on the console.
 """
 from __future__ import unicode_literals
 
+from prompt_toolkit.eventloop import Future, From, ensure_future
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.layout.formatted_text import to_formatted_text
 from prompt_toolkit.layout.mouse_handlers import MouseHandlers
@@ -12,7 +13,10 @@ from prompt_toolkit.output import Output
 from prompt_toolkit.styles import BaseStyle
 from prompt_toolkit.utils import is_windows
 
+from collections import deque
 from six.moves import range
+import time
+import threading
 
 __all__ = (
     'Renderer',
@@ -255,9 +259,8 @@ class Renderer(object):
         self._mouse_support_enabled = False
         self._bracketed_paste_enabled = False
 
-        # Waiting for CPR flag. True when we send the request, but didn't got a
-        # response.
-        self.waiting_for_cpr = False
+        # Future set when we are waiting for a CPR flag.
+        self._waiting_for_cpr_futures = deque()
 
         # Cache for the style.
         self._attrs_for_style = None
@@ -358,7 +361,7 @@ class Renderer(object):
                 self._min_available_height = self.output.get_size().rows
             else:
                 # Asks for a cursor position report (CPR).
-                self.waiting_for_cpr = True
+                self._waiting_for_cpr_futures.append(Future())
                 self.output.ask_for_cpr()
 
     def report_absolute_cursor_row(self, row):
@@ -371,10 +374,52 @@ class Renderer(object):
         total_rows = self.output.get_size().rows
         rows_below_cursor = total_rows - row + 1
 
-        # Set the
+        # Set the minimum available height.
         self._min_available_height = rows_below_cursor
 
-        self.waiting_for_cpr = False
+        # Pop and set waiting for CPR future.
+        try:
+            f = self._waiting_for_cpr_futures.popleft()
+        except IndexError:
+            pass  # Received CPR response without having a CPR.
+        else:
+            f.set_result(None)
+
+    @property
+    def waiting_for_cpr(self):
+        """
+        Waiting for CPR flag. True when we send the request, but didn't got a
+        response.
+        """
+        return bool(self._waiting_for_cpr_futures)
+
+    def wait_for_cpr_responses(self, timeout=.5):
+        """
+        Wait for a CPR response.
+        """
+        f = Future()
+
+        # When a CPR has been reveived, set the result.
+        def wait_for_responses():
+            futures = list(self._waiting_for_cpr_futures)
+            for response_f in futures:
+                yield From(response_f)
+            f.set_result(None)
+        ensure_future(wait_for_responses())
+
+        # Timeout.
+        def wait_for_timeout():
+            time.sleep(timeout)
+            f.set_result(None)
+
+            # Don't wait anymore for these responses.
+            self._waiting_for_cpr_futures = deque()
+
+        t = threading.Thread(target=wait_for_timeout)
+        t.daemon = True
+        t.start()
+
+        return f
 
     def render(self, app, layout, is_done=False):
         """
