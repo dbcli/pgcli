@@ -8,6 +8,16 @@ from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
 
 
+def function_meta_data(
+        func_name, schema_name='public', arg_names=None, arg_types=None,
+        arg_modes=None, return_type=None, is_aggregate=False, is_window=False,
+        is_set_returning=False, arg_defaults=None
+):
+    return FunctionMetadata(
+        schema_name, func_name, arg_names, arg_types, arg_modes, return_type,
+        is_aggregate, is_window, is_set_returning, arg_defaults
+    )
+
 @dbtest
 def test_conn(executor):
     run(executor, '''create table test(a text)''')
@@ -97,15 +107,32 @@ def test_functions_query(executor):
 
     funcs = set(executor.functions())
     assert funcs >= set([
-        FunctionMetadata('public', 'func1', None, [], [],
-                         'integer', False, False, False),
-        FunctionMetadata('public', 'func3', ['x', 'y'],
-            ['integer', 'integer'], ['t', 't'], 'record', False, False, True),
-        FunctionMetadata('public', 'func4', ('x',), ('integer',), [],
-                         'integer', False, False, True),
-        FunctionMetadata('schema1', 'func2', None, [], [],
-                         'integer', False, False, False),
-      ])
+        function_meta_data(
+            func_name='func1',
+            return_type='integer'
+        ),
+        function_meta_data(
+            func_name='func3',
+            arg_names=['x', 'y'],
+            arg_types=['integer', 'integer'],
+            arg_modes=['t', 't'],
+            return_type='record',
+            is_set_returning=True
+        ),
+        function_meta_data(
+            schema_name='public',
+            func_name='func4',
+            arg_names=('x',),
+            arg_types=('integer',),
+            return_type='integer',
+            is_set_returning=True
+        ),
+        function_meta_data(
+            schema_name='schema1',
+            func_name='func2',
+            return_type='integer'
+        ),
+    ])
 
 
 @dbtest

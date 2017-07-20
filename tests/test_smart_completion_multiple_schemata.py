@@ -530,14 +530,20 @@ def test_join_alias_search_without_aliases2(completer):
 def test_function_alias_search_without_aliases(completer):
     text = 'SELECT blog.ees'
     result = get_result(completer, text)
-    assert result[0] == function('extract_entry_symbols()', -3)
+    first = result[0]
+    assert first.start_position == -3
+    assert first.text == 'extract_entry_symbols()'
+    assert first.display == 'extract_entry_symbols(_entryid)'
 
 
 @parametrize('completer', completers())
 def test_function_alias_search_with_aliases(completer):
     text = 'SELECT blog.ee'
     result = get_result(completer, text)
-    assert result[0] == function('enter_entry()', -2)
+    first = result[0]
+    assert first.start_position == -2
+    assert first.text == 'enter_entry(_title := , _text := )'
+    assert first.display == 'enter_entry(_title, _text)'
 
 
 @parametrize('completer',completers(filtr=True, casing=True, qualify=no_qual))

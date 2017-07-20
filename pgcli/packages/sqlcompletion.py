@@ -34,8 +34,8 @@ JoinCondition = namedtuple('JoinCondition', ['table_refs', 'parent'])
 # Joins are suggested after JOIN, e.g. 'foo ON foo.barid = bar.barid'
 Join = namedtuple('Join', ['table_refs', 'schema'])
 
-Function = namedtuple('Function', ['schema', 'table_refs', 'filter'])
-# For convenience, don't require the `filter` argument in Function constructor
+Function = namedtuple('Function', ['schema', 'table_refs', 'usage'])
+# For convenience, don't require the `usage` argument in Function constructor
 Function.__new__.__defaults__ = (None, tuple(), None)
 Table.__new__.__defaults__ = (None, tuple(), tuple())
 View.__new__.__defaults__ = (None, tuple())
@@ -111,6 +111,9 @@ class SqlStatement(object):
         elif self.is_insert():
             tables = tables[1:]
         return tables
+
+    def get_previous_token(self, token):
+        return self.parsed.token_prev(self.parsed.token_index(token))[1]
 
     def get_identifier_schema(self):
         schema = (self.identifier and self.identifier.get_parent_name()) or None
@@ -434,8 +437,19 @@ def suggest_based_on_last_token(token, stmt):
 
         return tuple(suggest)
 
-    elif token_v in ('table', 'view', 'function'):
-        # E.g. 'DROP FUNCTION <funcname>', 'ALTER TABLE <tablname>'
+    elif token_v == 'function':
+        schema = stmt.get_identifier_schema()
+        # stmt.get_previous_token will fail for e.g. `SELECT 1 FROM functions WHERE function:`
+        try:
+            prev = stmt.get_previous_token(token).value.lower()
+            if prev in('drop', 'alter', 'create', 'create or replace'):
+                return (Function(schema=schema, usage='signature'),)
+        except ValueError:
+            pass
+        return tuple()
+
+    elif token_v in ('table', 'view'):
+        # E.g. 'ALTER TABLE <tablname>'
         rel_type = {'table': Table, 'view': View, 'function': Function}[token_v]
         schema = stmt.get_identifier_schema()
         if schema:

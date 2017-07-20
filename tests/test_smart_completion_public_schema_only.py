@@ -12,14 +12,16 @@ metadata = {
         'orders': ['id', 'ordered_date', 'status', 'email'],
         'select': ['id', 'insert', 'ABC']},
     'views': {
-        'user_emails': ['id', 'email']},
+        'user_emails': ['id', 'email'],
+        'functions': ['function'],
+    },
     'functions': [
-        ['custom_fun', [''], [''], [''], '', False, False, False],
-        ['_custom_fun', [''], [''], [''], '', False, False, False],
-        ['custom_func1', [''], [''], [''], '', False, False, False],
-        ['custom_func2', [''], [''], [''], '', False, False, False],
+        ['custom_fun', [], [], [], '', False, False, False],
+        ['_custom_fun', [], [], [], '', False, False, False],
+        ['custom_func1', [], [], [], '', False, False, False],
+        ['custom_func2', [], [], [], '', False, False, False],
         ['set_returning_func', ['x', 'y'], ['integer', 'integer'],
-            ['o', 'o'], '', False, False, True]],
+            ['b', 'b'], '', False, False, True]],
     'datatypes': ['custom_type1', 'custom_type2'],
     'foreignkeys': [
         ('public', 'users', 'id', 'public', 'users', 'parentid'),
@@ -33,26 +35,64 @@ testdata = MetaData(metadata)
 
 cased_users_col_names = ['ID', 'PARENTID', 'Email', 'First_Name', 'last_name']
 cased_users2_col_names = ['UserID', 'UserName']
-cased_funcs = ['Custom_Fun', '_custom_fun', 'Custom_Func1',
-    'custom_func2', 'set_returning_func']
+cased_funcs = [
+    'Custom_Fun', '_custom_fun', 'Custom_Func1', 'custom_func2', 'set_returning_func'
+]
 cased_tbls = ['Users', 'Orders']
-cased_views = ['User_Emails']
-casing =  (['SELECT', 'PUBLIC'] + cased_funcs + cased_tbls + cased_views
-    + cased_users_col_names + cased_users2_col_names)
+cased_views = ['User_Emails', 'Functions']
+casing = (
+    ['SELECT', 'PUBLIC'] + cased_funcs + cased_tbls + cased_views
+    + cased_users_col_names + cased_users2_col_names
+)
 # Lists for use in assertions
-cased_funcs = [function(f + '()') for f in cased_funcs]
+cased_funcs = [
+    function(f) for f in ('Custom_Fun()', '_custom_fun()', 'Custom_Func1()', 'custom_func2()')
+] + [function('set_returning_func(x := , y := )', display='set_returning_func(x, y)')]
 cased_tbls = [table(t) for t in (cased_tbls + ['"Users"', '"select"'])]
 cased_rels = [view(t) for t in cased_views] + cased_funcs + cased_tbls
 cased_users_cols = [column(c) for c in cased_users_col_names]
-aliased_rels = [table(t) for t in ('users u', '"Users" U', 'orders o',
-    '"select" s')] + [view('user_emails ue')] + [function(f) for f in (
-    '_custom_fun() cf', 'custom_fun() cf', 'custom_func1() cf',
-    'custom_func2() cf', 'set_returning_func() srf')]
-cased_aliased_rels = [table(t) for t in ('Users U', '"Users" U', 'Orders O',
-    '"select" s')] + [view('User_Emails UE')] + [function(f) for f in (
-    '_custom_fun() cf', 'Custom_Fun() CF', 'Custom_Func1() CF',
-    'custom_func2() cf', 'set_returning_func() srf')]
+aliased_rels = [
+    table(t) for t in ('users u', '"Users" U', 'orders o', '"select" s')
+] + [view('user_emails ue'), view('functions f')] + [
+    function(f) for f in (
+        '_custom_fun() cf', 'custom_fun() cf', 'custom_func1() cf',
+        'custom_func2() cf'
+    )
+] + [function(
+    'set_returning_func(x := , y := ) srf',
+    display='set_returning_func(x, y) srf'
+)]
+cased_aliased_rels = [
+    table(t) for t in ('Users U', '"Users" U', 'Orders O', '"select" s')
+] + [view('User_Emails UE'), view('Functions F')] + [
+    function(f) for f in (
+        '_custom_fun() cf', 'Custom_Fun() CF', 'Custom_Func1() CF', 'custom_func2() cf'
+    )
+] + [function(
+    'set_returning_func(x := , y := ) srf',
+    display='set_returning_func(x, y) srf'
+)]
 completers = testdata.get_completers(casing)
+
+
+# Just to make sure that this doesn't crash
+@parametrize('completer', completers())
+def test_function_column_name(completer):
+    for l in range(
+        len('SELECT * FROM Functions WHERE function:'),
+        len('SELECT * FROM Functions WHERE function:text') + 1
+    ):
+        assert [] == get_result(
+            completer, 'SELECT * FROM Functions WHERE function:text'[:l]
+        )
+
+
+@parametrize('action', ['ALTER', 'DROP', 'CREATE', 'CREATE OR REPLACE'])
+@parametrize('completer', completers())
+def test_drop_alter_function(completer, action):
+    assert get_result(completer, action + ' FUNCTION set_ret') == [
+        function('set_returning_func(x integer, y integer)', -len('set_ret'))
+    ]
 
 
 @parametrize('completer', completers())
@@ -496,12 +536,13 @@ def test_table_names_after_from(completer, text):
         '"select"',
         'users',
         '"Users"',
+        'functions',
         'user_emails',
         '_custom_fun()',
         'custom_fun()',
         'custom_func1()',
         'custom_func2()',
-        'set_returning_func()',
+        'set_returning_func(x := , y := )',
     ]
 
 
@@ -747,11 +788,16 @@ def test_duplicate_table_aliases(completer, text):
         table('"Users" U'),
         table('"select" s'),
         view('user_emails ue'),
+        view('functions f'),
         function('_custom_fun() cf'),
         function('custom_fun() cf'),
         function('custom_func1() cf'),
         function('custom_func2() cf'),
-        function('set_returning_func() srf')])
+        function(
+            'set_returning_func(x := , y := ) srf',
+            display='set_returning_func(x, y) srf'
+        ),
+    ])
 
 
 @parametrize('completer', completers(casing=True, aliasing=True))
@@ -765,11 +811,16 @@ def test_duplicate_aliases_with_casing(completer, text):
         table('"Users" U'),
         table('"select" s'),
         view('User_Emails UE'),
+        view('Functions F'),
         function('_custom_fun() cf'),
         function('Custom_Fun() CF'),
         function('Custom_Func1() CF'),
         function('custom_func2() cf'),
-        function('set_returning_func() srf')])
+        function(
+            'set_returning_func(x := , y := ) srf',
+            display='set_returning_func(x, y) srf'
+        ),
+    ])
 
 
 @parametrize('completer', completers(casing=True, aliasing=True))

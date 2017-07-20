@@ -542,7 +542,8 @@ class PGExecute(object):
                         prorettype::regtype::text return_type,
                         p.proisagg is_aggregate,
                         p.proiswindow is_window,
-                        p.proretset is_set_returning
+                        p.proretset is_set_returning,
+                        pg_get_expr(proargdefaults, 0) AS arg_defaults
                 FROM pg_catalog.pg_proc p
                         INNER JOIN pg_catalog.pg_namespace n
                             ON n.oid = p.pronamespace
@@ -559,7 +560,8 @@ class PGExecute(object):
                         prorettype::regtype::text,
                         p.proisagg is_aggregate,
                         false is_window,
-                        p.proretset is_set_returning
+                        p.proretset is_set_returning,
+                        NULL AS arg_defaults
                 FROM pg_catalog.pg_proc p
                 INNER JOIN pg_catalog.pg_namespace n
                 ON n.oid = p.pronamespace
@@ -576,7 +578,8 @@ class PGExecute(object):
                         '' ret_type,
                         p.proisagg is_aggregate,
                         false is_window,
-                        p.proretset is_set_returning
+                        p.proretset is_set_returning,
+                        NULL AS arg_defaults
                 FROM pg_catalog.pg_proc p
                 INNER JOIN pg_catalog.pg_namespace n
                 ON n.oid = p.pronamespace
@@ -671,6 +674,9 @@ class PGExecute(object):
                 UNION -- Schema names
                 SELECT nspname
                 FROM pg_catalog.pg_namespace
+                UNION -- Parameter names
+                SELECT unnest(proargnames)
+                FROM pg_proc
             )
             SELECT Word
             FROM OrderWords
