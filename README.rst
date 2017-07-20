@@ -23,7 +23,7 @@ If you already know how to install python packages, then you can simply do:
 
     or
 
-    $ brew tap dbcli/tap && brew tap-pin dbcli/tap && brew install pgcli  # Only on macOS
+    $ brew install pgcli  # Only on macOS
 
 If you don't know how to install python packages, please check the
 `detailed instructions`__.
@@ -95,12 +95,10 @@ Detailed Installation Instructions:
 macOS:
 ======
 
-The easiest way to install pgcli is using Homebrew. Please be aware that this will
-install postgres if you don't have it installed.
+The easiest way to install pgcli is using Homebrew.
 
 ::
 
-    $ brew tap-pin dbcli/tap
     $ brew install pgcli
 
 Done!
