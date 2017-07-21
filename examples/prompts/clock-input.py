@@ -7,7 +7,7 @@ from prompt_toolkit.shortcuts import prompt
 import datetime
 
 
-def get_prompt(app):
+def get_prompt():
     " Tokens to be shown before the prompt. "
     now = datetime.datetime.now()
     return [
