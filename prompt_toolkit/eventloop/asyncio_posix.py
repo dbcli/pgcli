@@ -68,13 +68,7 @@ class PosixAsyncioEventLoop(EventLoop):
         assert callable(input_ready_callback)
 
         # Remove previous
-        if self._input:
-            previous_input = self._input
-            previous_cb = self._input_ready_cb
-            self.remove_input()
-        else:
-            previous_input = None
-            previous_cb = None
+        previous_input, previous_cb = self.remove_input()
 
         # Set current.
         self._input = input
