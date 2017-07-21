@@ -5,9 +5,8 @@ from __future__ import unicode_literals
 
 from ..input.win32 import Win32Input
 from ..win32_types import SECURITY_ATTRIBUTES
-from .base import EventLoop, INPUT_TIMEOUT
+from .base import EventLoop
 from .inputhook import InputHookContext
-from .utils import TimeIt
 
 from ctypes import windll, pointer
 from ctypes.wintypes import DWORD, BOOL, HANDLE
@@ -20,7 +19,7 @@ __all__ = (
 )
 
 WAIT_TIMEOUT = 0x00000102
-INPUT_TIMEOUT_MS = int(1000 * INPUT_TIMEOUT)
+INFINITE = -1
 
 
 class Win32EventLoop(EventLoop):
@@ -48,8 +47,6 @@ class Win32EventLoop(EventLoop):
         # Additional readers.
         self._read_fds = {}  # Maps fd to handler.
 
-        self._current_timeout = -1
-
         # Create inputhook context.
         self._inputhook_context = InputHookContext(inputhook) if inputhook else None
 
@@ -58,7 +55,6 @@ class Win32EventLoop(EventLoop):
             raise Exception('Event loop already closed.')
 
         try:
-            self._current_timeout = INPUT_TIMEOUT_MS
             self._running = True
 
             while not future.done():
@@ -73,26 +69,18 @@ class Win32EventLoop(EventLoop):
 
     def _run_once(self):
         # Call inputhook.
-        with TimeIt() as inputhook_timer:
-            if self._inputhook_context:
-                def ready(wait):
-                    " True when there is input ready. The inputhook should return control. "
-                    return bool(self._ready_for_reading(self._current_timeout if wait else 0))
-                self._inputhook_context.call_inputhook(ready)
-
-        # Calculate remaining timeout. (The inputhook consumed some of the time.)
-        if self._current_timeout == -1:
-            remaining_timeout = -1
-        else:
-            remaining_timeout = max(0, self._current_timeout - int(1000 * inputhook_timer.duration))
+        if self._inputhook_context:
+            def ready(wait):
+                " True when there is input ready. The inputhook should return control. "
+                return bool(self._ready_for_reading(INFINITE if wait else 0))
+            self._inputhook_context.call_inputhook(ready)
 
         # Wait for the next event.
-        handle = self._ready_for_reading(remaining_timeout)
+        handle = self._ready_for_reading(INFINITE)
 
         if self._input and handle == self._input.handle:
             # When stdin is ready, read input and reset timeout timer.
             self._run_task(self._input_ready_cb)
-            self._current_timeout = INPUT_TIMEOUT_MS
 
         elif handle == self._event:
             # When the Windows Event has been trigger, process the messages in the queue.
@@ -102,15 +90,6 @@ class Win32EventLoop(EventLoop):
         elif handle in self._read_fds:
             callback = self._read_fds[handle]
             self._run_task(callback)
-        else:
-            # Timeout happened.
-            # Flush all pending keys on a timeout. (This is most important
-            # to flush the vt100 'Escape' key early when nothing else
-            # follows.)
-            if self._input is not None:
-                self._input.flush()
-
-            self._current_timeout = -1
 
     def _run_task(self, t):
         try:
@@ -120,7 +99,7 @@ class Win32EventLoop(EventLoop):
                 'exception': e
             })
 
-    def _ready_for_reading(self, timeout=None):
+    def _ready_for_reading(self, timeout=INFINITE):
         """
         Return the handle that is ready for reading or `None` on timeout.
         """
@@ -211,13 +190,15 @@ class Win32EventLoop(EventLoop):
             del self._read_fds[h]
 
 
-def _wait_for_handles(handles, timeout=-1):
+def _wait_for_handles(handles, timeout=INFINITE):
     """
     Waits for multiple handles. (Similar to 'select') Returns the handle which is ready.
     Returns `None` on timeout.
 
     http://msdn.microsoft.com/en-us/library/windows/desktop/ms687025(v=vs.85).aspx
     """
+    assert isinstance(timeout, int)
+
     arrtype = HANDLE * len(handles)
     handle_array = arrtype(*handles)
 
