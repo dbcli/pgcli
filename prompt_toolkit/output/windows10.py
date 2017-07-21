@@ -25,23 +25,26 @@ class Windows10_Output(object):
     def __init__(self, stdout):
         self.win32_output = Win32Output(stdout)
         self.vt100_output = Vt100_Output(stdout, lambda: None)
-
-        self._original_mode = DWORD(0)
         self._hconsole = windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
 
-    def start_rendering(self):
-        " Called when rendering starts. "
+    def flush(self):
+        """
+        Write to output stream and flush.
+        """
+        original_mode = DWORD(0)
+
         # Remember the previous console mode.
-        windll.kernel32.GetConsoleMode(self._hconsole, byref(self._original_mode))
+        windll.kernel32.GetConsoleMode(self._hconsole, byref(original_mode))
 
         # Enable processing of vt100 sequences.
         windll.kernel32.SetConsoleMode(self._hconsole, DWORD(
             ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
 
-    def stop_rendering(self):
-        " Called when rendering stops. "
-        # Restore.
-        windll.kernel32.SetConsoleMode(self._hconsole, self._original_mode)
+        try:
+            self.vt100_output.flush()
+        finally:
+            # Restore console mode.
+            windll.kernel32.SetConsoleMode(self._hconsole, original_mode)
 
     def __getattr__(self, name):
         if name in ('get_size', 'get_rows_below_cursor_position',

@@ -429,7 +429,6 @@ class Renderer(object):
                 won't print any changes to this part.
         """
         output = self.output
-        output.start_rendering()
 
         # Enter alternate screen.
         if self.full_screen and not self._in_alternate_screen:
@@ -516,8 +515,6 @@ class Renderer(object):
 
         if is_done:
             self.reset()
-
-        output.stop_rendering()
 
     def erase(self, leave_alternate_screen=True):
         """
