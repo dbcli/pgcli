@@ -3,7 +3,6 @@ Win32 event loop.
 """
 from __future__ import unicode_literals
 
-from ..input.win32 import Win32Input
 from ..win32_types import SECURITY_ATTRIBUTES
 from .base import EventLoop
 from .inputhook import InputHookContext
@@ -16,6 +15,7 @@ import threading
 
 __all__ = (
     'Win32EventLoop',
+    'wait_for_handles',
 )
 
 WAIT_TIMEOUT = 0x00000102
@@ -107,12 +107,13 @@ class Win32EventLoop(EventLoop):
         if self._input:
             handles.append(self._input.handle)
         handles.extend(self._read_fds.keys())
-        return _wait_for_handles(handles, timeout)
+        return wait_for_handles(handles, timeout)
 
     def set_input(self, input, input_ready_callback):
         """
         Tell the eventloop to read from this input object.
         """
+        from ..input.win32 import Win32Input
         assert isinstance(input, Win32Input)
         previous_values = self._input, self._input_ready_cb
 
@@ -190,13 +191,14 @@ class Win32EventLoop(EventLoop):
             del self._read_fds[h]
 
 
-def _wait_for_handles(handles, timeout=INFINITE):
+def wait_for_handles(handles, timeout=INFINITE):
     """
     Waits for multiple handles. (Similar to 'select') Returns the handle which is ready.
     Returns `None` on timeout.
 
     http://msdn.microsoft.com/en-us/library/windows/desktop/ms687025(v=vs.85).aspx
     """
+    assert isinstance(handles, list)
     assert isinstance(timeout, int)
 
     arrtype = HANDLE * len(handles)

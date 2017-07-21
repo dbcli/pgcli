@@ -3,6 +3,7 @@ from ctypes import windll, pointer
 from ctypes.wintypes import DWORD
 from six.moves import range
 
+from prompt_toolkit.eventloop.win32 import wait_for_handles
 from prompt_toolkit.key_binding.key_processor import KeyPress
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.mouse_events import MouseEventType
@@ -173,6 +174,15 @@ class ConsoleInputReader(object):
         read = DWORD(0)
         arrtype = INPUT_RECORD * max_count
         input_records = arrtype()
+
+        # Check whether there is some input to read. `ReadConsoleInputW` would
+        # block otherwise.
+        # (Actually, the event loop is responsible to make sure that this
+        # function is only called when there is something to read, but for some
+        # reason this happend in the asyncio_win32 loop, and it's better to be
+        # safe anyway.)
+        if not wait_for_handles([self.handle], timeout=0):
+            return []
 
         # Get next batch of input event.
         windll.kernel32.ReadConsoleInputW(

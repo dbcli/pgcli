@@ -236,6 +236,7 @@ class KeyProcessor(object):
                 # an exception was raised) restart the processor for next time.
                 self.reset()
                 self.flush()
+                app.invalidate()
                 raise
 
             if key_press.key != Keys.CPRResponse:

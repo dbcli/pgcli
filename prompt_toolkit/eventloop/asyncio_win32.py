@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from ..input import Input
 from .base import EventLoop
 from .future import Future
+from .win32 import wait_for_handles
 
 import asyncio
 
@@ -46,17 +47,28 @@ class Win32AsyncioEventLoop(EventLoop):
         assert callable(input_ready_callback)
 
         # Remove previous
-        if self._input:
-            previous_input = self._input
-            previous_cb = self._input_ready_cb
-            self.remove_input()
-        else:
-            previous_input = None
-            previous_cb = None
+        previous_input, previous_cb = self.remove_input()
 
         # Set current.
         self._input = input
         self._input_ready_cb = input_ready_callback
+
+        # Add reader.
+        def ready():
+            # Tell the callback that input's ready.
+            try:
+                input_ready_callback()
+            finally:
+                self.run_in_executor(wait)
+
+        # Wait for the input to become ready.
+        # (Use an executor for this, the Windows asyncio event loop doesn't
+        # allow us to wait for stdin.)
+        def wait():
+            wait_for_handles([input.handle])
+            self.call_from_executor(ready)
+
+        self.run_in_executor(wait)
 
         return previous_input, previous_cb
 
