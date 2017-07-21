@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 import fcntl
 import os
 import signal
-import threading
 import time
 
 from prompt_toolkit.input import Input
@@ -10,6 +9,7 @@ from .base import EventLoop
 from .future import Future
 from .inputhook import InputHookContext
 from .select import AutoSelector, Selector, fd_to_int
+from .utils import ThreadWithFuture
 
 __all__ = (
     'PosixEventLoop',
@@ -255,7 +255,7 @@ class PosixEventLoop(EventLoop):
         (This is recommended for code that could block the event loop.)
         Similar to Twisted's ``deferToThread``.
         """
-        f = self.create_future()
+        th = ThreadWithFuture(callback, daemon=_daemon)
 
         # Wait until the main thread is idle.
         # We start the thread by using `call_from_executor`. The event loop
@@ -266,22 +266,9 @@ class PosixEventLoop(EventLoop):
         # background would cause a significantly slow down of the main thread.
         # It is mostly noticable when pasting large portions of text while
         # having real time autocompletion while typing on.
-        def run():
-            try:
-                result = callback()
-            except BaseException as e:
-                f.set_exception(e)
-            else:
-                f.set_result(result)
+        self.call_from_executor(th.start)
 
-        def start_executor():
-            t = threading.Thread(target=run)
-            if _daemon:
-                t.daemon = True
-            t.start()
-        self.call_from_executor(start_executor)
-
-        return f
+        return th.future
 
     def call_from_executor(self, callback, _max_postpone_until=None):
         """

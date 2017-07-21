@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from ..input import Input
 from .base import EventLoop
 from .future import Future
+from .utils import ThreadWithFuture
 from .win32 import wait_for_handles
 
 import asyncio
@@ -85,8 +86,14 @@ class Win32AsyncioEventLoop(EventLoop):
             return None, None
 
     def run_in_executor(self, callback, _daemon=False):
-        asyncio_f = self.loop.run_in_executor(None, callback)
-        return Future.from_asyncio_future(asyncio_f, loop=self)
+        if _daemon:
+            # Asyncio doesn't support 'daemon' executors.
+            th = ThreadWithFuture(callback, daemon=True)
+            self.call_from_executor(th.start)
+            return th.future
+        else:
+            asyncio_f = self.loop.run_in_executor(None, callback)
+            return Future.from_asyncio_future(asyncio_f, loop=self)
 
     def call_from_executor(self, callback, _max_postpone_until=None):
         self.loop.call_soon_threadsafe(callback)

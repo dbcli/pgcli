@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from ..input import Input
 from .base import EventLoop
 from .future import Future
+from .utils import ThreadWithFuture
 import asyncio
 
 __all__ = (
@@ -36,8 +37,14 @@ class PosixAsyncioEventLoop(EventLoop):
         return self.loop.run_until_complete(future)
 
     def run_in_executor(self, callback, _daemon=False):
-        asyncio_f = self.loop.run_in_executor(None, callback)
-        return Future.from_asyncio_future(asyncio_f, loop=self)
+        if _daemon:
+            # Asyncio doesn't support 'daemon' executors.
+            th = ThreadWithFuture(callback, daemon=True)
+            self.call_from_executor(th.start)
+            return th.future
+        else:
+            asyncio_f = self.loop.run_in_executor(None, callback)
+            return Future.from_asyncio_future(asyncio_f, loop=self)
 
     def call_from_executor(self, callback, _max_postpone_until=None):
         """

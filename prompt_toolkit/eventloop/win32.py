@@ -6,12 +6,12 @@ from __future__ import unicode_literals
 from ..win32_types import SECURITY_ATTRIBUTES
 from .base import EventLoop
 from .inputhook import InputHookContext
+from .utils import ThreadWithFuture
 
 from ctypes import windll, pointer
 from ctypes.wintypes import DWORD, BOOL, HANDLE
 
 import msvcrt
-import threading
 
 __all__ = (
     'Win32EventLoop',
@@ -152,15 +152,13 @@ class Win32EventLoop(EventLoop):
         (This is recommended for code that could block the event loop.)
         Similar to Twisted's ``deferToThread``.
         """
+        th = ThreadWithFuture(callback, daemon=_daemon)
+
         # Wait until the main thread is idle for an instant before starting the
         # executor. (Like in eventloop/posix.py, we start the executor using
         # `call_from_executor`.)
-        def start_executor():
-            t = threading.Thread(target=callback)
-            if _daemon:
-                t.daemon = True
-            t.start()
-        self.call_from_executor(start_executor)
+        self.call_from_executor(th.start)
+        return th.future
 
     def call_from_executor(self, callback, _max_postpone_until=None):
         """
