@@ -121,7 +121,7 @@ prompt = '\u@\h:\d> '
 min_num_menu_lines = 4
 
 # Character used to left pad multi-line queries to match the prompt size.
-multiline_continuation_char = '.'
+multiline_continuation_char = ''
 
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
