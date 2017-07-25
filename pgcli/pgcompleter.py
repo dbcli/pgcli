@@ -10,7 +10,7 @@ from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.document import Document
 from .packages.sqlcompletion import (FromClauseItem,
     suggest_type, Special, Database, Schema, Table, Function, Column, View,
-    Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join)
+    Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join, Setting)
 from .packages.parseutils.meta import ColumnMetadata, ForeignKey
 from .packages.parseutils.utils import last_word
 from .packages.parseutils.tables import TableReference
@@ -859,6 +859,11 @@ class PGCompleter(Completer):
         return self.find_matches(
             word_before_cursor, NamedQueries.instance.list(), meta='named query')
 
+    def get_setting_matches(self, suggestion, word_before_cursor):
+        return self.find_matches(
+            word_before_cursor, ['archive_mode', 'work_mem'], meta='setting',
+        )
+
     suggestion_matchers = {
         FromClauseItem: get_from_clause_item_matches,
         JoinCondition: get_join_condition_matches,
@@ -875,6 +880,7 @@ class PGCompleter(Completer):
         Datatype: get_datatype_matches,
         NamedQuery: get_namedquery_matches,
         Path: get_path_matches,
+        Setting: get_setting_matches,
     }
 
     def populate_scoped_cols(self, scoped_tbls, local_tbls=()):

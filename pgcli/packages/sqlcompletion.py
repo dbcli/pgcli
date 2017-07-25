@@ -52,6 +52,7 @@ Keyword.__new__.__defaults__ = (None,)
 NamedQuery = namedtuple('NamedQuery', [])
 Datatype = namedtuple('Datatype', ['schema'])
 Alias = namedtuple('Alias', ['aliases'])
+Setting = namedtuple('Setting', [])
 
 Path = namedtuple('Path', [])
 
@@ -386,6 +387,8 @@ def suggest_based_on_last_token(token, stmt):
         # We're probably in a function argument list
         return (Column(table_refs=extract_tables(stmt.full_text),
                        local_tables=stmt.local_tables, qualifiable=True),)
+    elif token_v == 'show':
+        return (Setting(),)
     elif token_v == 'set':
         return (Column(table_refs=stmt.get_tables(),
                        local_tables=stmt.local_tables),)
