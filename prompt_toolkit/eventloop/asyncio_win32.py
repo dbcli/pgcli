@@ -95,7 +95,7 @@ class Win32AsyncioEventLoop(EventLoop):
             if self._handle_callbacks[handle] != callback:
                 return
 
-            wait_for_handles([input.handle])
+            wait_for_handles([handle])
             self.call_from_executor(ready)
 
         self.run_in_executor(wait, _daemon=True)
