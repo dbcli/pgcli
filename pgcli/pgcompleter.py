@@ -117,6 +117,7 @@ class PGCompleter(Completer):
         self.name_pattern = re.compile("^[_a-z][_a-z0-9\$]*$")
 
         self.databases = []
+        self._settings = None
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
                            'datatypes': {}}
         self.search_path = []
@@ -859,9 +860,16 @@ class PGCompleter(Completer):
         return self.find_matches(
             word_before_cursor, NamedQueries.instance.list(), meta='named query')
 
+    @property
+    def settings(self):
+        if self._settings is None:
+            import pdb; pdb.set_trace()
+            self._settings = ['archive_mode', 'work_mem']
+        return self._settings or []
+
     def get_setting_matches(self, suggestion, word_before_cursor):
         return self.find_matches(
-            word_before_cursor, ['archive_mode', 'work_mem'], meta='setting',
+            word_before_cursor, self.settings, meta='setting',
         )
 
     suggestion_matchers = {
