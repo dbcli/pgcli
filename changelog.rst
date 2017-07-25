@@ -5,6 +5,7 @@ Features:
 ---------
 
 * Add fish-style auto-suggestion from history. (Thanks: `Amjith Ramanujam`_)
+* Remove the ``...`` in the continuation prompt and use empty space instead. (Thanks: `Amjith Ramanujam`_)
 
 Bug Fixes:
 ----------
