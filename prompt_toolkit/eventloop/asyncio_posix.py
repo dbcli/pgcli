@@ -3,8 +3,8 @@ Posix asyncio event loop.
 """
 from __future__ import unicode_literals
 
-from ..input import Input
 from .base import EventLoop
+from .context import wrap_in_current_context
 from .future import Future
 from .utils import ThreadWithFuture
 import asyncio
@@ -23,10 +23,6 @@ class PosixAsyncioEventLoop(EventLoop):
 
         self.loop = loop or asyncio.get_event_loop()
         self.closed = False
-
-        self._input = None
-        self._input_fd = None
-        self._input_ready_cb = None
 
     def close(self):
         # Note: we should not close the asyncio loop itself, because that one
@@ -51,10 +47,12 @@ class PosixAsyncioEventLoop(EventLoop):
         Call this function in the main event loop.
         Similar to Twisted's ``callFromThread``.
         """
+        callback = wrap_in_current_context(callback)
         self.loop.call_soon_threadsafe(callback)
 
     def add_reader(self, fd, callback):
         " Start watching the file descriptor for read availability. "
+        callback = wrap_in_current_context(callback)
         self.loop.add_reader(fd, callback)
 
     def remove_reader(self, fd):
@@ -63,47 +61,6 @@ class PosixAsyncioEventLoop(EventLoop):
 
     def add_signal_handler(self, signum, handler):
         return self.loop.add_signal_handler(signum, handler)
-
-    def set_input(self, input, input_ready_callback):
-        """
-        Tell the eventloop to read from this input object.
-
-        :param input: `Input` object.
-        :param input_ready_callback: Called when the input is ready to read.
-        """
-        assert isinstance(input, Input)
-        assert callable(input_ready_callback)
-
-        # Remove previous
-        previous_input, previous_cb = self.remove_input()
-
-        # Set current.
-        self._input = input
-        self._input_ready_cb = input_ready_callback
-        self._input_fd = input.fileno()
-
-        # Add reader.
-        def ready():
-            # Tell the callback that input's ready.
-            input_ready_callback()
-
-        self.add_reader(self._input_fd, ready)
-
-        return previous_input, previous_cb
-
-    def remove_input(self):
-        if self._input:
-            previous_input = self._input
-            previous_cb = self._input_ready_cb
-
-            self.remove_reader(self._input_fd)
-            self._input = None
-            self._input_fd = None
-            self._input_ready_cb = None
-
-            return previous_input, previous_cb
-        else:
-            return None, None
 
     def get_exception_handler(self):
         return self.loop.get_exception_handler()

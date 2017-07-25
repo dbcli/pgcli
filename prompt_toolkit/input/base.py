@@ -66,6 +66,20 @@ class Input(with_metaclass(ABCMeta, object)):
         Context manager that turns the input into cooked mode.
         """
 
+    @abstractmethod
+    def attach(self, input_ready_callback):
+        """
+        Return a context manager that makes this input active in the current
+        event loop.
+        """
+
+    @abstractmethod
+    def detach(self):
+        """
+        Return a context manager that makes sure that this input is not active
+        in the current event loop.
+        """
+
     def close(self):
         " Close input. "
         pass

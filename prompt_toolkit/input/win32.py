@@ -2,7 +2,9 @@ from __future__ import unicode_literals
 from ctypes import windll, pointer
 from ctypes.wintypes import DWORD
 from six.moves import range
+from contextlib import contextmanager
 
+from prompt_toolkit.eventloop import get_event_loop
 from prompt_toolkit.eventloop.win32 import wait_for_handles
 from prompt_toolkit.key_binding.key_processor import KeyPress
 from prompt_toolkit.keys import Keys
@@ -29,6 +31,21 @@ class Win32Input(Input):
     """
     def __init__(self, stdin=None):
         self.console_input_reader = ConsoleInputReader()
+
+    def attach(self, input_ready_callback):
+        """
+        Return a context manager that makes this input active in the current
+        event loop.
+        """
+        assert callable(input_ready_callback)
+        return _attach_win32_input(self, input_ready_callback)
+
+    def detach(self):
+        """
+        Return a context manager that makes sure that this input is not active
+        in the current event loop.
+        """
+        return _detach_win32_input(self)
 
     def read_keys(self):
         return self.console_input_reader.read()
@@ -358,6 +375,51 @@ class ConsoleInputReader(object):
                 result.append(KeyPress(Keys.WindowsMouseEvent, data))
 
         return result
+
+
+_current_callbacks = {}  # loop -> callback
+
+
+@contextmanager
+def _attach_win32_input(input, callback):
+    """
+    Context manager that makes this input active in the current event loop.
+
+    :param input: :class:`~prompt_toolkit.input.Input` object.
+    :param input_ready_callback: Called when the input is ready to read.
+    """
+    assert isinstance(input, Input)
+
+    loop = get_event_loop()
+    previous_callback = _current_callbacks.get(loop)
+
+    # Add reader.
+    loop.add_win32_handle(input.handle, callback)
+    _current_callbacks[loop] = callback
+
+    try:
+        yield
+    finally:
+        loop.remove_win32_handle(input.handle)
+
+        if previous_callback:
+            loop.add_win32_handle(input.handle, previous_callback)
+            _current_callbacks[loop] = previous_callback
+
+
+def _detach_win32_input(input):
+    loop = get_event_loop()
+    previous = _current_callbacks.get(loop)
+
+    loop.remove_win32_handle(input.handle)
+    _current_callbacks[loop] = None
+
+    try:
+        yield
+    finally:
+        if previous:
+            loop.add_win32_handle(input.handle, previous)
+            _current_callbacks[loop] = previous
 
 
 class raw_mode(object):

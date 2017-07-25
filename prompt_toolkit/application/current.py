@@ -1,4 +1,6 @@
 from __future__ import unicode_literals
+from prompt_toolkit.eventloop.context import TaskLocal, TaskLocalNotSetError
+from contextlib import contextmanager
 
 __all__ = (
     'get_app',
@@ -7,10 +9,10 @@ __all__ = (
 )
 
 
-_current_app = None
+_current_app = TaskLocal()
 
 
-def get_app(raise_exception=False):
+def get_app(raise_exception=False, return_none=False):
     """
     Get the current active (running) Application.
     An `Application` is active during the `Application.run_async` call.
@@ -30,28 +32,40 @@ def get_app(raise_exception=False):
 
     :param raise_exception: When `True`, raise `NoRunningApplicationError`
         instead of returning a `DummyApplication` if no application is running.
+    :param return_none: When `True`, return `None`
+        instead of returning a `DummyApplication` if no application is running.
     """
-    if _current_app is None:
+    try:
+        value = _current_app.get()
+    except TaskLocalNotSetError:
         if raise_exception:
             raise NoRunningApplicationError
+        elif return_none:
+            return None
         else:
             from .dummy import DummyApplication
             return DummyApplication()
+    else:
+        return value
 
-    return _current_app
 
-
+@contextmanager
 def set_app(app):
     """
-    Set the current active Application, and return the previous `Application`
-    or `None`.
+    Context manager that sets the given Application active.
     """
     from .application import Application
     assert app is None or isinstance(app, Application)
-    global _current_app
-    previous = _current_app
-    _current_app = app
-    return previous
+
+    previous = get_app(return_none=True)
+    _current_app.set(app)
+
+    yield
+
+    if previous:
+        _current_app.set(previous)
+    else:
+        _current_app.delete()
 
 
 class NoRunningApplicationError(Exception):

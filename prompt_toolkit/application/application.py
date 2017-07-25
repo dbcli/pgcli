@@ -206,8 +206,7 @@ class Application(object):
         # If `run_in_terminal` was called. This will point to a `Future` what will be
         # set at the point whene the previous run finishes.
         self._running_in_terminal = False
-        self._running_in_terminal_f = get_event_loop().create_future()
-        self._running_in_terminal_f.set_result(None)
+        self._running_in_terminal_f = None
 
         # Trigger initialize callback.
         self.reset()
@@ -401,8 +400,6 @@ class Application(object):
         Run asynchronous. Return a `Future` object.
         """
         assert not self._is_running
-        self._is_running = True
-        previous_app = set_app(self)
 
         def _run_async():
             " Coroutine. "
@@ -476,63 +473,54 @@ class Application(object):
 
             # Enter raw mode.
             with self.input.raw_mode():
-                # Draw UI.
-                self.renderer.request_absolute_cursor_position()
-                self._redraw()
+                with self.input.attach(read_from_input):
+                    # Draw UI.
+                    self.renderer.request_absolute_cursor_position()
+                    self._redraw()
 
-                # Set event loop handlers.
-                previous_input, previous_cb = loop.set_input(self.input, read_from_input)
+                    has_sigwinch = hasattr(signal, 'SIGWINCH')
+                    if has_sigwinch:
+                        previous_winch_handler = loop.add_signal_handler(
+                            signal.SIGWINCH, self._on_resize)
 
-                has_sigwinch = hasattr(signal, 'SIGWINCH')
-                if has_sigwinch:
-                    previous_winch_handler = loop.add_signal_handler(
-                        signal.SIGWINCH, self._on_resize)
-
-                # Wait for UI to finish.
-                try:
-                    result = yield From(f)
-                finally:
-                    # In any case, when the application finishes. (Successful,
-                    # or because of an error.)
+                    # Wait for UI to finish.
                     try:
-                        self._redraw(render_as_done=True)
+                        result = yield From(f)
                     finally:
-                        # _redraw has a good chance to fail if it calls widgets
-                        # with bad code. Make sure to reset the renderer anyway.
-                        self.renderer.reset()
+                        # In any case, when the application finishes. (Successful,
+                        # or because of an error.)
+                        try:
+                            self._redraw(render_as_done=True)
+                        finally:
+                            # _redraw has a good chance to fail if it calls widgets
+                            # with bad code. Make sure to reset the renderer anyway.
+                            self.renderer.reset()
 
-                        # Unset `is_running`, this ensures that possibly
-                        # scheduled draws won't paint during the following
-                        # yield.
-                        self._is_running = False
+                            # Unset `is_running`, this ensures that possibly
+                            # scheduled draws won't paint during the following
+                            # yield.
+                            self._is_running = False
 
-                        # Wait for CPR responses.
-                        yield From(self.renderer.wait_for_cpr_responses())
+                            # Wait for CPR responses.
+                            yield From(self.renderer.wait_for_cpr_responses())
 
-                        # Clear event loop handlers.
-                        if previous_input:
-                            loop.set_input(previous_input, previous_cb)
-                        else:
-                            loop.remove_input()
+                            if has_sigwinch:
+                                loop.add_signal_handler(signal.SIGWINCH, previous_winch_handler)
 
-                        if has_sigwinch:
-                            loop.add_signal_handler(signal.SIGWINCH, previous_winch_handler)
-
-                        # Restore previous Application.
-                        set_app(previous_app)  # Make sure to do this after removing the input.
-
-                        # Store unprocessed input as typeahead for next time.
-                        store_typeahead(self.input, self.key_processor.flush())
+                            # Store unprocessed input as typeahead for next time.
+                            store_typeahead(self.input, self.key_processor.flush())
 
                 raise Return(result)
 
         def _run_async2():
-            try:
-                f = From(_run_async())
-                result = yield f
-            finally:
-                assert not self._is_running
-            raise Return(result)
+            self._is_running = True
+            with set_app(self):
+                try:
+                    f = From(_run_async())
+                    result = yield f
+                finally:
+                    assert not self._is_running
+                raise Return(result)
 
         return ensure_future(_run_async2())
 
@@ -650,7 +638,8 @@ class Application(object):
         def _run_in_t():
             " Coroutine. "
             # Wait for the previous `run_in_terminal` to finish.
-            yield previous_run_in_terminal_f
+            if previous_run_in_terminal_f is not None:
+                yield previous_run_in_terminal_f
 
             # Draw interface in 'done' state, or erase.
             if render_cli_done:
@@ -662,16 +651,13 @@ class Application(object):
             self._running_in_terminal = True
 
             # Detach input.
-            previous_input, previous_cb = loop.remove_input()
             try:
-                with self.input.cooked_mode():
-                    result = yield From(async_func())
+                with self.input.detach():
+                    with self.input.cooked_mode():
+                        result = yield From(async_func())
 
                 raise Return(result)  # Same as: "return result"
             finally:
-                # Attach input again.
-                loop.set_input(previous_input, previous_cb)
-
                 # Redraw interface again.
                 try:
                     self._running_in_terminal = False

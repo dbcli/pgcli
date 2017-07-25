@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 from ..win32_types import SECURITY_ATTRIBUTES
 from .base import EventLoop
+from .context import wrap_in_current_context
 from .inputhook import InputHookContext
 from .utils import ThreadWithFuture
 
@@ -40,10 +41,6 @@ class Win32EventLoop(EventLoop):
         self.closed = False
         self._running = False
 
-        # The `Input` object that's currently attached.
-        self._input = None
-        self._input_ready_cb = None
-
         # Additional readers.
         self._read_fds = {}  # Maps fd to handler.
 
@@ -78,11 +75,7 @@ class Win32EventLoop(EventLoop):
         # Wait for the next event.
         handle = self._ready_for_reading(INFINITE)
 
-        if self._input and handle == self._input.handle:
-            # When stdin is ready, read input and reset timeout timer.
-            self._run_task(self._input_ready_cb)
-
-        elif handle == self._event:
+        if handle == self._event:
             # When the Windows Event has been trigger, process the messages in the queue.
             windll.kernel32.ResetEvent(self._event)
             self._process_queued_calls_from_executor()
@@ -104,38 +97,8 @@ class Win32EventLoop(EventLoop):
         Return the handle that is ready for reading or `None` on timeout.
         """
         handles = [self._event]
-        if self._input:
-            handles.append(self._input.handle)
         handles.extend(self._read_fds.keys())
         return wait_for_handles(handles, timeout)
-
-    def set_input(self, input, input_ready_callback):
-        """
-        Tell the eventloop to read from this input object.
-        """
-        from ..input.win32 import Win32Input
-        assert isinstance(input, Win32Input)
-        previous_values = self._input, self._input_ready_cb
-
-        self._input = input
-        self._input_ready_cb = input_ready_callback
-
-        return previous_values
-
-    def remove_input(self):
-        """
-        Remove the currently attached `Input`.
-        """
-        if self._input:
-            previous_input = self._input
-            previous_cb = self._input_ready_cb
-
-            self._input = None
-            self._input_ready_cb = None
-
-            return previous_input, previous_cb
-        else:
-            return None, None
 
     def close(self):
         self.closed = True
@@ -165,6 +128,8 @@ class Win32EventLoop(EventLoop):
         Call this function in the main event loop.
         Similar to Twisted's ``callFromThread``.
         """
+        callback = wrap_in_current_context(callback)
+
         # Append to list of pending callbacks.
         self._calls_from_executor.append(callback)
 
@@ -179,14 +144,25 @@ class Win32EventLoop(EventLoop):
 
     def add_reader(self, fd, callback):
         " Start watching the file descriptor for read availability. "
+        callback = wrap_in_current_context(callback)
+
         h = msvcrt.get_osfhandle(fd)
-        self._read_fds[h] = callback
+        self.add_win32_handle(h, callback)
 
     def remove_reader(self, fd):
         " Stop watching the file descriptor for read availability. "
         h = msvcrt.get_osfhandle(fd)
-        if h in self._read_fds:
-            del self._read_fds[h]
+        self.remove_win32_handle(h)
+
+    def add_win32_handle(self, handle, callback):
+        " Add a Win32 handle to the event loop. "
+        callback = wrap_in_current_context(callback)
+        self._read_fds[handle] = callback
+
+    def remove_win32_handle(self, handle):
+        " Remove a Win32 handle from the event loop. "
+        if handle in self._read_fds:
+            del self._read_fds[handle]
 
 
 def wait_for_handles(handles, timeout=INFINITE):
@@ -218,4 +194,5 @@ def _create_event():
 
     http://msdn.microsoft.com/en-us/library/windows/desktop/ms682396(v=vs.85).aspx
     """
-    return windll.kernel32.CreateEventA(pointer(SECURITY_ATTRIBUTES()), BOOL(True), BOOL(False), None)
+    return windll.kernel32.CreateEventA(
+        pointer(SECURITY_ATTRIBUTES()), BOOL(True), BOOL(False), None)

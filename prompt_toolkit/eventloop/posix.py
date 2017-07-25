@@ -4,12 +4,12 @@ import os
 import signal
 import time
 
-from prompt_toolkit.input import Input
 from .base import EventLoop
 from .future import Future
 from .inputhook import InputHookContext
 from .select import AutoSelector, Selector, fd_to_int
 from .utils import ThreadWithFuture
+from .context import wrap_in_current_context
 
 __all__ = (
     'PosixEventLoop',
@@ -31,11 +31,6 @@ class PosixEventLoop(EventLoop):
         self.closed = False
         self._running = False
 
-        # The `Input` object that's currently attached.
-        self._input = None
-        self._input_fd = None
-        self._input_ready_cb = None
-
         self._calls_from_executor = []
         self._read_fds = {}  # Maps fd to handler.
         self.selector = selector()
@@ -45,7 +40,7 @@ class PosixEventLoop(EventLoop):
         # Create a pipe for inter thread communication.
         self._schedule_pipe = os.pipe()
         fcntl.fcntl(self._schedule_pipe[0], fcntl.F_SETFL, os.O_NONBLOCK)
-        self.add_reader(self._schedule_pipe[0], None)
+        self.selector.register(self._schedule_pipe[0])
 
         # Create inputhook context.
         self._inputhook_context = InputHookContext(inputhook) if inputhook else None
@@ -160,60 +155,6 @@ class PosixEventLoop(EventLoop):
         fds = self.selector.select(timeout)
         return fds
 
-    def set_input(self, input, input_ready_callback):
-        """
-        Tell the eventloop to read from this input object.
-
-        :param input: :class:`~prompt_toolkit.input.Input` object.
-        :param input_ready_callback: Called when the input is ready to read.
-        """
-        assert isinstance(input, Input)
-        assert callable(input_ready_callback)
-
-        # Remove previous
-        if self._input:
-            previous_input = self._input
-            previous_cb = self._input_ready_cb
-            self.remove_input()
-        else:
-            previous_input = None
-            previous_cb = None
-
-        # Set current.
-        self._input = input
-        self._input_ready_cb = input_ready_callback
-        self._input_fd = input.fileno()
-
-        # NOTE: We take a backup of the fd, because there are situations where
-        #       the input can be closed (e.g. if `exit()` is called), which means
-        #       that fileno() is going to raise an exception but we still want
-        #       `remove_input()` to work.
-
-        # Add reader.
-        def ready():
-            input_ready_callback()
-
-        self.add_reader(self._input_fd, ready)
-
-        return previous_input, previous_cb
-
-    def remove_input(self):
-        """
-        Remove the currently attached `Input`.
-        """
-        if self._input:
-            previous_input = self._input
-            previous_cb = self._input_ready_cb
-
-            self.remove_reader(self._input_fd)
-            self._input = None
-            self._input_fd = None
-            self._input_ready_cb = None
-
-            return previous_input, previous_cb
-        else:
-            return None, None
-
     def add_signal_handler(self, signum, handler):
         """
         Register a signal handler. Call `handler` when `signal` was received.
@@ -281,6 +222,7 @@ class PosixEventLoop(EventLoop):
             repaint is done using low priority.)
         """
         assert _max_postpone_until is None or isinstance(_max_postpone_until, float)
+        callback = wrap_in_current_context(callback)
 
         self._calls_from_executor.append((callback, _max_postpone_until))
 
@@ -314,6 +256,8 @@ class PosixEventLoop(EventLoop):
 
     def add_reader(self, fd, callback):
         " Add read file descriptor to the event loop. "
+        callback = wrap_in_current_context(callback)
+
         fd = fd_to_int(fd)
         self._read_fds[fd] = callback
         self.selector.register(fd)

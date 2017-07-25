@@ -3,6 +3,7 @@ Future implementation for the prompt_toolkit eventloop.
 """
 from __future__ import unicode_literals, print_function
 from .base import EventLoop
+from .context import get_context_id, context
 from .defaults import get_event_loop
 
 __all__ = (
@@ -28,6 +29,13 @@ class Future(object):
         self._result = None
         self._exception = None
         self._done = False
+
+        # Keep track of which `TaskContext` was active when this Future was
+        # created.  This is the one that will be viewed as visible when the
+        # callbacks are called.  (This is required to make get_app/set_app work
+        # together with coroutines, when there are multiple active
+        # applications, attached to different outputs.)
+        self._ctx_id = get_context_id()
 
     @classmethod
     def succeed(cls, result):
@@ -92,9 +100,11 @@ class Future(object):
 
     def _call_callbacks(self):
         def call_them_all():
-            # They should be called in order.
-            for cb in self.done_callbacks:
-                cb(self)
+            # Activate the original task context (and application) again.
+            with context(self._ctx_id):
+                # They should be called in order.
+                for cb in self.done_callbacks:
+                    cb(self)
 
         self.loop.call_from_executor(call_them_all)
 

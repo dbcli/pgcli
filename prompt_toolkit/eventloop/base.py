@@ -54,23 +54,19 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         Stop watching the file descriptor for read availability.
         """
 
-    @abstractmethod
-    def set_input(self, input, input_ready_callback):
+    def add_win32_handle(self, handle, callback):
         """
-        Tell the eventloop to read from this input object.
+        Add a Windows Handle to the event loop.
+        (Only applied to win32 loops.)
+        """
+        raise NotImplementedError
 
-        :param input: :class:`~prompt_toolkit.input.Input` object.
-        :param input_ready_callback: Called when the input is ready to read.
+    def remove_win32_handle(self, handle):
         """
-
-    @abstractmethod
-    def remove_input(self):
+        Remove a Windows Handle from the event loop.
+        (Only applied to win32 loops.)
         """
-        Remove the currently attached `Input`.
-
-        Return the previous (input, input_ready_callback) tuple.
-        This can be (None, None).
-        """
+        raise NotImplementedError
 
     @abstractmethod
     def run_in_executor(self, callback, _daemon=False):

@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from ..eventloop import get_event_loop
 from ..utils import DummyContext
 from .base import Input
 from .posix_utils import PosixStdinReader
@@ -9,6 +10,7 @@ import os
 import sys
 import termios
 import tty
+import contextlib
 
 __all__ = (
     'Vt100Input',
@@ -45,6 +47,21 @@ class Vt100Input(Input):
         self.stdin_reader = PosixStdinReader(self._fileno)
         self.vt100_parser = Vt100Parser(
             lambda key: self._buffer.append(key))
+
+    def attach(self, input_ready_callback):
+        """
+        Return a context manager that makes this input active in the current
+        event loop.
+        """
+        assert callable(input_ready_callback)
+        return _attached_input(self, input_ready_callback)
+
+    def detach(self):
+        """
+        Return a context manager that makes sure that this input is not active
+        in the current event loop.
+        """
+        return _detached_input(self)
 
     def read_keys(self):
         " Read list of KeyPress. "
@@ -119,6 +136,9 @@ class PipeInput(Vt100Input):
         self.__class__._id += 1
         self._id = self.__class__._id
 
+    def send_bytes(self, data):
+        os.write(self._w, data)
+
     def send_text(self, data):
         " Send text to the input. "
         os.write(self._w, data.encode('utf-8'))
@@ -143,6 +163,51 @@ class PipeInput(Vt100Input):
         This needs to be unique for every `PipeInput`.
         """
         return 'pipe-input-%s' % (self._id, )
+
+
+_current_callbacks = {}  # (loop, fd) -> current callback
+
+
+@contextlib.contextmanager
+def _attached_input(input, callback):
+    """
+    Context manager that makes this input active in the current event loop.
+
+    :param input: :class:`~prompt_toolkit.input.Input` object.
+    :param callback: Called when the input is ready to read.
+    """
+    loop = get_event_loop()
+    fd = input.fileno()
+    previous = _current_callbacks.get((loop, fd))
+
+    loop.add_reader(fd, callback)
+    _current_callbacks[loop, fd] = callback
+
+    try:
+        yield
+    finally:
+        loop.remove_reader(fd)
+
+        if previous:
+            loop.add_reader(fd, previous)
+            _current_callbacks[loop, fd] = previous
+
+
+@contextlib.contextmanager
+def _detached_input(input):
+    loop = get_event_loop()
+    fd = input.fileno()
+    previous = _current_callbacks.get((loop, fd))
+
+    loop.remove_reader(fd)
+    _current_callbacks[loop, fd] = None
+
+    try:
+        yield
+    finally:
+        if previous:
+            loop.add_reader(fd, previous)
+            _current_callbacks[loop, fd] = previous
 
 
 class raw_mode(object):
