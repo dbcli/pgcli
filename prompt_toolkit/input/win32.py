@@ -407,6 +407,7 @@ def _attach_win32_input(input, callback):
             _current_callbacks[loop] = previous_callback
 
 
+@contextmanager
 def _detach_win32_input(input):
     loop = get_event_loop()
     previous = _current_callbacks.get(loop)
