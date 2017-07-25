@@ -7,14 +7,15 @@ from psycopg2.extensions import AsIs
 
 
 def create_db(hostname='localhost', username=None, password=None, dbname=None, port=None):
-    """
-    Create test database.
+    """Create test database.
+
     :param hostname: string
     :param username: string
     :param password: string
     :param dbname: string
     :param port: int
     :return:
+
     """
     cn = create_cn(hostname, password, username, 'postgres', port)
 
