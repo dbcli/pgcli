@@ -6,17 +6,18 @@ from psycopg2 import connect
 from psycopg2.extensions import AsIs
 
 
-def create_db(hostname='localhost', username=None, password=None,
-              dbname=None):
-    """
-    Create test database.
+def create_db(hostname='localhost', username=None, password=None, dbname=None, port=None):
+    """Create test database.
+
     :param hostname: string
     :param username: string
     :param password: string
     :param dbname: string
+    :param port: int
     :return:
+
     """
-    cn = create_cn(hostname, password, username, 'postgres')
+    cn = create_cn(hostname, password, username, 'postgres', port)
 
     # ISOLATION_LEVEL_AUTOCOMMIT = 0
     # Needed for DB creation.
@@ -28,11 +29,11 @@ def create_db(hostname='localhost', username=None, password=None,
 
     cn.close()
 
-    cn = create_cn(hostname, password, username, dbname)
+    cn = create_cn(hostname, password, username, dbname, port)
     return cn
 
 
-def create_cn(hostname, password, username, dbname):
+def create_cn(hostname, password, username, dbname, port):
     """
     Open connection to database.
     :param hostname:
@@ -41,18 +42,15 @@ def create_cn(hostname, password, username, dbname):
     :param dbname: string
     :return: psycopg2.connection
     """
-    if password:
-        cn = connect(host=hostname, user=username, database=dbname,
-                     password=password)
-    else:
-        cn = connect(user=username, database=dbname)
+    cn = connect(host=hostname, user=username, database=dbname,
+                 password=password, port=port)
 
     print('Created connection: {0}.'.format(cn.dsn))
     return cn
 
 
 def drop_db(hostname='localhost', username=None, password=None,
-            dbname=None):
+            dbname=None, port=None):
     """
     Drop database.
     :param hostname: string
@@ -60,7 +58,7 @@ def drop_db(hostname='localhost', username=None, password=None,
     :param password: string
     :param dbname: string
     """
-    cn = create_cn(hostname, password, username, 'postgres')
+    cn = create_cn(hostname, password, username, 'postgres', port)
 
     # ISOLATION_LEVEL_AUTOCOMMIT = 0
     # Needed for DB drop.
