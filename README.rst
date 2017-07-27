@@ -230,7 +230,7 @@ Thanks to all the beta testers and contributors for your time and patience. :)
     :target: https://travis-ci.org/dbcli/pgcli
 
 .. |CodeCov| image:: https://codecov.io/gh/dbcli/pgcli/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/dbcli/pgcli
+   :target: https://codecov.io/gh/dbcli/pgcli
    :alt: Code coverage report
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pgcli.svg
