@@ -1,6 +1,21 @@
 CHANGELOG
 =========
 
+1.0.15: 2017-07-27
+------------------
+
+Fixes:
+- Don't shuffle tasks in the event loop. This fixes an issue where lines
+  printed from background threads were printed in a different order if
+  `patch_stdout=True`.
+- Only consider the text before the cursor when activating history search.
+- Pressing escape should accept the search, this is closer to how readline works.
+- Enable autowrap again when required.
+
+New features:
+- Add run_in_terminal option to disable cooked mode.
+
+
 1.0.14: 2017-03-26
 ------------------
 
