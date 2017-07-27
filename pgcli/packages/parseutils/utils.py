@@ -5,15 +5,15 @@ from sqlparse.sql import Identifier
 from sqlparse.tokens import Token, Error
 
 cleanup_regex = {
-        # This matches only alphanumerics and underscores.
-        'alphanum_underscore': re.compile(r'(\w+)$'),
-        # This matches everything except spaces, parens, colon, and comma
-        'many_punctuations': re.compile(r'([^():,\s]+)$'),
-        # This matches everything except spaces, parens, colon, comma, and period
-        'most_punctuations': re.compile(r'([^\.():,\s]+)$'),
-        # This matches everything except a space.
-        'all_punctuations': re.compile(r'([^\s]+)$'),
-        }
+    # This matches only alphanumerics and underscores.
+    'alphanum_underscore': re.compile(r'(\w+)$'),
+    # This matches everything except spaces, parens, colon, and comma
+    'many_punctuations': re.compile(r'([^():,\s]+)$'),
+    # This matches everything except spaces, parens, colon, comma, and period
+    'most_punctuations': re.compile(r'([^\.():,\s]+)$'),
+    # This matches everything except a space.
+    'all_punctuations': re.compile(r'([^\s]+)$'),
+}
 
 
 def last_word(text, include='alphanum_underscore'):
