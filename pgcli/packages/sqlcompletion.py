@@ -174,7 +174,7 @@ def _strip_named_query(txt):
     return txt
 
 
-function_body_pattern = re.compile('(\\$.*?\\$)([\s\S]*?)\\1', re.M)
+function_body_pattern = re.compile(r'(\$.*?\$)([\s\S]*?)\1', re.M)
 
 
 def _find_function_body(text):

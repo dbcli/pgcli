@@ -367,7 +367,7 @@ class PGCli(object):
         self.pgexecute = pgexecute
 
     def handle_editor_command(self, cli, document):
-        """
+        r"""
         Editor command is any query that is prefixed or suffixed
         by a '\e'. The reason for a while loop is because a user
         might edit a query multiple times.
@@ -929,7 +929,7 @@ def is_select(status):
 def quit_command(sql):
     return (sql.strip().lower() == 'exit'
             or sql.strip().lower() == 'quit'
-            or sql.strip() == '\q'
+            or sql.strip() == r'\q'
             or sql.strip() == ':q')
 
 

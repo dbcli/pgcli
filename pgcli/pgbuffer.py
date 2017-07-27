@@ -18,7 +18,6 @@ class PGBuffer(Buffer):
             else:
                 return not _multiline_exception(doc.text)
 
-
         super(self.__class__, self).__init__(*args, is_multiline=is_multiline,
                                              tempfile_suffix='.sql', **kwargs)
 
@@ -32,11 +31,12 @@ def _is_complete(sql):
 
 def _multiline_exception(text):
     text = text.strip()
-    return (text.startswith('\\') or   # Special Command
-            text.endswith('\e') or     # Ended with \e which should launch the editor.
-            _is_complete(text) or      # A complete SQL command
-            (text == 'exit') or        # Exit doesn't need semi-colon
-            (text == 'quit') or        # Quit doesn't need semi-colon
-            (text == ':q') or          # To all the vim fans out there
-            (text == '')               # Just a plain enter without any text
-            )
+    return (
+        text.startswith('\\') or  # Special Command
+        text.endswith(r'\e') or  # Ended with \e which should launch the editor
+        _is_complete(text) or  # A complete SQL command
+        (text == 'exit') or  # Exit doesn't need semi-colon
+        (text == 'quit') or  # Quit doesn't need semi-colon
+        (text == ':q') or  # To all the vim fans out there
+        (text == '')  # Just a plain enter without any text
+    )

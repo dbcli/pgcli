@@ -642,7 +642,7 @@ class PGExecute(object):
     def casing(self):
         """Yields the most common casing for names used in db functions"""
         with self.conn.cursor() as cur:
-            query = '''
+            query = r'''
           WITH Words AS (
                 SELECT regexp_split_to_table(prosrc, '\W+') AS Word, COUNT(1)
                 FROM pg_catalog.pg_proc P
