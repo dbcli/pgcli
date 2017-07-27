@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.contrib.telnet.server import TelnetServer
-from prompt_toolkit.eventloop import From
+from prompt_toolkit.eventloop import From, get_event_loop
 from prompt_toolkit.layout.lexers import PygmentsLexer
 
 from pygments.lexers import HtmlLexer
@@ -39,5 +39,11 @@ def interact(connection):
     connection.send('Bye.\n')
 
 
+def main():
+    server = TelnetServer(interact=interact, port=2323)
+    server.start()
+    get_event_loop().run_forever()
+
+
 if __name__ == '__main__':
-    TelnetServer(interact=interact, port=2324).run()
+    main()

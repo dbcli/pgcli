@@ -405,6 +405,8 @@ def _attach_win32_input(input, callback):
         if previous_callback:
             loop.add_win32_handle(input.handle, previous_callback)
             _current_callbacks[loop] = previous_callback
+        else:
+            del _current_callbacks[loop]
 
 
 @contextmanager
@@ -412,8 +414,9 @@ def _detach_win32_input(input):
     loop = get_event_loop()
     previous = _current_callbacks.get(loop)
 
-    loop.remove_win32_handle(input.handle)
-    _current_callbacks[loop] = None
+    if previous:
+        loop.remove_win32_handle(input.handle)
+        _current_callbacks[loop] = None
 
     try:
         yield

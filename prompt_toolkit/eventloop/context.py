@@ -45,6 +45,7 @@ class context(object):
             self._previous_id = None
 
         _storage.context_id = self.id
+        return self.id
 
     def __exit__(self, *a):
         if self._previous_id is None:

@@ -26,13 +26,19 @@ class EventLoop(with_metaclass(ABCMeta, object)):
     def __init__(self):
         self._exception_handler = None
 
+    @abstractmethod
     def run_until_complete(self, future):
         """
         Keep running until this future has been set.
         Return the Future's result, or raise its exception.
         """
-        raise NotImplementedError(
-            "This eventloop doesn't implement synchronous 'run_until_complete()'.")
+
+    def run_forever(self):
+        """
+        Run loop forever.
+        """
+        f = self.create_future()
+        self.run_until_complete(f)
 
     @abstractmethod
     def close(self):

@@ -32,6 +32,9 @@ class PosixAsyncioEventLoop(EventLoop):
     def run_until_complete(self, future):
         return self.loop.run_until_complete(future)
 
+    def run_forever(self):
+        self.loop.run_forever()
+
     def run_in_executor(self, callback, _daemon=False):
         if _daemon:
             # Asyncio doesn't support 'daemon' executors.

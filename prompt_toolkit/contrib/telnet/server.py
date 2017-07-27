@@ -3,17 +3,22 @@ Telnet server.
 """
 from __future__ import unicode_literals
 
+import inspect
 import socket
+import sys
 
 from six import int2byte, text_type, binary_type
 
-from prompt_toolkit.application.current import get_app
+from prompt_toolkit.application.current import get_app, NoRunningApplicationError
 from prompt_toolkit.eventloop import get_event_loop, ensure_future, Future, From
 from prompt_toolkit.eventloop.context import context
 from prompt_toolkit.input.vt100 import PipeInput
+from prompt_toolkit.layout.formatted_text import to_formatted_text
 from prompt_toolkit.layout.screen import Size
 from prompt_toolkit.output.vt100 import Vt100_Output
+from prompt_toolkit.renderer import print_formatted_text as renderer_print_formatted_text
 from prompt_toolkit.shortcuts import Prompt
+from prompt_toolkit.styles import default_style, BaseStyle
 
 from .log import logger
 from .protocol import IAC, DO, LINEMODE, SB, MODE, SE, WILL, ECHO, NAWS, SUPPRESS_GO_AHEAD
@@ -44,6 +49,12 @@ def _initialize_telnet(connection):
     connection.send(IAC + DO + NAWS)
 
 
+def _is_coroutine(func):
+    if sys.version_info > (3, 5, 0):
+        return inspect.iscoroutine(func)
+    return False
+
+
 class _ConnectionStdout(object):
     """
     Wrapper around socket which provides `write` and `flush` methods for the
@@ -72,18 +83,23 @@ class TelnetConnection(object):
     """
     Class that represents one Telnet connection.
     """
-    def __init__(self, conn, addr, interact, server, encoding):
+    def __init__(self, conn, addr, interact, server, encoding, style):
         assert isinstance(addr, tuple)  # (addr, port) tuple
         assert callable(interact)
         assert isinstance(server, TelnetServer)
         assert isinstance(encoding, text_type)  # e.g. 'utf-8'
+        assert isinstance(style, BaseStyle)
 
         self.conn = conn
         self.addr = addr
         self.interact = interact
         self.server = server
         self.encoding = encoding
+        self.style = style
         self.callback = None  # Function that handles the CLI result.
+
+        # Execution context.
+        self._context_id = None
 
         # Create "Output" object.
         self.size = Size(rows=40, columns=79)
@@ -118,14 +134,23 @@ class TelnetConnection(object):
         Run application.
         """
         def run():
-            with context():
+            with context() as ctx_id:
+                self._context_id = ctx_id
                 try:
-                    yield From(self.interact(self))
+                    obj = self.interact(self)
+                    if _is_coroutine(obj):
+                        # Got an asyncio coroutine.
+                        import asyncio
+                        f = asyncio.ensure_future(obj)
+                        yield From(Future.from_asyncio_future(f))
+                    else:
+                        # Got a prompt_toolkit coroutine.
+                        yield From(obj)
                 except Exception as e:
-                    print('Got exception', e)
+                    print('Got %s' % type(e).__name__, e)
+                    import traceback; traceback.print_exc()
                     raise
                 finally:
-                    get_event_loop().remove_reader(self.conn)
                     self.conn.close()
 
         return ensure_future(run())
@@ -137,24 +162,61 @@ class TelnetConnection(object):
         assert isinstance(data, binary_type)
         self.parser.feed(data)
 
+    def close(self):
+        """
+        Closed by client.
+        """
+        self.vt100_input.close()
+
     def send(self, data):
         """
         Send text to the client.
         """
         assert isinstance(data, text_type)
 
-        # When data is send back to the client, we should replace the line
-        # endings. (We didn't allocate a real pseudo terminal, and the telnet
-        # connection is raw, so we are responsible for inserting \r.)
-        self.stdout.write(data.replace('\n', '\r\n'))
-        self.stdout.flush()
+        def write():
+            # When data is send back to the client, we should replace the line
+            # endings. (We didn't allocate a real pseudo terminal, and the
+            # telnet connection is raw, so we are responsible for inserting \r.)
+            self.stdout.write(data.replace('\n', '\r\n'))
+            self.stdout.flush()
+
+        self._run_in_terminal(write)
+
+    def send_formatted_text(self, formatted_text):
+        """
+        Send a piece of formatted text to the client.
+        """
+        formatted_text = to_formatted_text(formatted_text)
+
+        def write():
+            renderer_print_formatted_text(self.vt100_output, formatted_text, self.style)
+        self._run_in_terminal(write)
+
+    def _run_in_terminal(self, func):
+        # Make sure that when an application was active for this connection,
+        # that we print the text above the application.
+        with context(self._context_id):
+            try:
+                app = get_app(raise_exception=True)
+            except NoRunningApplicationError:
+                func()
+            else:
+                app.run_in_terminal(func)
 
     def erase_screen(self):
+        """
+        Erase the screen and move the cursor to the top.
+        """
         self.vt100_output.erase_screen()
         self.vt100_output.cursor_goto(0, 0)
         self.vt100_output.flush()
 
     def prompt_async(self, *a, **kw):
+        """
+        Like the `prompt_toolkit.shortcuts.prompt` function.
+        Ask for input.
+        """
         p = Prompt(input=self.vt100_input, output=self.vt100_output)
         return p.prompt_async(*a, **kw)
 
@@ -163,16 +225,21 @@ class TelnetServer(object):
     """
     Telnet server implementation.
     """
-    def __init__(self, host='127.0.0.1', port=23, interact=None, encoding='utf-8'):
+    def __init__(self, host='127.0.0.1', port=23, interact=None, encoding='utf-8', style=None):
         assert isinstance(host, text_type)
         assert isinstance(port, int)
         assert callable(interact)
         assert isinstance(encoding, text_type)
 
+        if style is None:
+            style = default_style()
+        assert isinstance(style, BaseStyle)
+
         self.host = host
         self.port = port
         self.interact = interact
         self.encoding = encoding
+        self.style = style
 
         self.connections = set()
 
@@ -186,17 +253,15 @@ class TelnetServer(object):
         s.listen(4)
         return s
 
-    def run(self):
+    def start(self):
         """
-        Run the eventloop for the telnet server.
+        Start the telnet server.
+        Don't forget to call `loop.run_forever()` after doing this.
         """
         listen_socket = self.create_socket(self.host, self.port)
         logger.info('Listening for telnet connections on %s port %r', self.host, self.port)
 
         get_event_loop().add_reader(listen_socket, lambda: self._accept(listen_socket))
-
-        f = Future()
-        get_event_loop().run_until_complete(f)
 
         #listen_socket.close()  # TODO
 
@@ -209,7 +274,9 @@ class TelnetServer(object):
         conn, addr = listen_socket.accept()
         logger.info('New connection %r %r', *addr)
 
-        connection = TelnetConnection(conn, addr, self.interact, self, encoding=self.encoding)
+        connection = TelnetConnection(
+            conn, addr, self.interact, self,
+            encoding=self.encoding, style=self.style)
         self.connections.add(connection)
 
         def handle_incoming_data():
@@ -220,8 +287,7 @@ class TelnetServer(object):
                 connection.feed(data)
             else:
                 # Connection closed by client.
-                self.connections.remove(connection)
-                loop.remove_reader(conn)
+                connection.close()
 
         loop.add_reader(conn, handle_incoming_data)
 
@@ -232,6 +298,7 @@ class TelnetServer(object):
             except Exception as e:
                 print(e)
             finally:
+                self.connections.remove(connection)
                 loop.remove_reader(conn)
 
         ensure_future(run())

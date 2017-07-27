@@ -191,6 +191,8 @@ def _attached_input(input, callback):
         if previous:
             loop.add_reader(fd, previous)
             _current_callbacks[loop, fd] = previous
+        else:
+            del _current_callbacks[loop, fd]
 
 
 @contextlib.contextmanager
@@ -199,8 +201,9 @@ def _detached_input(input):
     fd = input.fileno()
     previous = _current_callbacks.get((loop, fd))
 
-    loop.remove_reader(fd)
-    _current_callbacks[loop, fd] = None
+    if previous:
+        loop.remove_reader(fd)
+        _current_callbacks[loop, fd] = None
 
     try:
         yield

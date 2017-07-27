@@ -760,7 +760,7 @@ prompt.__doc__ = Prompt.prompt.__doc__
 
 def prompt_async(*a, **kw):
     """
-    Similar to :func:`.prompt`, but return an asyncio coroutine instead.
+    Similar to :func:`.prompt`, but return a Future instead.
     """
     prompt = Prompt()
     return prompt.prompt_async(*a, **kw)

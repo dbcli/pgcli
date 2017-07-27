@@ -5,6 +5,7 @@ from .base import EventLoop
 __all__ = (
     'create_event_loop',
     'create_asyncio_event_loop',
+    'use_asyncio_event_loop',
     'get_event_loop',
     'set_event_loop',
     'run_in_executor',
@@ -43,6 +44,13 @@ def create_asyncio_event_loop(loop=None):
         from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop
 
     return AsyncioEventLoop(loop)
+
+
+def use_asyncio_event_loop(loop=None):
+    """
+    Use the asyncio event loop for prompt_toolkit applications.
+    """
+    set_event_loop(create_asyncio_event_loop(loop))
 
 
 _loop = None
