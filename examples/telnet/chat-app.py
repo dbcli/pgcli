@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.telnet.server import TelnetServer
 from prompt_toolkit.eventloop import From, get_event_loop
-from prompt_toolkit.styles import ANSI_COLOR_NAMES
 
 import logging
 import random
@@ -17,6 +16,10 @@ logging.getLogger().setLevel(logging.INFO)
 _connections = []
 _connection_to_color = {}
 
+COLORS = [
+    'ansired', 'ansigreen', 'ansiyellow', 'ansiblue', 'ansifuchsia',
+    'ansiturquoise', 'ansilightgray', 'ansidarkgray', 'ansidarkred',
+    'ansidarkgreen', 'ansibrown', 'ansidarkblue', 'ansipurple', 'ansiteal']
 
 def interact(connection):
     # When a client is connected, erase the screen from the client and say
@@ -28,11 +31,17 @@ def interact(connection):
     name = yield From(connection.prompt_async(message='Type your name: '))
 
     # Random color.
-    color = random.choice(ANSI_COLOR_NAMES)
+    color = random.choice(COLORS)
     _connection_to_color[connection] = color
 
+    # Send 'connected' message.
+    _send_to_everyone(connection, name, '(connected)', color)
+
     # Prompt.
-    prompt_msg = [('fg:' + color, ' [%s]> ' % name)]
+    prompt_msg = [
+        ('reverse fg:' + color, '[%s]>' % name),
+        ('', ' '),
+    ]
 
     _connections.append(connection)
     try:
@@ -40,18 +49,22 @@ def interact(connection):
         # Set CommandLineInterface.
         while True:
             result = yield From(connection.prompt_async(message=prompt_msg))
-            _send_to_everyone(name, result, color)
+            _send_to_everyone(connection, name, result, color)
     finally:
         _connections.remove(connection)
 
 
-def _send_to_everyone(name, message, color):
+def _send_to_everyone(sender_connection, name, message, color):
+    """
+    Send a message to all the clients.
+    """
     for c in _connections:
-        c.send_formatted_text([
-            ('reverse fg:' + color, '[%s]' % name),
-            ('', ' '),
-            ('fg:' + color, message),
-        ])
+        if c != sender_connection:
+            c.send_formatted_text([
+                ('fg:' + color, '[%s]' % name),
+                ('', ' '),
+                ('fg:' + color, '%s\n' % message),
+            ])
 
 
 def main():
