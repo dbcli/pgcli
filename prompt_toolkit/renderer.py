@@ -561,11 +561,12 @@ def print_formatted_text(output, formatted_text, style):
     assert isinstance(style, BaseStyle)
     fragments = to_formatted_text(formatted_text)
 
-    # Check whether the last fragment ends with a newline.
+    # Make sure we end with a newline.
     if fragments:
         ends_with_newline = fragments[-1][1].endswith('\n')
-    else:
-        ends_with_newline = False
+        if not ends_with_newline:
+            fragments = fragments.copy()
+            fragments.append(('', '\n'))
 
     # Reset first.
     output.reset_attributes()
@@ -582,10 +583,10 @@ def print_formatted_text(output, formatted_text, style):
         else:
             output.reset_attributes()
 
-        output.write(text)
-
-    if not ends_with_newline:
-        output.write('\n')
+        # Assume that the output is raw, and insert a carriage return before
+        # every newline. (Also importent when the front-end is a telnet client.)
+        assert not '\r' in text
+        output.write(text.replace('\n', '\r\n'))
 
     # Reset again.
     output.reset_attributes()
