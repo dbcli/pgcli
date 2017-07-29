@@ -12,12 +12,13 @@ from six import int2byte, text_type, binary_type
 from prompt_toolkit.application.current import get_app, NoRunningApplicationError
 from prompt_toolkit.eventloop import get_event_loop, ensure_future, Future, From
 from prompt_toolkit.eventloop.context import context
+from prompt_toolkit.input.defaults import set_default_input
 from prompt_toolkit.input.vt100 import PipeInput
 from prompt_toolkit.layout.formatted_text import to_formatted_text
 from prompt_toolkit.layout.screen import Size
+from prompt_toolkit.output.defaults import set_default_output
 from prompt_toolkit.output.vt100 import Vt100_Output
 from prompt_toolkit.renderer import print_formatted_text as renderer_print_formatted_text
-from prompt_toolkit.shortcuts import Prompt
 from prompt_toolkit.styles import default_style, BaseStyle
 
 from .log import logger
@@ -96,7 +97,7 @@ class TelnetConnection(object):
         self.server = server
         self.encoding = encoding
         self.style = style
-        self.callback = None  # Function that handles the CLI result.
+        self._closed = False
 
         # Execution context.
         self._context_id = None
@@ -133,9 +134,27 @@ class TelnetConnection(object):
         """
         Run application.
         """
+        def handle_incoming_data():
+            data = self.conn.recv(1024)
+            if data:
+                self.feed(data)
+            else:
+                # Connection closed by client.
+                logger.info('Connection closed by client. %r %r' % self.addr)
+                self.close()
+
         def run():
             with context() as ctx_id:
                 self._context_id = ctx_id
+
+                # Set input/output for all application running in this context.
+                set_default_input(self.vt100_input)
+                set_default_output(self.vt100_output)
+
+                # Add reader.
+                loop = get_event_loop()
+                loop.add_reader(self.conn, handle_incoming_data)
+
                 try:
                     obj = self.interact(self)
                     if _is_coroutine(obj):
@@ -151,7 +170,7 @@ class TelnetConnection(object):
                     import traceback; traceback.print_exc()
                     raise
                 finally:
-                    self.conn.close()
+                    self.close()
 
         return ensure_future(run())
 
@@ -166,7 +185,12 @@ class TelnetConnection(object):
         """
         Closed by client.
         """
-        self.vt100_input.close()
+        if not self._closed:
+            self._closed = True
+
+            self.vt100_input.close()
+            get_event_loop().remove_reader(self.conn)
+            self.conn.close()
 
     def send(self, data):
         """
@@ -212,20 +236,13 @@ class TelnetConnection(object):
         self.vt100_output.cursor_goto(0, 0)
         self.vt100_output.flush()
 
-    def prompt_async(self, *a, **kw):
-        """
-        Like the `prompt_toolkit.shortcuts.prompt` function.
-        Ask for input.
-        """
-        p = Prompt(input=self.vt100_input, output=self.vt100_output)
-        return p.prompt_async(*a, **kw)
-
 
 class TelnetServer(object):
     """
     Telnet server implementation.
     """
-    def __init__(self, host='127.0.0.1', port=23, interact=None, encoding='utf-8', style=None):
+    def __init__(self, host='127.0.0.1', port=23, interact=None,
+                 encoding='utf-8', style=None):
         assert isinstance(host, text_type)
         assert isinstance(port, int)
         assert callable(interact)
@@ -242,9 +259,10 @@ class TelnetServer(object):
         self.style = style
 
         self.connections = set()
+        self._listen_socket = None
 
     @classmethod
-    def create_socket(cls, host, port):
+    def _create_socket(cls, host, port):
         # Create and bind socket
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -258,20 +276,21 @@ class TelnetServer(object):
         Start the telnet server.
         Don't forget to call `loop.run_forever()` after doing this.
         """
-        listen_socket = self.create_socket(self.host, self.port)
+        self._listen_socket = self._create_socket(self.host, self.port)
         logger.info('Listening for telnet connections on %s port %r', self.host, self.port)
 
-        get_event_loop().add_reader(listen_socket, lambda: self._accept(listen_socket))
+        get_event_loop().add_reader(self._listen_socket, self._accept)
 
+    def stop(self):
+        if self._listen_socket:
+            self._listen_socket.close()
         #listen_socket.close()  # TODO
 
-    def _accept(self, listen_socket):
+    def _accept(self):
         """
         Accept new incoming connection.
         """
-        loop = get_event_loop()
-
-        conn, addr = listen_socket.accept()
+        conn, addr = self._listen_socket.accept()
         logger.info('New connection %r %r', *addr)
 
         connection = TelnetConnection(
@@ -279,26 +298,15 @@ class TelnetServer(object):
             encoding=self.encoding, style=self.style)
         self.connections.add(connection)
 
-        def handle_incoming_data():
-            " Handle incoming data on socket. "
-            connection = [c for c in self.connections if c.conn == conn][0]
-            data = conn.recv(1024)
-            if data:
-                connection.feed(data)
-            else:
-                # Connection closed by client.
-                connection.close()
-
-        loop.add_reader(conn, handle_incoming_data)
-
         # Run application for this connection.
         def run():
+            logger.info('Starting interaction %r %r', *addr)
             try:
                 yield From(connection.run_application())
             except Exception as e:
                 print(e)
             finally:
                 self.connections.remove(connection)
-                loop.remove_reader(conn)
+                logger.info('Stopping interaction %r %r', *addr)
 
         ensure_future(run())
