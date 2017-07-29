@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from prompt_toolkit.output.defaults import create_output
+from prompt_toolkit.output.defaults import get_default_output
 from prompt_toolkit.renderer import print_formatted_text as renderer_print_formatted_text
 from prompt_toolkit.styles import default_style, BaseStyle
 import six
@@ -12,7 +12,7 @@ __all__ = (
 )
 
 
-def print_formatted_text(formatted_text, style=None, true_color=False, file=None):
+def print_formatted_text(formatted_text, style=None, output=None):
     """
     Print a list of (style_str, text) tuples in the given style to the output.
     E.g.::
@@ -32,14 +32,12 @@ def print_formatted_text(formatted_text, style=None, true_color=False, file=None
 
     :param text_fragments: List of ``(style_str, text)`` tuples.
     :param style: :class:`.Style` instance for the color scheme.
-    :param true_color: When True, use 24bit colors instead of 256 colors.
-    :param file: The output file. This can be `sys.stdout` or `sys.stderr`.
     """
     if style is None:
         style = default_style()
     assert isinstance(style, BaseStyle)
 
-    output = create_output(true_color=true_color, stdout=file)
+    output = output or get_default_output()
     renderer_print_formatted_text(output, formatted_text, style)
 
 
@@ -47,7 +45,7 @@ def clear():
     """
     Clear the screen.
     """
-    out = create_output()
+    out = get_default_output()
     out.erase_screen()
     out.cursor_goto(0, 0)
     out.flush()
@@ -59,7 +57,7 @@ def set_title(text):
     """
     assert isinstance(text, six.text_type)
 
-    output = create_output()
+    output = get_default_output()
     output.set_title(text)
 
 
