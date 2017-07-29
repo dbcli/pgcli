@@ -10,7 +10,7 @@ Features:
 Bug Fixes:
 ----------
 
-There are no bugs :)
+* Fix the way we get host when using DSN (issue #765) (Thanks: `François Pietka`_)
 
 1.7.0
 =====

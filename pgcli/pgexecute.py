@@ -203,9 +203,11 @@ class PGExecute(object):
             # When we connect using a DSN, we don't really know what db,
             # user, etc. we connected to. Let's read it.
             # Note: moved this after setting autocommit because of #664.
-            db, user, host, port = self._select_one(
-                cursor,
-                'select current_database(), current_user, inet_server_addr(), inet_server_port()')
+            dsn_parameters = conn.get_dsn_parameters()
+            db = dsn_parameters['dbname']
+            user = dsn_parameters['user']
+            host = dsn_parameters['host']
+            port = dsn_parameters['port']
 
         self.dbname = db
         self.user = user
