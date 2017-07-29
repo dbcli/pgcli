@@ -1,12 +1,18 @@
 from __future__ import unicode_literals
 import os
 import sys
-from prompt_toolkit.utils import is_windows, is_conemu_ansi
+
+from prompt_toolkit.eventloop.context import TaskLocal, TaskLocalNotSetError
 from prompt_toolkit.filters import to_filter
+from prompt_toolkit.utils import is_windows, is_conemu_ansi
+from .base import Output
+
 from six import PY2
 
 __all__ = (
     'create_output',
+    'get_default_output',
+    'set_default_output',
 )
 
 
@@ -43,3 +49,28 @@ def create_output(stdout=None, true_color=False, ansi_colors_only=None):
         return Vt100_Output.from_pty(
             stdout, true_color=true_color,
             ansi_colors_only=ansi_colors_only, term=term)
+
+
+_default_output = TaskLocal()
+
+
+def get_default_output():
+    """
+    Get the output class to be used by default.
+
+    Called when creating a new Application(), when no `Output` has been passed.
+    """
+    try:
+        value = _default_output.get()
+    except TaskLocalNotSetError:
+        return create_output()
+    else:
+        return value
+
+
+def set_default_output(output):
+    """
+    Set the default `Output` class.
+    """
+    assert isinstance(output, Output)
+    _default_output.set(output)

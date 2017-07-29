@@ -8,7 +8,7 @@ from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_
 from prompt_toolkit.eventloop.base import get_traceback_from_context
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.input.base import Input
-from prompt_toolkit.input.defaults import create_input
+from prompt_toolkit.input.defaults import get_default_input
 from prompt_toolkit.input.typeahead import store_typeahead, get_typeahead
 from prompt_toolkit.key_binding.bindings.mouse import load_mouse_bindings
 from prompt_toolkit.key_binding.bindings.page_navigation import load_page_navigation_bindings
@@ -21,7 +21,7 @@ from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.dummy import create_dummy_layout
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.output import Output
-from prompt_toolkit.output.defaults import create_output
+from prompt_toolkit.output.defaults import get_default_output
 from prompt_toolkit.renderer import Renderer, print_formatted_text
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.styles import BaseStyle, default_style, merge_styles, DynamicStyle
@@ -154,8 +154,8 @@ class Application(object):
         self.on_reset = Event(self, on_reset)
 
         # I/O.
-        self.output = output or create_output()
-        self.input = input or create_input(sys.stdin)
+        self.output = output or get_default_output()
+        self.input = input or get_default_input()
 
         # List of 'extra' functions to execute before a Application.run.
         self.pre_run_callables = []

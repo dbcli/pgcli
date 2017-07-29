@@ -37,7 +37,7 @@ from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
 from prompt_toolkit.eventloop import ensure_future, Return, From
 from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_filter, Condition, has_arg
 from prompt_toolkit.history import InMemoryHistory, DynamicHistory
-from prompt_toolkit.input.defaults import create_input
+from prompt_toolkit.input.defaults import get_default_input
 from prompt_toolkit.key_binding.bindings.auto_suggest import load_auto_suggest_bindings
 from prompt_toolkit.key_binding.bindings.completion import display_completions_like_readline
 from prompt_toolkit.key_binding.bindings.open_in_editor import load_open_in_editor_bindings
@@ -55,7 +55,7 @@ from prompt_toolkit.layout.menus import CompletionsMenu, MultiColumnCompletionsM
 from prompt_toolkit.layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
 from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.layout.widgets.toolbars import ValidationToolbar, SystemToolbar, SearchToolbar
-from prompt_toolkit.output.defaults import create_output
+from prompt_toolkit.output.defaults import get_default_output
 from prompt_toolkit.styles import default_style, BaseStyle, DynamicStyle, merge_styles
 from prompt_toolkit.utils import suspend_to_background_supported
 from prompt_toolkit.validation import DynamicValidator
@@ -63,7 +63,6 @@ from six import text_type
 
 import threading
 import time
-import sys
 
 __all__ = (
     'Prompt',
@@ -195,7 +194,6 @@ class Prompt(object):
         to enable mouse support.
     :param default: The default input text to be shown. (This can be edited by
         the user).
-    :param true_color: When True, use 24bit colors instead of 256 colors.
     :param refresh_interval: (number; in seconds) When given, refresh the UI
         every so many seconds.
     """
@@ -245,7 +243,6 @@ class Prompt(object):
             tempfile_suffix='.txt',
 
             refresh_interval=0,
-            true_color=False,
             input=None,
             output=None):
         assert style is None or isinstance(style, BaseStyle)
@@ -253,8 +250,8 @@ class Prompt(object):
         assert extra_key_bindings is None or isinstance(extra_key_bindings, KeyBindingsBase)
 
         # Defaults.
-        output = output or create_output(true_color)
-        input = input or create_input(sys.stdin)
+        output = output or get_default_output()
+        input = input or get_default_input()
         extra_input_processor = extra_input_processor
 
         history = history or InMemoryHistory()
@@ -598,7 +595,7 @@ class Prompt(object):
             self, message=None,
             # When any of these arguments are passed, this value is overwritten
             # for the current prompt.
-            default='', true_color=None, editing_mode=None,
+            default='', editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
             is_password=None, extra_key_bindings=None, bottom_toolbar=None,
             style=None, rprompt=None, multiline=None, prompt_continuation=None,
@@ -636,7 +633,7 @@ class Prompt(object):
     def prompt_async(self, message=None,
             # When any of these arguments are passed, this value is overwritten
             # for the current prompt.
-            default='', true_color=None, editing_mode=None,
+            default='', editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
             is_password=None, extra_key_bindings=None, bottom_toolbar=None,
             style=None, rprompt=None, multiline=None, prompt_continuation=None,
