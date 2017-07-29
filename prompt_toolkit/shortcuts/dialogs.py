@@ -19,7 +19,8 @@ __all__ = (
 )
 
 
-def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None):
+def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None,
+                  async=False):
     """
     Display a Yes/No dialog.
     Return a boolean.
@@ -38,11 +39,11 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None):
             Button(text=no_text, handler=no_handler),
         ], with_background=True)
 
-    return _run_dialog(dialog, style)
+    return _run_dialog(dialog, style, async=async)
 
 
 def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
-                 completer=None, password=False, style=None):
+                 completer=None, password=False, style=None, async=False):
     """
     Display a text input box.
     Return the given text, or None when cancelled.
@@ -71,10 +72,10 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
         buttons=[ok_button, cancel_button],
         with_background=True)
 
-    return _run_dialog(dialog, style)
+    return _run_dialog(dialog, style, async=async)
 
 
-def message_dialog(title='', text='', ok_text='Ok', style=None):
+def message_dialog(title='', text='', ok_text='Ok', style=None, async=False):
     """
     Display a simple message box and wait until the user presses enter.
     """
@@ -86,11 +87,11 @@ def message_dialog(title='', text='', ok_text='Ok', style=None):
         ],
         with_background=True)
 
-    return _run_dialog(dialog, style)
+    return _run_dialog(dialog, style, async=async)
 
 
 def radiolist_dialog(title='', text='', ok_text='Ok', cancel_text='Cancel',
-                     values=None, style=None):
+                     values=None, style=None, async=False):
     """
     Display a simple message box and wait until the user presses enter.
     """
@@ -111,10 +112,10 @@ def radiolist_dialog(title='', text='', ok_text='Ok', cancel_text='Cancel',
         ],
         with_background=True)
 
-    return _run_dialog(dialog, style)
+    return _run_dialog(dialog, style, async=async)
 
 
-def progress_dialog(title='', text='', run_callback=None, style=None):
+def progress_dialog(title='', text='', run_callback=None, style=None, async=False):
     """
     :param run_callback: A function that receives as input a `set_percentage`
         function and it does the work.
@@ -157,13 +158,19 @@ def progress_dialog(title='', text='', run_callback=None, style=None):
 
     run_in_executor(start)
 
-    return app.run()
+    if async:
+        return app.run_async()
+    else:
+        return app.run()
 
 
-def _run_dialog(dialog, style):
+def _run_dialog(dialog, style, async=False):
     " Turn the `Dialog` into an `Application` and run it. "
     application = _create_app(dialog, style)
-    return application.run()
+    if async:
+        return application.run_async()
+    else:
+        return application.run()
 
 
 def _create_app(dialog, style):
