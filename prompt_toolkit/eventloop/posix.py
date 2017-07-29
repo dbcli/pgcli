@@ -52,7 +52,9 @@ class PosixEventLoop(EventLoop):
         :param future: :class:`prompt_toolkit.eventloop.future.Future` object.
         """
         assert isinstance(future, Future)
-        assert not self._running
+        if self._running:
+            raise Exception('Event loop is already running')
+
         if self.closed:
             raise Exception('Event loop already closed.')
 

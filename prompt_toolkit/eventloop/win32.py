@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from ..win32_types import SECURITY_ATTRIBUTES
 from .base import EventLoop
 from .context import wrap_in_current_context
+from .future import Future
 from .inputhook import InputHookContext
 from .utils import ThreadWithFuture
 
@@ -48,6 +49,14 @@ class Win32EventLoop(EventLoop):
         self._inputhook_context = InputHookContext(inputhook) if inputhook else None
 
     def run_until_complete(self, future):
+        """
+        Keep running the event loop until `future` has been set.
+
+        :param future: :class:`prompt_toolkit.eventloop.future.Future` object.
+        """
+        assert isinstance(future, Future)
+        if self._running:
+            raise Exception('Event loop is already running')
         if self.closed:
             raise Exception('Event loop already closed.')
 
