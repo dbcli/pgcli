@@ -102,11 +102,17 @@ class Future(object):
             pass
 
     def _call_callbacks(self):
+        # Create a local copy of the callbacks. Otherwise, it could be that
+        # another call to `add_done_callback` would add a new callback to this list
+        # which would then be called twice. (Once from here, once from the
+        # `add_done_callback` function directly.
+        done_callbacks = self.done_callbacks[:]
+
         def call_them_all():
             # Activate the original task context (and application) again.
             with context(self._ctx_id):
                 # They should be called in order.
-                for cb in self.done_callbacks:
+                for cb in done_callbacks:
                     cb(self)
 
         self.loop.call_from_executor(call_them_all)
