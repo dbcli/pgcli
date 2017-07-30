@@ -74,7 +74,7 @@ class Future(object):
 
     def set_result(self, result):
         " Mark the future done and set its result. "
-        if self._result:
+        if self._done:
             raise InvalidStateError('Future result has been set already.')
 
         self._result = result
@@ -83,6 +83,9 @@ class Future(object):
 
     def set_exception(self, exception):
         " Mark the future done and set an exception. "
+        if self._done:
+            raise InvalidStateError('Future result has been set already.')
+
         self._exception = exception
         self._done = True
 
