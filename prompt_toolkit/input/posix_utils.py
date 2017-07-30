@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from codecs import getincrementaldecoder
 import os
 import six
+import select
 
 __all__ = (
     'PosixStdinReader',
@@ -62,7 +63,15 @@ class PosixStdinReader(object):
         wrong during the decoding.
         """
         if self.closed:
-            return b''
+            return u''
+
+        # Check whether there is some input to read. `os.read` would block
+        # otherwise.
+        # (Actually, the event loop is responsible to make sure that this
+        # function is only called when there is something to read, but for some
+        # reason this happens in certain situations.)
+        if not select.select([self.stdin_fd], [], [], 0)[0]:
+            return u''
 
         # Note: the following works better than wrapping `self.stdin` like
         #       `codecs.getreader('utf-8')(stdin)` and doing `read(1)`.
