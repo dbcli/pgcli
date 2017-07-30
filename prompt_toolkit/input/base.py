@@ -9,6 +9,7 @@ from six import with_metaclass
 
 __all__ = (
     'Input',
+    'DummyInput',
 )
 
 
@@ -83,3 +84,33 @@ class Input(with_metaclass(ABCMeta, object)):
     def close(self):
         " Close input. "
         pass
+
+
+class DummyInput(Input):
+    """
+    Input for use in a `DummyApplication`
+    """
+    def fileno(self):
+        raise NotImplementedError
+
+    def typeahead_hash(self):
+        return 'dummy-%s' % id(self)
+
+    def read_keys(self):
+        return []
+
+    @property
+    def closed(self):
+        return True
+
+    def raw_mode(self):
+        raise NotImplementedError
+
+    def cooked_mode(self):
+        raise NotImplementedError
+
+    def attach(self, input_ready_callback):
+        raise NotImplementedError
+
+    def detach(self):
+        raise NotImplementedError

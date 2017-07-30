@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from .application import Application
+from prompt_toolkit.input import DummyInput
 from prompt_toolkit.output import DummyOutput
 
 __all__ = (
@@ -14,7 +15,7 @@ class DummyApplication(Application):
     `Application`.
     """
     def __init__(self):
-        super(DummyApplication, self).__init__(output=DummyOutput())
+        super(DummyApplication, self).__init__(output=DummyOutput(), input=DummyInput())
 
     def run(self):
         raise NotImplementedError('A DummyApplication is not supposed to run.')
