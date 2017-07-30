@@ -75,7 +75,7 @@ class _ConnectionStdout(object):
         try:
             self._connection.send(b''.join(self._buffer))
         except socket.error as e:
-            logger.error("Couldn't send data over socket: %s" % e)
+            logger.warning("Couldn't send data over socket: %s" % e)
 
         self._buffer = []
 
@@ -192,30 +192,20 @@ class TelnetConnection(object):
             get_event_loop().remove_reader(self.conn)
             self.conn.close()
 
-    def send(self, data):
+    def send(self, formatted_text):
         """
         Send text to the client.
         """
-        assert isinstance(data, text_type)
+        formatted_text = to_formatted_text(formatted_text)
+        renderer_print_formatted_text(self.vt100_output, formatted_text, self.style)
 
-        def write():
-            # When data is send back to the client, we should replace the line
-            # endings. (We didn't allocate a real pseudo terminal, and the
-            # telnet connection is raw, so we are responsible for inserting \r.)
-            self.stdout.write(data.replace('\n', '\r\n'))
-            self.stdout.flush()
-
-        self._run_in_terminal(write)
-
-    def send_formatted_text(self, formatted_text):
+    def send_above_prompt(self, formatted_text):
         """
-        Send a piece of formatted text to the client.
+        Send text to the client.
+        This is asynchronous, returns a `Future`.
         """
         formatted_text = to_formatted_text(formatted_text)
-
-        def write():
-            renderer_print_formatted_text(self.vt100_output, formatted_text, self.style)
-        self._run_in_terminal(write)
+        return self._run_in_terminal(lambda: self.send(formatted_text))
 
     def _run_in_terminal(self, func):
         # Make sure that when an application was active for this connection,
@@ -225,8 +215,9 @@ class TelnetConnection(object):
                 app = get_app(raise_exception=True)
             except NoRunningApplicationError:
                 func()
+                return Future.succeed(None)
             else:
-                app.run_in_terminal(func)
+                return app.run_in_terminal(func)
 
     def erase_screen(self):
         """

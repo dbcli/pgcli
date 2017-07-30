@@ -1,8 +1,14 @@
 #!/usr/bin/env python
+"""
+A simple chat application over telnet.
+Everyone that connects is asked for his name, and then people can chat with
+each other.
+"""
 from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.telnet.server import TelnetServer
 from prompt_toolkit.eventloop import From, get_event_loop
+from prompt_toolkit.shortcuts import prompt_async, clear
 
 import logging
 import random
@@ -16,19 +22,23 @@ logging.getLogger().setLevel(logging.INFO)
 _connections = []
 _connection_to_color = {}
 
+
 COLORS = [
     'ansired', 'ansigreen', 'ansiyellow', 'ansiblue', 'ansifuchsia',
     'ansiturquoise', 'ansilightgray', 'ansidarkgray', 'ansidarkred',
     'ansidarkgreen', 'ansibrown', 'ansidarkblue', 'ansipurple', 'ansiteal']
 
+
 def interact(connection):
+    write = connection.send
+
     # When a client is connected, erase the screen from the client and say
     # Hello.
-    connection.erase_screen()
-    connection.send('Welcome to our chat application!\n')
-    connection.send('All connected clients will receive what you say.')
+    clear()
+    write('Welcome to our chat application!\n')
+    write('All connected clients will receive what you say.\n')
 
-    name = yield From(connection.prompt_async(message='Type your name: '))
+    name = yield From(prompt_async(message='Type your name: '))
 
     # Random color.
     color = random.choice(COLORS)
@@ -48,8 +58,10 @@ def interact(connection):
 
         # Set CommandLineInterface.
         while True:
-            result = yield From(connection.prompt_async(message=prompt_msg))
+            result = yield From(prompt_async(message=prompt_msg))
             _send_to_everyone(connection, name, result, color)
+    except KeyboardInterrupt:
+        _send_to_everyone(connection, name, '(leaving)', color)
     finally:
         _connections.remove(connection)
 
@@ -60,7 +72,7 @@ def _send_to_everyone(sender_connection, name, message, color):
     """
     for c in _connections:
         if c != sender_connection:
-            c.send_formatted_text([
+            c.send_above_prompt([
                 ('fg:' + color, '[%s]' % name),
                 ('', ' '),
                 ('fg:' + color, '%s\n' % message),

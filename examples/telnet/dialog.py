@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 """
-A simple Telnet application that asks for input and responds.
-
-The interaction function is a prompt_toolkit coroutine.
-Also see the `hello-world-asyncio.py` example which uses an asyncio coroutine.
-That is probably the preferred way if you only need Python 3 support.
+Example of a telnet application that displays a dialog window.
 """
 from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.telnet.server import TelnetServer
+from prompt_toolkit.shortcuts.dialogs import yes_no_dialog
 from prompt_toolkit.eventloop import From, get_event_loop
-from prompt_toolkit.shortcuts.prompt import prompt_async
-from prompt_toolkit.shortcuts.utils import clear
 
 import logging
 
@@ -21,13 +16,9 @@ logging.getLogger().setLevel(logging.INFO)
 
 
 def interact(connection):
-    clear()
-    connection.send('Welcome!\n')
+    result = yield From(yes_no_dialog(
+        title='Yes/no dialog demo', text='Press yes or no', async=True))
 
-    # Ask for input.
-    result = yield From(prompt_async(message='Say something: '))
-
-    # Send output.
     connection.send('You said: {}\n'.format(result))
     connection.send('Bye.\n')
 

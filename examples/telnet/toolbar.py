@@ -1,12 +1,14 @@
 #!/usr/bin/env python
+"""
+Example of a telnet application that displays a bottom toolbar and completions
+in the prompt.
+"""
 from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.contrib.telnet.server import TelnetServer
 from prompt_toolkit.eventloop import From, get_event_loop
-from prompt_toolkit.layout.lexers import PygmentsLexer
-
-from pygments.lexers import HtmlLexer
+from prompt_toolkit.shortcuts import prompt_async
 
 import logging
 
@@ -21,21 +23,18 @@ def interact(connection):
     connection.erase_screen()
     connection.send('Welcome!\n')
 
-    # Set CommandLineInterface.
+    # Display prompt with bottom toolbar.
     animal_completer = WordCompleter(['alligator', 'ant'])
 
-    result = yield From(connection.prompt_async(
-        message='Say something: ',
-        lexer=PygmentsLexer(HtmlLexer),
+    def get_toolbar():
+        return 'Bottom toolbar...'
+
+    result = yield From(prompt_async(
+        'Say something: ',
+        bottom_toolbar=get_toolbar,
         completer=animal_completer))
 
     connection.send('You said: {}\n'.format(result))
-
-
-    connection.send('Say something else:\n')
-    result = yield From(connection.prompt_async(message='>: '))
-    connection.send('You said: %s\n' % result)
-
     connection.send('Bye.\n')
 
 
