@@ -40,7 +40,7 @@ class GrammarLexer(Lexer):
         self.default_style = default_style
         self.lexers = lexers or {}
 
-    def _get_text_fragments(self, app, text):
+    def _get_text_fragments(self, text):
         m = self.compiled_grammar.match_prefix(text)
 
         if m:
@@ -53,7 +53,7 @@ class GrammarLexer(Lexer):
 
                 if lexer:
                     document = Document(text[v.start:v.stop])
-                    lexer_tokens_for_line = lexer.lex_document(app, document)
+                    lexer_tokens_for_line = lexer.lex_document(document)
                     text_fragments = []
                     for i in range(len(document.lines)):
                         text_fragments.extend(lexer_tokens_for_line(i))
@@ -78,8 +78,8 @@ class GrammarLexer(Lexer):
         else:
             return [('', text)]
 
-    def lex_document(self, app, document):
-        lines = list(split_lines(self._get_text_fragments(app, document.text)))
+    def lex_document(self, document):
+        lines = list(split_lines(self._get_text_fragments(document.text)))
 
         def get_line(lineno):
             try:
