@@ -42,6 +42,7 @@ class PosixAsyncioEventLoop(EventLoop):
             self.call_from_executor(th.start)
             return th.future
         else:
+            callback = wrap_in_current_context(callback)
             asyncio_f = self.loop.run_in_executor(None, callback)
             return Future.from_asyncio_future(asyncio_f, loop=self)
 
