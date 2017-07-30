@@ -404,13 +404,15 @@ class Renderer(object):
             futures = list(self._waiting_for_cpr_futures)
             for response_f in futures:
                 yield From(response_f)
-            f.set_result(None)
+            if not f.done():
+                f.set_result(None)
         ensure_future(wait_for_responses())
 
         # Timeout.
         def wait_for_timeout():
             time.sleep(timeout)
-            f.set_result(None)
+            if not f.done():
+                f.set_result(None)
 
             # Don't wait anymore for these responses.
             self._waiting_for_cpr_futures = deque()
