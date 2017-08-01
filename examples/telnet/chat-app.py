@@ -49,16 +49,19 @@ def interact(connection):
     _send_to_everyone(connection, name, '(connected)', color)
 
     # Prompt.
-    prompt_msg = HTML('<reverse fg="{}">{}</reverse> ').format(color, name)
+    prompt_msg = HTML('<reverse fg="{}">[{}]</reverse> ').format(color, name)
 
     _connections.append(connection)
     try:
 
         # Set CommandLineInterface.
         while True:
-            result = yield From(prompt_async(message=prompt_msg))
-            _send_to_everyone(connection, name, result, color)
-    except KeyboardInterrupt:
+            try:
+                result = yield From(prompt_async(message=prompt_msg))
+                _send_to_everyone(connection, name, result, color)
+            except KeyboardInterrupt:
+                pass
+    except EOFError:
         _send_to_everyone(connection, name, '(leaving)', color)
     finally:
         _connections.remove(connection)
