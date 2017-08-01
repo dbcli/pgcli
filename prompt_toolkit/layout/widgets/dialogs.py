@@ -5,10 +5,10 @@ from __future__ import unicode_literals
 from .base import Box, Shadow, Frame
 from ..containers import VSplit, HSplit
 from ..dimension import Dimension as D
+from prompt_toolkit.filters import has_completions
+from prompt_toolkit.formatted_text import is_formatted_text
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from prompt_toolkit.filters import has_completions
-from prompt_toolkit.layout.formatted_text import is_formatted_text
 
 __all__ = (
     'Dialog',

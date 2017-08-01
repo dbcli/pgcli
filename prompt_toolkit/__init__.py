@@ -15,6 +15,7 @@ Probably, to get started, you meight also want to have a look at
 """
 from .application import Application
 from .shortcuts import *
+from .formatted_text import HTML
 
 
 # Don't forget to update in `docs/conf.py`!

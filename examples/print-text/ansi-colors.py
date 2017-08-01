@@ -4,8 +4,8 @@ Demonstration of all the ANSI colors.
 """
 from __future__ import unicode_literals, print_function
 from prompt_toolkit import print
+from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.styles.named_colors import NAMED_COLORS
-from prompt_toolkit.layout.formatted_text import HTML
 
 
 def main():

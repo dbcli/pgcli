@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit import prompt
 from prompt_toolkit.styles import Style
-from prompt_toolkit.layout.formatted_text import HTML, ANSI
+from prompt_toolkit.formatted_text import HTML, ANSI
 
 example_style = Style.from_dict({
     # The 'rprompt' gets by default the 'rprompt' class. We can use this

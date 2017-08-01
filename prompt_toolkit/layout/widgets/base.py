@@ -14,17 +14,16 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SearchDirection
 from prompt_toolkit.filters import to_filter, is_searching
+from prompt_toolkit.formatted_text import to_formatted_text, Template, is_formatted_text
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
-from prompt_toolkit.layout.formatted_text import Template, is_formatted_text
 
 from ..containers import Window, VSplit, HSplit, FloatContainer, Float, Align, is_container
 from ..controls import BufferControl, FormattedTextControl
 from ..dimension import Dimension as D
 from ..dimension import is_dimension
 from ..dimension import to_dimension
-from ..formatted_text import to_formatted_text
 from ..margins import ScrollbarMargin, NumberredMargin
 from ..processors import PasswordProcessor, ConditionalProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, merge_processors
 from ..utils import fragment_list_to_text

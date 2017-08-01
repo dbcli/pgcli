@@ -36,6 +36,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
 from prompt_toolkit.eventloop import ensure_future, Return, From
 from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_filter, Condition, has_arg
+from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.history import InMemoryHistory, DynamicHistory
 from prompt_toolkit.input.defaults import get_default_input
 from prompt_toolkit.key_binding.bindings.auto_suggest import load_auto_suggest_bindings
@@ -47,7 +48,6 @@ from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
 from prompt_toolkit.layout.containers import ConditionalContainer, Align
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension
-from prompt_toolkit.layout.formatted_text import to_formatted_text
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import DynamicLexer
 from prompt_toolkit.layout.margins import PromptMargin, ConditionalMargin

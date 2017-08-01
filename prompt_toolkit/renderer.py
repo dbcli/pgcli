@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.eventloop import Future, From, ensure_future
 from prompt_toolkit.filters import to_filter
-from prompt_toolkit.layout.formatted_text import to_formatted_text
+from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.layout.mouse_handlers import MouseHandlers
 from prompt_toolkit.layout.screen import Point, Screen, WritePosition
 from prompt_toolkit.output import Output

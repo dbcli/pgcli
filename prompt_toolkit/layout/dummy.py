@@ -3,12 +3,14 @@ Dummy layout. Used when somebody creates an `Application` without specifying a
 `Layout`.
 """
 from __future__ import unicode_literals
+
+from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.key_binding import KeyBindings
-from .layout import Layout
-from .controls import FormattedTextControl
+
 from .containers import Window
-from .formatted_text import HTML
+from .controls import FormattedTextControl
 from .dimension import D
+from .layout import Layout
 
 __all__ = (
     'create_dummy_layout',

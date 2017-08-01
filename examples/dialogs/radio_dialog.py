@@ -3,8 +3,8 @@
 Example of a radio list box dialog.
 """
 from __future__ import unicode_literals
+from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts.dialogs import radiolist_dialog
-from prompt_toolkit.layout.formatted_text import HTML
 
 
 def main():

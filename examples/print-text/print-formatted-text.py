@@ -4,7 +4,7 @@ Example of printing colored text to the output.
 """
 from __future__ import unicode_literals
 from prompt_toolkit import print
-from prompt_toolkit.layout.formatted_text import HTML, ANSI
+from prompt_toolkit.formatted_text import HTML, ANSI
 from prompt_toolkit.styles import Style
 
 

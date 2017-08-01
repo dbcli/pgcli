@@ -1,9 +1,9 @@
 from __future__ import unicode_literals, print_function
+from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.output.base import Output
 from prompt_toolkit.output.defaults import create_output, get_default_output
 from prompt_toolkit.renderer import print_formatted_text as renderer_print_formatted_text
 from prompt_toolkit.styles import default_style, BaseStyle
-from prompt_toolkit.layout.formatted_text import to_formatted_text
 import six
 
 __all__ = (
