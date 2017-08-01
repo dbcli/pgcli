@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.telnet.server import TelnetServer
 from prompt_toolkit.eventloop import From, get_event_loop
+from prompt_toolkit.layout.formatted_text import HTML
 from prompt_toolkit.shortcuts import prompt_async, clear
 
 import logging
@@ -48,10 +49,7 @@ def interact(connection):
     _send_to_everyone(connection, name, '(connected)', color)
 
     # Prompt.
-    prompt_msg = [
-        ('reverse fg:' + color, '[%s]>' % name),
-        ('', ' '),
-    ]
+    prompt_msg = HTML('<reverse fg="{}">{}</reverse> ').format(color, name)
 
     _connections.append(connection)
     try:
