@@ -26,7 +26,7 @@ __all__ = (
 )
 
 
-def to_formatted_text(value, style=''):
+def to_formatted_text(value, style='', auto_convert=False):
     """
     Convert the given value (which can be formatted text) into a list of text
     fragments. (Which is the canonical form of formatted text.) The outcome is
@@ -37,6 +37,8 @@ def to_formatted_text(value, style=''):
 
     :param style: An additional style string which is applied to all text
         fragments.
+    :param auto_convert: If `True`, also accept other types, and convert them
+        to a string first.
     """
     assert isinstance(style, six.text_type)
 
@@ -53,6 +55,8 @@ def to_formatted_text(value, style=''):
         result = value.__pt_formatted_text__()
     elif callable(value):
         return to_formatted_text(value(), style=style)
+    elif auto_convert:
+        result = [('', '{}'.format(value))]
     else:
         raise ValueError('No formatted text given. Expecting a unicode object, '
                          'a list of text fragments or an HTML object.')
@@ -203,6 +207,33 @@ class HTML(object):
     def __pt_formatted_text__(self):
         return self.formatted_text
 
+    def format(self, *args, **kwargs):
+        """
+        Like `str.format`, but make sure that the arguments are properly
+        escaped.
+        """
+        # Escape all the arguments.
+        args = [html_escape(a) for a in args]
+        kwargs = {k: html_escape(v) for k, v in kwargs.items()}
+
+        return HTML(self.value.format(*args, **kwargs))
+
+    def __mod__(self, value):
+        """
+        HTML('<b>%s</b>') % value
+        """
+        if not isinstance(value, tuple):
+            value = (value, )
+
+        value = tuple(html_escape(i) for i in value)
+        return HTML(self.value % value)
+
+
+
+def html_escape(text):
+    assert isinstance(text, six.text_type)
+    return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
 
 class ANSI(object):
     """
@@ -342,11 +373,11 @@ class ANSI(object):
                 self._blink = False
                 self._reverse = False
 
-            elif attr in (38, 48):
+            elif attr in (38, 48) and len(attrs) > 1:
                 n = attrs.pop()
 
                 # 256 colors.
-                if n == 5:
+                if n == 5 and len(attrs) > 1:
                     if attr == 38:
                         m = attrs.pop()
                         self._color = _256_colors.get(m)
@@ -355,7 +386,7 @@ class ANSI(object):
                         self._bgcolor = _256_colors.get(m)
 
                 # True colors.
-                if n == 2:
+                if n == 2 and len(attrs) > 3:
                     try:
                         color_str = '%02x%02x%02x' % (
                             attrs.pop(), attrs.pop(), attrs.pop())

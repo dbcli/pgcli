@@ -77,6 +77,39 @@ def test_interpolation():
         ('', 'c'),
     ]
 
+
+def test_html_interpolation():
+    # %-style interpolation.
+    value = HTML('<b>%s</b>') % 'hello'
+    assert to_formatted_text(value) == [
+        ('class:b', 'hello')
+    ]
+
+    value = HTML('<b>%s</b>') % ('hello', )
+    assert to_formatted_text(value) == [
+        ('class:b', 'hello')
+    ]
+
+    value = HTML('<b>%s</b><u>%s</u>') % ('hello', 'world')
+    assert to_formatted_text(value) == [
+        ('class:b', 'hello'),
+        ('class:u', 'world')
+    ]
+
+    # Format function.
+    value = HTML('<b>{}</b><u>{}</u>').format('hello', 'world')
+    assert to_formatted_text(value) == [
+        ('class:b', 'hello'),
+        ('class:u', 'world')
+    ]
+
+    value = HTML('<b>{a}</b><u>{b}</u>').format(a='hello', b='world')
+    assert to_formatted_text(value) == [
+        ('class:b', 'hello'),
+        ('class:u', 'world')
+    ]
+
+
 def test_merge_formatted_text():
     html1 = HTML('<u>hello</u>')
     html2 = HTML('<b>world</b>')

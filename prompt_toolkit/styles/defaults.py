@@ -3,6 +3,8 @@ The default styling.
 """
 from __future__ import unicode_literals, absolute_import
 from .style import Style, merge_styles
+from .base import ANSI_COLOR_NAMES
+from .named_colors import NAMED_COLORS
 from prompt_toolkit.cache import memoized
 
 __all__ = (
@@ -116,6 +118,14 @@ PROMPT_TOOLKIT_STYLE = [
 ]
 
 
+# Style that will turn for instance the class 'red' into 'red'.
+COLOR_STYLES = [
+    (name, 'fg:' + name) for name in ANSI_COLOR_NAMES
+] + [
+    (name.lower(), 'fg:' + name) for name in NAMED_COLORS
+]
+
+
 WIDGETS_STYLE = [
     # Dialog windows.
     ('dialog',                                  'bg:#4444ff'),
@@ -213,6 +223,7 @@ def default_style():
     """
     return merge_styles([
         Style(PROMPT_TOOLKIT_STYLE),
+        Style(COLOR_STYLES),
         Style(WIDGETS_STYLE),
         Style.from_dict(PYGMENTS_DEFAULT_STYLE),
     ])

@@ -563,13 +563,6 @@ def print_formatted_text(output, formatted_text, style):
     assert isinstance(style, BaseStyle)
     fragments = to_formatted_text(formatted_text)
 
-    # Make sure we end with a newline.
-    if fragments:
-        ends_with_newline = fragments[-1][1].endswith('\n')
-        if not ends_with_newline:
-            fragments = fragments.copy()
-            fragments.append(('', '\n'))
-
     # Reset first.
     output.reset_attributes()
     output.enable_autowrap()

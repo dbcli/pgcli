@@ -698,7 +698,7 @@ class Application(object):
 
             # Run sub process.
             def run_command():
-                self.print_formatted_text(display_before_text)
+                self.print_text(display_before_text)
                 p = Popen(command, shell=True,
                           stdin=input_fd, stdout=output_fd)
                 p.wait()
@@ -734,16 +734,16 @@ class Application(object):
 
             self.run_in_terminal(run)
 
-    def print_formatted_text(self, formatted_text, style=None):
+    def print_text(self, text, style=None):
         """
         Print a list of (style_str, text) tuples to the output.
         (When the UI is running, this method has to be called through
         `run_in_terminal`, otherwise it will destroy the UI.)
 
-        :param formatted_text: List of ``(style_str, text)`` tuples.
+        :param text: List of ``(style_str, text)`` tuples.
         :param style: Style class to use. Defaults to the active style in the CLI.
         """
-        print_formatted_text(self.output, formatted_text, style or self.style)
+        print_formatted_text(self.output, text, style or self.style)
 
     @property
     def is_running(self):
