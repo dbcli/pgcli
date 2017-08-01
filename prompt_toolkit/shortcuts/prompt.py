@@ -61,6 +61,7 @@ from prompt_toolkit.utils import suspend_to_background_supported
 from prompt_toolkit.validation import DynamicValidator
 from six import text_type
 
+import contextlib
 import threading
 import time
 
@@ -569,27 +570,27 @@ class Prompt(object):
 
         return kb
 
+    @contextlib.contextmanager
     def _auto_refresh_context(self):
         " Return a context manager for the auto-refresh loop. "
-        # Set up refresh interval.
-        class _Refresh(object):
-            def __enter__(ctx):
-                self.done = False
+        done = [False]  # nonlocal
 
-                def run():
-                    while not self.done:
-                        time.sleep(self.refresh_interval)
-                        self.app.invalidate()
+        # Enter.
 
-                if self.refresh_interval:
-                    t = threading.Thread(target=run)
-                    t.daemon = True
-                    t.start()
+        def run():
+            while not done[0]:
+                time.sleep(self.refresh_interval)
+                self.app.invalidate()
 
-            def __exit__(ctx, *a):
-                self.done = True
+        if self.refresh_interval:
+            t = threading.Thread(target=run)
+            t.daemon = True
+            t.start()
 
-        return _Refresh()
+        yield
+
+        # Exit.
+        done[0] = True
 
     def prompt(
             self, message=None,

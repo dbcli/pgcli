@@ -21,11 +21,13 @@ from __future__ import unicode_literals
 from .application.current import get_app, NoRunningApplicationError
 from .eventloop import get_event_loop
 
+from contextlib import contextmanager
 import threading
 import sys
 
 
-class patch_stdout(object):
+@contextmanager
+def patch_stdout(raw=False):
     """
     Replace `sys.stdout` by an :class:`_StdoutProxy` instance.
 
@@ -37,22 +39,22 @@ class patch_stdout(object):
     :param raw: (`bool`) When True, vt100 terminal escape sequences are not
                 removed/escaped.
     """
-    def __init__(self, raw=False):
-        self.proxy = StdoutProxy(raw=raw)
+    proxy = StdoutProxy(raw=raw)
 
-        self.original_stdout = sys.stdout
-        self.original_stderr = sys.stderr
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
 
-    def __enter__(self):
-        sys.stdout = self.proxy
-        sys.stderr = self.proxy
+    # Enter.
+    sys.stdout = proxy
+    sys.stderr = proxy
 
-    def __exit__(self, *a, **kw):
-        # Flush the proxy.
-        self.proxy.flush()
+    yield
 
-        sys.stdout = self.original_stdout
-        sys.stderr = self.original_stderr
+    # Exit.
+    self.proxy.flush()
+
+    sys.stdout = original_stdout
+    sys.stderr = original_stderr
 
 
 class StdoutProxy(object):
