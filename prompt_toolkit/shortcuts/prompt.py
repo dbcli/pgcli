@@ -68,7 +68,6 @@ import time
 __all__ = (
     'Prompt',
     'prompt',
-    'prompt_async',
     'confirm',
     'create_confirm_prompt',  # Used by '_display_completions_like_readline'.
     'CompleteStyle',
@@ -606,9 +605,13 @@ class Prompt(object):
             clipboard=None, mouse_support=None, extra_input_processor=None,
             reserve_space_for_menu=None, enable_system_prompt=None,
             enable_suspend=None, enable_open_in_editor=None,
-            tempfile_suffix=None):
+            tempfile_suffix=None,
+            async_=False):
         """
         Display the prompt.
+
+        :param _async: When `True` return a `Future` instead of waiting for the
+            prompt to finish.
         """
         # Backup original settings.
         backup = dict((name, getattr(self, name)) for name in self._fields)
@@ -622,64 +625,32 @@ class Prompt(object):
         if vi_mode:
             self.editing_mode = EditingMode.VI
 
-        with self._auto_refresh_context():
-            try:
-                self._default_buffer.reset(Document(self.default))
-                return self.app.run()
-            finally:
-                # Restore original settings.
-                for name in self._fields:
-                    setattr(self, name, backup[name])
+        def restore():
+            " Restore original settings. "
+            for name in self._fields:
+                setattr(self, name, backup[name])
 
-    def prompt_async(self, message=None,
-            # When any of these arguments are passed, this value is overwritten
-            # for the current prompt.
-            default='', editing_mode=None,
-            refresh_interval=None, vi_mode=None, lexer=None, completer=None,
-            is_password=None, extra_key_bindings=None, bottom_toolbar=None,
-            style=None, rprompt=None, multiline=None, prompt_continuation=None,
-            wrap_lines=None, history=None, enable_history_search=None,
-            complete_while_typing=None, validate_while_typing=None,
-            complete_style=None, auto_suggest=None, validator=None,
-            clipboard=None, mouse_support=None, extra_input_processor=None,
-            reserve_space_for_menu=None, enable_system_prompt=None,
-            enable_suspend=None, enable_open_in_editor=None,
-            tempfile_suffix=None):
-        """
-        Display the prompt (run in async IO coroutine).
-        This is only available in Python 3.5 or newer.
-        """
-        # Backup original settings.
-        backup = dict((name, getattr(self, name)) for name in self._fields)
+        def run_sync():
+            with self._auto_refresh_context():
+                try:
+                    self._default_buffer.reset(Document(self.default))
+                    return self.app.run()
+                finally:
+                    restore()
 
-        # Take settings from 'prompt'-arguments.
-        for name in self._fields:
-            value = locals()[name]
-            if value is not None:
-                setattr(self, name, value)
-
-        if vi_mode:
-            self.editing_mode = EditingMode.VI
-
-        def run():
+        def run_async():
             with self._auto_refresh_context():
                 try:
                     self._default_buffer.reset(Document(self.default))
                     result = yield From(self.app.run_async())
                     raise Return(result)
                 finally:
-                    # Restore original settings.
-                    for name in self._fields:
-                        setattr(self, name, backup[name])
+                    restore()
 
-        return ensure_future(run())
-
-    def prompt_asyncio(self, *a, **kw):
-        """
-        For use in Asyncio. This returns an Asyncio Future.
-        """
-        f = self.prompt_async(*a, **kw)
-        return f.to_asyncio_future()
+        if async_:
+            return ensure_future(run_async())
+        else:
+            return run_sync()
 
     @property
     def editing_mode(self):
@@ -754,16 +725,6 @@ def prompt(*a, **kw):
     return prompt.prompt(*a, **kw)
 
 prompt.__doc__ = Prompt.prompt.__doc__
-
-
-def prompt_async(*a, **kw):
-    """
-    Similar to :func:`.prompt`, but return a Future instead.
-    """
-    prompt = Prompt()
-    return prompt.prompt_async(*a, **kw)
-
-prompt_async.__doc__ = Prompt.prompt_async
 
 
 def create_confirm_prompt(message):

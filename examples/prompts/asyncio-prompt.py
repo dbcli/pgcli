@@ -53,7 +53,7 @@ async def interactive_shell():
     # Run echo loop. Read text from stdin, and reply it back.
     while True:
         try:
-            result = await prompt.prompt_async()
+            result = await prompt.prompt(async_=True)
             print('You said: "{0}"'.format(result))
         except (EOFError, KeyboardInterrupt):
             return

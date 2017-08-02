@@ -32,7 +32,7 @@ async def interact(connection):
     connection.send('Welcome!\n')
 
     # Ask for input.
-    result = await prompt.prompt_async(message='Say something: ')
+    result = await prompt.prompt(message='Say something: ', async_=True)
 
     # Send output.
     connection.send('You said: {}\n'.format(result))

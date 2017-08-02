@@ -10,8 +10,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.telnet.server import TelnetServer
 from prompt_toolkit.eventloop import From, get_event_loop
-from prompt_toolkit.shortcuts.prompt import prompt_async
-from prompt_toolkit.shortcuts.utils import clear
+from prompt_toolkit import prompt, clear
 
 import logging
 
@@ -25,7 +24,7 @@ def interact(connection):
     connection.send('Welcome!\n')
 
     # Ask for input.
-    result = yield From(prompt_async(message='Say something: '))
+    result = yield From(prompt(message='Say something: ', async_=True))
 
     # Send output.
     connection.send('You said: {}\n'.format(result))

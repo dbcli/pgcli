@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.contrib.telnet.server import TelnetServer
 from prompt_toolkit.eventloop import From, get_event_loop
 from prompt_toolkit.formatted_text import HTML
-from prompt_toolkit.shortcuts import prompt_async, clear
+from prompt_toolkit.shortcuts import prompt, clear
 
 import logging
 import random
@@ -39,7 +39,7 @@ def interact(connection):
     write('Welcome to our chat application!\n')
     write('All connected clients will receive what you say.\n')
 
-    name = yield From(prompt_async(message='Type your name: '))
+    name = yield From(prompt(message='Type your name: ', async_=True))
 
     # Random color.
     color = random.choice(COLORS)
@@ -49,15 +49,14 @@ def interact(connection):
     _send_to_everyone(connection, name, '(connected)', color)
 
     # Prompt.
-    prompt_msg = HTML('<reverse fg="{}">[{}]</reverse> ').format(color, name)
+    prompt_msg = HTML('<reverse fg="{}">[{}]</reverse> &gt; ').format(color, name)
 
     _connections.append(connection)
     try:
-
         # Set CommandLineInterface.
         while True:
             try:
-                result = yield From(prompt_async(message=prompt_msg))
+                result = yield From(prompt(message=prompt_msg, async_=True))
                 _send_to_everyone(connection, name, result, color)
             except KeyboardInterrupt:
                 pass

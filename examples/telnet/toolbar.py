@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.contrib.telnet.server import TelnetServer
 from prompt_toolkit.eventloop import From, get_event_loop
-from prompt_toolkit.shortcuts import prompt_async
+from prompt_toolkit.shortcuts import prompt
 
 import logging
 
@@ -20,7 +20,6 @@ logging.getLogger().setLevel(logging.INFO)
 def interact(connection):
     # When a client is connected, erase the screen from the client and say
     # Hello.
-    connection.erase_screen()
     connection.send('Welcome!\n')
 
     # Display prompt with bottom toolbar.
@@ -29,10 +28,11 @@ def interact(connection):
     def get_toolbar():
         return 'Bottom toolbar...'
 
-    result = yield From(prompt_async(
+    result = yield From(prompt(
         'Say something: ',
         bottom_toolbar=get_toolbar,
-        completer=animal_completer))
+        completer=animal_completer,
+        async_=True))
 
     connection.send('You said: {}\n'.format(result))
     connection.send('Bye.\n')

@@ -17,7 +17,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 def interact(connection):
     result = yield From(yes_no_dialog(
-        title='Yes/no dialog demo', text='Press yes or no', async=True))
+        title='Yes/no dialog demo', text='Press yes or no', async_=True))
 
     connection.send('You said: {}\n'.format(result))
     connection.send('Bye.\n')
