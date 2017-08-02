@@ -21,6 +21,7 @@ __all__ = (
     'is_formatted_text',
     'Template',
     'merge_formatted_text',
+    'FormattedText',
     'HTML',
     'ANSI',
 )
@@ -43,7 +44,7 @@ def to_formatted_text(value, style='', auto_convert=False):
     assert isinstance(style, six.text_type)
 
     if value is None:
-        return []
+        result = []
     elif isinstance(value, six.text_type):
         result = [('', value)]
     elif isinstance(value, list):
@@ -58,8 +59,8 @@ def to_formatted_text(value, style='', auto_convert=False):
     elif auto_convert:
         result = [('', '{}'.format(value))]
     else:
-        raise ValueError('No formatted text given. Expecting a unicode object, '
-                         'a list of text fragments or an HTML object.')
+        raise ValueError('No formatted text. Expecting a unicode object, '
+                         'HTML, ANSI or a FormattedText instance. Got %r' % value)
 
     # Apply extra style.
     if style:
@@ -80,6 +81,25 @@ def is_formatted_text(value):
     if hasattr(value, '__pt_formatted_text__'):
         return True
     return False
+
+
+class FormattedText(object):
+    """
+    A list of (style, text) tuples.
+    """
+    def __init__(self, data):
+        self.data = data
+
+        # Validate the first tuple only.
+        if len(self.data):
+            assert isinstance(self.data[0][0], six.text_type)
+            assert isinstance(self.data[0][1], six.text_type)
+
+    def __pt_formatted_text__(self):
+        return self.data
+
+    def __repr__(self):
+        return 'FormattedText(%r)' % (self.data, )
 
 
 class Template(object):
