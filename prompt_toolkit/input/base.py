@@ -50,6 +50,14 @@ class Input(with_metaclass(ABCMeta, object)):
         " The event loop can call this when the input has to be flushed. "
         pass
 
+    @property
+    def responds_to_cpr(self):
+        """
+        `True` if the `Application can expect to receive a CPR response from
+        here.
+        """
+        return False
+
     @abstractproperty
     def closed(self):
         " Should be true when the input stream is closed. "

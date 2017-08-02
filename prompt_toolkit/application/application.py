@@ -502,7 +502,8 @@ class Application(object):
                             self._is_running = False
 
                             # Wait for CPR responses.
-                            yield From(self.renderer.wait_for_cpr_responses())
+                            if self.input.responds_to_cpr:
+                                yield From(self.renderer.wait_for_cpr_responses())
 
                             if has_sigwinch:
                                 loop.add_signal_handler(signal.SIGWINCH, previous_winch_handler)

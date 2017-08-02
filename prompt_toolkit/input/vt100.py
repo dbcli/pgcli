@@ -48,6 +48,10 @@ class Vt100Input(Input):
         self.vt100_parser = Vt100Parser(
             lambda key: self._buffer.append(key))
 
+    @property
+    def responds_to_cpr(self):
+        return True
+
     def attach(self, input_ready_callback):
         """
         Return a context manager that makes this input active in the current
@@ -135,6 +139,10 @@ class PipeInput(Vt100Input):
         # Identifier for every PipeInput for the hash.
         self.__class__._id += 1
         self._id = self.__class__._id
+
+    @property
+    def responds_to_cpr(self):
+        return False
 
     def send_bytes(self, data):
         os.write(self._w, data)
