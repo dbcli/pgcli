@@ -1,9 +1,10 @@
 """
-Test `shortcuts.print_formatted_text`.
+Test the `print` function.
 """
-from __future__ import unicode_literals
-from prompt_toolkit.shortcuts import print_formatted_text
+from __future__ import unicode_literals, print_function
 from prompt_toolkit.styles import Style
+from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit import print as pt_print
 
 
 class _Capture:
@@ -29,7 +30,7 @@ class _Capture:
 
 def test_print_formatted_text():
     f = _Capture()
-    print_formatted_text([('', 'hello'), ('', 'world')], file=f)
+    pt_print([('', 'hello'), ('', 'world')], file=f)
     assert b'hello' in f.data
     assert b'world' in f.data
 
@@ -40,10 +41,10 @@ def test_with_style():
         'hello': '#ff0066',
         'world': '#44ff44 italic',
     })
-    tokens = [
+    tokens = FormattedText([
         ('class:hello', 'Hello '),
         ('class:world', 'world'),
-    ]
-    print_formatted_text(tokens, style=style, file=f)
+    ])
+    pt_print(tokens, style=style, file=f)
     assert b'\x1b[0;38;5;197mHello' in f.data
     assert b'\x1b[0;38;5;83;3mworld' in f.data

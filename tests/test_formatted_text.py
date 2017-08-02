@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from prompt_toolkit.layout.formatted_text import HTML, ANSI, to_formatted_text, Template, merge_formatted_text
+from prompt_toolkit.formatted_text import HTML, ANSI, to_formatted_text, Template, merge_formatted_text
 
 
 def test_basic_html():
