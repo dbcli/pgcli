@@ -1,6 +1,6 @@
 .. _building_prompts:
 
-Building prompts
+Asking for input
 ================
 
 This page is about building prompts. Pieces of code that we can embed in a

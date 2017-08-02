@@ -116,6 +116,7 @@ Table of contents
 
    pages/gallery
    pages/building_prompts
+   pages/echo_text
    pages/full_screen_apps
    pages/architecture
    pages/reference
