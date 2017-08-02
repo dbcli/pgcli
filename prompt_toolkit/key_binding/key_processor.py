@@ -224,6 +224,13 @@ class KeyProcessor(object):
         app = get_app()
 
         while self.input_queue:
+            # When the application result is set, stop processing keys.  (E.g.
+            # if ENTER was received, followed by a few additional key strokes,
+            # leave the other keys in the queue.)
+            if app.is_done:
+                break
+
+            # Process next key.
             key_press = self.input_queue.popleft()
 
             if key_press.key != Keys.CPRResponse:
@@ -241,12 +248,6 @@ class KeyProcessor(object):
 
             if key_press.key != Keys.CPRResponse:
                 self.after_key_press.fire()
-
-            # When the application result is set, stop processing keys.  (E.g.
-            # if ENTER was received, followed by a few additional key strokes,
-            # leave the other keys in the queue.)
-            if app.is_done:
-                break
 
         # Invalidate user interface.
         app.invalidate()
