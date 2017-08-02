@@ -13,9 +13,11 @@ __all__ = (
     'clear_title',
 )
 
-
-def print(*values, sep=' ', end='\n', file=None, flush=False, style=None, output=None):
+def print(*values, **kwargs):
     """
+    ::
+        print(*values, sep=' ', end='\n', file=None, flush=False, style=None, output=None)
+
     Print a list of (style_str, text) tuples in the given style to the output.
     E.g.::
 
@@ -38,8 +40,17 @@ def print(*values, sep=' ', end='\n', file=None, flush=False, style=None, output
     :param end: String appended after the last value, default a newline.
     :param style: :class:`.Style` instance for the color scheme.
     """
+    # Pop kwargs (Python 2 compatibility).
+    sep = kwargs.pop('sep', ' ')
+    end = kwargs.pop('end', '\n')
+    file = kwargs.pop('file', None)
+    flush = kwargs.pop('flush', False)
+    style = kwargs.pop('style', None)
+    output = kwargs.pop('output', None)
+    assert not kwargs
     assert not (output and file)
 
+    # Other defaults.
     if style is None:
         style = default_style()
 
