@@ -69,6 +69,10 @@ class Application(object):
         `invalidate` call has not been executed yet, nothing will happen in any
         case.
 
+    :param max_render_postpone_time: When there is high CPU (a lot of other
+        scheduled calls), postpone the rendering max x seconds.  '0' means:
+        don't postpone. '.5' means: try to draw at least twice a second.
+
     Filters:
 
     :param mouse_support: (:class:`~prompt_toolkit.filters.Filter` or
@@ -111,6 +115,7 @@ class Application(object):
                  erase_when_done=False,
                  reverse_vi_search_direction=False,
                  min_redraw_interval=None,
+                 max_render_postpone_time=0,
 
                  on_reset=None, on_render=None, on_invalidate=None,
 
@@ -130,6 +135,7 @@ class Application(object):
         assert style is None or isinstance(style, BaseStyle)
         assert isinstance(erase_when_done, bool)
         assert min_redraw_interval is None or isinstance(min_redraw_interval, (float, int))
+        assert max_render_postpone_time is None or isinstance(max_render_postpone_time, (float, int))
 
         assert on_reset is None or callable(on_reset)
         assert on_render is None or callable(on_render)
@@ -160,6 +166,7 @@ class Application(object):
         self.reverse_vi_search_direction = reverse_vi_search_direction
         self.enable_page_navigation_bindings = enable_page_navigation_bindings
         self.min_redraw_interval = min_redraw_interval
+        self.max_render_postpone_time = max_render_postpone_time
 
         # Events.
         self.on_invalidate = Event(self, on_invalidate)
@@ -204,10 +211,6 @@ class Application(object):
         #: It can be used as a key for caching certain information during one
         #: rendering.
         self.render_counter = 0
-
-        #: When there is high CPU, postpone the rendering max x seconds.
-        #: '0' means: don't postpone. '.5' means: try to draw at least twice a second.
-        self.max_render_postpone_time = 0  # E.g. .5
 
         # Invalidate flag. When 'True', a repaint has been scheduled.
         self._invalidated = False
