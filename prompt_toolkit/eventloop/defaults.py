@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from prompt_toolkit.utils import is_windows
 from .base import EventLoop
+import threading
 
 __all__ = (
     'create_event_loop',
@@ -54,21 +55,28 @@ def use_asyncio_event_loop(loop=None):
 
 
 _loop = None
+_loop_lock = threading.RLock()
 
 
 def get_event_loop():
     """
     Return the current event loop.
-    This has to be called after setting an event loop, using `set_event_loop`.
-    (Unline Asyncio, we don't set a default loop.)
+    This will create a new loop if no loop was set yet.
     """
     # When this function is called for the first time, and no loop has been
     # set: create one.
     global _loop
-    if _loop is None:
-        _loop = create_event_loop()
 
-    return _loop
+    with _loop_lock:
+        # The following two lines are not atomic. I ended up in a situation
+        # where two threads were calling `get_event_loop()` at the same time,
+        # and that way we had two event loop instances. On one of the
+        # instances, `call_from_executor` was called, but never executed
+        # because that loop was not running.
+        if _loop is None:
+            _loop = create_event_loop()
+
+        return _loop
 
 
 def set_event_loop(loop):
