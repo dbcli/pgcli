@@ -58,6 +58,16 @@ class Application(object):
     :param reverse_vi_search_direction: Normally, in Vi mode, a '/' searches
         forward and a '?' searches backward. In readline mode, this is usually
         reversed.
+    :param min_redraw_interval: Number of seconds to wait between redraws. Use
+        this for applications where `invalidate` is called a lot. This could cause
+        a lot of terminal output, which some terminals are not able to process.
+        
+        `None` means that every `invalidate` will be scheduled right away
+        (which is usually fine).
+        
+        When one `invalidate` is called, but a scheduled redraw of a previous
+        `invalidate` call has not been executed yet, nothing will happen in any
+        case.
 
     Filters:
 
@@ -100,6 +110,7 @@ class Application(object):
                  editing_mode=EditingMode.EMACS,
                  erase_when_done=False,
                  reverse_vi_search_direction=False,
+                 min_redraw_interval=None,
 
                  on_reset=None, on_render=None, on_invalidate=None,
 
@@ -118,6 +129,7 @@ class Application(object):
         assert isinstance(editing_mode, six.string_types)
         assert style is None or isinstance(style, BaseStyle)
         assert isinstance(erase_when_done, bool)
+        assert min_redraw_interval is None or isinstance(min_redraw_interval, (float, int))
 
         assert on_reset is None or callable(on_reset)
         assert on_render is None or callable(on_render)
@@ -147,6 +159,7 @@ class Application(object):
         self.erase_when_done = erase_when_done
         self.reverse_vi_search_direction = reverse_vi_search_direction
         self.enable_page_navigation_bindings = enable_page_navigation_bindings
+        self.min_redraw_interval = min_redraw_interval
 
         # Events.
         self.on_invalidate = Event(self, on_invalidate)
@@ -199,6 +212,8 @@ class Application(object):
         # Invalidate flag. When 'True', a repaint has been scheduled.
         self._invalidated = False
         self._invalidate_events = []  # Collection of 'invalidate' Event objects.
+        self._last_redraw_time = 0  # Unix timestamp of last redraw. Used when
+                                    # `min_redraw_interval` is given.
 
         #: The `InputProcessor` instance.
         self.key_processor = KeyProcessor(_CombinedRegistry(self))
@@ -304,17 +319,37 @@ class Application(object):
             self._invalidated = False
             self._redraw()
 
-        # Call redraw in the eventloop (thread safe).
-        # Usually with the high priority, in order to make the application
-        # feel responsive, but this can be tuned by changing the value of
-        # `max_render_postpone_time`.
-        if self.max_render_postpone_time:
-            _max_postpone_until = time.time() + self.max_render_postpone_time
-        else:
-            _max_postpone_until = None
+        def schedule_redraw():
+            # Call redraw in the eventloop (thread safe).
+            # Usually with the high priority, in order to make the application
+            # feel responsive, but this can be tuned by changing the value of
+            # `max_render_postpone_time`.
+            if self.max_render_postpone_time:
+                _max_postpone_until = time.time() + self.max_render_postpone_time
+            else:
+                _max_postpone_until = None
 
-        call_from_executor(
-            redraw, _max_postpone_until=_max_postpone_until)
+            call_from_executor(
+                redraw, _max_postpone_until=_max_postpone_until)
+
+        if self.min_redraw_interval:
+            # When a minimum redraw interval is set, wait minimum this amount
+            # of time between redraws.
+            diff = time.time() - self._last_redraw_time
+            if diff < self.min_redraw_interval:
+                def redraw_in_future():
+                    time.sleep(self.min_redraw_interval - diff)
+                    schedule_redraw()
+                run_in_executor(redraw_in_future)
+            else:
+                schedule_redraw()
+        else:
+            schedule_redraw()
+
+    @property
+    def invalidated(self):
+        " True when a redraw operation has been scheduled. "
+        return self._invalidated
 
     def _redraw(self, render_as_done=False):
         """
@@ -325,6 +360,9 @@ class Application(object):
         """
         # Only draw when no sub application was started.
         if self._is_running and not self._running_in_terminal:
+            if self.min_redraw_interval:
+                self._last_redraw_time = time.time()
+
             # Clear the 'rendered_ui_controls' list. (The `Window` class will
             # populate this during the next rendering.)
             self.rendered_user_controls = []
