@@ -200,16 +200,20 @@ class FormattedTextControl(UIControl):
     :param focussable: `bool` or `Filter`: Tell whether this control is focussable.
 
     :param text: Text or formatted text to be displayed.
+    :param style: Style string applied to the content. (If you want to style
+        the whole ``Window``, pass the style to the ``Window`` instead.)
     :param key_bindings: a `KeyBindings` object.
     """
-    def __init__(self, text='', focussable=False, key_bindings=None,
+    def __init__(self, text='', style='', focussable=False, key_bindings=None,
                  show_cursor=True, modal=False):
         from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
+        assert isinstance(style, six.text_type)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert isinstance(show_cursor, bool)
         assert isinstance(modal, bool)
 
         self.text = text  # No type check on 'text'. This is done dynamically.
+        self.style = style
         self.focussable = to_filter(focussable)
 
         # Key bindings.
@@ -242,7 +246,7 @@ class FormattedTextControl(UIControl):
         """
         return self._fragment_cache.get(
             get_app().render_counter,
-            lambda: to_formatted_text(self.text))
+            lambda: to_formatted_text(self.text, self.style))
 
     def preferred_width(self, max_available_width):
         """
