@@ -148,7 +148,7 @@ class Win32EventLoop(EventLoop):
     def _process_queued_calls_from_executor(self):
         # Process calls from executor.
         calls_from_executor = self._calls_from_executor[:]
-        self._calls_from_executor.clear()
+        del self._calls_from_executor[:]
 
         for c in calls_from_executor:
             self._run_task(c)

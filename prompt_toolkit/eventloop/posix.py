@@ -104,7 +104,7 @@ class PosixEventLoop(EventLoop):
                     os.read(self._schedule_pipe[0], 1024)
 
                     calls_from_executor = self._calls_from_executor[:]
-                    self._calls_from_executor.clear()
+                    del self._calls_from_executor[:]
 
                     for c, max_postpone_until in calls_from_executor:
                         if max_postpone_until is None:
