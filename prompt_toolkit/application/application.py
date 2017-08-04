@@ -10,7 +10,6 @@ from prompt_toolkit.filters import to_filter
 from prompt_toolkit.input.base import Input
 from prompt_toolkit.input.defaults import get_default_input
 from prompt_toolkit.input.typeahead import store_typeahead, get_typeahead
-from prompt_toolkit.key_binding.bindings.mouse import load_mouse_bindings
 from prompt_toolkit.key_binding.bindings.page_navigation import load_page_navigation_bindings
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, ConditionalKeyBindings, KeyBindingsBase, merge_key_bindings
@@ -153,7 +152,6 @@ class Application(object):
         self.key_bindings = key_bindings
         self._default_bindings = load_key_bindings()
         self._page_navigation_bindings = load_page_navigation_bindings()
-        self._mouse_bindings = load_mouse_bindings()
 
         self.layout = layout
         self.clipboard = clipboard or InMemoryClipboard()
@@ -851,7 +849,6 @@ class _CombinedRegistry(KeyBindingsBase):
             self.app._page_navigation_bindings,
             self.app.enable_page_navigation_bindings))
         key_bindings.append(self.app._default_bindings)
-        key_bindings.append(self.app._mouse_bindings)
 
         # Reverse this list. The current control's key bindings should come
         # last. They need priority.

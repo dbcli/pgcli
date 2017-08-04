@@ -189,18 +189,6 @@ def load_basic_bindings():
         """
         event.current_buffer.insert_text(event.data)
 
-    @handle(Keys.CPRResponse, save_before=lambda e: False)
-    def _(event):
-        """
-        Handle incoming Cursor-Position-Request response.
-        """
-        # The incoming data looks like u'\x1b[35;1R'
-        # Parse row/col information.
-        row, col = map(int, event.data[2:-1].split(';'))
-
-        # Report absolute cursor position to the renderer.
-        event.app.renderer.report_absolute_cursor_row(row)
-
     @handle(Keys.BracketedPaste)
     def _(event):
         " Pasting from clipboard. "
