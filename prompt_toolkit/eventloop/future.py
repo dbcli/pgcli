@@ -5,6 +5,7 @@ from __future__ import unicode_literals, print_function
 from .base import EventLoop
 from .context import get_context_id, context
 from .defaults import get_event_loop
+import sys
 
 __all__ = (
     'Future',
@@ -36,6 +37,23 @@ class Future(object):
         # together with coroutines, when there are multiple active
         # applications, attached to different outputs.)
         self._ctx_id = get_context_id()
+
+
+    # Thanks to asyncio for the following destructor!
+    # On Python 3.3 and older, objects with a destructor part of a reference
+    # cycle are never destroyed. It's not more the case on Python 3.4 thanks
+    # to the PEP 442.
+    if sys.version_info >= (3, 4):
+        def __del__(self):
+            if self._exception and not self.done_callbacks:
+                exc = self._exception
+                context = {
+                    'message': ('%s exception was never retrieved'
+                                % self.__class__.__name__),
+                    'exception': exc,
+                    'future': self,
+                }
+                self.loop.call_exception_handler(context)
 
     @classmethod
     def succeed(cls, result):
