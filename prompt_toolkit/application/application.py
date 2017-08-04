@@ -196,11 +196,13 @@ class Application(object):
 
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
+        self._merged_style = merge_styles([
+            default_style(),
+            DynamicStyle(lambda: self.style),
+        ])
+
         self.renderer = Renderer(
-            merge_styles([
-                default_style(),
-                DynamicStyle(lambda: self.style),
-            ]),
+            self._merged_style,
             self.output,
             full_screen=full_screen,
             mouse_support=mouse_support)
@@ -783,7 +785,7 @@ class Application(object):
         :param text: List of ``(style_str, text)`` tuples.
         :param style: Style class to use. Defaults to the active style in the CLI.
         """
-        print_formatted_text(self.output, text, style or self.style)
+        print_formatted_text(self.output, text, style or self._merged_style)
 
     @property
     def is_running(self):
