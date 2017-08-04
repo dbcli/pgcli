@@ -35,7 +35,7 @@ from prompt_toolkit.completion import DynamicCompleter
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
 from prompt_toolkit.eventloop import ensure_future, Return, From
-from prompt_toolkit.filters import is_done, has_focus, RendererHeightIsKnown, to_filter, Condition, has_arg
+from prompt_toolkit.filters import is_done, has_focus, renderer_height_is_known, to_filter, Condition, has_arg
 from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.history import InMemoryHistory, DynamicHistory
 from prompt_toolkit.input.defaults import get_default_input
@@ -113,7 +113,9 @@ class _RPrompt(Window):
     " The prompt that is displayed on the right side of the Window. "
     def __init__(self, get_formatted_text):
         super(_RPrompt, self).__init__(
-            FormattedTextControl(get_formatted_text), align=Align.RIGHT)
+            FormattedTextControl(get_formatted_text),
+            align=Align.RIGHT,
+            style='class:rprompt')
 
 
 def _true(value):
@@ -353,10 +355,12 @@ class Prompt(object):
 
         # Create bottom toolbars.
         bottom_toolbar = ConditionalContainer(
-            Window(FormattedTextControl(self._get_bottom_toolbar),
-                                        style='class:bottom-toolbar',
-                                        height=Dimension.exact(1)),
-            filter=~is_done & RendererHeightIsKnown() &
+            Window(FormattedTextControl(
+                        lambda: self.bottom_toolbar,
+                        style='class:bottom-toolbar.text'),
+                   style='class:bottom-toolbar',
+                   height=Dimension.exact(1)),
+            filter=~is_done & renderer_height_is_known &
                     Condition(lambda: self.bottom_toolbar is not None))
 
         search_toolbar = SearchToolbar(search_buffer)
@@ -439,7 +443,7 @@ class Prompt(object):
                                   multi_column_complete_style)),
                     # The right prompt.
                     Float(right=0, top=0, hide_when_covering_content=True,
-                          content=_RPrompt(self._get_rprompt)),
+                          content=_RPrompt(lambda: self.rprompt)),
                 ]
             ),
             ValidationToolbar(),
@@ -683,9 +687,6 @@ class Prompt(object):
     def _get_prompt(self):
         return to_formatted_text(self.message, style='class:prompt')
 
-    def _get_rprompt(self):
-        return to_formatted_text(self.rprompt, style='class:rprompt')
-
     def _get_continuation(self, width):
         prompt_continuation = self.prompt_continuation
 
@@ -694,18 +695,6 @@ class Prompt(object):
 
         return to_formatted_text(
             prompt_continuation, style='class:prompt-continuation')
-
-    def _get_bottom_toolbar(self):
-        bottom_toolbar = self.bottom_toolbar
-
-        if bottom_toolbar is None:
-            return []
-
-        if callable(bottom_toolbar):
-            bottom_toolbar = bottom_toolbar()
-
-        return to_formatted_text(
-            bottom_toolbar, style='class:bottom-toolbar.text')
 
     def _get_arg_text(self, app):
         arg = app.key_processor.arg
