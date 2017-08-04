@@ -4,7 +4,7 @@ Example of printing colored text to the output.
 """
 from __future__ import unicode_literals
 from prompt_toolkit import print
-from prompt_toolkit.formatted_text import HTML, ANSI
+from prompt_toolkit.formatted_text import HTML, ANSI, FormattedText
 from prompt_toolkit.styles import Style
 
 
@@ -15,11 +15,11 @@ def main():
     })
 
     # Print using a a list of text fragments.
-    text_fragments = [
+    text_fragments = FormattedText([
         ('class:hello', 'Hello '),
         ('class:world', 'World'),
         ('', '\n'),
-    ]
+    ])
     print(text_fragments, style=style)
 
     # Print using an HTML object.

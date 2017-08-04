@@ -251,7 +251,11 @@ class HTML(object):
 
 
 def html_escape(text):
-    assert isinstance(text, six.text_type)
+    # The string interpolation functions also take integers and other types.
+    # Convert to string first.
+    if not isinstance(text, six.text_type):
+        text = '{}'.format(text)
+
     return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 

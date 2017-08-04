@@ -33,8 +33,8 @@ def main():
     # Background colors.
     title('Background colors')
 
-    print(HTML('    <span fg="ansiwhite" bg="ansired">ANSI Red</span>'))
-    print(HTML('    <span fg="ansiwhite" bg="ansiblue">ANSI Blue</span>'))
+    print(HTML('    <style fg="ansiwhite" bg="ansired">ANSI Red</style>'))
+    print(HTML('    <style fg="ansiwhite" bg="ansiblue">ANSI Blue</style>'))
 
     # Interpolation.
     title('HTML interpolation (see source)')
