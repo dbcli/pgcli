@@ -97,7 +97,7 @@ def test_html_interpolation():
     ]
 
     # Format function.
-    value = HTML('<b>{}</b><u>{}</u>').format('hello', 'world')
+    value = HTML('<b>{0}</b><u>{1}</u>').format('hello', 'world')
     assert to_formatted_text(value) == [
         ('class:b', 'hello'),
         ('class:u', 'world')
