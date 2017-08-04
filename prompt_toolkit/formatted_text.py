@@ -234,7 +234,7 @@ class HTML(object):
         """
         # Escape all the arguments.
         args = [html_escape(a) for a in args]
-        kwargs = {k: html_escape(v) for k, v in kwargs.items()}
+        kwargs = dict((k, html_escape(v)) for k, v in kwargs.items())
 
         return HTML(self.value.format(*args, **kwargs))
 
