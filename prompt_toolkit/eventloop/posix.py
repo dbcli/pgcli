@@ -100,7 +100,13 @@ class PosixEventLoop(EventLoop):
                 # For the 'call_from_executor' fd, put each pending
                 # item on either the high or low priority queue.
                 if fd == self._schedule_pipe[0]:
-                    for c, max_postpone_until in self._calls_from_executor:
+                    # Flush all the pipe content.
+                    os.read(self._schedule_pipe[0], 1024)
+
+                    calls_from_executor = self._calls_from_executor[:]
+                    self._calls_from_executor.clear()
+
+                    for c, max_postpone_until in calls_from_executor:
                         if max_postpone_until is None:
                             # Execute now.
                             tasks.append(c)
@@ -111,10 +117,6 @@ class PosixEventLoop(EventLoop):
                                 tasks.append(c)
                             else:
                                 low_priority_tasks.append((c, max_postpone_until))
-                    self._calls_from_executor = []
-
-                    # Flush all the pipe content.
-                    os.read(self._schedule_pipe[0], 1024)
                 else:
                     handler = self._read_fds.get(fd)
                     if handler:
