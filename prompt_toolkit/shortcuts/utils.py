@@ -66,7 +66,7 @@ def print(*values, **kwargs):
     # Merges values.
     def to_text(val):
         if isinstance(val, list):
-            return to_formatted_text('{}'.format(val))
+            return to_formatted_text('{0}'.format(val))
         return to_formatted_text(val, auto_convert=True)
 
     fragments = []
