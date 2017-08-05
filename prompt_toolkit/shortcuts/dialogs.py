@@ -20,7 +20,7 @@ __all__ = (
 
 
 def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None,
-                  async_=True):
+                  async_=False):
     """
     Display a Yes/No dialog.
     Return a boolean.
