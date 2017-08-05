@@ -24,7 +24,7 @@ from prompt_toolkit.output.defaults import get_default_output
 from prompt_toolkit.renderer import Renderer, print_formatted_text
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.styles import BaseStyle, default_style, merge_styles, DynamicStyle
-from prompt_toolkit.utils import Event
+from prompt_toolkit.utils import Event, in_main_thread
 from .current import set_app
 
 from subprocess import Popen
@@ -519,7 +519,7 @@ class Application(object):
                     self.renderer.request_absolute_cursor_position()
                     self._redraw()
 
-                    has_sigwinch = hasattr(signal, 'SIGWINCH')
+                    has_sigwinch = hasattr(signal, 'SIGWINCH') and in_main_thread()
                     if has_sigwinch:
                         previous_winch_handler = loop.add_signal_handler(
                             signal.SIGWINCH, self._on_resize)
