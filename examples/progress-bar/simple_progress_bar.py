@@ -9,8 +9,8 @@ import time
 
 def main():
     with progress_bar() as pb:
-        for i in pb(range(20)):
-            time.sleep(.5)
+        for i in pb(range(200)):
+            time.sleep(.01)
 
 
 if __name__ == '__main__':

@@ -157,13 +157,14 @@ class progress_bar(object):
 
         self._thread.join()
 
-    def __call__(self, data=None, title='', keep=False, total=None):
+    def __call__(self, data=None, title='', remove_when_done=False, total=None):
         """
         Start a new counter.
 
-        :param keep: When `True`, don't remove this progress bar when done.
+        :param remove_when_done: When `True`, hide this progress bar.
         """
-        counter = ProgressBarCounter(self, data, title=title, keep=keep, total=total)
+        counter = ProgressBarCounter(
+            self, data, title=title, remove_when_done=remove_when_done, total=total)
         self.counters.append(counter)
         return counter
 
@@ -203,13 +204,13 @@ class ProgressBarCounter(object):
     """
     An individual counter (A progress bar can have multiple counters).
     """
-    def __init__(self, progress_bar, data=None, title='', keep=False, total=None):
+    def __init__(self, progress_bar, data=None, title='', remove_when_done=False, total=None):
         self.start_time = datetime.datetime.now()
         self.progress_bar = progress_bar
         self.data = data
         self.current = 0
         self.title = title
-        self.keep = keep
+        self.remove_when_done = remove_when_done
         self.done = False
 
         if total is None:
@@ -226,7 +227,7 @@ class ProgressBarCounter(object):
         finally:
             self.done = True
 
-            if not self.keep:
+            if self.remove_when_done:
                 self.progress_bar.counters.remove(self)
 
     @property
