@@ -237,7 +237,7 @@ class PGCli(object):
             self.pgexecute.connect()
 
         yield (None, None, None, 'You are now connected to database "%s" as '
-                'user "%s"' % (self.pgexecute.dbname, self.pgexecute.user))
+               'user "%s"' % (self.pgexecute.dbname, self.pgexecute.user))
 
     def execute_from_file(self, pattern, **_):
         if not pattern:
