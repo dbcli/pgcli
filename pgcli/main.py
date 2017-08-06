@@ -946,6 +946,19 @@ def format_output(title, cur, headers, status, settings):
     case_function = settings.case_function
     formatter = TabularOutputFormatter(format_name=table_format)
 
+    def format_array(val):
+        if val is None:
+            return settings.missingval
+        if not isinstance(val, list):
+            return val
+        return '{' + ','.join(unicode(format_array(e)) for e in val) + '}'
+
+    def format_arrays(data, headers, column_types, **kwargs):
+        for row in data:
+            row[:] = [format_array(val) if isinstance(val, list) else val for val in row]
+
+        return data, headers
+
     output_kwargs = {
         'sep_title': 'RECORD {n}',
         'sep_character': '-',
@@ -953,7 +966,7 @@ def format_output(title, cur, headers, status, settings):
         'missing_value': settings.missingval,
         'integer_format': settings.dcmlfmt,
         'float_format': settings.floatfmt,
-        'preprocessors': (format_numbers, ),
+        'preprocessors': (format_numbers, format_arrays),
         'disable_numparse': True,
         'preserve_whitespace': True
     }

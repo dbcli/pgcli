@@ -1,6 +1,8 @@
+# coding=utf-8
 import os
 import platform
 import mock
+from decimal import Decimal
 
 import pytest
 try:
@@ -53,6 +55,52 @@ def test_format_output():
     results = format_output('Title', [('abc', 'def')], ['head1', 'head2'],
                             'test status', settings)
     expected = ['Title', '+---------+---------+\n| head1   | head2   |\n|---------+---------|\n| abc     | def     |\n+---------+---------+', 'test status']
+    assert results == expected
+
+
+def test_format_array_output(executor):
+    statement = u"""
+    SELECT
+        array[1, 2, 3]::bigint[] as bigint_array,
+        '{{1,2},{3,4}}'::numeric[] as nested_numeric_array,
+        '{å,魚,текст}'::text[] as 配列
+    UNION ALL
+    SELECT '{}', NULL, array[NULL]
+    """
+    results = run(executor, statement)
+    expected = [
+        u'+----------------+------------------------+--------------+\n'
+        u'| bigint_array   | nested_numeric_array   | 配列         |\n'
+        u'|----------------+------------------------+--------------|\n'
+        u'| {1,2,3}        | {{1,2},{3,4}}          | {å,魚,текст} |\n'
+        u'| {}             | <null>                 | {<null>}     |\n'
+        u'+----------------+------------------------+--------------+',
+        u'SELECT 2'
+    ]
+    assert results == expected
+
+
+def test_format_array_output_expanded(executor):
+    statement = u"""
+    SELECT
+        array[1, 2, 3]::bigint[] as bigint_array,
+        '{{1,2},{3,4}}'::numeric[] as nested_numeric_array,
+        '{å,魚,текст}'::text[] as 配列
+    UNION ALL
+    SELECT '{}', NULL, array[NULL]
+    """
+    results = run(executor, statement, expanded=True)
+    expected = [
+        u'-[ RECORD 1 ]-------------------------\n'
+        u'bigint_array         | {1,2,3}\n'
+        u'nested_numeric_array | {{1,2},{3,4}}\n'
+        u'配列                   | {å,魚,текст}\n'
+        u'-[ RECORD 2 ]-------------------------\n'
+        u'bigint_array         | {}\n'
+        u'nested_numeric_array | <null>\n'
+        u'配列                   | {<null>}\n',
+        u'SELECT 2'
+    ]
     assert results == expected
 
 
