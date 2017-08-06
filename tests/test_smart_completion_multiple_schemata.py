@@ -9,7 +9,7 @@ metadata = {
         'public': {
             'users': ['id', 'email', 'first_name', 'last_name'],
             'orders': ['id', 'ordered_date', 'status', 'datestamp'],
-            'select': ['id', 'insert', 'ABC']
+            'select': ['id', 'localtime', 'ABC']
         },
         'custom': {
             'users': ['id', 'phone_number'],
@@ -364,7 +364,7 @@ def test_wildcard_column_expansion_with_table_qualifier(completer):
 
     completions = get_result(completer, text, position)
 
-    col_list = 'id, "select"."insert", "select"."ABC"'
+    col_list = 'id, "select"."localtime", "select"."ABC"'
     expected = [wildcard_expansion(col_list)]
 
     assert expected == completions
@@ -377,7 +377,7 @@ def test_wildcard_column_expansion_with_two_tables(completer):
 
     completions = get_result(completer, text, position)
 
-    cols = ('"select".id, "select"."insert", "select"."ABC", '
+    cols = ('"select".id, "select"."localtime", "select"."ABC", '
         'users.id, users.phone_number')
     expected = [wildcard_expansion(cols)]
     assert completions == expected
@@ -390,7 +390,7 @@ def test_wildcard_column_expansion_with_two_tables_and_parent(completer):
 
     completions = get_result(completer, text, position)
 
-    col_list = 'id, "select"."insert", "select"."ABC"'
+    col_list = 'id, "select"."localtime", "select"."ABC"'
     expected = [wildcard_expansion(col_list)]
 
     assert expected == completions

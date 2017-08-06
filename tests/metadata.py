@@ -13,7 +13,7 @@ no_qual = ['if_more_than_one_table', 'never']
 
 
 def escape(name):
-    if not name.islower() or name in ('select', 'insert'):
+    if not name.islower() or name in ('select', 'localtimestamp'):
         return '"' + name + '"'
     return name
 

@@ -74,6 +74,7 @@ class PGCompleter(Completer):
     keywords = tuple(set(chain(keywords_tree.keys(), *keywords_tree.values())))
     functions = get_literals('functions')
     datatypes = get_literals('datatypes')
+    reserved_words = set(get_literals('reserved'))
 
     def __init__(self, smart_completion=True, pgspecial=None, settings=None):
         super(PGCompleter, self).__init__()
@@ -110,10 +111,6 @@ class PGCompleter(Completer):
         if keyword_casing not in ('upper', 'lower', 'auto'):
             keyword_casing = 'upper'
         self.keyword_casing = keyword_casing
-
-        self.reserved_words = set()
-        for x in self.keywords:
-            self.reserved_words.update(x.split())
         self.name_pattern = re.compile(r"^[_a-z][_a-z0-9\$]*$")
 
         self.databases = []
