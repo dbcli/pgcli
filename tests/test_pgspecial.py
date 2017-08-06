@@ -56,12 +56,12 @@ def test_d_dot_suggests_schema_qualified_tables_or_views():
 def test_df_suggests_schema_or_function():
     suggestions = suggest_type('\\df xxx', '\\df xxx')
     assert set(suggestions) == set([
-        Function(schema=None),
+        Function(schema=None, usage='special'),
         Schema(),
     ])
 
     suggestions = suggest_type('\\df myschema.xxx', '\\df myschema.xxx')
-    assert suggestions == (Function(schema='myschema'),)
+    assert suggestions == (Function(schema='myschema', usage='special'),)
 
 
 def test_leading_whitespace_ok():

@@ -35,13 +35,13 @@ testdata = MetaData(metadata)
 
 cased_users_col_names = ['ID', 'PARENTID', 'Email', 'First_Name', 'last_name']
 cased_users2_col_names = ['UserID', 'UserName']
-cased_funcs = [
+cased_func_names = [
     'Custom_Fun', '_custom_fun', 'Custom_Func1', 'custom_func2', 'set_returning_func'
 ]
 cased_tbls = ['Users', 'Orders']
 cased_views = ['User_Emails', 'Functions']
 casing = (
-    ['SELECT', 'PUBLIC'] + cased_funcs + cased_tbls + cased_views
+    ['SELECT', 'PUBLIC'] + cased_func_names + cased_tbls + cased_views
     + cased_users_col_names + cased_users2_col_names
 )
 # Lists for use in assertions
@@ -145,6 +145,12 @@ def test_user_function_name_completion_matches_anywhere(completer):
         function('_custom_fun()', -2),
         function('custom_func1()', -2),
         function('custom_func2()', -2)])
+
+
+@parametrize('completer', completers(casing=True))
+def test_list_functions_for_special(completer):
+    result = result_set(completer, r'\df ')
+    assert result == set([schema('PUBLIC')] + [function(f) for f in cased_func_names])
 
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
