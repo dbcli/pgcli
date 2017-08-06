@@ -220,8 +220,19 @@ class PGCli(object):
 
     def change_db(self, pattern, **_):
         if pattern:
-            db = pattern[1:-1] if pattern[0] == pattern[-1] == '"' else pattern
-            self.pgexecute.connect(database=db)
+            # Get all the parameters in pattern, handling double quotes if any.
+            infos = re.findall(r'"[^"]*"|[^"\'\s]+', pattern)
+            # Now removing quotes.
+            list(map(lambda s: s.strip('"'), infos))
+
+            infos.extend([None] * (4 - len(infos)))
+            db, user, host, port = infos
+            try:
+                self.pgexecute.connect(database=db, user=user, host=host,
+                                       port=port)
+            except OperationalError as e:
+                click.secho(str(e), err=True, fg='red')
+                click.echo("Previous connection kept")
         else:
             self.pgexecute.connect()
 
