@@ -212,9 +212,9 @@ the docker container:
 IPython
 =======
 
-Pgcli can be run from within IPython console. When working on a query, it may be useful to drop
-into a pgcli session without leaving the IPython console, iterate on a query, then quit pgcli
-to find the query results in your IPython workspace.
+Pgcli can be run from within `IPython <https://ipython.org>`_ console. When working on a query,
+it may be useful to drop into a pgcli session without leaving the IPython console, iterate on a
+query, then quit pgcli to find the query results in your IPython workspace.
 
 Assuming you have IPython installed:
 
