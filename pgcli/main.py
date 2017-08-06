@@ -50,6 +50,7 @@ from .config import (get_casing_file,
     load_config, config_location, ensure_dir_exists, get_config)
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
+from .encodingutils import text_type
 from .__init__ import __version__
 
 click.disable_unicode_literals_warning = True
@@ -64,8 +65,6 @@ from psycopg2 import OperationalError, InterfaceError
 
 from collections import namedtuple
 
-if sys.version_info[0] > 2:
-    unicode = str
 
 # Query tuples are used for maintaining history
 MetaQuery = namedtuple(
@@ -954,7 +953,7 @@ def format_output(title, cur, headers, status, settings):
             return settings.missingval
         if not isinstance(val, list):
             return val
-        return '{' + ','.join(unicode(format_array(e)) for e in val) + '}'
+        return '{' + ','.join(text_type(format_array(e)) for e in val) + '}'
 
     def format_arrays(data, headers, column_types, **kwargs):
         for row in data:
