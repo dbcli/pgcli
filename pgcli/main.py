@@ -64,6 +64,9 @@ from psycopg2 import OperationalError, InterfaceError
 
 from collections import namedtuple
 
+if sys.version_info[0] > 2:
+    unicode = str
+
 # Query tuples are used for maintaining history
 MetaQuery = namedtuple(
     'Query',
