@@ -227,14 +227,6 @@ After that, run ipython and load the ``pgcli.magic`` extension:
 ::
 
     $ ipython
-    Python 2.7.12 (default, Nov  1 2016, 07:58:43)
-    Type "copyright", "credits" or "license" for more information.
-
-    IPython 5.4.1 -- An enhanced Interactive Python.
-    ?         -> Introduction and overview of IPython's features.
-    %quickref -> Quick reference.
-    help      -> Python's own help system.
-    object?   -> Details about 'object', use 'object??' for extra details.
 
     In [1]: %load_ext pgcli.magic
 
@@ -245,10 +237,6 @@ Connect to a database and construct a query:
 
     In [2]: %pgcli postgres://someone@localhost:5432/world
     Connected: someone@world
-    Version: 1.7.0
-    Chat: https://gitter.im/dbcli/pgcli
-    Mail: https://groups.google.com/forum/#!forum/pgcli
-    Home: http://pgcli.com
     someone@localhost:world> select * from city c where countrycode = 'USA' and population > 1000000;
     +------+--------------+---------------+--------------+--------------+
     | id   | name         | countrycode   | district     | population   |
