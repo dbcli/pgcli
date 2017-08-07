@@ -955,7 +955,7 @@ def format_output(title, cur, headers, status, settings):
             return val
         return '{' + ','.join(text_type(format_array(e)) for e in val) + '}'
 
-    def format_arrays(data, headers, column_types, **kwargs):
+    def format_arrays(data, headers, **_):
         data = list(data)
         for row in data:
             row[:] = [format_array(val) if isinstance(val, list) else val for val in row]
