@@ -6,12 +6,15 @@ Features:
 
 * Add fish-style auto-suggestion from history. (Thanks: `Amjith Ramanujam`_)
 * Improved formatting of arrays in output (Thanks: `Joakim Koljonen`_)
+* Don't quote identifiers that are non-reserved keywords. (Thanks: `Joakim Koljonen`_)
 * Remove the ``...`` in the continuation prompt and use empty space instead. (Thanks: `Amjith Ramanujam`_)
 
 Bug Fixes:
 ----------
 
 * Fix the way we get host when using DSN (issue #765) (Thanks: `François Pietka`_)
+* Add missing keyword COLUMN after DROP (issue #769) (Thanks: `François Pietka`_)
+* Don't include arguments in function suggestions for backslash commands (Thanks: `Joakim Koljonen`_)
 
 1.7.0
 =====
