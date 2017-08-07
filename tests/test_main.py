@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import unicode_literals
 import os
 import platform
 import mock
@@ -77,13 +78,13 @@ def test_format_array_output(executor):
     """
     results = run(executor, statement)
     expected = [
-        u'+----------------+------------------------+--------------+\n'
-        u'| bigint_array   | nested_numeric_array   | 配列         |\n'
-        u'|----------------+------------------------+--------------|\n'
-        u'| {1,2,3}        | {{1,2},{3,4}}          | {å,魚,текст} |\n'
-        u'| {}             | <null>                 | {<null>}     |\n'
-        u'+----------------+------------------------+--------------+',
-        u'SELECT 2'
+        '+----------------+------------------------+--------------+\n'
+        '| bigint_array   | nested_numeric_array   | 配列         |\n'
+        '|----------------+------------------------+--------------|\n'
+        '| {1,2,3}        | {{1,2},{3,4}}          | {å,魚,текст} |\n'
+        '| {}             | <null>                 | {<null>}     |\n'
+        '+----------------+------------------------+--------------+',
+        'SELECT 2'
     ]
     assert results == expected
 
@@ -99,15 +100,15 @@ def test_format_array_output_expanded(executor):
     """
     results = run(executor, statement, expanded=True)
     expected = [
-        u'-[ RECORD 1 ]-------------------------\n'
-        u'bigint_array         | {1,2,3}\n'
-        u'nested_numeric_array | {{1,2},{3,4}}\n'
-        u'配列                   | {å,魚,текст}\n'
-        u'-[ RECORD 2 ]-------------------------\n'
-        u'bigint_array         | {}\n'
-        u'nested_numeric_array | <null>\n'
-        u'配列                   | {<null>}\n',
-        u'SELECT 2'
+        '-[ RECORD 1 ]-------------------------\n'
+        'bigint_array         | {1,2,3}\n'
+        'nested_numeric_array | {{1,2},{3,4}}\n'
+        '配列                   | {å,魚,текст}\n'
+        '-[ RECORD 2 ]-------------------------\n'
+        'bigint_array         | {}\n'
+        'nested_numeric_array | <null>\n'
+        '配列                   | {<null>}\n',
+        'SELECT 2'
     ]
     assert results == expected
 
@@ -136,7 +137,7 @@ def test_format_output_auto_expand():
     )
     expanded = [
         'Title',
-        u'-[ RECORD 1 ]-------------------------\n'
+        '-[ RECORD 1 ]-------------------------\n'
         'head1 | abc\n'
         'head2 | def\n',
         'test status'
