@@ -958,7 +958,10 @@ def format_output(title, cur, headers, status, settings):
     def format_arrays(data, headers, **_):
         data = list(data)
         for row in data:
-            row[:] = [format_array(val) if isinstance(val, list) else val for val in row]
+            row[:] = [
+                format_array(val) if isinstance(val, list) else val
+                for val in row
+            ]
 
         return data, headers
 
