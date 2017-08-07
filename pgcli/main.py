@@ -50,6 +50,7 @@ from .config import (get_casing_file,
     load_config, config_location, ensure_dir_exists, get_config)
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
+from .encodingutils import text_type
 from .__init__ import __version__
 
 click.disable_unicode_literals_warning = True
@@ -63,6 +64,7 @@ from getpass import getuser
 from psycopg2 import OperationalError, InterfaceError
 
 from collections import namedtuple
+
 
 # Query tuples are used for maintaining history
 MetaQuery = namedtuple(
@@ -946,6 +948,23 @@ def format_output(title, cur, headers, status, settings):
     case_function = settings.case_function
     formatter = TabularOutputFormatter(format_name=table_format)
 
+    def format_array(val):
+        if val is None:
+            return settings.missingval
+        if not isinstance(val, list):
+            return val
+        return '{' + ','.join(text_type(format_array(e)) for e in val) + '}'
+
+    def format_arrays(data, headers, **_):
+        data = list(data)
+        for row in data:
+            row[:] = [
+                format_array(val) if isinstance(val, list) else val
+                for val in row
+            ]
+
+        return data, headers
+
     output_kwargs = {
         'sep_title': 'RECORD {n}',
         'sep_character': '-',
@@ -953,7 +972,7 @@ def format_output(title, cur, headers, status, settings):
         'missing_value': settings.missingval,
         'integer_format': settings.dcmlfmt,
         'float_format': settings.floatfmt,
-        'preprocessors': (format_numbers, ),
+        'preprocessors': (format_numbers, format_arrays),
         'disable_numparse': True,
         'preserve_whitespace': True
     }

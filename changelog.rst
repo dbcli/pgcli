@@ -5,6 +5,7 @@ Features:
 ---------
 
 * Add fish-style auto-suggestion from history. (Thanks: `Amjith Ramanujam`_)
+* Improved formatting of arrays in output (Thanks: `Joakim Koljonen`_)
 * Don't quote identifiers that are non-reserved keywords. (Thanks: `Joakim Koljonen`_)
 * Remove the ``...`` in the continuation prompt and use empty space instead. (Thanks: `Amjith Ramanujam`_)
 
