@@ -127,3 +127,16 @@ def test_port_db_uri(tmpdir):
                                     user='bar',
                                     passwd='foo',
                                     port='2543')
+
+
+def test_search_socketdir():
+    cli = PGCli()
+    with mock.patch('pgcli.main.os.path.isdir', autospec=True) as isdir:
+        isdir.side_effect = iter([
+            False, False, True, AssertionError("not reached"),
+        ])
+
+        socketdir = cli.guess_socketdir()
+
+        assert isdir.called is True
+        assert '/usr/local/var/postgres' == socketdir

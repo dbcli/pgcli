@@ -288,9 +288,6 @@ class PGCli(object):
         pgspecial_logger.addHandler(handler)
         pgspecial_logger.setLevel(log_level)
 
-    def connect_dsn(self, dsn):
-        self.connect(dsn=dsn)
-
     def connect_uri(self, uri):
         uri = urlparse(uri)
         database = uri.path[1:]  # ignore the leading fwd slash
@@ -312,9 +309,23 @@ class PGCli(object):
         # unquote str(each URI part (they may be percent encoded)
         self.connect(**arguments)
 
+    def guess_socketdir(self):
+        candidates = [
+            '/var/run/postgresql',
+            '/var/pgsql_socket',
+            '/usr/local/var/postgres',
+            '/tmp',
+        ]
+
+        for candidate in candidates:
+            if os.path.isdir(candidate):
+                return candidate
+
     def connect(self, database='', host='', user='', port='', passwd='',
                 dsn='', **kwargs):
         # Connect to the database.
+        if not host:
+            host = self.guess_socketdir() or ''
 
         if not user:
             user = getuser()
@@ -838,9 +849,9 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
     elif '://' in database:
         pgcli.connect_uri(database)
     elif "=" in database:
-        pgcli.connect_dsn(database)
+        pgcli.connect(dsn=database)
     elif os.environ.get('PGSERVICE', None):
-        pgcli.connect_dsn('service={0}'.format(os.environ['PGSERVICE']))
+        pgcli.connect(dsn='service={0}'.format(os.environ['PGSERVICE']))
     else:
         pgcli.connect(database, host, user, port)
 
