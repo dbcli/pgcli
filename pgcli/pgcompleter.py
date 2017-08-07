@@ -653,7 +653,10 @@ class PGCompleter(Completer):
             alias = False
 
             def filt(f): return True
-        arg_mode = 'signature' if suggestion.usage == 'signature' else 'call'
+        arg_mode = {
+            'signature': 'signature',
+            'special': None,
+        }.get(suggestion.usage, 'call')
         # Function overloading means we way have multiple functions of the same
         # name at this point, so keep unique names only
         funcs = set(
