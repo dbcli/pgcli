@@ -150,7 +150,9 @@ def test_user_function_name_completion_matches_anywhere(completer):
 @parametrize('completer', completers(casing=True))
 def test_list_functions_for_special(completer):
     result = result_set(completer, r'\df ')
-    assert result == set([schema('PUBLIC')] + [function(f) for f in cased_func_names])
+    assert result == set(
+        [schema('PUBLIC')] + [function(f) for f in cased_func_names]
+    )
 
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
