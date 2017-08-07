@@ -279,8 +279,12 @@ def suggest_special(text):
     elif cmd[1:] in SPECIALS_SUGGESTION:
         rel_type = SPECIALS_SUGGESTION[cmd[1:]]
         if schema:
+            if rel_type == Function:
+                return (Function(schema=schema, usage='special'),)
             return (rel_type(schema=schema),)
         else:
+            if rel_type == Function:
+                return (Schema(), Function(schema=None, usage='special'),)
             return (Schema(), rel_type(schema=None))
 
     if cmd in ['\\n', '\\ns', '\\nd']:
