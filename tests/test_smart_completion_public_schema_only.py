@@ -732,7 +732,7 @@ def test_wildcard_column_expansion_with_two_tables(completer):
 
     completions = get_result(completer, text, position)
 
-    cols = ('"select".id, "select"."insert", "select"."ABC", '
+    cols = ('"select".id, "select".insert, "select"."ABC", '
         'u.id, u.parentid, u.email, u.first_name, u.last_name')
     expected = [wildcard_expansion(cols)]
     assert completions == expected
@@ -745,7 +745,7 @@ def test_wildcard_column_expansion_with_two_tables_and_parent(completer):
 
     completions = get_result(completer, text, position)
 
-    col_list = 'id, "select"."insert", "select"."ABC"'
+    col_list = 'id, "select".insert, "select"."ABC"'
     expected = [wildcard_expansion(col_list)]
 
     assert expected == completions
