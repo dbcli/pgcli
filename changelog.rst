@@ -11,6 +11,7 @@ Bug Fixes:
 ----------
 
 * Fix the way we get host when using DSN (issue #765) (Thanks: `François Pietka`_)
+* Add missing keyword COLUMN after DROP (issue #769) (Thanks: `François Pietka`_)
 * Don't include arguments in function suggestions for backslash commands (Thanks: `Joakim Koljonen`_)
 
 1.7.0

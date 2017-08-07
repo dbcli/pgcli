@@ -110,6 +110,7 @@
             "AGGREGATE",
             "CAST",
             "COLLATION",
+            "COLUMN",
             "CONVERSION",
             "DATABASE",
             "DOMAIN",
