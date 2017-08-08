@@ -32,5 +32,9 @@ with progress_bar(
     for t in threads:
         t.start()
 
+    # Wait for the threads to finish. We use a timeout for the join() call,
+    # because on Windows, join cannot be interrupted by Control-C or any other
+    # signal.
     for t in threads:
-        t.join()
+        while t.is_alive():
+            t.join(timeout=.5)
