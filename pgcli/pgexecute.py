@@ -221,6 +221,9 @@ class PGExecute(object):
         self.host = host
         self.port = port
 
+        if not self.host:
+            self.host = self.get_socket_directory()
+
         cursor.execute("SHOW ALL")
         db_parameters = dict(name_val_desc[:2] for name_val_desc in cursor.fetchall())
 
