@@ -156,6 +156,12 @@ class PGExecute(object):
         FROM pg_catalog.pg_database d
         ORDER BY 1'''
 
+    socket_directory_query = '''
+        SELECT setting
+        FROM pg_settings
+        WHERE name = 'unix_socket_directories'
+    '''
+
     def __init__(self, database, user, password, host, port, dsn, **kwargs):
         self.dbname = database
         self.user = user
@@ -490,6 +496,13 @@ class PGExecute(object):
             cur.execute(self.full_databases_query)
             headers = [x[0] for x in cur.description]
             return cur.fetchall(), headers, cur.statusmessage
+
+    def get_socket_directory(self):
+        with self.conn.cursor() as cur:
+            _logger.debug('Socket directory Query. sql: %r',
+                          self.socket_directory_query)
+            cur.execute(self.socket_directory_query)
+            return cur.fetchone()[0]
 
     def foreignkeys(self):
         """Yields ForeignKey named tuples"""
