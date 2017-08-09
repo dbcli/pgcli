@@ -123,6 +123,9 @@ min_num_menu_lines = 4
 # Character used to left pad multi-line queries to match the prompt size.
 multiline_continuation_char = ''
 
+# The string used in place of a null value.
+null_string = '<null>'
+
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
 Token.Menu.Completions.Completion.Current = 'bg:#ffffff #000000'
