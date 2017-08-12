@@ -17,8 +17,16 @@ class EmailValidator(Validator):
 
 
 def main():
-    text = prompt('Enter e-mail address: ', validator=EmailValidator())
+    # Validate when pressing ENTER.
+    text = prompt('Enter e-mail address: ', validator=EmailValidator(),
+                  validate_while_typing=False)
     print('You said: %s' % text)
+
+    # While typing
+    text = prompt('Enter e-mail address: ', validator=EmailValidator(),
+                  validate_while_typing=True)
+    print('You said: %s' % text)
+
 
 if __name__ == '__main__':
     main()
