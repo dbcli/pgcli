@@ -151,22 +151,25 @@ class ScrollbarMargin(Margin):
         return 1
 
     def create_margin(self, window_render_info, width, height):
-        total_height = window_render_info.content_height
+        content_height = window_render_info.content_height
+        window_height = window_render_info.window_height
         display_arrows = self.display_arrows()
 
-        window_height = window_render_info.window_height
         if display_arrows:
             window_height -= 2
 
         try:
-            items_per_row = float(total_height) / min(total_height, window_height)
+            fraction_visible = len(window_render_info.displayed_lines) / float(content_height)
+            fraction_above = window_render_info.vertical_scroll / float(content_height)
+
+            scrollbar_height = int(min(window_height, max(1, window_height * fraction_visible)))
+            scrollbar_top = int(window_height * fraction_above)
         except ZeroDivisionError:
             return []
         else:
             def is_scroll_button(row):
                 " True if we should display a button on this row. "
-                current_row_middle = int((row + .5) * items_per_row)
-                return current_row_middle in window_render_info.displayed_lines
+                return scrollbar_top <= row <= scrollbar_top + scrollbar_height
 
             # Up arrow.
             result = []
