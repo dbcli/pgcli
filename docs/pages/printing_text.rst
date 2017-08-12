@@ -1,4 +1,4 @@
-.. _echo_text:
+.. _printing_text:
 
 Echoing text
 ============

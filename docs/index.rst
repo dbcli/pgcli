@@ -115,7 +115,7 @@ Table of contents
    :maxdepth: 3
 
    pages/gallery
-   pages/echo_text
+   pages/printing_text
    pages/building_prompts
    pages/dialogs
    pages/full_screen_apps
