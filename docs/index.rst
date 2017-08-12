@@ -115,8 +115,9 @@ Table of contents
    :maxdepth: 3
 
    pages/gallery
-   pages/building_prompts
    pages/echo_text
+   pages/building_prompts
+   pages/dialogs
    pages/full_screen_apps
    pages/architecture
    pages/reference
