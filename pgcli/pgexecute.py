@@ -345,7 +345,8 @@ class PGExecute(object):
 
         """
         return (isinstance(e, psycopg2.OperationalError) and
-                psycopg2.errorcodes.lookup(e.pgcode) != 'LOCK_NOT_AVAILABLE')
+                (not e.pgcode or
+                 psycopg2.errorcodes.lookup(e.pgcode) != 'LOCK_NOT_AVAILABLE'))
 
     def execute_normal_sql(self, split_sql):
         """Returns tuple (title, rows, headers, status)"""
