@@ -30,6 +30,7 @@ class Future(object):
         self._result = None
         self._exception = None
         self._done = False
+        self._retrieved_result = False
 
         # Keep track of which `TaskContext` was active when this Future was
         # created.  This is the one that will be viewed as visible when the
@@ -38,14 +39,13 @@ class Future(object):
         # applications, attached to different outputs.)
         self._ctx_id = get_context_id()
 
-
     # Thanks to asyncio for the following destructor!
     # On Python 3.3 and older, objects with a destructor part of a reference
     # cycle are never destroyed. It's not more the case on Python 3.4 thanks
     # to the PEP 442.
     if sys.version_info >= (3, 4):
         def __del__(self):
-            if self._exception and not self.done_callbacks:
+            if self._exception and not self._retrieved_result:
                 exc = self._exception
                 context = {
                     'message': ('%s exception was never retrieved'
@@ -86,6 +86,7 @@ class Future(object):
         # When a result has already been set. Call callback right away.
         if self._done:
             def call_cb():
+                self._retrieved_result = True
                 callback(self)
 
             self.loop.call_from_executor(call_cb)
@@ -126,6 +127,9 @@ class Future(object):
         # `add_done_callback` function directly.
         done_callbacks = self.done_callbacks[:]
 
+        if done_callbacks:
+            self._retrieved_result = True
+
         def call_them_all():
             # Activate the original task context (and application) again.
             with context(self._ctx_id):
@@ -140,6 +144,7 @@ class Future(object):
         if not self._done:
             raise InvalidStateError
 
+        self._retrieved_result = True
         if self._exception:
             raise self._exception
         else:
@@ -147,10 +152,11 @@ class Future(object):
 
     def exception(self):
         " Return the exception that was set on this future. "
-        if self._done:
-            return self._exception
-        else:
+        if not self._done:
             raise InvalidStateError
+
+        self._retrieved_result = True
+        return self._exception
 
     def done(self):
         """
