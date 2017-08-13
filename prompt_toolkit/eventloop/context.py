@@ -1,5 +1,25 @@
 """
 Task local storage for coroutines.
+
+Example::
+
+    # Create a new task local.
+    my_local = TaskLocal()
+
+    # Set/retrieve/erase:
+    my_local.set(value)
+
+    value = my_local.get()
+
+    my_local.delete()
+
+A new scope can be created as follows::
+
+    with context():
+        ...
+
+Within this scope, a new value can be assigned, which is only visible within
+the scope. The scope as passed along when code is sent to an executor and back.
 """
 from __future__ import unicode_literals
 from threading import local
@@ -28,6 +48,7 @@ def get_context_id():
 
 class context(object):
     """
+    Context manager that activates a new scope.
     """
     def __init__(self, context_id=None):
         global _last_context_id
