@@ -449,6 +449,9 @@ class BufferControl(UIControl):
         self._last_click_timestamp = None
         self._last_get_processed_line = None
 
+    def __repr__(self):
+        return '<BufferControl(buffer=%r at %r>' % (self.buffer, id(self))
+
     @property
     def search_buffer_control(self):
         if self.get_search_buffer_control is not None:
