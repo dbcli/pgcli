@@ -60,12 +60,14 @@ def set_app(app):
     previous = get_app(return_none=True)
     _current_app.set(app)
 
-    yield
+    try:
+        yield
 
-    if previous:
-        _current_app.set(previous)
-    else:
-        _current_app.delete()
+    finally:
+        if previous:
+            _current_app.set(previous)
+        else:
+            _current_app.delete()
 
 
 class NoRunningApplicationError(Exception):
