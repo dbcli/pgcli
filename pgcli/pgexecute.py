@@ -156,6 +156,12 @@ class PGExecute(object):
         FROM pg_catalog.pg_database d
         ORDER BY 1'''
 
+    socket_directory_query = '''
+        SELECT setting
+        FROM pg_settings
+        WHERE name = 'unix_socket_directories'
+    '''
+
     def __init__(self, database, user, password, host, port, dsn, **kwargs):
         self.dbname = database
         self.user = user
@@ -214,6 +220,9 @@ class PGExecute(object):
         self.password = password
         self.host = host
         self.port = port
+
+        if not self.host:
+            self.host = self.get_socket_directory()
 
         cursor.execute("SHOW ALL")
         db_parameters = dict(name_val_desc[:2] for name_val_desc in cursor.fetchall())
@@ -336,7 +345,8 @@ class PGExecute(object):
 
         """
         return (isinstance(e, psycopg2.OperationalError) and
-                psycopg2.errorcodes.lookup(e.pgcode) != 'LOCK_NOT_AVAILABLE')
+                (not e.pgcode or
+                 psycopg2.errorcodes.lookup(e.pgcode) != 'LOCK_NOT_AVAILABLE'))
 
     def execute_normal_sql(self, split_sql):
         """Returns tuple (title, rows, headers, status)"""
@@ -490,6 +500,13 @@ class PGExecute(object):
             cur.execute(self.full_databases_query)
             headers = [x[0] for x in cur.description]
             return cur.fetchall(), headers, cur.statusmessage
+
+    def get_socket_directory(self):
+        with self.conn.cursor() as cur:
+            _logger.debug('Socket directory Query. sql: %r',
+                          self.socket_directory_query)
+            cur.execute(self.socket_directory_query)
+            return cur.fetchone()[0]
 
     def foreignkeys(self):
         """Yields ForeignKey named tuples"""
