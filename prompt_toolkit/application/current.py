@@ -62,7 +62,6 @@ def set_app(app):
 
     try:
         yield
-
     finally:
         if previous:
             _current_app.set(previous)

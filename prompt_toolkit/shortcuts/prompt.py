@@ -590,10 +590,11 @@ class Prompt(object):
             t.daemon = True
             t.start()
 
-        yield
-
-        # Exit.
-        done[0] = True
+        try:
+            yield
+        finally:
+            # Exit.
+            done[0] = True
 
     def prompt(
             self, message=None,

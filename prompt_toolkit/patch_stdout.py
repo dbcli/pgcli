@@ -48,13 +48,14 @@ def patch_stdout(raw=False):
     sys.stdout = proxy
     sys.stderr = proxy
 
-    yield
+    try:
+        yield
+    finally:
+        # Exit.
+        proxy.flush()
 
-    # Exit.
-    self.proxy.flush()
-
-    sys.stdout = original_stdout
-    sys.stderr = original_stderr
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
 
 
 class StdoutProxy(object):
