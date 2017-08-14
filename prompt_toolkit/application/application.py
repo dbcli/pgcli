@@ -723,6 +723,7 @@ class Application(object):
             command is finished.
         :param display_before_text: If given, text to be displayed before the
             command executes.
+        :return: A `Future` object.
         """
         assert isinstance(wait_for_enter, bool)
 
@@ -750,7 +751,7 @@ class Application(object):
             if wait_for_enter:
                 yield From(_do_wait_for_enter(wait_text))
 
-        self.run_coroutine_in_terminal(run)
+        return self.run_coroutine_in_terminal(run)
 
     def suspend_to_background(self, suspend_group=True):
         """
