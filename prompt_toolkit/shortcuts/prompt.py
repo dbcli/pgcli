@@ -480,7 +480,9 @@ class Prompt(object):
                         has_focus(DEFAULT_BUFFER)),
                     prompt_bindings
                 ]),
-                system_toolbar.get_global_key_bindings(),
+                ConditionalKeyBindings(
+                    system_toolbar.get_global_key_bindings(),
+                    dyncond('enable_system_prompt')),
                 DynamicKeyBindings(lambda: self.extra_key_bindings),
             ]),
             mouse_support=dyncond('mouse_support'),
