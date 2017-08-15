@@ -279,6 +279,10 @@ class HighlightMatchingBracketProcessor(Processor):
     def apply_transformation(self, transformation_input):
         buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
 
+        # When the application is in the 'done' state, don't highlight.
+        if get_app().is_done:
+            return Transformation(fragments)
+
         # Get the highlight positions.
         key = (get_app().render_counter, document.text, document.cursor_position)
         positions = self._positions_cache.get(
