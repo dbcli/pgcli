@@ -31,18 +31,21 @@ __all__ = (
 
 def default_format(progress_bar, progress, width):
     try:
-        pb_width = width - 24 - len(progress.title)
+        pb_width = width - 50 - len(progress.title)
 
         pb_a = int(progress.percentage * pb_width / 100)
         bar_a = '=' * pb_a
         bar_b = ' ' * (pb_width - pb_a)
 
+        time_elapsed = progress.time_elapsed
+        eta = progress.eta
         return HTML(
                 '<b>{title}</b>'
                 '{separator}'
                 '{percentage:>5}%'
-                ' |<style abg="#888888">{bar_a}</style>&gt;{bar_b}| '
+                ' |<completed abg="#888888">{bar_a}&gt;</completed><pending>{bar_b}</pending>| '
                 '{current}/{total} '
+                '{time_elapsed} eta <eta>[{eta}]</eta>'
                 ).format(
             title=progress.title,
             separator=(': ' if progress.title else ''),
@@ -50,7 +53,10 @@ def default_format(progress_bar, progress, width):
             bar_a=bar_a,
             bar_b=bar_b,
             current=progress.current,
-            total=progress.total)
+            total=progress.total,
+            time_elapsed='{0}'.format(time_elapsed).split('.')[0],
+            eta='{0}'.format(eta).split('.')[0],
+            )
     except BaseException as e:
         import traceback; traceback.print_exc()
         return ''
@@ -90,11 +96,12 @@ class progress_bar(object):
     :param bottom_toolbar: Text to be displayed in the bottom toolbar.
         This can be a callable or formatted text.
     """
-    def __init__(self, title=None, formatter=default_format, bottom_toolbar=None):
+    def __init__(self, title=None, formatter=default_format, bottom_toolbar=None, style=None):
         self.title = title
         self.formatter = formatter
         self.bottom_toolbar = bottom_toolbar
         self.counters = []
+        self.style = style
         self._thread = None
 
         self._loop = get_event_loop()
@@ -124,7 +131,8 @@ class progress_bar(object):
                     height=lambda: len(self.counters)),
                 Window(),
                 bottom_toolbar,
-            ])))
+            ])),
+            style=self.style)
 
         # Run application in different thread.
         def run():
@@ -162,6 +170,8 @@ class progress_bar(object):
         Start a new counter.
 
         :param remove_when_done: When `True`, hide this progress bar.
+        :param total: Specify the maximum value if it can't be calculated by
+            calling ``len``.
         """
         counter = ProgressBarCounter(
             self, data, title=title, remove_when_done=remove_when_done, total=total)
@@ -233,3 +243,18 @@ class ProgressBarCounter(object):
     @property
     def percentage(self):
         return self.current * 100 / max(self.total, 1)
+
+    @property
+    def time_elapsed(self):
+        """
+        return how much time has been elapsed since the start.
+        """
+        return datetime.datetime.now() - self.start_time
+
+    @property
+    def eta(self):
+        """
+        Timedelta representing the ETA.
+        """
+        return self.time_elapsed / self.percentage * (100 - self.percentage)
+
