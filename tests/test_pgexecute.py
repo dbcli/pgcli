@@ -181,25 +181,25 @@ def test_unicode_support_in_output(executor, expanded):
 @dbtest
 def test_multiple_queries_same_line(executor):
     result = run(executor, "select 'foo'; select 'bar'")
-    assert len(result) == 4  # 2 * (output+status)
-    assert "foo" in result[0]
-    assert "bar" in result[2]
+    assert len(result) == 12  # 2 * (output+status) * 3 lines
+    assert "foo" in result[3]
+    assert "bar" in result[9]
 
 
 @dbtest
 def test_multiple_queries_with_special_command_same_line(executor, pgspecial):
     result = run(executor, "select 'foo'; \d", pgspecial=pgspecial)
-    assert len(result) == 4  # 2 * (output+status)
-    assert "foo" in result[0]
+    assert len(result) == 11  # 2 * (output+status) * 3 lines
+    assert "foo" in result[3]
     # This is a lame check. :(
-    assert "Schema" in result[2]
+    assert "Schema" in result[7]
 
 
 @dbtest
 def test_multiple_queries_same_line_syntaxerror(executor, exception_formatter):
     result = run(executor, u"select 'fooé'; invalid syntax é",
                  exception_formatter=exception_formatter)
-    assert u'fooé' in result[0]
+    assert u'fooé' in result[3]
     assert 'syntax error at or near "invalid"' in result[-1]
 
 
@@ -210,9 +210,9 @@ def pgspecial():
 
 @dbtest
 def test_special_command_help(executor, pgspecial):
-    result = run(executor, '\\?', pgspecial=pgspecial)[0].split('|')
-    assert(result[1].find(u'Command') != -1)
-    assert(result[2].find(u'Description') != -1)
+    result = run(executor, '\\?', pgspecial=pgspecial)[1].split('|')
+    assert u'Command' in result[1]
+    assert u'Description' in result[2]
 
 
 @dbtest

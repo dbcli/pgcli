@@ -43,7 +43,6 @@ def step_see_data(context, which):
                 x | 1\r
                 y | 1.0\r
                 z | 1.0000\r
-                \r
                 SELECT 1\r
             '''),
             timeout=1)

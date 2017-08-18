@@ -57,14 +57,14 @@ def test_format_output():
                             'test status', settings)
     expected = [
         'Title',
-        '+---------+---------+\n'
-        '| head1   | head2   |\n'
-        '|---------+---------|\n'
-        '| abc     | def     |\n'
+        '+---------+---------+',
+        '| head1   | head2   |',
+        '|---------+---------|',
+        '| abc     | def     |',
         '+---------+---------+',
         'test status'
     ]
-    assert results == expected
+    assert list(results) == expected
 
 
 def test_format_array_output(executor):
@@ -78,15 +78,15 @@ def test_format_array_output(executor):
     """
     results = run(executor, statement)
     expected = [
-        '+----------------+------------------------+--------------+\n'
-        '| bigint_array   | nested_numeric_array   | 配列         |\n'
-        '|----------------+------------------------+--------------|\n'
-        '| {1,2,3}        | {{1,2},{3,4}}          | {å,魚,текст} |\n'
-        '| {}             | <null>                 | {<null>}     |\n'
+        '+----------------+------------------------+--------------+',
+        '| bigint_array   | nested_numeric_array   | 配列         |',
+        '|----------------+------------------------+--------------|',
+        '| {1,2,3}        | {{1,2},{3,4}}          | {å,魚,текст} |',
+        '| {}             | <null>                 | {<null>}     |',
         '+----------------+------------------------+--------------+',
         'SELECT 2'
     ]
-    assert results == expected
+    assert list(results) == expected
 
 
 def test_format_array_output_expanded(executor):
@@ -100,17 +100,17 @@ def test_format_array_output_expanded(executor):
     """
     results = run(executor, statement, expanded=True)
     expected = [
-        '-[ RECORD 1 ]-------------------------\n'
-        'bigint_array         | {1,2,3}\n'
-        'nested_numeric_array | {{1,2},{3,4}}\n'
-        '配列                   | {å,魚,текст}\n'
-        '-[ RECORD 2 ]-------------------------\n'
-        'bigint_array         | {}\n'
-        'nested_numeric_array | <null>\n'
-        '配列                   | {<null>}\n',
+        '-[ RECORD 1 ]-------------------------',
+        'bigint_array         | {1,2,3}',
+        'nested_numeric_array | {{1,2},{3,4}}',
+        '配列                   | {å,魚,текст}',
+        '-[ RECORD 2 ]-------------------------',
+        'bigint_array         | {}',
+        'nested_numeric_array | <null>',
+        '配列                   | {<null>}',
         'SELECT 2'
     ]
-    assert results == expected
+    assert list(results) == expected
 
 
 def test_format_output_auto_expand():
@@ -120,14 +120,14 @@ def test_format_output_auto_expand():
                                   ['head1', 'head2'], 'test status', settings)
     table = [
         'Title',
-        '+---------+---------+\n'
-        '| head1   | head2   |\n'
-        '|---------+---------|\n'
-        '| abc     | def     |\n'
+        '+---------+---------+',
+        '| head1   | head2   |',
+        '|---------+---------|',
+        '| abc     | def     |',
         '+---------+---------+',
         'test status'
     ]
-    assert table_results == table
+    assert list(table_results) == table
     expanded_results = format_output(
         'Title',
         [('abc', 'def')],
@@ -137,12 +137,12 @@ def test_format_output_auto_expand():
     )
     expanded = [
         'Title',
-        '-[ RECORD 1 ]-------------------------\n'
-        'head1 | abc\n'
-        'head2 | def\n',
+        '-[ RECORD 1 ]-------------------------',
+        'head1 | abc',
+        'head2 | def',
         'test status'
     ]
-    assert expanded_results == expanded
+    assert list(expanded_results) == expanded
 
 
 @dbtest
