@@ -16,6 +16,7 @@ Bug Fixes:
 * Fix the way we get host when using DSN (issue #765) (Thanks: `François Pietka`_)
 * Add missing keyword COLUMN after DROP (issue #769) (Thanks: `François Pietka`_)
 * Don't include arguments in function suggestions for backslash commands (Thanks: `Joakim Koljonen`_)
+* Optionally use POSTGRES_USER, POSTGRES_HOST POSTGRES_PASSWORD from environment (Thanks: `Dick Marinus`_)
 
 1.7.0
 =====

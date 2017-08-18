@@ -3,9 +3,11 @@ import psycopg2
 import psycopg2.extras
 from pgcli.main import format_output, OutputSettings
 from pgcli.pgexecute import register_json_typecasters
+from os import getenv
 
-# TODO: should this be somehow be divined from environment?
-POSTGRES_USER, POSTGRES_HOST = 'postgres', 'localhost'
+POSTGRES_USER = getenv('PGUSER', 'postgres')
+POSTGRES_HOST = getenv('PGHOST', 'localhost')
+POSTGRES_PASSWORD = getenv('PGPASSWORD', '')
 
 
 def db_connection(dbname=None):
