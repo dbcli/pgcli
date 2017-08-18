@@ -10,6 +10,10 @@ Features:
 * Remove the ``...`` in the continuation prompt and use empty space instead. (Thanks: `Amjith Ramanujam`_)
 * Add \conninfo and handle more parameters with \c (issue #716) (Thanks: `François Pietka`_)
 
+Internal changes:
+-----------------
+* Preliminary work for a future change in outputting results that uses less memory. (Thanks: `Dick Marinus`_)
+
 Bug Fixes:
 ----------
 

@@ -12,6 +12,7 @@ import shutil
 import functools
 import humanize
 import datetime as dt
+import itertools
 from time import time, sleep
 from codecs import open
 
@@ -1011,16 +1012,26 @@ def format_output(title, cur, headers, status, settings):
         headers = [case_function(utf8tounicode(x)) for x in headers]
         rows = list(cur)
         formatted = formatter.format_output(rows, headers, **output_kwargs)
-        first_line = formatted[:formatted.find('\n')]
+
+        if isinstance(formatted, (text_type)):
+            formatted = iter(formatted.splitlines())
+
+        first_line = next(formatted)
+        formatted = itertools.chain([first_line], formatted)
+
+        if max_width:
+            formatted = list(formatted)
 
         if (not expanded and max_width and len(first_line) > max_width and headers):
             formatted = formatter.format_output(
                 rows, headers, format_name='vertical', **output_kwargs)
+            if isinstance(formatted, (text_type)):
+                formatted = iter(formatted.splitlines())
 
-        output.append(formatted)
+        output = itertools.chain(output, formatted)
 
     if status:  # Only print the status if it's not None.
-        output.append(status)
+        output = itertools.chain(output, [status])
 
     return output
 
