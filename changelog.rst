@@ -13,6 +13,7 @@ Features:
 Internal changes:
 -----------------
 * Preliminary work for a future change in outputting results that uses less memory. (Thanks: `Dick Marinus`_)
+* Remove import workaround for OrderedDict, required for python < 2.7. (Thanks: `Andrew Speed`_)
 
 Bug Fixes:
 ----------
@@ -729,3 +730,4 @@ Improvements:
 .. _`Thomas Roten`: https://github.com/tsroten
 .. _`Gustavo Castro`: https://github.com/gustavo-castro
 .. _`Alexander Schmolck`: https://github.com/aschmolck
+.. _`Andrew Speed`: https://github.com/AndrewSpeed
