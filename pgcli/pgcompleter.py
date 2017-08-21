@@ -3,7 +3,7 @@ import logging
 import re
 from itertools import count, repeat, chain
 import operator
-from collections import namedtuple, defaultdict
+from collections import namedtuple, defaultdict, OrderedDict
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.contrib.completers import PathCompleter
@@ -17,11 +17,6 @@ from .packages.parseutils.tables import TableReference
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
 from .config import load_config, config_location
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    from .packages.ordereddict import OrderedDict
 
 _logger = logging.getLogger(__name__)
 
