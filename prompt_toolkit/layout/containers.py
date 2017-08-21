@@ -1606,6 +1606,8 @@ class Window(Container):
 
         if get_app().layout.current_window == self:
             style += ' class:focussed'
+        else:
+            style += ' class:not-focussed'
 
         new_screen.fill_area(write_position, style=style, after=False)
 
