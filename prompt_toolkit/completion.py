@@ -175,7 +175,9 @@ class ThreadedCompleter(Completer):
         Run the `get_completions` function in a thread.
         """
         def run_get_completions_thread():
-            return self.get_completions(document, complete_event)
+            # Do conversion to list in the thread, othewise the generator
+            # (which is possibly slow) will be consumed in the event loop.
+            return list(self.get_completions(document, complete_event))
         f = run_in_executor(run_get_completions_thread)
         return f
 
