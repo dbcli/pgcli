@@ -18,24 +18,37 @@ def print(*values, **kwargs):
     ::
         print(*values, sep=' ', end='\n', file=None, flush=False, style=None, output=None)
 
-    Print a list of (style_str, text) tuples in the given style to the output.
-    E.g.::
+    Print text to stdout. This is supposed to be compatible with Python's print
+    function, but supports printing of formatted text. You can pass a
+    ``FormattedText``, ``HTML`` or ``ANSI`` object to print formatted text.
+
+    * Print HTML as follows::
+
+        print(HTML('<i>Some italic text</i> <ansired>This is red!</ansired>'))
 
         style = Style.from_dict({
             'hello': '#ff0066',
             'world': '#884444 italic',
         })
-        fragments = [
+        print(HTML('<hello>Hello</hello> <world>world</world>!'), style=style)
+
+    * Print a list of (style_str, text) tuples in the given style to the
+      output.  E.g.::
+
+        style = Style.from_dict({
+            'hello': '#ff0066',
+            'world': '#884444 italic',
+        })
+        fragments = FormattedText([
             ('class:hello', 'Hello'),
             ('class:world', 'World'),
-        ]
+        ])
         print(fragments, style=style)
 
     If you want to print a list of Pygments tokens, use
     ``prompt_toolkit.style.token_list_to_formatted_text`` to do the conversion.
 
-    :param values: A formatted string. This can be a list of
-        ``(style_str, text)`` tuples.
+    :param values: Any kind of printable object, or formatted string.
     :param sep: String inserted between values, default a space.
     :param end: String appended after the last value, default a newline.
     :param style: :class:`.Style` instance for the color scheme.
