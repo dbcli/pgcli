@@ -70,8 +70,14 @@ class PosixStdinReader(object):
         # (Actually, the event loop is responsible to make sure that this
         # function is only called when there is something to read, but for some
         # reason this happens in certain situations.)
-        if not select.select([self.stdin_fd], [], [], 0)[0]:
-            return u''
+        try:
+            if not select.select([self.stdin_fd], [], [], 0)[0]:
+                return u''
+        except IOError:
+            # Happens for instance when the file descriptor was closed.
+            # (We had this in ptterm, where the FD became ready, a callback was
+            # scheduled, but in the meantime another callback closed it already.)
+            self.closed = True
 
         # Note: the following works better than wrapping `self.stdin` like
         #       `codecs.getreader('utf-8')(stdin)` and doing `read(1)`.
