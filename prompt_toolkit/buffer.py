@@ -1470,9 +1470,10 @@ class Buffer(object):
                         completions=completions,
                         go_to_first=select_first or select_first_anyway,
                         go_to_last=select_last)
+
             elif not self.complete_state:
                 # Otherwise, restart thread.
-                async_completer()
+                raise _Retry
 
         return async_completer
 
@@ -1499,7 +1500,7 @@ class Buffer(object):
                 self.on_suggestion_set.fire()
             else:
                 # Otherwise, restart thread.
-                async_suggestor()
+                raise _Retry
         return async_suggestor
 
     def _create_auto_validate_coroutine(self):
@@ -1530,6 +1531,8 @@ def _only_one_at_a_time(coroutine):
     Decorator that only starts the coroutine only if the previous call has
     finished. (Used to make sure that we have only one autocompleter, auto
     suggestor and validator running at a time.)
+
+    When the coroutine raises `_Retry`, it is restarted.
     """
     running = [False]
 
@@ -1542,11 +1545,20 @@ def _only_one_at_a_time(coroutine):
         running[0] = True
 
         try:
-            result = yield From(coroutine(*a, **kw))
-            raise Return(result)
+            while True:
+                try:
+                    yield From(coroutine(*a, **kw))
+                except _Retry:
+                    continue
+                else:
+                    raise Return(None)
         finally:
             running[0] = False
     return new_coroutine
+
+
+class _Retry(Exception):
+    " Retry in `_only_one_at_a_time`. "
 
 
 def indent(buffer, from_row, to_row, count=1):
