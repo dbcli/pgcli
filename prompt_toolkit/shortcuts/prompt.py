@@ -522,13 +522,14 @@ class Prompt(object):
         """
         kb = KeyBindings()
         handle = kb.add
+        default_focussed = has_focus(DEFAULT_BUFFER)
 
         @Condition
         def do_accept():
             return (not _true(self.multiline) and
                     self.app.layout.current_control == self._default_buffer_control)
 
-        @handle('enter', filter=do_accept)
+        @handle('enter', filter=do_accept & default_focussed)
         def _(event):
             " Accept input when enter has been pressed. "
             self._default_buffer.validate_and_handle()
@@ -537,12 +538,12 @@ class Prompt(object):
         def readline_complete_style():
             return self.complete_style == CompleteStyle.READLINE_LIKE
 
-        @handle('tab', filter=readline_complete_style)
+        @handle('tab', filter=readline_complete_style & default_focussed)
         def _(event):
             " Display completions (like readline). "
             display_completions_like_readline(event)
 
-        @handle('c-c')
+        @handle('c-c', filter=default_focussed)
         def _(event):
             " Abort when Control-C has been pressed. "
             event.app.abort()
@@ -555,7 +556,7 @@ class Prompt(object):
             return (app.current_buffer.name == DEFAULT_BUFFER and
                     not app.current_buffer.text)
 
-        @handle('c-d', filter=ctrl_d_condition)
+        @handle('c-d', filter=ctrl_d_condition & default_focussed)
         def _(event):
             " Exit when Control-D has been pressed. "
             event.app.exit()
