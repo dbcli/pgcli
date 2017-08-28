@@ -63,6 +63,7 @@ except ImportError:
 
 from getpass import getuser
 from psycopg2 import OperationalError, InterfaceError
+import psycopg2
 
 from collections import namedtuple
 
@@ -1010,21 +1011,29 @@ def format_output(title, cur, headers, status, settings):
 
     if cur:
         headers = [case_function(utf8tounicode(x)) for x in headers]
-        rows = list(cur)
-        formatted = formatter.format_output(rows, headers, **output_kwargs)
-
+        if max_width is not None:
+            cur = list(cur)
+        column_types = None
+        if hasattr(cur, 'description'):
+            column_types = []
+            for d in cur.description:
+                if d[1] in psycopg2.extensions.DECIMAL.values or \
+                        d[1] in psycopg2.extensions.FLOAT.values:
+                    column_types.append(float)
+                if d[1] == psycopg2.extensions.INTEGER.values or \
+                        d[1] in psycopg2.extensions.LONGINTEGER.values:
+                    column_types.append(int)
+                else:
+                    column_types.append(text_type)
+        formatted = formatter.format_output(cur, headers, **output_kwargs)
         if isinstance(formatted, (text_type)):
             formatted = iter(formatted.splitlines())
-
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
 
-        if max_width:
-            formatted = list(formatted)
-
         if (not expanded and max_width and len(first_line) > max_width and headers):
             formatted = formatter.format_output(
-                rows, headers, format_name='vertical', **output_kwargs)
+                cur, headers, format_name='vertical', column_types=None, **output_kwargs)
             if isinstance(formatted, (text_type)):
                 formatted = iter(formatted.splitlines())
 

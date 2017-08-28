@@ -14,6 +14,7 @@ Internal changes:
 -----------------
 * Preliminary work for a future change in outputting results that uses less memory. (Thanks: `Dick Marinus`_)
 * Remove import workaround for OrderedDict, required for python < 2.7. (Thanks: `Andrew Speed`_)
+* Use less memory when formatting results for display (Thanks: `Dick Marinus`_).
 
 Bug Fixes:
 ----------
