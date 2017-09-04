@@ -40,7 +40,7 @@ class Layout(object):
             self._stack.append(to_window(focussed_window))
 
     def __repr__(self):
-        return 'Layout(%r, focussed_window=%r)' % (
+        return 'Layout(%r, current_window=%r)' % (
             self.container, self.current_window)
 
     def find_all_windows(self):
@@ -80,6 +80,8 @@ class Layout(object):
         :param value: `UIControl` or `Window` instance.
         """
         if isinstance(value, six.text_type):
+            if self.current_buffer is None:
+                return False
             return self.current_buffer.name == value
         if isinstance(value, Buffer):
             return self.current_buffer == value
