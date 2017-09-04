@@ -238,7 +238,7 @@ class Application(object):
         has the focus. In this case, it's really not practical to check for
         `None` values or catch exceptions every time.)
         """
-        return self.layout.current_buffer or Buffer()  # Dummy buffer.
+        return self.layout.current_buffer or Buffer(name='dummy-buffer')  # Dummy buffer.
 
     @property
     def current_search_state(self):
