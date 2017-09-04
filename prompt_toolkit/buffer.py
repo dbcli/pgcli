@@ -242,7 +242,12 @@ class Buffer(object):
         self.reset(document=document)
 
     def __repr__(self):
-        return '<Buffer(name=%r) at %r>' % (self.name, id(self))
+        if len(self.text) < 15:
+            text = self.text
+        else:
+            text = self.text[:12] + '...'
+
+        return '<Buffer(name=%r, text=%r) at %r>' % (self.name, text, id(self))
 
     def reset(self, document=None, append_to_history=False):
         """
