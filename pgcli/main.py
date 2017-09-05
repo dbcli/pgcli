@@ -119,7 +119,8 @@ class PGCli(object):
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
                  pgexecute=None, pgclirc_file=None, row_limit=None,
-                 single_connection=False, less_chatty=None, prompt=None):
+                 single_connection=False, less_chatty=None, prompt=None,
+                 auto_vertical_output=False):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
@@ -138,7 +139,8 @@ class PGCli(object):
         self.multi_line = c['main'].as_bool('multi_line')
         self.multiline_mode = c['main'].get('multi_line_mode', 'psql')
         self.vi_mode = c['main'].as_bool('vi')
-        self.auto_expand = c['main'].as_bool('auto_expand')
+        self.auto_expand = auto_vertical_output or c['main'].as_bool(
+            'auto_expand')
         self.expanded_output = c['main'].as_bool('expand')
         self.pgspecial.timing_enabled = c['main'].as_bool('timing')
         if row_limit is not None:
@@ -820,11 +822,13 @@ class PGCli(object):
 @click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.option('-l', '--list', 'list_databases', is_flag=True, help='list '
               'available databases, then exit.')
+@click.option('--auto-vertical-output', is_flag=True,
+              help='Automatically switch to vertical output mode if the result is wider than the terminal width.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
         single_connection, dbname, username, version, pgclirc, dsn, row_limit,
-        less_chatty, prompt, list_databases):
+        less_chatty, prompt, list_databases, auto_vertical_output):
 
     if version:
         print('Version:', __version__)
@@ -848,7 +852,8 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
 
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc,
                   row_limit=row_limit, single_connection=single_connection,
-                  less_chatty=less_chatty, prompt=prompt)
+                  less_chatty=less_chatty, prompt=prompt,
+                  auto_vertical_output=auto_vertical_output)
 
     # Choose which ever one has a valid value.
     database = database or dbname
