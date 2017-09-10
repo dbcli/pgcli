@@ -20,7 +20,6 @@ install_requirements = [
     'sqlparse >=0.2.2,<0.3.0',
     'configobj >= 5.0.6',
     'humanize >= 0.5.1',
-    'wcwidth >= 0.1.6',
     'cli_helpers >= 0.2.0, < 1.0.0',
 ]
 

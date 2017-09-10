@@ -16,6 +16,7 @@ Internal changes:
 * Remove import workaround for OrderedDict, required for python < 2.7. (Thanks: `Andrew Speed`_)
 * Use less memory when formatting results for display (Thanks: `Dick Marinus`_).
 * Port auto_vertical feature test from mycli to pgcli. (Thanks: `Dick Marinus`_)
+* Drop wcwidth dependency (Thanks: `Dick Marinus`_)
 
 Bug Fixes:
 ----------
