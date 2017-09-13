@@ -235,6 +235,12 @@ class _StyleStringToAttrsCache(dict):
         self[style_str] = result
         return result
 
+class CPR_Support(object):
+    " Enum: whether or not CPR is supported. "
+    SUPPORTED = 'SUPPORTED'
+    NOT_SUPPORTED = 'NOT_SUPPORTED'
+    UNKNOWN = 'UNKNOWN'
+
 
 class Renderer(object):
     """
@@ -246,14 +252,18 @@ class Renderer(object):
         r = Renderer(style, output)
         r.render(app, layout=...)
     """
-    def __init__(self, style, output, full_screen=False, mouse_support=False):
+    CPR_TIMEOUT = 2  # Time to wait until we consider CPR to be not supported.
+
+    def __init__(self, style, output, full_screen=False, mouse_support=False, cpr_not_supported_callback=None):
         assert isinstance(style, BaseStyle)
         assert isinstance(output, Output)
+        assert callable(cpr_not_supported_callback) or cpr_not_supported_callback is None
 
         self.style = style
         self.output = output
         self.full_screen = full_screen
         self.mouse_support = to_filter(mouse_support)
+        self.cpr_not_supported_callback = cpr_not_supported_callback
 
         self._in_alternate_screen = False
         self._mouse_support_enabled = False
@@ -261,6 +271,7 @@ class Renderer(object):
 
         # Future set when we are waiting for a CPR flag.
         self._waiting_for_cpr_futures = deque()
+        self.cpr_support = CPR_Support.UNKNOWN
 
         # Cache for the style.
         self._attrs_for_style = None
@@ -359,16 +370,36 @@ class Renderer(object):
         else:
             if self.full_screen:
                 self._min_available_height = self.output.get_size().rows
+            elif self.cpr_support == CPR_Support.NOT_SUPPORTED:
+                return
             else:
                 # Asks for a cursor position report (CPR).
                 self._waiting_for_cpr_futures.append(Future())
                 self.output.ask_for_cpr()
+
+                # If we don't know whether CPR is supported, test using timer.
+                if self.cpr_support == CPR_Support.UNKNOWN:
+                    def timer():
+                        time.sleep(self.CPR_TIMEOUT)
+
+                        # Not set in the meantime -> not supported.
+                        if self.cpr_support == CPR_Support.UNKNOWN:
+                            self.cpr_support = CPR_Support.NOT_SUPPORTED
+
+                            if self.cpr_not_supported_callback:
+                                self.cpr_not_supported_callback()
+
+                    t = threading.Thread(target=timer)
+                    t.daemon = True
+                    t.start()
 
     def report_absolute_cursor_row(self, row):
         """
         To be called when we know the absolute cursor position.
         (As an answer of a "Cursor Position Request" response.)
         """
+        self.cpr_support = CPR_Support.SUPPORTED
+
         # Calculate the amount of rows from the cursor position until the
         # bottom of the terminal.
         total_rows = self.output.get_size().rows
@@ -393,16 +424,21 @@ class Renderer(object):
         """
         return bool(self._waiting_for_cpr_futures)
 
-    def wait_for_cpr_responses(self, timeout=.5):
+    def wait_for_cpr_responses(self, timeout=1):
         """
         Wait for a CPR response.
         """
+        cpr_futures = list(self._waiting_for_cpr_futures)  # Make copy.
+
+        # When there are no CPRs in the queue. Don't do anything.
+        if not cpr_futures or self.cpr_support == CPR_Support.NOT_SUPPORTED:
+            return Future.succeed(None)
+
         f = Future()
 
         # When a CPR has been reveived, set the result.
         def wait_for_responses():
-            futures = list(self._waiting_for_cpr_futures)
-            for response_f in futures:
+            for response_f in cpr_futures:
                 yield From(response_f)
             if not f.done():
                 f.set_result(None)
@@ -411,11 +447,11 @@ class Renderer(object):
         # Timeout.
         def wait_for_timeout():
             time.sleep(timeout)
-            if not f.done():
-                f.set_result(None)
 
-            # Don't wait anymore for these responses.
-            self._waiting_for_cpr_futures = deque()
+            # Got timeout.
+            if not f.done():
+                self._waiting_for_cpr_futures = deque()
+                f.set_result(None)
 
         t = threading.Thread(target=wait_for_timeout)
         t.daemon = True

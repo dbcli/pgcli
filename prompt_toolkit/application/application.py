@@ -205,7 +205,8 @@ class Application(object):
             self._merged_style,
             self.output,
             full_screen=full_screen,
-            mouse_support=mouse_support)
+            mouse_support=mouse_support,
+            cpr_not_supported_callback=self.cpr_not_supported_callback)
 
         #: Render counter. This one is increased every time the UI is rendered.
         #: It can be used as a key for caching certain information during one
@@ -423,7 +424,7 @@ class Application(object):
         # Erase, request position (when cursor is at the start position)
         # and redraw again. -- The order is important.
         self.renderer.erase(leave_alternate_screen=False)
-        self.renderer.request_absolute_cursor_position()
+        self._request_absolute_cursor_position()
         self._redraw()
 
     def _pre_run(self, pre_run=None):
@@ -470,7 +471,8 @@ class Application(object):
                 # Ignore when we aren't running anymore. This callback will
                 # removed from the loop next time. (It could be that it was
                 # still in the 'tasks' list of the loop.)
-                if not self._is_running:
+                # Except: if we need to process incoming CPRs.
+                if not self._is_running and not self.renderer.waiting_for_cpr:
                     return
 
                 # Get keys from the input object.
@@ -516,7 +518,7 @@ class Application(object):
             with self.input.raw_mode():
                 with self.input.attach(read_from_input):
                     # Draw UI.
-                    self.renderer.request_absolute_cursor_position()
+                    self._request_absolute_cursor_position()
                     self._redraw()
 
                     has_sigwinch = hasattr(signal, 'SIGWINCH') and in_main_thread()
@@ -611,6 +613,16 @@ class Application(object):
         else:
             run()
 
+    def cpr_not_supported_callback(self):
+        """
+        Called when we don't receive the cursor position response in time.
+        """
+        def in_terminal():
+            self.output.write(
+                "WARNING: your terminal doesn't support cursor position requests (CPR).\r\n")
+            self.output.flush()
+        self.run_in_terminal(in_terminal)
+
     def exit(self):
         " Set exit. When Control-D has been pressed. "
         self._exit_flag = True
@@ -704,12 +716,22 @@ class Application(object):
                 try:
                     self._running_in_terminal = False
                     self.renderer.reset()
-                    self.renderer.request_absolute_cursor_position()
+                    self._request_absolute_cursor_position()
                     self._redraw()
                 finally:
                     new_run_in_terminal_f.set_result(None)
 
         return ensure_future(_run_in_t())
+
+    def _request_absolute_cursor_position(self):
+        """
+        Send CPR request.
+        """
+        # Note: only do this if the input queue is not empty, and a return
+        # value has not been set. Otherwise, we won't be able to read the
+        # response anyway.
+        if not self.key_processor.input_queue and not self.is_done:
+            self.renderer.request_absolute_cursor_position()
 
     def run_system_command(self, command, wait_for_enter=True,
                            display_before_text='',

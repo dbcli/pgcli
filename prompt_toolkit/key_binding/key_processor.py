@@ -223,15 +223,29 @@ class KeyProcessor(object):
         """
         app = get_app()
 
-        while self.input_queue:
+        def not_empty():
             # When the application result is set, stop processing keys.  (E.g.
             # if ENTER was received, followed by a few additional key strokes,
             # leave the other keys in the queue.)
             if app.is_done:
-                break
+                # But if there are still CPRResponse keys in the queue, these
+                # need to be processed.
+                return any(k for k in self.input_queue if k.key == Keys.CPRResponse)
+            else:
+                return bool(self.input_queue)
 
+        def get_next():
+            if app.is_done:
+                # Only process CPR responses. Everything else is typeahead.
+                cpr = [k for k in self.input_queue if k.key == Keys.CPRResponse][0]
+                self.input_queue.remove(cpr)
+                return cpr
+            else:
+                return self.input_queue.popleft()
+
+        while not_empty():
             # Process next key.
-            key_press = self.input_queue.popleft()
+            key_press = get_next()
 
             if key_press.key != Keys.CPRResponse:
                 self.before_key_press.fire()
