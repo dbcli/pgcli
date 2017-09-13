@@ -199,7 +199,7 @@ class ConsoleInputReader(object):
         # reason this happend in the asyncio_win32 loop, and it's better to be
         # safe anyway.)
         if not wait_for_handles([self.handle], timeout=0):
-            return []
+            return
 
         # Get next batch of input event.
         windll.kernel32.ReadConsoleInputW(
