@@ -1,7 +1,9 @@
 Upcoming
 ========
 
-TBD
+Internal changes:
+-----------------
+* Remove shebang and git execute permission from pgcli/main.py. (Thanks: `Dick Marinus`_)
 
 1.8.0
 =====
