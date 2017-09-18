@@ -723,8 +723,8 @@ class Prompt(object):
         return to_formatted_text(
             prompt_continuation, style='class:prompt-continuation')
 
-    def _get_arg_text(self, app):
-        arg = app.key_processor.arg
+    def _get_arg_text(self):
+        arg = self.app.key_processor.arg
         if arg == '-':
             arg = '-1'
 
