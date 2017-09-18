@@ -4,6 +4,7 @@ Upcoming
 Internal changes:
 -----------------
 * Remove shebang and git execute permission from pgcli/main.py. (Thanks: `Dick Marinus`_)
+* Require cli_helpers 0.2.3 (fix #513). (Thanks: `Dick Marinus`_)
 
 1.8.0
 =====
