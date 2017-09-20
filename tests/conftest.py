@@ -1,3 +1,4 @@
+import os
 import pytest
 from utils import (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, create_db, db_connection,
                    drop_tables)
@@ -29,3 +30,8 @@ def executor(connection):
 @pytest.fixture
 def exception_formatter():
     return lambda e: str(e)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def temp_config(tmpdir_factory):
+    os.environ['XDG_CONFIG_HOME'] = str(tmpdir_factory.mktemp('data'))

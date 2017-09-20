@@ -1,7 +1,9 @@
 Upcoming
 ========
 
-TODO
+Internal changes:
+-----------------
+* Use temporary dir as config location in tests
 
 1.8.1
 =====
