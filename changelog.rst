@@ -1,7 +1,7 @@
 Upcoming
 ========
 
-TODO
+* Colored and customizable booleans in output (Thanks: `Joakim Koljonen`_)
 
 1.8.1
 =====
