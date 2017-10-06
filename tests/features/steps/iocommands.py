@@ -5,7 +5,6 @@ import os.path
 import wrappers
 
 from behave import when, then
-from retrying import retry
 
 
 @when('we start external editor providing a file name')
@@ -76,13 +75,8 @@ def step_notee_output(context):
 
 @then(u'we see 123456 in tee output')
 def step_see_123456_in_ouput(context):
-
-    @retry(stop_max_delay=3000)  # stop trying after 3 seconds
-    def assert_tee_output():
-        with open(context.tee_file_name) as f:
-            assert '123456' in f.read()
-
-    assert_tee_output()
+    with open(context.tee_file_name) as f:
+        assert '123456' in f.read()
     if os.path.exists(context.tee_file_name):
         os.remove(context.tee_file_name)
     context.atprompt = True
