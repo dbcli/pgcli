@@ -1,7 +1,10 @@
 Upcoming
 ========
 
-TODO
+Internal changes:
+-----------------
+
+* Fix errors in the ``tee`` test (#795 and #797). (Thanks: `Irina Truong`_)
 
 1.8.1
 =====
