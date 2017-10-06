@@ -98,8 +98,8 @@ def before_all(context):
 
     context.fixture_data = fixutils.read_fixture_files()
 
+    # use temporary directory as config home
     context.env_config_home = tempfile.mkdtemp(prefix='pgcli_home_')
-
     os.environ['XDG_CONFIG_HOME'] = context.env_config_home
 
 

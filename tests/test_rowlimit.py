@@ -3,6 +3,9 @@ from mock import Mock
 import pytest
 
 
+# We need this fixtures beacause we need PGCli object to be created
+# after test collection so it has config loaded from temp directory
+
 @pytest.fixture(scope="module")
 def default_pgcli_obj():
     return PGCli()
