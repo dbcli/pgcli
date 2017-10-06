@@ -12,6 +12,6 @@ Feature: I/O commands
       and we wait for prompt
       and we query "select 123456"
       and we wait for prompt
-      and we notee output
+      and we stop teeing output
       and we wait for prompt
       then we see 123456 in tee output

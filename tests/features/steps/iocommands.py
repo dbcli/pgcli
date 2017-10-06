@@ -5,6 +5,7 @@ import os.path
 import wrappers
 
 from behave import when, then
+from retrying import retry
 
 
 @when('we start external editor providing a file name')
@@ -67,16 +68,21 @@ def step_query_select_123456(context):
     context.cli.sendline('select 123456')
 
 
-@when(u'we notee output')
+@when(u'we stop teeing output')
 def step_notee_output(context):
-    context.cli.sendline('notee')
+    context.cli.sendline('\o')
     wrappers.expect_exact(context, "Time", timeout=5)
 
 
 @then(u'we see 123456 in tee output')
 def step_see_123456_in_ouput(context):
-    with open(context.tee_file_name) as f:
-        assert '123456' in f.read()
+
+    @retry(stop_max_delay=3000)  # stop trying after 3 seconds
+    def assert_tee_output():
+        with open(context.tee_file_name) as f:
+            assert '123456' in f.read()
+
+    assert_tee_output()
     if os.path.exists(context.tee_file_name):
         os.remove(context.tee_file_name)
     context.atprompt = True

@@ -6,8 +6,8 @@ python:
   - "3.5"
   - "3.6"
 
-install: 
-  - pip install . docutils pytest mock codecov==1.5.1 behave pexpect==3.3
+install:
+  - pip install . docutils pytest mock codecov==1.5.1 behave pexpect==3.3 retrying>=1.3.3
   - pip install git+https://github.com/hayd/pep8radius.git
 
 script:
