@@ -7,6 +7,8 @@ import sys
 import db_utils as dbutils
 import fixture_utils as fixutils
 import pexpect
+import tempfile
+import shutil
 
 from steps.wrappers import run_cli, wait_prompt
 
@@ -76,6 +78,7 @@ def before_all(context):
         'PGHOST': os.environ.get('PGHOST', None),
         'PGPASSWORD': os.environ.get('PGPASSWORD', None),
         'PGPORT': os.environ.get('PGPORT', None),
+        'XDG_CONFIG_HOME': os.environ.get('XDG_CONFIG_HOME', None),
     }
 
     # Set new env vars.
@@ -96,6 +99,10 @@ def before_all(context):
 
     context.fixture_data = fixutils.read_fixture_files()
 
+    # use temporary directory as config home
+    context.env_config_home = tempfile.mkdtemp(prefix='pgcli_home_')
+    os.environ['XDG_CONFIG_HOME'] = context.env_config_home
+
 
 def after_all(context):
     """
@@ -105,6 +112,9 @@ def after_all(context):
     dbutils.drop_db(context.conf['host'], context.conf['user'],
                     context.conf['pass'], context.conf['dbname'],
                     context.conf['port'])
+
+    # Remove temp config direcotry
+    shutil.rmtree(context.env_config_home)
 
     # Restore env vars.
     for k, v in context.pgenv.items():
