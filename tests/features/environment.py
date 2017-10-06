@@ -78,6 +78,7 @@ def before_all(context):
         'PGHOST': os.environ.get('PGHOST', None),
         'PGPASSWORD': os.environ.get('PGPASSWORD', None),
         'PGPORT': os.environ.get('PGPORT', None),
+        'XDG_CONFIG_HOME': os.environ.get('XDG_CONFIG_HOME', None),
     }
 
     # Set new env vars.
