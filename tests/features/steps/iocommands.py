@@ -67,9 +67,9 @@ def step_query_select_123456(context):
     context.cli.sendline('select 123456')
 
 
-@when(u'we notee output')
+@when(u'we stop teeing output')
 def step_notee_output(context):
-    context.cli.sendline('notee')
+    context.cli.sendline('\o')
     wrappers.expect_exact(context, "Time", timeout=5)
 
 
