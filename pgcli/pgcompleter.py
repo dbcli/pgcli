@@ -138,7 +138,6 @@ class PGCompleter(Completer):
         return [self.escape_name(name) for name in names]
 
     def extend_database_names(self, databases):
-        databases = self.escaped_names(databases)
         self.databases.extend(databases)
 
     def extend_keywords(self, additional_keywords):
