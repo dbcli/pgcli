@@ -64,7 +64,15 @@ def to_formatted_text(value, style='', auto_convert=False):
 
     # Apply extra style.
     if style:
-        result = [(style + ' ' + k, v) for k, v in result]
+        try:
+            result = [(style + ' ' + k, v) for k, v in result]
+        except ValueError:
+            # Too many values to unpack:
+            #     If the above failed, try the slower version (amost twice as
+            #     slow) which supports multiple items. This is used in the
+            #     `to_formatted_text` call in `FormattedTextControl` which also
+            #     accepts (style, text, mouse_handler) tuples.
+            result = [(style + ' ' + item[0], ) + item[1:] for item in result]
     return result
 
 
