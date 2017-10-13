@@ -144,7 +144,7 @@ def after_scenario(context, _):
                 '{0}> '.format(dbname),
                 timeout=5
             )
-        context.cli.sendcontrol('u')
+        context.cli.sendcontrol('c')
         context.cli.sendcontrol('d')
         context.cli.expect_exact(pexpect.EOF, timeout=5)
 
