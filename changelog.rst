@@ -9,6 +9,7 @@ Internal changes:
 Bug Fixes:
 ----------
 * Do NOT quote the database names in the completion menu (Thanks: `Amjith Ramanujam`_)
+* Fix error in ``unix_socket_directories`` (#805). (Thanks: `Irina Truong`_)
 
 1.8.1
 =====
