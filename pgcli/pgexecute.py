@@ -506,7 +506,8 @@ class PGExecute(object):
             _logger.debug('Socket directory Query. sql: %r',
                           self.socket_directory_query)
             cur.execute(self.socket_directory_query)
-            return cur.fetchone()[0]
+            result = cur.fetchone()
+            return result[0] if result else ''
 
     def foreignkeys(self):
         """Yields ForeignKey named tuples"""
