@@ -32,7 +32,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.filters import Always, HasFocus, IsDone
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.processors import (ConditionalProcessor,
-                                        HighlightMatchingBracketProcessor)
+                                              HighlightMatchingBracketProcessor)
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from pygments.lexers.sql import PostgresLexer
@@ -46,8 +46,8 @@ from .pgstyle import style_factory
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
 from .completion_refresher import CompletionRefresher
-from .config import (get_casing_file,
-    load_config, config_location, ensure_dir_exists, get_config)
+from .config import (get_casing_file, load_config, config_location,
+                     ensure_dir_exists, get_config)
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
 from .encodingutils import text_type
@@ -183,7 +183,7 @@ class PGCli(object):
         }
 
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial,
-            settings=self.settings)
+                                settings=self.settings)
         self.completer = completer
         self._completer_lock = threading.Lock()
         self.register_special_commands()
@@ -722,7 +722,7 @@ class PGCli(object):
         callback = functools.partial(self._on_completions_refreshed,
                                      persist_priorities=persist_priorities)
         self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
-            callback, history=history, settings=self.settings)
+                                          callback, history=history, settings=self.settings)
         return [(None, None, None,
                 'Auto-completion refresh started in the background.')]
 
@@ -794,30 +794,30 @@ class PGCli(object):
 @click.command()
 # Default host is '' so psycopg2 can default to either localhost or unix socket
 @click.option('-h', '--host', default='', envvar='PGHOST',
-        help='Host address of the postgres database.')
+              help='Host address of the postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
-        'postgres instance is listening.', envvar='PGPORT')
+              'postgres instance is listening.', envvar='PGPORT')
 @click.option('-U', '--username', 'username_opt', envvar='PGUSER',
-        help='Username to connect to the postgres database.')
+              help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
-        help='Force password prompt.')
+              help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
-        default=False, help='Never prompt for password.')
+              default=False, help='Never prompt for password.')
 @click.option('--single-connection', 'single_connection', is_flag=True,
-        default=False,
-        help='Do not use a separate connection for completions.')
+              default=False,
+              help='Do not use a separate connection for completions.')
 @click.option('-v', '--version', is_flag=True, help='Version of pgcli.')
 @click.option('-d', '--dbname', default='', envvar='PGDATABASE',
-        help='database name to connect to.')
+              help='database name to connect to.')
 @click.option('--pgclirc', default=config_location() + 'config',
-        envvar='PGCLIRC', help='Location of pgclirc file.')
+              envvar='PGCLIRC', help='Location of pgclirc file.')
 @click.option('-D', '--dsn', default='', envvar='DSN',
-        help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
+              help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
 @click.option('--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
-        help='Set threshold for row limit prompt. Use 0 to disable prompt.')
+              help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.option('--less-chatty', 'less_chatty', is_flag=True,
-        default=False,
-        help='Skip intro on startup and goodbye on exit.')
+              default=False,
+              help='Skip intro on startup and goodbye on exit.')
 @click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.option('-l', '--list', 'list_databases', is_flag=True, help='list '
               'available databases, then exit.')
@@ -864,8 +864,8 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
             dsn_config = cfg['alias_dsn'][dsn]
         except:
             click.secho('Invalid DSNs found in the config file. '\
-                'Please check the "[alias_dsn]" section in pgclirc.',
-                 err=True, fg='red')
+                        'Please check the "[alias_dsn]" section in pgclirc.',
+                        err=True, fg='red')
             exit(1)
         pgcli.connect_uri(dsn_config)
     elif '://' in database:
@@ -891,10 +891,10 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
         sys.exit(0)
 
     pgcli.logger.debug('Launch Params: \n'
-            '\tdatabase: %r'
-            '\tuser: %r'
-            '\thost: %r'
-            '\tport: %r', database, user, host, port)
+                       '\tdatabase: %r'
+                       '\tuser: %r'
+                       '\thost: %r'
+                       '\tport: %r', database, user, host, port)
 
     if setproctitle:
         obfuscate_process_password()

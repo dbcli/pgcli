@@ -611,7 +611,7 @@ class PGExecute(object):
             _logger.debug('Functions Query. sql: %r', query)
             cur.execute(query)
             for row in cur:
-                  yield FunctionMetadata(*row)
+                yield FunctionMetadata(*row)
 
     def datatypes(self):
         """Yields tuples of (schema_name, type_name)"""

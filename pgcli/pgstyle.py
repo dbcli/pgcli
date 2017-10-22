@@ -11,7 +11,7 @@ def style_factory(name, cli_style):
         style = pygments.styles.get_style_by_name('native')
 
     custom_styles = dict([(string_to_tokentype(x), y)
-                            for x, y in cli_style.items()])
+                          for x, y in cli_style.items()])
 
     return PygmentsStyle.from_defaults(style_dict=custom_styles,
                                        pygments_style_cls=style)

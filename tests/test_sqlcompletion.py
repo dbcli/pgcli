@@ -291,7 +291,7 @@ def test_col_comma_suggests_cols():
 
 def test_table_comma_suggests_tables_and_schemas():
     suggestions = suggest_type('SELECT a, b FROM tbl1, ',
-            'SELECT a, b FROM tbl1, ')
+                               'SELECT a, b FROM tbl1, ')
     assert set(suggestions) == set([
         FromClauseItem(schema=None),
         Schema(),
@@ -343,7 +343,7 @@ def test_insert_into_lparen_comma_suggests_cols():
 
 def test_partially_typed_col_name_suggests_col_names():
     suggestions = suggest_type('SELECT * FROM tabl WHERE col_n',
-            'SELECT * FROM tabl WHERE col_n')
+                               'SELECT * FROM tabl WHERE col_n')
     assert set(suggestions) == cols_etc('tabl', last_keyword='WHERE')
 
 
@@ -391,7 +391,7 @@ def test_dot_suggests_cols_of_an_alias_where(sql):
 
 def test_dot_col_comma_suggests_cols_or_schema_qualified_table():
     suggestions = suggest_type('SELECT t1.a, t2. FROM tabl1 t1, tabl2 t2',
-            'SELECT t1.a, t2.')
+                               'SELECT t1.a, t2.')
     assert set(suggestions) == set([
         Column(table_refs=((None, 'tabl2', 't2', False),)),
         Table(schema='t2'),
@@ -457,7 +457,7 @@ def test_sub_select_table_name_completion_with_outer_table(expression):
 
 def test_sub_select_col_name_completion():
     suggestions = suggest_type('SELECT * FROM (SELECT  FROM abc',
-            'SELECT * FROM (SELECT ')
+                               'SELECT * FROM (SELECT ')
     assert set(suggestions) == set([
         Column(table_refs=((None, 'abc', None, False),), qualifiable=True),
         Function(schema=None),
@@ -468,13 +468,13 @@ def test_sub_select_col_name_completion():
 @pytest.mark.xfail
 def test_sub_select_multiple_col_name_completion():
     suggestions = suggest_type('SELECT * FROM (SELECT a, FROM abc',
-            'SELECT * FROM (SELECT a, ')
+                               'SELECT * FROM (SELECT a, ')
     assert set(suggestions) == cols_etc('abc')
 
 
 def test_sub_select_dot_col_name_completion():
     suggestions = suggest_type('SELECT * FROM (SELECT t. FROM tabl t',
-            'SELECT * FROM (SELECT t.')
+                               'SELECT * FROM (SELECT t.')
     assert set(suggestions) == set([
         Column(table_refs=((None, 'tabl', 't', False),)),
         Table(schema='t'),
@@ -554,7 +554,7 @@ def test_on_suggests_aliases_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, 'abc', 'a', False), (None, 'bcd', 'b', False))
     assert set(suggestions) == set((JoinCondition(table_refs=tables, parent=None),
-        Alias(aliases=('a', 'b',)),))
+                                    Alias(aliases=('a', 'b',)),))
 
 
 @pytest.mark.parametrize('sql', [
@@ -565,7 +565,7 @@ def test_on_suggests_tables_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, 'abc', None, False), (None, 'bcd', None, False))
     assert set(suggestions) == set((JoinCondition(table_refs=tables, parent=None),
-        Alias(aliases=('abc', 'bcd',)),))
+                                    Alias(aliases=('abc', 'bcd',)),))
 
 
 @pytest.mark.parametrize('sql', [
@@ -585,7 +585,7 @@ def test_on_suggests_tables_and_join_conditions_right_side(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, 'abc', None, False), (None, 'bcd', None, False))
     assert set(suggestions) == set((JoinCondition(table_refs=tables, parent=None),
-      Alias(aliases=('abc', 'bcd',)),))
+                                    Alias(aliases=('abc', 'bcd',)),))
 
 
 @pytest.mark.parametrize('text', (
@@ -665,7 +665,7 @@ def test_3_statements_2nd_current():
 
 
 @pytest.mark.parametrize('text', [
-'''
+    '''
 CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $$
 SELECT  FROM foo;
 SELECT 2 FROM bar;
@@ -679,7 +679,7 @@ SELECT 2 FROM bar;
 SELECT  FROM foo;
 $func$
     ''',
-'''
+    '''
 CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $func$
 SELECT 3 FROM foo;
 SELECT 2 FROM bar;
@@ -692,7 +692,7 @@ SELECT 2 FROM bar;
 SELECT  FROM foo;
 $func$
     ''',
-'''
+    '''
 SELECT * FROM baz;
 CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $func$
 SELECT  FROM foo;
@@ -718,7 +718,7 @@ def test_statements_in_function_body(text):
 
 
 functions = [
-'''
+    '''
 CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $$
 SELECT 1 FROM foo;
 SELECT 2 FROM bar;

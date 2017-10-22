@@ -367,7 +367,7 @@ def suggest_based_on_last_token(token, stmt):
         prev_tok = p.token_prev(len(p.tokens) - 1)[1]
 
         if (prev_tok and prev_tok.value
-          and prev_tok.value.lower().split(' ')[-1] == 'using'):
+                and prev_tok.value.lower().split(' ')[-1] == 'using'):
             # tbl1 INNER JOIN tbl2 USING (col1, col2)
             tables = stmt.get_tables('before')
 
@@ -412,7 +412,7 @@ def suggest_based_on_last_token(token, stmt):
         # Don't suggest anything for aliases
         return ()
     elif (token_v.endswith('join') and token.is_keyword) or (token_v in
-            ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
+                                                             ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
 
         schema = stmt.get_identifier_schema()
         tables = extract_tables(stmt.text_before_cursor)
@@ -575,4 +575,4 @@ def _allow_join(statement):
 
     last_tok = statement.token_prev(len(statement.tokens))[1]
     return (last_tok.value.lower().endswith('join')
-        and last_tok.value.lower() not in('cross join', 'natural join'))
+            and last_tok.value.lower() not in('cross join', 'natural join'))

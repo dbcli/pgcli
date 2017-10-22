@@ -9,8 +9,8 @@ from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.document import Document
 from .packages.sqlcompletion import (FromClauseItem,
-    suggest_type, Special, Database, Schema, Table, Function, Column, View,
-    Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join)
+                                     suggest_type, Special, Database, Schema, Table, Function, Column, View,
+                                     Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join)
 from .packages.parseutils.meta import ColumnMetadata, ForeignKey
 from .packages.parseutils.utils import last_word
 from .packages.parseutils.tables import TableReference
@@ -59,7 +59,7 @@ def generate_alias(tbl):
     param tbl - unescaped name of the table to alias
     """
     return ''.join([l for l in tbl if l.isupper()] or
-        [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and l != '_'])
+                   [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and l != '_'])
 
 
 class PGCompleter(Completer):
@@ -118,8 +118,8 @@ class PGCompleter(Completer):
 
     def escape_name(self, name):
         if name and ((not self.name_pattern.match(name))
-                or (name.upper() in self.reserved_words)
-                or (name.upper() in self.functions)):
+                     or (name.upper() in self.reserved_words)
+                     or (name.upper() in self.functions)):
             name = '"%s"' % name
 
         return name
@@ -265,7 +265,7 @@ class PGCompleter(Completer):
             childcolmeta =  meta[childschema][childtable][childcol]
             parcolmeta =  meta[parentschema][parenttable][parcol]
             fk = ForeignKey(parentschema, parenttable, parcol,
-                childschema, childtable, childcol)
+                            childschema, childtable, childcol)
             childcolmeta.foreignkeys.append((fk))
             parcolmeta.foreignkeys.append((fk))
 
@@ -399,8 +399,8 @@ class PGCompleter(Completer):
                 # We also use the unescape_name to make sure quoted names have
                 # the same priority as unquoted names.
                 lexical_priority = (tuple(0 if c in(' _') else -ord(c)
-                    for c in self.unescape_name(item.lower())) + (1,)
-                    + tuple(c for c in item))
+                                          for c in self.unescape_name(item.lower())) + (1,)
+                                    + tuple(c for c in item))
 
                 item = self.case(item)
                 display = self.case(display)
@@ -459,7 +459,7 @@ class PGCompleter(Completer):
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.table_refs
         do_qualify = suggestion.qualifiable and {'always': True, 'never': False,
-            'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
+                                                 'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
         qualify = lambda col, tbl: (
             (tbl + '.' + self.case(col)) if do_qualify else self.case(col))
         _logger.debug("Completion column scope: %r", tables)
@@ -499,7 +499,7 @@ class PGCompleter(Completer):
                 for cols in scoped_cols.values():
                     cols.sort(key=operator.attrgetter('name'))
             if (lastword != word_before_cursor and len(tables) == 1
-              and word_before_cursor[-len(lastword) - 1] == '.'):
+                    and word_before_cursor[-len(lastword) - 1] == '.'):
                 # User typed x.*; replicate "x." for all columns except the
                 # first, which gets the original (as we only replace the "*"")
                 sep = ', ' + word_before_cursor[:-1]
@@ -520,7 +520,7 @@ class PGCompleter(Completer):
             )]
 
         return self.find_matches(word_before_cursor, flat_cols(),
-            meta='column')
+                                 meta='column')
 
     def alias(self, tbl, tbls):
         """ Generate a unique table alias
@@ -547,11 +547,11 @@ class PGCompleter(Completer):
         ref_prio = dict((normalize_ref(t.ref), n) for n, t in enumerate(tbls))
         refs = set(normalize_ref(t.ref) for t in tbls)
         other_tbls = set((t.schema, t.name)
-            for t in list(cols)[:-1])
+                         for t in list(cols)[:-1])
         joins = []
         # Iterate over FKs in existing tables to find potential joins
         fks = ((fk, rtbl, rcol) for rtbl, rcols in cols.items()
-            for rcol in rcols for fk in rcol.foreignkeys)
+               for rcol in rcols for fk in rcol.foreignkeys)
         col = namedtuple('col', 'schema tbl col')
         for fk, rtbl, rcol in fks:
             right = col(rtbl.schema, rtbl.name, rcol.name)
@@ -574,8 +574,8 @@ class PGCompleter(Completer):
             # Schema-qualify if (1) new table in same schema as old, and old
             # is schema-qualified, or (2) new in other schema, except public
             if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)]
-                and left.schema == right.schema
-                or left.schema not in(right.schema, 'public')):
+                                          and left.schema == right.schema
+                                          or left.schema not in(right.schema, 'public')):
                 join = left.schema + '.' + join
             prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (
                 0 if (left.schema, left.tbl) in other_tbls else 1)
@@ -610,10 +610,10 @@ class PGCompleter(Completer):
 
         # Tables that are closer to the cursor get higher prio
         ref_prio = dict((tbl.ref, num) for num, tbl
-            in enumerate(suggestion.table_refs))
+                        in enumerate(suggestion.table_refs))
         # Map (schema, table, col) to tables
         coldict = list_dict(((t.schema, t.name, c.name), t)
-            for t, c in cols if t.ref != lref)
+                            for t, c in cols if t.ref != lref)
         # For each fk from the left table, generate a join condition if
         # the other table is also in the scope
         fks = ((fk, lcol.name) for lcol in lcols for fk in lcol.foreignkeys)
@@ -900,8 +900,8 @@ class PGCompleter(Completer):
                 relname = self.escape_name(tbl.name)
                 schema = self.escape_name(schema)
                 if tbl.is_function:
-                # Return column names from a set-returning function
-                # Get an array of FunctionMetadata objects
+                    # Return column names from a set-returning function
+                    # Get an array of FunctionMetadata objects
                     functions = meta['functions'].get(schema, {}).get(relname)
                     for func in (functions or []):
                         # func is a FunctionMetadata object

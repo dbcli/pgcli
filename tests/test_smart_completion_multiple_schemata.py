@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
 import itertools
 from metadata import (MetaData, alias, name_join, fk_join, join,
-    schema, table, function, wildcard_expansion, column,
-    get_result, result_set, qual, no_qual, parametrize)
+                      schema, table, function, wildcard_expansion, column,
+                      get_result, result_set, qual, no_qual, parametrize)
 
 metadata = {
     'tables': {
@@ -378,7 +378,7 @@ def test_wildcard_column_expansion_with_two_tables(completer):
     completions = get_result(completer, text, position)
 
     cols = ('"select".id, "select"."localtime", "select"."ABC", '
-        'users.id, users.phone_number')
+            'users.id, users.phone_number')
     expected = [wildcard_expansion(cols)]
     assert completions == expected
 

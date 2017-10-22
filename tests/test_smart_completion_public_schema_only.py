@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
-    schema, table, view, function, column, wildcard_expansion,
-    get_result, result_set, qual, no_qual, parametrize)
+                      schema, table, view, function, column, wildcard_expansion,
+                      get_result, result_set, qual, no_qual, parametrize)
 from prompt_toolkit.completion import Completion
 
 
@@ -165,7 +165,7 @@ def test_suggested_column_names_from_visible_table(completer):
 def test_suggested_cased_column_names(completer):
     result = result_set(completer, 'SELECT  from users', len('SELECT '))
     assert result == set(cased_funcs + cased_users_cols
-        + testdata.builtin_functions() + testdata.keywords())
+                         + testdata.builtin_functions() + testdata.keywords())
 
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
@@ -213,7 +213,7 @@ def test_suggested_cased_always_qualified_column_names(
     cols = [column('users.' + c) for c in cased_users_col_names]
     result = result_set(completer, text, position)
     assert result == set(cased_funcs + cols
-        + testdata.builtin_functions() + testdata.keywords())
+                         + testdata.builtin_functions() + testdata.keywords())
 
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
@@ -396,9 +396,9 @@ def test_suggested_joins(completer, text):
     result = result_set(completer, text)
     assert result == set(
         testdata.schemas_and_from_clause_items() + [
-        join('"Users" ON "Users".userid = Users.id'),
-        join('users users2 ON users2.id = Users.parentid'),
-        join('users users2 ON users2.parentid = Users.id'),
+            join('"Users" ON "Users".userid = Users.id'),
+            join('users users2 ON users2.id = Users.parentid'),
+            join('users users2 ON users2.parentid = Users.id'),
         ]
     )
 
@@ -733,7 +733,7 @@ def test_wildcard_column_expansion_with_two_tables(completer):
     completions = get_result(completer, text, position)
 
     cols = ('"select".id, "select".insert, "select"."ABC", '
-        'u.id, u.parentid, u.email, u.first_name, u.last_name')
+            'u.id, u.parentid, u.email, u.first_name, u.last_name')
     expected = [wildcard_expansion(cols)]
     assert completions == expected
 
@@ -773,7 +773,7 @@ def test_suggest_columns_from_quoted_table(completer):
 
 @parametrize('completer', completers(casing=False, aliasing=False))
 @parametrize('text', ['SELECT * FROM ',
-    'SELECT * FROM Orders o CROSS JOIN '])
+                      'SELECT * FROM Orders o CROSS JOIN '])
 def test_schema_or_visible_table_completion(completer, text):
     result = result_set(completer, text)
     assert result == set(testdata.schemas_and_from_clause_items())

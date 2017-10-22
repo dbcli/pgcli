@@ -62,7 +62,7 @@ def test_schemata_table_views_and_columns_query(executor):
 
     # tables
     assert set(executor.tables()) >= set([
-    ('public', 'a'), ('public', 'b'), ('schema1', 'c')])
+        ('public', 'a'), ('public', 'b'), ('schema1', 'c')])
 
     assert set(executor.table_columns()) >= set([
         ('public', 'a', 'x', 'text', False, None),
@@ -261,17 +261,17 @@ def test_jsonb_renders_without_u_prefix(executor, expanded):
 def test_date_time_types(executor):
     run(executor, "SET TIME ZONE UTC")
     assert run(executor, "SELECT (CAST('00:00:00' AS time))", join=True).split("\n")[3] \
-         == "| 00:00:00 |"
+        == "| 00:00:00 |"
     assert run(executor, "SELECT (CAST('00:00:00+14:59' AS timetz))", join=True).split("\n")[3]  \
         == "| 00:00:00+14:59 |"
     assert run(executor, "SELECT (CAST('4713-01-01 BC' AS date))", join=True).split("\n")[3] \
-         == "| 4713-01-01 BC |"
+        == "| 4713-01-01 BC |"
     assert run(executor, "SELECT (CAST('4713-01-01 00:00:00 BC' AS timestamp))", join=True).split("\n")[3] \
-         == "| 4713-01-01 00:00:00 BC |"
+        == "| 4713-01-01 00:00:00 BC |"
     assert run(executor, "SELECT (CAST('4713-01-01 00:00:00+00 BC' AS timestamptz))", join=True).split("\n")[3] \
-         == "| 4713-01-01 00:00:00+00 BC |"
+        == "| 4713-01-01 00:00:00+00 BC |"
     assert run(executor, "SELECT (CAST('-123456789 days 12:23:56' AS interval))", join=True).split("\n")[3] \
-         == "| -123456789 days, 12:23:56 |"
+        == "| -123456789 days, 12:23:56 |"
 
 
 @dbtest
