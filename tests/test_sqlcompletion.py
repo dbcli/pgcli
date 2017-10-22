@@ -27,7 +27,8 @@ def test_select_suggests_cols_with_qualified_table_scope():
 
 
 def test_cte_does_not_crash():
-    sql = 'WITH CTE AS (SELECT F.* FROM Foo F WHERE F.Bar > 23) SELECT C.* FROM CTE C WHERE C.FooID BETWEEN 123 AND 234;'
+    sql = ('WITH CTE AS (SELECT F.* FROM Foo F WHERE F.Bar > 23) '
+           'SELECT C.* FROM CTE C WHERE C.FooID BETWEEN 123 AND 234;')
     for i in range(len(sql)):
         suggestions = suggest_type(sql[:i+1], sql[:i+1])
 
@@ -553,7 +554,8 @@ on ''',
 def test_on_suggests_aliases_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, 'abc', 'a', False), (None, 'bcd', 'b', False))
-    assert set(suggestions) == set((JoinCondition(table_refs=tables, parent=None),
+    assert set(suggestions) == set((JoinCondition(table_refs=tables,
+                                                  parent=None),
                                     Alias(aliases=('a', 'b',)),))
 
 
@@ -564,7 +566,8 @@ def test_on_suggests_aliases_and_join_conditions(sql):
 def test_on_suggests_tables_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, 'abc', None, False), (None, 'bcd', None, False))
-    assert set(suggestions) == set((JoinCondition(table_refs=tables, parent=None),
+    assert set(suggestions) == set((JoinCondition(table_refs=tables,
+                                                  parent=None),
                                     Alias(aliases=('abc', 'bcd',)),))
 
 
@@ -584,7 +587,8 @@ def test_on_suggests_aliases_right_side(sql):
 def test_on_suggests_tables_and_join_conditions_right_side(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, 'abc', None, False), (None, 'bcd', None, False))
-    assert set(suggestions) == set((JoinCondition(table_refs=tables, parent=None),
+    assert set(suggestions) == set((JoinCondition(table_refs=tables,
+                                                  parent=None),
                                     Alias(aliases=('abc', 'bcd',)),))
 
 
@@ -652,14 +656,16 @@ def test_2_statements_1st_current():
 
 
 def test_3_statements_2nd_current():
-    suggestions = suggest_type('select * from a; select * from ; select * from c',
+    suggestions = suggest_type('select * from a; select * from ; '
+                               'select * from c',
                                'select * from a; select * from ')
     assert set(suggestions) == set([
         FromClauseItem(schema=None),
         Schema(),
     ])
 
-    suggestions = suggest_type('select * from a; select  from b; select * from c',
+    suggestions = suggest_type('select * from a; select  from b; '
+                               'select * from c',
                                'select * from a; select ')
     assert set(suggestions) == cols_etc('b', last_keyword='SELECT')
 

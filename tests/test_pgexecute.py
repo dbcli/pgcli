@@ -85,7 +85,8 @@ def test_foreign_key_query(executor):
     run(executor, "create schema schema1")
     run(executor, "create schema schema2")
     run(executor, "create table schema1.parent(parentid int PRIMARY KEY)")
-    run(executor, "create table schema2.child(childid int PRIMARY KEY, motherid int REFERENCES schema1.parent)")
+    run(executor, "create table schema2.child(childid int PRIMARY KEY, "
+                  "motherid int REFERENCES schema1.parent)")
 
     assert set(executor.foreignkeys()) >= set([
         ('schema1', 'parent', 'parentid', 'schema2', 'child', 'motherid')])
@@ -175,8 +176,8 @@ def test_unicode_support_in_output(executor, expanded):
     run(executor, u"insert into unicodechars (t) values ('é')")
 
     # See issue #24, this raises an exception without proper handling
-    assert u'é' in run(executor, "select * from unicodechars",
-                       join=True, expanded=expanded)
+    assert u'é' in run(
+        executor, "select * from unicodechars", join=True, expanded=expanded)
 
 
 @dbtest
@@ -222,12 +223,14 @@ def test_bytea_field_support_in_output(executor):
     run(executor,
         "insert into binarydata (c) values (decode('DEADBEEF', 'hex'))")
 
-    assert u'\\xdeadbeef' in run(executor, "select * from binarydata", join=True)
+    assert u'\\xdeadbeef' in run(executor, "select * from binarydata",
+                                 join=True)
 
 
 @dbtest
 def test_unicode_support_in_unknown_type(executor):
-    assert u'日本語' in run(executor, u"SELECT '日本語' AS japanese;", join=True)
+    assert u'日本語' in run(
+        executor, u"SELECT '日本語' AS japanese;", join=True)
 
 
 @dbtest
@@ -251,7 +254,8 @@ def test_json_renders_without_u_prefix(executor, expanded):
 @requires_jsonb
 def test_jsonb_renders_without_u_prefix(executor, expanded):
     run(executor, "create table jsonbtest(d jsonb)")
-    run(executor, u"""insert into jsonbtest (d) values ('{"name": "Éowyn"}')""")
+    run(executor,
+        u"""insert into jsonbtest (d) values ('{"name": "Éowyn"}')""")
     result = run(executor, "SELECT d FROM jsonbtest LIMIT 1",
                  join=True, expanded=expanded)
 
@@ -261,17 +265,29 @@ def test_jsonb_renders_without_u_prefix(executor, expanded):
 @dbtest
 def test_date_time_types(executor):
     run(executor, "SET TIME ZONE UTC")
-    assert run(executor, "SELECT (CAST('00:00:00' AS time))", join=True).split("\n")[3] \
+    assert run(executor,
+               "SELECT (CAST('00:00:00' AS time))",
+               join=True).split("\n")[3] \
         == "| 00:00:00 |"
-    assert run(executor, "SELECT (CAST('00:00:00+14:59' AS timetz))", join=True).split("\n")[3]  \
+    assert run(executor,
+               "SELECT (CAST('00:00:00+14:59' AS timetz))",
+               join=True).split("\n")[3]  \
         == "| 00:00:00+14:59 |"
-    assert run(executor, "SELECT (CAST('4713-01-01 BC' AS date))", join=True).split("\n")[3] \
+    assert run(executor,
+               "SELECT (CAST('4713-01-01 BC' AS date))",
+               join=True).split("\n")[3] \
         == "| 4713-01-01 BC |"
-    assert run(executor, "SELECT (CAST('4713-01-01 00:00:00 BC' AS timestamp))", join=True).split("\n")[3] \
+    assert run(executor,
+               "SELECT (CAST('4713-01-01 00:00:00 BC' AS timestamp))",
+               join=True).split("\n")[3] \
         == "| 4713-01-01 00:00:00 BC |"
-    assert run(executor, "SELECT (CAST('4713-01-01 00:00:00+00 BC' AS timestamptz))", join=True).split("\n")[3] \
+    assert run(executor,
+               "SELECT (CAST('4713-01-01 00:00:00+00 BC' AS timestamptz))",
+               join=True).split("\n")[3] \
         == "| 4713-01-01 00:00:00+00 BC |"
-    assert run(executor, "SELECT (CAST('-123456789 days 12:23:56' AS interval))", join=True).split("\n")[3] \
+    assert run(executor,
+               "SELECT (CAST('-123456789 days 12:23:56' AS interval))",
+               join=True).split("\n")[3] \
         == "| -123456789 days, 12:23:56 |"
 
 

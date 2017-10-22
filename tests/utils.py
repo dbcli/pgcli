@@ -11,7 +11,8 @@ POSTGRES_PASSWORD = getenv('PGPASSWORD', '')
 
 
 def db_connection(dbname=None):
-    conn = psycopg2.connect(user=POSTGRES_USER, host=POSTGRES_HOST, database=dbname)
+    conn = psycopg2.connect(user=POSTGRES_USER, host=POSTGRES_HOST,
+                            database=dbname)
     conn.autocommit = True
     return conn
 
@@ -30,7 +31,8 @@ except:
 
 dbtest = pytest.mark.skipif(
     not CAN_CONNECT_TO_DB,
-    reason="Need a postgres instance at localhost accessible by user 'postgres'")
+    reason=("Need a postgres instance at localhost accessible by user "
+            "'postgres'"))
 
 
 requires_json = pytest.mark.skipif(

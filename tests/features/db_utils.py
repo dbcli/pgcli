@@ -6,7 +6,8 @@ from psycopg2 import connect
 from psycopg2.extensions import AsIs
 
 
-def create_db(hostname='localhost', username=None, password=None, dbname=None, port=None):
+def create_db(hostname='localhost', username=None, password=None, dbname=None,
+              port=None):
     """Create test database.
 
     :param hostname: string

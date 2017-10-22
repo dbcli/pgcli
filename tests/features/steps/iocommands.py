@@ -17,7 +17,8 @@ def step_edit_file(context):
     context.cli.sendline('\e {0}'.format(
         os.path.basename(context.editor_file_name)))
     wrappers.expect_exact(
-        context, 'Entering Ex mode.  Type "visual" to go to Normal mode.', timeout=2)
+        context, 'Entering Ex mode.  Type "visual" to go to Normal mode.',
+        timeout=2)
     wrappers.expect_exact(context, '\r\n:', timeout=2)
 
 

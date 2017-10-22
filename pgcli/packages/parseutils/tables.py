@@ -18,7 +18,8 @@ def is_subselect(parsed):
         return False
     for item in parsed.tokens:
         if item.ttype is DML and item.value.upper() in ('SELECT', 'INSERT',
-                                                        'UPDATE', 'CREATE', 'DELETE'):
+                                                        'UPDATE', 'CREATE',
+                                                        'DELETE'):
             return True
     return False
 

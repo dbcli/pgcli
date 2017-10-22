@@ -15,7 +15,8 @@ def ColumnMetadata(
 
 
 ForeignKey = namedtuple('ForeignKey', ['parentschema', 'parenttable',
-                                       'parentcolumn', 'childschema', 'childtable', 'childcolumn'])
+                                       'parentcolumn', 'childschema',
+                                       'childtable', 'childcolumn'])
 TableMetadata = namedtuple('TableMetadata', 'name columns')
 
 
@@ -50,7 +51,8 @@ class FunctionMetadata(object):
 
     def __init__(
             self, schema_name, func_name, arg_names, arg_types, arg_modes,
-            return_type, is_aggregate, is_window, is_set_returning, arg_defaults
+            return_type, is_aggregate, is_window, is_set_returning,
+            arg_defaults
     ):
         """Class for describing a postgresql function"""
 
@@ -106,7 +108,8 @@ class FunctionMetadata(object):
         )
 
     def has_variadic(self):
-        return self.arg_modes and any(arg_mode == 'v' for arg_mode in self.arg_modes)
+        return self.arg_modes and any(arg_mode == 'v' for arg_mode
+                                      in self.arg_modes)
 
     def args(self):
         """Returns a list of input-parameter ColumnMetadata namedtuples."""

@@ -42,12 +42,14 @@ def create_toolbar_tokens_func(get_vi_mode_enabled, get_is_refreshing,
                 result.append((token, ' (Semi-colon [;] will end the line) '))
 
         if get_vi_mode_enabled():
-            result.append((token.On, '[F4] Vi-mode (' + _get_vi_mode(cli) + ')'))
+            result.append((token.On, '[F4] Vi-mode (' +
+                           _get_vi_mode(cli) + ')'))
         else:
             result.append((token.On, '[F4] Emacs-mode'))
 
         if failed_transaction():
-            result.append((token.Transaction.Failed, '     Failed transaction'))
+            result.append((token.Transaction.Failed,
+                           '     Failed transaction'))
 
         if valid_transaction():
             result.append((token.Transaction.Valid, '     Transaction'))

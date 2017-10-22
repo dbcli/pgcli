@@ -8,9 +8,10 @@ from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.document import Document
-from .packages.sqlcompletion import (FromClauseItem,
-                                     suggest_type, Special, Database, Schema, Table, Function, Column, View,
-                                     Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join)
+from .packages.sqlcompletion import (FromClauseItem, suggest_type, Special,
+                                     Database, Schema, Table, Function, Column,
+                                     View, Keyword, NamedQuery, Datatype,
+                                     Alias, Path, JoinCondition, Join)
 from .packages.parseutils.meta import ColumnMetadata, ForeignKey
 from .packages.parseutils.utils import last_word
 from .packages.parseutils.tables import TableReference
@@ -62,7 +63,8 @@ def generate_alias(tbl):
     param tbl - unescaped name of the table to alias
     """
     return ''.join([l for l in tbl if l.isupper()] or
-                   [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and l != '_'])
+                   [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and
+                    l != '_'])
 
 
 class PGCompleter(Completer):
@@ -204,7 +206,8 @@ class PGCompleter(Completer):
 
         """
         metadata = self.dbmetadata[kind]
-        for schema, relname, colname, datatype, has_default, default in column_data:
+        for (schema, relname, colname, datatype, has_default,
+             default) in column_data:
             (schema, relname, colname) = self.escaped_names(
                 [schema, relname, colname])
             column = ColumnMetadata(
@@ -237,9 +240,11 @@ class PGCompleter(Completer):
         self._refresh_arg_list_cache()
 
     def _refresh_arg_list_cache(self):
-        # We keep a cache of {function_usage:{function_metadata: function_arg_list_string}}
-        # This is used when suggesting functions, to avoid the latency that would result
-        # if we'd recalculate the arg lists each time we suggest functions (in large DBs)
+        # We keep a cache of {function_usage:{function_metadata:
+        #                                         function_arg_list_string}}
+        # This is used when suggesting functions, to avoid the latency that
+        # would result if we'd recalculate the arg lists each time we suggest
+        # functions (in large DBs)
         self._arg_list_cache = {
             usage: {
                 meta: self._arg_list(meta, usage)
@@ -384,7 +389,8 @@ class PGCompleter(Completer):
                 syn_matches = [m for m in syn_matches if m]
                 sort_key = max(syn_matches) if syn_matches else None
             else:
-                item, display_meta, prio, prio2, display = cand, meta, 0, 0, cand
+                item, display_meta, prio, prio2, display = (cand, meta, 0, 0,
+                                                            cand)
                 sort_key = _match(cand)
 
             if sort_key:
@@ -401,9 +407,10 @@ class PGCompleter(Completer):
                 # case-sensitive one as a tie breaker.
                 # We also use the unescape_name to make sure quoted names have
                 # the same priority as unquoted names.
-                lexical_priority = (tuple(0 if c in(' _') else -ord(c)
-                                          for c in self.unescape_name(item.lower())) + (1,) +
-                                    tuple(c for c in item))
+                lexical_priority = (
+                    tuple(0 if c in(' _') else -ord(c)
+                          for c in self.unescape_name(item.lower())) + (1,) +
+                    tuple(c for c in item))
 
                 item = self.case(item)
                 display = self.case(display)
@@ -436,8 +443,8 @@ class PGCompleter(Completer):
         # If smart_completion is off then match any word that starts with
         # 'word_before_cursor'.
         if not smart_completion:
-            matches = self.find_matches(word_before_cursor, self.all_completions,
-                                        mode='strict')
+            matches = self.find_matches(word_before_cursor,
+                                        self.all_completions, mode='strict')
             completions = [m.completion for m in matches]
             return sorted(completions, key=operator.attrgetter('text'))
 
@@ -461,27 +468,34 @@ class PGCompleter(Completer):
 
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.table_refs
-        do_qualify = suggestion.qualifiable and {'always': True, 'never': False,
-                                                 'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
+        do_qualify = suggestion.qualifiable and {
+            'always': True,
+            'never': False,
+            'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
 
         def qualify(col, tbl):
-            return (tbl + '.' + self.case(col)) if do_qualify else self.case(col)
+            return ((tbl + '.' + self.case(col)) if do_qualify
+                    else self.case(col))
 
         _logger.debug("Completion column scope: %r", tables)
-        scoped_cols = self.populate_scoped_cols(tables, suggestion.local_tables)
+        scoped_cols = self.populate_scoped_cols(tables,
+                                                suggestion.local_tables)
 
         def make_cand(name, ref):
             synonyms = (name, generate_alias(self.case(name)))
             return Candidate(qualify(name, ref), 0, 'column', synonyms)
 
         def flat_cols():
-            return [make_cand(c.name, t.ref) for t, cols in scoped_cols.items() for c in cols]
+            return [make_cand(c.name, t.ref) for t, cols in scoped_cols.items()
+                    for c in cols]
         if suggestion.require_last_table:
-            # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
-            # suggest only columns that appear in the last table and one more
+            # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which
+            # should suggest only columns that appear in the last table and one
+            # more
             ltbl = tables[-1].ref
             other_tbl_cols = set(
-                c.name for t, cs in scoped_cols.items() if t.ref != ltbl for c in cs)
+                c.name for t, cs in scoped_cols.items() if t.ref != ltbl for c
+                in cs)
             scoped_cols = {
                 t: [col for col in cols if col.name in other_tbl_cols]
                 for t, cols in scoped_cols.items()
@@ -498,7 +512,8 @@ class PGCompleter(Completer):
                         for p in self.insert_col_skip_patterns
                     )
                 scoped_cols = {
-                    t: [col for col in cols if filter(col)] for t, cols in scoped_cols.items()
+                    t: [col for col in cols if filter(col)] for t, cols
+                    in scoped_cols.items()
                 }
             if self.asterisk_column_order == 'alphabetic':
                 for cols in scoped_cols.values():
@@ -512,7 +527,8 @@ class PGCompleter(Completer):
                                    for c in flat_cols())
             else:
                 collist = ', '.join(qualify(c.name, t.ref)
-                                    for t, cs in scoped_cols.items() for c in cs)
+                                    for t, cs in scoped_cols.items() for c
+                                    in cs)
 
             return [Match(
                 completion=Completion(
@@ -578,9 +594,11 @@ class PGCompleter(Completer):
                 alias, c(left.col), rtbl.ref, c(right.col))]
             # Schema-qualify if (1) new table in same schema as old, and old
             # is schema-qualified, or (2) new in other schema, except public
-            if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)] and
-                                          left.schema == right.schema or
-                                          left.schema not in(right.schema, 'public')):
+            if (not suggestion.schema and
+                (qualified[normalize_ref(rtbl.ref)] and
+                 left.schema == right.schema or
+                 left.schema not in(right.schema,
+                                    'public'))):
                 join = left.schema + '.' + join
             prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (
                 0 if (left.schema, left.tbl) in other_tbls else 1)
@@ -641,7 +659,8 @@ class PGCompleter(Completer):
 
         return self.find_matches(word_before_cursor, conds, meta='join')
 
-    def get_function_matches(self, suggestion, word_before_cursor, alias=False):
+    def get_function_matches(self, suggestion, word_before_cursor,
+                             alias=False):
         if suggestion.usage == 'from':
             # Only suggest functions allowed in FROM clause
             def filt(f): return not f.is_aggregate and not f.is_window
@@ -684,7 +703,8 @@ class PGCompleter(Completer):
         if suggestion.quoted:
             schema_names = [self.escape_schema(s) for s in schema_names]
 
-        return self.find_matches(word_before_cursor, schema_names, meta='schema')
+        return self.find_matches(word_before_cursor, schema_names,
+                                 meta='schema')
 
     def get_from_clause_item_matches(self, suggestion, word_before_cursor):
         alias = self.generate_aliases
@@ -749,7 +769,8 @@ class PGCompleter(Completer):
         """Returns a Candidate namedtuple.
 
         :param tbl is a SchemaObject
-        :param arg_mode determines what type of arg list to suffix for functions.
+        :param arg_mode determines what type of arg list to suffix for
+                        functions.
         Possible values: call, signature
 
         """
@@ -773,7 +794,8 @@ class PGCompleter(Completer):
 
     def get_table_matches(self, suggestion, word_before_cursor, alias=False):
         tables = self.populate_schema_objects(suggestion.schema, 'tables')
-        tables.extend(SchemaObject(tbl.name) for tbl in suggestion.local_tables)
+        tables.extend(SchemaObject(tbl.name) for tbl
+                      in suggestion.local_tables)
 
         # Unless we're sure the user really wants them, don't suggest the
         # pg_catalog tables that are implicitly on the search path
@@ -848,14 +870,16 @@ class PGCompleter(Completer):
 
         if not suggestion.schema:
             # Also suggest hardcoded types
-            matches.extend(self.find_matches(word_before_cursor, self.datatypes,
-                                             mode='strict', meta='datatype'))
+            matches.extend(self.find_matches(word_before_cursor,
+                                             self.datatypes, mode='strict',
+                                             meta='datatype'))
 
         return matches
 
     def get_namedquery_matches(self, _, word_before_cursor):
         return self.find_matches(
-            word_before_cursor, NamedQueries.instance.list(), meta='named query')
+            word_before_cursor, NamedQueries.instance.list(),
+            meta='named query')
 
     suggestion_matchers = {
         FromClauseItem: get_from_clause_item_matches,

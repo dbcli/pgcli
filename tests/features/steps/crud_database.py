@@ -65,7 +65,8 @@ def step_see_prompt(context):
     """
     Wait to see the prompt.
     """
-    wrappers.expect_exact(context, '{0}> '.format(context.conf['dbname']), timeout=5)
+    wrappers.expect_exact(context, '{0}> '.format(context.conf['dbname']),
+                          timeout=5)
     context.atprompt = True
 
 
@@ -96,4 +97,5 @@ def step_see_db_connected(context):
     """
     Wait to see drop database output.
     """
-    wrappers.expect_exact(context, 'You are now connected to database', timeout=2)
+    wrappers.expect_exact(context, 'You are now connected to database',
+                          timeout=2)
