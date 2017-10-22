@@ -197,8 +197,8 @@ class PGCli(object):
             self.change_db, '\\c', '\\c[onnect] database_name',
             'Change to a new database.', aliases=('use', '\\connect', 'USE'))
 
-        refresh_callback = lambda: self.refresh_completions(
-            persist_priorities='all')
+        def refresh_callback():
+            return self.refresh_completions(persist_priorities='all')
 
         self.pgspecial.register(refresh_callback, '\\#', '\\#',
                                 'Refresh auto-completions.', arg_type=NO_QUERY)

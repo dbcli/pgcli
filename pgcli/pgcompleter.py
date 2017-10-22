@@ -50,7 +50,9 @@ def Candidate(
 # Used to strip trailing '::some_type' from default-value expressions
 arg_default_type_strip_regex = re.compile(r'::[\w\.]+(\[\])?$')
 
-normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() + '"'
+
+def normalize_ref(ref):
+    return ref if ref[0] == '"' else '"' + ref.lower() + '"'
 
 
 def generate_alias(tbl):
@@ -461,8 +463,10 @@ class PGCompleter(Completer):
         tables = suggestion.table_refs
         do_qualify = suggestion.qualifiable and {'always': True, 'never': False,
                                                  'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
-        qualify = lambda col, tbl: (
-            (tbl + '.' + self.case(col)) if do_qualify else self.case(col))
+
+        def qualify(col, tbl):
+            return (tbl + '.' + self.case(col)) if do_qualify else self.case(col)
+
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables, suggestion.local_tables)
 
