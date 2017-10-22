@@ -53,7 +53,7 @@ def _wait_select(conn):
 
 
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
-# See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
+# See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/  # nopep8
 # See also https://github.com/psycopg/psycopg2/issues/468
 ext.set_wait_callback(_wait_select)
 
@@ -225,7 +225,8 @@ class PGExecute(object):
             self.host = self.get_socket_directory()
 
         cursor.execute("SHOW ALL")
-        db_parameters = dict(name_val_desc[:2] for name_val_desc in cursor.fetchall())
+        db_parameters = dict(name_val_desc[:2] for name_val_desc
+                             in cursor.fetchall())
 
         pid = self._select_one(cursor, 'select pg_backend_pid()')[0]
         self.pid = pid
@@ -259,17 +260,14 @@ class PGExecute(object):
         else:
             return json_data
 
-
     def failed_transaction(self):
         status = self.conn.get_transaction_status()
         return status == ext.TRANSACTION_STATUS_INERROR
-
 
     def valid_transaction(self):
         status = self.conn.get_transaction_status()
         return (status == ext.TRANSACTION_STATUS_ACTIVE or
                 status == ext.TRANSACTION_STATUS_INTRANS)
-
 
     def run(self, statement, pgspecial=None, exception_formatter=None,
             on_error_resume=False):
@@ -278,9 +276,9 @@ class PGExecute(object):
         :param statement: A string containing one or more sql statements
         :param pgspecial: PGSpecial object
         :param exception_formatter: A callable that accepts an Exception and
-               returns a formatted (title, rows, headers, status) tuple that can
-               act as a query result. If an exception_formatter is not supplied,
-               psycopg2 exceptions are always raised.
+               returns a formatted (title, rows, headers, status) tuple that
+               can act as a query result. If an exception_formatter is not
+               supplied, psycopg2 exceptions are always raised.
         :param on_error_resume: Bool. If true, queries following an exception
                (assuming exception_formatter has been supplied) continue to
                execute.
@@ -321,8 +319,8 @@ class PGExecute(object):
                 _logger.error("sql: %r, error: %r", sql, e)
                 _logger.error("traceback: %r", traceback.format_exc())
 
-                if (self._must_raise(e)
-                        or not exception_formatter):
+                if (self._must_raise(e) or
+                        not exception_formatter):
                     raise
 
                 yield None, None, None, exception_formatter(e), sql, False
@@ -373,7 +371,8 @@ class PGExecute(object):
 
         try:
             with self.conn.cursor() as cur:
-                _logger.debug('Search path query. sql: %r', self.search_path_query)
+                _logger.debug('Search path query. sql: %r',
+                              self.search_path_query)
                 cur.execute(self.search_path_query)
                 return [x[0] for x in cur.fetchall()]
         except psycopg2.ProgrammingError:
@@ -382,7 +381,6 @@ class PGExecute(object):
                 _logger.debug('Search path query. sql: %r', fallback)
                 cur.execute(fallback)
                 return cur.fetchone()[0]
-
 
     def schemata(self):
         """Returns a list of schema names in the database"""
@@ -429,7 +427,8 @@ class PGExecute(object):
                 'r' - table
                 'v' - view
                 'm' - materialized view
-        :return: list of (schema_name, relation_name, column_name, column_type) tuples
+        :return: list of (schema_name, relation_name, column_name, column_type)
+                 tuples
         """
 
         if self.conn.server_version >= 80400:
@@ -523,7 +522,8 @@ class PGExecute(object):
                         select
                             array_agg(attname ORDER BY i)
                         from
-                            (select unnest(confkey) as attnum, generate_subscripts(confkey, 1) as i) x
+                            (select unnest(confkey) as attnum,
+                             generate_subscripts(confkey, 1) as i) x
                             JOIN pg_catalog.pg_attribute c USING(attnum)
                             WHERE c.attrelid = fk.confrelid
                         )) AS parentcolumn,
@@ -533,7 +533,8 @@ class PGExecute(object):
                         select
                             array_agg(attname ORDER BY i)
                         from
-                            (select unnest(conkey) as attnum, generate_subscripts(conkey, 1) as i) x
+                            (select unnest(conkey) as attnum,
+                             generate_subscripts(conkey, 1) as i) x
                             JOIN pg_catalog.pg_attribute c USING(attnum)
                             WHERE c.attrelid = fk.conrelid
                         )) AS childcolumn
@@ -557,7 +558,8 @@ class PGExecute(object):
                 SELECT n.nspname schema_name,
                         p.proname func_name,
                         p.proargnames,
-                        COALESCE(proallargtypes::regtype[], proargtypes::regtype[])::text[],
+                        COALESCE(proallargtypes::regtype[],
+                                 proargtypes::regtype[])::text[],
                         p.proargmodes,
                         prorettype::regtype::text return_type,
                         p.proisagg is_aggregate,
@@ -575,7 +577,8 @@ class PGExecute(object):
                 SELECT n.nspname schema_name,
                         p.proname func_name,
                         p.proargnames,
-                        COALESCE(proallargtypes::regtype[], proargtypes::regtype[])::text[],
+                        COALESCE(proallargtypes::regtype[],
+                                 proargtypes::regtype[])::text[],
                         p.proargmodes,
                         prorettype::regtype::text,
                         p.proisagg is_aggregate,
@@ -611,7 +614,7 @@ class PGExecute(object):
             _logger.debug('Functions Query. sql: %r', query)
             cur.execute(query)
             for row in cur:
-                  yield FunctionMetadata(*row)
+                yield FunctionMetadata(*row)
 
     def datatypes(self):
         """Yields tuples of (schema_name, type_name)"""
@@ -634,7 +637,8 @@ class PGExecute(object):
                           AND NOT EXISTS( -- ignore array types
                                 SELECT  1
                                 FROM    pg_catalog.pg_type el
-                                WHERE   el.oid = t.typelem AND el.typarray = t.oid
+                                WHERE   el.oid = t.typelem
+                                        AND el.typarray = t.oid
                               )
                           AND n.nspname <> 'pg_catalog'
                           AND n.nspname <> 'information_schema'
@@ -645,8 +649,11 @@ class PGExecute(object):
                     SELECT n.nspname schema_name,
                       pg_catalog.format_type(t.oid, NULL) type_name
                     FROM pg_catalog.pg_type t
-                         LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-                    WHERE (t.typrelid = 0 OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid))
+                         LEFT JOIN pg_catalog.pg_namespace n
+                            ON n.oid = t.typnamespace
+                    WHERE (t.typrelid = 0 OR (SELECT c.relkind = 'c'
+                                              FROM pg_catalog.pg_class c
+                                              WHERE c.oid = t.typrelid))
                       AND t.typname !~ '^_'
                           AND n.nspname <> 'pg_catalog'
                           AND n.nspname <> 'information_schema'
@@ -657,7 +664,6 @@ class PGExecute(object):
             cur.execute(query)
             for row in cur:
                 yield row
-
 
     def casing(self):
         """Yields the most common casing for names used in db functions"""
@@ -674,7 +680,8 @@ class PGExecute(object):
             ),
             OrderWords AS (
                 SELECT Word,
-                    ROW_NUMBER() OVER(PARTITION BY LOWER(Word) ORDER BY Count DESC)
+                    ROW_NUMBER() OVER(PARTITION BY LOWER(Word)
+                                      ORDER BY Count DESC)
                 FROM Words
                 WHERE Word ~* '.*[a-z].*'
             ),

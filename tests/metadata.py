@@ -192,8 +192,8 @@ class MetaData(object):
 
     def _make_col(self, sch, tbl, col):
         defaults = self.metadata.get('defaults', {}).get(sch, {})
-        return (sch, tbl, col, 'text', (tbl, col) in defaults, defaults.get((tbl, col)))
-
+        return (sch, tbl, col, 'text', (tbl, col) in defaults, defaults.get(
+            (tbl, col)))
 
     def get_completer(self, settings=None, casing=None):
         metadata = self.metadata

@@ -9,7 +9,8 @@ with open('pgcli/__init__.py', 'rb') as f:
     version = str(ast.literal_eval(_version_re.search(
         f.read().decode('utf-8')).group(1)))
 
-description = 'CLI for Postgres Database. With auto-completion and syntax highlighting.'
+description = ('CLI for Postgres Database. With auto-completion and syntax '
+               'highlighting.')
 
 install_requirements = [
     'pgspecial>=1.8.0',
@@ -28,7 +29,8 @@ install_requirements = [
 # But this is not necessary in Windows since the password is never shown in the
 # task manager. Also setproctitle is a hard dependency to install in Windows,
 # so we'll only install it if we're not in Windows.
-if platform.system() != 'Windows' and not platform.system().startswith("CYGWIN"):
+if (platform.system() != 'Windows' and
+        not platform.system().startswith("CYGWIN")):
     install_requirements.append('setproctitle >= 1.1.9')
 
 setup(

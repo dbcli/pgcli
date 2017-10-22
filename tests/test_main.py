@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import os
 import platform
 import mock
-from decimal import Decimal
 
 import pytest
 try:
@@ -30,7 +29,8 @@ def test_obfuscate_process_password():
     expected = "pgcli user=root password=xxxx host=localhost"
     assert title == expected
 
-    setproctitle.setproctitle("pgcli user=root password=top secret host=localhost")
+    setproctitle.setproctitle("pgcli user=root password=top secret "
+                              "host=localhost")
     obfuscate_process_password()
     title = setproctitle.getproctitle()
     expected = "pgcli user=root password=xxxx host=localhost"
@@ -181,7 +181,8 @@ def test_ssl_db_uri(tmpdir):
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri(
             'postgres://bar%5E:%5Dfoo@baz.com/testdb%5B?'
-            'sslmode=verify-full&sslcert=m%79.pem&sslkey=my-key.pem&sslrootcert=c%61.pem')
+            'sslmode=verify-full&sslcert=m%79.pem&sslkey=my-key.pem'
+            '&sslrootcert=c%61.pem')
     mock_connect.assert_called_with(database='testdb[',
                                     host='baz.com',
                                     port=None,

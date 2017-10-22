@@ -112,7 +112,8 @@ def get_cte_from_token(tok, pos0):
 
 
 def extract_column_names(parsed):
-    # Find the first DML token to check if it's a SELECT or INSERT/UPDATE/DELETE
+    # Find the first DML token to check if it's a SELECT
+    # or INSERT/UPDATE/DELETE
     idx, tok = parsed.token_next_by(t=DML)
     tok_val = tok and tok.value.lower()
 

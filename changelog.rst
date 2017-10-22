@@ -5,6 +5,7 @@ Internal changes:
 -----------------
 * Use temporary dir as config location in tests
 * Fix errors in the ``tee`` test (#795 and #797). (Thanks: `Irina Truong`_)
+* Fully PEP8 compliant (Thanks: `François Pietka`_)
 
 Bug Fixes:
 ----------

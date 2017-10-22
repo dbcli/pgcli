@@ -2,7 +2,6 @@ import logging
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.key_binding.manager import KeyBindingManager
-from prompt_toolkit.filters import Condition
 from .filters import HasSelectedCompletion
 
 _logger = logging.getLogger(__name__)
@@ -49,7 +48,8 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
         vi_mode = not get_vi_mode_enabled()
         set_vi_mode_enabled(vi_mode)
 
-        event.cli.editing_mode = EditingMode.VI if vi_mode else EditingMode.EMACS
+        event.cli.editing_mode = (EditingMode.VI if vi_mode
+                                  else EditingMode.EMACS)
 
     @key_binding_manager.registry.add_binding(Keys.Tab)
     def _(event):
@@ -81,7 +81,8 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
         else:
             event.cli.start_completion(select_first=False)
 
-    @key_binding_manager.registry.add_binding(Keys.ControlJ, filter=HasSelectedCompletion())
+    @key_binding_manager.registry.add_binding(Keys.ControlJ,
+                                              filter=HasSelectedCompletion())
     def _(event):
         """
         Makes the enter key work as the tab key only when showing the menu.

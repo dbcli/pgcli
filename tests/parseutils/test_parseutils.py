@@ -132,14 +132,16 @@ def test_simple_update_table_with_schema():
 
 @pytest.mark.parametrize('join_type', ['', 'INNER', 'LEFT', 'RIGHT OUTER'])
 def test_join_table(join_type):
-    sql = 'SELECT * FROM abc a {0} JOIN def d ON a.id = d.num'.format(join_type)
+    sql = 'SELECT * FROM abc a {0} JOIN def d ON a.id = d.num'.format(
+        join_type)
     tables = extract_tables(sql)
     assert set(tables) == set([(None, 'abc', 'a', False),
                                (None, 'def', 'd', False)])
 
 
 def test_join_table_schema_qualified():
-    tables = extract_tables('SELECT * FROM abc.def x JOIN ghi.jkl y ON x.id = y.num')
+    tables = extract_tables('SELECT * FROM abc.def x JOIN ghi.jkl y '
+                            'ON x.id = y.num')
     assert set(tables) == set([('abc', 'def', 'x', False),
                                ('ghi', 'jkl', 'y', False)])
 
@@ -217,7 +219,8 @@ def test_complex_table_and_function():
 def test_find_prev_keyword_using():
     q = 'select * from tbl1 inner join tbl2 using (col1, '
     kw, q2 = find_prev_keyword(q)
-    assert kw.value == '(' and q2 == 'select * from tbl1 inner join tbl2 using ('
+    assert (kw.value == '(' and
+            q2 == 'select * from tbl1 inner join tbl2 using (')
 
 
 @pytest.mark.parametrize('sql', [

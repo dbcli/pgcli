@@ -1,7 +1,7 @@
 import os
 import pytest
-from utils import (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, create_db, db_connection,
-                   drop_tables)
+from utils import (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, create_db,
+                   db_connection, drop_tables)
 import pgcli.pgexecute
 
 
@@ -24,7 +24,9 @@ def cursor(connection):
 @pytest.fixture
 def executor(connection):
     return pgcli.pgexecute.PGExecute(database='_test_db', user=POSTGRES_USER,
-                                     host=POSTGRES_HOST, password=POSTGRES_PASSWORD, port=None, dsn=None)
+                                     host=POSTGRES_HOST,
+                                     password=POSTGRES_PASSWORD, port=None,
+                                     dsn=None)
 
 
 @pytest.fixture

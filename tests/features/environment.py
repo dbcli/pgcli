@@ -93,8 +93,10 @@ def before_all(context):
         if 'PGPASSWORD' in os.environ:
             del os.environ['PGPASSWORD']
 
-    context.cn = dbutils.create_db(context.conf['host'], context.conf['user'],
-                                   context.conf['pass'], context.conf['dbname'],
+    context.cn = dbutils.create_db(context.conf['host'],
+                                   context.conf['user'],
+                                   context.conf['pass'],
+                                   context.conf['dbname'],
                                    context.conf['port'])
 
     context.fixture_data = fixutils.read_fixture_files()

@@ -37,9 +37,10 @@ def test_refresh_called_once(refresher):
         time.sleep(1)  # Wait for the thread to work.
         assert len(actual) == 1
         assert len(actual[0]) == 4
-        assert actual[0][3] == 'Auto-completion refresh started in the background.'
+        assert actual[0][3] == ('Auto-completion refresh started in the '
+                                'background.')
         bg_refresh.assert_called_with(pgexecute, special, callbacks, None,
-            None)
+                                      None)
 
 
 def test_refresh_called_twice(refresher):
@@ -62,7 +63,8 @@ def test_refresh_called_twice(refresher):
     time.sleep(1)  # Wait for the thread to work.
     assert len(actual1) == 1
     assert len(actual1[0]) == 4
-    assert actual1[0][3] == 'Auto-completion refresh started in the background.'
+    assert actual1[0][3] == ('Auto-completion refresh started in the '
+                             'background.')
 
     actual2 = refresher.refresh(pgexecute, special, callbacks)
     time.sleep(1)  # Wait for the thread to work.
