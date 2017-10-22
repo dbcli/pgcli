@@ -194,7 +194,6 @@ class MetaData(object):
         defaults = self.metadata.get('defaults', {}).get(sch, {})
         return (sch, tbl, col, 'text', (tbl, col) in defaults, defaults.get((tbl, col)))
 
-
     def get_completer(self, settings=None, casing=None):
         metadata = self.metadata
         from pgcli.pgcompleter import PGCompleter

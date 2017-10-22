@@ -259,17 +259,14 @@ class PGExecute(object):
         else:
             return json_data
 
-
     def failed_transaction(self):
         status = self.conn.get_transaction_status()
         return status == ext.TRANSACTION_STATUS_INERROR
-
 
     def valid_transaction(self):
         status = self.conn.get_transaction_status()
         return (status == ext.TRANSACTION_STATUS_ACTIVE or
                 status == ext.TRANSACTION_STATUS_INTRANS)
-
 
     def run(self, statement, pgspecial=None, exception_formatter=None,
             on_error_resume=False):
@@ -382,7 +379,6 @@ class PGExecute(object):
                 _logger.debug('Search path query. sql: %r', fallback)
                 cur.execute(fallback)
                 return cur.fetchone()[0]
-
 
     def schemata(self):
         """Returns a list of schema names in the database"""
@@ -657,7 +653,6 @@ class PGExecute(object):
             cur.execute(query)
             for row in cur:
                 yield row
-
 
     def casing(self):
         """Yields the most common casing for names used in db functions"""

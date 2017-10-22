@@ -421,6 +421,7 @@ def test_suggest_columns_from_quoted_table(completer, text):
     result = result_set(completer, text, position)
     assert result == set(testdata.columns('Users', 'custom'))
 
+
 texts = ['SELECT * FROM ', 'SELECT * FROM public.Orders O CROSS JOIN ']
 
 

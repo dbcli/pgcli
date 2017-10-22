@@ -131,7 +131,6 @@ class FunctionMetadata(object):
 
         return [arg(name, typ, num) for num, (name, typ) in enumerate(args)]
 
-
     def fields(self):
         """Returns a list of output-field ColumnMetadata namedtuples"""
 

@@ -52,6 +52,7 @@ arg_default_type_strip_regex = re.compile(r'::[\w\.]+(\[\])?$')
 
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
+
 def generate_alias(tbl):
     """ Generate a table alias, consisting of all upper-case letters in
     the table name, or, if there are no upper-case letters, the first letter +
@@ -777,7 +778,6 @@ class PGCompleter(Completer):
             tables = [t for t in tables if not t.name.startswith('pg_')]
         tables = [self._make_cand(t, alias, suggestion) for t in tables]
         return self.find_matches(word_before_cursor, tables, meta='table')
-
 
     def get_view_matches(self, suggestion, word_before_cursor, alias=False):
         views = self.populate_schema_objects(suggestion.schema, 'views')

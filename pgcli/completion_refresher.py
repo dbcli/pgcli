@@ -116,6 +116,7 @@ def refresh_views(completer, executor):
     completer.extend_relations(executor.views(), kind='views')
     completer.extend_columns(executor.view_columns(), kind='views')
 
+
 @refresher('types')
 def refresh_types(completer, executor):
     completer.extend_datatypes(executor.datatypes())

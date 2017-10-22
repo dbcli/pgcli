@@ -18,6 +18,7 @@ def function_meta_data(
         is_aggregate, is_window, is_set_returning, arg_defaults
     )
 
+
 @dbtest
 def test_conn(executor):
     run(executor, '''create table test(a text)''')
