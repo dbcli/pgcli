@@ -53,7 +53,7 @@ def _wait_select(conn):
 
 
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
-# See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
+# See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/  # nopep8
 # See also https://github.com/psycopg/psycopg2/issues/468
 ext.set_wait_callback(_wait_select)
 
