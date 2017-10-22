@@ -15,6 +15,12 @@ import itertools
 from time import time, sleep
 from codecs import open
 
+from getpass import getuser
+from psycopg2 import OperationalError, InterfaceError
+import psycopg2
+
+from collections import namedtuple
+
 
 from cli_helpers.tabular_output import TabularOutputFormatter
 from cli_helpers.tabular_output.preprocessors import (align_decimals,
@@ -59,12 +65,6 @@ try:
     from urlparse import urlparse, unquote, parse_qs
 except ImportError:
     from urllib.parse import urlparse, unquote, parse_qs
-
-from getpass import getuser
-from psycopg2 import OperationalError, InterfaceError
-import psycopg2
-
-from collections import namedtuple
 
 
 # Query tuples are used for maintaining history
