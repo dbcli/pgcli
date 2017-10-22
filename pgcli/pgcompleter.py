@@ -591,7 +591,7 @@ class PGCompleter(Completer):
         try:
             lref = (suggestion.parent or suggestion.table_refs[-1]).ref
             ltbl, lcols = [(t, cs) for (t, cs) in tbls() if t.ref == lref][-1]
-        except IndexError: # The user typed an incorrect table qualifier
+        except IndexError:  # The user typed an incorrect table qualifier
             return []
         conds, found_conds = [], set()
 
@@ -603,7 +603,7 @@ class PGCompleter(Completer):
                 found_conds.add(cond)
                 conds.append(Candidate(cond, prio + ref_prio[rref], meta))
 
-        def list_dict(pairs): # Turns [(a, b), (a, c)] into {a: [b, c]}
+        def list_dict(pairs):  # Turns [(a, b), (a, c)] into {a: [b, c]}
             d = defaultdict(list)
             for pair in pairs:
                 d[pair[0]].append(pair[1])
