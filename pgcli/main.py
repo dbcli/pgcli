@@ -863,7 +863,7 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
             cfg = load_config(pgclirc, config_full_path)
             dsn_config = cfg['alias_dsn'][dsn]
         except:
-            click.secho('Invalid DSNs found in the config file. '\
+            click.secho('Invalid DSNs found in the config file. '
                         'Please check the "[alias_dsn]" section in pgclirc.',
                         err=True, fg='red')
             exit(1)
