@@ -50,7 +50,7 @@ def Candidate(
 # Used to strip trailing '::some_type' from default-value expressions
 arg_default_type_strip_regex = re.compile(r'::[\w\.]+(\[\])?$')
 
-normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
+normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() + '"'
 
 
 def generate_alias(tbl):
@@ -263,8 +263,8 @@ class PGCompleter(Completer):
             parentschema, childschema = e([fk.parentschema, fk.childschema])
             parenttable, childtable = e([fk.parenttable, fk.childtable])
             childcol, parcol = e([fk.childcolumn, fk.parentcolumn])
-            childcolmeta =  meta[childschema][childtable][childcol]
-            parcolmeta =  meta[parentschema][parenttable][parcol]
+            childcolmeta = meta[childschema][childtable][childcol]
+            parcolmeta = meta[parentschema][parenttable][parcol]
             fk = ForeignKey(parentschema, parenttable, parcol,
                             childschema, childtable, childcol)
             childcolmeta.foreignkeys.append((fk))
