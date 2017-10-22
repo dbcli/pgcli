@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 import logging
 import re
-from itertools import count, repeat, chain
+from itertools import count, chain
 import operator
 from collections import namedtuple, defaultdict, OrderedDict
 from pgspecial.namedqueries import NamedQueries

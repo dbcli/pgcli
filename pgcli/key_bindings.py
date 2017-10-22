@@ -2,7 +2,6 @@ import logging
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.key_binding.manager import KeyBindingManager
-from prompt_toolkit.filters import Condition
 from .filters import HasSelectedCompletion
 
 _logger = logging.getLogger(__name__)

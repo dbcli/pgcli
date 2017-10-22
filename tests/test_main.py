@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import os
 import platform
 import mock
-from decimal import Decimal
 
 import pytest
 try:
