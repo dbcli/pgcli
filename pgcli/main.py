@@ -550,7 +550,7 @@ class PGCli(object):
 
         except EOFError:
             if not self.less_chatty:
-                print ('Goodbye!')
+                print('Goodbye!')
 
     def _build_cli(self, history):
 
@@ -569,7 +569,7 @@ class PGCli(object):
             return [(Token.Prompt, prompt)]
 
         def get_continuation_tokens(cli, width):
-            continuation=self.multiline_continuation_char * (width - 1) + ' '
+            continuation = self.multiline_continuation_char * (width - 1) + ' '
             return [(Token.Continuation, continuation)]
 
         get_toolbar_tokens = create_toolbar_tokens_func(
@@ -842,12 +842,12 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
     if os.path.exists(os.path.expanduser('~/.pgclirc')):
         if not os.path.exists(config_full_path):
             shutil.move(os.path.expanduser('~/.pgclirc'), config_full_path)
-            print ('Config file (~/.pgclirc) moved to new location',
-                   config_full_path)
+            print('Config file (~/.pgclirc) moved to new location',
+                  config_full_path)
         else:
-            print ('Config file is now located at', config_full_path)
-            print ('Please move the existing config file ~/.pgclirc to',
-                   config_full_path)
+            print('Config file is now located at', config_full_path)
+            print('Please move the existing config file ~/.pgclirc to',
+                  config_full_path)
 
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc,
                   row_limit=row_limit, single_connection=single_connection,

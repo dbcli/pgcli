@@ -77,7 +77,7 @@ completers = testdata.get_completers(casing)
 
 @parametrize('completer', completers(filtr=True, casing=False, qualify=no_qual))
 @parametrize('table', ['users', '"users"'])
-def test_suggested_column_names_from_shadowed_visible_table(completer, table) :
+def test_suggested_column_names_from_shadowed_visible_table(completer, table):
     result = result_set(completer, 'SELECT  FROM ' + table, len('SELECT '))
     assert result == set(testdata.columns_functions_and_keywords('users'))
 
@@ -88,14 +88,14 @@ def test_suggested_column_names_from_shadowed_visible_table(completer, table) :
     'WITH users as (SELECT 1 AS foo) SELECT  from custom.users',
 ])
 def test_suggested_column_names_from_qualified_shadowed_table(completer, text):
-    result = result_set(completer, text, position = text.find('  ') + 1)
+    result = result_set(completer, text, position=text.find('  ') + 1)
     assert result == set(testdata.columns_functions_and_keywords(
         'users', 'custom'
     ))
 
 
 @parametrize('completer', completers(filtr=True, casing=False, qualify=no_qual))
-@parametrize('text', ['WITH users as (SELECT 1 AS foo) SELECT  from users',])
+@parametrize('text', ['WITH users as (SELECT 1 AS foo) SELECT  from users', ])
 def test_suggested_column_names_from_cte(completer, text):
     result = result_set(completer, text, text.find('  ') + 1)
     assert result == set([column('foo')] + testdata.functions_and_keywords())
@@ -289,7 +289,7 @@ def test_suggest_columns_from_aliased_set_returning_function(completer):
         testdata.columns('set_returning_func', 'custom', 'functions'))
 
 
-@parametrize('completer',completers(filtr=True, casing=False, qualify=no_qual))
+@parametrize('completer', completers(filtr=True, casing=False, qualify=no_qual))
 @parametrize('text', [
     'SELECT * FROM custom.set_returning_func()',
     'SELECT * FROM Custom.set_returning_func()',
@@ -370,7 +370,7 @@ def test_wildcard_column_expansion_with_table_qualifier(completer):
     assert expected == completions
 
 
-@parametrize('completer',completers(filtr=True, casing=False, qualify=qual))
+@parametrize('completer', completers(filtr=True, casing=False, qualify=qual))
 def test_wildcard_column_expansion_with_two_tables(completer):
     text = 'SELECT * FROM public."select" JOIN custom.users ON true'
     position = len('SELECT *')
@@ -547,7 +547,7 @@ def test_function_alias_search_with_aliases(completer):
     assert first.display == 'enter_entry(_title, _text)'
 
 
-@parametrize('completer',completers(filtr=True, casing=True, qualify=no_qual))
+@parametrize('completer', completers(filtr=True, casing=True, qualify=no_qual))
 def test_column_alias_search(completer):
     result = get_result(
         completer, 'SELECT et FROM blog.Entries E', len('SELECT et')
