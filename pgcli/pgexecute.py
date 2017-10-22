@@ -318,8 +318,8 @@ class PGExecute(object):
                 _logger.error("sql: %r, error: %r", sql, e)
                 _logger.error("traceback: %r", traceback.format_exc())
 
-                if (self._must_raise(e)
-                        or not exception_formatter):
+                if (self._must_raise(e) or
+                        not exception_formatter):
                     raise
 
                 yield None, None, None, exception_formatter(e), sql, False

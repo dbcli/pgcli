@@ -960,10 +960,10 @@ def is_select(status):
 
 
 def quit_command(sql):
-    return (sql.strip().lower() == 'exit'
-            or sql.strip().lower() == 'quit'
-            or sql.strip() == r'\q'
-            or sql.strip() == ':q')
+    return (sql.strip().lower() == 'exit' or
+            sql.strip().lower() == 'quit' or
+            sql.strip() == r'\q' or
+            sql.strip() == ':q')
 
 
 def exception_formatter(e):

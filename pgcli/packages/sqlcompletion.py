@@ -366,8 +366,8 @@ def suggest_based_on_last_token(token, stmt):
         # Get the token before the parens
         prev_tok = p.token_prev(len(p.tokens) - 1)[1]
 
-        if (prev_tok and prev_tok.value
-                and prev_tok.value.lower().split(' ')[-1] == 'using'):
+        if (prev_tok and prev_tok.value and
+                prev_tok.value.lower().split(' ')[-1] == 'using'):
             # tbl1 INNER JOIN tbl2 USING (col1, col2)
             tables = stmt.get_tables('before')
 
@@ -574,5 +574,5 @@ def _allow_join(statement):
         return False
 
     last_tok = statement.token_prev(len(statement.tokens))[1]
-    return (last_tok.value.lower().endswith('join')
-            and last_tok.value.lower() not in('cross join', 'natural join'))
+    return (last_tok.value.lower().endswith('join') and
+            last_tok.value.lower() not in('cross join', 'natural join'))

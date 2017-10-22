@@ -118,9 +118,9 @@ class PGCompleter(Completer):
         self.all_completions = set(self.keywords + self.functions)
 
     def escape_name(self, name):
-        if name and ((not self.name_pattern.match(name))
-                     or (name.upper() in self.reserved_words)
-                     or (name.upper() in self.functions)):
+        if name and ((not self.name_pattern.match(name)) or
+                     (name.upper() in self.reserved_words) or
+                     (name.upper() in self.functions)):
             name = '"%s"' % name
 
         return name
@@ -400,8 +400,8 @@ class PGCompleter(Completer):
                 # We also use the unescape_name to make sure quoted names have
                 # the same priority as unquoted names.
                 lexical_priority = (tuple(0 if c in(' _') else -ord(c)
-                                          for c in self.unescape_name(item.lower())) + (1,)
-                                    + tuple(c for c in item))
+                                          for c in self.unescape_name(item.lower())) + (1,) +
+                                    tuple(c for c in item))
 
                 item = self.case(item)
                 display = self.case(display)
@@ -499,8 +499,8 @@ class PGCompleter(Completer):
             if self.asterisk_column_order == 'alphabetic':
                 for cols in scoped_cols.values():
                     cols.sort(key=operator.attrgetter('name'))
-            if (lastword != word_before_cursor and len(tables) == 1
-                    and word_before_cursor[-len(lastword) - 1] == '.'):
+            if (lastword != word_before_cursor and len(tables) == 1 and
+                    word_before_cursor[-len(lastword) - 1] == '.'):
                 # User typed x.*; replicate "x." for all columns except the
                 # first, which gets the original (as we only replace the "*"")
                 sep = ', ' + word_before_cursor[:-1]
@@ -574,9 +574,9 @@ class PGCompleter(Completer):
                 alias, c(left.col), rtbl.ref, c(right.col))]
             # Schema-qualify if (1) new table in same schema as old, and old
             # is schema-qualified, or (2) new in other schema, except public
-            if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)]
-                                          and left.schema == right.schema
-                                          or left.schema not in(right.schema, 'public')):
+            if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)] and
+                                          left.schema == right.schema or
+                                          left.schema not in(right.schema, 'public')):
                 join = left.schema + '.' + join
             prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (
                 0 if (left.schema, left.tbl) in other_tbls else 1)
@@ -689,9 +689,9 @@ class PGCompleter(Completer):
         v_sug = View(s.schema, s.table_refs)
         f_sug = Function(s.schema, s.table_refs, usage='from')
         return (
-            self.get_table_matches(t_sug, word_before_cursor, alias)
-            + self.get_view_matches(v_sug, word_before_cursor, alias)
-            + self.get_function_matches(f_sug, word_before_cursor, alias)
+            self.get_table_matches(t_sug, word_before_cursor, alias) +
+            self.get_view_matches(v_sug, word_before_cursor, alias) +
+            self.get_function_matches(f_sug, word_before_cursor, alias)
         )
 
     def _arg_list(self, func, usage):

@@ -41,8 +41,8 @@ cased_func_names = [
 cased_tbls = ['Users', 'Orders']
 cased_views = ['User_Emails', 'Functions']
 casing = (
-    ['SELECT', 'PUBLIC'] + cased_func_names + cased_tbls + cased_views
-    + cased_users_col_names + cased_users2_col_names
+    ['SELECT', 'PUBLIC'] + cased_func_names + cased_tbls + cased_views +
+    cased_users_col_names + cased_users2_col_names
 )
 # Lists for use in assertions
 cased_funcs = [
@@ -164,8 +164,8 @@ def test_suggested_column_names_from_visible_table(completer):
 @parametrize('completer', completers(casing=True, qualify=no_qual))
 def test_suggested_cased_column_names(completer):
     result = result_set(completer, 'SELECT  from users', len('SELECT '))
-    assert result == set(cased_funcs + cased_users_cols
-                         + testdata.builtin_functions() + testdata.keywords())
+    assert result == set(cased_funcs + cased_users_cols +
+                         testdata.builtin_functions() + testdata.keywords())
 
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
@@ -212,8 +212,8 @@ def test_suggested_cased_always_qualified_column_names(
     position = len('SELECT ')
     cols = [column('users.' + c) for c in cased_users_col_names]
     result = result_set(completer, text, position)
-    assert result == set(cased_funcs + cols
-                         + testdata.builtin_functions() + testdata.keywords())
+    assert result == set(cased_funcs + cols +
+                         testdata.builtin_functions() + testdata.keywords())
 
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))

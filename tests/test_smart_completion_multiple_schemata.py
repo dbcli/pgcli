@@ -578,8 +578,8 @@ def test_all_schema_objects(completer):
     text = ('SELECT * FROM ')
     result = result_set(completer, text)
     assert result >= set(
-        [table(x) for x in ('orders', '"select"', 'custom.shipments')]
-        + [function(x+'()') for x in ('func2', 'custom.func3')]
+        [table(x) for x in ('orders', '"select"', 'custom.shipments')] +
+        [function(x+'()') for x in ('func2', 'custom.func3')]
     )
 
 
@@ -588,8 +588,8 @@ def test_all_schema_objects_with_casing(completer):
     text = 'SELECT * FROM '
     result = result_set(completer, text)
     assert result >= set(
-        [table(x) for x in ('Orders', '"select"', 'CUSTOM.shipments')]
-        + [function(x+'()') for x in ('func2', 'CUSTOM.func3')]
+        [table(x) for x in ('Orders', '"select"', 'CUSTOM.shipments')] +
+        [function(x+'()') for x in ('func2', 'CUSTOM.func3')]
     )
 
 
@@ -598,8 +598,8 @@ def test_all_schema_objects_with_aliases(completer):
     text = ('SELECT * FROM ')
     result = result_set(completer, text)
     assert result >= set(
-        [table(x) for x in ('orders o', '"select" s', 'custom.shipments s')]
-        + [function(x) for x in ('func2() f', 'custom.func3() f')]
+        [table(x) for x in ('orders o', '"select" s', 'custom.shipments s')] +
+        [function(x) for x in ('func2() f', 'custom.func3() f')]
     )
 
 
