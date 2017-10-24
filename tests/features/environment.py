@@ -146,7 +146,7 @@ def after_scenario(context, _):
             )
         context.cli.sendcontrol('c')
         context.cli.sendcontrol('d')
-        context.cli.expect_exact(pexpect.EOF, timeout=5)
+        context.cli.expect_exact(pexpect.EOF, timeout=10)
 
 # TODO: uncomment to debug a failure
 # def after_step(context, step):
