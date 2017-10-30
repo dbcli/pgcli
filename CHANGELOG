@@ -39,6 +39,11 @@ Changes:
   (For backwards-compatibility, we have aliases to the old names, whenever
   possible.)
 
+- The way focussing works is different. Before it was always a `Buffer` that
+  was focussed, and because of that, any visible `BufferControl` that contained
+  this `Buffer` would be focussed. Now, any user control can be focussed. All
+  of this is handled in the `Application.layout` object.
+
 - The `buffers` dictionary (`CommandLineInterface.buffers`) does not exist
   anymore. Further, `buffers` was a `BufferMapping` that keeps track of which
   buffer has the focus. This significantly reduces the freedom for creating
@@ -83,6 +88,10 @@ Changes:
 
   * `print_tokens` was renamed to `print_text_fragments`.
 
+  * In many places in the layout, we accept a parameter named `style`. All the
+    styles from the layout hierarchy are combined to decide what style to be
+    used.
+
 - User controls can define key bindings, which are active when the user control
   is focussed.
 
@@ -105,6 +114,8 @@ Changes:
   * `DummyControl` was added.
   * `VSplit` and `HSplit` classes also take a `token` as argument, these are
     passed to the `Window` class and applied to the content as well.
+  * Alignment of the content is now done in the `Window` class, not in the
+    user control.
 
 - Changes to `BufferControl`:
 
@@ -131,6 +142,11 @@ Changes:
     ``Container`` object is expected. This avoids inheritance from other
     ``Container`` types, but also having to unpack the container object from
     the widget, in case we would have used composition.
+
+- Changes to `Buffer`:
+
+  * A `Buffer` no longer takes an ``accept_action``.  Both `AcceptAction` and
+    `AbortAction` have been removed.
 
 - Changes related to `shortcuts.prompt`:
 
@@ -162,6 +178,9 @@ Changes:
 
   * The `Input` and `Output` classes have some changes. (Not really important.)
 
+  * `Application.run_sub_applications` has been removed. The alternative is to
+    call `run_coroutine_in_terminal` which returns a `Future`.
+
 - Changes to the `filters` module:
 
   * All filters have been turned into functions. For instance, `IsDone`
@@ -175,9 +194,14 @@ Changes:
     The few filters that took arguments as input, are also functions, but still
     have to be called with the given arguments.
 
+    For new filters, it is recommended to use the `@Condition` decorator.
+
 - Other renames:
 
   * `IncrementalSearchDirection` was renamed to `SearchDirection`.
+  * The `use_alternate_screen` parameter has been renamed to `full_screen`.
+  * `Buffer.initial_document` was renamed to `Buffer.document`.
+  * `TokenListControl` has been renamed to `FormattedTextControl`.
 
 - Other new featers:
 
@@ -187,35 +211,6 @@ Changes:
   * `DummyHistory` and `DynamicHistory` was added.
 
   * `to_container` and `to_window` utilities were added.
-
-****
-- `run_sub_applications` returns a future instead of taking a callback.
-
-- `use_alternate_screen` has been renamed to `full_screen`.
-
-
-- Deprecated 
-
-
-Migrating readline applications:
-
-TODO: finish changelog...
-- Removed AcceptAction, AbortAction
-buffer.initial_document was renamed to buffer.document
-
-TODO: use focussed_window instead of focussed_control
-
-TODO: clean up 'contrib'.
-      clean up filters. Use @Condition as much as possible.
-    rename pop_focus()
-    Focus() should be an attribute of the Layout() class.
-rename current_buffer to focussed_buffer
-allow setting of focussed_buffer.  (Search in the UI.)
-
-TODO: - remove alignment in TokenListControl
-      - add background token to control.
-
-TODO: add to_container() function that automatically wraps stuff in a window.
 
 
 1.0.9: 2016-11-07
