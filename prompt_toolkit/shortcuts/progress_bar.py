@@ -11,11 +11,9 @@ from __future__ import unicode_literals
 from prompt_toolkit.application import Application
 from prompt_toolkit.filters import Condition, is_done, renderer_height_is_known
 from prompt_toolkit.formatted_text import to_formatted_text, HTML
-from prompt_toolkit.input.vt100 import PipeInput
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout, Window, ConditionalContainer, FormattedTextControl, HSplit
 from prompt_toolkit.layout.controls import UIControl, UIContent
-from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.utils import in_main_thread
 from prompt_toolkit.eventloop import get_event_loop
 
@@ -25,6 +23,7 @@ import signal
 import threading
 
 __all__ = (
+    'default_format',
     'progress_bar',
 )
 
@@ -56,8 +55,8 @@ def default_format(progress_bar, progress, width):
             total=progress.total,
             time_elapsed='{0}'.format(time_elapsed).split('.')[0],
             eta='{0}'.format(eta).split('.')[0],
-            )
-    except BaseException as e:
+            )  # NOTE: escaping is not required here. The 'HTML' object takes care of that.
+    except BaseException:
         import traceback; traceback.print_exc()
         return ''
 
