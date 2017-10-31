@@ -8,7 +8,6 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.eventloop import Future, ensure_future, Return
-from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import Float, HSplit, VSplit, Window, Align, ConditionalContainer
 from prompt_toolkit.layout.controls import FormattedTextControl
