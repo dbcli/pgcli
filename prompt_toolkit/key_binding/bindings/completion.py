@@ -152,7 +152,7 @@ def _create_more_prompt(message='--MORE--'):
     @bindings.add(Keys.ControlM)
     @bindings.add(Keys.ControlI)  # Tab.
     def _(event):
-        event.app.set_return_value(True)
+        event.app.set_result(True)
 
     @bindings.add('n')
     @bindings.add('N')
@@ -160,7 +160,7 @@ def _create_more_prompt(message='--MORE--'):
     @bindings.add('Q')
     @bindings.add(Keys.ControlC)
     def _(event):
-        event.app.set_return_value(False)
+        event.app.set_result(False)
 
     @bindings.add(Keys.Any)
     def _(event):

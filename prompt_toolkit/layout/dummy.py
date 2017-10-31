@@ -26,7 +26,7 @@ def create_dummy_layout():
 
     @kb.add('enter')
     def enter(event):
-        event.app.set_return_value(None)
+        event.app.set_result(None)
 
     control = FormattedTextControl(
         HTML('No layout specified. Press <reverse>ENTER</reverse> to quit.'),

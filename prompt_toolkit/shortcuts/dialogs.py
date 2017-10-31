@@ -26,10 +26,10 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None,
     Return a boolean.
     """
     def yes_handler():
-        get_app().set_return_value(True)
+        get_app().set_result(True)
 
     def no_handler():
-        get_app().set_return_value(False)
+        get_app().set_result(False)
 
     dialog = Dialog(
         title=title,
@@ -52,7 +52,7 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
         get_app().layout.focus(ok_button)
 
     def ok_handler():
-        get_app().set_return_value(textfield.text)
+        get_app().set_result(textfield.text)
 
     ok_button = Button(text=ok_text, handler=ok_handler)
     cancel_button = Button(text=cancel_text, handler=_return_none)
@@ -96,7 +96,7 @@ def radiolist_dialog(title='', text='', ok_text='Ok', cancel_text='Cancel',
     Display a simple message box and wait until the user presses enter.
     """
     def ok_handler():
-        get_app().set_return_value(radio_list.current_value)
+        get_app().set_result(radio_list.current_value)
 
     radio_list = RadioList(values)
 
@@ -154,7 +154,7 @@ def progress_dialog(title='', text='', run_callback=None, style=None, async_=Fal
         try:
             run_callback(set_percentage, log_text)
         finally:
-            app.set_return_value(None)
+            app.set_result(None)
 
     run_in_executor(start)
 
@@ -192,4 +192,4 @@ def _create_app(dialog, style):
 
 def _return_none():
     " Button handler that returns None. "
-    get_app().set_return_value(None)
+    get_app().set_result(None)

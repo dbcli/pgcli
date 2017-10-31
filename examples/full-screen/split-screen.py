@@ -108,7 +108,7 @@ def _(event):
     Note that Ctrl-Q does not work on all terminals. Sometimes it requires
     executing `stty -ixon`.
     """
-    event.app.set_return_value(None)
+    event.app.set_result(None)
 
 all_bindings = merge_key_bindings([
     kb,

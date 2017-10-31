@@ -633,7 +633,7 @@ class Application(object):
         self._abort_flag = True
         self.future.set_exception(KeyboardInterrupt)
 
-    def set_return_value(self, value):
+    def set_result(self, value):
         """
         Set a return value. The eventloop can retrieve the result it by calling
         `return_value`.
@@ -642,6 +642,8 @@ class Application(object):
             self.future.set_result(value)
         else:
             raise Exception('Return value already set.')
+
+    set_return_value = set_result  # For backwards-compatibility.
 
     def run_in_terminal(self, func, render_cli_done=False, in_executor=False):
         """
@@ -910,7 +912,7 @@ def _do_wait_for_enter(wait_text):
 
     @key_bindings.add('enter')
     def _(event):
-        event.app.set_return_value(None)
+        event.app.set_result(None)
 
     @key_bindings.add(Keys.Any)
     def _(event):

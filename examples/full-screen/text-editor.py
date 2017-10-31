@@ -185,7 +185,7 @@ def do_new_file():
 
 
 def do_exit():
-    get_app().set_return_value(None)
+    get_app().set_result(None)
 
 def do_time_date():
     text = datetime.datetime.now().isoformat()

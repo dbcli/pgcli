@@ -69,7 +69,7 @@ bindings = KeyBindings()
 @bindings.add('q')
 def _(event):
     " Quit. "
-    event.app.set_return_value(None)
+    event.app.set_result(None)
 
 
 style = merge_styles([

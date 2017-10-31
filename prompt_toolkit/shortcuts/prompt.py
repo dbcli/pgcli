@@ -301,7 +301,7 @@ class Prompt(object):
         def accept(buff):
             """ Accept the content of the default buffer. This is called when
             the validation succeeds. """
-            self.app.set_return_value(buff.document.text)
+            self.app.set_result(buff.document.text)
 
             # Reset content before running again.
             self.app.pre_run_callables.append(buff.reset)
@@ -731,14 +731,14 @@ def create_confirm_prompt(message):
     @bindings.add('Y')
     def yes(event):
         prompt._default_buffer.text = 'y'
-        event.app.set_return_value(True)
+        event.app.set_result(True)
 
     @bindings.add('n')
     @bindings.add('N')
     @bindings.add('c-c')
     def no(event):
         prompt._default_buffer.text = 'n'
-        event.app.set_return_value(False)
+        event.app.set_result(False)
 
     @bindings.add(Keys.Any)
     def _(event):

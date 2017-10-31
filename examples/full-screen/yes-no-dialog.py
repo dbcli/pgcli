@@ -20,13 +20,13 @@ from pygments.lexers import HtmlLexer
 
 
 def accept_yes():
-    get_app().set_return_value(True)
+    get_app().set_result(True)
 
 def accept_no():
-    get_app().set_return_value(False)
+    get_app().set_result(False)
 
 def do_exit():
-    get_app().set_return_value(False)
+    get_app().set_result(False)
 
 
 yes_button = Button(text='Yes', handler=accept_yes)

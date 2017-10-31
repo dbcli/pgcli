@@ -27,7 +27,7 @@ def button3_clicked():
 
 
 def exit_clicked():
-    get_app().set_return_value(None)
+    get_app().set_result(None)
 
 
 # All the widgets for the UI.

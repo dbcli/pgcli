@@ -202,6 +202,7 @@ Changes:
   * The `use_alternate_screen` parameter has been renamed to `full_screen`.
   * `Buffer.initial_document` was renamed to `Buffer.document`.
   * `TokenListControl` has been renamed to `FormattedTextControl`.
+  * `Application.set_return_value` has been renamed to `Application.set_result`.
 
 - Other new featers:
 

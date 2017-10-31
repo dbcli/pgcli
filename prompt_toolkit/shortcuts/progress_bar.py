@@ -156,7 +156,7 @@ class progress_bar(object):
     def __exit__(self, *a):
         # Quit UI application.
         if self.app.is_running:
-            self.app.set_return_value(None)
+            self.app.set_result(None)
 
         # Remove WINCH handler.
         if self._has_sigwinch:
