@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Example of nested progress bars.
 """
@@ -5,7 +6,6 @@ from __future__ import unicode_literals
 from prompt_toolkit.shortcuts.progress_bar import progress_bar
 from prompt_toolkit import HTML
 import time
-
 
 
 def main():

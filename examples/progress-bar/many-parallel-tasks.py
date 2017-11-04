@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 More complex demonstration of what's possible with the progress bar.
 """
@@ -6,7 +7,6 @@ from prompt_toolkit.shortcuts.progress_bar import progress_bar
 from prompt_toolkit import HTML
 import time
 import threading
-
 
 
 def main():

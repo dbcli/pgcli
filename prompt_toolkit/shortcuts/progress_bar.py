@@ -25,10 +25,12 @@ import datetime
 import os
 import signal
 import threading
+import traceback
 
 __all__ = (
     'progress_bar',
-    'create_formatter',
+    'Formatter',
+    'SimpleFormatter',
 )
 
 TEMPLATE = (
@@ -45,7 +47,7 @@ TEMPLATE = (
     '</progress>')
 
 
-class BaseFormatter(with_metaclass(ABCMeta, object)):
+class Formatter(with_metaclass(ABCMeta, object)):
     """
     Base class for any formatter.
     """
@@ -54,10 +56,10 @@ class BaseFormatter(with_metaclass(ABCMeta, object)):
         pass
 
 
-class Formatter(BaseFormatter):
+class SimpleFormatter(Formatter):
     """
-    This is the default formatter function.
-    It renders an `HTML` object, every time the progress bar is redrawn.
+    This is the default formatter.
+    It creates an `HTML` object, every time the progress bar is rendered.
     """
     def __init__(self, sym_a='=', sym_b='>', sym_c=' ', template=TEMPLATE):
         assert len(sym_a) == 1
@@ -70,7 +72,7 @@ class Formatter(BaseFormatter):
         self.template = template
 
     def __repr__(self):
-        return 'Formatter(%r, %r, %r, %r)' % (
+        return 'SimpleFormatter(%r, %r, %r, %r)' % (
             self.sym_a, self.sym_b, self.sym_c, self.template)
 
     def format(self, progress_bar, progress, width):
@@ -96,7 +98,7 @@ class Formatter(BaseFormatter):
                 eta='{0}'.format(eta).split('.')[0],
                 )  # NOTE: escaping is not required here. The 'HTML' object takes care of that.
         except BaseException:
-            import traceback; traceback.print_exc()
+            traceback.print_exc()
             return ''
 
 
@@ -137,12 +139,12 @@ class progress_bar(object):
         This can be a callable or formatted text.
     :param style: `prompt_toolkit` ``Style`` instance.
     """
-    def __init__(self, title=None, formatter=Formatter(), bottom_toolbar=None, style=None):
-        assert isinstance(formatter, BaseFormatter)
+    def __init__(self, title=None, formatter=None, bottom_toolbar=None, style=None):
+        assert formatter is None or isinstance(formatter, Formatter)
         assert style is None or isinstance(style, BaseStyle)
 
         self.title = title
-        self.formatter = formatter
+        self.formatter = formatter or SimpleFormatter()
         self.bottom_toolbar = bottom_toolbar
         self.counters = []
         self.style = style
@@ -164,7 +166,7 @@ class progress_bar(object):
                    style='class:bottom-toolbar',
                    height=1),
             filter=~is_done & renderer_height_is_known &
-                    Condition(lambda: self.bottom_toolbar is not None))
+                Condition(lambda: self.bottom_toolbar is not None))
 
         self.app = Application(
             min_redraw_interval=.05,
@@ -183,7 +185,7 @@ class progress_bar(object):
             try:
                 self.app.run()
             except Exception as e:
-                import traceback; traceback.print_exc()
+                traceback.print_exc()
                 print(e)
 
         self._thread = threading.Thread(target=run)
@@ -301,4 +303,3 @@ class ProgressBarCounter(object):
         Timedelta representing the ETA.
         """
         return self.time_elapsed / self.percentage * (100 - self.percentage)
-

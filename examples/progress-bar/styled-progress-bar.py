@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 A very simple progress bar which keep track of the progress as we consume an
 iterator.

@@ -1,11 +1,13 @@
+#!/usr/bin/env python
 """
 A very simple progress bar which keep track of the progress as we consume an
 iterator.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.shortcuts.progress_bar import progress_bar, Formatter
+from prompt_toolkit.shortcuts.progress_bar import progress_bar, SimpleFormatter
 from prompt_toolkit.styles import Style
 import time
+
 
 style = Style.from_dict({
     'progressbar title': '#0000ff',
@@ -22,7 +24,7 @@ style = Style.from_dict({
 
 
 def main():
-    formatter = Formatter(sym_a='#', sym_b='#', sym_c='.')
+    formatter = SimpleFormatter(sym_a='#', sym_b='#', sym_c='.')
     with progress_bar(title='Progress bar example with custom formatter.', formatter=formatter) as pb:
         for i in pb(range(1600), title='Downloading...'):
             time.sleep(.01)
