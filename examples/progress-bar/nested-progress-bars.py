@@ -11,7 +11,7 @@ import time
 def main():
     with progress_bar(
             title=HTML('<b fg="#aa00ff">Nested progress bars</b>'),
-            bottom_toolbar=HTML('<b>[Control-L]</b> clear  <b>[Control-C]</b> abort')) as pb:
+            bottom_toolbar=HTML(' <b>[Control-L]</b> clear  <b>[Control-C]</b> abort')) as pb:
 
         for i in pb(range(6), title='Main task'):
             for j in pb(range(200), title='Subtask  ', remove_when_done=True):

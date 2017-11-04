@@ -9,13 +9,17 @@ Progress bar implementation on top of prompt_toolkit.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.application import Application
+from prompt_toolkit.eventloop import get_event_loop
 from prompt_toolkit.filters import Condition, is_done, renderer_height_is_known
 from prompt_toolkit.formatted_text import to_formatted_text, HTML
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout, Window, ConditionalContainer, FormattedTextControl, HSplit
 from prompt_toolkit.layout.controls import UIControl, UIContent
+from prompt_toolkit.styles import BaseStyle
 from prompt_toolkit.utils import in_main_thread
-from prompt_toolkit.eventloop import get_event_loop
+
+from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 
 import datetime
 import os
@@ -23,42 +27,77 @@ import signal
 import threading
 
 __all__ = (
-    'default_format',
     'progress_bar',
+    'create_formatter',
 )
 
+TEMPLATE = (
+    # Notice that whitespace is meaningful in these templates, so a triple
+    # quoted multiline string with indentation doesn't work.
+    '<progress>'
+        '<item-title>{title}</item-title>'
+        '{separator}'
+        '<percentage>{percentage:>5}%</percentage>'
+        ' |<bar-a>{bar_a}</bar-a><bar-b>{bar_b}</bar-b><bar-c>{bar_c}</bar-c>| '
+        '<current>{current}</current>/<total>{total}</total> '
+        '<time-elapsed>{time_elapsed}</time-elapsed> '
+        'eta <eta>[{eta}]</eta>'
+    '</progress>')
 
-def default_format(progress_bar, progress, width):
-    try:
-        pb_width = width - 50 - len(progress.title)
 
-        pb_a = int(progress.percentage * pb_width / 100)
-        bar_a = '=' * pb_a
-        bar_b = ' ' * (pb_width - pb_a)
+class BaseFormatter(with_metaclass(ABCMeta, object)):
+    """
+    Base class for any formatter.
+    """
+    @abstractmethod
+    def format(self, progress_bar, progress, width):
+        pass
 
-        time_elapsed = progress.time_elapsed
-        eta = progress.eta
-        return HTML(
-                '<b>{title}</b>'
-                '{separator}'
-                '{percentage:>5}%'
-                ' |<completed abg="#888888">{bar_a}&gt;</completed><pending>{bar_b}</pending>| '
-                '{current}/{total} '
-                '{time_elapsed} eta <eta>[{eta}]</eta>'
-                ).format(
-            title=progress.title,
-            separator=(': ' if progress.title else ''),
-            percentage=round(progress.percentage, 1), 
-            bar_a=bar_a,
-            bar_b=bar_b,
-            current=progress.current,
-            total=progress.total,
-            time_elapsed='{0}'.format(time_elapsed).split('.')[0],
-            eta='{0}'.format(eta).split('.')[0],
-            )  # NOTE: escaping is not required here. The 'HTML' object takes care of that.
-    except BaseException:
-        import traceback; traceback.print_exc()
-        return ''
+
+class Formatter(BaseFormatter):
+    """
+    This is the default formatter function.
+    It renders an `HTML` object, every time the progress bar is redrawn.
+    """
+    def __init__(self, sym_a='=', sym_b='>', sym_c=' ', template=TEMPLATE):
+        assert len(sym_a) == 1
+        assert len(sym_b) == 1
+        assert len(sym_c) == 1
+
+        self.sym_a = sym_a
+        self.sym_b = sym_b
+        self.sym_c = sym_c
+        self.template = template
+
+    def __repr__(self):
+        return 'Formatter(%r, %r, %r, %r)' % (
+            self.sym_a, self.sym_b, self.sym_c, self.template)
+
+    def format(self, progress_bar, progress, width):
+        try:
+            pb_width = width - 50 - len(progress.title)
+
+            pb_a = int(progress.percentage * pb_width / 100)
+            bar_a = self.sym_a * pb_a
+            bar_c = self.sym_c * (pb_width - pb_a)
+
+            time_elapsed = progress.time_elapsed
+            eta = progress.eta
+            return HTML(self.template).format(
+                title=progress.title,
+                separator=(': ' if progress.title else ''),
+                percentage=round(progress.percentage, 1),
+                bar_a=bar_a,
+                bar_b=self.sym_b,
+                bar_c=bar_c,
+                current=progress.current,
+                total=progress.total,
+                time_elapsed='{0}'.format(time_elapsed).split('.')[0],
+                eta='{0}'.format(eta).split('.')[0],
+                )  # NOTE: escaping is not required here. The 'HTML' object takes care of that.
+        except BaseException:
+            import traceback; traceback.print_exc()
+            return ''
 
 
 def create_key_bindings():
@@ -92,10 +131,16 @@ class progress_bar(object):
 
     :param title: Text to be displayed above the progress bars. This can be a
         callable or formatted text as well.
+    :param formatter: `BaseFormatter` instance.
+        as input, and returns an `HTML` object for the individual progress bar.
     :param bottom_toolbar: Text to be displayed in the bottom toolbar.
         This can be a callable or formatted text.
+    :param style: `prompt_toolkit` ``Style`` instance.
     """
-    def __init__(self, title=None, formatter=default_format, bottom_toolbar=None, style=None):
+    def __init__(self, title=None, formatter=Formatter(), bottom_toolbar=None, style=None):
+        assert isinstance(formatter, BaseFormatter)
+        assert style is None or isinstance(style, BaseStyle)
+
         self.title = title
         self.formatter = formatter
         self.bottom_toolbar = bottom_toolbar
@@ -110,7 +155,7 @@ class progress_bar(object):
     def __enter__(self):
         # Create UI Application.
         title_toolbar = ConditionalContainer(
-            Window(FormattedTextControl(lambda: self.title), height=1),
+            Window(FormattedTextControl(lambda: self.title), height=1, style='class:progressbar,title'),
             filter=Condition(lambda: self.title is not None))
 
         bottom_toolbar = ConditionalContainer(
@@ -193,7 +238,7 @@ class _ProgressControl(UIControl):
         items = []
         for pr in self.progress_bar.counters:
             items.append(to_formatted_text(
-                self.progress_bar.formatter(self.progress_bar, pr, width)))
+                self.progress_bar.formatter.format(self.progress_bar, pr, width)))
 
         def get_line(i):
             return items[i]
