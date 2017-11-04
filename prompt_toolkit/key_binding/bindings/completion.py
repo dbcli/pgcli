@@ -125,7 +125,7 @@ def _display_completions_like_readline(app, completions):
 
                     if page != page_count - 1:
                         # Display --MORE-- and go to the next page.
-                        show_more = yield _create_more_prompt('--MORE--').prompt_async()
+                        show_more = yield _create_more_prompt('--MORE--').prompt(async_=True)
 
                         if not show_more:
                             return

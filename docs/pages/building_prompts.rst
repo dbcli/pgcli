@@ -663,15 +663,15 @@ instance, it would be better to run them in the same thread as the other code.)
 
 The answer is to run the prompt_toolkit interface on top of the asyncio event
 loop. Prompting the user for input is as simple as calling
-:func:`~prompt_toolkit.shortcuts.prompt_async`.
+:func:`~prompt_toolkit.shortcuts.prompt` with the `async_=True` argument.
 
 .. code:: python
 
-    from prompt_toolkit import prompt_async
+    from prompt_toolkit import prompt
 
     async def my_coroutine():
         while True:
-            result = await prompt_async('Say something: ', patch_stdout=True)
+            result = await prompt('Say something: ', patch_stdout=True, async_=True)
             print('You said: %s' % result)
 
 The ``patch_stdout=True`` parameter is optional, but it's recommended, because
