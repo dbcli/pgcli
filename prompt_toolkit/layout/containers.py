@@ -1303,9 +1303,7 @@ class Window(Container):
 
         # Scroll content.
         wrap_lines = self.wrap_lines()
-        scroll_func = self._scroll_when_linewrapping if wrap_lines else self._scroll_without_linewrapping
-
-        scroll_func(ui_content, write_position.width - total_margin_width, write_position.height)
+        self._scroll(ui_content, write_position.width - total_margin_width, write_position.height)
 
         # Erase background and fill with `char`.
         self._fill_bg(screen, write_position, erase_bg)
@@ -1696,6 +1694,17 @@ class Window(Container):
 
         margin_write_position = WritePosition(xpos, ypos, width, write_position.height)
         self._copy_body(lazy_screen, new_screen, margin_write_position, 0, width)
+
+    def _scroll(self, ui_content, width, height):
+        """
+        Scroll body. Ensure that the cursor is visible.
+        """
+        if self.wrap_lines():
+            func = self._scroll_when_linewrapping
+        else:
+            func = self._scroll_without_linewrapping
+
+        func(ui_content, width, height)
 
     def _scroll_when_linewrapping(self, ui_content, width, height):
         """
