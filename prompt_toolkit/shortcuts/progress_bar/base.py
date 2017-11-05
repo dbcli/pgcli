@@ -11,95 +11,28 @@ from __future__ import unicode_literals
 from prompt_toolkit.application import Application
 from prompt_toolkit.eventloop import get_event_loop
 from prompt_toolkit.filters import Condition, is_done, renderer_height_is_known
-from prompt_toolkit.formatted_text import to_formatted_text, HTML
+from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout import Layout, Window, ConditionalContainer, FormattedTextControl, HSplit
+from prompt_toolkit.layout import Layout, Window, ConditionalContainer, FormattedTextControl, HSplit, VSplit
 from prompt_toolkit.layout.controls import UIControl, UIContent
 from prompt_toolkit.styles import BaseStyle
 from prompt_toolkit.utils import in_main_thread
 
-from abc import ABCMeta, abstractmethod
-from six import with_metaclass
+from functools import partial
 
+import contextlib
 import datetime
 import os
 import signal
 import threading
+import time
 import traceback
+
+from . import formatters as f
 
 __all__ = (
     'progress_bar',
-    'Formatter',
-    'SimpleFormatter',
 )
-
-TEMPLATE = (
-    # Notice that whitespace is meaningful in these templates, so a triple
-    # quoted multiline string with indentation doesn't work.
-    '<progress>'
-        '<item-title>{title}</item-title>'
-        '{separator}'
-        '<percentage>{percentage:>5}%</percentage>'
-        ' |<bar-a>{bar_a}</bar-a><bar-b>{bar_b}</bar-b><bar-c>{bar_c}</bar-c>| '
-        '<current>{current}</current>/<total>{total}</total> '
-        '<time-elapsed>{time_elapsed}</time-elapsed> '
-        'eta <eta>[{eta}]</eta>'
-    '</progress>')
-
-
-class Formatter(with_metaclass(ABCMeta, object)):
-    """
-    Base class for any formatter.
-    """
-    @abstractmethod
-    def format(self, progress_bar, progress, width):
-        pass
-
-
-class SimpleFormatter(Formatter):
-    """
-    This is the default formatter.
-    It creates an `HTML` object, every time the progress bar is rendered.
-    """
-    def __init__(self, sym_a='=', sym_b='>', sym_c=' ', template=TEMPLATE):
-        assert len(sym_a) == 1
-        assert len(sym_b) == 1
-        assert len(sym_c) == 1
-
-        self.sym_a = sym_a
-        self.sym_b = sym_b
-        self.sym_c = sym_c
-        self.template = template
-
-    def __repr__(self):
-        return 'SimpleFormatter(%r, %r, %r, %r)' % (
-            self.sym_a, self.sym_b, self.sym_c, self.template)
-
-    def format(self, progress_bar, progress, width):
-        try:
-            pb_width = width - 50 - len(progress.title)
-
-            pb_a = int(progress.percentage * pb_width / 100)
-            bar_a = self.sym_a * pb_a
-            bar_c = self.sym_c * (pb_width - pb_a)
-
-            time_elapsed = progress.time_elapsed
-            eta = progress.eta
-            return HTML(self.template).format(
-                title=progress.title,
-                separator=(': ' if progress.title else ''),
-                percentage=round(progress.percentage, 1),
-                bar_a=bar_a,
-                bar_b=self.sym_b,
-                bar_c=bar_c,
-                current=progress.current,
-                total=progress.total,
-                time_elapsed='{0}'.format(time_elapsed).split('.')[0],
-                eta='{0}'.format(eta).split('.')[0],
-                )  # NOTE: escaping is not required here. The 'HTML' object takes care of that.
-        except BaseException:
-            traceback.print_exc()
-            return ''
 
 
 def create_key_bindings():
@@ -121,6 +54,21 @@ def create_key_bindings():
     return kb
 
 
+def create_default_formatters():
+    return [
+        f.TaskName(),
+        f.Text(' '),
+        f.Percentage(),
+        f.Text(' '),
+        f.Bar(),
+        f.Text(' '),
+        f.Progress(),
+        f.Text(' '),
+        f.ETA(),
+        f.Text(' '),
+    ]
+
+
 class progress_bar(object):
     """
     Progress bar context manager.
@@ -139,12 +87,12 @@ class progress_bar(object):
         This can be a callable or formatted text.
     :param style: `prompt_toolkit` ``Style`` instance.
     """
-    def __init__(self, title=None, formatter=None, bottom_toolbar=None, style=None):
-        assert formatter is None or isinstance(formatter, Formatter)
+    def __init__(self, title=None, formatters=None, bottom_toolbar=None, style=None):
+        assert formatters is None or (isinstance(formatters, list) and all(isinstance(fo, f.Formatter) for fo in formatters))
         assert style is None or isinstance(style, BaseStyle)
 
         self.title = title
-        self.formatter = formatter or SimpleFormatter()
+        self.formatters = formatters or create_default_formatters()
         self.bottom_toolbar = bottom_toolbar
         self.counters = []
         self.style = style
@@ -153,6 +101,15 @@ class progress_bar(object):
         self._loop = get_event_loop()
         self._previous_winch_handler = None
         self._has_sigwinch = False
+
+    def _get_auto_refresh_interval(self):
+        " Calculate minimum refresh interval, or return None. "
+        intervals = [f.refresh_interval() for f in self.formatters]
+        intervals = [f for f in intervals if f is not None]
+        if intervals:
+            return min(intervals)
+        else:
+            return None
 
     def __enter__(self):
         # Create UI Application.
@@ -168,13 +125,17 @@ class progress_bar(object):
             filter=~is_done & renderer_height_is_known &
                 Condition(lambda: self.bottom_toolbar is not None))
 
+        progress_controls = [
+            Window(content=_ProgressControl(self, f), width=partial(f.get_width, progress_bar=self))
+            for f in self.formatters
+        ]
+
         self.app = Application(
             min_redraw_interval=.05,
             layout=Layout(HSplit([
                 title_toolbar,
-                Window(
-                    content=_ProgressControl(self),
-                    height=lambda: len(self.counters)),
+                VSplit(progress_controls,
+                       height=lambda: len(self.counters)),
                 Window(),
                 bottom_toolbar,
             ])),
@@ -182,11 +143,12 @@ class progress_bar(object):
 
         # Run application in different thread.
         def run():
-            try:
-                self.app.run()
-            except Exception as e:
-                traceback.print_exc()
-                print(e)
+            with _auto_refresh_context(self.app, self._get_auto_refresh_interval()):
+                try:
+                    self.app.run()
+                except Exception as e:
+                    traceback.print_exc()
+                    print(e)
 
         self._thread = threading.Thread(target=run)
         self._thread.start()
@@ -211,7 +173,7 @@ class progress_bar(object):
 
         self._thread.join()
 
-    def __call__(self, data=None, title='', remove_when_done=False, total=None):
+    def __call__(self, data=None, task_name='', remove_when_done=False, total=None):
         """
         Start a new counter.
 
@@ -220,7 +182,7 @@ class progress_bar(object):
             calling ``len``.
         """
         counter = ProgressBarCounter(
-            self, data, title=title, remove_when_done=remove_when_done, total=total)
+            self, data, task_name=task_name, remove_when_done=remove_when_done, total=total)
         self.counters.append(counter)
         return counter
 
@@ -232,18 +194,25 @@ class _ProgressControl(UIControl):
     """
     User control for the progress bar.
     """
-    def __init__(self, progress_bar):
+    def __init__(self, progress_bar, formatter):
         self.progress_bar = progress_bar
+        self.formatter = formatter
         self._key_bindings = create_key_bindings()
 
     def create_content(self, width, height):
         items = []
         for pr in self.progress_bar.counters:
-            items.append(to_formatted_text(
-                self.progress_bar.formatter.format(self.progress_bar, pr, width)))
+            try:
+                text = self.formatter.format(self.progress_bar, pr, width)
+            except BaseException:
+                traceback.print_exc()
+                text = 'ERROR'
+
+            items.append(to_formatted_text(text))
 
         def get_line(i):
             return items[i]
+
         return UIContent(
             get_line=get_line,
             line_count=len(items),
@@ -260,17 +229,20 @@ class ProgressBarCounter(object):
     """
     An individual counter (A progress bar can have multiple counters).
     """
-    def __init__(self, progress_bar, data=None, title='', remove_when_done=False, total=None):
+    def __init__(self, progress_bar, data=None, task_name='', remove_when_done=False, total=None):
         self.start_time = datetime.datetime.now()
         self.progress_bar = progress_bar
         self.data = data
         self.current = 0
-        self.title = title
+        self.task_name = task_name
         self.remove_when_done = remove_when_done
         self.done = False
 
         if total is None:
-            self.total = len(data)
+            try:
+                self.total = len(data)
+            except TypeError:
+                self.total = None  # We don't know the total length.
         else:
             self.total = total
 
@@ -288,7 +260,10 @@ class ProgressBarCounter(object):
 
     @property
     def percentage(self):
-        return self.current * 100 / max(self.total, 1)
+        if self.total is None:
+            return 0
+        else:
+            return self.current * 100 / max(self.total, 1)
 
     @property
     def time_elapsed(self):
@@ -302,4 +277,31 @@ class ProgressBarCounter(object):
         """
         Timedelta representing the ETA.
         """
-        return self.time_elapsed / self.percentage * (100 - self.percentage)
+        if self.total is None:
+            return None
+        else:
+            return self.time_elapsed / self.percentage * (100 - self.percentage)
+
+
+@contextlib.contextmanager
+def _auto_refresh_context(app, refresh_interval=None):
+    " Return a context manager for the auto-refresh loop. "
+    done = [False]  # nonlocal
+
+    # Enter.
+
+    def run():
+        while not done[0]:
+            time.sleep(refresh_interval)
+            app.invalidate()
+
+    if refresh_interval:
+        t = threading.Thread(target=run)
+        t.daemon = True
+        t.start()
+
+    try:
+        yield
+    finally:
+        # Exit.
+        done[0] = True

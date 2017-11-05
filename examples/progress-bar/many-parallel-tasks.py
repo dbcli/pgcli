@@ -14,19 +14,19 @@ def main():
             title=HTML('<b>Example of many parallel tasks.</b>'),
             bottom_toolbar=HTML('<b>[Control-L]</b> clear  <b>[Control-C]</b> abort')) as pb:
 
-        def run_task(title, total, sleep_time):
-            for i in pb(range(total), title=title):
+        def run_task(task_name, total, sleep_time):
+            for i in pb(range(total), task_name=task_name):
                 time.sleep(sleep_time)
 
         threads = [
-            threading.Thread(target=run_task, args=('Task 1', 50, .1)),
-            threading.Thread(target=run_task, args=('Task 2', 100, .1)),
-            threading.Thread(target=run_task, args=('Task 3', 8, 3)),
-            threading.Thread(target=run_task, args=('Task 4', 200, .1)),
-            threading.Thread(target=run_task, args=('Task 5', 40, .2)),
-            threading.Thread(target=run_task, args=('Task 6', 220, .1)),
-            threading.Thread(target=run_task, args=('Task 7', 85, .05)),
-            threading.Thread(target=run_task, args=('Task 8', 200, .05)),
+            threading.Thread(target=run_task, args=('First task', 50, .1)),
+            threading.Thread(target=run_task, args=('Second task', 100, .1)),
+            threading.Thread(target=run_task, args=('Third task', 8, 3)),
+            threading.Thread(target=run_task, args=('Fourth task', 200, .1)),
+            threading.Thread(target=run_task, args=('Fifth task', 40, .2)),
+            threading.Thread(target=run_task, args=('Sixt task', 220, .1)),
+            threading.Thread(target=run_task, args=('Seventh task', 85, .05)),
+            threading.Thread(target=run_task, args=('Eight task', 200, .05)),
         ]
 
         for t in threads:

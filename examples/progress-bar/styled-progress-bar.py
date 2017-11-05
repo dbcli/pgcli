@@ -9,22 +9,22 @@ from prompt_toolkit.styles import Style
 import time
 
 style = Style.from_dict({
-    'progressbar title': '#0000ff',
-    'item-title': '#ff4400 underline',
+    'title': '#4444ff underline',
+    'item-title': '#ff4400 bold',
     'percentage': '#00ff00',
     'bar-a': 'bg:#00ff00 #004400',
     'bar-b': 'bg:#00ff00 #000000',
-    'bar-c': 'bg:#000000 #000000',
+    'bar-c': '#000000 underline',
     'current': '#448844',
     'total': '#448844',
     'time-elapsed': '#444488',
-    'eta': 'bg:#88ff88 #ffffff',
+    'eta': 'bg:#88ff88 #000000',
 })
 
 
 def main():
     with progress_bar(style=style, title='Progress bar example with custom styling.') as pb:
-        for i in pb(range(1600), title='Downloading...'):
+        for i in pb(range(1600), task_name='Downloading...'):
             time.sleep(.01)
 
 
