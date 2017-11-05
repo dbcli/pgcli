@@ -3,9 +3,9 @@ language: python
 python: '3.5'
 env:
   - TOXENV=py27
-  - TOXENV=py33
   - TOXENV=py34
   - TOXENV=py35
+  - TOXENV=py36
   - TOXENV=pypy
 install:
   - travis_retry pip install tox
