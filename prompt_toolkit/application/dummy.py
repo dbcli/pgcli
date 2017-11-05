@@ -23,12 +23,6 @@ class DummyApplication(Application):
     def run_async(self):
         raise NotImplementedError('A DummyApplication is not supposed to run.')
 
-    def run_in_terminal(self):
-        raise NotImplementedError
-
-    def run_coroutine_in_terminal(self):
-        raise NotImplementedError
-
     def run_system_command(self):
         raise NotImplementedError
 

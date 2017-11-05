@@ -10,6 +10,7 @@ import sys
 from six import int2byte, text_type, binary_type
 
 from prompt_toolkit.application.current import get_app, NoRunningApplicationError
+from prompt_toolkit.application.run_in_terminal import run_in_terminal
 from prompt_toolkit.eventloop import get_event_loop, ensure_future, Future, From
 from prompt_toolkit.eventloop.context import context
 from prompt_toolkit.formatted_text import to_formatted_text
@@ -211,13 +212,7 @@ class TelnetConnection(object):
         # Make sure that when an application was active for this connection,
         # that we print the text above the application.
         with context(self._context_id):
-            try:
-                app = get_app(raise_exception=True)
-            except NoRunningApplicationError:
-                func()
-                return Future.succeed(None)
-            else:
-                return app.run_in_terminal(func)
+            return run_in_terminal(func)
 
     def erase_screen(self):
         """

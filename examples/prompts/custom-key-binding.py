@@ -4,6 +4,7 @@ Example of adding a custom key binding to a prompt.
 """
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
+from prompt_toolkit.application import run_in_terminal
 from prompt_toolkit.key_binding import KeyBindings
 
 
@@ -48,8 +49,7 @@ def main():
         """
         def print_hello():
             print('hello world')
-        event.app.run_in_terminal(print_hello)
-
+        run_in_terminal(print_hello)
 
     # Read input.
     print('Press F4 to insert "hello world", type "xy" to insert "z":')

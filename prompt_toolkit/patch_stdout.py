@@ -18,6 +18,7 @@ Multiple applications can run in the body of the context manager, one after the
 other.
 """
 from __future__ import unicode_literals
+from .application import run_in_terminal
 from .application.current import get_app, NoRunningApplicationError
 from .eventloop import get_event_loop
 
@@ -89,12 +90,7 @@ class StdoutProxy(object):
         def write_and_flush_in_loop():
             # If an application is running, use `run_in_terminal`, otherwise
             # call it directly.
-            try:
-                app = get_app(raise_exception=True)
-            except NoRunningApplicationError:
-                write_and_flush()
-            else:
-                app.run_in_terminal(write_and_flush, in_executor=False)
+            run_in_terminal(write_and_flush, in_executor=False)
 
         # Make sure `write_and_flush` is executed *in* the event loop, not in
         # another thread.

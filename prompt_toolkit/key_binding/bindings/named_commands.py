@@ -487,7 +487,9 @@ def print_last_kbd_macro(event):
     def print_macro():
         for k in event.app.key_processor.macro:
             print(k)
-    event.app.run_in_terminal(print_macro)
+
+    from prompt_toolkit.aplication.run_in_terminal import run_in_terminal
+    run_in_terminal(print_macro)
 
 #
 # Miscellaneous Commands.

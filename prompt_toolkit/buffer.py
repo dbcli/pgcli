@@ -5,6 +5,7 @@ It holds the text, cursor position, history, etc...
 from __future__ import unicode_literals
 
 from .application.current import get_app
+from .application.run_in_terminal import run_in_terminal
 from .auto_suggest import AutoSuggest
 from .cache import FastDictCache
 from .clipboard import ClipboardData
@@ -1329,10 +1330,10 @@ class Buffer(object):
         os.close(descriptor)
 
         # Open in editor
-        # (We need to use `app.run_in_terminal`, because not all editors go to
+        # (We need to use `run_in_terminal`, because not all editors go to
         # the alternate screen buffer, and some could influence the cursor
         # position.)
-        succes = get_app().run_in_terminal(lambda: self._open_file_in_editor(filename))
+        succes = run_in_terminal(lambda: self._open_file_in_editor(filename))
 
         # Read content again.
         if succes:

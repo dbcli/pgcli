@@ -2,6 +2,7 @@
 Key binding handlers for displaying completions.
 """
 from __future__ import unicode_literals
+from prompt_toolkit.application.run_in_terminal import run_coroutine_in_terminal
 from prompt_toolkit.completion import CompleteEvent, get_common_complete_suffix
 from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.keys import Keys
@@ -135,7 +136,7 @@ def _display_completions_like_readline(app, completions):
             # Display all completions.
             display(0)
 
-    app.run_coroutine_in_terminal(run_compl, render_cli_done=True)
+    run_coroutine_in_terminal(run_compl, render_cli_done=True)
 
 
 def _create_more_prompt(message='--MORE--'):
