@@ -623,6 +623,9 @@ class Application(object):
         """
         Called when we don't receive the cursor position response in time.
         """
+        if not self.input.responds_to_cpr:
+            return # We know about this already.
+
         def in_terminal():
             self.output.write(
                 "WARNING: your terminal doesn't support cursor position requests (CPR).\r\n")
