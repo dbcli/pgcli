@@ -1,5 +1,9 @@
+"""
+Tools for running functions on the terminal above the current application or prompt.
+"""
 from __future__ import unicode_literals
 from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, From, Future
+from .current import get_app
 
 __all__ = (
     'run_in_terminal',
@@ -51,7 +55,6 @@ def run_coroutine_in_terminal(async_func, render_cli_done=False):
 
     # Make sure to run this function in the current `Application`, or if no
     # application is active, run it normally.
-    from .current import get_app
     app = get_app(return_none=True)
 
     if app is None:
@@ -97,4 +100,3 @@ def run_coroutine_in_terminal(async_func, render_cli_done=False):
                 new_run_in_terminal_f.set_result(None)
 
     return ensure_future(_run_in_t())
-
