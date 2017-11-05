@@ -10,7 +10,7 @@ import time
 
 style = Style.from_dict({
     'title': '#4444ff underline',
-    'item-title': '#ff4400 bold',
+    'taskname': '#ff4400 bold',
     'percentage': '#00ff00',
     'bar-a': 'bg:#00ff00 #004400',
     'bar-b': 'bg:#00ff00 #000000',
@@ -19,6 +19,7 @@ style = Style.from_dict({
     'total': '#448844',
     'time-elapsed': '#444488',
     'eta': 'bg:#88ff88 #000000',
+    'eta value': 'underline',
 })
 
 

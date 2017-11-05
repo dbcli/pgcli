@@ -35,10 +35,6 @@ class Formatter(with_metaclass(ABCMeta, object)):
     def get_width(self, progress_bar):
         return D()
 
-    def refresh_interval(self):
-        " Return the amount of seconds that this formatter requires a refresh. "
-        return None
-
 
 class Text(Formatter):
     """
@@ -55,14 +51,38 @@ class Text(Formatter):
 
 
 class TaskName(Formatter):
+    """
+    Display the name of the current task.
+
+    If `width` is given, use this width. Scroll the text if it doesn't fit in
+    this width.
+    """
+    template = '<taskname>{name}</taskname>'
+
+    def __init__(self, width=None):
+        self.width = width
+
     def format(self, progress_bar, progress, width):
-        return HTML('<taskname>{name}</taskname>').format(name=progress.task_name)
+        task_name = progress.task_name
+        cwidth = get_cwidth(task_name)
+
+        if cwidth > width:
+            # It doesn't fit -> scroll task name.
+            max_scroll = cwidth - width
+            current_scroll = int(time.time() * 3 % max_scroll)
+            task_name = task_name[current_scroll:]
+
+        # It does fit.
+        return HTML(self.template).format(name=task_name)
 
     def get_width(self, progress_bar):
+        if self.width:
+            return self.width
+
         all_names = [c.task_name for c in progress_bar.counters]
         if all_names:
             max_widths = max(get_cwidth(name) for name in all_names)
-            return D.exact(max_widths)
+            return D(preferred=max_widths, max=max_widths)
         else:
             return D()
 
@@ -111,6 +131,9 @@ class Bar(Formatter):
             bar_b=bar_b,
             bar_c=bar_c)
 
+    def get_width(self, progress_bar):
+        return D(min=9)
+
 
 class Progress(Formatter):
     template = '<current>{current:>3}</current>/<total>{total:>3}</total>'
@@ -136,16 +159,20 @@ class ElapsedTime(Formatter):
 
 
 class ETA(Formatter):
+    template = '<eta>eta [<value>{eta}</value>]</eta>'
+    unknown = '?:??:??'
+
     def format(self, progress_bar, progress, width):
         if progress.total:
             eta = '{0}'.format(progress.eta).split('.')[0]
         else:
-            eta='?:??:??'
+            eta = self.unknown
 
-        return HTML('eta <eta>[{eta}]</eta>').format(eta=eta)
+        return HTML(self.template).format(eta=eta)
 
     def get_width(self, progress_bar):
-        return D.exact(13)
+        text = to_formatted_text(HTML(self.template).format(eta=self.unknown))
+        return fragment_list_width(text)
 
 
 class SpinningWheel(Formatter):
@@ -157,6 +184,3 @@ class SpinningWheel(Formatter):
 
     def get_width(self, progress_bar):
         return D.exact(1)
-
-    def refresh_interval(self):
-        return .3

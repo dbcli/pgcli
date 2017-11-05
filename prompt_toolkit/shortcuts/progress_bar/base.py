@@ -102,15 +102,6 @@ class progress_bar(object):
         self._previous_winch_handler = None
         self._has_sigwinch = False
 
-    def _get_auto_refresh_interval(self):
-        " Calculate minimum refresh interval, or return None. "
-        intervals = [f.refresh_interval() for f in self.formatters]
-        intervals = [f for f in intervals if f is not None]
-        if intervals:
-            return min(intervals)
-        else:
-            return None
-
     def __enter__(self):
         # Create UI Application.
         title_toolbar = ConditionalContainer(
@@ -143,7 +134,7 @@ class progress_bar(object):
 
         # Run application in different thread.
         def run():
-            with _auto_refresh_context(self.app, self._get_auto_refresh_interval()):
+            with _auto_refresh_context(self.app, .3):
                 try:
                     self.app.run()
                 except Exception as e:
