@@ -4,7 +4,7 @@ Renders the command line on the console.
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit.eventloop import Future, From, ensure_future
+from prompt_toolkit.eventloop import Future, From, ensure_future, get_event_loop
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.layout.mouse_handlers import MouseHandlers
@@ -387,7 +387,8 @@ class Renderer(object):
                             self.cpr_support = CPR_Support.NOT_SUPPORTED
 
                             if self.cpr_not_supported_callback:
-                                self.cpr_not_supported_callback()
+                                # Make sure to call this callback in the main thread.
+                                get_event_loop().call_from_executor(self.cpr_not_supported_callback)
 
                     t = threading.Thread(target=timer)
                     t.daemon = True
