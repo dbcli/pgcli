@@ -81,21 +81,24 @@ class progress_bar(object):
 
     :param title: Text to be displayed above the progress bars. This can be a
         callable or formatted text as well.
-    :param formatter: `BaseFormatter` instance.
-        as input, and returns an `HTML` object for the individual progress bar.
+    :param formatters: List of `Formatter` instances.
     :param bottom_toolbar: Text to be displayed in the bottom toolbar.
         This can be a callable or formatted text.
     :param style: `prompt_toolkit` ``Style`` instance.
+    :param key_bindings: `KeyBindings` instance.
     """
-    def __init__(self, title=None, formatters=None, bottom_toolbar=None, style=None):
+    def __init__(self, title=None, formatters=None, bottom_toolbar=None, style=None, key_bindings=None):
         assert formatters is None or (isinstance(formatters, list) and all(isinstance(fo, f.Formatter) for fo in formatters))
         assert style is None or isinstance(style, BaseStyle)
+        assert key_bindings is None or isinstance(key_bindings, KeyBindings)
 
         self.title = title
         self.formatters = formatters or create_default_formatters()
         self.bottom_toolbar = bottom_toolbar
         self.counters = []
         self.style = style
+        self.key_bindings = key_bindings
+
         self._thread = None
 
         self._loop = get_event_loop()
@@ -130,7 +133,8 @@ class progress_bar(object):
                 Window(),
                 bottom_toolbar,
             ])),
-            style=self.style)
+            style=self.style,
+            key_bindings=self.key_bindings)
 
         # Run application in different thread.
         def run():
