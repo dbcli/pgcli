@@ -64,7 +64,9 @@ def create_default_formatters():
         f.Text(' '),
         f.Progress(),
         f.Text(' '),
-        f.ETA(),
+        f.Text('eta [', style='class:time-left'),
+        f.TimeLeft(),
+        f.Text(']', style='class:time-left'),
         f.Text(' '),
     ]
 
@@ -268,14 +270,14 @@ class ProgressBarCounter(object):
         return datetime.datetime.now() - self.start_time
 
     @property
-    def eta(self):
+    def time_left(self):
         """
-        Timedelta representing the ETA.
+        Timedelta representing the time left.
         """
         if self.total is None:
             return None
         else:
-            return self.time_elapsed / self.percentage * (100 - self.percentage)
+            return self.time_elapsed * (100 - self.percentage) / self.percentage
 
 
 @contextlib.contextmanager

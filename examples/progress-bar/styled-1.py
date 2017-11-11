@@ -18,8 +18,7 @@ style = Style.from_dict({
     'current': '#448844',
     'total': '#448844',
     'time-elapsed': '#444488',
-    'eta': 'bg:#88ff88 #000000',
-    'eta value': 'underline',
+    'time-left': 'bg:#88ff88 #000000',
 })
 
 

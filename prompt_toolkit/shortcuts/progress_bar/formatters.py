@@ -19,8 +19,10 @@ __all__ = (
     'Percentage',
     'Bar',
     'Progress',
-    'ElapsedTime',
-    'ETA',
+    'TimeElapsed',
+    'TimeLeft',
+    'IterationsPerSecond',
+    'SpinningWheel',
 )
 
 
@@ -153,30 +155,55 @@ class Progress(Formatter):
         return D.exact(max(all_lengths) * 2 + 1)
 
 
-class ElapsedTime(Formatter):
+def _format_timedelta(timedelta):
+    """
+    Return hh:mm:ss, or mm:ss if the amount of hours is zero.
+    """
+    result = '{0}'.format(timedelta).split('.')[0]
+    if result.startswith('0:'):
+        result = result[2:]
+    return result
+
+
+class TimeElapsed(Formatter):
     def format(self, progress_bar, progress, width):
-        return HTML('<time-elapsed>{time_elapsed}</time-elapsed>').format(
-            time_elapsed=progress.time_elapsed)
+        text = _format_timedelta(progress.time_elapsed).rjust(width)
+        return HTML('<time-elapsed>{time_elapsed}</time-elapsed>').format(time_elapsed=text)
 
     def get_width(self, progress_bar):
-        return D.exact(8)
+        all_values = [len(_format_timedelta(c.time_elapsed)) for c in progress_bar.counters]
+        return max(all_values)
 
 
-class ETA(Formatter):
-    template = '<eta>eta [<value>{eta}</value>]</eta>'
+class TimeLeft(Formatter):
+    template = '<time-left>{time_left}</time-left>'
     unknown = '?:??:??'
 
     def format(self, progress_bar, progress, width):
         if progress.total:
-            eta = '{0}'.format(progress.eta).split('.')[0]
+            time_left = _format_timedelta(progress.time_left)
         else:
-            eta = self.unknown
+            time_left = self.unknown
 
-        return HTML(self.template).format(eta=eta)
+        return HTML(self.template).format(time_left=time_left.rjust(width))
 
     def get_width(self, progress_bar):
-        text = to_formatted_text(HTML(self.template).format(eta=self.unknown))
-        return fragment_list_width(text)
+        all_values = [len(_format_timedelta(c.time_left)) if c.total else 7
+                      for c in progress_bar.counters]
+        return max(all_values)
+
+
+class IterationsPerSecond(Formatter):
+    template = '<iterations-per-second>{iterations_per_second:.2f}</iterations-per-second>'
+
+    def format(self, progress_bar, progress, width):
+        value = progress.current / progress.time_elapsed.total_seconds()
+        return HTML(self.template.format(iterations_per_second=value))
+
+    def get_width(self, progress_bar):
+        all_values = [len('{0:.2f}'.format(c.current / c.time_elapsed.total_seconds()))
+                      for c in progress_bar.counters]
+        return max(all_values)
 
 
 class SpinningWheel(Formatter):
