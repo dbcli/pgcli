@@ -24,6 +24,7 @@ import contextlib
 import datetime
 import os
 import signal
+import six
 import threading
 import time
 import traceback
@@ -56,7 +57,7 @@ def create_key_bindings():
 
 def create_default_formatters():
     return [
-        f.TaskName(),
+        f.Label(),
         f.Text(' '),
         f.Percentage(),
         f.Text(' '),
@@ -170,16 +171,20 @@ class progress_bar(object):
 
         self._thread.join()
 
-    def __call__(self, data=None, task_name='', remove_when_done=False, total=None):
+    def __call__(self, data=None, label='', remove_when_done=False, total=None):
         """
         Start a new counter.
 
+        :param label: Title text or description for this progress.
         :param remove_when_done: When `True`, hide this progress bar.
         :param total: Specify the maximum value if it can't be calculated by
             calling ``len``.
         """
+        assert isinstance(label, six.text_type)
+        assert isinstance(remove_when_done, bool)
+
         counter = ProgressBarCounter(
-            self, data, task_name=task_name, remove_when_done=remove_when_done, total=total)
+            self, data, label=label, remove_when_done=remove_when_done, total=total)
         self.counters.append(counter)
         return counter
 
@@ -226,12 +231,12 @@ class ProgressBarCounter(object):
     """
     An individual counter (A progress bar can have multiple counters).
     """
-    def __init__(self, progress_bar, data=None, task_name='', remove_when_done=False, total=None):
+    def __init__(self, progress_bar, data=None, label='', remove_when_done=False, total=None):
         self.start_time = datetime.datetime.now()
         self.progress_bar = progress_bar
         self.data = data
         self.current = 0
-        self.task_name = task_name
+        self.label = label
         self.remove_when_done = remove_when_done
         self.done = False
 

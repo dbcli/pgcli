@@ -17,6 +17,7 @@ style = Style.from_dict({
 
 def main():
     custom_formatters = [
+        formatters.Label(suffix=': '),
         formatters.Bar(start='|', end='|', sym_a='#', sym_b='#', sym_c='-'),
         formatters.Text(' '),
         formatters.Progress(),
@@ -33,7 +34,7 @@ def main():
     ]
 
     with progress_bar(style=style, formatters=custom_formatters) as pb:
-        for i in pb(range(1600), task_name='Installing'):
+        for i in pb(range(1600), label='Installing'):
             time.sleep(.01)
 
 

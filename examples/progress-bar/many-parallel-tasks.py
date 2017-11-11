@@ -14,8 +14,8 @@ def main():
             title=HTML('<b>Example of many parallel tasks.</b>'),
             bottom_toolbar=HTML('<b>[Control-L]</b> clear  <b>[Control-C]</b> abort')) as pb:
 
-        def run_task(task_name, total, sleep_time):
-            for i in pb(range(total), task_name=task_name):
+        def run_task(label, total, sleep_time):
+            for i in pb(range(total), label=label):
                 time.sleep(sleep_time)
 
         threads = [

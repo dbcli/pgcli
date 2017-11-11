@@ -15,7 +15,7 @@ from prompt_toolkit.utils import get_cwidth
 __all__ = (
     'Formatter',
     'Text',
-    'TaskName',
+    'Label',
     'Percentage',
     'Bar',
     'Progress',
@@ -52,7 +52,7 @@ class Text(Formatter):
         return fragment_list_width(self.text)
 
 
-class TaskName(Formatter):
+class Label(Formatter):
     """
     Display the name of the current task.
 
@@ -61,36 +61,36 @@ class TaskName(Formatter):
     :param suffix: String suffix to be added after the task name, e.g. ': '.
         If no task name was given, no suffix will be added.
     """
-    template = '<taskname>{name}</taskname>'
+    template = '<label>{label}</label>'
 
     def __init__(self, width=None, suffix=''):
         assert isinstance(suffix, text_type)
         self.width = width
         self.suffix = suffix
 
-    def _add_suffix(self, task_name):
-        if task_name:
-            task_name += self.suffix
-        return task_name
+    def _add_suffix(self, label):
+        if label:
+            label += self.suffix
+        return label
 
     def format(self, progress_bar, progress, width):
-        task_name = self._add_suffix(progress.task_name)
-        cwidth = get_cwidth(task_name)
+        label = self._add_suffix(progress.label)
+        cwidth = get_cwidth(label)
 
         if cwidth > width:
             # It doesn't fit -> scroll task name.
             max_scroll = cwidth - width
             current_scroll = int(time.time() * 3 % max_scroll)
-            task_name = task_name[current_scroll:]
+            label = label[current_scroll:]
 
         # It does fit.
-        return HTML(self.template).format(name=task_name)
+        return HTML(self.template).format(label=label)
 
     def get_width(self, progress_bar):
         if self.width:
             return self.width
 
-        all_names = [self._add_suffix(c.task_name) for c in progress_bar.counters]
+        all_names = [self._add_suffix(c.label) for c in progress_bar.counters]
         if all_names:
             max_widths = max(get_cwidth(name) for name in all_names)
             return D(preferred=max_widths, max=max_widths)

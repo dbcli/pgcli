@@ -26,7 +26,7 @@ style = Style.from_dict({
 
 def main():
     custom_formatters = [
-        formatters.TaskName(),
+        formatters.Label(),
         formatters.Text(' '),
         formatters.SpinningWheel(),
         formatters.Text(' '),
@@ -36,7 +36,7 @@ def main():
         formatters.TimeLeft(),
     ]
     with progress_bar(title='Progress bar example with custom formatter.', formatters=custom_formatters, style=style) as pb:
-        for i in pb(range(20), task_name='Downloading...'):
+        for i in pb(range(20), label='Downloading...'):
             time.sleep(1)
 
 
