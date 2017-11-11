@@ -4,7 +4,7 @@ Each progress bar consists of a list of these formatters.
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
-from six import with_metaclass
+from six import with_metaclass, text_type
 import time
 
 from prompt_toolkit.formatted_text import HTML, to_formatted_text
@@ -56,16 +56,25 @@ class TaskName(Formatter):
     """
     Display the name of the current task.
 
-    If `width` is given, use this width. Scroll the text if it doesn't fit in
-    this width.
+    :param width: If a `width` is given, use this width. Scroll the text if it
+        doesn't fit in this width.
+    :param suffix: String suffix to be added after the task name, e.g. ': '.
+        If no task name was given, no suffix will be added.
     """
     template = '<taskname>{name}</taskname>'
 
-    def __init__(self, width=None):
+    def __init__(self, width=None, suffix=''):
+        assert isinstance(suffix, text_type)
         self.width = width
+        self.suffix = suffix
+
+    def _add_suffix(self, task_name):
+        if task_name:
+            task_name += self.suffix
+        return task_name
 
     def format(self, progress_bar, progress, width):
-        task_name = progress.task_name
+        task_name = self._add_suffix(progress.task_name)
         cwidth = get_cwidth(task_name)
 
         if cwidth > width:
@@ -81,7 +90,7 @@ class TaskName(Formatter):
         if self.width:
             return self.width
 
-        all_names = [c.task_name for c in progress_bar.counters]
+        all_names = [self._add_suffix(c.task_name) for c in progress_bar.counters]
         if all_names:
             max_widths = max(get_cwidth(name) for name in all_names)
             return D(preferred=max_widths, max=max_widths)
