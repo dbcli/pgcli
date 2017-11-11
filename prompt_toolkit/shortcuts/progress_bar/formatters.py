@@ -9,6 +9,7 @@ import time
 
 from prompt_toolkit.formatted_text import HTML, to_formatted_text
 from prompt_toolkit.layout.dimension import D
+from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.layout.utils import fragment_list_width
 from prompt_toolkit.utils import get_cwidth
 
@@ -23,6 +24,7 @@ __all__ = (
     'TimeLeft',
     'IterationsPerSecond',
     'SpinningWheel',
+    'Rainbow',
 )
 
 
@@ -224,3 +226,50 @@ class SpinningWheel(Formatter):
 
     def get_width(self, progress_bar):
         return D.exact(1)
+
+
+def _hue_to_rgb(hue):
+    " Take hue between 0 and 1, return (r, g, b). "
+    i = int(hue * 6.)
+    f = (hue * 6.) - i
+
+    q = int(255 * (1. - f))
+    t = int(255 * (1. - (1. - f)))
+
+    i %= 6
+
+    return [
+        (255, t, 0),
+        (q, 255, 0),
+        (0, 255, t),
+        (0, q, 255),
+        (t, 0, 255),
+        (255, 0, q),
+    ][i]
+
+
+class Rainbow(Formatter):
+    """
+    For the fun. Add rainbow colors to any of the other formatters.
+    """
+    colors = ['#%.2x%.2x%.2x' % _hue_to_rgb(h / 100.) for h in range(0, 100)]
+
+    def __init__(self, formatter):
+        self.formatter = formatter
+
+    def format(self, progress_bar, progress, width):
+        # Get formatted text from nested formatter, and explode it in
+        # text/style tuples.
+        result = self.formatter.format(progress_bar, progress, width)
+        result = explode_text_fragments(to_formatted_text(result))
+
+        # Insert colors.
+        result2 = []
+        shift = int(time.time() * 3) % len(self.colors)
+
+        for i, (style, text) in enumerate(result):
+            result2.append((style + ' ' + self.colors[(i + shift) % len(self.colors)], text))
+        return result2
+
+    def get_width(self, progress_bar):
+        return self.formatter.get_width(progress_bar)
