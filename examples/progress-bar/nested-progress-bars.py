@@ -14,7 +14,7 @@ def main():
             bottom_toolbar=HTML(' <b>[Control-L]</b> clear  <b>[Control-C]</b> abort')) as pb:
 
         for i in pb(range(6), task_name='Main task'):
-            for j in pb(range(200), task_name='Subtask  ', remove_when_done=True):
+            for j in pb(range(200), task_name='Subtask <%s>' % (i + 1, ), remove_when_done=True):
                 time.sleep(.01)
 
 
