@@ -363,7 +363,8 @@ class Prompt(object):
             filter=~is_done & renderer_height_is_known &
                     Condition(lambda: self.bottom_toolbar is not None))
 
-        search_toolbar = SearchToolbar(search_buffer)
+        search_toolbar = SearchToolbar(
+            search_buffer, get_search_state=lambda: default_buffer_control.get_search_state())
         search_buffer_control = BufferControl(
             buffer=search_buffer,
             input_processor=merge_processors([

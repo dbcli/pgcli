@@ -173,7 +173,7 @@ class SearchToolbar(object):
     """
     :param vi_mode: Display '/' and '?' instead of I-search.
     """
-    def __init__(self, search_buffer, vi_mode=False):
+    def __init__(self, search_buffer, get_search_state=None, vi_mode=False):
         assert isinstance(search_buffer, Buffer)
 
         def get_before_input():
@@ -187,6 +187,7 @@ class SearchToolbar(object):
 
         self.control = BufferControl(
             buffer=search_buffer,
+            get_search_state=get_search_state,
             input_processor=BeforeInput(get_before_input),
             lexer=SimpleLexer(
                 style='class:search-toolbar.text'))
