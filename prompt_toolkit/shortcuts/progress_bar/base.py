@@ -12,10 +12,12 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.eventloop import get_event_loop
 from prompt_toolkit.filters import Condition, is_done, renderer_height_is_known
 from prompt_toolkit.formatted_text import to_formatted_text
+from prompt_toolkit.input.defaults import get_default_input
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout, Window, ConditionalContainer, FormattedTextControl, HSplit, VSplit
 from prompt_toolkit.layout.controls import UIControl, UIContent
 from prompt_toolkit.layout.dimension import D
+from prompt_toolkit.output.defaults import get_default_output
 from prompt_toolkit.styles import BaseStyle
 from prompt_toolkit.utils import in_main_thread
 
@@ -90,9 +92,13 @@ class progress_bar(object):
         This can be a callable or formatted text.
     :param style: `prompt_toolkit` ``Style`` instance.
     :param key_bindings: `KeyBindings` instance.
+    :param output: `prompt_toolkit` `Output` instance.
+    :param input: `prompt_toolkit` `Input` instance.
     """
-    def __init__(self, title=None, formatters=None, bottom_toolbar=None, style=None, key_bindings=None):
-        assert formatters is None or (isinstance(formatters, list) and all(isinstance(fo, f.Formatter) for fo in formatters))
+    def __init__(self, title=None, formatters=None, bottom_toolbar=None,
+                 style=None, key_bindings=None, output=None, input=None):
+        assert formatters is None or (
+            isinstance(formatters, list) and all(isinstance(fo, f.Formatter) for fo in formatters))
         assert style is None or isinstance(style, BaseStyle)
         assert key_bindings is None or isinstance(key_bindings, KeyBindings)
 
@@ -102,6 +108,9 @@ class progress_bar(object):
         self.counters = []
         self.style = style
         self.key_bindings = key_bindings
+
+        self.output = output or get_default_output()
+        self.input = input or get_default_input()
 
         self._thread = None
 
@@ -140,7 +149,9 @@ class progress_bar(object):
                 bottom_toolbar,
             ])),
             style=self.style,
-            key_bindings=self.key_bindings)
+            key_bindings=self.key_bindings,
+            output=self.output,
+            input=self.input)
 
         # Run application in different thread.
         def run():
