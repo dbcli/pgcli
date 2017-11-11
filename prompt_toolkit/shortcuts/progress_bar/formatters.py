@@ -40,8 +40,8 @@ class Text(Formatter):
     """
     Display plain text.
     """
-    def __init__(self, text):
-        self.text = to_formatted_text(text)
+    def __init__(self, text, style=''):
+        self.text = to_formatted_text(text, style=style)
 
     def format(self, progress_bar, progress, width):
         return self.text
@@ -99,13 +99,15 @@ class Percentage(Formatter):
 
 
 class Bar(Formatter):
-    template = '<bar>|<bar-a>{bar_a}</bar-a><bar-b>{bar_b}</bar-b><bar-c>{bar_c}</bar-c>|</bar>'
+    template = '<bar>{start}<bar-a>{bar_a}</bar-a><bar-b>{bar_b}</bar-b><bar-c>{bar_c}</bar-c>{end}</bar>'
 
-    def __init__(self, sym_a='=', sym_b='>', sym_c=' ', unknown='#'):
+    def __init__(self, start='[', end=']', sym_a='=', sym_b='>', sym_c=' ', unknown='#'):
         assert len(sym_a) == 1
         assert len(sym_b) == 1
         assert len(sym_c) == 1
 
+        self.start = start
+        self.end = end
         self.sym_a = sym_a
         self.sym_b = sym_b
         self.sym_c = sym_c
@@ -127,6 +129,8 @@ class Bar(Formatter):
             bar_c = self.sym_c * (width - pb_a)
 
         return HTML(self.template).format(
+            start=self.start,
+            end=self.end,
             bar_a=bar_a,
             bar_b=bar_b,
             bar_c=bar_c)
