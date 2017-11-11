@@ -15,6 +15,7 @@ from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout, Window, ConditionalContainer, FormattedTextControl, HSplit, VSplit
 from prompt_toolkit.layout.controls import UIControl, UIContent
+from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.styles import BaseStyle
 from prompt_toolkit.utils import in_main_thread
 
@@ -132,7 +133,9 @@ class progress_bar(object):
             layout=Layout(HSplit([
                 title_toolbar,
                 VSplit(progress_controls,
-                       height=lambda: len(self.counters)),
+                       height=lambda: D(
+                           preferred=len(self.counters),
+                           max=len(self.counters))),
                 Window(),
                 bottom_toolbar,
             ])),
