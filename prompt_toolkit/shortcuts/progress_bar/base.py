@@ -17,7 +17,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout, Window, ConditionalContainer, FormattedTextControl, HSplit, VSplit
 from prompt_toolkit.layout.controls import UIControl, UIContent
 from prompt_toolkit.layout.dimension import D
-from prompt_toolkit.output.defaults import get_default_output
+from prompt_toolkit.output.defaults import create_output
 from prompt_toolkit.styles import BaseStyle
 from prompt_toolkit.utils import in_main_thread
 
@@ -31,6 +31,7 @@ import six
 import threading
 import time
 import traceback
+import sys
 
 from . import formatters as f
 
@@ -92,11 +93,13 @@ class progress_bar(object):
         This can be a callable or formatted text.
     :param style: `prompt_toolkit` ``Style`` instance.
     :param key_bindings: `KeyBindings` instance.
+    :param file: The file object used for rendering, by default `sys.stderr` is used.
+
     :param output: `prompt_toolkit` `Output` instance.
     :param input: `prompt_toolkit` `Input` instance.
     """
     def __init__(self, title=None, formatters=None, bottom_toolbar=None,
-                 style=None, key_bindings=None, output=None, input=None):
+                 style=None, key_bindings=None, file=None, output=None, input=None):
         assert formatters is None or (
             isinstance(formatters, list) and all(isinstance(fo, f.Formatter) for fo in formatters))
         assert style is None or isinstance(style, BaseStyle)
@@ -109,7 +112,7 @@ class progress_bar(object):
         self.style = style
         self.key_bindings = key_bindings
 
-        self.output = output or get_default_output()
+        self.output = output or create_output(stdout=file or sys.stderr)
         self.input = input or get_default_input()
 
         self._thread = None
