@@ -336,16 +336,16 @@ Adding a bottom toolbar
 Adding a bottom toolbar is as easy as passing a ``get_bottom_toolbar_tokens``
 function to :func:`~prompt_toolkit.shortcuts.prompt`. The function is called
 every time the prompt is rendered (at least on every key stroke), so the bottom
-toolbar can be used to display dynamic information. It receives a
-:class:`~prompt_toolkit.interface.CommandLineInterface` and should return a
-list of tokens. The toolbar is always erased when the prompt returns.
+toolbar can be used to display dynamic information. It should return formatted
+text or a list of ``(style, text)`` tuples. The toolbar is always erased when
+the prompt returns.
 
 .. code:: python
 
     from prompt_toolkit import prompt
     from prompt_toolkit.styles import Style
 
-    def bottom_toolbar(cli):
+    def bottom_toolbar():
         return [('class:bottom-toolbar', ' This is a toolbar. ')]
 
     style = Style.from_dict({
@@ -478,7 +478,7 @@ filters <filters>`.)
 Dynamically switch between Emacs and Vi mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :class:`~prompt_toolkit.interface.CommandLineInterface` has
+The :class:`~prompt_toolkit.application.Application` has
 an ``editing_mode`` attribute. We can change the key bindings by changing this
 attribute from ``EditingMode.VI`` to ``EditingMode.EMACS``.
 
