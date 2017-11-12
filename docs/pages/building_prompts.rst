@@ -1,7 +1,7 @@
 .. _building_prompts:
 
-Asking for input
-================
+Asking for input (prompts)
+==========================
 
 This page is about building prompts. Pieces of code that we can embed in a
 program for asking the user for input. If you want to use `prompt_toolkit` for

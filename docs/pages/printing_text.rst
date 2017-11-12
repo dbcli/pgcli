@@ -1,11 +1,11 @@
 .. _printing_text:
 
-Echoing text
-============
+Printing text
+=============
 
-Prompt_toolkit ships with a ``print`` function that's meant to be compatible
-with the built-in print function, but on top of that, also supports colors and
-formatting.
+Prompt_toolkit ships with a ``print`` function that's meant to be (as much as
+possible) compatible with the built-in print function, but on top of that, also
+supports colors and formatting.
 
 On Linux systems, this will output VT100 escape sequences, while on Windows it
 will use Win32 API calls or VT100 sequences, depending on what is available.
@@ -30,8 +30,8 @@ The print function can be imported as follows:
     named ``print``.
 
 
-Colors and formatting
----------------------
+Formatted text
+--------------
 
 There are three ways to print colors:
 
@@ -39,6 +39,9 @@ There are three ways to print colors:
 - By creating an ANSI object that contains ANSI escape sequences.
 - By creating a list of ``(style, text)`` tuples.
 
+An instance of any of these three kinds of objects is called "formatted text".
+There are various places in prompt toolkit, where we accept not just plain text
+(as a strings), but also formatted text.
 
 HTML
 ^^^^
@@ -100,8 +103,8 @@ ANSI
 
 Some people like to use the VT100 ANSI escape squences to generate output.
 Natively, this is however only supported on VT100 terminals, but prompt_toolkit
-can parse these, and map it to whatever terminal or console is available. This
-means that it will work on Windows as well.
+can parse these, and map them to a formatted text instances. This means that they
+will work on Windows as well.
 
 .. code:: python
 
@@ -109,3 +112,48 @@ means that it will work on Windows as well.
     from prompt_toolkit import print, ANSI
 
     print(ANSI('\x1b[31mhello \x1b[32mworld'))
+
+
+Style/text tuples
+^^^^^^^^^^^^^^^^^
+
+Internally, both `HTML` and `ANSI` objects are mapped to a list of ``(style,
+text)`` tuples. It is however also possible to create such a list manually.
+This is a little more verbose, but it's probably the most powerful way of
+expressing formatted text.
+
+.. code:: python
+
+    from __future__ import unicode_literals, print_function
+    from prompt_toolkit import print
+    from prompt_toolkit.styles import Style
+
+    text = [
+        ('#ff0066', 'Hello'),
+        ('', ' '),
+        ('#44ff00 italic', 'World'),
+    ]
+
+    print(text, style=style)
+
+Similar to the `HTML` example, it's also possible to use class names, and
+separate the styling in a style sheet.
+
+.. code:: python
+
+    from __future__ import unicode_literals, print_function
+    from prompt_toolkit import print
+    from prompt_toolkit.styles import Style
+
+    text = [
+        ('class:aaa', 'Hello'),
+        ('', ' '),
+        ('class:bbb', 'World'),
+    ]
+
+    style = Style.from_dict({
+        'aaa': '#ff0066',
+        'bbb': '#44ff00 italic',
+    })
+
+    print(text, style=style)

@@ -1,7 +1,7 @@
 .. _building_prompts:
 
-Displaying dialogs
-==================
+Dialogs
+=======
 
 Prompt_toolkit ships with a high level API for displaying dialogs.
 
