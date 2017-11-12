@@ -4,7 +4,7 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.clipboard import Clipboard, InMemoryClipboard
 from prompt_toolkit.enums import EditingMode
-from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From, Future
+from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From
 from prompt_toolkit.eventloop.base import get_traceback_from_context
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.input.base import Input

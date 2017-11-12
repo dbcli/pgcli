@@ -7,7 +7,6 @@ from prompt_toolkit import prompt
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.styles import Style
 
 
 def run():
