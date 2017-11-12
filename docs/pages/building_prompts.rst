@@ -68,20 +68,19 @@ The colors for syntax highlighting are defined by a
 :class:`~prompt_toolkit.styles.Style` instance.  By default, a neutral built-in
 style is used, but any style instance can be passed to the
 :func:`~prompt_toolkit.shortcuts.prompt` function. A simple way to create a
-style, is by using the :class:`~prompt_toolkit.styles.style_from_dict`
+style, is by using the :meth:`~prompt_toolkit.styles.Style.from_dict`
 function:
 
 .. code:: python
 
     from pygments.lexers import HtmlLexer
     from prompt_toolkit.shortcuts import prompt
-    from prompt_toolkit.token import Token
-    from prompt_toolkit.styles import style_from_dict
+    from prompt_toolkit.styles import Style
     from prompt_toolkit.layout.lexers import PygmentsLexer
 
-    our_style = style_from_dict({
-        Token.Comment:   '#888888 bold',
-        Token.Keyword:   '#ff88ff bold',
+    our_style = style.from_dict({
+        'pygments.comment':   '#888888 bold',
+        'pygments.keyword':   '#ff88ff bold',
     })
 
     text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer),
@@ -111,17 +110,19 @@ Creating a custom style could be done like this:
 .. code:: python
 
     from prompt_toolkit.shortcuts import prompt
-    from prompt_toolkit.styles import style_from_pygments
+    from prompt_toolkit.styles import style_from_pygments, merge_style
     from prompt_toolkit.layout.lexers import PygmentsLexer
 
     from pygments.styles.tango import TangoStyle
-    from pygments.token import Token
     from pygments.lexers import HtmlLexer
 
-    our_style = style_from_pygments(TangoStyle, {
-        Token.Comment:   '#888888 bold',
-        Token.Keyword:   '#ff88ff bold',
-    })
+    our_style = merge_style([
+        style_from_pygments(TangoStyle),
+        Style.from_dict({
+            'pygments.comment': '#888888 bold',
+            'pygments.keyword': '#ff88ff bold',
+        })
+    ])
 
     text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer),
                   style=our_style)
@@ -131,40 +132,38 @@ Coloring the prompt itself
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is possible to add some colors to the prompt itself. For this, we need a
-``get_prompt_tokens`` function. This function takes a
-:class:`~prompt_toolkit.interface.CommandLineInterface` instance as input
-(ignore that for now) and it should return a list of ``(Token, text)`` tuples.
-Each token is a Pygments token and can be styled individually.
+``get_prompt`` function. This is a function that can return a string, but also
+a list of ``(style, text)`` tuples.
 
 .. code:: python
 
     from prompt_toolkit.shortcuts import prompt
-    from prompt_toolkit.styles import style_from_dict
+    from prompt_toolkit.styles import Style
 
-    example_style = style_from_dict({
+    style = Style.from_dict({
         # User input.
-        Token:          '#ff0066',
+        '':          '#ff0066',
 
         # Prompt.
-        Token.Username: '#884444',
-        Token.At:       '#00aa00',
-        Token.Colon:    '#00aa00',
-        Token.Pound:    '#00aa00',
-        Token.Host:     '#000088 bg:#aaaaff',
-        Token.Path:     '#884444 underline',
+        'username': '#884444',
+        'at':       '#00aa00',
+        'colon':    '#00aa00',
+        'pound':    '#00aa00',
+        'host':     '#000088 bg:#aaaaff',
+        'path':     '#884444 underline',
     })
 
-    def get_prompt_tokens(cli):
+    def get_prompt():
         return [
-            (Token.Username, 'john'),
-            (Token.At,       '@'),
-            (Token.Host,     'localhost'),
-            (Token.Colon,    ':'),
-            (Token.Path,     '/user/john'),
-            (Token.Pound,    '# '),
+            ('class:username', 'john'),
+            ('class:at',       '@'),
+            ('class:host',     'localhost'),
+            ('class:colon',    ':'),
+            ('class:path',     '/user/john'),
+            ('class:pound',    '# '),
         ]
 
-    text = prompt(get_prompt_tokens=get_prompt_tokens, style=example_style)
+    text = prompt(get_prompt, style=style)
 
 By default, colors are taking from the 256 color palette. If you want to have
 24bit true color, this is possible by adding the ``true_color=True`` option to
@@ -172,37 +171,7 @@ the ``prompt`` function.
 
 .. code:: python
 
-    text = prompt(get_prompt_tokens=get_prompt_tokens, style=example_style,
-                  true_color=True)
-
-
-Printing text (output) in color
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Besides prompting for input, we often have to print some output in color. This
-is simple with the :func:`~prompt_toolkit.shortcuts.print_tokens` function.
-
-.. code:: python
-
-    from prompt_toolkit.shortcuts import print_tokens
-    from prompt_toolkit.styles import style_from_dict
-    from pygments.token import Token
-
-    # Create a stylesheet.
-    style = style_from_dict({
-        Token.Hello: '#ff0066',
-        Token.World: '#44ff44 italic',
-    })
-
-    # Make a list of (Token, text) tuples.
-    tokens = [
-        (Token.Hello, 'Hello '),
-        (Token.World, 'World'),
-        (Token, '\n'),
-    ]
-
-    # Print the result.
-    print_tokens(tokens, style=style)
+    text = prompt(get_prompt, style=style, true_color=True)
 
 
 Autocompletion
@@ -374,23 +343,20 @@ list of tokens. The toolbar is always erased when the prompt returns.
 .. code:: python
 
     from prompt_toolkit import prompt
-    from prompt_toolkit.styles import style_from_dict
-    from prompt_toolkit.token import Token
+    from prompt_toolkit.styles import Style
 
-    def get_bottom_toolbar_tokens(cli):
-        return [(Token.Toolbar, ' This is a toolbar. ')]
+    def bottom_toolbar(cli):
+        return [('class:bottom-toolbar', ' This is a toolbar. ')]
 
-    style = style_from_dict({
-        Token.Toolbar: '#ffffff bg:#333333',
+    style = Style.from_dict({
+        'class:bottom-toolbar': '#ffffff bg:#333333',
     })
 
-    text = prompt('> ', get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
-                  style=style)
+    text = prompt('> ', bottom_toolbar=bottom_toolbar, style=style)
     print('You said: %s' % text)
 
-The default token is ``Token.Toolbar`` and that will also be used to fill the
-background of the toolbar. :ref:`Styling <colors>` can be done by pointing to
-that token.
+The default class name is ``bottom-toolbar`` and that will also be used to fill
+the background of the toolbar.
 
 .. image:: ../images/bottom-toolbar.png
 
@@ -407,21 +373,16 @@ callable.
 .. code:: python
 
     from prompt_toolkit import prompt
-    from prompt_toolkit.styles import style_from_dict
-    from prompt_toolkit.token import Token
+    from prompt_toolkit.styles import Style
 
-    example_style = style_from_dict({
-        Token.RPrompt: 'bg:#ff0066 #ffffff',
+    example_style = Style.from_dict({
+        'rprompt': 'bg:#ff0066 #ffffff',
     })
 
-    def get_rprompt_tokens(cli):
-        return [
-            (Token, ' '),
-            (Token.RPrompt, '<rprompt>'),
-        ]
+    def get_rprompt():
+        return '<rprompt>'
 
-    answer = prompt('> ', get_rprompt_tokens=get_rprompt_tokens,
-                    style=example_style)
+    answer = prompt('> ', rprompt=get_rprompt, style=example_style)
 
 .. image:: ../images/rprompt.png
 
@@ -461,23 +422,23 @@ An example of a prompt that prints ``'hello world'`` when :kbd:`Control-T` is pr
 .. code:: python
 
     from prompt_toolkit import prompt
-    from prompt_toolkit.key_binding.manager import KeyBindingManager
-    from prompt_toolkit.keys import Keys
+    from prompt_toolkit.application import run_in_terminal
+    from prompt_toolkit.key_binding import KeyBindings
 
-    manager = KeyBindingManager.for_prompt()
+    bindings = KeyBindings()
 
-    @manager.registry.add_binding(Keys.ControlT)
+    @bindings.add('c-t')
     def _(event):
         def print_hello():
             print('hello world')
-        event.cli.run_in_terminal(print_hello)
+        run_in_terminal(print_hello)
 
-    text = prompt('> ', key_bindings_registry=manager.registry)
+    text = prompt('> ', key_bindings=bindings)
     print('You said: %s' % text)
 
 
 Note that we use
-:meth:`~prompt_toolkit.interface.CommandLineInterface.run_in_terminal`. This
+:meth:`~prompt_toolkit.application.run_in_terminal`. This
 ensures that the output of the print-statement and the prompt don't mix up.
 
 
@@ -498,21 +459,20 @@ filters <filters>`.)
 
     from prompt_toolkit import prompt
     from prompt_toolkit.filters import Condition
-    from prompt_toolkit.key_binding.manager import KeyBindingManager
-    from prompt_toolkit.keys import Keys
+    from prompt_toolkit.key_binding import KeyBindings
 
-    manager = KeyBindingManager.for_prompt()
+    bindings = KeyBindings()
 
-    def is_active(cli):
+    def is_active():
         " Only activate key binding on the second half of each minute. "
         return datetime.datetime.now().second > 30
 
-    @manager.registry.add_binding(Keys.ControlT, filter=Condition(is_active))
+    @bindings.add('c-t', filter=Condition(is_active))
     def _(event):
         # ...
         pass
 
-    prompt('> ', key_bindings_registry=manager.registry)
+    prompt('> ', key_bindings=bindings)
 
 
 Dynamically switch between Emacs and Vi mode
@@ -525,35 +485,34 @@ attribute from ``EditingMode.VI`` to ``EditingMode.EMACS``.
 .. code:: python
 
     from prompt_toolkit import prompt
+    from prompt_toolkit.application.current import get_app
     from prompt_toolkit.filters import Condition
-    from prompt_toolkit.key_binding.manager import KeyBindingManager
-    from prompt_toolkit.keys import Keys
+    from prompt_toolkit.key_binding import KeyBindings
 
     def run():
         # Create a set of key bindings.
-        manager = KeyBindingManager.for_prompt()
+        bindings = KeyBindings()
 
         # Add an additional key binding for toggling this flag.
-        @manager.registry.add_binding(Keys.F4)
+        @bindings.add('f4')
         def _(event):
             " Toggle between Emacs and Vi mode. "
-            cli = event.cli
+            app = event.app
 
-            if cli.editing_mode == EditingMode.VI:
-                cli.editing_mode = EditingMode.EMACS
+            if app.editing_mode == EditingMode.VI:
+                app.editing_mode = EditingMode.EMACS
             else:
-                cli.editing_mode = EditingMode.VI
+                app.editing_mode = EditingMode.VI
 
         # Add a toolbar at the bottom to display the current input mode.
-        def get_bottom_toolbar_tokens(cli):
+        def bottom_toolbar():
             " Display the current input mode. "
-            text = 'Vi' if cli.editing_mode == EditingMode.VI else 'Emacs'
+            text = 'Vi' if get_app().editing_mode == EditingMode.VI else 'Emacs'
             return [
-                (Token.Toolbar, ' [F4] %s ' % text)
+                ('class:toolbar', ' [F4] %s ' % text)
             ]
 
-        prompt('> ', key_bindings_registry=manager.registry,
-               get_bottom_toolbar_tokens=get_bottom_toolbar_tokens)
+        prompt('> ', key_bindings=bindings, bottom_toolbar=bottom_toolbar)
 
     run()
 
@@ -579,17 +538,16 @@ of accepting and returning the input. The user will now have to press
 
 It is possible to specify a continuation prompt. This works by passing a
 ``get_continuation_tokens`` callable to ``prompt``. This function can return a
-list of ``(Token, text)`` tuples. The width of the returned text should not
+list of ``(style, text)`` tuples. The width of the returned text should not
 exceed the given width. (The width of the prompt margin is defined by the
 prompt.)
 
 .. code:: python
 
-    def get_continuation_tokens(cli, width):
-        return [(Token, '.' * width)]
+    def prompt_continuation(width):
+        return [('', '.' * width)]
 
-    prompt('> ', multiline=True,
-           get_continuation_tokens=get_continuation_tokens)
+    prompt('> ', multiline=True, prompt_continuation=prompt_continuation)
 
 
 Passing a default
