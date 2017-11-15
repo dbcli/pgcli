@@ -66,11 +66,22 @@ def _run_coroutine(coroutine):
 
     result_f = loop.create_future()
 
+    # Wrap this future in a `_FutureRef`. We need this in order to be able to
+    # break all its references when we're done. This is important
+    # because in case of an exception, we want to be sure that
+    # `result_f.__del__` is triggered as soon as possible, so that we see the
+    # exception.
+
+    # (If `step_next` had a direct reference to `result_f` and there is a
+    # future that references `step_next`, then sometimes it won't be cleaned up
+    # immediately. - I'm not sure how exactly, but in that case it requires the
+    # garbage collector, because refcounting isn't sufficient.)
+    ref = _FutureRef(result_f)
+
     # Loop through the generator.
     def step_next(f=None):
         " Execute next step of the coroutine."
         try:
-            # Run until next yield.
             if f is None:
                 new_f = coroutine.send(None)
             else:
@@ -83,12 +94,15 @@ def _run_coroutine(coroutine):
             # Stop coroutine. Make sure that a result has been set in the future,
             # this will call the callbacks. (Also, don't take any result from
             # StopIteration, it has already been set using `raise Return()`.
-            if not result_f.done():
-                result_f.set_result(None)
+            if not ref.future.done():
+                ref.future.set_result(None)
+                ref.forget()
         except Return as e:
-            result_f.set_result(e.value)
+            ref.future.set_result(e.value)
+            ref.forget()
         except BaseException as e:
-            result_f.set_exception(e)
+            ref.future.set_exception(e)
+            ref.forget()
         else:
             # Process yielded value from coroutine.
             assert isinstance(new_f, Future)
@@ -101,3 +115,12 @@ def _run_coroutine(coroutine):
     step_next()
 
     return result_f
+
+
+class _FutureRef(object):
+    def __init__(self, future):
+        self.future = future
+
+    def forget(self):
+        " Forget reference. "
+        self.future = None
