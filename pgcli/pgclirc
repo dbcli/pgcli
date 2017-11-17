@@ -111,7 +111,7 @@ row_limit = 1000
 less_chatty = False
 
 # Postgres prompt
-# \t - current date and time
+# \t - Current date and time
 # \u - Username
 # \h - Hostname of the server
 # \d - Database name
@@ -122,8 +122,8 @@ less_chatty = False
 prompt = '\u@\h:\d> '
 
 # Postgres prompt when using --dsn option
-# \t - current date and time
-# \dsn - seelcted DSN alias
+# \t - Current date and time
+# \dsn - Selected DSN alias
 # \p - Database port
 # \i - Postgres PID
 # \# - "@" sign if logged in as superuser, '>' in other case
