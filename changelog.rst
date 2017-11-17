@@ -1,5 +1,6 @@
 Upcoming
 ========
+* Use other prompt (prompt_dsn) when connecting using --dsn parameter
 
 Internal changes:
 -----------------
