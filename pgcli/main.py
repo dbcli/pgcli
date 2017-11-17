@@ -93,6 +93,7 @@ OutputSettings.__new__.__defaults__ = (
 class PGCli(object):
 
     default_prompt = '\\u@\\h:\\d> '
+    default_prompt_dsn = '\\dsn> '
     max_len_prompt = 30
 
     def set_default_pager(self, config):
@@ -118,12 +119,13 @@ class PGCli(object):
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
                  pgexecute=None, pgclirc_file=None, row_limit=None,
-                 single_connection=False, less_chatty=None, prompt=None,
+                 single_connection=False, less_chatty=None, prompt=None, prompt_dsn=None,
                  auto_vertical_output=False):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
+        self.dsn_name = None
 
         # Load config.
         c = self.config = get_config(pgclirc_file)
@@ -156,6 +158,7 @@ class PGCli(object):
         self.less_chatty = bool(less_chatty) or c['main'].as_bool('less_chatty')
         self.null_string = c['main'].get('null_string', '<null>')
         self.prompt_format = prompt if prompt is not None else c['main'].get('prompt', self.default_prompt)
+        self.prompt_dsn_format = prompt_dsn if prompt_dsn is not None else c['main'].get('prompt_dsn', self.default_prompt_dsn)
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
@@ -562,10 +565,14 @@ class PGCli(object):
             set_vi_mode_enabled=set_vi_mode)
 
         def prompt_tokens(_):
-            prompt = self.get_prompt(self.prompt_format)
-            if (self.prompt_format == self.default_prompt and
-               len(prompt) > self.max_len_prompt):
-                prompt = self.get_prompt('\\d> ')
+            if self.dsn_name:
+                prompt = self.get_prompt(self.prompt_dsn_format)
+            else:
+                prompt = self.get_prompt(self.prompt_format)
+                if (self.prompt_format == self.default_prompt and
+                   len(prompt) > self.max_len_prompt):
+                    prompt = self.get_prompt('\\d> ')
+
             return [(Token.Prompt, prompt)]
 
         def get_continuation_tokens(cli, width):
@@ -777,10 +784,14 @@ class PGCli(object):
 
     def get_prompt(self, string):
         string = string.replace('\\t', self.now.strftime('%x %X'))
-        string = string.replace('\\u', self.pgexecute.user or '(none)')
-        string = string.replace('\\h', self.pgexecute.host or '(none)')
-        string = string.replace('\\d', self.pgexecute.dbname or '(none)')
-        string = string.replace('\\p', str(self.pgexecute.port) or '(none)')
+        # if self.dsn_name and '\\dsn' in string
+        if self.dsn_name:
+            string = string.replace('\\dsn', self.dsn_name)
+        else:
+            string = string.replace('\\u', self.pgexecute.user or '(none)')
+            string = string.replace('\\h', self.pgexecute.host or '(none)')
+            string = string.replace('\\d', self.pgexecute.dbname or '(none)')
+            string = string.replace('\\p', str(self.pgexecute.port) or '(none)')
         string = string.replace('\\i', str(self.pgexecute.pid) or '(none)')
         string = string.replace('\\#', "#" if (self.pgexecute.superuser) else ">")
         string = string.replace('\\n', "\n")
@@ -819,6 +830,7 @@ class PGCli(object):
         default=False,
         help='Skip intro on startup and goodbye on exit.')
 @click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
+@click.option('--prompt-dsn', help='Prompt format when DSN alias is used (Default: "\\dsn> ").')
 @click.option('-l', '--list', 'list_databases', is_flag=True, help='list '
               'available databases, then exit.')
 @click.option('--auto-vertical-output', is_flag=True,
@@ -827,7 +839,7 @@ class PGCli(object):
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
         single_connection, dbname, username, version, pgclirc, dsn, row_limit,
-        less_chatty, prompt, list_databases, auto_vertical_output):
+        less_chatty, prompt, prompt_dsn, list_databases, auto_vertical_output):
 
     if version:
         print('Version:', __version__)
@@ -851,7 +863,7 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
 
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc,
                   row_limit=row_limit, single_connection=single_connection,
-                  less_chatty=less_chatty, prompt=prompt,
+                  less_chatty=less_chatty, prompt=prompt, prompt_dsn=prompt_dsn,
                   auto_vertical_output=auto_vertical_output)
 
     # Choose which ever one has a valid value.
@@ -868,6 +880,7 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
                  err=True, fg='red')
             exit(1)
         pgcli.connect_uri(dsn_config)
+        pgcli.dsn_name = dsn
     elif '://' in database:
         pgcli.connect_uri(database)
     elif "=" in database:

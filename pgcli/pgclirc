@@ -111,11 +111,24 @@ row_limit = 1000
 less_chatty = False
 
 # Postgres prompt
+# \t - current date and time
 # \u - Username
 # \h - Hostname of the server
 # \d - Database name
+# \p - Database port
+# \i - Postgres PID
+# \# - "@" sign if logged in as superuser, '>' in other case
 # \n - Newline
 prompt = '\u@\h:\d> '
+
+# Postgres prompt when using --dsn option
+# \t - current date and time
+# \dsn - seelcted DSN alias
+# \p - Database port
+# \i - Postgres PID
+# \# - "@" sign if logged in as superuser, '>' in other case
+# \n - Newline
+prompt_dsn = '\dsn> '
 
 # Number of lines to reserve for the suggestion menu
 min_num_menu_lines = 4
