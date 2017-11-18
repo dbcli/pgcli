@@ -31,11 +31,16 @@ def main():
     print('You said: %s' % text)
 
     # Example 3: Using HTML:
-    text = prompt('Say something: ',
-        bottom_toolbar=HTML('<b>This</b> <u>is</u> a <style bg="ansired">toolbar</style>'))
+    text = prompt('Say something: ', bottom_toolbar=HTML(
+        '(html) <b>This</b> <u>is</u> a <style bg="ansired">toolbar</style>'))
     print('You said: %s' % text)
 
-    # Example 4: styling differently.
+    # Example 4: Using ANSI:
+    text = prompt('Say something: ', bottom_toolbar=ANSI(
+        '(ansi): \x1b[1mThis\x1b[0m \x1b[4mis\x1b[0m a \x1b[91mtoolbar'))
+    print('You said: %s' % text)
+
+    # Example 5: styling differently.
     style = Style.from_dict({
         'bottom-toolbar':      '#aaaa00 bg:#ff0000',
         'bottom-toolbar.text': '#aaaa44 bg:#aa4444',
@@ -45,7 +50,7 @@ def main():
                   style=style)
     print('You said: %s' % text)
 
-    # Example 5: Using a list of tokens.
+    # Example 6: Using a list of tokens.
     def get_bottom_toolbar():
         return [
             ('', ' '),

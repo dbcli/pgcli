@@ -71,7 +71,6 @@ def example_3():
     print('You said: %s' % answer)
 
 
-
 if __name__ == '__main__':
     example_1()
     example_2()

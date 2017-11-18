@@ -59,7 +59,6 @@ if __name__ == '__main__':
         'operator2': WordCompleter(operators2),
     })
 
-
     try:
         # REPL loop.
         while True:

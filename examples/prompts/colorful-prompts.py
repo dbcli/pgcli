@@ -8,7 +8,8 @@ from prompt_toolkit.completion import Completion, Completer
 from prompt_toolkit.shortcuts import prompt, CompleteStyle
 
 
-colors = ['red', 'blue', 'green', 'orange', 'red', 'purple', 'yellow', 'cyan', 'magenta', 'pink']
+colors = ['red', 'blue', 'green', 'orange', 'red', 'purple', 'yellow', 'cyan',
+          'magenta', 'pink']
 
 
 class ColorCompleter(Completer):
@@ -16,7 +17,8 @@ class ColorCompleter(Completer):
         word = document.get_word_before_cursor()
         for color in colors:
             if color.startswith(word):
-                yield Completion(color,
+                yield Completion(
+                    color,
                     start_position=-len(word),
                     style='fg:' + color,
                     selected_style='fg:white bg:' + color)
