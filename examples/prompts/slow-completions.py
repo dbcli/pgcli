@@ -34,6 +34,7 @@ class SlowCompleter(Completer):
         word_before_cursor = document.get_word_before_cursor()
 
         time.sleep(.5)  # Simulate slowness.
+        raise ''
 
         for word in WORDS:
             if word.startswith(word_before_cursor):
