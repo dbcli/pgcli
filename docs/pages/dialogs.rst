@@ -1,4 +1,4 @@
-.. _building_prompts:
+.. _dialogs:
 
 Dialogs
 =======

@@ -7,6 +7,12 @@ Application
 .. automodule:: prompt_toolkit.application
     :members:
 
+Formatted text
+--------------
+
+.. automodule:: prompt_toolkit.formatted_text
+    :members:
+
 Buffer
 ------
 
@@ -70,7 +76,25 @@ Keys
 Style
 -----
 
-.. automodule:: prompt_toolkit.styles
+.. automodule:: prompt_toolkit.styles.base
+    :members:
+
+.. automodule:: prompt_toolkit.styles.style
+    :members:
+
+.. automodule:: prompt_toolkit.styles.defaults
+    :members:
+
+.. automodule:: prompt_toolkit.styles.from_dict
+    :members:
+
+.. automodule:: prompt_toolkit.styles.from_pygments
+    :members:
+
+.. automodule:: prompt_toolkit.styles.named_colors
+    :members:
+
+.. automodule:: prompt_toolkit.styles.utils
     :members:
 
 Reactive
@@ -82,7 +106,10 @@ Reactive
 Shortcuts
 ---------
 
-.. automodule:: prompt_toolkit.shortcuts
+.. automodule:: prompt_toolkit.shortcuts.prompt
+    :members:
+
+.. automodule:: prompt_toolkit.shortcuts.dialogs
     :members:
 
 Validation

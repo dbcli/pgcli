@@ -1,4 +1,4 @@
-.. _building_prompts:
+.. _asking_for_input:
 
 Asking for input (prompts)
 ==========================
@@ -32,8 +32,8 @@ In the following sections, we will discover all these parameters.
 
 .. note::
 
-    ``prompt_toolkit`` expects unicode strings everywhere. If you are using
-    Python 2, make sure that all strings which are passed to ``prompt_toolkit``
+    `prompt_toolkit` expects unicode strings everywhere. If you are using
+    Python 2, make sure that all strings which are passed to `prompt_toolkit`
     are unicode strings (and not bytes). Either use 
     ``from __future__ import unicode_literals`` or explicitely put a small 
     ``'u'`` in front of every string.
@@ -65,8 +65,8 @@ Colors
 ------
 
 The colors for syntax highlighting are defined by a
-:class:`~prompt_toolkit.styles.Style` instance.  By default, a neutral built-in
-style is used, but any style instance can be passed to the
+:class:`~prompt_toolkit.styles.Style` instance. By default, a neutral
+built-in style is used, but any style instance can be passed to the
 :func:`~prompt_toolkit.shortcuts.prompt` function. A simple way to create a
 style, is by using the :meth:`~prompt_toolkit.styles.Style.from_dict`
 function:
@@ -90,9 +90,9 @@ function:
 The style dictionary is very similar to the Pygments ``styles`` dictionary,
 with a few differences:
 
-- The `roman`, `sans`, `mono` and `border` options are not ignored.
-- The style has a few additions: `blink`, `noblink`, `reverse` and `noreverse`.
-- Colors can be in the `#ff0000` format, but they can be one of the built-in
+- The `roman`, `sans`, `mono` and `border` options are ignored.
+- The style has a few additions: ``blink``, ``noblink``, ``reverse`` and ``noreverse``.
+- Colors can be in the ``#ff0000`` format, but they can be one of the built-in
   ANSI color names as well. In that case, they map directly to the 16 color
   palette of the terminal.
 
@@ -167,7 +167,7 @@ a list of ``(style, text)`` tuples.
 
 By default, colors are taking from the 256 color palette. If you want to have
 24bit true color, this is possible by adding the ``true_color=True`` option to
-the ``prompt`` function.
+the :func:`~prompt_toolkit.shortcuts.prompt.prompt`` function.
 
 .. code:: python
 

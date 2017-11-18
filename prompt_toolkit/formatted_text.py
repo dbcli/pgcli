@@ -93,7 +93,7 @@ def is_formatted_text(value):
 
 class FormattedText(object):
     """
-    A list of (style, text) tuples.
+    A list of ``(style, text)`` tuples.
     """
     def __init__(self, data):
         self.data = data
@@ -163,16 +163,16 @@ class HTML(object):
 
     ::
 
-        <!-- Turn something into red. -->
-        <style fg="ansired" bg="#00ff44">...</style>
+        # Turn something into red.
+        HTML('<style fg="ansired" bg="#00ff44">...</style>')
 
-        <!-- Italic, bold and underline.  -->
-        <i>...</i>
-        <b>...</b>
-        <u>...</u>
+        # Italic, bold and underline.
+        HTML('<i>...</i>')
+        HTML('<b>...</b>')
+        HTML('<u>...</u>')
 
     All HTML elements become available as a "class" in the style sheet.
-    E.g. ``<username>...</username>`` can be styles, by setting a style for
+    E.g. ``<username>...</username>`` can be styled, by setting a style for
     ``username``.
     """
     def __init__(self, value):
@@ -270,7 +270,11 @@ def html_escape(text):
 class ANSI(object):
     """
     ANSI formatted text.
-    Take something ANSI escaped text, for use as a formatted string.
+    Take something ANSI escaped text, for use as a formatted string. E.g.
+
+    ::
+
+        ANSI('\x1b[31mhello \x1b[32mworld')
 
     Characters between \001 and \002 are supposed to have a zero width when
     printed, but these are literally sent to the terminal output. This can be

@@ -35,8 +35,9 @@ Formatted text
 
 There are three ways to print colors:
 
-- By creating an HTML object.
-- By creating an ANSI object that contains ANSI escape sequences.
+- By creating an :class:`~prompt_toolkit.formatted_text.HTML` object.
+- By creating an :class:`~prompt_toolkit.formatted_text.ANSI` object that
+  contains ANSI escape sequences.
 - By creating a list of ``(style, text)`` tuples.
 
 An instance of any of these three kinds of objects is called "formatted text".
@@ -46,9 +47,9 @@ There are various places in prompt toolkit, where we accept not just plain text
 HTML
 ^^^^
 
-``prompt_toolkit.HTML`` can be used to indicate that a string contains
-HTML-like formatting. It supports the basic tags for bold, italic and
-underline: ``<b>``, ``<i>`` and ``<u>``.
+:class:`~prompt_toolkit.formatted_text.HTML` can be used to indicate that a
+string contains HTML-like formatting. It supports the basic tags for bold,
+italic and underline: ``<b>``, ``<i>`` and ``<u>``.
 
 .. code:: python
 
@@ -104,7 +105,8 @@ ANSI
 Some people like to use the VT100 ANSI escape squences to generate output.
 Natively, this is however only supported on VT100 terminals, but prompt_toolkit
 can parse these, and map them to a formatted text instances. This means that they
-will work on Windows as well.
+will work on Windows as well. The :class:`~prompt_toolkit.formatted.ANSI` class
+takes care of that.
 
 .. code:: python
 
@@ -117,10 +119,11 @@ will work on Windows as well.
 Style/text tuples
 ^^^^^^^^^^^^^^^^^
 
-Internally, both `HTML` and `ANSI` objects are mapped to a list of ``(style,
-text)`` tuples. It is however also possible to create such a list manually.
-This is a little more verbose, but it's probably the most powerful way of
-expressing formatted text.
+Internally, both :class:`~prompt_toolkit.formatted_text.HTML` and
+:class:`~prompt_toolkit.formatted_text.ANSI` objects are mapped to a list of
+``(style, text)`` tuples. It is however also possible to create such a list
+manually.  This is a little more verbose, but it's probably the most powerful
+way of expressing formatted text.
 
 .. code:: python
 
@@ -136,8 +139,8 @@ expressing formatted text.
 
     print(text, style=style)
 
-Similar to the `HTML` example, it's also possible to use class names, and
-separate the styling in a style sheet.
+Similar to the :class:`~prompt_toolkit.formatted_text.HTML` example, it is also
+possible to use class names, and separate the styling in a style sheet.
 
 .. code:: python
 
@@ -145,12 +148,14 @@ separate the styling in a style sheet.
     from prompt_toolkit import print
     from prompt_toolkit.styles import Style
 
+    # The text.
     text = [
         ('class:aaa', 'Hello'),
         ('', ' '),
         ('class:bbb', 'World'),
     ]
 
+    # The style sheet.
     style = Style.from_dict({
         'aaa': '#ff0066',
         'bbb': '#44ff00 italic',
