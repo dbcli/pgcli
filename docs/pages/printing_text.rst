@@ -29,6 +29,7 @@ The print function can be imported as follows:
     print_function``. Otherwise, it will not be possible to import a function
     named ``print``.
 
+.. _formatted_text:
 
 Formatted text
 --------------

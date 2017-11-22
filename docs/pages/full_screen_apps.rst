@@ -19,30 +19,97 @@ them together.
     backwards-incompatible. The refactoring should probably be complete
     somewhere around half 2017.
 
+A simple application
+--------------------
+
+Every prompt_toolkit application is an instance of an
+:class:`~prompt_toolkit.application.application.Application` object. The
+simplest example would look like this:
+
+.. code:: python
+
+    from prompt_toolkit import Application
+
+    app = Application()
+    app.run()
+
+This will display a dummy application that says "No layout specified. Press
+ENTER to quit.". We are discussing full screen applications in this section, so
+we may as well set the ``full_screen`` flag so that the application runs in
+full screen mode (in the alternate screen buffer).
+
+.. code:: python
+
+    from prompt_toolkit import Application
+
+    app = Application(full_screen=True)
+    app.run()
+
+An application consists of several components. The most important are:
+
+- I/O objects: the event loop, the input and output device.
+- The layout: this defines the graphical structure of the application. For
+  instance, a text box on the left side, and a button on the right side.
+- A style: this defines what colors and underline/bold/italic styles are used
+  everywhere.
+- Key bindings.
+
+We will discuss all of these in more detail them below.
+
+Three I/O objects
+-----------------
+
+An :class:`~prompt_toolkit.application.application.Application` instance requires three I/O
+objects:
+
+    - An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is
+      basically a while-true loop that waits for user input, and when it
+      receives something (like a key press), it will send that to the the
+      appropriate handler, like for instance, a key binding.
+    - An :class:`~prompt_toolkit.input.base.Input` instance. This is an abstraction
+      of the input stream (stdin).
+    - An :class:`~prompt_toolkit.output.base.Output` instance. This is an
+      abstraction of the output stream, and is called by the renderer.
+
+All of these three objects are optional, and a default value will be used when
+they are absent. Usually, the default works fine.
+
+The layout
+----------
+
 A layered layout architecture
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are several ways to create a prompt_toolkit layout, depending on how
 customizable you want things to be. In fact, there are several layers of
 abstraction.
 
-- The most low-level way of creating a layout is by combining ``Container`` and
-  ``Control`` objects.
+- The most low-level way of creating a layout is by combining
+  :class:`~prompt_toolkit.layout.containers.Container` and
+  :class:`~prompt_toolkit.layout.controls.UIControl` objects.
 
-  Examples of ``Container`` objects are ``VSplit``, ``HSplit`` and
-  ``FloatContainer``. These containers that can split the layout in multiple
-  regions and can each contain multiple other containers. They can be combined
-  in any way to define the "shape" of the layout.
+  Examples of :class:`~prompt_toolkit.layout.containers.Container` objects are
+  :class:`~prompt_toolkit.layout.containers.VSplit` (vertical split),
+  :class:`~prompt_toolkit.layout.containers.HSplit` (horizontal split) and
+  :class:`~prompt_toolkit.layout.containers.FloatContainer`. These containers
+  arrange the layout and can split it in multiple regions. Each container can
+  recursively contain multiple other containers. They can be combined in any
+  way to define the "shape" of the layout.
 
-  The ``Window`` object is a special kind of container that can contain
-  ``Control`` object. The ``Control`` object is responsible for the actual
-  content. The ``Window`` object acts as an adaptor between the
-  ``Control`` and other containers, but it's also responsible for the scrolling
-  and line wrapping of the content.
+  The :class:`~prompt_toolkit.layout.containers.Window` object is a special
+  kind of container that can contain
+  :class:`~prompt_toolkit.layout.controls.UIControl` object. The
+  :class:`~prompt_toolkit.layout.controls.UIControl` object is responsible for
+  the actual content. The :class:`~prompt_toolkit.layout.containers.Window`
+  object acts as an adaptor between the
+  :class:`~prompt_toolkit.layout.controls.UIControl` and other containers, but
+  it's also responsible for the scrolling and line wrapping of the content.
 
-  Examples of ``Control`` objects are ``BufferControl`` for showing the content
-  of an editable/scrollable buffer, and ``FormattedTextcontrol`` for showing
-  static text.
+  Examples of :class:`~prompt_toolkit.layout.controls.UIControl` objects are
+  :class:`~prompt_toolkit.layout.controls.BufferControl` for showing the
+  content of an editable/scrollable buffer, and
+  :class:`~prompt_toolkit.layout.controls.FormattedTextControl` for displaying static
+  static (:ref:`formatted <formatted_text>`) text.
 
 - A higher level abstraction of building a layout is by using "widgets". A
   widget is a reusable layout component that can contain multiple containers
@@ -54,135 +121,16 @@ abstraction.
   the simplest way to use prompt_toolkit, but is only meant for certain use
   cases.
 
+Containers and controls
+^^^^^^^^^^^^^^^^^^^^^^^
 
-Running the application
------------------------
-
-To run our final Full screen Application, we need three I/O objects, and
-an :class:`~prompt_toolkit.application.Application` instance. These are passed
-as arguments to :class:`~prompt_toolkit.interface.CommandLineInterface`.
-
-The three I/O objects are:
-
-    - An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is
-      basically a while-true loop that waits for user input, and when it receives
-      something (like a key press), it will send that to the application.
-    - An :class:`~prompt_toolkit.input.Input` instance. This is an abstraction
-      on the input stream (stdin).
-    - An :class:`~prompt_toolkit.output.Output` instance. This is an
-      abstraction on the output stream, and is called by the renderer.
-
-The input and output objects are optional. However, the eventloop is always
-required.
-
-We'll come back to what the :class:`~prompt_toolkit.application.Application`
-instance is later.
-
-So, the only thing we actually need in order to run an application is the following:
-
-.. code:: python
-
-    from prompt_toolkit.interface import CommandLineInterface
-    from prompt_toolkit.application import Application
-    from prompt_toolkit.shortcuts import create_eventloop
-
-    loop = create_eventloop()
-    application = Application()
-    cli = CommandLineInterface(application=application, eventloop=loop)
-    # cli.run()
-    print('Exiting')
-
-.. note:: In the example above, we don't run the application yet, as otherwise
-    it will hang indefinitely waiting for a signal to exit the event loop. This
-    is why the `cli.run()` part is commented.
-
-    (Actually, it would accept the `Enter` key by default. But that's only
-    because by default, a buffer called `DEFAULT_BUFFER` has the focus; its
-    :class:`~prompt_toolkit.buffer.AcceptAction` is configured to return the
-    result when accepting, and there is a default `Enter` key binding that
-    calls the :class:`~prompt_toolkit.buffer.AcceptAction` of the currently
-    focussed buffer. However, the content of the `DEFAULT_BUFFER` buffer is not
-    yet visible, so it's hard to see what's going on.)
-
-Let's now bind a keyboard shortcut to exit:
-
-Key bindings
-------------
-
-In order to react to user actions, we need to create a registry of keyboard
-shortcuts to pass to our :class:`~prompt_toolkit.application.Application`.  The
-easiest way to do so, is to create a
-:class:`~prompt_toolkit.key_binding.manager.KeyBindingManager`, and then attach
-handlers to our desired keys. :class:`~prompt_toolkit.keys.Keys` contains a few
-predefined keyboards shortcut that can be useful.
-
-To create a `registry`, we can simply instantiate a
-:class:`~prompt_toolkit.key_binding.manager.KeyBindingManager` and take its
-`registry` attribute:
-
-.. code:: python
-
-    from prompt_toolkit.key_binding.manager import KeyBindingManager
-    manager = KeyBindingManager()
-    registry = manager.registry
-
-Update the `Application` constructor, and pass the registry as one of the
-argument.
-
-.. code:: python
-
-    application = Application(key_bindings_registry=registry)
-
-To register a new keyboard shortcut, we can use the
-:meth:`~prompt_toolkit.key_binding.registry.Registry.add_binding` method as a
-decorator of the key handler:
-
-.. code:: python
-
-    from prompt_toolkit.keys import Keys
-
-    @registry.add_binding(Keys.ControlQ, eager=True)
-    def exit_(event):
-        """
-        Pressing Ctrl-Q will exit the user interface.
-
-        Setting a return value means: quit the event loop that drives the user
-        interface and return this value from the `CommandLineInterface.run()` call.
-        """
-        event.cli.set_return_value(None)
-
-In this particular example we use ``eager=True`` to trigger the callback as soon
-as the shortcut `Ctrl-Q` is pressed. The callback is named ``exit_`` for clarity,
-but it could have been named ``_`` (underscore) as well, because the we won't
-refer to this name.
-
-
-Creating a layout
------------------
-
-A `layout` is a composition of
-:class:`~prompt_toolkit.layout.containers.Container` and
-:class:`~prompt_toolkit.layout.controls.UIControl` that will describe the
-disposition of various element on the user screen.
-
-Various Layouts can refer to `Buffers` that have to be created and pass to the
-application separately. This allow an application to have its layout changed,
-without having to reconstruct buffers. You can imagine for example switching
-from an horizontal to a vertical split panel layout and vice versa,
-
-There are two types of classes that have to be combined to construct a layout:
-
-- **containers** (:class:`~prompt_toolkit.layout.containers.Container`
-  instances), which arrange the layout
-
-- **user controls**
-  (:class:`~prompt_toolkit.layout.controls.UIControl` instances), which
-  generate the actual content
-
+The biggest difference between containers and controls is that containers
+arrange the layout by splitting the screen in many regions, while controls are
+responsible for generating the actual content.
 
 .. note::
 
-   An important difference:
+   Under the hood, the difference is:
 
    - containers use *absolute coordinates*, and paint on a
      :class:`~prompt_toolkit.layout.screen.Screen` instance.
@@ -204,16 +152,13 @@ There are two types of classes that have to be combined to construct a layout:
 |                                                      | :class:`~prompt_toolkit.layout.controls.FillControl`      |
 +------------------------------------------------------+-----------------------------------------------------------+
 
-
 The :class:`~prompt_toolkit.layout.containers.Window` class itself is
 particular: it is a :class:`~prompt_toolkit.layout.containers.Container` that
 can contain a :class:`~prompt_toolkit.layout.controls.UIControl`. Thus, it's
 the adaptor between the two.
 
 The :class:`~prompt_toolkit.layout.containers.Window` class also takes care of
-scrolling the content if the user control created a
-:class:`~prompt_toolkit.layout.screen.Screen` that is larger than what was
-available to the :class:`~prompt_toolkit.layout.containers.Window`.
+scrolling the content if needed.
 
 Here is an example of a layout that displays the content of the default buffer
 on the left, and displays ``"Hello world"`` on the right. In between it shows a
@@ -221,41 +166,89 @@ vertical line:
 
 .. code:: python
 
-    from prompt_toolkit.enums import DEFAULT_BUFFER
+    from prompt_toolkit import Application
+    from prompt_toolkit.buffer import Buffer
     from prompt_toolkit.layout.containers import VSplit, Window
-    from prompt_toolkit.layout.controls import BufferControl, FillControl, TokenListControl
-    from prompt_toolkit.layout.dimension import LayoutDimension as D
+    from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 
-    from pygments.token import Token
+    buffer1 = Buffer()
 
-    layout = VSplit([
+    root_container = VSplit([
         # One window that holds the BufferControl with the default buffer on the
         # left.
-        Window(content=BufferControl(buffer_name=DEFAULT_BUFFER)),
+        Window(content=BufferControl(buffer=buffer1)),
 
         # A vertical line in the middle. We explicitely specify the width, to make
         # sure that the layout engine will not try to divide the whole width by
-        # three for all these windows. The `FillControl` will simply fill the whole
-        # window by repeating this character.
-        Window(width=D.exact(1),
-               content=FillControl('|', token=Token.Line)),
+        # three for all these windows. The window will simply fill its content
+        # by repeating this character.
+        Window(width=1, char='|', style='class:line'),
 
         # Display the text 'Hello world' on the right.
-        Window(content=TokenListControl(
-            get_tokens=lambda cli: [(Token, 'Hello world')])),
+        Window(content=FormattedTextControl('Hello world')),
     ])
 
-The previous section explains how to create an application, you can just pass
-the currently created `layout` when you create the ``Application`` instance
-using the ``layout=`` keyword argument.
+    layout = Layout(root_container)
+
+    app = Application(layout=layout, full_screen=True)
+    app.run()
+
+
+Key bindings
+------------
+
+In order to react to user actions, we need to create a
+:class:`~prompt_toolkit.key_binding.key_bindings.KeyBindings` object and pass
+that to our :class:`~prompt_toolkit.application.application.Application`.
+
+There are two kinds of key bindings:
+
+- Global key bindings, which are always active.
+- Key bindings that belong to a certain
+  :class:`~prompt_toolkit.layout.controls.UIControl` and are only active when
+  this control is focussed.
+
+Global key bindings
+^^^^^^^^^^^^^^^^^^^
 
 .. code:: python
 
-    app = Application(..., layout=layout, ...)
+    from prompt_toolkit import Application
+    from prompt_toolkit.key_binding.key_bindings import KeyBindings
 
+    kb = KeyBindings()
+    app = Application(key_bindings=kb)
+    app.run()
+
+To register a new keyboard shortcut, we can use the
+:meth:`~prompt_toolkit.key_binding.key_bindings.KeyBindings.add` method as a
+decorator of the key handler:
+
+.. code:: python
+
+    from prompt_toolkit import Application
+    from prompt_toolkit.key_binding.key_bindings import KeyBindings
+
+    kb = KeyBindings()
+
+    @kb.add('c-q')
+    def exit_(event):
+        """
+        Pressing Ctrl-Q will exit the user interface.
+
+        Setting a return value means: quit the event loop that drives the user
+        interface and return this value from the `CommandLineInterface.run()` call.
+        """
+        event.app.set_return_value(None)
+
+    app = Application(key_bindings=kb, full_screen=True)
+    app.run()
+
+The callback function is named ``exit_`` for clarity, but it could have been
+named ``_`` (underscore) as well, because the we won't refer to this name.
 
 The rendering flow
-^^^^^^^^^^^^^^^^^^
+------------------
 
 Understanding the rendering flow is important for understanding how
 :class:`~prompt_toolkit.layout.containers.Container` and
@@ -337,7 +330,7 @@ the line is not passed through the processors or even asked from the
 :class:`~prompt_toolkit.layout.lexers.Lexer`.
 
 Input processors
-^^^^^^^^^^^^^^^^
+----------------
 
 An :class:`~prompt_toolkit.layout.processors.Processor` is an object that
 processes the tokens of a line in a
@@ -372,14 +365,11 @@ Some build-in processors:
 
 
 
-The ``TokenListControl``
-^^^^^^^^^^^^^^^^^^^^^
-
 Custom user controls
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 The Window class
-^^^^^^^^^^^^^^^^
+----------------
 
 The :class:`~prompt_toolkit.layout.containers.Window` class exposes many
 interesting functionality that influences the behaviour of user controls.
@@ -393,38 +383,6 @@ Buffers
 
 The focus stack
 ---------------
-
-
-The ``Application`` instance
-----------------------------
-
-The :class:`~prompt_toolkit.application.Application` instance is where all the
-components for a prompt_toolkit application come together.
-
-.. note:: Actually, not *all* the components; just everything that is not
-    dependent on I/O (i.e. all components except for the eventloop and the
-    input/output objects).
-
-    This way, it's possible to create an
-    :class:`~prompt_toolkit.application.Application` instance and later decide
-    to run it on an asyncio eventloop or in a telnet server.
-
-.. code:: python
-
-    from prompt_toolkit.application import Application
-
-    application = Application(
-        layout=layout,
-        key_bindings_registry=registry,
-
-        # Let's add mouse support as well.
-        mouse_support=True,
-
-        # For fullscreen:
-        use_alternate_screen=True)
-
-We are talking about full screen applications, so it's important to pass
-``use_alternate_screen=True``. This switches to the alternate terminal buffer.
 
 
 .. _filters:

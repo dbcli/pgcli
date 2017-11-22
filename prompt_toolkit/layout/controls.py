@@ -177,9 +177,11 @@ class UIContent(object):
 class FormattedTextControl(UIControl):
     """
     Control that displays formatted text. This can be either plain text, an
-    ``HTML`` object an ``ANSI`` object or a list of (style_str, text) tuples,
-    depending on how you prefer to do the formatting. See
-    ``prompt_toolkit.layout.formatted_text`` for more information.
+    :class:`~prompt_toolkit.formatted_text.HTML` object an
+    :class:`~prompt_toolkit.formatted_text.ANSI` object or a list of
+    ``(style_str, text)`` tuples, depending on how you prefer to do the
+    formatting. See ``prompt_toolkit.layout.formatted_text`` for more
+    information.
 
     (It's mostly optimized for rather small widgets, like toolbars, menus, etc...)
 
@@ -201,8 +203,10 @@ class FormattedTextControl(UIControl):
 
     :param text: Text or formatted text to be displayed.
     :param style: Style string applied to the content. (If you want to style
-        the whole ``Window``, pass the style to the ``Window`` instead.)
-    :param key_bindings: a `KeyBindings` object.
+        the whole :class:`~prompt_toolkit.layout.containers.Window`, pass the
+        style to the :class:`~prompt_toolkit.layout.containers.Window`
+        instead.)
+    :param key_bindings: a :class:`~prompt_toolkit.key_binding.key_bindings.KeyBindings` object.
     """
     def __init__(self, text='', style='', focussable=False, key_bindings=None,
                  show_cursor=True, modal=False):

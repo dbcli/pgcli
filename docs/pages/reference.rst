@@ -7,6 +7,18 @@ Application
 .. automodule:: prompt_toolkit.application
     :members:
 
+.. automodule:: prompt_toolkit.application.application
+    :members:
+
+.. automodule:: prompt_toolkit.application.current
+    :members:
+
+.. automodule:: prompt_toolkit.application.dummy
+    :members:
+
+.. automodule:: prompt_toolkit.application.run_in_terminal
+    :members:
+
 Formatted text
 --------------
 
@@ -61,12 +73,6 @@ History
 .. automodule:: prompt_toolkit.history
     :members:
 
-Interface
----------
-
-.. automodule:: prompt_toolkit.interface
-    :members:
-
 Keys
 ----
 
@@ -112,6 +118,9 @@ Shortcuts
 .. automodule:: prompt_toolkit.shortcuts.dialogs
     :members:
 
+.. automodule:: prompt_toolkit.shortcuts.utils
+    :members:
+
 Validation
 ----------
 
@@ -155,19 +164,10 @@ Layout
 .. automodule:: prompt_toolkit.layout.processors
     :members:
 
-.. automodule:: prompt_toolkit.layout.toolbars
-    :members:
-
 .. automodule:: prompt_toolkit.layout.utils
     :members:
 
 .. automodule:: prompt_toolkit.layout.screen
-    :members:
-
-Token
------
-
-.. automodule:: prompt_toolkit.token
     :members:
 
 Filters
@@ -179,22 +179,19 @@ Filters
 .. autoclass:: prompt_toolkit.filters.Filter
     :members:
 
-.. autoclass:: prompt_toolkit.filters.CLIFilter
-    :members:
-
-.. autoclass:: prompt_toolkit.filters.SimpleFilter
-    :members:
-
 .. autoclass:: prompt_toolkit.filters.Condition
+    :members:
+
+.. automodule:: prompt_toolkit.filters.app
     :members:
 
 Key binding
 -----------
 
-.. automodule:: prompt_toolkit.key_binding.registry
+.. automodule:: prompt_toolkit.key_binding.key_bindings
     :members:
 
-.. automodule:: prompt_toolkit.key_binding.manager
+.. automodule:: prompt_toolkit.key_binding.defaults
     :members:
 
 .. automodule:: prompt_toolkit.key_binding.vi_state
@@ -227,8 +224,29 @@ Eventloop
 Input and output
 ----------------
 
-.. automodule:: prompt_toolkit.input
+.. automodule:: prompt_toolkit.input.defaults
+    :members:
+
+.. automodule:: prompt_toolkit.input.base
+    :members:
+
+.. automodule:: prompt_toolkit.input.vt100
+    :members:
+
+.. automodule:: prompt_toolkit.input.win32
     :members:
 
 .. automodule:: prompt_toolkit.output
+    :members:
+
+.. automodule:: prompt_toolkit.output.defaults
+    :members:
+
+.. automodule:: prompt_toolkit.output.base
+    :members:
+
+.. automodule:: prompt_toolkit.output.vt100
+    :members:
+
+.. automodule:: prompt_toolkit.output.win32
     :members:

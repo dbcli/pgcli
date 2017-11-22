@@ -478,7 +478,7 @@ filters <filters>`.)
 Dynamically switch between Emacs and Vi mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :class:`~prompt_toolkit.application.Application` has
+The :class:`~prompt_toolkit.application.application.Application` has
 an ``editing_mode`` attribute. We can change the key bindings by changing this
 attribute from ``EditingMode.VI`` to ``EditingMode.EMACS``.
 
