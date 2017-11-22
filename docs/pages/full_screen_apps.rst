@@ -19,6 +19,42 @@ them together.
     backwards-incompatible. The refactoring should probably be complete
     somewhere around half 2017.
 
+A layered layout architecture
+-----------------------------
+
+There are several ways to create a prompt_toolkit layout, depending on how
+customizable you want things to be. In fact, there are several layers of
+abstraction.
+
+- The most low-level way of creating a layout is by combining ``Container`` and
+  ``Control`` objects.
+
+  Examples of ``Container`` objects are ``VSplit``, ``HSplit`` and
+  ``FloatContainer``. These containers that can split the layout in multiple
+  regions and can each contain multiple other containers. They can be combined
+  in any way to define the "shape" of the layout.
+
+  The ``Window`` object is a special kind of container that can contain
+  ``Control`` object. The ``Control`` object is responsible for the actual
+  content. The ``Window`` object acts as an adaptor between the
+  ``Control`` and other containers, but it's also responsible for the scrolling
+  and line wrapping of the content.
+
+  Examples of ``Control`` objects are ``BufferControl`` for showing the content
+  of an editable/scrollable buffer, and ``FormattedTextcontrol`` for showing
+  static text.
+
+- A higher level abstraction of building a layout is by using "widgets". A
+  widget is a reusable layout component that can contain multiple containers
+  and controls. It should have a ``__pt__container__`` function, which is
+  supposed to return the root container for this widget.
+
+- The highest level abstractions are in the ``shortcuts`` module. There we
+  don't have to think about the layout, controls and containers at all. This is
+  the simplest way to use prompt_toolkit, but is only meant for certain use
+  cases.
+
+
 Running the application
 -----------------------
 
