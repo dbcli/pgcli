@@ -68,6 +68,7 @@ Table of contents
    pages/dialogs
    pages/full_screen_apps
    pages/architecture
+   pages/advanced_topics/index
    pages/reference
 
 

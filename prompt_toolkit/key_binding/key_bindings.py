@@ -117,7 +117,24 @@ class KeyBindingsBase(with_metaclass(ABCMeta, object)):
 
 class KeyBindings(KeyBindingsBase):
     """
-    Key binding.
+    A container for a set of key bindings.
+
+    Example usage::
+
+        kb = KeyBindings()
+
+        @kb.add('c-t')
+        def _(event):
+            print('Control-T pressed')
+
+        @kb.add('c-a', 'c-b')
+        def _(event):
+            print('Control-A pressed, followed by Control-B')
+
+        @kb.add('c-x', filter=is_searching)
+        def _(event):
+            print('Control-X pressed')  # Works only if we are searching.
+
     """
     def __init__(self):
         self.bindings = []
@@ -311,7 +328,7 @@ def _check_and_expand_key(key):
 def key_binding(filter=True, eager=False, save_before=None):
     """
     Decorator that turn a function into a `_Binding` object. This can be added
-    to a registry when a key binding is assigned.
+    to a `KeyBindings` object when a key binding is assigned.
     """
     filter = to_filter(filter)
     eager = to_filter(eager)
@@ -371,7 +388,7 @@ class ConditionalKeyBindings(_Proxy):
         def setting_is_true():
             return True  # or False
 
-        registy = ConditionalKeyBindings(registry, setting_is_true)
+        registy = ConditionalKeyBindings(key_bindings, setting_is_true)
 
     When new key bindings are added to this object. They are also
     enable/disabled according to the given `filter`.

@@ -276,7 +276,7 @@ history each time again. Usually, however, for a REPL, you want to keep the
 same history between several calls to
 :meth:`~prompt_toolkit.shortcuts.prompt`.  This is possible by instantiating a
 :class:`~prompt_toolkit.history.History` object and passing that to each
-``prompt`` call.
+:meth:`~prompt_toolkit.shortcuts.prompt` call.
 
 
 .. code:: python
@@ -333,12 +333,12 @@ passed as an argument.
 Adding a bottom toolbar
 -----------------------
 
-Adding a bottom toolbar is as easy as passing a ``get_bottom_toolbar_tokens``
-function to :func:`~prompt_toolkit.shortcuts.prompt`. The function is called
-every time the prompt is rendered (at least on every key stroke), so the bottom
-toolbar can be used to display dynamic information. It should return formatted
-text or a list of ``(style, text)`` tuples. The toolbar is always erased when
-the prompt returns.
+Adding a bottom toolbar is as easy as passing a ``bottom_toolbar`` function to
+:func:`~prompt_toolkit.shortcuts.prompt`. The function is called every time the
+prompt is rendered (at least on every key stroke), so the bottom toolbar can be
+used to display dynamic information. It should return formatted text or a list
+of ``(style, text)`` tuples. The toolbar is always erased when the prompt
+returns.
 
 .. code:: python
 
@@ -367,8 +367,7 @@ The :func:`~prompt_toolkit.shortcuts.prompt` function has out of the box
 support for right prompts as well. People familiar to ZSH could recognise this
 as the `RPROMPT` option.
 
-So, similar to adding a bottom toolbar, we can pass a ``get_rprompt_tokens``
-callable.
+So, similar to adding a bottom toolbar, we can pass a ``get_rprompt`` callable.
 
 .. code:: python
 
@@ -385,6 +384,12 @@ callable.
     answer = prompt('> ', rprompt=get_rprompt, style=example_style)
 
 .. image:: ../images/rprompt.png
+
+The ``get_rprompt`` function can return any kind of formatted text such as
+:class:`~prompt_toolkit.formatted_text.HTML`. it is also possible to pass text
+directly to the ``rprompt`` argument of the
+:func:`~prompt_toolkit.shortcuts.prompt` function. It does not have to be a
+callable.
 
 
 Vi input mode
@@ -406,16 +411,11 @@ binding are required, just pass ``vi_mode=True``.
 Adding custom key bindings
 --------------------------
 
-The :func:`~prompt_toolkit.shortcuts.prompt` function accepts an optional
-``key_bindings_registry`` argument. This should be
-a :class:`~prompt_toolkit.key_binding.registry.Registry` instance which hold
-all of the key bindings.
-
-It would be possible to create such a
-:class:`~prompt_toolkit.key_binding.registry.Registry` class ourself, but
-usually, for a prompt, we would like to have at least the basic (Emacs/Vi)
-bindings and start from there. That's what the
-:class:`~prompt_toolkit.key_binding.manager.KeyBindingManager` class does.
+By default, every prompt already has a set of key bindings which implements the
+usual Vi or Emacs behaviour. We can extend this by passing another
+:class:`~prompt_toolkit.key_binding.key_bindings.KeyBindings` instance to the
+``key_bindings`` argument of the :func:`~prompt_toolkit.shortcuts.prompt`
+function.
 
 An example of a prompt that prints ``'hello world'`` when :kbd:`Control-T` is pressed.
 
@@ -451,7 +451,7 @@ same time, but it is possible to switch between Emacs and Vi bindings at run
 time.
 
 In order to enable a key binding according to a certain condition, we have to
-pass it a :class:`~prompt_toolkit.filters.CLIFilter`, usually a
+pass it a :class:`~prompt_toolkit.filters.Filter`, usually a
 :class:`~prompt_toolkit.filters.Condition` instance. (:ref:`Read more about
 filters <filters>`.)
 
