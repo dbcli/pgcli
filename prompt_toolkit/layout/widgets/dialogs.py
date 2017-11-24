@@ -24,7 +24,8 @@ class Dialog(object):
     :param title: Text to be displayed in the heading of the dialog.
     :param buttons: A list of `Button` widgets, displayed at the bottom.
     """
-    def __init__(self, body, title='', buttons=None, modal=True, width=None, with_background=False):
+    def __init__(self, body, title='', buttons=None, modal=True, width=None,
+                 with_background=False):
         assert is_formatted_text(title)
         assert buttons is None or isinstance(buttons, list)
 
@@ -33,7 +34,8 @@ class Dialog(object):
         if buttons:
             frame_body = HSplit([
                 # Add optional padding around the body.
-                Box(body=body, padding=D(preferred=1, max=1), padding_bottom=0),
+                Box(body=body, padding=D(preferred=1, max=1),
+                    padding_bottom=0),
                 # The buttons.
                 Box(body=VSplit(buttons, padding=1),
                     height=D(min=1, max=3, preferred=3))
