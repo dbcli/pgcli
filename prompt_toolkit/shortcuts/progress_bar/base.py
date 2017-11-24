@@ -21,8 +21,6 @@ from prompt_toolkit.output.defaults import create_output
 from prompt_toolkit.styles import BaseStyle
 from prompt_toolkit.utils import in_main_thread
 
-from functools import partial
-
 import contextlib
 import datetime
 import os
@@ -135,8 +133,11 @@ class progress_bar(object):
             filter=~is_done & renderer_height_is_known &
                 Condition(lambda: self.bottom_toolbar is not None))
 
+        def width_for_formatter(formatter):
+            return formatter.get_width(progress_bar=self)
+
         progress_controls = [
-            Window(content=_ProgressControl(self, f), width=partial(f.get_width, progress_bar=self))
+            Window(content=_ProgressControl(self, f), width=width_for_formatter(f))
             for f in self.formatters
         ]
 

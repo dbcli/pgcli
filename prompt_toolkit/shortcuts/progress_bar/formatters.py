@@ -183,7 +183,9 @@ class TimeElapsed(Formatter):
 
     def get_width(self, progress_bar):
         all_values = [len(_format_timedelta(c.time_elapsed)) for c in progress_bar.counters]
-        return max(all_values)
+        if all_values:
+            return max(all_values)
+        return 0
 
 
 class TimeLeft(Formatter):
@@ -201,7 +203,9 @@ class TimeLeft(Formatter):
     def get_width(self, progress_bar):
         all_values = [len(_format_timedelta(c.time_left)) if c.total else 7
                       for c in progress_bar.counters]
-        return max(all_values)
+        if all_values:
+            return max(all_values)
+        return 0
 
 
 class IterationsPerSecond(Formatter):
@@ -214,7 +218,9 @@ class IterationsPerSecond(Formatter):
     def get_width(self, progress_bar):
         all_values = [len('{0:.2f}'.format(c.current / c.time_elapsed.total_seconds()))
                       for c in progress_bar.counters]
-        return max(all_values)
+        if all_values:
+            return max(all_values)
+        return 0
 
 
 class SpinningWheel(Formatter):
