@@ -49,7 +49,8 @@ def has_focus(value):
     """
     from prompt_toolkit.buffer import Buffer
     from prompt_toolkit.layout.controls import UIControl
-    from prompt_toolkit.layout.containers import to_window
+    from prompt_toolkit.layout.containers import to_container, Window
+    from prompt_toolkit.layout import walk
 
     if isinstance(value, six.text_type):
         def test():
@@ -61,10 +62,21 @@ def has_focus(value):
         def test():
             return get_app().layout.current_control == value
     else:
-        value = to_window(value)
+        value = to_container(value)
 
-        def test():
-            return get_app().layout.current_window == value
+        if isinstance(value, Window):
+            def test():
+                return get_app().layout.current_window == value
+        else:
+            def test():
+                # Consider focussed when any window inside this container is
+                # focussed.
+                current_window = get_app().layout.current_window
+
+                for c in walk(value):
+                    if isinstance(c, Window) and c == current_window:
+                        return True
+                return False
 
     @Condition
     def has_focus_filter():
