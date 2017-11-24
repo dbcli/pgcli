@@ -10,6 +10,7 @@ import six
 __all__ = (
     'Layout',
     'InvalidLayoutError',
+    'walk',
 )
 
 
@@ -69,7 +70,7 @@ class Layout(object):
                 self.current_window = value
             else:
                 # Take the first window of this container.
-                for c in self._walk(value):
+                for c in walk(value):
                     if isinstance(c, Window) and c.content.is_focussable():
                         self.current_window = c
                         break
@@ -163,16 +164,8 @@ class Layout(object):
         """
         Walk through all the layout nodes (and their children) and yield them.
         """
-        return self._walk(self.container)
-
-    @classmethod
-    def _walk(cls, container):
-        " Walk, starting at this container. "
-        yield container
-        for c in container.get_children():
-            # yield from _walk(c)
-            for i in cls._walk(c):
-                yield i
+        for i in walk(self.container):
+            yield i
 
     def walk_through_modal_area(self):
         """
@@ -185,7 +178,7 @@ class Layout(object):
         while not root.is_modal() and root in self._child_to_parent:
             root = self._child_to_parent[root]
 
-        for container in self._walk(root):
+        for container in walk(root):
             yield container
 
     def update_parents_relations(self):
@@ -226,3 +219,14 @@ class Layout(object):
 class InvalidLayoutError(Exception):
     pass
 
+
+def walk(container):
+    """
+    Walk through layout, starting at this container.
+    """
+    yield container
+
+    for c in container.get_children():
+        # yield from walk(c)
+        for i in walk(c):
+            yield i
