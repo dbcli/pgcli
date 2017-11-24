@@ -209,12 +209,13 @@ class FormattedTextControl(UIControl):
     :param key_bindings: a :class:`~prompt_toolkit.key_binding.key_bindings.KeyBindings` object.
     """
     def __init__(self, text='', style='', focussable=False, key_bindings=None,
-                 show_cursor=True, modal=False):
+                 show_cursor=True, modal=False, get_cursor_position=None):
         from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
         assert isinstance(style, six.text_type)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert isinstance(show_cursor, bool)
         assert isinstance(modal, bool)
+        assert get_cursor_position is None or callable(get_cursor_position)
 
         self.text = text  # No type check on 'text'. This is done dynamically.
         self.style = style
@@ -224,6 +225,7 @@ class FormattedTextControl(UIControl):
         self.key_bindings = key_bindings
         self.show_cursor = show_cursor
         self.modal = modal
+        self.get_cursor_position = get_cursor_position
 
         #: Cache for the content.
         self._content_cache = SimpleCache(maxsize=18)
@@ -295,14 +297,16 @@ class FormattedTextControl(UIControl):
         def get_menu_position():
             return get_cursor_position('[SetMenuPosition]')
 
+        cursor_position = (self.get_cursor_position or get_cursor_position)()
+
         # Create content, or take it from the cache.
-        key = (tuple(fragments_with_mouse_handlers), width)
+        key = (tuple(fragments_with_mouse_handlers), width, cursor_position)
 
         def get_content():
             return UIContent(get_line=lambda i: fragment_lines[i],
                              line_count=len(fragment_lines),
                              show_cursor=self.show_cursor,
-                             cursor_position=get_cursor_position(),
+                             cursor_position=cursor_position,
                              menu_position=get_menu_position())
 
         return self._content_cache.get(key, get_content)
