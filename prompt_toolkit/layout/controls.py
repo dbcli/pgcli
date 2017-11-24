@@ -186,9 +186,14 @@ class FormattedTextControl(UIControl):
     (It's mostly optimized for rather small widgets, like toolbars, menus, etc...)
 
     When this UI control has the focus, the cursor will be shown in the upper
-    left corner of this control, unless `get_fragment` returns a
-    ``'[SetCursorPosition]'`` fragment somewhere in the fragment list, then the
-    cursor will be shown there.
+    left corner of this control by default. There are two ways for specifying the cursor position:
+
+    - Pass a `get_cursor_position` function which returns a `Point` instance
+      with the current cursor position.
+
+    - If the (formatted) text is passed as a list of ``(style, text)`` tuples
+      and there is one that looks like ``('[SetCursorPosition]', '')``, then
+      this will specify the cursor position.
 
     Mouse support:
 
@@ -207,6 +212,8 @@ class FormattedTextControl(UIControl):
         style to the :class:`~prompt_toolkit.layout.containers.Window`
         instead.)
     :param key_bindings: a :class:`~prompt_toolkit.key_binding.key_bindings.KeyBindings` object.
+    :param get_cursor_position: A callable that returns the cursor position as
+        a `Point` instance.
     """
     def __init__(self, text='', style='', focussable=False, key_bindings=None,
                  show_cursor=True, modal=False, get_cursor_position=None):
