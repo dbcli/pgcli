@@ -459,6 +459,15 @@ class Buffer(object):
         :param bypass_readonly: When True, don't raise an
                                 :class:`.EditReadOnlyBuffer` exception, even
                                 when the buffer is read-only.
+
+        .. warning::
+
+            When this buffer is read-only and `bypass_readonly` was not passed,
+            the `EditReadOnlyBuffer` exception will be caught by the
+            `KeyProcessor` and is silently suppressed. This is important to
+            keep in mind when writing key bindings, because it won't do what
+            you expect, and there won't be a stack trace. Use try/finally
+            around this function if you need some cleanup code.
         """
         assert isinstance(value, Document)
 
