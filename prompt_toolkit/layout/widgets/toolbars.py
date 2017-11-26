@@ -257,13 +257,13 @@ class _CompletionsToolbarControl(UIControl):
 
 
 class CompletionsToolbar(object):
-    def __init__(self, extra_filter=Always()):
+    def __init__(self):
         self.container = ConditionalContainer(
             content=Window(
                 _CompletionsToolbarControl(),
                 height=Dimension.exact(1),
                 style='class:completions-toolbar'),
-            filter=has_completions & ~is_done & extra_filter)
+            filter=has_completions & ~is_done)
 
     def __pt_container__(self):
         return self.container
