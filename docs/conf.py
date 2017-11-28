@@ -44,7 +44,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'prompt_toolkit'
-copyright = u'2014, Jonathan Slenders'
+copyright = u'2014-2017, Jonathan Slenders'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

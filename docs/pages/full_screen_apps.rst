@@ -139,18 +139,18 @@ responsible for generating the actual content.
      content. A :class:`~prompt_toolkit.layout.controls.UIControl` is not aware
      of the screen.
 
-+------------------------------------------------------+-----------------------------------------------------------+
-| Abstract base class                                  | Examples                                                  |
-+======================================================+===========================================================+
-| :class:`~prompt_toolkit.layout.containers.Container` | :class:`~prompt_toolkit.layout.containers.HSplit`         |
-|                                                      | :class:`~prompt_toolkit.layout.containers.VSplit`         |
-|                                                      | :class:`~prompt_toolkit.layout.containers.FloatContainer` |
-|                                                      | :class:`~prompt_toolkit.layout.containers.Window`         |
-+------------------------------------------------------+-----------------------------------------------------------+
-| :class:`~prompt_toolkit.layout.controls.UIControl`   | :class:`~prompt_toolkit.layout.controls.BufferControl`    |
-|                                                      | :class:`~prompt_toolkit.layout.controls.TokenListControl` |
-|                                                      | :class:`~prompt_toolkit.layout.controls.FillControl`      |
-+------------------------------------------------------+-----------------------------------------------------------+
++------------------------------------------------------+---------------------------------------------------------------+
+| Abstract base class                                  | Examples                                                      |
++======================================================+===============================================================+
+| :class:`~prompt_toolkit.layout.containers.Container` | :class:`~prompt_toolkit.layout.containers.HSplit`             |
+|                                                      | :class:`~prompt_toolkit.layout.containers.VSplit`             |
+|                                                      | :class:`~prompt_toolkit.layout.containers.FloatContainer`     |
+|                                                      | :class:`~prompt_toolkit.layout.containers.Window`             |
++------------------------------------------------------+---------------------------------------------------------------+
+| :class:`~prompt_toolkit.layout.controls.UIControl`   | :class:`~prompt_toolkit.layout.controls.BufferControl`        |
+|                                                      | :class:`~prompt_toolkit.layout.controls.FormattedTextControl` |
+|                                                      | :class:`~prompt_toolkit.layout.controls.FillControl`          |
++------------------------------------------------------+---------------------------------------------------------------+
 
 The :class:`~prompt_toolkit.layout.containers.Window` class itself is
 particular: it is a :class:`~prompt_toolkit.layout.containers.Container` that
@@ -294,18 +294,12 @@ The :class:`~prompt_toolkit.layout.containers.Window` class exposes many
 interesting functionality that influences the behaviour of user controls.
 
 
-
-
 Buffers
 -------
 
 
 The focus stack
 ---------------
-
-
-Input hooks
------------
 
 
 Running on the ``asyncio`` event loop
