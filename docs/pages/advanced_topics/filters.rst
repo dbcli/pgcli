@@ -4,17 +4,20 @@
 Filters
 -------
 
-Many places in `prompt_toolkit` expect a boolean. For instance, for determining
-the visibility of some part of the layout (it can be either hidden or visible),
-or a key binding filter (the binding can be active on not) or the
-``wrap_lines`` option of
-:class:`~prompt_toolkit.layout.controls.BufferControl`, etc.
+Many places in `prompt_toolkit` require a boolean value that can change over
+time. For instance:
 
-These booleans however are often dynamic and can change at runtime. For
-instance, the search toolbar should only be visible when the user is actually
-searching (when the search buffer has the focus). The ``wrap_lines`` option
-could be changed with a certain key binding. And that key binding could only
-work when the default buffer got the focus.
+- to specify whether a part of the layout needs to be visible or not;
+- or to decide whether a certain key binding needs to be active or not;
+- or the ``wrap_lines`` option of
+  :class:`~prompt_toolkit.layout.controls.BufferControl`;
+- etcetera.
+
+These booleans are often dynamic and can change at runtime. For instance, the
+search toolbar should only be visible when the user is actually searching (when
+the search buffer has the focus). The ``wrap_lines`` option could be changed
+with a certain key binding. And that key binding could only work when the
+default buffer got the focus.
 
 In `prompt_toolkit`, we decided to reduce the amount of state in the whole
 framework, and apply a simple kind of reactive programming to describe the flow
@@ -22,16 +25,18 @@ of these booleans as expressions. (It's one-way only: if a key binding needs to
 know whether it's active or not, it can follow this flow by evaluating an
 expression.)
 
-The base class is :class:`~prompt_toolkit.filters.Filter`, which wraps an
-expression that takes no input and evaluates to a boolean.
+The (abstract) base class is :class:`~prompt_toolkit.filters.Filter`, which
+wraps an expression that takes no input and evaluates to a boolean. Getting the
+state of a filter is done by simply calling it.
+
 
 An example
 ^^^^^^^^^^
 
-One way to create a :class:`~prompt_toolkit.filters.Filter` instance is by
-creating a :class:`~prompt_toolkit.filters.Condition` instance from a function.
-For instance, the following condition will evaluate to ``True`` when the user
-is searching:
+The most obvious way to create such a :class:`~prompt_toolkit.filters.Filter`
+instance is by creating a :class:`~prompt_toolkit.filters.Condition` instance
+from a function. For instance, the following condition will evaluate to
+``True`` when the user is searching:
 
 .. code:: python
 
@@ -49,7 +54,7 @@ A different way of writing this, is by using the decorator syntax:
 
     @Condition
     def is_searching():
-        return get_app().is_searching)
+        return get_app().is_searching
 
 This filter can then be used in a key binding, like in the following snippet:
 
@@ -63,6 +68,14 @@ This filter can then be used in a key binding, like in the following snippet:
     def _(event):
         # Do, something, but only when searching.
         pass
+
+If we want to know the boolean value of this filter, we have to call it like a
+function:
+
+.. code:: python
+
+    print(is_searching())
+
 
 Built-in filters
 ^^^^^^^^^^^^^^^^^
@@ -106,8 +119,8 @@ as a function.
 Combining filters
 ^^^^^^^^^^^^^^^^^
 
-Further, these filters can be chained by the ``&`` and ``|`` operators or
-negated by the ``~`` operator.
+Filters can be chained with the ``&`` and ``|`` operators and negated with the
+``~`` operator.
 
 Some examples:
 
@@ -127,3 +140,30 @@ Some examples:
     def _(event):
         " Do something, but only when searching or when there is a selection. "
         pass
+
+
+to_filter
+^^^^^^^^^
+
+Finally, in many situations you want your code to expose an API that is able to
+deal with both booleans as well as filters. For instance, when for most users a
+boolean works fine because they don't need to change the value over time, while
+some advanced users want to be able this value to a certain setting or event
+that does changes over time.
+
+In order to handle both use cases, there is a utility called
+:func:`~prompt_toolkit.filters.utils.to_filter`.
+
+This is a function that takes
+either a boolean or an actual :class:`~prompt_toolkit.filters.Filter`
+instance, and always returns a :class:`~prompt_toolkit.filters.Filter`.
+
+.. code:: python
+
+        from prompt_toolkit.filters.utils import to_filter
+
+        # In each of the following three examples, 'f' will be a `Filter`
+        # instance.
+        f = to_filter(True)
+        f = to_filter(False)
+        f = to_filter(Condition(lambda: True))

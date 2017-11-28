@@ -182,6 +182,9 @@ Filters
 .. autoclass:: prompt_toolkit.filters.Condition
     :members:
 
+.. automodule:: prompt_toolkit.filters.utils
+    :members:
+
 .. automodule:: prompt_toolkit.filters.app
     :members:
 
