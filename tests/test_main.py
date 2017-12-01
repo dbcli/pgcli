@@ -142,7 +142,7 @@ def test_format_output_auto_expand():
         'head2 | def',
         'test status'
     ]
-    assert list(expanded_results) == expanded
+    assert '\n'.join(expanded_results) == '\n'.join(expanded)
 
 
 @dbtest
