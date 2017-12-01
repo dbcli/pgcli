@@ -110,7 +110,7 @@ def test_format_array_output_expanded(executor):
         '配列                   | {<null>}',
         'SELECT 2'
     ]
-    assert list(results) == expected
+    assert '\n'.join(results) == '\n'.join(expected)
 
 
 def test_format_output_auto_expand():
