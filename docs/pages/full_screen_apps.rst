@@ -50,9 +50,10 @@ An application consists of several components. The most important are:
 - I/O objects: the event loop, the input and output device.
 - The layout: this defines the graphical structure of the application. For
   instance, a text box on the left side, and a button on the right side.
+  You can also think of the layout as a collection of 'widgets'.
 - A style: this defines what colors and underline/bold/italic styles are used
   everywhere.
-- Key bindings.
+- A set of key bindings.
 
 We will discuss all of these in more detail them below.
 
@@ -100,10 +101,11 @@ abstraction.
   kind of container that can contain
   :class:`~prompt_toolkit.layout.controls.UIControl` object. The
   :class:`~prompt_toolkit.layout.controls.UIControl` object is responsible for
-  the actual content. The :class:`~prompt_toolkit.layout.containers.Window`
-  object acts as an adaptor between the
-  :class:`~prompt_toolkit.layout.controls.UIControl` and other containers, but
-  it's also responsible for the scrolling and line wrapping of the content.
+  the generation of the actual content. The
+  :class:`~prompt_toolkit.layout.containers.Window` object acts as an adaptor
+  between the :class:`~prompt_toolkit.layout.controls.UIControl` and other
+  containers, but it's also responsible for the scrolling and line wrapping of
+  the content.
 
   Examples of :class:`~prompt_toolkit.layout.controls.UIControl` objects are
   :class:`~prompt_toolkit.layout.controls.BufferControl` for showing the
@@ -114,12 +116,17 @@ abstraction.
 - A higher level abstraction of building a layout is by using "widgets". A
   widget is a reusable layout component that can contain multiple containers
   and controls. It should have a ``__pt__container__`` function, which is
-  supposed to return the root container for this widget.
+  supposed to return the root container for this widget. Prompt_toolkit
+  contains a couple of widgets like
+  :class:`~prompt_toolkit.layout.widgets.base.TextArea`,
+  :class:`~prompt_toolkit.layout.widgets.base.Button`,
+  :class:`~prompt_toolkit.layout.widgets.base.Frame`,
+  :class:`~prompt_toolkit.layout.widgets.base.VerticalLine` and so on.
 
-- The highest level abstractions are in the ``shortcuts`` module. There we
-  don't have to think about the layout, controls and containers at all. This is
-  the simplest way to use prompt_toolkit, but is only meant for certain use
-  cases.
+- The highest level abstractions can be found in the ``shortcuts`` module.
+  There we don't have to think about the layout, controls and containers at
+  all. This is the simplest way to use prompt_toolkit, but is only meant for
+  specific use cases, like a prompt or a simple dialog window.
 
 Containers and controls
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -149,7 +156,6 @@ responsible for generating the actual content.
 +------------------------------------------------------+---------------------------------------------------------------+
 | :class:`~prompt_toolkit.layout.controls.UIControl`   | :class:`~prompt_toolkit.layout.controls.BufferControl`        |
 |                                                      | :class:`~prompt_toolkit.layout.controls.FormattedTextControl` |
-|                                                      | :class:`~prompt_toolkit.layout.controls.FillControl`          |
 +------------------------------------------------------+---------------------------------------------------------------+
 
 The :class:`~prompt_toolkit.layout.containers.Window` class itself is
@@ -158,7 +164,11 @@ can contain a :class:`~prompt_toolkit.layout.controls.UIControl`. Thus, it's
 the adaptor between the two.
 
 The :class:`~prompt_toolkit.layout.containers.Window` class also takes care of
-scrolling the content if needed.
+scrolling the content and wrapping the lines if needed.
+
+Finally, there is the :class:`~prompt_toolkit.layout.layout.Layout` class which
+wraps the whole layout. This is responsible for keeping track of which window
+has the focus.
 
 Here is an example of a layout that displays the content of the default buffer
 on the left, and displays ``"Hello world"`` on the right. In between it shows a
@@ -171,7 +181,7 @@ vertical line:
     from prompt_toolkit.layout.containers import VSplit, Window
     from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 
-    buffer1 = Buffer()
+    buffer1 = Buffer()  # Editable buffer.
 
     root_container = VSplit([
         # One window that holds the BufferControl with the default buffer on the
@@ -206,7 +216,11 @@ There are two kinds of key bindings:
 - Global key bindings, which are always active.
 - Key bindings that belong to a certain
   :class:`~prompt_toolkit.layout.controls.UIControl` and are only active when
-  this control is focussed.
+  this control is focussed. Both
+  :class:`~prompt_toolkit.layout.controls.BufferControl`
+  :class:`~prompt_toolkit.layout.controls.FormattedTextControl` take a
+  ``key_bindings`` argument.
+
 
 Global key bindings
 ^^^^^^^^^^^^^^^^^^^
@@ -247,14 +261,64 @@ decorator of the key handler:
 The callback function is named ``exit_`` for clarity, but it could have been
 named ``_`` (underscore) as well, because the we won't refer to this name.
 
+Modal containers
+^^^^^^^^^^^^^^^^
+
+All container objects, like :class:`~prompt_toolkit.layout.containers.VSplit`
+and :class:`~prompt_toolkit.layout.containers.HSplit` take a ``modal`` argument.
+
+If this flag has been set, then key bindings from the parent account are not
+taken into account if one of the childen windows has the focus.
+
+This is useful in a complex layout, where many controls have their own key
+bindings, but you only want to enable the key bindings for a certain region of
+the layout.
+
+The global key bindings are always active.
+
+The Window class
+----------------
+
+As said earlier, a :class:`~prompt_toolkit.layout.containers.Window` is a
+:class:`~prompt_toolkit.layout.containers.Container` that wraps a 
+:class:`~prompt_toolkit.layout.controls.UIControl`, like a
+:class:`~prompt_toolkit.layout.controls.BufferControl` or
+:class:`~prompt_toolkit.layout.controls.FormattedTextControl`.
+
+.. note::
+
+    Basically, windows are the leafs in the tree structure that represent the UI.
+
+A :class:`~prompt_toolkit.layout.containers.Window` provides a "view" on the
+:class:`~prompt_toolkit.layout.controls.UIControl`, which provides lines of
+content. The window is in the first place responsible for the line wrapping and
+scrolling of the content, but there are much more options.
+
+- Adding left or right margins. These are used for displaying scroll bars or
+  line numbers.
+- There are the `cursorline` and `cursorcolumn` options. These allow
+  highlighting the line or column of the cursor position.
+- Alignment of the content. The content can be left aligned, right aligned or
+  centered.
+- Finally, the background can be filled with a default character.
+
+
+Buffers and :class:`~prompt_toolkit.layout.controls.BufferControl`
+------------------------------------------------------------------
+
+
 
 Input processors
 ----------------
 
-An :class:`~prompt_toolkit.layout.processors.Processor` is an object that
-processes the tokens of a line in a
-:class:`~prompt_toolkit.layout.controls.BufferControl` before it's passed to a
-:class:`~prompt_toolkit.layout.controls.UIContent` instance.
+A :class:`~prompt_toolkit.layout.processors.Processor` is used to postprocess
+the content of a :class:`~prompt_toolkit.layout.controls.BufferControl` before
+it's displayed. It can for instance highlight matching brackets or change
+the visualisation of tabs and so on.
+
+A :class:`~prompt_toolkit.layout.processors.Processor` operates on individual
+lines. Basically, it takes a (formatted) line and produces a new (formatted)
+line.
 
 Some build-in processors:
 
@@ -282,20 +346,9 @@ Some build-in processors:
 | :class:`~prompt_toolkit.layout.processors.TabsProcessor`                   | Visualise tabs as `n` spaces, or some symbols.            |
 +----------------------------------------------------------------------------+-----------------------------------------------------------+
 
-
-
-Custom user controls
---------------------
-
-The Window class
-----------------
-
-The :class:`~prompt_toolkit.layout.containers.Window` class exposes many
-interesting functionality that influences the behaviour of user controls.
-
-
-Buffers
--------
+A :class:`~prompt_toolkit.layout.controls.BufferControl` takes only one
+processor as input, but it is possible to "merge" multiple processors into one
+with the :func:`~prompt_toolkit.layout.processors.merge_processors` function.
 
 
 The focus stack
