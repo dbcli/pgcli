@@ -1470,7 +1470,7 @@ class Window(Container):
                 elif align == Align.RIGHT:
                     line_width = fragment_list_width(line)
                     if line_width < width:
-                        x += (width - line_width) + 1
+                        x += width - line_width
 
                 # Copy line.
                 for style, text in line:
