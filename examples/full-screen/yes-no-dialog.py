@@ -7,7 +7,6 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
-from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import VSplit, HSplit, Float
 from prompt_toolkit.layout.dimension import D
@@ -158,10 +157,7 @@ application = Application(
         root_container,
         focussed_window=yes_button,
     ),
-    key_bindings=merge_key_bindings([
-        load_key_bindings(),
-        bindings,
-    ]),
+    key_bindings=bindings,
     style=merge_styles([
         default_style(),
         style,

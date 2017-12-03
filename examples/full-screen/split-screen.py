@@ -9,7 +9,6 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
@@ -110,10 +109,6 @@ def _(event):
     """
     event.app.set_result(None)
 
-all_bindings = merge_key_bindings([
-    kb,
-    load_key_bindings()
-])
 
 # Now we add an event handler that captures change events to the buffer on the
 # left. If the text changes over there, we'll update the buffer on the right.
@@ -136,7 +131,7 @@ left_buffer.on_text_changed += default_buffer_changed
 
 application = Application(
     layout=Layout(root_container, focussed_window=left_window),
-    key_bindings=all_bindings,
+    key_bindings=kb,
 
     # Let's add mouse support!
     mouse_support=True,

@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 from prompt_toolkit.application import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
-from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout import VSplit, HSplit, Layout
 from prompt_toolkit.layout.widgets import Button, Box, TextArea, Label, Frame
@@ -68,17 +67,6 @@ layout = Layout(
 kb = KeyBindings()
 kb.add('tab')(focus_next)
 kb.add('s-tab')(focus_previous)
-
-
-# This step is not necessary for this application.
-#   This will merge our own key bindings with the basic built-in key bindings.
-#   Probably, this is what you want if you plan to add editable text fields and
-#   you want people to actually be able to edit them. (I'm adding this, because
-#   otherwise it could take some time to figure out why editing doesn't work.)
-kb = merge_key_bindings([
-    load_key_bindings(),
-    kb,
-])
 
 
 # Styling.

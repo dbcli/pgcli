@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 from prompt_toolkit.application import Application
 from prompt_toolkit.document import Document
 from prompt_toolkit.filters import has_focus
-from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.layout import Layout
@@ -54,11 +53,6 @@ def main():
             text=new_text, cursor_position=len(new_text))
         input_field.text = ''
 
-    all_bindings = merge_key_bindings([
-        load_key_bindings(),  # Start from the basic bindings.
-        kb,  # But override it with the following.
-    ])
-
     # Style.
     style = Style([
         ('output-field', 'bg:#000044 #ffffff'),
@@ -69,7 +63,7 @@ def main():
     # Run application.
     application = Application(
         layout=Layout(container, focussed_window=input_field),
-        key_bindings=all_bindings,
+        key_bindings=kb,
         style=style,
         mouse_support=True,
         full_screen=True)
