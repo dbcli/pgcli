@@ -107,7 +107,7 @@ class Layout(object):
                 for c in walk(value):
                     if isinstance(c, Window) and c.content.is_focussable():
                         self.current_window = c
-                        break
+                        return
 
                 raise ValueError('Invalid value. Container cannot be focussed: %r' % (value, ))
 
