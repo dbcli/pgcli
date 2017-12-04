@@ -193,6 +193,7 @@ class Application(object):
         #: key from for instance the left-arrow key, if we don't know what follows
         #: after "\x1b". This little timer will consider "\x1b" to be escape if
         #: nothing did follow in this time span.
+        #: This seems to work like the `ttimeoutlen` option in Vim.
         self.input_timeout = .5
 
         #: The `Renderer` instance.
