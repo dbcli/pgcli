@@ -560,7 +560,7 @@ class Application(object):
                                 yield From(previous_run_in_terminal_f)
 
                             # Store unprocessed input as typeahead for next time.
-                            store_typeahead(self.input, self.key_processor.flush())
+                            store_typeahead(self.input, self.key_processor.empty_queue())
 
                 raise Return(result)
 

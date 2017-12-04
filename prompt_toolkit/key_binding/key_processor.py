@@ -12,13 +12,15 @@ from prompt_toolkit.buffer import EditReadOnlyBuffer
 from prompt_toolkit.filters.app import vi_navigation_mode
 from prompt_toolkit.keys import Keys, ALL_KEYS
 from prompt_toolkit.utils import Event
+from prompt_toolkit.eventloop import run_in_executor, call_from_executor
 
 from .key_bindings import KeyBindingsBase
 
 from collections import deque
 from six.moves import range
-import weakref
 import six
+import time
+import weakref
 
 __all__ = (
     'KeyProcessor',
@@ -49,6 +51,13 @@ class KeyPress(object):
         return self.key == other.key and self.data == other.data
 
 
+"""
+Helper object to indicate flush operation in the KeyProcessor.
+NOTE: the implementation is very similar to the VT100 parser.
+"""
+_Flush = KeyPress('?', data='_Flush')
+
+
 class KeyProcessor(object):
     """
     Statemachine that receives :class:`KeyPress` instances and according to the
@@ -77,6 +86,15 @@ class KeyProcessor(object):
 
         self.before_key_press = Event(self)
         self.after_key_press = Event(self)
+
+        # Timeout, like Vim's timeoutlen option.
+        # For instance, suppose that we have a key binding AB and a second key
+        # binding A. If the uses presses A and then waits, we don't handle this
+        # binding yet (unless it was marked 'eager'), because we don't know
+        # what will follow. This timeout is the maximum amount of time that we
+        # wait until we call the handlers anyway.
+        self.timeout = 1.0 # seconds
+        self._keys_pressed = 0  # Monotonically increasing counter.
 
         # Simple macro recording. (Like readline does.)
         self.record_macro = False
@@ -150,15 +168,25 @@ class KeyProcessor(object):
         retry = False
 
         while True:
+            flush = False
+
             if retry:
                 retry = False
             else:
-                buffer.append((yield))
+                key = yield
+                if key is _Flush:
+                    flush = True
+                else:
+                    buffer.append(key)
 
             # If we have some key presses, check for matches.
             if buffer:
-                is_prefix_of_longer_match = self._is_prefix_of_longer_match(buffer)
                 matches = self._get_matches(buffer)
+
+                if flush:
+                    is_prefix_of_longer_match = False
+                else:
+                    is_prefix_of_longer_match = self._is_prefix_of_longer_match(buffer)
 
                 # When eager matches were found, give priority to them and also
                 # ignore all the longer matches.
@@ -198,6 +226,8 @@ class KeyProcessor(object):
         :param first: If true, insert before everything else.
         """
         assert isinstance(key_press, KeyPress)
+        self._keys_pressed += 1
+
         if first:
             self.input_queue.appendleft(key_press)
         else:
@@ -207,6 +237,8 @@ class KeyProcessor(object):
         """
         :param first: If true, insert before everything else.
         """
+        self._keys_pressed += len(key_presses)
+
         if first:
             self.input_queue.extendleft(reversed(key_presses))
         else:
@@ -256,7 +288,7 @@ class KeyProcessor(object):
                 # If for some reason something goes wrong in the parser, (maybe
                 # an exception was raised) restart the processor for next time.
                 self.reset()
-                self.flush()
+                self.empty_queue()
                 app.invalidate()
                 raise
 
@@ -266,9 +298,11 @@ class KeyProcessor(object):
         # Invalidate user interface.
         app.invalidate()
 
-    def flush(self):
+        self._start_timeout()
+
+    def empty_queue(self):
         """
-        Flush the input queue. Return the inprocessed input.
+        Empty the input queue. Return the unprocessed input.
         """
         key_presses = list(self.input_queue)
         self.input_queue.clear()
@@ -327,6 +361,35 @@ class KeyProcessor(object):
             # Set the preferred_column for arrow up/down again.
             # (This was cleared after changing the cursor position.)
             buff.preferred_column = preferred_column
+
+    def _start_timeout(self):
+        """
+        Start auto flush timeout. Similar to Vim's `timeoutlen` option.
+
+        Start a background thread with a timer. When this timeout expires and
+        no key was pressed in the meantime, we flush all data in the queue and
+        call the appropriate key binding handlers.
+        """
+        self._keys_pressed += 1
+        counter = self._keys_pressed
+
+        def wait():
+            " Wait for timeout. "
+            time.sleep(self.timeout)
+
+            if counter == self._keys_pressed:
+                # (No keys pressed in the meantime.)
+                call_from_executor(flush_keys)
+
+        def flush_keys():
+            " Flush keys. "
+            self.feed(_Flush)
+            self.process_keys()
+
+        # Automatically flush keys.
+        # (_daemon needs to be set, otherwise, this will hang the
+        # application for .5 seconds before exiting.)
+        run_in_executor(wait, _daemon=True)
 
 
 class KeyPressEvent(object):
