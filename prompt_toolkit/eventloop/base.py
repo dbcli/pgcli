@@ -128,8 +128,8 @@ class EventLoop(with_metaclass(ABCMeta, object)):
             try:
                 self._exception_handler(context)
             except Exception:
-                 logger.error('Exception in default exception handler',
-                              exc_info=True)
+                logger.error('Exception in default exception handler',
+                             exc_info=True)
         else:
             try:
                 self.default_exception_handler(context)

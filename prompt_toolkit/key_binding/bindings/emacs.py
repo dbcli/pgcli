@@ -63,7 +63,6 @@ def load_emacs_bindings():
     handle('c-x', 'c-u', save_before=(lambda e: False), filter=insert_mode)(
         get_by_name('undo'))
 
-
     handle('escape', '<', filter= ~has_selection)(get_by_name('beginning-of-history'))
     handle('escape', '>', filter= ~has_selection)(get_by_name('end-of-history'))
 

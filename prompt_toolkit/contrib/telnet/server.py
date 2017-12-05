@@ -9,7 +9,7 @@ import sys
 
 from six import int2byte, text_type, binary_type
 
-from prompt_toolkit.application.current import get_app, NoRunningApplicationError
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.application.run_in_terminal import run_in_terminal
 from prompt_toolkit.eventloop import get_event_loop, ensure_future, Future, From
 from prompt_toolkit.eventloop.context import context
@@ -270,7 +270,6 @@ class TelnetServer(object):
     def stop(self):
         if self._listen_socket:
             self._listen_socket.close()
-        #listen_socket.close()  # TODO
 
     def _accept(self):
         """

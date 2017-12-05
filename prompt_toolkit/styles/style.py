@@ -45,7 +45,7 @@ def _colorformat(text):
         elif len(col) == 6:
             return col
         elif len(col) == 3:
-            return col[0]*2 + col[1]*2 + col[2]*2
+            return col[0] * 2 + col[1] * 2 + col[2] * 2
 
     # Default.
     elif text in ('', 'default'):

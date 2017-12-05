@@ -123,7 +123,7 @@ def _get_closest_ansi_color(r, g, b, exclude=()):
 
     # Take the closest color.
     # (Thanks to Pygments for this part.)
-    distance = 257*257*3  # "infinity" (>distance from #000000 to #ffffff)
+    distance = 257 * 257 * 3  # "infinity" (>distance from #000000 to #ffffff)
     match = 'ansidefault'
 
     for name, (r2, g2, b2) in ANSI_COLORS_TO_RGB.items():
@@ -218,7 +218,7 @@ class _256ColorCache(dict):
 
         # Find closest color.
         # (Thanks to Pygments for this!)
-        distance = 257*257*3  # "infinity" (>distance from #000000 to #ffffff)
+        distance = 257 * 257 * 3  # "infinity" (>distance from #000000 to #ffffff)
         match = 0
 
         for i, (r2, g2, b2) in enumerate(self.colors):

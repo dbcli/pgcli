@@ -430,6 +430,7 @@ class BufferControl(UIControl):
         # Default search state.
         if get_search_state is None:
             search_state = SearchState()
+
             def get_search_state():
                 return search_state
 

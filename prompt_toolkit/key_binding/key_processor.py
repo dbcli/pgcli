@@ -93,7 +93,7 @@ class KeyProcessor(object):
         # binding yet (unless it was marked 'eager'), because we don't know
         # what will follow. This timeout is the maximum amount of time that we
         # wait until we call the handlers anyway.
-        self.timeout = 1.0 # seconds
+        self.timeout = 1.0  # seconds
         self._keys_pressed = 0  # Monotonically increasing counter.
 
         # Simple macro recording. (Like readline does.)

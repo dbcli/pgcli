@@ -19,7 +19,6 @@ other.
 """
 from __future__ import unicode_literals
 from .application import run_in_terminal
-from .application.current import get_app, NoRunningApplicationError
 from .eventloop import get_event_loop
 
 from contextlib import contextmanager

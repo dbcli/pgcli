@@ -452,6 +452,7 @@ def _create_ansi_color_dict(color_cls):
         'ansiturquoise':  color_cls.CYAN | color_cls.INTENSITY,
     }
 
+
 FG_ANSI_COLORS = _create_ansi_color_dict(FOREGROUND_COLOR)
 BG_ANSI_COLORS = _create_ansi_color_dict(BACKROUND_COLOR)
 

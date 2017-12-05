@@ -88,6 +88,7 @@ class SyntaxSync(with_metaclass(ABCMeta, object)):
             this line, or an earlier position.)
         """
 
+
 class SyncFromStart(SyntaxSync):
     """
     Always start the syntax highlighting from the beginning.
@@ -168,6 +169,7 @@ class _TokenCache(dict):
         result = ('class:' + '.'.join(parts)).lower()
         self[key] = result
         return result
+
 
 _token_cache = _TokenCache()
 

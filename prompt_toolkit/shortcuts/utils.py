@@ -13,6 +13,7 @@ __all__ = (
     'clear_title',
 )
 
+
 def print(*values, **kwargs):
     """
     ::

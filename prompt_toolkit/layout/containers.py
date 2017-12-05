@@ -1320,8 +1320,8 @@ class Window(Container):
             align=self.align)
 
         # Remember render info. (Set before generating the margins. They need this.)
-        x_offset=write_position.xpos + sum(left_margin_widths)
-        y_offset=write_position.ypos
+        x_offset = write_position.xpos + sum(left_margin_widths)
+        y_offset = write_position.ypos
 
         self.render_info = WindowRenderInfo(
             ui_content=ui_content,
@@ -1527,7 +1527,7 @@ class Window(Container):
                 y += 1
             return y
 
-        y = copy()
+        copy()
 
         def cursor_pos_to_screen_pos(row, col):
             " Translate row/col from UIContent to real Screen coordinates. "

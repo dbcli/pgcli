@@ -665,7 +665,6 @@ class ReverseSearchProcessor(Processor):
 
         return buffer_control.create_content(ti.width, ti.height)
 
-
     def apply_transformation(self, ti):
         main_control, search_state = self._get_main_buffer(ti.buffer_control)
 

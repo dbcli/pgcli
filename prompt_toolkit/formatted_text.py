@@ -257,7 +257,6 @@ class HTML(object):
         return HTML(self.value % value)
 
 
-
 def html_escape(text):
     # The string interpolation functions also take integers and other types.
     # Convert to string first.

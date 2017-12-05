@@ -89,7 +89,7 @@ class Dimension(object):
         return self.preferred == 0 or self.max == 0
 
     def __repr__(self):
-        fields= []
+        fields = []
         if self.min_specified:
             fields.append('min=%r' % self.min)
         if self.max_specified:

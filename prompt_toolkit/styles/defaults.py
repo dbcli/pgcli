@@ -170,7 +170,7 @@ PYGMENTS_DEFAULT_STYLE = {
     'pygments.comment':                   "italic #408080",
     'pygments.comment.preproc':           "noitalic #bc7a00",
 
-    #keyword:                   "bold #aa22ff",
+    # keyword:                   "bold #aa22ff",
     'pygments.keyword':                   "bold #008000",
     'pygments.keyword.pseudo':            "nobold",
     'pygments.keyword.type':              "nobold #b00040",
@@ -196,7 +196,7 @@ PYGMENTS_DEFAULT_STYLE = {
     'pygments.string.interpol':           "bold #bb6688",
     'pygments.string.escape':             "bold #bb6622",
     'pygments.string.regex':              "#bb6688",
-    #'pygments.string.symbol':             "#b8860b",
+    # 'pygments.string.symbol':             "#b8860b",
     'pygments.string.symbol':             "#19177c",
     'pygments.string.other':              "#008000",
     'pygments.number':                    "#666666",

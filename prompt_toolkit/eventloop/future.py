@@ -115,9 +115,9 @@ class Future(object):
             # is no callback set to handle it, print the exception.
             # -- Uncomment for debugging. --
 
-            #import traceback, sys
-            #print(''.join(traceback.format_stack()), file=sys.__stderr__)
-            #print('Uncollected error: %r' % (exception, ), file=sys.__stderr__)
+            # import traceback, sys
+            # print(''.join(traceback.format_stack()), file=sys.__stderr__)
+            # print('Uncollected error: %r' % (exception, ), file=sys.__stderr__)
             pass
 
     def _call_callbacks(self):

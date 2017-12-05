@@ -41,8 +41,8 @@ def load_mouse_bindings():
             }.get(mouse_event)
 
             # Handle situations where `PosixStdinReader` used surrogateescapes.
-            if x >= 0xdc00: x-= 0xdc00
-            if y >= 0xdc00: y-= 0xdc00
+            if x >= 0xdc00: x -= 0xdc00
+            if y >= 0xdc00: y -= 0xdc00
 
             x -= 32
             y -= 32
@@ -90,7 +90,7 @@ def load_mouse_bindings():
                 return
 
             # Call the mouse handler from the renderer.
-            handler = event.app.renderer.mouse_handlers.mouse_handlers[x,y]
+            handler = event.app.renderer.mouse_handlers.mouse_handlers[x, y]
             handler(MouseEvent(position=Point(x=x, y=y),
                                event_type=mouse_event))
 
@@ -124,8 +124,7 @@ def load_mouse_bindings():
         y -= rows_above_cursor
 
         # Call the mouse event handler.
-        handler = event.app.renderer.mouse_handlers.mouse_handlers[x,y]
+        handler = event.app.renderer.mouse_handlers.mouse_handlers[x, y]
         handler(MouseEvent(position=Point(x=x, y=y), event_type=event_type))
 
     return key_bindings
-

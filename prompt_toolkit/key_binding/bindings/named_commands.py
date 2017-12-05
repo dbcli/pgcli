@@ -23,11 +23,13 @@ __all__ = (
 # Registry that maps the Readline command names to their handlers.
 _readline_commands = {}
 
+
 def register(name):
     """
     Store handler in the `_readline_commands` dictionary.
     """
     assert isinstance(name, six.text_type)
+
     def decorator(handler):
         assert callable(handler)
 
@@ -49,6 +51,7 @@ def get_by_name(name):
 # Commands for moving
 # See: http://www.delorie.com/gnu/docs/readline/rlman_14.html
 #
+
 
 @register('beginning-of-line')
 def beginning_of_line(event):
@@ -124,6 +127,7 @@ def redraw_current_line(event):
 # Commands for manipulating the history.
 # See: http://www.delorie.com/gnu/docs/readline/rlman_15.html
 #
+
 
 @register('accept-line')
 def accept_line(event):
@@ -391,6 +395,7 @@ def yank(event):
     event.current_buffer.paste_clipboard_data(
         event.app.clipboard.get_data(), count=event.arg, paste_mode=PasteMode.EMACS)
 
+
 @register('yank-nth-arg')
 def yank_nth_arg(event):
     """
@@ -409,6 +414,7 @@ def yank_last_arg(event):
     """
     n = (event.arg if event.arg_present else None)
     event.current_buffer.yank_last_arg(n)
+
 
 @register('yank-pop')
 def yank_pop(event):
@@ -429,6 +435,7 @@ def yank_pop(event):
 #
 # Completion.
 #
+
 
 @register('complete')
 def complete(event):
@@ -453,6 +460,7 @@ def menu_complete_backward(event):
 #
 # Keyboard macros.
 #
+
 
 @register('start-kbd-macro')
 def start_kbd_macro(event):
@@ -494,6 +502,7 @@ def print_last_kbd_macro(event):
 #
 # Miscellaneous Commands.
 #
+
 
 @register('undo')
 def undo(event):

@@ -61,10 +61,10 @@ class Application(object):
     :param min_redraw_interval: Number of seconds to wait between redraws. Use
         this for applications where `invalidate` is called a lot. This could cause
         a lot of terminal output, which some terminals are not able to process.
-        
+
         `None` means that every `invalidate` will be scheduled right away
         (which is usually fine).
-        
+
         When one `invalidate` is called, but a scheduled redraw of a previous
         `invalidate` call has not been executed yet, nothing will happen in any
         case.
@@ -412,7 +412,8 @@ class Application(object):
         self._invalidate_events = list(gather_events())
 
         # Attach invalidate event handler.
-        invalidate = lambda sender: self.invalidate()
+        def invalidate(sender):
+            self.invalidate()
 
         for ev in self._invalidate_events:
             ev += invalidate
@@ -626,7 +627,7 @@ class Application(object):
         Called when we don't receive the cursor position response in time.
         """
         if not self.input.responds_to_cpr:
-            return # We know about this already.
+            return  # We know about this already.
 
         def in_terminal():
             self.output.write(

@@ -717,6 +717,7 @@ def prompt(*a, **kw):
     prompt = Prompt()
     return prompt.prompt(*a, **kw)
 
+
 prompt.__doc__ = Prompt.prompt.__doc__
 
 

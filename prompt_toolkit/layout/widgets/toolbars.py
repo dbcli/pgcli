@@ -9,7 +9,7 @@ from ..utils import fragment_list_len
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import SYSTEM_BUFFER, SearchDirection
-from prompt_toolkit.filters import has_focus, has_completions, has_validation_error, is_searching, Always, is_done, emacs_mode, vi_mode, vi_navigation_mode, has_arg
+from prompt_toolkit.filters import has_focus, has_completions, has_validation_error, is_searching, is_done, emacs_mode, vi_mode, vi_navigation_mode, has_arg
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings, ConditionalKeyBindings
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys

@@ -174,7 +174,7 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
 
         # If the new line is shorter, trim it.
         if previous_screen and new_max_line_len < previous_max_line_len:
-            current_pos = move_cursor(Point(x=new_max_line_len+1, y=y))
+            current_pos = move_cursor(Point(x=new_max_line_len + 1, y=y))
             reset_attributes()
             output.erase_end_of_line()
 
@@ -234,6 +234,7 @@ class _StyleStringToAttrsCache(dict):
 
         self[style_str] = result
         return result
+
 
 class CPR_Support(object):
     " Enum: whether or not CPR is supported. "
@@ -617,11 +618,9 @@ def print_formatted_text(output, formatted_text, style):
 
         # Assume that the output is raw, and insert a carriage return before
         # every newline. (Also importent when the front-end is a telnet client.)
-        assert not '\r' in text
+        assert '\r' not in text
         output.write(text.replace('\n', '\r\n'))
 
     # Reset again.
     output.reset_attributes()
     output.flush()
-
-

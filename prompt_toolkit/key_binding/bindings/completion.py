@@ -15,6 +15,7 @@ __all__ = (
     'display_completions_like_readline',
 )
 
+
 def generate_completions(event):
     r"""
     Tab-completion: where the first tab completes the common suffix and the
@@ -92,10 +93,10 @@ def _display_completions_like_readline(app, completions):
     def display(page):
         # Display completions.
         page_completions = completions[page * completions_per_page:
-                                       (page+1) * completions_per_page]
+                                       (page + 1) * completions_per_page]
 
         page_row_count = int(math.ceil(len(page_completions) / float(column_count)))
-        page_columns = [page_completions[i * page_row_count:(i+1) * page_row_count]
+        page_columns = [page_completions[i * page_row_count:(i + 1) * page_row_count]
                    for i in range(column_count)]
 
         result = []

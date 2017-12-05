@@ -44,5 +44,3 @@ def load_vi_open_in_editor_bindings():
     key_bindings.add('v', filter=vi_navigation_mode)(
         get_by_name('edit-and-execute-command'))
     return key_bindings
-
-
