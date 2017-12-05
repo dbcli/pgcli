@@ -18,6 +18,7 @@ def document():
 
 def test_current_char(document):
     assert document.current_char == 'e'
+    assert document.char_before_cursor == 'n'
 
 
 def test_text_before_cursor(document):
@@ -72,3 +73,8 @@ def test_translate_index_to_position(document):
 
     pos = document.translate_index_to_position(0)
     assert pos == (0, 0)
+
+
+def test_is_cursor_at_the_end(document):
+    assert Document('hello', 5).is_cursor_at_the_end
+    assert not Document('hello', 4).is_cursor_at_the_end

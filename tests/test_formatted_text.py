@@ -46,6 +46,17 @@ def test_ansi_formatting():
         ('#ansidarkgreen bg:#ansipurple', 'o'),
     ]
 
+    # Bold and italic.
+    value = ANSI('\x1b[1mhe\x1b[0mllo')
+
+    assert to_formatted_text(value) == [
+        ('bold', 'h'),
+        ('bold', 'e'),
+        ('', 'l'),
+        ('', 'l'),
+        ('', 'o'),
+    ]
+
     # Zero width escapes.
     value = ANSI('ab\001cd\002ef')
 
