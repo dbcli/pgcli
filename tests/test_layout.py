@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.layout import Layout, InvalidLayoutError
 from prompt_toolkit.layout.containers import HSplit, VSplit, Window
-from prompt_toolkit.layout.controls import DummyControl
+from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.utils import split_lines
 import pytest
 
@@ -64,9 +64,9 @@ def test_split_lines_3():
 
 
 def test_layout_class():
-    c1 = DummyControl()
-    c2 = DummyControl()
-    c3 = DummyControl()
+    c1 = BufferControl()
+    c2 = BufferControl()
+    c3 = BufferControl()
     win1 = Window(content=c1)
     win2 = Window(content=c2)
     win3 = Window(content=c3)

@@ -405,7 +405,7 @@ class BufferControl(UIControl):
     :param key_bindings: a `KeyBindings` object.
     """
     def __init__(self,
-                 buffer,
+                 buffer=None,
                  input_processor=None,
                  lexer=None,
                  preview_search=False,
@@ -417,7 +417,7 @@ class BufferControl(UIControl):
                  focus_on_click=False,
                  key_bindings=None):
         from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
-        assert isinstance(buffer, Buffer)
+        assert buffer is None or isinstance(buffer, Buffer)
         assert input_processor is None or isinstance(input_processor, Processor)
         assert menu_position is None or callable(menu_position)
         assert lexer is None or isinstance(lexer, Lexer)
@@ -447,7 +447,7 @@ class BufferControl(UIControl):
         self.focus_on_click = to_filter(focus_on_click)
 
         self.input_processor = input_processor
-        self.buffer = buffer
+        self.buffer = buffer or Buffer()
         self.menu_position = menu_position
         self.lexer = lexer or SimpleLexer()
         self.get_search_buffer_control = get_search_buffer_control
