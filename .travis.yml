@@ -9,6 +9,7 @@ matrix:
     - python: 3.3
     - python: 2.7
     - python: 2.6
+    - python: nightly
     - python: pypy
     - python: pypy3
 
@@ -17,8 +18,13 @@ install:
   - pip install pytest
   - pip install coverage
   - pip install codecov
+  - pip install flake8
+  - pip list
 
 script:
+  - echo "$TRAVIS_PYTHON_VERSION"
+  - if [ "$TRAVIS_PYTHON_VERSION" != "2.6" ]; then flake8 --exclude=__init__.py prompt_toolkit --max-line-length=150 --ignore=E221,F811,E123,E114,E128,E126,E241,E704,E116,E731,E301,F405,W503,E131,E121,E227,F403,E122,E501,E251,E211,E127,E701,E171,E702,E741; fi
+
   - cd tests
   - coverage run -m pytest
 

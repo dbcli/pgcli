@@ -88,7 +88,7 @@ class AutoSelector(Selector):
         if self._py3_selector:
             try:
                 return self._py3_selector.select(timeout)
-            except PermissionError:
+            except PermissionError:  # noqa  (PermissionError doesn't exist in Py2)
                 # We had a situation (in pypager) where epoll raised a
                 # PermissionError when a local file descriptor was registered,
                 # however poll and select worked fine. So, in that case, just

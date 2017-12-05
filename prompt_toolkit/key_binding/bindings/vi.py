@@ -1555,7 +1555,7 @@ def load_vi_bindings():
 
         # Shift all cursor positions.
         new_cursor_positions = [
-            p + i + 1 for i, p in enumerate(buff.multiple_cursor_positions)]
+            pos + i + 1 for i, pos in enumerate(buff.multiple_cursor_positions)]
 
         # Set result.
         buff.text = ''.join(text)
