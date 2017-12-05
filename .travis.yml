@@ -15,7 +15,12 @@ matrix:
 install:
   - pip install .
   - pip install pytest
+  - pip install coverage
+  - pip install codecov
 
 script:
   - cd tests
-  - py.test
+  - coverage run -m pytest
+
+after_success:
+  - codecov
