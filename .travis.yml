@@ -4,22 +4,18 @@ language: python
 matrix:
   include:
     - python: 3.6
-      env: TOXENV=py
     - python: 3.5
-      env: TOXENV=py
     - python: 3.4
-      env: TOXENV=py
     - python: 3.3
-      env: TOXENV=py
     - python: 2.7
-      env: TOXENV=py
     - python: 2.6
-      env: TOXENV=py
     - python: pypy
-      env: TOXENV=py
+    - python: pypy3
 
 install:
-  - travis_retry pip install tox
+  - pip install .
+  - pip install pytest
 
 script:
-  - tox
+  - cd tests
+  - py.test

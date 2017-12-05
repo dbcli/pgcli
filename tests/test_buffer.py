@@ -8,7 +8,7 @@ import pytest
 @pytest.fixture
 def _buffer():
     buff = Buffer()
-    yield buff
+    return buff
 
 
 def test_initial(_buffer):
