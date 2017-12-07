@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 An example of a BufferControl in a full screen layout that offers auto
 completion.
