@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.application import Application
 from prompt_toolkit.document import Document
 from prompt_toolkit.filters import has_focus
-from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.widgets import TextArea
@@ -18,6 +18,7 @@ help_text = """
 Type any expression (e.g. "4 + 4") followed by enter to execute.
 Press Control-C to exit.
 """
+
 
 def main():
     # The layout.

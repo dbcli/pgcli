@@ -18,7 +18,7 @@ right_text = "\n(right pane.)"
 
 body = VSplit([
     Window(FormattedTextControl(left_text)),
-    Window(width=1, char='|'), # Vertical line in the middle.
+    Window(width=1, char='|'),  # Vertical line in the middle.
     Window(FormattedTextControl(right_text)),
 ])
 
@@ -38,7 +38,6 @@ application = Application(
     layout=Layout(body),
     key_bindings=kb,
     full_screen=True)
-
 
 
 def run():

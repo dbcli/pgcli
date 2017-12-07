@@ -19,7 +19,6 @@ from prompt_toolkit.eventloop.defaults import create_asyncio_event_loop, set_eve
 from prompt_toolkit.patch_stdout import patch_stdout
 
 import asyncio
-import sys
 
 loop = asyncio.get_event_loop()
 
@@ -48,7 +47,7 @@ async def interactive_shell():
     # something is written to stdout.
     # (This is optional, when `patch_stdout=True` has been given before.)
 
-    ## sys.stdout = prompt.app.stdout_proxy()
+    # sys.stdout = prompt.app.stdout_proxy()
 
     # Run echo loop. Read text from stdin, and reply it back.
     while True:

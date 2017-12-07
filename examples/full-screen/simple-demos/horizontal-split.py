@@ -18,7 +18,7 @@ right_text = "\n(bottom pane.)"
 
 body = HSplit([
     Window(FormattedTextControl(left_text)),
-    Window(height=1, char='-'), # Horizontal line in the middle.
+    Window(height=1, char='-'),  # Horizontal line in the middle.
     Window(FormattedTextControl(right_text)),
 ])
 
@@ -38,7 +38,6 @@ application = Application(
     layout=Layout(body),
     key_bindings=kb,
     full_screen=True)
-
 
 
 def run():

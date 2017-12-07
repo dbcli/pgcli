@@ -7,7 +7,7 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
-from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import VSplit, HSplit, Float
 from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.layout.layout import Layout
@@ -21,8 +21,10 @@ from pygments.lexers import HtmlLexer
 def accept_yes():
     get_app().set_result(True)
 
+
 def accept_no():
     get_app().set_result(False)
+
 
 def do_exit():
     get_app().set_result(False)

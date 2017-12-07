@@ -10,7 +10,7 @@ from prompt_toolkit.filters import Condition
 
 
 def main():
-    hidden = [True] # Nonlocal
+    hidden = [True]  # Nonlocal
     bindings = KeyBindings()
 
     @bindings.add('c-t')

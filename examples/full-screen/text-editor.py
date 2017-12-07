@@ -31,10 +31,12 @@ show_status_bar = True
 def get_statusbar_text():
     return ' Press Ctrl-C to open menu. '
 
+
 def get_statusbar_right_text():
     return ' {}:{}  '.format(
         text_field.document.cursor_position_row + 1,
         text_field.document.cursor_position_col + 1)
+
 
 search_field = SearchField()
 text_field = TextArea(
@@ -43,7 +45,6 @@ text_field = TextArea(
     line_numbers=True,
     search_field=search_field,
 )
-
 
 
 class TextInputDialog(object):
@@ -117,8 +118,10 @@ body = HSplit([
         filter=Condition(lambda: show_status_bar)),
 ])
 
+
 # Global key bindings.
 bindings = KeyBindings()
+
 
 @bindings.add('c-c')
 def _(event):
@@ -186,6 +189,7 @@ def do_new_file():
 def do_exit():
     get_app().set_result(None)
 
+
 def do_time_date():
     text = datetime.datetime.now().isoformat()
     text_field.buffer.insert_text(text)
@@ -208,6 +212,7 @@ def do_go_to():
                 text_field.buffer.document.translate_row_col_to_index(line_number - 1, 0)
 
     ensure_future(coroutine())
+
 
 def do_undo():
     text_field.buffer.undo()
@@ -302,9 +307,11 @@ style = Style.from_dict({
     'shadow': 'bg:#440044',
 })
 
-layout=Layout(
+
+layout = Layout(
     root_container,
     focussed_window=text_field)
+
 
 application = Application(
     layout=layout,

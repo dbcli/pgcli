@@ -43,6 +43,7 @@ def main(database):
                     print(message)
     print('GoodBye!')
 
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         db = ':memory:'

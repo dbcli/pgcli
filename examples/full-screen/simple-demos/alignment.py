@@ -56,7 +56,6 @@ application = Application(
     full_screen=True)
 
 
-
 def run():
     application.run()
 

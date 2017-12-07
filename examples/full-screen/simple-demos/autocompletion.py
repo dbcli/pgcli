@@ -45,6 +45,7 @@ body = FloatContainer(
 # Key bindings
 kb = KeyBindings()
 
+
 @kb.add('q')
 @kb.add('c-c')
 def _(event):

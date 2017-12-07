@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
@@ -47,11 +47,13 @@ body = VSplit([
 # but the user doesn't see any feedback. We will add the search toolbar to the
 # bottom by using an HSplit.
 
+
 def get_titlebar_text():
     return [
         ('class:title', ' Hello world '),
         ('class:title', ' (Press [Ctrl-Q] to quit.)'),
     ]
+
 
 root_container = HSplit([
     # The titlebar.
@@ -95,6 +97,7 @@ kb = KeyBindings()
 # `eager=True` to all key bindings, but do it when it conflicts with another
 # existing key binding, and you definitely want to override that behaviour.
 
+
 @kb.add('c-c', eager=True)
 @kb.add('c-q', eager=True)
 def _(event):
@@ -112,6 +115,7 @@ def _(event):
 
 # Now we add an event handler that captures change events to the buffer on the
 # left. If the text changes over there, we'll update the buffer on the right.
+
 
 def default_buffer_changed(_):
     """
@@ -144,9 +148,11 @@ application = Application(
 # 4. Run the application
 #    -------------------
 
+
 def run():
     # Run the interface. (This runs the event loop until Ctrl-Q is pressed.)
     application.run()
+
 
 if __name__ == '__main__':
     run()

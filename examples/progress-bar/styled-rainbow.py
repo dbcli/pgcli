@@ -19,7 +19,7 @@ def main():
         formatters.Text(' left: '),
         formatters.Rainbow(formatters.TimeLeft()),
     ]
-    
+
     output = create_output(true_color=true_color)
 
     with progress_bar(formatters=custom_formatters, output=output) as pb:

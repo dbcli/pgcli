@@ -10,7 +10,6 @@ from prompt_toolkit.styles.named_colors import NAMED_COLORS
 
 
 def main():
-    nl = ('', '\n')
     tokens = FormattedText(
         [('fg:' + name, name + '  ') for name in NAMED_COLORS]
     )

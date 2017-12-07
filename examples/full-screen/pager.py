@@ -36,8 +36,10 @@ def get_statusbar_text():
         ('class:status', ' for searching.'),
     ]
 
+
 search_field = SearchField(text_if_not_searching=[
     ('class:not-searching', "Press '/' to start searching.")])
+
 
 text_area = TextArea(
     text=text,
@@ -63,6 +65,7 @@ root_container = HSplit([
 
 # Key bindings.
 bindings = KeyBindings()
+
 
 @bindings.add('c-c')
 @bindings.add('q')
@@ -97,6 +100,7 @@ application = Application(
 
 def run():
     application.run()
+
 
 if __name__ == '__main__':
     run()
