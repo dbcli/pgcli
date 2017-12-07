@@ -6,7 +6,7 @@ from prompt_toolkit.clipboard import Clipboard, InMemoryClipboard
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, run_until_complete, call_from_executor, From
 from prompt_toolkit.eventloop.base import get_traceback_from_context
-from prompt_toolkit.filters import to_filter
+from prompt_toolkit.filters import to_filter, Condition
 from prompt_toolkit.input.base import Input
 from prompt_toolkit.input.defaults import get_default_input
 from prompt_toolkit.input.typeahead import store_typeahead, get_typeahead
@@ -83,8 +83,9 @@ class Application(object):
     :param enable_page_navigation_bindings: When `True`, enable the page
         navigation key bindings. These include both Emacs and Vi bindings like
         page-up, page-down and so on to scroll through pages. Mostly useful for
-        creating an editor. Probably, you don't want this for the
-        implementation of a REPL.
+        creating an editor or other full screen applications. Probably, you
+        don't want this for the implementation of a REPL. By default, this is
+        enabled if `full_screen` is set.
 
     Callbacks (all of these should accept a
     :class:`~prompt_toolkit.application.Application` object as input.)
@@ -108,7 +109,8 @@ class Application(object):
                  style=None,
                  key_bindings=None, clipboard=None,
                  full_screen=False, mouse_support=False,
-                 enable_page_navigation_bindings=False,
+
+                 enable_page_navigation_bindings=None,  # Can be None, True or False.
 
                  paste_mode=False,
                  editing_mode=EditingMode.EMACS,
@@ -121,6 +123,11 @@ class Application(object):
 
                  # I/O.
                  input=None, output=None):
+
+        # If `enable_page_navigation_bindings` is not specified, enable it in
+        # case of full screen applications only. This can be overriden by the user.
+        if enable_page_navigation_bindings is None:
+            enable_page_navigation_bindings = Condition(lambda: self.full_screen)
 
         paste_mode = to_filter(paste_mode)
         mouse_support = to_filter(mouse_support)
