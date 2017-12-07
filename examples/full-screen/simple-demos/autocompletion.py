@@ -45,6 +45,7 @@ body = FloatContainer(
 kb = KeyBindings()
 
 @kb.add('q')
+@kb.add('c-c')
 def _(event):
     " Quit application. "
     event.app.set_result(None)

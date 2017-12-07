@@ -11,32 +11,22 @@ The sections below describe the components required for full screen
 applications (or custom, non full screen applications), and how to assemble
 them together.
 
-.. warning:: This is going to change.
+.. note::
 
-    The information below is still up to date, but we are planning to
-    refactor some of the internal architecture of prompt_toolkit, to make it
-    easier to build full screen applications. This will however be
-    backwards-incompatible. The refactoring should probably be complete
-    somewhere around half 2017.
+    Also remember that the ``examples`` directory of the prompt_toolkit
+    application contains plenty of examples. Each example is supposed to
+    explain one idea. So, this as well should help you get started.
+
+    Don't hesitate to open a GitHub issue if you feel that a certain example is
+    missing.
+
 
 A simple application
 --------------------
 
 Every prompt_toolkit application is an instance of an
-:class:`~prompt_toolkit.application.application.Application` object. The
-simplest example would look like this:
-
-.. code:: python
-
-    from prompt_toolkit import Application
-
-    app = Application()
-    app.run()
-
-This will display a dummy application that says "No layout specified. Press
-ENTER to quit.". We are discussing full screen applications in this section, so
-we may as well set the ``full_screen`` flag so that the application runs in
-full screen mode (in the alternate screen buffer).
+:class:`~prompt_toolkit.application.Application` object. The simplest full
+screen example would look like this:
 
 .. code:: python
 
@@ -45,9 +35,18 @@ full screen mode (in the alternate screen buffer).
     app = Application(full_screen=True)
     app.run()
 
+This will display a dummy application that says "No layout specified. Press
+ENTER to quit.".
+
+.. note::
+
+        If we wouldn't set the ``full_screen`` option, the application would
+        not run in the alternate screen buffer, and only consume the least
+        amount of space required for the layout.
+
 An application consists of several components. The most important are:
 
-- I/O objects: the event loop, the input and output device.
+- I/O objects: the input and output device.
 - The layout: this defines the graphical structure of the application. For
   instance, a text box on the left side, and a button on the right side.
   You can also think of the layout as a collection of 'widgets'.
@@ -57,23 +56,31 @@ An application consists of several components. The most important are:
 
 We will discuss all of these in more detail them below.
 
-Three I/O objects
------------------
 
-An :class:`~prompt_toolkit.application.application.Application` instance requires three I/O
-objects:
+I/O objects
+-----------
 
-    - An :class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is
-      basically a while-true loop that waits for user input, and when it
-      receives something (like a key press), it will send that to the the
-      appropriate handler, like for instance, a key binding.
-    - An :class:`~prompt_toolkit.input.base.Input` instance. This is an abstraction
-      of the input stream (stdin).
-    - An :class:`~prompt_toolkit.output.base.Output` instance. This is an
+Every :class:`~prompt_toolkit.application.Application` instance requires an I/O
+objects for input and output:
+
+    - An :class:`~prompt_toolkit.input.base.Input` instance, which is an
+      abstraction of the input stream (stdin).
+    - An :class:`~prompt_toolkit.output.base.Output` instance, which is an
       abstraction of the output stream, and is called by the renderer.
 
-All of these three objects are optional, and a default value will be used when
-they are absent. Usually, the default works fine.
+Both are optional and normally not needed to pass explicitely. Usually, the
+default works fine.
+
+There is a third I/O object which is also required by the application, but not
+passed inside. This is the event loop, an
+:class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is basically a
+while-true loop that waits for user input, and when it receives something (like
+a key press), it will send that to the the appropriate handler, like for
+instance, a key binding.
+
+When :func:`~prompt_toolkit.application.Application.run()` is called, the event
+loop will run until the application is done.
+
 
 The layout
 ----------
@@ -110,8 +117,8 @@ abstraction.
   Examples of :class:`~prompt_toolkit.layout.controls.UIControl` objects are
   :class:`~prompt_toolkit.layout.controls.BufferControl` for showing the
   content of an editable/scrollable buffer, and
-  :class:`~prompt_toolkit.layout.controls.FormattedTextControl` for displaying static
-  static (:ref:`formatted <formatted_text>`) text.
+  :class:`~prompt_toolkit.layout.controls.FormattedTextControl` for displaying
+  (:ref:`formatted <formatted_text>`) text.
 
 - A higher level abstraction of building a layout is by using "widgets". A
   widget is a reusable layout component that can contain multiple containers
@@ -161,14 +168,13 @@ responsible for generating the actual content.
 The :class:`~prompt_toolkit.layout.containers.Window` class itself is
 particular: it is a :class:`~prompt_toolkit.layout.containers.Container` that
 can contain a :class:`~prompt_toolkit.layout.controls.UIControl`. Thus, it's
-the adaptor between the two.
-
-The :class:`~prompt_toolkit.layout.containers.Window` class also takes care of
+the adaptor between the two. The
+:class:`~prompt_toolkit.layout.containers.Window` class also takes care of
 scrolling the content and wrapping the lines if needed.
 
-Finally, there is the :class:`~prompt_toolkit.layout.layout.Layout` class which
-wraps the whole layout. This is responsible for keeping track of which window
-has the focus.
+Finally, there is the :class:`~prompt_toolkit.layout.Layout` class which wraps
+the whole layout. This is responsible for keeping track of which window has the
+focus.
 
 Here is an example of a layout that displays the content of the default buffer
 on the left, and displays ``"Hello world"`` on the right. In between it shows a
@@ -184,18 +190,18 @@ vertical line:
     buffer1 = Buffer()  # Editable buffer.
 
     root_container = VSplit([
-        # One window that holds the BufferControl with the default buffer on the
-        # left.
+        # One window that holds the BufferControl with the default buffer on
+        # the left.
         Window(content=BufferControl(buffer=buffer1)),
 
-        # A vertical line in the middle. We explicitely specify the width, to make
-        # sure that the layout engine will not try to divide the whole width by
-        # three for all these windows. The window will simply fill its content
-        # by repeating this character.
-        Window(width=1, char='|', style='class:line'),
+        # A vertical line in the middle. We explicitely specify the width, to
+        # make sure that the layout engine will not try to divide the whole
+        # width by three for all these windows. The window will simply fill its
+        # content by repeating this character.
+        Window(width=1, char='|'),
 
         # Display the text 'Hello world' on the right.
-        Window(content=FormattedTextControl('Hello world')),
+        Window(content=FormattedTextControl(text='Hello world')),
     ])
 
     layout = Layout(root_container)
@@ -204,12 +210,27 @@ vertical line:
     app.run()
 
 
+More complex layouts can be achieved by nesting multiple 
+:class:`~prompt_toolkit.layout.containers.VSplit`,
+:class:`~prompt_toolkit.layout.containers.HSplit` and 
+:class:`~prompt_toolkit.layout.containers.FloatContainer` objects.
+
+If you want to make some part of the layout only visible when a certain
+condition is satisfied, use a
+:class:`~prompt_toolkit.layout.containers.ConditionalContainer`.
+
+
+Focussing windows
+^^^^^^^^^^^^^^^^^
+
+TODO
+
 Key bindings
 ------------
 
 In order to react to user actions, we need to create a
 :class:`~prompt_toolkit.key_binding.key_bindings.KeyBindings` object and pass
-that to our :class:`~prompt_toolkit.application.application.Application`.
+that to our :class:`~prompt_toolkit.application.Application`.
 
 There are two kinds of key bindings:
 
@@ -261,6 +282,7 @@ decorator of the key handler:
 The callback function is named ``exit_`` for clarity, but it could have been
 named ``_`` (underscore) as well, because the we won't refer to this name.
 
+
 Modal containers
 ^^^^^^^^^^^^^^^^
 
@@ -276,8 +298,9 @@ the layout.
 
 The global key bindings are always active.
 
-The Window class
-----------------
+
+More about the Window class
+---------------------------
 
 As said earlier, a :class:`~prompt_toolkit.layout.containers.Window` is a
 :class:`~prompt_toolkit.layout.containers.Container` that wraps a 
@@ -303,13 +326,13 @@ scrolling of the content, but there are much more options.
 - Finally, the background can be filled with a default character.
 
 
-Buffers and :class:`~prompt_toolkit.layout.controls.BufferControl`
-------------------------------------------------------------------
+More about buffers and :class:`~prompt_toolkit.layout.controls.BufferControl`
+-----------------------------------------------------------------------------
 
 
 
 Input processors
-----------------
+^^^^^^^^^^^^^^^^
 
 A :class:`~prompt_toolkit.layout.processors.Processor` is used to postprocess
 the content of a :class:`~prompt_toolkit.layout.controls.BufferControl` before
@@ -349,11 +372,3 @@ Some build-in processors:
 A :class:`~prompt_toolkit.layout.controls.BufferControl` takes only one
 processor as input, but it is possible to "merge" multiple processors into one
 with the :func:`~prompt_toolkit.layout.processors.merge_processors` function.
-
-
-The focus stack
----------------
-
-
-Running on the ``asyncio`` event loop
--------------------------------------

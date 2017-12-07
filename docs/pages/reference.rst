@@ -5,19 +5,17 @@ Application
 -----------
 
 .. automodule:: prompt_toolkit.application
-    :members:
+    :members: Application
 
-.. automodule:: prompt_toolkit.application.application
-    :members:
+.. automodule:: prompt_toolkit.application
+    :members: get_app, set_app, NoRunningApplicationError
 
-.. automodule:: prompt_toolkit.application.current
-    :members:
+.. automodule:: prompt_toolkit.application
+    :members: DummyApplication
 
-.. automodule:: prompt_toolkit.application.dummy
-    :members:
+.. automodule:: prompt_toolkit.application
+    :members: run_in_terminal, run_coroutine_in_terminal
 
-.. automodule:: prompt_toolkit.application.run_in_terminal
-    :members:
 
 Formatted text
 --------------
@@ -25,11 +23,13 @@ Formatted text
 .. automodule:: prompt_toolkit.formatted_text
     :members:
 
+
 Buffer
 ------
 
 .. automodule:: prompt_toolkit.buffer
     :members:
+
 
 Selection
 ---------
@@ -37,17 +37,19 @@ Selection
 .. automodule:: prompt_toolkit.selection
     :members:
 
+
 Clipboard
 ---------
 
-.. automodule:: prompt_toolkit.clipboard.base
-    :members:
+.. automodule:: prompt_toolkit.clipboard
+    :members: Clipboard, ClipboardData, DummyClipboard, DynamicClipboard
 
 .. automodule:: prompt_toolkit.clipboard.in_memory
-    :members:
+    :members: InMemoryClipboard
 
 .. automodule:: prompt_toolkit.clipboard.pyperclip
     :members:
+
 
 Auto completion
 ---------------
@@ -55,11 +57,13 @@ Auto completion
 .. automodule:: prompt_toolkit.completion
     :members:
 
+
 Document
 --------
 
 .. automodule:: prompt_toolkit.document
     :members:
+
 
 Enums
 -----
@@ -67,11 +71,13 @@ Enums
 .. automodule:: prompt_toolkit.enums
     :members:
 
+
 History
 -------
 
 .. automodule:: prompt_toolkit.history
     :members:
+
 
 Keys
 ----
@@ -79,20 +85,15 @@ Keys
 .. automodule:: prompt_toolkit.keys
     :members:
 
+
 Style
 -----
 
-.. automodule:: prompt_toolkit.styles.base
-    :members:
+.. automodule:: prompt_toolkit.styles
+    :members: BaseStyle, DummyStyle, DynamicStyle
 
-.. automodule:: prompt_toolkit.styles.style
-    :members:
-
-.. automodule:: prompt_toolkit.styles.defaults
-    :members:
-
-.. automodule:: prompt_toolkit.styles.from_dict
-    :members:
+.. automodule:: prompt_toolkit.styles
+    :members: Style, merge_styles
 
 .. automodule:: prompt_toolkit.styles.from_pygments
     :members:
@@ -100,14 +101,13 @@ Style
 .. automodule:: prompt_toolkit.styles.named_colors
     :members:
 
-.. automodule:: prompt_toolkit.styles.utils
-    :members:
 
 Reactive
 --------
 
 .. automodule:: prompt_toolkit.reactive
     :members:
+
 
 Shortcuts
 ---------
@@ -121,11 +121,13 @@ Shortcuts
 .. automodule:: prompt_toolkit.shortcuts.utils
     :members:
 
+
 Validation
 ----------
 
 .. automodule:: prompt_toolkit.validation
     :members:
+
 
 Auto suggestion
 ---------------
@@ -140,14 +142,33 @@ Renderer
 .. automodule:: prompt_toolkit.renderer
     :members:
 
+
 Layout
 ------
+
+The layout class itself
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: prompt_toolkit.layout
+    :members: Layout, InvalidLayoutError, walk
+
+
+Containers
+^^^^^^^^^^
 
 .. automodule:: prompt_toolkit.layout.containers
     :members:
 
+
+Controls
+^^^^^^^^
+
 .. automodule:: prompt_toolkit.layout.controls
     :members:
+
+
+Other
+^^^^^
 
 .. automodule:: prompt_toolkit.layout.dimension
     :members:
@@ -170,6 +191,7 @@ Layout
 .. automodule:: prompt_toolkit.layout.screen
     :members:
 
+
 Filters
 -------
 
@@ -188,6 +210,7 @@ Filters
 .. automodule:: prompt_toolkit.filters.app
     :members:
 
+
 Key binding
 -----------
 
@@ -199,6 +222,7 @@ Key binding
 
 .. automodule:: prompt_toolkit.key_binding.vi_state
     :members:
+
 
 Eventloop
 ---------
@@ -223,6 +247,7 @@ Eventloop
 
 .. automodule:: prompt_toolkit.eventloop.callbacks
     :members:
+
 
 Input and output
 ----------------

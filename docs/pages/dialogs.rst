@@ -3,7 +3,8 @@
 Dialogs
 =======
 
-Prompt_toolkit ships with a high level API for displaying dialogs.
+Prompt_toolkit ships with a high level API for displaying dialogs, similar to
+the Whiptail program, but in pure Python.
 
 
 Message box
