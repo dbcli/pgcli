@@ -40,6 +40,9 @@ class Layout(object):
         else:
             self._stack.append(to_window(focussed_window))
 
+        # List of visible windows.
+        self.visible_windows = []  # type: List[Window]
+
     def __repr__(self):
         return 'Layout(%r, current_window=%r)' % (
             self.container, self.current_window)
@@ -160,6 +163,24 @@ class Layout(object):
         assert isinstance(value, Window)
         self._stack.append(value)
 
+    def get_focussable_windows(self):
+        """
+        Return all the `Window` objects which are focussable (in the 'modal'
+        area).
+        """
+        for w in self.walk_through_modal_area():
+            if isinstance(w, Window) and w.content.is_focussable():
+                yield w
+
+    def get_visible_focussable_windows(self):
+        """
+        Return a list of `Window` objects that are focussable.
+        """
+        # Focussable windows are windows that are visible, but also part of the
+        # modal container. Make sure to keep the ordering.
+        visible_windows = self.visible_windows
+        return [w for w in self.get_focussable_windows() if w in visible_windows]
+
     @property
     def current_buffer(self):
         """
@@ -189,12 +210,44 @@ class Layout(object):
         except IndexError:
             return self._stack[-1].content
 
-    def focus_previous(self):
+    def focus_last(self):
         """
-        Give the focus to the previously focussed control.
+        Give the focus to the last focussed control.
         """
         if len(self._stack) > 1:
             self._stack = self._stack[:-1]
+
+    def focus_next(self):
+        """
+        Focus the next visible/focussable Window.
+        """
+        windows = self.get_visible_focussable_windows()
+
+        if len(windows) > 0:
+            try:
+                index = windows.index(self.current_window)
+            except ValueError:
+                index = 0
+            else:
+                index = (index + 1) % len(windows)
+
+            self.focus(windows[index])
+
+    def focus_previous(self):
+        """
+        Focus the previous visible/focussable Window.
+        """
+        windows = self.get_visible_focussable_windows()
+
+        if len(windows) > 0:
+            try:
+                index = windows.index(self.current_window)
+            except ValueError:
+                index = 0
+            else:
+                index = (index - 1) % len(windows)
+
+            self.focus(windows[index])
 
     def walk(self):
         """
@@ -244,12 +297,6 @@ class Layout(object):
             return self._child_to_parent[container]
         except KeyError:
             return
-
-    def get_focussable_windows(self):
-        # Now traverse and collect all the focussable children of this root.
-        for w in self.walk_through_modal_area():
-            if isinstance(w, Window) and w.content.is_focussable():
-                yield w
 
 
 class InvalidLayoutError(Exception):

@@ -553,6 +553,9 @@ class Renderer(object):
 
         output.flush()
 
+        # Set visible windows in layout.
+        app.layout.visible_windows = screen.visible_windows
+
         if is_done:
             self.reset()
 

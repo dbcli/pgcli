@@ -103,7 +103,7 @@ def test_layout_class():
     assert layout.previous_control == c2
 
     # Pop focus. This should focus the previous control again.
-    layout.focus_previous()
+    layout.focus_last()
     assert layout.has_focus(c2)
     assert layout.has_focus(win2)
     assert layout.current_control == c2

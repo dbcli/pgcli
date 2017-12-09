@@ -262,27 +262,6 @@ class Application(object):
         else:
             return SearchState()  # Dummy search state.  (Don't return None!)
 
-    @property
-    def visible_windows(self):
-        """
-        Return a list of `Window` objects that represent visible user controls.
-        """
-        last_screen = self.renderer.last_rendered_screen
-        if last_screen is not None:
-            return last_screen.visible_windows
-        else:
-            return []
-
-    @property
-    def focussable_windows(self):
-        """
-        Return a list of `Window` objects that are focussable.
-        """
-        # Focussable windows are windows that are visible, but also part of the modal container.
-        # Make sure to keep the ordering.
-        visible_windows = self.visible_windows
-        return [w for w in self.layout.get_focussable_windows() if w in visible_windows]
-
     def reset(self):
         """
         Reset everything, for reading the next input.

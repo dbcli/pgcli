@@ -18,7 +18,7 @@ def abort_search(event):
     (Usually bound to ControlG/ControlC.)
     """
     event.current_buffer.reset()
-    event.app.layout.focus_previous()
+    event.app.layout.focus_last()
 
     # If we're in Vi mode, go back to navigation mode.
     event.app.vi_state.input_mode = InputMode.NAVIGATION
@@ -47,7 +47,7 @@ def accept_search(event):
     search_control.buffer.reset()
 
     # Focus previous document again.
-    event.app.layout.focus_previous()
+    event.app.layout.focus_last()
 
     # If we're in Vi mode, go back to navigation mode.
     event.app.vi_state.input_mode = InputMode.NAVIGATION

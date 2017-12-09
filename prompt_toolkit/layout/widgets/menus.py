@@ -61,8 +61,7 @@ class MenuContainer(object):
         @kb.add('c-g', filter=in_main_menu)
         def _(event):
             " Leave menu. "
-            layout = event.app.layout
-            layout.focus_previous()
+            event.app.layout.focus_last()
 
         # Sub menu navigation.
 
@@ -120,7 +119,7 @@ class MenuContainer(object):
             " Click the selected menu item. "
             item = self._get_menu(len(self.selected_menu) - 1)
             if item.handler:
-                event.app.layout.focus_previous()
+                event.app.layout.focus_last()
                 item.handler()
 
         # Controls.
@@ -202,7 +201,7 @@ class MenuContainer(object):
                     app = get_app()
                     if app.layout.has_focus(self.window):
                         if self.selected_menu == [i]:
-                            app.layout.focus_previous()
+                            app.layout.focus_last()
                     else:
                         app.layout.focus(self.window)
                     self.selected_menu = [i]
@@ -241,7 +240,7 @@ class MenuContainer(object):
                             if mouse_event.event_type == MouseEventType.MOUSE_UP:
                                 app = get_app()
                                 if item.handler:
-                                    app.layout.focus_previous()
+                                    app.layout.focus_last()
                                     item.handler()
                                 else:
                                     self.selected_menu = self.selected_menu[:level + 1] + [i]
