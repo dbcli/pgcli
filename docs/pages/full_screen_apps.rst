@@ -11,6 +11,10 @@ The sections below describe the components required for full screen
 applications (or custom, non full screen applications), and how to assemble
 them together.
 
+Before going through this page, it could be helpful to go through :ref:`asking
+for input <asking_for_input>` (prompts) first. Many things that apply to an
+input prompt also apply to full screen applications.
+
 .. note::
 
     Also remember that the ``examples`` directory of the prompt_toolkit
