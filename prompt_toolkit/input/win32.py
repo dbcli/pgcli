@@ -48,7 +48,7 @@ class Win32Input(Input):
         return _detach_win32_input(self)
 
     def read_keys(self):
-        return self.console_input_reader.read()
+        return list(self.console_input_reader.read())
 
     def flush(self):
         pass
