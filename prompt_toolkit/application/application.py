@@ -452,10 +452,6 @@ class Application(object):
             self.key_processor.feed_multiple(get_typeahead(self.input))
             self.key_processor.process_keys()
 
-            def feed_keys(keys):
-                self.key_processor.feed_multiple(keys)
-                self.key_processor.process_keys()
-
             def read_from_input():
                 # Ignore when we aren't running anymore. This callback will
                 # removed from the loop next time. (It could be that it was
