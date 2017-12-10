@@ -12,6 +12,7 @@ turns all of them into such a tuple sequence.
 from __future__ import unicode_literals
 from prompt_toolkit.output.vt100 import FG_ANSI_COLORS, BG_ANSI_COLORS
 from prompt_toolkit.output.vt100 import _256_colors as _256_colors_table
+from prompt_toolkit.styles.pygments import pygments_token_to_classname
 
 import six
 import xml.dom.minidom as minidom
@@ -24,6 +25,7 @@ __all__ = (
     'FormattedText',
     'HTML',
     'ANSI',
+    'PygmentsTokens',
 )
 
 
@@ -108,6 +110,23 @@ class FormattedText(object):
 
     def __repr__(self):
         return 'FormattedText(%r)' % (self.data, )
+
+
+def PygmentsTokens(object):
+    """
+    Turn a pygments token list into a list of prompt_toolkit text fragments
+    (``(style_str, text)`` tuples).
+    """
+    def __init__(self, token_list):
+        self.token_list = token_list
+
+    def __pt_formatted_text__(self):
+        result = []
+
+        for token, text in self.token_list:
+            result.append(('class:' + pygments_token_to_classname(token), text))
+
+        return result
 
 
 class Template(object):

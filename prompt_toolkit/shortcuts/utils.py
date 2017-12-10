@@ -46,8 +46,8 @@ def print(*values, **kwargs):
         ])
         print(fragments, style=style)
 
-    If you want to print a list of Pygments tokens, use
-    ``prompt_toolkit.style.token_list_to_formatted_text`` to do the conversion.
+    If you want to print a list of Pygments tokens, wrap it in
+    ``prompt_toolkit.formatted_text.PygmentsTokens`` to do the conversion.
 
     :param values: Any kind of printable object, or formatted string.
     :param sep: String inserted between values, default a space.
