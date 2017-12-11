@@ -93,7 +93,6 @@ OutputSettings.__new__.__defaults__ = (
 class PGCli(object):
 
     default_prompt = '\\u@\\h:\\d> '
-    default_prompt_dsn = '\\dsn> '
     max_len_prompt = 30
 
     def set_default_pager(self, config):
@@ -125,7 +124,7 @@ class PGCli(object):
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
-        self.dsn_name = None
+        self.dsn_alias = None
 
         # Load config.
         c = self.config = get_config(pgclirc_file)
@@ -158,7 +157,7 @@ class PGCli(object):
         self.less_chatty = bool(less_chatty) or c['main'].as_bool('less_chatty')
         self.null_string = c['main'].get('null_string', '<null>')
         self.prompt_format = prompt if prompt is not None else c['main'].get('prompt', self.default_prompt)
-        self.prompt_dsn_format = prompt_dsn if prompt_dsn is not None else c['main'].get('prompt_dsn', self.default_prompt_dsn)
+        self.prompt_dsn_format = prompt_dsn
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
@@ -565,13 +564,16 @@ class PGCli(object):
             set_vi_mode_enabled=set_vi_mode)
 
         def prompt_tokens(_):
-            if self.dsn_name:
-                prompt = self.get_prompt(self.prompt_dsn_format)
+            if self.dsn_alias and self.prompt_dsn_format is not None:
+                prompt_format = self.prompt_dsn_format
             else:
-                prompt = self.get_prompt(self.prompt_format)
-                if (self.prompt_format == self.default_prompt and
-                   len(prompt) > self.max_len_prompt):
-                    prompt = self.get_prompt('\\d> ')
+                prompt_format = self.prompt_format
+
+            prompt = self.get_prompt(prompt_format)
+
+            if (prompt_format == self.default_prompt and
+               len(prompt) > self.max_len_prompt):
+                prompt = self.get_prompt('\\d> ')
 
             return [(Token.Prompt, prompt)]
 
@@ -783,15 +785,13 @@ class PGCli(object):
                 Document(text=text, cursor_position=cursor_positition), None)
 
     def get_prompt(self, string):
+        # should be before replacing \\d
+        string = string.replace('\\dsn_alias', self.dsn_alias or '')
         string = string.replace('\\t', self.now.strftime('%x %X'))
-        # if self.dsn_name and '\\dsn' in string
-        if self.dsn_name:
-            string = string.replace('\\dsn', self.dsn_name)
-        else:
-            string = string.replace('\\u', self.pgexecute.user or '(none)')
-            string = string.replace('\\h', self.pgexecute.host or '(none)')
-            string = string.replace('\\d', self.pgexecute.dbname or '(none)')
-            string = string.replace('\\p', str(self.pgexecute.port) or '(none)')
+        string = string.replace('\\u', self.pgexecute.user or '(none)')
+        string = string.replace('\\h', self.pgexecute.host or '(none)')
+        string = string.replace('\\d', self.pgexecute.dbname or '(none)')
+        string = string.replace('\\p', str(self.pgexecute.port) or '(none)')
         string = string.replace('\\i', str(self.pgexecute.pid) or '(none)')
         string = string.replace('\\#', "#" if (self.pgexecute.superuser) else ">")
         string = string.replace('\\n', "\n")
@@ -880,7 +880,7 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
                  err=True, fg='red')
             exit(1)
         pgcli.connect_uri(dsn_config)
-        pgcli.dsn_name = dsn
+        pgcli.dsn_alias = dsn
     elif '://' in database:
         pgcli.connect_uri(database)
     elif "=" in database:

@@ -119,16 +119,8 @@ less_chatty = False
 # \i - Postgres PID
 # \# - "@" sign if logged in as superuser, '>' in other case
 # \n - Newline
+# \dsn_alias - name of dsn alias if -D option is used (empty otherwise)
 prompt = '\u@\h:\d> '
-
-# Postgres prompt when using --dsn option
-# \t - Current date and time
-# \dsn - Selected DSN alias
-# \p - Database port
-# \i - Postgres PID
-# \# - "@" sign if logged in as superuser, '>' in other case
-# \n - Newline
-prompt_dsn = '\dsn> '
 
 # Number of lines to reserve for the suggestion menu
 min_num_menu_lines = 4
