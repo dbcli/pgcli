@@ -297,7 +297,7 @@ class _EscapeCodeCache(dict):
         def get(color, bg):
             table = BG_ANSI_COLORS if bg else FG_ANSI_COLORS
 
-            if color is None:
+            if not color:
                 return ()
 
             # 16 ANSI colors. (Given by name.)

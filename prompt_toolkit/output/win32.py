@@ -232,12 +232,12 @@ class Win32Output(Output):
         attrs = self.default_attrs
 
         # Override the last four bits: foreground color.
-        if fgcolor is not None:
+        if fgcolor:
             attrs = attrs & ~0xf
             attrs |= self.color_lookup_table.lookup_fg_color(fgcolor)
 
         # Override the next four bits: background color.
-        if bgcolor is not None:
+        if bgcolor:
             attrs = attrs & ~0xf0
             attrs |= self.color_lookup_table.lookup_bg_color(bgcolor)
 
