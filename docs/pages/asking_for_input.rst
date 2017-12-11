@@ -626,12 +626,14 @@ loop. Prompting the user for input is as simple as calling
 .. code:: python
 
     from prompt_toolkit import prompt
+    from prompt_toolkit.patch_stdout import patch_stdout
 
     async def my_coroutine():
         while True:
-            result = await prompt('Say something: ', patch_stdout=True, async_=True)
+            with patch_stdout():
+                result = await prompt('Say something: ', async_=True)
             print('You said: %s' % result)
 
-The ``patch_stdout=True`` parameter is optional, but it's recommended, because
-other coroutines could print to stdout. This option ensures that other output
+The ``patch_stdout()`` context manager is optional, but it's recommended,
+because other coroutines could print to stdout. This ensures that other output
 won't destroy the prompt.
