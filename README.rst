@@ -23,7 +23,7 @@ prompt_toolkit features
 ***********************
 
 ``prompt_toolkit`` could be a replacement for `GNU readline
-<http://cnswww.cns.cwru.edu/php/chet/readline/rltop.html>`_, but it can be much
+<https://tiswww.case.edu/php/chet/readline/rltop.html>`_, but it can be much
 more than that.
 
 Some features:
