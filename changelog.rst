@@ -1,9 +1,14 @@
 Upcoming
 ========
 
+TODO
+
+1.8.2
+=====
+
 Internal changes:
 -----------------
-* Use temporary dir as config location in tests
+* Use temporary dir as config location in tests. (Thanks: `Dmitry B`_)
 * Fix errors in the ``tee`` test (#795 and #797). (Thanks: `Irina Truong`_)
 * Increase timeout for quitting pgcli. (Thanks: `Dick Marinus`_)
 
@@ -756,3 +761,4 @@ Improvements:
 .. _`Gustavo Castro`: https://github.com/gustavo-castro
 .. _`Alexander Schmolck`: https://github.com/aschmolck
 .. _`Andrew Speed`: https://github.com/AndrewSpeed
+.. _`Dmitry B`: https://github.com/oxitnik
