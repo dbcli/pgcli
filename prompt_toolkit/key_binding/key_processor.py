@@ -78,8 +78,15 @@ class KeyProcessor(object):
         # registered in the key bindings.
 
     :param key_bindings: `KeyBindingsBase` instance.
+    :param timeout: Like Vim's `timeoutlen` option. This can be `None` or a float.
+        For instance, suppose that we have a key binding AB and a second key
+        binding A. If the uses presses A and then waits, we don't handle this
+        binding yet (unless it was marked 'eager'), because we don't know what
+        will follow. This timeout is the maximum amount of time that we wait
+        until we call the handlers anyway.
+        Pass `None` to disable this timeout.
     """
-    def __init__(self, key_bindings):
+    def __init__(self, key_bindings, timeout=1.0):
         assert isinstance(key_bindings, KeyBindingsBase)
 
         self._bindings = key_bindings
@@ -370,7 +377,9 @@ class KeyProcessor(object):
         no key was pressed in the meantime, we flush all data in the queue and
         call the appropriate key binding handlers.
         """
-        self._keys_pressed += 1
+        if self.timeout is None:
+            return
+
         counter = self._keys_pressed
 
         def wait():
