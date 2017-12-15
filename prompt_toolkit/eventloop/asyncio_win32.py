@@ -98,7 +98,7 @@ class Win32AsyncioEventLoop(EventLoop):
         # (Use an executor for this, the Windows asyncio event loop doesn't
         # allow us to wait for handles like stdin.)
         def wait():
-            if self._handle_callbacks[handle] != callback:
+            if self._handle_callbacks.get(handle) != callback:
                 return
 
             wait_for_handles([handle])
