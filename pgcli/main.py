@@ -830,7 +830,7 @@ class PGCli(object):
         default=False,
         help='Skip intro on startup and goodbye on exit.')
 @click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
-@click.option('--prompt-dsn', help='Prompt format for connections using DSN aliases (default to same as for --prompt option).')
+@click.option('--prompt-dsn', help='Prompt format for connections using DSN aliases (Default: "\\u@\\h:\\d> ").')
 @click.option('-l', '--list', 'list_databases', is_flag=True, help='list '
               'available databases, then exit.')
 @click.option('--auto-vertical-output', is_flag=True,
