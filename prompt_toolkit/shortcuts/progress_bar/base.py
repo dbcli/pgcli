@@ -111,7 +111,9 @@ class progress_bar(object):
         self.style = style
         self.key_bindings = key_bindings
 
-        self.output = output or create_output(stdout=file or sys.stderr)
+        # Note that we use __stderr__ as default error output, because that
+        # works best with `patch_stdout`.
+        self.output = output or create_output(stdout=file or sys.__stderr__)
         self.input = input or get_default_input()
 
         self._thread = None
