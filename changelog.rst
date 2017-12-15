@@ -1,6 +1,6 @@
 Upcoming
 ========
-* Use other prompt (prompt_dsn) when connecting using --dsn parameter
+* Use other prompt (prompt_dsn) when connecting using --dsn parameter. (Thanks: `Marcin Sztolcman`_)
 
 Internal changes:
 -----------------
