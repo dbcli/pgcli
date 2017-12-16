@@ -858,6 +858,10 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
     database = database or dbname
     user = username_opt or username
 
+    # because option --list or -l are not supposed to have a db name
+    if list_databases:
+        database = 'postgres'
+
     if dsn is not '':
         try:
             cfg = load_config(pgclirc, config_full_path)
