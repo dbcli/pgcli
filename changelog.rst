@@ -763,3 +763,4 @@ Improvements:
 .. _`Alexander Schmolck`: https://github.com/aschmolck
 .. _`Andrew Speed`: https://github.com/AndrewSpeed
 .. _`Dmitry B`: https://github.com/oxitnik
+.. _`Marcin Sztolcman`: https://github.com/msztolcman
