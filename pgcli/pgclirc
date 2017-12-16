@@ -131,6 +131,11 @@ multiline_continuation_char = ''
 # The string used in place of a null value.
 null_string = '<null>'
 
+# Representation of boolean False
+false_string = [31mfalse[0m
+# Representation of boolean True
+true_string = [32mtrue[0m
+
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
 Token.Menu.Completions.Completion.Current = 'bg:#ffffff #000000'

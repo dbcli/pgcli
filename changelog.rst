@@ -2,7 +2,7 @@ Upcoming
 ========
 * Use other prompt (prompt_dsn) when connecting using --dsn parameter. (Thanks: `Marcin Sztolcman`_)
 
-TODO
+* Colored and customizable booleans in output (Thanks: `Joakim Koljonen`_)
 
 1.8.2
 =====

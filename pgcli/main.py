@@ -83,10 +83,11 @@ MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     'OutputSettings',
-    'table_format dcmlfmt floatfmt missingval expanded max_width case_function'
+    'table_format dcmlfmt floatfmt missingval expanded max_width case_function, '
+    'bool_true, bool_false'
 )
 OutputSettings.__new__.__defaults__ = (
-    None, None, None, '<null>', False, None, lambda x: x
+    None, None, None, '<null>', False, None, lambda x: x, 'True', 'False'
 )
 
 
@@ -156,6 +157,8 @@ class PGCli(object):
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
         self.less_chatty = bool(less_chatty) or c['main'].as_bool('less_chatty')
         self.null_string = c['main'].get('null_string', '<null>')
+        self.false_string = c['main'].get('false_string', 'False')
+        self.true_string = c['main'].get('true_string', 'True')
         self.prompt_format = prompt if prompt is not None else c['main'].get('prompt', self.default_prompt)
         self.prompt_dsn_format = prompt_dsn
         self.on_error = c['main']['on_error'].upper()
@@ -680,6 +683,8 @@ class PGCli(object):
                 dcmlfmt=self.decimal_format,
                 floatfmt=self.float_format,
                 missingval=self.null_string,
+                bool_false=self.false_string,
+                bool_true=self.true_string,
                 expanded=expanded,
                 max_width=max_width,
                 case_function=(
@@ -992,20 +997,22 @@ def format_output(title, cur, headers, status, settings):
     case_function = settings.case_function
     formatter = TabularOutputFormatter(format_name=table_format)
 
-    def format_array(val):
+    def format_scalar(val):
+        if isinstance(val, bool):
+            return settings.bool_true if val else settings.bool_false
         if val is None:
             return settings.missingval
-        if not isinstance(val, list):
-            return val
-        return '{' + ','.join(text_type(format_array(e)) for e in val) + '}'
+        return val
 
-    def format_arrays(data, headers, **_):
+    def format_maybe_array(val):
+        if not isinstance(val, list):
+            return format_scalar(val)
+        return '{' + ','.join(text_type(format_maybe_array(e)) for e in val) + '}'
+
+    def format_any(data, headers, **_):
         data = list(data)
         for row in data:
-            row[:] = [
-                format_array(val) if isinstance(val, list) else val
-                for val in row
-            ]
+            row[:] = [format_maybe_array(val) for val in row]
 
         return data, headers
 
@@ -1013,10 +1020,9 @@ def format_output(title, cur, headers, status, settings):
         'sep_title': 'RECORD {n}',
         'sep_character': '-',
         'sep_length': (1, 25),
-        'missing_value': settings.missingval,
         'integer_format': settings.dcmlfmt,
         'float_format': settings.floatfmt,
-        'preprocessors': (format_numbers, format_arrays),
+        'preprocessors': (format_numbers, format_any),
         'disable_numparse': True,
         'preserve_whitespace': True
     }
