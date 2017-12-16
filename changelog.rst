@@ -16,6 +16,7 @@ Bug Fixes:
 ----------
 * Do NOT quote the database names in the completion menu (Thanks: `Amjith Ramanujam`_)
 * Fix error in ``unix_socket_directories`` (#805). (Thanks: `Irina Truong`_)
+* Fix the --list command line option tries to connect to 'personal' DB (#816). (Thanks: `Isank`_)
 
 1.8.1
 =====
