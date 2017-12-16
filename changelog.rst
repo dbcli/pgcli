@@ -757,3 +757,4 @@ Improvements:
 .. _`Gustavo Castro`: https://github.com/gustavo-castro
 .. _`Alexander Schmolck`: https://github.com/aschmolck
 .. _`Andrew Speed`: https://github.com/AndrewSpeed
+.. _`Marcin Sztolcman`: https://github.com/msztolcman
