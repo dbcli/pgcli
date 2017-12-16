@@ -572,7 +572,7 @@ class PGCli(object):
             prompt = self.get_prompt(prompt_format)
 
             if (prompt_format == self.default_prompt and
-               len(prompt) > self.max_len_prompt):
+                    len(prompt) > self.max_len_prompt):
                 prompt = self.get_prompt('\\d> ')
 
             return [(Token.Prompt, prompt)]
