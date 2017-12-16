@@ -765,4 +765,4 @@ Improvements:
 .. _`Andrew Speed`: https://github.com/AndrewSpeed
 .. _`Dmitry B`: https://github.com/oxitnik
 .. _`Marcin Sztolcman`: https://github.com/msztolcman
-.. _`Isan`: https://github.com/isank
+.. _`Isank`: https://github.com/isank
