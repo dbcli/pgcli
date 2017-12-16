@@ -1,5 +1,6 @@
 Upcoming
 ========
+* Use other prompt (prompt_dsn) when connecting using --dsn parameter. (Thanks: `Marcin Sztolcman`_)
 
 TODO
 
@@ -762,3 +763,4 @@ Improvements:
 .. _`Alexander Schmolck`: https://github.com/aschmolck
 .. _`Andrew Speed`: https://github.com/AndrewSpeed
 .. _`Dmitry B`: https://github.com/oxitnik
+.. _`Marcin Sztolcman`: https://github.com/msztolcman
