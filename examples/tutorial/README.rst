@@ -36,7 +36,7 @@ Let's get started!
 
 #. Loop The REPL
 
-   Now we call the ``prompt`` method in a loop while keeeping the line
+   Now we call the ``prompt`` method in a loop while keeping the line
    history in our ``InMemoryHistory`` object.
 
    .. code:: python
