@@ -365,7 +365,7 @@ class PGCli(object):
         # If we successfully parsed a password from a URI, there's no need to
         # prompt for it, even with the -W flag
         if self.force_passwd_prompt and not passwd:
-            passwd = click.prompt('Password', hide_input=True,
+            passwd = click.prompt('Password for %s' % user, hide_input=True,
                                   show_default=False, type=str)
 
         # Prompt for a password after 1st attempt to connect without a password
@@ -383,8 +383,9 @@ class PGCli(object):
             except (OperationalError, InterfaceError) as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
                         auto_passwd_prompt):
-                    passwd = click.prompt('Password', hide_input=True,
-                                          show_default=False, type=str)
+                    passwd = click.prompt('Password for %s' % user,
+                                          hide_input=True, show_default=False,
+                                          type=str)
                     pgexecute = PGExecute(database, user, passwd, host, port,
                                           dsn, **kwargs)
                 else:
