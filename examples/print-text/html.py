@@ -3,7 +3,9 @@
 Demonstration of how to print using the HTML class.
 """
 from __future__ import unicode_literals, print_function
-from prompt_toolkit import print, HTML
+from prompt_toolkit import print_formatted_text, HTML
+
+print = print_formatted_text
 
 
 def title(text):

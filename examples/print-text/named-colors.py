@@ -3,10 +3,12 @@
 Demonstration of all the ANSI colors.
 """
 from __future__ import unicode_literals, print_function
-from prompt_toolkit import print, HTML
+from prompt_toolkit import print_formatted_text, HTML
 from prompt_toolkit.output.defaults import create_output
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles.named_colors import NAMED_COLORS
+
+print = print_formatted_text
 
 
 def main():

@@ -1,11 +1,11 @@
 .. _printing_text:
 
-Printing text
-=============
+Printing formatted text
+=======================
 
-Prompt_toolkit ships with a ``print`` function that's meant to be (as much as
-possible) compatible with the built-in print function, but on top of that, also
-supports colors and formatting.
+Prompt_toolkit ships with a ``print_formatted_text`` function that's meant to
+be (as much as possible) compatible with the built-in print function, but on
+top of that, also supports colors and formatting.
 
 On Linux systems, this will output VT100 escape sequences, while on Windows it
 will use Win32 API calls or VT100 sequences, depending on what is available.
@@ -18,8 +18,17 @@ The print function can be imported as follows:
 
 .. code:: python
 
+    from __future__ import unicode_literals
+    from prompt_toolkit import print_formatted_text
+
+    print_formatted_text('Hello world')
+
+You can replace the built in ``print`` function as follows.
+
+.. code:: python
+
     from __future__ import unicode_literals, print_function
-    from prompt_toolkit import print
+    from prompt_toolkit import print_formatted_text as print
 
     print('Hello world')
 
@@ -55,7 +64,9 @@ italic and underline: ``<b>``, ``<i>`` and ``<u>``.
 .. code:: python
 
     from __future__ import unicode_literals, print_function
-    from prompt_toolkit import print, HTML
+    from prompt_toolkit import print_formatted_text, HTML
+
+    print = print_formatted_text
 
     print(HTML('<b>This is bold</b>'))
     print(HTML('<i>This is italic</b>'))
@@ -64,6 +75,8 @@ italic and underline: ``<b>``, ``<i>`` and ``<u>``.
 Further, it's possible to use tags for foreground colors:
 
 .. code:: python
+
+    print = print_formatted_text
 
     # Colors from the ANSI palette.
     print(HTML('<ansired>This is red</ansired>'))
@@ -80,7 +93,7 @@ Both foreground and background colors can also be defined using the `fg` and
 .. code:: python
 
     # Colors from the ANSI palette.
-    print(HTML('<span fg="#ff0044" bg="seegreen">Red on green</span>'))
+    print_formatted_text(HTML('<span fg="#ff0044" bg="seegreen">Red on green</span>'))
 
 
 Underneath, all tags are mapped to classes from the style sheet. So, if you use
@@ -89,7 +102,7 @@ a custom tag, then you can assign a style in the stylesheet.
 .. code:: python
 
     from __future__ import unicode_literals, print_function
-    from prompt_toolkit import print, HTML
+    from prompt_toolkit import print_formatted_text, HTML
     from prompt_toolkit.styles import Style
 
     style = Style.from_dict({
@@ -97,7 +110,7 @@ a custom tag, then you can assign a style in the stylesheet.
         'bbb': '#44ff00 italic',
     })
 
-    print(HTML('<aaa>Hello</aaa> <bbb>world</bbb>!'), style=style)
+    print_formatted_text(HTML('<aaa>Hello</aaa> <bbb>world</bbb>!'), style=style)
 
 
 ANSI
@@ -112,9 +125,9 @@ takes care of that.
 .. code:: python
 
     from __future__ import unicode_literals, print_function
-    from prompt_toolkit import print, ANSI
+    from prompt_toolkit import print_formatted_text, ANSI
 
-    print(ANSI('\x1b[31mhello \x1b[32mworld'))
+    print_formatted_text(ANSI('\x1b[31mhello \x1b[32mworld'))
 
 
 Style/text tuples
@@ -129,7 +142,7 @@ way of expressing formatted text.
 .. code:: python
 
     from __future__ import unicode_literals, print_function
-    from prompt_toolkit import print
+    from prompt_toolkit import print_formatted_text
     from prompt_toolkit.styles import Style
 
     text = [
@@ -138,7 +151,7 @@ way of expressing formatted text.
         ('#44ff00 italic', 'World'),
     ]
 
-    print(text, style=style)
+    print_formatted_text(text, style=style)
 
 Similar to the :class:`~prompt_toolkit.formatted_text.HTML` example, it is also
 possible to use class names, and separate the styling in a style sheet.
@@ -146,7 +159,7 @@ possible to use class names, and separate the styling in a style sheet.
 .. code:: python
 
     from __future__ import unicode_literals, print_function
-    from prompt_toolkit import print
+    from prompt_toolkit import print_formatted_text
     from prompt_toolkit.styles import Style
 
     # The text.
@@ -162,4 +175,4 @@ possible to use class names, and separate the styling in a style sheet.
         'bbb': '#44ff00 italic',
     })
 
-    print(text, style=style)
+    print_formatted_text(text, style=style)

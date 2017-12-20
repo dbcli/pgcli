@@ -7,17 +7,17 @@ from prompt_toolkit.styles import default_style, BaseStyle
 import six
 
 __all__ = (
-    'print',
+    'print_formatted_text',
     'clear',
     'set_title',
     'clear_title',
 )
 
 
-def print(*values, **kwargs):
+def print_formatted_text(*values, **kwargs):
     """
     ::
-        print(*values, sep=' ', end='\n', file=None, flush=False, style=None, output=None)
+        print_formatted_text(*values, sep=' ', end='\n', file=None, flush=False, style=None, output=None)
 
     Print text to stdout. This is supposed to be compatible with Python's print
     function, but supports printing of formatted text. You can pass a
@@ -25,13 +25,13 @@ def print(*values, **kwargs):
 
     * Print HTML as follows::
 
-        print(HTML('<i>Some italic text</i> <ansired>This is red!</ansired>'))
+        print_formatted_text(HTML('<i>Some italic text</i> <ansired>This is red!</ansired>'))
 
         style = Style.from_dict({
             'hello': '#ff0066',
             'world': '#884444 italic',
         })
-        print(HTML('<hello>Hello</hello> <world>world</world>!'), style=style)
+        print_formatted_text(HTML('<hello>Hello</hello> <world>world</world>!'), style=style)
 
     * Print a list of (style_str, text) tuples in the given style to the
       output.  E.g.::
@@ -44,7 +44,7 @@ def print(*values, **kwargs):
             ('class:hello', 'Hello'),
             ('class:world', 'World'),
         ])
-        print(fragments, style=style)
+        print_formatted_text(fragments, style=style)
 
     If you want to print a list of Pygments tokens, wrap it in
     ``prompt_toolkit.formatted_text.PygmentsTokens`` to do the conversion.
