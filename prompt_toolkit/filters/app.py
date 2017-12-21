@@ -11,6 +11,7 @@ import six
 __all__ = (
     'has_arg',
     'has_completions',
+    'completion_is_selected',
     'has_focus',
     'buffer_has_focus',
     'has_selection',
@@ -106,6 +107,16 @@ def has_completions():
     Enable when the current buffer has completions.
     """
     return get_app().current_buffer.complete_state is not None
+
+
+@Condition
+def completion_is_selected():
+    """
+    True when the user selected a completion.
+    """
+    complete_state = get_app().current_buffer.complete_state
+    return (complete_state is not None and
+            complete_state.current_completion is not None)
 
 
 @Condition
