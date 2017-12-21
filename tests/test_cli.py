@@ -49,7 +49,7 @@ def _feed_cli_with_input(
                    extra_key_bindings=extra_key_bindings)
 
         result = p.prompt()
-        return p._default_buffer.document, p.app
+        return p.default_buffer.document, p.app
 
     finally:
         inp.close()

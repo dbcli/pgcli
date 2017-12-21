@@ -273,7 +273,7 @@ class Prompt(object):
                 value = locals()[name]
                 setattr(self, name, value)
 
-        self.app, self._default_buffer, self._default_buffer_control = \
+        self.app, self.default_buffer, self._default_buffer_control = \
             self._create_application(editing_mode, erase_when_done)
 
     def _create_application(self, editing_mode, erase_when_done):
@@ -533,7 +533,7 @@ class Prompt(object):
         @handle('enter', filter=do_accept & default_focussed)
         def _(event):
             " Accept input when enter has been pressed. "
-            self._default_buffer.validate_and_handle()
+            self.default_buffer.validate_and_handle()
 
         @Condition
         def readline_complete_style():
@@ -642,7 +642,7 @@ class Prompt(object):
         def run_sync():
             with self._auto_refresh_context():
                 try:
-                    self._default_buffer.reset(Document(self.default))
+                    self.default_buffer.reset(Document(self.default))
                     return self.app.run()
                 finally:
                     restore()
@@ -650,7 +650,7 @@ class Prompt(object):
         def run_async():
             with self._auto_refresh_context():
                 try:
-                    self._default_buffer.reset(Document(self.default))
+                    self.default_buffer.reset(Document(self.default))
                     result = yield From(self.app.run_async())
                     raise Return(result)
                 finally:
@@ -679,7 +679,7 @@ class Prompt(object):
             space = 0
 
         if space and not get_app().is_done:
-            buff = self._default_buffer
+            buff = self.default_buffer
 
             # Reserve the space, either when there are completions, or when
             # `complete_while_typing` is true and we expect completions very
@@ -732,14 +732,14 @@ def create_confirm_prompt(message):
     @bindings.add('y')
     @bindings.add('Y')
     def yes(event):
-        prompt._default_buffer.text = 'y'
+        prompt.default_buffer.text = 'y'
         event.app.set_result(True)
 
     @bindings.add('n')
     @bindings.add('N')
     @bindings.add('c-c')
     def no(event):
-        prompt._default_buffer.text = 'n'
+        prompt.default_buffer.text = 'n'
         event.app.set_result(False)
 
     @bindings.add(Keys.Any)
