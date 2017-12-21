@@ -1,11 +1,11 @@
-Upcoming
-========
-* Use other prompt (prompt_dsn) when connecting using --dsn parameter. (Thanks: `Marcin Sztolcman`_)
-
-TODO
-
 1.8.2
 =====
+
+Features:
+---------
+
+* Use other prompt (prompt_dsn) when connecting using --dsn parameter. (Thanks: `Marcin Sztolcman`_)
+* Include username into password prompt. (Thanks: `Bojan Delić`_)
 
 Internal changes:
 -----------------
@@ -766,3 +766,4 @@ Improvements:
 .. _`Dmitry B`: https://github.com/oxitnik
 .. _`Marcin Sztolcman`: https://github.com/msztolcman
 .. _`Isank`: https://github.com/isank
+.. _`Bojan Delić`: https://github.com/delicb
