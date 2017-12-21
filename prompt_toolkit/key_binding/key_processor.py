@@ -25,6 +25,7 @@ import weakref
 __all__ = (
     'KeyProcessor',
     'KeyPress',
+    'KeyPressEvent',
 )
 
 
