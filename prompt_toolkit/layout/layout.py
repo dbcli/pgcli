@@ -190,6 +190,16 @@ class Layout(object):
         if isinstance(ui_control, BufferControl):
             return ui_control.buffer
 
+    def get_buffer_by_name(self, buffer_name):
+        """
+        Look in the layout for a buffer with the given name.
+        Return `None` when nothing was found.
+        """
+        for w in self.walk():
+            if isinstance(w, Window) and isinstance(w.content, BufferControl):
+                if w.content.buffer.name == buffer_name:
+                    return w.content.buffer
+
     @property
     def buffer_has_focus(self):
         """
