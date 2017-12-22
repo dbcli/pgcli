@@ -312,14 +312,14 @@ Internal Changes:
 
 Bug Fixes:
 ----------
-* Fixed logging in Windows by switching the location of log and history file based on OS. (Thanks: Amjith, `Darik Gamble`_, `Iryna Cherniavska`_).
+* Fixed logging in Windows by switching the location of log and history file based on OS. (Thanks: Amjith, `Darik Gamble`_, `Irina Truong`_).
 
 0.20.0
 ======
 
 Features:
 ---------
-* Perform auto-completion refresh in background. (Thanks: Amjith, `Darik Gamble`_, `Iryna Cherniavska`_).
+* Perform auto-completion refresh in background. (Thanks: Amjith, `Darik Gamble`_, `Irina Truong`_).
   When the auto-completion entries are refreshed, the update now happens in a
   background thread. This means large databases with thousands of tables are
   handled without blocking.
@@ -334,7 +334,7 @@ Features:
 * Suggest set-returning functions as tables. (Thanks: `Darik Gamble`_).
   Functions that return table like results will now be suggested in places of tables.
 * Suggest fields from functions used as tables. (Thanks: `Darik Gamble`_).
-* Using ``pgspecial`` as a separate module. (Thanks: `Iryna Cherniavska`_).
+* Using ``pgspecial`` as a separate module. (Thanks: `Irina Truong`_).
 * Make "enter" key behave as "tab" key when the completion menu is displayed. (Thanks: `Matheus Rosa`_).
 * Support different error-handling options when running multiple queries. (Thanks: `Darik Gamble`_).
   When ``on_error = STOP`` in the config file, pgcli will abort execution if one of the queries results in an error.
@@ -357,7 +357,7 @@ Improvements:
 
 Internal Changes:
 -----------------
-* Improvements to integration tests to make it more robust. (Thanks: `Iryna Cherniavska`_).
+* Improvements to integration tests to make it more robust. (Thanks: `Irina Truong`_).
 
 0.19.2
 ======
@@ -370,9 +370,9 @@ Features:
 * Added \pager command.
 * Enhanced \i to run multiple queries and display the results for each of them
 * Added keywords to suggestions after WHERE clause.
-* Enabled autocompletion in named queries. (Thanks: `Iryna Cherniavska`_).
-* Path to .pgclirc can be specified in command line. (Thanks: `Iryna Cherniavska`_).
-* Added support for pg_service_conf file. (Thanks: `Iryna Cherniavska`_).
+* Enabled autocompletion in named queries. (Thanks: `Irina Truong`_).
+* Path to .pgclirc can be specified in command line. (Thanks: `Irina Truong`_).
+* Added support for pg_service_conf file. (Thanks: `Irina Truong`_).
 * Added custom styles. (Contributor: `Darik Gamble`_).
 
 Internal Changes:
@@ -429,9 +429,9 @@ BugFixes:
 Internal Changes:
 -----------------
 
-* Added more behaviorial tests (Thanks: `Iryna Cherniavska`_)
-* Added code coverage to the tests. (Thanks: `Iryna Cherniavska`_)
-* Run behaviorial tests as part of TravisCI (Thanks: `Iryna Cherniavska`_)
+* Added more behaviorial tests (Thanks: `Irina Truong`_)
+* Added code coverage to the tests. (Thanks: `Irina Truong`_)
+* Run behaviorial tests as part of TravisCI (Thanks: `Irina Truong`_)
 * Upgraded prompt_toolkit version to 0.45 (Thanks: `Jonathan Slenders`_)
 * Update the minumum required version of click to 4.1.
 
@@ -479,7 +479,7 @@ Features:
 * Pasting queries into the pgcli repl is orders of magnitude faster. (Thanks: `Jonathan Slenders`_)
 
 * Add support for PGPASSWORD environment variable to pass the password for the
-  postgres database. (Thanks: `Iryna Cherniavska`_)
+  postgres database. (Thanks: `Irina Truong`_)
 
 * Add the ability to manually refresh autocompletions by typing ``\#`` or
   ``\refresh``. This is useful if the database was updated by an external means
@@ -499,7 +499,7 @@ Internal Changes:
 * Complete refactor of handling the back-slash commands.
 * Upgrade prompt_toolkit to 0.42. (Thanks: `Jonathan Slenders`_)
 * Change the config file management to use ConfigObj.(Thanks: `Brett Atoms`_)
-* Add integration tests using ``behave``. (Thanks: `Iryna Cherniavska`_)
+* Add integration tests using ``behave``. (Thanks: `Irina Truong`_)
 
 0.17.0
 ======
@@ -515,9 +515,9 @@ Features:
   word is in the middle of a suggestion.
   eg: When you type 'mig', 'django_migrations' will be suggested.
 * Completion for built-in tables and temporary tables are suggested after entering a prefix of ``pg_``. (Thanks: `Darik Gamble`_)
-* Add place holder doc strings for special commands that are planned for implementation. (Thanks: `Iryna Cherniavska`_)
+* Add place holder doc strings for special commands that are planned for implementation. (Thanks: `Irina Truong`_)
 * Updated version of prompt_toolkit, now matching braces are highlighted. (Thanks: `Jonathan Slenders`_)
-* Added support of ``\\e`` command. Queries can be edited in an external editor. (Thanks: `Iryna Cherniavska`_)
+* Added support of ``\\e`` command. Queries can be edited in an external editor. (Thanks: `Irina Truong`_)
   eg: When you type ``SELECT * FROM \e`` it will be opened in an external editor.
 * Add special command ``\dT`` to show datatypes. (Thanks: `Darik Gamble`_)
 * Add auto-completion support for datatypes in CREATE, SELECT etc. (Thanks: `Darik Gamble`_)
@@ -623,7 +623,7 @@ Bug Fixes:
 
 Features:
 ---------
-* Add alias completion support to ON keyword. (Thanks: `Iryna Cherniavska`_)
+* Add alias completion support to ON keyword. (Thanks: `Irina Truong`_)
 * Add LIMIT keyword to completion.
 * Auto-completion for Postgres schemas. (Thanks: `Darik Gamble`_)
 * Better unicode handling for datatypes, dbname and roles.
@@ -708,7 +708,6 @@ Improvements:
 
 .. _`Amjith Ramanujam`: https://github.com/amjith
 .. _`Darik Gamble`: https://github.com/darikg
-.. _`Iryna Cherniavska`: https://github.com/j-bennet
 .. _`Daniel Rocco`: https://github.com/drocco007
 .. _`Jay Zeng`:  https://github.com/jayzeng
 .. _`蔡佳男`: https://github.com/xalley
