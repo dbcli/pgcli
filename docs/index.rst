@@ -63,6 +63,7 @@ Table of contents
 
    pages/gallery
    pages/getting_started
+   pages/upgrading
    pages/printing_text
    pages/asking_for_input
    pages/dialogs
