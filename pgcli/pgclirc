@@ -157,7 +157,7 @@ Token.Toolbar.Transaction.Failed = 'bg:#222222 #ff005f bold'
 # Named queries are queries you can execute by name.
 [named queries]
 
-# DNS to call by -D option
+# DSN to call by -D option
 [alias_dsn]
 # example_dsn = postgresql://[user[:password]@][netloc][:port][/dbname]
 
