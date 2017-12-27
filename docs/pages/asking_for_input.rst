@@ -196,6 +196,16 @@ cursor with any of the given words.
 
 .. image:: ../images/html-completion.png
 
+.. note::
+
+    Note that in prompt_toolkit 2.0, the auto completion became synchronous. This
+    means that if it takes a long time to compute the completions, that this
+    will block the event loop and the input processing.
+
+    For heavy completion algorithms, it is recommended to wrap the completer in
+    a :class:`~prompt_toolkit.completion.ThreadedCompleter` in order to run it
+    in a background thread.
+
 
 A custom completer
 ^^^^^^^^^^^^^^^^^^

@@ -94,6 +94,12 @@ features.
 - New utilities were added. We now have function for printing formatted text
   and an experimental module for displaying progress bars.
 
+- Autocompletion, input validation, and auto suggestion can now either be
+  asynchronous or synchronous. By default they are synchronous, but by wrapping
+  them in ``ThreadedCompleter``, ``ThreadedValidator`` or
+  ``ThreadedAutoSuggest``, they will become asynchronous by running in a
+  background thread.
+
 
 Upgrading
 ---------
