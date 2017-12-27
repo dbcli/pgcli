@@ -214,8 +214,9 @@ Filters
 Key binding
 -----------
 
-.. automodule:: prompt_toolkit.key_binding.key_bindings
-    :members:
+.. automodule:: prompt_toolkit.key_binding
+    :members: KeyBindingsBase, KeyBindings, ConditionalKeyBindings,
+        merge_key_bindings, DynamicKeyBindings
 
 .. automodule:: prompt_toolkit.key_binding.defaults
     :members:

@@ -55,9 +55,9 @@ full screen applications. These are the most important:
 - The way that key bindings were defined was too complex.
   ``KeyBindingsManager`` was too complex and no longer exists. Every set of key
   bindings is now a
-  :class:`~prompt_toolkit.key_binding.key_bindings.KeyBindings` object and
-  multiple of these can be merged together at any time. The runtime performance
-  remains the same, but it's now easier for users.
+  :class:`~prompt_toolkit.key_binding.KeyBindings` object and multiple of these
+  can be merged together at any time. The runtime performance remains the same,
+  but it's now easier for users.
 
 - The separation between the ``CommandLineInterface`` and
   :class:`~prompt_toolkit.application.Application` class was confusing and in

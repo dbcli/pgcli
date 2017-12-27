@@ -1,6 +1,7 @@
 Advanced topics
 ---------------
 
+- :ref:`Key bindings <key_bindings>`
 - :ref:`Filters <filters>`
 - :ref:`The rendering flow <rendering_flow>`
 - :ref:`Running on top of the asyncio event loop <asyncio>`

@@ -60,7 +60,7 @@ This filter can then be used in a key binding, like in the following snippet:
 
 .. code:: python
 
-    from prompt_toolkit.key_binding.key_bindings import KeyBindings
+    from prompt_toolkit.key_binding import KeyBindings
 
     kb = KeyBindings()
 
@@ -126,7 +126,7 @@ Some examples:
 
 .. code:: python
 
-    from prompt_toolkit.key_binding.key_bindings import KeyBindings
+    from prompt_toolkit.key_binding import KeyBindings
     from prompt_toolkit.filters import has_selection, has_selection
 
     kb = KeyBindings()

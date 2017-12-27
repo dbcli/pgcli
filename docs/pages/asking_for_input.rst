@@ -423,7 +423,7 @@ Adding custom key bindings
 
 By default, every prompt already has a set of key bindings which implements the
 usual Vi or Emacs behaviour. We can extend this by passing another
-:class:`~prompt_toolkit.key_binding.key_bindings.KeyBindings` instance to the
+:class:`~prompt_toolkit.key_binding.KeyBindings` instance to the
 ``key_bindings`` argument of the :func:`~prompt_toolkit.shortcuts.prompt`
 function.
 
@@ -473,11 +473,12 @@ filters <filters>`.)
 
     bindings = KeyBindings()
 
+    @Condition
     def is_active():
         " Only activate key binding on the second half of each minute. "
         return datetime.datetime.now().second > 30
 
-    @bindings.add('c-t', filter=Condition(is_active))
+    @bindings.add('c-t', filter=is_active)
     def _(event):
         # ...
         pass
@@ -525,6 +526,8 @@ attribute. We can change the key bindings by changing this attribute from
         prompt('> ', key_bindings=bindings, bottom_toolbar=bottom_toolbar)
 
     run()
+
+:ref:`Read more about key bindings ...<key_bindings>`
 
 
 Other prompt options

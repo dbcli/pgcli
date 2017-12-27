@@ -233,7 +233,7 @@ Key bindings
 ------------
 
 In order to react to user actions, we need to create a
-:class:`~prompt_toolkit.key_binding.key_bindings.KeyBindings` object and pass
+:class:`~prompt_toolkit.key_binding.KeyBindings` object and pass
 that to our :class:`~prompt_toolkit.application.Application`.
 
 There are two kinds of key bindings:
@@ -253,20 +253,20 @@ Global key bindings
 .. code:: python
 
     from prompt_toolkit import Application
-    from prompt_toolkit.key_binding.key_bindings import KeyBindings
+    from prompt_toolkit.key_binding import KeyBindings
 
     kb = KeyBindings()
     app = Application(key_bindings=kb)
     app.run()
 
 To register a new keyboard shortcut, we can use the
-:meth:`~prompt_toolkit.key_binding.key_bindings.KeyBindings.add` method as a
-decorator of the key handler:
+:meth:`~prompt_toolkit.key_binding.KeyBindings.add` method as a decorator of
+the key handler:
 
 .. code:: python
 
     from prompt_toolkit import Application
-    from prompt_toolkit.key_binding.key_bindings import KeyBindings
+    from prompt_toolkit.key_binding import KeyBindings
 
     kb = KeyBindings()
 
