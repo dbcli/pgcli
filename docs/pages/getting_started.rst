@@ -34,16 +34,16 @@ Basically, at the core, `prompt_toolkit` has a layout engine, that supports
 horizontal and vertical splits as well as floats, where each "window" can
 display a user control. The API for user controls is simple yet powerful.
 
-When `prompt_toolkit` is used to simply read some input from the user, it uses
-a rather simple built-in layout. One that displays the default input buffer and
-the prompt, a float for the autocompletions and a toolbar for input validation
-which is hidden by default.
+When `prompt_toolkit` is used as a readline replacement, (to simply read some
+input from the user), it uses a rather simple built-in layout. One that
+displays the default input buffer and the prompt, a float for the
+autocompletions and a toolbar for input validation which is hidden by default.
 
-For full screen applications, usually we build the layout ourself, because
-that's very custom.
+For full screen applications, usually we build a custom layout ourself.
 
 Further, there is a very flexible key binding system that can be programmed for
 all the needs of full screen applications.
+
 
 A simple prompt
 ---------------
@@ -79,4 +79,6 @@ in the repository.
 
 - Then, learn about :ref:`dialogs`, which is easy and fun.
 
-- Finally, learn about :ref:`full_screen_applications`.
+- Finally, learn about :ref:`full screen applications
+  <full_screen_applications>` and read through :ref:`the advanced topics
+  <advanced_topics>`.
