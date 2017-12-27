@@ -1,13 +1,14 @@
 """
 Many places in prompt_toolkit can take either plain text, or formatted text.
-For instance the ``shortcuts.prompt()`` function takes either plain text or
-formatted text for the prompt. The ``FormattedTextControl`` can also take
+For instance the ``prompt_toolkit.shortcuts.prompt`` function takes either
+plain text or formatted text for the prompt. The
+:class:`~prompt_toolkit.layout.controls.FormattedTextControl` can also take
 either plain text or formatted text.
 
 In any case, there is an input that can either be just plain text (a string),
-an `HTML` object, an `ANSI` object or a sequence of ``(style_string, text)``
-tuples. The ``to_formatted_text`` conversion function takes any of these and
-turns all of them into such a tuple sequence.
+an :class:`.HTML` object, an :class:`.ANSI` object or a sequence of
+`(style_string, text)` tuples. The :func:`.to_formatted_text` conversion
+function takes any of these and turns all of them into such a tuple sequence.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.output.vt100 import FG_ANSI_COLORS, BG_ANSI_COLORS
@@ -295,12 +296,12 @@ class ANSI(object):
 
     ::
 
-        ANSI('\x1b[31mhello \x1b[32mworld')
+        ANSI('\\x1b[31mhello \\x1b[32mworld')
 
-    Characters between \001 and \002 are supposed to have a zero width when
-    printed, but these are literally sent to the terminal output. This can be
-    used for instance, for inserting Final Term prompt commands.
-    They will be translated into a prompt_toolkit '[ZeroWidthEscape]' fragment.
+    Characters between ``\\001`` and ``\\002`` are supposed to have a zero width
+    when printed, but these are literally sent to the terminal output. This can
+    be used for instance, for inserting Final Term prompt commands.  They will
+    be translated into a prompt_toolkit '[ZeroWidthEscape]' fragment.
     """
     def __init__(self, value):
         self.value = value

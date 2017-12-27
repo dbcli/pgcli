@@ -17,11 +17,15 @@ __all__ = (
 def print_formatted_text(*values, **kwargs):
     """
     ::
-        print_formatted_text(*values, sep=' ', end='\n', file=None, flush=False, style=None, output=None)
+
+        print_formatted_text(*values, sep=' ', end='\\n', file=None, flush=False, style=None, output=None)
 
     Print text to stdout. This is supposed to be compatible with Python's print
     function, but supports printing of formatted text. You can pass a
-    ``FormattedText``, ``HTML`` or ``ANSI`` object to print formatted text.
+    :class:`~prompt_toolkit.formatted_text.FormattedText`,
+    :class:`~prompt_toolkit.formatted_text.HTML` or
+    :class:`~prompt_toolkit.formatted_text.ANSI` object to print formatted
+    text.
 
     * Print HTML as follows::
 
@@ -47,7 +51,8 @@ def print_formatted_text(*values, **kwargs):
         print_formatted_text(fragments, style=style)
 
     If you want to print a list of Pygments tokens, wrap it in
-    ``prompt_toolkit.formatted_text.PygmentsTokens`` to do the conversion.
+    :class:`~prompt_toolkit.formatted_text.PygmentsTokens` to do the
+    conversion.
 
     :param values: Any kind of printable object, or formatted string.
     :param sep: String inserted between values, default a space.

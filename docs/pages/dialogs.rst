@@ -67,9 +67,9 @@ selection.
 Styling of dialogs
 ------------------
 
-A custom :class:`~prompt_toolkit.styles.style.Style` instance can be passed to
-all dialogs to override the default style. Also, text can be styled by passing
-an :class:`~prompt_toolkit.formatted_text.HTML` object.
+A custom :class:`~prompt_toolkit.styles.Style` instance can be passed to all
+dialogs to override the default style. Also, text can be styled by passing an
+:class:`~prompt_toolkit.formatted_text.HTML` object.
 
 
 .. code:: python

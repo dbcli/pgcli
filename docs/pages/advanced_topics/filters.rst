@@ -119,8 +119,8 @@ as a function.
 Combining filters
 ^^^^^^^^^^^^^^^^^
 
-Filters can be chained with the ``&`` and ``|`` operators and negated with the
-``~`` operator.
+Filters can be chained with the ``&`` (AND) and ``|`` (OR) operators and
+negated with the ``~`` (negation) operator.
 
 Some examples:
 
