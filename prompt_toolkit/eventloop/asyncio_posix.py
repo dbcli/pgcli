@@ -29,10 +29,16 @@ class PosixAsyncioEventLoop(EventLoop):
         # was not created here.
         self.closed = True
 
-    def run_until_complete(self, future):
+    def run_until_complete(self, future, inputhook=None):
+        if inputhook:
+            raise ValueError("PosixAsyncioEventLoop doesn't support input hooks.")
+
         return self.loop.run_until_complete(future)
 
-    def run_forever(self):
+    def run_forever(self, inputhook=None):
+        if inputhook:
+            raise ValueError("PosixAsyncioEventLoop doesn't support input hooks.")
+
         self.loop.run_forever()
 
     def run_in_executor(self, callback, _daemon=False):

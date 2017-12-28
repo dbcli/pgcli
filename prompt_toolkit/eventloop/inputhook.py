@@ -37,12 +37,8 @@ class InputHookContext(object):
     """
     Given as a parameter to the inputhook.
     """
-    def __init__(self, inputhook):
-        assert callable(inputhook)
-
-        self.inputhook = inputhook
+    def __init__(self):
         self._input_is_ready = None
-
         self._r, self._w = os.pipe()
 
     def input_is_ready(self):
@@ -57,10 +53,21 @@ class InputHookContext(object):
         """
         return self._r
 
-    def call_inputhook(self, input_is_ready_func):
+    def call_inputhook(self, input_is_ready_func, inputhook):
         """
         Call the inputhook. (Called by a prompt-toolkit eventloop.)
+
+        :param input_is_ready_func: A callable which returns True when there is
+            input ready for the main event loop to process. This means that we
+            should quit our input hook. This callable takes a boolean `wait`.
+            Wen `True` this needs to be a blocking call which only returns when
+            there is input ready.
+        :param inputhook: This is a callable that runs the inputhook. This
+            function should take this object (the `InputHookContext`) as input.
         """
+        assert callable(input_is_ready_func)
+        assert callable(inputhook)
+
         self._input_is_ready = input_is_ready_func
 
         # Start thread that activates this pipe when there is input to process.
@@ -71,7 +78,7 @@ class InputHookContext(object):
         threading.Thread(target=thread).start()
 
         # Call inputhook.
-        self.inputhook(self)
+        inputhook(self)
 
         # Flush the read end of the pipe.
         try:

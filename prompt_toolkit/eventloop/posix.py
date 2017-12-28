@@ -22,8 +22,7 @@ class PosixEventLoop(EventLoop):
     """
     Event loop for posix systems (Linux, Mac os X).
     """
-    def __init__(self, inputhook=None, selector=AutoSelector):
-        assert inputhook is None or callable(inputhook)
+    def __init__(self, selector=AutoSelector):
         assert issubclass(selector, Selector)
 
         super(PosixEventLoop, self).__init__()
@@ -43,15 +42,17 @@ class PosixEventLoop(EventLoop):
         self.selector.register(self._schedule_pipe[0])
 
         # Create inputhook context.
-        self._inputhook_context = InputHookContext(inputhook) if inputhook else None
+        self._inputhook_context = None
 
-    def run_until_complete(self, future):
+    def run_until_complete(self, future, inputhook=None):
         """
         Keep running the event loop until `future` has been set.
 
         :param future: :class:`prompt_toolkit.eventloop.future.Future` object.
         """
         assert isinstance(future, Future)
+        assert inputhook is None or callable(inputhook)
+
         if self._running:
             raise Exception('Event loop is already running')
 
@@ -62,22 +63,26 @@ class PosixEventLoop(EventLoop):
             self._running = True
 
             while not future.done():
-                self._run_once()
+                self._run_once(inputhook)
 
             # Run one last time, to flush the pending `_calls_from_executor`s.
             if self._calls_from_executor:
-                self._run_once()
+                self._run_once(inputhook)
 
         finally:
             self._running = False
 
-    def _run_once(self):
+    def _run_once(self, inputhook):
         # Call inputhook.
-        if self._inputhook_context:
+        if inputhook:
+            # Create input hook context.
+            if self._inputhook_context is None:
+                self._inputhook_context = InputHookContext()
+
             def ready(wait):
                 " True when there is input ready. The inputhook should return control. "
                 return self._ready_for_reading(None if wait else 0) != []
-            self._inputhook_context.call_inputhook(ready)
+            self._inputhook_context.call_inputhook(ready, inputhook)
 
         # Wait until input is ready.
         fds = self._ready_for_reading(None)

@@ -198,6 +198,8 @@ class Prompt(object):
         the user).
     :param refresh_interval: (number; in seconds) When given, refresh the UI
         every so many seconds.
+    :param inputhook: None or an Inputook callable that takes an
+        `InputHookContext` object.
     """
     _fields = (
         'message', 'lexer', 'completer', 'is_password', 'editing_mode',
@@ -209,7 +211,7 @@ class Prompt(object):
         'clipboard', 'validator',
         'refresh_interval', 'extra_input_processor', 'default',
         'enable_system_prompt', 'enable_suspend', 'enable_open_in_editor',
-        'reserve_space_for_menu', 'tempfile_suffix')
+        'reserve_space_for_menu', 'tempfile_suffix', 'inputhook')
 
     def __init__(
             self,
@@ -243,6 +245,7 @@ class Prompt(object):
             extra_key_bindings=None,
             erase_when_done=False,
             tempfile_suffix='.txt',
+            inputhook=None,
 
             refresh_interval=0,
             input=None,
@@ -614,7 +617,7 @@ class Prompt(object):
             clipboard=None, mouse_support=None, extra_input_processor=None,
             reserve_space_for_menu=None, enable_system_prompt=None,
             enable_suspend=None, enable_open_in_editor=None,
-            tempfile_suffix=None,
+            tempfile_suffix=None, inputhook=None,
             async_=False):
         """
         Display the prompt.
@@ -643,7 +646,7 @@ class Prompt(object):
             with self._auto_refresh_context():
                 try:
                     self.default_buffer.reset(Document(self.default))
-                    return self.app.run()
+                    return self.app.run(inputhook=self.inputhook)
                 finally:
                     restore()
 

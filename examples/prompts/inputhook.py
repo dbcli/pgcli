@@ -14,6 +14,7 @@ There are two ways to know when input is ready. One way is to poll
 from __future__ import unicode_literals
 
 from prompt_toolkit.eventloop.defaults import create_event_loop
+from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.shortcuts import Prompt
 from pygments.lexers import PythonLexer
@@ -74,8 +75,8 @@ def main():
     # and that should print nicely 'above' the input line.
     with patch_stdout():
         prompt = Prompt('Python >>> ',
-                        eventloop=create_event_loop(inputhook=inputhook),
-                        lexer=PythonLexer)
+                        inputhook=inputhook,
+                        lexer=PygmentsLexer(PythonLexer))
         result = prompt.prompt()
     print('You said: %s' % result)
 

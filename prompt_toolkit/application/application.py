@@ -559,19 +559,20 @@ class Application(object):
 
         return ensure_future(_run_async2())
 
-    def run(self, pre_run=None, set_exception_handler=True):
+    def run(self, pre_run=None, set_exception_handler=True, inputhook=None):
         """
         A blocking 'run' call that waits until the UI is finished.
 
         :param set_exception_handler: When set, in case of an exception, go out
             of the alternate screen and hide the application, display the
             exception, and wait for the user to press ENTER.
+        :param inputhook: None or a callable that takes an `InputHookContext`.
         """
         loop = get_event_loop()
 
         def run():
             f = self.run_async(pre_run=pre_run)
-            run_until_complete(f)
+            run_until_complete(f, inputhook=inputhook)
             return f.result()
 
         def handle_exception(context):

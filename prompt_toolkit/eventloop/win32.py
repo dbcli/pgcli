@@ -31,9 +31,7 @@ class Win32EventLoop(EventLoop):
     :param recognize_paste: When True, try to discover paste actions and turn
         the event into a BracketedPaste.
     """
-    def __init__(self, inputhook=None, recognize_paste=True):
-        assert inputhook is None or callable(inputhook)
-
+    def __init__(self, recognize_paste=True):
         super(Win32EventLoop, self).__init__()
 
         self._event = _create_event()
@@ -46,15 +44,17 @@ class Win32EventLoop(EventLoop):
         self._read_fds = {}  # Maps fd to handler.
 
         # Create inputhook context.
-        self._inputhook_context = InputHookContext(inputhook) if inputhook else None
+        self._inputhook_context = None
 
-    def run_until_complete(self, future):
+    def run_until_complete(self, future, inputhook=None):
         """
         Keep running the event loop until `future` has been set.
 
         :param future: :class:`prompt_toolkit.eventloop.future.Future` object.
         """
         assert isinstance(future, Future)
+        assert inputhook is None or callable(inputhook)
+
         if self._running:
             raise Exception('Event loop is already running')
         if self.closed:
@@ -64,22 +64,26 @@ class Win32EventLoop(EventLoop):
             self._running = True
 
             while not future.done():
-                self._run_once()
+                self._run_once(inputhook)
 
             # Run one last time, to flush the pending `_calls_from_executor`s.
             if self._calls_from_executor:
-                self._run_once()
+                self._run_once(inputhook)
 
         finally:
             self._running = False
 
-    def _run_once(self):
+    def _run_once(self, inputhook):
         # Call inputhook.
-        if self._inputhook_context:
+        if inputhook:
+            # Create input hook context.
+            if self._inputhook_context is None:
+                self._inputhook_context = InputHookContext()
+
             def ready(wait):
                 " True when there is input ready. The inputhook should return control. "
                 return bool(self._ready_for_reading(INFINITE if wait else 0))
-            self._inputhook_context.call_inputhook(ready)
+            self._inputhook_context.call_inputhook(ready, inputhook)
 
         # Wait for the next event.
         handle = self._ready_for_reading(INFINITE)

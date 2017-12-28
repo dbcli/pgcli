@@ -27,18 +27,18 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         self._exception_handler = None
 
     @abstractmethod
-    def run_until_complete(self, future):
+    def run_until_complete(self, future, inputhook=None):
         """
         Keep running until this future has been set.
         Return the Future's result, or raise its exception.
         """
 
-    def run_forever(self):
+    def run_forever(self, inputhook=None):
         """
         Run loop forever.
         """
         f = self.create_future()
-        self.run_until_complete(f)
+        self.run_until_complete(f, inputhook=inputhook)
 
     @abstractmethod
     def close(self):

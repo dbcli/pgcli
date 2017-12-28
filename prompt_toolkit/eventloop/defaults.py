@@ -15,17 +15,17 @@ __all__ = (
 )
 
 
-def create_event_loop(inputhook=None, recognize_win32_paste=True):
+def create_event_loop(recognize_win32_paste=True):
     """
     Create and return an
     :class:`~prompt_toolkit.eventloop.base.EventLoop` instance.
     """
     if is_windows():
         from .win32 import Win32EventLoop
-        return Win32EventLoop(inputhook=inputhook, recognize_paste=recognize_win32_paste)
+        return Win32EventLoop(recognize_paste=recognize_win32_paste)
     else:
         from .posix import PosixEventLoop
-        return PosixEventLoop(inputhook=inputhook)
+        return PosixEventLoop()
 
 
 def create_asyncio_event_loop(loop=None):
@@ -106,9 +106,9 @@ def call_from_executor(callback, _max_postpone_until=None):
         callback, _max_postpone_until=_max_postpone_until)
 
 
-def run_until_complete(future):
+def run_until_complete(future, inputhook=None):
     """
     Keep running until this future has been set.
     Return the Future's result, or raise its exception.
     """
-    return get_event_loop().run_until_complete(future)
+    return get_event_loop().run_until_complete(future, inputhook=inputhook)
