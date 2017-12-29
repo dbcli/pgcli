@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from prompt_toolkit.formatted_text import HTML, ANSI, to_formatted_text, Template, merge_formatted_text
+from prompt_toolkit.formatted_text import HTML, ANSI, to_formatted_text, Template, merge_formatted_text, PygmentsTokens
 
 
 def test_basic_html():
@@ -129,4 +129,18 @@ def test_merge_formatted_text():
     assert to_formatted_text(result) == [
         ('class:u', 'hello'),
         ('class:b', 'world'),
+    ]
+
+
+def test_pygments_tokens():
+    text = [
+        (('A', 'B'), 'hello'),  # Token.A.B
+        (('C', 'D', 'E'), 'hello'),  # Token.C.D.E
+        ((), 'world'),  # Token
+    ]
+
+    assert to_formatted_text(PygmentsTokens(text)) == [
+        ('class:pygments.a.b', 'hello'),
+        ('class:pygments.c.d.e', 'hello'),
+        ('class:pygments', 'world'),
     ]

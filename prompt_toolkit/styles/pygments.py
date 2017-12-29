@@ -57,4 +57,7 @@ def pygments_token_to_classname(token):
     (Our Pygments lexer will also turn the tokens that pygments produces in a
     prompt_toolkit list of fragments that match these styling rules.)
     """
-    return 'pygments.' + '.'.join(token).lower()
+    if token:
+        return 'pygments.' + '.'.join(token).lower()
+    else:
+        return 'pygments'
