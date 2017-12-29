@@ -16,7 +16,7 @@ __all__ = (
 )
 
 
-def style_from_pygments(pygments_style_cls=None):
+def style_from_pygments(pygments_style_cls):
     """
     Shortcut to create a :class:`.Style` instance from a Pygments style class
     and a style dictionary.
