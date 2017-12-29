@@ -116,12 +116,13 @@ class FormattedText(object):
         return 'FormattedText(%r)' % (self.data, )
 
 
-def PygmentsTokens(object):
+class PygmentsTokens(object):
     """
     Turn a pygments token list into a list of prompt_toolkit text fragments
     (``(style_str, text)`` tuples).
     """
     def __init__(self, token_list):
+        assert isinstance(token_list, list)
         self.token_list = token_list
 
     def __pt_formatted_text__(self):
