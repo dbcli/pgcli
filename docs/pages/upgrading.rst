@@ -139,3 +139,10 @@ adaptor to make it compatible with the native prompt_toolkit objects.
 
   Multiple styles can be merged together using
   :func:`~prompt_toolkit.styles.merge_styles`.
+
+Asynchronous autocompletion
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, prompt_toolkit 2.0 completion is now synchronous. If you still want
+asynchronous auto completion (which is often good thing), then you have to wrap
+the completer in a :class:`~prompt_toolkit.completion.ThreadedCompleter`.
