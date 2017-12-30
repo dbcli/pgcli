@@ -95,7 +95,7 @@ Style
 .. automodule:: prompt_toolkit.styles
     :members: Style, merge_styles
 
-.. automodule:: prompt_toolkit.styles.from_pygments
+.. automodule:: prompt_toolkit.styles.pygments
     :members:
 
 .. automodule:: prompt_toolkit.styles.named_colors

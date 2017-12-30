@@ -110,3 +110,32 @@ Upgrading
 ---------
 
 More guidelines on how to upgrade will follow.
+
+
+Pygments styles and tokens
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+prompt_toolkit 2.0 no longer depends on `Pygments <http://pygments.org/>`_, but
+that definitely doesn't mean that you can't use any Pygments functionality
+anymore. The only difference is that Pygments stuff needs to be wrapped in an
+adaptor to make it compatible with the native prompt_toolkit objects.
+
+- For instance, if you have a list of ``(pygments.Token, text)`` tuples for
+  formatting, then this needs to be wrapped in a
+  :class:`~prompt_toolkit.formatted_text.PygmentsTokens` object. This is an
+  adaptor that turns it into prompt_toolkit "formatted text". Feel free to keep
+  using this.
+
+- Pygments lexers need to be wrapped in a
+  :class:`~prompt_toolkit.layout.lexers.PygmentsLexer`. This will convert the
+  list of Pygments tokens into prompt_toolkit formatted text.
+
+- If you have a Pygments style, then this needs to be converted as well. A
+  Pygments style class can be converted in a prompt_toolkit
+  :class:`~prompt_toolkit.styles.Style` with the
+  :func:`~prompt_toolkit.styles.pygments.style_from_pygments` function. A
+  Pygments style dictionary can be converted using
+  :func:`~prompt_toolkit.styles.pygments.style_from_pygments_dict`.
+
+  Multiple styles can be merged together using
+  :func:`~prompt_toolkit.styles.merge_styles`.
