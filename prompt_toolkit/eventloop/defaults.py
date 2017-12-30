@@ -28,6 +28,16 @@ def create_event_loop(recognize_win32_paste=True):
         return PosixEventLoop()
 
 
+def _get_asyncio_loop_cls():
+    # Inline import, to make sure the rest doesn't break on Python 2. (Where
+    # asyncio is not available.)
+    if is_windows():
+        from prompt_toolkit.eventloop.asyncio_win32 import Win32AsyncioEventLoop as AsyncioEventLoop
+    else:
+        from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop
+    return AsyncioEventLoop
+
+
 def create_asyncio_event_loop(loop=None):
     """
     Returns an asyncio :class:`~prompt_toolkit.eventloop.EventLoop` instance
@@ -37,13 +47,7 @@ def create_asyncio_event_loop(loop=None):
     :param loop: The asyncio eventloop (or `None` if the default asyncioloop
                  should be used.)
     """
-    # Inline import, to make sure the rest doesn't break on Python 2. (Where
-    # asyncio is not available.)
-    if is_windows():
-        from prompt_toolkit.eventloop.asyncio_win32 import Win32AsyncioEventLoop as AsyncioEventLoop
-    else:
-        from prompt_toolkit.eventloop.asyncio_posix import PosixAsyncioEventLoop as AsyncioEventLoop
-
+    AsyncioEventLoop = _get_asyncio_loop_cls()
     return AsyncioEventLoop(loop)
 
 
@@ -51,6 +55,11 @@ def use_asyncio_event_loop(loop=None):
     """
     Use the asyncio event loop for prompt_toolkit applications.
     """
+    # Don't create a new loop if the current one uses asyncio already.
+    current_loop = get_event_loop()
+    if current_loop and isinstance(current_loop, _get_asyncio_loop_cls()):
+        return
+
     set_event_loop(create_asyncio_event_loop(loop))
 
 
