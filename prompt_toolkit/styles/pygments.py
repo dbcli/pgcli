@@ -7,7 +7,6 @@ Usage::
     style = style_from_pygments(pygments_style_cls=TangoStyle)
 """
 from __future__ import unicode_literals, absolute_import
-from collections.abc import Mapping
 from .style import Style
 
 __all__ = (
@@ -42,7 +41,7 @@ def style_from_pygments_dict(pygments_dict):
     Create a :class:`.Style` instance from a Pygments style dictionary.
     (One that maps Token objects to style strings.)
     """
-    assert isinstance(pygments_dict, Mapping)
+    assert hasattr(pygments_dict, 'items')  # collections.abc.Mapping only available on Python 3.
     pygments_style = []
 
     for token, style in pygments_dict.items():
