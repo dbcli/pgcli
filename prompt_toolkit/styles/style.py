@@ -135,7 +135,7 @@ def _parse_style_str(style_str):
     return attrs
 
 
-CLASS_NAMES_RE = re.compile(r'^[a-z0-9.\s-]*$')  # This one can't contain a comma!
+CLASS_NAMES_RE = re.compile(r'^[a-z0-9.\s_-]*$')  # This one can't contain a comma!
 
 
 class Style(BaseStyle):
