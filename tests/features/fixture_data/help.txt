@@ -1,24 +1,25 @@
-+--------------------------+-----------------------------------------------+
-| Command                  | Description                                   |
-|--------------------------+-----------------------------------------------|
-| \#                       | Refresh auto-completions.                     |
-| \?                       | Show Help.                                    |
-| \c[onnect] database_name | Change to a new database.                     |
-| \d [pattern]             | List or describe tables, views and sequences. |
-| \dT[S+] [pattern]        | List data types                               |
-| \df[+] [pattern]         | List functions.                               |
-| \di[+] [pattern]         | List indexes.                                 |
-| \dn[+] [pattern]         | List schemas.                                 |
-| \ds[+] [pattern]         | List sequences.                               |
-| \dt[+] [pattern]         | List tables.                                  |
-| \du[+] [pattern]         | List roles.                                   |
-| \dv[+] [pattern]         | List views.                                   |
-| \e [file]                | Edit the query with external editor.          |
-| \l                       | List databases.                               |
-| \n[+] [name]             | List or execute named queries.                |
-| \nd [name [query]]       | Delete a named query.                         |
-| \ns name query           | Save a named query.                           |
-| \refresh                 | Refresh auto-completions.                     |
-| \timing                  | Toggle timing of commands.                    |
-| \x                       | Toggle expanded output.                       |
-+--------------------------+-----------------------------------------------+
++--------------------------+------------------------------------------------+
+| Command                  | Description                                    |
+|--------------------------+------------------------------------------------|
+| \#                       | Refresh auto-completions.                      |
+| \?                       | Show Help.                                     |
+| \c[onnect] database_name | Change to a new database.                      |
+| \d [pattern]             | List or describe tables, views and sequences.  |
+| \dT[S+] [pattern]        | List data types                                |
+| \df[+] [pattern]         | List functions.                                |
+| \di[+] [pattern]         | List indexes.                                  |
+| \dn[+] [pattern]         | List schemas.                                  |
+| \ds[+] [pattern]         | List sequences.                                |
+| \dt[+] [pattern]         | List tables.                                   |
+| \du[+] [pattern]         | List roles.                                    |
+| \dv[+] [pattern]         | List views.                                    |
+| \e [file]                | Edit the query with external editor.           |
+| \l                       | List databases.                                |
+| \n[+] [name]             | List or execute named queries.                 |
+| \nd [name [query]]       | Delete a named query.                          |
+| \ns name query           | Save a named query.                            |
+| \refresh                 | Refresh auto-completions.                      |
+| \t [format]              | Change the table format used to output results |
+| \timing                  | Toggle timing of commands.                     |
+| \x                       | Toggle expanded output.                        |
++--------------------------+------------------------------------------------+

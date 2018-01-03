@@ -56,6 +56,8 @@ A limited version of traditional \pset
 Refresh auto-completions.
 \sf[+] FUNCNAME
 Show a function's definition.
+\t [format]
+Change the table format used to output results
 \timing
 Toggle timing of commands.
 \x
