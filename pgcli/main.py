@@ -227,7 +227,7 @@ class PGCli(object):
                 pattern)
             for table_type in TabularOutputFormatter().supported_formats:
                 msg += "\n\t{}".format(table_type)
-            msg += '\ncurrently table format: %s' % self.table_format
+            msg += '\nCurrently set to: %s' % self.table_format
             yield (None, None, None, msg)
 
 

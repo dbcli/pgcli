@@ -1,3 +1,11 @@
+1.8.3
+=====
+
+Features:
+---------
+
+* Add support for `\T` command to change format output. (Thanks: `Frederic Aoustin`_).
+
 1.8.2
 =====
 
