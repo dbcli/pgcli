@@ -774,3 +774,4 @@ Improvements:
 .. _`Marcin Sztolcman`: https://github.com/msztolcman
 .. _`Isank`: https://github.com/isank
 .. _`Bojan Delić`: https://github.com/delicb
+.. _`Frederic Aoustin`: https://github.com/fraoustin
