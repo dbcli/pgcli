@@ -3,6 +3,7 @@
 |--------------------------+------------------------------------------------|
 | \#                       | Refresh auto-completions.                      |
 | \?                       | Show Help.                                     |
+| \T [format]              | Change the table format used to output results |
 | \c[onnect] database_name | Change to a new database.                      |
 | \d [pattern]             | List or describe tables, views and sequences.  |
 | \dT[S+] [pattern]        | List data types                                |
@@ -19,7 +20,6 @@
 | \nd [name [query]]       | Delete a named query.                          |
 | \ns name query           | Save a named query.                            |
 | \refresh                 | Refresh auto-completions.                      |
-| \t [format]              | Change the table format used to output results |
 | \timing                  | Toggle timing of commands.                     |
 | \x                       | Toggle expanded output.                        |
 +--------------------------+------------------------------------------------+

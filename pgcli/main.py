@@ -212,7 +212,7 @@ class PGCli(object):
                                 'Send all query results to file.')
         self.pgspecial.register(self.info_connection, '\\conninfo',
                                 '\\conninfo', 'Get connection details')
-        self.pgspecial.register(self.change_table_format, '\\t', '\\t [format]',
+        self.pgspecial.register(self.change_table_format, '\\T', '\\T [format]',
                                 'Change the table format used to output results')
 
     def change_table_format(self, pattern, **_):
