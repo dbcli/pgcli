@@ -212,6 +212,24 @@ class PGCli(object):
                                 'Send all query results to file.')
         self.pgspecial.register(self.info_connection, '\\conninfo',
                                 '\\conninfo', 'Get connection details')
+        self.pgspecial.register(self.change_table_format, '\\T', '\\T [format]',
+                                'Change the table format used to output results')
+
+    def change_table_format(self, pattern, **_):
+        try:
+            if pattern not in TabularOutputFormatter().supported_formats:
+                raise ValueError()
+            self.table_format = pattern
+            yield (None, None, None,
+                   'Changed table format to {}'.format(pattern))
+        except ValueError:
+            msg = 'Table format {} not recognized. Allowed formats:'.format(
+                pattern)
+            for table_type in TabularOutputFormatter().supported_formats:
+                msg += "\n\t{}".format(table_type)
+            msg += '\nCurrently set to: %s' % self.table_format
+            yield (None, None, None, msg)
+
 
     def info_connection(self, **_):
         if self.pgexecute.host.startswith('/'):

@@ -4,12 +4,14 @@ Description
 Refresh auto-completions.
 \?
 Show Commands.
+\T [format]
+Change the table format used to output results
 \c[onnect] database_name
 Change to a new database.
 \copy [tablename] to/from [filename] 
 Copy data between a file and a table.
 \d[+] [pattern]
-List or describe tables, views and sequences. |
+List or describe tables, views and sequences.
 \dT[S+] [pattern]
 List data types
 \db[+] [pattern]
@@ -49,7 +51,7 @@ Save a named query.
 \o [filename]
 Send all query results to file.
 \pager [command]
-Set PAGER. Pring the query results via PAGER. |
+Set PAGER. Pring the query results via PAGER.
 \pset [key] [value]
 A limited version of traditional \pset
 \refresh
