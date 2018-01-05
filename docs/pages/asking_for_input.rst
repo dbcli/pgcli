@@ -270,6 +270,24 @@ makes sense for a case insensitive completer. Or in case of a fuzzy completion,
 it could fix typos. When ``start_position`` is something negative, this amount
 of characters will be deleted and replaced.
 
+
+Complete while typing
+^^^^^^^^^^^^^^^^^^^^^
+
+Autcompletions can be generated automatically while typing or when the user
+presses the tab key. This can be configured with the ``complete_while_typing``
+option:
+
+.. code:: python
+
+    text = prompt('Enter HTML: ', completer=my_completer,
+                  complete_while_typing=True)
+
+Notice that this setting is incompatible with the ``enable_history_search``
+option. The reason for this is that the up and down key bindings would conflict
+otherwise. So, make sure to disable history search for this.
+
+
 Asynchronous completion
 ^^^^^^^^^^^^^^^^^^^^^^^
 
