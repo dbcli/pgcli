@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass, text_type
 from .eventloop import Future, run_in_executor
+from .filters import to_filter
 
 __all__ = (
     'Completion',
@@ -163,9 +164,10 @@ class ThreadedCompleter(Completer):
     (Use this to prevent the user interface from becoming unresponsive if the
     generation of completions takes too much time.)
     """
-    def __init__(self, completer):
+    def __init__(self, completer, in_thread=True):
         assert isinstance(completer, Completer)
         self.completer = completer
+        self.in_thread = to_filter(in_thread)
 
     def get_completions(self, document, complete_event):
         return self.completer.get_completions(document, complete_event)
@@ -174,6 +176,9 @@ class ThreadedCompleter(Completer):
         """
         Run the `get_completions` function in a thread.
         """
+        if not self.in_thread():
+            return self.completer.get_completions_future(document, complete_event)
+
         def run_get_completions_thread():
             # Do conversion to list in the thread, othewise the generator
             # (which is possibly slow) will be consumed in the event loop.
