@@ -34,9 +34,43 @@ In the following sections, we will discover all these parameters.
 
     `prompt_toolkit` expects unicode strings everywhere. If you are using
     Python 2, make sure that all strings which are passed to `prompt_toolkit`
-    are unicode strings (and not bytes). Either use 
-    ``from __future__ import unicode_literals`` or explicitely put a small 
+    are unicode strings (and not bytes). Either use
+    ``from __future__ import unicode_literals`` or explicitely put a small
     ``'u'`` in front of every string.
+
+
+The `Prompt` object
+-------------------
+
+Instead of calling the :func:`~prompt_toolkit.shortcuts.prompt` function, it's
+also possible to create a :func:`~prompt_toolkit.shortcuts.Prompt` instance
+followed by calling its :meth:`~prompt_toolkit.shortcuts.Prompt.prompt` method
+for every input call. This creates a kind of an input session.
+
+.. code:: python
+
+    from prompt_toolkit import Prompt
+
+    # Create prompt object.
+    our_prompt = Prompt()
+
+    # Do multiple input calls.
+    text1 = our_prompt.prompt()
+    text2 = our_prompt.prompt()
+
+This has mainly two advantages:
+
+- The input history will be kept between concecutive
+  :meth:`~prompt_toolkit.shortcuts.Prompt.prompt` calls.
+
+- The :func:`~prompt_toolkit.shortcuts.Prompt` instance and its
+  :meth:`~prompt_toolkit.shortcuts.Prompt.prompt` method take about the same
+  arguments, like all the options described below (highlighting, completion,
+  etc...). So if you want to ask for multiple inputs, but each input call needs
+  about the same arguments, they can be passed to the
+  :func:`~prompt_toolkit.shortcuts.Prompt` instance as well, and they can be
+  overridden by passing values to the
+  :meth:`~prompt_toolkit.shortcuts.Prompt.prompt` method.
 
 
 Syntax highlighting
@@ -236,6 +270,19 @@ makes sense for a case insensitive completer. Or in case of a fuzzy completion,
 it could fix typos. When ``start_position`` is something negative, this amount
 of characters will be deleted and replaced.
 
+Asynchronous completion
+^^^^^^^^^^^^^^^^^^^^^^^
+
+When generating the completions takes a lot of time, it's better to do this in
+a background thread. This is possible by wrapping the completer in a
+:class:`~prompt_toolkit.completion.ThreadedCompleter`, but also by passing the
+`complete_in_thread=True` argument.
+
+
+.. code:: python
+
+    text = prompt('> ', completer=MyCustomCompleter(), complete_in_thread=True)
+
 
 Input validation
 ----------------
@@ -271,7 +318,6 @@ takes a :class:`~prompt_toolkit.document.Document` as input and raises
                 raise ValidationError(message='This input contains non-numeric characters',
                                       cursor_position=i)
 
-
     number = int(prompt('Give a number: ', validator=NumberValidator()))
     print('You said: %i' % number)
 
@@ -284,10 +330,9 @@ previously entered strings. When nothing is passed into the
 :func:`~prompt_toolkit.shortcuts.prompt` function, it will start with an empty
 history each time again. Usually, however, for a REPL, you want to keep the
 same history between several calls to
-:meth:`~prompt_toolkit.shortcuts.prompt`.  This is possible by instantiating a
+:meth:`~prompt_toolkit.shortcuts.prompt`. This is possible by instantiating a
 :class:`~prompt_toolkit.history.History` object and passing that to each
-:meth:`~prompt_toolkit.shortcuts.prompt` call.
-
+:meth:`~prompt_toolkit.shortcuts.prompt` call as follows:
 
 .. code:: python
 
@@ -303,6 +348,21 @@ same history between several calls to
 To persist a history to disk, use :class:`~prompt_toolkit.history.FileHistory`
 instead instead of :class:`~prompt_toolkit.history.InMemoryHistory`.
 
+.. note::
+
+    Note that the same result as in the example above (with an
+    :class:`~prompt_toolkit.history.InMemoryHistory`) can be achieved by
+    creating a :func:`~prompt_toolkit.shortcuts.Prompt` instance.
+
+   .. code:: python
+
+       from prompt_toolkit import Prompt
+
+       p = Prompt()
+
+       while True:
+           p.prompt()
+
 
 Auto suggestion
 ---------------
@@ -314,7 +374,7 @@ Usually, the input is compared to the history and when there is another entry
 starting with the given text, the completion will be shown as gray text behind
 the current input. Pressing the right arrow :kbd:`→` will insert this suggestion.
 
-.. note:: 
+.. note::
 
     When suggestions are based on the history, don't forget to share one
     :class:`~prompt_toolkit.history.History` object between consecutive

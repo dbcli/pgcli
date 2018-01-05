@@ -112,8 +112,8 @@ Reactive
 Shortcuts
 ---------
 
-.. automodule:: prompt_toolkit.shortcuts.prompt
-    :members:
+.. automodule:: prompt_toolkit.shortcuts
+    :members: prompt, Prompt
 
 .. automodule:: prompt_toolkit.shortcuts.dialogs
     :members:

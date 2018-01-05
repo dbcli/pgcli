@@ -15,7 +15,9 @@ __all__ = (
 
 class Filter(with_metaclass(ABCMeta, object)):
     """
-    Filter to activate/deactivate a feature, depending on a condition.
+    Base class for any filter to activate/deactivate a feature, depending on a
+    condition.
+
     The return value of ``__call__`` will tell if the feature should be active.
     """
     @abstractmethod

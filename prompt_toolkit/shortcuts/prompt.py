@@ -141,9 +141,7 @@ class Prompt(object):
     (a unicode object), a list of ``(style_str, text)`` tuples or an HTML object.
 
     :param message: Plain text or formatted text to be shown before the prompt.
-        This can also be a callable that takes an
-        :class:`~prompt_toolkit.application.Application` and returns formatted
-        text.
+        This can also be a callable that returns formatted text.
     :param multiline: `bool` or :class:`~prompt_toolkit.filters.Filter`.
         When True, prefer a layout that is more adapted for multiline input.
         Text after newlines is automatically indented, and search/arg input is
@@ -628,7 +626,8 @@ class Prompt(object):
             enable_open_in_editor=None, tempfile_suffix=None, inputhook=None,
             async_=False):
         """
-        Display the prompt.
+        Display the prompt. All the arguments are the same as for the
+        :class:`~.Prompt` class.
 
         :param _async: When `True` return a `Future` instead of waiting for the
             prompt to finish.
