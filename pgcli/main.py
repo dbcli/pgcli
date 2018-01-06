@@ -38,7 +38,7 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from pygments.lexers.sql import PostgresLexer
 from pygments.token import Token
 
-from pgspecial.main import (PGSpecial, NO_QUERY)
+from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF)
 import pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
@@ -161,6 +161,8 @@ class PGCli(object):
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
+
+        self.pgspecial.pset_pager(c['main'].get('pset-pager', 'on'))
 
         self.now = dt.datetime.today()
 
@@ -480,7 +482,7 @@ class PGCli(object):
                     except IOError as e:
                         click.secho(str(e), err=True, fg='red')
                 else:
-                    click.echo_via_pager('\n'.join(output))
+                    self.echo_via_pager('\n'.join(output))
             except KeyboardInterrupt:
                 pass
 
@@ -820,6 +822,11 @@ class PGCli(object):
         """Get the last query executed or None."""
         return self.query_history[-1][0] if self.query_history else None
 
+    def echo_via_pager(self, text, color=None):
+        if self.pgspecial.pager_config == PAGER_OFF:
+            click.echo(text, color=color)
+        else:
+            click.echo_via_pager(text, color)
 
 @click.command()
 # Default host is '' so psycopg2 can default to either localhost or unix socket
@@ -922,7 +929,7 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
             missingval='<null>'
         )
         formatted = format_output(title, cur, headers, status, settings)
-        click.echo_via_pager('\n'.join(formatted))
+        self.echo_via_pager('\n'.join(formatted))
 
         sys.exit(0)
 
