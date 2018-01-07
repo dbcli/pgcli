@@ -296,7 +296,7 @@ class _MergedStyle(BaseStyle):
         " The `Style` object that has the other styles merged together. "
         def get():
             return Style(self.style_rules)
-        return self._style.get(self.invalidation_hash, get)
+        return self._style.get(self.invalidation_hash(), get)
 
     @property
     def style_rules(self):
