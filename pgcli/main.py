@@ -826,7 +826,7 @@ class PGCli(object):
 @click.option('-h', '--host', default='', envvar='PGHOST',
         help='Host address of the postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
-        'postgres instance is listening.', envvar='PGPORT')
+        'postgres instance is listening.', envvar='PGPORT', type=click.INT)
 @click.option('-U', '--username', 'username_opt', envvar='PGUSER',
         help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
@@ -840,7 +840,7 @@ class PGCli(object):
 @click.option('-d', '--dbname', default='', envvar='PGDATABASE',
         help='database name to connect to.')
 @click.option('--pgclirc', default=config_location() + 'config',
-        envvar='PGCLIRC', help='Location of pgclirc file.')
+        envvar='PGCLIRC', help='Location of pgclirc file.', type=click.Path(dir_okay=False))
 @click.option('-D', '--dsn', default='', envvar='DSN',
         help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
 @click.option('--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
