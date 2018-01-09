@@ -23,7 +23,7 @@ from prompt_toolkit.output import Output
 from prompt_toolkit.output.defaults import get_default_output
 from prompt_toolkit.renderer import Renderer, print_formatted_text
 from prompt_toolkit.search_state import SearchState
-from prompt_toolkit.styles import BaseStyle, default_style, merge_styles, DynamicStyle
+from prompt_toolkit.styles import BaseStyle, default_ui_style, default_pygments_style, merge_styles, DynamicStyle, DummyStyle
 from prompt_toolkit.utils import Event, in_main_thread
 from .current import set_app
 from .run_in_terminal import run_in_terminal, run_coroutine_in_terminal
@@ -106,7 +106,7 @@ class Application(object):
         app.run()
     """
     def __init__(self, layout=None,
-                 style=None,
+                 style=None, include_default_pygments_style=True,
                  key_bindings=None, clipboard=None,
                  full_screen=False, mouse_support=False,
 
@@ -133,6 +133,7 @@ class Application(object):
         mouse_support = to_filter(mouse_support)
         reverse_vi_search_direction = to_filter(reverse_vi_search_direction)
         enable_page_navigation_bindings = to_filter(enable_page_navigation_bindings)
+        include_default_pygments_style = to_filter(include_default_pygments_style)
 
         assert layout is None or isinstance(layout, Layout)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
@@ -205,10 +206,7 @@ class Application(object):
 
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
-        self._merged_style = merge_styles([
-            default_style(),
-            DynamicStyle(lambda: self.style),
-        ])
+        self._merged_style = self._create_merged_style(include_default_pygments_style)
 
         self.renderer = Renderer(
             self._merged_style,
@@ -238,6 +236,27 @@ class Application(object):
 
         # Trigger initialize callback.
         self.reset()
+
+    def _create_merged_style(self, include_default_pygments_style):
+        """
+        Create a `Style` object that merges the default UI style, the default
+        pygments style, and the custom user style.
+        """
+        dummy_style = DummyStyle()
+        pygments_style = default_pygments_style()
+
+        @DynamicStyle
+        def conditional_pygments_style():
+            if include_default_pygments_style():
+                return pygments_style
+            else:
+                return dummy_style
+
+        return merge_styles([
+            default_ui_style(),
+            conditional_pygments_style,
+            DynamicStyle(lambda: self.style),
+        ])
 
     @property
     def current_buffer(self):

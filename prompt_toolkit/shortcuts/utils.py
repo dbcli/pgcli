@@ -3,7 +3,7 @@ from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.output.base import Output
 from prompt_toolkit.output.defaults import create_output, get_default_output
 from prompt_toolkit.renderer import print_formatted_text as renderer_print_formatted_text
-from prompt_toolkit.styles import default_style, BaseStyle
+from prompt_toolkit.styles import default_ui_style, BaseStyle, merge_styles
 import six
 
 __all__ = (
@@ -71,7 +71,13 @@ def print_formatted_text(*values, **kwargs):
 
     # Other defaults.
     if style is None:
-        style = default_style()
+        merged_style = default_ui_style()
+    else:
+        assert isinstance(style, BaseStyle)
+        merged_style = merge_styles([
+            default_ui_style(),
+            merged_style
+        ])
 
     if output is None:
         if file:
@@ -79,7 +85,6 @@ def print_formatted_text(*values, **kwargs):
         else:
             output = get_default_output()
 
-    assert isinstance(style, BaseStyle)
     assert isinstance(output, Output)
 
     # Merges values.
@@ -98,7 +103,7 @@ def print_formatted_text(*values, **kwargs):
     fragments.extend(to_text(end))
 
     # Print output.
-    renderer_print_formatted_text(output, fragments, style)
+    renderer_print_formatted_text(output, fragments, merged_style)
 
     # Flush the output stream.
     if flush:

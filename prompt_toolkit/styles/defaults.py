@@ -8,7 +8,8 @@ from .named_colors import NAMED_COLORS
 from prompt_toolkit.cache import memoized
 
 __all__ = (
-    'default_style',
+    'default_ui_style',
+    'default_pygments_style',
 )
 
 #: Default styling. Mapping from classnames to their style definition.
@@ -217,7 +218,7 @@ PYGMENTS_DEFAULT_STYLE = {
 
 
 @memoized()
-def default_style():
+def default_ui_style():
     """
     Create a default `Style` object.
     """
@@ -225,5 +226,12 @@ def default_style():
         Style(PROMPT_TOOLKIT_STYLE),
         Style(COLOR_STYLES),
         Style(WIDGETS_STYLE),
-        Style.from_dict(PYGMENTS_DEFAULT_STYLE),
     ])
+
+
+@memoized()
+def default_pygments_style():
+    """
+    Create a `Style` object that contains the default Pygments style.
+    """
+    return Style.from_dict(PYGMENTS_DEFAULT_STYLE)
