@@ -140,6 +140,11 @@ class Prompt(object):
     All parameters that expect "formatted text" can take either just plain text
     (a unicode object), a list of ``(style_str, text)`` tuples or an HTML object.
 
+    Example usage::
+
+        p = Prompt('>')
+        text = p.prompt()
+
     :param message: Plain text or formatted text to be shown before the prompt.
         This can also be a callable that returns formatted text.
     :param multiline: `bool` or :class:`~prompt_toolkit.filters.Filter`.
