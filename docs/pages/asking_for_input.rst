@@ -60,7 +60,7 @@ for every input call. This creates a kind of an input session.
 
 This has mainly two advantages:
 
-- The input history will be kept between concecutive
+- The input history will be kept between consecutive
   :meth:`~prompt_toolkit.shortcuts.Prompt.prompt` calls.
 
 - The :func:`~prompt_toolkit.shortcuts.Prompt` instance and its
