@@ -88,10 +88,27 @@ create a custom lexer by implementing the
     from prompt_toolkit.shortcuts import prompt
     from prompt_toolkit.layout.lexers import PygmentsLexer
 
-    text = prompt('Enter HTML', lexer=PygmentsLexer(HtmlLexer))
+    text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer))
     print('You said: %s' % text)
 
 .. image:: ../images/html-input.png
+
+The default Pygments colorscheme is included as part of the default style in
+prompt_toolkit. If you want to use another Pygments style along with the lexer,
+you can do the following:
+
+.. code:: python
+
+    from pygments.lexers import HtmlLexer
+    from pygments.styles import get_style_by_name
+    from prompt_toolkit.shortcuts import prompt
+    from prompt_toolkit.layout.lexers import PygmentsLexer
+    from prompt_toolkit.styles.pygments import style_from_pygments
+
+    style = style_from_pygments(get_style_by_name('monokai'))
+    text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer), style=style)
+    print('You said: %s' % text)
+
 
 .. _colors:
 
