@@ -4,7 +4,9 @@ Upcoming
 Features:
 ---------
 
-* Add support for `\T` command to change format output. (Thanks: `Frederic Aoustin`_).
+* Add support for `\T` command to change format output. (Thanks: `Frederic Aoustin`_)
+* Add support color for table. (Thanks: `Frederic Aoustin`_)
+* For color, you can use name of token. (Thanks: `Frederic Aoustin`_)
 
 1.8.2
 =====
