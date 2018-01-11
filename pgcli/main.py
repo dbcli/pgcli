@@ -36,7 +36,10 @@ from prompt_toolkit.layout.processors import (ConditionalProcessor,
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from pygments.lexers.sql import PostgresLexer
-from pygments.token import Token
+from pygments.style import Style
+from pygments.styles import get_style_by_name
+from pygments.token import Token, string_to_tokentype
+from pygments.util import ClassNotFound
 
 from pgspecial.main import (PGSpecial, NO_QUERY)
 import pgspecial as special
@@ -83,10 +86,10 @@ MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     'OutputSettings',
-    'table_format dcmlfmt floatfmt missingval expanded max_width case_function'
+    'table_format dcmlfmt floatfmt missingval expanded max_width case_function style_output'
 )
 OutputSettings.__new__.__defaults__ = (
-    None, None, None, '<null>', False, None, lambda x: x
+    None, None, None, '<null>', False, None, lambda x: x, None
 )
 
 
@@ -161,6 +164,24 @@ class PGCli(object):
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
+
+        try:
+            own_styles = get_style_by_name(self.syntax_style).styles
+        except ClassNotFound:
+            own_styles = get_style_by_name('native').styles
+        for token in c['colors']:
+            try:
+                own_styles.update({string_to_tokentype(
+                    token): own_styles[string_to_tokentype(c['colors'][token])], })
+            except AttributeError as err:
+                own_styles.update(
+                    {string_to_tokentype(token): c['colors'][token], })
+
+        class OutputStyle(Style):
+            default_style = ""
+            styles = own_styles
+
+        self.style_output = OutputStyle
 
         self.now = dt.datetime.today()
 
@@ -704,7 +725,8 @@ class PGCli(object):
                 case_function=(
                     self.completer.case if self.settings['case_column_headers']
                     else lambda x: x
-                )
+                ),
+                style_output=self.style_output
             )
             formatted = format_output(title, cur, headers, status, settings)
 
@@ -1041,7 +1063,8 @@ def format_output(title, cur, headers, status, settings):
         'float_format': settings.floatfmt,
         'preprocessors': (format_numbers, format_arrays),
         'disable_numparse': True,
-        'preserve_whitespace': True
+        'preserve_whitespace': True,
+        'style': settings.style_output
     }
     if not settings.floatfmt:
         output_kwargs['preprocessors'] = (align_decimals, )
