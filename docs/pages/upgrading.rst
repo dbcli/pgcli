@@ -112,6 +112,25 @@ Upgrading
 More guidelines on how to upgrade will follow.
 
 
+`AbortAction` has been removed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Prompt_toolkit 1.0 had an argument ``abort_action`` for both the
+``Application`` class as well as for the ``prompt`` function. This has been
+removed. The recommended way to handle this now is by capturing
+``KeyboardInterrupt`` and ``EOFError`` manually.
+
+
+Calling `create_eventloop` usually not required anymore
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Prompt_toolkit 2.0 will automatically create the appropriate event loop when
+it's needed for the first time. There is no need to create one and pass it
+around. If you want to run an application on top of asyncio (without using an
+executor), it still needs to be activated by calling
+:func:`~prompt_toolkit.eventloop.use_asyncio_event_loop` at the beginning.
+
+
 Pygments styles and tokens
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
