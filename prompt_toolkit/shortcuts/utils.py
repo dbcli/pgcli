@@ -76,7 +76,7 @@ def print_formatted_text(*values, **kwargs):
         assert isinstance(style, BaseStyle)
         merged_style = merge_styles([
             default_ui_style(),
-            merged_style
+            style
         ])
 
     if output is None:
