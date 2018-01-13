@@ -272,7 +272,7 @@ class ConsoleInputReader(object):
         for k in keys:
             if isinstance(k.key, six.text_type):
                 text_count += 1
-            if k.key == Keys.ControlJ:
+            if k.key == Keys.ControlM:
                 newline_count += 1
 
         return newline_count >= 1 and text_count > 1
