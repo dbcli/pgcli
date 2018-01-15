@@ -471,9 +471,12 @@ class BufferControl(UIControl):
     @property
     def search_buffer_control(self):
         if self.get_search_buffer_control is not None:
-            return self.get_search_buffer_control()
+            result = self.get_search_buffer_control()
         else:
-            return self._search_buffer_control
+            result = self._search_buffer_control
+
+        assert result is None or isinstance(result, UIControl)
+        return result
 
     @property
     def search_buffer(self):
