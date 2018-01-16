@@ -6,6 +6,11 @@ Features:
 
 * Add support for `\T` command to change format output. (Thanks: `Frederic Aoustin`_).
 
+Internal changes:
+-----------------
+
+* Removed support for Python 3.3. (Thanks: `Irina Truong`_)
+
 1.8.2
 =====
 
