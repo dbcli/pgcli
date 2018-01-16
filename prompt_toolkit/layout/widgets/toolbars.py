@@ -26,9 +26,14 @@ __all__ = (
 
 class FormattedTextToolbar(Window):
     def __init__(self, text, **kw):
+        # The style needs to be applied to the toolbar as a whole, not just the
+        # `FormattedTextControl`.
+        style = kw.pop('style', '')
+
         super(FormattedTextToolbar, self).__init__(
             FormattedTextControl(text, **kw),
-            height=Dimension.exact(1))
+            style=style,
+            height=1)
 
 
 class SystemToolbar(object):
