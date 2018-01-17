@@ -18,7 +18,7 @@ from prompt_toolkit.filters import Condition
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.widgets import Dialog, Label, Button
 from prompt_toolkit.layout.widgets import TextArea, SearchField, MenuContainer, MenuItem
-from prompt_toolkit.styles import Style, merge_styles, default_style
+from prompt_toolkit.styles import Style, merge_styles, default_ui_style
 from pygments.lexers import PythonLexer
 import datetime
 
@@ -317,7 +317,7 @@ application = Application(
     layout=layout,
     enable_page_navigation_bindings=True,
     style=merge_styles([
-        default_style(),
+        default_ui_style(),
         style,
     ]),
     mouse_support=True,
