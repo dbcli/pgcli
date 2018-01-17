@@ -1014,7 +1014,7 @@ class ScrollOffsets(object):
 
 
 class ColorColumn(object):
-    def __init__(self, position, style=''):
+    def __init__(self, position, style='class:color-column'):
         assert isinstance(position, int)
         assert isinstance(style, text_type)
 
