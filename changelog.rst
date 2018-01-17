@@ -4,7 +4,7 @@ Upcoming
 Features:
 ---------
 
-* manage pager by \pset pager and add pset-pager to the config file (Thanks: `Frederic Aoustin`_).
+* manage pager by \pset pager and add enable_pager to the config file (Thanks: `Frederic Aoustin`_).
 * Add support for `\T` command to change format output. (Thanks: `Frederic Aoustin`_).
 
 1.8.2

@@ -132,7 +132,7 @@ multiline_continuation_char = ''
 null_string = '<null>'
 
 # manage pager on startup
-pset-pager = on
+enable_pager = True
 
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
