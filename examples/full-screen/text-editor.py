@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.application import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.contrib.completers import PathCompleter
-from prompt_toolkit.eventloop import Future, ensure_future, Return
+from prompt_toolkit.eventloop import Future, ensure_future, Return, From
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.containers import Float, HSplit, VSplit, Window, Align, ConditionalContainer
 from prompt_toolkit.layout.controls import FormattedTextControl
@@ -140,7 +140,7 @@ def do_open_file():
             label_text='Enter the path of a file:',
             completer=PathCompleter())
 
-        path = yield ensure_future(show_dialog_as_float(open_dialog))
+        path = yield From(show_dialog_as_float(open_dialog))
 
         if path is not None:
             try:
@@ -159,7 +159,7 @@ def do_about():
 def show_message(title, text):
     def coroutine():
         dialog = MessageDialog(title, text)
-        yield ensure_future(show_dialog_as_float(dialog))
+        yield From(show_dialog_as_float(dialog))
 
     ensure_future(coroutine())
 
@@ -201,7 +201,7 @@ def do_go_to():
             title='Go to line',
             label_text='Line number:')
 
-        line_number = yield ensure_future(show_dialog_as_float(dialog))
+        line_number = yield From(show_dialog_as_float(dialog))
 
         try:
             line_number = int(line_number)
