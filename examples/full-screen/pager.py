@@ -11,7 +11,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
-from prompt_toolkit.styles import Style, merge_styles, default_ui_style
+from prompt_toolkit.styles import Style
 from prompt_toolkit.layout.widgets import TextArea, SearchField
 
 from pygments.lexers import PythonLexer
@@ -74,15 +74,12 @@ def _(event):
     event.app.set_result(None)
 
 
-style = merge_styles([
-    default_ui_style(),
-    Style.from_dict({
-        'status': 'reverse',
-        'status.position': '#aaaa00',
-        'status.key': '#ffaa00',
-        'not-searching': '#888888',
-    })
-])
+style = Style.from_dict({
+    'status': 'reverse',
+    'status.position': '#aaaa00',
+    'status.key': '#ffaa00',
+    'not-searching': '#888888',
+})
 
 
 # create application.
