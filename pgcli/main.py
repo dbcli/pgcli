@@ -162,7 +162,8 @@ class PGCli(object):
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
 
-        self.pgspecial.pset_pager(self.config['main'].as_bool('enable_pager') and "on" or "off")
+        self.pgspecial.pset_pager(self.config['main'].as_bool(
+            'enable_pager') and "on" or "off")
 
         self.now = dt.datetime.today()
 
