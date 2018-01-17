@@ -124,7 +124,8 @@ class _Split(Container):
     The common parts of `VSplit` and `HSplit`.
     """
     def __init__(self, children, window_too_small=None, padding=Dimension.exact(0),
-                 width=None, height=None, modal=False, key_bindings=None, style=''):
+                 padding_char=None, width=None, height=None, modal=False,
+                 key_bindings=None, style=''):
         assert window_too_small is None or isinstance(window_too_small, Container)
         assert isinstance(children, list)
         assert isinstance(modal, bool)
@@ -132,10 +133,12 @@ class _Split(Container):
         assert is_dimension(width)
         assert is_dimension(height)
         assert is_dimension(padding)
+        assert padding_char is None or isinstance(padding_char, text_type)
 
         self.children = [to_container(c) for c in children]
         self.window_too_small = window_too_small or _window_too_small()
         self.padding = to_dimension(padding)
+        self.padding_char = padding_char
 
         self.width = width
         self.height = height
@@ -175,12 +178,13 @@ class HSplit(_Split):
     :param key_bindings: ``None`` or a ``KeyBindings`` object.
     """
     def __init__(self, children, window_too_small=None,
-                 align=VerticalAlign.JUSTIFY, padding=0, width=None,
-                 height=None, modal=False, key_bindings=None, style=''):
+                 align=VerticalAlign.JUSTIFY, padding=0, padding_char=None,
+                 width=None, height=None, modal=False, key_bindings=None,
+                 style=''):
         super(HSplit, self).__init__(
             children=children, window_too_small=window_too_small,
-            padding=padding, width=width, height=height, modal=modal,
-            key_bindings=key_bindings, style=style)
+            padding=padding, padding_char=padding_char, width=width,
+            height=height, modal=modal, key_bindings=key_bindings, style=style)
 
         self.align = align
 
@@ -225,7 +229,7 @@ class HSplit(_Split):
             # The children with padding.
             for child in self.children:
                 result.append(child)
-                result.append(Window(height=self.padding))
+                result.append(Window(height=self.padding, char=self.padding_char))
             result.pop()
 
             # Padding right.
@@ -348,12 +352,12 @@ class VSplit(_Split):
     :param key_bindings: ``None`` or a ``KeyBindings`` object.
     """
     def __init__(self, children, window_too_small=None, align=HorizontalAlign.JUSTIFY,
-                 padding=Dimension.exact(0), width=None, height=None,
-                 modal=False, key_bindings=None, style=''):
+                 padding=Dimension.exact(0), padding_char=None, width=None,
+                 height=None, modal=False, key_bindings=None, style=''):
         super(VSplit, self).__init__(
             children=children, window_too_small=window_too_small,
-            padding=padding, width=width, height=height, modal=modal,
-            key_bindings=key_bindings, style=style)
+            padding=padding, padding_char=padding_char, width=width,
+            height=height, modal=modal, key_bindings=key_bindings, style=style)
 
         self.align = align
 
@@ -410,7 +414,7 @@ class VSplit(_Split):
             # The children with padding.
             for child in self.children:
                 result.append(child)
-                result.append(Window(width=self.padding))
+                result.append(Window(width=self.padding, char=self.padding_char))
             result.pop()
 
             # Padding right.
@@ -1084,7 +1088,7 @@ class Window(Container):
     :param char: Character to be used for filling the background.
     :param transparent: When `False`, first erase everything underneath. (This
         is mainly useful if this Window is displayed inside a `Float`.)
-        (when `char` or `get_char` is geven, it will never be transparant
+        (when `char` or `get_char` is given, it will never be transparant
         anyway, and this parameter doesn't change anything.)
     """
     def __init__(self, content=None, width=None, height=None,
