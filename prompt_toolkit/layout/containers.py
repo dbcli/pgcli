@@ -1680,14 +1680,16 @@ class Window(Container):
         # Highlight color columns
         for cc in self.get_colorcolumns():
             assert isinstance(cc, ColorColumn)
-            color_column_style = ' ' + cc.style
             column = cc.position
 
-            for y2 in range(y, y + height):
-                row = data_buffer[y2]
-                original_char = row[column]
-                row[column] = _CHAR_CACHE[
-                   original_char.char, original_char.style + color_column_style]
+            if column < x + width:  # Only draw when visible.
+                color_column_style = ' ' + cc.style
+
+                for y2 in range(y, y + height):
+                    row = data_buffer[y2]
+                    original_char = row[column + x]
+                    row[column + x] = _CHAR_CACHE[
+                       original_char.char, original_char.style + color_column_style]
 
     def _copy_margin(self, lazy_screen, new_screen, write_position, move_x, width):
         """
