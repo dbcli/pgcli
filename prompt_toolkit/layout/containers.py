@@ -1060,6 +1060,12 @@ class Window(Container):
                               preferred width reported by the control.
     :param dont_extend_height: When `True`, don't take up more width then the
                                preferred height reported by the control.
+    :param ignore_content_width: A `bool` or
+        :class:`~prompt_toolkit.filters.Filter` instance. Ignore the
+        `UIContent` width when calculating the dimensions.
+    :param ignore_content_height: A `bool` or
+        :class:`~prompt_toolkit.filters.Filter` instance. Ignore the
+        `UIContent` height when calculating the dimensions.
     :param left_margins: A list of :class:`~prompt_toolkit.layout.margins.Margin`
         instance to be displayed on the left. For instance:
         :class:`~prompt_toolkit.layout.margins.NumberredMargin` can be one of
@@ -1105,6 +1111,7 @@ class Window(Container):
     """
     def __init__(self, content=None, width=None, height=None,
                  dont_extend_width=False, dont_extend_height=False,
+                 ignore_content_width=False, ignore_content_height=False,
                  left_margins=None, right_margins=None, scroll_offsets=None,
                  allow_scroll_beyond_bottom=False, wrap_lines=False,
                  get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False,
@@ -1134,8 +1141,10 @@ class Window(Container):
         self.cursorcolumn = to_filter(cursorcolumn)
 
         self.content = content or DummyControl()
-        self.dont_extend_width = dont_extend_width
-        self.dont_extend_height = dont_extend_height
+        self.dont_extend_width = to_filter(dont_extend_width)
+        self.dont_extend_height = to_filter(dont_extend_height)
+        self.ignore_content_width = to_filter(ignore_content_width)
+        self.ignore_content_height = to_filter(ignore_content_height)
         self.left_margins = left_margins or []
         self.right_margins = right_margins or []
         self.scroll_offsets = scroll_offsets or ScrollOffsets()
@@ -1198,6 +1207,9 @@ class Window(Container):
         def preferred_content_width():
             """ Content width: is only calculated if no exact width for the
             window was given. """
+            if self.ignore_content_width():
+                return None
+
             # Calculate the width of the margin.
             total_margin_width = sum(self._get_margin_width(m) for m in
                                      self.left_margins + self.right_margins)
@@ -1215,7 +1227,7 @@ class Window(Container):
         return self._merge_dimensions(
             dimension=to_dimension(self.width),
             get_preferred=preferred_content_width,
-            dont_extend=self.dont_extend_width)
+            dont_extend=self.dont_extend_width())
 
     def preferred_height(self, width, max_available_height):
         """
@@ -1224,6 +1236,9 @@ class Window(Container):
         def preferred_content_height():
             """ Content height: is only calculated if no exact height for the
             window was given. """
+            if self.ignore_content_height():
+                return None
+
             total_margin_width = sum(self._get_margin_width(m) for m in
                                      self.left_margins + self.right_margins)
             wrap_lines = self.wrap_lines()
@@ -1234,7 +1249,7 @@ class Window(Container):
         return self._merge_dimensions(
             dimension=to_dimension(self.height),
             get_preferred=preferred_content_height,
-            dont_extend=self.dont_extend_height)
+            dont_extend=self.dont_extend_height())
 
     @staticmethod
     def _merge_dimensions(dimension, get_preferred, dont_extend=False):
