@@ -1683,14 +1683,14 @@ class Window(Container):
         else:
             char = self.char
 
-        if (erase_bg or char) and not self.transparent:
+        if erase_bg or char or not self.transparent:
             wp = write_position
-            char = _CHAR_CACHE[char or ' ', '']
+            char_obj = _CHAR_CACHE[char or ' ', '']
 
             for y in range(wp.ypos, wp.ypos + wp.height):
                 row = screen.data_buffer[y]
                 for x in range(wp.xpos, wp.xpos + wp.width):
-                    row[x] = char
+                    row[x] = char_obj
 
     def _apply_style(self, new_screen, write_position, parent_style):
         # Apply `self.style`.
