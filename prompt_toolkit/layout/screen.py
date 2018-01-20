@@ -127,6 +127,8 @@ class Screen(object):
         # this list.)
         self.visible_windows = []
 
+        self._draw_float_functions = []  # List of (z_index, draw_func)
+
     def set_cursor_position(self, window, position):
         " Set the cursor position for a given window. "
         self.cursor_positions[window] = position
@@ -157,6 +159,31 @@ class Screen(object):
                 return self.cursor_positions[window]
             except KeyError:
                 return Point(x=0, y=0)
+
+    def draw_with_z_index(self, z_index, draw_func):
+        """
+        Add a draw-function for a `Window` which has a >= 0 z_index.
+        This will be postponed until `draw_all_floats` is called.
+        """
+        assert isinstance(z_index, int), z_index
+        assert callable(draw_func)
+
+        self._draw_float_functions.append((z_index, draw_func))
+
+    def draw_all_floats(self):
+        """
+        Draw all float functions in order of z-index.
+        """
+        # Sort the floats that we have so far by z_index.
+        functions = sorted(self._draw_float_functions, key=lambda item: item[0])
+        self._draw_float_functions = []
+
+        for _, f in functions:
+            f()
+
+        # Only `Window` should call `draw_with_z_index` while rendering. This
+        # means that no new `_draw_float_functions` should have been added.
+        assert len(self._draw_float_functions) == 0
 
     def append_style_to_content(self, style_str):
         """

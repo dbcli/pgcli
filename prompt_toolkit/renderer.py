@@ -531,7 +531,8 @@ class Renderer(object):
             ypos=0,
             width=size.columns,
             height=height,
-        ), parent_style='', erase_bg=False)
+        ), parent_style='', erase_bg=False, z_index=None)
+        screen.draw_all_floats()
 
         # When grayed. Replace all styles in the new screen.
         if app.is_aborting:
