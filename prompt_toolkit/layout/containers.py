@@ -613,18 +613,29 @@ class FloatContainer(Container):
             screen, mouse_handlers, write_position, style, erase_bg, z_index)
 
         for fl in self.floats:
-            self._draw_float(fl, screen, mouse_handlers, write_position,
-                             parent_style, erase_bg, z_index)
+            # z_index of a Float is computed by summing the z_index of the
+            # container and the `Float`.
+            new_z_index = (z_index or 0) + fl.z_index
+            style = parent_style + ' ' + self.style
+
+            # If the float that we have here, is positioned relative to the
+            # cursor position, but the Window that specifiies the cursor
+            # position is not drawn yet, because it's a Float itself, we have
+            # to postpone this calculation. (This is a work-around, but good
+            # enough for now.)
+            postpone = (fl.xcursor is not None or fl.ycursor is not None)
+
+            if postpone:
+                new_z_index = 10 ** 10  # Draw as late as possible.
+                screen.draw_with_z_index(z_index=new_z_index, draw_func=partial(self._draw_float,
+                    fl, screen, mouse_handlers, write_position, style, erase_bg, new_z_index))
+            else:
+                self._draw_float(fl, screen, mouse_handlers, write_position,
+                                 style, erase_bg, new_z_index)
 
     def _draw_float(self, fl, screen, mouse_handlers, write_position,
-                    parent_style, erase_bg, z_index):
+                    style, erase_bg, z_index):
         " Draw a single Float. "
-        style = parent_style + ' ' + self.style
-
-        # z_index of a Float is computed by summing the z_index of the
-        # container and the `Float`.
-        z_index = (z_index or 0) + fl.z_index
-
         # When a menu_position was given, use this instead of the cursor
         # position. (These cursor positions are absolute, translate again
         # relative to the write_position.)

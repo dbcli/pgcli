@@ -174,16 +174,15 @@ class Screen(object):
         """
         Draw all float functions in order of z-index.
         """
-        # Sort the floats that we have so far by z_index.
-        functions = sorted(self._draw_float_functions, key=lambda item: item[0])
-        self._draw_float_functions = []
+        # We keep looping because some draw functions could add new functions
+        # to this list. See `FloatContainer`.
+        while self._draw_float_functions:
+            # Sort the floats that we have so far by z_index.
+            functions = sorted(self._draw_float_functions, key=lambda item: item[0])
+            self._draw_float_functions = []
 
-        for _, f in functions:
-            f()
-
-        # Only `Window` should call `draw_with_z_index` while rendering. This
-        # means that no new `_draw_float_functions` should have been added.
-        assert len(self._draw_float_functions) == 0
+            for _, f in functions:
+                f()
 
     def append_style_to_content(self, style_str):
         """

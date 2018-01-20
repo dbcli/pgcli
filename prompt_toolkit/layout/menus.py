@@ -176,7 +176,11 @@ def _trim_text(text, max_width):
 
 
 class CompletionsMenu(ConditionalContainer):
-    def __init__(self, max_height=None, scroll_offset=0, extra_filter=True, display_arrows=False):
+    # NOTE: We use a pretty big z_index by default. Menus are supposed to be
+    #       above anything else. We also want to make sure that the content is
+    #       visible at the point where we draw this menu.
+    def __init__(self, max_height=None, scroll_offset=0, extra_filter=True,
+                 display_arrows=False, z_index=10 ** 10):
         extra_filter = to_filter(extra_filter)
         display_arrows = to_filter(display_arrows)
 
@@ -189,6 +193,7 @@ class CompletionsMenu(ConditionalContainer):
                 right_margins=[ScrollbarMargin(display_arrows=display_arrows)],
                 dont_extend_width=True,
                 style='class:completion-menu',
+                z_index=z_index,
             ),
             # Show when there are completions but not at the point we are
             # returning the input.
@@ -425,7 +430,7 @@ class MultiColumnCompletionsMenu(HSplit):
     to True, it shows the meta information at the bottom.
     """
     def __init__(self, min_rows=3, suggested_max_column_width=30,
-                 show_meta=True, extra_filter=True):
+                 show_meta=True, extra_filter=True, z_index=10 ** 10):
         show_meta = to_filter(show_meta)
         extra_filter = to_filter(extra_filter)
 
@@ -433,8 +438,9 @@ class MultiColumnCompletionsMenu(HSplit):
         # we are returning the input.
         full_filter = has_completions & ~is_done & extra_filter
 
-        any_completion_has_meta = Condition(lambda:
-                any(c.display_meta for c in get_app().current_buffer.complete_state.current_completions))
+        @Condition
+        def any_completion_has_meta():
+            return any(c.display_meta for c in get_app().current_buffer.complete_state.current_completions)
 
         # Create child windows.
         completions_window = ConditionalContainer(
@@ -454,7 +460,7 @@ class MultiColumnCompletionsMenu(HSplit):
         super(MultiColumnCompletionsMenu, self).__init__([
             completions_window,
             meta_window
-        ])
+        ], z_index=z_index)
 
 
 class _SelectedCompletionMetaControl(UIControl):
