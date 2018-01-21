@@ -3,7 +3,7 @@ Wrapper for the layout.
 """
 from __future__ import unicode_literals
 from .controls import UIControl, BufferControl
-from .containers import Window, to_container, to_window
+from .containers import Window, to_container, to_window, ConditionalContainer
 from prompt_toolkit.buffer import Buffer
 import six
 
@@ -26,6 +26,11 @@ class Layout(object):
     def __init__(self, container, focussed_window=None):
         self.container = to_container(container)
         self._stack = []
+
+        # Map search BufferControl back to the original BufferControl.
+        # This is used to keep track of when exactly we are searching, and for
+        # applying the search.
+        self.search_links = {}
 
         # Mapping that maps the children in the layout to their parent.
         # This relationship is calculated dynamically, each time when the UI
@@ -67,8 +72,9 @@ class Layout(object):
         - a `UIControl`
         - a `Buffer` instance or the name of a `Buffer`
         - a `Window`
-        - Any container object. In this case we will focus the first focussable
-          `UIControl` within the container.
+        - Any container object. In this case we will focus the `Window` from
+          this container that was focussed most recent, or the very first
+          focussable `Window` of the container.
         """
         # BufferControl by buffer name.
         if isinstance(value, six.text_type):
@@ -100,17 +106,33 @@ class Layout(object):
             value = to_container(value)
 
             if isinstance(value, Window):
+                # This is a `Window`: focus that.
                 if value not in self.find_all_windows():
                     raise ValueError('Invalid value. Window does not appear in the layout: %r' %
                             (value, ))
 
                 self.current_window = value
             else:
-                # Take the first window of this container.
-                for c in walk(value):
+                # Focus a window in this container.
+                # If we have many windows as part of this container, and some
+                # of them have been focussed before, take the last focused
+                # item. (This is very useful when the UI is composed of more
+                # complex sub components.)
+                windows = []
+                for c in walk(value, skip_hidden=True):
                     if isinstance(c, Window) and c.content.is_focussable():
-                        self.current_window = c
+                        windows.append(c)
+
+                # Take the first one that was focussed before.
+                for w in reversed(self._stack):
+                    if w in windows:
+                        self.current_window = w
                         return
+
+                # None was focussed before: take the very first focussable window.
+                if windows:
+                    self.current_window = windows[0]
+                    return
 
                 raise ValueError('Invalid value. Container cannot be focussed: %r' % (value, ))
 
@@ -162,6 +184,23 @@ class Layout(object):
         " Set the `Window` object to be currently focussed. "
         assert isinstance(value, Window)
         self._stack.append(value)
+
+    def start_search(self, control, search_buffer_control):
+        # Make sure to focus the search BufferControl
+        self.focus(search_buffer_control)
+
+        # Remember search link.
+        self.search_links[search_buffer_control] = control
+
+    @property
+    def is_searching(self):
+        " True if we are searching right now. "
+        return self.current_control in self.search_links
+
+    @property
+    def search_target_buffer_control(self):
+        " Return the `BufferControl` in which we are searching or `None`. "
+        return self.search_links.get(self.current_control)
 
     def get_focussable_windows(self):
         """
@@ -313,13 +352,17 @@ class InvalidLayoutError(Exception):
     pass
 
 
-def walk(container):
+def walk(container, skip_hidden=False):
     """
     Walk through layout, starting at this container.
     """
+    # When `skip_hidden` is set, don't go into disabled ConditionalContainer containers.
+    if skip_hidden and isinstance(container, ConditionalContainer) and not container.filter():
+        return
+
     yield container
 
     for c in container.get_children():
         # yield from walk(c)
-        for i in walk(c):
+        for i in walk(c, skip_hidden=skip_hidden):
             yield i

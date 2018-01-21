@@ -18,7 +18,9 @@ def abort_search(event):
     (Usually bound to ControlG/ControlC.)
     """
     event.current_buffer.reset()
-    event.app.layout.focus_last()
+
+    target_buffer_control = event.app.layout.search_target_buffer_control
+    event.app.layout.focus(target_buffer_control)  # XXX: TODO: maybe pop from search links.
 
     # If we're in Vi mode, go back to navigation mode.
     event.app.vi_state.input_mode = InputMode.NAVIGATION
@@ -32,22 +34,22 @@ def accept_search(event):
     (Usually bound to Enter.)
     """
     search_control = event.app.layout.current_control
-    prev_control = event.app.layout.previous_control
-    search_state = prev_control.search_state
+    target_buffer_control = event.app.layout.search_target_buffer_control
+    search_state = target_buffer_control.search_state
 
     # Update search state.
     if search_control.buffer.text:
         search_state.text = search_control.buffer.text
 
     # Apply search.
-    prev_control.buffer.apply_search(search_state, include_current_position=True)
+    target_buffer_control.buffer.apply_search(search_state, include_current_position=True)
 
     # Add query to history of search line.
     search_control.buffer.append_to_history()
     search_control.buffer.reset()
 
     # Focus previous document again.
-    event.app.layout.focus_last()
+    event.app.layout.focus(target_buffer_control)
 
     # If we're in Vi mode, go back to navigation mode.
     event.app.vi_state.input_mode = InputMode.NAVIGATION
@@ -63,7 +65,8 @@ def start_reverse_incremental_search(event):
     search_state = control.search_state
 
     search_state.direction = SearchDirection.BACKWARD
-    event.app.layout.current_control = control.search_buffer_control
+
+    event.app.layout.start_search(control, control.search_buffer_control)
 
     # If we're in Vi mode, make sure to go into insert mode.
     event.app.vi_state.input_mode = InputMode.INSERT
@@ -79,7 +82,8 @@ def start_forward_incremental_search(event):
     search_state = control.search_state
 
     search_state.direction = SearchDirection.FORWARD
-    event.app.layout.current_control = control.search_buffer_control
+
+    event.app.layout.start_search(control, control.search_buffer_control)
 
     # If we're in Vi mode, make sure to go into insert mode.
     event.app.vi_state.input_mode = InputMode.INSERT

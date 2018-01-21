@@ -316,16 +316,8 @@ def emacs_selection_mode():
 @Condition
 def is_searching():
     " When we are searching. "
-    from prompt_toolkit.layout.controls import BufferControl
     app = get_app()
-
-    control = app.layout.current_control
-    prev = app.layout.previous_control
-
-    return (isinstance(prev, BufferControl) and
-            isinstance(control, BufferControl) and
-            prev.search_buffer_control is not None and
-            prev.search_buffer_control == control)
+    return app.layout.is_searching
 
 
 @Condition
