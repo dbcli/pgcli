@@ -143,7 +143,7 @@ class _Split(Container):
 
         self.children = [to_container(c) for c in children]
         self.window_too_small = window_too_small or _window_too_small()
-        self.padding = to_dimension(padding)
+        self.padding = padding
         self.padding_char = padding_char
         self.padding_style = padding_style
 
