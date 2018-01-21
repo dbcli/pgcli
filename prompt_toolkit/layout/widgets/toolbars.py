@@ -178,8 +178,11 @@ class SearchToolbar(object):
     """
     :param vi_mode: Display '/' and '?' instead of I-search.
     """
-    def __init__(self, search_buffer, get_search_state=None, vi_mode=False):
-        assert isinstance(search_buffer, Buffer)
+    def __init__(self, search_buffer=None, get_search_state=None, vi_mode=False):
+        assert search_buffer is None or isinstance(search_buffer, Buffer)
+
+        if search_buffer is None:
+            search_buffer = Buffer()
 
         def get_before_input():
             app = get_app()
@@ -190,6 +193,8 @@ class SearchToolbar(object):
             else:
                 return ('/' if vi_mode else 'I-search: ')
 
+        self.search_buffer = search_buffer
+
         self.control = BufferControl(
             buffer=search_buffer,
             get_search_state=get_search_state,
@@ -198,8 +203,10 @@ class SearchToolbar(object):
                 style='class:search-toolbar.text'))
 
         self.container = ConditionalContainer(
-            content=Window(self.control, height=Dimension.exact(1),
-                           style='class:search-toolbar'),
+            content=Window(
+                self.control,
+                height=1,
+                style='class:search-toolbar'),
             filter=is_searching & ~is_done)
 
     def __pt_container__(self):
