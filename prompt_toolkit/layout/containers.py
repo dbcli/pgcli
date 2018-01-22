@@ -1158,7 +1158,8 @@ class Window(Container):
     :param get_colorcolumns: A callable that should return a a list of
         :class:`.ColorColumn` instances that describe the columns to be
         highlighted.
-    :param align: alignment of content.
+    :param align: `Align` value or callable that returns an `Align value.
+        alignment of content.
     :param style: A string string. Style to be applied to all the cells in this
         window.
     :param char: Character to be used for filling the background.
@@ -1185,7 +1186,7 @@ class Window(Container):
         assert get_vertical_scroll is None or callable(get_vertical_scroll)
         assert get_horizontal_scroll is None or callable(get_horizontal_scroll)
         assert get_colorcolumns is None or callable(get_colorcolumns)
-        assert align in Align._ALL
+        assert callable(align) or align in Align._ALL
         assert isinstance(style, text_type)
         assert char is None or isinstance(char, text_type)
         assert get_char is None or callable(get_char)
@@ -1390,7 +1391,8 @@ class Window(Container):
             # Otherwise, postpone.
             screen.draw_with_z_index(z_index=z_index, draw_func=draw_func)
 
-    def _write_to_screen_at_index(self, screen, mouse_handlers, write_position, parent_style, erase_bg):
+    def _write_to_screen_at_index(self, screen, mouse_handlers, write_position,
+                                  parent_style, erase_bg):
         # Don't bother writing invisible windows.
         # (We save some time, but also avoid applying last-line styling.)
         if write_position.height <= 0 or write_position.width <= 0:
@@ -1413,6 +1415,9 @@ class Window(Container):
         # Erase background and fill with `char`.
         self._fill_bg(screen, write_position, erase_bg)
 
+        # Resolve `align` attribute.
+        align = self.align() if callable(self.align) else self.align
+
         # Write body
         visible_line_to_row_col, rowcol_to_yx = self._copy_body(
             ui_content, screen, write_position,
@@ -1422,7 +1427,7 @@ class Window(Container):
             vertical_scroll_2=self.vertical_scroll_2,
             always_hide_cursor=self.always_hide_cursor(),
             has_focus=get_app().layout.current_control == self.content,
-            align=self.align)
+            align=align)
 
         # Remember render info. (Set before generating the margins. They need this.)
         x_offset = write_position.xpos + sum(left_margin_widths)
