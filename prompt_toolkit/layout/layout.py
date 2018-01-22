@@ -3,7 +3,7 @@ Wrapper for the layout.
 """
 from __future__ import unicode_literals
 from .controls import UIControl, BufferControl
-from .containers import Window, to_container, to_window, ConditionalContainer
+from .containers import Window, to_container, ConditionalContainer
 from prompt_toolkit.buffer import Buffer
 import six
 
