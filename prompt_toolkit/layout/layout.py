@@ -21,9 +21,10 @@ class Layout(object):
     This also keeps track of which user control is focussed.
 
     :param container: The "root" container for the layout.
-    :param focussed_window: The `Window` to be focused initially.
+    :param focussed_element: element to be focused initially. (Can be anything
+        the `focus` function accepts.)
     """
-    def __init__(self, container, focussed_window=None):
+    def __init__(self, container, focussed_element=None):
         self.container = to_container(container)
         self._stack = []
 
@@ -37,13 +38,13 @@ class Layout(object):
         # is rendered.  (UI elements have only references to their children.)
         self._child_to_parent = {}
 
-        if focussed_window is None:
+        if focussed_element is None:
             try:
                 self._stack.append(next(self.find_all_windows()))
             except StopIteration:
                 raise InvalidLayoutError('Invalid layout. The layout does not contain any Window object.')
         else:
-            self._stack.append(to_window(focussed_window))
+            self.focus(focussed_element)
 
         # List of visible windows.
         self.visible_windows = []  # type: List[Window]
