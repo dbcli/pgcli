@@ -151,8 +151,16 @@ class Layout(object):
         if isinstance(value, UIControl):
             return self.current_control == value
         else:
-            value = to_window(value)
-            return self.current_window == value
+            value = to_container(value)
+            if isinstance(value, Window):
+                return self.current_window == value
+            else:
+                # Check whether this "container" is focussed. This is true if
+                # one of the elements inside is focussed.
+                for element in walk(value):
+                    if element == self.current_window:
+                        return True
+                return False
 
     @property
     def current_control(self):
