@@ -91,8 +91,9 @@ class Application(object):
     :class:`~prompt_toolkit.application.Application` object as input.)
 
     :param on_reset: Called during reset.
-    :param on_render: Called right after rendering.
     :param on_invalidate: Called when the UI has been invalidated.
+    :param before_render: Called right before rendering.
+    :param after_render: Called right after rendering.
 
     I/O:
 
@@ -119,7 +120,8 @@ class Application(object):
                  min_redraw_interval=None,
                  max_render_postpone_time=0,
 
-                 on_reset=None, on_render=None, on_invalidate=None,
+                 on_reset=None, on_invalidate=None,
+                 before_render=None, after_render=None,
 
                  # I/O.
                  input=None, output=None):
@@ -146,8 +148,9 @@ class Application(object):
         assert max_render_postpone_time is None or isinstance(max_render_postpone_time, (float, int))
 
         assert on_reset is None or callable(on_reset)
-        assert on_render is None or callable(on_render)
         assert on_invalidate is None or callable(on_invalidate)
+        assert before_render is None or callable(before_render)
+        assert after_render is None or callable(after_render)
 
         assert output is None or isinstance(output, Output)
         assert input is None or isinstance(input, Input)
@@ -177,8 +180,9 @@ class Application(object):
 
         # Events.
         self.on_invalidate = Event(self, on_invalidate)
-        self.on_render = Event(self, on_render)
         self.on_reset = Event(self, on_reset)
+        self.before_render = Event(self, before_render)
+        self.after_render = Event(self, after_render)
 
         # I/O.
         self.output = output or get_default_output()
@@ -380,6 +384,7 @@ class Application(object):
 
             # Render
             self.render_counter += 1
+            self.before_render.fire()
 
             if render_as_done:
                 if self.erase_when_done:
@@ -393,7 +398,7 @@ class Application(object):
             self.layout.update_parents_relations()
 
             # Fire render event.
-            self.on_render.fire()
+            self.after_render.fire()
 
             self._update_invalidate_events()
 
