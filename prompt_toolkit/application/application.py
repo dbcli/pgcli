@@ -386,14 +386,21 @@ class Application(object):
             self.render_counter += 1
             self.before_render.fire()
 
-            if render_as_done:
-                if self.erase_when_done:
-                    self.renderer.erase()
+            # NOTE: We want to make sure this Application is the active one, if
+            #       we have a situation with multiple concurrent running apps.
+            #       We had the case with pymux where `invalidate()` was called
+            #       at the point where another Application was active. This
+            #       would cause prompt_toolkit to render the wrong application
+            #       to this output device.
+            with set_app(self):
+                if render_as_done:
+                    if self.erase_when_done:
+                        self.renderer.erase()
+                    else:
+                        # Draw in 'done' state and reset renderer.
+                        self.renderer.render(self, self.layout, is_done=render_as_done)
                 else:
-                    # Draw in 'done' state and reset renderer.
-                    self.renderer.render(self, self.layout, is_done=render_as_done)
-            else:
-                self.renderer.render(self, self.layout)
+                    self.renderer.render(self, self.layout)
 
             self.layout.update_parents_relations()
 
