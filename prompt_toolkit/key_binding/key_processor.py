@@ -283,11 +283,19 @@ class KeyProcessor(object):
             else:
                 return self.input_queue.popleft()
 
+        keys_processed = False
+        is_flush = False
+
         while not_empty():
+            keys_processed = True
+
             # Process next key.
             key_press = get_next()
 
-            if key_press.key != Keys.CPRResponse:
+            is_flush = key_press is _Flush
+            is_cpr = key_press.key == Keys.CPRResponse
+
+            if not is_flush and not is_cpr:
                 self.before_key_press.fire()
 
             try:
@@ -300,13 +308,16 @@ class KeyProcessor(object):
                 app.invalidate()
                 raise
 
-            if key_press.key != Keys.CPRResponse:
+            if not is_flush and not is_cpr:
                 self.after_key_press.fire()
 
-        # Invalidate user interface.
-        app.invalidate()
+        if keys_processed:
+            # Invalidate user interface.
+            app.invalidate()
 
-        self._start_timeout()
+        # skip timeout if the last key was flush
+        if not is_flush:
+            self._start_timeout()
 
     def empty_queue(self):
         """
@@ -387,7 +398,7 @@ class KeyProcessor(object):
             " Wait for timeout. "
             time.sleep(self.timeout)
 
-            if counter == self._keys_pressed:
+            if len(self.input_queue) > 0 and counter == self._keys_pressed:
                 # (No keys pressed in the meantime.)
                 call_from_executor(flush_keys)
 
