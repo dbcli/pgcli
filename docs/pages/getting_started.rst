@@ -39,7 +39,7 @@ input from the user), it uses a rather simple built-in layout. One that
 displays the default input buffer and the prompt, a float for the
 autocompletions and a toolbar for input validation which is hidden by default.
 
-For full screen applications, usually we build a custom layout ourself.
+For full screen applications, usually we build a custom layout ourselves.
 
 Further, there is a very flexible key binding system that can be programmed for
 all the needs of full screen applications.
