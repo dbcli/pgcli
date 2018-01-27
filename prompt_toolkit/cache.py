@@ -95,7 +95,7 @@ class FastDictCache(dict):
 
 def memoized(maxsize=1024):
     """
-    Momoization decorator for immutable classes and pure functions.
+    Memoization decorator for immutable classes and pure functions.
     """
     def decorator(obj):
         cache = SimpleCache(maxsize=maxsize)
