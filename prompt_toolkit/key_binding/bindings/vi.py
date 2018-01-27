@@ -23,7 +23,7 @@ try:
     from itertools import accumulate
 except ImportError:  # < Python 3.2
     def accumulate(iterable):
-        " Super simpel 'accumulate' implementation. "
+        " Super simple 'accumulate' implementation. "
         total = 0
         for item in iterable:
             total += item
@@ -450,7 +450,7 @@ def load_vi_bindings():
 
     @handle('insert', filter=vi_navigation_mode)
     def _(event):
-        " Presing the Insert key. "
+        " Pressing the Insert key. "
         event.app.vi_state.input_mode = InputMode.INSERT
 
     @handle('a', filter=vi_navigation_mode & ~is_read_only)
@@ -848,7 +848,7 @@ def load_vi_bindings():
     @handle('#', filter=vi_navigation_mode)
     def _(event):
         """
-        Go to previous occurence of this word.
+        Go to previous occurrence of this word.
         """
         b = event.current_buffer
         search_state = event.app.current_search_state
@@ -862,7 +862,7 @@ def load_vi_bindings():
     @handle('*', filter=vi_navigation_mode)
     def _(event):
         """
-        Go to next occurence of this word.
+        Go to next occurrence of this word.
         """
         b = event.current_buffer
         search_state = event.app.current_search_state
@@ -1152,8 +1152,8 @@ def load_vi_bindings():
     @text_object('f', Keys.Any)
     def _(event):
         """
-        Go to next occurance of character. Typing 'fx' will move the
-        cursor to the next occurance of character. 'x'.
+        Go to next occurrence of character. Typing 'fx' will move the
+        cursor to the next occurrence of character. 'x'.
         """
         event.app.vi_state.last_character_find = CharacterFind(event.data, False)
         match = event.current_buffer.document.find(
@@ -1166,8 +1166,8 @@ def load_vi_bindings():
     @text_object('F', Keys.Any)
     def _(event):
         """
-        Go to previous occurance of character. Typing 'Fx' will move the
-        cursor to the previous occurance of character. 'x'.
+        Go to previous occurrence of character. Typing 'Fx' will move the
+        cursor to the previous occurrence of character. 'x'.
         """
         event.app.vi_state.last_character_find = CharacterFind(event.data, True)
         return TextObject(event.current_buffer.document.find_backwards(
@@ -1176,7 +1176,7 @@ def load_vi_bindings():
     @text_object('t', Keys.Any)
     def _(event):
         """
-        Move right to the next occurance of c, then one char backward.
+        Move right to the next occurrence of c, then one char backward.
         """
         event.app.vi_state.last_character_find = CharacterFind(event.data, False)
         match = event.current_buffer.document.find(
@@ -1189,7 +1189,7 @@ def load_vi_bindings():
     @text_object('T', Keys.Any)
     def _(event):
         """
-        Move left to the previous occurance of c, then one char forward.
+        Move left to the previous occurrence of c, then one char forward.
         """
         event.app.vi_state.last_character_find = CharacterFind(event.data, True)
         match = event.current_buffer.document.find_backwards(
@@ -1369,7 +1369,7 @@ def load_vi_bindings():
         """
         Scrolls the window to makes the current line the last line in the visible region.
         """
-        # We can safely set the scroll offset to zero; the Window will meke
+        # We can safely set the scroll offset to zero; the Window will make
         # sure that it scrolls at least enough to make the cursor visible
         # again.
         event.app.layout.current_window.vertical_scroll = 0
@@ -1668,7 +1668,7 @@ def load_vi_bindings():
                 code = code[::-1]  # Try reversing.
             symbol = DIGRAPHS[code]
         except KeyError:
-            # Unkown digraph.
+            # Unknown digraph.
             event.app.output.bell()
         else:
             # Insert digraph.
