@@ -271,7 +271,7 @@ class HSplit(_Split):
         :param screen: The :class:`~prompt_toolkit.layout.screen.Screen` class
             to which the output has to be written.
         """
-        sizes = self._divide_heigths(write_position)
+        sizes = self._divide_heights(write_position)
         style = parent_style + ' ' + to_str(self.style)
         z_index = z_index if self.z_index is None else self.z_index
 
@@ -303,7 +303,7 @@ class HSplit(_Split):
                     WritePosition(xpos, ypos, width, remaining_height), style,
                                   erase_bg, z_index)
 
-    def _divide_heigths(self, write_position):
+    def _divide_heights(self, write_position):
         """
         Return the heights for all rows.
         Or None when there is not enough space.
