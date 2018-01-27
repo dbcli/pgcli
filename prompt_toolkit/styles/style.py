@@ -206,7 +206,6 @@ class Style(BaseStyle):
     def style_rules(self):
         return self._style_rules
 
-
     @classmethod
     def from_dict(cls, style_dict, priority=Priority.MOST_PRECISE):
         """
