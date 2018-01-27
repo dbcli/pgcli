@@ -80,7 +80,7 @@ class Container(with_metaclass(ABCMeta, object)):
     def is_modal(self):
         """
         When this container is modal, key bindings from parent containers are
-        not taken into account if a user control in this container is focussed.
+        not taken into account if a user control in this container is focused.
         """
         return False
 
@@ -88,7 +88,7 @@ class Container(with_metaclass(ABCMeta, object)):
         """
         Returns a `KeyBindings` object. These bindings become active when any
         user control in this container has the focus, except if any containers
-        between this container and the focussed user control is modal.
+        between this container and the focused user control is modal.
         """
         return None
 
@@ -627,7 +627,7 @@ class FloatContainer(Container):
             style = parent_style + ' ' + to_str(self.style)
 
             # If the float that we have here, is positioned relative to the
-            # cursor position, but the Window that specifiies the cursor
+            # cursor position, but the Window that specifies the cursor
             # position is not drawn yet, because it's a Float itself, we have
             # to postpone this calculation. (This is a work-around, but good
             # enough for now.)
@@ -1173,7 +1173,7 @@ class Window(Container):
     :param char: Character to be used for filling the background.
     :param transparent: When `False`, first erase everything underneath. (This
         is mainly useful if this Window is displayed inside a `Float`.)
-        (when `char` or `get_char` is given, it will never be transparant
+        (when `char` or `get_char` is given, it will never be transparent
         anyway, and this parameter doesn't change anything.)
     """
     def __init__(self, content=None, width=None, height=None, z_index=None,
@@ -1619,7 +1619,7 @@ class Window(Container):
                             new_buffer_row[x + xpos] = char
 
                             # When we print a multi width character, make sure
-                            # to erase the neighbous positions in the screen.
+                            # to erase the neighbours positions in the screen.
                             # (The empty string if different from everything,
                             # so next redraw this cell will repaint anyway.)
                             if char_width > 1:
@@ -1692,7 +1692,7 @@ class Window(Container):
             new_screen.set_menu_position(self, cursor_pos_to_screen_pos(
                     ui_content.menu_position.y, ui_content.menu_position.x))
 
-        # Update output screne height.
+        # Update output screen height.
         new_screen.height = max(new_screen.height, ypos + write_position.height)
 
         return visible_line_to_row_col, rowcol_to_yx
@@ -1841,7 +1841,7 @@ class Window(Container):
         # scroll to this line.
         if ui_content.get_height_for_line(ui_content.cursor_position.y, width) > height - scroll_offsets_top:
             # Calculate the height of the text before the cursor, with the line
-            # containing the cursor included, and the character belowe the
+            # containing the cursor included, and the character below the
             # cursor included as well.
             line = explode_text_fragments(ui_content.get_line(ui_content.cursor_position.y))
             text_before_cursor = fragment_list_to_text(line[:ui_content.cursor_position.x + 1])
