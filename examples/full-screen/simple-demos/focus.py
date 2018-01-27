@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Demonstration of how to programatically focus a certain widget.
+Demonstration of how to programmatically focus a certain widget.
 """
 from __future__ import unicode_literals
 
