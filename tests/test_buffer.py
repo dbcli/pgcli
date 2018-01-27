@@ -71,7 +71,7 @@ def test_cursor_down(_buffer):
     _buffer.cursor_down()
     assert _buffer.document.cursor_position == len('line1\nlin')
 
-    # Going down to a line that's storter.
+    # Going down to a line that's shorter.
     _buffer.reset()
     _buffer.insert_text('long line1\na\nb')
     _buffer.cursor_position = 3
