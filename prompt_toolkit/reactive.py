@@ -16,7 +16,7 @@ We introduce two types:
   of a filter happens by calling it.
 
 - Integer: for binding integer values. Reactive operations (like addition and
-  substraction) are not suppported. Resolving the actual value happens by
+  subtraction) are not supported. Resolving the actual value happens by
   casting it to int, like  ``int(integer)``. This way, it is possible to use
   normal integers as well for static values.
 """
