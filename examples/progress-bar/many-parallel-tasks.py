@@ -24,7 +24,7 @@ def main():
             threading.Thread(target=run_task, args=('Third task', 8, 3)),
             threading.Thread(target=run_task, args=('Fourth task', 200, .1)),
             threading.Thread(target=run_task, args=('Fifth task', 40, .2)),
-            threading.Thread(target=run_task, args=('Sixt task', 220, .1)),
+            threading.Thread(target=run_task, args=('Sixth task', 220, .1)),
             threading.Thread(target=run_task, args=('Seventh task', 85, .05)),
             threading.Thread(target=run_task, args=('Eight task', 200, .05)),
         ]
