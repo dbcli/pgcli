@@ -145,7 +145,7 @@ Philosophy
 **********
 
 The source code of ``prompt_toolkit`` should be readable, concise and
-efficient. We prefer short functions focussing each on one task and for which
+efficient. We prefer short functions focusing each on one task and for which
 the input and output types are clearly specified. We mostly prefer composition
 over inheritance, because inheritance can result in too much functionality in
 the same object. We prefer immutable objects where possible (objects don't
