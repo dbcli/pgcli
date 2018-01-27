@@ -1,5 +1,5 @@
 """
-Validator for a regular langage.
+Validator for a regular language.
 """
 from __future__ import unicode_literals
 
