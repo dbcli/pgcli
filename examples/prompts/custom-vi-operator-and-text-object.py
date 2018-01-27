@@ -41,7 +41,7 @@ def main():
     @text_object('A')
     def _(event):
         " A custom text object that involves everything. "
-        # Note that a `TextObject` has coordinatens, relative to the cursor position.
+        # Note that a `TextObject` has coordinates, relative to the cursor position.
         buff = event.current_buffer
         return TextObject(
                 -buff.document.cursor_position,  # The start.
