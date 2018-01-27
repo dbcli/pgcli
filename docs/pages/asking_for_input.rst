@@ -35,7 +35,7 @@ In the following sections, we will discover all these parameters.
     `prompt_toolkit` expects unicode strings everywhere. If you are using
     Python 2, make sure that all strings which are passed to `prompt_toolkit`
     are unicode strings (and not bytes). Either use
-    ``from __future__ import unicode_literals`` or explicitely put a small
+    ``from __future__ import unicode_literals`` or explicitly put a small
     ``'u'`` in front of every string.
 
 
@@ -325,7 +325,7 @@ Input validation
 A prompt can have a validator attached. This is some code that will check
 whether the given input is acceptable and it will only return it if that's the
 case. Otherwise it will show an error message and move the cursor to a given
-possition.
+position.
 
 A validator should implements the :class:`~prompt_toolkit.validation.Validator`
 abstract base class. This requires only one method, named ``validate`` that
