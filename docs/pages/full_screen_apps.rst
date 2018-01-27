@@ -72,7 +72,7 @@ objects for input and output:
     - An :class:`~prompt_toolkit.output.base.Output` instance, which is an
       abstraction of the output stream, and is called by the renderer.
 
-Both are optional and normally not needed to pass explicitely. Usually, the
+Both are optional and normally not needed to pass explicitly. Usually, the
 default works fine.
 
 There is a third I/O object which is also required by the application, but not
@@ -198,7 +198,7 @@ vertical line:
         # the left.
         Window(content=BufferControl(buffer=buffer1)),
 
-        # A vertical line in the middle. We explicitely specify the width, to
+        # A vertical line in the middle. We explicitly specify the width, to
         # make sure that the layout engine will not try to divide the whole
         # width by three for all these windows. The window will simply fill its
         # content by repeating this character.
@@ -214,9 +214,9 @@ vertical line:
     app.run()
 
 
-More complex layouts can be achieved by nesting multiple 
+More complex layouts can be achieved by nesting multiple
 :class:`~prompt_toolkit.layout.containers.VSplit`,
-:class:`~prompt_toolkit.layout.containers.HSplit` and 
+:class:`~prompt_toolkit.layout.containers.HSplit` and
 :class:`~prompt_toolkit.layout.containers.FloatContainer` objects.
 
 If you want to make some part of the layout only visible when a certain
@@ -224,7 +224,7 @@ condition is satisfied, use a
 :class:`~prompt_toolkit.layout.containers.ConditionalContainer`.
 
 
-Focussing windows
+Focusing windows
 ^^^^^^^^^^^^^^^^^
 
 TODO
@@ -241,7 +241,7 @@ There are two kinds of key bindings:
 - Global key bindings, which are always active.
 - Key bindings that belong to a certain
   :class:`~prompt_toolkit.layout.controls.UIControl` and are only active when
-  this control is focussed. Both
+  this control is focused. Both
   :class:`~prompt_toolkit.layout.controls.BufferControl`
   :class:`~prompt_toolkit.layout.controls.FormattedTextControl` take a
   ``key_bindings`` argument.
@@ -294,7 +294,7 @@ All container objects, like :class:`~prompt_toolkit.layout.containers.VSplit`
 and :class:`~prompt_toolkit.layout.containers.HSplit` take a ``modal`` argument.
 
 If this flag has been set, then key bindings from the parent account are not
-taken into account if one of the childen windows has the focus.
+taken into account if one of the children windows has the focus.
 
 This is useful in a complex layout, where many controls have their own key
 bindings, but you only want to enable the key bindings for a certain region of
@@ -307,7 +307,7 @@ More about the Window class
 ---------------------------
 
 As said earlier, a :class:`~prompt_toolkit.layout.containers.Window` is a
-:class:`~prompt_toolkit.layout.containers.Container` that wraps a 
+:class:`~prompt_toolkit.layout.containers.Container` that wraps a
 :class:`~prompt_toolkit.layout.controls.UIControl`, like a
 :class:`~prompt_toolkit.layout.controls.BufferControl` or
 :class:`~prompt_toolkit.layout.controls.FormattedTextControl`.
