@@ -142,7 +142,7 @@ class SystemToolbar(object):
     def get_global_key_bindings(self):
         """
         Return the key bindings which need to be registered to allow this
-        toolbar to be focussed.
+        toolbar to be focused.
         """
         return self._global_bindings
 
