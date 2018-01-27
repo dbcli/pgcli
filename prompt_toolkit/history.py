@@ -27,7 +27,7 @@ class History(with_metaclass(ABCMeta, object)):
 
     @abstractmethod
     def __iter__(self):
-        " Iterate through all the items of the history. Cronologically. "
+        " Iterate through all the items of the history. Chronologically. "
 
     @abstractmethod
     def __len__(self):
