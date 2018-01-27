@@ -101,7 +101,7 @@ class StdoutProxy(object):
               (write('line') and write('\n')). Of course we don't want to call
               `run_in_terminal` for every individual call, because that's too
               expensive, and as long as the newline hasn't been written, the
-              text itself is again overwritter by the rendering of the input
+              text itself is again overwritten by the rendering of the input
               command line. Therefor, we have a little buffer which holds the
               text until a newline is written to stdout.
         """
