@@ -10,7 +10,7 @@ __all__ = (
 
 class MouseHandlers(object):
     """
-    Two dimentional raster of callbacks for mouse events.
+    Two dimensional raster of callbacks for mouse events.
     """
     def __init__(self):
         def dummy_callback(mouse_event):
