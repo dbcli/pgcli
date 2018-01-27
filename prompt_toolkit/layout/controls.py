@@ -458,7 +458,7 @@ class BufferControl(UIControl):
         #: Cache for the lexer.
         #: Often, due to cursor movement, undo/redo and window resizing
         #: operations, it happens that a short time, the same document has to be
-        #: lexed. This is a faily easy way to cache such an expensive operation.
+        #: lexed. This is a fairly easy way to cache such an expensive operation.
         self._fragment_cache = SimpleCache(maxsize=8)
 
         self._xy_to_cursor_position = None
