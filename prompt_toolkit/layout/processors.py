@@ -323,7 +323,7 @@ class DisplayMultipleCursors(Processor):
             start_pos = document.translate_row_col_to_index(lineno, 0)
             end_pos = start_pos + len(document.lines[lineno])
 
-            fragment_suffix = ' class:multiple-cursors.cursor '
+            fragment_suffix = ' class:multiple-cursors'
 
             for p in positions:
                 if start_pos <= p < end_pos:

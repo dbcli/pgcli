@@ -242,8 +242,8 @@ class _CompletionsToolbarControl(UIControl):
                         cut_right = True
                         break
 
-                fragments.append(('class:completion,current-completion' if i == index
-                               else 'class:completion', c.display))
+                fragments.append(('class:completion-toolbar.completion.current' if i == index
+                               else 'class:completion-toolbar.completion', c.display))
                 fragments.append(('', ' '))
 
             # Extend/strip until the content width.
@@ -253,11 +253,11 @@ class _CompletionsToolbarControl(UIControl):
             # Return fragments
             all_fragments = [
                 ('', ' '),
-                ('class:completions-toolbar.arrow', '<' if cut_left else ' '),
+                ('class:completion-toolbar.arrow', '<' if cut_left else ' '),
                 ('', ' '),
             ] + fragments + [
                 ('', ' '),
-                ('class:completions-toolbar.arrow', '>' if cut_right else ' '),
+                ('class:completion-toolbar.arrow', '>' if cut_right else ' '),
                 ('', ' '),
             ]
         else:
@@ -275,7 +275,7 @@ class CompletionsToolbar(object):
             content=Window(
                 _CompletionsToolbarControl(),
                 height=Dimension.exact(1),
-                style='class:completions-toolbar'),
+                style='class:completion-toolbar'),
             filter=has_completions & ~is_done)
 
     def __pt_container__(self):

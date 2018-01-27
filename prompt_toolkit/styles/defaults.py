@@ -30,7 +30,8 @@ PROMPT_TOOLKIT_STYLE = [
     ('matching-bracket.other',                  '#000000 bg:#aacccc'),
     ('matching-bracket.cursor',                 '#ff8888 bg:#880000'),
 
-    ('multiple-cursors.cursor',                 '#000000 bg:#ccccaa'),
+    # Styling of other cursors, in case of block editing.
+    ('multiple-cursors',                        '#000000 bg:#ccccaa'),
 
     # Line numbers.
     ('line-number',                             '#888888'),
@@ -61,19 +62,18 @@ PROMPT_TOOLKIT_STYLE = [
     ('window-too-small',                        'bg:#550000 #ffffff'),
 
     # Completions toolbar.
-    ('completions-toolbar',                     'bg:#bbbbbb #000000'),
-    ('completions-toolbar.arrow',               'bg:#bbbbbb #000000 bold'),
-    ('completions-toolbar completion',          'bg:#bbbbbb #000000'),
-    ('completions-toolbar current-completion',  'bg:#444444 #ffffff'),
+    ('completion-toolbar',                     'bg:#bbbbbb #000000'),
+    ('completion-toolbar.arrow',               'bg:#bbbbbb #000000 bold'),
+    ('completion-toolbar.completion',          'bg:#bbbbbb #000000'),
+    ('completion-toolbar.completion.current',  'bg:#444444 #ffffff'),
 
     # Completions menu.
     ('completion-menu',                         'bg:#bbbbbb #000000'),
-    ('completion-menu completion',              ''),
-    ('completion-menu current-completion',      'bg:#888888 #ffffff'),
-    ('completion-menu completion-meta',         'bg:#999999 #000000'),
-    ('completion-menu completion-meta current-completion',
-                                                'bg:#aaaaaa #000000'),
-    ('completion-menu multi-column-completion-meta', 'bg:#aaaaaa #000000'),
+    ('completion-menu.completion',              ''),
+    ('completion-menu.completion.current',      'bg:#888888 #ffffff'),
+    ('completion-menu.meta.completion',         'bg:#999999 #000000'),
+    ('completion-menu.meta.completion.current', 'bg:#aaaaaa #000000'),
+    ('completion-menu.multi-column-meta',       'bg:#aaaaaa #000000'),
 
     # Scrollbars.
     ('scrollbar.background',                     ''),

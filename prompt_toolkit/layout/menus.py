@@ -108,10 +108,10 @@ class CompletionsMenuControl(UIControl):
 
     def _get_menu_item_fragments(self, completion, is_current_completion, width):
         if is_current_completion:
-            style_str = 'class:current-completion %s %s' % (
+            style_str = 'class:completion-menu.completion.current %s %s' % (
                 completion.style, completion.selected_style)
         else:
-            style_str = 'class:completion ' + completion.style
+            style_str = 'class:completion-menu.completion ' + completion.style
 
         text, tw = _trim_text(completion.display, width - 2)
         padding = ' ' * (width - 2 - tw)
@@ -119,9 +119,9 @@ class CompletionsMenuControl(UIControl):
 
     def _get_menu_item_meta_fragments(self, completion, is_current_completion, width):
         if is_current_completion:
-            style_str = 'class:completion-meta,current-completion'
+            style_str = 'class:completion-menu.meta.completion.current'
         else:
-            style_str = 'class:completion-meta,completion'
+            style_str = 'class:completion-menu.meta.completion'
 
         text, tw = _trim_text(completion.display_meta, width - 2)
         padding = ' ' * (width - 2 - tw)
@@ -494,7 +494,7 @@ class _SelectedCompletionMetaControl(UIControl):
         return UIContent(get_line=get_line, line_count=1 if fragments else 0)
 
     def _get_text_fragments(self):
-        style = 'class:completion-menu,multi-column-completion-meta'
+        style = 'class:completion-menu.multi-column-meta'
         state = get_app().current_buffer.complete_state
 
         if state and state.current_completion and state.current_completion.display_meta:
