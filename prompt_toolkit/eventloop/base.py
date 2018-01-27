@@ -1,7 +1,7 @@
 """
 Base event loop interface.
 
-The naming convension is kept similar to asyncio as much as possible.
+The naming convention is kept similar to asyncio as much as possible.
 
 A special thanks to asyncio (tulip), Twisted, Tornado and Trollius for setting
 a good example on how to implement event loops. Possible, in the future, we'll
@@ -88,7 +88,7 @@ class EventLoop(with_metaclass(ABCMeta, object)):
         Call this function in the main event loop. Similar to Twisted's
         ``callFromThread``.
 
-        :param _max_postpone_until: `None` or `time.time` value. For interal
+        :param _max_postpone_until: `None` or `time.time` value. For internal
             use. If the eventloop is saturated, consider this task to be low
             priority and postpone maximum until this timestamp. (For instance,
             repaint is done using low priority.)
