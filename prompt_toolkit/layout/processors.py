@@ -203,7 +203,7 @@ class HighlightSelectionProcessor(Processor):
 
             if from_ == 0 and to == 0 and len(fragments) == 0:
                 # When this is an empty line, insert a space in order to
-                # visualiase the selection.
+                # visualise the selection.
                 return Transformation([(selected_fragment, ' ')])
             else:
                 for i in range(from_, to + 1):
@@ -713,7 +713,7 @@ class ConditionalProcessor(Processor):
         def highlight_enabled():
             return true_or_false
 
-        # Wrapt it in a `ConditionalProcessor` for usage in a `BufferControl`.
+        # Wrapped it in a `ConditionalProcessor` for usage in a `BufferControl`.
         BufferControl(input_processors=[
             ConditionalProcessor(HighlightSearchProcessor(),
                                  Condition(highlight_enabled))])
