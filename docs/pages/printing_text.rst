@@ -125,7 +125,7 @@ a custom tag, then you can assign a style in the stylesheet.
 ANSI
 ^^^^
 
-Some people like to use the VT100 ANSI escape squences to generate output.
+Some people like to use the VT100 ANSI escape sequences to generate output.
 Natively, this is however only supported on VT100 terminals, but prompt_toolkit
 can parse these, and map them to a formatted text instances. This means that they
 will work on Windows as well. The :class:`~prompt_toolkit.formatted.ANSI` class
@@ -246,7 +246,7 @@ Pygments would do, but if you'd like to change the colors, keep in mind that Pyg
 A classname like ``pygments.literal.string.double`` is actually decomposed in
 the following four classnames: ``pygments``, ``pygments.literal``,
 ``pygments.literal.string`` and ``pygments.literal.string.double``. The final
-style is computed by combinding the style for these four classnames. So,
+style is computed by combining the style for these four classnames. So,
 changing the style from these Pygments tokens can be done as follows:
 
 .. code:: python
