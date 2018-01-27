@@ -164,7 +164,7 @@ class _CompiledGrammar(object):
         which clause would appear first. E.g. "(A|B)C" is not the same as
         "(B|A)C" because the regex engine is lazy and takes the first match.
         However, because we the current input is actually a prefix of the
-        grammar which meight not yet contain the data for "C", we need to know
+        grammar which might not yet contain the data for "C", we need to know
         both intermediate states, in order to call the appropriate
         autocompletion for both cases.
 
