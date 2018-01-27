@@ -20,8 +20,8 @@ def load_page_navigation_bindings():
     """
     Load both the Vi and Emacs bindings for page navigation.
     """
-    # Only enable when a `Buffer` is focussed, otherwise, we would catch keys
-    # when another widget is focussed (like for instance `c-d` in a
+    # Only enable when a `Buffer` is focused, otherwise, we would catch keys
+    # when another widget is focused (like for instance `c-d` in a
     # ptterm.Terminal).
     return ConditionalKeyBindings(
         merge_key_bindings([
