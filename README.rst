@@ -9,6 +9,13 @@ and terminal applications in Python.
 Read the `documentation on readthedocs
 <http://python-prompt-toolkit.readthedocs.io/en/stable/>`_.
 
+NOTICE: prompt_toolkit 2.0
+**************************
+
+Please notice that this is the 2.0 branch of prompt_toolkit. It is incompatible
+with the 1.0 branch, but much better in many regards. On Pypi you'll still find
+the 1.0 branch, but a release should follow soon. In the meantime, don't
+hesitate to test this branch and report any bugs.
 
 Ptpython
 ********

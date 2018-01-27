@@ -1,6 +1,15 @@
 Python Prompt Toolkit
 =====================
 
+.. warning::
+
+    Please notice that this is the documentation for the 2.0 branch of
+    prompt_toolkit. It is incompatible with the 1.0 branch, but much better in
+    many regards. On Pypi you'll still find the 1.0 branch, but a release
+    should follow soon. In the meantime, don't hesitate to test this branch and
+    report any bugs.
+
+
 `prompt_toolkit` is a library for building powerful interactive command line
 and terminal applications in Python.
 
