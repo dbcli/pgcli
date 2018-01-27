@@ -121,7 +121,7 @@ def _parse_style_str(style_str):
             pass
 
         # Ignore pieces in between square brackets. This is internal stuff.
-        # Like '[transparant]' or '[set-cursor-position]'.
+        # Like '[transparent]' or '[set-cursor-position]'.
         elif part.startswith('[') and part.endswith(']'):
             pass
 
@@ -314,7 +314,7 @@ class _MergedStyle(BaseStyle):
     # NOTE: previously, we used an algorithm where we did not generate the
     #       combined style. Instead this was a proxy that called one style
     #       after the other, passing the outcome of the previous style as the
-    #       defalut for the next one. This did not work, because that way, the
+    #       default for the next one. This did not work, because that way, the
     #       priorities like described in the `Style` class don't work.
     #       'class:aborted' was for instance never displayed in gray, because
     #       the next style specified a default color for any text. (The
