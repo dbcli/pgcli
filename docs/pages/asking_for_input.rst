@@ -386,6 +386,18 @@ takes a :class:`~prompt_toolkit.document.Document` as input and raises
     number = int(prompt('Give a number: ', validator=NumberValidator()))
     print('You said: %i' % number)
 
+By default, the input is only validated when the user presses the enter key,
+but prompt_toolkit can also validate in real-time while typing:
+
+.. code:: python
+
+    prompt('Give a number: ', validator=NumberValidator(),
+           validate_while_typing=True)
+
+If the input validation contains some heavy CPU intensive code, but you don't
+want to block the event loop, then it's recommended to wrap the validator class
+in a :class:`~prompt_toolkit.validation.ThreadedValidator`.
+
 
 History
 -------
