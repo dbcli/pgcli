@@ -83,7 +83,7 @@ def test_flush_1(processor, stream):
 
 def test_flush_2(processor, stream):
     # Send left key with a 'Flush' in between.
-    # The flush should make sure that we process evenything before as-is,
+    # The flush should make sure that we process everything before as-is,
     # with makes the first part just an escape character instead.
     stream.feed('\x1b')
     stream.flush()
