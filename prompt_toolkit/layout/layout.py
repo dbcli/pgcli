@@ -18,7 +18,7 @@ class Layout(object):
     """
     The layout for a prompt_toolkit
     :class:`~prompt_toolkit.application.Application`.
-    This also keeps track of which user control is focussed.
+    This also keeps track of which user control is focused.
 
     :param container: The "root" container for the layout.
     :param focussed_element: element to be focused initially. (Can be anything
@@ -74,8 +74,8 @@ class Layout(object):
         - a `Buffer` instance or the name of a `Buffer`
         - a `Window`
         - Any container object. In this case we will focus the `Window` from
-          this container that was focussed most recent, or the very first
-          focussable `Window` of the container.
+          this container that was focused most recent, or the very first
+          focusable `Window` of the container.
         """
         # BufferControl by buffer name.
         if isinstance(value, six.text_type):
@@ -98,7 +98,7 @@ class Layout(object):
             if value not in self.find_all_controls():
                 raise ValueError('Invalid value. Container does not appear in the layout.')
             if not value.is_focussable():
-                raise ValueError('Invalid value. UIControl is not focussable.')
+                raise ValueError('Invalid value. UIControl is not focusable.')
 
             self.current_control = value
 
@@ -116,7 +116,7 @@ class Layout(object):
             else:
                 # Focus a window in this container.
                 # If we have many windows as part of this container, and some
-                # of them have been focussed before, take the last focused
+                # of them have been focused before, take the last focused
                 # item. (This is very useful when the UI is composed of more
                 # complex sub components.)
                 windows = []
@@ -124,18 +124,18 @@ class Layout(object):
                     if isinstance(c, Window) and c.content.is_focussable():
                         windows.append(c)
 
-                # Take the first one that was focussed before.
+                # Take the first one that was focused before.
                 for w in reversed(self._stack):
                     if w in windows:
                         self.current_window = w
                         return
 
-                # None was focussed before: take the very first focussable window.
+                # None was focused before: take the very first focusable window.
                 if windows:
                     self.current_window = windows[0]
                     return
 
-                raise ValueError('Invalid value. Container cannot be focussed: %r' % (value, ))
+                raise ValueError('Invalid value. Container cannot be focused: %r' % (value, ))
 
     def has_focus(self, value):
         """
@@ -155,8 +155,8 @@ class Layout(object):
             if isinstance(value, Window):
                 return self.current_window == value
             else:
-                # Check whether this "container" is focussed. This is true if
-                # one of the elements inside is focussed.
+                # Check whether this "container" is focused. This is true if
+                # one of the elements inside is focused.
                 for element in walk(value):
                     if element == self.current_window:
                         return True
@@ -185,12 +185,12 @@ class Layout(object):
 
     @property
     def current_window(self):
-        " Return the `Window` object that is currently focussed. "
+        " Return the `Window` object that is currently focused. "
         return self._stack[-1]
 
     @current_window.setter
     def current_window(self, value):
-        " Set the `Window` object to be currently focussed. "
+        " Set the `Window` object to be currently focused. "
         assert isinstance(value, Window)
         self._stack.append(value)
 
@@ -213,7 +213,7 @@ class Layout(object):
 
     def get_focussable_windows(self):
         """
-        Return all the `Window` objects which are focussable (in the 'modal'
+        Return all the `Window` objects which are focusable (in the 'modal'
         area).
         """
         for w in self.walk_through_modal_area():
@@ -222,9 +222,9 @@ class Layout(object):
 
     def get_visible_focussable_windows(self):
         """
-        Return a list of `Window` objects that are focussable.
+        Return a list of `Window` objects that are focusable.
         """
-        # Focussable windows are windows that are visible, but also part of the
+        # focusable windows are windows that are visible, but also part of the
         # modal container. Make sure to keep the ordering.
         visible_windows = self.visible_windows
         return [w for w in self.get_focussable_windows() if w in visible_windows]
@@ -232,7 +232,7 @@ class Layout(object):
     @property
     def current_buffer(self):
         """
-        The currently focussed :class:`~.Buffer` or `None`.
+        The currently focused :class:`~.Buffer` or `None`.
         """
         ui_control = self.current_control
         if isinstance(ui_control, BufferControl):
@@ -270,14 +270,14 @@ class Layout(object):
 
     def focus_last(self):
         """
-        Give the focus to the last focussed control.
+        Give the focus to the last focused control.
         """
         if len(self._stack) > 1:
             self._stack = self._stack[:-1]
 
     def focus_next(self):
         """
-        Focus the next visible/focussable Window.
+        Focus the next visible/focusable Window.
         """
         windows = self.get_visible_focussable_windows()
 
@@ -293,7 +293,7 @@ class Layout(object):
 
     def focus_previous(self):
         """
-        Focus the previous visible/focussable Window.
+        Focus the previous visible/focusable Window.
         """
         windows = self.get_visible_focussable_windows()
 
