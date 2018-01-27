@@ -10,6 +10,7 @@ from prompt_toolkit.cache import SimpleCache
 
 __all__ = (
     'Style',
+    'Priority',
     'merge_styles',
 )
 
@@ -138,6 +139,28 @@ def _parse_style_str(style_str):
 CLASS_NAMES_RE = re.compile(r'^[a-z0-9.\s_-]*$')  # This one can't contain a comma!
 
 
+class Priority:
+    """
+    The priority of the rules, when a style is created from a dictionary.
+
+    In a `Style`, rules that are defined later will always override previous
+    defined rules, however in a dictionary, the key order was arbitrary before
+    Python 3.6. This means that the style could change at random between rules.
+
+    We have two options:
+    - `DICT_KEY_ORDER`: This means, iterate through the dictionary, and take
+        the key/value pairs in order as they come. This is a good option if you
+        have Python >3.6. Rules at the end will override rules at the
+        beginning.
+    - `MOST_PRECISE`: keys that are defined with most precision will get higher
+      priority. (More precise means: more elements.)
+    """
+    DICT_KEY_ORDER = 'KEY_ORDER'
+    MOST_PRECISE = 'MOST_PRECISE'
+
+    _ALL = [DICT_KEY_ORDER, MOST_PRECISE]
+
+
 class Style(BaseStyle):
     """
     Create a ``Style`` instance from a list of style rules.
@@ -146,6 +169,8 @@ class Style(BaseStyle):
     The classnames are a whitespace separated string of class names and the
     style string is just like a Pygments style definition, but with a few
     additions: it supports 'reverse' and 'blink'.
+
+    Later rules always override previous rules.
 
     Usage::
 
@@ -181,13 +206,23 @@ class Style(BaseStyle):
     def style_rules(self):
         return self._style_rules
 
+
     @classmethod
-    def from_dict(cls, style_dict):
+    def from_dict(cls, style_dict, priority=Priority.MOST_PRECISE):
         """
-        :param include_defaults: Include the defaults (built-in) styling for
-            selected text, etc...)
+        :param style_dict: Style dictionary.
+        :param priority: `Priority` value.
         """
-        return cls(list(style_dict.items()))
+        assert priority in Priority._ALL
+
+        if priority == Priority.MOST_PRECISE:
+            def key(item):
+                # Split on '.' and whitespace. Count elements.
+                return sum(len(i.split('.')) for i in item[0].split())
+
+            return cls(sorted(style_dict.items(), key=key))
+        else:
+            return cls(list(style_dict.items()))
 
     def get_attrs_for_style_str(self, style_str, default=DEFAULT_ATTRS):
         """

@@ -146,7 +146,6 @@ WIDGETS_STYLE = [
     # Buttons.
     ('button',                                  ''),
     ('button.arrow',                            'bold'),
-    ('button focussed',                         'bg:#880000 #ffffff'),
 
     # Menu bars.
     ('menu-bar',                                'bg:#aaaaaa #000000'),
