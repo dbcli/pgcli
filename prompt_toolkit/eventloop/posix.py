@@ -174,7 +174,7 @@ class PosixEventLoop(EventLoop):
         # write to the output, and doing this inside the signal handler causes
         # easily reentrant calls, giving runtime errors.
 
-        # Furthur, this has to be thread safe. When the Application runs not in
+        # Further, this has to be thread safe. When the Application runs not in
         # the main thread, this function will still be called from the main
         # thread. (The only place where we can install signal handlers.)
 
@@ -214,7 +214,7 @@ class PosixEventLoop(EventLoop):
         # thread becomes idle for an instant. This is good, because Python
         # threading favours CPU over I/O -- an autocompletion thread in the
         # background would cause a significantly slow down of the main thread.
-        # It is mostly noticable when pasting large portions of text while
+        # It is mostly noticeable when pasting large portions of text while
         # having real time autocompletion while typing on.
         self.call_from_executor(th.start)
 
@@ -225,7 +225,7 @@ class PosixEventLoop(EventLoop):
         Call this function in the main event loop.
         Similar to Twisted's ``callFromThread``.
 
-        :param _max_postpone_until: `None` or `time.time` value. For interal
+        :param _max_postpone_until: `None` or `time.time` value. For internal
             use. If the eventloop is saturated, consider this task to be low
             priority and postpone maximum until this timestamp. (For instance,
             repaint is done using low priority.)
