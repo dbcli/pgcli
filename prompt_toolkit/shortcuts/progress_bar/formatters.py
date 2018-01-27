@@ -127,7 +127,7 @@ class Bar(Formatter):
         self.unknown = unknown
 
     def format(self, progress_bar, progress, width):
-        width -= 3  # Substract left '|', bar_b and right '|'
+        width -= 3  # Subtract left '|', bar_b and right '|'
 
         if progress.total:
             pb_a = int(progress.percentage * width / 100)
