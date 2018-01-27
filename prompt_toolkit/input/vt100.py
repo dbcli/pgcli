@@ -114,7 +114,7 @@ class Vt100Input(Input):
 class PipeInput(Vt100Input):
     """
     Input that is send through a pipe.
-    This is useful if we want to send the input programatically into the
+    This is useful if we want to send the input programmatically into the
     application. Mostly useful for unit testing.
 
     Usage::
@@ -303,7 +303,7 @@ class raw_mode(object):
 
 class cooked_mode(raw_mode):
     """
-    The opposide of ``raw_mode``, used when we need cooked mode inside a
+    The opposite of ``raw_mode``, used when we need cooked mode inside a
     `raw_mode` block.  Used in `Application.run_in_terminal`.::
 
         with cooked_mode(stdin):
