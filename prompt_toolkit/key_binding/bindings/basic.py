@@ -154,7 +154,7 @@ def load_basic_bindings():
         r"""
         By default, handle \n as if it were a \r (enter).
         (It appears that some terminals send \n instead of \r when pressing
-        enter. - at least the Linux subsytem for Windows.)
+        enter. - at least the Linux subsystem for Windows.)
         """
         event.key_processor.feed(
             KeyPress(Keys.ControlM, '\r'), first=True)
