@@ -41,7 +41,7 @@ class SystemCompleter(GrammarCompleter):
                 'single_quoted_filename': (lambda string: string.replace("'", "\\'")),
             },
             unescape_funcs={
-                'double_quoted_filename': (lambda string: string.replace('\\"', '"')),  # XXX: not enterily correct.
+                'double_quoted_filename': (lambda string: string.replace('\\"', '"')),  # XXX: not entirely correct.
                 'single_quoted_filename': (lambda string: string.replace("\\'", "'")),
             })
 
