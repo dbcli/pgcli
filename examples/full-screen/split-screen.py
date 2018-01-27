@@ -31,7 +31,7 @@ right_window = Window(BufferControl(buffer=right_buffer))
 body = VSplit([
     left_window,
 
-    # A vertical line in the middle. We explicitely specify the width, to make
+    # A vertical line in the middle. We explicitly specify the width, to make
     # sure that the layout engine will not try to divide the whole width by
     # three for all these windows.
     Window(width=1, char='|', style='class:line'),
@@ -93,7 +93,7 @@ kb = KeyBindings()
 # Now, There is an Emacs key binding for the [Ctrl-Q Any] sequence by default.
 # Pressing Ctrl-Q followed by any other key will do a quoted insert. So to be
 # sure that we won't wait for that key binding to match, but instead execute
-# Ctrl-Q immediately, we can pass eager=True. (Don't make a habbit of adding
+# Ctrl-Q immediately, we can pass eager=True. (Don't make a habit of adding
 # `eager=True` to all key bindings, but do it when it conflicts with another
 # existing key binding, and you definitely want to override that behaviour.
 
