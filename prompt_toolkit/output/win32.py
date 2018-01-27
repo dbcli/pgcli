@@ -20,7 +20,7 @@ def _coord_byval(coord):
     Turns a COORD object into a c_long.
     This will cause it to be passed by value instead of by reference. (That is what I think at least.)
 
-    When runing ``ptipython`` is run (only with IPython), we often got the following error::
+    When running ``ptipython`` is run (only with IPython), we often got the following error::
 
          Error in 'SetConsoleCursorPosition'.
          ArgumentError("argument 2: <class 'TypeError'>: wrong type",)
@@ -294,7 +294,7 @@ class Win32Output(Output):
             self.LOG.write(('%r' % data).encode('utf-8') + b'\n')
             self.LOG.flush()
 
-        # Print characters one by one. This appears to be the best soluton
+        # Print characters one by one. This appears to be the best solution
         # in oder to avoid traces of vertical lines when the completion
         # menu disappears.
         for b in data:
