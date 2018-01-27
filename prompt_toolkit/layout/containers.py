@@ -122,6 +122,14 @@ class HorizontalAlign:
     JUSTIFY = 'JUSTIFY'
 
 
+def to_str(value):
+    " Turn callable or string into string. "
+    if callable(value):
+        return to_str(value())
+    else:
+        return str(value)
+
+
 class _Split(Container):
     """
     The common parts of `VSplit` and `HSplit`.
@@ -133,7 +141,7 @@ class _Split(Container):
         assert window_too_small is None or isinstance(window_too_small, Container)
         assert isinstance(children, list)
         assert isinstance(modal, bool)
-        assert isinstance(style, text_type)
+        assert callable(style) or isinstance(style, text_type)
         assert is_dimension(width)
         assert is_dimension(height)
         assert z_index is None or isinstance(z_index, int)  # `None` means: inherit from parent.
@@ -264,7 +272,7 @@ class HSplit(_Split):
             to which the output has to be written.
         """
         sizes = self._divide_heigths(write_position)
-        style = parent_style + ' ' + self.style
+        style = parent_style + ' ' + to_str(self.style)
         z_index = z_index if self.z_index is None else self.z_index
 
         if sizes is None:
@@ -516,7 +524,7 @@ class VSplit(_Split):
 
         children = self._all_children
         sizes = self._divide_widths(write_position.width)
-        style = parent_style + ' ' + self.style
+        style = parent_style + ' ' + to_str(self.style)
         z_index = z_index if self.z_index is None else self.z_index
 
         # If there is not enough space.
@@ -576,7 +584,7 @@ class FloatContainer(Container):
     def __init__(self, content, floats, modal=False, key_bindings=None, style='', z_index=None):
         assert all(isinstance(f, Float) for f in floats)
         assert isinstance(modal, bool)
-        assert isinstance(style, text_type)
+        assert callable(style) or isinstance(style, text_type)
         assert z_index is None or isinstance(z_index, int)
 
         self.content = to_container(content)
@@ -606,7 +614,7 @@ class FloatContainer(Container):
 
     def write_to_screen(self, screen, mouse_handlers, write_position,
                         parent_style, erase_bg, z_index):
-        style = parent_style + ' ' + self.style
+        style = parent_style + ' ' + to_str(self.style)
         z_index = z_index if self.z_index is None else self.z_index
 
         self.content.write_to_screen(
@@ -616,7 +624,7 @@ class FloatContainer(Container):
             # z_index of a Float is computed by summing the z_index of the
             # container and the `Float`.
             new_z_index = (z_index or 0) + fl.z_index
-            style = parent_style + ' ' + self.style
+            style = parent_style + ' ' + to_str(self.style)
 
             # If the float that we have here, is positioned relative to the
             # cursor position, but the Window that specifiies the cursor
@@ -1187,7 +1195,7 @@ class Window(Container):
         assert get_horizontal_scroll is None or callable(get_horizontal_scroll)
         assert get_colorcolumns is None or callable(get_colorcolumns)
         assert callable(align) or align in Align._ALL
-        assert isinstance(style, text_type)
+        assert callable(style) or isinstance(style, text_type)
         assert char is None or isinstance(char, text_type)
         assert get_char is None or callable(get_char)
         assert not (char and get_char)
@@ -1710,12 +1718,7 @@ class Window(Container):
 
     def _apply_style(self, new_screen, write_position, parent_style):
         # Apply `self.style`.
-        style = parent_style + ' ' + self.style
-
-        if get_app().layout.current_window == self:
-            style += ' class:focussed'
-        else:
-            style += ' class:not-focussed'
+        style = parent_style + ' ' + to_str(self.style)
 
         new_screen.fill_area(write_position, style=style, after=False)
 
