@@ -19,7 +19,7 @@ in the following two places:
 - First, there was the focus which was always pointing to a
   :class:`~prompt_toolkit.buffer.Buffer` (or text input widget), but in full
   screen applications there are other widgets, like menus and buttons  which
-  can be focussed.
+  can be focused.
 - And secondly, it was impossible to make reusable UI components. All the key
   bindings for the entire applications were stored together in one
   ``KeyBindings`` object, and similar, all
@@ -45,7 +45,7 @@ full screen applications. These are the most important:
   Pygments tokens were not ideal for styling anything besides tokenized text.
 
   Instead we created something similar to CSS. All UI components can attach
-  classnames to themself, as well as define an inline style. The final style is
+  classnames to themselves, as well as define an inline style. The final style is
   then computed by combining the inline styles, the classnames and the style
   sheet.
 
