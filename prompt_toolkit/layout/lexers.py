@@ -260,7 +260,7 @@ class PygmentsLexer(Lexer):
                 return self.syntax_sync
 
         def find_closest_generator(i):
-            " Return a generator close to line 'i', or None if none was fonud. "
+            " Return a generator close to line 'i', or None if none was found. "
             for generator, lineno in line_generators.items():
                 if lineno < i and i - lineno < self.REUSE_GENERATOR_MAX_DISTANCE:
                     return generator
