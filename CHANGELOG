@@ -6,7 +6,7 @@ CHANGELOG
 
 Version 2.0 includes a big refactoring of the internal architecture. This
 includes the merge of the CommandLineInterface and the Application object, a
-rewrite of how user controls are focussed, a rewrite of how event loops work
+rewrite of how user controls are focused, a rewrite of how event loops work
 and the removal of the buffers dictionary. This introduces many backwards
 incompatible changes, but the result is a very nice and powerful architecture.
 
@@ -39,9 +39,9 @@ Changes:
   (For backwards-compatibility, we have aliases to the old names, whenever
   possible.)
 
-- The way focussing works is different. Before it was always a `Buffer` that
-  was focussed, and because of that, any visible `BufferControl` that contained
-  this `Buffer` would be focussed. Now, any user control can be focussed. All
+- The way focusing works is different. Before it was always a `Buffer` that
+  was focused, and because of that, any visible `BufferControl` that contained
+  this `Buffer` would be focused. Now, any user control can be focused. All
   of this is handled in the `Application.layout` object.
 
 - The `buffers` dictionary (`CommandLineInterface.buffers`) does not exist
@@ -74,7 +74,7 @@ Changes:
 
   * The `Key` class does not exist anymore. Every key is a string and it's
     considered fine to use string literals in the key bindings. This is more
-    readible, but we still have run-time validation. The `Keys` enum still
+    readable, but we still have run-time validation. The `Keys` enum still
     exist (for backwards-compatibility, but also to have an overview of which
     keys are supported.)
   * 'enter' and 'tab' are key aliases for 'c-m' and 'c-i'.
@@ -93,7 +93,7 @@ Changes:
     used.
 
 - User controls can define key bindings, which are active when the user control
-  is focussed.
+  is focused.
 
   * `UIControl` got a `get_key_bindings` (abstract) method.
 
@@ -204,7 +204,7 @@ Changes:
   * `TokenListControl` has been renamed to `FormattedTextControl`.
   * `Application.set_return_value` has been renamed to `Application.set_result`.
 
-- Other new featers:
+- Other new features:
 
   * `DummyAutoSuggest` and `DynamicAutoSuggest` were added.
   * `DummyClipboard` and `DynamicClipboard` were added.
@@ -272,7 +272,7 @@ New features:
 -----------------
 
 Fixes:
-- Go to the start of the line in Vi nagivation mode, when 'j' or 'k' have been
+- Go to the start of the line in Vi navigation mode, when 'j' or 'k' have been
   pressed to navigate to a new history entry.
 - Don't crash when pasting text that contains \r\n characters. (This could
   happen in iTerm2.)
@@ -350,7 +350,7 @@ For future compatibility:
   input; this is not correct and makes it impossible to distinguish between
   ControlJ and ControlM. Some applications bind ControlJ for custom handling of
   the enter key, because this equals \n. However, in a future version we will
-  stop replacing \r by \n and at that point, the enter key will be ControlM. 
+  stop replacing \r by \n and at that point, the enter key will be ControlM.
   So better is to use `Keys.Enter`, which becomes an alias for whatever the
   enter key translates into.
 
@@ -363,7 +363,7 @@ Fixes:
 - Bugfix in readline-like completion visualisation.
 
 New features:
-- Added `erase_when_done` parameter to the `Aplication` class.  (This was
+- Added `erase_when_done` parameter to the `Application` class.  (This was
   required for the bug fixes.)
 - Added (experimental) `CommandLineInterface.run_application_generator` method.
   (Also required for the bug fix.)
@@ -512,7 +512,7 @@ Backwards-incompatible changes:
 - Renamed MouseEventTypes to MouseEventType for consistency. The old name is
   still valid, but deprecated.
 - Refactoring of Callbacks. All events should now receive one argument, which
-  is the sender. (Furter, Callback was renamed to Event.) This is mostly used
+  is the sender. (Further, Callback was renamed to Event.) This is mostly used
   internally.
 - Moved on_invalidate callback from CommandLineInterface to Application
 - Renamed `PipeInput.send` to `PipeInput.send_text`. (Old deprecated name is
@@ -733,7 +733,7 @@ Fixes:
 - Fix in signal handler.
 - Use utf-8 encoding in Vt100_Output by default.
 - Use correct default token in BufferControl.
-- Fix in ControlL key binding. Use @handle to allow desactivation.
+- Fix in ControlL key binding. Use @handle to allow deactivation.
 
 Backwards-incompatible changes:
 - Renamed create_default_layout to create_prompt_layout
@@ -784,7 +784,7 @@ Fixes:
 New features:
 - Mouse support. (Scrolling and clicking for vt100 terminals. For Windows only
   clicking.) Both the autocompletion menus and buffer controls respond to
-  scolling and clicking.
+  scrolling and clicking.
 - Added auto suggestions. (Like the fish shell.)
 - Stdout proxy become thread safe.
 - Linewrapping can now be disabled, instead we get horizontal scrolling.
@@ -879,7 +879,7 @@ Fixes:
 - Don't trigger autocompletion on paste.
 - Added `pre_run` parameter to CommandLineInterface.
 - Correct invalidation of BeforeInput and AfterInput.
-- Correctly handle transparancy. (For floats.)
+- Correctly handle transparency. (For floats.)
 - Small change in the algorithm to determine Window dimensions: keep in the
   bounds of the Window dimensions.
 
@@ -887,9 +887,9 @@ Backwards-incompatible changes:
 - There a now a `Lexer` abstract base class. Every lexer should be an instance
   of that class, and Pygments lexers should be wrapped in a `PygmentsLexer`
   class. `prompt_toolkit.shortcuts` still accepts Pygments lexers directly for
-  backwards-compatibilty.
+  backwards-compatibility.
 - BufferControl no longer has a `show_line_numbers` argument. Pass a
-  `NumberredMargin` instance instead.
+  `NumberedMargin` instance instead.
 - The `History` class became an abstract base class and only defines an
   interface. The default history class is now called `InMemoryHistory`.
 
@@ -1056,7 +1056,7 @@ Bug fixes:
 ----------------
 
 New features:
-- Added get_prompt_tokens paramter to create_default_layout.
+- Added get_prompt_tokens parameter to create_default_layout.
 - Show prompt in bold by default.
 
 Bug fixes:
@@ -1100,7 +1100,7 @@ Backwards incompatible changes:
 ----------------
 
 Bug fixes:
-- Crash fixed in SystemCompleter when some directiories didn't exist.
+- Crash fixed in SystemCompleter when some directories didn't exist.
 - Made text/cursor_position in Document more atomic.
 - Fixed Char.__ne__, improves performance.
 - Better performance of the filter module.
@@ -1129,7 +1129,7 @@ New features:
 - Improved 'L' and 'H' Vi key bindings.
 - Implemented Vi 'zz' key binding.
 - ValidationToolbar got a show_position parameter.
-- When only width or hight are given for a float, the control is centered in
+- When only width or height are given for a float, the control is centered in
   the parent.
 - Added beforeKeyPress and afterKeyPress events.
 - Added HighlightMatchingBracketProcessor.
@@ -1148,11 +1148,11 @@ New features:
 
 Fixed:
 - Always insert indentation when pressing enter.
-- vertical_srcoll should be an int instead of a float.
+- vertical_scroll should be an int instead of a float.
 - Some bug fixes in renderer.Output.
 - Pressing backspace in an empty search in Vi mode now goes back to navigation
   mode.
-- Bug fix in TokenListControl (Correctly calculate hight for multiline
+- Bug fix in TokenListControl (Correctly calculate height for multiline
   content.)
 - Only apply HighlightMatchingBracketProcessor when editing buffer.
 - Ensure that floating layouts never go out of bounds.
@@ -1240,7 +1240,7 @@ Fixed:
 
 Backwards-incompatible changes:
 - Refactoring of the key input system. (The registry which contains the key
-  bindings, the focus stack, key binding manager.) Overal much better API.
+  bindings, the focus stack, key binding manager.) Overall much better API.
 - Renamed `Line` to `Buffer`.
 
 New features:
