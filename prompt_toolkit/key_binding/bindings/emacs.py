@@ -94,7 +94,7 @@ def load_emacs_bindings():
     def handle_digit(c):
         """
         Handle input of arguments.
-        The first number needs to be preceeded by escape.
+        The first number needs to be preceded by escape.
         """
         @handle(c, filter=has_arg)
         @handle('escape', c)
@@ -327,7 +327,7 @@ def load_emacs_search_bindings():
     # #handle('escape', 'escape', eager=True)(search.abort_search)
     # #handle('escape', 'enter', eager=True)(search.accept_search_and_accept_input)
 
-    # If Read-only: also include the following key bindigs:
+    # If Read-only: also include the following key bindings:
 
     # '/' and '?' key bindings for searching, just like Vi mode.
     handle('?', filter=is_read_only & ~vi_search_direction_reversed)(search.start_reverse_incremental_search)
