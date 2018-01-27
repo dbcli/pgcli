@@ -15,7 +15,7 @@ animal_completer = WordCompleter([
     'bat',
 
     'bear', 'beaver', 'bee', 'bison', 'butterfly', 'cat', 'chicken',
-    'crocodile', 'dinosaur', 'dog', 'dolphine', 'dove', 'duck', 'eagle',
+    'crocodile', 'dinosaur', 'dog', 'dolphin', 'dove', 'duck', 'eagle',
     'elephant',
 ], meta_dict={
     'alligator': 'An alligator is a crocodilian in the genus Alligator of the family Alligatoridae.',
