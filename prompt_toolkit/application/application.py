@@ -127,7 +127,7 @@ class Application(object):
                  input=None, output=None):
 
         # If `enable_page_navigation_bindings` is not specified, enable it in
-        # case of full screen applications only. This can be overriden by the user.
+        # case of full screen applications only. This can be overridden by the user.
         if enable_page_navigation_bindings is None:
             enable_page_navigation_bindings = Condition(lambda: self.full_screen)
 
@@ -234,7 +234,7 @@ class Application(object):
         self.key_processor = KeyProcessor(_CombinedRegistry(self))
 
         # If `run_in_terminal` was called. This will point to a `Future` what will be
-        # set at the point whene the previous run finishes.
+        # set at the point when the previous run finishes.
         self._running_in_terminal = False
         self._running_in_terminal_f = None
 
@@ -265,7 +265,7 @@ class Application(object):
     @property
     def current_buffer(self):
         """
-        The currently focussed :class:`~.Buffer`.
+        The currently focused :class:`~.Buffer`.
 
         (This returns a dummy :class:`.Buffer` when none of the actual buffers
         has the focus. In this case, it's really not practical to check for
@@ -276,7 +276,7 @@ class Application(object):
     @property
     def current_search_state(self):
         """
-        Return the current `SearchState`. (The one for the focussed
+        Return the current `SearchState`. (The one for the focused
         `BufferControl`.)
         """
         ui_control = self.layout.current_control
@@ -305,7 +305,7 @@ class Application(object):
         # Trigger reset event.
         self.on_reset.fire()
 
-        # Make sure that we have a 'focussable' widget focussed.
+        # Make sure that we have a 'focussable' widget focused.
         # (The `Layout` class can't determine this.)
         layout = self.layout
 
@@ -420,7 +420,7 @@ class Application(object):
             ev -= self.invalidate
 
         # Gather all new events.
-        # (All controls are able to invalidate themself.)
+        # (All controls are able to invalidate themselves.)
         def gather_events():
             for c in self.layout.find_all_controls():
                 for ev in c.get_invalidate_events():
@@ -731,7 +731,7 @@ class Application(object):
         :param suspend_group: When true, suspend the whole process group.
             (This is the default, and probably what you want.)
         """
-        # Only suspend when the opperating system supports it.
+        # Only suspend when the operating system supports it.
         # (Not on Windows.)
         if hasattr(signal, 'SIGTSTP'):
             def run():
@@ -801,7 +801,7 @@ class _CombinedRegistry(KeyBindingsBase):
         """
         key_bindings = []
 
-        # Collect key bindings from currently focussed control and all parent
+        # Collect key bindings from currently focused control and all parent
         # controls. Don't include key bindings of container parent controls.
         container = current_window
         while container is not None:
