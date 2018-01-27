@@ -374,7 +374,7 @@ class ANSI(object):
                             style = self._create_style_string()
                             break
                         else:
-                            # Ignore unspported sequence.
+                            # Ignore unsupported sequence.
                             break
             else:
                 # Add current character.
