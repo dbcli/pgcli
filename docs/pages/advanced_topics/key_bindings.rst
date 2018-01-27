@@ -82,7 +82,7 @@ filters <filters>`.)
 The key binding will be ignored when this condition is not satisfied.
 
 
-ConditinalKeyBindings: Disabling a set of key bindings
+ConditionalKeyBindings: Disabling a set of key bindings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Sometimes you want to enable or disable a whole set of key bindings according
@@ -91,14 +91,14 @@ to a certain condition. This is possible by wrapping it in a
 
 .. code:: python
 
-    from prompt_toolkit.key_binding import ConditinalKeyBindings
+    from prompt_toolkit.key_binding import ConditionalKeyBindings
 
     @Condition
     def is_active():
         " Only activate key binding on the second half of each minute. "
         return datetime.datetime.now().second > 30
 
-     bindings = ConditinalKeyBindings(
+     bindings = ConditionalKeyBindings(
          key_bindings=my_bindings,
          filter=is_active)
 
