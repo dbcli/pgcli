@@ -305,7 +305,7 @@ class Application(object):
         # Trigger reset event.
         self.on_reset.fire()
 
-        # Make sure that we have a 'focussable' widget focused.
+        # Make sure that we have a 'focusable' widget focused.
         # (The `Layout` class can't determine this.)
         layout = self.layout
 
