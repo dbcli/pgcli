@@ -310,7 +310,7 @@ style = Style.from_dict({
 
 layout = Layout(
     root_container,
-    focussed_window=text_field)
+    focussed_element=text_field)
 
 
 application = Application(

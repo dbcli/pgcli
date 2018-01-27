@@ -60,7 +60,7 @@ root_container = Box(
 
 layout = Layout(
     container=root_container,
-    focussed_window=button1)
+    focussed_element=button1)
 
 
 # Key bindings.

@@ -157,7 +157,7 @@ style = Style.from_dict({
 application = Application(
     layout=Layout(
         root_container,
-        focussed_window=yes_button,
+        focussed_element=yes_button,
     ),
     key_bindings=bindings,
     style=style,
