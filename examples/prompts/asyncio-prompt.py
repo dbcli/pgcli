@@ -66,7 +66,7 @@ def main():
         loop.run_until_complete(shell_task)
         background_task.cancel()
         loop.run_until_complete(background_task)
-        print('Qutting event loop. Bye.')
+        print('Quitting event loop. Bye.')
 
 
 if __name__ == '__main__':
