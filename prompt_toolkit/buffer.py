@@ -128,7 +128,7 @@ class YankNthArgState(object):
 class Buffer(object):
     """
     The core data structure that holds the text and cursor position of the
-    current input line and implements all text manupulations on top of it. It
+    current input line and implements all text manipulations on top of it. It
     also implements the history, undo stack and the completion state.
 
     :param eventloop: :class:`~prompt_toolkit.eventloop.base.EventLoop` instance.
@@ -389,7 +389,7 @@ class Buffer(object):
         if self.__working_index != value:
             self.__working_index = value
             # Make sure to reset the cursor position, otherwise we end up in
-            # sitations where the cursor position is out of the bounds of the
+            # situations where the cursor position is out of the bounds of the
             # text.
             self.cursor_position = 0
             self._text_changed()
