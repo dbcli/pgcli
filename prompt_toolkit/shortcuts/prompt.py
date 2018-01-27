@@ -212,7 +212,7 @@ class Prompt(object):
         the user).
     :param refresh_interval: (number; in seconds) When given, refresh the UI
         every so many seconds.
-    :param inputhook: None or an Inputook callable that takes an
+    :param inputhook: None or an Inputhook callable that takes an
         `InputHookContext` object.
     """
     _fields = (
@@ -397,7 +397,7 @@ class Prompt(object):
         system_toolbar = SystemToolbar()
 
         def get_search_buffer_control():
-            " Return the UIControl to be focussed when searching start. "
+            " Return the UIControl to be focused when searching start. "
             if _true(self.multiline):
                 return search_toolbar.control
             else:
