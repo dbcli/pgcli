@@ -83,7 +83,7 @@ def test_layout_class():
     assert list(layout.find_all_windows()) == [win1, win2, win3]
     assert list(layout.find_all_controls()) == [c1, c2, c3]
 
-    # Focussing something.
+    # Focusing something.
     layout.focus(c1)
     assert layout.has_focus(c1)
     assert layout.has_focus(win1)
