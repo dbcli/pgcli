@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 This is an example of "prompt_toolkit.contrib.regular_languages" which
-implements a litle calculator.
+implements a little calculator.
 
 Type for instance::
 
