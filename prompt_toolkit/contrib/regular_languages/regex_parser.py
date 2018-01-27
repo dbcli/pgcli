@@ -242,7 +242,7 @@ def parse_regex(regex_tokens):
 
             elif t.startswith('{'):
                 # TODO: implement!
-                raise Exception('{}-style repitition not yet supported' % t)
+                raise Exception('{}-style repetition not yet supported' % t)
 
             elif t.startswith('(?'):
                 raise Exception('%r not supported' % t)
@@ -257,6 +257,6 @@ def parse_regex(regex_tokens):
     result = _parse()
 
     if len(tokens) != 0:
-        raise Exception("Unmatched parantheses.")
+        raise Exception("Unmatched parentheses.")
     else:
         return result
