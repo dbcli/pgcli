@@ -28,7 +28,7 @@ animal_completer = WordCompleter([
     'crocodile',
     'dinosaur',
     'dog',
-    'dolphine',
+    'dolphin',
     'dove',
     'duck',
     'eagle',
