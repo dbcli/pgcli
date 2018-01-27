@@ -70,8 +70,8 @@ def has_focus(value):
                 return get_app().layout.current_window == value
         else:
             def test():
-                # Consider focussed when any window inside this container is
-                # focussed.
+                # Consider focused when any window inside this container is
+                # focused.
                 current_window = get_app().layout.current_window
 
                 for c in walk(value):
@@ -88,7 +88,7 @@ def has_focus(value):
 @Condition
 def buffer_has_focus():
     """
-    Enabled when the currently focussed control is a `BufferControl`.
+    Enabled when the currently focused control is a `BufferControl`.
     """
     return get_app().layout.buffer_has_focus
 
