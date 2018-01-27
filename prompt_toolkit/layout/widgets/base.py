@@ -78,7 +78,7 @@ class TextArea(object):
     :param wrap_lines: When `True`, don't scroll horizontally, but wrap lines.
     :param width: Window width. (``Dimension`` object.)
     :param height: Window height. (``Dimension`` object.)
-    :param password: When `True`, display using asteriks.
+    :param password: When `True`, display using asterisks.
     :param accept_handler: Called when `Enter` is pressed.
     :param scrollbar: When `True`, display a scroll bar.
     :param style: A style string.
@@ -197,7 +197,7 @@ class SearchField(object):
 
 class Label(object):
     """
-    Widget that displays the given text. It is not editable or focussable.
+    Widget that displays the given text. It is not editable or focusable.
 
     :param text: The text to be displayed. (This can be multiline. This can be
         formatted text as well.)
