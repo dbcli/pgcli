@@ -94,7 +94,7 @@ class ConsoleInputReader(object):
         b'\x02': Keys.ControlB,  # Control-B (emacs cursor left)
         b'\x03': Keys.ControlC,  # Control-C (interrupt)
         b'\x04': Keys.ControlD,  # Control-D (exit)
-        b'\x05': Keys.ControlE,  # Contrel-E (end)
+        b'\x05': Keys.ControlE,  # Control-E (end)
         b'\x06': Keys.ControlF,  # Control-F (cursor forward)
         b'\x07': Keys.ControlG,  # Control-G
         b'\x08': Keys.ControlH,  # Control-H (8) (Identical to '\b')
@@ -120,7 +120,7 @@ class ConsoleInputReader(object):
         b'\x1c': Keys.ControlBackslash,  # Both Control-\ and Ctrl-|
         b'\x1d': Keys.ControlSquareClose,  # Control-]
         b'\x1e': Keys.ControlCircumflex,  # Control-^
-        b'\x1f': Keys.ControlUnderscore,  # Control-underscore (Also for Ctrl-hypen.)
+        b'\x1f': Keys.ControlUnderscore,  # Control-underscore (Also for Ctrl-hyphen.)
         b'\x7f': Keys.Backspace,  # (127) Backspace   (ASCII Delete.)
     }
 
@@ -196,7 +196,7 @@ class ConsoleInputReader(object):
         # block otherwise.
         # (Actually, the event loop is responsible to make sure that this
         # function is only called when there is something to read, but for some
-        # reason this happend in the asyncio_win32 loop, and it's better to be
+        # reason this happened in the asyncio_win32 loop, and it's better to be
         # safe anyway.)
         if not wait_for_handles([self.handle], timeout=0):
             return
@@ -433,7 +433,7 @@ class raw_mode(object):
         with raw_mode(stdin):
             ''' the windows terminal is now in 'raw' mode. '''
 
-    The ``fileno`` attribute is ignored. This is to be compatble with the
+    The ``fileno`` attribute is ignored. This is to be compatible with the
     `raw_input` method of `.vt100_input`.
     """
     def __init__(self, fileno=None):
