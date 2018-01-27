@@ -22,7 +22,7 @@ prefer to work on bigger chunks of text. This is why we have to read the input
 in bigger chunks.
 
 Further, line buffering is also not an option, because it doesn't work well in
-the architecture. We use lowel level Posix APIs, that work better with the
+the architecture. We use lower level Posix APIs, that work better with the
 event loop and so on. In fact, there is also nothing that defines that only \n
 can accept the input, you could create a key binding for any key to accept the
 input.
