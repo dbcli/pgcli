@@ -253,7 +253,7 @@ class PygmentsLexer(Lexer):
         line_generators = {}  # Map lexer generator to the line number.
 
         def get_syntax_sync():
-            " The Syntax synchronisation objcet that we currently use. "
+            " The Syntax synchronisation object that we currently use. "
             if self.sync_from_start():
                 return SyncFromStart()
             else:
