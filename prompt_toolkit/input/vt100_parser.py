@@ -45,7 +45,7 @@ ANSI_SEQUENCES = {
     '\x02': Keys.ControlB,  # Control-B (emacs cursor left)
     '\x03': Keys.ControlC,  # Control-C (interrupt)
     '\x04': Keys.ControlD,  # Control-D (exit)
-    '\x05': Keys.ControlE,  # Contrel-E (end)
+    '\x05': Keys.ControlE,  # Control-E (end)
     '\x06': Keys.ControlF,  # Control-F (cursor forward)
     '\x07': Keys.ControlG,  # Control-G
     '\x08': Keys.ControlH,  # Control-H (8) (Identical to '\b')
@@ -72,7 +72,7 @@ ANSI_SEQUENCES = {
     '\x1c': Keys.ControlBackslash,  # Both Control-\ (also Ctrl-| )
     '\x1d': Keys.ControlSquareClose,  # Control-]
     '\x1e': Keys.ControlCircumflex,  # Control-^
-    '\x1f': Keys.ControlUnderscore,  # Control-underscore (Also for Ctrl-hypen.)
+    '\x1f': Keys.ControlUnderscore,  # Control-underscore (Also for Ctrl-hyphen.)
 
     # ASCII Delete (0x7f)
     # Vt220 (and Linux terminal) send this when pressing backspace. We map this
@@ -184,7 +184,7 @@ ANSI_SEQUENCES = {
     #     (Iterm sends ESC followed by the normal arrow_up/down/left/right
     #     sequences, and the OSX Terminal sends ESCb and ESCf for "alt
     #     arrow_left" and "alt arrow_right." We don't handle these
-    #     explicitely, in here, because would could not distinguesh between
+    #     explicitly, in here, because would could not distinguish between
     #     pressing ESC (to go to Vi navigation mode), followed by just the
     #     'b' or 'f' key. These combinations are handled in
     #     the input processor.)
@@ -202,7 +202,7 @@ ANSI_SEQUENCES = {
 
 class _IsPrefixOfLongerMatchCache(dict):
     """
-    Dictiory that maps input sequences to a boolean indicating whether there is
+    Dictionary that maps input sequences to a boolean indicating whether there is
     any key that start with this characters.
     """
     def __missing__(self, prefix):
@@ -224,7 +224,7 @@ _IS_PREFIX_OF_LONGER_MATCH_CACHE = _IsPrefixOfLongerMatchCache()
 class Vt100Parser(object):
     """
     Parser for VT100 input stream.
-    Data can be fed throughthe `feed` method and the given callback will be
+    Data can be fed through the `feed` method and the given callback will be
     called with KeyPress objects.
 
     ::
@@ -389,7 +389,7 @@ class Vt100Parser(object):
         sequence, we don't know whether escape has been pressed, or whether
         it's something else. This flush function should be called after a
         timeout, and processes everything that's still in the buffer as-is, so
-        without assuming any characters will folow.
+        without assuming any characters will follow.
         """
         self._input_parser.send(_Flush)
 
