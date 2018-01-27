@@ -53,7 +53,7 @@ class UIControl(with_metaclass(ABCMeta, object)):
 
     def is_focussable(self):
         """
-        Tell whether this user control is focussable.
+        Tell whether this user control is focusable.
         """
         return False
 
@@ -204,7 +204,7 @@ class FormattedTextControl(UIControl):
         either handle the event or return `NotImplemented` in case we want the
         containing Window to handle this event.
 
-    :param focussable: `bool` or `Filter`: Tell whether this control is focussable.
+    :param focussable: `bool` or `Filter`: Tell whether this control is focusable.
 
     :param text: Text or formatted text to be displayed.
     :param style: Style string applied to the content. (If you want to style
@@ -399,9 +399,9 @@ class BufferControl(UIControl):
         ``HighlightSearchProcessor`` with ``preview_search=True`` as well.
         Otherwise only the cursor position will move, but the text won't be
         highlighted.
-    :param focussable: `bool` or `Filter`: Tell whether this control is focussable.
+    :param focussable: `bool` or `Filter`: Tell whether this control is focusable.
     :param get_search_state: Callable that returns the SearchState to be used.
-    :param focus_on_click: Focus this buffer when it's click, but not yet focussed.
+    :param focus_on_click: Focus this buffer when it's click, but not yet focused.
     :param key_bindings: a `KeyBindings` object.
     """
     def __init__(self,
@@ -641,7 +641,7 @@ class BufferControl(UIControl):
 
         # If there is an auto completion going on, use that start point for a
         # pop-up menu position. (But only when this buffer has the focus --
-        # there is only one place for a menu, determined by the focussed buffer.)
+        # there is only one place for a menu, determined by the focused buffer.)
         if get_app().layout.current_control == self:
             menu_position = self.menu_position() if self.menu_position else None
             if menu_position is not None:
@@ -709,12 +709,12 @@ class BufferControl(UIControl):
                     # Don't handle scroll events here.
                     return NotImplemented
 
-        # Not focussed, but focussing on click events.
+        # Not focused, but focusing on click events.
         else:
             if self.focus_on_click() and mouse_event.event_type == MouseEventType.MOUSE_UP:
                 # Focus happens on mouseup. (If we did this on mousedown, the
                 # up event will be received at the point where this widget is
-                # focussed and be handled anyway.)
+                # focused and be handled anyway.)
                 get_app().layout.current_control = self
             else:
                 return NotImplemented
