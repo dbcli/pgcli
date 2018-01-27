@@ -207,7 +207,7 @@ class MultiColumnCompletionMenuControl(UIControl):
     arrow is shown on the left or right side.
 
     `min_rows` indicates how many rows will be available in any possible case.
-    When this is langer than one, in will try to use less columns and more
+    When this is larger than one, it will try to use less columns and more
     rows until this value is reached.
     Be careful passing in a too big value, if less than the given amount of
     rows are available, more columns would have been required, but
@@ -384,7 +384,7 @@ class MultiColumnCompletionMenuControl(UIControl):
 
     def mouse_handler(self, mouse_event):
         """
-        Handle scoll and click events.
+        Handle scroll and click events.
         """
         b = get_app().current_buffer
 
