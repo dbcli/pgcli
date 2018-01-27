@@ -51,7 +51,7 @@ class UIControl(with_metaclass(ABCMeta, object)):
     def preferred_height(self, width, max_available_height, wrap_lines):
         return None
 
-    def is_focussable(self):
+    def is_focusable(self):
         """
         Tell whether this user control is focusable.
         """
@@ -245,7 +245,7 @@ class FormattedTextControl(UIControl):
     def reset(self):
         self._fragments = None
 
-    def is_focussable(self):
+    def is_focusable(self):
         return self.focussable()
 
     def __repr__(self):
@@ -378,7 +378,7 @@ class DummyControl(UIControl):
             get_line=get_line,
             line_count=100 ** 100)  # Something very big.
 
-    def is_focussable(self):
+    def is_focusable(self):
         return False
 
 
@@ -488,7 +488,7 @@ class BufferControl(UIControl):
     def search_state(self):
         return self.get_search_state()
 
-    def is_focussable(self):
+    def is_focusable(self):
         return self.focussable()
 
     def preferred_width(self, max_available_width):

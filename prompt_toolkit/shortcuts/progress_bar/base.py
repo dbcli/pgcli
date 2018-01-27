@@ -243,7 +243,7 @@ class _ProgressControl(UIControl):
             line_count=len(items),
             show_cursor=False)
 
-    def is_focussable(self):
+    def is_focusable(self):
         return True  # Make sure that the key bindings work.
 
     def get_key_bindings(self):

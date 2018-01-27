@@ -97,7 +97,7 @@ class Layout(object):
         elif isinstance(value, UIControl):
             if value not in self.find_all_controls():
                 raise ValueError('Invalid value. Container does not appear in the layout.')
-            if not value.is_focussable():
+            if not value.is_focusable():
                 raise ValueError('Invalid value. UIControl is not focusable.')
 
             self.current_control = value
@@ -121,7 +121,7 @@ class Layout(object):
                 # complex sub components.)
                 windows = []
                 for c in walk(value, skip_hidden=True):
-                    if isinstance(c, Window) and c.content.is_focussable():
+                    if isinstance(c, Window) and c.content.is_focusable():
                         windows.append(c)
 
                 # Take the first one that was focused before.
@@ -217,7 +217,7 @@ class Layout(object):
         area).
         """
         for w in self.walk_through_modal_area():
-            if isinstance(w, Window) and w.content.is_focussable():
+            if isinstance(w, Window) and w.content.is_focusable():
                 yield w
 
     def get_visible_focussable_windows(self):

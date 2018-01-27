@@ -309,9 +309,9 @@ class Application(object):
         # (The `Layout` class can't determine this.)
         layout = self.layout
 
-        if not layout.current_control.is_focussable():
+        if not layout.current_control.is_focusable():
             for w in layout.find_all_windows():
-                if w.content.is_focussable():
+                if w.content.is_focusable():
                     layout.current_window = w
                     break
 
