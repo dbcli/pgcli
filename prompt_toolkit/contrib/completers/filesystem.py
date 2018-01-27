@@ -78,7 +78,7 @@ class PathCompleter(Completer):
                 if os.path.isdir(full_name):
                     # For directories, add a slash to the filename.
                     # (We don't add them to the `completion`. Users can type it
-                    # to trigger the autocompletion themself.)
+                    # to trigger the autocompletion themselves.)
                     filename += '/'
                 elif self.only_directories:
                     continue
@@ -93,7 +93,7 @@ class PathCompleter(Completer):
 
 class ExecutableCompleter(PathCompleter):
     """
-    Complete only excutable files in the current path.
+    Complete only executable files in the current path.
     """
     def __init__(self):
         PathCompleter.__init__(
