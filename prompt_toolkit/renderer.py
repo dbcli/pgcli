@@ -44,7 +44,7 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
         character.  (Color/attributes.)
     :param attrs_for_style_string: :class:`._StyleStringToAttrsCache` instance.
     :param width: The width of the terminal.
-    :param prevous_width: The width of the terminal during the last rendering.
+    :param previous_width: The width of the terminal during the last rendering.
     """
     width, height = size.columns, size.rows
 
