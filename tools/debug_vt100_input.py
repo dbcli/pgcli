@@ -6,7 +6,8 @@ For testing terminal input.
 from __future__ import unicode_literals
 import sys
 
-from prompt_toolkit.terminal.vt100_input import InputStream, raw_mode
+from prompt_toolkit.input.vt100 import raw_mode
+from prompt_toolkit.input.vt100_parser import Vt100Parser
 from prompt_toolkit.keys import Keys
 
 
@@ -18,7 +19,7 @@ def callback(key_press):
 
 
 def main():
-    stream = InputStream(callback)
+    stream = Vt100Parser(callback)
 
     with raw_mode(sys.stdin.fileno()):
         while True:
