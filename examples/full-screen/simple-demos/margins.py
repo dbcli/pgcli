@@ -13,7 +13,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import FormattedTextControl, BufferControl
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.layout.margins import NumberredMargin, ScrollbarMargin
+from prompt_toolkit.layout.margins import NumberedMargin, ScrollbarMargin
 
 
 LIPSUM = """
@@ -41,7 +41,7 @@ body = HSplit([
         BufferControl(buffer=buff),
 
         # Add margins.
-        left_margins=[NumberredMargin(), ScrollbarMargin()],
+        left_margins=[NumberedMargin(), ScrollbarMargin()],
         right_margins=[ScrollbarMargin(), ScrollbarMargin()],
     ),
 ])

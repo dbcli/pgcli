@@ -13,7 +13,7 @@ from .utils import fragment_list_to_text
 
 __all__ = (
     'Margin',
-    'NumberredMargin',
+    'NumberedMargin',
     'ScrollbarMargin',
     'ConditionalMargin',
     'PromptMargin',
@@ -54,7 +54,7 @@ class Margin(with_metaclass(ABCMeta, object)):
         return []
 
 
-class NumberredMargin(Margin):
+class NumberedMargin(Margin):
     """
     Margin that displays the line numbers.
 

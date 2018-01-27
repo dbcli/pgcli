@@ -24,7 +24,7 @@ from ..controls import BufferControl, FormattedTextControl
 from ..dimension import Dimension as D
 from ..dimension import is_dimension
 from ..dimension import to_dimension
-from ..margins import ScrollbarMargin, NumberredMargin
+from ..margins import ScrollbarMargin, NumberedMargin
 from ..processors import PasswordProcessor, ConditionalProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, merge_processors
 from ..utils import fragment_list_to_text
 
@@ -132,7 +132,7 @@ class TextArea(object):
             else:
                 right_margins = []
             if line_numbers:
-                left_margins = [NumberredMargin()]
+                left_margins = [NumberedMargin()]
             else:
                 left_margins = []
         else:

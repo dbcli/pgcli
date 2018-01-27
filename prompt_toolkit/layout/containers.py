@@ -1134,7 +1134,7 @@ class Window(Container):
         `UIContent` height when calculating the dimensions.
     :param left_margins: A list of :class:`~prompt_toolkit.layout.margins.Margin`
         instance to be displayed on the left. For instance:
-        :class:`~prompt_toolkit.layout.margins.NumberredMargin` can be one of
+        :class:`~prompt_toolkit.layout.margins.NumberedMargin` can be one of
         them in order to show line numbers.
     :param right_margins: Like `left_margins`, but on the other side.
     :param scroll_offsets: :class:`.ScrollOffsets` instance, representing the
