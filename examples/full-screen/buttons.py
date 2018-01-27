@@ -34,7 +34,7 @@ button1 = Button('Button 1', handler=button1_clicked)
 button2 = Button('Button 2', handler=button2_clicked)
 button3 = Button('Button 3', handler=button3_clicked)
 button4 = Button('Exit', handler=exit_clicked)
-text_area = TextArea(focussable=True)
+text_area = TextArea(focusable=True)
 
 
 # Combine all the widgets in a UI.

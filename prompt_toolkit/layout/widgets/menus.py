@@ -126,7 +126,7 @@ class MenuContainer(object):
         self.control = FormattedTextControl(
             self._get_menu_fragments,
             key_bindings=kb,
-            focussable=True,
+            focusable=True,
             show_cursor=False)
 
         self.window = Window(

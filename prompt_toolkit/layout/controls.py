@@ -204,7 +204,7 @@ class FormattedTextControl(UIControl):
         either handle the event or return `NotImplemented` in case we want the
         containing Window to handle this event.
 
-    :param focussable: `bool` or `Filter`: Tell whether this control is focusable.
+    :param focusable: `bool` or `Filter`: Tell whether this control is focusable.
 
     :param text: Text or formatted text to be displayed.
     :param style: Style string applied to the content. (If you want to style
@@ -215,7 +215,7 @@ class FormattedTextControl(UIControl):
     :param get_cursor_position: A callable that returns the cursor position as
         a `Point` instance.
     """
-    def __init__(self, text='', style='', focussable=False, key_bindings=None,
+    def __init__(self, text='', style='', focusable=False, key_bindings=None,
                  show_cursor=True, modal=False, get_cursor_position=None):
         from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
         assert isinstance(style, six.text_type)
@@ -226,7 +226,7 @@ class FormattedTextControl(UIControl):
 
         self.text = text  # No type check on 'text'. This is done dynamically.
         self.style = style
-        self.focussable = to_filter(focussable)
+        self.focusable = to_filter(focusable)
 
         # Key bindings.
         self.key_bindings = key_bindings
@@ -246,7 +246,7 @@ class FormattedTextControl(UIControl):
         self._fragments = None
 
     def is_focusable(self):
-        return self.focussable()
+        return self.focusable()
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.text)
@@ -399,7 +399,7 @@ class BufferControl(UIControl):
         ``HighlightSearchProcessor`` with ``preview_search=True`` as well.
         Otherwise only the cursor position will move, but the text won't be
         highlighted.
-    :param focussable: `bool` or `Filter`: Tell whether this control is focusable.
+    :param focusable: `bool` or `Filter`: Tell whether this control is focusable.
     :param get_search_state: Callable that returns the SearchState to be used.
     :param focus_on_click: Focus this buffer when it's click, but not yet focused.
     :param key_bindings: a `KeyBindings` object.
@@ -409,7 +409,7 @@ class BufferControl(UIControl):
                  input_processor=None,
                  lexer=None,
                  preview_search=False,
-                 focussable=True,
+                 focusable=True,
                  search_buffer_control=None,
                  get_search_buffer_control=None,
                  get_search_state=None,
@@ -443,7 +443,7 @@ class BufferControl(UIControl):
             ])
 
         self.preview_search = to_filter(preview_search)
-        self.focussable = to_filter(focussable)
+        self.focusable = to_filter(focusable)
         self.get_search_state = get_search_state
         self.focus_on_click = to_filter(focus_on_click)
 
@@ -489,7 +489,7 @@ class BufferControl(UIControl):
         return self.get_search_state()
 
     def is_focusable(self):
-        return self.focussable()
+        return self.focusable()
 
     def preferred_width(self, max_available_width):
         """

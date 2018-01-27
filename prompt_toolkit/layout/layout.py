@@ -211,7 +211,7 @@ class Layout(object):
         " Return the `BufferControl` in which we are searching or `None`. "
         return self.search_links.get(self.current_control)
 
-    def get_focussable_windows(self):
+    def get_focusable_windows(self):
         """
         Return all the `Window` objects which are focusable (in the 'modal'
         area).
@@ -220,14 +220,14 @@ class Layout(object):
             if isinstance(w, Window) and w.content.is_focusable():
                 yield w
 
-    def get_visible_focussable_windows(self):
+    def get_visible_focusable_windows(self):
         """
         Return a list of `Window` objects that are focusable.
         """
         # focusable windows are windows that are visible, but also part of the
         # modal container. Make sure to keep the ordering.
         visible_windows = self.visible_windows
-        return [w for w in self.get_focussable_windows() if w in visible_windows]
+        return [w for w in self.get_focusable_windows() if w in visible_windows]
 
     @property
     def current_buffer(self):
@@ -251,7 +251,7 @@ class Layout(object):
     @property
     def buffer_has_focus(self):
         """
-        Return `True` if the currently foccussed control is a `BufferControl`.
+        Return `True` if the currently focused control is a `BufferControl`.
         (For instance, used to determine whether the default key bindings
         should be active or not.)
         """
@@ -279,7 +279,7 @@ class Layout(object):
         """
         Focus the next visible/focusable Window.
         """
-        windows = self.get_visible_focussable_windows()
+        windows = self.get_visible_focusable_windows()
 
         if len(windows) > 0:
             try:
@@ -295,7 +295,7 @@ class Layout(object):
         """
         Focus the previous visible/focusable Window.
         """
-        windows = self.get_visible_focussable_windows()
+        windows = self.get_visible_focusable_windows()
 
         if len(windows) > 0:
             try:

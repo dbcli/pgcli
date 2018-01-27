@@ -124,7 +124,7 @@ def progress_dialog(title='', text='', run_callback=None, style=None, async_=Fal
 
     progressbar = ProgressBar()
     text_area = TextArea(
-        focussable=False,
+        focusable=False,
 
         # Prefer this text area as big as possible, to avoid having a window
         # that keeps resizing when we add text to it.

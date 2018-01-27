@@ -74,7 +74,7 @@ class TextArea(object):
     :param multiline: If True, allow multiline input.
     :param lexer: ``Lexer`` instance for syntax highlighting.
     :param completer: ``Completer`` instance for auto completion.
-    :param focussable: When `True`, allow this widget to receive the focus.
+    :param focusable: When `True`, allow this widget to receive the focus.
     :param wrap_lines: When `True`, don't scroll horizontally, but wrap lines.
     :param width: Window width. (``Dimension`` object.)
     :param height: Window height. (``Dimension`` object.)
@@ -87,7 +87,7 @@ class TextArea(object):
     """
     def __init__(self, text='', multiline=True, password=False,
                  lexer=None, completer=None, accept_handler=None,
-                 focussable=True, wrap_lines=True, read_only=False,
+                 focusable=True, wrap_lines=True, read_only=False,
                  width=None, height=None,
                  dont_extend_height=False, dont_extend_width=False,
                  line_numbers=False, scrollbar=False, style='',
@@ -124,7 +124,7 @@ class TextArea(object):
             ]),
             search_buffer_control=search_buffer,
             preview_search=preview_search,
-            focussable=focussable)
+            focusable=focusable)
 
         if multiline:
             if scrollbar:
@@ -255,7 +255,7 @@ class Button(object):
         self.control = FormattedTextControl(
             self._get_text_fragments,
             key_bindings=self._get_key_bindings(),
-            focussable=True)
+            focusable=True)
 
         self.window = Window(
             self.control,
@@ -452,7 +452,7 @@ class Checkbox(object):
         self.control = FormattedTextControl(
             self._get_text_fragments,
             key_bindings=kb,
-            focussable=True)
+            focusable=True)
 
         self.window = Window(
             width=3, content=self.control, height=1)
@@ -507,7 +507,7 @@ class RadioList(object):
         self.control = FormattedTextControl(
             self._get_text_fragments,
             key_bindings=kb,
-            focussable=True)
+            focusable=True)
 
         self.window = Window(
             content=self.control,
