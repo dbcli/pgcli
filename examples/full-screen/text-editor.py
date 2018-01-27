@@ -171,10 +171,10 @@ def show_dialog_as_float(dialog):
 
     app = get_app()
 
-    focussed_before = app.layout.current_window
+    focused_before = app.layout.current_window
     app.layout.focus(dialog)
     result = yield dialog.future
-    app.layout.focus(focussed_before)
+    app.layout.focus(focused_before)
 
     if float_ in root_container.floats:
         root_container.floats.remove(float_)
@@ -310,7 +310,7 @@ style = Style.from_dict({
 
 layout = Layout(
     root_container,
-    focussed_element=text_field)
+    focused_element=text_field)
 
 
 application = Application(

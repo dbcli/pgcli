@@ -65,16 +65,16 @@ class SystemToolbar(object):
             filter=has_focus(self.system_buffer))
 
     def _build_global_key_bindings(self):
-        focussed = has_focus(self.system_buffer)
+        focused = has_focus(self.system_buffer)
 
         bindings = KeyBindings()
 
-        @bindings.add(Keys.Escape, '!', filter= ~focussed & emacs_mode)
+        @bindings.add(Keys.Escape, '!', filter= ~focused & emacs_mode)
         def _(event):
             " M-'!' will focus this user control. "
             event.app.layout.focus(self.window)
 
-        @bindings.add('!', filter=~focussed & vi_mode & vi_navigation_mode)
+        @bindings.add('!', filter=~focused & vi_mode & vi_navigation_mode)
         def _(event):
             " Focus. "
             event.app.vi_state.input_mode = InputMode.INSERT
@@ -89,21 +89,21 @@ class SystemToolbar(object):
         ]
 
     def _build_key_bindings(self):
-        focussed = has_focus(self.system_buffer)
+        focused = has_focus(self.system_buffer)
 
         # Emacs
         emacs_bindings = KeyBindings()
         handle = emacs_bindings.add
 
-        @handle('escape', filter=focussed)
-        @handle('c-g', filter=focussed)
-        @handle('c-c', filter=focussed)
+        @handle('escape', filter=focused)
+        @handle('c-g', filter=focused)
+        @handle('c-c', filter=focused)
         def _(event):
             " Hide system prompt. "
             self.system_buffer.reset()
             event.app.layout.focus_last()
 
-        @handle('enter', filter=focussed)
+        @handle('enter', filter=focused)
         def _(event):
             " Run system command. "
             event.app.run_system_command(
@@ -116,15 +116,15 @@ class SystemToolbar(object):
         vi_bindings = KeyBindings()
         handle = vi_bindings.add
 
-        @handle('escape', filter=focussed)
-        @handle('c-c', filter=focussed)
+        @handle('escape', filter=focused)
+        @handle('c-c', filter=focused)
         def _(event):
             " Hide system prompt. "
             event.app.vi_state.input_mode = InputMode.NAVIGATION
             self.system_buffer.reset()
             event.app.layout.focus_last()
 
-        @handle('enter', filter=focussed)
+        @handle('enter', filter=focused)
         def _(event):
             " Run system command. "
             event.app.vi_state.input_mode = InputMode.NAVIGATION

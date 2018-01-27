@@ -143,12 +143,12 @@ style = Style.from_dict({
     'menu.border': '#aaaaaa',
     'window.border shadow': '#444444',
 
-    'focussed  button': 'bg:#880000 #ffffff noinherit',
+    'focused  button': 'bg:#880000 #ffffff noinherit',
 
     # Styling for Dialog widgets.
 
-    'radiolist focussed': 'noreverse',
-    'radiolist focussed radio.selected': 'reverse',
+    'radiolist focused': 'noreverse',
+    'radiolist focused radio.selected': 'reverse',
 
     'button-bar': 'bg:#aaaaff'
 })
@@ -157,7 +157,7 @@ style = Style.from_dict({
 application = Application(
     layout=Layout(
         root_container,
-        focussed_element=yes_button,
+        focused_element=yes_button,
     ),
     key_bindings=bindings,
     style=style,

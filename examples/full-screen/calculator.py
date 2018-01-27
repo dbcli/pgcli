@@ -63,7 +63,7 @@ def main():
 
     # Run application.
     application = Application(
-        layout=Layout(container, focussed_window=input_field),
+        layout=Layout(container, focused_window=input_field),
         key_bindings=kb,
         style=style,
         mouse_support=True,

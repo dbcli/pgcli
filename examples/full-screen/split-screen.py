@@ -134,7 +134,7 @@ left_buffer.on_text_changed += default_buffer_changed
 # This glues everything together.
 
 application = Application(
-    layout=Layout(root_container, focussed_element=left_window),
+    layout=Layout(root_container, focused_element=left_window),
     key_bindings=kb,
 
     # Let's add mouse support!

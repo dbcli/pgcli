@@ -60,7 +60,7 @@ root_container = Box(
 
 layout = Layout(
     container=root_container,
-    focussed_element=button1)
+    focused_element=button1)
 
 
 # Key bindings.
@@ -75,8 +75,8 @@ style = Style([
     ('right-pane',      'bg:#00aa00 #000000'),
     ('button',          '#000000'),
     ('button-arrow',    '#000000'),
-    ('button focussed', 'bg:#ff0000'),
-    ('text-area focussed', 'bg:#ff0000'),
+    ('button focused', 'bg:#ff0000'),
+    ('text-area focused', 'bg:#ff0000'),
 ])
 
 

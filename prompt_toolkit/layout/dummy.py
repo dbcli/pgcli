@@ -32,4 +32,4 @@ def create_dummy_layout():
         HTML('No layout specified. Press <reverse>ENTER</reverse> to quit.'),
         key_bindings=kb)
     window = Window(content=control, height=D(min=1))
-    return Layout(container=window, focussed_element=window)
+    return Layout(container=window, focused_element=window)
