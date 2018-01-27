@@ -11,8 +11,8 @@ from prompt_toolkit.contrib.completers import WordCompleter
 
 animal_completer = WordCompleter([
     'alligator', 'ant', 'ape', 'bat', 'bear', 'beaver', 'bee', 'bison',
-    'butterfly', 'cat', 'chicken', 'crocodile', 'dinosaur', 'dog', 'dolphine',
-    'dove', 'duck', 'eagle', 'elephant', 'fish', 'goat', 'gorilla', 'kangoroo',
+    'butterfly', 'cat', 'chicken', 'crocodile', 'dinosaur', 'dog', 'dolphin',
+    'dove', 'duck', 'eagle', 'elephant', 'fish', 'goat', 'gorilla', 'kangaroo',
     'leopard', 'lion', 'mouse', 'rabbit', 'rat', 'snake', 'spider', 'turkey',
     'turtle',
 ], ignore_case=True)
