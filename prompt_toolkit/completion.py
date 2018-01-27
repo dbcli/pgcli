@@ -112,7 +112,7 @@ class CompleteEvent(object):
 
     :param text_inserted: When True, it means that completions are requested
         because of a text insert. (`Buffer.complete_while_typing`.)
-    :param completion_requested: When True, it means that the user explicitely
+    :param completion_requested: When True, it means that the user explicitly
         pressed the `Tab` key in order to view the completions.
 
     These two flags can be used for instance to implemented a completer that
@@ -126,7 +126,7 @@ class CompleteEvent(object):
         #: Automatic completion while typing.
         self.text_inserted = text_inserted
 
-        #: Used explicitely requested completion by pressing 'tab'.
+        #: Used explicitly requested completion by pressing 'tab'.
         self.completion_requested = completion_requested
 
     def __repr__(self):
@@ -180,7 +180,7 @@ class ThreadedCompleter(Completer):
             return self.completer.get_completions_future(document, complete_event)
 
         def run_get_completions_thread():
-            # Do conversion to list in the thread, othewise the generator
+            # Do conversion to list in the thread, otherwise the generator
             # (which is possibly slow) will be consumed in the event loop.
             return list(self.get_completions(document, complete_event))
         f = run_in_executor(run_get_completions_thread)
