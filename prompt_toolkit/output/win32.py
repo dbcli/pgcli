@@ -414,7 +414,7 @@ class FOREGROUND_COLOR:
     INTENSITY = 0x0008  # Foreground color is intensified.
 
 
-class BACKROUND_COLOR:
+class BACKGROUND_COLOR:
     BLACK     = 0x0000
     BLUE      = 0x0010
     GREEN     = 0x0020
@@ -454,7 +454,7 @@ def _create_ansi_color_dict(color_cls):
 
 
 FG_ANSI_COLORS = _create_ansi_color_dict(FOREGROUND_COLOR)
-BG_ANSI_COLORS = _create_ansi_color_dict(BACKROUND_COLOR)
+BG_ANSI_COLORS = _create_ansi_color_dict(BACKGROUND_COLOR)
 
 assert set(FG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
 assert set(BG_ANSI_COLORS) == set(ANSI_COLOR_NAMES)
@@ -474,7 +474,7 @@ class ColorLookupTable(object):
         Build an RGB-to-256 color conversion table
         """
         FG = FOREGROUND_COLOR
-        BG = BACKROUND_COLOR
+        BG = BACKGROUND_COLOR
 
         return [
             (0x00, 0x00, 0x00, FG.BLACK, BG.BLACK),
