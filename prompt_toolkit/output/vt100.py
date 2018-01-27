@@ -173,7 +173,7 @@ class _16ColorCache(dict):
 
 class _256ColorCache(dict):
     """
-    Cach which maps (r, g, b) tuples to 256 colors.
+    Cache which maps (r, g, b) tuples to 256 colors.
     """
     def __init__(self):
         # Build color table.
@@ -291,7 +291,7 @@ class _EscapeCodeCache(dict):
         " Return a tuple with the vt100 values  that represent this color. "
         # When requesting ANSI colors only, and both fg/bg color were converted
         # to ANSI, ensure that the foreground and background color are not the
-        # same. (Unless they were explicitely defined to be the same color.)
+        # same. (Unless they were explicitly defined to be the same color.)
         fg_ansi = [()]
 
         def get(color, bg):
@@ -602,7 +602,7 @@ class Vt100_Output(Output):
             self.stdout.flush()
         except IOError as e:
             if e.args and e.args[0] == errno.EINTR:
-                # Interrupted system call. Can happpen in case of a window
+                # Interrupted system call. Can happen in case of a window
                 # resize signal. (Just ignore. The resize handler will render
                 # again anyway.)
                 pass
