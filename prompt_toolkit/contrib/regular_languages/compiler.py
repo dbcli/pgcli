@@ -70,7 +70,7 @@ class _CompiledGrammar(object):
         self.escape_funcs = escape_funcs or {}
         self.unescape_funcs = unescape_funcs or {}
 
-        #: Dictionary that will map the redex names to Node instances.
+        #: Dictionary that will map the regex names to Node instances.
         self._group_names_to_nodes = {}  # Maps regex group names to varnames.
         counter = [0]
 
