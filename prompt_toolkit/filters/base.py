@@ -48,7 +48,7 @@ class Filter(with_metaclass(ABCMeta, object)):
     def __bool__(self):
         """
         By purpose, we don't allow bool(...) operations directly on a filter,
-        because because the meaning is ambigue.
+        because the meaning is ambiguous.
 
         Executing a filter has to be done always by calling it. Providing
         defaults for `None` values should be done through an `is None` check
