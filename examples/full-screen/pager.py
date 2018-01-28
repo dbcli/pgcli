@@ -86,7 +86,7 @@ style = Style.from_dict({
 application = Application(
     layout=Layout(
         root_container,
-        focused_window=text_area,
+        focused_element=text_area,
     ),
     key_bindings=bindings,
     enable_page_navigation_bindings=True,
