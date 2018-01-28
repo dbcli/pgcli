@@ -12,7 +12,7 @@ from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.styles import Style
-from prompt_toolkit.layout.widgets import TextArea, SearchField
+from prompt_toolkit.widgets import TextArea, SearchField
 
 from pygments.lexers import PythonLexer
 

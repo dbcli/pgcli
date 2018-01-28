@@ -6,9 +6,9 @@ from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.dimension import Dimension as D
-from prompt_toolkit.layout.widgets import ProgressBar, Dialog, Button, Label, Box, TextArea, RadioList
 from prompt_toolkit.layout.containers import HSplit
+from prompt_toolkit.layout.dimension import Dimension as D
+from prompt_toolkit.widgets import ProgressBar, Dialog, Button, Label, Box, TextArea, RadioList
 
 __all__ = [
     'yes_no_dialog',

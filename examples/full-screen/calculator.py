@@ -11,8 +11,8 @@ from prompt_toolkit.filters import has_focus
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.layout.widgets import TextArea
 from prompt_toolkit.styles import Style
+from prompt_toolkit.widgets import TextArea
 
 help_text = """
 Type any expression (e.g. "4 + 4") followed by enter to execute.

@@ -54,11 +54,11 @@ from prompt_toolkit.layout.margins import PromptMargin, ConditionalMargin
 from prompt_toolkit.layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
 from prompt_toolkit.layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
 from prompt_toolkit.layout.utils import explode_text_fragments
-from prompt_toolkit.layout.widgets.toolbars import ValidationToolbar, SystemToolbar, SearchToolbar
 from prompt_toolkit.output.defaults import get_default_output
 from prompt_toolkit.styles import BaseStyle, DynamicStyle
 from prompt_toolkit.utils import suspend_to_background_supported
 from prompt_toolkit.validation import DynamicValidator
+from prompt_toolkit.widgets.toolbars import ValidationToolbar, SystemToolbar, SearchToolbar
 from six import text_type
 
 import contextlib

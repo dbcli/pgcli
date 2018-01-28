@@ -6,15 +6,15 @@ from __future__ import unicode_literals
 from prompt_toolkit.application import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.layout.containers import VSplit, HSplit, Float
 from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.layout.widgets import TextArea, Label, Frame, Box, Checkbox, Dialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
 from prompt_toolkit.styles import Style, merge_styles
+from prompt_toolkit.widgets import TextArea, Label, Frame, Box, Checkbox, Dialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
 from pygments.lexers import HtmlLexer
 
 

@@ -129,10 +129,10 @@ abstraction.
   and controls. It should have a ``__pt__container__`` function, which is
   supposed to return the root container for this widget. Prompt_toolkit
   contains a couple of widgets like
-  :class:`~prompt_toolkit.layout.widgets.base.TextArea`,
-  :class:`~prompt_toolkit.layout.widgets.base.Button`,
-  :class:`~prompt_toolkit.layout.widgets.base.Frame`,
-  :class:`~prompt_toolkit.layout.widgets.base.VerticalLine` and so on.
+  :class:`~prompt_toolkit.widgets.base.TextArea`,
+  :class:`~prompt_toolkit.widgets.base.Button`,
+  :class:`~prompt_toolkit.widgets.base.Frame`,
+  :class:`~prompt_toolkit.widgets.base.VerticalLine` and so on.
 
 - The highest level abstractions can be found in the ``shortcuts`` module.
   There we don't have to think about the layout, controls and containers at

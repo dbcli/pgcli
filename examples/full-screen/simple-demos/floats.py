@@ -9,7 +9,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.containers import Window, FloatContainer, Float
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.layout.widgets import Frame
+from prompt_toolkit.widgets import Frame
 
 LIPSUM = ' '.join(("""Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 Maecenas quis interdum enim. Nam viverra, mauris et blandit malesuada, ante est
