@@ -10,9 +10,9 @@ from prompt_toolkit.formatted_text import is_formatted_text
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 
-__all__ = (
+__all__ = [
     'Dialog',
-)
+]
 
 
 class Dialog(object):

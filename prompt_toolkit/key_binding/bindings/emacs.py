@@ -9,10 +9,10 @@ from prompt_toolkit.keys import Keys
 from .named_commands import get_by_name
 from ..key_bindings import KeyBindings, ConditionalKeyBindings
 
-__all__ = (
+__all__ = [
     'load_emacs_bindings',
     'load_emacs_search_bindings',
-)
+]
 
 
 def load_emacs_bindings():

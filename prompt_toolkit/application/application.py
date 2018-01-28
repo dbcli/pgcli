@@ -36,9 +36,9 @@ import six
 import sys
 import time
 
-__all__ = (
+__all__ = [
     'Application',
-)
+]
 
 
 class Application(object):

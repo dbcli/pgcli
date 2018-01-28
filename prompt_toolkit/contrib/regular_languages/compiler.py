@@ -45,9 +45,9 @@ from six.moves import range
 from .regex_parser import Any, Sequence, Regex, Variable, Repeat, Lookahead
 from .regex_parser import parse_regex, tokenize_regex
 
-__all__ = (
+__all__ = [
     'compile',
-)
+]
 
 
 # Name of the named group in the regex, matching trailing input.

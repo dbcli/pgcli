@@ -9,11 +9,11 @@ from .base import Output
 
 from six import PY2
 
-__all__ = (
+__all__ = [
     'create_output',
     'get_default_output',
     'set_default_output',
-)
+]
 
 
 def create_output(stdout=None, true_color=False, ansi_colors_only=None):

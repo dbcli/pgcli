@@ -6,11 +6,11 @@ from ..key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.filters import emacs_mode, vi_navigation_mode, has_selection
 from .named_commands import get_by_name
 
-__all__ = (
+__all__ = [
     'load_open_in_editor_bindings',
     'load_emacs_open_in_editor_bindings',
     'load_vi_open_in_editor_bindings',
-)
+]
 
 
 def load_open_in_editor_bindings():

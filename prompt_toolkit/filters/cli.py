@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 # (Many people are going to have key bindings that rely on this file.)
 from .app import *
 
-__all__ = (
+__all__ = [
     # Old names.
     'HasArg',
     'HasCompletions',
@@ -35,7 +35,7 @@ __all__ = (
     'IsSearching',
     'HasSearch',
     'ControlIsSearchable',
-)
+]
 
 # Keep the original classnames for backwards compatibility.
 HasValidationError = lambda: has_validation_error

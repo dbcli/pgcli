@@ -12,12 +12,12 @@ import termios
 import tty
 import contextlib
 
-__all__ = (
+__all__ = [
     'Vt100Input',
     'PipeInput',
     'raw_mode',
     'cooked_mode',
-)
+]
 
 
 class Vt100Input(Input):

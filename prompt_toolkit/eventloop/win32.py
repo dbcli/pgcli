@@ -15,10 +15,10 @@ from ctypes.wintypes import DWORD, BOOL, HANDLE
 
 import msvcrt
 
-__all__ = (
+__all__ = [
     'Win32EventLoop',
     'wait_for_handles',
-)
+]
 
 WAIT_TIMEOUT = 0x00000102
 INFINITE = -1

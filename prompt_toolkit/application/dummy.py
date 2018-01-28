@@ -3,9 +3,9 @@ from .application import Application
 from prompt_toolkit.input import DummyInput
 from prompt_toolkit.output import DummyOutput
 
-__all__ = (
+__all__ = [
     'DummyApplication',
-)
+]
 
 
 class DummyApplication(Application):

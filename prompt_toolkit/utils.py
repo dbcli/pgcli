@@ -10,8 +10,7 @@ from wcwidth import wcwidth
 from six.moves import range
 from .cache import memoized
 
-
-__all__ = (
+__all__ = [
     'Event',
     'DummyContext',
     'get_cwidth',
@@ -21,7 +20,7 @@ __all__ = (
     'in_main_thread',
     'take_using_weights',
     'test_callable_args',
-)
+]
 
 
 class Event(object):

@@ -7,10 +7,10 @@ from .context import get_context_id, context
 from .defaults import get_event_loop
 import sys
 
-__all__ = (
+__all__ = [
     'Future',
     'InvalidStateError',
-)
+]
 
 
 class InvalidStateError(Exception):

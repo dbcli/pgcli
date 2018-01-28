@@ -5,9 +5,9 @@ from prompt_toolkit.contrib.regular_languages.compiler import compile
 
 from .filesystem import PathCompleter, ExecutableCompleter
 
-__all__ = (
+__all__ = [
     'SystemCompleter',
-)
+]
 
 
 class SystemCompleter(GrammarCompleter):

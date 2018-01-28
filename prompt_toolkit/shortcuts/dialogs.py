@@ -10,13 +10,13 @@ from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.widgets import ProgressBar, Dialog, Button, Label, Box, TextArea, RadioList
 from prompt_toolkit.layout.containers import HSplit
 
-__all__ = (
+__all__ = [
     'yes_no_dialog',
     'input_dialog',
     'message_dialog',
     'radiolist_dialog',
     'progress_dialog',
-)
+]
 
 
 def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None,

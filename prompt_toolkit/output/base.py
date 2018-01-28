@@ -6,10 +6,10 @@ from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 from prompt_toolkit.layout.screen import Size
 
-__all__ = (
+__all__ = [
     'Output',
     'DummyOutput',
-)
+]
 
 
 class Output(with_metaclass(ABCMeta, object)):

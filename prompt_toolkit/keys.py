@@ -1,9 +1,9 @@
 from __future__ import unicode_literals
 
-__all__ = (
+__all__ = [
     'Keys',
     'ALL_KEYS',
-)
+]
 
 
 class Keys(object):

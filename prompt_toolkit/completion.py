@@ -6,7 +6,7 @@ from six import with_metaclass, text_type
 from .eventloop import Future, run_in_executor
 from .filters import to_filter
 
-__all__ = (
+__all__ = [
     'Completion',
     'Completer',
     'ThreadedCompleter',
@@ -14,7 +14,7 @@ __all__ = (
     'DynamicCompleter',
     'CompleteEvent',
     'get_common_complete_suffix',
-)
+]
 
 
 class Completion(object):

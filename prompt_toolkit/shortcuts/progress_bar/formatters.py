@@ -13,7 +13,7 @@ from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.layout.utils import fragment_list_width
 from prompt_toolkit.utils import get_cwidth
 
-__all__ = (
+__all__ = [
     'Formatter',
     'Text',
     'Label',
@@ -25,7 +25,7 @@ __all__ = (
     'IterationsPerSecond',
     'SpinningWheel',
     'Rainbow',
-)
+]
 
 
 class Formatter(with_metaclass(ABCMeta, object)):

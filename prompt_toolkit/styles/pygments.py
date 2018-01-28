@@ -9,11 +9,11 @@ Usage::
 from __future__ import unicode_literals, absolute_import
 from .style import Style
 
-__all__ = (
+__all__ = [
     'style_from_pygments',
     'style_from_pygments_dict',
     'pygments_token_to_classname',
-)
+]
 
 
 def style_from_pygments(pygments_style_cls):

@@ -14,10 +14,10 @@ from .screen import Point
 
 import math
 
-__all__ = (
-    'CompletionsMenu',  # XXX: rename to CompletionMenu
+__all__ = [
+    'CompletionsMenu',
     'MultiColumnCompletionsMenu',
-)
+]
 
 
 class CompletionsMenuControl(UIControl):

@@ -19,9 +19,9 @@ import errno
 import os
 import six
 
-__all__ = (
+__all__ = [
     'Vt100_Output',
-)
+]
 
 
 FG_ANSI_COLORS = {

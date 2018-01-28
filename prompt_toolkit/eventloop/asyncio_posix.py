@@ -9,9 +9,9 @@ from .future import Future
 from .utils import ThreadWithFuture
 import asyncio
 
-__all__ = (
+__all__ = [
     'PosixAsyncioEventLoop',
-)
+]
 
 
 class PosixAsyncioEventLoop(EventLoop):

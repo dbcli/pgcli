@@ -6,9 +6,9 @@ from prompt_toolkit.application.current import get_app
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.filters import Condition
 
-__all__ = (
+__all__ = [
     'load_auto_suggest_bindings',
-)
+]
 
 
 def load_auto_suggest_bindings():

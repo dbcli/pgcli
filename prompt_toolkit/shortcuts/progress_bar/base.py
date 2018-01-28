@@ -34,9 +34,9 @@ import sys
 
 from . import formatters as f
 
-__all__ = (
+__all__ = [
     'progress_bar',
-)
+]
 
 
 def create_key_bindings():

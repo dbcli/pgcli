@@ -13,10 +13,10 @@ from six import with_metaclass
 from prompt_toolkit.log import logger
 import sys
 
-__all__ = (
+__all__ = [
     'EventLoop',
     'get_traceback_from_context',
-)
+]
 
 
 class EventLoop(with_metaclass(ABCMeta, object)):

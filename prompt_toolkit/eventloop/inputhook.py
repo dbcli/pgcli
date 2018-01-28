@@ -28,9 +28,9 @@ import threading
 from prompt_toolkit.utils import is_windows
 from .select import select_fds
 
-__all__ = (
+__all__ = [
     'InputHookContext',
-)
+]
 
 
 class InputHookContext(object):

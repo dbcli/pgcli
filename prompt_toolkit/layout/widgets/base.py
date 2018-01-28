@@ -29,7 +29,7 @@ from ..processors import PasswordProcessor, ConditionalProcessor, HighlightSearc
 from ..utils import fragment_list_to_text
 
 
-__all__ = (
+__all__ = [
     'TextArea',
     'SearchField',
     'Label',
@@ -43,7 +43,7 @@ __all__ = (
 
     'Checkbox',  # XXX: refactor into CheckboxList.
     'ProgressBar',
-)
+]
 
 
 class Border:

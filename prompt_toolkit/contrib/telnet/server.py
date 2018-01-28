@@ -25,9 +25,9 @@ from .log import logger
 from .protocol import IAC, DO, LINEMODE, SB, MODE, SE, WILL, ECHO, NAWS, SUPPRESS_GO_AHEAD
 from .protocol import TelnetProtocolParser
 
-__all__ = (
+__all__ = [
     'TelnetServer',
-)
+]
 
 
 def _initialize_telnet(connection):

@@ -11,9 +11,9 @@ from six import int2byte, binary_type, iterbytes
 
 from .log import logger
 
-__all__ = (
+__all__ = [
     'TelnetProtocolParser',
-)
+]
 
 # Telnet constants.
 NOP      = int2byte(0)

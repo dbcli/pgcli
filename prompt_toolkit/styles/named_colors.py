@@ -4,9 +4,9 @@ Taken from: https://www.w3schools.com/colors/colors_names.asp
 """
 from __future__ import unicode_literals
 
-__all__ = (
+__all__ = [
     'NAMED_COLORS',
-)
+]
 
 
 NAMED_COLORS = {

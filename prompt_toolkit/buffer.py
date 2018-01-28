@@ -30,13 +30,13 @@ import six
 import subprocess
 import tempfile
 
-__all__ = (
+__all__ = [
     'EditReadOnlyBuffer',
     'Buffer',
     'indent',
     'unindent',
     'reshape_text',
-)
+]
 
 
 class EditReadOnlyBuffer(Exception):

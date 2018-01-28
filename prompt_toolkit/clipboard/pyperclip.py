@@ -4,9 +4,9 @@ import pyperclip
 from prompt_toolkit.selection import SelectionType
 from .base import Clipboard, ClipboardData
 
-__all__ = (
+__all__ = [
     'PyperclipClipboard',
-)
+]
 
 
 class PyperclipClipboard(Clipboard):

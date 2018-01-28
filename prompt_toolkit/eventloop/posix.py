@@ -11,9 +11,9 @@ from .select import AutoSelector, Selector, fd_to_int
 from .utils import ThreadWithFuture
 from .context import wrap_in_current_context
 
-__all__ = (
+__all__ = [
     'PosixEventLoop',
-)
+]
 
 _now = time.time
 

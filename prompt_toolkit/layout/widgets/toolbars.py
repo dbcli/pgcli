@@ -14,14 +14,14 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindi
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 
-__all__ = (
+__all__ = [
     'ArgToolbar',
     'CompletionsToolbar',
     'FormattedTextToolbar',
     'SearchToolbar',
     'SystemToolbar',
     'ValidationToolbar',
-)
+]
 
 
 class FormattedTextToolbar(Window):

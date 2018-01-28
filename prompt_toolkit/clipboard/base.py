@@ -8,12 +8,12 @@ import six
 
 from prompt_toolkit.selection import SelectionType
 
-__all__ = (
+__all__ = [
     'Clipboard',
     'ClipboardData',
     'DummyClipboard',
     'DynamicClipboard',
-)
+]
 
 
 class ClipboardData(object):

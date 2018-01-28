@@ -3,9 +3,9 @@ import threading
 from .future import Future
 from .context import get_context_id, context
 
-__all__ = (
+__all__ = [
     'ThreadWithFuture',
-)
+]
 
 
 class ThreadWithFuture(object):

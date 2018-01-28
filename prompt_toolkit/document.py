@@ -13,7 +13,9 @@ from six.moves import range, map
 from .selection import SelectionType, SelectionState, PasteMode
 from .clipboard import ClipboardData
 
-__all__ = ('Document',)
+__all__ = [
+    'Document',
+]
 
 
 # Regex for finding "words" in documents. (We consider a group of alnum

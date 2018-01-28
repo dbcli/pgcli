@@ -5,9 +5,9 @@ import os
 import six
 import select
 
-__all__ = (
+__all__ = [
     'PosixStdinReader',
-)
+]
 
 
 class PosixStdinReader(object):

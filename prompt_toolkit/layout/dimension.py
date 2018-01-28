@@ -5,14 +5,14 @@ dimensions for containers and controls.
 from __future__ import unicode_literals
 from prompt_toolkit.utils import test_callable_args
 
-__all__ = (
+__all__ = [
     'Dimension',
     'D',
     'sum_layout_dimensions',
     'max_layout_dimensions',
     'to_dimension',
     'is_dimension',
-)
+]
 
 
 class Dimension(object):

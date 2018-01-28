@@ -18,10 +18,10 @@ from six.moves import range
 import time
 import threading
 
-__all__ = (
+__all__ = [
     'Renderer',
     'print_formatted_text',
-)
+]
 
 
 def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, last_style=None,

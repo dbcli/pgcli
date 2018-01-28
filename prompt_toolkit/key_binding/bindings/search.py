@@ -9,6 +9,16 @@ from prompt_toolkit.filters import is_searching, control_is_searchable, Conditio
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.layout.controls import BufferControl
 
+__all__ = [
+    'abort_search',
+    'accept_search',
+    'start_reverse_incremental_search',
+    'start_forward_incremental_search',
+    'reverse_incremental_search',
+    'forward_incremental_search',
+    'accept_search_and_accept_input',
+]
+
 
 @key_binding(filter=is_searching)
 def abort_search(event):

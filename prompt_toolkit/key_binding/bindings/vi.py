@@ -29,10 +29,10 @@ except ImportError:  # < Python 3.2
             total += item
             yield total
 
-__all__ = (
+__all__ = [
     'load_vi_bindings',
     'load_vi_search_bindings',
-)
+]
 
 if six.PY2:
     ascii_lowercase = string.ascii_lowercase.decode('ascii')

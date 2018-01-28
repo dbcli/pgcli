@@ -17,10 +17,10 @@ coordinates to coordinates relative to the user control, and there
 """
 from __future__ import unicode_literals
 
-__all__ = (
+__all__ = [
     'MouseEventType',
     'MouseEvent'
-)
+]
 
 
 class MouseEventType:

@@ -11,10 +11,10 @@ from prompt_toolkit.layout.widgets import Shadow
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
 
-__all__ = (
+__all__ = [
     'MenuContainer',
     'MenuItem',
-)
+]
 
 
 class MenuContainer(object):

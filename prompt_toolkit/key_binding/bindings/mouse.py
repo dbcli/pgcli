@@ -8,9 +8,9 @@ from prompt_toolkit.utils import is_windows
 
 from ..key_bindings import KeyBindings
 
-__all__ = (
+__all__ = [
     'load_mouse_bindings',
-)
+]
 
 
 def load_mouse_bindings():

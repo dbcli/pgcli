@@ -5,9 +5,9 @@ from prompt_toolkit.renderer import Output
 from .vt100 import Vt100_Output
 from .win32 import Win32Output
 
-__all__ = (
+__all__ = [
     'ConEmuOutput',
-)
+]
 
 
 class ConEmuOutput(object):

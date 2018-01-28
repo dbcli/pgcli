@@ -7,11 +7,11 @@ from .containers import Window, to_container, ConditionalContainer
 from prompt_toolkit.buffer import Buffer
 import six
 
-__all__ = (
+__all__ = [
     'Layout',
     'InvalidLayoutError',
     'walk',
-)
+]
 
 
 class Layout(object):

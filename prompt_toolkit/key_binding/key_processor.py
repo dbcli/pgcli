@@ -22,11 +22,11 @@ import six
 import time
 import weakref
 
-__all__ = (
+__all__ = [
     'KeyProcessor',
     'KeyPress',
     'KeyPressEvent',
-)
+]
 
 
 class KeyPress(object):

@@ -8,7 +8,9 @@ pressing Control-K followed by to normal characters.
 Taken from Neovim and translated to Python:
 https://raw.githubusercontent.com/neovim/neovim/master/src/nvim/digraph.c
 """
-__all__ = ('DIGRAPHS', )
+__all__ = [
+    'DIGRAPHS',
+]
 
 # digraphs for Unicode from RFC1345
 # (also work for ISO-8859-1 aka latin1)

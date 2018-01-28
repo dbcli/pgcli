@@ -10,10 +10,10 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings
 
 import math
 
-__all__ = (
+__all__ = [
     'generate_completions',
     'display_completions_like_readline',
-)
+]
 
 
 def generate_completions(event):

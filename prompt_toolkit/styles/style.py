@@ -8,11 +8,11 @@ from .base import BaseStyle, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
 from .named_colors import NAMED_COLORS
 from prompt_toolkit.cache import SimpleCache
 
-__all__ = (
+__all__ = [
     'Style',
     'Priority',
     'merge_styles',
-)
+]
 
 _named_colors_lowercase = dict(
     (k.lower(), v.lstrip('#')) for k, v in NAMED_COLORS.items())

@@ -1,9 +1,9 @@
 from __future__ import unicode_literals
 from .base import Always, Never, Filter
 
-__all__ = (
+__all__ = [
     'to_filter',
-)
+]
 
 _always = Always()
 _never = Never()

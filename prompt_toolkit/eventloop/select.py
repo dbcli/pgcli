@@ -8,13 +8,13 @@ import errno
 import select
 import six
 
-__all__ = (
+__all__ = [
     'AutoSelector',
     'PollSelector',
     'SelectSelector',
     'Selector',
     'fd_to_int',
-)
+]
 
 
 def fd_to_int(fd):

@@ -2,13 +2,13 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.utils import get_cwidth
 
-__all__ = (
+__all__ = [
     'fragment_list_len',
     'fragment_list_width',
     'fragment_list_to_text',
     'explode_text_fragments',
     'split_lines',
-)
+]
 
 
 def fragment_list_len(fragments):

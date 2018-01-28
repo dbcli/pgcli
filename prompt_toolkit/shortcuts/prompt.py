@@ -65,13 +65,13 @@ import contextlib
 import threading
 import time
 
-__all__ = (
+__all__ = [
     'Prompt',
     'prompt',
     'confirm',
     'create_confirm_prompt',  # Used by '_display_completions_like_readline'.
     'CompleteStyle',
-)
+]
 
 
 def _split_multiline_prompt(get_prompt_text):

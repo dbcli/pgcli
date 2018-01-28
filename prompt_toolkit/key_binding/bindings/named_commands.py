@@ -15,9 +15,9 @@ from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.key_binding.key_processor import KeyPress
 from prompt_toolkit.keys import Keys
 
-__all__ = (
+__all__ = [
     'get_by_name',
-)
+]
 
 
 # Registry that maps the Readline command names to their handlers.

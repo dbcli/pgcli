@@ -28,13 +28,13 @@ import six
 import time
 
 
-__all__ = (
+__all__ = [
     'BufferControl',
     'DummyControl',
     'FormattedTextControl',
     'UIControl',
     'UIContent',
-)
+]
 
 
 class UIControl(with_metaclass(ABCMeta, object)):

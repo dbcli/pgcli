@@ -2,11 +2,11 @@ from __future__ import unicode_literals
 from collections import deque
 from functools import wraps
 
-__all__ = (
+__all__ = [
     'SimpleCache',
     'FastDictCache',
     'memoized',
-)
+]
 
 
 class SimpleCache(object):

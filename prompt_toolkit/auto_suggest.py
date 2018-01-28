@@ -17,7 +17,7 @@ from six import with_metaclass
 from .eventloop import Future, run_in_executor
 from .filters import to_filter
 
-__all__ = (
+__all__ = [
     'Suggestion',
     'AutoSuggest',
     'ThreadedAutoSuggest',
@@ -25,7 +25,7 @@ __all__ = (
     'AutoSuggestFromHistory',
     'ConditionalAutoSuggest',
     'DynamicAutoSuggest',
-)
+]
 
 
 class Suggestion(object):

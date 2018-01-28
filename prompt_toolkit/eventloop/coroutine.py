@@ -3,11 +3,11 @@ import types
 from prompt_toolkit.eventloop.defaults import get_event_loop
 from prompt_toolkit.eventloop.future import Future
 
-__all__ = (
+__all__ = [
     'From',
     'Return',
     'ensure_future',
-)
+]
 
 
 def ensure_future(future_or_coroutine):

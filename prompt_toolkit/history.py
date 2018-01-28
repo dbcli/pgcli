@@ -5,12 +5,12 @@ from six import with_metaclass
 import datetime
 import os
 
-__all__ = (
+__all__ = [
     'FileHistory',
     'History',
     'DummyHistory',
     'InMemoryHistory',
-)
+]
 
 
 class History(with_metaclass(ABCMeta, object)):

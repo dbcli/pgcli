@@ -14,9 +14,9 @@ from .win32 import wait_for_handles
 
 import asyncio
 
-__all__ = (
+__all__ = [
     'Win32AsyncioEventLoop',
-)
+]
 
 
 class Win32AsyncioEventLoop(EventLoop):

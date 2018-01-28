@@ -8,9 +8,9 @@ from prompt_toolkit.document import Document
 
 from .compiler import _CompiledGrammar
 
-__all__ = (
+__all__ = [
     'GrammarCompleter',
-)
+]
 
 
 class GrammarCompleter(Completer):

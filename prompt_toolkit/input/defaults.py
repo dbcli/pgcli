@@ -4,11 +4,11 @@ from prompt_toolkit.eventloop.context import TaskLocal, TaskLocalNotSetError
 from .base import Input
 import sys
 
-__all__ = (
+__all__ = [
     'create_input',
     'get_default_input',
     'set_default_input',
-)
+]
 
 
 def create_input(stdin=None):

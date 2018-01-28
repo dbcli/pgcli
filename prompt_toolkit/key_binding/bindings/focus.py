@@ -1,9 +1,9 @@
 from __future__ import unicode_literals
 
-__all__ = (
+__all__ = [
     'focus_next',
     'focus_previous',
-)
+]
 
 
 def focus_next(event):

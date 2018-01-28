@@ -10,9 +10,9 @@ from prompt_toolkit.win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HA
 import os
 import six
 
-__all__ = (
+__all__ = [
     'Win32Output',
-)
+]
 
 
 def _coord_byval(coord):

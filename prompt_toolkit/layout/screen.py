@@ -5,12 +5,12 @@ from prompt_toolkit.utils import get_cwidth
 
 from collections import defaultdict, namedtuple
 
-__all__ = (
+__all__ = [
     'Point',
     'Size',
     'Screen',
     'Char',
-)
+]
 
 
 Point = namedtuple('Point', 'x y')

@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 from itertools import product
 from collections import defaultdict
 
-__all__ = (
+__all__ = [
     'MouseHandlers',
-)
+]
 
 
 class MouseHandlers(object):

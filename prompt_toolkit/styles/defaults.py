@@ -7,10 +7,10 @@ from .base import ANSI_COLOR_NAMES
 from .named_colors import NAMED_COLORS
 from prompt_toolkit.cache import memoized
 
-__all__ = (
+__all__ = [
     'default_ui_style',
     'default_pygments_style',
-)
+]
 
 #: Default styling. Mapping from classnames to their style definition.
 PROMPT_TOOLKIT_STYLE = [

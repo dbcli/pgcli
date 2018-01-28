@@ -9,14 +9,14 @@ from .eventloop import Future, run_in_executor
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 
-__all__ = (
+__all__ = [
     'ConditionalValidator',
     'ValidationError',
     'Validator',
     'ThreadedValidator',
     'DummyValidator',
     'DynamicValidator',
-)
+]
 
 
 class ValidationError(Exception):

@@ -18,7 +18,7 @@ from prompt_toolkit.styles.pygments import pygments_token_to_classname
 import six
 import xml.dom.minidom as minidom
 
-__all__ = (
+__all__ = [
     'to_formatted_text',
     'is_formatted_text',
     'Template',
@@ -27,7 +27,7 @@ __all__ = (
     'HTML',
     'ANSI',
     'PygmentsTokens',
-)
+]
 
 
 def to_formatted_text(value, style='', auto_convert=False):

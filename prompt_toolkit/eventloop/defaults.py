@@ -3,7 +3,7 @@ from prompt_toolkit.utils import is_windows
 from .base import EventLoop
 import threading
 
-__all__ = (
+__all__ = [
     'create_event_loop',
     'create_asyncio_event_loop',
     'use_asyncio_event_loop',
@@ -12,7 +12,7 @@ __all__ = (
     'run_in_executor',
     'call_from_executor',
     'run_until_complete',
-)
+]
 
 
 def create_event_loop(recognize_win32_paste=True):

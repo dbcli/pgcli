@@ -9,9 +9,9 @@ from .win32 import Win32Output
 from ctypes import windll, byref
 from ctypes.wintypes import DWORD
 
-__all__ = (
+__all__ = [
     'Windows10_Output',
-)
+]
 
 # See: https://msdn.microsoft.com/pl-pl/library/windows/desktop/ms686033(v=vs.85).aspx
 ENABLE_PROCESSED_INPUT = 0x0001

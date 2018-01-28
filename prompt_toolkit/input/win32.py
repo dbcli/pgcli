@@ -17,12 +17,12 @@ import os
 import sys
 import six
 
-__all__ = (
+__all__ = [
     'Win32Input',
     'ConsoleInputReader',
     'raw_mode',
     'cooked_mode'
-)
+]
 
 
 class Win32Input(Input):

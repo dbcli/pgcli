@@ -6,11 +6,10 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod, abstractproperty
 from six import with_metaclass
 
-
-__all__ = (
+__all__ = [
     'Input',
     'DummyInput',
-)
+]
 
 
 class Input(with_metaclass(ABCMeta, object)):

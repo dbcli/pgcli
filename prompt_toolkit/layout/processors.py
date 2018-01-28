@@ -23,7 +23,7 @@ from .utils import fragment_list_len, explode_text_fragments
 
 import re
 
-__all__ = (
+__all__ = [
     'Processor',
     'TransformationInput',
     'Transformation',
@@ -44,7 +44,7 @@ __all__ = (
     'TabsProcessor',
     'DynamicProcessor',
     'merge_processors',
-)
+]
 
 
 class Processor(with_metaclass(ABCMeta, object)):

@@ -8,7 +8,7 @@ from prompt_toolkit.cache import memoized
 from prompt_toolkit.enums import EditingMode
 import six
 
-__all__ = (
+__all__ = [
     'has_arg',
     'has_completions',
     'completion_is_selected',
@@ -40,7 +40,7 @@ __all__ = (
     'is_searching',
     'control_is_searchable',
     'vi_search_direction_reversed',
-)
+]
 
 
 @memoized()

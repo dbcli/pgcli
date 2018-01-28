@@ -6,14 +6,14 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
 from six import with_metaclass
 
-__all__ = (
+__all__ = [
     'Attrs',
     'DEFAULT_ATTRS',
     'ANSI_COLOR_NAMES',
     'BaseStyle',
     'DummyStyle',
     'DynamicStyle',
-)
+]
 
 
 #: Style attributes.

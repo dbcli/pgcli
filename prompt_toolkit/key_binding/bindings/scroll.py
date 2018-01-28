@@ -8,14 +8,14 @@ Vi, Emacs, etc...
 from __future__ import unicode_literals
 from six.moves import range
 
-__all__ = (
+__all__ = [
     'scroll_forward',
     'scroll_backward',
     'scroll_half_page_up',
     'scroll_half_page_down',
     'scroll_one_line_up',
     'scroll_one_line_down',
-)
+]
 
 
 def scroll_forward(event, half=False):

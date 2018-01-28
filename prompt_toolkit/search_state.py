@@ -3,9 +3,9 @@ from .enums import SearchDirection
 from .filters import to_filter
 import six
 
-__all__ = (
+__all__ = [
     'SearchState',
-)
+]
 
 
 class SearchState(object):

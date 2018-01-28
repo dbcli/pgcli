@@ -11,9 +11,9 @@ from six.moves import range
 from ..keys import Keys
 from ..key_binding.key_processor import KeyPress
 
-__all__ = (
+__all__ = [
     'Vt100Parser',
-)
+]
 
 
 # Regex matching any CPR response

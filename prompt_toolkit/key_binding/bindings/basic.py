@@ -9,10 +9,9 @@ from prompt_toolkit.keys import Keys
 from .named_commands import get_by_name
 from ..key_bindings import KeyBindings
 
-
-__all__ = (
+__all__ = [
     'load_basic_bindings',
-)
+]
 
 
 def if_no_repeat(event):

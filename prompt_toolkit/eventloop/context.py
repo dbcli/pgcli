@@ -25,13 +25,13 @@ from __future__ import unicode_literals
 from threading import local
 from functools import wraps
 
-__all__ = (
+__all__ = [
     'context',
     'get_context_id',
     'wrap_in_current_context',
     'TaskLocal',
     'TaskLocalNotSetError',
-)
+]
 
 
 _storage = local()

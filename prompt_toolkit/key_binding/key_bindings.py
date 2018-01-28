@@ -43,13 +43,13 @@ from prompt_toolkit.keys import Keys, ALL_KEYS, KEY_ALIASES
 
 from six import text_type, with_metaclass
 
-__all__ = (
+__all__ = [
     'KeyBindingsBase',
     'KeyBindings',
     'ConditionalKeyBindings',
     'merge_key_bindings',
     'DynamicKeyBindings',
-)
+]
 
 
 class _Binding(object):

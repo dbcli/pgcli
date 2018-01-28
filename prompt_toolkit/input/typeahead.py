@@ -35,11 +35,11 @@ from __future__ import unicode_literals
 from collections import defaultdict
 from .base import Input
 
-__all__ = (
+__all__ = [
     'store_typeahead',
     'get_typeahead',
     'clear_typeahead',
-)
+]
 
 _buffer = defaultdict(list)  # input hash -> list of key presses.
 

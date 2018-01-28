@@ -6,12 +6,12 @@ from prompt_toolkit.renderer import print_formatted_text as renderer_print_forma
 from prompt_toolkit.styles import default_ui_style, BaseStyle, merge_styles
 import six
 
-__all__ = (
+__all__ = [
     'print_formatted_text',
     'clear',
     'set_title',
     'clear_title',
-)
+]
 
 
 def print_formatted_text(*values, **kwargs):

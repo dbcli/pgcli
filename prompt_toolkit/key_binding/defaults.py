@@ -14,9 +14,9 @@ from prompt_toolkit.key_binding.bindings.cpr import load_cpr_bindings
 
 from prompt_toolkit.filters import buffer_has_focus
 
-__all__ = (
+__all__ = [
     'load_key_bindings',
-)
+]
 
 
 def load_key_bindings():

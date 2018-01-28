@@ -3,11 +3,11 @@ Data structures for the selection.
 """
 from __future__ import unicode_literals
 
-__all__ = (
+__all__ = [
     'SelectionType',
     'PasteMode',
     'SelectionState',
-)
+]
 
 
 class SelectionType(object):

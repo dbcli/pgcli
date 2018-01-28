@@ -13,7 +13,7 @@ from .utils import split_lines
 import re
 import six
 
-__all__ = (
+__all__ = [
     'Lexer',
     'SimpleLexer',
     'PygmentsLexer',
@@ -21,7 +21,7 @@ __all__ = (
     'SyncFromStart',
     'RegexSync',
     'DynamicLexer',
-)
+]
 
 
 class Lexer(with_metaclass(ABCMeta, object)):

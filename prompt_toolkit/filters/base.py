@@ -4,13 +4,12 @@ from six import with_metaclass
 
 from prompt_toolkit.utils import test_callable_args
 
-
-__all__ = (
+__all__ = [
     'Filter',
     'Never',
     'Always',
     'Condition',
-)
+]
 
 
 class Filter(with_metaclass(ABCMeta, object)):

@@ -17,7 +17,7 @@ Limitations:
 from __future__ import unicode_literals
 import re
 
-__all__ = (
+__all__ = [
     'Repeat',
     'Variable',
     'Regex',
@@ -25,7 +25,7 @@ __all__ = (
 
     'tokenize_regex',
     'parse_regex',
-)
+]
 
 
 class Node(object):

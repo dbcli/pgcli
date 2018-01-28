@@ -11,9 +11,9 @@ from .compiler import _CompiledGrammar
 from six.moves import range
 import six
 
-__all__ = (
+__all__ = [
     'GrammarLexer',
-)
+]
 
 
 class GrammarLexer(Lexer):

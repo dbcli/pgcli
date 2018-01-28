@@ -2,11 +2,11 @@ from __future__ import unicode_literals
 from prompt_toolkit.eventloop.context import TaskLocal, TaskLocalNotSetError
 from contextlib import contextmanager
 
-__all__ = (
+__all__ = [
     'get_app',
     'set_app',
     'NoRunningApplicationError',
-)
+]
 
 
 _current_app = TaskLocal()

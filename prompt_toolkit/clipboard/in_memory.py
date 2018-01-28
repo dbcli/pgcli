@@ -1,10 +1,10 @@
+from __future__ import unicode_literals
 from .base import Clipboard, ClipboardData
-
 from collections import deque
 
-__all__ = (
+__all__ = [
     'InMemoryClipboard',
-)
+]
 
 
 class InMemoryClipboard(Clipboard):

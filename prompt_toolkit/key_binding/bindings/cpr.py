@@ -2,9 +2,9 @@ from __future__ import unicode_literals
 from prompt_toolkit.keys import Keys
 from ..key_bindings import KeyBindings
 
-__all__ = (
+__all__ = [
     'load_cpr_bindings',
-)
+]
 
 
 def load_cpr_bindings():

@@ -5,10 +5,10 @@ from __future__ import unicode_literals
 from prompt_toolkit.eventloop import get_event_loop, ensure_future, Return, run_in_executor, From, Future
 from .current import get_app
 
-__all__ = (
+__all__ = [
     'run_in_terminal',
     'run_coroutine_in_terminal',
-)
+]
 
 
 def run_in_terminal(func, render_cli_done=False, in_executor=False):

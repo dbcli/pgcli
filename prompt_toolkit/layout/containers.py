@@ -21,7 +21,7 @@ from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from prompt_toolkit.reactive import Integer
 from prompt_toolkit.utils import take_using_weights, get_cwidth
 
-__all__ = (
+__all__ = [
     'Container',
     'HSplit',
     'VSplit',
@@ -35,7 +35,7 @@ __all__ = (
     'to_container',
     'to_window',
     'is_container',
-)
+]
 
 
 class Container(with_metaclass(ABCMeta, object)):
