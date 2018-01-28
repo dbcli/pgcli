@@ -185,9 +185,9 @@ class PygmentsLexer(Lexer):
 
     Note: Don't forget to also load a Pygments compatible style. E.g.::
 
-        from prompt_toolkit.styles.from_pygments import style_from_pygments
+        from prompt_toolkit.styles.from_pygments import style_from_pygments_cls
         from pygments.styles import get_style_by_name
-        style = style_from_pygments(get_style_by_name('monokai'))
+        style = style_from_pygments_cls(get_style_by_name('monokai'))
 
     :param pygments_lexer_cls: A `Lexer` from Pygments.
     :param sync_from_start: Start lexing at the start of the document. This

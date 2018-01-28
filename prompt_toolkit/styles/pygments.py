@@ -4,28 +4,28 @@ Adaptor for building prompt_toolkit styles, starting from a Pygments style.
 Usage::
 
     from pygments.styles.tango import TangoStyle
-    style = style_from_pygments(pygments_style_cls=TangoStyle)
+    style = style_from_pygments_cls(pygments_style_cls=TangoStyle)
 """
 from __future__ import unicode_literals, absolute_import
 from .style import Style
 
 __all__ = [
-    'style_from_pygments',
+    'style_from_pygments_cls',
     'style_from_pygments_dict',
     'pygments_token_to_classname',
 ]
 
 
-def style_from_pygments(pygments_style_cls):
+def style_from_pygments_cls(pygments_style_cls):
     """
     Shortcut to create a :class:`.Style` instance from a Pygments style class
     and a style dictionary.
 
     Example::
 
-        from prompt_toolkit.styles.from_pygments import style_from_pygments
+        from prompt_toolkit.styles.from_pygments import style_from_pygments_cls
         from pygments.styles import get_style_by_name
-        style = style_from_pygments(get_style_by_name('monokai'))
+        style = style_from_pygments_cls(get_style_by_name('monokai'))
 
     :param pygments_style_cls: Pygments style class to start from.
     """
