@@ -398,7 +398,7 @@ class KeyProcessor(object):
             " Wait for timeout. "
             time.sleep(self.timeout)
 
-            if len(self.input_queue) > 0 and counter == self._keys_pressed:
+            if len(self.key_buffer) > 0 and counter == self._keys_pressed:
                 # (No keys pressed in the meantime.)
                 call_from_executor(flush_keys)
 
