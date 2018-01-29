@@ -478,7 +478,7 @@ class Prompt(object):
             ConditionalContainer(
                 Window(FormattedTextControl(self._get_arg_text), height=1),
                 dyncond('multiline') & has_arg),
-            ConditionalContainer(search_toolbar, dyncond('multiline')),
+            ConditionalContainer(search_toolbar, dyncond('multiline') & ~is_done),
             bottom_toolbar,
         ])
 

@@ -215,7 +215,7 @@ class SearchToolbar(object):
                 self.control,
                 height=1,
                 style='class:search-toolbar'),
-            filter=is_searching & ~is_done)
+            filter=is_searching)
 
     def __pt_container__(self):
         return self.container
