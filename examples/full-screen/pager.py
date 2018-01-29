@@ -12,7 +12,7 @@ from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets import TextArea, SearchField
+from prompt_toolkit.widgets import TextArea, SearchToolbar
 
 from pygments.lexers import PythonLexer
 
@@ -37,7 +37,7 @@ def get_statusbar_text():
     ]
 
 
-search_field = SearchField(text_if_not_searching=[
+search_field = SearchToolbar(text_if_not_searching=[
     ('class:not-searching', "Press '/' to start searching.")])
 
 
