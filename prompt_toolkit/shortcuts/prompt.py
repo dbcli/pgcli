@@ -469,7 +469,9 @@ class Prompt(object):
                           content=_RPrompt(lambda: self.rprompt)),
                 ]
             ),
-            ValidationToolbar(),
+            ConditionalContainer(
+                ValidationToolbar(),
+                filter=~is_done),
             ConditionalContainer(
                 system_toolbar,
                 dyncond('enable_system_prompt') & ~is_done),
