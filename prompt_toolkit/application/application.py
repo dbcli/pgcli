@@ -137,7 +137,7 @@ class Application(object):
         enable_page_navigation_bindings = to_filter(enable_page_navigation_bindings)
         include_default_pygments_style = to_filter(include_default_pygments_style)
 
-        assert layout is None or isinstance(layout, Layout)
+        assert layout is None or isinstance(layout, Layout), 'Got layout: %r' % (layout, )
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert clipboard is None or isinstance(clipboard, Clipboard)
         assert isinstance(full_screen, bool)
