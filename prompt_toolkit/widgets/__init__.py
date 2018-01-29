@@ -8,7 +8,7 @@ possible to embed these in the layout like any other container.
 """
 from __future__ import unicode_literals
 
-from .base import TextArea, SearchField, Label, Button, Frame, Shadow, Box, VerticalLine, HorizontalLine, RadioList, Checkbox, ProgressBar
+from .base import TextArea, Label, Button, Frame, Shadow, Box, VerticalLine, HorizontalLine, RadioList, Checkbox, ProgressBar
 from .dialogs import Dialog
 from .menus import MenuContainer, MenuItem
 from .toolbars import ArgToolbar, CompletionsToolbar, FormattedTextToolbar, SearchToolbar, SystemToolbar, ValidationToolbar
@@ -16,7 +16,6 @@ from .toolbars import ArgToolbar, CompletionsToolbar, FormattedTextToolbar, Sear
 __all__ = [
     # Base.
     'TextArea',
-    'SearchField',
     'Label',
     'Button',
     'Frame',

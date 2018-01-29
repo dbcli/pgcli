@@ -17,7 +17,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets import Dialog, Label, Button, TextArea, SearchField, MenuContainer, MenuItem
+from prompt_toolkit.widgets import Dialog, Label, Button, TextArea, SearchToolbar, MenuContainer, MenuItem
 from pygments.lexers import PythonLexer
 import datetime
 
@@ -37,12 +37,12 @@ def get_statusbar_right_text():
         text_field.document.cursor_position_col + 1)
 
 
-search_field = SearchField()
+search_toolbar = SearchToolbar()
 text_field = TextArea(
     lexer=PygmentsLexer(PythonLexer),  # TODO: make lexer dynamic.
     scrollbar=True,
     line_numbers=True,
-    search_field=search_field,
+    search_field=search_toolbar,
 )
 
 
@@ -107,7 +107,7 @@ class MessageDialog(object):
 
 body = HSplit([
     text_field,
-    search_field,
+    search_toolbar,
     ConditionalContainer(
         content=VSplit([
             Window(FormattedTextControl(get_statusbar_text), style='class:status'),

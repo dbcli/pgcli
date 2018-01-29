@@ -179,6 +179,7 @@ class SearchToolbar(object):
     :param vi_mode: Display '/' and '?' instead of I-search.
     """
     def __init__(self, search_buffer=None, get_search_state=None, vi_mode=False,
+                 text_if_not_searching='',
                  forward_search_prompt='I-search: ',
                  backward_search_prompt='I-search backward: '):
         assert search_buffer is None or isinstance(search_buffer, Buffer)
@@ -189,7 +190,7 @@ class SearchToolbar(object):
         def get_before_input():
             app = get_app()
             if not is_searching():
-                return ''
+                return text_if_not_searching
             elif self.control.search_state.direction == SearchDirection.BACKWARD:
                 return ('?' if vi_mode else backward_search_prompt)
             else:

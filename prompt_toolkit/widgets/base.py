@@ -16,7 +16,7 @@ from prompt_toolkit.enums import SearchDirection
 from prompt_toolkit.filters import to_filter, is_searching
 from prompt_toolkit.formatted_text import to_formatted_text, Template, is_formatted_text
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from prompt_toolkit.layout.containers import Window, VSplit, HSplit, FloatContainer, Float, Align, is_container
+from prompt_toolkit.layout.containers import Window, VSplit, HSplit, FloatContainer, Float, Align, is_container, to_container
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.dimension import is_dimension, to_dimension
@@ -26,10 +26,11 @@ from prompt_toolkit.layout.utils import fragment_list_to_text
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
 
+from .toolbars import SearchToolbar
+
 
 __all__ = [
     'TextArea',
-    'SearchField',
     'Label',
     'Button',
     'Frame',
@@ -79,6 +80,7 @@ class TextArea(object):
     :param password: When `True`, display using asterisks.
     :param accept_handler: Called when `Enter` is pressed.
     :param scrollbar: When `True`, display a scroll bar.
+    :param search_field: An optional `SearchToolbar` object.
     :param style: A style string.
     :param dont_extend_height:
     :param dont_extend_width:
@@ -92,7 +94,12 @@ class TextArea(object):
                  input_processor=None, search_field=None, preview_search=True,
                  prompt=''):
         assert isinstance(text, six.text_type)
-        assert search_field is None or isinstance(search_field, SearchField)
+        assert search_field is None or isinstance(search_field, SearchToolbar)
+
+        if search_field is None:
+            search_control = None
+        elif isinstance(search_field, SearchToolbar):
+            search_control = search_field.control
 
         self.buffer = Buffer(
             document=Document(text, 0),
@@ -101,11 +108,6 @@ class TextArea(object):
             completer=completer,
             complete_while_typing=True,
             accept_handler=lambda buff: accept_handler and accept_handler())
-
-        if search_field:
-            search_buffer = search_field.text_area.control
-        else:
-            search_buffer = None
 
         self.control = BufferControl(
             buffer=self.buffer,
@@ -120,7 +122,7 @@ class TextArea(object):
                 DisplayMultipleCursors(),
                 BeforeInput(prompt, style='class:text-area.prompt'),
             ]),
-            search_buffer_control=search_buffer,
+            search_buffer_control=search_control,
             preview_search=preview_search,
             focusable=focusable)
 
@@ -170,27 +172,6 @@ class TextArea(object):
 
     def __pt_container__(self):
         return self.window
-
-
-class SearchField(object):
-    """
-    A simple text field that can be used for searching.
-    Attach to all searchable text fields, by passing it to the `search_field`
-    parameter.
-    """
-    def __init__(self, vi_display=True, text_if_not_searching=''):
-        def before_input():
-            if not is_searching():
-                return text_if_not_searching
-            elif get_app().current_search_state.direction == SearchDirection.BACKWARD:
-                return ('?' if vi_display else 'I-search backward: ')
-            else:
-                return ('/' if vi_display else 'I-search: ')
-
-        self.text_area = TextArea(prompt=before_input, height=1)
-
-    def __pt_container__(self):
-        return self.text_area
 
 
 class Label(object):
