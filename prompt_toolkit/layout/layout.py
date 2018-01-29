@@ -31,7 +31,9 @@ class Layout(object):
         # Map search BufferControl back to the original BufferControl.
         # This is used to keep track of when exactly we are searching, and for
         # applying the search.
-        self.search_links = {}
+        # When a link exists in this dictionary, that means the search is
+        # currently active.
+        self.search_links = {}  # search_buffer_control -> original buffer control.
 
         # Mapping that maps the children in the layout to their parent.
         # This relationship is calculated dynamically, each time when the UI
@@ -194,12 +196,28 @@ class Layout(object):
         assert isinstance(value, Window)
         self._stack.append(value)
 
-    def start_search(self, control, search_buffer_control):
+    def start_search(self, buffer_control, search_buffer_control):
+        """
+        Start search through the given `buffer_control` using the
+        `search_buffer_control`.
+        """
         # Make sure to focus the search BufferControl
         self.focus(search_buffer_control)
 
         # Remember search link.
-        self.search_links[search_buffer_control] = control
+        self.search_links[search_buffer_control] = buffer_control
+
+    def stop_search(self, buffer_control, search_buffer_control):
+        """
+        Stop search through the given `buffer_control`.
+        """
+        assert search_buffer_control in self.search_links
+
+        # Focus the original buffer again.
+        self.focus(buffer_control)
+
+        # Remove the search link.
+        del self.search_links[search_buffer_control]
 
     @property
     def is_searching(self):
@@ -344,6 +362,12 @@ class Layout(object):
         self._child_to_parent = parents
 
     def reset(self):
+        # Remove all search links when the UI starts.
+        # (Important, for instance when control-c is been pressed while
+        #  searching. The prompt cancels, but next `run()` call the search
+        #  links are still there.)
+        self.search_links.clear()
+
         return self.container.reset()
 
     def get_parent(self, container):

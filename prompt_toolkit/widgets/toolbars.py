@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import SYSTEM_BUFFER, SearchDirection
-from prompt_toolkit.filters import has_focus, has_completions, has_validation_error, is_searching, is_done, emacs_mode, vi_mode, vi_navigation_mode, has_arg
+from prompt_toolkit.filters import Condition, has_focus, has_completions, has_validation_error, is_searching, is_done, emacs_mode, vi_mode, vi_navigation_mode, has_arg
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings, ConditionalKeyBindings
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
@@ -178,7 +178,9 @@ class SearchToolbar(object):
     """
     :param vi_mode: Display '/' and '?' instead of I-search.
     """
-    def __init__(self, search_buffer=None, get_search_state=None, vi_mode=False):
+    def __init__(self, search_buffer=None, get_search_state=None, vi_mode=False,
+                 forward_search_prompt='I-search: ',
+                 backward_search_prompt='I-search backward: '):
         assert search_buffer is None or isinstance(search_buffer, Buffer)
 
         if search_buffer is None:
@@ -188,19 +190,25 @@ class SearchToolbar(object):
             app = get_app()
             if not is_searching():
                 return ''
-            elif app.current_search_state.direction == SearchDirection.BACKWARD:
-                return ('?' if vi_mode else 'I-search backward: ')
+            elif self.control.search_state.direction == SearchDirection.BACKWARD:
+                return ('?' if vi_mode else backward_search_prompt)
             else:
-                return ('/' if vi_mode else 'I-search: ')
+                return ('/' if vi_mode else forward_search_prompt)
 
         self.search_buffer = search_buffer
 
         self.control = BufferControl(
             buffer=search_buffer,
             get_search_state=get_search_state,
-            input_processor=BeforeInput(get_before_input),
+            input_processor=BeforeInput(
+                get_before_input,
+                style='class:search-toolbar.prompt'),
             lexer=SimpleLexer(
                 style='class:search-toolbar.text'))
+
+        @Condition
+        def is_searching():
+            return self.control in get_app().layout.search_links
 
         self.container = ConditionalContainer(
             content=Window(

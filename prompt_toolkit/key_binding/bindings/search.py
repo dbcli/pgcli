@@ -30,7 +30,10 @@ def abort_search(event):
     event.current_buffer.reset()
 
     target_buffer_control = event.app.layout.search_target_buffer_control
-    event.app.layout.focus(target_buffer_control)  # XXX: TODO: maybe pop from search links.
+    search_control = event.app.layout.current_control
+
+    # Stop search and focus previous control again.
+    event.app.layout.stop_search(target_buffer_control, search_control)
 
     # If we're in Vi mode, go back to navigation mode.
     event.app.vi_state.input_mode = InputMode.NAVIGATION
@@ -58,8 +61,8 @@ def accept_search(event):
     search_control.buffer.append_to_history()
     search_control.buffer.reset()
 
-    # Focus previous document again.
-    event.app.layout.focus(target_buffer_control)
+    # Stop search and focus previous control again.
+    event.app.layout.stop_search(target_buffer_control, search_control)
 
     # If we're in Vi mode, go back to navigation mode.
     event.app.vi_state.input_mode = InputMode.NAVIGATION
