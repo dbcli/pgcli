@@ -3,13 +3,12 @@ from __future__ import unicode_literals
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import SYSTEM_BUFFER, SearchDirection
-from prompt_toolkit.filters import Condition, has_focus, has_completions, has_validation_error, is_searching, emacs_mode, vi_mode, vi_navigation_mode, has_arg
+from prompt_toolkit.filters import Condition, has_focus, has_completions, has_validation_error, emacs_mode, vi_mode, vi_navigation_mode, has_arg
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings, ConditionalKeyBindings
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import Window, ConditionalContainer
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl, UIControl, UIContent
-from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.lexers import SimpleLexer
 from prompt_toolkit.layout.processors import BeforeInput
 from prompt_toolkit.layout.utils import fragment_list_len
@@ -187,8 +186,11 @@ class SearchToolbar(object):
         if search_buffer is None:
             search_buffer = Buffer()
 
+        @Condition
+        def is_searching():
+            return self.control in get_app().layout.search_links
+
         def get_before_input():
-            app = get_app()
             if not is_searching():
                 return text_if_not_searching
             elif self.control.search_state.direction == SearchDirection.BACKWARD:
@@ -206,10 +208,6 @@ class SearchToolbar(object):
                 style='class:search-toolbar.prompt'),
             lexer=SimpleLexer(
                 style='class:search-toolbar.text'))
-
-        @Condition
-        def is_searching():
-            return self.control in get_app().layout.search_links
 
         self.container = ConditionalContainer(
             content=Window(
