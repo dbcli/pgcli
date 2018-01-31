@@ -371,7 +371,7 @@ class BeforeInput(Processor):
                               display_to_source=display_to_source)
 
     def __repr__(self):
-        return 'BeforeInput(get_text_fragments=%r)' % (self.get_text_fragments, )
+        return 'BeforeInput(%r, %r)' % (self.text, self.style)
 
 
 class ShowArg(BeforeInput):
@@ -417,8 +417,8 @@ class AfterInput(Processor):
             return Transformation(fragments=ti.fragments)
 
     def __repr__(self):
-        return '%s(get_text_fragments=%r)' % (
-            self.__class__.__name__, self.get_text_fragments)
+        return '%s(%r, style=%r)' % (
+            self.__class__.__name__, self.text, self.style)
 
 
 class AppendAutoSuggestion(Processor):
