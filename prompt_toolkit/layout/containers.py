@@ -16,7 +16,7 @@ from .screen import Point, WritePosition, _CHAR_CACHE
 from .utils import fragment_list_to_text, explode_text_fragments, fragment_list_width
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.cache import SimpleCache
-from prompt_toolkit.filters import to_filter, ViInsertMode, EmacsInsertMode
+from prompt_toolkit.filters import to_filter, vi_insert_mode, emacs_insert_mode
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from prompt_toolkit.reactive import Integer
 from prompt_toolkit.utils import take_using_weights, get_cwidth
@@ -1102,7 +1102,7 @@ class ColorColumn(object):
         self.style = style
 
 
-_in_insert_mode = ViInsertMode() | EmacsInsertMode()
+_in_insert_mode = vi_insert_mode | emacs_insert_mode
 
 
 class Align:
