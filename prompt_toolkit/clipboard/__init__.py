@@ -6,3 +6,11 @@ from .in_memory import InMemoryClipboard
 # `pyperclip` module to be present.
 
 #from .pyperclip import PyperclipClipboard
+
+__all__ = [
+    'Clipboard',
+    'ClipboardData',
+    'DummyClipboard',
+    'DynamicClipboard',
+    'InMemoryClipboard',
+]
