@@ -68,7 +68,9 @@ class Char(object):
 
     def __init__(self, char=' ', style=''):
         # If this character has to be displayed otherwise, take that one.
-        char = self.display_mappings.get(char, char)
+        if char in self.display_mappings:
+            char = self.display_mappings[char]
+            style += 'class:control-character'
 
         self.char = char
         self.style = style
