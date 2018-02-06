@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import functools
 from prompt_toolkit.application import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.eventloop import run_in_executor
@@ -12,6 +13,7 @@ from prompt_toolkit.widgets import ProgressBar, Dialog, Button, Label, Box, Text
 
 __all__ = [
     'yes_no_dialog',
+    'button_dialog',
     'input_dialog',
     'message_dialog',
     'radiolist_dialog',
@@ -38,6 +40,24 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None,
             Button(text=yes_text, handler=yes_handler),
             Button(text=no_text, handler=no_handler),
         ], with_background=True)
+
+    return _run_dialog(dialog, style, async_=async_)
+
+
+def button_dialog(title='', text='', buttons=[], style=None,
+                  async_=False):
+    """
+    Display a dialog with button choices (given as a list of tuples).
+    Return the value associated with button.
+    """
+    def button_handler(v):
+        get_app().set_result(v)
+
+    dialog = Dialog(
+        title=title,
+        body=Label(text=text, dont_extend_height=True),
+        buttons=[Button(text=t, handler=functools.partial(button_handler, v)) for t, v in buttons],
+        with_background=True)
 
     return _run_dialog(dialog, style, async_=async_)
 

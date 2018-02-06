@@ -64,6 +64,30 @@ selection.
 .. image:: ../images/dialogs/confirm.png
 
 
+Button dialog
+--------------------------
+
+The :func:`~prompt_toolkit.shortcuts.dialogs.button_dialog` function displays a
+dialog with choices offered as buttons. Buttons are indicated as a list of
+tuples, each providing the label (first) and return value if clicked (second).
+
+.. code:: python
+
+    from prompt_toolkit.shortcuts.dialogs import button_dialog
+
+    result = button_dialog(
+        title='Button dialog example',
+        text='Do you want to confirm?',
+        buttons=[
+            ('Yes', True),
+            ('No', False),
+            ('Maybe...', None)
+        ],
+    )
+
+.. image:: ../images/dialogs/button.png
+
+
 Styling of dialogs
 ------------------
 
