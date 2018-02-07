@@ -147,6 +147,9 @@ with a few differences:
   ANSI color names as well. In that case, they map directly to the 16 color
   palette of the terminal.
 
+:ref:`Read more about styling <styling>`.
+
+
 Using a Pygments style
 ^^^^^^^^^^^^^^^^^^^^^^
 
