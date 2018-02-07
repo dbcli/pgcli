@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from functools import partial
 import six
 
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
 from prompt_toolkit.filters import to_filter
@@ -234,12 +235,18 @@ class Button(object):
             key_bindings=self._get_key_bindings(),
             focusable=True)
 
+        def get_style():
+            if get_app().layout.has_focus(self):
+                return 'class:button.focused'
+            else:
+                return 'class:button'
+
         self.window = Window(
             self.control,
             align=Align.CENTER,
             height=1,
             width=width,
-            style='class:button',
+            style=get_style,
             dont_extend_width=True,
             dont_extend_height=True)
 
