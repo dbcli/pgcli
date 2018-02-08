@@ -139,6 +139,7 @@ Shells:
 - `Kube-shell <https://github.com/cloudnativelabs/kube-shell>`_: Kubernetes shell: An integrated shell for working with the Kubernetes CLI
 - `mssql-cli <https://github.com/dbcli/mssql-cli>`_: A command-line client for Microsoft SQL Server.
 - `robotframework-debuglibrary <https://github.com/xyb/robotframework-debuglibrary>`_: A debug library and REPL for RobotFramework.
+- `ptrepl <https://github.com/imomaliev/ptrepl>`_: Run any command as REPL
 
 Full screen applications:
 
