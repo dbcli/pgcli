@@ -4,8 +4,8 @@ the input using a regular grammar with annotations.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.document import Document
-from prompt_toolkit.layout.lexers import Lexer
-from prompt_toolkit.layout.utils import split_lines
+from prompt_toolkit.formatted_text.utils import split_lines
+from prompt_toolkit.lexers import Lexer
 
 from .compiler import _CompiledGrammar
 from six.moves import range
@@ -28,7 +28,7 @@ class GrammarLexer(Lexer):
                    the lexers that should be used for this part. (This can
                    call other lexers recursively.) If you wish a part of the
                    grammar to just get one fragment, use a
-                   `prompt_toolkit.layout.lexers.SimpleLexer`.
+                   `prompt_toolkit.lexers.SimpleLexer`.
     """
     def __init__(self, compiled_grammar, default_style='', lexers=None):
         assert isinstance(compiled_grammar, _CompiledGrammar)
