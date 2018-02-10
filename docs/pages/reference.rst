@@ -142,6 +142,12 @@ Renderer
 .. automodule:: prompt_toolkit.renderer
     :members:
 
+Lexers
+------
+
+.. automodule:: prompt_toolkit.lexers
+    :members:
+
 
 Layout
 ------
@@ -171,9 +177,6 @@ Other
 ^^^^^
 
 .. automodule:: prompt_toolkit.layout.dimension
-    :members:
-
-.. automodule:: prompt_toolkit.layout.lexers
     :members:
 
 .. automodule:: prompt_toolkit.layout.margins

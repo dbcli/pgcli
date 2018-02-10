@@ -78,15 +78,15 @@ Syntax highlighting
 
 Adding syntax highlighting is as simple as adding a lexer. All of the `Pygments
 <http://pygments.org/>`_ lexers can be used after wrapping them in a
-:class:`~prompt_toolkit.layout.lexers.PygmentsLexer`. It is also possible to
-create a custom lexer by implementing the
-:class:`~prompt_toolkit.layout.lexers.Lexer` abstract base class.
+:class:`~prompt_toolkit.lexers.PygmentsLexer`. It is also possible to create a
+custom lexer by implementing the :class:`~prompt_toolkit.lexers.Lexer` abstract
+base class.
 
 .. code:: python
 
     from pygments.lexers import HtmlLexer
     from prompt_toolkit.shortcuts import prompt
-    from prompt_toolkit.layout.lexers import PygmentsLexer
+    from prompt_toolkit.lexers import PygmentsLexer
 
     text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer))
     print('You said: %s' % text)
@@ -102,7 +102,7 @@ you can do the following:
     from pygments.lexers import HtmlLexer
     from pygments.styles import get_style_by_name
     from prompt_toolkit.shortcuts import prompt
-    from prompt_toolkit.layout.lexers import PygmentsLexer
+    from prompt_toolkit.lexers import PygmentsLexer
     from prompt_toolkit.styles.pygments import style_from_pygments
 
     style = style_from_pygments(get_style_by_name('monokai'))
@@ -127,7 +127,7 @@ function:
     from pygments.lexers import HtmlLexer
     from prompt_toolkit.shortcuts import prompt
     from prompt_toolkit.styles import Style
-    from prompt_toolkit.layout.lexers import PygmentsLexer
+    from prompt_toolkit.lexers import PygmentsLexer
 
     our_style = style.from_dict({
         'pygments.comment':   '#888888 bold',
@@ -165,7 +165,7 @@ Creating a custom style could be done like this:
 
     from prompt_toolkit.shortcuts import prompt
     from prompt_toolkit.styles import style_from_pygments, merge_style
-    from prompt_toolkit.layout.lexers import PygmentsLexer
+    from prompt_toolkit.lexers import PygmentsLexer
 
     from pygments.styles.tango import TangoStyle
     from pygments.lexers import HtmlLexer

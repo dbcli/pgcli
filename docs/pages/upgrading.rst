@@ -146,8 +146,8 @@ adaptor to make it compatible with the native prompt_toolkit objects.
   using this.
 
 - Pygments lexers need to be wrapped in a
-  :class:`~prompt_toolkit.layout.lexers.PygmentsLexer`. This will convert the
-  list of Pygments tokens into prompt_toolkit formatted text.
+  :class:`~prompt_toolkit.lexers.PygmentsLexer`. This will convert the list of
+  Pygments tokens into prompt_toolkit formatted text.
 
 - If you have a Pygments style, then this needs to be converted as well. A
   Pygments style class can be converted in a prompt_toolkit

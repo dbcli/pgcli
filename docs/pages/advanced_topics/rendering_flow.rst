@@ -50,8 +50,8 @@ The visualisation happens in several steps:
    several steps:
 
    2. First, the buffer's text is passed to the
-      :meth:`~prompt_toolkit.layout.lexers.Lexer.lex_document` method of a
-      :class:`~prompt_toolkit.layout.lexers.Lexer`. This returns a function which
+      :meth:`~prompt_toolkit.lexers.Lexer.lex_document` method of a
+      :class:`~prompt_toolkit.lexers.Lexer`. This returns a function which
       for a given line number, returns a token list for that line (that's a
       list of ``(Token, text)`` tuples).
 
@@ -80,4 +80,4 @@ Note that this process is lazy: if a certain line is not displayed in the
 :class:`~prompt_toolkit.layout.containers.Window`, then it is not requested
 from the :class:`~prompt_toolkit.layout.controls.UIContent`. And from there,
 the line is not passed through the processors or even asked from the
-:class:`~prompt_toolkit.layout.lexers.Lexer`.
+:class:`~prompt_toolkit.lexers.Lexer`.
