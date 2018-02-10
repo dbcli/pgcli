@@ -851,6 +851,8 @@ class PGCli(object):
         envvar='PGCLIRC', help='Location of pgclirc file.', type=click.Path(dir_okay=False))
 @click.option('-D', '--dsn', default='', envvar='DSN',
         help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
+@click.option('--list-dsn', 'list_dsn', is_flag=True,
+        help='list of DSN configured into the [alias_dsn] section of pgclirc file.')
 @click.option('--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
         help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.option('--less-chatty', 'less_chatty', is_flag=True,
@@ -866,7 +868,8 @@ class PGCli(object):
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
         single_connection, dbname, username, version, pgclirc, dsn, row_limit,
-        less_chatty, prompt, prompt_dsn, list_databases, auto_vertical_output):
+        less_chatty, prompt, prompt_dsn, list_databases, auto_vertical_output,
+        list_dsn):
 
     if version:
         print('Version:', __version__)
@@ -887,7 +890,18 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
             print ('Config file is now located at', config_full_path)
             print ('Please move the existing config file ~/.pgclirc to',
                    config_full_path)
-
+    if list_dsn :
+        try:
+            cfg = load_config(pgclirc, config_full_path)
+            for alias in cfg['alias_dsn']:
+                click.secho(alias + " : " + cfg['alias_dsn'][alias])
+            sys.exit(0)
+        except Exception as err:
+            click.secho('Invalid DSNs found in the config file. '\
+                'Please check the "[alias_dsn]" section in pgclirc.',
+                 err=True, fg='red')
+            exit(1)
+            
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc,
                   row_limit=row_limit, single_connection=single_connection,
                   less_chatty=less_chatty, prompt=prompt, prompt_dsn=prompt_dsn,
