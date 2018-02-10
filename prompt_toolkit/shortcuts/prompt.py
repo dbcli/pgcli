@@ -381,7 +381,8 @@ class Prompt(object):
                         lambda: self.bottom_toolbar,
                         style='class:bottom-toolbar.text'),
                    style='class:bottom-toolbar',
-                   height=Dimension.exact(1)),
+                   dont_extend_height=True,
+                   height=Dimension(min=1)),
             filter=~is_done & renderer_height_is_known &
                     Condition(lambda: self.bottom_toolbar is not None))
 

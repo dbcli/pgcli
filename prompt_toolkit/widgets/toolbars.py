@@ -9,6 +9,7 @@ from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import Window, ConditionalContainer
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl, UIControl, UIContent
+from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.lexers import SimpleLexer
 from prompt_toolkit.layout.processors import BeforeInput
 from prompt_toolkit.layout.utils import fragment_list_len
@@ -32,7 +33,8 @@ class FormattedTextToolbar(Window):
         super(FormattedTextToolbar, self).__init__(
             FormattedTextControl(text, **kw),
             style=style,
-            height=1)
+            dont_extend_height=True,
+            height=Dimension(min=1))
 
 
 class SystemToolbar(object):

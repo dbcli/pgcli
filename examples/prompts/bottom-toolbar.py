@@ -63,6 +63,10 @@ def main():
     text = prompt('Say something: ', bottom_toolbar=get_bottom_toolbar)
     print('You said: %s' % text)
 
+    # Example 7: multiline fixed text.
+    text = prompt('Say something: ', bottom_toolbar='This is\na multiline toolbar')
+    print('You said: %s' % text)
+
 
 if __name__ == '__main__':
     main()
