@@ -297,5 +297,3 @@ class PygmentsLexer(Lexer):
             return []
 
         return get_line
-
-
