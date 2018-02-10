@@ -12,7 +12,7 @@ from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl, 
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.lexers import SimpleLexer
 from prompt_toolkit.layout.processors import BeforeInput
-from prompt_toolkit.layout.utils import fragment_list_len
+from prompt_toolkit.formatted_text.utils import fragment_list_len
 
 __all__ = [
     'ArgToolbar',

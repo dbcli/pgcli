@@ -16,10 +16,10 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.enums import SearchDirection
 from prompt_toolkit.filters import to_filter, vi_insert_multiple_mode
 from prompt_toolkit.formatted_text import to_formatted_text
-from prompt_toolkit.layout.utils import fragment_list_to_text
+from prompt_toolkit.formatted_text.utils import fragment_list_len, fragment_list_to_text
 from prompt_toolkit.reactive import Integer
 
-from .utils import fragment_list_len, explode_text_fragments
+from .utils import explode_text_fragments
 
 import re
 

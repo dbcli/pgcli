@@ -8,8 +8,8 @@ from six import with_metaclass
 from six.moves import range
 
 from prompt_toolkit.filters import to_filter
+from prompt_toolkit.formatted_text.utils import fragment_list_to_text
 from prompt_toolkit.utils import get_cwidth
-from .utils import fragment_list_to_text
 
 __all__ = [
     'Margin',

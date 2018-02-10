@@ -13,7 +13,9 @@ from .controls import UIControl, FormattedTextControl, UIContent, DummyControl
 from .dimension import Dimension, sum_layout_dimensions, max_layout_dimensions, to_dimension, is_dimension
 from .margins import Margin
 from .screen import Point, WritePosition, _CHAR_CACHE
-from .utils import fragment_list_to_text, explode_text_fragments, fragment_list_width
+from .utils import explode_text_fragments
+
+from prompt_toolkit.formatted_text.utils import fragment_list_to_text, fragment_list_width
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.filters import to_filter, vi_insert_mode, emacs_insert_mode

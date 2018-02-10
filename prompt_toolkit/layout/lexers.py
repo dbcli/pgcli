@@ -8,7 +8,7 @@ from six import with_metaclass
 from six.moves import range
 
 from prompt_toolkit.filters import to_filter
-from .utils import split_lines
+from prompt_toolkit.formatted_text.utils import split_lines
 
 import re
 import six

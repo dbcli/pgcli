@@ -13,6 +13,7 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.formatted_text import to_formatted_text
+from prompt_toolkit.formatted_text.utils import split_lines, fragment_list_to_text
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
@@ -20,9 +21,7 @@ from prompt_toolkit.utils import get_cwidth
 
 from .lexers import Lexer, SimpleLexer
 from .processors import Processor, TransformationInput, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, merge_processors
-
 from .screen import Point
-from .utils import split_lines, fragment_list_to_text
 
 import six
 import time

@@ -14,6 +14,7 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.formatted_text import to_formatted_text, Template, is_formatted_text
+from prompt_toolkit.formatted_text.utils import fragment_list_to_text
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import Window, VSplit, HSplit, FloatContainer, Float, Align, is_container
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
@@ -21,7 +22,6 @@ from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.dimension import is_dimension, to_dimension
 from prompt_toolkit.layout.margins import ScrollbarMargin, NumberedMargin
 from prompt_toolkit.layout.processors import PasswordProcessor, ConditionalProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, merge_processors
-from prompt_toolkit.layout.utils import fragment_list_to_text
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
 
