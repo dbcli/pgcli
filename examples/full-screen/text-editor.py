@@ -14,17 +14,22 @@ from prompt_toolkit.layout.containers import Float, HSplit, VSplit, Window, Alig
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.lexers import PygmentsLexer
+from prompt_toolkit.lexers import DynamicLexer, PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import Dialog, Label, Button, TextArea, SearchToolbar, MenuContainer, MenuItem
-from pygments.lexers import PythonLexer
 import datetime
 
 
-# Status bar.
+class ApplicationState:
+    """
+    Application state.
 
-show_status_bar = True
+    For the simplicity, we store this as a global, but better would be to
+    instantiate this as an object and pass at around.
+    """
+    show_status_bar = True
+    current_path = None
 
 
 def get_statusbar_text():
@@ -39,7 +44,10 @@ def get_statusbar_right_text():
 
 search_toolbar = SearchToolbar()
 text_field = TextArea(
-    lexer=PygmentsLexer(PythonLexer),  # TODO: make lexer dynamic.
+    lexer=DynamicLexer(
+        lambda: PygmentsLexer.from_filename(
+            ApplicationState.current_path or '.txt',
+            sync_from_start=False)),
     scrollbar=True,
     line_numbers=True,
     search_field=search_toolbar,
@@ -114,7 +122,7 @@ body = HSplit([
             Window(FormattedTextControl(get_statusbar_right_text),
                    style='class:status.right', width=9, align=Align.RIGHT),
         ], height=1),
-        filter=Condition(lambda: show_status_bar)),
+        filter=Condition(lambda: ApplicationState.show_status_bar)),
 ])
 
 
@@ -134,12 +142,14 @@ def _(event):
 
 def do_open_file():
     def coroutine():
+        global current_path
         open_dialog = TextInputDialog(
             title='Open file',
             label_text='Enter the path of a file:',
             completer=PathCompleter())
 
         path = yield From(show_dialog_as_float(open_dialog))
+        current_path = path
 
         if path is not None:
             try:
@@ -254,8 +264,7 @@ def do_select_all():
 
 
 def do_status_bar():
-    global show_status_bar
-    show_status_bar = not show_status_bar
+    ApplicationState.show_status_bar = not ApplicationState.show_status_bar
 
 
 #
