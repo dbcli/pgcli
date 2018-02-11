@@ -19,7 +19,7 @@ from prompt_toolkit import prompt
 from prompt_toolkit.contrib.regular_languages.compiler import compile
 from prompt_toolkit.contrib.regular_languages.completion import GrammarCompleter
 from prompt_toolkit.contrib.regular_languages.lexer import GrammarLexer
-from prompt_toolkit.layout.lexers import SimpleLexer
+from prompt_toolkit.lexers import SimpleLexer
 from prompt_toolkit.styles import Style
 
 import math

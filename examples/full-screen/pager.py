@@ -10,7 +10,7 @@ from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.layout.lexers import PygmentsLexer
+from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import TextArea, SearchToolbar
 

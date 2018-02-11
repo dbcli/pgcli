@@ -7,7 +7,7 @@ from prompt_toolkit import prompt
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.styles import Style
-from prompt_toolkit.layout.lexers import PygmentsLexer
+from prompt_toolkit.lexers import PygmentsLexer
 
 from pygments.lexers import SqlLexer
 

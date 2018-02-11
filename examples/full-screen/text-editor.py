@@ -14,7 +14,7 @@ from prompt_toolkit.layout.containers import Float, HSplit, VSplit, Window, Alig
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.layout.lexers import PygmentsLexer
+from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import Dialog, Label, Button, TextArea, SearchToolbar, MenuContainer, MenuItem
