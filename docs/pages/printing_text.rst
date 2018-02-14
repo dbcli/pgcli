@@ -102,7 +102,7 @@ Both foreground and background colors can also be defined using the `fg` and
 .. code:: python
 
     # Colors from the ANSI palette.
-    print_formatted_text(HTML('<span fg="#ff0044" bg="seegreen">Red on green</span>'))
+    print_formatted_text(HTML('<span fg="#ff0044" bg="seagreen">Red on green</span>'))
 
 
 Underneath, all tags are mapped to classes from the style sheet. So, if you use
