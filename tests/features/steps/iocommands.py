@@ -18,7 +18,7 @@ def step_edit_file(context):
         os.path.basename(context.editor_file_name)))
     wrappers.expect_exact(
         context, 'Entering Ex mode.  Type "visual" to go to Normal mode.', timeout=2)
-    wrappers.expect_exact(context, '\r\n:', timeout=2)
+    wrappers.expect_exact(context, ':', timeout=2)
 
 
 @when('we type sql in the editor')
