@@ -4,6 +4,7 @@ Tool for creating styles from a dictionary.
 from __future__ import unicode_literals, absolute_import
 import itertools
 import re
+import sys
 from .base import BaseStyle, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
 from .named_colors import NAMED_COLORS
 from prompt_toolkit.cache import SimpleCache
@@ -161,6 +162,16 @@ class Priority:
     _ALL = [DICT_KEY_ORDER, MOST_PRECISE]
 
 
+# In the latest python verions, we take the dictionary ordering like it is,
+# In older versions, we sort by by precision. If you need to write code that
+# runs on all Python versions, it's best to sort them manually, with the most
+# precise rules at the bottom.
+if sys.version_info >= (3, 6):
+    default_priority = Priority.DICT_KEY_ORDER
+else:
+    default_priority = Priority.MOST_PRECISE
+
+
 class Style(BaseStyle):
     """
     Create a ``Style`` instance from a list of style rules.
@@ -207,7 +218,7 @@ class Style(BaseStyle):
         return self._style_rules
 
     @classmethod
-    def from_dict(cls, style_dict, priority=Priority.MOST_PRECISE):
+    def from_dict(cls, style_dict, priority=default_priority):
         """
         :param style_dict: Style dictionary.
         :param priority: `Priority` value.
