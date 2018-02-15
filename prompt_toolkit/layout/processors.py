@@ -42,6 +42,7 @@ __all__ = [
     'ShowLeadingWhiteSpaceProcessor',
     'ShowTrailingWhiteSpaceProcessor',
     'TabsProcessor',
+    'ReverseSearchProcessor',
     'DynamicProcessor',
     'merge_processors',
 ]
@@ -604,14 +605,13 @@ class ReverseSearchProcessor(Processor):
     _excluded_input_processors = [
         HighlightSearchProcessor,
         HighlightSelectionProcessor,
-        HighlightSelectionProcessor,
         BeforeInput,
         AfterInput,
     ]
 
     def _get_main_buffer(self, buffer_control):
         from prompt_toolkit.layout.controls import BufferControl
-        prev_control = get_app().layout.previous_control
+        prev_control = get_app().layout.search_target_buffer_control
         if isinstance(prev_control, BufferControl) and \
                 prev_control.search_buffer_control == buffer_control:
             return prev_control, prev_control.search_state
@@ -662,6 +662,7 @@ class ReverseSearchProcessor(Processor):
                  lexer=main_control.lexer,
                  preview_search=True,
                  search_buffer_control=ti.buffer_control)
+        buffer_control.search_state = main_control.search_state
 
         return buffer_control.create_content(ti.width, ti.height)
 
@@ -672,8 +673,7 @@ class ReverseSearchProcessor(Processor):
             content = self._content(main_control, ti)
 
             # Get the line from the original document for this search.
-            line_fragments = content.get_line(
-                main_control.buffer.document_for_search(search_state).cursor_position_row)
+            line_fragments = content.get_line(content.cursor_position.y)
 
             if search_state.direction == SearchDirection.FORWARD:
                 direction_text = 'i-search'

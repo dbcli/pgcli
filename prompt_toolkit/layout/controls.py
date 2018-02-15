@@ -399,7 +399,6 @@ class BufferControl(UIControl):
         Otherwise only the cursor position will move, but the text won't be
         highlighted.
     :param focusable: `bool` or `Filter`: Tell whether this control is focusable.
-    :param get_search_state: Callable that returns the SearchState to be used.
     :param focus_on_click: Focus this buffer when it's click, but not yet focused.
     :param key_bindings: a `KeyBindings` object.
     """
@@ -411,7 +410,6 @@ class BufferControl(UIControl):
                  focusable=True,
                  search_buffer_control=None,
                  get_search_buffer_control=None,
-                 get_search_state=None,
                  menu_position=None,
                  focus_on_click=False,
                  key_bindings=None):
@@ -423,15 +421,7 @@ class BufferControl(UIControl):
         assert search_buffer_control is None or isinstance(search_buffer_control, BufferControl)
         assert get_search_buffer_control is None or callable(get_search_buffer_control)
         assert not (search_buffer_control and get_search_buffer_control)
-        assert get_search_state is None or callable(get_search_state)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
-
-        # Default search state.
-        if get_search_state is None:
-            search_state = SearchState()
-
-            def get_search_state():
-                return search_state
 
         # Default input processor (display search and selection by default.)
         if input_processor is None:
@@ -443,7 +433,6 @@ class BufferControl(UIControl):
 
         self.preview_search = to_filter(preview_search)
         self.focusable = to_filter(focusable)
-        self.get_search_state = get_search_state
         self.focus_on_click = to_filter(focus_on_click)
 
         self.input_processor = input_processor
@@ -464,6 +453,9 @@ class BufferControl(UIControl):
         self._last_click_timestamp = None
         self._last_get_processed_line = None
 
+        # Search state.
+        self.search_state = SearchState()
+
     def __repr__(self):
         return '<BufferControl(buffer=%r at %r>' % (self.buffer, id(self))
 
@@ -482,10 +474,6 @@ class BufferControl(UIControl):
         control = self.search_buffer_control
         if control is not None:
             return control.buffer
-
-    @property
-    def search_state(self):
-        return self.get_search_state()
 
     def is_focusable(self):
         return self.focusable()

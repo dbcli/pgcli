@@ -7,7 +7,6 @@ from prompt_toolkit.application.current import get_app
 from prompt_toolkit.enums import SearchDirection
 from prompt_toolkit.filters import is_searching, control_is_searchable, Condition
 from prompt_toolkit.key_binding.vi_state import InputMode
-from prompt_toolkit.layout.controls import BufferControl
 
 __all__ = [
     'abort_search',
@@ -107,7 +106,7 @@ def _incremental_search(app, direction, count=1):
     assert is_searching()
 
     search_control = app.layout.current_control
-    prev_control = app.layout.previous_control
+    prev_control = app.layout.search_target_buffer_control
     search_state = prev_control.search_state
 
     # Update search_state.
@@ -145,10 +144,8 @@ def _previous_buffer_is_returnable():
     """
     True if the previously focused buffer has a return handler.
     """
-    prev_control = get_app().layout.previous_control
-    if isinstance(prev_control, BufferControl):
-        return prev_control.buffer.is_returnable
-    return False
+    prev_control = get_app().layout.search_target_buffer_control
+    return prev_control and prev_control.buffer.is_returnable
 
 
 @key_binding(filter=is_searching & _previous_buffer_is_returnable)
