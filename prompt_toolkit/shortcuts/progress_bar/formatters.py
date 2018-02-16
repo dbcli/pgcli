@@ -10,7 +10,7 @@ import time
 from prompt_toolkit.formatted_text import HTML, to_formatted_text
 from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.layout.utils import explode_text_fragments
-from prompt_toolkit.layout.utils import fragment_list_width
+from prompt_toolkit.formatted_text.utils import fragment_list_width
 from prompt_toolkit.utils import get_cwidth
 
 __all__ = [
