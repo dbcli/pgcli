@@ -94,11 +94,13 @@ class progress_bar(object):
     :param key_bindings: `KeyBindings` instance.
     :param file: The file object used for rendering, by default `sys.stderr` is used.
 
+    :param color_depth: `prompt_toolkit` `ColorDepth` instance.
     :param output: `prompt_toolkit` `Output` instance.
     :param input: `prompt_toolkit` `Input` instance.
     """
     def __init__(self, title=None, formatters=None, bottom_toolbar=None,
-                 style=None, key_bindings=None, file=None, output=None, input=None):
+                 style=None, key_bindings=None, file=None, color_depth=None,
+                 output=None, input=None):
         assert formatters is None or (
             isinstance(formatters, list) and all(isinstance(fo, f.Formatter) for fo in formatters))
         assert style is None or isinstance(style, BaseStyle)
@@ -113,6 +115,7 @@ class progress_bar(object):
 
         # Note that we use __stderr__ as default error output, because that
         # works best with `patch_stdout`.
+        self.color_depth = color_depth
         self.output = output or create_output(stdout=file or sys.__stderr__)
         self.input = input or get_default_input()
 
@@ -159,6 +162,7 @@ class progress_bar(object):
             ])),
             style=self.style,
             key_bindings=self.key_bindings,
+            color_depth=self.color_depth,
             output=self.output,
             input=self.input)
 

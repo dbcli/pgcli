@@ -1,6 +1,6 @@
 from __future__ import unicode_literals, print_function
 from prompt_toolkit.formatted_text import to_formatted_text
-from prompt_toolkit.output.base import Output
+from prompt_toolkit.output import Output, ColorDepth
 from prompt_toolkit.output.defaults import create_output, get_default_output
 from prompt_toolkit.renderer import print_formatted_text as renderer_print_formatted_text
 from prompt_toolkit.styles import default_ui_style, default_pygments_style, BaseStyle, merge_styles
@@ -68,6 +68,7 @@ def print_formatted_text(*values, **kwargs):
     flush = kwargs.pop('flush', False)
     style = kwargs.pop('style', None)
     output = kwargs.pop('output', None)
+    color_depth = kwargs.pop('color_depth', None)
     include_default_pygments_style = kwargs.pop('include_default_pygments_style', True)
     assert not kwargs
     assert not (output and file)
@@ -91,6 +92,9 @@ def print_formatted_text(*values, **kwargs):
 
     assert isinstance(output, Output)
 
+    # Get color depth.
+    color_depth = color_depth or ColorDepth.default()
+
     # Merges values.
     def to_text(val):
         if isinstance(val, list):
@@ -107,7 +111,8 @@ def print_formatted_text(*values, **kwargs):
     fragments.extend(to_text(end))
 
     # Print output.
-    renderer_print_formatted_text(output, fragments, merged_style)
+    renderer_print_formatted_text(
+        output, fragments, merged_style, color_depth=color_depth)
 
     # Flush the output stream.
     if flush:

@@ -19,7 +19,7 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.dummy import create_dummy_layout
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.output import Output
+from prompt_toolkit.output import Output, ColorDepth
 from prompt_toolkit.output.defaults import get_default_output
 from prompt_toolkit.renderer import Renderer, print_formatted_text
 from prompt_toolkit.search_state import SearchState
@@ -54,6 +54,7 @@ class Application(object):
     :param on_abort: What to do when Control-C is pressed.
     :param on_exit: What to do when Control-D is pressed.
     :param full_screen: When True, run the application on the alternate screen buffer.
+    :param color_depth: Any `ColorDepth` value, or `None` for default.
     :param erase_when_done: (bool) Clear the application output when it finishes.
     :param reverse_vi_search_direction: Normally, in Vi mode, a '/' searches
         forward and a '?' searches backward. In readline mode, this is usually
@@ -109,7 +110,8 @@ class Application(object):
     def __init__(self, layout=None,
                  style=None, include_default_pygments_style=True,
                  key_bindings=None, clipboard=None,
-                 full_screen=False, mouse_support=False,
+                 full_screen=False, color_depth=None,
+                 mouse_support=False,
 
                  enable_page_navigation_bindings=None,  # Can be None, True or False.
 
@@ -141,6 +143,7 @@ class Application(object):
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert clipboard is None or isinstance(clipboard, Clipboard)
         assert isinstance(full_screen, bool)
+        assert color_depth is None or color_depth in ColorDepth._ALL
         assert isinstance(editing_mode, six.string_types)
         assert style is None or isinstance(style, BaseStyle)
         assert isinstance(erase_when_done, bool)
@@ -168,6 +171,7 @@ class Application(object):
         self.layout = layout
         self.clipboard = clipboard or InMemoryClipboard()
         self.full_screen = full_screen
+        self.color_depth = color_depth or ColorDepth.default()
         self.mouse_support = mouse_support
 
         self.paste_mode = paste_mode

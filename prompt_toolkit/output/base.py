@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 from prompt_toolkit.layout.screen import Size
+from .color_depth import ColorDepth
 
 __all__ = [
     'Output',
@@ -95,7 +96,7 @@ class Output(with_metaclass(ABCMeta, object)):
         " Reset color and styling attributes. "
 
     @abstractmethod
-    def set_attributes(self, attrs):
+    def set_attributes(self, attrs, color_depth):
         " Set new color and styling attributes. "
 
     @abstractmethod

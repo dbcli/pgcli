@@ -9,7 +9,7 @@ from prompt_toolkit.filters import to_filter
 from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.layout.mouse_handlers import MouseHandlers
 from prompt_toolkit.layout.screen import Point, Screen, WritePosition
-from prompt_toolkit.output import Output
+from prompt_toolkit.output import Output, ColorDepth
 from prompt_toolkit.styles import BaseStyle
 from prompt_toolkit.utils import is_windows
 
@@ -24,9 +24,10 @@ __all__ = [
 ]
 
 
-def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, last_style=None,
-                        is_done=False, full_screen=False, attrs_for_style_string=None, size=None,
-                        previous_width=0):  # XXX: drop is_done
+def _output_screen_diff(app, output, screen, current_pos, color_depth,
+                        previous_screen=None, last_style=None, is_done=False,
+                        full_screen=False, attrs_for_style_string=None,
+                        size=None, previous_width=0):  # XXX: drop is_done
     """
     Render the diff between this screen and the previous screen.
 
@@ -109,7 +110,7 @@ def _output_screen_diff(app, output, screen, current_pos, previous_screen=None, 
         if the_last_style and the_last_style == char.style:
             write(char.char)
         else:
-            _output_set_attributes(attrs_for_style_string[char.style])
+            _output_set_attributes(attrs_for_style_string[char.style], color_depth)
             write(char.char)
             last_style[0] = char.style
 
@@ -277,6 +278,7 @@ class Renderer(object):
         # Cache for the style.
         self._attrs_for_style = None
         self._last_style_hash = None
+        self._last_color_depth = None
 
         self.reset(_scroll=True)
 
@@ -516,15 +518,19 @@ class Renderer(object):
         if self._last_size != size:
             self._last_screen = None
 
-        # When we render using another style, do a full repaint. (Forget about
-        # the previous rendered screen.)
+        # When we render using another style or another color depth, do a full
+        # repaint. (Forget about the previous rendered screen.)
         # (But note that we still use _last_screen to calculate the height.)
-        if self.style.invalidation_hash() != self._last_style_hash:
+        if (self.style.invalidation_hash() != self._last_style_hash or
+                app.color_depth != self._last_color_depth):
             self._last_screen = None
             self._attrs_for_style = None
+
         if self._attrs_for_style is None:
             self._attrs_for_style = _StyleStringToAttrsCache(self.style.get_attrs_for_style_str)
+
         self._last_style_hash = self.style.invalidation_hash()
+        self._last_color_depth = app.color_depth
 
         layout.container.write_to_screen(screen, mouse_handlers, WritePosition(
             xpos=0,
@@ -542,11 +548,10 @@ class Renderer(object):
 
         # Process diff and write to output.
         self._cursor_pos, self._last_style = _output_screen_diff(
-            app, output, screen, self._cursor_pos,
+            app, output, screen, self._cursor_pos, app.color_depth,
             self._last_screen, self._last_style, is_done,
             full_screen=self.full_screen,
-            attrs_for_style_string=self._attrs_for_style,
-            size=size,
+            attrs_for_style_string=self._attrs_for_style, size=size,
             previous_width=(self._last_size.columns if self._last_size else 0))
         self._last_screen = screen
         self._last_size = size
@@ -597,12 +602,14 @@ class Renderer(object):
         self.request_absolute_cursor_position()
 
 
-def print_formatted_text(output, formatted_text, style):
+def print_formatted_text(output, formatted_text, style, color_depth):
     """
     Print a list of (style_str, text) tuples in the given style to the output.
     """
     assert isinstance(output, Output)
     assert isinstance(style, BaseStyle)
+    assert color_depth in ColorDepth._ALL
+
     fragments = to_formatted_text(formatted_text)
 
     # Reset first.
@@ -616,7 +623,7 @@ def print_formatted_text(output, formatted_text, style):
         attrs = attrs_for_style_string[style_str]
 
         if attrs:
-            output.set_attributes(attrs)
+            output.set_attributes(attrs, color_depth)
         else:
             output.reset_attributes()
 

@@ -8,15 +8,15 @@ http://pygments.org/
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit.filters import to_filter, Condition
 from prompt_toolkit.layout.screen import Size
 from prompt_toolkit.output import Output
 from prompt_toolkit.styles.base import ANSI_COLOR_NAMES
 
+from .color_depth import ColorDepth
+
 from six.moves import range
 import array
 import errno
-import os
 import six
 
 __all__ = [
@@ -245,10 +245,9 @@ class _EscapeCodeCache(dict):
 
     :param true_color: When True, use 24bit colors instead of 256 colors.
     """
-    def __init__(self, true_color=False, ansi_colors_only=False):
-        assert isinstance(true_color, bool)
-        self.true_color = true_color
-        self.ansi_colors_only = to_filter(ansi_colors_only)
+    def __init__(self, color_depth):
+        assert color_depth in ColorDepth._ALL
+        self.color_depth = color_depth
 
     def __missing__(self, attrs):
         fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
@@ -297,7 +296,7 @@ class _EscapeCodeCache(dict):
         def get(color, bg):
             table = BG_ANSI_COLORS if bg else FG_ANSI_COLORS
 
-            if not color:
+            if not color or self.color_depth == ColorDepth.DEPTH_1_BIT:
                 return ()
 
             # 16 ANSI colors. (Given by name.)
@@ -312,7 +311,7 @@ class _EscapeCodeCache(dict):
                     return ()
 
                 # When only 16 colors are supported, use that.
-                if self.ansi_colors_only():
+                if self.color_depth == ColorDepth.DEPTH_4_BIT:
                     if bg:  # Background.
                         if fg_color != bg_color:
                             exclude = (fg_ansi[0], )
@@ -326,7 +325,7 @@ class _EscapeCodeCache(dict):
                         return (code, )
 
                 # True colors. (Only when this feature is enabled.)
-                elif self.true_color:
+                elif self.color_depth == ColorDepth.DEPTH_24_BIT:
                     r, g, b = rgb
                     return (48 if bg else 38, 2, r, g, b)
 
@@ -372,16 +371,11 @@ class Vt100_Output(Output):
     """
     :param get_size: A callable which returns the `Size` of the output terminal.
     :param stdout: Any object with has a `write` and `flush` method + an 'encoding' property.
-    :param true_color: Use 24bit color instead of 256 colors.
-        (Can be a :class:`Filter`.) When `ansi_colors_only` is set, only 16
-        colors are used.
-    :param ansi_colors_only: Restrict to 16 ANSI colors only.
     :param term: The terminal environment variable. (xterm, xterm-256color, linux, ...)
     :param write_binary: Encode the output before writing it. If `True` (the
         default), the `stdout` object is supposed to expose an `encoding` attribute.
     """
-    def __init__(self, stdout, get_size, true_color=False,
-                 ansi_colors_only=None, term=None, write_binary=True):
+    def __init__(self, stdout, get_size, term=None, write_binary=True):
         assert callable(get_size)
         assert term is None or isinstance(term, six.text_type)
         assert all(hasattr(stdout, a) for a in ('write', 'flush'))
@@ -393,30 +387,18 @@ class Vt100_Output(Output):
         self.stdout = stdout
         self.write_binary = write_binary
         self.get_size = get_size
-        self.true_color = to_filter(true_color)
         self.term = term or 'xterm'
 
-        # ANSI colors only?
-        if ansi_colors_only is None:
-            # When not given, use the following default.
-            ANSI_COLORS_ONLY = bool(os.environ.get(
-                'PROMPT_TOOLKIT_ANSI_COLORS_ONLY', False))
-
-            @Condition
-            def ansi_colors_only():
-                return ANSI_COLORS_ONLY or term in ('linux', 'eterm-color')
-        else:
-            ansi_colors_only = to_filter(ansi_colors_only)
-
-        self.ansi_colors_only = ansi_colors_only
-
         # Cache for escape codes.
-        self._escape_code_cache = _EscapeCodeCache(ansi_colors_only=ansi_colors_only)
-        self._escape_code_cache_true_color = _EscapeCodeCache(
-            true_color=True, ansi_colors_only=ansi_colors_only)
+        self._escape_code_caches = {
+            ColorDepth.DEPTH_1_BIT: _EscapeCodeCache(ColorDepth.DEPTH_1_BIT),
+            ColorDepth.DEPTH_4_BIT: _EscapeCodeCache(ColorDepth.DEPTH_4_BIT),
+            ColorDepth.DEPTH_8_BIT: _EscapeCodeCache(ColorDepth.DEPTH_8_BIT),
+            ColorDepth.DEPTH_24_BIT: _EscapeCodeCache(ColorDepth.DEPTH_24_BIT),
+        }
 
     @classmethod
-    def from_pty(cls, stdout, true_color=False, ansi_colors_only=None, term=None):
+    def from_pty(cls, stdout, term=None):
         """
         Create an Output class from a pseudo terminal.
         (This will take the dimensions by reading the pseudo
@@ -428,8 +410,7 @@ class Vt100_Output(Output):
             rows, columns = _get_size(stdout.fileno())
             return Size(rows=rows, columns=columns)
 
-        return cls(stdout, get_size, true_color=true_color,
-                   ansi_colors_only=ansi_colors_only, term=term)
+        return cls(stdout, get_size, term=term)
 
     def fileno(self):
         " Return file descriptor. "
@@ -508,16 +489,17 @@ class Vt100_Output(Output):
     def reset_attributes(self):
         self.write_raw('\x1b[0m')
 
-    def set_attributes(self, attrs):
+    def set_attributes(self, attrs, color_depth):
         """
         Create new style and output.
 
         :param attrs: `Attrs` instance.
         """
-        if self.true_color() and not self.ansi_colors_only():
-            self.write_raw(self._escape_code_cache_true_color[attrs])
-        else:
-            self.write_raw(self._escape_code_cache[attrs])
+        # Get current depth.
+        escape_code_cache = self._escape_code_caches[color_depth]
+
+        # Write escape character.
+        self.write_raw(escape_code_cache[attrs])
 
     def disable_autowrap(self):
         self.write_raw('\x1b[?7l')

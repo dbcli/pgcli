@@ -6,6 +6,7 @@ from ctypes.wintypes import DWORD
 from prompt_toolkit.renderer import Output
 from prompt_toolkit.styles import ANSI_COLOR_NAMES
 from prompt_toolkit.win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, STD_INPUT_HANDLE, COORD, SMALL_RECT
+from .color_depth import ColorDepth
 
 import os
 import six
@@ -225,21 +226,22 @@ class Win32Output(Output):
         self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole,
                      self.default_attrs)
 
-    def set_attributes(self, attrs):
+    def set_attributes(self, attrs, color_depth):
         fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
 
         # Start from the default attributes.
         attrs = self.default_attrs
 
-        # Override the last four bits: foreground color.
-        if fgcolor:
-            attrs = attrs & ~0xf
-            attrs |= self.color_lookup_table.lookup_fg_color(fgcolor)
+        if color_depth != ColorDepth.DEPTH_1_BIT:
+            # Override the last four bits: foreground color.
+            if fgcolor:
+                attrs = attrs & ~0xf
+                attrs |= self.color_lookup_table.lookup_fg_color(fgcolor)
 
-        # Override the next four bits: background color.
-        if bgcolor:
-            attrs = attrs & ~0xf0
-            attrs |= self.color_lookup_table.lookup_bg_color(bgcolor)
+            # Override the next four bits: background color.
+            if bgcolor:
+                attrs = attrs & ~0xf0
+                attrs |= self.color_lookup_table.lookup_bg_color(bgcolor)
 
         # Reverse: swap these four bits groups.
         if reverse:

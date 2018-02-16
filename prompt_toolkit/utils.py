@@ -6,8 +6,9 @@ import sys
 import threading
 import weakref
 
-from wcwidth import wcwidth
+from six import PY2
 from six.moves import range
+from wcwidth import wcwidth
 from .cache import memoized
 
 __all__ = [
@@ -218,6 +219,14 @@ def in_main_thread():
     True when the current thread is the main thread.
     """
     return threading.current_thread().__class__.__name__ == '_MainThread'
+
+
+def get_term_environment_variable():
+    " Return the $TERM environment variable. "
+    term = os.environ.get('TERM', '')
+    if PY2:
+        term = term.decode('utf-8')
+    return term
 
 
 def take_using_weights(items, weights):
