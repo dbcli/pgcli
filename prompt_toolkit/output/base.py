@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 from prompt_toolkit.layout.screen import Size
-from .color_depth import ColorDepth
 
 __all__ = [
     'Output',
@@ -175,7 +174,7 @@ class DummyOutput(Output):
     def erase_end_of_line(self): pass
     def erase_down(self): pass
     def reset_attributes(self): pass
-    def set_attributes(self, attrs): pass
+    def set_attributes(self, attrs, color_depth): pass
     def disable_autowrap(self): pass
     def enable_autowrap(self): pass
     def cursor_goto(self, row=0, column=0): pass
