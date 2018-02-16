@@ -180,9 +180,9 @@ class ANSI(object):
         """
         result = []
         if self._color:
-            result.append('#' + self._color)
+            result.append(self._color)
         if self._bgcolor:
-            result.append('bg:#' + self._bgcolor)
+            result.append('bg:' + self._bgcolor)
         if self._bold:
             result.append('bold')
         if self._underline:
@@ -211,4 +211,4 @@ _bg_colors = dict((v, k) for k, v in BG_ANSI_COLORS.items())
 _256_colors = {}
 
 for i, (r, g, b) in enumerate(_256_colors_table.colors):
-    _256_colors[i] = '%02x%02x%02x' % (r, g, b)
+    _256_colors[i] = '#%02x%02x%02x' % (r, g, b)

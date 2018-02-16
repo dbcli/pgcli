@@ -10,48 +10,51 @@ print = print_formatted_text
 
 
 def main():
+    wide_space = ('', '       ')
     space = ('', ' ')
 
     print(HTML('\n<u>Foreground colors</u>'))
     print(FormattedText([
-        ('ansiblack', 'ansiblack'), space,
-        ('ansiwhite', 'ansiwhite'), space,
-        ('ansired', 'ansired'), space,
-        ('ansigreen', 'ansigreen'), space,
-        ('ansiyellow', 'ansiyellow'), space,
-        ('ansiblue', 'ansiblue'), space,
-        ('ansifuchsia', 'ansifuchsia'), space,
-        ('ansiturquoise', 'ansiturquoise'), space,
-        ('ansilightgray', 'ansilightgray'), space,
+        ('ansiblack', 'ansiblack'), wide_space,
+        ('ansired', 'ansired'), wide_space,
+        ('ansigreen', 'ansigreen'), wide_space,
+        ('ansiyellow', 'ansiyellow'), wide_space,
+        ('ansiblue', 'ansiblue'), wide_space,
+        ('ansimagenta', 'ansimagenta'), wide_space,
+        ('ansicyan', 'ansicyan'), wide_space,
+        ('ansigray', 'ansigray'), wide_space,
+        ('', '\n'),
 
-        ('ansidarkgray', 'ansidarkgray'), space,
-        ('ansidarkred', 'ansidarkred'), space,
-        ('ansidarkgreen', 'ansidarkgreen'), space,
-        ('ansibrown', 'ansibrown'), space,
-        ('ansidarkblue', 'ansidarkblue'), space,
-        ('ansipurple', 'ansipurple'), space,
-        ('ansiteal', 'ansiteal'), space,
+        ('ansibrightblack', 'ansibrightblack'), space,
+        ('ansibrightred', 'ansibrightred'), space,
+        ('ansibrightgreen', 'ansibrightgreen'), space,
+        ('ansibrightyellow', 'ansibrightyellow'), space,
+        ('ansibrightblue', 'ansibrightblue'), space,
+        ('ansibrightmagenta', 'ansibrightmagenta'), space,
+        ('ansibrightcyan', 'ansibrightcyan'), space,
+        ('ansiwhite', 'ansiwhite'), space,
     ]))
 
-    print(HTML('\n<u>background colors</u>'))
+    print(HTML('\n<u>Background colors</u>'))
     print(FormattedText([
-        ('bg:ansiblack ansiwhite', 'ansiblack'), space,
-        ('bg:ansiwhite', 'ansiwhite'), space,
-        ('bg:ansired', 'ansired'), space,
-        ('bg:ansigreen', 'ansigreen'), space,
-        ('bg:ansiyellow', 'ansiyellow'), space,
-        ('bg:ansiblue', 'ansiblue'), space,
-        ('bg:ansifuchsia', 'ansifuchsia'), space,
-        ('bg:ansiturquoise', 'ansiturquoise'), space,
-        ('bg:ansilightgray', 'ansilightgray'), space,
+        ('bg:ansiblack ansiwhite', 'ansiblack'), wide_space,
+        ('bg:ansired', 'ansired'), wide_space,
+        ('bg:ansigreen', 'ansigreen'), wide_space,
+        ('bg:ansiyellow', 'ansiyellow'), wide_space,
+        ('bg:ansiblue ansiwhite', 'ansiblue'), wide_space,
+        ('bg:ansimagenta', 'ansimagenta'), wide_space,
+        ('bg:ansicyan', 'ansicyan'), wide_space,
+        ('bg:ansigray', 'ansigray'), wide_space,
+        ('', '\n'),
 
-        ('bg:ansidarkgray', 'ansidarkgray'), space,
-        ('bg:ansidarkred', 'ansidarkred'), space,
-        ('bg:ansidarkgreen fg:ansiwhite', 'ansidarkgreen'), space,
-        ('bg:ansibrown', 'ansibrown'), space,
-        ('bg:ansidarkblue fg:ansiwhite', 'ansidarkblue'), space,
-        ('bg:ansipurple', 'ansipurple'), space,
-        ('bg:ansiteal', 'ansiteal'), space,
+        ('bg:ansibrightblack', 'ansibrightblack'), space,
+        ('bg:ansibrightred', 'ansibrightred'), space,
+        ('bg:ansibrightgreen', 'ansibrightgreen'), space,
+        ('bg:ansibrightyellow', 'ansibrightyellow'), space,
+        ('bg:ansibrightblue', 'ansibrightblue'), space,
+        ('bg:ansibrightmagenta', 'ansibrightmagenta'), space,
+        ('bg:ansibrightcyan', 'ansibrightcyan'), space,
+        ('bg:ansiwhite', 'ansiwhite'), space,
     ]))
     print()
 

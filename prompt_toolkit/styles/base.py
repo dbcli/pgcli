@@ -10,6 +10,7 @@ __all__ = [
     'Attrs',
     'DEFAULT_ATTRS',
     'ANSI_COLOR_NAMES',
+    'ANSI_COLOR_NAMES_ALIASES',
     'BaseStyle',
     'DummyStyle',
     'DynamicStyle',
@@ -37,16 +38,39 @@ DEFAULT_ATTRS = Attrs(color='', bgcolor='', bold=False, underline=False,
 #: the following in case we want to take colors from the 8/16 color palette.
 #: Usually, in that case, the terminal application allows to configure the RGB
 #: values for these names.
+#: ISO 6429 colors
 ANSI_COLOR_NAMES = [
-    'ansiblack', 'ansiwhite', 'ansidefault',
+    'ansidefault',
 
-    # Low intensity.
-    'ansired', 'ansigreen', 'ansiyellow', 'ansiblue', 'ansifuchsia', 'ansiturquoise', 'ansilightgray',
+    # Low intensity, dark.  (One or two components 0x80, the other 0x00.)
+    'ansiblack', 'ansired', 'ansigreen', 'ansiyellow', 'ansiblue',
+    'ansimagenta', 'ansicyan', 'ansigray',
 
-    # High intensity. (Not supported everywhere.)
-    'ansidarkgray', 'ansidarkred', 'ansidarkgreen', 'ansibrown', 'ansidarkblue',
-    'ansipurple', 'ansiteal',
+    # High intensity, bright. (One or two components 0xff, the other 0x00. Not supported everywhere.)
+    'ansibrightblack', 'ansibrightred', 'ansibrightgreen', 'ansibrightyellow',
+    'ansibrightblue', 'ansibrightmagenta', 'ansibrightcyan', 'ansiwhite',
 ]
+
+
+# People don't use the same ANSI color names everywhere. In prompt_toolkit 1.0
+# we used some unconvential names (which were contributed like that to
+# Pygments). This is fixed now, but we still support the old names.
+
+# The table below maps the old aliases to the current names.
+ANSI_COLOR_NAMES_ALIASES = {
+    'ansidarkgray': 'ansibrightblack',
+    'ansiteal': 'ansicyan',
+    'ansiturquoise': 'ansibrightcyan',
+    'ansibrown': 'ansiyellow',
+    'ansipurple': 'ansimagenta',
+    'ansifuchsia': 'ansibrightmagenta',
+    'ansilightgray': 'ansigray',
+    'ansidarkred': 'ansired',
+    'ansidarkgreen': 'ansigreen',
+    'ansidarkblue': 'ansiblue',
+}
+assert set(ANSI_COLOR_NAMES_ALIASES.values()).issubset(set(ANSI_COLOR_NAMES))
+assert not (set(ANSI_COLOR_NAMES_ALIASES.keys()) & set(ANSI_COLOR_NAMES))
 
 
 class BaseStyle(with_metaclass(ABCMeta, object)):

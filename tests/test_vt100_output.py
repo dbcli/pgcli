@@ -12,8 +12,8 @@ def test_get_closest_ansi_color():
     assert _get_closest_ansi_color(5, 5, 5) == 'ansiblack'
 
     # Green
-    assert _get_closest_ansi_color(0, 255, 0) == 'ansigreen'
-    assert _get_closest_ansi_color(10, 255, 0) == 'ansigreen'
-    assert _get_closest_ansi_color(0, 255, 10) == 'ansigreen'
+    assert _get_closest_ansi_color(0, 255, 0) == 'ansibrightgreen'
+    assert _get_closest_ansi_color(10, 255, 0) == 'ansibrightgreen'
+    assert _get_closest_ansi_color(0, 255, 10) == 'ansibrightgreen'
 
-    assert _get_closest_ansi_color(220, 220, 200) == 'ansibrown'
+    assert _get_closest_ansi_color(220, 220, 100) == 'ansiyellow'

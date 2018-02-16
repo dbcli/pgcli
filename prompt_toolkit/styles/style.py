@@ -5,7 +5,7 @@ from __future__ import unicode_literals, absolute_import
 import itertools
 import re
 import sys
-from .base import BaseStyle, DEFAULT_ATTRS, ANSI_COLOR_NAMES, Attrs
+from .base import BaseStyle, DEFAULT_ATTRS, ANSI_COLOR_NAMES, ANSI_COLOR_NAMES_ALIASES, Attrs
 from .named_colors import NAMED_COLORS
 from prompt_toolkit.cache import SimpleCache
 
@@ -29,6 +29,8 @@ def _colorformat(text):
     # ANSI color names.
     if text in ANSI_COLOR_NAMES:
         return text
+    if text in ANSI_COLOR_NAMES_ALIASES:
+        return ANSI_COLOR_NAMES_ALIASES[text]
 
     # 140 named colors.
     try:
@@ -40,12 +42,19 @@ def _colorformat(text):
     # Hex codes.
     if text[0:1] == '#':
         col = text[1:]
+
+        # Keep this for backwards-compatibility (Pygments does it).
+        # I don't like the '#' prefix for named colors.
         if col in ANSI_COLOR_NAMES:
-            # Keep this for backwards-compatibility (Pygments does it).
-            # I don't like the '#' prefix for named colors.
             return col
+        elif col in ANSI_COLOR_NAMES_ALIASES:
+            return ANSI_COLOR_NAMES_ALIASES[col]
+
+        # 6 digit hex color.
         elif len(col) == 6:
             return col
+
+        # 3 digit hex color.
         elif len(col) == 3:
             return col[0] * 2 + col[1] * 2 + col[2] * 2
 

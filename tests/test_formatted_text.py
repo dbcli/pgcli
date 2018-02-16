@@ -40,11 +40,11 @@ def test_ansi_formatting():
     value = ANSI('\x1b[32mHe\x1b[45mllo')
 
     assert to_formatted_text(value) == [
-        ('#ansidarkgreen', 'H'),
-        ('#ansidarkgreen', 'e'),
-        ('#ansidarkgreen bg:#ansipurple', 'l'),
-        ('#ansidarkgreen bg:#ansipurple', 'l'),
-        ('#ansidarkgreen bg:#ansipurple', 'o'),
+        ('ansigreen', 'H'),
+        ('ansigreen', 'e'),
+        ('ansigreen bg:ansimagenta', 'l'),
+        ('ansigreen bg:ansimagenta', 'l'),
+        ('ansigreen bg:ansimagenta', 'o'),
     ]
 
     # Bold and italic.

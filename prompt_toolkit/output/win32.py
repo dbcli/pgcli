@@ -429,27 +429,27 @@ class BACKGROUND_COLOR:
 def _create_ansi_color_dict(color_cls):
     " Create a table that maps the 16 named ansi colors to their Windows code. "
     return {
-        'ansidefault':   color_cls.BLACK,
-        'ansiblack':     color_cls.BLACK,
-        'ansidarkgray':  color_cls.BLACK | color_cls.INTENSITY,
-        'ansilightgray': color_cls.GRAY,
-        'ansiwhite':     color_cls.GRAY | color_cls.INTENSITY,
+        'ansidefault':     color_cls.BLACK,
+        'ansiblack':       color_cls.BLACK,
+        'ansigray':        color_cls.GRAY,
+        'ansibrightblack': color_cls.BLACK | color_cls.INTENSITY,
+        'ansiwhite':       color_cls.GRAY | color_cls.INTENSITY,
 
         # Low intensity.
-        'ansidarkred':     color_cls.RED,
-        'ansidarkgreen':   color_cls.GREEN,
-        'ansibrown':       color_cls.YELLOW,
-        'ansidarkblue':    color_cls.BLUE,
-        'ansipurple':      color_cls.MAGENTA,
-        'ansiteal':        color_cls.CYAN,
+        'ansired':     color_cls.RED,
+        'ansigreen':   color_cls.GREEN,
+        'ansiyellow':  color_cls.YELLOW,
+        'ansiblue':    color_cls.BLUE,
+        'ansimagenta': color_cls.MAGENTA,
+        'ansicyan':    color_cls.CYAN,
 
         # High intensity.
-        'ansired':        color_cls.RED | color_cls.INTENSITY,
-        'ansigreen':      color_cls.GREEN | color_cls.INTENSITY,
-        'ansiyellow':     color_cls.YELLOW | color_cls.INTENSITY,
-        'ansiblue':       color_cls.BLUE | color_cls.INTENSITY,
-        'ansifuchsia':    color_cls.MAGENTA | color_cls.INTENSITY,
-        'ansiturquoise':  color_cls.CYAN | color_cls.INTENSITY,
+        'ansibrightred':     color_cls.RED | color_cls.INTENSITY,
+        'ansibrightgreen':   color_cls.GREEN | color_cls.INTENSITY,
+        'ansibrightyellow':  color_cls.YELLOW | color_cls.INTENSITY,
+        'ansibrightblue':    color_cls.BLUE | color_cls.INTENSITY,
+        'ansibrightmagenta': color_cls.MAGENTA | color_cls.INTENSITY,
+        'ansibrightcyan':    color_cls.CYAN | color_cls.INTENSITY,
     }
 
 
