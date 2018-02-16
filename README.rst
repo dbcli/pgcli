@@ -140,6 +140,7 @@ Shells:
 - `mssql-cli <https://github.com/dbcli/mssql-cli>`_: A command-line client for Microsoft SQL Server.
 - `robotframework-debuglibrary <https://github.com/xyb/robotframework-debuglibrary>`_: A debug library and REPL for RobotFramework.
 - `ptrepl <https://github.com/imomaliev/ptrepl>`_: Run any command as REPL
+- `clipwdmgr <https://github.com/samisalkosuo/clipasswordmgr>`_: Command Line Password Manager.
 
 Full screen applications:
 
