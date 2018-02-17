@@ -51,7 +51,7 @@ from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.margins import PromptMargin, ConditionalMargin
 from prompt_toolkit.layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
-from prompt_toolkit.layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
+from prompt_toolkit.layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightIncrementalSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
 from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.lexers import DynamicLexer
 from prompt_toolkit.output.defaults import get_default_output
@@ -350,14 +350,7 @@ class Prompt(object):
 
         # Create processors list.
         input_processor = merge_processors([
-            ConditionalProcessor(
-                # By default, only highlight search when the search
-                # input has the focus. (Note that this doesn't mean
-                # there is no search: the Vi 'n' binding for instance
-                # still allows to jump to the next match in
-                # navigation mode.)
-                HighlightSearchProcessor(preview_search=True),
-                has_focus(search_buffer)),
+            HighlightIncrementalSearchProcessor(),
             HighlightSelectionProcessor(),
             ConditionalProcessor(AppendAutoSuggestion(), has_focus(default_buffer) & ~is_done),
             ConditionalProcessor(PasswordProcessor(), dyncond('is_password')),

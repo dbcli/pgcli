@@ -30,6 +30,7 @@ __all__ = [
 
     'DummyProcessor',
     'HighlightSearchProcessor',
+    'HighlightIncrementalSearchProcessor',
     'HighlightSelectionProcessor',
     'PasswordProcessor',
     'HighlightMatchingBracketProcessor',
@@ -121,35 +122,24 @@ class HighlightSearchProcessor(Processor):
     Processor that highlights search matches in the document.
     Note that this doesn't support multiline search matches yet.
 
-    :param preview_search: A Filter; when active it indicates that we take
-        the search text in real time while the user is typing, instead of the
-        last active search state.
-
-        When this is `True`, maybe you also want to set
-        `BufferControl.preview_search`, otherwise the cursor position won't move.
+    The style classes 'search' and 'search.current' will be applied to the
+    content.
     """
-    def __init__(self, preview_search=False):
-        self.preview_search = to_filter(preview_search)
+    _classname = 'search'
+    _classname_current = 'search.current'
 
     def _get_search_text(self, buffer_control):
         """
         The text we are searching for.
         """
-        # When the search buffer has focus, take that text.
-        if self.preview_search():
-            search_buffer = buffer_control.search_buffer
-            if search_buffer is not None and search_buffer.text:
-                return search_buffer.text
-
-        # Otherwise, take the text of the last active search.
         return buffer_control.search_state.text
 
     def apply_transformation(self, transformation_input):
         buffer_control, document, lineno, source_to_display, fragments, _, _ = transformation_input.unpack()
 
         search_text = self._get_search_text(buffer_control)
-        searchmatch_current_fragment = ' class:search-match.current '
-        searchmatch_fragment = ' class:search-match '
+        searchmatch_fragment = ' class:%s ' % (self._classname, )
+        searchmatch_current_fragment = ' class:%s ' % (self._classname_current, )
 
         if search_text and not get_app().is_done:
             # For each search match, replace the style string.
@@ -181,6 +171,26 @@ class HighlightSearchProcessor(Processor):
                         fragments[i] = (old_fragment + searchmatch_fragment, fragments[i][1])
 
         return Transformation(fragments)
+
+
+class HighlightIncrementalSearchProcessor(HighlightSearchProcessor):
+    """
+    Highlight the search terms that are used for highlighting the incremental
+    search. The style class 'incsearch' will be applied to the content.
+    """
+    # NOTE: This UIControl won't be focussed. Having a different classname, for
+    #       the match below the cursor doesn't make sense.
+    _classname = 'incsearch'
+    _classname_current = 'incsearch'
+
+    def _get_search_text(self, buffer_control):
+        """
+        The text we are searching for.
+        """
+        # When the search buffer has focus, take that text.
+        search_buffer = buffer_control.search_buffer
+        if search_buffer is not None and search_buffer.text:
+            return search_buffer.text
 
 
 class HighlightSelectionProcessor(Processor):
@@ -649,7 +659,7 @@ class ReverseSearchProcessor(Processor):
                     return item
 
         filtered_processor = filter_processor(main_control.input_processor)
-        highlight_processor = HighlightSearchProcessor(preview_search=True)
+        highlight_processor = HighlightIncrementalSearchProcessor()
 
         if filtered_processor:
             new_processor = _MergedProcessor([filtered_processor, highlight_processor])
