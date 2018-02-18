@@ -141,6 +141,7 @@ Shells:
 - `robotframework-debuglibrary <https://github.com/xyb/robotframework-debuglibrary>`_: A debug library and REPL for RobotFramework.
 - `ptrepl <https://github.com/imomaliev/ptrepl>`_: Run any command as REPL
 - `clipwdmgr <https://github.com/samisalkosuo/clipasswordmgr>`_: Command Line Password Manager.
+- `slacker <https://github.com/netromdk/slacker>`_: Easy access to the Slack API and admin of workspaces via REPL.
 
 Full screen applications:
 
