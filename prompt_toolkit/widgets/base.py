@@ -21,7 +21,7 @@ from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.dimension import is_dimension, to_dimension
 from prompt_toolkit.layout.margins import ScrollbarMargin, NumberedMargin
-from prompt_toolkit.layout.processors import PasswordProcessor, ConditionalProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, merge_processors
+from prompt_toolkit.layout.processors import PasswordProcessor, ConditionalProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
 
@@ -90,7 +90,7 @@ class TextArea(object):
                  width=None, height=None,
                  dont_extend_height=False, dont_extend_width=False,
                  line_numbers=False, scrollbar=False, style='',
-                 input_processor=None, search_field=None, preview_search=True,
+                 search_field=None, preview_search=True,
                  prompt=''):
         assert isinstance(text, six.text_type)
         assert search_field is None or isinstance(search_field, SearchToolbar)
@@ -111,7 +111,7 @@ class TextArea(object):
         self.control = BufferControl(
             buffer=self.buffer,
             lexer=lexer,
-            input_processor=merge_processors([
+            input_processors=[
                 ConditionalProcessor(
                     processor=PasswordProcessor(),
                     filter=to_filter(password)
@@ -120,7 +120,7 @@ class TextArea(object):
                 HighlightSelectionProcessor(),
                 DisplayMultipleCursors(),
                 BeforeInput(prompt, style='class:text-area.prompt'),
-            ]),
+            ],
             search_buffer_control=search_control,
             preview_search=preview_search,
             focusable=focusable)

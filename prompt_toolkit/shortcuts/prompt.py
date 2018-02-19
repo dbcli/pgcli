@@ -51,7 +51,7 @@ from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.margins import PromptMargin, ConditionalMargin
 from prompt_toolkit.layout.menus import CompletionsMenu, MultiColumnCompletionsMenu
-from prompt_toolkit.layout.processors import Processor, DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightIncrementalSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
+from prompt_toolkit.layout.processors import DynamicProcessor, PasswordProcessor, ConditionalProcessor, AppendAutoSuggestion, HighlightIncrementalSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput, ReverseSearchProcessor, ShowArg, merge_processors
 from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.lexers import DynamicLexer
 from prompt_toolkit.output.defaults import get_default_output
@@ -223,7 +223,7 @@ class Prompt(object):
         'enable_history_search', 'complete_while_typing',
         'validate_while_typing', 'complete_style', 'mouse_support',
         'auto_suggest', 'clipboard', 'validator', 'refresh_interval',
-        'extra_input_processor', 'default', 'enable_system_prompt',
+        'input_processors', 'default', 'enable_system_prompt',
         'enable_suspend', 'enable_open_in_editor', 'reserve_space_for_menu',
         'tempfile_suffix', 'inputhook')
 
@@ -257,7 +257,7 @@ class Prompt(object):
             rprompt=None,
             bottom_toolbar=None,
             mouse_support=False,
-            extra_input_processor=None,
+            input_processors=None,
             key_bindings=None,
             erase_when_done=False,
             tempfile_suffix='.txt',
@@ -267,13 +267,12 @@ class Prompt(object):
             input=None,
             output=None):
         assert style is None or isinstance(style, BaseStyle)
-        assert extra_input_processor is None or isinstance(extra_input_processor, Processor)
+        assert input_processors is None or isinstance(input_processors, list)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
 
         # Defaults.
         output = output or get_default_output()
         input = input or get_default_input()
-        extra_input_processor = extra_input_processor
 
         history = history or InMemoryHistory()
         clipboard = clipboard or InMemoryClipboard()
@@ -349,7 +348,7 @@ class Prompt(object):
         search_buffer = Buffer(name=SEARCH_BUFFER)
 
         # Create processors list.
-        input_processor = merge_processors([
+        all_input_processors = [
             HighlightIncrementalSearchProcessor(),
             HighlightSelectionProcessor(),
             ConditionalProcessor(AppendAutoSuggestion(), has_focus(default_buffer) & ~is_done),
@@ -357,7 +356,7 @@ class Prompt(object):
             DisplayMultipleCursors(),
 
             # Users can insert processors here.
-            DynamicProcessor(lambda: self.extra_input_processor),
+            DynamicProcessor(lambda: merge_processors(self.input_processors or [])),
 
             # For single line mode, show the prompt before the input.
             ConditionalProcessor(
@@ -366,7 +365,7 @@ class Prompt(object):
                     ShowArg(),
                 ]),
                 ~dyncond('multiline'))
-        ])
+        ]
 
         # Create bottom toolbars.
         bottom_toolbar = ConditionalContainer(
@@ -382,10 +381,10 @@ class Prompt(object):
         search_toolbar = SearchToolbar(search_buffer)
         search_buffer_control = BufferControl(
             buffer=search_buffer,
-            input_processor=merge_processors([
+            input_processors=[
                 ReverseSearchProcessor(),
                 ShowArg(),
-            ]))
+            ])
 
         system_toolbar = SystemToolbar()
 
@@ -399,7 +398,8 @@ class Prompt(object):
         default_buffer_control = BufferControl(
             buffer=default_buffer,
             get_search_buffer_control=get_search_buffer_control,
-            input_processor=input_processor,
+            input_processors=all_input_processors,
+            include_default_input_processors=False,
             lexer=DynamicLexer(lambda: self.lexer),
             preview_search=True)
 
@@ -627,7 +627,7 @@ class Prompt(object):
             wrap_lines=None, history=None, enable_history_search=None,
             complete_while_typing=None, validate_while_typing=None,
             complete_style=None, auto_suggest=None, validator=None,
-            clipboard=None, mouse_support=None, extra_input_processor=None,
+            clipboard=None, mouse_support=None, input_processors=None,
             reserve_space_for_menu=None, enable_system_prompt=None,
             enable_suspend=None, enable_open_in_editor=None,
             tempfile_suffix=None, inputhook=None,

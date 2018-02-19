@@ -53,8 +53,8 @@ class SystemToolbar(object):
         self.buffer_control = BufferControl(
             buffer=self.system_buffer,
             lexer=SimpleLexer(style='class:system-toolbar.text'),
-            input_processor=BeforeInput(
-                lambda: self.prompt, style='class:system-toolbar'),
+            input_processors=[BeforeInput(
+                lambda: self.prompt, style='class:system-toolbar')],
             key_bindings=self._bindings)
 
         self.window = Window(
@@ -203,9 +203,9 @@ class SearchToolbar(object):
 
         self.control = BufferControl(
             buffer=search_buffer,
-            input_processor=BeforeInput(
+            input_processors=[BeforeInput(
                 get_before_input,
-                style='class:search-toolbar.prompt'),
+                style='class:search-toolbar.prompt')],
             lexer=SimpleLexer(
                 style='class:search-toolbar.text'))
 

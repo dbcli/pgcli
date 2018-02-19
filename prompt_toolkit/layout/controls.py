@@ -20,7 +20,7 @@ from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
 from prompt_toolkit.utils import get_cwidth
 
-from .processors import Processor, TransformationInput, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, merge_processors
+from .processors import TransformationInput, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, merge_processors
 from .screen import Point
 
 import six
@@ -389,9 +389,11 @@ class BufferControl(UIControl):
     Control for visualising the content of a `Buffer`.
 
     :param buffer: The `Buffer` object to be displayed.
-    :param input_processor: A :class:`~prompt_toolkit.layout.processors.Processor`. (Use
-        :func:`~prompt_toolkit.layout.processors.merge_processors` if you want
-        to apply multiple processors.)
+    :param input_processors: A list of
+        :class:`~prompt_toolkit.layout.processors.Processor` objects.
+    :param include_default_input_processors: When True, include the default
+        processors for highlighting of selection, search and displaying of
+        multiple cursors.
     :param lexer: :class:`~prompt_toolkit.lexers.Lexer` instance for syntax highlighting.
     :param preview_search: `bool` or `Filter`: Show search while typing.
         When this is `True`, probably you want to add a
@@ -404,7 +406,8 @@ class BufferControl(UIControl):
     """
     def __init__(self,
                  buffer=None,
-                 input_processor=None,
+                 input_processors=None,
+                 include_default_input_processors=True,
                  lexer=None,
                  preview_search=False,
                  focusable=True,
@@ -415,7 +418,8 @@ class BufferControl(UIControl):
                  key_bindings=None):
         from prompt_toolkit.key_binding.key_bindings import KeyBindingsBase
         assert buffer is None or isinstance(buffer, Buffer)
-        assert input_processor is None or isinstance(input_processor, Processor)
+        assert input_processors is None or isinstance(input_processors, list)
+        assert isinstance(include_default_input_processors, bool)
         assert menu_position is None or callable(menu_position)
         assert lexer is None or isinstance(lexer, Lexer)
         assert search_buffer_control is None or isinstance(search_buffer_control, BufferControl)
@@ -423,19 +427,19 @@ class BufferControl(UIControl):
         assert not (search_buffer_control and get_search_buffer_control)
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
 
-        # Default input processor (display search and selection by default.)
-        if input_processor is None:
-            input_processor = merge_processors([
-                HighlightSearchProcessor(),
-                HighlightSelectionProcessor(),
-                DisplayMultipleCursors(),
-            ])
+        self.input_processors = input_processors
+        self.include_default_input_processors = include_default_input_processors
+
+        self.default_input_processors = [
+            HighlightSearchProcessor(),
+            HighlightSelectionProcessor(),
+            DisplayMultipleCursors(),
+        ]
 
         self.preview_search = to_filter(preview_search)
         self.focusable = to_filter(focusable)
         self.focus_on_click = to_filter(focus_on_click)
 
-        self.input_processor = input_processor
         self.buffer = buffer or Buffer()
         self.menu_position = menu_position
         self.lexer = lexer or SimpleLexer()
@@ -532,7 +536,12 @@ class BufferControl(UIControl):
         returns a _ProcessedLine(processed_fragments, source_to_display, display_to_source)
         tuple.
         """
-        merged_processor = self.input_processor
+        # Merge all input processors together.
+        input_processors = self.input_processors or []
+        if self.include_default_input_processors:
+            input_processors = self.default_input_processors + input_processors
+
+        merged_processor = merge_processors(input_processors)
 
         def transform(lineno, fragments):
             " Transform the fragments for a given line number. "

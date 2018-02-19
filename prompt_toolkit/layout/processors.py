@@ -658,20 +658,20 @@ class ReverseSearchProcessor(Processor):
                 if not isinstance(item, excluded_processors):
                     return item
 
-        filtered_processor = filter_processor(main_control.input_processor)
+        filtered_processor = filter_processor(merge_processors(main_control.input_processors or []))
         highlight_processor = HighlightIncrementalSearchProcessor()
 
         if filtered_processor:
-            new_processor = _MergedProcessor([filtered_processor, highlight_processor])
+            new_processors = [filtered_processor, highlight_processor]
         else:
-            new_processor = highlight_processor
+            new_processors = [highlight_processor]
 
         buffer_control = BufferControl(
-                 buffer=main_control.buffer,
-                 input_processor=new_processor,
-                 lexer=main_control.lexer,
-                 preview_search=True,
-                 search_buffer_control=ti.buffer_control)
+             buffer=main_control.buffer,
+             input_processors=new_processors,
+             lexer=main_control.lexer,
+             preview_search=True,
+             search_buffer_control=ti.buffer_control)
         buffer_control.search_state = main_control.search_state
 
         return buffer_control.create_content(ti.width, ti.height)
