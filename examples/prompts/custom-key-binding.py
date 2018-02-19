@@ -53,7 +53,7 @@ def main():
 
     # Read input.
     print('Press F4 to insert "hello world", type "xy" to insert "z":')
-    text = prompt('> ', extra_key_bindings=bindings)
+    text = prompt('> ', key_bindings=bindings)
     print('You said: %s' % text)
 
 

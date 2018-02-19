@@ -29,7 +29,7 @@ def run():
         else:
             return ' [F4] Emacs '
 
-    prompt('> ', extra_key_bindings=bindings, bottom_toolbar=bottom_toolbar)
+    prompt('> ', key_bindings=bindings, bottom_toolbar=bottom_toolbar)
 
 
 if __name__ == '__main__':

@@ -37,7 +37,7 @@ def main():
         b.insert_text(' ')
 
     # Read input.
-    text = prompt('Say something: ', extra_key_bindings=bindings)
+    text = prompt('Say something: ', key_bindings=bindings)
     print('You said: %s' % text)
 
 

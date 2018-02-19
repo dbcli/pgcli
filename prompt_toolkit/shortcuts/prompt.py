@@ -217,7 +217,7 @@ class Prompt(object):
     """
     _fields = (
         'message', 'lexer', 'completer', 'complete_in_thread', 'is_password',
-        'editing_mode', 'extra_key_bindings', 'is_password', 'bottom_toolbar',
+        'editing_mode', 'key_bindings', 'is_password', 'bottom_toolbar',
         'style', 'include_default_pygments_style', 'rprompt', 'multiline',
         'prompt_continuation', 'wrap_lines', 'history',
         'enable_history_search', 'complete_while_typing',
@@ -258,7 +258,7 @@ class Prompt(object):
             bottom_toolbar=None,
             mouse_support=False,
             extra_input_processor=None,
-            extra_key_bindings=None,
+            key_bindings=None,
             erase_when_done=False,
             tempfile_suffix='.txt',
             inputhook=None,
@@ -268,7 +268,7 @@ class Prompt(object):
             output=None):
         assert style is None or isinstance(style, BaseStyle)
         assert extra_input_processor is None or isinstance(extra_input_processor, Processor)
-        assert extra_key_bindings is None or isinstance(extra_key_bindings, KeyBindingsBase)
+        assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
 
         # Defaults.
         output = output or get_default_output()
@@ -499,7 +499,7 @@ class Prompt(object):
                 ConditionalKeyBindings(
                     system_toolbar.get_global_key_bindings(),
                     dyncond('enable_system_prompt')),
-                DynamicKeyBindings(lambda: self.extra_key_bindings),
+                DynamicKeyBindings(lambda: self.key_bindings),
             ]),
             mouse_support=dyncond('mouse_support'),
             editing_mode=editing_mode,
@@ -621,7 +621,7 @@ class Prompt(object):
             # for the current prompt.
             default='', editing_mode=None,
             refresh_interval=None, vi_mode=None, lexer=None, completer=None,
-            complete_in_thread=None, is_password=None, extra_key_bindings=None,
+            complete_in_thread=None, is_password=None, key_bindings=None,
             bottom_toolbar=None, style=None, include_default_pygments_style=None,
             rprompt=None, multiline=None, prompt_continuation=None,
             wrap_lines=None, history=None, enable_history_search=None,
@@ -764,7 +764,7 @@ def create_confirm_prompt(message):
         " Disallow inserting other text. "
         pass
 
-    prompt = Prompt(message, extra_key_bindings=bindings)
+    prompt = Prompt(message, key_bindings=bindings)
     return prompt
 
 

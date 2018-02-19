@@ -29,7 +29,7 @@ def _history():
 
 def _feed_cli_with_input(
         text, editing_mode=EditingMode.EMACS, clipboard=None, history=None,
-        multiline=False, check_line_ending=True, extra_key_bindings=None):
+        multiline=False, check_line_ending=True, key_bindings=None):
     """
     Create a Prompt, feed it with the given user input and return the CLI
     object.
@@ -46,7 +46,7 @@ def _feed_cli_with_input(
         inp.send_text(text)
         p = Prompt(input=inp, output=DummyOutput(), editing_mode=editing_mode,
                    history=history, multiline=multiline, clipboard=clipboard,
-                   extra_key_bindings=extra_key_bindings)
+                   key_bindings=key_bindings)
 
         result = p.prompt()
         return p.default_buffer.document, p.app
@@ -442,7 +442,7 @@ def test_prefix_meta():
     b.add('j', 'j', filter=ViInsertMode())(prefix_meta)
 
     result, cli = _feed_cli_with_input(
-        'hellojjIX\r', extra_key_bindings=b, editing_mode=EditingMode.VI)
+        'hellojjIX\r', key_bindings=b, editing_mode=EditingMode.VI)
     assert result.text == 'Xhello'
 
 

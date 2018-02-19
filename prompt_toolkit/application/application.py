@@ -871,5 +871,5 @@ def _do_wait_for_enter(wait_text):
 
     prompt = Prompt(
         message=wait_text,
-        extra_key_bindings=key_bindings)
+        key_bindings=key_bindings)
     yield From(prompt.app.run_async())

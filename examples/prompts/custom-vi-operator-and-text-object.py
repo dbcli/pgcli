@@ -56,7 +56,7 @@ def main():
     print('-  yA     - yank everything.')
     print('-  RA     - reverse everything.')
 
-    text = prompt('> ', default='hello world', extra_key_bindings=bindings,
+    text = prompt('> ', default='hello world', key_bindings=bindings,
                   editing_mode=EditingMode.VI)
     print('You said: %s' % text)
 

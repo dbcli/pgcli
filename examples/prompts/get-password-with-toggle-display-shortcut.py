@@ -21,7 +21,7 @@ def main():
     print('Type Control-T to toggle password visible.')
     password = prompt('Password: ',
                       is_password=Condition(lambda: hidden[0]),
-                      extra_key_bindings=bindings)
+                      key_bindings=bindings)
     print('You said: %s' % password)
 
 

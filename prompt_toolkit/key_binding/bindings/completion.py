@@ -169,6 +169,6 @@ def _create_more_prompt(message='--MORE--'):
         " Disable inserting of text. "
 
     prompt = Prompt(message,
-        extra_key_bindings=bindings,
+        key_bindings=bindings,
         erase_when_done=True)
     return prompt
