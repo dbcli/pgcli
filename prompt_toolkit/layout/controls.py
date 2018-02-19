@@ -597,7 +597,15 @@ class BufferControl(UIControl):
         # text/cursor position.)
         search_control = self.search_buffer_control
         preview_now = bool(
-            search_control and search_control.buffer.text and self.preview_search())
+            # Only if this feature is enabled.
+            self.preview_search() and
+
+            # And something was typed in the associated search field.
+            search_control and search_control.buffer.text and
+
+            # And we are searching in this control. (Many controls can point to
+            # the same search field, like in Pyvim.)
+            get_app().layout.search_target_buffer_control == self)
 
         if preview_now:
             ss = self.search_state
