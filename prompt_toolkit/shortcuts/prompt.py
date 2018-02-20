@@ -166,6 +166,8 @@ class Prompt(object):
     :param enable_history_search: `bool` or
         :class:`~prompt_toolkit.filters.Filter`. Enable up-arrow parting
         string matching.
+    :param search_ignore_case:
+        :class:`~prompt_toolkit.filters.Filter`. Search case insensitive.
     :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` to be used for
         the syntax highlighting.
     :param validator: :class:`~prompt_toolkit.validation.Validator` instance
@@ -220,7 +222,7 @@ class Prompt(object):
         'editing_mode', 'key_bindings', 'is_password', 'bottom_toolbar',
         'style', 'include_default_pygments_style', 'rprompt', 'multiline',
         'prompt_continuation', 'wrap_lines', 'history',
-        'enable_history_search', 'complete_while_typing',
+        'enable_history_search', 'search_ignore_case', 'complete_while_typing',
         'validate_while_typing', 'complete_style', 'mouse_support',
         'auto_suggest', 'clipboard', 'validator', 'refresh_interval',
         'input_processors', 'default', 'enable_system_prompt',
@@ -239,6 +241,7 @@ class Prompt(object):
             complete_while_typing=True,
             validate_while_typing=True,
             enable_history_search=False,
+            search_ignore_case=False,
             lexer=None,
             enable_system_prompt=False,
             enable_suspend=False,
@@ -378,13 +381,17 @@ class Prompt(object):
             filter=~is_done & renderer_height_is_known &
                     Condition(lambda: self.bottom_toolbar is not None))
 
-        search_toolbar = SearchToolbar(search_buffer)
+        search_toolbar = SearchToolbar(
+            search_buffer,
+            ignore_case=dyncond('search_ignore_case'))
+
         search_buffer_control = SearchBufferControl(
             buffer=search_buffer,
             input_processors=[
                 ReverseSearchProcessor(),
                 ShowArg(),
-            ])
+            ],
+            ignore_case=dyncond('search_ignore_case'))
 
         system_toolbar = SystemToolbar()
 
@@ -625,12 +632,12 @@ class Prompt(object):
             bottom_toolbar=None, style=None, include_default_pygments_style=None,
             rprompt=None, multiline=None, prompt_continuation=None,
             wrap_lines=None, history=None, enable_history_search=None,
-            complete_while_typing=None, validate_while_typing=None,
-            complete_style=None, auto_suggest=None, validator=None,
-            clipboard=None, mouse_support=None, input_processors=None,
-            reserve_space_for_menu=None, enable_system_prompt=None,
-            enable_suspend=None, enable_open_in_editor=None,
-            tempfile_suffix=None, inputhook=None,
+            search_ignore_case=None, complete_while_typing=None,
+            validate_while_typing=None, complete_style=None, auto_suggest=None,
+            validator=None, clipboard=None, mouse_support=None,
+            input_processors=None, reserve_space_for_menu=None,
+            enable_system_prompt=None, enable_suspend=None,
+            enable_open_in_editor=None, tempfile_suffix=None, inputhook=None,
             async_=False):
         """
         Display the prompt. All the arguments are the same as for the
