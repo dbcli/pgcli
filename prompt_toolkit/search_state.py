@@ -10,7 +10,18 @@ __all__ = [
 
 class SearchState(object):
     """
-    A search 'query'.
+    A search 'query', associated with a search field (like a SearchToolbar).
+
+    Every searchable `BufferControl` points to a `search_buffer_control`
+    (another `BufferControls`) which represents the search field. The
+    `SearchState` attached to that search field is used for storing the current
+    search query.
+
+    It is possible to have one searchfield for multiple `BufferControls`. In
+    that case, they'll share the same `SearchState`.
+    If there are multiple `BufferControls` that display the same `Buffer`, then
+    they can have a different `SearchState` each (if they have a different
+    search control).
     """
     __slots__ = ('text', 'direction', 'ignore_case')
 

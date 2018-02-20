@@ -46,7 +46,7 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings, DynamicKeyBindi
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
 from prompt_toolkit.layout.containers import ConditionalContainer, Align
-from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
+from prompt_toolkit.layout.controls import BufferControl, SearchBufferControl, FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.margins import PromptMargin, ConditionalMargin
@@ -379,7 +379,7 @@ class Prompt(object):
                     Condition(lambda: self.bottom_toolbar is not None))
 
         search_toolbar = SearchToolbar(search_buffer)
-        search_buffer_control = BufferControl(
+        search_buffer_control = SearchBufferControl(
             buffer=search_buffer,
             input_processors=[
                 ReverseSearchProcessor(),
@@ -397,7 +397,7 @@ class Prompt(object):
 
         default_buffer_control = BufferControl(
             buffer=default_buffer,
-            get_search_buffer_control=get_search_buffer_control,
+            search_buffer_control=get_search_buffer_control,
             input_processors=all_input_processors,
             include_default_input_processors=False,
             lexer=DynamicLexer(lambda: self.lexer),

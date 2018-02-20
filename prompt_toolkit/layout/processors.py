@@ -624,8 +624,8 @@ class ReverseSearchProcessor(Processor):
         prev_control = get_app().layout.search_target_buffer_control
         if isinstance(prev_control, BufferControl) and \
                 prev_control.search_buffer_control == buffer_control:
-            return prev_control, prev_control.search_state
-        return None, None
+            return prev_control
+        return None
 
     def _content(self, main_control, ti):
         from prompt_toolkit.layout.controls import BufferControl
@@ -658,7 +658,8 @@ class ReverseSearchProcessor(Processor):
                 if not isinstance(item, excluded_processors):
                     return item
 
-        filtered_processor = filter_processor(merge_processors(main_control.input_processors or []))
+        filtered_processor = filter_processor(
+            merge_processors(main_control.input_processors or []))
         highlight_processor = HighlightIncrementalSearchProcessor()
 
         if filtered_processor:
@@ -669,15 +670,15 @@ class ReverseSearchProcessor(Processor):
         buffer_control = BufferControl(
              buffer=main_control.buffer,
              input_processors=new_processors,
+             include_default_input_processors=False,
              lexer=main_control.lexer,
              preview_search=True,
              search_buffer_control=ti.buffer_control)
-        buffer_control.search_state = main_control.search_state
 
-        return buffer_control.create_content(ti.width, ti.height)
+        return buffer_control.create_content(ti.width, ti.height, preview_search=True)
 
     def apply_transformation(self, ti):
-        main_control, search_state = self._get_main_buffer(ti.buffer_control)
+        main_control = self._get_main_buffer(ti.buffer_control)
 
         if ti.lineno == 0 and main_control:
             content = self._content(main_control, ti)
@@ -685,7 +686,7 @@ class ReverseSearchProcessor(Processor):
             # Get the line from the original document for this search.
             line_fragments = content.get_line(content.cursor_position.y)
 
-            if search_state.direction == SearchDirection.FORWARD:
+            if main_control.search_state.direction == SearchDirection.FORWARD:
                 direction_text = 'i-search'
             else:
                 direction_text = 'reverse-i-search'

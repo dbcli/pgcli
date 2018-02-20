@@ -29,6 +29,7 @@ import time
 
 __all__ = [
     'BufferControl',
+    'SearchBufferControl',
     'DummyControl',
     'FormattedTextControl',
     'UIControl',
@@ -412,7 +413,6 @@ class BufferControl(UIControl):
                  preview_search=False,
                  focusable=True,
                  search_buffer_control=None,
-                 get_search_buffer_control=None,
                  menu_position=None,
                  focus_on_click=False,
                  key_bindings=None):
@@ -422,9 +422,9 @@ class BufferControl(UIControl):
         assert isinstance(include_default_input_processors, bool)
         assert menu_position is None or callable(menu_position)
         assert lexer is None or isinstance(lexer, Lexer)
-        assert search_buffer_control is None or isinstance(search_buffer_control, BufferControl)
-        assert get_search_buffer_control is None or callable(get_search_buffer_control)
-        assert not (search_buffer_control and get_search_buffer_control)
+        assert (search_buffer_control is None or
+                callable(search_buffer_control) or
+                isinstance(search_buffer_control, SearchBufferControl))
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
 
         self.input_processors = input_processors
@@ -443,7 +443,6 @@ class BufferControl(UIControl):
         self.buffer = buffer or Buffer()
         self.menu_position = menu_position
         self.lexer = lexer or SimpleLexer()
-        self.get_search_buffer_control = get_search_buffer_control
         self.key_bindings = key_bindings
         self._search_buffer_control = search_buffer_control
 
@@ -457,20 +456,17 @@ class BufferControl(UIControl):
         self._last_click_timestamp = None
         self._last_get_processed_line = None
 
-        # Search state.
-        self.search_state = SearchState()
-
     def __repr__(self):
-        return '<BufferControl(buffer=%r at %r>' % (self.buffer, id(self))
+        return '<%s(buffer=%r at %r>' % (self.__class__.__name__, self.buffer, id(self))
 
     @property
     def search_buffer_control(self):
-        if self.get_search_buffer_control is not None:
-            result = self.get_search_buffer_control()
+        if callable(self._search_buffer_control):
+            result = self._search_buffer_control()
         else:
             result = self._search_buffer_control
 
-        assert result is None or isinstance(result, UIControl)
+        assert result is None or isinstance(result, SearchBufferControl)
         return result
 
     @property
@@ -478,6 +474,20 @@ class BufferControl(UIControl):
         control = self.search_buffer_control
         if control is not None:
             return control.buffer
+
+    @property
+    def search_state(self):
+        """
+        Return the `SearchState` for searching this `BufferControl`.
+        This is always associated with the search control. If one search bar is
+        used for searching multiple `BufferControls`, then they share the same
+        `SearchState`.
+        """
+        search_buffer_control = self.search_buffer_control
+        if search_buffer_control:
+            return search_buffer_control.searcher_search_state
+        else:
+            return SearchState()
 
     def is_focusable(self):
         return self.focusable()
@@ -585,7 +595,7 @@ class BufferControl(UIControl):
 
         return create_func()
 
-    def create_content(self, width, height):
+    def create_content(self, width, height, preview_search=False):
         """
         Create a UIContent.
         """
@@ -596,7 +606,7 @@ class BufferControl(UIControl):
         # then use the search document, which has possibly a different
         # text/cursor position.)
         search_control = self.search_buffer_control
-        preview_now = bool(
+        preview_now = preview_search or bool(
             # Only if this feature is enabled.
             self.preview_search() and
 
@@ -747,6 +757,25 @@ class BufferControl(UIControl):
 
         yield self.buffer.on_completions_changed
         yield self.buffer.on_suggestion_set
+
+
+class SearchBufferControl(BufferControl):
+    """
+    `BufferControl` which is used for searching another `BufferControl`.
+
+    :param ignore_case: Search case insensitive. (Only when this
+        `BufferControl` is used for searching through another `BufferControl`.)
+    """
+    def __init__(self, buffer=None, input_processors=None, lexer=None,
+                 focus_on_click=False, key_bindings=None,
+                 ignore_case=False):
+        super(SearchBufferControl, self).__init__(
+                buffer=buffer, input_processors=input_processors, lexer=lexer,
+                focus_on_click=focus_on_click, key_bindings=key_bindings)
+
+        # If this BufferControl is used as a search field for one or more other
+        # BufferControls, then represents the search state.
+        self.searcher_search_state = SearchState(ignore_case=ignore_case)
 
 
 # Deprecated aliases.

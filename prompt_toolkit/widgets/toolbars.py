@@ -9,7 +9,7 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindi
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.containers import Window, ConditionalContainer
-from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl, UIControl, UIContent
+from prompt_toolkit.layout.controls import BufferControl, SearchBufferControl, FormattedTextControl, UIControl, UIContent
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.processors import BeforeInput
 from prompt_toolkit.lexers import SimpleLexer
@@ -178,10 +178,11 @@ class ArgToolbar(object):
 class SearchToolbar(object):
     """
     :param vi_mode: Display '/' and '?' instead of I-search.
+    :param ignore_case: Search case insensitive.
     """
     def __init__(self, search_buffer=None, vi_mode=False,
                  text_if_not_searching='', forward_search_prompt='I-search: ',
-                 backward_search_prompt='I-search backward: '):
+                 backward_search_prompt='I-search backward: ', ignore_case=False):
         assert search_buffer is None or isinstance(search_buffer, Buffer)
 
         if search_buffer is None:
@@ -194,20 +195,21 @@ class SearchToolbar(object):
         def get_before_input():
             if not is_searching():
                 return text_if_not_searching
-            elif self.control.search_state.direction == SearchDirection.BACKWARD:
+            elif self.control.searcher_search_state.direction == SearchDirection.BACKWARD:
                 return ('?' if vi_mode else backward_search_prompt)
             else:
                 return ('/' if vi_mode else forward_search_prompt)
 
         self.search_buffer = search_buffer
 
-        self.control = BufferControl(
+        self.control = SearchBufferControl(
             buffer=search_buffer,
             input_processors=[BeforeInput(
                 get_before_input,
                 style='class:search-toolbar.prompt')],
             lexer=SimpleLexer(
-                style='class:search-toolbar.text'))
+                style='class:search-toolbar.text'),
+            ignore_case=ignore_case)
 
         self.container = ConditionalContainer(
             content=Window(
