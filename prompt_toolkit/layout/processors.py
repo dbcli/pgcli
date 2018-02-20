@@ -178,10 +178,8 @@ class HighlightIncrementalSearchProcessor(HighlightSearchProcessor):
     Highlight the search terms that are used for highlighting the incremental
     search. The style class 'incsearch' will be applied to the content.
     """
-    # NOTE: This UIControl won't be focussed. Having a different classname, for
-    #       the match below the cursor doesn't make sense.
     _classname = 'incsearch'
-    _classname_current = 'incsearch'
+    _classname_current = 'incsearch.current'
 
     def _get_search_text(self, buffer_control):
         """

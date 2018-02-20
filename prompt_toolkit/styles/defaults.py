@@ -16,10 +16,11 @@ __all__ = [
 PROMPT_TOOLKIT_STYLE = [
     # Highlighting of search matches in document.
     ('search',                             'bg:ansibrightyellow'),
-    ('search.current',                     'underline'),
+    ('search.current',                     ''),
 
     # Incremental search.
-    ('incsearch',                          'reverse'),
+    ('incsearch',                          ''),
+    ('incsearch.current',                  'reverse'),
 
     # Highlighting of select text in document.
     ('selected',                                'reverse'),
