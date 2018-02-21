@@ -177,6 +177,10 @@ class HighlightIncrementalSearchProcessor(HighlightSearchProcessor):
     """
     Highlight the search terms that are used for highlighting the incremental
     search. The style class 'incsearch' will be applied to the content.
+
+    Important: this requires the `preview_search=True` flag to be set for the
+    `BufferControl`. Otherwise, the cursor position won't be set to the search
+    match while searching, and nothing happens.
     """
     _classname = 'incsearch'
     _classname_current = 'incsearch.current'

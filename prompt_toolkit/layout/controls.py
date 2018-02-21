@@ -20,7 +20,7 @@ from prompt_toolkit.search_state import SearchState
 from prompt_toolkit.selection import SelectionType
 from prompt_toolkit.utils import get_cwidth
 
-from .processors import TransformationInput, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, merge_processors
+from .processors import TransformationInput, HighlightSearchProcessor, HighlightIncrementalSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, merge_processors
 from .screen import Point
 
 import six
@@ -432,6 +432,7 @@ class BufferControl(UIControl):
 
         self.default_input_processors = [
             HighlightSearchProcessor(),
+            HighlightIncrementalSearchProcessor(),
             HighlightSelectionProcessor(),
             DisplayMultipleCursors(),
         ]
