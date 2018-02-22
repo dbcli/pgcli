@@ -21,7 +21,7 @@ from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.dimension import is_dimension, to_dimension
 from prompt_toolkit.layout.margins import ScrollbarMargin, NumberedMargin
-from prompt_toolkit.layout.processors import PasswordProcessor, ConditionalProcessor, HighlightSearchProcessor, HighlightSelectionProcessor, DisplayMultipleCursors, BeforeInput
+from prompt_toolkit.layout.processors import PasswordProcessor, ConditionalProcessor, BeforeInput
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
 
@@ -116,9 +116,6 @@ class TextArea(object):
                     processor=PasswordProcessor(),
                     filter=to_filter(password)
                 ),
-                HighlightSearchProcessor(preview_search=preview_search),
-                HighlightSelectionProcessor(),
-                DisplayMultipleCursors(),
                 BeforeInput(prompt, style='class:text-area.prompt'),
             ],
             search_buffer_control=search_control,
