@@ -760,7 +760,7 @@ class Application(object):
         :param text: List of ``(style_str, text)`` tuples.
         :param style: Style class to use. Defaults to the active style in the CLI.
         """
-        print_formatted_text(self.output, text, style or self._merged_style)
+        print_formatted_text(self.output, text, style or self._merged_style, self.color_depth)
 
     @property
     def is_running(self):
