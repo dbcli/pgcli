@@ -739,7 +739,12 @@ class Prompt(object):
 def prompt(*a, **kw):
     """ The global `prompt` function. This will create a new `Prompt` instance
     for every call.  """
-    prompt = Prompt()
+    # Input and output arguments have to be passed to the 'Prompt' class, not
+    # its method.
+    input = kw.get('input')
+    output = kw.get('output')
+
+    prompt = Prompt(input=input, output=output)
     return prompt.prompt(*a, **kw)
 
 
