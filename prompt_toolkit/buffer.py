@@ -1326,9 +1326,11 @@ class Buffer(object):
     def exit_selection(self):
         self.selection_state = None
 
-    def open_in_editor(self):
+    def open_in_editor(self, validate_and_handle=False):
         """
         Open code in editor.
+
+        This returns a future, and runs in a thread executor.
         """
         if self.read_only():
             raise EditReadOnlyBuffer()
@@ -1338,28 +1340,38 @@ class Buffer(object):
         os.write(descriptor, self.text.encode('utf-8'))
         os.close(descriptor)
 
-        # Open in editor
-        # (We need to use `run_in_terminal`, because not all editors go to
-        # the alternate screen buffer, and some could influence the cursor
-        # position.)
-        succes = run_in_terminal(lambda: self._open_file_in_editor(filename))
+        def run():
+            try:
+                # Open in editor
+                # (We need to use `run_in_terminal`, because not all editors go to
+                # the alternate screen buffer, and some could influence the cursor
+                # position.)
+                succes = yield From(run_in_terminal(
+                    lambda: self._open_file_in_editor(filename), in_executor=True))
 
-        # Read content again.
-        if succes:
-            with open(filename, 'rb') as f:
-                text = f.read().decode('utf-8')
+                # Read content again.
+                if succes:
+                    with open(filename, 'rb') as f:
+                        text = f.read().decode('utf-8')
 
-                # Drop trailing newline. (Editors are supposed to add it at the
-                # end, but we don't need it.)
-                if text.endswith('\n'):
-                    text = text[:-1]
+                        # Drop trailing newline. (Editors are supposed to add it at the
+                        # end, but we don't need it.)
+                        if text.endswith('\n'):
+                            text = text[:-1]
 
-                self.document = Document(
-                    text=text,
-                    cursor_position=len(text))
+                        self.document = Document(
+                            text=text,
+                            cursor_position=len(text))
 
-        # Clean up temp file.
-        os.remove(filename)
+                    # Accept the input.
+                    if validate_and_handle:
+                        self.validate_and_handle()
+
+            finally:
+                # Clean up temp file.
+                os.remove(filename)
+
+        return ensure_future(run())
 
     def _open_file_in_editor(self, filename):
         """

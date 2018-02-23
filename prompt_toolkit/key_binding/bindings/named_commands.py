@@ -588,6 +588,4 @@ def edit_and_execute(event):
     Invoke an editor on the current command line, and accept the result.
     """
     buff = event.current_buffer
-
-    buff.open_in_editor()
-    buff.validate_and_handle()
+    buff.open_in_editor(validate_and_handle=True)
