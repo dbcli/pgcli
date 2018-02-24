@@ -44,7 +44,7 @@ Clipboard
 .. automodule:: prompt_toolkit.clipboard
     :members: Clipboard, ClipboardData, DummyClipboard, DynamicClipboard
 
-.. automodule:: prompt_toolkit.clipboard.in_memory
+.. automodule:: prompt_toolkit.clipboard
     :members: InMemoryClipboard
 
 .. automodule:: prompt_toolkit.clipboard.pyperclip
@@ -95,11 +95,11 @@ Style
 .. automodule:: prompt_toolkit.styles
     :members: Style, merge_styles
 
-.. automodule:: prompt_toolkit.styles.pygments
-    :members:
+.. automodule:: prompt_toolkit.styles
+    :members: style_from_pygments_cls, style_from_pygments_dict, pygments_token_to_classname
 
 .. automodule:: prompt_toolkit.styles.named_colors
-    :members:
+    :members: NAMED_COLORS
 
 
 Reactive
@@ -162,28 +162,28 @@ The layout class itself
 Containers
 ^^^^^^^^^^
 
-.. automodule:: prompt_toolkit.layout.containers
-    :members:
+.. automodule:: prompt_toolkit.layout
+    :members: Container, HSplit, VSplit, FloatContainer, Float, Window, ConditionalContainer, ScrollOffsets, ColorColumn, to_container, to_window, is_container
 
 
 Controls
 ^^^^^^^^
 
-.. automodule:: prompt_toolkit.layout.controls
-    :members:
+.. automodule:: prompt_toolkit.layout
+    :members: BufferControl, SearchBufferControl, DummyControl, FormattedTextControl, UIControl, UIContent
 
 
 Other
 ^^^^^
 
-.. automodule:: prompt_toolkit.layout.dimension
-    :members:
+.. automodule:: prompt_toolkit.layout
+    :members: Dimension
 
-.. automodule:: prompt_toolkit.layout.margins
-    :members:
+.. automodule:: prompt_toolkit.layout
+    :members: Margin, NumberredMargin, ScrollbarMargin, ConditionalMargin, PromptMargin
 
-.. automodule:: prompt_toolkit.layout.menus
-    :members:
+.. automodule:: prompt_toolkit.layout
+    :members: CompletionsMenu, MultiColumnCompletionsMenu
 
 .. automodule:: prompt_toolkit.layout.processors
     :members:
@@ -256,10 +256,10 @@ Eventloop
 Input
 -----
 
-.. automodule:: prompt_toolkit.input.defaults
+.. automodule:: prompt_toolkit.input
     :members:
 
-.. automodule:: prompt_toolkit.input.base
+.. automodule:: prompt_toolkit.input.defaults
     :members:
 
 .. automodule:: prompt_toolkit.input.vt100

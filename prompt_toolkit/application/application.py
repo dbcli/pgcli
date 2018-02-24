@@ -46,15 +46,16 @@ class Application(object):
     The main Application class!
     This glues everything together.
 
-    :param layout: A :class:`~prompt_toolkit.layout.layout.Layout` instance.
+    :param layout: A :class:`~prompt_toolkit.layout.Layout` instance.
     :param key_bindings:
-        :class:`~prompt_toolkit.key_binding.key_bindings.KeyBindingsBase` instance for
+        :class:`~prompt_toolkit.key_binding.KeyBindingsBase` instance for
         the key bindings.
-    :param clipboard: :class:`~prompt_toolkit.clipboard.base.Clipboard` to use.
+    :param clipboard: :class:`~prompt_toolkit.clipboard.Clipboard` to use.
     :param on_abort: What to do when Control-C is pressed.
     :param on_exit: What to do when Control-D is pressed.
     :param full_screen: When True, run the application on the alternate screen buffer.
-    :param color_depth: Any `ColorDepth` value, or `None` for default.
+    :param color_depth: Any :class:`~prompt_toolkit.output.ColorDepth` value,
+        or `None` for default.
     :param erase_when_done: (bool) Clear the application output when it finishes.
     :param reverse_vi_search_direction: Normally, in Vi mode, a '/' searches
         forward and a '?' searches backward. In readline mode, this is usually
