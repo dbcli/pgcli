@@ -253,8 +253,8 @@ Eventloop
     :members:
 
 
-Input and output
-----------------
+Input
+-----
 
 .. automodule:: prompt_toolkit.input.defaults
     :members:
@@ -267,6 +267,9 @@ Input and output
 
 .. automodule:: prompt_toolkit.input.win32
     :members:
+
+Output
+------
 
 .. automodule:: prompt_toolkit.output
     :members:
@@ -281,4 +284,7 @@ Input and output
     :members:
 
 .. automodule:: prompt_toolkit.output.win32
+    :members:
+
+.. automodule:: prompt_toolkit.output.color_depth
     :members:

@@ -61,6 +61,18 @@ underline"`` where a child overrides this style partly by specifying
     `reverse` and `blink`. Further, we ignore flags like `roman`, `sans`,
     `mono` and `border`.
 
+The following ANSI colors are available (both for foreground and background):
+
+.. code::
+
+    # Low intensity, dark.  (One or two components 0x80, the other 0x00.)
+    ansiblack, ansired, ansigreen, ansiyellow, ansiblue
+    ansimagenta, 'ansicyan, ansigray
+
+    # High intensity, bright.
+    ansibrightblack, ansibrightred, ansibrightgreen, ansibrightyellow
+    ansibrightblue, ansibrightmagenta, ansibrightcyan, ansiwhite
+
 
 Class names
 ^^^^^^^^^^^
@@ -229,3 +241,49 @@ follows:
         style2,
         style3
     ])
+
+
+Color depths
+^^^^^^^^^^^^
+
+There are four different levels of color depths available:
+
++--------+-----------------+-----------------------------+---------------------------------+
+| 1 bit  | Black and white | ``ColorDepth.DEPTH_1_BIT``  | ``ColorDepth.MONOCHROME``       |
++--------+-----------------+-----------------------------+---------------------------------+
+| 4 bit  | ANSI colors     | ``ColorDepth.DEPTH_4_BIT``  | ``ColorDepth.ANSI_COLORS_ONLY`` |
++--------+-----------------+-----------------------------+---------------------------------+
+| 8 bit  | 256 colors      | ``ColorDepth.DEPTH_8_BIT``  | ``ColorDepth.DEFAULT``          |
++--------+-----------------+-----------------------------+---------------------------------+
+| 24 bit | True colors     | ``ColorDepth.DEPTH_24_BIT`` | ``ColorDepth.TRUE_COLOR``       |
++--------+-----------------+-----------------------------+---------------------------------+
+
+By default, 256 colors are used, because this is what most terminals support
+these days. If the ``TERM`` enviroment variable is set to ``linux`` or
+``eterm-color``, then only ANSI colors are used, because of these terminals. 24
+bit true color output needs to be enabled explicitely. When 4 bit color output
+is chosen, all colors will be mapped to the closest ANSI color.
+
+Setting the default color depth for any prompt_toolkit application can be done
+by setting the ``PROMPT_TOOLKIT_COLOR_DEPTH`` environment variable. You could
+for instance copy the following into your `.bashrc` file.
+
+.. code:: shell
+
+    # export PROMPT_TOOLKIT_COLOR_DEPTH=DEPTH_1_BIT
+    export PROMPT_TOOLKIT_COLOR_DEPTH=DEPTH_4_BIT
+    # export PROMPT_TOOLKIT_COLOR_DEPTH=DEPTH_8_BIT
+    # export PROMPT_TOOLKIT_COLOR_DEPTH=DEPTH_24_BIT
+
+An application can also decide to set the color depth manually by passing a
+:class:`~prompt_toolkit.output.color_depth.ColorDepth` value to the
+:class:`~prompt_toolkit.application.Application` object:
+
+.. code:: python
+
+    from prompt_toolkit.output.color_depth import ColorDepth
+
+    app = Application(
+        color_depth=ColorDepth.ANSI_COLORS_ONLY,
+        # ...
+    )

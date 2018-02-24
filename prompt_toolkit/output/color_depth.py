@@ -10,9 +10,16 @@ class ColorDepth(object):
     """
     Possible color depth values for the output.
     """
-    DEPTH_1_BIT = 'DEPTH_1_BIT'  # One color only.
-    DEPTH_4_BIT = 'DEPTH_4_BIT'  # ANSI Colors.
-    DEPTH_8_BIT = 'DEPTH_8_BIT'  # (The default).
+    #: One color only.
+    DEPTH_1_BIT = 'DEPTH_1_BIT'
+
+    #: ANSI Colors.
+    DEPTH_4_BIT = 'DEPTH_4_BIT'
+
+    #: The default.
+    DEPTH_8_BIT = 'DEPTH_8_BIT'
+
+    #: 24 bit True color.
     DEPTH_24_BIT = 'DEPTH_24_BIT'
 
     # Aliases.
