@@ -79,7 +79,7 @@ italic and underline: ``<b>``, ``<i>`` and ``<u>``.
 
     print(HTML('<b>This is bold</b>'))
     print(HTML('<i>This is italic</b>'))
-    print(HTML('<u>This is italic</u>'))
+    print(HTML('<u>This is underlined</u>'))
 
 Further, it's possible to use tags for foreground colors:
 
