@@ -22,7 +22,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.output import Output, ColorDepth
 from prompt_toolkit.output.defaults import get_default_output
 from prompt_toolkit.renderer import Renderer, print_formatted_text
-from prompt_toolkit.search_state import SearchState
+from prompt_toolkit.search import SearchState
 from prompt_toolkit.styles import BaseStyle, default_ui_style, default_pygments_style, merge_styles, DynamicStyle, DummyStyle
 from prompt_toolkit.utils import Event, in_main_thread
 from .current import set_app

@@ -14,8 +14,9 @@ from prompt_toolkit.layout.containers import Float, HSplit, VSplit, Window, Alig
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.lexers import DynamicLexer, PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
+from prompt_toolkit.lexers import DynamicLexer, PygmentsLexer
+from prompt_toolkit.search import start_search
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import Dialog, Label, Button, TextArea, SearchToolbar, MenuContainer, MenuItem
 import datetime
@@ -242,7 +243,7 @@ def do_delete():
 
 
 def do_find():
-    get_app().layout.focus(search_field)
+    start_search(text_field.control)
 
 
 def do_find_next():

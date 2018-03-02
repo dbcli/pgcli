@@ -196,29 +196,6 @@ class Layout(object):
         assert isinstance(value, Window)
         self._stack.append(value)
 
-    def start_search(self, buffer_control, search_buffer_control):
-        """
-        Start search through the given `buffer_control` using the
-        `search_buffer_control`.
-        """
-        # Make sure to focus the search BufferControl
-        self.focus(search_buffer_control)
-
-        # Remember search link.
-        self.search_links[search_buffer_control] = buffer_control
-
-    def stop_search(self, buffer_control, search_buffer_control):
-        """
-        Stop search through the given `buffer_control`.
-        """
-        assert search_buffer_control in self.search_links
-
-        # Focus the original buffer again.
-        self.focus(buffer_control)
-
-        # Remove the search link.
-        del self.search_links[search_buffer_control]
-
     @property
     def is_searching(self):
         " True if we are searching right now. "

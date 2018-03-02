@@ -1,11 +1,6 @@
 from __future__ import unicode_literals
 
 
-class SearchDirection(object):
-    FORWARD = 'FORWARD'
-    BACKWARD = 'BACKWARD'
-
-
 class EditingMode(object):
     # The set of key bindings that is active.
     VI = 'VI'
@@ -20,6 +15,3 @@ DEFAULT_BUFFER = 'DEFAULT_BUFFER'
 
 #: Name of the system buffer.
 SYSTEM_BUFFER = 'SYSTEM_BUFFER'
-
-# For backward compatibility:
-IncrementalSearchDirection = SearchDirection

@@ -13,11 +13,11 @@ from six.moves import range
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.document import Document
-from prompt_toolkit.enums import SearchDirection
 from prompt_toolkit.filters import to_filter, vi_insert_multiple_mode
 from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.formatted_text.utils import fragment_list_len, fragment_list_to_text
 from prompt_toolkit.reactive import Integer
+from prompt_toolkit.search import SearchDirection
 
 from .utils import explode_text_fragments
 

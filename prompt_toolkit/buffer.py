@@ -11,11 +11,10 @@ from .cache import FastDictCache
 from .clipboard import ClipboardData
 from .completion import CompleteEvent, get_common_complete_suffix, Completer, Completion, DummyCompleter
 from .document import Document
-from .enums import SearchDirection
 from .eventloop import ensure_future, Return, From
 from .filters import to_filter
 from .history import History, InMemoryHistory
-from .search_state import SearchState
+from .search import SearchDirection, SearchState
 from .selection import SelectionType, SelectionState, PasteMode
 from .utils import Event, test_callable_args
 from .validation import ValidationError, Validator

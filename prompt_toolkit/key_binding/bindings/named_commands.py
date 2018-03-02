@@ -4,8 +4,6 @@ Key bindings which are also known by GNU readline by the given names.
 See: http://www.delorie.com/gnu/docs/readline/rlman_13.html
 """
 from __future__ import unicode_literals
-from prompt_toolkit.enums import SearchDirection
-from prompt_toolkit.selection import PasteMode
 from six.moves import range
 import six
 
@@ -14,6 +12,8 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.key_binding.key_processor import KeyPress
 from prompt_toolkit.keys import Keys
+from prompt_toolkit.search import SearchDirection
+from prompt_toolkit.selection import PasteMode
 
 __all__ = [
     'get_by_name',
