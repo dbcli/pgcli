@@ -777,7 +777,3 @@ class SearchBufferControl(BufferControl):
         # If this BufferControl is used as a search field for one or more other
         # BufferControls, then represents the search state.
         self.searcher_search_state = SearchState(ignore_case=ignore_case)
-
-
-# Deprecated aliases.
-TokenListControl = FormattedTextControl
