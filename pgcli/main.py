@@ -36,16 +36,13 @@ from prompt_toolkit.layout.processors import (ConditionalProcessor,
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from pygments.lexers.sql import PostgresLexer
-from pygments.style import Style
-from pygments.styles import get_style_by_name
-from pygments.token import Token, string_to_tokentype
-from pygments.util import ClassNotFound
+from pygments.token import Token
 
 from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF)
 import pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
-from .pgstyle import style_factory
+from .pgstyle import style_factory, style_factory_output
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
 from .completion_refresher import CompletionRefresher
@@ -167,24 +164,9 @@ class PGCli(object):
 
         self.pgspecial.pset_pager(self.config['main'].as_bool(
             'enable_pager') and "on" or "off")
-        
-        try:
-            own_styles = get_style_by_name(self.syntax_style).styles
-        except ClassNotFound:
-            own_styles = get_style_by_name('native').styles
-        for token in c['colors']:
-            try:
-                own_styles.update({string_to_tokentype(
-                    token): own_styles[string_to_tokentype(c['colors'][token])], })
-            except AttributeError as err:
-                own_styles.update(
-                    {string_to_tokentype(token): c['colors'][token], })
 
-        class OutputStyle(Style):
-            default_style = ""
-            styles = own_styles
-
-        self.style_output = OutputStyle
+        self.style_output = style_factory_output(
+            self.syntax_style, c['colors'])
 
         self.now = dt.datetime.today()
 
