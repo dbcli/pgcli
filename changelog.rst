@@ -1,10 +1,23 @@
-Upcoming
-========
+Upcoming:
+=========
+
+TODO
+
+1.9.0
+=====
 
 Features:
 ---------
 
+* manage pager by \pset pager and add enable_pager to the config file (Thanks: `Frederic Aoustin`_).
 * Add support for `\T` command to change format output. (Thanks: `Frederic Aoustin`_).
+* Add option list-dsn (Thanks: `Frederic Aoustin`_).
+
+
+Internal changes:
+-----------------
+
+* Removed support for Python 3.3. (Thanks: `Irina Truong`_)
 
 1.8.2
 =====

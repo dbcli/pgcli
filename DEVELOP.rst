@@ -66,7 +66,7 @@ Adding PostgreSQL Special (Meta) Commands
 -----------------------------------------
 
 If you want to work on adding new meta-commands (such as `\dp`, `\ds`, `dy`),
-you need to contribute to `pgspecial <https://github.com/pgcli/pgspecial/>`_
+you need to contribute to `pgspecial <https://github.com/dbcli/pgspecial/>`_
 project.
 
 Building RPM and DEB packages

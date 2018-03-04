@@ -38,7 +38,7 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from pygments.lexers.sql import PostgresLexer
 from pygments.token import Token
 
-from pgspecial.main import (PGSpecial, NO_QUERY)
+from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF)
 import pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
@@ -161,6 +161,9 @@ class PGCli(object):
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
+
+        self.pgspecial.pset_pager(self.config['main'].as_bool(
+            'enable_pager') and "on" or "off")
 
         self.now = dt.datetime.today()
 
@@ -480,7 +483,7 @@ class PGCli(object):
                     except IOError as e:
                         click.secho(str(e), err=True, fg='red')
                 else:
-                    click.echo_via_pager('\n'.join(output))
+                    self.echo_via_pager('\n'.join(output))
             except KeyboardInterrupt:
                 pass
 
@@ -820,6 +823,11 @@ class PGCli(object):
         """Get the last query executed or None."""
         return self.query_history[-1][0] if self.query_history else None
 
+    def echo_via_pager(self, text, color=None):
+        if self.pgspecial.pager_config == PAGER_OFF:
+            click.echo(text, color=color)
+        else:
+            click.echo_via_pager(text, color)
 
 @click.command()
 # Default host is '' so psycopg2 can default to either localhost or unix socket
@@ -843,6 +851,8 @@ class PGCli(object):
         envvar='PGCLIRC', help='Location of pgclirc file.', type=click.Path(dir_okay=False))
 @click.option('-D', '--dsn', default='', envvar='DSN',
         help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
+@click.option('--list-dsn', 'list_dsn', is_flag=True,
+              help='list of DSN configured into the [alias_dsn] section of pgclirc file.')
 @click.option('--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
         help='Set threshold for row limit prompt. Use 0 to disable prompt.')
 @click.option('--less-chatty', 'less_chatty', is_flag=True,
@@ -858,7 +868,8 @@ class PGCli(object):
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
         single_connection, dbname, username, version, pgclirc, dsn, row_limit,
-        less_chatty, prompt, prompt_dsn, list_databases, auto_vertical_output):
+        less_chatty, prompt, prompt_dsn, list_databases, auto_vertical_output,
+        list_dsn):
 
     if version:
         print('Version:', __version__)
@@ -879,6 +890,17 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
             print ('Config file is now located at', config_full_path)
             print ('Please move the existing config file ~/.pgclirc to',
                    config_full_path)
+    if list_dsn:
+        try:
+            cfg = load_config(pgclirc, config_full_path)
+            for alias in cfg['alias_dsn']:
+                click.secho(alias + " : " + cfg['alias_dsn'][alias])
+            sys.exit(0)
+        except Exception as err:
+            click.secho('Invalid DSNs found in the config file. '
+                        'Please check the "[alias_dsn]" section in pgclirc.',
+                        err=True, fg='red')
+            exit(1)
 
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc,
                   row_limit=row_limit, single_connection=single_connection,
@@ -922,7 +944,7 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
             missingval='<null>'
         )
         formatted = format_output(title, cur, headers, status, settings)
-        click.echo_via_pager('\n'.join(formatted))
+        self.echo_via_pager('\n'.join(formatted))
 
         sys.exit(0)
 
