@@ -187,5 +187,5 @@ def _get_reverse_search_links(layout):
     """
     Return mapping from BufferControl to SearchBufferControl.
     """
-    return {buffer_control: search_buffer_control
-            for search_buffer_control, buffer_control in layout.search_links.items()}
+    return dict((buffer_control, search_buffer_control)
+            for search_buffer_control, buffer_control in layout.search_links.items())
