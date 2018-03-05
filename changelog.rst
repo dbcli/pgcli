@@ -1,7 +1,11 @@
 Upcoming:
 =========
 
-TODO
+Internal changes:
+-----------------
+
+* Add tests, AUTHORS and changelog.rst to release. (Thanks: `Dick Marinus`_)
+
 
 1.9.0
 =====
