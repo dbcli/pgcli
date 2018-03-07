@@ -250,7 +250,7 @@ class _EscapeCodeCache(dict):
         self.color_depth = color_depth
 
     def __missing__(self, attrs):
-        fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
+        fgcolor, bgcolor, bold, underline, italic, blink, reverse, hidden = attrs
         parts = []
 
         parts.extend(self._colors_to_code(fgcolor, bgcolor))
@@ -265,6 +265,8 @@ class _EscapeCodeCache(dict):
             parts.append('4')
         if reverse:
             parts.append('7')
+        if hidden:
+            parts.append('8')
 
         if parts:
             result = '\x1b[0;' + ';'.join(parts) + 'm'

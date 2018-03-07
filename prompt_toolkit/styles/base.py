@@ -18,7 +18,7 @@ __all__ = [
 
 
 #: Style attributes.
-Attrs = namedtuple('Attrs', 'color bgcolor bold underline italic blink reverse')
+Attrs = namedtuple('Attrs', 'color bgcolor bold underline italic blink reverse hidden')
 """
 :param color: Hexadecimal string. E.g. '000000' or Ansi color name: e.g. 'ansiblue'
 :param bgcolor: Hexadecimal string. E.g. 'ffffff' or Ansi color name: e.g. 'ansired'
@@ -27,11 +27,12 @@ Attrs = namedtuple('Attrs', 'color bgcolor bold underline italic blink reverse')
 :param italic: Boolean
 :param blink: Boolean
 :param reverse: Boolean
+:param hidden: Boolean
 """
 
 #: The default `Attrs`.
 DEFAULT_ATTRS = Attrs(color='', bgcolor='', bold=False, underline=False,
-                      italic=False, blink=False, reverse=False)
+                      italic=False, blink=False, reverse=False, hidden=False)
 
 
 #: ``Attrs.bgcolor/fgcolor`` can be in either 'ffffff' format, or can be any of

@@ -34,6 +34,7 @@ Or we can add one of the following flags:
 - ``"underline"``
 - ``"blink"``
 - ``"reverse"``  (reverse foreground and background on the terminal.)
+- ``"hidden"``
 
 Or their negative variants:
 
@@ -42,6 +43,7 @@ Or their negative variants:
 - ``"nounderline"``
 - ``"noblink"``
 - ``"noreverse"``
+- ``"nohidden"``
 
 All of these formatting options can be combined as well:
 

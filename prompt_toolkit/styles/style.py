@@ -68,7 +68,7 @@ def _colorformat(text):
 # Attributes, when they are not filled in by a style. None means that we take
 # the value from the parent.
 _EMPTY_ATTRS = Attrs(color=None, bgcolor=None, bold=None, underline=None,
-                     italic=None, blink=None, reverse=None)
+                     italic=None, blink=None, reverse=None, hidden=None)
 
 
 def _expand_classname(classname):
@@ -123,6 +123,10 @@ def _parse_style_str(style_str):
             attrs = attrs._replace(reverse=True)
         elif part == 'noreverse':
             attrs = attrs._replace(reverse=False)
+        elif part == 'hidden':
+            attrs = attrs._replace(hidden=True)
+        elif part == 'nohidden':
+            attrs = attrs._replace(hidden=False)
 
         # Pygments properties that we ignore.
         elif part in ('roman', 'sans', 'mono'):
@@ -313,7 +317,8 @@ def _merge_attrs(list_of_attrs):
         underline=_or(False, *[a.underline for a in list_of_attrs]),
         italic=_or(False, *[a.italic for a in list_of_attrs]),
         blink=_or(False, *[a.blink for a in list_of_attrs]),
-        reverse=_or(False, *[a.reverse for a in list_of_attrs]))
+        reverse=_or(False, *[a.reverse for a in list_of_attrs]),
+        hidden=_or(False, *[a.hidden for a in list_of_attrs]))
 
 
 def merge_styles(styles):

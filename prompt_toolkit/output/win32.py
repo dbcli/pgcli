@@ -5,6 +5,7 @@ from ctypes.wintypes import DWORD
 
 from prompt_toolkit.renderer import Output
 from prompt_toolkit.styles import ANSI_COLOR_NAMES
+from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.win32_types import CONSOLE_SCREEN_BUFFER_INFO, STD_OUTPUT_HANDLE, STD_INPUT_HANDLE, COORD, SMALL_RECT
 from .color_depth import ColorDepth
 
@@ -74,6 +75,7 @@ class Win32Output(Output):
         self.hconsole = windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
 
         self._in_alternate_screen = False
+        self._hidden = False
 
         self.color_lookup_table = ColorLookupTable()
 
@@ -93,6 +95,9 @@ class Win32Output(Output):
         return self.stdout.encoding
 
     def write(self, data):
+        if self._hidden:
+            data = ' ' * get_cwidth(data)
+
         self._buffer.append(data)
 
     def write_raw(self, data):
@@ -225,9 +230,10 @@ class Win32Output(Output):
         " Reset the console foreground/background color. "
         self._winapi(windll.kernel32.SetConsoleTextAttribute, self.hconsole,
                      self.default_attrs)
+        self._hidden = False
 
     def set_attributes(self, attrs, color_depth):
-        fgcolor, bgcolor, bold, underline, italic, blink, reverse = attrs
+        fgcolor, bgcolor, bold, underline, italic, blink, reverse, self._hidden = attrs
 
         # Start from the default attributes.
         attrs = self.default_attrs

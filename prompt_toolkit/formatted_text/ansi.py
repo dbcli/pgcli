@@ -33,6 +33,7 @@ class ANSI(object):
         self._italic = False
         self._blink = False
         self._reverse = False
+        self._hidden = False
 
         # Process received text.
         parser = self._parse_corot()
@@ -130,6 +131,8 @@ class ANSI(object):
                 self._blink = True  # Fast blink.
             elif attr == 7:
                 self._reverse = True
+            elif attr == 8:
+                self._hidden = True
             elif attr == 22:
                 self._bold = False
             elif attr == 23:
@@ -148,6 +151,7 @@ class ANSI(object):
                 self._italic = False
                 self._blink = False
                 self._reverse = False
+                self._hidden = False
 
             elif attr in (38, 48) and len(attrs) > 1:
                 n = attrs.pop()
@@ -193,6 +197,8 @@ class ANSI(object):
             result.append('blink')
         if self._reverse:
             result.append('reverse')
+        if self._hidden:
+            result.append('hidden')
 
         return ' '.join(result)
 
