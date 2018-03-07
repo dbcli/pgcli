@@ -178,7 +178,6 @@ PYGMENTS_DEFAULT_STYLE = {
     'pygments.comment':                   "italic #408080",
     'pygments.comment.preproc':           "noitalic #bc7a00",
 
-    # keyword:                   "bold #aa22ff",
     'pygments.keyword':                   "bold #008000",
     'pygments.keyword.pseudo':            "nobold",
     'pygments.keyword.type':              "nobold #b00040",
@@ -199,15 +198,16 @@ PYGMENTS_DEFAULT_STYLE = {
     'pygments.name.tag':                  "bold #008000",
     'pygments.name.decorator':            "#aa22ff",
 
-    'pygments.string':                    "#ba2121",
-    'pygments.string.doc':                "italic",
-    'pygments.string.interpol':           "bold #bb6688",
-    'pygments.string.escape':             "bold #bb6622",
-    'pygments.string.regex':              "#bb6688",
-    # 'pygments.string.symbol':             "#b8860b",
-    'pygments.string.symbol':             "#19177c",
-    'pygments.string.other':              "#008000",
-    'pygments.number':                    "#666666",
+    # Note: In Pygments, Token.String is an alias for Token.Literal.String,
+    #       and Token.Number as an alias for Token.Literal.Number.
+    'pygments.literal.string':            "#ba2121",
+    'pygments.literal.string.doc':        "italic",
+    'pygments.literal.string.interpol':   "bold #bb6688",
+    'pygments.literal.string.escape':     "bold #bb6622",
+    'pygments.literal.string.regex':      "#bb6688",
+    'pygments.literal.string.symbol':     "#19177c",
+    'pygments.literal.string.other':      "#008000",
+    'pygments.literal.number':            "#666666",
 
     'pygments.generic.heading':           "bold #000080",
     'pygments.generic.subheading':        "bold #800080",
