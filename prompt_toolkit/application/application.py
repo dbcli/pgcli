@@ -55,7 +55,7 @@ class Application(object):
     :param on_exit: What to do when Control-D is pressed.
     :param full_screen: When True, run the application on the alternate screen buffer.
     :param color_depth: Any :class:`~prompt_toolkit.output.ColorDepth` value,
-        or `None` for default.
+        a callable that returns a ColorDepth or `None` for default.
     :param erase_when_done: (bool) Clear the application output when it finishes.
     :param reverse_vi_search_direction: Normally, in Vi mode, a '/' searches
         forward and a '?' searches backward. In readline mode, this is usually
@@ -144,7 +144,8 @@ class Application(object):
         assert key_bindings is None or isinstance(key_bindings, KeyBindingsBase)
         assert clipboard is None or isinstance(clipboard, Clipboard)
         assert isinstance(full_screen, bool)
-        assert color_depth is None or color_depth in ColorDepth._ALL
+        assert (color_depth is None or callable(color_depth) or
+                color_depth in ColorDepth._ALL), 'Got color_depth: %r' % (color_depth, )
         assert isinstance(editing_mode, six.string_types)
         assert style is None or isinstance(style, BaseStyle)
         assert isinstance(erase_when_done, bool)
@@ -172,7 +173,7 @@ class Application(object):
         self.layout = layout
         self.clipboard = clipboard or InMemoryClipboard()
         self.full_screen = full_screen
-        self.color_depth = color_depth or ColorDepth.default()
+        self._color_depth = color_depth
         self.mouse_support = mouse_support
 
         self.paste_mode = paste_mode
@@ -266,6 +267,21 @@ class Application(object):
             conditional_pygments_style,
             DynamicStyle(lambda: self.style),
         ])
+
+    @property
+    def color_depth(self):
+        """
+        Active `ColorDepth`.
+        """
+        depth = self._color_depth
+
+        if callable(depth):
+            depth = depth()
+
+        if depth is None:
+            depth = ColorDepth.default()
+
+        return depth
 
     @property
     def current_buffer(self):
