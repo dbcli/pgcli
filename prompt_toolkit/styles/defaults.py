@@ -127,7 +127,7 @@ PROMPT_TOOLKIT_STYLE = [
 
 
 # Style that will turn for instance the class 'red' into 'red'.
-COLOR_STYLES = [
+COLORS_STYLE = [
     (name, 'fg:' + name) for name in ANSI_COLOR_NAMES
 ] + [
     (name.lower(), 'fg:' + name) for name in NAMED_COLORS
@@ -231,7 +231,7 @@ def default_ui_style():
     """
     return merge_styles([
         Style(PROMPT_TOOLKIT_STYLE),
-        Style(COLOR_STYLES),
+        Style(COLORS_STYLE),
         Style(WIDGETS_STYLE),
     ])
 
