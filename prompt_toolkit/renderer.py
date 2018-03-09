@@ -602,15 +602,16 @@ class Renderer(object):
         self.request_absolute_cursor_position()
 
 
-def print_formatted_text(output, formatted_text, style, color_depth):
+def print_formatted_text(output, formatted_text, style, color_depth=None):
     """
     Print a list of (style_str, text) tuples in the given style to the output.
     """
     assert isinstance(output, Output)
     assert isinstance(style, BaseStyle)
-    assert color_depth in ColorDepth._ALL
+    assert color_depth is None or color_depth in ColorDepth._ALL
 
     fragments = to_formatted_text(formatted_text)
+    color_depth = color_depth or ColorDepth.default()
 
     # Reset first.
     output.reset_attributes()

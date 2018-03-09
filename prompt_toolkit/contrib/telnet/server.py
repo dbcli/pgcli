@@ -20,6 +20,7 @@ from prompt_toolkit.layout.screen import Size
 from prompt_toolkit.output.defaults import set_default_output
 from prompt_toolkit.output.vt100 import Vt100_Output
 from prompt_toolkit.renderer import print_formatted_text as print_formatted_text
+from prompt_toolkit.styles import DummyStyle
 
 from .log import logger
 from .protocol import IAC, DO, LINEMODE, SB, MODE, SE, WILL, ECHO, NAWS, SUPPRESS_GO_AHEAD
@@ -196,7 +197,7 @@ class TelnetConnection(object):
         Send text to the client.
         """
         formatted_text = to_formatted_text(formatted_text)
-        print_formatted_text(self.vt100_output, formatted_text, self.style)
+        print_formatted_text(self.vt100_output, formatted_text, self.style or DummyStyle())
 
     def send_above_prompt(self, formatted_text):
         """
