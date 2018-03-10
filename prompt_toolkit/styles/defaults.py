@@ -109,6 +109,7 @@ PROMPT_TOOLKIT_STYLE = [
     ('b',                                       'bold'),
     ('em',                                      'italic'),
     ('strong',                                  'bold'),
+    ('hidden',                                  'hidden'),
 
     # It should be possible to use the style names in HTML.
     # <reverse>...</reverse>  or <noreverse>...</noreverse>.
