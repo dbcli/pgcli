@@ -75,6 +75,10 @@ The following ANSI colors are available (both for foreground and background):
     ansibrightblack, ansibrightred, ansibrightgreen, ansibrightyellow
     ansibrightblue, ansibrightmagenta, ansibrightcyan, ansiwhite
 
+In order to know which styles are actually used in an application, it is
+possible to call :meth:`~Application.get_used_style_strings`, when the
+application is done.
+
 
 Class names
 ^^^^^^^^^^^

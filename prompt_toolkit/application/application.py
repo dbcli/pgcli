@@ -31,6 +31,7 @@ from .run_in_terminal import run_in_terminal, run_coroutine_in_terminal
 from subprocess import Popen
 from traceback import format_tb
 import os
+import re
 import signal
 import six
 import sys
@@ -797,6 +798,15 @@ class Application(object):
     @property
     def is_done(self):
         return self.future and self.future.done()
+
+    def get_used_style_strings(self):
+        """
+        Return a list of used style strings. This is helpful for debugging, and
+        for writing a new `Style`.
+        """
+        return sorted([
+            re.sub(r'\s+', ' ', style_str).strip()
+            for style_str in self.app.renderer._attrs_for_style.keys()])
 
 
 class _CombinedRegistry(KeyBindingsBase):
