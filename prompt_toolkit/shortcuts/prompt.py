@@ -394,7 +394,8 @@ class Prompt(object):
             ],
             ignore_case=dyncond('search_ignore_case'))
 
-        system_toolbar = SystemToolbar()
+        system_toolbar = SystemToolbar(
+            enable_global_bindings=dyncond('enable_system_prompt'))
 
         def get_search_buffer_control():
             " Return the UIControl to be focused when searching start. "
@@ -504,9 +505,6 @@ class Prompt(object):
                         has_focus(DEFAULT_BUFFER)),
                     prompt_bindings
                 ]),
-                ConditionalKeyBindings(
-                    system_toolbar.get_global_key_bindings(),
-                    dyncond('enable_system_prompt')),
                 DynamicKeyBindings(lambda: self.key_bindings),
             ]),
             mouse_support=dyncond('mouse_support'),

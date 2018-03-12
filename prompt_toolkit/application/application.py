@@ -12,13 +12,13 @@ from prompt_toolkit.input.defaults import get_default_input
 from prompt_toolkit.input.typeahead import store_typeahead, get_typeahead
 from prompt_toolkit.key_binding.bindings.page_navigation import load_page_navigation_bindings
 from prompt_toolkit.key_binding.defaults import load_key_bindings
-from prompt_toolkit.key_binding.key_bindings import KeyBindings, ConditionalKeyBindings, KeyBindingsBase, merge_key_bindings
+from prompt_toolkit.key_binding.key_bindings import KeyBindings, ConditionalKeyBindings, KeyBindingsBase, merge_key_bindings, GlobalOnlyKeyBindings
 from prompt_toolkit.key_binding.key_processor import KeyProcessor
 from prompt_toolkit.key_binding.vi_state import ViState
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.dummy import create_dummy_layout
-from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.layout import Layout, walk
 from prompt_toolkit.output import Output, ColorDepth
 from prompt_toolkit.output.defaults import get_default_output
 from prompt_toolkit.renderer import Renderer, print_formatted_text
@@ -831,18 +831,32 @@ class _CombinedRegistry(KeyBindingsBase):
         `UIControl` with all the parent controls and the global key bindings.
         """
         key_bindings = []
+        collected_containers = set()
 
         # Collect key bindings from currently focused control and all parent
         # controls. Don't include key bindings of container parent controls.
         container = current_window
-        while container is not None:
+        while True:
+            collected_containers.add(container)
             kb = container.get_key_bindings()
             if kb is not None:
                 key_bindings.append(kb)
 
             if container.is_modal():
                 break
-            container = self.app.layout.get_parent(container)
+
+            parent = self.app.layout.get_parent(container)
+            if parent is None:
+                break
+            else:
+                container = parent
+
+        # Include global bindings (starting at the top-model container).
+        for c in walk(container):
+            if c not in collected_containers:
+                kb = c.get_key_bindings()
+                if kb is not None:
+                    key_bindings.append(GlobalOnlyKeyBindings(kb))
 
         # Add App key bindings
         if self.app.key_bindings:

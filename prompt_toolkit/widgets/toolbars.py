@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import SYSTEM_BUFFER
-from prompt_toolkit.filters import Condition, has_focus, has_completions, has_validation_error, emacs_mode, vi_mode, vi_navigation_mode, has_arg
+from prompt_toolkit.filters import Condition, has_focus, has_completions, has_validation_error, emacs_mode, vi_mode, vi_navigation_mode, has_arg, to_filter
 from prompt_toolkit.formatted_text.utils import fragment_list_len
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings, ConditionalKeyBindings
 from prompt_toolkit.key_binding.vi_state import InputMode
@@ -44,11 +44,12 @@ class SystemToolbar(object):
 
     :param prompt: Prompt to be displayed to the user.
     """
-    def __init__(self, prompt='Shell command: '):
+    def __init__(self, prompt='Shell command: ', enable_global_bindings=True):
         self.prompt = prompt
+        self.enable_global_bindings = to_filter(enable_global_bindings)
+
         self.system_buffer = Buffer(name=SYSTEM_BUFFER)
 
-        self._global_bindings = self._build_global_key_bindings()
         self._bindings = self._build_key_bindings()
 
         self.buffer_control = BufferControl(
@@ -66,28 +67,11 @@ class SystemToolbar(object):
             content=self.window,
             filter=has_focus(self.system_buffer))
 
-    def _build_global_key_bindings(self):
-        focused = has_focus(self.system_buffer)
-
-        bindings = KeyBindings()
-
-        @bindings.add(Keys.Escape, '!', filter= ~focused & emacs_mode)
-        def _(event):
-            " M-'!' will focus this user control. "
-            event.app.layout.focus(self.window)
-
-        @bindings.add('!', filter=~focused & vi_mode & vi_navigation_mode)
-        def _(event):
-            " Focus. "
-            event.app.vi_state.input_mode = InputMode.INSERT
-            event.app.layout.focus(self.window)
-
-        return bindings
-
     def _get_display_before_text(self):
         return [
             ('class:system-toolbar', 'Shell command: '),
             ('class:system-toolbar.text', self.system_buffer.text),
+            ('', '\n'),
         ]
 
     def _build_key_bindings(self):
@@ -136,17 +120,27 @@ class SystemToolbar(object):
             self.system_buffer.reset(append_to_history=True)
             event.app.layout.focus_last()
 
+        # Global bindings. (Listen to these bindings, even when this widget is
+        # not focussed.)
+        global_bindings = KeyBindings()
+        handle = global_bindings.add
+
+        @handle(Keys.Escape, '!', filter= ~focused & emacs_mode, is_global=True)
+        def _(event):
+            " M-'!' will focus this user control. "
+            event.app.layout.focus(self.window)
+
+        @handle('!', filter=~focused & vi_mode & vi_navigation_mode, is_global=True)
+        def _(event):
+            " Focus. "
+            event.app.vi_state.input_mode = InputMode.INSERT
+            event.app.layout.focus(self.window)
+
         return merge_key_bindings([
             ConditionalKeyBindings(emacs_bindings, emacs_mode),
             ConditionalKeyBindings(vi_bindings, vi_mode),
+            ConditionalKeyBindings(global_bindings, self.enable_global_bindings),
         ])
-
-    def get_global_key_bindings(self):
-        """
-        Return the key bindings which need to be registered to allow this
-        toolbar to be focused.
-        """
-        return self._global_bindings
 
     def __pt_container__(self):
         return self.container

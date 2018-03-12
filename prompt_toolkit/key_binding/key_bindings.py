@@ -49,6 +49,7 @@ __all__ = [
     'ConditionalKeyBindings',
     'merge_key_bindings',
     'DynamicKeyBindings',
+    'GlobalOnlyKeyBindings',
 ]
 
 
@@ -56,17 +57,19 @@ class _Binding(object):
     """
     (Immutable binding class.)
     """
-    def __init__(self, keys, handler, filter=None, eager=None, save_before=None):
+    def __init__(self, keys, handler, filter=None, eager=None, is_global=None, save_before=None):
         assert isinstance(keys, tuple)
         assert callable(handler)
         assert isinstance(filter, Filter)
         assert isinstance(eager, Filter)
+        assert isinstance(is_global, Filter)
         assert callable(save_before)
 
         self.keys = keys
         self.handler = handler
         self.filter = filter
         self.eager = eager
+        self.is_global = is_global
         self.save_before = save_before
 
     def call(self, event):
@@ -162,12 +165,15 @@ class KeyBindings(KeyBindingsBase):
             hit. E.g. when there is an active eager key binding for Ctrl-X,
             execute the handler immediately and ignore the key binding for
             Ctrl-X Ctrl-E of which it is a prefix.
+        :param is_global: When this key bindings is added to a `Container` or
+            `Control`, make it a global (always active) binding.
         :param save_before: Callable that takes an `Event` and returns True if
             we should save the current buffer, before handling the event.
             (That's the default.)
         """
         filter = to_filter(kwargs.pop('filter', True))
         eager = to_filter(kwargs.pop('eager', False))
+        is_global = to_filter(kwargs.pop('is_global', False))
         save_before = kwargs.pop('save_before', lambda e: True)
 
         assert not kwargs
@@ -191,11 +197,12 @@ class KeyBindings(KeyBindingsBase):
                             keys, func.handler,
                             filter=func.filter & filter,
                             eager=eager | func.eager,
+                            is_global = is_global | func.is_global,
                             save_before=func.save_before))
                 else:
                     self.bindings.append(
                         _Binding(keys, func, filter=filter, eager=eager,
-                                 save_before=save_before))
+                                 is_global=is_global, save_before=save_before))
                 self._clear_cache()
 
                 return func
@@ -325,19 +332,20 @@ def _check_and_expand_key(key):
     return key
 
 
-def key_binding(filter=True, eager=False, save_before=None):
+def key_binding(filter=True, eager=False, is_global=False, save_before=None):
     """
     Decorator that turn a function into a `_Binding` object. This can be added
     to a `KeyBindings` object when a key binding is assigned.
     """
     filter = to_filter(filter)
     eager = to_filter(eager)
+    is_global = to_filter(is_global)
     save_before = save_before or (lambda e: True)
     keys = ()
 
     def decorator(function):
         return _Binding(keys, function, filter=filter, eager=eager,
-                        save_before=save_before)
+                        is_global=is_global, save_before=save_before)
 
     return decorator
 
@@ -418,6 +426,7 @@ class ConditionalKeyBindings(_Proxy):
                         handler=b.handler,
                         filter=self.filter & b.filter,
                         eager=b.eager,
+                        is_global=b.is_global,
                         save_before=b.save_before))
 
             self._bindings2 = bindings2
@@ -486,3 +495,31 @@ class DynamicKeyBindings(_Proxy):
 
         self._bindings2 = key_bindings
         self._last_version = version
+
+
+class GlobalOnlyKeyBindings(_Proxy):
+    """
+    Wrapper around a `KeyBindings` object that only exposes the global key
+    bindings.
+    """
+    def __init__(self, key_bindings):
+        assert isinstance(key_bindings, KeyBindingsBase)
+        _Proxy.__init__(self)
+        self.key_bindings = key_bindings
+
+    def _update_cache(self):
+        """
+        If one of the original registries was changed. Update our merged
+        version.
+        """
+        expected_version = self.key_bindings._version
+
+        if self._last_version != expected_version:
+            bindings2 = KeyBindings()
+
+            for b in self.key_bindings.bindings:
+                if b.is_global():
+                    bindings2.bindings.append(b)
+
+            self._bindings2 = bindings2
+            self._last_version = expected_version
