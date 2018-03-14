@@ -6,7 +6,7 @@ More about styling
 This page will attempt to explain in more detail how to use styling in
 prompt_toolkit.
 
-To some extend, it is very similar to how `Pygments <http://pygments.org/>`_
+To some extent, it is very similar to how `Pygments <http://pygments.org/>`_
 styling works.
 
 
