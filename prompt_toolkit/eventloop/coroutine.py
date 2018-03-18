@@ -105,7 +105,7 @@ def _run_coroutine(coroutine):
             ref.forget()
         else:
             # Process yielded value from coroutine.
-            assert isinstance(new_f, Future)
+            assert isinstance(new_f, Future), 'got %r' % (new_f, )
 
             @new_f.add_done_callback
             def continue_(_):

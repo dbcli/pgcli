@@ -4,7 +4,7 @@ An example of how to deal with slow auto completion code.
 
 - Running the completions in a thread is possible by wrapping the
   `Completer` object in a `ThreadedCompleter`. This makes sure that the
-  ``get_completions`` function is executed in a background thread.
+  ``get_completions`` generator is executed in a background thread.
 
   For the `prompt` shortcut, we don't have to wrap the completer ourselves.
   Passing `complete_in_thread=True` is sufficient.
@@ -15,7 +15,7 @@ An example of how to deal with slow auto completion code.
 from __future__ import unicode_literals
 
 from prompt_toolkit.completion import Completer, Completion
-from prompt_toolkit import prompt
+from prompt_toolkit.shortcuts import prompt, CompleteStyle
 import time
 
 WORDS = [
@@ -35,16 +35,22 @@ class SlowCompleter(Completer):
         self.loading = False
 
     def get_completions(self, document, complete_event):
+        # TODO: checking this flag is not reliable, multiple instances of this
+        #       generator could be running at the same time. Use something like
+        #       `get_app().current_buffer.is_completing` in the future.
         self.loading = True
         word_before_cursor = document.get_word_before_cursor()
 
-        time.sleep(.5)  # Simulate slowness.
+        try:
+            for word in WORDS:
+                if word.startswith(word_before_cursor):
+                    time.sleep(.2)  # Simulate slowness.
+                    yield Completion(word, -len(word_before_cursor))
 
-        for word in WORDS:
-            if word.startswith(word_before_cursor):
-                yield Completion(word, -len(word_before_cursor))
-
-        self.loading = False
+        finally:
+            # We use try/finally because this generator can be closed if the
+            # input text changes before all completions are generated.
+            self.loading = False
 
 
 def main():
@@ -57,8 +63,10 @@ def main():
         return ' Loading completions... ' if slow_completer.loading else ''
 
     # Display prompt.
-    text = prompt('Give some animals: ', completer=slow_completer, complete_in_thread=True,
-                  complete_while_typing=True, bottom_toolbar=bottom_toolbar)
+    text = prompt('Give some animals: ', completer=slow_completer,
+                  complete_in_thread=True, complete_while_typing=True,
+                  bottom_toolbar=bottom_toolbar,
+                  complete_style=CompleteStyle.MULTI_COLUMN)
     print('You said: %s' % text)
 
 

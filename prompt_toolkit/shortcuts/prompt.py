@@ -340,10 +340,10 @@ class Prompt(object):
             validate_while_typing=dyncond('validate_while_typing'),
             enable_history_search=dyncond('enable_history_search'),
             validator=DynamicValidator(lambda: self.validator),
-            completer=ThreadedCompleter(
-                completer=DynamicCompleter(lambda: self.completer),
-                in_thread=dyncond('complete_in_thread'),
-            ),
+            completer=DynamicCompleter(lambda:
+                ThreadedCompleter(self.completer)
+                if self.complete_in_thread and self.completer
+                else self.completer),
             history=DynamicHistory(lambda: self.history),
             auto_suggest=DynamicAutoSuggest(lambda: self.auto_suggest),
             accept_handler=accept,

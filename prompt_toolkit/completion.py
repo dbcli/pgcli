@@ -1,10 +1,9 @@
 """
 """
 from __future__ import unicode_literals
+from .eventloop import generator_to_async_generator, AsyncGeneratorItem
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass, text_type
-from .eventloop import Future, run_in_executor
-from .filters import to_filter
 
 __all__ = [
     'Completion',
@@ -141,7 +140,13 @@ class Completer(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def get_completions(self, document, complete_event):
         """
-        Yield :class:`.Completion` instances.
+        This should be a generator that yields :class:`.Completion` instances.
+
+        If the generation of completions is something expensive (that takes a
+        lot of time), consider wrapping this `Completer` class in a
+        `ThreadedCompleter`. In that case, the completer algorithm runs in a
+        background thread and completions will be displayed as soon as they
+        arrive.
 
         :param document: :class:`~prompt_toolkit.document.Document` instance.
         :param complete_event: :class:`.CompleteEvent` instance.
@@ -149,42 +154,50 @@ class Completer(with_metaclass(ABCMeta, object)):
         while False:
             yield
 
-    def get_completions_future(self, document, complete_event):
+    def get_completions_async(self, document, complete_event):
         """
-        Return a `Future` which is set when the completions are ready.
-        This function can be overloaded in order to provide an asynchronous
-        implementation.
+        Asynchronous generator for completions. (Probably, you won't have to
+        override this.)
+
+        This should return an iterable that can yield both :class:`.Completion`
+        and `Future` objects. The :class:`.Completion` objects have to be
+        wrapped in a `AsyncGeneratorItem` object.
+
+        If we drop Python 2 support in the future, this could become a true
+        asynchronous generator.
         """
-        return Future.succeed(self.get_completions(document, complete_event))
+        for item in self.get_completions(document, complete_event):
+            assert isinstance(item, Completion)
+            yield AsyncGeneratorItem(item)
 
 
 class ThreadedCompleter(Completer):
     """
-    Wrapper that runs completions in a thread.
+    Wrapper that runs the `get_completions` generator in a thread.
+
     (Use this to prevent the user interface from becoming unresponsive if the
     generation of completions takes too much time.)
+
+    The completions will be displayed as soon as they are produced. The user
+    can already select a completion, even if not all completions are displayed.
     """
-    def __init__(self, completer, in_thread=True):
-        assert isinstance(completer, Completer)
+    def __init__(self, completer=None):
+        assert isinstance(completer, Completer), 'Got %r' % (completer, )
         self.completer = completer
-        self.in_thread = to_filter(in_thread)
 
     def get_completions(self, document, complete_event):
         return self.completer.get_completions(document, complete_event)
 
-    def get_completions_future(self, document, complete_event):
+    def get_completions_async(self, document, complete_event):
         """
-        Run the `get_completions` function in a thread.
+        Asynchronous generator of completions.
+        This yields both Future and Completion objects.
         """
-        if not self.in_thread():
-            return self.completer.get_completions_future(document, complete_event)
+        return generator_to_async_generator(
+            lambda: self.completer.get_completions(document, complete_event))
 
-        def run_get_completions_thread():
-            # Do conversion to list in the thread, otherwise the generator
-            # (which is possibly slow) will be consumed in the event loop.
-            return list(self.get_completions(document, complete_event))
-        f = run_in_executor(run_get_completions_thread)
-        return f
+    def __repr__(self):
+        return 'ThreadedCompleter(%r)' % (self.completer, )
 
 
 class DummyCompleter(Completer):
@@ -193,6 +206,9 @@ class DummyCompleter(Completer):
     """
     def get_completions(self, document, complete_event):
         return []
+
+    def __repr__(self):
+        return 'DummyCompleter()'
 
 
 class DynamicCompleter(Completer):
@@ -209,9 +225,13 @@ class DynamicCompleter(Completer):
         completer = self.get_completer() or DummyCompleter()
         return completer.get_completions(document, complete_event)
 
-    def get_completions_future(self, document, complete_event):
+    def get_completions_async(self, document, complete_event):
         completer = self.get_completer() or DummyCompleter()
-        return completer.get_completions_future(document, complete_event)
+        return completer.get_completions_async(document, complete_event)
+
+    def __repr__(self):
+        return 'DynamicCompleter(%r -> %r)' % (
+            self.get_completer, self.get_completer())
 
 
 def get_common_complete_suffix(document, completions):

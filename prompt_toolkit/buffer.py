@@ -11,7 +11,7 @@ from .cache import FastDictCache
 from .clipboard import ClipboardData
 from .completion import CompleteEvent, get_common_complete_suffix, Completer, Completion, DummyCompleter
 from .document import Document
-from .eventloop import ensure_future, Return, From
+from .eventloop import ensure_future, Return, From, consume_async_generator
 from .filters import to_filter
 from .history import History, InMemoryHistory
 from .search import SearchDirection, SearchState
@@ -755,11 +755,13 @@ class Buffer(object):
             self.go_to_completion(None)
             self.complete_state = None
 
-    def set_completions(self, completions, go_to_first=True, go_to_last=False):
+    def set_completions(self, completions, select_first=False, select_last=False):
         """
         Start completions. (Generate list of completions and initialize.)
+
+        By default, no completion will be selected.
         """
-        assert not (go_to_first and go_to_last)
+        assert not (select_first and select_last)
 
         # Generate list of all completions.
         if completions is None:
@@ -776,9 +778,9 @@ class Buffer(object):
             self.complete_state = CompletionState(
                 original_document=self.document,
                 current_completions=completions)
-            if go_to_first:
+            if select_first:
                 self.go_to_completion(0)
-            elif go_to_last:
+            elif select_last:
                 self.go_to_completion(len(completions) - 1)
             else:
                 self.go_to_completion(None)
@@ -819,7 +821,7 @@ class Buffer(object):
                             start_position=-len(current_line),
                             display_meta=display_meta))
 
-        self.set_completions(completions=completions[::-1])
+        self.set_completions(completions=completions[::-1], select_first=True)
 
     def go_to_completion(self, index):
         """
@@ -1415,16 +1417,21 @@ class Buffer(object):
         Start asynchronous autocompletion of this buffer.
         (This will do nothing if a previous completion was still in progress.)
         """
+        # Only one of these options can be selected.
+        assert select_first + select_last + insert_common_part <= 1
+
         ensure_future(self._async_completer(
             select_first=select_first,
             select_last=select_last,
             insert_common_part=insert_common_part,
-            complete_event=CompleteEvent(completion_requested=True)))
+            complete_event=complete_event or CompleteEvent(completion_requested=True)))
 
     def _create_completer_coroutine(self):
         """
         Create function for asynchronous autocompletion.
-        (This can be in another thread.)
+
+        (This consumes the asynchronous completer generator, which possibly
+        runs the completion algorithm in another thread.)
         """
         def completion_does_nothing(document, completion):
             """
@@ -1446,9 +1453,31 @@ class Buffer(object):
             if self.complete_state or not self.completer:
                 return
 
-            completions = yield From(self.completer.get_completions_future(
-                    document, complete_event))
-            completions = list(completions)
+            # Process asynchronous completions generator.
+            completions = []
+
+            def proceed():
+                """ Keep retrieving completions. Input text has not yet changed
+                while generating completions. """
+                if self.complete_state is None:
+                    return self.document == document
+                else:
+                    return self.complete_state.original_document == document
+
+            def add_completion(completion):
+                " Got one completion from the asynchronous completion generator. "
+                completions.append(completion)
+
+                if self.complete_state:
+                    self.complete_state.current_completions = completions[:]
+                    self.on_completions_changed.fire()
+                else:
+                    self.set_completions(completions=completions[:])
+
+            yield From(consume_async_generator(
+                self.completer.get_completions_async(document, complete_event),
+                item_callback=add_completion,
+                cancel=lambda: not proceed()))
 
             # Set the new complete_state. Don't replace an existing
             # complete_state if we had one. (The user could have pressed
@@ -1461,13 +1490,23 @@ class Buffer(object):
                 del completions[:]
 
             # Set completions if the text was not yet changed.
-            if self.document == document and not self.complete_state:
-                set_completions = True
-                select_first_anyway = False
+            if proceed():
+                # When no completions were found, or when the user selected
+                # already a completion by using the arrow keys, don't do anything.
+                if not self.complete_state or self.complete_state.complete_index is not None:
+                    return
 
-                # When the common part has to be inserted, and there
-                # is a common part.
-                if insert_common_part:
+                # Select first/last or insert common part, depending on the key
+                # binding. (For this we have to wait until all completions are
+                # loaded.)
+
+                if select_first:
+                    self.go_to_completion(0)
+
+                elif select_last:
+                    self.go_to_completion(len(completions) - 1)
+
+                elif insert_common_part:
                     common_part = get_common_complete_suffix(document, completions)
                     if common_part:
                         # Insert the common part, update completions.
@@ -1479,8 +1518,10 @@ class Buffer(object):
                             completions[:] = [
                                 c.new_completion_from_position(len(common_part))
                                 for c in completions]
+
+                            self.set_completions(completions=completions)
                         else:
-                            set_completions = False
+                            self.complete_state = None
                     else:
                         # When we were asked to insert the "common"
                         # prefix, but there was no common suffix but
@@ -1489,17 +1530,13 @@ class Buffer(object):
                         # which does * expansion, like '*.py', with
                         # exactly one match.)
                         if len(completions) == 1:
-                            select_first_anyway = True
+                            self.go_to_completion(0)
 
-                if set_completions:
-                    self.set_completions(
-                        completions=completions,
-                        go_to_first=select_first or select_first_anyway,
-                        go_to_last=select_last)
-
-            elif not self.complete_state:
-                # Otherwise, restart thread.
-                raise _Retry
+            else:
+                # If the last operation was an insert, (not a delete), restart
+                # the completion coroutine.
+                if self.document.text_before_cursor.startswith(document.text_before_cursor):
+                    raise _Retry
 
         return async_completer
 
