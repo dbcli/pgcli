@@ -32,13 +32,11 @@ class SlowCompleter(Completer):
     This is a completer that's very slow.
     """
     def __init__(self):
-        self.loading = False
+        self.loading = 0
 
     def get_completions(self, document, complete_event):
-        # TODO: checking this flag is not reliable, multiple instances of this
-        #       generator could be running at the same time. Use something like
-        #       `get_app().current_buffer.is_completing` in the future.
-        self.loading = True
+        # Keep count of how many completion generators are running.
+        self.loading += 1
         word_before_cursor = document.get_word_before_cursor()
 
         try:
@@ -50,7 +48,7 @@ class SlowCompleter(Completer):
         finally:
             # We use try/finally because this generator can be closed if the
             # input text changes before all completions are generated.
-            self.loading = False
+            self.loading -= 1
 
 
 def main():
@@ -60,7 +58,7 @@ def main():
 
     # Add a bottom toolbar that display when completions are loading.
     def bottom_toolbar():
-        return ' Loading completions... ' if slow_completer.loading else ''
+        return ' Loading completions... ' if slow_completer.loading > 0 else ''
 
     # Display prompt.
     text = prompt('Give some animals: ', completer=slow_completer,
