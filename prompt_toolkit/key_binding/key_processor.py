@@ -79,15 +79,8 @@ class KeyProcessor(object):
         # registered in the key bindings.
 
     :param key_bindings: `KeyBindingsBase` instance.
-    :param timeout: Like Vim's `timeoutlen` option. This can be `None` or a float.
-        For instance, suppose that we have a key binding AB and a second key
-        binding A. If the uses presses A and then waits, we don't handle this
-        binding yet (unless it was marked 'eager'), because we don't know what
-        will follow. This timeout is the maximum amount of time that we wait
-        until we call the handlers anyway.
-        Pass `None` to disable this timeout.
     """
-    def __init__(self, key_bindings, timeout=1.0):
+    def __init__(self, key_bindings):
         assert isinstance(key_bindings, KeyBindingsBase)
 
         self._bindings = key_bindings
@@ -95,13 +88,6 @@ class KeyProcessor(object):
         self.before_key_press = Event(self)
         self.after_key_press = Event(self)
 
-        # Timeout, like Vim's timeoutlen option.
-        # For instance, suppose that we have a key binding AB and a second key
-        # binding A. If the uses presses A and then waits, we don't handle this
-        # binding yet (unless it was marked 'eager'), because we don't know
-        # what will follow. This timeout is the maximum amount of time that we
-        # wait until we call the handlers anyway.
-        self.timeout = 1.0  # seconds
         self._keys_pressed = 0  # Monotonically increasing counter.
 
         # Simple macro recording. (Like readline does.)
@@ -315,7 +301,7 @@ class KeyProcessor(object):
             # Invalidate user interface.
             app.invalidate()
 
-        # skip timeout if the last key was flush
+        # Skip timeout if the last key was flush.
         if not is_flush:
             self._start_timeout()
 
@@ -389,14 +375,16 @@ class KeyProcessor(object):
         no key was pressed in the meantime, we flush all data in the queue and
         call the appropriate key binding handlers.
         """
-        if self.timeout is None:
+        timeout = get_app().timeoutlen
+
+        if timeout is None:
             return
 
         counter = self._keys_pressed
 
         def wait():
             " Wait for timeout. "
-            time.sleep(self.timeout)
+            time.sleep(timeout)
 
             if len(self.key_buffer) > 0 and counter == self._keys_pressed:
                 # (No keys pressed in the meantime.)

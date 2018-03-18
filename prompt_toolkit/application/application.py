@@ -213,7 +213,16 @@ class Application(object):
         #: after "\x1b". This little timer will consider "\x1b" to be escape if
         #: nothing did follow in this time span.
         #: This seems to work like the `ttimeoutlen` option in Vim.
-        self.input_timeout = .5
+        self.ttimeoutlen = .5  # Seconds.
+
+        #: Like Vim's `timeoutlen` option. This can be `None` or a float.  For
+        #: instance, suppose that we have a key binding AB and a second key
+        #: binding A. If the uses presses A and then waits, we don't handle
+        #: this binding yet (unless it was marked 'eager'), because we don't
+        #: know what will follow. This timeout is the maximum amount of time
+        #: that we wait until we call the handlers anyway. Pass `None` to
+        #: disable this timeout.
+        self.timeoutlen = 1.0
 
         #: The `Renderer` instance.
         # Make sure that the same stdout is used, when a custom renderer has been passed.
@@ -537,7 +546,7 @@ class Application(object):
             def auto_flush_input(counter):
                 # Flush input after timeout.
                 # (Used for flushing the enter key.)
-                time.sleep(self.input_timeout)
+                time.sleep(self.ttimeoutlen)
 
                 if flush_counter[0] == counter:
                     call_from_executor(flush_input)
