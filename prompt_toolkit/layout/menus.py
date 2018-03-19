@@ -433,15 +433,24 @@ class MultiColumnCompletionMenuControl(UIControl):
         @Condition
         def filter():
             " Only handle key bindings if this menu is visible. "
+            app = get_app()
+            complete_state = app.current_buffer.complete_state
+
+            # There need to be completions, and one needs to be selected.
+            if complete_state is None or complete_state.complete_index is None:
+                return False
+
+            # This menu needs to be visible.
             return any(
                 window.content == self
-                for window in get_app().layout.visible_windows)
+                for window in app.layout.visible_windows)
 
         def move(right=False):
             buff = get_app().current_buffer
             complete_state = buff.complete_state
 
-            if complete_state is not None:
+            if complete_state is not None and \
+                    buff.complete_state.complete_index is not None:
                 # Calculate new complete index.
                 new_index = buff.complete_state.complete_index
                 if right:
