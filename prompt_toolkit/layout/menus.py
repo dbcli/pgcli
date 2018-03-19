@@ -422,6 +422,49 @@ class MultiColumnCompletionMenuControl(UIControl):
                 if completion:
                     b.apply_completion(completion)
 
+    def get_key_bindings(self):
+        """
+        Expose key bindings that handle the left/right arrow keys when the menu
+        is displayed.
+        """
+        from prompt_toolkit.key_binding.key_bindings import KeyBindings
+        kb = KeyBindings()
+
+        @Condition
+        def filter():
+            " Only handle key bindings if this menu is visible. "
+            return any(
+                window.content == self
+                for window in get_app().layout.visible_windows)
+
+        def move(right=False):
+            buff = get_app().current_buffer
+            complete_state = buff.complete_state
+
+            if complete_state is not None:
+                # Calculate new complete index.
+                new_index = buff.complete_state.complete_index
+                if right:
+                    new_index += self._rendered_rows
+                else:
+                    new_index -= self._rendered_rows
+
+                if 0 <= new_index < len(complete_state.current_completions):
+                    buff.go_to_completion(new_index)
+
+        # NOTE: the is_global is required because the completion menu will
+        #       never be focussed.
+
+        @kb.add('left', is_global=True, filter=filter)
+        def _(event):
+            move()
+
+        @kb.add('right', is_global=True, filter=filter)
+        def _(event):
+            move(True)
+
+        return kb
+
 
 class MultiColumnCompletionsMenu(HSplit):
     """
