@@ -417,6 +417,7 @@ def load_vi_bindings():
         else:
             b.start_completion(select_last=True)
 
+    @handle('c-g', filter=vi_insert_mode)
     @handle('c-y', filter=vi_insert_mode)
     def _(event):
         """
