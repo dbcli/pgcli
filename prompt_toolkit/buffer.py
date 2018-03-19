@@ -73,8 +73,12 @@ class CompletionState(object):
     def go_to_index(self, index):
         """
         Create a new :class:`.CompletionState` object with the new index.
+
+        When `index` is `None` deselect the completion.
         """
-        return CompletionState(self.original_document, self.current_completions, complete_index=index)
+        if self.current_completions:
+            assert index is None or 0 <= index < len(self.current_completions)
+            self.complete_index = index
 
     def new_text_and_position(self):
         """
@@ -755,41 +759,22 @@ class Buffer(object):
             self.go_to_completion(None)
             self.complete_state = None
 
-    def set_completions(self, completions, select_first=False, select_last=False):
+    def _set_completions(self, completions):
         """
         Start completions. (Generate list of completions and initialize.)
 
         By default, no completion will be selected.
         """
-        assert not (select_first and select_last)
+        assert isinstance(completions, list)
 
-        # Generate list of all completions.
-        if completions is None:
-            if self.completer:
-                completions = list(self.completer.get_completions(
-                    self.document,
-                    CompleteEvent(completion_requested=True)
-                ))
-            else:
-                completions = []
-
-        # Set `complete_state`.
-        if completions:
-            self.complete_state = CompletionState(
-                original_document=self.document,
-                current_completions=completions)
-            if select_first:
-                self.go_to_completion(0)
-            elif select_last:
-                self.go_to_completion(len(completions) - 1)
-            else:
-                self.go_to_completion(None)
-
-        else:
-            self.complete_state = None
+        self.complete_state = CompletionState(
+            original_document=self.document,
+            current_completions=completions)
 
         # Trigger event. This should eventually invalidate the layout.
         self.on_completions_changed.fire()
+
+        return self.complete_state
 
     def start_history_lines_completion(self):
         """
@@ -821,7 +806,8 @@ class Buffer(object):
                             start_position=-len(current_line),
                             display_meta=display_meta))
 
-        self.set_completions(completions=completions[::-1], select_first=True)
+        self._set_completions(completions=completions[::-1])
+        self.go_to_completion(0)
 
     def go_to_completion(self, index):
         """
@@ -831,7 +817,8 @@ class Buffer(object):
         assert self.complete_state
 
         # Set new completion
-        state = self.complete_state.go_to_index(index)
+        state = self.complete_state
+        state.go_to_index(index)
 
         # Set text/cursor position
         new_text, new_cursor_position = state.new_text_and_position()
@@ -1453,36 +1440,26 @@ class Buffer(object):
             if self.complete_state or not self.completer:
                 return
 
-            # Process asynchronous completions generator.
-            completions = []
+            # Create an empty CompletionState.
+            complete_state = CompletionState(original_document=self.document)
+            self.complete_state = complete_state
 
             def proceed():
                 """ Keep retrieving completions. Input text has not yet changed
                 while generating completions. """
-                if self.complete_state is None:
-                    return self.document == document
-                else:
-                    return self.complete_state.original_document == document
+                return self.complete_state == complete_state
 
             def add_completion(completion):
                 " Got one completion from the asynchronous completion generator. "
-                completions.append(completion)
-
-                if self.complete_state:
-                    self.complete_state.current_completions = completions[:]
-                    self.on_completions_changed.fire()
-                else:
-                    self.set_completions(completions=completions[:])
+                complete_state.current_completions.append(completion)
+                self.on_completions_changed.fire()
 
             yield From(consume_async_generator(
                 self.completer.get_completions_async(document, complete_event),
                 item_callback=add_completion,
                 cancel=lambda: not proceed()))
 
-            # Set the new complete_state. Don't replace an existing
-            # complete_state if we had one. (The user could have pressed
-            # 'Tab' in the meantime. Also don't set it if the text was
-            # changed in the meantime.
+            completions = complete_state.current_completions
 
             # When there is only one completion, which has nothing to add, ignore it.
             if (len(completions) == 1 and
@@ -1519,7 +1496,7 @@ class Buffer(object):
                                 c.new_completion_from_position(len(common_part))
                                 for c in completions]
 
-                            self.set_completions(completions=completions)
+                            self._set_completions(completions=completions)
                         else:
                             self.complete_state = None
                     else:
@@ -1535,6 +1512,10 @@ class Buffer(object):
             else:
                 # If the last operation was an insert, (not a delete), restart
                 # the completion coroutine.
+
+                if self.document.text_before_cursor == document.text_before_cursor:
+                    return  # Nothing changed.
+
                 if self.document.text_before_cursor.startswith(document.text_before_cursor):
                     raise _Retry
 
