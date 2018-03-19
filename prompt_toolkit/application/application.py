@@ -692,8 +692,8 @@ class Application(object):
 
     def set_result(self, value):
         """
-        Set a return value. The eventloop can retrieve the result it by calling
-        `return_value`.
+        Set the return value for this application. This value will be returned
+        from the `.run()` method.
         """
         if not self.future.done():
             self.future.set_result(value)
