@@ -53,7 +53,7 @@ def start_forward_incremental_search(event):
     Enter forward incremental search.
     (Usually ControlS.)
     """
-    search.start_search(direction=search.SearchDirection.BACKWARD)
+    search.start_search(direction=search.SearchDirection.FORWARD)
 
 
 @key_binding(filter=is_searching)
