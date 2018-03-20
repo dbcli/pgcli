@@ -53,22 +53,22 @@ class CompletionState(object):
     """
     Immutable class that contains a completion state.
     """
-    def __init__(self, original_document, current_completions=None, complete_index=None):
+    def __init__(self, original_document, completions=None, complete_index=None):
         #: Document as it was when the completion started.
         self.original_document = original_document
 
         #: List of all the current Completion instances which are possible at
         #: this point.
-        self.current_completions = current_completions or []
+        self.completions = completions or []
 
-        #: Position in the `current_completions` array.
+        #: Position in the `completions` array.
         #: This can be `None` to indicate "no completion", the original text.
         self.complete_index = complete_index  # Position in the `_completions` array.
 
     def __repr__(self):
         return '%s(%r, <%r> completions, index=%r)' % (
             self.__class__.__name__,
-            self.original_document, len(self.current_completions), self.complete_index)
+            self.original_document, len(self.completions), self.complete_index)
 
     def go_to_index(self, index):
         """
@@ -76,8 +76,8 @@ class CompletionState(object):
 
         When `index` is `None` deselect the completion.
         """
-        if self.current_completions:
-            assert index is None or 0 <= index < len(self.current_completions)
+        if self.completions:
+            assert index is None or 0 <= index < len(self.completions)
             self.complete_index = index
 
     def new_text_and_position(self):
@@ -90,7 +90,7 @@ class CompletionState(object):
             original_text_before_cursor = self.original_document.text_before_cursor
             original_text_after_cursor = self.original_document.text_after_cursor
 
-            c = self.current_completions[self.complete_index]
+            c = self.completions[self.complete_index]
             if c.start_position == 0:
                 before = original_text_before_cursor
             else:
@@ -107,7 +107,7 @@ class CompletionState(object):
         selected.
         """
         if self.complete_index is not None:
-            return self.current_completions[self.complete_index]
+            return self.completions[self.complete_index]
 
 
 _QUOTED_WORDS_RE = re.compile(r"""(\s+|".*?"|'.*?')""")
@@ -720,7 +720,7 @@ class Buffer(object):
         (Does nothing if there are no completion.)
         """
         if self.complete_state:
-            completions_count = len(self.complete_state.current_completions)
+            completions_count = len(self.complete_state.completions)
 
             if self.complete_state.complete_index is None:
                 index = 0
@@ -745,7 +745,7 @@ class Buffer(object):
                 if disable_wrap_around:
                     return
             elif self.complete_state.complete_index is None:
-                index = len(self.complete_state.current_completions) - 1
+                index = len(self.complete_state.completions) - 1
             else:
                 index = max(0, self.complete_state.complete_index - count)
 
@@ -769,7 +769,7 @@ class Buffer(object):
 
         self.complete_state = CompletionState(
             original_document=self.document,
-            current_completions=completions)
+            completions=completions)
 
         # Trigger event. This should eventually invalidate the layout.
         self.on_completions_changed.fire()
@@ -1451,7 +1451,7 @@ class Buffer(object):
 
             def add_completion(completion):
                 " Got one completion from the asynchronous completion generator. "
-                complete_state.current_completions.append(completion)
+                complete_state.completions.append(completion)
                 self.on_completions_changed.fire()
 
             yield From(consume_async_generator(
@@ -1459,7 +1459,7 @@ class Buffer(object):
                 item_callback=add_completion,
                 cancel=lambda: not proceed()))
 
-            completions = complete_state.current_completions
+            completions = complete_state.completions
 
             # When there is only one completion, which has nothing to add, ignore it.
             if (len(completions) == 1 and

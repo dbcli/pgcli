@@ -221,7 +221,7 @@ class _CompletionsToolbarControl(UIControl):
     def create_content(self, width, height):
         complete_state = get_app().current_buffer.complete_state
         if complete_state:
-            completions = complete_state.current_completions
+            completions = complete_state.completions
             index = complete_state.complete_index  # Can be None!
 
             # Width of the completions without the left/right arrows in the margins.
