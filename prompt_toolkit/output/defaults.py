@@ -1,14 +1,13 @@
 from __future__ import unicode_literals
 import sys
 
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.eventloop.context import TaskLocal, TaskLocalNotSetError
 from prompt_toolkit.utils import is_windows, is_conemu_ansi, get_term_environment_variable
-from .base import Output
 
 __all__ = [
     'create_output',
     'get_default_output',
-    'set_default_output',
 ]
 
 
@@ -48,17 +47,16 @@ def get_default_output():
 
     Called when creating a new Application(), when no `Output` has been passed.
     """
+    # If an application is running, take the output from there. (This is
+    # important for the "ENTER for continue" prompts after executing system
+    # commands and displaying readline-style completions.)
+    app = get_app(return_none=True)
+    if app:
+        return app.output
+
     try:
         value = _default_output.get()
     except TaskLocalNotSetError:
         return create_output()
     else:
         return value
-
-
-def set_default_output(output):
-    """
-    Set the default `Output` class.
-    """
-    assert isinstance(output, Output)
-    _default_output.set(output)
