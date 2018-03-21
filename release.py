@@ -1,10 +1,14 @@
 #!/usr/bin/env python
+"""A script to publish a release of pgcli to PyPI."""
+
 from __future__ import print_function
+import io
+from optparse import OptionParser
 import re
-import ast
 import subprocess
 import sys
-from optparse import OptionParser
+
+import click
 
 DEBUG = False
 CONFIRM_STEPS = False
@@ -19,9 +23,7 @@ def skip_step():
     global CONFIRM_STEPS
 
     if CONFIRM_STEPS:
-        choice = raw_input("--- Confirm step? (y/N) [y] ")
-        if choice.lower() == 'n':
-            return True
+        return not click.confirm('--- Run this step?', default=True)
     return False
 
 
@@ -44,11 +46,11 @@ def run_step(*args):
 
 
 def version(version_file):
-    _version_re = re.compile(r'__version__\s+=\s+(.*)')
+    _version_re = re.compile(
+        r'__version__\s+=\s+(?P<quote>[\'"])(?P<version>.*)(?P=quote)')
 
-    with open(version_file, 'rb') as f:
-        ver = str(ast.literal_eval(_version_re.search(
-            f.read().decode('utf-8')).group(1)))
+    with io.open(version_file, encoding='utf-8') as f:
+        ver = _version_re.search(f.read()).group('version')
 
     return ver
 
@@ -56,19 +58,20 @@ def version(version_file):
 def commit_for_release(version_file, ver):
     run_step('git', 'reset')
     run_step('git', 'add', version_file)
-    run_step('git', 'commit', '--message', 'Releasing version %s' % ver)
+    run_step('git', 'commit', '--message',
+             'Releasing version {}'.format(ver))
 
 
 def create_git_tag(tag_name):
-    run_step('git', 'tag', '-s', '-m', tag_name, tag_name)
+    run_step('git', 'tag', tag_name)
 
 
-def create_source_tarball():
-    run_step('python', 'setup.py', 'sdist')
+def create_distribution_files():
+    run_step('python', 'setup.py', 'sdist', 'bdist_wheel')
 
 
-def upload_source_tarball():
-    run_step('python', 'setup.py', 'sdist', 'upload')
+def upload_distribution_files():
+    run_step('twine', 'upload', 'dist/*')
 
 
 def push_to_github():
@@ -79,9 +82,20 @@ def push_tags_to_github():
     run_step('git', 'push', '--tags', 'origin')
 
 
+def checklist(questions):
+    for question in questions:
+        if not click.confirm('--- {}'.format(question), default=False):
+            sys.exit(1)
+
+
 if __name__ == '__main__':
     if DEBUG:
         subprocess.check_output = lambda x: x
+
+    checks = ['Have you updated the AUTHORS file?',
+              'Have you updated the `Usage` section of the README?',
+              ]
+    checklist(checks)
 
     ver = version('pgcli/__init__.py')
     print('Releasing Version:', ver)
@@ -101,13 +115,12 @@ if __name__ == '__main__':
     CONFIRM_STEPS = popts.confirm_steps
     DRY_RUN = popts.dry_run
 
-    choice = raw_input('Are you sure? (y/N) [n] ')
-    if choice.lower() != 'y':
+    if not click.confirm('Are you sure?', default=False):
         sys.exit(1)
 
     commit_for_release('pgcli/__init__.py', ver)
-    create_git_tag('v%s' % ver)
-    create_source_tarball()
+    create_git_tag('v{}'.format(ver))
+    create_distribution_files()
     push_to_github()
     push_tags_to_github()
-    upload_source_tarball()
+    upload_distribution_files()
