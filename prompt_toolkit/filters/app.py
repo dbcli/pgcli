@@ -107,7 +107,7 @@ def has_completions():
     Enable when the current buffer has completions.
     """
     state = get_app().current_buffer.complete_state
-    return state is not None and len(state.current_completions) > 0
+    return state is not None and len(state.completions) > 0
 
 
 @Condition
