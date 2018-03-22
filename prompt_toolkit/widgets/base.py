@@ -4,6 +4,13 @@ Collection of reusable components for building full screen applications.
 All of these widgets implement the ``__pt_container__`` method, which makes
 them usable in any situation where we are expecting a `prompt_toolkit`
 container object.
+
+.. warning::
+
+    At this point, the API for these widgets is considered unstable, and can
+    potentially change between minor releases (we try not too, but no
+    guarantees are made yet). The public API in
+    `prompt_toolkit.shortcuts.dialogs` on the other hand is considered stable.
 """
 from __future__ import unicode_literals
 from functools import partial
