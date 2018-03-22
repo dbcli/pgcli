@@ -181,3 +181,11 @@ Special thanks to
 .. |PyPI| image:: https://img.shields.io/pypi/v/prompt_toolkit.svg
     :target: https://pypi.python.org/pypi/prompt-toolkit/
     :alt: Latest Version
+
+
+Other libraries and implementations in other languages
+******************************************************
+
+- `go-prompt <https://github.com/c-bata/go-prompt>`_: building a powerful
+  interactive prompt in Go, inspired by python-prompt-toolkit.
+- `urwid <http://urwid.org/>`_: Console user interface library for Python.
