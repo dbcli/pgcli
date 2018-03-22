@@ -444,8 +444,17 @@ class Checkbox(object):
         ], style='class:checkbox')
 
     def _get_text_fragments(self):
-        text = '*' if self.checked else ' '
-        return [('', '[%s]' % text)]
+        result = [('', '[')]
+        result.append(('[SetCursorPosition]', ''))
+
+        if self.checked:
+            result.append(('', '*'))
+        else:
+            result.append(('', ' '))
+
+        result.append(('', ']'))
+
+        return result
 
     def __pt_container__(self):
         return self.container
