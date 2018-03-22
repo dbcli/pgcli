@@ -944,7 +944,7 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
             missingval='<null>'
         )
         formatted = format_output(title, cur, headers, status, settings)
-        self.echo_via_pager('\n'.join(formatted))
+        pgcli.echo_via_pager('\n'.join(formatted))
 
         sys.exit(0)
 
