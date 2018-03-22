@@ -6,6 +6,9 @@ Internal changes:
 
 * Add tests, AUTHORS and changelog.rst to release. (Thanks: `Dick Marinus`_)
 
+Bug Fixes:
+----------
+* Fix broken pgcli --list command line option (#850). (Thanks: `Dmitry B`_)
 
 1.9.0
 =====
