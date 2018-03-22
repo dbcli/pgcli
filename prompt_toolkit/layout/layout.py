@@ -3,7 +3,7 @@ Wrapper for the layout.
 """
 from __future__ import unicode_literals
 from .controls import UIControl, BufferControl
-from .containers import Window, to_container, ConditionalContainer
+from .containers import Container, Window, to_container, ConditionalContainer
 from prompt_toolkit.buffer import Buffer
 import six
 
@@ -366,6 +366,8 @@ def walk(container, skip_hidden=False):
     """
     Walk through layout, starting at this container.
     """
+    assert isinstance(container, Container)
+
     # When `skip_hidden` is set, don't go into disabled ConditionalContainer containers.
     if skip_hidden and isinstance(container, ConditionalContainer) and not container.filter():
         return
