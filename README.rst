@@ -27,9 +27,17 @@ If you already know how to install python packages, then you can simply do:
     $ brew install pgcli  # Only on macOS
 
 If you don't know how to install python packages, please check the
-`detailed instructions`__.
+`detailed instructions`_.
 
-__ https://github.com/dbcli/pgcli#detailed-installation-instructions
+If you have `problems with psycopg2 wheels`_, use the following flags to install psycopg2 from
+source:
+
+::
+
+    $ pip install pgcli --no-binary :all: psycopg2
+
+.. _`detailed instructions`: https://github.com/dbcli/pgcli#detailed-installation-instructions
+.. _`problems with psycopg2 wheels`: http://initd.org/psycopg/articles/2018/02/08/psycopg-274-released/
 
 Usage
 -----
