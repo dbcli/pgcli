@@ -16,7 +16,6 @@ __all__ = [
     'buffer_has_focus',
     'has_selection',
     'has_validation_error',
-    'is_aborting',
     'is_done',
     'is_read_only',
     'is_multiline',
@@ -146,20 +145,6 @@ def has_validation_error():
 def has_arg():
     " Enable when the input processor has an 'arg'. "
     return get_app().key_processor.arg is not None
-
-
-@Condition
-def is_aborting():
-    " True when aborting. (E.g. Control-C pressed.) "
-    return get_app().is_aborting
-
-
-@Condition
-def is_exiting():
-    """
-    True when exiting. (E.g. Control-D pressed.)
-    """
-    return get_app().is_exiting
 
 
 @Condition

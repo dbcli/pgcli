@@ -26,7 +26,7 @@ def button3_clicked():
 
 
 def exit_clicked():
-    get_app().set_result(None)
+    get_app().exit()
 
 
 # All the widgets for the UI.

@@ -197,7 +197,7 @@ def do_new_file():
 
 
 def do_exit():
-    get_app().set_result(None)
+    get_app().exit()
 
 
 def do_time_date():

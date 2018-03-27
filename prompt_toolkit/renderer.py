@@ -541,10 +541,8 @@ class Renderer(object):
         screen.draw_all_floats()
 
         # When grayed. Replace all styles in the new screen.
-        if app.is_aborting:
-            screen.append_style_to_content('class:aborting')
-        if app.is_exiting:
-            screen.append_style_to_content('class:exiting')
+        if app.exit_style:
+            screen.append_style_to_content(app.exit_style)
 
         # Process diff and write to output.
         self._cursor_pos, self._last_style = _output_screen_diff(

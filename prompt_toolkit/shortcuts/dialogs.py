@@ -28,10 +28,10 @@ def yes_no_dialog(title='', text='', yes_text='Yes', no_text='No', style=None,
     Return a boolean.
     """
     def yes_handler():
-        get_app().set_result(True)
+        get_app().exit(result=True)
 
     def no_handler():
-        get_app().set_result(False)
+        get_app().exit(result=False)
 
     dialog = Dialog(
         title=title,
@@ -51,7 +51,7 @@ def button_dialog(title='', text='', buttons=[], style=None,
     Return the value associated with button.
     """
     def button_handler(v):
-        get_app().set_result(v)
+        get_app().exit(result=v)
 
     dialog = Dialog(
         title=title,
@@ -72,7 +72,7 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
         get_app().layout.focus(ok_button)
 
     def ok_handler():
-        get_app().set_result(textfield.text)
+        get_app().exit(result=textfield.text)
 
     ok_button = Button(text=ok_text, handler=ok_handler)
     cancel_button = Button(text=cancel_text, handler=_return_none)
@@ -116,7 +116,7 @@ def radiolist_dialog(title='', text='', ok_text='Ok', cancel_text='Cancel',
     Display a simple message box and wait until the user presses enter.
     """
     def ok_handler():
-        get_app().set_result(radio_list.current_value)
+        get_app().exit(result=radio_list.current_value)
 
     radio_list = RadioList(values)
 
@@ -174,7 +174,7 @@ def progress_dialog(title='', text='', run_callback=None, style=None, async_=Fal
         try:
             run_callback(set_percentage, log_text)
         finally:
-            app.set_result(None)
+            app.exit()
 
     run_in_executor(start)
 
@@ -212,4 +212,4 @@ def _create_app(dialog, style):
 
 def _return_none():
     " Button handler that returns None. "
-    get_app().set_result(None)
+    get_app().exit()

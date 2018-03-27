@@ -323,7 +323,7 @@ class Prompt(object):
         def accept(buff):
             """ Accept the content of the default buffer. This is called when
             the validation succeeds. """
-            self.app.set_result(buff.document.text)
+            self.app.exit(result=buff.document.text)
 
             # Reset content before running again.
             self.app.pre_run_callables.append(buff.reset)
@@ -569,7 +569,7 @@ class Prompt(object):
         @handle('c-c', filter=default_focused)
         def _(event):
             " Abort when Control-C has been pressed. "
-            event.app.abort()
+            event.app.exit(exception=KeyboardInterrupt, style='class:aborting')
 
         @Condition
         def ctrl_d_condition():
@@ -582,7 +582,7 @@ class Prompt(object):
         @handle('c-d', filter=ctrl_d_condition & default_focused)
         def _(event):
             " Exit when Control-D has been pressed. "
-            event.app.exit()
+            event.app.exit(exception=EOFError, style='class:exiting')
 
         suspend_supported = Condition(suspend_to_background_supported)
 
@@ -763,14 +763,14 @@ def create_confirm_prompt(message):
     @bindings.add('Y')
     def yes(event):
         prompt.default_buffer.text = 'y'
-        event.app.set_result(True)
+        event.app.exit(result=True)
 
     @bindings.add('n')
     @bindings.add('N')
     @bindings.add('c-c')
     def no(event):
         prompt.default_buffer.text = 'n'
-        event.app.set_result(False)
+        event.app.exit(result=False)
 
     @bindings.add(Keys.Any)
     def _(event):

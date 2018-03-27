@@ -71,7 +71,7 @@ bindings = KeyBindings()
 @bindings.add('q')
 def _(event):
     " Quit. "
-    event.app.set_result(None)
+    event.app.exit()
 
 
 style = Style.from_dict({

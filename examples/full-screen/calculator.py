@@ -38,7 +38,7 @@ def main():
     @kb.add('c-q')
     def _(event):
         " Pressing Ctrl-Q or Ctrl-C will exit the user interface. "
-        event.app.set_result(None)
+        event.app.exit()
 
     @kb.add('enter', filter=has_focus(input_field))
     def _(event):

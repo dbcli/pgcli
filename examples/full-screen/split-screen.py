@@ -110,7 +110,7 @@ def _(event):
     Note that Ctrl-Q does not work on all terminals. Sometimes it requires
     executing `stty -ixon`.
     """
-    event.app.set_result(None)
+    event.app.exit()
 
 
 # Now we add an event handler that captures change events to the buffer on the

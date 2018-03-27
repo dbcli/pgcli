@@ -13,21 +13,21 @@ from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.styles import Style, merge_styles
+from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import TextArea, Label, Frame, Box, Checkbox, Dialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
 from pygments.lexers import HtmlLexer
 
 
 def accept_yes():
-    get_app().set_result(True)
+    get_app().exit(result=True)
 
 
 def accept_no():
-    get_app().set_result(False)
+    get_app().exit(result=False)
 
 
 def do_exit():
-    get_app().set_result(False)
+    get_app().exit(result=False)
 
 
 yes_button = Button(text='Yes', handler=accept_yes)

@@ -86,7 +86,7 @@ kb = KeyBindings()
 @kb.add('q')
 def _(event):
     " Quit application. "
-    event.app.set_result(None)
+    event.app.exit()
 
 
 # 3. The `Application`

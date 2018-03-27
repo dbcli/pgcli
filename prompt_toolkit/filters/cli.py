@@ -11,7 +11,6 @@ __all__ = [
     'HasFocus',
     'HasSelection',
     'HasValidationError',
-    'IsAborting',
     'IsDone',
     'IsReadOnly',
     'IsMultiline',
@@ -40,8 +39,6 @@ __all__ = [
 # Keep the original classnames for backwards compatibility.
 HasValidationError = lambda: has_validation_error
 HasArg = lambda: has_arg
-IsAborting = lambda: is_aborting
-IsExiting = lambda: is_exiting
 IsDone = lambda: is_done
 RendererHeightIsKnown = lambda: renderer_height_is_known
 ViNavigationMode = lambda: vi_navigation_mode
