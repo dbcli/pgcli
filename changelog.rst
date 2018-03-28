@@ -1,6 +1,14 @@
 Upcoming:
 =========
 
+Features:
+---------
+
+* Change ``\h`` format string in prompt to only return the first part of the hostname,
+  up to the first '.' character.  Add ``\H`` that returns the entire hostname (#858).
+  (Thanks: `Andrew Kuchling`_)
+
+
 Internal changes:
 -----------------
 
@@ -735,6 +743,7 @@ Improvements:
 * Integration tests with Postgres!! (Thanks: https://github.com/macobo)
 
 .. _`Amjith Ramanujam`: https://github.com/amjith
+.. _`Andrew Kuchling`: https://github.com/akuchling
 .. _`Darik Gamble`: https://github.com/darikg
 .. _`Daniel Rocco`: https://github.com/drocco007
 .. _`Jay Zeng`:  https://github.com/jayzeng
