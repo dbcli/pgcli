@@ -3,7 +3,7 @@ Development Guide
 This is a guide for developers who would like to contribute to this project.
 
 GitHub Workflow
-------------
+---------------
 
 If you're interested in contributing to pgcli, first of all my heart felt
 thanks. `Fork the project <https://github.com/dbcli/pgcli>`_ in github.  Then
