@@ -1,7 +1,22 @@
 Upcoming:
 =========
 
-TODO
+Features:
+---------
+
+* Change ``\h`` format string in prompt to only return the first part of the hostname,
+  up to the first '.' character.  Add ``\H`` that returns the entire hostname (#858).
+  (Thanks: `Andrew Kuchling`_)
+* Add Color of table by parameter. The color of table is function of syntax style
+
+Internal changes:
+-----------------
+
+* Add tests, AUTHORS and changelog.rst to release. (Thanks: `Dick Marinus`_)
+
+Bug Fixes:
+----------
+* Fix broken pgcli --list command line option (#850). (Thanks: `Dmitry B`_)
 
 1.9.0
 =====
@@ -728,6 +743,7 @@ Improvements:
 * Integration tests with Postgres!! (Thanks: https://github.com/macobo)
 
 .. _`Amjith Ramanujam`: https://github.com/amjith
+.. _`Andrew Kuchling`: https://github.com/akuchling
 .. _`Darik Gamble`: https://github.com/darikg
 .. _`Daniel Rocco`: https://github.com/drocco007
 .. _`Jay Zeng`:  https://github.com/jayzeng
