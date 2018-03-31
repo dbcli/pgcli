@@ -3,7 +3,7 @@ Development Guide
 This is a guide for developers who would like to contribute to this project.
 
 GitHub Workflow
-------------
+---------------
 
 If you're interested in contributing to pgcli, first of all my heart felt
 thanks. `Fork the project <https://github.com/dbcli/pgcli>`_ in github.  Then
@@ -112,11 +112,19 @@ Running the integration tests
 
 Integration tests use `behave package <http://pythonhosted.org/behave/>`_ and
 pytest.
-Configuration settings for this package are provided via ``behave.ini`` file
-in the ``tests`` directory.
+Configuration settings for this package are provided via a ``behave.ini`` file
+in the ``tests`` directory.  An example::
 
-The database user (``pg_test_user = postgres`` in .ini file) has to have
-permissions to create and drop test database. Default user is ``postgres``
+    [behave]
+    stderr_capture = false
+
+    [behave.userdata]
+    pg_test_user = dbuser
+    pg_test_host = db.example.com
+    pg_test_port = 30000
+
+The database user has to have
+permissions to create and drop test databases. Default user is ``postgres``
 at ``localhost``, without the password (authentication mode trust).
 
 First, install the requirements for testing:

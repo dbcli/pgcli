@@ -113,7 +113,8 @@ less_chatty = False
 # Postgres prompt
 # \t - Current date and time
 # \u - Username
-# \h - Hostname of the server
+# \h - Short hostname of the server (up to first '.')
+# \H - Hostname of the server
 # \d - Database name
 # \p - Database port
 # \i - Postgres PID

@@ -1,1 +1,2 @@
-include LICENSE.txt
+include LICENSE.txt AUTHORS changelog.rst
+recursive-include tests *
