@@ -7,7 +7,7 @@ Features:
 * Change ``\h`` format string in prompt to only return the first part of the hostname,
   up to the first '.' character.  Add ``\H`` that returns the entire hostname (#858).
   (Thanks: `Andrew Kuchling`_)
-
+* Add Color of table by parameter. The color of table is function of syntax style
 
 Internal changes:
 -----------------

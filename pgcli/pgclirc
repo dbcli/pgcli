@@ -158,6 +158,12 @@ Token.Toolbar.Arg.Text = 'nobold'
 Token.Toolbar.Transaction.Valid = 'bg:#222222 #00ff5f bold'
 Token.Toolbar.Transaction.Failed = 'bg:#222222 #ff005f bold'
 
+# color of table
+# you can use token or custom colors 
+Token.Output.Header = "#00ff5f bold"
+Token.Output.OddRow = ""
+Token.Output.EvenRow = ""
+
 # Named queries are queries you can execute by name.
 [named queries]
 

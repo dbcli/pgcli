@@ -42,7 +42,7 @@ from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF)
 import pgspecial as special
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
-from .pgstyle import style_factory
+from .pgstyle import style_factory, style_factory_output
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
 from .completion_refresher import CompletionRefresher
@@ -83,10 +83,10 @@ MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     'OutputSettings',
-    'table_format dcmlfmt floatfmt missingval expanded max_width case_function'
+    'table_format dcmlfmt floatfmt missingval expanded max_width case_function style_output'
 )
 OutputSettings.__new__.__defaults__ = (
-    None, None, None, '<null>', False, None, lambda x: x
+    None, None, None, '<null>', False, None, lambda x: x, None
 )
 
 
@@ -164,6 +164,9 @@ class PGCli(object):
 
         self.pgspecial.pset_pager(self.config['main'].as_bool(
             'enable_pager') and "on" or "off")
+
+        self.style_output = style_factory_output(
+            self.syntax_style, c['colors'])
 
         self.now = dt.datetime.today()
 
@@ -707,7 +710,8 @@ class PGCli(object):
                 case_function=(
                     self.completer.case if self.settings['case_column_headers']
                     else lambda x: x
-                )
+                ),
+                style_output=self.style_output
             )
             formatted = format_output(title, cur, headers, status, settings)
 
@@ -1066,7 +1070,8 @@ def format_output(title, cur, headers, status, settings):
         'float_format': settings.floatfmt,
         'preprocessors': (format_numbers, format_arrays),
         'disable_numparse': True,
-        'preserve_whitespace': True
+        'preserve_whitespace': True,
+        'style': settings.style_output
     }
     if not settings.floatfmt:
         output_kwargs['preprocessors'] = (align_decimals, )
