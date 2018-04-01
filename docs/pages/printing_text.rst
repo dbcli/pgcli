@@ -153,7 +153,6 @@ way of expressing formatted text.
     from __future__ import unicode_literals, print_function
     from prompt_toolkit import print_formatted_text
     from prompt_toolkit.formatted_text import FormattedText
-    from prompt_toolkit.styles import Style
 
     text = FormattedText([
         ('#ff0066', 'Hello'),
@@ -161,7 +160,7 @@ way of expressing formatted text.
         ('#44ff00 italic', 'World'),
     ])
 
-    print_formatted_text(text, style=style)
+    print_formatted_text(text)
 
 Similar to the :class:`~prompt_toolkit.formatted_text.HTML` example, it is also
 possible to use class names, and separate the styling in a style sheet.
