@@ -190,6 +190,7 @@ vertical line:
     from prompt_toolkit.buffer import Buffer
     from prompt_toolkit.layout.containers import VSplit, Window
     from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
+    from prompt_toolkit.layout.layout import Layout
 
     buffer1 = Buffer()  # Editable buffer.
 
@@ -211,7 +212,7 @@ vertical line:
     layout = Layout(root_container)
 
     app = Application(layout=layout, full_screen=True)
-    app.run()
+    app.run() # You won't be able to Exit this app
 
 
 More complex layouts can be achieved by nesting multiple
