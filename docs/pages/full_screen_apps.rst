@@ -279,7 +279,7 @@ the key handler:
         Setting a return value means: quit the event loop that drives the user
         interface and return this value from the `CommandLineInterface.run()` call.
         """
-        event.app.set_return_value(None)
+        event.app.exit()
 
     app = Application(key_bindings=kb, full_screen=True)
     app.run()
