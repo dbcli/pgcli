@@ -24,8 +24,10 @@ Let's take the following code:
     from prompt_toolkit.enums import DEFAULT_BUFFER
     from prompt_toolkit.layout.containers import Window
     from prompt_toolkit.layout.controls import BufferControl
+    from prompt_toolkit.buffer import Buffer
 
-    Window(content=BufferControl(buffer_name=DEFAULT_BUFFER))
+    b = Buffer(name=DEFAULT_BUFFER)
+    Window(content=BufferControl(buffer=b))
 
 What happens when a :class:`~prompt_toolkit.renderer.Renderer` objects wants a
 :class:`~prompt_toolkit.layout.containers.Container` to be rendered on a
