@@ -499,7 +499,7 @@ returns.
         return [('class:bottom-toolbar', ' This is a toolbar. ')]
 
     style = Style.from_dict({
-        'class:bottom-toolbar': '#ffffff bg:#333333',
+        'bottom-toolbar': '#ffffff bg:#333333',
     })
 
     text = prompt('> ', bottom_toolbar=bottom_toolbar, style=style)
