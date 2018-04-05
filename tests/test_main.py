@@ -67,6 +67,7 @@ def test_format_output():
     assert list(results) == expected
 
 
+@dbtest
 def test_format_array_output(executor):
     statement = u"""
     SELECT
@@ -89,6 +90,7 @@ def test_format_array_output(executor):
     assert list(results) == expected
 
 
+@dbtest
 def test_format_array_output_expanded(executor):
     statement = u"""
     SELECT
