@@ -1,7 +1,10 @@
 Upcoming:
 =========
 
-TODO
+Internal changes:
+-----------------
+
+* Mark tests requiring a running database server as dbtest (Thanks: `Dick Marinus`_)
 
 1.9.1:
 ======
