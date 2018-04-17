@@ -1473,6 +1473,11 @@ class Buffer(object):
                 if not self.complete_state or self.complete_state.complete_index is not None:
                     return
 
+                # When there are no completions, reset completion state anyway.
+                if not completions:
+                    self.complete_state = None
+                    return
+
                 # Select first/last or insert common part, depending on the key
                 # binding. (For this we have to wait until all completions are
                 # loaded.)
@@ -1508,10 +1513,6 @@ class Buffer(object):
                         # exactly one match.)
                         if len(completions) == 1:
                             self.go_to_completion(0)
-                else:
-                    if not completions:
-                        # reset completion state anyway
-                        self.complete_state = None
 
             else:
                 # If the last operation was an insert, (not a delete), restart
