@@ -39,6 +39,33 @@ Changes:
   (For backwards-compatibility, we have aliases to the old names, whenever
   possible.)
 
+- prompt_toolkit no longer depends on Pygments, but it can still use Pygments
+  for its color schemes and lexers. In many places we used Pygments "Tokens",
+  this has been replaced by the concept of class names, somewhat similar to
+  HTML and CSS.
+
+  * `PygmentsStyle` and `PygmentsLexer` adaptors are available for
+     plugging in Pygments styles and lexers.
+
+  * Wherever we had a list of `(Token, text)` tuples, we now have lists of
+    `(style_string, text)` tuples. The style string can contain both inline
+    styling as well as refer to a class from the style sheet. `PygmentsTokens`
+    is an adaptor that converts a list of Pygments tokens into a list of
+    `(style_string, text)` tuples.
+
+- Changes in the `Style` classes.
+
+  * `style.from_dict` does not exist anymore. Instantiate the ``Style`` class
+    directory to create a new style. ``Style.from_dict`` can be used to create
+    a style from a dictionary, where the dictionary keys are a space separated
+    list of class names, and the values, style strings (like before).
+
+  * `print_tokens` was renamed to `print_formatted_text`.
+
+  * In many places in the layout, we accept a parameter named `style`. All the
+    styles from the layout hierarchy are combined to decide what style to be
+    used.
+
 - The way focusing works is different. Before it was always a `Buffer` that
   was focused, and because of that, any visible `BufferControl` that contained
   this `Buffer` would be focused. Now, any user control can be focused. All
@@ -78,19 +105,6 @@ Changes:
     exist (for backwards-compatibility, but also to have an overview of which
     keys are supported.)
   * 'enter' and 'tab' are key aliases for 'c-m' and 'c-i'.
-
-- Changes in the `Style` classes.
-
-  * `style.from_dict` does not exist anymore. Instantiate the ``Style`` class
-    directory to create a new style. ``Style.from_dict`` can be used to create
-    a style from a dictionary, where the dictionary keys are a space separated
-    list of class names, and the values, style strings (like before).
-
-  * `print_tokens` was renamed to `print_text_fragments`.
-
-  * In many places in the layout, we accept a parameter named `style`. All the
-    styles from the layout hierarchy are combined to decide what style to be
-    used.
 
 - User controls can define key bindings, which are active when the user control
   is focused.
@@ -143,10 +157,22 @@ Changes:
     ``Container`` types, but also having to unpack the container object from
     the widget, in case we would have used composition.
 
+  * Warning: The API of the widgets module is not considered stable yet, and
+    can change is the future, if needed.
+
 - Changes to `Buffer`:
 
   * A `Buffer` no longer takes an ``accept_action``.  Both `AcceptAction` and
     `AbortAction` have been removed.
+
+- Changes regarding auto completion:
+
+  * The left and right arrows now work in the multi-column auto completion
+    menu.
+  * When the completer runs in a background thread, completions will be
+    displayed as soon as they are generated. This means that we don't have to
+    wait for all the completions to be generated, before displaying the first
+    one. The completion menus are updated as soon as new completions arrive.
 
 - Changes related to `shortcuts.prompt`:
 
@@ -159,7 +185,7 @@ Changes:
     Of course, it's still possible to call the global `prompt` function. This
     will create a new instance every time when it's called.
 
-  * The `prompt` function now takes an `extra_key_bindings` argument instead of
+  * The `prompt` function now takes an `key_bindings` argument instead of
     `key_bindings_registry`. This should only contain the additional bindings.
     (The default bindings are always included.)
 
@@ -191,10 +217,11 @@ Changes:
     `HasCompletions()` has to be replaced by `has_completions` (without
     parenthesis).
 
-    The few filters that took arguments as input, are also functions, but still
-    have to be called with the given arguments.
+    The few filters that took arguments as input, are became functions, but
+    still have to be called with the given arguments.
 
-    For new filters, it is recommended to use the `@Condition` decorator.
+    For new filters, it is recommended to use the `@Condition` decorator,
+    rather then inheriting from `Filter`.
 
 - Other renames:
 
