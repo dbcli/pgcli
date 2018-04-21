@@ -1476,6 +1476,9 @@ class Buffer(object):
                 # When there are no completions, reset completion state anyway.
                 if not completions:
                     self.complete_state = None
+                    # Render the ui if the completion menu was shown
+                    # it is needed especially if there is one completion and it was deleted.
+                    self.on_completions_changed.fire()
                     return
 
                 # Select first/last or insert common part, depending on the key
