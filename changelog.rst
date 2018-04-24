@@ -5,6 +5,7 @@ Internal changes:
 -----------------
 
 * Mark tests requiring a running database server as dbtest (Thanks: `Dick Marinus`_)
+* Rename psycopg2 package to psycopg2-binary
 
 1.9.1:
 ======
