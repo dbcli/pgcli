@@ -260,7 +260,7 @@ class PGCli(object):
             db, user, host, port = infos
             try:
                 self.pgexecute.connect(database=db, user=user, host=host,
-                                       port=port)
+                                       port=port, application_name='pgcli')
             except OperationalError as e:
                 click.secho(str(e), err=True, fg='red')
                 click.echo("Previous connection kept")
@@ -403,7 +403,7 @@ class PGCli(object):
         try:
             try:
                 pgexecute = PGExecute(database, user, passwd, host, port, dsn,
-                                      **kwargs)
+                                      application_name='pgcli', **kwargs)
             except (OperationalError, InterfaceError) as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
                         auto_passwd_prompt):
@@ -411,7 +411,8 @@ class PGCli(object):
                                           hide_input=True, show_default=False,
                                           type=str)
                     pgexecute = PGExecute(database, user, passwd, host, port,
-                                          dsn, **kwargs)
+                                          dsn, application_name='pgcli',
+                                          **kwargs)
                 else:
                     raise e
 
