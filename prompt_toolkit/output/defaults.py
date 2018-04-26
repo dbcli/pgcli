@@ -18,8 +18,7 @@ def create_output(stdout=None):
     Return an :class:`~prompt_toolkit.output.Output` instance for the command
     line.
 
-    :param color_depth: Any `ColorDepth` value, a callable that returns a
-        `ColorDepth` or `None` for default.
+    :param stdout: The stdout object
     """
     stdout = stdout or sys.__stdout__
 
