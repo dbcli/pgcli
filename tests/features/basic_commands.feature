@@ -10,6 +10,10 @@ Feature: run the cli,
      When we send source command
       then we see help output
 
+  Scenario: check our application_name
+     When we run query to check application_name
+      then we see found
+
   Scenario: run the cli and exit
      When we send "ctrl + d"
       then dbcli exits

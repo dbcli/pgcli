@@ -10,6 +10,7 @@ import tempfile
 
 from behave import when
 import wrappers
+from textwrap import dedent
 
 
 @when('we run dbcli')
@@ -47,3 +48,26 @@ def step_send_source_command(context):
         context.cli.sendline('\i {0}'.format(f.name))
         wrappers.expect_exact(
             context, context.conf['pager_boundary'] + '\r\n', timeout=5)
+
+
+@when(u'we run query to check application_name')
+def step_check_application_name(context):
+    context.cli.sendline(
+        "SELECT 'found' FROM pg_stat_activity WHERE application_name = 'pgcli' HAVING COUNT(*) > 0;"
+    )
+
+
+@then(u'we see found')
+def step_see_found(context):
+    wrappers.expect_exact(
+        context,
+        context.conf['pager_boundary'] + '\r' + dedent('''
+            +------------+\r
+            | ?column?   |\r
+            |------------|\r
+            | found      |\r
+            +------------+\r
+            SELECT 1\r
+        ''') + context.conf['pager_boundary'],
+        timeout=5
+    )
