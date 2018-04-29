@@ -218,10 +218,11 @@ class Screen(object):
         while self._draw_float_functions:
             # Sort the floats that we have so far by z_index.
             functions = sorted(self._draw_float_functions, key=lambda item: item[0])
-            self._draw_float_functions = []
 
-            for _, f in functions:
-                f()
+            # Draw only one at a time, then sort everything again. Now floats
+            # might have been added.
+            self._draw_float_functions = functions[1:]
+            functions[0][1]()
 
     def append_style_to_content(self, style_str):
         """
