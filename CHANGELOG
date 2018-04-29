@@ -66,6 +66,10 @@ Changes:
     styles from the layout hierarchy are combined to decide what style to be
     used.
 
+  * The ANSI color names were confusing and inconsistent with common naming
+    conventions. This has been fixed, but aliases for the original names were
+    kept.
+
 - The way focusing works is different. Before it was always a `Buffer` that
   was focused, and because of that, any visible `BufferControl` that contained
   this `Buffer` would be focused. Now, any user control can be focused. All
@@ -195,6 +199,9 @@ Changes:
     `Application` now has a `Future` object. Calling the `.start()` method
     creates and returns that `Future`. An event loop has a `run_until_complete`
     method that takes a future and runs the event loop until the Future is set.
+
+    The idea is to be able to transition easily to asyncio when Python 2
+    support can be dropped in the future.
 
   * `Application` still has a method `run()` that underneath still runs the
     event loop until the `Future` is set and returns that result.
