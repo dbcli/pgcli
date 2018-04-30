@@ -742,8 +742,8 @@ def prompt(*a, **kw):
     for every call.  """
     # Input and output arguments have to be passed to the 'Prompt' class, not
     # its method.
-    input = kw.get('input')
-    output = kw.get('output')
+    input = kw.pop('input', None)
+    output = kw.pop('output', None)
 
     prompt = Prompt(input=input, output=output)
     return prompt.prompt(*a, **kw)
