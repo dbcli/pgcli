@@ -352,7 +352,10 @@ class Buffer(object):
         otherwise set a Document instead.)
         """
         assert isinstance(value, six.text_type), 'Got %r' % value
-        assert self.cursor_position <= len(value)
+
+        # Ensure cursor position remains within the size of the text.
+        if self.cursor_position > len(value):
+            self.cursor_position = len(value)
 
         # Don't allow editing of read-only buffers.
         if self.read_only():
@@ -376,7 +379,12 @@ class Buffer(object):
         Setting cursor position.
         """
         assert isinstance(value, int)
-        assert value <= len(self.text)
+
+        # Ensure cursor position is within the size of the text.
+        if value > len(self.text):
+            value = len(self.text)
+        if value < 0:
+            value = 0
 
         changed = self._set_cursor_position(value)
 
