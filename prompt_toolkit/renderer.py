@@ -105,12 +105,17 @@ def _output_screen_diff(app, output, screen, current_pos, color_depth,
         """
         # If the last printed character has the same style, don't output the
         # style again.
-        the_last_style = last_style[0]
+        the_last_style = last_style[0]  # Either `None` or a style string.
 
-        if the_last_style and the_last_style == char.style:
+        if the_last_style == char.style:
             write(char.char)
         else:
-            _output_set_attributes(attrs_for_style_string[char.style], color_depth)
+            # Look up `Attr` for this style string. Only set attributes if different.
+            # (Two style strings can still have the same formatting.)
+            new_attrs = attrs_for_style_string[char.style]
+            if new_attrs != attrs_for_style_string[the_last_style or '']:
+                _output_set_attributes(new_attrs, color_depth)
+
             write(char.char)
             last_style[0] = char.style
 
