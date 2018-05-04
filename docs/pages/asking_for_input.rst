@@ -39,38 +39,39 @@ In the following sections, we will discover all these parameters.
     ``'u'`` in front of every string.
 
 
-The `Prompt` object
--------------------
+The `PromptSession` object
+--------------------------
 
 Instead of calling the :func:`~prompt_toolkit.shortcuts.prompt` function, it's
-also possible to create a :func:`~prompt_toolkit.shortcuts.Prompt` instance
-followed by calling its :meth:`~prompt_toolkit.shortcuts.Prompt.prompt` method
-for every input call. This creates a kind of an input session.
+also possible to create a :class:`~prompt_toolkit.shortcuts.PromptSession`
+instance followed by calling its
+:meth:`~prompt_toolkit.shortcuts.PromptSession.prompt` method for every input
+call.  This creates a kind of an input session.
 
 .. code:: python
 
-    from prompt_toolkit import Prompt
+    from prompt_toolkit import PromptSession
 
     # Create prompt object.
-    our_prompt = Prompt()
+    session = PromptSession()
 
     # Do multiple input calls.
-    text1 = our_prompt.prompt()
-    text2 = our_prompt.prompt()
+    text1 = session.prompt()
+    text2 = session.prompt()
 
 This has mainly two advantages:
 
 - The input history will be kept between consecutive
-  :meth:`~prompt_toolkit.shortcuts.Prompt.prompt` calls.
+  :meth:`~prompt_toolkit.shortcuts.PromptSession.prompt` calls.
 
-- The :func:`~prompt_toolkit.shortcuts.Prompt` instance and its
-  :meth:`~prompt_toolkit.shortcuts.Prompt.prompt` method take about the same
-  arguments, like all the options described below (highlighting, completion,
-  etc...). So if you want to ask for multiple inputs, but each input call needs
-  about the same arguments, they can be passed to the
-  :func:`~prompt_toolkit.shortcuts.Prompt` instance as well, and they can be
-  overridden by passing values to the
-  :meth:`~prompt_toolkit.shortcuts.Prompt.prompt` method.
+- The :func:`~prompt_toolkit.shortcuts.PromptSession` instance and its
+  :meth:`~prompt_toolkit.shortcuts.PromptSession.prompt` method take about the
+  same arguments, like all the options described below (highlighting,
+  completion, etc...). So if you want to ask for multiple inputs, but each
+  input call needs about the same arguments, they can be passed to the
+  :func:`~prompt_toolkit.shortcuts.PromptSession` instance as well, and they
+  can be overridden by passing values to the
+  :meth:`~prompt_toolkit.shortcuts.PromptSession.prompt` method.
 
 
 Syntax highlighting
@@ -432,16 +433,16 @@ instead instead of :class:`~prompt_toolkit.history.InMemoryHistory`.
 
     Note that the same result as in the example above (with an
     :class:`~prompt_toolkit.history.InMemoryHistory`) can be achieved by
-    creating a :func:`~prompt_toolkit.shortcuts.Prompt` instance.
+    creating a :func:`~prompt_toolkit.shortcuts.PromptSession` instance.
 
    .. code:: python
 
-       from prompt_toolkit import Prompt
+       from prompt_toolkit import PromptSession
 
-       p = Prompt()
+       session = PromptSession()
 
        while True:
-           p.prompt()
+           session.prompt()
 
 
 Auto suggestion

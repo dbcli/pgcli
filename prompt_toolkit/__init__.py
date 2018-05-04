@@ -14,7 +14,7 @@ Probably, to get started, you might also want to have a look at
 `prompt_toolkit.shortcuts.prompt`.
 """
 from .application import Application
-from .shortcuts import Prompt, prompt, print_formatted_text
+from .shortcuts import PromptSession, prompt, print_formatted_text
 from .formatted_text import HTML, ANSI
 
 
@@ -28,7 +28,7 @@ __all__ = [
 
     # Shortcuts.
     'prompt',
-    'Prompt',
+    'PromptSession',
     'print_formatted_text',
 
     # Formatted text.

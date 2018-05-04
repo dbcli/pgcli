@@ -72,7 +72,7 @@ def _display_completions_like_readline(app, completions):
     This will ask for a confirmation if there are too many completions to fit
     on a single page and provide a paginator to walk through them.
     """
-    from prompt_toolkit.shortcuts.prompt import create_confirm_prompt
+    from prompt_toolkit.shortcuts.prompt import create_confirm_session
     assert isinstance(completions, list)
 
     # Get terminal dimensions.
@@ -116,7 +116,7 @@ def _display_completions_like_readline(app, completions):
         " Coroutine. "
         if len(completions) > completions_per_page:
             # Ask confirmation if it doesn't fit on the screen.
-            confirm = yield create_confirm_prompt(
+            confirm = yield create_confirm_session(
                 'Display all {} possibilities? (y on n) '.format(len(completions)),
                 ).prompt(async_=True)
 
@@ -127,7 +127,7 @@ def _display_completions_like_readline(app, completions):
 
                     if page != page_count - 1:
                         # Display --MORE-- and go to the next page.
-                        show_more = yield _create_more_prompt('--MORE--').prompt(async_=True)
+                        show_more = yield _create_more_session('--MORE--').prompt(async_=True)
 
                         if not show_more:
                             return
@@ -140,11 +140,11 @@ def _display_completions_like_readline(app, completions):
     run_coroutine_in_terminal(run_compl, render_cli_done=True)
 
 
-def _create_more_prompt(message='--MORE--'):
+def _create_more_session(message='--MORE--'):
     """
-    Create a `Prompt` object for displaying the "--MORE--".
+    Create a `PromptSession` object for displaying the "--MORE--".
     """
-    from prompt_toolkit.shortcuts import Prompt
+    from prompt_toolkit.shortcuts import PromptSession
     bindings = KeyBindings()
 
     @bindings.add(' ')
@@ -168,7 +168,7 @@ def _create_more_prompt(message='--MORE--'):
     def _(event):
         " Disable inserting of text. "
 
-    prompt = Prompt(message,
+    session = PromptSession(message,
         key_bindings=bindings,
         erase_when_done=True)
-    return prompt
+    return session

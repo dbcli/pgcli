@@ -113,7 +113,7 @@ Shortcuts
 ---------
 
 .. automodule:: prompt_toolkit.shortcuts
-    :members: prompt, Prompt
+    :members: prompt, PromptSession
 
 .. automodule:: prompt_toolkit.shortcuts.dialogs
     :members:

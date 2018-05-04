@@ -12,7 +12,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.contrib.telnet.server import TelnetServer
 from prompt_toolkit.eventloop.defaults import use_asyncio_event_loop
-from prompt_toolkit.shortcuts import Prompt
+from prompt_toolkit.shortcuts import PromptSession
 
 import logging
 import asyncio
@@ -26,13 +26,13 @@ use_asyncio_event_loop()
 
 
 async def interact(connection):
-    prompt = Prompt(output=connection.vt100_output, input=connection.vt100_input)
+    session = PromptSession(output=connection.vt100_output, input=connection.vt100_input)
 
     connection.erase_screen()
     connection.send('Welcome!\n')
 
     # Ask for input.
-    result = await prompt.prompt(message='Say something: ', async_=True)
+    result = await session.prompt(message='Say something: ', async_=True)
 
     # Send output.
     connection.send('You said: {}\n'.format(result))

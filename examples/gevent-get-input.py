@@ -5,7 +5,7 @@ patches are applied.
 """
 from __future__ import unicode_literals
 from gevent.monkey import patch_all
-from prompt_toolkit.shortcuts import Prompt
+from prompt_toolkit.shortcuts import PromptSession
 from prompt_toolkit.eventloop.defaults import create_event_loop
 
 
@@ -19,6 +19,6 @@ if __name__ == '__main__':
     eventloop = create_event_loop(inputhook=dummy_inputhook)
 
     # Ask for input.
-    prompt = Prompt('Give me some input: ', loop=eventloop)
-    answer = prompt.prompt()
+    session = PromptSession('Give me some input: ', loop=eventloop)
+    answer = session.prompt()
     print('You said: %s' % answer)

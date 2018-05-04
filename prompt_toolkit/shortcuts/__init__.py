@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from .dialogs import yes_no_dialog, button_dialog, input_dialog, message_dialog, radiolist_dialog, progress_dialog
-from .prompt import Prompt, prompt, confirm, create_confirm_prompt, CompleteStyle
+from .prompt import PromptSession, prompt, confirm, create_confirm_session, CompleteStyle
 from .utils import print_formatted_text, clear, set_title, clear_title
 
 
@@ -14,10 +14,10 @@ __all__ = [
     'button_dialog',
 
     # Prompts.
-    'Prompt',
+    'PromptSession',
     'prompt',
     'confirm',
-    'create_confirm_prompt',
+    'create_confirm_session',
     'CompleteStyle',
 
     # Utils.

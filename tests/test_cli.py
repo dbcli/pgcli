@@ -15,7 +15,7 @@ from prompt_toolkit.input.vt100_parser import ANSI_SEQUENCES
 from prompt_toolkit.key_binding.bindings.named_commands import prefix_meta
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.output import DummyOutput
-from prompt_toolkit.shortcuts import Prompt
+from prompt_toolkit.shortcuts import PromptSession
 import pytest
 
 
@@ -44,12 +44,13 @@ def _feed_cli_with_input(
 
     try:
         inp.send_text(text)
-        p = Prompt(input=inp, output=DummyOutput(), editing_mode=editing_mode,
-                   history=history, multiline=multiline, clipboard=clipboard,
-                   key_bindings=key_bindings)
+        session = PromptSession(
+            input=inp, output=DummyOutput(), editing_mode=editing_mode,
+            history=history, multiline=multiline, clipboard=clipboard,
+            key_bindings=key_bindings)
 
-        result = p.prompt()
-        return p.default_buffer.document, p.app
+        result = session.prompt()
+        return session.default_buffer.document, session.app
 
     finally:
         inp.close()

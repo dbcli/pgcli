@@ -14,7 +14,7 @@ possible. ::
     sys.stdout = app.stdout_proxy()
 """
 
-from prompt_toolkit.shortcuts import Prompt
+from prompt_toolkit.shortcuts import PromptSession
 from prompt_toolkit.eventloop.defaults import use_asyncio_event_loop
 from prompt_toolkit.patch_stdout import patch_stdout
 
@@ -39,7 +39,7 @@ async def interactive_shell():
     Like `interactive_shell`, but doing things manual.
     """
     # Create Prompt.
-    prompt = Prompt('Say something: ')
+    session = PromptSession('Say something: ')
 
     # Patch stdout in something that will always print *above* the prompt when
     # something is written to stdout.
@@ -50,7 +50,7 @@ async def interactive_shell():
     # Run echo loop. Read text from stdin, and reply it back.
     while True:
         try:
-            result = await prompt.prompt(async_=True)
+            result = await session.prompt(async_=True)
             print('You said: "{0}"'.format(result))
         except (EOFError, KeyboardInterrupt):
             return

@@ -6,14 +6,14 @@ This provides a UI for a line input, similar to GNU Readline, libedit and
 linenoise.
 
 Either call the `prompt` function for every line input. Or create an instance
-of the :class:`.Prompt` class and call the `prompt` method from that class. In
-the second case, we'll have a 'session' that keeps all the state like the
-history in between several calls.
+of the :class:`.PromptSession` class and call the `prompt` method from that
+class. In the second case, we'll have a 'session' that keeps all the state like
+the history in between several calls.
 
 There is a lot of overlap between the arguments taken by the `prompt` function
-and the `Prompt` (like `completer`, `style`, etcetera). There we have the
-freedom to decide which settings we want for the whole 'session', and which we
-want for an individual `prompt`.
+and the `PromptSession` (like `completer`, `style`, etcetera). There we have
+the freedom to decide which settings we want for the whole 'session', and which
+we want for an individual `prompt`.
 
 Example::
 
@@ -21,8 +21,8 @@ Example::
         result = prompt('Say something: ')
 
         # Using a 'session'.
-        p = Prompt()
-        result = p.prompt('Say something: ')
+        s = PromptSession()
+        result = s.prompt('Say something: ')
 """
 from __future__ import unicode_literals
 
@@ -66,10 +66,10 @@ import threading
 import time
 
 __all__ = [
-    'Prompt',
+    'PromptSession',
     'prompt',
     'confirm',
-    'create_confirm_prompt',  # Used by '_display_completions_like_readline'.
+    'create_confirm_session',  # Used by '_display_completions_like_readline'.
     'CompleteStyle',
 ]
 
@@ -130,9 +130,10 @@ class CompleteStyle:
     READLINE_LIKE = 'READLINE_LIKE'
 
 
-class Prompt(object):
+class PromptSession(object):
     """
-    The Prompt application, which can be used as a GNU Readline replacement.
+    PromptSession for a prompt application, which can be used as a GNU Readline
+    replacement.
 
     This is a wrapper around a lot of ``prompt_toolkit`` functionality and can
     be a replacement for `raw_input`.
@@ -142,8 +143,8 @@ class Prompt(object):
 
     Example usage::
 
-        p = Prompt('>')
-        text = p.prompt()
+        s = PromptSession(message='>')
+        text = s.prompt()
 
     :param message: Plain text or formatted text to be shown before the prompt.
         This can also be a callable that returns formatted text.
@@ -301,7 +302,7 @@ class Prompt(object):
     def _create_application(self, editing_mode, erase_when_done):
         def dyncond(attr_name):
             """
-            Dynamically take this setting from this 'Prompt' class.
+            Dynamically take this setting from this 'PromptSession' class.
             `attr_name` represents an attribute name of this class. Its value
             can either be a boolean or a `Filter`.
 
@@ -642,7 +643,7 @@ class Prompt(object):
             async_=False):
         """
         Display the prompt. All the arguments are the same as for the
-        :class:`~.Prompt` class.
+        :class:`~.PromptSession` class.
 
         :param _async: When `True` return a `Future` instead of waiting for the
             prompt to finish.
@@ -738,23 +739,23 @@ class Prompt(object):
 
 
 def prompt(*a, **kw):
-    """ The global `prompt` function. This will create a new `Prompt` instance
-    for every call.  """
-    # Input and output arguments have to be passed to the 'Prompt' class, not
-    # its method.
+    """ The global `prompt` function. This will create a new `PromptSession`
+    instance for every call.  """
+    # Input and output arguments have to be passed to the 'PromptSession'
+    # class, not its method.
     input = kw.pop('input', None)
     output = kw.pop('output', None)
 
-    prompt = Prompt(input=input, output=output)
-    return prompt.prompt(*a, **kw)
+    session = PromptSession(input=input, output=output)
+    return session.prompt(*a, **kw)
 
 
-prompt.__doc__ = Prompt.prompt.__doc__
+prompt.__doc__ = PromptSession.prompt.__doc__
 
 
-def create_confirm_prompt(message):
+def create_confirm_session(message):
     """
-    Create a `Prompt` object for the 'confirm' function.
+    Create a `PromptSession` object for the 'confirm' function.
     """
     assert isinstance(message, text_type)
     bindings = KeyBindings()
@@ -762,14 +763,14 @@ def create_confirm_prompt(message):
     @bindings.add('y')
     @bindings.add('Y')
     def yes(event):
-        prompt.default_buffer.text = 'y'
+        session.default_buffer.text = 'y'
         event.app.exit(result=True)
 
     @bindings.add('n')
     @bindings.add('N')
     @bindings.add('c-c')
     def no(event):
-        prompt.default_buffer.text = 'n'
+        session.default_buffer.text = 'n'
         event.app.exit(result=False)
 
     @bindings.add(Keys.Any)
@@ -777,13 +778,13 @@ def create_confirm_prompt(message):
         " Disallow inserting other text. "
         pass
 
-    prompt = Prompt(message, key_bindings=bindings)
-    return prompt
+    session = PromptSession(message, key_bindings=bindings)
+    return session
 
 
 def confirm(message='Confirm (y or n) '):
     """
     Display a confirmation prompt that returns True/False.
     """
-    p = create_confirm_prompt(message)
-    return p.prompt()
+    session = create_confirm_session(message)
+    return session.prompt()

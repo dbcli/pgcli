@@ -896,7 +896,7 @@ def _do_wait_for_enter(wait_text):
     - This will share the same input/output I/O.
     - This doesn't block the event loop.
     """
-    from prompt_toolkit.shortcuts import Prompt
+    from prompt_toolkit.shortcuts import PromptSession
 
     key_bindings = KeyBindings()
 
@@ -909,7 +909,7 @@ def _do_wait_for_enter(wait_text):
         " Disallow typing. "
         pass
 
-    prompt = Prompt(
+    session = PromptSession(
         message=wait_text,
         key_bindings=key_bindings)
-    yield From(prompt.app.run_async())
+    yield From(session.app.run_async())

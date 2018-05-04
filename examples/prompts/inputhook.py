@@ -16,7 +16,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.eventloop.defaults import create_event_loop
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.patch_stdout import patch_stdout
-from prompt_toolkit.shortcuts import Prompt
+from prompt_toolkit.shortcuts import PromptSession
 from pygments.lexers import PythonLexer
 
 import gtk
@@ -74,10 +74,10 @@ def main():
     # We use `patch_stdout`, because clicking the button will print something;
     # and that should print nicely 'above' the input line.
     with patch_stdout():
-        prompt = Prompt('Python >>> ',
-                        inputhook=inputhook,
-                        lexer=PygmentsLexer(PythonLexer))
-        result = prompt.prompt()
+        session = PromptSession('Python >>> ',
+                                inputhook=inputhook,
+                                lexer=PygmentsLexer(PythonLexer))
+        result = session.prompt()
     print('You said: %s' % result)
 
 
