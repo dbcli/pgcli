@@ -805,7 +805,7 @@ class Application(object):
         """
         return sorted([
             re.sub(r'\s+', ' ', style_str).strip()
-            for style_str in self.app.renderer._attrs_for_style.keys()])
+            for style_str in self.renderer._attrs_for_style.keys()])
 
 
 class _CombinedRegistry(KeyBindingsBase):
