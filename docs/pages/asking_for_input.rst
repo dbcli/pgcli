@@ -669,6 +669,25 @@ attribute. We can change the key bindings by changing this attribute from
 
 :ref:`Read more about key bindings ...<key_bindings>`
 
+Using control-space for completion
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An popular short cut that people sometimes use it to use control-space for
+opening the autocompletion menu.
+
+.. code:: python
+
+    kb = KeyBindings()
+
+    @kb.add('c-space')
+    def _(event):
+        " Initialize autocompletion, or select the next completion. "
+        buff = event.app.current_buffer
+        if buff.complete_state:
+            buff.complete_next()
+        else:
+            buff.start_completion(select_first=False)
+
 
 Other prompt options
 --------------------
