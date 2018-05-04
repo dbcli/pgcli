@@ -3,7 +3,7 @@ Collection of reusable components for building full screen applications.
 """
 from __future__ import unicode_literals
 from .base import Box, Shadow, Frame
-from prompt_toolkit.filters import has_completions
+from prompt_toolkit.filters import has_completions, has_focus
 from prompt_toolkit.formatted_text import is_formatted_text
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
@@ -31,19 +31,28 @@ class Dialog(object):
 
         buttons = buttons or []
 
+        # When a button is selected, handle left/right key bindings.
+        buttons_kb = KeyBindings()
+        if len(buttons) > 1:
+            first_selected = has_focus(buttons[0])
+            last_selected = has_focus(buttons[-1])
+
+            buttons_kb.add('left', filter=~first_selected)(focus_previous)
+            buttons_kb.add('right', filter=~last_selected)(focus_next)
+
         if buttons:
             frame_body = HSplit([
                 # Add optional padding around the body.
                 Box(body=body, padding=D(preferred=1, max=1),
                     padding_bottom=0),
                 # The buttons.
-                Box(body=VSplit(buttons, padding=1),
+                Box(body=VSplit(buttons, padding=1, key_bindings=buttons_kb),
                     height=D(min=1, max=3, preferred=3))
             ])
         else:
             frame_body = body
 
-        # Key bindings.
+        # Key bindings for whole dialog.
         kb = KeyBindings()
         kb.add('tab', filter=~has_completions)(focus_next)
         kb.add('s-tab', filter=~has_completions)(focus_previous)
