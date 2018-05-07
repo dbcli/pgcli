@@ -1172,11 +1172,12 @@ class Window(Container):
         alignment of content.
     :param style: A string string. Style to be applied to all the cells in this
         window.
-    :param char: Character to be used for filling the background.
+    :param char: Character to be used for filling the background. This can also
+        be a callable that returns a character.
     :param transparent: When `False`, first erase everything underneath. (This
         is mainly useful if this Window is displayed inside a `Float`.)
-        (when `char` or `get_char` is given, it will never be transparent
-        anyway, and this parameter doesn't change anything.)
+        (when `char` is given, it will never be transparent anyway, and this
+        parameter doesn't change anything.)
     """
     def __init__(self, content=None, width=None, height=None, z_index=None,
                  dont_extend_width=False, dont_extend_height=False,
@@ -1185,8 +1186,7 @@ class Window(Container):
                  allow_scroll_beyond_bottom=False, wrap_lines=False,
                  get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False,
                  cursorline=False, cursorcolumn=False, get_colorcolumns=None,
-                 align=Align.LEFT, style='', char=None,
-                 get_char=None, transparent=False):
+                 align=Align.LEFT, style='', char=None, transparent=False):
         assert content is None or isinstance(content, UIControl)
         assert is_dimension(width)
         assert is_dimension(height)
@@ -1198,9 +1198,7 @@ class Window(Container):
         assert get_colorcolumns is None or callable(get_colorcolumns)
         assert callable(align) or align in Align._ALL
         assert callable(style) or isinstance(style, text_type)
-        assert char is None or isinstance(char, text_type)
-        assert get_char is None or callable(get_char)
-        assert not (char and get_char)
+        assert char is None or callable(char) or isinstance(char, text_type)
         assert isinstance(transparent, bool)
         assert z_index is None or isinstance(z_index, int)
 
@@ -1224,7 +1222,6 @@ class Window(Container):
         self.align = align
         self.style = style
         self.char = char
-        self.get_char = get_char
         self.transparent = transparent
 
         self.width = width
@@ -1704,8 +1701,8 @@ class Window(Container):
         Erase/fill the background.
         (Useful for floats and when a `char` has been given.)
         """
-        if self.get_char:
-            char = self.get_char()
+        if callable(self.char):
+            char = self.char()
         else:
             char = self.char
 
