@@ -38,7 +38,7 @@ color_columns = [
 
 body = HSplit([
     Window(FormattedTextControl('Press "q" to quit.'), height=1, style='reverse'),
-    Window(BufferControl(buffer=buff), get_colorcolumns=lambda:color_columns),
+    Window(BufferControl(buffer=buff), colorcolumns=color_columns),
 ])
 
 

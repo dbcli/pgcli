@@ -1165,9 +1165,9 @@ class Window(Container):
         instance. When True, display a cursorline.
     :param cursorcolumn: A `bool` or :class:`~prompt_toolkit.filters.Filter`
         instance. When True, display a cursorcolumn.
-    :param get_colorcolumns: A callable that should return a a list of
-        :class:`.ColorColumn` instances that describe the columns to be
-        highlighted.
+    :param colorcolumns: A list of :class:`.ColorColumn` instances that
+        describe the columns to be highlighted, or a callable that returns such
+        a list.
     :param align: `Align` value or callable that returns an `Align value.
         alignment of content.
     :param style: A string string. Style to be applied to all the cells in this
@@ -1185,7 +1185,7 @@ class Window(Container):
                  left_margins=None, right_margins=None, scroll_offsets=None,
                  allow_scroll_beyond_bottom=False, wrap_lines=False,
                  get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False,
-                 cursorline=False, cursorcolumn=False, get_colorcolumns=None,
+                 cursorline=False, cursorcolumn=False, colorcolumns=None,
                  align=Align.LEFT, style='', char=None, transparent=False):
         assert content is None or isinstance(content, UIControl)
         assert is_dimension(width)
@@ -1195,7 +1195,7 @@ class Window(Container):
         assert right_margins is None or all(isinstance(m, Margin) for m in right_margins)
         assert get_vertical_scroll is None or callable(get_vertical_scroll)
         assert get_horizontal_scroll is None or callable(get_horizontal_scroll)
-        assert get_colorcolumns is None or callable(get_colorcolumns)
+        assert colorcolumns is None or callable(colorcolumns) or isinstance(colorcolumns, list)
         assert callable(align) or align in Align._ALL
         assert callable(style) or isinstance(style, text_type)
         assert char is None or callable(char) or isinstance(char, text_type)
@@ -1218,7 +1218,7 @@ class Window(Container):
         self.scroll_offsets = scroll_offsets or ScrollOffsets()
         self.get_vertical_scroll = get_vertical_scroll
         self.get_horizontal_scroll = get_horizontal_scroll
-        self.get_colorcolumns = get_colorcolumns or (lambda: [])
+        self.colorcolumns = colorcolumns or []
         self.align = align
         self.style = style
         self.char = char
@@ -1786,7 +1786,11 @@ class Window(Container):
                    original_char.char, original_char.style + cursor_column_style]
 
         # Highlight color columns
-        for cc in self.get_colorcolumns():
+        colorcolumns = self.colorcolumns
+        if callable(colorcolumns):
+            colorcolumns = colorcolumns()
+
+        for cc in colorcolumns:
             assert isinstance(cc, ColorColumn)
             column = cc.position
 
