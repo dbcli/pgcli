@@ -359,9 +359,11 @@ class Shadow(object):
             content=body,
             floats=[
                 Float(bottom=-1, height=1, left=1, right=-1,
-                      content=Window(style='class:shadow', transparent=True)),
+                      transparent=True,
+                      content=Window(style='class:shadow')),
                 Float(bottom=-1, top=1, width=1, right=-1,
-                      content=Window(style='class:shadow', transparent=True)),
+                      transparent=True,
+                      content=Window(style='class:shadow')),
                 ]
             )
 

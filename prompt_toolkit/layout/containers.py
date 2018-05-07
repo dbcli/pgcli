@@ -758,7 +758,8 @@ class FloatContainer(Container):
 
             if not fl.hide_when_covering_content or self._area_is_empty(screen, wp):
                 fl.content.write_to_screen(
-                    screen, mouse_handlers, wp, style, erase_bg=True, z_index=z_index)
+                    screen, mouse_handlers, wp, style,
+                    erase_bg=not fl.transparent(), z_index=z_index)
 
     def _area_is_empty(self, screen, write_position):
         """
@@ -812,11 +813,13 @@ class Float(object):
         below the cursor. Not on top of the indicated position.
     :param z_index: Z-index position. For a Float, this needs to be at least
         one. It is relative to the z_index of the parent container.
+    :param transparent: `Filter` indicating whether this float needs to be
+        drawn transparently.
     """
     def __init__(self, content=None, top=None, right=None, bottom=None, left=None,
                  width=None, height=None, xcursor=None, ycursor=None,
                  attach_to_window=None, hide_when_covering_content=False,
-                 allow_cover_cursor=False, z_index=1):
+                 allow_cover_cursor=False, z_index=1, transparent=False):
         assert is_dimension(width)
         assert is_dimension(height)
         assert isinstance(hide_when_covering_content, bool)
@@ -843,6 +846,7 @@ class Float(object):
         self.hide_when_covering_content = hide_when_covering_content
         self.allow_cover_cursor = allow_cover_cursor
         self.z_index = z_index
+        self.transparent = to_filter(transparent)
 
     def get_width(self):
         if callable(self.width):
@@ -1174,10 +1178,6 @@ class Window(Container):
         window.
     :param char: Character to be used for filling the background. This can also
         be a callable that returns a character.
-    :param transparent: When `False`, first erase everything underneath. (This
-        is mainly useful if this Window is displayed inside a `Float`.)
-        (when `char` is given, it will never be transparent anyway, and this
-        parameter doesn't change anything.)
     """
     def __init__(self, content=None, width=None, height=None, z_index=None,
                  dont_extend_width=False, dont_extend_height=False,
@@ -1186,7 +1186,7 @@ class Window(Container):
                  allow_scroll_beyond_bottom=False, wrap_lines=False,
                  get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False,
                  cursorline=False, cursorcolumn=False, colorcolumns=None,
-                 align=Align.LEFT, style='', char=None, transparent=False):
+                 align=Align.LEFT, style='', char=None):
         assert content is None or isinstance(content, UIControl)
         assert is_dimension(width)
         assert is_dimension(height)
@@ -1199,7 +1199,6 @@ class Window(Container):
         assert callable(align) or align in Align._ALL
         assert callable(style) or isinstance(style, text_type)
         assert char is None or callable(char) or isinstance(char, text_type)
-        assert isinstance(transparent, bool)
         assert z_index is None or isinstance(z_index, int)
 
         self.allow_scroll_beyond_bottom = to_filter(allow_scroll_beyond_bottom)
@@ -1222,7 +1221,6 @@ class Window(Container):
         self.align = align
         self.style = style
         self.char = char
-        self.transparent = transparent
 
         self.width = width
         self.height = height
@@ -1706,7 +1704,7 @@ class Window(Container):
         else:
             char = self.char
 
-        if erase_bg or char or not self.transparent:
+        if erase_bg or char:
             wp = write_position
             char_obj = _CHAR_CACHE[char or ' ', '']
 
