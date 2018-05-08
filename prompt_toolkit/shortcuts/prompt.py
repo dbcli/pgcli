@@ -296,29 +296,32 @@ class PromptSession(object):
                 value = locals()[name]
                 setattr(self, name, value)
 
-        self.app, self.default_buffer, self._default_buffer_control = \
-            self._create_application(editing_mode, erase_when_done)
+        # Create buffers, layout and Application.
+        self.default_buffer = self._create_default_buffer()
+        self.search_buffer = self._create_search_buffer()
+        self.layout = self._create_layout()
+        self.app = self._create_application(editing_mode, erase_when_done)
 
-    def _create_application(self, editing_mode, erase_when_done):
-        def dyncond(attr_name):
-            """
-            Dynamically take this setting from this 'PromptSession' class.
-            `attr_name` represents an attribute name of this class. Its value
-            can either be a boolean or a `Filter`.
+    def _dyncond(self, attr_name):
+        """
+        Dynamically take this setting from this 'PromptSession' class.
+        `attr_name` represents an attribute name of this class. Its value
+        can either be a boolean or a `Filter`.
 
-            This returns something that can be used as either a `Filter`
-            or `Filter`.
-            """
-            @Condition
-            def dynamic():
-                value = getattr(self, attr_name)
-                return to_filter(value)()
-            return dynamic
+        This returns something that can be used as either a `Filter`
+        or `Filter`.
+        """
+        @Condition
+        def dynamic():
+            value = getattr(self, attr_name)
+            return to_filter(value)()
+        return dynamic
 
-        # Create functions that will dynamically split the prompt. (If we have
-        # a multiline prompt.)
-        has_before_fragments, get_prompt_text_1, get_prompt_text_2 = \
-            _split_multiline_prompt(self._get_prompt)
+    def _create_default_buffer(self):
+        """
+        Create and return the default input buffer.
+        """
+        dyncond = self._dyncond
 
         # Create buffers list.
         def accept(buff):
@@ -329,7 +332,7 @@ class PromptSession(object):
             # Reset content before running again.
             self.app.pre_run_callables.append(buff.reset)
 
-        default_buffer = Buffer(
+        return Buffer(
             name=DEFAULT_BUFFER,
                 # Make sure that complete_while_typing is disabled when
                 # enable_history_search is enabled. (First convert to Filter,
@@ -350,13 +353,29 @@ class PromptSession(object):
             accept_handler=accept,
             get_tempfile_suffix=lambda: self.tempfile_suffix)
 
-        search_buffer = Buffer(name=SEARCH_BUFFER)
+    def _create_search_buffer(self):
+        return Buffer(name=SEARCH_BUFFER)
+
+    def _create_layout(self):
+        """
+        Create `Layout` for this prompt.
+        """
+        dyncond = self._dyncond
+
+        # Create functions that will dynamically split the prompt. (If we have
+        # a multiline prompt.)
+        has_before_fragments, get_prompt_text_1, get_prompt_text_2 = \
+            _split_multiline_prompt(self._get_prompt)
+
+        default_buffer = self.default_buffer
+        search_buffer = self.search_buffer
 
         # Create processors list.
         all_input_processors = [
             HighlightIncrementalSearchProcessor(),
             HighlightSelectionProcessor(),
-            ConditionalProcessor(AppendAutoSuggestion(), has_focus(default_buffer) & ~is_done),
+            ConditionalProcessor(AppendAutoSuggestion(),
+                                 has_focus(default_buffer) & ~is_done),
             ConditionalProcessor(PasswordProcessor(), dyncond('is_password')),
             DisplayMultipleCursors(),
 
@@ -487,6 +506,14 @@ class PromptSession(object):
             bottom_toolbar,
         ])
 
+        return Layout(layout, default_buffer_window)
+
+    def _create_application(self, editing_mode, erase_when_done):
+        """
+        Create the `Application` object.
+        """
+        dyncond = self._dyncond
+
         # Default key bindings.
         auto_suggest_bindings = load_auto_suggest_bindings()
         open_in_editor_bindings = load_open_in_editor_bindings()
@@ -494,7 +521,7 @@ class PromptSession(object):
 
         # Create application
         application = Application(
-            layout=Layout(layout, default_buffer_window),
+            layout=self.layout,
             style=DynamicStyle(lambda: self.style),
             include_default_pygments_style=dyncond('include_default_pygments_style'),
             clipboard=DynamicClipboard(lambda: self.clipboard),
@@ -538,7 +565,7 @@ class PromptSession(object):
         app.on_render += on_render
         '''
 
-        return application, default_buffer, default_buffer_control
+        return application
 
     def _create_prompt_bindings(self):
         """
@@ -551,7 +578,7 @@ class PromptSession(object):
         @Condition
         def do_accept():
             return (not _true(self.multiline) and
-                    self.app.layout.current_control == self._default_buffer_control)
+                    self.app.layout.has_focus(DEFAULT_BUFFER))
 
         @handle('enter', filter=do_accept & default_focused)
         def _(event):
