@@ -115,10 +115,13 @@ Shortcuts
 .. automodule:: prompt_toolkit.shortcuts
     :members: prompt, PromptSession
 
+.. automodule:: prompt_toolkit.shortcuts
+    :members: clear, clear_title, print_formatted_text, set_title
+
 .. automodule:: prompt_toolkit.shortcuts.dialogs
     :members:
 
-.. automodule:: prompt_toolkit.shortcuts.utils
+.. automodule:: prompt_toolkit.shortcuts.progress_bar
     :members:
 
 
@@ -240,9 +243,6 @@ Eventloop
 .. automodule:: prompt_toolkit.eventloop.win32
     :members:
 
-.. automodule:: prompt_toolkit.eventloop.asyncio_base
-    :members:
-
 .. automodule:: prompt_toolkit.eventloop.asyncio_win32
     :members:
 
@@ -250,6 +250,12 @@ Eventloop
     :members:
 
 .. automodule:: prompt_toolkit.eventloop.callbacks
+    :members:
+
+.. automodule:: prompt_toolkit.eventloop.coroutine
+    :members:
+
+.. automodule:: prompt_toolkit.eventloop.future
     :members:
 
 

@@ -83,7 +83,8 @@ a key press), it will send that to the the appropriate handler, like for
 instance, a key binding.
 
 When :func:`~prompt_toolkit.application.Application.run()` is called, the event
-loop will run until the application is done.
+loop will run until the application is done. An application will quit when 
+:func:`~prompt_toolkit.application.Application.exit()` is called.
 
 
 The layout
@@ -109,7 +110,7 @@ abstraction.
   way to define the "shape" of the layout.
 
   The :class:`~prompt_toolkit.layout.containers.Window` object is a special
-  kind of container that can contain
+  kind of container that can contain a
   :class:`~prompt_toolkit.layout.controls.UIControl` object. The
   :class:`~prompt_toolkit.layout.controls.UIControl` object is responsible for
   the generation of the actual content. The
@@ -123,6 +124,11 @@ abstraction.
   content of an editable/scrollable buffer, and
   :class:`~prompt_toolkit.layout.controls.FormattedTextControl` for displaying
   (:ref:`formatted <formatted_text>`) text.
+
+  Normally, it is never needed to create new
+  :class:`~prompt_toolkit.layout.controls.UIControl` or
+  :class:`~prompt_toolkit.layout.containers.Container` classes, but instead you
+  would create the layout by composing instances of the existing built-ins.
 
 - A higher level abstraction of building a layout is by using "widgets". A
   widget is a reusable layout component that can contain multiple containers
@@ -228,7 +234,27 @@ condition is satisfied, use a
 Focusing windows
 ^^^^^^^^^^^^^^^^^
 
-TODO
+Focussing something can be done by calling the
+:meth:`~prompt_toolkit.layout.Layout.focus` method. This method is very
+flexible and accepts a :class:`~prompt_toolkit.layout.containers.Window`, a
+:class:`~prompt_toolkit.buffer.Buffer`, a
+:class:`~prompt_toolkit.layout.controls.UIControl` and more.
+
+In the following example, we use :func:`~prompt_toolkit.application.get_app`
+for getting the active application.
+
+.. code:: python
+
+    from prompt_toolkit.application import get_app
+
+    # This window was created earlier.
+    w = Window()
+
+    # ...
+
+    # Now focus it.
+    get_app().layout.focus(w)
+
 
 Key bindings
 ------------
@@ -250,6 +276,8 @@ There are two kinds of key bindings:
 
 Global key bindings
 ^^^^^^^^^^^^^^^^^^^
+
+Key bindings can be passed to the application as follows:
 
 .. code:: python
 

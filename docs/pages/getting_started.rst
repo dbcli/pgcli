@@ -76,6 +76,7 @@ in the repository.
 
 - Secondly, go through the :ref:`asking for input <asking_for_input>` section.
   This is useful for almost any use case, even for full screen applications.
+  It covers autocompletions, syntax highlighting, key bindings, and so on.
 
 - Then, learn about :ref:`dialogs`, which is easy and fun.
 

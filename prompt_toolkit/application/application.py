@@ -59,7 +59,7 @@ class Application(object):
         a callable that returns a ColorDepth or `None` for default.
     :param erase_when_done: (bool) Clear the application output when it finishes.
     :param reverse_vi_search_direction: Normally, in Vi mode, a '/' searches
-        forward and a '?' searches backward. In readline mode, this is usually
+        forward and a '?' searches backward. In Readline mode, this is usually
         reversed.
     :param min_redraw_interval: Number of seconds to wait between redraws. Use
         this for applications where `invalidate` is called a lot. This could cause

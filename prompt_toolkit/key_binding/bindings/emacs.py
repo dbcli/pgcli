@@ -321,7 +321,7 @@ def load_emacs_search_bindings():
     # Handling of escape.
     handle('escape', eager=True)(search.accept_search)
 
-    # Like readline, it's more natural to accept the search when escape has
+    # Like Readline, it's more natural to accept the search when escape has
     # been pressed, however instead the following two bindings could be used
     # instead.
     # #handle('escape', 'escape', eager=True)(search.abort_search)

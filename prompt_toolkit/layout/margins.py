@@ -213,9 +213,8 @@ class PromptMargin(Margin):
     This can display one prompt at the first line, and a continuation prompt
     (e.g, just dots) on all the following lines.
 
-    :param get_prompt_fragments: Callable that takes an Application as
-        input and returns a list of (style_str, type) tuples to be shown as the
-        prompt at the first line.
+    :param get_prompt_fragments: Callable returns a list of (style_str, type)
+        tuples to be shown as the prompt at the first line.
     :param get_continuation_fragments: Callable that takes a width as input and
         returns a list of (style_str, type) tuples for the next lines of the
         input.

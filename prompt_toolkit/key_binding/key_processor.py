@@ -90,7 +90,7 @@ class KeyProcessor(object):
 
         self._keys_pressed = 0  # Monotonically increasing counter.
 
-        # Simple macro recording. (Like readline does.)
+        # Simple macro recording. (Like Readline does.)
         self.record_macro = False
         self.macro = []
 

@@ -30,11 +30,11 @@ Changes:
   mostly a proxy to `Application`.)
 
   A consequence is that all almost code which used to received a
-  `CommandLineInterface`, will now receive an `Application`. Usually, where we
+  `CommandLineInterface`, will now use an `Application`. Usually, where we
   had an attribute `cli`, we'll now have an attribute `app`.
 
-  * `CLIFilter` will now take an `Application`, so it was renamed to `AppFilter`.
-  * `to_cli_filter` was renamed to `to_app_filter`.
+  Secondly, the `Application` object is no longer passed around. The `get_app`
+  function can be used at any time to acquire the active application.
 
   (For backwards-compatibility, we have aliases to the old names, whenever
   possible.)
@@ -216,6 +216,10 @@ Changes:
 
 - Changes to the `filters` module:
 
+  * The `Application` is no longer passed around, so both `CLIFilter` and
+    `SimpleFilter` were merged into `Filter`. `to_cli_filter` and
+    `to_simple_filter` became `to_filter`.
+
   * All filters have been turned into functions. For instance, `IsDone`
     became `is_done` and `HasCompletions` became `has_completions`.
 
@@ -224,8 +228,8 @@ Changes:
     `HasCompletions()` has to be replaced by `has_completions` (without
     parenthesis).
 
-    The few filters that took arguments as input, are became functions, but
-    still have to be called with the given arguments.
+    The few filters that took arguments as input, became functions, but still
+    have to be called with the given arguments.
 
     For new filters, it is recommended to use the `@Condition` decorator,
     rather then inheriting from `Filter`.

@@ -4,10 +4,13 @@ Asking for input (prompts)
 ==========================
 
 This page is about building prompts. Pieces of code that we can embed in a
-program for asking the user for input. If you want to use `prompt_toolkit` for
-building full screen terminal applications, it is probably still a good idea to
-read this first, before heading to the :ref:`building full screen applications
-<full_screen_applications>` page.
+program for asking the user for input. Even if you want to use `prompt_toolkit`
+for building full screen terminal applications, it is probably still a good
+idea to read this first, before heading to the :ref:`building full screen
+applications <full_screen_applications>` page.
+
+In this page, we will cover autocompletion, syntax highlighting, key bindings,
+and so on.
 
 
 Hello world
@@ -46,7 +49,7 @@ Instead of calling the :func:`~prompt_toolkit.shortcuts.prompt` function, it's
 also possible to create a :class:`~prompt_toolkit.shortcuts.PromptSession`
 instance followed by calling its
 :meth:`~prompt_toolkit.shortcuts.PromptSession.prompt` method for every input
-call.  This creates a kind of an input session.
+call. This creates a kind of an input session.
 
 .. code:: python
 
@@ -107,9 +110,13 @@ you can do the following:
     from prompt_toolkit.styles.pygments import style_from_pygments
 
     style = style_from_pygments(get_style_by_name('monokai'))
-    text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer), style=style)
+    text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer), style=style,
+                  include_default_pygments_style=False)
     print('You said: %s' % text)
 
+We pass ``include_default_pygments_style=False``, because otherwise, both
+styles will be merged, possibly giving slightly different colors in the outcome
+for cases where where our custom Pygments style doesn't specify a color.
 
 .. _colors:
 
@@ -165,14 +172,14 @@ Creating a custom style could be done like this:
 .. code:: python
 
     from prompt_toolkit.shortcuts import prompt
-    from prompt_toolkit.styles import style_from_pygments, merge_style
+    from prompt_toolkit.styles import style_from_pygments_cls, merge_styles
     from prompt_toolkit.lexers import PygmentsLexer
 
     from pygments.styles.tango import TangoStyle
     from pygments.lexers import HtmlLexer
 
-    our_style = merge_style([
-        style_from_pygments(TangoStyle),
+    our_style = merge_styles([
+        style_from_pygments_cls(TangoStyle),
         Style.from_dict({
             'pygments.comment': '#888888 bold',
             'pygments.keyword': '#ff88ff bold',
@@ -186,9 +193,8 @@ Creating a custom style could be done like this:
 Coloring the prompt itself
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It is possible to add some colors to the prompt itself. For this, we need a
-``get_prompt`` function. This is a function that can return a string, but also
-a list of ``(style, text)`` tuples.
+It is possible to add some colors to the prompt itself. For this, we need to
+build some :ref:`formatted text <formatted_text>`.
 
 .. code:: python
 
@@ -208,17 +214,19 @@ a list of ``(style, text)`` tuples.
         'path':     '#884444 underline',
     })
 
-    def get_prompt():
-        return [
-            ('class:username', 'john'),
-            ('class:at',       '@'),
-            ('class:host',     'localhost'),
-            ('class:colon',    ':'),
-            ('class:path',     '/user/john'),
-            ('class:pound',    '# '),
-        ]
+    message = [
+        ('class:username', 'john'),
+        ('class:at',       '@'),
+        ('class:host',     'localhost'),
+        ('class:colon',    ':'),
+        ('class:path',     '/user/john'),
+        ('class:pound',    '# '),
+    ]
 
-    text = prompt(get_prompt, style=style)
+    text = prompt(message, style=style)
+
+The `message` can be any kind of formatted text, as discussed :ref:`here
+<formatted_text>`. It can also be a callable that returns some formatted text.
 
 By default, colors are taking from the 256 color palette. If you want to have
 24bit true color, this is possible by adding the ``true_color=True`` option to
@@ -285,7 +293,7 @@ that takes a :class:`~prompt_toolkit.document.Document` and yields the current
 :class:`~prompt_toolkit.completion.Completion` instances. Each completion
 contains a portion of text, and a position.
 
-The position is used in for fixing text before the cursor. Pressing the tab key
+The position is used for fixing text before the cursor. Pressing the tab key
 could for instance turn parts of the input from lowercase to uppercase. This
 makes sense for a case insensitive completer. Or in case of a fuzzy completion,
 it could fix typos. When ``start_position`` is something negative, this amount
@@ -295,8 +303,8 @@ of characters will be deleted and replaced.
 Styling individual completions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Each completion can provide a custom style, which is used when its rendered in
-the completion menu or toolbar. This is possible by passing a style to each
+Each completion can provide a custom style, which is used when it is rendered
+in the completion menu or toolbar. This is possible by passing a style to each
 :class:`~prompt_toolkit.completion.Completion` instance.
 
 .. code:: python
@@ -407,42 +415,38 @@ History
 -------
 
 A :class:`~prompt_toolkit.history.History` object keeps track of all the
-previously entered strings. When nothing is passed into the
-:func:`~prompt_toolkit.shortcuts.prompt` function, it will start with an empty
-history each time again. Usually, however, for a REPL, you want to keep the
-same history between several calls to
-:meth:`~prompt_toolkit.shortcuts.prompt`. This is possible by instantiating a
-:class:`~prompt_toolkit.history.History` object and passing that to each
-:meth:`~prompt_toolkit.shortcuts.prompt` call as follows:
+previously entered strings, so that the up-arrow can reveal previously entered
+items.
+
+The recommended way is to use a
+:class:`~prompt_toolkit.shortcuts.PromptSession`, which uses an
+:class:`~prompt_toolkit.history.InMemoryHistory` for the entire session by
+default. The following example has a history out of the box:
 
 .. code:: python
 
-    from prompt_toolkit.history import InMemoryHistory
-    from prompt_toolkit import prompt
+   from prompt_toolkit import PromptSession
 
-    history = InMemoryHistory()
+   session = PromptSession()
 
-    while True:
-        prompt(history=history)
+   while True:
+       session.prompt()
 
+To persist a history to disk, use a :class:`~prompt_toolkit.history.FileHistory`
+instead instead of the default
+:class:`~prompt_toolkit.history.InMemoryHistory`. This history object can be
+passed either to a :class:`~prompt_toolkit.shortcuts.PromptSession` or to the
+:meth:`~prompt_toolkit.shortcuts.prompt` function. For instance:
 
-To persist a history to disk, use :class:`~prompt_toolkit.history.FileHistory`
-instead instead of :class:`~prompt_toolkit.history.InMemoryHistory`.
+.. code:: python
 
-.. note::
+   from prompt_toolkit import PromptSession
+   from prompt_toolkit.history import FileHistory
 
-    Note that the same result as in the example above (with an
-    :class:`~prompt_toolkit.history.InMemoryHistory`) can be achieved by
-    creating a :func:`~prompt_toolkit.shortcuts.PromptSession` instance.
+   session = PromptSession(history=FileHistory('~/.myhistory'))
 
-   .. code:: python
-
-       from prompt_toolkit import PromptSession
-
-       session = PromptSession()
-
-       while True:
-           session.prompt()
+   while True:
+       session.prompt()
 
 
 Auto suggestion
@@ -459,20 +463,21 @@ the current input. Pressing the right arrow :kbd:`→` will insert this suggesti
 
     When suggestions are based on the history, don't forget to share one
     :class:`~prompt_toolkit.history.History` object between consecutive
-    :func:`~prompt_toolkit.shortcuts.prompt` calls.
+    :func:`~prompt_toolkit.shortcuts.prompt` calls. Using a
+    :class:`~prompt_toolkit.prompt.PromptSession` does this for you.
 
 Example:
 
 .. code:: python
 
-    from prompt_toolkit import prompt
+    from prompt_toolkit import PromptSession
     from prompt_toolkit.history import InMemoryHistory
     from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
-    history = InMemoryHistory()
+    session = PromptSession()
 
     while True:
-        text = prompt('> ', history=history, auto_suggest=AutoSuggestFromHistory())
+        text = session.prompt('> ', auto_suggest=AutoSuggestFromHistory())
         print('You said: %s' % text)
 
 
@@ -566,7 +571,7 @@ By default, every prompt already has a set of key bindings which implements the
 usual Vi or Emacs behaviour. We can extend this by passing another
 :class:`~prompt_toolkit.key_binding.KeyBindings` instance to the
 ``key_bindings`` argument of the :func:`~prompt_toolkit.shortcuts.prompt`
-function.
+function or the :class:`~prompt_toolkit.shortcuts.PromptSession` class.
 
 An example of a prompt that prints ``'hello world'`` when :kbd:`Control-T` is pressed.
 
@@ -674,7 +679,8 @@ Using control-space for completion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 An popular short cut that people sometimes use it to use control-space for
-opening the autocompletion menu.
+opening the autocompletion menu instead of the tab key. This can be done with
+the following key binding.
 
 .. code:: python
 
@@ -710,15 +716,16 @@ of accepting and returning the input. The user will now have to press
 :kbd:`Enter`.)
 
 It is possible to specify a continuation prompt. This works by passing a
-``get_continuation_tokens`` callable to ``prompt``. This function can return a
-list of ``(style, text)`` tuples. The width of the returned text should not
-exceed the given width. (The width of the prompt margin is defined by the
-prompt.)
+``prompt_continuation`` callable to ``prompt``. This function is supposed to
+return formatted text, or a list of ``(style, text)`` tuples. The width of the
+returned text should not exceed the given width. (The width of the prompt
+margin is defined by the prompt.)
 
 .. code:: python
 
     def prompt_continuation(width):
-        return [('', '.' * width)]
+        return '.' * width
+        # Or: return [('', '.' * width)]
 
     prompt('> ', multiline=True, prompt_continuation=prompt_continuation)
 
@@ -756,7 +763,7 @@ Line wrapping
 ^^^^^^^^^^^^^
 
 Line wrapping is enabled by default. This is what most people are used to and
-this is what GNU readline does. When it is disabled, the input string will
+this is what GNU Readline does. When it is disabled, the input string will
 scroll horizontally.
 
 .. code:: python
@@ -793,13 +800,18 @@ interface to run in another thread. (If we have custom key bindings for
 instance, it would be better to run them in the same thread as the other code.)
 
 The answer is to run the prompt_toolkit interface on top of the asyncio event
-loop. Prompting the user for input is as simple as calling
+loop. First we have to tell prompt_toolkit to use the asyncio event loop. Then
+prompting the user for input is as simple as calling
 :func:`~prompt_toolkit.shortcuts.prompt` with the `async_=True` argument.
 
 .. code:: python
 
     from prompt_toolkit import prompt
+    from prompt_toolkit.eventloop.defaults import use_asyncio_event_loop
     from prompt_toolkit.patch_stdout import patch_stdout
+
+    # Tell prompt_toolkit to use the asyncio event loop.
+    use_asyncio_event_loop()
 
     async def my_coroutine():
         while True:

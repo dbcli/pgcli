@@ -564,7 +564,7 @@ class PromptSession(object):
 
         @handle('tab', filter=readline_complete_style & default_focused)
         def _(event):
-            " Display completions (like readline). "
+            " Display completions (like Readline). "
             display_completions_like_readline(event)
 
         @handle('c-c', filter=default_focused)

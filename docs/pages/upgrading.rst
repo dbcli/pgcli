@@ -5,20 +5,24 @@ Prompt_toolkit 2.0 is not compatible with 1.0, however you want to upgrade your
 applications. This page explains why we have these differences and how to
 upgrade.
 
+If you experience some difficulties or you feel that some information is
+missing from this page, don't hesitate to open a GitHub issue for help.
+
 
 Why all these breaking changes?
 -------------------------------
 
-We had a problem, which is that prompt_toolkit 1.0 is not flexible enough for
-certain use cases. It was mostly the development of full screen applications
-that was not really natural. All the important components, like the rendering,
-key bindings, input and output handling were present, but the API was in the
-first place designed for simple command line prompts. This was mostly notably
-in the following two places:
+After more and more custom prompt_toolkit applications were developed, it
+became clear that prompt_toolkit 1.0 was not flexible enough for certain use
+cases. Mostly, the development of full screen applications was not really
+natural. All the important components, like the rendering, key bindings, input
+and output handling were present, but the API was in the first place designed
+for simple command line prompts. This was mostly notably in the following two
+places:
 
 - First, there was the focus which was always pointing to a
   :class:`~prompt_toolkit.buffer.Buffer` (or text input widget), but in full
-  screen applications there are other widgets, like menus and buttons  which
+  screen applications there are other widgets, like menus and buttons which
   can be focused.
 - And secondly, it was impossible to make reusable UI components. All the key
   bindings for the entire applications were stored together in one
@@ -28,13 +32,15 @@ in the following two places:
   their own key bindings and everything. It's the idea of encapsulation.
 
 For simple prompts, the changes wouldn't be that invasive, but given that there
-would be some changes, I took the opportunity to fix a couple of other things.
-For instance, in prompt_toolkit 1.0, we translated `\\r` into `\\n` during the
-input processing. This was not a good idea, because some people wanted to
-handle these keys individually. This makes sense if you keep in mind that they
-correspond to `Control-M` and `Control-J`. However, we couldn't fix this
-without breaking everyone's enter key, which happens to be the most important
-key in prompts.
+would be some, I took the opportunity to fix a couple of other things. For
+instance:
+
+- In prompt_toolkit 1.0, we translated `\\r` into `\\n` during the input
+  processing. This was not a good idea, because some people wanted to handle
+  these keys individually. This makes sense if you keep in mind that they
+  correspond to `Control-M` and `Control-J`. However, we couldn't fix this
+  without breaking everyone's enter key, which happens to be the most important
+  key in prompts.
 
 Given that we were going to break compatibility anyway, we changed a couple of
 other important things that both effect both simple prompt applications and
@@ -105,6 +111,11 @@ features.
   :class:`~prompt_toolkit.auto_suggest.ThreadedAutoSuggest`, they will become
   asynchronous by running in a background thread.
 
+  Furter, if the autocompletion code runs in a background thread, we will show
+  the completions as soon as they arrive. This means that the autocompletion
+  algorithm could for instance first yield the most trivial completions and then
+  take time to produce the completions that take more time.
+
 
 Upgrading
 ---------
@@ -166,3 +177,34 @@ Asynchronous autocompletion
 By default, prompt_toolkit 2.0 completion is now synchronous. If you still want
 asynchronous auto completion (which is often good thing), then you have to wrap
 the completer in a :class:`~prompt_toolkit.completion.ThreadedCompleter`.
+
+
+Filters
+^^^^^^^
+
+We don't distiguish anymore between `CLIFilter` and `SimpleFilter`, because the
+application object is no longer passed around. This means that all filters are
+a `Filter` from now on.
+
+All filters have been turned into functions. For instance, `IsDone` became
+`is_done` and `HasCompletions` became `has_completions`.
+
+This was done because almost all classes were called without any arguments in
+the `__init__` causing additional braces everywhere. This means that
+`HasCompletions()` has to be replaced by `has_completions` (without
+parenthesis).
+
+The few filters that took arguments as input, became functions, but still have
+to be called with the given arguments.
+
+For new filters, it is recommended to use the `@Condition` decorator,
+rather then inheriting from `Filter`. For instance:
+
+.. code:: python
+
+    from prompt_toolkit.filter import Condition
+
+    @Condition
+    def my_filter();
+        return True  # Or False
+

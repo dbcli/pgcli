@@ -1,5 +1,5 @@
 """
-Key bindings which are also known by GNU readline by the given names.
+Key bindings which are also known by GNU Readline by the given names.
 
 See: http://www.delorie.com/gnu/docs/readline/rlman_13.html
 """
@@ -45,7 +45,7 @@ def get_by_name(name):
     try:
         return _readline_commands[name]
     except KeyError:
-        raise KeyError('Unknown readline command: %r' % name)
+        raise KeyError('Unknown Readline command: %r' % name)
 
 #
 # Commands for moving
