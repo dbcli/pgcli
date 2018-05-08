@@ -12,6 +12,7 @@ import re
 
 from prompt_toolkit.filters import to_filter
 from prompt_toolkit.formatted_text.utils import split_lines
+from prompt_toolkit.styles.pygments import pygments_token_to_classname
 from .base import Lexer, SimpleLexer
 
 __all__ = [
@@ -116,9 +117,7 @@ class _TokenCache(dict):
     ``class:pygments,pygments.A,pygments.A.B,pygments.A.B.C``
     """
     def __missing__(self, key):
-        parts = ('pygments',) + key
-
-        result = ('class:' + '.'.join(parts)).lower()
+        result = 'class:' + pygments_token_to_classname(key)
         self[key] = result
         return result
 
