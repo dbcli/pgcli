@@ -282,7 +282,7 @@ for instance copy the following into your `.bashrc` file.
     # export PROMPT_TOOLKIT_COLOR_DEPTH=DEPTH_24_BIT
 
 An application can also decide to set the color depth manually by passing a
-:class:`~prompt_toolkit.output.color_depth.ColorDepth` value to the
+:class:`~prompt_toolkit.output.ColorDepth` value to the
 :class:`~prompt_toolkit.application.Application` object:
 
 .. code:: python

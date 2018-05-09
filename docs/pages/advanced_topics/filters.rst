@@ -10,7 +10,7 @@ time. For instance:
 - to specify whether a part of the layout needs to be visible or not;
 - or to decide whether a certain key binding needs to be active or not;
 - or the ``wrap_lines`` option of
-  :class:`~prompt_toolkit.layout.controls.BufferControl`;
+  :class:`~prompt_toolkit.layout.BufferControl`;
 - etcetera.
 
 These booleans are often dynamic and can change at runtime. For instance, the

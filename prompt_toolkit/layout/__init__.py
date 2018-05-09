@@ -57,8 +57,18 @@ __all__ = [
     'InvalidLayoutError',
     'walk',
 
+    # Dimensions.
+    'Dimension',
+    'D',
+    'sum_layout_dimensions',
+    'max_layout_dimensions',
+    'to_dimension',
+    'is_dimension',
+
     # Containers.
     'Container',
+    'HorizontalAlign',
+    'VerticalAlign',
     'HSplit',
     'VSplit',
     'FloatContainer',

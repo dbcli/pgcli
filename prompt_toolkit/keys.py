@@ -7,6 +7,9 @@ __all__ = [
 
 
 class Keys(object):
+    """
+    List of keys for use in key bindings.
+    """
     Escape = 'escape'  # Also Control-[
 
     ControlAt = 'c-@'  # Also Control-Space.

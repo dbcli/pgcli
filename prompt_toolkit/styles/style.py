@@ -162,10 +162,10 @@ class Priority:
     Python 3.6. This means that the style could change at random between rules.
 
     We have two options:
+
     - `DICT_KEY_ORDER`: This means, iterate through the dictionary, and take
-        the key/value pairs in order as they come. This is a good option if you
-        have Python >3.6. Rules at the end will override rules at the
-        beginning.
+       the key/value pairs in order as they come. This is a good option if you
+       have Python >3.6. Rules at the end will override rules at the beginning.
     - `MOST_PRECISE`: keys that are defined with most precision will get higher
       priority. (More precise means: more elements.)
     """

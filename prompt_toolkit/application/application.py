@@ -55,8 +55,8 @@ class Application(object):
     :param on_abort: What to do when Control-C is pressed.
     :param on_exit: What to do when Control-D is pressed.
     :param full_screen: When True, run the application on the alternate screen buffer.
-    :param color_depth: Any :class:`~prompt_toolkit.output.ColorDepth` value,
-        a callable that returns a ColorDepth or `None` for default.
+    :param color_depth: Any :class:`~.ColorDepth` value, a callable that
+        returns a :class:`~.ColorDepth` or `None` for default.
     :param erase_when_done: (bool) Clear the application output when it finishes.
     :param reverse_vi_search_direction: Normally, in Vi mode, a '/' searches
         forward and a '?' searches backward. In Readline mode, this is usually
@@ -281,7 +281,7 @@ class Application(object):
     @property
     def color_depth(self):
         """
-        Active `ColorDepth`.
+        Active :class:`.ColorDepth`.
         """
         depth = self._color_depth
 
@@ -307,8 +307,8 @@ class Application(object):
     @property
     def current_search_state(self):
         """
-        Return the current `SearchState`. (The one for the focused
-        `BufferControl`.)
+        Return the current :class:`.SearchState`. (The one for the focused
+        :class:`.BufferControl`.)
         """
         ui_control = self.layout.current_control
         if isinstance(ui_control, BufferControl):

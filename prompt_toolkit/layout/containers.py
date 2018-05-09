@@ -24,6 +24,8 @@ from prompt_toolkit.utils import take_using_weights, get_cwidth, to_int, to_str
 
 __all__ = [
     'Container',
+    'HorizontalAlign',
+    'VerticalAlign',
     'HSplit',
     'VSplit',
     'FloatContainer',
@@ -53,15 +55,15 @@ class Container(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def preferred_width(self, max_available_width):
         """
-        Return a :class:`~prompt_toolkit.layout.dimension.Dimension` that
-        represents the desired width for this container.
+        Return a :class:`~prompt_toolkit.layout.Dimension` that represents the
+        desired width for this container.
         """
 
     @abstractmethod
     def preferred_height(self, width, max_available_height):
         """
-        Return a :class:`~prompt_toolkit.layout.dimension.Dimension` that
-        represents the desired height for this container.
+        Return a :class:`~prompt_toolkit.layout.Dimension` that represents the
+        desired height for this container.
         """
 
     @abstractmethod
@@ -72,9 +74,10 @@ class Container(with_metaclass(ABCMeta, object)):
 
         :param screen: :class:`~prompt_toolkit.layout.screen.Screen`
         :param mouse_handlers: :class:`~prompt_toolkit.layout.mouse_handlers.MouseHandlers`.
-        :param parent_style: Style string to pass to the `Window` object. This will be
-            applied to all content of the windows. `VSplit` and `HSplit` can
-            use it to pass their style down to the windows that they contain.
+        :param parent_style: Style string to pass to the :class:`.Window`
+            object. This will be applied to all content of the windows.
+            :class:`.VSplit` and :class:`.HSplit` can use it to pass their
+            style down to the windows that they contain.
         :param z_index: Used for propagating z_index from parent to child.
         """
 
@@ -87,7 +90,7 @@ class Container(with_metaclass(ABCMeta, object)):
 
     def get_key_bindings(self):
         """
-        Returns a `KeyBindings` object. These bindings become active when any
+        Returns a :class:`.KeyBindings` object. These bindings become active when any
         user control in this container has the focus, except if any containers
         between this container and the focused user control is modal.
         """
@@ -186,7 +189,7 @@ class HSplit(_Split):
         element in front of floating elements.  `None` means: inherit from parent.
     :param style: A style string.
     :param modal: ``True`` or ``False``.
-    :param key_bindings: ``None`` or a ``KeyBindings`` object.
+    :param key_bindings: ``None`` or a :class:`.KeyBindings` object.
     """
     def __init__(self, children, window_too_small=None,
                  align=VerticalAlign.JUSTIFY, padding=0, padding_char=None,
@@ -371,7 +374,7 @@ class VSplit(_Split):
         element in front of floating elements.  `None` means: inherit from parent.
     :param style: A style string.
     :param modal: ``True`` or ``False``.
-    :param key_bindings: ``None`` or a ``KeyBindings`` object.
+    :param key_bindings: ``None`` or a :class:`.KeyBindings` object.
     """
     def __init__(self, children, window_too_small=None, align=HorizontalAlign.JUSTIFY,
                  padding=Dimension.exact(0), padding_char=None,
@@ -789,13 +792,13 @@ class Float(object):
 
     :param content: :class:`.Container` instance.
 
-    :param width: `Dimension` or callable which returns a `Dimension`.
-    :param height: `Dimension` or callable which returns a `Dimension`.
+    :param width: :class:`.Dimension` or callable which returns a :class:`.Dimension`.
+    :param height: :class:`.Dimension` or callable which returns a :class:`.Dimension`.
 
-    :param left: Distance to the left edge of the `FloatContainer`.
-    :param right: Distance to the right edge of the `FloatContainer`.
-    :param top: Distance to the top of the `FloatContainer`.
-    :param bottom: Distance to the bottom of the `FloatContainer`.
+    :param left: Distance to the left edge of the :class:`.FloatContainer`.
+    :param right: Distance to the right edge of the :class:`.FloatContainer`.
+    :param top: Distance to the top of the :class:`.FloatContainer`.
+    :param bottom: Distance to the bottom of the :class:`.FloatContainer`.
 
     :param attach_to_window: Attach to the cursor from this window, instead of
         the current window.
@@ -804,7 +807,7 @@ class Float(object):
         below the cursor. Not on top of the indicated position.
     :param z_index: Z-index position. For a Float, this needs to be at least
         one. It is relative to the z_index of the parent container.
-    :param transparent: `Filter` indicating whether this float needs to be
+    :param transparent: :class:`.Filter` indicating whether this float needs to be
         drawn transparently.
     """
     def __init__(self, content=None, top=None, right=None, bottom=None, left=None,
@@ -1091,6 +1094,7 @@ class ScrollOffsets(object):
 
 
 class ColorColumn(object):
+    " Column for a :class:`.Window` to be colored. "
     def __init__(self, position, style='class:color-column'):
         assert isinstance(position, int)
         assert isinstance(style, text_type)
@@ -1114,38 +1118,35 @@ class Window(Container):
     """
     Container that holds a control.
 
-    :param content: :class:`~prompt_toolkit.layout.controls.UIControl` instance.
-    :param width: :class:`~prompt_toolkit.layout.dimension.Dimension` instance or callable.
-    :param height: :class:`~prompt_toolkit.layout.dimension.Dimension` instance or callable.
+    :param content: :class:`.UIControl` instance.
+    :param width: :class:`.Dimension` instance or callable.
+    :param height: :class:`.Dimension` instance or callable.
     :param z_index: When specified, this can be used to bring element in front
         of floating elements.
     :param dont_extend_width: When `True`, don't take up more width then the
                               preferred width reported by the control.
     :param dont_extend_height: When `True`, don't take up more width then the
                                preferred height reported by the control.
-    :param ignore_content_width: A `bool` or
-        :class:`~prompt_toolkit.filters.Filter` instance. Ignore the
-        `UIContent` width when calculating the dimensions.
-    :param ignore_content_height: A `bool` or
-        :class:`~prompt_toolkit.filters.Filter` instance. Ignore the
-        `UIContent` height when calculating the dimensions.
-    :param left_margins: A list of :class:`~prompt_toolkit.layout.margins.Margin`
-        instance to be displayed on the left. For instance:
-        :class:`~prompt_toolkit.layout.margins.NumberedMargin` can be one of
-        them in order to show line numbers.
+    :param ignore_content_width: A `bool` or :class:`.Filter` instance. Ignore
+        the :class:`.UIContent` width when calculating the dimensions.
+    :param ignore_content_height: A `bool` or :class:`.Filter` instance. Ignore
+        the :class:`.UIContent` height when calculating the dimensions.
+    :param left_margins: A list of :class:`.Margin` instance to be displayed on
+        the left. For instance: :class:`~prompt_toolkit.layout.NumberedMargin`
+        can be one of them in order to show line numbers.
     :param right_margins: Like `left_margins`, but on the other side.
     :param scroll_offsets: :class:`.ScrollOffsets` instance, representing the
         preferred amount of lines/columns to be always visible before/after the
         cursor. When both top and bottom are a very high number, the cursor
         will be centered vertically most of the time.
     :param allow_scroll_beyond_bottom: A `bool` or
-        :class:`~prompt_toolkit.filters.Filter` instance. When True, allow
-        scrolling so far, that the top part of the content is not visible
-        anymore, while there is still empty space available at the bottom of
-        the window. In the Vi editor for instance, this is possible. You will
-        see tildes while the top part of the body is hidden.
-    :param wrap_lines: A `bool` or :class:`~prompt_toolkit.filters.Filter`
-        instance. When True, don't scroll horizontally, but wrap lines instead.
+        :class:`.Filter` instance. When True, allow scrolling so far, that the
+        top part of the content is not visible anymore, while there is still
+        empty space available at the bottom of the window. In the Vi editor for
+        instance, this is possible. You will see tildes while the top part of
+        the body is hidden.
+    :param wrap_lines: A `bool` or :class:`.Filter` instance. When True, don't
+        scroll horizontally, but wrap lines instead.
     :param get_vertical_scroll: Callable that takes this window
         instance as input and returns a preferred vertical scroll.
         (When this is `None`, the scroll is only determined by the last and
@@ -1153,21 +1154,20 @@ class Window(Container):
     :param get_horizontal_scroll: Callable that takes this window
         instance as input and returns a preferred vertical scroll.
     :param always_hide_cursor: A `bool` or
-        :class:`~prompt_toolkit.filters.Filter` instance. When True, never
-        display the cursor, even when the user control specifies a cursor
-        position.
-    :param cursorline: A `bool` or :class:`~prompt_toolkit.filters.Filter`
-        instance. When True, display a cursorline.
-    :param cursorcolumn: A `bool` or :class:`~prompt_toolkit.filters.Filter`
-        instance. When True, display a cursorcolumn.
+        :class:`.Filter` instance. When True, never display the cursor, even
+        when the user control specifies a cursor position.
+    :param cursorline: A `bool` or :class:`.Filter` instance. When True,
+        display a cursorline.
+    :param cursorcolumn: A `bool` or :class:`.Filter` instance. When True,
+        display a cursorcolumn.
     :param colorcolumns: A list of :class:`.ColorColumn` instances that
         describe the columns to be highlighted, or a callable that returns such
         a list.
-    :param align: `Align` value or callable that returns an `Align value.
-        alignment of content.
-    :param style: A string string. Style to be applied to all the cells in this
+    :param align: :class:`.Align` value or callable that returns an
+        :class:`.Align` value. alignment of content.
+    :param style: A style string. Style to be applied to all the cells in this
         window.
-    :param char: Character to be used for filling the background. This can also
+    :param char: (string) Character to be used for filling the background. This can also
         be a callable that returns a character.
     """
     def __init__(self, content=None, width=None, height=None, z_index=None,
@@ -2031,7 +2031,7 @@ class ConditionalContainer(Container):
     displayed or not.
 
     :param content: :class:`.Container` instance.
-    :param filter: :class:`~prompt_toolkit.filters.Filter` instance.
+    :param filter: :class:`.Filter` instance.
     """
     def __init__(self, content, filter):
         self.content = to_container(content)
@@ -2067,7 +2067,7 @@ class ConditionalContainer(Container):
 
 def to_container(container):
     """
-    Make sure that the given object is a `Container`.
+    Make sure that the given object is a :class:`.Container`.
     """
     if isinstance(container, Container):
         return container
@@ -2079,7 +2079,7 @@ def to_container(container):
 
 def to_window(container):
     """
-    Make sure that the given argument is a `Window`.
+    Make sure that the given argument is a :class:`.Window`.
     """
     if isinstance(container, Window):
         return container

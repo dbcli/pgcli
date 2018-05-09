@@ -93,7 +93,7 @@ class UIControl(with_metaclass(ABCMeta, object)):
         """
         The key bindings that are specific for this user control.
 
-        Return a `KeyBindings` object if some key bindings are
+        Return a :class:`.KeyBindings` object if some key bindings are
         specified, or `None` otherwise.
         """
 
@@ -186,7 +186,8 @@ class FormattedTextControl(UIControl):
     (It's mostly optimized for rather small widgets, like toolbars, menus, etc...)
 
     When this UI control has the focus, the cursor will be shown in the upper
-    left corner of this control by default. There are two ways for specifying the cursor position:
+    left corner of this control by default. There are two ways for specifying
+    the cursor position:
 
     - Pass a `get_cursor_position` function which returns a `Point` instance
       with the current cursor position.
@@ -204,14 +205,14 @@ class FormattedTextControl(UIControl):
         either handle the event or return `NotImplemented` in case we want the
         containing Window to handle this event.
 
-    :param focusable: `bool` or `Filter`: Tell whether this control is focusable.
+    :param focusable: `bool` or :class:`.Filter`: Tell whether this control is
+        focusable.
 
     :param text: Text or formatted text to be displayed.
     :param style: Style string applied to the content. (If you want to style
-        the whole :class:`~prompt_toolkit.layout.containers.Window`, pass the
-        style to the :class:`~prompt_toolkit.layout.containers.Window`
-        instead.)
-    :param key_bindings: a :class:`~prompt_toolkit.key_binding.key_bindings.KeyBindings` object.
+        the whole :class:`~prompt_toolkit.layout.Window`, pass the style to the
+        :class:`~prompt_toolkit.layout.Window` instead.)
+    :param key_bindings: a :class:`.KeyBindings` object.
     :param get_cursor_position: A callable that returns the cursor position as
         a `Point` instance.
     """
@@ -324,8 +325,9 @@ class FormattedTextControl(UIControl):
 
         (When the fragment list contained mouse handlers and the user clicked on
         on any of these, the matching handler is called. This handler can still
-        return `NotImplemented` in case we want the `Window` to handle this
-        particular event.)
+        return `NotImplemented` in case we want the
+        :class:`~prompt_toolkit.layout.Window` to handle this particular
+        event.)
         """
         if self._fragments:
             # Read the generator.
@@ -367,8 +369,9 @@ class DummyControl(UIControl):
     """
     A dummy control object that doesn't paint any content.
 
-    Useful for filling a Window. (The `fragment` and `char` attributes of the
-    `Window` class can be used to define the filling.)
+    Useful for filling a :class:`~prompt_toolkit.layout.Window`. (The
+    `fragment` and `char` attributes of the `Window` class can be used to
+    define the filling.)
     """
     def create_content(self, width, height):
         def get_line(i):
@@ -387,22 +390,22 @@ _ProcessedLine = namedtuple('_ProcessedLine', 'fragments source_to_display displ
 
 class BufferControl(UIControl):
     """
-    Control for visualising the content of a `Buffer`.
+    Control for visualising the content of a :class:`.Buffer`.
 
-    :param buffer: The `Buffer` object to be displayed.
+    :param buffer: The :class:`.Buffer` object to be displayed.
     :param input_processors: A list of
         :class:`~prompt_toolkit.layout.processors.Processor` objects.
     :param include_default_input_processors: When True, include the default
         processors for highlighting of selection, search and displaying of
         multiple cursors.
-    :param lexer: :class:`~prompt_toolkit.lexers.Lexer` instance for syntax highlighting.
-    :param preview_search: `bool` or `Filter`: Show search while typing.
-        When this is `True`, probably you want to add a
+    :param lexer: :class:`.Lexer` instance for syntax highlighting.
+    :param preview_search: `bool` or :class:`.Filter`: Show search while
+        typing. When this is `True`, probably you want to add a
         ``HighlightIncrementalSearchProcessor`` as well. Otherwise only the
         cursor position will move, but the text won't be highlighted.
-    :param focusable: `bool` or `Filter`: Tell whether this control is focusable.
+    :param focusable: `bool` or :class:`.Filter`: Tell whether this control is focusable.
     :param focus_on_click: Focus this buffer when it's click, but not yet focused.
-    :param key_bindings: a `KeyBindings` object.
+    :param key_bindings: a :class:`.KeyBindings` object.
     """
     def __init__(self,
                  buffer=None,
@@ -478,9 +481,9 @@ class BufferControl(UIControl):
     @property
     def search_state(self):
         """
-        Return the `SearchState` for searching this `BufferControl`.
-        This is always associated with the search control. If one search bar is
-        used for searching multiple `BufferControls`, then they share the same
+        Return the `SearchState` for searching this `BufferControl`. This is
+        always associated with the search control. If one search bar is used
+        for searching multiple `BufferControls`, then they share the same
         `SearchState`.
         """
         search_buffer_control = self.search_buffer_control
@@ -761,10 +764,10 @@ class BufferControl(UIControl):
 
 class SearchBufferControl(BufferControl):
     """
-    `BufferControl` which is used for searching another `BufferControl`.
+    :class:`.BufferControl` which is used for searching another
+    :class:`.BufferControl`.
 
-    :param ignore_case: Search case insensitive. (Only when this
-        `BufferControl` is used for searching through another `BufferControl`.)
+    :param ignore_case: Search case insensitive.
     """
     def __init__(self, buffer=None, input_processors=None, lexer=None,
                  focus_on_click=False, key_bindings=None,

@@ -200,8 +200,8 @@ class PromptSession(object):
         :class:`~prompt_toolkit.filters.Filter`. Pressing 'v' in Vi mode or
         C-X C-E in emacs mode will open an external editor.
     :param history: :class:`~prompt_toolkit.history.History` instance.
-    :param clipboard: :class:`~prompt_toolkit.clipboard.base.Clipboard` instance.
-        (e.g. :class:`~prompt_toolkit.clipboard.in_memory.InMemoryClipboard`)
+    :param clipboard: :class:`~prompt_toolkit.clipboard.Clipboard` instance.
+        (e.g. :class:`~prompt_toolkit.clipboard.InMemoryClipboard`)
     :param bottom_toolbar: Formatted text or callable which is supposed to
         return formatted text.
     :param prompt_continuation: Text that needs to be displayed for a multiline

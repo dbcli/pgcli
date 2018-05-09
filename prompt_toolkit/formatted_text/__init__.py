@@ -1,9 +1,9 @@
 """
 Many places in prompt_toolkit can take either plain text, or formatted text.
-For instance the ``prompt_toolkit.shortcuts.prompt`` function takes either
+For instance the :func:`~prompt_toolkit.shortcuts.prompt` function takes either
 plain text or formatted text for the prompt. The
-:class:`~prompt_toolkit.layout.controls.FormattedTextControl` can also take
-either plain text or formatted text.
+:class:`~prompt_toolkit.layout.FormattedTextControl` can also take either plain
+text or formatted text.
 
 In any case, there is an input that can either be just plain text (a string),
 an :class:`.HTML` object, an :class:`.ANSI` object or a sequence of

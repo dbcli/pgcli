@@ -8,7 +8,8 @@ suggestion will be inserted.
 
 If you want the auto suggestions to be asynchronous (in a background thread),
 because they take too much time, and could potentially block the event loop,
-then wrap the ``AutoSuggest`` instance into a ``ThreadedAutoSuggest``.
+then wrap the :class:`.AutoSuggest` instance into a
+:class:`.ThreadedAutoSuggest`.
 """
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
@@ -50,7 +51,8 @@ class AutoSuggest(with_metaclass(ABCMeta, object)):
         """
         Return `None` or a :class:`.Suggestion` instance.
 
-        We receive both ``buffer`` and ``document``. The reason is that auto
+        We receive both :class:`~prompt_toolkit.buffer.Buffer` and
+        :class:`~prompt_toolkit.document.Document`. The reason is that auto
         suggestions are retrieved asynchronously. (Like completions.) The
         buffer text could be changed in the meantime, but ``document`` contains
         the buffer document like it was at the start of the auto suggestion
@@ -63,7 +65,7 @@ class AutoSuggest(with_metaclass(ABCMeta, object)):
 
     def get_suggestion_future(self, buff, document):
         """
-        Return a `Future` which is set when the suggestions are ready.
+        Return a :class:`.Future` which is set when the suggestions are ready.
         This function can be overloaded in order to provide an asynchronous
         implementation.
         """

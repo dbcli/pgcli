@@ -57,7 +57,7 @@ class Layout(object):
 
     def find_all_windows(self):
         """
-        Find all the `UIControl` objects in this layout.
+        Find all the :class:`.UIControl` objects in this layout.
         """
         for item in self.walk():
             if isinstance(item, Window):
@@ -72,12 +72,13 @@ class Layout(object):
         Focus the given UI element.
 
         `value` can be either:
-        - a `UIControl`
-        - a `Buffer` instance or the name of a `Buffer`
-        - a `Window`
-        - Any container object. In this case we will focus the `Window` from
-          this container that was focused most recent, or the very first
-          focusable `Window` of the container.
+
+        - a :class:`.UIControl`
+        - a :class:`.Buffer` instance or the name of a :class:`.Buffer`
+        - a :class:`.Window`
+        - Any container object. In this case we will focus the :class:`.Window`
+          from this container that was focused most recent, or the very first
+          focusable :class:`.Window` of the container.
         """
         # BufferControl by buffer name.
         if isinstance(value, six.text_type):
@@ -142,7 +143,7 @@ class Layout(object):
     def has_focus(self, value):
         """
         Check whether the given control has the focus.
-        :param value: `UIControl` or `Window` instance.
+        :param value: :class:`.UIControl` or :class:`.Window` instance.
         """
         if isinstance(value, six.text_type):
             if self.current_buffer is None:
@@ -167,14 +168,14 @@ class Layout(object):
     @property
     def current_control(self):
         """
-        Get the `UIControl` to currently has the  focus.
+        Get the :class:`.UIControl` to currently has the focus.
         """
         return self._stack[-1].content
 
     @current_control.setter
     def current_control(self, control):
         """
-        Set the `UIControl` to receive the focus.
+        Set the :class:`.UIControl` to receive the focus.
         """
         assert isinstance(control, UIControl)
 
@@ -187,12 +188,12 @@ class Layout(object):
 
     @property
     def current_window(self):
-        " Return the `Window` object that is currently focused. "
+        " Return the :class:`.Window` object that is currently focused. "
         return self._stack[-1]
 
     @current_window.setter
     def current_window(self, value):
-        " Set the `Window` object to be currently focused. "
+        " Set the :class:`.Window` object to be currently focused. "
         assert isinstance(value, Window)
         self._stack.append(value)
 
@@ -203,13 +204,13 @@ class Layout(object):
 
     @property
     def search_target_buffer_control(self):
-        " Return the `BufferControl` in which we are searching or `None`. "
+        " Return the :class:`.BufferControl` in which we are searching or `None`. "
         return self.search_links.get(self.current_control)
 
     def get_focusable_windows(self):
         """
-        Return all the `Window` objects which are focusable (in the 'modal'
-        area).
+        Return all the :class:`.Window` objects which are focusable (in the
+        'modal' area).
         """
         for w in self.walk_through_modal_area():
             if isinstance(w, Window) and w.content.is_focusable():
@@ -217,7 +218,7 @@ class Layout(object):
 
     def get_visible_focusable_windows(self):
         """
-        Return a list of `Window` objects that are focusable.
+        Return a list of :class:`.Window` objects that are focusable.
         """
         # focusable windows are windows that are visible, but also part of the
         # modal container. Make sure to keep the ordering.
@@ -246,9 +247,9 @@ class Layout(object):
     @property
     def buffer_has_focus(self):
         """
-        Return `True` if the currently focused control is a `BufferControl`.
-        (For instance, used to determine whether the default key bindings
-        should be active or not.)
+        Return `True` if the currently focused control is a
+        :class:`.BufferControl`. (For instance, used to determine whether the
+        default key bindings should be active or not.)
         """
         ui_control = self.current_control
         return isinstance(ui_control, BufferControl)
@@ -256,7 +257,7 @@ class Layout(object):
     @property
     def previous_control(self):
         """
-        Get the `UIControl` to previously had the focus.
+        Get the :class:`.UIControl` to previously had the focus.
         """
         try:
             return self._stack[-2].content

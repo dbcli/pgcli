@@ -65,24 +65,30 @@ class TextArea(object):
     """
     A simple input field.
 
-    This contains a ``prompt_toolkit`` ``Buffer`` object that hold the text
-    data structure for the edited buffer, the ``BufferControl``, which applies
-    a ``Lexer`` to the text and turns it into a ``UIControl``, and finally,
-    this ``UIControl`` is wrapped in a ``Window`` object (just like any
-    ``UIControl``), which is responsible for the scrolling.
+    This contains a ``prompt_toolkit`` :class:`~prompt_toolkit.buffer.Buffer`
+    object that hold the text data structure for the edited buffer, the
+    :class:`~prompt_toolkit.layout.BufferControl`, which applies a
+    :class:`~prompt_toolkit.lexers.Lexer` to the text and turns it into a
+    :class:`~prompt_toolkit.layout.UIControl`, and finally, this
+    :class:`~prompt_toolkit.layout.UIControl` is wrapped in a
+    :class:`~prompt_toolkit.layout.Window` object (just like any
+    :class:`~prompt_toolkit.layout.UIControl`), which is responsible for the
+    scrolling.
 
     This widget does have some options, but it does not intend to cover every
     single use case. For more configurations options, you can always build a
-    text area manually, using a ``Buffer``, ``BufferControl`` and ``Window``.
+    text area manually, using a :class:`~prompt_toolkit.buffer.Buffer`,
+    :class:`~prompt_toolkit.layout.BufferControl` and
+    :class:`~prompt_toolkit.layout.Window`.
 
     :param text: The initial text.
     :param multiline: If True, allow multiline input.
-    :param lexer: ``Lexer`` instance for syntax highlighting.
-    :param completer: ``Completer`` instance for auto completion.
+    :param lexer: :class:`~prompt_toolkit.lexers.Lexer` instance for syntax highlighting.
+    :param completer: :class:`~prompt_toolkit.completion.Completer` instance for auto completion.
     :param focusable: When `True`, allow this widget to receive the focus.
     :param wrap_lines: When `True`, don't scroll horizontally, but wrap lines.
-    :param width: Window width. (``Dimension`` object.)
-    :param height: Window height. (``Dimension`` object.)
+    :param width: Window width. (:class:`~prompt_toolkit.layout.Dimension` object.)
+    :param height: Window height. (:class:`~prompt_toolkit.layout.Dimension` object.)
     :param password: When `True`, display using asterisks.
     :param accept_handler: Called when `Enter` is pressed.
     :param scrollbar: When `True`, display a scroll bar.

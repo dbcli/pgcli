@@ -77,7 +77,6 @@ Table of contents
    pages/asking_for_input
    pages/dialogs
    pages/full_screen_apps
-   pages/architecture
    pages/advanced_topics/index
    pages/reference
 

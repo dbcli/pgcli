@@ -1272,8 +1272,8 @@ class Buffer(object):
         Return a :class:`~prompt_toolkit.document.Document` instance that has
         the text/cursor position for this search, if we would apply it. This
         will be used in the
-        :class:`~prompt_toolkit.layout.controls.BufferControl` to display
-        feedback while searching.
+        :class:`~prompt_toolkit.layout.BufferControl` to display feedback while
+        searching.
         """
         search_result = self._search(search_state, include_current_position=True)
 

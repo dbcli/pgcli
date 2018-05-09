@@ -90,23 +90,16 @@ Style
 -----
 
 .. automodule:: prompt_toolkit.styles
-    :members: BaseStyle, DummyStyle, DynamicStyle
+    :members: Attrs, ANSI_COLOR_NAMES, BaseStyle, DummyStyle, DynamicStyle
 
 .. automodule:: prompt_toolkit.styles
-    :members: Style, merge_styles
+    :members: Style, Priority, merge_styles
 
 .. automodule:: prompt_toolkit.styles
     :members: style_from_pygments_cls, style_from_pygments_dict, pygments_token_to_classname
 
 .. automodule:: prompt_toolkit.styles.named_colors
     :members: NAMED_COLORS
-
-
-Reactive
---------
-
-.. automodule:: prompt_toolkit.reactive
-    :members:
 
 
 Shortcuts
@@ -166,7 +159,7 @@ Containers
 ^^^^^^^^^^
 
 .. automodule:: prompt_toolkit.layout
-    :members: Container, HSplit, VSplit, FloatContainer, Float, Window, ConditionalContainer, ScrollOffsets, ColorColumn, to_container, to_window, is_container
+    :members: Container, HSplit, VSplit, FloatContainer, Float, Window, ConditionalContainer, ScrollOffsets, ColorColumn, to_container, to_window, is_container, HorizontalAlign, VerticalAlign
 
 
 Controls
@@ -176,6 +169,22 @@ Controls
     :members: BufferControl, SearchBufferControl, DummyControl, FormattedTextControl, UIControl, UIContent
 
 
+Widgets
+^^^^^^^
+
+.. automodule:: prompt_toolkit.widgets
+    :members: TextArea, Label, Button, Frame, Shadow, Box, VerticalLine, HorizontalLine, RadioList, Checkbox, ProgressBar
+
+.. automodule:: prompt_toolkit.widgets
+    :members: ArgToolbar, CompletionsToolbar, FormattedTextToolbar, SearchToolbar, SystemToolbar, ValidationToolbar
+
+.. automodule:: prompt_toolkit.widgets
+    :members: Dialog
+
+.. automodule:: prompt_toolkit.widgets
+    :members: MenuContainer, MenuItem
+
+
 Other
 ^^^^^
 
@@ -183,7 +192,7 @@ Other
     :members: Dimension
 
 .. automodule:: prompt_toolkit.layout
-    :members: Margin, NumberredMargin, ScrollbarMargin, ConditionalMargin, PromptMargin
+    :members: Margin, NumberedMargin, ScrollbarMargin, ConditionalMargin, PromptMargin
 
 .. automodule:: prompt_toolkit.layout
     :members: CompletionsMenu, MultiColumnCompletionsMenu
@@ -249,9 +258,6 @@ Eventloop
 .. automodule:: prompt_toolkit.eventloop.asyncio_posix
     :members:
 
-.. automodule:: prompt_toolkit.eventloop.callbacks
-    :members:
-
 .. automodule:: prompt_toolkit.eventloop.coroutine
     :members:
 
@@ -283,14 +289,8 @@ Output
 .. automodule:: prompt_toolkit.output.defaults
     :members:
 
-.. automodule:: prompt_toolkit.output.base
-    :members:
-
 .. automodule:: prompt_toolkit.output.vt100
     :members:
 
 .. automodule:: prompt_toolkit.output.win32
-    :members:
-
-.. automodule:: prompt_toolkit.output.color_depth
     :members:

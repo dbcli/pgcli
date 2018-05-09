@@ -52,7 +52,7 @@ class Input(with_metaclass(ABCMeta, object)):
     @property
     def responds_to_cpr(self):
         """
-        `True` if the `Application can expect to receive a CPR response from
+        `True` if the `Application` can expect to receive a CPR response from
         here.
         """
         return False
