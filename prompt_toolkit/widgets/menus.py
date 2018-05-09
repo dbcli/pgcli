@@ -281,8 +281,7 @@ class MenuContainer(object):
 
         return Window(
             FormattedTextControl(get_text_fragments),
-            style='class:menu',
-            transparent=False)
+            style='class:menu')
 
     @property
     def floats(self):
