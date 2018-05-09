@@ -20,8 +20,7 @@ from prompt_toolkit.application.current import get_app
 from prompt_toolkit.cache import SimpleCache
 from prompt_toolkit.filters import to_filter, vi_insert_mode, emacs_insert_mode
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
-from prompt_toolkit.reactive import Integer
-from prompt_toolkit.utils import take_using_weights, get_cwidth
+from prompt_toolkit.utils import take_using_weights, get_cwidth, to_int, to_str
 
 __all__ = [
     'Container',
@@ -122,14 +121,6 @@ class HorizontalAlign:
     CENTER = 'CENTER'
     RIGHT = 'RIGHT'
     JUSTIFY = 'JUSTIFY'
-
-
-def to_str(value):
-    " Turn callable or string into string. "
-    if callable(value):
-        return to_str(value())
-    else:
-        return str(value)
 
 
 class _Split(Container):
@@ -1068,10 +1059,10 @@ class ScrollOffsets(object):
     Note that left/right offsets only make sense if line wrapping is disabled.
     """
     def __init__(self, top=0, bottom=0, left=0, right=0):
-        assert isinstance(top, Integer)
-        assert isinstance(bottom, Integer)
-        assert isinstance(left, Integer)
-        assert isinstance(right, Integer)
+        assert isinstance(top, int) or callable(top)
+        assert isinstance(bottom, int) or callable(bottom)
+        assert isinstance(left, int) or callable(left)
+        assert isinstance(right, int) or callable(right)
 
         self._top = top
         self._bottom = bottom
@@ -1080,23 +1071,23 @@ class ScrollOffsets(object):
 
     @property
     def top(self):
-        return int(self._top)
+        return to_int(self._top)
 
     @property
     def bottom(self):
-        return int(self._bottom)
+        return to_int(self._bottom)
 
     @property
     def left(self):
-        return int(self._left)
+        return to_int(self._left)
 
     @property
     def right(self):
-        return int(self._right)
+        return to_int(self._right)
 
     def __repr__(self):
         return 'ScrollOffsets(top=%r, bottom=%r, left=%r, right=%r)' % (
-            self.top, self.bottom, self.left, self.right)
+            self._top, self._bottom, self._left, self._right)
 
 
 class ColorColumn(object):

@@ -16,8 +16,8 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.filters import to_filter, vi_insert_multiple_mode
 from prompt_toolkit.formatted_text import to_formatted_text
 from prompt_toolkit.formatted_text.utils import fragment_list_len, fragment_list_to_text
-from prompt_toolkit.reactive import Integer
 from prompt_toolkit.search import SearchDirection
+from prompt_toolkit.utils import to_int
 
 from .utils import explode_text_fragments
 
@@ -535,14 +535,15 @@ class TabsProcessor(Processor):
     Render tabs as spaces (instead of ^I) or make them visible (for instance,
     by replacing them with dots.)
 
-    :param tabstop: (Integer) Horizontal space taken by a tab.
+    :param tabstop: Horizontal space taken by a tab. (`int` or callable that
+        returns an `int`).
     :param get_char1: Callable that returns a character (text of length one).
         This one is used for the first space taken by the tab.
     :param get_char2: Like `get_char1`, but for the rest of the space.
     """
     def __init__(self, tabstop=4, get_char1=None, get_char2=None,
                  style='class:tab'):
-        assert isinstance(tabstop, Integer)
+        assert isinstance(tabstop, int) or callable(tabstop)
         assert get_char1 is None or callable(get_char1)
         assert get_char2 is None or callable(get_char2)
 
@@ -552,7 +553,7 @@ class TabsProcessor(Processor):
         self.style = style
 
     def apply_transformation(self, ti):
-        tabstop = int(self.tabstop)
+        tabstop = to_int(self.tabstop)
         style = self.style
 
         # Create separator for tabs.

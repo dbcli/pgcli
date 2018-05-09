@@ -21,6 +21,8 @@ __all__ = [
     'in_main_thread',
     'take_using_weights',
     'test_callable_args',
+    'to_str',
+    'to_int',
 ]
 
 
@@ -282,3 +284,19 @@ def take_using_weights(items, weights):
                     adding = True
 
         i += 1
+
+
+def to_str(value):
+    " Turn callable or string into string. "
+    if callable(value):
+        return to_str(value())
+    else:
+        return str(value)
+
+
+def to_int(value):
+    " Turn callable or int into int. "
+    if callable(value):
+        return to_int(value())
+    else:
+        return int(value)
