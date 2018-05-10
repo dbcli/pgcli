@@ -565,7 +565,7 @@ def load_vi_bindings():
 
         if after:
             def get_pos(from_to):
-                return from_to[1] + 1
+                return from_to[1]
         else:
             def get_pos(from_to):
                 return from_to[0]

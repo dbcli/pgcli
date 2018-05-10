@@ -219,7 +219,7 @@ class HighlightSelectionProcessor(Processor):
                 # visualise the selection.
                 return Transformation([(selected_fragment, ' ')])
             else:
-                for i in range(from_, to + 1):
+                for i in range(from_, to):
                     if i < len(fragments):
                         old_fragment, old_text = fragments[i]
                         fragments[i] = (old_fragment + selected_fragment, old_text)

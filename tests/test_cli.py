@@ -411,6 +411,54 @@ def test_emacs_kill_ring():
     assert result.text == 'ghi'
 
 
+def test_emacs_selection():
+    # Copy/paste empty selection should not do anything.
+    operations = (
+        'hello'
+
+        # Twice left.
+        '\x1b[D\x1b[D'
+
+        # Control-Space
+        '\x00'
+
+        # ControlW (cut)
+        '\x17'
+
+        # ControlY twice. (paste twice)
+        '\x19\x19\r'
+    )
+
+    result, cli = _feed_cli_with_input(operations)
+    assert result.text == 'hello'
+
+    # Copy/paste one character.
+    operations = (
+        'hello'
+
+        # Twice left.
+        '\x1b[D\x1b[D'
+
+        # Control-Space
+        '\x00'
+
+        # Right.
+        '\x1b[C'
+
+        # ControlW (cut)
+        '\x17'
+
+        # ControlA (Home).
+        '\x01'
+
+        # ControlY (paste)
+        '\x19\r'
+    )
+
+    result, cli = _feed_cli_with_input(operations)
+    assert result.text == 'lhelo'
+
+
 def test_emacs_insert_comment():
     # Test insert-comment (M-#) binding.
     result, cli = _feed_cli_with_input('hello\x1b#', check_line_ending=False)
@@ -576,7 +624,7 @@ def test_vi_block_editing():
                    multiline=True)
 
     operations = (
-        # Three lines of text.
+        # Six lines of text.
         '-line1\r-line2\r-line3\r-line4\r-line5\r-line6'
         # Go to the second character of the second line.
         '\x1bkkkkkkkj0l'
@@ -604,6 +652,36 @@ def test_vi_block_editing():
 
     assert (result.text ==
             '-line1\n-line***2\n-line***3\n-line***4\n-line5\n-line6')
+
+
+def test_vi_visual_line_copy():
+    feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI,
+                   multiline=True)
+
+    operations = (
+        # Three lines of text.
+        '-line1\r-line2\r-line3\r-line4\r-line5\r-line6'
+        # Go to the second character of the second line.
+        '\x1bkkkkkkkj0l'
+        # Enter Visual linemode.
+        'V'
+        # Go down one line.
+        'j'
+        # Go 3 characters to the right (should not do much).
+        'lll'
+        # Copy this block.
+        'y'
+        # Go down one line.
+        'j'
+        # Insert block twice.
+        '2p'
+        # Escape again.
+        '\x1b\r')
+
+    result, cli = feed(operations)
+
+    assert (result.text ==
+            '-line1\n-line2\n-line3\n-line4\n-line2\n-line3\n-line2\n-line3\n-line5\n-line6')
 
 
 def test_vi_character_paste():
