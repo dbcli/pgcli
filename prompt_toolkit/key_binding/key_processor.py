@@ -91,6 +91,7 @@ class KeyProcessor(object):
         self._keys_pressed = 0  # Monotonically increasing counter.
 
         # Simple macro recording. (Like Readline does.)
+        # (For Emacs mode.)
         self.record_macro = False
         self.macro = []
 
@@ -317,7 +318,9 @@ class KeyProcessor(object):
         return key_presses
 
     def _call_handler(self, handler, key_sequence=None):
+        app = get_app()
         was_recording = self.record_macro
+        was_recording_vi = bool(app.vi_state.recording_register)
         arg = self.arg
         self.arg = None
 
@@ -347,6 +350,10 @@ class KeyProcessor(object):
         # before and after executing the key.)
         if self.record_macro and was_recording:
             self.macro.extend(key_sequence)
+
+        if app.vi_state.recording_register and was_recording_vi:
+            for k in key_sequence:
+                app.vi_state.current_recording += k.data
 
     def _fix_vi_cursor_position(self, event):
         """

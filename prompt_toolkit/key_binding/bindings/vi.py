@@ -1,10 +1,12 @@
 # pylint: disable=function-redefined
 from __future__ import unicode_literals
 from prompt_toolkit.application.current import get_app
-from prompt_toolkit.buffer import ClipboardData, indent, unindent, reshape_text
+from prompt_toolkit.buffer import indent, unindent, reshape_text
+from prompt_toolkit.clipboard import ClipboardData
 from prompt_toolkit.document import Document
 from prompt_toolkit.filters import Condition, has_arg, Always, is_read_only, is_searching
-from prompt_toolkit.filters.app import vi_navigation_mode, vi_insert_mode, vi_insert_multiple_mode, vi_replace_mode, vi_selection_mode, vi_waiting_for_text_object_mode, vi_digraph_mode, vi_mode, in_paste_mode, is_multiline, vi_search_direction_reversed
+from prompt_toolkit.filters.app import vi_navigation_mode, vi_insert_mode, vi_insert_multiple_mode, vi_replace_mode, vi_selection_mode, vi_waiting_for_text_object_mode, vi_digraph_mode, vi_mode, in_paste_mode, is_multiline, vi_search_direction_reversed, vi_recording_macro
+from prompt_toolkit.input.vt100_parser import Vt100Parser
 from prompt_toolkit.key_binding.digraphs import DIGRAPHS
 from prompt_toolkit.key_binding.vi_state import CharacterFind, InputMode
 from prompt_toolkit.keys import Keys
@@ -1680,6 +1682,48 @@ def load_vi_bindings():
         finally:
             event.app.vi_state.waiting_for_digraph = False
             event.app.vi_state.digraph_symbol1 = None
+
+    @handle('q', Keys.Any, filter=vi_navigation_mode & ~vi_recording_macro)
+    def _(event):
+        " Start recording macro. "
+        c = event.key_sequence[1].data
+        if c in vi_register_names:
+            vi_state = event.app.vi_state
+
+            vi_state.recording_register = c
+            vi_state.current_recording = ''
+
+    @handle('q', filter=vi_navigation_mode & vi_recording_macro)
+    def _(event):
+        " Stop recording macro. "
+        vi_state = event.app.vi_state
+
+        # Store and stop recording.
+        vi_state.named_registers[vi_state.recording_register] = ClipboardData(vi_state.current_recording)
+        vi_state.recording_register = None
+        vi_state.current_recording = ''
+
+    @handle('@', Keys.Any, filter=vi_navigation_mode)
+    def _(event):
+        " Execute macro. "
+        # Retrieve macro.
+        c = event.key_sequence[1].data
+        try:
+            macro = event.app.vi_state.named_registers[c]
+        except KeyError:
+            return
+
+        # Expand macro (which is a string in the register), in individual keys.
+        # Use vt100 parser for this.
+        keys = []
+
+        parser = Vt100Parser(keys.append)
+        parser.feed(macro.text)
+        parser.flush()
+
+        # Now feed keys back to the input processor.
+        for _ in range(event.arg):
+            event.app.key_processor.feed_multiple(keys, first=True)
 
     return ConditionalKeyBindings(key_bindings, vi_mode)
 

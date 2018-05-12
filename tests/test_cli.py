@@ -618,3 +618,17 @@ def test_vi_character_paste():
     result, cli = feed('abcde\x1bhhxP\r')
     assert result.text == 'abcde'
     assert result.cursor_position == 2
+
+
+def test_vi_macros():
+    feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI)
+
+    # Record and execute macro.
+    result, cli = feed('\x1bqcahello\x1bq@c\r')
+    assert result.text == 'hellohello'
+    assert result.cursor_position == 9
+
+    # Running unknown macro.
+    result, cli = feed('\x1b@d\r')
+    assert result.text == ''
+    assert result.cursor_position == 0

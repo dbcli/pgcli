@@ -49,6 +49,14 @@ class ViState(object):
         #: When true, make ~ act as an operator.
         self.tilde_operator = False
 
+        #: Register in which we are recording a macro.
+        #: `None` when not recording anything.
+        # Note that the recording is only stored in the register after the
+        # recording is stopped. So we record in a seperate `current_recording`
+        # variable.
+        self.recording_register = None
+        self.current_recording = ''
+
     def reset(self, mode=InputMode.INSERT):
         """
         Reset state, go back to the given mode. INSERT by default.

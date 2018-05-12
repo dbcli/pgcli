@@ -31,6 +31,7 @@ __all__ = [
     'vi_selection_mode',
     'vi_waiting_for_text_object_mode',
     'vi_digraph_mode',
+    'vi_recording_macro',
 
     'emacs_mode',
     'emacs_insert_mode',
@@ -274,6 +275,16 @@ def vi_digraph_mode():
         return False
 
     return app.vi_state.waiting_for_digraph
+
+
+@Condition
+def vi_recording_macro():
+    " When recording a Vi macro. "
+    app = get_app()
+    if app.editing_mode != EditingMode.VI:
+        return False
+
+    return app.vi_state.recording_register is not None
 
 
 @Condition
