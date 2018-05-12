@@ -338,7 +338,7 @@ def load_vi_bindings():
         if vi_state.input_mode in (InputMode.INSERT, InputMode.REPLACE):
             buffer.cursor_position += buffer.document.get_cursor_left_position()
 
-        vi_state.reset(InputMode.NAVIGATION)
+        vi_state.input_mode = InputMode.NAVIGATION
 
         if bool(buffer.selection_state):
             buffer.exit_selection()

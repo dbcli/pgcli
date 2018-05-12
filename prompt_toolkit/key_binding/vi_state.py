@@ -40,7 +40,7 @@ class ViState(object):
         self.named_registers = {}
 
         #: The Vi mode we're currently in to.
-        self.input_mode = InputMode.INSERT
+        self.__input_mode = InputMode.INSERT
 
         #: Waiting for digraph.
         self.waiting_for_digraph = False
@@ -57,13 +57,32 @@ class ViState(object):
         self.recording_register = None
         self.current_recording = ''
 
-    def reset(self, mode=InputMode.INSERT):
+    @property
+    def input_mode(self):
+        " Get `InputMode`. "
+        return self.__input_mode
+
+    @input_mode.setter
+    def input_mode(self, value):
+        " Set `InputMode`. "
+        if value == InputMode.NAVIGATION:
+            self.waiting_for_digraph = False
+            self.operator_func = None
+            self.operator_arg = None
+
+        self.__input_mode = value
+
+    def reset(self):
         """
         Reset state, go back to the given mode. INSERT by default.
         """
         # Go back to insert mode.
-        self.input_mode = mode
+        self.input_mode = InputMode.INSERT
 
         self.waiting_for_digraph = False
         self.operator_func = None
         self.operator_arg = None
+
+        # Reset recording state.
+        self.recording_register = None
+        self.current_recording = ''
