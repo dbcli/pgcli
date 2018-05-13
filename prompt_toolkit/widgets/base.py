@@ -31,6 +31,7 @@ from prompt_toolkit.layout.margins import ScrollbarMargin, NumberedMargin
 from prompt_toolkit.layout.processors import PasswordProcessor, ConditionalProcessor, BeforeInput
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.utils import get_cwidth
+from prompt_toolkit.keys import Keys
 
 from .toolbars import SearchToolbar
 
@@ -507,6 +508,14 @@ class RadioList(object):
         @kb.add(' ')
         def _(event):
             self.current_value = self.values[self._selected_index][0]
+
+        @kb.add(Keys.Any)
+        def _(event):
+            # We first check values after the selected value, then all values.
+            for value in self.values[self._selected_index + 1:] + self.values:
+                if value[1].startswith(event.data):
+                    self._selected_index = self.values.index(value)
+                    return
 
         # Control and window.
         self.control = FormattedTextControl(
