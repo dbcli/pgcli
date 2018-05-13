@@ -467,7 +467,7 @@ def start_kbd_macro(event):
     """
     Begin saving the characters typed into the current keyboard macro.
     """
-    event.app.key_processor.start_macro()
+    event.app.emacs_state.start_macro()
 
 
 @register('end-kbd-macro')
@@ -476,7 +476,7 @@ def end_kbd_macro(event):
     Stop saving the characters typed into the current keyboard macro and save
     the definition.
     """
-    event.app.key_processor.end_macro()
+    event.app.emacs_state.end_macro()
 
 
 @register('call-last-kbd-macro')
@@ -485,7 +485,9 @@ def call_last_kbd_macro(event):
     Re-execute the last keyboard macro defined, by making the characters in the
     macro appear as if typed at the keyboard.
     """
-    event.app.key_processor.call_macro()
+    # Insert the macro.
+    event.app.key_processor.feed_multiple(
+        event.app.emacs_state.macro, first=True)
 
 
 @register('print-last-kbd-macro')

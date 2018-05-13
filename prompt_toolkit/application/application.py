@@ -14,6 +14,7 @@ from prompt_toolkit.key_binding.bindings.page_navigation import load_page_naviga
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, ConditionalKeyBindings, KeyBindingsBase, merge_key_bindings, GlobalOnlyKeyBindings
 from prompt_toolkit.key_binding.key_processor import KeyProcessor
+from prompt_toolkit.key_binding.emacs_state import EmacsState
 from prompt_toolkit.key_binding.vi_state import ViState
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.controls import BufferControl
@@ -206,6 +207,7 @@ class Application(object):
 
         #: Vi state. (For Vi key bindings.)
         self.vi_state = ViState()
+        self.emacs_state = EmacsState()
 
         #: When to flush the input (For flushing escape keys.) This is important
         #: on terminals that use vt100 input. We can't distinguish the escape
@@ -331,6 +333,7 @@ class Application(object):
         self.key_processor.reset()
         self.layout.reset()
         self.vi_state.reset()
+        self.emacs_state.reset()
 
         # Trigger reset event.
         self.on_reset.fire()
