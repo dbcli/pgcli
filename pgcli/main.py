@@ -359,7 +359,7 @@ class PGCli(object):
                          user=fixup_possible_percent_encoding(uri.username),
                          port=fixup_possible_percent_encoding(uri.port),
                          passwd=fixup_possible_percent_encoding(uri.password))
-        # Deal with extra params e.g. ?sslmode=verify-ca&ssl-cert=/mycert
+        # Deal with extra params e.g. ?sslmode=verify-ca&sslrootcert=/myrootcert
         if uri.query:
             arguments = dict(
                 {k: v for k, (v,) in parse_qs(uri.query).items()},
