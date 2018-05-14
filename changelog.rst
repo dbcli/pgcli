@@ -1,6 +1,10 @@
 Upcoming:
 =========
 
+Features:
+---------
+* Add quit commands to the completion menu. (Thanks: `Jason Ribeiro`_)
+
 Internal changes:
 -----------------
 
@@ -813,3 +817,4 @@ Improvements:
 .. _`Isank`: https://github.com/isank
 .. _`Bojan Delić`: https://github.com/delicb
 .. _`Frederic Aoustin`: https://github.com/fraoustin
+.. _`Jason Ribeiro`: https://github.com/jrib
