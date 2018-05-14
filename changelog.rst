@@ -4,6 +4,7 @@ Upcoming:
 Features:
 ---------
 * Add quit commands to the completion menu. (Thanks: `Jason Ribeiro`_)
+* Add table formats to ``\T`` completion. (Thanks: `Jason Ribeiro`_)
 
 Internal changes:
 -----------------
