@@ -1,11 +1,19 @@
 Upcoming:
 =========
 
+Features:
+---------
+* Add quit commands to the completion menu. (Thanks: `Jason Ribeiro`_)
+
 Internal changes:
 -----------------
 
 * Mark tests requiring a running database server as dbtest (Thanks: `Dick Marinus`_)
 * Add ``application_name`` to help identify pgcli connection to database (issue #868) (Thanks: `François Pietka`_)
+
+Bug Fixes:
+----------
+* Disable pager when using \watch (#837). (Thanks: `Jason Ribeiro`_)
 
 1.9.1:
 ======
@@ -814,3 +822,4 @@ Improvements:
 .. _`Isank`: https://github.com/isank
 .. _`Bojan Delić`: https://github.com/delicb
 .. _`Frederic Aoustin`: https://github.com/fraoustin
+.. _`Jason Ribeiro`: https://github.com/jrib
