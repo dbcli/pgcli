@@ -5,9 +5,6 @@ python:
   - "3.5"
   - "3.6"
 
-before_install:
-  - sudo apt-get install python-dbus
-
 install:
   - pip install .
   - pip install -r requirements-dev.txt
