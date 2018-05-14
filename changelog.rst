@@ -745,6 +745,7 @@ Bug Fixes:
 ----------
 * Fix the broken behavior of \d+. (Thanks: https://github.com/macobo)
 * Fix a crash during auto-completion. (Thanks: https://github.com/Erethon)
+* Avoid losing pre_run_callables on error in editing.  (Thanks: https://github.com/catherinedevlin)
 
 Improvements:
 -------------
