@@ -458,12 +458,14 @@ class PGCli(object):
             while special.editor_command(document.text):
                 filename = special.get_filename(document.text)
                 query = (special.get_editor_query(document.text) or
-                        self.get_last_query())
-                sql, message = special.open_external_editor(filename, sql=query)
+                         self.get_last_query())
+                sql, message = special.open_external_editor(
+                    filename, sql=query)
                 if message:
                     # Something went wrong. Raise an exception and bail.
                     raise RuntimeError(message)
-                cli.current_buffer.document = Document(sql, cursor_position=len(sql))
+                cli.current_buffer.document = Document(sql,
+                                                       cursor_position=len(sql))
                 cli.application.pre_run_callables = []
                 document = cli.run()
         finally:
