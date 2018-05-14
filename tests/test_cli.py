@@ -21,9 +21,9 @@ import pytest
 
 def _history():
     h = InMemoryHistory()
-    h.append('line1 first input')
-    h.append('line2 second input')
-    h.append('line3 third input')
+    h.append_string('line1 first input')
+    h.append_string('line2 second input')
+    h.append_string('line3 third input')
     return h
 
 
@@ -319,7 +319,7 @@ def test_emacs_history_bindings():
     history = _history()
     result, cli = _feed_cli_with_input('new input\r', history=history)
     assert result.text == 'new input'
-    history.strings[-1] == 'new input'
+    history.get_strings()[-1] == 'new input'
 
     # Go up in history, and accept the last item.
     result, cli = _feed_cli_with_input('hello\x1b[A\r', history=history)

@@ -1,86 +1,182 @@
+"""
+Implementations for the history of a `Buffer`.
+
+NOTE: Notice that there is no `DynamicHistory`. This doesn't work well, because
+      the `Buffer` needs to be able to attach an event handler to the event
+      when a history entry is loaded. This loading can be done asynchronously
+      and making the history swappable would probably break this.
+"""
 from __future__ import unicode_literals
+
+from .utils import Event
+from .eventloop import AsyncGeneratorItem, From, ensure_future, consume_async_generator, generator_to_async_generator
+
 from abc import ABCMeta, abstractmethod
-from six import with_metaclass
+from six import with_metaclass, text_type
 
 import datetime
 import os
 
 __all__ = [
-    'FileHistory',
     'History',
+    'ThreadedHistory',
     'DummyHistory',
+    'FileHistory',
     'InMemoryHistory',
 ]
 
 
 class History(with_metaclass(ABCMeta, object)):
     """
-    Base ``History`` interface.
+    Base ``History`` class.
+
+    This also includes abstract methods for loading/storing history.
     """
-    @abstractmethod
-    def append(self, string):
-        " Append string to history. "
+    def __init__(self):
+        # In memory storage for strings.
+        self._loading = False
+        self._loaded_strings = []
+        self._item_loaded = Event(self)
 
-    @abstractmethod
-    def __getitem__(self, key):
-        " Return one item of the history. It should be accessible like a `list`. "
-
-    @abstractmethod
-    def __iter__(self):
-        " Iterate through all the items of the history. Chronologically. "
-
-    @abstractmethod
-    def __len__(self):
-        " Return the length of the history.  "
-
-    def __bool__(self):
+    def _start_loading(self):
         """
-        Never evaluate to False, even when the history is empty.
-        (Python calls __len__ if __bool__ is not implemented.)
-        This is mainly to allow lazy evaluation::
+        Consume the asynchronous generator: `load_history_strings_async`.
 
-            x = history or InMemoryHistory()
+        This is only called once, because once the history is loaded, we don't
+        have to load it again.
         """
-        return True
+        def add_string(string):
+            " Got one string from the asynchronous history generator. "
+            self._loaded_strings.insert(0, string)
+            self._item_loaded.fire()
 
-    __nonzero__ = __bool__  # For Python 2.
+        yield From(consume_async_generator(
+            self.load_history_strings_async(),
+            cancel=lambda: False,  # Right now, we don't have cancellation
+                                   # of history loading in any way.
+            item_callback=add_string))
+
+    #
+    # Methods expected by `Buffer`.
+    #
+
+    def start_loading(self):
+        " Start loading the history. "
+        if not self._loading:
+            self._loading = True
+            ensure_future(self._start_loading())
+
+    def get_item_loaded_event(self):
+        " Event which is triggered when a new item is loaded. "
+        return self._item_loaded
+
+    def get_strings(self):
+        """
+        Get the strings from the history that are loaded so far.
+        """
+        return self._loaded_strings
+
+    def append_string(self, string):
+        " Add string to the history. "
+        self._loaded_strings.append(string)
+        self.store_string(string)
+
+    #
+    # Implementation for specific backends.
+    #
+
+    @abstractmethod
+    def load_history_strings(self):
+        """
+        This should be a generator that yields `str` instances.
+
+        It should yield the most recent items first, because they are the most
+        important. (The history can already be used, even when it's only
+        partially loaded.)
+        """
+        while False:
+            yield
+
+    def load_history_strings_async(self):
+        """
+        Asynchronous generator for history strings. (Probably, you won't have
+        to override this.)
+
+        This should return an iterable that can yield both `str`
+        and `Future` objects. The `str` objects have to be
+        wrapped in a `AsyncGeneratorItem` object.
+
+        If we drop Python 2 support in the future, this could become a true
+        asynchronous generator.
+        """
+        for item in self.load_history_strings():
+            assert isinstance(item, text_type)
+            yield AsyncGeneratorItem(item)
+
+    @abstractmethod
+    def store_string(self, string):
+        """
+        Store the string in persistent storage.
+        """
 
 
-class DummyHistory(History):
+class ThreadedHistory(History):
     """
-    `History` object that doesn't remember anything.
+    Wrapper that runs the `load_history_strings` generator in a thread.
+
+    Use this to increase the start-up time of prompt_toolkit applications.
+    History entries are available as soon as they are loaded. We don't have to
+    wait for everything to be loaded.
     """
-    def append(self, string):
-        pass
+    def __init__(self, history=None):
+        assert isinstance(history, History), 'Got %r' % (history, )
+        self.history = history
+        super(ThreadedHistory, self).__init__()
 
-    def __getitem__(self, key):
-        raise KeyError
+    def load_history_strings_async(self):
+        """
+        Asynchronous generator of completions.
+        This yields both Future and Completion objects.
+        """
+        return generator_to_async_generator(
+            self.history.load_history_strings)
 
-    def __iter__(self):
-        return iter([])
+    # All of the following are proxied to `self.history`.
 
-    def __len__(self):
-        return 0
+    def load_history_strings(self):
+        return self.history.load_history_strings()
+
+    def store_string(self, string):
+        self.history.store_string(string)
+
+    def __repr__(self):
+        return 'ThreadedHistory(%r)' % (self.history, )
 
 
 class InMemoryHistory(History):
     """
     :class:`.History` class that keeps a list of all strings in memory.
     """
-    def __init__(self):
-        self.strings = []
+    def load_history_strings(self):
+        return []
 
-    def append(self, string):
-        self.strings.append(string)
+    def store_string(self, string):
+        pass
 
-    def __getitem__(self, key):
-        return self.strings[key]
 
-    def __iter__(self):
-        return iter(self.strings)
+class DummyHistory(History):
+    """
+    :class:`.History` object that doesn't remember anything.
+    """
+    def load_history_strings(self):
+        return []
 
-    def __len__(self):
-        return len(self.strings)
+    def store_string(self, string):
+        pass
+
+    def append_string(self, string):
+        # Don't remember this.
+        pass
 
 
 class FileHistory(History):
@@ -88,12 +184,11 @@ class FileHistory(History):
     :class:`.History` class that stores all strings in a file.
     """
     def __init__(self, filename):
-        self.strings = []
         self.filename = filename
+        super(FileHistory, self).__init__()
 
-        self._load()
-
-    def _load(self):
+    def load_history_strings(self):
+        strings = []
         lines = []
 
         def add():
@@ -101,7 +196,7 @@ class FileHistory(History):
                 # Join and drop trailing newline.
                 string = ''.join(lines)[:-1]
 
-                self.strings.append(string)
+                strings.append(string)
 
         if os.path.exists(self.filename):
             with open(self.filename, 'rb') as f:
@@ -116,9 +211,10 @@ class FileHistory(History):
 
                 add()
 
-    def append(self, string):
-        self.strings.append(string)
+        # Reverse the order, because newest items have to go first.
+        return reversed(strings)
 
+    def store_string(self, string):
         # Save to file.
         with open(self.filename, 'ab') as f:
             def write(t):
@@ -127,39 +223,3 @@ class FileHistory(History):
             write('\n# %s\n' % datetime.datetime.now())
             for line in string.split('\n'):
                 write('+%s\n' % line)
-
-    def __getitem__(self, key):
-        return self.strings[key]
-
-    def __iter__(self):
-        return iter(self.strings)
-
-    def __len__(self):
-        return len(self.strings)
-
-
-class DynamicHistory(History):
-    """
-    History class that can dynamically returns any History object.
-
-    :param get_history: Callable that returns a :class:`.History` instance.
-    """
-    def __init__(self, get_history):
-        assert callable(get_history)
-        self.get_history = get_history
-
-    @property
-    def strings(self):
-        return self.get_history().strings
-
-    def append(self, string):
-        return self.get_history().append(string)
-
-    def __getitem__(self, key):
-        return self.get_history()[key]
-
-    def __iter__(self):
-        return iter(self.get_history())
-
-    def __len__(self):
-        return len(self.get_history())

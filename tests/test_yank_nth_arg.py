@@ -9,8 +9,8 @@ import pytest
 def _history():
     " Prefilled history. "
     history = InMemoryHistory()
-    history.append('alpha beta gamma delta')
-    history.append('one two three four')
+    history.append_string('alpha beta gamma delta')
+    history.append_string('one two three four')
     return history
 
 
@@ -30,7 +30,7 @@ def test_simple_search(_history):
 
 
 def test_simple_search_with_quotes(_history):
-    _history.append("""one two "three 'x' four"\n""")
+    _history.append_string("""one two "three 'x' four"\n""")
     buff = Buffer(history=_history)
     buff.yank_last_arg()
     assert buff.document.current_line == '''"three 'x' four"'''

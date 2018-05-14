@@ -62,7 +62,7 @@ class Event(object):
         " Alias for just calling the event. "
         self()
 
-    def __iadd__(self, handler):
+    def add_handler(self, handler):
         """
         Add another handler to this callback.
         (Handler should be a callable that takes exactly one parameter: the
@@ -75,14 +75,22 @@ class Event(object):
 
         # Add to list of event handlers.
         self._handlers.append(handler)
-        return self
 
-    def __isub__(self, handler):
+    def remove_handler(self, handler):
         """
         Remove a handler from this callback.
         """
         if handler in self._handlers:
             self._handlers.remove(handler)
+
+    def __iadd__(self, handler):
+        " `event += handler` notation for adding a handler. "
+        self.add_handler(handler)
+        return self
+
+    def __isub__(self, handler):
+        " `event -= handler` notation for removing a handler. "
+        self.remove_handler(handler)
         return self
 
 

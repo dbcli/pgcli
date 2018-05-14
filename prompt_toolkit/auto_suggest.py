@@ -116,7 +116,7 @@ class AutoSuggestFromHistory(AutoSuggest):
         # Only create a suggestion when this is not an empty line.
         if text.strip():
             # Find first matching line in history.
-            for string in reversed(list(history)):
+            for string in reversed(list(history.get_strings())):
                 for line in reversed(string.splitlines()):
                     if line.startswith(text):
                         return Suggestion(line[len(text):])

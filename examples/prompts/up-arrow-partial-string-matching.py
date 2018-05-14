@@ -6,17 +6,17 @@ When you type some input, it's possible to use the up arrow to filter the
 history on the items starting with the given input text.
 """
 from __future__ import unicode_literals, print_function
-from prompt_toolkit import prompt
+from prompt_toolkit import PromptSession
 from prompt_toolkit.history import InMemoryHistory
 
 
 def main():
     # Create some history first. (Easy for testing.)
     history = InMemoryHistory()
-    history.append('import os')
-    history.append('print("hello")')
-    history.append('print("world")')
-    history.append('import path')
+    history.append_string('import os')
+    history.append_string('print("hello")')
+    history.append_string('print("world")')
+    history.append_string('import path')
 
     # Print help.
     print('This CLI has up-arrow partial string matching enabled.')
@@ -25,10 +25,11 @@ def main():
     print('Press Control-C to retry. Control-D to exit.')
     print()
 
+    session = PromptSession(history=history, enable_history_search=True)
+
     while True:
         try:
-            text = prompt('Say something: ', history=history,
-                          enable_history_search=True)
+            text = session.prompt('Say something: ')
         except KeyboardInterrupt:
             pass  # Ctrl-C pressed. Try again.
         else:

@@ -8,7 +8,7 @@ remaining part as a suggestion. Pressing the right arrow will insert this
 suggestion.
 """
 from __future__ import unicode_literals, print_function
-from prompt_toolkit import prompt
+from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.history import InMemoryHistory
 
@@ -16,10 +16,10 @@ from prompt_toolkit.history import InMemoryHistory
 def main():
     # Create some history first. (Easy for testing.)
     history = InMemoryHistory()
-    history.append('import os')
-    history.append('print("hello")')
-    history.append('print("world")')
-    history.append('import path')
+    history.append_string('import os')
+    history.append_string('print("hello")')
+    history.append_string('print("world")')
+    history.append_string('import path')
 
     # Print help.
     print('This CLI has fish-style auto-suggestion enable.')
@@ -28,11 +28,14 @@ def main():
     print('Press Control-C to retry. Control-D to exit.')
     print()
 
+    session = PromptSession(
+        history=history,
+        auto_suggest=AutoSuggestFromHistory(),
+        enable_history_search=True)
+
     while True:
         try:
-            text = prompt('Say something: ', history=history,
-                          auto_suggest=AutoSuggestFromHistory(),
-                          enable_history_search=True)
+            text = session.prompt('Say something: ')
         except KeyboardInterrupt:
             pass  # Ctrl-C pressed. Try again.
         else:

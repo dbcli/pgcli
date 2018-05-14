@@ -37,7 +37,7 @@ from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
 from prompt_toolkit.eventloop import ensure_future, Return, From
 from prompt_toolkit.filters import is_done, has_focus, renderer_height_is_known, to_filter, Condition, has_arg
 from prompt_toolkit.formatted_text import to_formatted_text
-from prompt_toolkit.history import InMemoryHistory, DynamicHistory
+from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.input.defaults import get_default_input
 from prompt_toolkit.key_binding.bindings.auto_suggest import load_auto_suggest_bindings
 from prompt_toolkit.key_binding.bindings.completion import display_completions_like_readline
@@ -222,7 +222,7 @@ class PromptSession(object):
         'message', 'lexer', 'completer', 'complete_in_thread', 'is_password',
         'editing_mode', 'key_bindings', 'is_password', 'bottom_toolbar',
         'style', 'color_depth', 'include_default_pygments_style', 'rprompt',
-        'multiline', 'prompt_continuation', 'wrap_lines', 'history',
+        'multiline', 'prompt_continuation', 'wrap_lines',
         'enable_history_search', 'search_ignore_case', 'complete_while_typing',
         'validate_while_typing', 'complete_style', 'mouse_support',
         'auto_suggest', 'clipboard', 'validator', 'refresh_interval',
@@ -297,6 +297,7 @@ class PromptSession(object):
                 setattr(self, name, value)
 
         # Create buffers, layout and Application.
+        self.history = history
         self.default_buffer = self._create_default_buffer()
         self.search_buffer = self._create_search_buffer()
         self.layout = self._create_layout()
@@ -348,7 +349,7 @@ class PromptSession(object):
                 ThreadedCompleter(self.completer)
                 if self.complete_in_thread and self.completer
                 else self.completer),
-            history=DynamicHistory(lambda: self.history),
+            history=self.history,
             auto_suggest=DynamicAutoSuggest(lambda: self.auto_suggest),
             accept_handler=accept,
             get_tempfile_suffix=lambda: self.tempfile_suffix)
@@ -659,7 +660,7 @@ class PromptSession(object):
             complete_in_thread=None, is_password=None, key_bindings=None,
             bottom_toolbar=None, style=None, color_depth=None,
             include_default_pygments_style=None, rprompt=None, multiline=None,
-            prompt_continuation=None, wrap_lines=None, history=None,
+            prompt_continuation=None, wrap_lines=None,
             enable_history_search=None, search_ignore_case=None,
             complete_while_typing=None, validate_while_typing=None,
             complete_style=None, auto_suggest=None, validator=None,

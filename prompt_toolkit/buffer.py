@@ -243,7 +243,17 @@ class Buffer(object):
         self._async_completer = self._create_completer_coroutine()
         self._async_validator = self._create_auto_validate_coroutine()
 
+        # Reset other attributes.
         self.reset(document=document)
+
+        # Attach callback for new history entries.
+        def new_history_item(sender):
+            # Insert the new string into `_working_lines`.
+            self._working_lines.insert(0, self.history.get_strings()[0])
+            self.__working_index += 1
+
+        self.history.get_item_loaded_event().add_handler(new_history_item)
+        self.history.start_loading()
 
     def __repr__(self):
         if len(self.text) < 15:
@@ -307,7 +317,7 @@ class Buffer(object):
         #: Ctrl-C should reset this, and copy the whole history back in here.
         #: Enter should process the current command and append to the real
         #: history.
-        self._working_lines = self.history.strings[:]
+        self._working_lines = self.history.get_strings()[:]
         self._working_lines.append(document.text)
         self.__working_index = len(self._working_lines) - 1
 
@@ -929,8 +939,9 @@ class Buffer(object):
             to take.
         """
         assert n is None or isinstance(n, int)
+        history_strings = self.history.get_strings()
 
-        if not len(self.history):
+        if not len(history_strings):
             return
 
         # Make sure we have a `YankNthArgState`.
@@ -944,11 +955,11 @@ class Buffer(object):
 
         # Get new history position.
         new_pos = state.history_position - 1
-        if -new_pos > len(self.history):
+        if -new_pos > len(history_strings):
             new_pos = -1
 
         # Take argument from line.
-        line = self.history[new_pos]
+        line = history_strings[new_pos]
 
         words = [w.strip() for w in _QUOTED_WORDS_RE.split(line)]
         words = [w for w in words if w]
@@ -1199,8 +1210,10 @@ class Buffer(object):
         """
         # Save at the tail of the history. (But don't if the last entry the
         # history is already the same.)
-        if self.text and (not len(self.history) or self.history[-1] != self.text):
-            self.history.append(self.text)
+        if self.text:
+            history_strings = self.history.get_strings()
+            if not len(history_strings) or history_strings[-1] != self.text:
+                self.history.append_string(self.text)
 
     def _search(self, search_state, include_current_position=False, count=1):
         """
