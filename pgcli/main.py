@@ -564,12 +564,16 @@ class PGCli(object):
                 # Initialize default metaquery in case execution fails
                 query = MetaQuery(query=document.text, successful=False)
 
-                self.watch_command, timing = special.get_watch_command(document.text)
+                self.watch_command, timing = special.get_watch_command(
+                        document.text)
                 if self.watch_command:
                     while self.watch_command:
                         try:
-                            query = self.execute_command(self.watch_command, query)
-                            click.echo('Waiting for {0} seconds before repeating'.format(timing))
+                            query = self.execute_command(
+                                    self.watch_command, query)
+                            click.echo(
+                                    'Waiting for {0} seconds before repeating'
+                                    .format(timing))
                             sleep(timing)
                         except KeyboardInterrupt:
                             self.watch_command = None
