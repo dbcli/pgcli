@@ -4,13 +4,15 @@ import re
 from itertools import count, repeat, chain
 import operator
 from collections import namedtuple, defaultdict, OrderedDict
+from cli_helpers.tabular_output import TabularOutputFormatter
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.document import Document
-from .packages.sqlcompletion import (FromClauseItem,
-    suggest_type, Special, Database, Schema, Table, Function, Column, View,
-    Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join)
+from .packages.sqlcompletion import (
+    FromClauseItem, suggest_type, Special, Database, Schema, Table,
+    TableFormat, Function, Column, View, Keyword, NamedQuery,
+    Datatype, Alias, Path, JoinCondition, Join)
 from .packages.parseutils.meta import ColumnMetadata, ForeignKey
 from .packages.parseutils.utils import last_word
 from .packages.parseutils.tables import TableReference
@@ -321,7 +323,8 @@ class PGCompleter(Completer):
             return []
         prio_order = [
             'keyword', 'function', 'view', 'table', 'datatype', 'database',
-            'schema', 'column', 'table alias', 'join', 'name join', 'fk join'
+            'schema', 'column', 'table alias', 'join', 'name join', 'fk join',
+            'table format'
         ]
         type_priority = prio_order.index(meta) if meta in prio_order else -1
         text = last_word(text, include='most_punctuations').lower()
@@ -778,6 +781,9 @@ class PGCompleter(Completer):
         tables = [self._make_cand(t, alias, suggestion) for t in tables]
         return self.find_matches(word_before_cursor, tables, meta='table')
 
+    def get_table_formats(self, _, word_before_cursor):
+        formats = TabularOutputFormatter().supported_formats
+        return self.find_matches(word_before_cursor, formats, meta='table format')
 
     def get_view_matches(self, suggestion, word_before_cursor, alias=False):
         views = self.populate_schema_objects(suggestion.schema, 'views')
@@ -861,6 +867,7 @@ class PGCompleter(Completer):
         Function: get_function_matches,
         Schema: get_schema_matches,
         Table: get_table_matches,
+        TableFormat: get_table_formats,
         View: get_view_matches,
         Alias: get_alias_matches,
         Database: get_database_matches,

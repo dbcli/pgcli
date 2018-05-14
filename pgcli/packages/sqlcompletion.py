@@ -28,6 +28,7 @@ Schema.__new__.__defaults__ = (False,)
 # used to ensure that the alias we suggest is unique
 FromClauseItem = namedtuple('FromClauseItem', 'schema table_refs local_tables')
 Table = namedtuple('Table', ['schema', 'table_refs', 'local_tables'])
+TableFormat = namedtuple('TableFormat', [])
 View = namedtuple('View', ['schema', 'table_refs'])
 # JoinConditions are suggested after ON, e.g. 'foo.barid = bar.barid'
 JoinCondition = namedtuple('JoinCondition', ['table_refs', 'parent'])
@@ -251,6 +252,9 @@ def suggest_special(text):
 
     if cmd in ('\\c', '\\connect'):
         return (Database(),)
+
+    if cmd == '\\T':
+        return (TableFormat(),)
 
     if cmd == '\\dn':
         return (Schema(),)
