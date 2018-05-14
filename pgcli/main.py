@@ -564,15 +564,15 @@ class PGCli(object):
                 # Initialize default metaquery in case execution fails
                 query = MetaQuery(query=document.text, successful=False)
 
-                watch_command, timing = special.get_watch_command(document.text)
-                if watch_command:
-                    while watch_command:
+                self.watch_command, timing = special.get_watch_command(document.text)
+                if self.watch_command:
+                    while self.watch_command:
                         try:
-                            query = self.execute_command(watch_command, query)
+                            query = self.execute_command(self.watch_command, query)
                             click.echo('Waiting for {0} seconds before repeating'.format(timing))
                             sleep(timing)
                         except KeyboardInterrupt:
-                            watch_command = None
+                            self.watch_command = None
                 else:
                     query = self.execute_command(document.text, query)
 
@@ -840,7 +840,7 @@ class PGCli(object):
         return self.query_history[-1][0] if self.query_history else None
 
     def echo_via_pager(self, text, color=None):
-        if self.pgspecial.pager_config == PAGER_OFF:
+        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command:
             click.echo(text, color=color)
         else:
             click.echo_via_pager(text, color)
