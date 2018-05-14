@@ -8,6 +8,7 @@ python:
 install:
   - pip install .
   - pip install -r requirements-dev.txt
+  - pip install keyrings.alt>=3.1
 
 script:
   - set -e
