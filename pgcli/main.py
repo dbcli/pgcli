@@ -90,6 +90,10 @@ OutputSettings.__new__.__defaults__ = (
 )
 
 
+class PgCliQuitError(Exception):
+    pass
+
+
 class PGCli(object):
 
     default_prompt = '\\u@\\h:\\d> '
@@ -199,6 +203,9 @@ class PGCli(object):
         self.eventloop = create_eventloop()
         self.cli = None
 
+    def quit(self):
+        raise PgCliQuitError
+
     def register_special_commands(self):
 
         self.pgspecial.register(
@@ -208,6 +215,12 @@ class PGCli(object):
         refresh_callback = lambda: self.refresh_completions(
             persist_priorities='all')
 
+        self.pgspecial.register(self.quit, '\\q', '\\q',
+                                'Quit pgcli.', arg_type=NO_QUERY, case_sensitive=True,
+                                aliases=(':q',))
+        self.pgspecial.register(self.quit, 'quit', 'quit',
+                                'Quit pgcli.', arg_type=NO_QUERY, case_sensitive=False,
+                                aliases=('exit',))
         self.pgspecial.register(refresh_callback, '\\#', '\\#',
                                 'Refresh auto-completions.', arg_type=NO_QUERY)
         self.pgspecial.register(refresh_callback, '\\refresh', '\\refresh',
@@ -472,6 +485,8 @@ class PGCli(object):
             logger.error("sql: %r, error: %r", text, e)
             logger.error("traceback: %r", traceback.format_exc())
             self._handle_server_closed_connection()
+        except PgCliQuitError as e:
+            raise
         except Exception as e:
             logger.error("sql: %r, error: %r", text, e)
             logger.error("traceback: %r", traceback.format_exc())
@@ -538,13 +553,6 @@ class PGCli(object):
             while True:
                 document = self.cli.run()
 
-                # The reason we check here instead of inside the pgexecute is
-                # because we want to raise the Exit exception which will be
-                # caught by the try/except block that wraps the pgexecute.run()
-                # statement.
-                if quit_command(document.text):
-                    raise EOFError
-
                 try:
                     document = self.handle_editor_command(self.cli, document)
                 except RuntimeError as e:
@@ -576,7 +584,7 @@ class PGCli(object):
 
                 self.query_history.append(query)
 
-        except EOFError:
+        except PgCliQuitError:
             if not self.less_chatty:
                 print ('Goodbye!')
 
@@ -1023,13 +1031,6 @@ def is_select(status):
     if not status:
         return False
     return status.split(None, 1)[0].lower() == 'select'
-
-
-def quit_command(sql):
-    return (sql.strip().lower() == 'exit'
-            or sql.strip().lower() == 'quit'
-            or sql.strip() == r'\q'
-            or sql.strip() == ':q')
 
 
 def exception_formatter(e):
