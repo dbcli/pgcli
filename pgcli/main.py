@@ -42,7 +42,7 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from pygments.lexers.sql import PostgresLexer
 from pygments.token import Token
 
-from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF)
+from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF, PAGER_LONG_OUTPUT)
 import pgspecial as special
 try:
     import keyring
@@ -76,6 +76,9 @@ import psycopg2
 from collections import namedtuple
 
 from textwrap import dedent
+
+# Ref: https://stackoverflow.com/questions/30425105/filter-special-chars-such-as-color-codes-from-shell-output
+COLOR_CODE_REGEX = re.compile(r'\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))')
 
 # Query tuples are used for maintaining history
 MetaQuery = namedtuple(
@@ -929,6 +932,15 @@ class PGCli(object):
     def echo_via_pager(self, text, color=None):
         if self.pgspecial.pager_config == PAGER_OFF or self.watch_command:
             click.echo(text, color=color)
+        elif self.pgspecial.pager_config == PAGER_LONG_OUTPUT:
+            lines = text.split('\n')
+
+            # The last 4 lines are reserved for the pgcli menu and padding
+            if len(lines) >= self.cli.output.get_size().rows - 4 \
+                    or any(len(COLOR_CODE_REGEX.sub('', l)) > self.cli.output.get_size().columns for l in lines):
+                click.echo_via_pager(text, color=color)
+            else:
+                click.echo(text, color=color)
         else:
             click.echo_via_pager(text, color)
 
