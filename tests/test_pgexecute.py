@@ -186,7 +186,7 @@ def test_not_is_special(executor, pgspecial):
     '''
     query = 'select 1'
     result = list(executor.run(query, pgspecial=pgspecial))
-    *_, success, is_special = result[0]
+    success, is_special = result[0][5:]
     assert success == True
     assert is_special == False
 
@@ -197,7 +197,7 @@ def test_execute_from_file_no_arg(executor, pgspecial):
     \i without a filename returns an error.
     '''
     result = list(executor.run("\i", pgspecial=pgspecial))
-    *_, status, sql, success, is_special = result[0]
+    status, sql, success, is_special = result[0][3:]
     assert 'missing required argument' in status
     assert success == False
     assert is_special == True
@@ -214,7 +214,7 @@ def test_execute_from_file_io_error(os, executor, pgspecial):
 
     # Check the result.
     result = list(executor.run("\i test", pgspecial=pgspecial))
-    *_, status, sql, success, is_special = result[0]
+    status, sql, success, is_special = result[0][3:]
     assert status == 'test'
     assert success == False
     assert is_special == True

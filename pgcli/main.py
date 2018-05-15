@@ -476,6 +476,8 @@ class PGCli(object):
     def execute_command(self, text):
         logger = self.logger
 
+        query = MetaQury(query=text, successful=False)
+
         try:
             output, query = self._evaluate_command(text)
         except KeyboardInterrupt:
@@ -570,7 +572,7 @@ class PGCli(object):
                 if self.watch_command:
                     while self.watch_command:
                         try:
-                            query = self.execute_command(self.watch_commandy)
+                            query = self.execute_command(self.watch_command)
                             click.echo(
                                     'Waiting for {0} seconds before repeating'
                                     .format(timing))
