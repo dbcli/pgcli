@@ -51,7 +51,7 @@ Save a named query.
 \o [filename]
 Send all query results to file.
 \pager [command]
-Set PAGER. Print the query results via PAGER.
+Set PAGER. Pring the query results via PAGER.
 \pset [key] [value]
 A limited version of traditional \pset
 \refresh
