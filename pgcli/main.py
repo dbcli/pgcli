@@ -472,7 +472,7 @@ class PGCli(object):
             cli.application.pre_run_callables = saved_callables
         return document
 
-    def execute_command(self, text, query):
+    def execute_command(self, text):
         logger = self.logger
 
         try:
@@ -564,16 +564,12 @@ class PGCli(object):
                     click.secho(str(e), err=True, fg='red')
                     continue
 
-                # Initialize default metaquery in case execution fails
-                query = MetaQuery(query=document.text, successful=False)
-
                 self.watch_command, timing = special.get_watch_command(
                         document.text)
                 if self.watch_command:
                     while self.watch_command:
                         try:
-                            query = self.execute_command(
-                                    self.watch_command, query)
+                            query = self.execute_command(self.watch_commandy)
                             click.echo(
                                     'Waiting for {0} seconds before repeating'
                                     .format(timing))
@@ -581,7 +577,7 @@ class PGCli(object):
                         except KeyboardInterrupt:
                             self.watch_command = None
                 else:
-                    query = self.execute_command(document.text, query)
+                    query = self.execute_command(document.text)
 
                 self.now = dt.datetime.today()
 
