@@ -11,7 +11,7 @@ Internal changes:
 
 * Mark tests requiring a running database server as dbtest (Thanks: `Dick Marinus`_)
 * Add ``application_name`` to help identify pgcli connection to database (issue #868) (Thanks: `François Pietka`_)
-* Add a special command flag to MetaQuery (Thanks: `Rishi Ramraj`_)
+* Add an is_special command flag to MetaQuery (Thanks: `Rishi Ramraj`_)
 
 Bug Fixes:
 ----------
