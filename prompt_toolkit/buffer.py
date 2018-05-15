@@ -367,6 +367,9 @@ class Buffer(object):
             self._text_changed()
 
             # Reset history search text.
+            # (Note that this doesn't need to happen when working_index
+            #  changes, which is when we traverse the history. That's why we
+            #  don't do this in `self._text_changed`.)
             self.history_search_text = None
 
     @property
@@ -494,6 +497,7 @@ class Buffer(object):
         # both set and consistent.)
         if text_changed:
             self._text_changed()
+            self.history_search_text = None
 
         if cursor_position_changed:
             self._cursor_position_changed()
