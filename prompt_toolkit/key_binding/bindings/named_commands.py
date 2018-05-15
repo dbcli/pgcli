@@ -318,6 +318,10 @@ def kill_word(event):
 
     if pos:
         deleted = buff.delete(count=pos)
+
+        if event.is_repeat:
+            deleted = event.app.clipboard.get_data().text + deleted
+
         event.app.clipboard.set_text(deleted)
 
 

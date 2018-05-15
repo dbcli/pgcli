@@ -184,6 +184,29 @@ def test_emacs_cursor_movements():
     assert result.cursor_position == len('hello')
 
 
+def test_emacs_kill_multiple_words_and_paste():
+    # Using control-w twice should place both words on the clipboard.
+    result, cli = _feed_cli_with_input(
+        'hello world test'
+        '\x17\x17'  # Twice c-w.
+        '--\x19\x19\r'  # Twice c-y.
+    )
+    assert result.text == 'hello --world testworld test'
+    assert cli.clipboard.get_data().text == 'world test'
+
+    # Using alt-d twice should place both words on the clipboard.
+    result, cli = _feed_cli_with_input(
+        'hello world test'
+        '\x1bb\x1bb'  # Twice left.
+        '\x1bd\x1bd'  # Twice kill-word.
+        'abc'
+        '\x19'  # Paste.
+        '\r'
+    )
+    assert result.text == 'hello abcworld test'
+    assert cli.clipboard.get_data().text == 'world test'
+
+
 def test_interrupts():
     # ControlC: raise KeyboardInterrupt.
     with pytest.raises(KeyboardInterrupt):
