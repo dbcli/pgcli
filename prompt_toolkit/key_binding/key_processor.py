@@ -302,7 +302,7 @@ class KeyProcessor(object):
 
     def _call_handler(self, handler, key_sequence=None):
         app = get_app()
-        was_recording_emacs = app.emacs_state.record_macro
+        was_recording_emacs = app.emacs_state.is_recording
         was_recording_vi = bool(app.vi_state.recording_register)
         arg = self.arg
         self.arg = None
@@ -331,12 +331,13 @@ class KeyProcessor(object):
 
         # Record the key sequence in our macro. (Only if we're in macro mode
         # before and after executing the key.)
-        if app.emacs_state.record_macro and was_recording_emacs:
-            app.emacs_state.macro.extend(key_sequence)
+        if handler.record_in_macro():
+            if app.emacs_state.is_recording and was_recording_emacs:
+                app.emacs_state.current_recording.extend(key_sequence)
 
-        if app.vi_state.recording_register and was_recording_vi:
-            for k in key_sequence:
-                app.vi_state.current_recording += k.data
+            if app.vi_state.recording_register and was_recording_vi:
+                for k in key_sequence:
+                    app.vi_state.current_recording += k.data
 
     def _fix_vi_cursor_position(self, event):
         """

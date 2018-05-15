@@ -1703,9 +1703,17 @@ def load_vi_bindings():
         vi_state.recording_register = None
         vi_state.current_recording = ''
 
-    @handle('@', Keys.Any, filter=vi_navigation_mode)
+    @handle('@', Keys.Any, filter=vi_navigation_mode, record_in_macro=False)
     def _(event):
-        " Execute macro. "
+        """
+        Execute macro.
+
+        Notice that we pass `record_in_macro=False`. This ensures that the `@x`
+        keys don't appear in the recording itself. This function inserts the
+        body of the called macro back into the KeyProcessor, so these keys will
+        be added later on to the macro of their handlers have
+        `record_in_macro=True`.
+        """
         # Retrieve macro.
         c = event.key_sequence[1].data
         try:

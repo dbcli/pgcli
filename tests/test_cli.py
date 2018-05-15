@@ -485,6 +485,39 @@ def test_emacs_record_macro():
     assert result.text == '  hello  hellohello'
 
 
+def test_emacs_nested_macro():
+    " Test calling the macro within a macro. "
+    # Calling a macro within a macro should take the previous recording (if one
+    # exists), not the one that is in progress.
+    operations = (
+        '\x18('  # Start recording macro. C-X(
+        'hello'
+        '\x18e'  # Execute macro.
+        '\x18)'  # Stop recording macro.
+        '\x18e'  # Execute macro.
+        '\r'
+    )
+
+    result, cli = _feed_cli_with_input(operations)
+    assert result.text == 'hellohello'
+
+    operations = (
+        '\x18('  # Start recording macro. C-X(
+        'hello'
+        '\x18)'  # Stop recording macro.
+        '\x18('  # Start recording macro. C-X(
+        '\x18e'  # Execute macro.
+        'world'
+        '\x18)'  # Stop recording macro.
+        '\x01\x0b'  # Delete all (c-a c-k).
+        '\x18e'  # Execute macro.
+        '\r'
+    )
+
+    result, cli = _feed_cli_with_input(operations)
+    assert result.text == 'helloworld'
+
+
 def test_prefix_meta():
     # Test the prefix-meta command.
     b = KeyBindings()
@@ -710,3 +743,25 @@ def test_vi_macros():
     result, cli = feed('\x1b@d\r')
     assert result.text == ''
     assert result.cursor_position == 0
+
+    # When a macro is called within a macro.
+    # It shouldn't result in eternal recursion.
+    result, cli = feed('\x1bqxahello\x1b@xq@x\r')
+    assert result.text == 'hellohello'
+    assert result.cursor_position == 9
+
+    # Nested macros.
+    result, cli = feed(
+        # Define macro 'x'.
+        '\x1bqxahello\x1bq'
+
+        # Define macro 'y' which calls 'x'.
+        'qya\x1b@xaworld\x1bq'
+
+        # Delete line.
+        '2dd'
+
+        # Execute 'y'
+        '@y\r')
+
+    assert result.text == 'helloworld'
