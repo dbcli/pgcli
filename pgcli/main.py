@@ -476,7 +476,7 @@ class PGCli(object):
     def execute_command(self, text):
         logger = self.logger
 
-        query = MetaQury(query=text, successful=False)
+        query = MetaQuery(query=text, successful=False)
 
         try:
             output, query = self._evaluate_command(text)
