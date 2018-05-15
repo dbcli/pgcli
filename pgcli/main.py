@@ -480,19 +480,29 @@ class PGCli(object):
         # We may find a better way to do it in the future.
         saved_callables = cli.application.pre_run_callables
         try:
-            while special.editor_command(document.text):
-                filename = special.get_filename(document.text)
-                query = (special.get_editor_query(document.text) or
-                         self.get_last_query())
+            editor_command = special.editor_command(document.text)
+            while editor_command:
+                if editor_command == '\\e':
+                    filename = special.get_filename(document.text)
+                    query = (special.get_editor_query(document.text) or
+                             self.get_last_query())
+                else:  # \ev or \ef
+                    filename = None
+                    spec = document.text.split()[1]
+                    query = self.pgexecute.view_definitions(spec)
+                    if not query:
+                        raise RuntimeError(
+                            'View {} does not exist.'.format(spec))
                 sql, message = special.open_external_editor(
                     filename, sql=query)
                 if message:
                     # Something went wrong. Raise an exception and bail.
                     raise RuntimeError(message)
-                cli.current_buffer.document = Document(sql,
-                                                       cursor_position=len(sql))
+                cli.current_buffer.document = Document(
+                    sql, cursor_position=len(sql))
                 cli.application.pre_run_callables = []
                 document = cli.run()
+                editor_command = special.editor_command(document.text)
         finally:
             cli.application.pre_run_callables = saved_callables
         return document
@@ -599,14 +609,16 @@ class PGCli(object):
                     continue
 
                 self.watch_command, timing = special.get_watch_command(
-                        document.text)
+                    document.text)
                 if self.watch_command:
                     while self.watch_command:
                         try:
+                            query = self.execute_command(
+                                self.watch_command, query)
                             query = self.execute_command(self.watch_command)
                             click.echo(
-                                    'Waiting for {0} seconds before repeating'
-                                    .format(timing))
+                                'Waiting for {0} seconds before repeating'
+                                .format(timing))
                             sleep(timing)
                         except KeyboardInterrupt:
                             self.watch_command = None

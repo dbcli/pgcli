@@ -9,6 +9,7 @@ import pgspecial as special
 import select
 from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
+from .packages.parseutils.tables import schema_table_split
 from .encodingutils import unicode2utf8, PY2, utf8tounicode
 
 _logger = logging.getLogger(__name__)
@@ -161,6 +162,11 @@ class PGExecute(object):
         FROM pg_settings
         WHERE name = 'unix_socket_directories'
     '''
+    view_definition_query = '''
+        SELECT table_schema, table_name, view_definition 
+        FROM   information_schema.views 
+        WHERE  table_schema LIKE %s 
+        AND    table_name LIKE %s'''
 
     def __init__(self, database, user, password, host, port, dsn, **kwargs):
         self.dbname = database
@@ -384,6 +390,17 @@ class PGExecute(object):
                 cur.execute(fallback)
                 return cur.fetchone()[0]
 
+    def view_definitions(self, spec):
+        """Returns the SQL defining views described by `spec` """
+
+        template = 'CREATE OR REPLACE VIEW {}.{} AS \n{}'
+        schema_pattern, view_pattern = schema_table_split(spec)
+        with self.conn.cursor() as cur:
+            sql = self.view_definition_query
+            _logger.debug('View Definition Query. sql: %r\nschema: %r\nview: %r',
+                          sql, schema_pattern, view_pattern)
+            cur.execute(sql, (schema_pattern, view_pattern))
+            return ';\n\n'.join(template.format(*row) for row in cur)
 
     def schemata(self):
         """Returns a list of schema names in the database"""
