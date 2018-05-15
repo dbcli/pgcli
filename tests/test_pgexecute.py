@@ -181,9 +181,7 @@ def test_unicode_support_in_output(executor, expanded):
 
 @dbtest
 def test_not_is_special(executor, pgspecial):
-    '''
-    is_special is set to false for database queries.
-    '''
+    """is_special is set to false for database queries."""
     query = 'select 1'
     result = list(executor.run(query, pgspecial=pgspecial))
     success, is_special = result[0][5:]
@@ -193,9 +191,7 @@ def test_not_is_special(executor, pgspecial):
 
 @dbtest
 def test_execute_from_file_no_arg(executor, pgspecial):
-    '''
-    \i without a filename returns an error.
-    '''
+    """\i without a filename returns an error."""
     result = list(executor.run("\i", pgspecial=pgspecial))
     status, sql, success, is_special = result[0][3:]
     assert 'missing required argument' in status
@@ -206,9 +202,7 @@ def test_execute_from_file_no_arg(executor, pgspecial):
 @dbtest
 @patch('pgcli.main.os')
 def test_execute_from_file_io_error(os, executor, pgspecial):
-    '''
-    \i with an io_error returns an error.
-    '''
+    """\i with an io_error returns an error."""
     # Inject an IOError.
     os.path.expanduser.side_effect = IOError('test')
 
