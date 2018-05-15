@@ -2,10 +2,11 @@
 
 import pytest
 import psycopg2
-from pgspecial.main import PGSpecial
+from mock import patch
 from pgcli.packages.parseutils.meta import FunctionMetadata
 from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
+from pgcli.main import PGCli
 
 
 def function_meta_data(
@@ -179,6 +180,35 @@ def test_unicode_support_in_output(executor, expanded):
 
 
 @dbtest
+def test_execute_from_file_no_arg(executor, pgspecial):
+    '''
+    \i without a filename returns an error.
+    '''
+    result = list(executor.run("\i", pgspecial=pgspecial))
+    *_, status, sql, success, is_special = result[0]
+    assert 'missing required argument' in status
+    assert success == False
+    assert is_special == True
+
+
+@dbtest
+@patch('pgcli.main.os')
+def test_execute_from_file_io_error(os, executor, pgspecial):
+    '''
+    \i with an io_error returns an error.
+    '''
+    # Inject an IOError.
+    os.path.expanduser.side_effect = IOError('test')
+
+    # Check the result.
+    result = list(executor.run("\i test", pgspecial=pgspecial))
+    *_, status, sql, success, is_special = result[0]
+    assert status == 'test'
+    assert success == False
+    assert is_special == True
+
+
+@dbtest
 def test_multiple_queries_same_line(executor):
     result = run(executor, "select 'foo'; select 'bar'")
     assert len(result) == 12  # 2 * (output+status) * 3 lines
@@ -205,7 +235,7 @@ def test_multiple_queries_same_line_syntaxerror(executor, exception_formatter):
 
 @pytest.fixture
 def pgspecial():
-    return PGSpecial()
+    return PGCli().pgspecial
 
 
 @dbtest

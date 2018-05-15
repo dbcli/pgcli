@@ -286,7 +286,7 @@ class PGExecute(object):
                execute.
 
         :return: Generator yielding tuples containing
-                 (title, rows, headers, status, query, success)
+                 (title, rows, headers, status, query, success, is_special)
         """
 
         # Remove spaces and EOL
@@ -307,8 +307,8 @@ class PGExecute(object):
                     try:
                         for result in pgspecial.execute(cur, sql):
                             # e.g. execute_from_file already appends these
-                            if len(result) < 6:
-                                yield result + (sql, True)
+                            if len(result) < 7:
+                                yield result + (sql, True, True)
                             else:
                                 yield result
                         continue
@@ -316,7 +316,7 @@ class PGExecute(object):
                         pass
 
                 # Not a special command, so execute as normal sql
-                yield self.execute_normal_sql(sql) + (sql, True)
+                yield self.execute_normal_sql(sql) + (sql, True, False)
             except psycopg2.DatabaseError as e:
                 _logger.error("sql: %r, error: %r", sql, e)
                 _logger.error("traceback: %r", traceback.format_exc())
@@ -325,7 +325,7 @@ class PGExecute(object):
                         or not exception_formatter):
                     raise
 
-                yield None, None, None, exception_formatter(e), sql, False
+                yield None, None, None, exception_formatter(e), sql, False, False
 
                 if not on_error_resume:
                     break

@@ -286,12 +286,12 @@ class PGCli(object):
     def execute_from_file(self, pattern, **_):
         if not pattern:
             message = '\\i: missing required argument'
-            return [(None, None, None, message, '', False)]
+            return [(None, None, None, message, '', False, True)]
         try:
             with open(os.path.expanduser(pattern), encoding='utf-8') as f:
                 query = f.read()
         except IOError as e:
-            return [(None, None, None, str(e), '', False)]
+            return [(None, None, None, str(e), '', False, True)]
 
         on_error_resume = (self.on_error == 'RESUME')
         return self.pgexecute.run(
@@ -694,7 +694,7 @@ class PGCli(object):
         res = self.pgexecute.run(text, self.pgspecial,
                                  exception_formatter, on_error_resume)
 
-        for title, cur, headers, status, sql, success in res:
+        for title, cur, headers, status, sql, success, is_special in res:
             logger.debug("headers: %r", headers)
             logger.debug("rows: %r", cur)
             logger.debug("status: %r", status)
