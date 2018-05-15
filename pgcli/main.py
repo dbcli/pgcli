@@ -78,7 +78,7 @@ MetaQuery = namedtuple(
         'db_changed',       # True if any subquery changed the database
         'path_changed',     # True if any subquery changed the search path
         'mutated',          # True if any subquery executed insert/update/delete
-        'special',          # True if the query is a special command
+        'is_special',       # True if the query is a special command
     ])
 MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
@@ -742,7 +742,7 @@ class PGCli(object):
                 all_success = False
 
         meta_query = MetaQuery(text, all_success, total, meta_changed,
-                               db_changed, path_changed, mutated, special)
+                               db_changed, path_changed, mutated, is_special)
 
         return output, meta_query
 
