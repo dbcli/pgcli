@@ -180,6 +180,18 @@ def test_unicode_support_in_output(executor, expanded):
 
 
 @dbtest
+def test_not_is_special(executor, pgspecial):
+    '''
+    is_special is set to false for database queries.
+    '''
+    query = 'select 1'
+    result = list(executor.run(query, pgspecial=pgspecial))
+    *_, success, is_special = result[0]
+    assert success == True
+    assert is_special == False
+
+
+@dbtest
 def test_execute_from_file_no_arg(executor, pgspecial):
     '''
     \i without a filename returns an error.
