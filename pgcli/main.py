@@ -303,7 +303,7 @@ class PGCli(object):
         if not pattern:
             self.output_file = None
             message = 'File output disabled'
-            return [(None, None, None, message, '', True)]
+            return [(None, None, None, message, '', True, True)]
         filename = os.path.abspath(os.path.expanduser(pattern))
         if not os.path.isfile(filename):
             try:
@@ -311,10 +311,10 @@ class PGCli(object):
             except IOError as e:
                 self.output_file = None
                 message = str(e) + '\nFile output disabled'
-                return [(None, None, None, message, '', False)]
+                return [(None, None, None, message, '', False, True)]
         self.output_file = filename
         message = 'Writing to file "%s"' % self.output_file
-        return [(None, None, None, message, '', True)]
+        return [(None, None, None, message, '', True, True)]
 
     def initialize_logging(self):
 
