@@ -2,7 +2,7 @@
 
 
 Input hooks
------------
+===========
 
 Input hooks are a tool for inserting an external event loop into the
 prompt_toolkit event loop, so that the other loop can run as long as

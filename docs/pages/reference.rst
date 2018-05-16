@@ -5,16 +5,8 @@ Application
 -----------
 
 .. automodule:: prompt_toolkit.application
-    :members: Application
-
-.. automodule:: prompt_toolkit.application
-    :members: get_app, set_app, NoRunningApplicationError
-
-.. automodule:: prompt_toolkit.application
-    :members: DummyApplication
-
-.. automodule:: prompt_toolkit.application
-    :members: run_in_terminal, run_coroutine_in_terminal
+    :members: Application, get_app, set_app, NoRunningApplicationError,
+        DummyApplication, run_in_terminal, run_coroutine_in_terminal
 
 
 Formatted text
@@ -42,10 +34,7 @@ Clipboard
 ---------
 
 .. automodule:: prompt_toolkit.clipboard
-    :members: Clipboard, ClipboardData, DummyClipboard, DynamicClipboard
-
-.. automodule:: prompt_toolkit.clipboard
-    :members: InMemoryClipboard
+    :members: Clipboard, ClipboardData, DummyClipboard, DynamicClipboard, InMemoryClipboard
 
 .. automodule:: prompt_toolkit.clipboard.pyperclip
     :members:
@@ -90,26 +79,17 @@ Style
 -----
 
 .. automodule:: prompt_toolkit.styles
-    :members: Attrs, ANSI_COLOR_NAMES, BaseStyle, DummyStyle, DynamicStyle
-
-.. automodule:: prompt_toolkit.styles
-    :members: Style, Priority, merge_styles
-
-.. automodule:: prompt_toolkit.styles
-    :members: style_from_pygments_cls, style_from_pygments_dict, pygments_token_to_classname
-
-.. automodule:: prompt_toolkit.styles.named_colors
-    :members: NAMED_COLORS
+    :members: Attrs, ANSI_COLOR_NAMES, BaseStyle, DummyStyle, DynamicStyle,
+        Style, Priority, merge_styles, style_from_pygments_cls,
+        style_from_pygments_dict, pygments_token_to_classname, NAMED_COLORS
 
 
 Shortcuts
 ---------
 
 .. automodule:: prompt_toolkit.shortcuts
-    :members: prompt, PromptSession
-
-.. automodule:: prompt_toolkit.shortcuts
-    :members: clear, clear_title, print_formatted_text, set_title
+    :members: prompt, PromptSession, clear, clear_title, print_formatted_text,
+        set_title
 
 .. automodule:: prompt_toolkit.shortcuts.dialogs
     :members:
@@ -159,43 +139,41 @@ Containers
 ^^^^^^^^^^
 
 .. automodule:: prompt_toolkit.layout
-    :members: Container, HSplit, VSplit, FloatContainer, Float, Window, ConditionalContainer, ScrollOffsets, ColorColumn, to_container, to_window, is_container, HorizontalAlign, VerticalAlign
+    :members: Container, HSplit, VSplit, FloatContainer, Float, Window,
+        ConditionalContainer, ScrollOffsets, ColorColumn, to_container,
+        to_window, is_container, HorizontalAlign, VerticalAlign
 
 
 Controls
 ^^^^^^^^
 
 .. automodule:: prompt_toolkit.layout
-    :members: BufferControl, SearchBufferControl, DummyControl, FormattedTextControl, UIControl, UIContent
+    :members: BufferControl, SearchBufferControl, DummyControl,
+        FormattedTextControl, UIControl, UIContent
 
 
 Widgets
 ^^^^^^^
 
 .. automodule:: prompt_toolkit.widgets
-    :members: TextArea, Label, Button, Frame, Shadow, Box, VerticalLine, HorizontalLine, RadioList, Checkbox, ProgressBar
+    :members: TextArea, Label, Button, Frame, Shadow, Box, VerticalLine,
+        HorizontalLine, RadioList, Checkbox, ProgressBar
 
 .. automodule:: prompt_toolkit.widgets
-    :members: ArgToolbar, CompletionsToolbar, FormattedTextToolbar, SearchToolbar, SystemToolbar, ValidationToolbar
+    :members: ArgToolbar, CompletionsToolbar, FormattedTextToolbar,
+        SearchToolbar, SystemToolbar, ValidationToolbar
 
 .. automodule:: prompt_toolkit.widgets
-    :members: Dialog
-
-.. automodule:: prompt_toolkit.widgets
-    :members: MenuContainer, MenuItem
+    :members: Dialog, MenuContainer, MenuItem
 
 
 Other
 ^^^^^
 
 .. automodule:: prompt_toolkit.layout
-    :members: Dimension
-
-.. automodule:: prompt_toolkit.layout
-    :members: Margin, NumberedMargin, ScrollbarMargin, ConditionalMargin, PromptMargin
-
-.. automodule:: prompt_toolkit.layout
-    :members: CompletionsMenu, MultiColumnCompletionsMenu
+    :members: Dimension, Margin, NumberedMargin, ScrollbarMargin,
+        ConditionalMargin, PromptMargin, CompletionsMenu,
+        MultiColumnCompletionsMenu
 
 .. automodule:: prompt_toolkit.layout.processors
     :members:

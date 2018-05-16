@@ -670,10 +670,14 @@ class PromptSession(object):
             tempfile_suffix=None, inputhook=None,
             async_=False):
         """
-        Display the prompt. All the arguments are the same as for the
-        :class:`~.PromptSession` class.
+        Display the prompt. All the arguments are a subset of the
+        :class:`~.PromptSession` class itself.
 
-        :param _async: When `True` return a `Future` instead of waiting for the
+        This will raise ``KeyboardInterrupt`` when control-c has been pressed
+        (for abort) and ``EOFError`` when control-d has been pressed (for
+        exit).
+
+        :param async_: When `True` return a `Future` instead of waiting for the
             prompt to finish.
         """
         # Backup original settings.

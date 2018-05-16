@@ -68,7 +68,7 @@ Table of contents
 -----------------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    pages/gallery
    pages/getting_started
@@ -77,6 +77,7 @@ Table of contents
    pages/asking_for_input
    pages/dialogs
    pages/full_screen_apps
+   pages/tutorials/index
    pages/advanced_topics/index
    pages/reference
 

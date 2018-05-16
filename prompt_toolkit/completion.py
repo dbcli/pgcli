@@ -38,7 +38,7 @@ class Completion(object):
         assert isinstance(start_position, int)
         assert display is None or isinstance(display, text_type)
         assert display_meta is None or isinstance(display_meta, text_type)
-        assert get_display_meta is None or callable(get_display_meta)
+        assert get_display_meta is None or callable(get_display_meta)  # XXX: remove attr, accept callable for display_meta.
         assert isinstance(style, text_type)
         assert isinstance(selected_style, text_type)
 

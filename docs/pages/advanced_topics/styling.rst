@@ -1,7 +1,7 @@
 .. _styling:
 
 More about styling
-------------------
+==================
 
 This page will attempt to explain in more detail how to use styling in
 prompt_toolkit.
@@ -11,7 +11,7 @@ styling works.
 
 
 Style strings
-^^^^^^^^^^^^^
+-------------
 
 Many user interface controls, like :class:`~prompt_toolkit.layout.Window`
 accept a ``style`` argument which can be used to pass the formatting as a
@@ -81,7 +81,7 @@ application is done.
 
 
 Class names
-^^^^^^^^^^^
+-----------
 
 Like we do for web design, it is not a good habit to specify all styling
 inline. Instead, we can attach class names to UI controls and have a style
@@ -128,7 +128,7 @@ the "header" class, and then override that with a red background color.
 
 
 Dot notation in class names
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
 
 The dot operator has a special meaning in a class name. If we write:
 ``style="class:a.b.c"``, then this will actually expand to the following:
@@ -139,7 +139,7 @@ specify "Tokens" like this, but it's useful in other situations as well.
 
 
 Multiple classes in a style sheet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------
 
 A style sheet can be more complex as well. We can for instance specify two
 class names. The following will underline the left part within the header, or
@@ -173,7 +173,7 @@ It is possible to combine this:
 
 
 Evaluation order of rules in a style sheet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------------
 
 The style is determined as follows:
 
@@ -200,7 +200,7 @@ The style is determined as follows:
 
 
 Using a dictionary as a style sheet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 The order of the rules in a style sheet is meaningful, so typically, we use a
 list of tuples to specify the style. But is also possible to use a dictionary
@@ -217,8 +217,7 @@ their ordering. An ``OrderedDict`` works as well.
 
 
 Loading a style from Pygments
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+-----------------------------
 
 `Pygments <http://pygments.org/>`_ has a slightly different notation for
 specifying styles, because it maps styling to Pygments "Tokens". A Pygments
@@ -233,7 +232,7 @@ style can however be loaded and used as follows:
 
 
 Merging styles together
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 Multiple :class:`~prompt_toolkit.style.Style` objects can be merged together as
 follows:
@@ -250,7 +249,7 @@ follows:
 
 
 Color depths
-^^^^^^^^^^^^
+------------
 
 There are four different levels of color depths available:
 

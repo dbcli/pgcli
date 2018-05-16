@@ -1,7 +1,7 @@
 .. _key_bindings:
 
-More about key bindings
------------------------
+Move about key bindings
+=======================
 
 This page contains a few additional notes about key bindings.
 
@@ -42,7 +42,7 @@ key (like `b`) has been pressed or until the timeout expires (see later).
 
 
 Wildcards
-^^^^^^^^^
+---------
 
 Sometimes you want to catch any key that follows after a certain key stroke.
 This is possible by binding the '<any>' key:
@@ -58,7 +58,7 @@ This will handle `aa`, `ab`, `ac`, etcetera. The key binding can check the
 
 
 Attaching a filter (condition)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 In order to enable a key binding according to a certain condition, we have to
 pass it a :class:`~prompt_toolkit.filters.Filter`, usually a
@@ -83,7 +83,7 @@ The key binding will be ignored when this condition is not satisfied.
 
 
 ConditionalKeyBindings: Disabling a set of key bindings
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------------------------
 
 Sometimes you want to enable or disable a whole set of key bindings according
 to a certain condition. This is possible by wrapping it in a
@@ -107,7 +107,7 @@ will be ignored.
 
 
 Merging key bindings
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 Sometimes you have different parts of your application generate a collection of
 key bindings. It is possible to merge them together through the
@@ -126,7 +126,7 @@ object around and having everyone populate it.
 
 
 Eager
-^^^^^
+-----
 
 Usually not required, but if ever you have to override an existing key binding,
 the `eager` flag can be useful.
@@ -155,7 +155,7 @@ This is mainly useful in order to conditionally override another binding.
 
 
 Timeouts
-^^^^^^^^
+--------
 
 There are two timeout settings that effect the handling of keys.
 

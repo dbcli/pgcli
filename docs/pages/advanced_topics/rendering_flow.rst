@@ -1,7 +1,7 @@
 .. _rendering_flow:
 
 The rendering flow
-------------------
+==================
 
 Understanding the rendering flow is important for understanding how
 :class:`~prompt_toolkit.layout.Container` and
