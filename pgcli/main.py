@@ -489,10 +489,10 @@ class PGCli(object):
                 else:  # \ev or \ef
                     filename = None
                     spec = document.text.split()[1]
-                    query = self.pgexecute.view_definitions(spec)
-                    if not query:
-                        raise RuntimeError(
-                            'View {} does not exist.'.format(spec))
+                    if editor_command == '\\ev':
+                        query = self.pgexecute.view_definitions(spec)
+                    elif editor_command == '\\ef':
+                        query = self.pgexecute.function_definition(spec)
                 sql, message = special.open_external_editor(
                     filename, sql=query)
                 if message:

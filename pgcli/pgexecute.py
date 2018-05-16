@@ -162,11 +162,18 @@ class PGExecute(object):
         FROM pg_settings
         WHERE name = 'unix_socket_directories'
     '''
+
     view_definition_query = '''
         SELECT table_schema, table_name, view_definition 
         FROM   information_schema.views 
         WHERE  table_schema LIKE %s 
         AND    table_name LIKE %s'''
+
+    function_definition_query = '''
+        WITH f AS 
+            (SELECT %s::pg_catalog.regproc::pg_catalog.oid AS f_oid)
+        SELECT pg_catalog.pg_get_functiondef(f.f_oid)
+        FROM f'''
 
     def __init__(self, database, user, password, host, port, dsn, **kwargs):
         self.dbname = database
@@ -400,7 +407,25 @@ class PGExecute(object):
             _logger.debug('View Definition Query. sql: %r\nschema: %r\nview: %r',
                           sql, schema_pattern, view_pattern)
             cur.execute(sql, (schema_pattern, view_pattern))
-            return ';\n\n'.join(template.format(*row) for row in cur)
+            result = ';\n\n'.join(template.format(*row) for row in cur)
+            if result:
+                return result
+            else:
+                raise RuntimeError('View {} does not exist.'.format(spec))
+
+    def function_definition(self, spec):
+        """Returns the SQL defining functions described by `spec` """
+
+        with self.conn.cursor() as cur:
+            sql = self.function_definition_query
+            _logger.debug('Function Definition Query. sql: %r\nspec: %r',
+                          sql, spec)
+            cur.execute(sql, (spec, ))
+            result = cur.fetchone()
+            if result:
+                return result[0]
+            else:
+                raise RuntimeError('Function {} does not exist.'.format(spec))
 
     def schemata(self):
         """Returns a list of schema names in the database"""
