@@ -8,7 +8,7 @@ from six import with_metaclass
 from six.moves import range
 
 from prompt_toolkit.filters import to_filter
-from prompt_toolkit.formatted_text.utils import fragment_list_to_text
+from prompt_toolkit.formatted_text import fragment_list_to_text, to_formatted_text
 from prompt_toolkit.utils import get_cwidth
 
 __all__ = [
@@ -213,53 +213,40 @@ class PromptMargin(Margin):
     This can display one prompt at the first line, and a continuation prompt
     (e.g, just dots) on all the following lines.
 
-    :param get_prompt_fragments: Callable returns a list of (style_str, type)
-        tuples to be shown as the prompt at the first line.
-    :param get_continuation_fragments: Callable that takes a width as input and
-        returns a list of (style_str, type) tuples for the next lines of the
+    :param get_prompt: Callable returns formatted text or a list of
+        `(style_str, type)` tuples to be shown as the prompt at the first line.
+    :param get_continuation: Callable that takes three inputs. The width (int),
+        line_number (int), and is_soft_wrap (bool). It should return formatted
+        text or a list of `(style_str, type)` tuples for the next lines of the
         input.
-    :param show_numbers: (bool or :class:`~prompt_toolkit.filters.Filter`)
-        Display line numbers instead of the continuation prompt.
     """
-    def __init__(self, get_prompt_fragments, get_continuation_fragments=None,
-                 show_numbers=False):
-        assert callable(get_prompt_fragments)
-        assert get_continuation_fragments is None or callable(get_continuation_fragments)
-        show_numbers = to_filter(show_numbers)
+    def __init__(self, get_prompt, get_continuation=None):
+        assert callable(get_prompt)
+        assert get_continuation is None or callable(get_continuation)
 
-        self.get_prompt_fragments = get_prompt_fragments
-        self.get_continuation_fragments = get_continuation_fragments
-        self.show_numbers = show_numbers
+        self.get_prompt = get_prompt
+        self.get_continuation = get_continuation
 
     def get_width(self, ui_content):
         " Width to report to the `Window`. "
         # Take the width from the first line.
-        text = fragment_list_to_text(self.get_prompt_fragments())
+        text = fragment_list_to_text(self.get_prompt())
         return get_cwidth(text)
 
     def create_margin(self, window_render_info, width, height):
+        get_continuation = self.get_continuation
+        result = []
+
         # First line.
-        fragments = self.get_prompt_fragments()[:]
+        result.extend(to_formatted_text(self.get_prompt()))
 
-        # Next lines. (Show line numbering when numbering is enabled.)
-        if self.get_continuation_fragments:
-            # Note: we turn this into a list, to make sure that we fail early
-            #       in case `get_continuation_fragments` returns something else,
-            #       like `None`.
-            fragments2 = list(self.get_continuation_fragments(width))
-        else:
-            fragments2 = []
+        # Next lines.
+        if get_continuation:
+            last_y = None
 
-        show_numbers = self.show_numbers()
-        last_y = None
+            for y in window_render_info.displayed_lines[1:]:
+                result.append(('', '\n'))
+                result.extend(to_formatted_text(get_continuation(width, y, y == last_y)))
+                last_y = y
 
-        for y in window_render_info.displayed_lines[1:]:
-            fragments.append(('', '\n'))
-            if show_numbers:
-                if y != last_y:
-                    fragments.append(('class:line-number', ('%i ' % (y + 1)).rjust(width)))
-            else:
-                fragments.extend(fragments2)
-            last_y = y
-
-        return fragments
+        return result

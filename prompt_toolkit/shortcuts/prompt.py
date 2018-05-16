@@ -746,11 +746,20 @@ class PromptSession(object):
     def _get_prompt(self):
         return to_formatted_text(self.message, style='class:prompt')
 
-    def _get_continuation(self, width):
+    def _get_continuation(self, width, line_number, is_soft_wrap):
+        """
+        Insert the prompt continuation.
+
+        :param width: The width that's available for the continuation (don't
+            exceed this).
+        :param line_number:
+        :param is_soft_wrap: True when we got a soft wrap here instead of a
+            hard line ending.
+        """
         prompt_continuation = self.prompt_continuation
 
         if callable(prompt_continuation):
-            prompt_continuation = prompt_continuation(width)
+            prompt_continuation = prompt_continuation(width, line_number, is_soft_wrap)
 
         return to_formatted_text(
             prompt_continuation, style='class:prompt-continuation')
