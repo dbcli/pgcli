@@ -140,8 +140,8 @@ Containers
 
 .. automodule:: prompt_toolkit.layout
     :members: Container, HSplit, VSplit, FloatContainer, Float, Window,
-        ConditionalContainer, ScrollOffsets, ColorColumn, to_container,
-        to_window, is_container, HorizontalAlign, VerticalAlign
+        WindowAlign, ConditionalContainer, ScrollOffsets, ColorColumn,
+        to_container, to_window, is_container, HorizontalAlign, VerticalAlign
 
 
 Controls

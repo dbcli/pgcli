@@ -30,6 +30,7 @@ __all__ = [
     'VSplit',
     'FloatContainer',
     'Float',
+    'WindowAlign',
     'Window',
     'WindowRenderInfo',
     'ConditionalContainer',
@@ -1106,7 +1107,7 @@ class ColorColumn(object):
 _in_insert_mode = vi_insert_mode | emacs_insert_mode
 
 
-class Align:
+class WindowAlign:
     " Alignment of Window content. "
     LEFT = 'LEFT'
     RIGHT = 'RIGHT'
@@ -1163,8 +1164,8 @@ class Window(Container):
     :param colorcolumns: A list of :class:`.ColorColumn` instances that
         describe the columns to be highlighted, or a callable that returns such
         a list.
-    :param align: :class:`.Align` value or callable that returns an
-        :class:`.Align` value. alignment of content.
+    :param align: :class:`.WindowAlign` value or callable that returns an
+        :class:`.WindowAlign` value. alignment of content.
     :param style: A style string. Style to be applied to all the cells in this
         window.
     :param char: (string) Character to be used for filling the background. This can also
@@ -1177,7 +1178,7 @@ class Window(Container):
                  allow_scroll_beyond_bottom=False, wrap_lines=False,
                  get_vertical_scroll=None, get_horizontal_scroll=None, always_hide_cursor=False,
                  cursorline=False, cursorcolumn=False, colorcolumns=None,
-                 align=Align.LEFT, style='', char=None):
+                 align=WindowAlign.LEFT, style='', char=None):
         assert content is None or isinstance(content, UIControl)
         assert is_dimension(width)
         assert is_dimension(height)
@@ -1187,7 +1188,7 @@ class Window(Container):
         assert get_vertical_scroll is None or callable(get_vertical_scroll)
         assert get_horizontal_scroll is None or callable(get_horizontal_scroll)
         assert colorcolumns is None or callable(colorcolumns) or isinstance(colorcolumns, list)
-        assert callable(align) or align in Align._ALL
+        assert callable(align) or align in WindowAlign._ALL
         assert callable(style) or isinstance(style, text_type)
         assert char is None or callable(char) or isinstance(char, text_type)
         assert z_index is None or isinstance(z_index, int)
@@ -1538,7 +1539,7 @@ class Window(Container):
                    width, vertical_scroll=0, horizontal_scroll=0,
                    wrap_lines=False, highlight_lines=False,
                    vertical_scroll_2=0, always_hide_cursor=False,
-                   has_focus=False, align=Align.LEFT):
+                   has_focus=False, align=WindowAlign.LEFT):
         """
         Copy the UIContent into the output screen.
         """
@@ -1569,11 +1570,11 @@ class Window(Container):
                 new_buffer_row = new_buffer[y + ypos]
 
                 # Align this line.
-                if align == Align.CENTER:
+                if align == WindowAlign.CENTER:
                     line_width = fragment_list_width(line)
                     if line_width < width:
                         x += (width - line_width) // 2
-                elif align == Align.RIGHT:
+                elif align == WindowAlign.RIGHT:
                     line_width = fragment_list_width(line)
                     if line_width < width:
                         x += width - line_width

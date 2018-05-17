@@ -45,7 +45,7 @@ from prompt_toolkit.key_binding.bindings.open_in_editor import load_open_in_edit
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, DynamicKeyBindings, merge_key_bindings, ConditionalKeyBindings, KeyBindingsBase
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout import Window, HSplit, FloatContainer, Float
-from prompt_toolkit.layout.containers import ConditionalContainer, Align
+from prompt_toolkit.layout.containers import ConditionalContainer, WindowAlign
 from prompt_toolkit.layout.controls import BufferControl, SearchBufferControl, FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
@@ -114,7 +114,7 @@ class _RPrompt(Window):
     def __init__(self, get_formatted_text):
         super(_RPrompt, self).__init__(
             FormattedTextControl(get_formatted_text),
-            align=Align.RIGHT,
+            align=WindowAlign.RIGHT,
             style='class:rprompt')
 
 
