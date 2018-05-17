@@ -40,6 +40,7 @@ from pygments.token import Token
 
 from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF)
 import pgspecial as special
+import keyring
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory, style_factory_output
@@ -396,6 +397,11 @@ class PGCli(object):
         if not self.force_passwd_prompt and not passwd:
             passwd = os.environ.get('PGPASSWORD', '')
 
+        # Find password from store
+        key = '%s@%s' % (user, host)
+        if not passwd:
+            passwd = keyring.get_password('pgcli', key)
+
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
         # no-password exception.
@@ -417,6 +423,8 @@ class PGCli(object):
             try:
                 pgexecute = PGExecute(database, user, passwd, host, port, dsn,
                                       application_name='pgcli', **kwargs)
+                if passwd:
+                    keyring.set_password('pgcli', key, passwd)
             except (OperationalError, InterfaceError) as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
                         auto_passwd_prompt):
@@ -426,6 +434,8 @@ class PGCli(object):
                     pgexecute = PGExecute(database, user, passwd, host, port,
                                           dsn, application_name='pgcli',
                                           **kwargs)
+                    if passwd:
+                        keyring.set_password('pgcli', key, passwd)
                 else:
                     raise e
 
