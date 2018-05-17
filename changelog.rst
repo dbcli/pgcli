@@ -6,6 +6,7 @@ Internal changes:
 
 * Mark tests requiring a running database server as dbtest (Thanks: `Dick Marinus`_)
 * Add ``application_name`` to help identify pgcli connection to database (issue #868) (Thanks: `François Pietka`_)
+* Ported Destructive Warning from mycli.
 
 1.9.1:
 ======
