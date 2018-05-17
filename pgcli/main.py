@@ -40,6 +40,7 @@ from pygments.token import Token
 
 from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF)
 import pgspecial as special
+import keyring
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory, style_factory_output
@@ -89,6 +90,10 @@ OutputSettings = namedtuple(
 OutputSettings.__new__.__defaults__ = (
     None, None, None, '<null>', False, None, lambda x: x, None
 )
+
+
+class PgCliQuitError(Exception):
+    pass
 
 
 class PGCli(object):
@@ -202,6 +207,9 @@ class PGCli(object):
         self.eventloop = create_eventloop()
         self.cli = None
 
+    def quit(self):
+        raise PgCliQuitError
+
     def register_special_commands(self):
 
         self.pgspecial.register(
@@ -211,6 +219,12 @@ class PGCli(object):
         refresh_callback = lambda: self.refresh_completions(
             persist_priorities='all')
 
+        self.pgspecial.register(self.quit, '\\q', '\\q',
+                                'Quit pgcli.', arg_type=NO_QUERY, case_sensitive=True,
+                                aliases=(':q',))
+        self.pgspecial.register(self.quit, 'quit', 'quit',
+                                'Quit pgcli.', arg_type=NO_QUERY, case_sensitive=False,
+                                aliases=('exit',))
         self.pgspecial.register(refresh_callback, '\\#', '\\#',
                                 'Refresh auto-completions.', arg_type=NO_QUERY)
         self.pgspecial.register(refresh_callback, '\\refresh', '\\refresh',
@@ -367,7 +381,7 @@ class PGCli(object):
                          user=fixup_possible_percent_encoding(uri.username),
                          port=fixup_possible_percent_encoding(uri.port),
                          passwd=fixup_possible_percent_encoding(uri.password))
-        # Deal with extra params e.g. ?sslmode=verify-ca&ssl-cert=/mycert
+        # Deal with extra params e.g. ?sslmode=verify-ca&sslrootcert=/myrootcert
         if uri.query:
             arguments = dict(
                 {k: v for k, (v,) in parse_qs(uri.query).items()},
@@ -391,6 +405,11 @@ class PGCli(object):
         if not self.force_passwd_prompt and not passwd:
             passwd = os.environ.get('PGPASSWORD', '')
 
+        # Find password from store
+        key = '%s@%s' % (user, host)
+        if not passwd:
+            passwd = keyring.get_password('pgcli', key)
+
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
         # no-password exception.
@@ -412,6 +431,8 @@ class PGCli(object):
             try:
                 pgexecute = PGExecute(database, user, passwd, host, port, dsn,
                                       application_name='pgcli', **kwargs)
+                if passwd:
+                    keyring.set_password('pgcli', key, passwd)
             except (OperationalError, InterfaceError) as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
                         auto_passwd_prompt):
@@ -421,6 +442,8 @@ class PGCli(object):
                     pgexecute = PGExecute(database, user, passwd, host, port,
                                           dsn, application_name='pgcli',
                                           **kwargs)
+                    if passwd:
+                        keyring.set_password('pgcli', key, passwd)
                 else:
                     raise e
 
@@ -449,19 +472,22 @@ class PGCli(object):
         # It's internal api of prompt_toolkit that may change. This was added to fix #668.
         # We may find a better way to do it in the future.
         saved_callables = cli.application.pre_run_callables
-        while special.editor_command(document.text):
-            filename = special.get_filename(document.text)
-            query = (special.get_editor_query(document.text) or
-                     self.get_last_query())
-            sql, message = special.open_external_editor(filename, sql=query)
-            if message:
-                # Something went wrong. Raise an exception and bail.
-                raise RuntimeError(message)
-            cli.current_buffer.document = Document(sql, cursor_position=len(sql))
-            cli.application.pre_run_callables = []
-            document = cli.run()
-            continue
-        cli.application.pre_run_callables = saved_callables
+        try:
+            while special.editor_command(document.text):
+                filename = special.get_filename(document.text)
+                query = (special.get_editor_query(document.text) or
+                         self.get_last_query())
+                sql, message = special.open_external_editor(
+                    filename, sql=query)
+                if message:
+                    # Something went wrong. Raise an exception and bail.
+                    raise RuntimeError(message)
+                cli.current_buffer.document = Document(sql,
+                                                       cursor_position=len(sql))
+                cli.application.pre_run_callables = []
+                document = cli.run()
+        finally:
+            cli.application.pre_run_callables = saved_callables
         return document
 
     def execute_command(self, text, query):
@@ -489,6 +515,8 @@ class PGCli(object):
             logger.error("sql: %r, error: %r", text, e)
             logger.error("traceback: %r", traceback.format_exc())
             self._handle_server_closed_connection()
+        except PgCliQuitError as e:
+            raise
         except Exception as e:
             logger.error("sql: %r, error: %r", text, e)
             logger.error("traceback: %r", traceback.format_exc())
@@ -555,13 +583,6 @@ class PGCli(object):
             while True:
                 document = self.cli.run()
 
-                # The reason we check here instead of inside the pgexecute is
-                # because we want to raise the Exit exception which will be
-                # caught by the try/except block that wraps the pgexecute.run()
-                # statement.
-                if quit_command(document.text):
-                    raise EOFError
-
                 try:
                     document = self.handle_editor_command(self.cli, document)
                 except RuntimeError as e:
@@ -573,15 +594,19 @@ class PGCli(object):
                 # Initialize default metaquery in case execution fails
                 query = MetaQuery(query=document.text, successful=False)
 
-                watch_command, timing = special.get_watch_command(document.text)
-                if watch_command:
-                    while watch_command:
+                self.watch_command, timing = special.get_watch_command(
+                        document.text)
+                if self.watch_command:
+                    while self.watch_command:
                         try:
-                            query = self.execute_command(watch_command, query)
-                            click.echo('Waiting for {0} seconds before repeating'.format(timing))
+                            query = self.execute_command(
+                                    self.watch_command, query)
+                            click.echo(
+                                    'Waiting for {0} seconds before repeating'
+                                    .format(timing))
                             sleep(timing)
                         except KeyboardInterrupt:
-                            watch_command = None
+                            self.watch_command = None
                 else:
                     query = self.execute_command(document.text, query)
 
@@ -593,7 +618,7 @@ class PGCli(object):
 
                 self.query_history.append(query)
 
-        except EOFError:
+        except PgCliQuitError:
             if not self.less_chatty:
                 print ('Goodbye!')
 
@@ -849,7 +874,7 @@ class PGCli(object):
         return self.query_history[-1][0] if self.query_history else None
 
     def echo_via_pager(self, text, color=None):
-        if self.pgspecial.pager_config == PAGER_OFF:
+        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command:
             click.echo(text, color=color)
         else:
             click.echo_via_pager(text, color)
@@ -1042,13 +1067,6 @@ def is_select(status):
     if not status:
         return False
     return status.split(None, 1)[0].lower() == 'select'
-
-
-def quit_command(sql):
-    return (sql.strip().lower() == 'exit'
-            or sql.strip().lower() == 'quit'
-            or sql.strip() == r'\q'
-            or sql.strip() == ':q')
 
 
 def exception_formatter(e):

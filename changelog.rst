@@ -1,12 +1,22 @@
 Upcoming:
 =========
 
+Features:
+---------
+* Add quit commands to the completion menu. (Thanks: `Jason Ribeiro`_)
+* Add table formats to ``\T`` completion. (Thanks: `Jason Ribeiro`_)
+
 Internal changes:
 -----------------
 
 * Mark tests requiring a running database server as dbtest (Thanks: `Dick Marinus`_)
 * Add ``application_name`` to help identify pgcli connection to database (issue #868) (Thanks: `François Pietka`_)
 * Ported Destructive Warning from mycli.
+
+Bug Fixes:
+----------
+* Disable pager when using \watch (#837). (Thanks: `Jason Ribeiro`_)
+* Don't offer to reconnect when we can't change a param in realtime (#807). (Thanks: `Amjith Ramanujam`_)
 
 1.9.1:
 ======
@@ -746,6 +756,7 @@ Bug Fixes:
 ----------
 * Fix the broken behavior of \d+. (Thanks: https://github.com/macobo)
 * Fix a crash during auto-completion. (Thanks: https://github.com/Erethon)
+* Avoid losing pre_run_callables on error in editing.  (Thanks: https://github.com/catherinedevlin)
 
 Improvements:
 -------------
@@ -814,3 +825,4 @@ Improvements:
 .. _`Isank`: https://github.com/isank
 .. _`Bojan Delić`: https://github.com/delicb
 .. _`Frederic Aoustin`: https://github.com/fraoustin
+.. _`Jason Ribeiro`: https://github.com/jrib

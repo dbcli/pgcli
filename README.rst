@@ -48,7 +48,7 @@ Usage
 
     or
 
-    $ pgcli postgresql://[user[:password]@][netloc][:port][/dbname]
+    $ pgcli postgresql://[user[:password]@][netloc][:port][/dbname][?extra=value[&other=other-value]]
 
 Examples:
 
@@ -56,7 +56,7 @@ Examples:
 
     $ pgcli local_database
 
-    $ pgcli postgres://amjith:pa$$w0rd@example.com:5432/app_db
+    $ pgcli postgres://amjith:pa$$w0rd@example.com:5432/app_db?sslmode=verify-ca&sslrootcert=/myrootcert
 
 Features
 --------
