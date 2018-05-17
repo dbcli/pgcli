@@ -142,6 +142,9 @@ Shells:
 - `ptrepl <https://github.com/imomaliev/ptrepl>`_: Run any command as REPL
 - `clipwdmgr <https://github.com/samisalkosuo/clipasswordmgr>`_: Command Line Password Manager.
 - `slacker <https://github.com/netromdk/slacker>`_: Easy access to the Slack API and admin of workspaces via REPL.
+- `EdgeDB <https://edgedb.com/>`_: The next generation object-relational database.
+- `pywit <https://github.com/wit-ai/pywit>`_: Python library for Wit.ai.
+- `objection <https://github.com/sensepost/objection>`_: Runtime Mobile Exploration.
 
 Full screen applications:
 
