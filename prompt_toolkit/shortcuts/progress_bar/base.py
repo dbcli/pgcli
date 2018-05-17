@@ -32,7 +32,7 @@ import time
 import traceback
 import sys
 
-from . import formatters as f
+from .formatters import create_default_formatters, Formatter
 
 __all__ = [
     'progress_bar',
@@ -58,23 +58,6 @@ def create_key_bindings():
     return kb
 
 
-def create_default_formatters():
-    return [
-        f.Label(),
-        f.Text(' '),
-        f.Percentage(),
-        f.Text(' '),
-        f.Bar(),
-        f.Text(' '),
-        f.Progress(),
-        f.Text(' '),
-        f.Text('eta [', style='class:time-left'),
-        f.TimeLeft(),
-        f.Text(']', style='class:time-left'),
-        f.Text(' '),
-    ]
-
-
 class progress_bar(object):
     """
     Progress bar context manager.
@@ -90,19 +73,19 @@ class progress_bar(object):
     :param formatters: List of `Formatter` instances.
     :param bottom_toolbar: Text to be displayed in the bottom toolbar.
         This can be a callable or formatted text.
-    :param style: `prompt_toolkit` ``Style`` instance.
-    :param key_bindings: `KeyBindings` instance.
+    :param style: :class:`prompt_toolkit.styles.BaseStyle` instance.
+    :param key_bindings: :class:`.KeyBindings` instance.
     :param file: The file object used for rendering, by default `sys.stderr` is used.
 
     :param color_depth: `prompt_toolkit` `ColorDepth` instance.
-    :param output: `prompt_toolkit` `Output` instance.
-    :param input: `prompt_toolkit` `Input` instance.
+    :param output: :class:`~prompt_toolkit.output.Output` instance.
+    :param input: :class:`~prompt_toolkit.input.Input` instance.
     """
     def __init__(self, title=None, formatters=None, bottom_toolbar=None,
                  style=None, key_bindings=None, file=None, color_depth=None,
                  output=None, input=None):
         assert formatters is None or (
-            isinstance(formatters, list) and all(isinstance(fo, f.Formatter) for fo in formatters))
+            isinstance(formatters, list) and all(isinstance(fo, Formatter) for fo in formatters))
         assert style is None or isinstance(style, BaseStyle)
         assert key_bindings is None or isinstance(key_bindings, KeyBindings)
 

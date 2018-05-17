@@ -134,7 +134,7 @@ class Buffer(object):
     current input line and implements all text manipulations on top of it. It
     also implements the history, undo stack and the completion state.
 
-    :param eventloop: :class:`~prompt_toolkit.eventloop.base.EventLoop` instance.
+    :param eventloop: :class:`~prompt_toolkit.eventloop.EventLoop` instance.
     :param completer: :class:`~prompt_toolkit.completion.Completer` instance.
     :param history: :class:`~prompt_toolkit.history.History` instance.
     :param get_tempfile_suffix: Callable that returns the tempfile suffix to be
@@ -157,20 +157,22 @@ class Buffer(object):
     Filters:
 
     :param complete_while_typing: :class:`~prompt_toolkit.filters.Filter`
-        instance. Decide whether or not to do asynchronous autocompleting while
+        or `bool`. Decide whether or not to do asynchronous autocompleting while
         typing.
     :param validate_while_typing: :class:`~prompt_toolkit.filters.Filter`
-        instance. Decide whether or not to do asynchronous validation while
+        or `bool`. Decide whether or not to do asynchronous validation while
         typing.
-    :param enable_history_search: :class:`~prompt_toolkit.filters.Filter`
-        to indicate when up-arrow partial string matching is enabled. It is
-        advised to not enable this at the same time as `complete_while_typing`,
-        because when there is an autocompletion found, the up arrows usually
-        browse through the completions, rather than through the history.
+    :param enable_history_search: :class:`~prompt_toolkit.filters.Filter` or
+        `bool` to indicate when up-arrow partial string matching is enabled. It
+        is advised to not enable this at the same time as
+        `complete_while_typing`, because when there is an autocompletion found,
+        the up arrows usually browse through the completions, rather than
+        through the history.
     :param read_only: :class:`~prompt_toolkit.filters.Filter`. When True,
         changes will not be allowed.
-    :param multiline: When not set, pressing `Enter` will call the `accept_handler`.
-        Otherwise, pressing `Esc-Enter` is required.
+    :param multiline: :class:`~prompt_toolkit.filters.Filter` or `bool`. When
+        not set, pressing `Enter` will call the `accept_handler`.  Otherwise,
+        pressing `Esc-Enter` is required.
     """
     def __init__(self, completer=None, auto_suggest=None, history=None,
                  validator=None, get_tempfile_suffix=None, tempfile_suffix='',

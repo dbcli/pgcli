@@ -25,6 +25,7 @@ __all__ = [
     'IterationsPerSecond',
     'SpinningWheel',
     'Rainbow',
+    'create_default_formatters',
 ]
 
 
@@ -101,6 +102,9 @@ class Label(Formatter):
 
 
 class Percentage(Formatter):
+    """
+    Display the progress as a percentage.
+    """
     template = '<percentage>{percentage:>5}%</percentage>'
 
     def format(self, progress_bar, progress, width):
@@ -112,6 +116,9 @@ class Percentage(Formatter):
 
 
 class Bar(Formatter):
+    """
+    Display the progress bar itself.
+    """
     template = '<bar>{start}<bar-a>{bar_a}</bar-a><bar-b>{bar_b}</bar-b><bar-c>{bar_c}</bar-c>{end}</bar>'
 
     def __init__(self, start='[', end=']', sym_a='=', sym_b='>', sym_c=' ', unknown='#'):
@@ -153,6 +160,9 @@ class Bar(Formatter):
 
 
 class Progress(Formatter):
+    """
+    Display the progress as text.  E.g. "8/20"
+    """
     template = '<current>{current:>3}</current>/<total>{total:>3}</total>'
 
     def format(self, progress_bar, progress, width):
@@ -177,6 +187,9 @@ def _format_timedelta(timedelta):
 
 
 class TimeElapsed(Formatter):
+    """
+    Display the elapsed time.
+    """
     def format(self, progress_bar, progress, width):
         text = _format_timedelta(progress.time_elapsed).rjust(width)
         return HTML('<time-elapsed>{time_elapsed}</time-elapsed>').format(time_elapsed=text)
@@ -189,6 +202,9 @@ class TimeElapsed(Formatter):
 
 
 class TimeLeft(Formatter):
+    """
+    Display the time left.
+    """
     template = '<time-left>{time_left}</time-left>'
     unknown = '?:??:??'
 
@@ -209,6 +225,9 @@ class TimeLeft(Formatter):
 
 
 class IterationsPerSecond(Formatter):
+    """
+    Display the iterations per second.
+    """
     template = '<iterations-per-second>{iterations_per_second:.2f}</iterations-per-second>'
 
     def format(self, progress_bar, progress, width):
@@ -224,6 +243,9 @@ class IterationsPerSecond(Formatter):
 
 
 class SpinningWheel(Formatter):
+    """
+    Display a spinning wheel.
+    """
     characters = r'/-\|'
 
     def format(self, progress_bar, progress, width):
@@ -279,3 +301,23 @@ class Rainbow(Formatter):
 
     def get_width(self, progress_bar):
         return self.formatter.get_width(progress_bar)
+
+
+def create_default_formatters():
+    """
+    Return the list of default formatters.
+    """
+    return [
+        Label(),
+        Text(' '),
+        Percentage(),
+        Text(' '),
+        Bar(),
+        Text(' '),
+        Progress(),
+        Text(' '),
+        Text('eta [', style='class:time-left'),
+        TimeLeft(),
+        Text(']', style='class:time-left'),
+        Text(' '),
+    ]

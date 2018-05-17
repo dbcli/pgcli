@@ -169,8 +169,8 @@ class PromptSession(object):
         string matching.
     :param search_ignore_case:
         :class:`~prompt_toolkit.filters.Filter`. Search case insensitive.
-    :param lexer: :class:`~prompt_toolkit.layout.lexers.Lexer` to be used for
-        the syntax highlighting.
+    :param lexer: :class:`~prompt_toolkit.lexers.Lexer` to be used for the
+        syntax highlighting.
     :param validator: :class:`~prompt_toolkit.validation.Validator` instance
         for input validation.
     :param completer: :class:`~prompt_toolkit.completion.Completer` instance
