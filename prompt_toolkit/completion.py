@@ -26,26 +26,23 @@ class Completion(object):
         differently in the completion menu.
     :param display_meta: (Optional string) Meta information about the
         completion, e.g. the path or source where it's coming from.
-    :param get_display_meta: Lazy `display_meta`. Retrieve meta information
-        only when meta is displayed.
+        This can also be a callable that returns a string.
     :param style: Style string.
     :param selected_style: Style string, used for a selected completion.
         This can override the `style` parameter.
     """
     def __init__(self, text, start_position=0, display=None, display_meta=None,
-                 get_display_meta=None, style='', selected_style=''):
+                 style='', selected_style=''):
         assert isinstance(text, text_type)
         assert isinstance(start_position, int)
         assert display is None or isinstance(display, text_type)
         assert display_meta is None or isinstance(display_meta, text_type)
-        assert get_display_meta is None or callable(get_display_meta)  # XXX: remove attr, accept callable for display_meta.
         assert isinstance(style, text_type)
         assert isinstance(selected_style, text_type)
 
         self.text = text
         self.start_position = start_position
         self._display_meta = display_meta
-        self._get_display_meta = get_display_meta
 
         if display is None:
             self.display = text
@@ -71,23 +68,23 @@ class Completion(object):
             self.text == other.text and
             self.start_position == other.start_position and
             self.display == other.display and
-            self.display_meta == other.display_meta)
+            self._display_meta == other._display_meta)
 
     def __hash__(self):
-        return hash((self.text, self.start_position, self.display, self.display_meta))
+        return hash((self.text, self.start_position, self.display, self._display_meta))
 
     @property
     def display_meta(self):
-        # Return meta-text. (This is lazy when using "get_display_meta".)
-        if self._display_meta is not None:
-            return self._display_meta
+        " Return meta-text. (This is lazy when using a callable). "
+        meta = self._display_meta
 
-        elif self._get_display_meta:
-            self._display_meta = self._get_display_meta()
-            return self._display_meta
-
-        else:
+        if meta is None:
             return ''
+
+        if callable(meta):
+            return meta()
+
+        return meta
 
     def new_completion_from_position(self, position):
         """
@@ -101,8 +98,7 @@ class Completion(object):
         return Completion(
             text=self.text[position - self.start_position:],
             display=self.display,
-            display_meta=self._display_meta,
-            get_display_meta=self._get_display_meta)
+            display_meta=self._display_meta)
 
 
 class CompleteEvent(object):
