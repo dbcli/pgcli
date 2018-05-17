@@ -457,14 +457,15 @@ Auto suggestion is a way to propose some input completions to the user like the
 
 Usually, the input is compared to the history and when there is another entry
 starting with the given text, the completion will be shown as gray text behind
-the current input. Pressing the right arrow :kbd:`→` will insert this suggestion.
+the current input. Pressing the right arrow :kbd:`→` or :kbd:`c-e` will insert
+this suggestion, :kbd:`alt-f` will insert the first word of the suggestion.
 
 .. note::
 
     When suggestions are based on the history, don't forget to share one
     :class:`~prompt_toolkit.history.History` object between consecutive
     :func:`~prompt_toolkit.shortcuts.prompt` calls. Using a
-    :class:`~prompt_toolkit.prompt.PromptSession` does this for you.
+    :class:`~prompt_toolkit.shortcuts.PromptSession` does this for you.
 
 Example:
 
@@ -489,12 +490,15 @@ passed as an argument.
 Adding a bottom toolbar
 -----------------------
 
-Adding a bottom toolbar is as easy as passing a ``bottom_toolbar`` function to
-:func:`~prompt_toolkit.shortcuts.prompt`. The function is called every time the
-prompt is rendered (at least on every key stroke), so the bottom toolbar can be
-used to display dynamic information. It should return formatted text or a list
-of ``(style, text)`` tuples. The toolbar is always erased when the prompt
-returns.
+Adding a bottom toolbar is as easy as passing a ``bottom_toolbar`` argument to
+:func:`~prompt_toolkit.shortcuts.prompt`. This argument be either plain text,
+:ref:`formatted text <formatted_text>` or a callable that returns plain or
+formatted text.
+
+When a function is given, it will be called every time the prompt is rendered,
+so the bottom toolbar can be used to display dynamic information.
+
+The toolbar is always erased when the prompt returns.
 
 .. code:: python
 
@@ -516,6 +520,7 @@ the background of the toolbar.
 
 .. image:: ../images/bottom-toolbar.png
 
+
 Adding a right prompt
 ---------------------
 
@@ -523,7 +528,9 @@ The :func:`~prompt_toolkit.shortcuts.prompt` function has out of the box
 support for right prompts as well. People familiar to ZSH could recognise this
 as the `RPROMPT` option.
 
-So, similar to adding a bottom toolbar, we can pass a ``get_rprompt`` callable.
+So, similar to adding a bottom toolbar, we can pass an ``rprompt`` argument.
+This can be either plain text, :ref:`formatted text <formatted_text>` or a
+callable which returns either.
 
 .. code:: python
 
@@ -585,17 +592,25 @@ An example of a prompt that prints ``'hello world'`` when :kbd:`Control-T` is pr
 
     @bindings.add('c-t')
     def _(event):
+        " Say 'hello' when `c-t` is pressed. "
         def print_hello():
             print('hello world')
         run_in_terminal(print_hello)
+
+    @bindings.add('c-x')
+    def _(event):
+        " Exit when `c-x` is pressed. "
+        event.app.exit()
 
     text = prompt('> ', key_bindings=bindings)
     print('You said: %s' % text)
 
 
 Note that we use
-:meth:`~prompt_toolkit.application.run_in_terminal`. This
-ensures that the output of the print-statement and the prompt don't mix up.
+:meth:`~prompt_toolkit.application.run_in_terminal` for the first key binding.
+This ensures that the output of the print-statement and the prompt don't mix
+up. If the key bindings doesn't print anything, then it can be handled directly
+without nesting functions.
 
 
 Enable key bindings according to a condition

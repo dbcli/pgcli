@@ -166,3 +166,4 @@ instance, and always returns a :class:`~prompt_toolkit.filters.Filter`.
     f = to_filter(True)
     f = to_filter(False)
     f = to_filter(Condition(lambda: True))
+    f = to_filter(has_search | has_selection)

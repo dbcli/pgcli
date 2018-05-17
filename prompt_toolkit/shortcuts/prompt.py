@@ -202,6 +202,8 @@ class PromptSession(object):
     :param history: :class:`~prompt_toolkit.history.History` instance.
     :param clipboard: :class:`~prompt_toolkit.clipboard.Clipboard` instance.
         (e.g. :class:`~prompt_toolkit.clipboard.InMemoryClipboard`)
+    :param rprompt: Text or formatted text to be displayed on the right side.
+        This can also be a callable that returns (formatted) text.
     :param bottom_toolbar: Formatted text or callable which is supposed to
         return formatted text.
     :param prompt_continuation: Text that needs to be displayed for a multiline

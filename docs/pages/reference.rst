@@ -152,21 +152,6 @@ Controls
         FormattedTextControl, UIControl, UIContent
 
 
-Widgets
-^^^^^^^
-
-.. automodule:: prompt_toolkit.widgets
-    :members: TextArea, Label, Button, Frame, Shadow, Box, VerticalLine,
-        HorizontalLine, RadioList, Checkbox, ProgressBar
-
-.. automodule:: prompt_toolkit.widgets
-    :members: ArgToolbar, CompletionsToolbar, FormattedTextToolbar,
-        SearchToolbar, SystemToolbar, ValidationToolbar
-
-.. automodule:: prompt_toolkit.widgets
-    :members: Dialog, MenuContainer, MenuItem
-
-
 Other
 ^^^^^
 
@@ -183,6 +168,16 @@ Other
 
 .. automodule:: prompt_toolkit.layout.screen
     :members:
+
+
+Widgets
+-------
+
+.. automodule:: prompt_toolkit.widgets
+    :members: TextArea, Label, Button, Frame, Shadow, Box, VerticalLine,
+        HorizontalLine, RadioList, Checkbox, ProgressBar, CompletionsToolbar,
+        FormattedTextToolbar, SearchToolbar, SystemToolbar, ValidationToolbar,
+        MenuContainer, MenuItem
 
 
 Filters
@@ -221,8 +216,12 @@ Key binding
 Eventloop
 ---------
 
-.. automodule:: prompt_toolkit.eventloop.base
-    :members:
+.. automodule:: prompt_toolkit.eventloop
+    :members: EventLoop, get_traceback_from_context, From, Return,
+        ensure_future, create_event_loop, create_asyncio_event_loop,
+        use_asyncio_event_loop, get_event_loop, set_event_loop,
+        run_in_executor, call_from_executor, run_until_complete, Future,
+        InvalidStateError
 
 .. automodule:: prompt_toolkit.eventloop.posix
     :members:
@@ -236,21 +235,12 @@ Eventloop
 .. automodule:: prompt_toolkit.eventloop.asyncio_posix
     :members:
 
-.. automodule:: prompt_toolkit.eventloop.coroutine
-    :members:
-
-.. automodule:: prompt_toolkit.eventloop.future
-    :members:
-
 
 Input
 -----
 
 .. automodule:: prompt_toolkit.input
-    :members:
-
-.. automodule:: prompt_toolkit.input.defaults
-    :members:
+    :members: Input, DummyInput, create_input, get_default_input, set_default_input
 
 .. automodule:: prompt_toolkit.input.vt100
     :members:
@@ -262,10 +252,8 @@ Output
 ------
 
 .. automodule:: prompt_toolkit.output
-    :members:
-
-.. automodule:: prompt_toolkit.output.defaults
-    :members:
+    :members: Output, DummyOutput, ColorDepth, create_output,
+        get_default_output, set_default_output
 
 .. automodule:: prompt_toolkit.output.vt100
     :members:

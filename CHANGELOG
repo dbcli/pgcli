@@ -134,6 +134,8 @@ Changes:
     passed to the `Window` class and applied to the content as well.
   * Alignment of the content is now done in the `Window` class, not in the
     user control.
+  * The continuation function of `PromptMargin` now takes `line_number` and
+  * `is_soft_wrap` as input.
 
 - Changes to `BufferControl`:
 
@@ -177,6 +179,11 @@ Changes:
     displayed as soon as they are generated. This means that we don't have to
     wait for all the completions to be generated, before displaying the first
     one. The completion menus are updated as soon as new completions arrive.
+
+- Changes regarding the `History` classes:
+
+  * The `History` base class has a different interface. This was needed for
+    asynchronous loading of the history. `ThreadedHistory` was added for this.
 
 - Changes related to `shortcuts.prompt`:
 

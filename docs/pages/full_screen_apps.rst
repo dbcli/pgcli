@@ -67,9 +67,9 @@ I/O objects
 Every :class:`~prompt_toolkit.application.Application` instance requires an I/O
 objects for input and output:
 
-    - An :class:`~prompt_toolkit.input.base.Input` instance, which is an
-      abstraction of the input stream (stdin).
-    - An :class:`~prompt_toolkit.output.base.Output` instance, which is an
+    - An :class:`~prompt_toolkit.input.Input` instance, which is an abstraction
+      of the input stream (stdin).
+    - An :class:`~prompt_toolkit.output.Output` instance, which is an
       abstraction of the output stream, and is called by the renderer.
 
 Both are optional and normally not needed to pass explicitly. Usually, the
@@ -77,7 +77,7 @@ default works fine.
 
 There is a third I/O object which is also required by the application, but not
 passed inside. This is the event loop, an
-:class:`~prompt_toolkit.eventloop.base.EventLoop` instance. This is basically a
+:class:`~prompt_toolkit.eventloop.EventLoop` instance. This is basically a
 while-true loop that waits for user input, and when it receives something (like
 a key press), it will send that to the the appropriate handler, like for
 instance, a key binding.
@@ -343,9 +343,9 @@ As said earlier, a :class:`~prompt_toolkit.layout.Window` is a
     Basically, windows are the leafs in the tree structure that represent the UI.
 
 A :class:`~prompt_toolkit.layout.Window` provides a "view" on the
-:class:`~prompt_toolkit.layout.controls.UIControl`, which provides lines of
-content. The window is in the first place responsible for the line wrapping and
-scrolling of the content, but there are much more options.
+:class:`~prompt_toolkit.layout.UIControl`, which provides lines of content. The
+window is in the first place responsible for the line wrapping and scrolling of
+the content, but there are much more options.
 
 - Adding left or right margins. These are used for displaying scroll bars or
   line numbers.

@@ -59,7 +59,7 @@ You can replace the built in ``print`` function as follows, if you want to.
 Formatted text
 --------------
 
-There are several ways to print colors:
+There are several ways to display colors:
 
 - By creating an :class:`~prompt_toolkit.formatted_text.HTML` object.
 - By creating an :class:`~prompt_toolkit.formatted_text.ANSI` object that
