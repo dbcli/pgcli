@@ -94,8 +94,8 @@ PROMPT_TOOLKIT_STYLE = [
     ('tab',                                     '#999999'),
 
     # When Control-C/D has been pressed. Grayed.
-    ('aborting',                                '#888888'),
-    ('exiting',                                 '#888888'),
+    ('aborting',  '#888888 bg:default noreverse noitalic nounderline noblink'),
+    ('exiting',   '#888888 bg:default noreverse noitalic nounderline noblink'),
 
     # Entering a Vi digraph.
     ('digraph',                                 '#4444ff'),
