@@ -2,10 +2,11 @@
 
 import pytest
 import psycopg2
-from pgspecial.main import PGSpecial
+from mock import patch
 from pgcli.packages.parseutils.meta import FunctionMetadata
 from textwrap import dedent
 from utils import run, dbtest, requires_json, requires_jsonb
+from pgcli.main import PGCli
 
 
 def function_meta_data(
@@ -179,6 +180,41 @@ def test_unicode_support_in_output(executor, expanded):
 
 
 @dbtest
+def test_not_is_special(executor, pgspecial):
+    """is_special is set to false for database queries."""
+    query = 'select 1'
+    result = list(executor.run(query, pgspecial=pgspecial))
+    success, is_special = result[0][5:]
+    assert success == True
+    assert is_special == False
+
+
+@dbtest
+def test_execute_from_file_no_arg(executor, pgspecial):
+    """\i without a filename returns an error."""
+    result = list(executor.run("\i", pgspecial=pgspecial))
+    status, sql, success, is_special = result[0][3:]
+    assert 'missing required argument' in status
+    assert success == False
+    assert is_special == True
+
+
+@dbtest
+@patch('pgcli.main.os')
+def test_execute_from_file_io_error(os, executor, pgspecial):
+    """\i with an io_error returns an error."""
+    # Inject an IOError.
+    os.path.expanduser.side_effect = IOError('test')
+
+    # Check the result.
+    result = list(executor.run("\i test", pgspecial=pgspecial))
+    status, sql, success, is_special = result[0][3:]
+    assert status == 'test'
+    assert success == False
+    assert is_special == True
+
+
+@dbtest
 def test_multiple_queries_same_line(executor):
     result = run(executor, "select 'foo'; select 'bar'")
     assert len(result) == 12  # 2 * (output+status) * 3 lines
@@ -205,7 +241,7 @@ def test_multiple_queries_same_line_syntaxerror(executor, exception_formatter):
 
 @pytest.fixture
 def pgspecial():
-    return PGSpecial()
+    return PGCli().pgspecial
 
 
 @dbtest
@@ -287,11 +323,11 @@ def test_large_numbers_render_directly(executor, value):
 @pytest.mark.parametrize('command', ['di', 'dv', 'ds', 'df', 'dT'])
 @pytest.mark.parametrize('verbose', ['', '+'])
 @pytest.mark.parametrize('pattern', ['', 'x', '*.*', 'x.y', 'x.*', '*.y'])
-def test_describe_special(executor, command, verbose, pattern):
+def test_describe_special(executor, command, verbose, pattern, pgspecial):
     # We don't have any tests for the output of any of the special commands,
     # but we can at least make sure they run without error
     sql = r'\{command}{verbose} {pattern}'.format(**locals())
-    executor.run(sql)
+    list(executor.run(sql, pgspecial=pgspecial))
 
 
 @dbtest

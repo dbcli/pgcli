@@ -80,6 +80,7 @@ MetaQuery = namedtuple(
         'db_changed',       # True if any subquery changed the database
         'path_changed',     # True if any subquery changed the search path
         'mutated',          # True if any subquery executed insert/update/delete
+        'is_special',       # True if the query is a special command
     ])
 MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
@@ -290,12 +291,12 @@ class PGCli(object):
     def execute_from_file(self, pattern, **_):
         if not pattern:
             message = '\\i: missing required argument'
-            return [(None, None, None, message, '', False)]
+            return [(None, None, None, message, '', False, True)]
         try:
             with open(os.path.expanduser(pattern), encoding='utf-8') as f:
                 query = f.read()
         except IOError as e:
-            return [(None, None, None, str(e), '', False)]
+            return [(None, None, None, str(e), '', False, True)]
 
         if (self.destructive_warning and
                 confirm_destructive_query(query) is False):
@@ -311,7 +312,7 @@ class PGCli(object):
         if not pattern:
             self.output_file = None
             message = 'File output disabled'
-            return [(None, None, None, message, '', True)]
+            return [(None, None, None, message, '', True, True)]
         filename = os.path.abspath(os.path.expanduser(pattern))
         if not os.path.isfile(filename):
             try:
@@ -319,10 +320,10 @@ class PGCli(object):
             except IOError as e:
                 self.output_file = None
                 message = str(e) + '\nFile output disabled'
-                return [(None, None, None, message, '', False)]
+                return [(None, None, None, message, '', False, True)]
         self.output_file = filename
         message = 'Writing to file "%s"' % self.output_file
-        return [(None, None, None, message, '', True)]
+        return [(None, None, None, message, '', True, True)]
 
     def initialize_logging(self):
 
@@ -490,8 +491,10 @@ class PGCli(object):
             cli.application.pre_run_callables = saved_callables
         return document
 
-    def execute_command(self, text, query):
+    def execute_command(self, text):
         logger = self.logger
+
+        query = MetaQuery(query=text, successful=False)
 
         try:
             if (self.destructive_warning):
@@ -591,16 +594,12 @@ class PGCli(object):
                     click.secho(str(e), err=True, fg='red')
                     continue
 
-                # Initialize default metaquery in case execution fails
-                query = MetaQuery(query=document.text, successful=False)
-
                 self.watch_command, timing = special.get_watch_command(
                         document.text)
                 if self.watch_command:
                     while self.watch_command:
                         try:
-                            query = self.execute_command(
-                                    self.watch_command, query)
+                            query = self.execute_command(self.watch_command)
                             click.echo(
                                     'Waiting for {0} seconds before repeating'
                                     .format(timing))
@@ -608,7 +607,7 @@ class PGCli(object):
                         except KeyboardInterrupt:
                             self.watch_command = None
                 else:
-                    query = self.execute_command(document.text, query)
+                    query = self.execute_command(document.text)
 
                 self.now = dt.datetime.today()
 
@@ -725,7 +724,7 @@ class PGCli(object):
         res = self.pgexecute.run(text, self.pgspecial,
                                  exception_formatter, on_error_resume)
 
-        for title, cur, headers, status, sql, success in res:
+        for title, cur, headers, status, sql, success, is_special in res:
             logger.debug("headers: %r", headers)
             logger.debug("rows: %r", cur)
             logger.debug("status: %r", status)
@@ -772,7 +771,7 @@ class PGCli(object):
                 all_success = False
 
         meta_query = MetaQuery(text, all_success, total, meta_changed,
-                               db_changed, path_changed, mutated)
+                               db_changed, path_changed, mutated, is_special)
 
         return output, meta_query
 

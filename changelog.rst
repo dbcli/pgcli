@@ -11,6 +11,7 @@ Internal changes:
 
 * Mark tests requiring a running database server as dbtest (Thanks: `Dick Marinus`_)
 * Add ``application_name`` to help identify pgcli connection to database (issue #868) (Thanks: `François Pietka`_)
+* Add an is_special command flag to MetaQuery (Thanks: `Rishi Ramraj`_)
 * Ported Destructive Warning from mycli.
 
 Bug Fixes:
@@ -826,3 +827,4 @@ Improvements:
 .. _`Bojan Delić`: https://github.com/delicb
 .. _`Frederic Aoustin`: https://github.com/fraoustin
 .. _`Jason Ribeiro`: https://github.com/jrib
+.. _`Rishi Ramraj`: https://github.com/RishiRamraj

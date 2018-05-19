@@ -68,7 +68,7 @@ def run(executor, sql, join=False, expanded=False, pgspecial=None,
     formatted = []
     settings = OutputSettings(table_format='psql', dcmlfmt='d', floatfmt='g',
                               expanded=expanded)
-    for title, rows, headers, status, sql, success in results:
+    for title, rows, headers, status, sql, success, is_special in results:
         formatted.extend(format_output(title, rows, headers, status, settings))
     if join:
         formatted = '\n'.join(formatted)
