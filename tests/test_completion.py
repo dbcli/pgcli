@@ -5,13 +5,10 @@ import shutil
 import tempfile
 
 from contextlib import contextmanager
-
 from six import text_type
 
-from prompt_toolkit.completion import CompleteEvent
+from prompt_toolkit.completion import CompleteEvent, PathCompleter, WordCompleter
 from prompt_toolkit.document import Document
-from prompt_toolkit.contrib.completers.filesystem import PathCompleter
-from prompt_toolkit.contrib.completers.base import WordCompleter
 
 
 @contextmanager

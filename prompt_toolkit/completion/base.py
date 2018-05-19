@@ -1,7 +1,7 @@
 """
 """
 from __future__ import unicode_literals
-from .eventloop import generator_to_async_generator, AsyncGeneratorItem
+from prompt_toolkit.eventloop import generator_to_async_generator, AsyncGeneratorItem
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass, text_type
 
