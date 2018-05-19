@@ -4,26 +4,28 @@ Simple example of input validation.
 """
 from __future__ import unicode_literals
 
-from prompt_toolkit.validation import Validator, ValidationError
+from prompt_toolkit.validation import Validator
 from prompt_toolkit import prompt
 
 
-class EmailValidator(Validator):
-    def validate(self, document):
-        if '@' not in document.text:
-            raise ValidationError(
-                message='Not a valid e-mail address (Does not contain an @).',
-                cursor_position=len(document.text))  # Move cursor to end of input.
+def is_valid_email(text):
+    return '@' in text
+
+
+validator = Validator.from_callable(
+    is_valid_email,
+    error_message='Not a valid e-mail address (Does not contain an @).',
+    move_cursor_to_end=True)
 
 
 def main():
     # Validate when pressing ENTER.
-    text = prompt('Enter e-mail address: ', validator=EmailValidator(),
+    text = prompt('Enter e-mail address: ', validator=validator,
                   validate_while_typing=False)
     print('You said: %s' % text)
 
     # While typing
-    text = prompt('Enter e-mail address: ', validator=EmailValidator(),
+    text = prompt('Enter e-mail address: ', validator=validator,
                   validate_while_typing=True)
     print('You said: %s' % text)
 

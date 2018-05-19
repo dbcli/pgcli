@@ -7,7 +7,7 @@ from .filters import to_filter
 from .eventloop import Future, run_in_executor
 
 from abc import ABCMeta, abstractmethod
-from six import with_metaclass
+from six import with_metaclass, text_type
 
 __all__ = [
     'ConditionalValidator',
@@ -39,6 +39,14 @@ class ValidationError(Exception):
 class Validator(with_metaclass(ABCMeta, object)):
     """
     Abstract base class for an input validator.
+
+    A validator is typically created in one of the following two ways:
+
+    - Either by overriding this class and implementing the `validate` method.
+    - Or by passing a callable to `Validator.from_callable`.
+
+    If the validation takes some time and needs to happen in a background
+    thread, this can be wrapped in a :class:`.ThreadedValidator`.
     """
     @abstractmethod
     def validate(self, document):
@@ -62,6 +70,53 @@ class Validator(with_metaclass(ABCMeta, object)):
             return Future.fail(e)
         else:
             return Future.succeed(None)
+
+    @classmethod
+    def from_callable(cls, validate_func, error_message='Invalid input',
+                      move_cursor_to_end=False):
+        """
+        Create a validator from a simple validate callable. E.g.:
+
+        .. code:: python
+
+            def is_valid(text):
+                return text in ['hello', 'world']
+            Validator.from_callable(is_valid, error_message='Invalid input')
+
+        :param validate_func: Callable that takes the input string, and returns
+            `True` if the input is valid input.
+        :param error_message: Message to be displayed if the input is invalid.
+        :param move_cursor_to_end: Move the cursor to the end of the input, if
+            the input is invalid.
+        """
+        return _ValidatorFromCallable(
+            validate_func, error_message, move_cursor_to_end)
+
+
+class _ValidatorFromCallable(Validator):
+    """
+    Validate input from a simple callable.
+    """
+    def __init__(self, func, error_message, move_cursor_to_end):
+        assert callable(func)
+        assert isinstance(error_message, text_type)
+
+        self.func = func
+        self.error_message = error_message
+        self.move_cursor_to_end = move_cursor_to_end
+
+    def __repr__(self):
+        return 'Validator.from_callable(%r)' % (self.func, )
+
+    def validate(self, document):
+        if not self.func(document.text):
+            if self.move_cursor_to_end:
+                index = len(document.text)
+            else:
+                index = 0
+
+            raise ValidationError(cursor_position=index,
+                                  message=self.error_message)
 
 
 class ThreadedValidator(Validator):
