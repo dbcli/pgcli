@@ -40,6 +40,7 @@ from pygments.token import Token
 
 from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF)
 import pgspecial as special
+import keyring
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory, style_factory_output
@@ -51,6 +52,7 @@ from .config import (get_casing_file,
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
 from .encodingutils import text_type
+from .packages.prompt_utils import confirm_destructive_query
 from .__init__ import __version__
 
 click.disable_unicode_literals_warning = True
@@ -124,7 +126,7 @@ class PGCli(object):
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
                  pgexecute=None, pgclirc_file=None, row_limit=None,
                  single_connection=False, less_chatty=None, prompt=None, prompt_dsn=None,
-                 auto_vertical_output=False):
+                 auto_vertical_output=False, warn=None):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
@@ -159,6 +161,8 @@ class PGCli(object):
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
+        c_dest_warning = c['main'].as_bool('destructive_warning')
+        self.destructive_warning = c_dest_warning if warn is None else warn
         self.less_chatty = bool(less_chatty) or c['main'].as_bool('less_chatty')
         self.null_string = c['main'].get('null_string', '<null>')
         self.prompt_format = prompt if prompt is not None else c['main'].get('prompt', self.default_prompt)
@@ -294,6 +298,11 @@ class PGCli(object):
         except IOError as e:
             return [(None, None, None, str(e), '', False, True)]
 
+        if (self.destructive_warning and
+                confirm_destructive_query(query) is False):
+            message = 'Wise choice. Command execution stopped.'
+            return [(None, None, None, message)]
+
         on_error_resume = (self.on_error == 'RESUME')
         return self.pgexecute.run(
             query, self.pgspecial, on_error_resume=on_error_resume
@@ -397,6 +406,11 @@ class PGCli(object):
         if not self.force_passwd_prompt and not passwd:
             passwd = os.environ.get('PGPASSWORD', '')
 
+        # Find password from store
+        key = '%s@%s' % (user, host)
+        if not passwd:
+            passwd = keyring.get_password('pgcli', key)
+
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
         # no-password exception.
@@ -418,6 +432,8 @@ class PGCli(object):
             try:
                 pgexecute = PGExecute(database, user, passwd, host, port, dsn,
                                       application_name='pgcli', **kwargs)
+                if passwd:
+                    keyring.set_password('pgcli', key, passwd)
             except (OperationalError, InterfaceError) as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
                         auto_passwd_prompt):
@@ -427,6 +443,8 @@ class PGCli(object):
                     pgexecute = PGExecute(database, user, passwd, host, port,
                                           dsn, application_name='pgcli',
                                           **kwargs)
+                    if passwd:
+                        keyring.set_password('pgcli', key, passwd)
                 else:
                     raise e
 
@@ -479,7 +497,16 @@ class PGCli(object):
         query = MetaQuery(query=text, successful=False)
 
         try:
-            output, query = self._evaluate_command(text)
+            if (self.destructive_warning):
+                destroy = confirm = confirm_destructive_query(text)
+                if destroy is None:
+                    output, query = self._evaluate_command(text)
+                elif destroy is True:
+                    click.secho('Your call!')
+                    output, query = self._evaluate_command(text)
+                else:
+                    click.secho('Wise choice!')
+                    raise KeyboardInterrupt
         except KeyboardInterrupt:
             # Restart connection to the database
             self.pgexecute.connect()
@@ -886,12 +913,14 @@ class PGCli(object):
               'available databases, then exit.')
 @click.option('--auto-vertical-output', is_flag=True,
               help='Automatically switch to vertical output mode if the result is wider than the terminal width.')
+@click.option('--warn/--no-warn', default=None,
+              help='Warn before running a destructive query.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
 def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
         single_connection, dbname, username, version, pgclirc, dsn, row_limit,
         less_chatty, prompt, prompt_dsn, list_databases, auto_vertical_output,
-        list_dsn):
+        list_dsn, warn):
 
     if version:
         print('Version:', __version__)
@@ -927,7 +956,7 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc,
                   row_limit=row_limit, single_connection=single_connection,
                   less_chatty=less_chatty, prompt=prompt, prompt_dsn=prompt_dsn,
-                  auto_vertical_output=auto_vertical_output)
+                  auto_vertical_output=auto_vertical_output, warn=warn)
 
     # Choose which ever one has a valid value.
     database = database or dbname

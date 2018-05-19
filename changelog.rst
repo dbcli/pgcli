@@ -12,10 +12,12 @@ Internal changes:
 * Mark tests requiring a running database server as dbtest (Thanks: `Dick Marinus`_)
 * Add ``application_name`` to help identify pgcli connection to database (issue #868) (Thanks: `François Pietka`_)
 * Add an is_special command flag to MetaQuery (Thanks: `Rishi Ramraj`_)
+* Ported Destructive Warning from mycli.
 
 Bug Fixes:
 ----------
 * Disable pager when using \watch (#837). (Thanks: `Jason Ribeiro`_)
+* Don't offer to reconnect when we can't change a param in realtime (#807). (Thanks: `Amjith Ramanujam`_)
 
 1.9.1:
 ======
