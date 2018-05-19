@@ -5,26 +5,36 @@ from six import string_types
 
 class SentenceValidator(Validator):
     """
-    Validate input only when it appears in this list of sentences.
+    Accept input only when it appears in this list of sentences.
 
-    :param sentences: List of sentences.
+    :param sentences: List of strings.
     :param ignore_case: If True, case-insensitive comparisons.
     """
-    def __init__(self, sentences, ignore_case=False, error_message='Invalid input', move_cursor_to_end=False):
+    def __init__(self, sentences, ignore_case=False, error_message='Invalid input',
+                 move_cursor_to_end=False):
         assert all(isinstance(s, string_types) for s in sentences)
         assert isinstance(ignore_case, bool)
         assert isinstance(error_message, string_types)
 
-        self.sentences = list(sentences)
+        self.sentences = sentences
         self.ignore_case = ignore_case
         self.error_message = error_message
         self.move_cursor_to_end = move_cursor_to_end
 
-        if ignore_case:
-            self.sentences = set([s.lower() for s in self.sentences])
+    def __repr__(self):
+        return 'SentenceValidator(%r, ignore_case=%r, error_message=%r)' % (
+            self.sentences, self.ignore_case, self.error_message)
+
+    def _is_valid(self, text):
+        " Check whether this given text is valid. "
+        if self.ignore_case:
+            text = text.lower()
+            return text in [s.lower() for s in self.sentences]
+
+        return text in self.sentences
 
     def validate(self, document):
-        if document.text not in self.sentences:
+        if self._is_valid(document.text):
             if self.move_cursor_to_end:
                 index = len(document.text)
             else:
