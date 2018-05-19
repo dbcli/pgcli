@@ -11,6 +11,7 @@ from six import text_type
 from prompt_toolkit.completion import CompleteEvent
 from prompt_toolkit.document import Document
 from prompt_toolkit.contrib.completers.filesystem import PathCompleter
+from prompt_toolkit.contrib.completers.base import WordCompleter
 
 
 @contextmanager
@@ -251,3 +252,68 @@ def test_pathcompleter_get_paths_constrains_path():
 
     # cleanup
     shutil.rmtree(test_dir)
+
+
+def test_word_completer_static_word_list():
+    completer = WordCompleter(['abc', 'def', 'aaa'])
+
+    # Static list on empty input.
+    completions = completer.get_completions(Document(''), CompleteEvent())
+    assert [c.text for c in completions] == ['abc', 'def', 'aaa']
+
+    # Static list on non-empty input.
+    completions = completer.get_completions(Document('a'), CompleteEvent())
+    assert [c.text for c in completions] == ['abc', 'aaa']
+
+    completions = completer.get_completions(Document('A'), CompleteEvent())
+    assert [c.text for c in completions] == []
+
+    # Multiple words. (Check last only.)
+    completions = completer.get_completions(Document('test a'), CompleteEvent())
+    assert [c.text for c in completions] == ['abc', 'aaa']
+
+
+def test_word_completer_ignore_case():
+    completer = WordCompleter(['abc', 'def', 'aaa'], ignore_case=True)
+    completions = completer.get_completions(Document('a'), CompleteEvent())
+    assert [c.text for c in completions] == ['abc', 'aaa']
+
+    completions = completer.get_completions(Document('A'), CompleteEvent())
+    assert [c.text for c in completions] == ['abc', 'aaa']
+
+
+def test_word_completer_match_middle():
+    completer = WordCompleter(['abc', 'def', 'abca'], match_middle=True)
+    completions = completer.get_completions(Document('bc'), CompleteEvent())
+    assert [c.text for c in completions] == ['abc', 'abca']
+
+
+def test_word_completer_sentence():
+    # With sentence=True
+    completer = WordCompleter(['hello world', 'www', 'hello www', 'hello there'], sentence=True)
+    completions = completer.get_completions(Document('hello w'), CompleteEvent())
+    assert [c.text for c in completions] == ['hello world', 'hello www']
+
+    # With sentence=False
+    completer = WordCompleter(['hello world', 'www', 'hello www', 'hello there'], sentence=False)
+    completions = completer.get_completions(Document('hello w'), CompleteEvent())
+    assert [c.text for c in completions] == ['www']
+
+
+def test_word_completer_dynamic_word_list():
+    called = [0]
+    def get_words():
+        called[0] += 1
+        return ['abc', 'def', 'aaa']
+
+    completer = WordCompleter(get_words)
+
+    # Dynamic list on empty input.
+    completions = completer.get_completions(Document(''), CompleteEvent())
+    assert [c.text for c in completions] == ['abc', 'def', 'aaa']
+    assert called[0] == 1
+
+    # Static list on non-empty input.
+    completions = completer.get_completions(Document('a'), CompleteEvent())
+    assert [c.text for c in completions] == ['abc', 'aaa']
+    assert called[0] == 2

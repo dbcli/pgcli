@@ -12,7 +12,7 @@ class WordCompleter(Completer):
     """
     Simple autocompletion on a list of words.
 
-    :param words: List of words.
+    :param words: List of words or callable that returns a list of words.
     :param ignore_case: If True, case-insensitive completion.
     :param meta_dict: Optional dict mapping words to their meta-information.
     :param WORD: When True, use WORD characters.
@@ -26,16 +26,21 @@ class WordCompleter(Completer):
     def __init__(self, words, ignore_case=False, meta_dict=None, WORD=False,
                  sentence=False, match_middle=False):
         assert not (WORD and sentence)
+        assert callable(words) or all(isinstance(w, string_types) for w in words)
 
-        self.words = list(words)
+        self.words = words
         self.ignore_case = ignore_case
         self.meta_dict = meta_dict or {}
         self.WORD = WORD
         self.sentence = sentence
         self.match_middle = match_middle
-        assert all(isinstance(w, string_types) for w in self.words)
 
     def get_completions(self, document, complete_event):
+        # Get list of words.
+        words = self.words
+        if callable(words):
+            words = words()
+
         # Get word/text before cursor.
         if self.sentence:
             word_before_cursor = document.text_before_cursor
@@ -55,7 +60,7 @@ class WordCompleter(Completer):
             else:
                 return word.startswith(word_before_cursor)
 
-        for a in self.words:
+        for a in words:
             if word_matches(a):
                 display_meta = self.meta_dict.get(a, '')
                 yield Completion(a, -len(word_before_cursor), display_meta=display_meta)
