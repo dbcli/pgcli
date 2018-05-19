@@ -16,6 +16,10 @@ from textwrap import dedent
 def step_prepare_data(context):
     """Create table, insert a record."""
     context.cli.sendline('drop table if exists a;')
+    wrappers.expect_exact(
+        context, 'You\'re about to run a destructive command.\r\nDo you want to proceed? (y/n):', timeout=2)
+    context.cli.sendline('y')
+
     wrappers.wait_prompt(context)
     context.cli.sendline(
         'create table a(x integer, y real, z numeric(10, 4));')
