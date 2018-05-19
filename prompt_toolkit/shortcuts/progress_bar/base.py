@@ -128,7 +128,9 @@ class progress_bar(object):
             return formatter.get_width(progress_bar=self)
 
         progress_controls = [
-            Window(content=_ProgressControl(self, f), width=functools.partial(width_for_formatter, f))
+            Window(
+                content=_ProgressControl(self, f),
+                width=functools.partial(width_for_formatter, f))
             for f in self.formatters
         ]
 
@@ -289,7 +291,7 @@ class ProgressBarCounter(object):
         """
         Timedelta representing the time left.
         """
-        if self.total is None:
+        if self.total is None or not self.percentage:
             return None
         else:
             return self.time_elapsed * (100 - self.percentage) / self.percentage

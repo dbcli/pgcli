@@ -6,6 +6,7 @@ import sys
 import threading
 import weakref
 
+from functools import partial
 from six import PY2
 from six.moves import range
 from wcwidth import wcwidth
@@ -121,7 +122,11 @@ def test_callable_args(func, args):
         else:
             return True
     else:
-        # For older Python versions, fall back to using getargspec.
+        # For older Python versions, fall back to using getargspec
+        # and don't check for `partial`.
+        if isinstance(func, partial):
+            return True
+
         spec = inspect.getargspec(func)
 
         # Drop the 'self'
