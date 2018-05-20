@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from prompt_toolkit.utils import is_windows
 import os
 
 __all__ = [
@@ -36,6 +37,13 @@ class ColorDepth(object):
         If the user doesn't specify a color depth, use this as a default.
         """
         if term in ('linux', 'eterm-color'):
+            return cls.DEPTH_4_BIT
+
+        # For now, always use 4 bit color on Windows 10 by default, even when
+        # vt100 escape sequences with ENABLE_VIRTUAL_TERMINAL_PROCESSING are
+        # supported. We don't have a reliable way yet to know whether our
+        # console supports true color or only 4-bit.
+        if is_windows() and 'PROMPT_TOOLKIT_COLOR_DEPTH' not in os.environ:
             return cls.DEPTH_4_BIT
 
         # Check the `PROMPT_TOOLKIT_COLOR_DEPTH` environment variable.
