@@ -6,7 +6,7 @@ binding a custom handler to the Tab key.
 from __future__ import unicode_literals
 
 from prompt_toolkit.shortcuts import prompt, CompleteStyle
-from prompt_toolkit.contrib.completers import WordCompleter
+from prompt_toolkit.completion import WordCompleter
 
 
 animal_completer = WordCompleter([

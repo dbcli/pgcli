@@ -13,7 +13,7 @@ This example shows how you can define the grammar of a regular language and how
 to use variables in this grammar with completers and tokens attached.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.contrib.completers import WordCompleter
+from prompt_toolkit.completion import WordCompleter
 
 from prompt_toolkit import prompt
 from prompt_toolkit.contrib.regular_languages.compiler import compile

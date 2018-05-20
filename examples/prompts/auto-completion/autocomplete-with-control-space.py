@@ -5,7 +5,7 @@ Eample of using the control-space key binding for auto completion.
 from __future__ import unicode_literals
 
 from prompt_toolkit import prompt
-from prompt_toolkit.contrib.completers import WordCompleter
+from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.key_binding import KeyBindings
 
 
