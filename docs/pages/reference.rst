@@ -88,13 +88,12 @@ Shortcuts
 ---------
 
 .. automodule:: prompt_toolkit.shortcuts
-    :members: prompt, PromptSession, clear, clear_title, print_formatted_text,
-        set_title
+    :members: prompt, PromptSession, confirm, CompleteStyle,
+        create_confirm_session, clear, clear_title, print_formatted_text,
+        set_title, ProgressBar, input_dialog, message_dialog, progress_dialog,
+        radiolist_dialog, yes_no_dialog, button_dialog
 
-.. automodule:: prompt_toolkit.shortcuts.dialogs
-    :members:
-
-.. automodule:: prompt_toolkit.shortcuts.progress_bar
+.. automodule:: prompt_toolkit.shortcuts.progress_bar.formatters
     :members:
 
 

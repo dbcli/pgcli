@@ -3,7 +3,7 @@
 Example of a progress bar dialog.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.shortcuts.dialogs import progress_dialog
+from prompt_toolkit.shortcuts import progress_dialog
 import time
 import os
 

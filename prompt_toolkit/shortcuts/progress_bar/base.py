@@ -3,7 +3,7 @@ Progress bar implementation on top of prompt_toolkit.
 
 ::
 
-    with progress_bar(...) as pb:
+    with ProgressBar(...) as pb:
         for item in pb(data):
             ...
 """
@@ -35,7 +35,7 @@ import sys
 from .formatters import create_default_formatters, Formatter
 
 __all__ = [
-    'progress_bar',
+    'ProgressBar',
 ]
 
 
@@ -58,13 +58,13 @@ def create_key_bindings():
     return kb
 
 
-class progress_bar(object):
+class ProgressBar(object):
     """
     Progress bar context manager.
 
     Usage ::
 
-        with progress_bar(...) as pb:
+        with ProgressBar(...) as pb:
             for item in pb(data):
                 ...
 

@@ -10,12 +10,12 @@ the Whiptail program, but in pure Python.
 Message box
 -----------
 
-Use the :func:`~prompt_toolkit.shortcuts.dialogs.message_dialog` function to
-display a simple message box. For instance:
+Use the :func:`~prompt_toolkit.shortcuts.message_dialog` function to display a
+simple message box. For instance:
 
 .. code:: python
 
-    from prompt_toolkit.shortcuts.dialogs import message_dialog
+    from prompt_toolkit.shortcuts import message_dialog
 
     message_dialog(
         title='Example dialog window',
@@ -27,12 +27,12 @@ display a simple message box. For instance:
 Input box
 ---------
 
-The :func:`~prompt_toolkit.shortcuts.dialogs.input_dialog` function can display
-an input box. It will return the user input as a string.
+The :func:`~prompt_toolkit.shortcuts.input_dialog` function can display an
+input box. It will return the user input as a string.
 
 .. code:: python
 
-    from prompt_toolkit.shortcuts.dialogs import input_dialog
+    from prompt_toolkit.shortcuts import input_dialog
 
     text = input_dialog(
         title='Input dialog example',
@@ -42,20 +42,19 @@ an input box. It will return the user input as a string.
 
 
 The ``password=True`` option can be passed to the
-:func:`~prompt_toolkit.shortcuts.dialogs.input_dialog` function to turn this
-into a password input box.
+:func:`~prompt_toolkit.shortcuts.input_dialog` function to turn this into a
+password input box.
 
 
 Yes/No confirmation dialog
 --------------------------
 
-The :func:`~prompt_toolkit.shortcuts.dialogs.yes_no_dialog` function displays a
-yes/no confirmation dialog. It will return a boolean according to the
-selection.
+The :func:`~prompt_toolkit.shortcuts.yes_no_dialog` function displays a yes/no
+confirmation dialog. It will return a boolean according to the selection.
 
 .. code:: python
 
-    from prompt_toolkit.shortcuts.dialogs import yes_no_dialog
+    from prompt_toolkit.shortcuts import yes_no_dialog
 
     result = yes_no_dialog(
         title='Yes/No dialog example',
@@ -67,13 +66,13 @@ selection.
 Button dialog
 --------------------------
 
-The :func:`~prompt_toolkit.shortcuts.dialogs.button_dialog` function displays a
-dialog with choices offered as buttons. Buttons are indicated as a list of
-tuples, each providing the label (first) and return value if clicked (second).
+The :func:`~prompt_toolkit.shortcuts.button_dialog` function displays a dialog
+with choices offered as buttons. Buttons are indicated as a list of tuples,
+each providing the label (first) and return value if clicked (second).
 
 .. code:: python
 
-    from prompt_toolkit.shortcuts.dialogs import button_dialog
+    from prompt_toolkit.shortcuts import button_dialog
 
     result = button_dialog(
         title='Button dialog example',
@@ -99,7 +98,7 @@ dialogs to override the default style. Also, text can be styled by passing an
 .. code:: python
 
     from prompt_toolkit.formatted_text import HTML
-    from prompt_toolkit.shortcuts.dialogs import message_dialog
+    from prompt_toolkit.shortcuts import message_dialog
     from prompt_toolkit.styles import Style
 
     example_style = Style.from_dict({

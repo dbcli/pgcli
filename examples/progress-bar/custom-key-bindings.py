@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 from prompt_toolkit import HTML
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.patch_stdout import patch_stdout
-from prompt_toolkit.shortcuts.progress_bar import progress_bar
+from prompt_toolkit.shortcuts import ProgressBar
 
 import time
 import os
@@ -31,7 +31,7 @@ def main():
     # Use `patch_stdout`, to make sure that prints go above the
     # application.
     with patch_stdout():
-        with progress_bar(key_bindings=kb, bottom_toolbar=bottom_toolbar) as pb:
+        with ProgressBar(key_bindings=kb, bottom_toolbar=bottom_toolbar) as pb:
             for i in pb(range(800)):
                 time.sleep(.01)
 

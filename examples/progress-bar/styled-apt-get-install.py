@@ -3,7 +3,7 @@
 Styled just like an apt-get installation.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.shortcuts.progress_bar import progress_bar
+from prompt_toolkit.shortcuts import ProgressBar
 from prompt_toolkit.styles import Style
 from prompt_toolkit.shortcuts.progress_bar import formatters
 import time
@@ -25,7 +25,7 @@ def main():
         formatters.Text('  '),
     ]
 
-    with progress_bar(style=style, formatters=custom_formatters) as pb:
+    with ProgressBar(style=style, formatters=custom_formatters) as pb:
         for i in pb(range(1600), label='Installing'):
             time.sleep(.01)
 
