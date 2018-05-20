@@ -490,7 +490,7 @@ class PGCli(object):
                     filename = None
                     spec = document.text.split()[1]
                     if editor_command == '\\ev':
-                        query = self.pgexecute.view_definitions(spec)
+                        query = self.pgexecute.view_definition(spec)
                     elif editor_command == '\\ef':
                         query = self.pgexecute.function_definition(spec)
                 sql, message = special.open_external_editor(

@@ -11,6 +11,7 @@ Internal changes:
 
 * Mark tests requiring a running database server as dbtest (Thanks: `Dick Marinus`_)
 * Add ``application_name`` to help identify pgcli connection to database (issue #868) (Thanks: `François Pietka`_)
+* Support `\\ev``, ``\ef`` (issue #) (Thanks: `Catherine Devlin`_)
 * Add an is_special command flag to MetaQuery (Thanks: `Rishi Ramraj`_)
 * Ported Destructive Warning from mycli.
 * Refactor Destructive Warning behave tests (Thanks: `Dick Marinus`_)

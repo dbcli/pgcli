@@ -145,13 +145,3 @@ def extract_tables(sql):
                                             allow_functions=not insert_stmt)
     # In the case 'sche.<cursor>', we get an empty TableReference; remove that
     return tuple(i for i in identifiers if i.name)
-
-
-def schema_table_split(spec):
-    """ "myschema.mytable" -> ('myschema', 'mytable); "mytable" -> (None, 'mytable')"""
-
-    pieces = spec.strip().split('.')
-    if len(pieces) == 1:
-        return ('%', pieces[0])
-    else:
-        return (pieces[0], '.'.join(pieces[1:]))

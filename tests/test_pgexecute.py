@@ -360,3 +360,40 @@ def test_on_error_stop(executor, exception_formatter):
 #     sql = "DO language plpgsql $$ BEGIN RAISE NOTICE '有人更改'; END $$;"
 #     result = list(executor.run(sql))
 #     assert result[0][0] == u'NOTICE:  有人更改\n'
+
+@dbtest
+def test_nonexistent_function_definition(executor):
+    with pytest.raises(RuntimeError):
+        result = executor.view_definition('there_is_no_such_function')
+
+
+@dbtest
+def test_function_definition(executor):
+    run(executor, '''
+            CREATE OR REPLACE FUNCTION public.the_number_three()
+            RETURNS int
+            LANGUAGE sql
+            AS $function$
+              select 3;
+            $function$
+    ''')
+    result = executor.function_definition('the_number_three')
+
+@dbtest
+def test_view_definition(executor):
+    run(executor, 'create table tbl1 (a text, b numeric)')
+    run(executor, 'create view vw1 AS SELECT * FROM tbl1')
+    run(executor, 'create materialized view mvw1 AS SELECT * FROM tbl1')
+    result = executor.view_definition('vw1')
+    assert 'FROM tbl1' in result
+    # import pytest; pytest.set_trace()
+    result = executor.view_definition('mvw1')
+    assert 'MATERIALIZED VIEW' in result
+
+@dbtest
+def test_nonexistent_view_definition(executor):
+    with pytest.raises(RuntimeError):
+        result = executor.view_definition('there_is_no_such_view')
+    with pytest.raises(RuntimeError):
+        result = executor.view_definition('mvw1')
+

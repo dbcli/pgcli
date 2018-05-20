@@ -1,5 +1,5 @@
 import pytest
-from pgcli.packages.parseutils.tables import extract_tables, schema_table_split
+from pgcli.packages.parseutils.tables import extract_tables 
 from pgcli.packages.parseutils.utils import find_prev_keyword, is_open_quote
 
 
@@ -265,12 +265,3 @@ def test_is_open_quote__closed(sql):
 ])
 def test_is_open_quote__open(sql):
     assert is_open_quote(sql)
-
-
-def test_schema_table_split():
-    assert schema_table_split('myschema.mytable') == ('myschema', 'mytable')
-    assert schema_table_split('mytable') == ('%', 'mytable')
-    assert schema_table_split('') == ('%', '')
-    assert schema_table_split('myschema.mytable.foo') == (
-        'myschema', 'mytable.foo')
-    assert schema_table_split('%') == ('%', '%')
