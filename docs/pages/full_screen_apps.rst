@@ -13,7 +13,8 @@ them together.
 
 Before going through this page, it could be helpful to go through :ref:`asking
 for input <asking_for_input>` (prompts) first. Many things that apply to an
-input prompt also apply to full screen applications.
+input prompt, like styling, key bindings and so on, also apply to full screen
+applications.
 
 .. note::
 
@@ -217,6 +218,8 @@ vertical line:
     app = Application(layout=layout, full_screen=True)
     app.run() # You won't be able to Exit this app
 
+Notice that if you execute this right now, there is no way to quit this
+application yet. This is something we explain in the next section below.
 
 More complex layouts can be achieved by nesting multiple
 :class:`~prompt_toolkit.layout.VSplit`,
@@ -252,6 +255,8 @@ for getting the active application.
     # Now focus it.
     get_app().layout.focus(w)
 
+Changing the focus is something which is typically done in a key binding, so
+read on to see how to define key bindings.
 
 Key bindings
 ------------
@@ -311,6 +316,8 @@ the key handler:
 
 The callback function is named ``exit_`` for clarity, but it could have been
 named ``_`` (underscore) as well, because the we won't refer to this name.
+
+:ref:`Read more about key bindings ...<key_bindings>`
 
 
 Modal containers

@@ -260,3 +260,10 @@ Output
 
 .. automodule:: prompt_toolkit.output.win32
     :members:
+
+
+Patch stdout
+------------
+
+.. automodule:: prompt_toolkit.patch_stdout
+    :members: patch_stdout, StdoutProxy

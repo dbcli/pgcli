@@ -4,7 +4,7 @@ import sys
 import sqlite3
 
 from prompt_toolkit import PromptSession
-from prompt_toolkit.contrib.completers import WordCompleter
+from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.styles import Style
 from prompt_toolkit.lexers import PygmentsLexer
 

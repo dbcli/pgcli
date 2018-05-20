@@ -242,13 +242,13 @@ Autocompletion
 
 Autocompletion can be added by passing a ``completer`` parameter. This should
 be an instance of the :class:`~prompt_toolkit.completion.Completer` abstract
-base class. ``WordCompleter`` is an example of a completer that implements that
-interface.
+base class. :class:`~prompt_toolkit.completion.WordCompleter` is an example of
+a completer that implements that interface.
 
 .. code:: python
 
     from prompt_toolkit import prompt
-    from prompt_toolkit.contrib.completers import WordCompleter
+    from prompt_toolkit.completion import WordCompleter
 
     html_completer = WordCompleter(['<html>', '<body>', '<head>', '<title>'])
     text = prompt('Enter HTML: ', completer=html_completer)
@@ -409,6 +409,37 @@ but prompt_toolkit can also validate in real-time while typing:
 If the input validation contains some heavy CPU intensive code, but you don't
 want to block the event loop, then it's recommended to wrap the validator class
 in a :class:`~prompt_toolkit.validation.ThreadedValidator`.
+
+Validator from a callable
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Instead of implementing the :class:`~prompt_toolkit.validation.Validator`
+abstract base class, it is also possible to start from a simple function and
+use the :meth:`~prompt_toolkit.validation.Validator.from_callable` classmethod.
+This is easier and sufficient for probably 90% of the validators. It looks as
+follows:
+
+.. code:: python
+
+    from prompt_toolkit.validation import Validator
+    from prompt_toolkit import prompt
+
+    def is_number(text):
+        return text.isdigit()
+
+    validator = Validator.from_callable(
+        is_number,
+        error_message='This input contains non-numeric characters',
+        move_cursor_to_end=True)
+
+    number = int(prompt('Give a number: ', validator=validator))
+    print('You said: %i' % number)
+
+We define a function that takes a string, and tells whether it's valid input or
+not by returning a boolean.
+:meth:`~prompt_toolkit.validation.Validator.from_callable` turns that into a
+:class:`~prompt_toolkit.validation.Validator` instance. Notice that setting the
+cursor position is not possible this way.
 
 
 History
@@ -738,7 +769,7 @@ margin is defined by the prompt.)
 
 .. code:: python
 
-    def prompt_continuation(width):
+    def prompt_continuation(width, line_number, is_soft_wrap):
         return '.' * width
         # Or: return [('', '.' * width)]
 
@@ -834,6 +865,6 @@ prompting the user for input is as simple as calling
                 result = await prompt('Say something: ', async_=True)
             print('You said: %s' % result)
 
-The ``patch_stdout()`` context manager is optional, but it's recommended,
-because other coroutines could print to stdout. This ensures that other output
-won't destroy the prompt.
+The :func:`~prompt_toolkit.patch_stdout.patch_stdout` context manager is
+optional, but it's recommended, because other coroutines could print to stdout.
+This ensures that other output won't destroy the prompt.

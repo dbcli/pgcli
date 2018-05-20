@@ -134,7 +134,7 @@ Like the lexer, this ``sql_completer`` instance can be passed to either the
 
     from __future__ import unicode_literals
     from prompt_toolkit import PromptSession
-    from prompt_toolkit.contrib.completers import WordCompleter
+    from prompt_toolkit.completion import WordCompleter
     from prompt_toolkit.lexers import PygmentsLexer
     from pygments.lexers import SqlLexer
 
@@ -178,7 +178,7 @@ function.
 
     from __future__ import unicode_literals
     from prompt_toolkit import PromptSession
-    from prompt_toolkit.contrib.completers import WordCompleter
+    from prompt_toolkit.completion import WordCompleter
     from prompt_toolkit.lexers import PygmentsLexer
     from prompt_toolkit.styles import Style
     from pygments.lexers import SqlLexer
@@ -233,7 +233,7 @@ gives a good idea of how to get started.
     import sqlite3
 
     from prompt_toolkit import PromptSession
-    from prompt_toolkit.contrib.completers import WordCompleter
+    from prompt_toolkit.completion import WordCompleter
     from prompt_toolkit.styles import Style
     from pygments.lexers import SqlLexer
 

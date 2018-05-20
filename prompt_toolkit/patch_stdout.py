@@ -25,6 +25,11 @@ from contextlib import contextmanager
 import threading
 import sys
 
+__all__ = [
+    'patch_stdout',
+    'StdoutProxy',
+]
+
 
 @contextmanager
 def patch_stdout(raw=False):

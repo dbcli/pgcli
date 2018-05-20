@@ -173,3 +173,18 @@ There are two timeout settings that effect the handling of keys.
   don't know what will follow. This timeout is the maximum amount of time that
   we wait until we call the handlers anyway. Pass `None` to disable this
   timeout.
+
+
+Recording macros
+----------------
+
+Both Emacs and Vi mode allow macro recording. By default, all key presses are
+recorded during a macro, but it is possible to exclude certain keys by setting
+the `record_in_macro` parameter to `False`:
+
+.. code:: python
+
+    @bindings.add('c-t', record_in_macro=False)
+    def _(event):
+        # ...
+        pass

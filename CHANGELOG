@@ -180,6 +180,11 @@ Changes:
     wait for all the completions to be generated, before displaying the first
     one. The completion menus are updated as soon as new completions arrive.
 
+- Changes regarding input validation:
+
+  * Added the `Validator.from_callable` class method for easy creation of
+    new validators.
+
 - Changes regarding the `History` classes:
 
   * The `History` base class has a different interface. This was needed for
