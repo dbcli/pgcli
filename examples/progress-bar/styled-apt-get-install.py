@@ -9,6 +9,7 @@ from prompt_toolkit.shortcuts.progress_bar import formatters
 import time
 
 style = Style.from_dict({
+    'label': 'bg:#ffff00 #000000',
     'percentage': 'bg:#ffff00 #000000',
     'current': '#448844',
     'bar': '',
@@ -17,7 +18,8 @@ style = Style.from_dict({
 
 def main():
     custom_formatters = [
-        formatters.Text('Progress: [', style='class:percentage'),
+        formatters.Label(),
+        formatters.Text(': [', style='class:percentage'),
         formatters.Percentage(),
         formatters.Text(']', style='class:percentage'),
         formatters.Text(' '),

@@ -76,6 +76,7 @@ Table of contents
    pages/printing_text
    pages/asking_for_input
    pages/dialogs
+   pages/progress_bars
    pages/full_screen_apps
    pages/tutorials/index
    pages/advanced_topics/index
