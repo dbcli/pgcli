@@ -159,14 +159,14 @@ Timeouts
 
 There are two timeout settings that effect the handling of keys.
 
-- ``Application.input_timeout``: Like Vim's `ttimeoutlen` option.
+- ``Application.ttimeoutlen``: Like Vim's `ttimeoutlen` option.
   When to flush the input (For flushing escape keys.) This is important on
   terminals that use vt100 input. We can't distinguish the escape key from for
   instance the left-arrow key, if we don't know what follows after "\x1b". This
   little timer will consider "\x1b" to be escape if nothing did follow in this
   time span.  This seems to work like the `ttimeoutlen` option in Vim.
 
-- ``KeyProcessor.timeout``: like Vim's `timeoutlen` option.
+- ``KeyProcessor.timeoutlen``: like Vim's `timeoutlen` option.
   This can be `None` or a float.  For instance, suppose that we have a key
   binding AB and a second key binding A. If the uses presses A and then waits,
   we don't handle this binding yet (unless it was marked 'eager'), because we
