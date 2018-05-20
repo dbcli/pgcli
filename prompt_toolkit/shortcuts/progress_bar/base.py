@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.application import Application
 from prompt_toolkit.eventloop import get_event_loop
 from prompt_toolkit.filters import Condition, is_done, renderer_height_is_known
-from prompt_toolkit.formatted_text import to_formatted_text
+from prompt_toolkit.formatted_text import to_formatted_text, is_formatted_text
 from prompt_toolkit.input.defaults import get_default_input
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout, Window, ConditionalContainer, FormattedTextControl, HSplit, VSplit
@@ -26,7 +26,6 @@ import contextlib
 import datetime
 import os
 import signal
-import six
 import threading
 import time
 import traceback
@@ -70,9 +69,9 @@ class ProgressBar(object):
 
     :param title: Text to be displayed above the progress bars. This can be a
         callable or formatted text as well.
-    :param formatters: List of `Formatter` instances.
-    :param bottom_toolbar: Text to be displayed in the bottom toolbar.
-        This can be a callable or formatted text.
+    :param formatters: List of :class:`.Formatter` instances.
+    :param bottom_toolbar: Text to be displayed in the bottom toolbar. This
+        can be a callable or formatted text.
     :param style: :class:`prompt_toolkit.styles.BaseStyle` instance.
     :param key_bindings: :class:`.KeyBindings` instance.
     :param file: The file object used for rendering, by default `sys.stderr` is used.
@@ -156,7 +155,7 @@ class ProgressBar(object):
             with _auto_refresh_context(self.app, .3):
                 try:
                     self.app.run()
-                except Exception as e:
+                except BaseException as e:
                     traceback.print_exc()
                     print(e)
 
@@ -187,12 +186,13 @@ class ProgressBar(object):
         """
         Start a new counter.
 
-        :param label: Title text or description for this progress.
+        :param label: Title text or description for this progress. (This can be
+            formatted text as well).
         :param remove_when_done: When `True`, hide this progress bar.
         :param total: Specify the maximum value if it can't be calculated by
             calling ``len``.
         """
-        assert isinstance(label, six.text_type)
+        assert is_formatted_text(label)
         assert isinstance(remove_when_done, bool)
 
         counter = ProgressBarCounter(

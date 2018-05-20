@@ -64,38 +64,35 @@ class Label(Formatter):
     :param suffix: String suffix to be added after the task name, e.g. ': '.
         If no task name was given, no suffix will be added.
     """
-    template = '<label>{label}</label>'
-
     def __init__(self, width=None, suffix=''):
         assert isinstance(suffix, text_type)
         self.width = width
         self.suffix = suffix
 
     def _add_suffix(self, label):
-        if label:
-            label += self.suffix
-        return label
+        label = to_formatted_text(label, style='class:label')
+        return label + [('', self.suffix)]
 
     def format(self, progress_bar, progress, width):
         label = self._add_suffix(progress.label)
-        cwidth = get_cwidth(label)
+        cwidth = fragment_list_width(label)
 
         if cwidth > width:
             # It doesn't fit -> scroll task name.
+            label = explode_text_fragments(label)
             max_scroll = cwidth - width
             current_scroll = int(time.time() * 3 % max_scroll)
             label = label[current_scroll:]
 
-        # It does fit.
-        return HTML(self.template).format(label=label)
+        return label
 
     def get_width(self, progress_bar):
         if self.width:
             return self.width
 
-        all_names = [self._add_suffix(c.label) for c in progress_bar.counters]
-        if all_names:
-            max_widths = max(get_cwidth(name) for name in all_names)
+        all_labels = [self._add_suffix(c.label) for c in progress_bar.counters]
+        if all_labels:
+            max_widths = max(fragment_list_width(l) for l in all_labels)
             return D(preferred=max_widths, max=max_widths)
         else:
             return D()
