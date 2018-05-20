@@ -331,7 +331,7 @@ def _check_and_expand_key(key):
         key = ' '
 
     # Final validation.
-    assert isinstance(key, text_type)
+    assert isinstance(key, text_type), 'Got %r' % (key, )
     if len(key) != 1 and key not in ALL_KEYS:
         raise ValueError('Invalid key: %s' % (key, ))
 
