@@ -354,7 +354,7 @@ class PromptSession(object):
             history=self.history,
             auto_suggest=DynamicAutoSuggest(lambda: self.auto_suggest),
             accept_handler=accept,
-            get_tempfile_suffix=lambda: self.tempfile_suffix)
+            tempfile_suffix=lambda: self.tempfile_suffix)
 
     def _create_search_buffer(self):
         return Buffer(name=SEARCH_BUFFER)

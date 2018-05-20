@@ -16,7 +16,7 @@ from .filters import to_filter
 from .history import History, InMemoryHistory
 from .search import SearchDirection, SearchState
 from .selection import SelectionType, SelectionState, PasteMode
-from .utils import Event, test_callable_args
+from .utils import Event, test_callable_args, to_str
 from .validation import ValidationError, Validator
 
 from functools import wraps
@@ -137,9 +137,10 @@ class Buffer(object):
     :param eventloop: :class:`~prompt_toolkit.eventloop.EventLoop` instance.
     :param completer: :class:`~prompt_toolkit.completion.Completer` instance.
     :param history: :class:`~prompt_toolkit.history.History` instance.
-    :param get_tempfile_suffix: Callable that returns the tempfile suffix to be
-        used for the 'open in editor' function.
-    :param tempfile_suffix: The tempfile suffix.
+    :param tempfile_suffix: The tempfile suffix (extension) to be used for the
+        "open in editor" function. For a Python REPL, this would be ".py", so
+        that the editor knows the syntax highlighting to use. This can also be
+        a callable that returns a string.
     :param name: Name for this buffer. E.g. DEFAULT_BUFFER. This is mostly
         useful for key bindings where we sometimes prefer to refer to a buffer
         by their name instead of by reference.
@@ -175,12 +176,13 @@ class Buffer(object):
         pressing `Esc-Enter` is required.
     """
     def __init__(self, completer=None, auto_suggest=None, history=None,
-                 validator=None, get_tempfile_suffix=None, tempfile_suffix='',
-                 name='', complete_while_typing=False, validate_while_typing=False,
+                 validator=None, tempfile_suffix='', name='',
+                 complete_while_typing=False, validate_while_typing=False,
                  enable_history_search=False, document=None,
                  accept_handler=None, read_only=False, multiline=True,
-                 on_text_changed=None, on_text_insert=None, on_cursor_position_changed=None,
-                 on_completions_changed=None, on_suggestion_set=None):
+                 on_text_changed=None, on_text_insert=None,
+                 on_cursor_position_changed=None, on_completions_changed=None,
+                 on_suggestion_set=None):
 
         # Accept both filters and booleans as input.
         enable_history_search = to_filter(enable_history_search)
@@ -194,10 +196,8 @@ class Buffer(object):
         assert auto_suggest is None or isinstance(auto_suggest, AutoSuggest)
         assert history is None or isinstance(history, History)
         assert validator is None or isinstance(validator, Validator)
-        assert get_tempfile_suffix is None or callable(get_tempfile_suffix)
-        assert isinstance(tempfile_suffix, six.text_type)
+        assert callable(tempfile_suffix) or isinstance(tempfile_suffix, six.text_type)
         assert isinstance(name, six.text_type)
-        assert not (get_tempfile_suffix and tempfile_suffix)
         assert on_text_changed is None or callable(on_text_changed)
         assert on_text_insert is None or callable(on_text_insert)
         assert on_cursor_position_changed is None or callable(on_cursor_position_changed)
@@ -209,7 +209,7 @@ class Buffer(object):
         self.completer = completer or DummyCompleter()
         self.auto_suggest = auto_suggest
         self.validator = validator
-        self.get_tempfile_suffix = get_tempfile_suffix or (lambda: tempfile_suffix)
+        self.tempfile_suffix = tempfile_suffix
         self.name = name
         self.accept_handler = accept_handler
 
@@ -1351,7 +1351,7 @@ class Buffer(object):
             raise EditReadOnlyBuffer()
 
         # Write to temporary file
-        descriptor, filename = tempfile.mkstemp(self.get_tempfile_suffix())
+        descriptor, filename = tempfile.mkstemp(to_str(self.tempfile_suffix))
         os.write(descriptor, self.text.encode('utf-8'))
         os.close(descriptor)
 
