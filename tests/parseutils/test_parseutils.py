@@ -1,5 +1,5 @@
 import pytest
-from pgcli.packages.parseutils.tables import extract_tables 
+from pgcli.packages.parseutils.tables import extract_tables
 from pgcli.packages.parseutils.utils import find_prev_keyword, is_open_quote
 
 

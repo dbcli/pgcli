@@ -15,6 +15,7 @@ def db_connection(dbname=None):
     conn.autocommit = True
     return conn
 
+
 try:
     conn = db_connection()
     CAN_CONNECT_TO_DB = True
