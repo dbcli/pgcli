@@ -114,14 +114,12 @@ Both the title and the labels can be :ref:`formatted text <formatted_text>`.
     from prompt_toolkit.formatted_text import HTML
     import time
 
+    title = HTML('Downloading <style bg="yellow" fg="black">4 files...</style>')
+    label = HTML('<ansired>some file</ansired>: ')
 
-    def main():
-        title = HTML('Downloading <style bg="yellow" fg="black">4 files...</style>')
-        label = HTML('<ansired>some file</ansired>: ')
-
-        with ProgressBar(title=title) as pb:
-            for i in pb(range(800), label=label):
-                time.sleep(.01)
+    with ProgressBar(title=title) as pb:
+        for i in pb(range(800), label=label):
+            time.sleep(.01)
 
 .. image:: ../images/progress-bars/colored-title-and-label.png
 

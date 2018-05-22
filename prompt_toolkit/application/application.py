@@ -492,7 +492,23 @@ class Application(object):
 
     def run_async(self, pre_run=None):
         """
-        Run asynchronous. Return a `Future` object.
+        Run asynchronous. Return a prompt_toolkit
+        :class:`~prompt_toolkit.eventloop.Future` object.
+
+        If you wish to run on top of asyncio, remember that a prompt_toolkit
+        `Future` needs to be converted to an asyncio `Future`. The cleanest way
+        is to call :meth:`~prompt_toolkit.eventloop.Future.to_asyncio_future`.
+        Also make sure to tell prompt_toolkit to use the asyncio event loop.
+
+        .. code:: python
+
+            from prompt_toolkit.eventloop import use_asyncio_event_loop
+            from asyncio import get_event_loop
+
+            use_asyncio_event_loop()
+            get_event_loop().run_until_complete(
+                application.run_async().to_asyncio_future())
+
         """
         assert not self._is_running
 

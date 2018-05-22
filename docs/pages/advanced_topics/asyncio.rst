@@ -14,7 +14,15 @@ line of code, it is possible to run prompt_toolkit on top of asyncio:
     use_asyncio_event_loop()
 
 This will create an adaptor between the asyncio event loop and prompt_toolkit,
-and register it as the default event loop.
+and register it as the underlying event loop for the prompt_toolkit
+application.
+
+When doing this, remember that prompt_toolkit still has its own implementation
+of futures (and coroutines). A prompt_toolkit `Future` needs to be converted to
+an asyncio `Future` for use in an asyncio context, like asyncio's
+``run_until_complete``. The cleanest way is to call
+:meth:`~prompt_toolkit.eventloop.Future.to_asyncio_future`.
+
 
 .. warning::
 
@@ -22,3 +30,6 @@ and register it as the default event loop.
     the preferred way. It's better to avoid the built-in coroutines, because
     they make debugging the application much more difficult. Unless of course
     Python 2 support is still required.
+
+    At some point, when we drop Python 2 support, prompt_toolkit will probably
+    use asyncio natively.
