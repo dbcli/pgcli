@@ -57,7 +57,8 @@ class _Binding(object):
     """
     (Immutable binding class.)
 
-    :param record_in_macro: When True, don't record this key binding when a macro is recorded.
+    :param record_in_macro: When True, don't record this key binding when a
+        macro is recorded.
     """
     def __init__(self, keys, handler, filter=True, eager=False,
                  is_global=False, save_before=None, record_in_macro=True):
@@ -412,8 +413,8 @@ class ConditionalKeyBindings(_Proxy):
     When new key bindings are added to this object. They are also
     enable/disabled according to the given `filter`.
 
-    :param registries: List of `KeyBindings` objects.
-    :param filter: `Filter` object.
+    :param registries: List of :class:`.KeyBindings` objects.
+    :param filter: :class:`~prompt_toolkit.filters.Filter` object.
     """
     def __init__(self, key_bindings, filter=True):
         assert isinstance(key_bindings, KeyBindingsBase)
@@ -449,10 +450,10 @@ class _MergedKeyBindings(_Proxy):
     """
     Merge multiple registries of key bindings into one.
 
-    This class acts as a proxy to multiple `KeyBindings` objects, but behaves as
-    if this is just one bigger `KeyBindings`.
+    This class acts as a proxy to multiple :class:`.KeyBindings` objects, but
+    behaves as if this is just one bigger :class:`.KeyBindings`.
 
-    :param registries: List of `KeyBindings` objects.
+    :param registries: List of :class:`.KeyBindings` objects.
     """
     def __init__(self, registries):
         assert all(isinstance(r, KeyBindingsBase) for r in registries)
@@ -478,7 +479,7 @@ class _MergedKeyBindings(_Proxy):
 
 def merge_key_bindings(bindings):
     """
-    Merge multiple `Keybinding` objects together.
+    Merge multiple :class:`.Keybinding` objects together.
 
     Usage::
 
@@ -511,8 +512,8 @@ class DynamicKeyBindings(_Proxy):
 
 class GlobalOnlyKeyBindings(_Proxy):
     """
-    Wrapper around a `KeyBindings` object that only exposes the global key
-    bindings.
+    Wrapper around a :class:`.KeyBindings` object that only exposes the global
+    key bindings.
     """
     def __init__(self, key_bindings):
         assert isinstance(key_bindings, KeyBindingsBase)

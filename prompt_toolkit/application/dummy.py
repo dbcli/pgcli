@@ -10,9 +10,8 @@ __all__ = [
 
 class DummyApplication(Application):
     """
-    When no `Application` is running,
-    `prompt_toolkit.application.current.get_app` will run an instance of this
-    `Application`.
+    When no :class:`.Application` is running,
+    :func:`.get_app` will run an instance of this :class:`.DummyApplication` instead.
     """
     def __init__(self):
         super(DummyApplication, self).__init__(output=DummyOutput(), input=DummyInput())
