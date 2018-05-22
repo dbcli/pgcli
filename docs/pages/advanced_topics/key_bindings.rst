@@ -27,6 +27,21 @@ Key bindings can be defined as follows by creating a
         " Do something if Control-T has been pressed. "
         ...
 
+.. note::
+
+    :kbd:`c-q` (control-q) and :kbd:`c-s` (control-s) are often captured by the
+    terminal, because they were used traditionally for software flow control.
+    When this is enabled, the application will automatically freeze when
+    :kbd:`c-s` is pressed, until :kbd:`c-q` is pressed. It won't be possible to
+    bind these keys.
+
+    In order to disable this, execute type the following in your shell, or even
+    add it to your `.bashrc`.
+
+    .. code::
+
+        stty -ixon
+
 Key bindings can even consist of a sequence of multiple keys. The binding is
 only triggered when all the keys in this sequence are pressed.
 
@@ -39,6 +54,121 @@ only triggered when all the keys in this sequence are pressed.
 
 If the user presses only `a`, then nothing will happen until either a second
 key (like `b`) has been pressed or until the timeout expires (see later).
+
+
+List of special keys
+--------------------
+
+Besides literal characters, any of the following keys can be used in a key
+binding:
+
++-------------------+-----------------------------------------+
+| Name              + Possible keys                           |
++===================+=========================================+
+| Escape            | :kbd:`escape`                           |
++-------------------+-----------------------------------------+
+| Arrows            | :kbd:`left`                             |
+|                   | :kbd:`right`                            |
+|                   | :kbd:`up`                               |
+|                   | :kbd:`down`                             |
++-------------------+-----------------------------------------+
+| Navigation        | :kbd:`home`                             |
+|                   | :kbd:`end`                              |
+|                   | :kbd:`delete`                           |
+|                   | :kbd:`pageup`                           |
+|                   | :kbd:`pagedown`                         |
+|                   | :kbd:`insert`                           |
++-------------------+-----------------------------------------+
+| Control+lowercase | :kbd:`c-a` :kbd:`c-b` :kbd:`c-c`        |
+|                   | :kbd:`c-d` :kbd:`c-e` :kbd:`c-f`        |
+|                   | :kbd:`c-g` :kbd:`c-h` :kbd:`c-i`        |
+|                   | :kbd:`c-j` :kbd:`c-k` :kbd:`c-l`        |
+|                   |                                         |
+|                   | :kbd:`c-m` :kbd:`c-n` :kbd:`c-o`        |
+|                   | :kbd:`c-p` :kbd:`c-q` :kbd:`c-r`        |
+|                   | :kbd:`c-s` :kbd:`c-t` :kbd:`c-u`        |
+|                   | :kbd:`c-v` :kbd:`c-w` :kbd:`c-x`        |
+|                   |                                         |
+|                   | :kbd:`c-y` :kbd:`c-z`                   |
++-------------------+-----------------------------------------+
+| Control+uppercase | :kbd:`c-A` :kbd:`c-B` :kbd:`c-C`        |
+|                   | :kbd:`c-D` :kbd:`c-E` :kbd:`c-F`        |
+|                   | :kbd:`c-G` :kbd:`c-H` :kbd:`c-I`        |
+|                   | :kbd:`c-J` :kbd:`c-K` :kbd:`c-L`        |
+|                   |                                         |
+|                   | :kbd:`c-M` :kbd:`c-N` :kbd:`c-O`        |
+|                   | :kbd:`c-P` :kbd:`c-Q` :kbd:`c-R`        |
+|                   | :kbd:`c-S` :kbd:`c-T` :kbd:`c-U`        |
+|                   | :kbd:`c-V` :kbd:`c-W` :kbd:`c-X`        |
+|                   |                                         |
+|                   | :kbd:`c-Y` :kbd:`c-Z`                   |
++-------------------+-----------------------------------------+
+| Control + arrow   | :kbd:`c-left`                           |
+|                   | :kbd:`c-right`                          |
+|                   | :kbd:`c-up`                             |
+|                   | :kbd:`c-down`                           |
++-------------------+-----------------------------------------+
+| Other control     | :kbd:`c-@`                              |
+| keys              | :kbd:`c-\\`                             |
+|                   | :kbd:`c-]`                              |
+|                   | :kbd:`c-^`                              |
+|                   | :kbd:`c-_`                              |
+|                   | :kbd:`c-delete`                         |
++-------------------+-----------------------------------------+
+| Shift + arrow     | :kbd:`s-left`                           |
+|                   | :kbd:`s-right`                          |
+|                   | :kbd:`s-up`                             |
+|                   | :kbd:`s-down`                           |
++-------------------+-----------------------------------------+
+| Other shift       | :kbd:`s-delete`                         |
+| keys              | :kbd:`s-tab`                            |
++-------------------+-----------------------------------------+
+| F-keys            | :kbd:`f1` :kbd:`f2` :kbd:`f3`           |
+|                   | :kbd:`f4` :kbd:`f5` :kbd:`f6`           |
+|                   | :kbd:`f7` :kbd:`f8` :kbd:`f9`           |
+|                   | :kbd:`f10` :kbd:`f11` :kbd:`f12`        |
+|                   |                                         |
+|                   | :kbd:`f13` :kbd:`f14` :kbd:`f15`        |
+|                   | :kbd:`f16` :kbd:`f17` :kbd:`f18`        |
+|                   | :kbd:`f19` :kbd:`f20` :kbd:`f21`        |
+|                   | :kbd:`f22` :kbd:`f23` :kbd:`f24`        |
++-------------------+-----------------------------------------+
+
+There are a couple of useful aliases as well:
+
++-------------------+-------------------+
+| :kbd:`c-h`        | :kbd:`backspace`  |
++-------------------+-------------------+
+| :kbd:`c-@`        | :kbd:`c-space`    |
++-------------------+-------------------+
+| :kbd:`c-m`        | :kbd:`enter`      |
++-------------------+-------------------+
+| :kbd:`c-i`        | :kbd:`tab`        |
++-------------------+-------------------+
+
+.. note::
+
+    Note that the supported keys are limited to what typical VT100 terminals
+    offer. Binding :kbd:`c-7` (control + number 7) for instance is not
+    supported.
+
+
+Binding alt+something, option+something or meta+something
+---------------------------------------------------------
+
+Vt100 terminals translate the alt key into a leading :kbd:`escape` key.
+For instance, in order to handle :kbd:`alt-f`, we have to handle
+:kbd:`escape` + :kbd:`f`. Notice that we receive this as two individual keys.
+This means that it's exactly the same as first typing :kbd:`escape` and then
+typing :kbd:`f`. Something this alt-key is also known as option or meta.
+
+In code that looks as follows:
+
+.. code:: python
+
+    @bindings.add('escape', 'f')
+    def _(event):
+        " Do something if alt-f or meta-f have been pressed. "
 
 
 Wildcards

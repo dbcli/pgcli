@@ -242,3 +242,5 @@ In the example above, we also display a toolbar at the bottom which shows the
 key bindings.
 
 .. image:: ../images/progress-bars/custom-key-bindings.png
+
+:ref:`Read more about key bindings ...<key_bindings>`
