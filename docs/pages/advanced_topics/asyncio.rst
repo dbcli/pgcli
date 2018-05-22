@@ -9,7 +9,7 @@ line of code, it is possible to run prompt_toolkit on top of asyncio:
 
 .. code::
 
-    from prompt_toolkit.eventloop.defaults import use_asyncio_event_loop
+    from prompt_toolkit.eventloop import use_asyncio_event_loop
 
     use_asyncio_event_loop()
 
@@ -23,6 +23,24 @@ an asyncio `Future` for use in an asyncio context, like asyncio's
 ``run_until_complete``. The cleanest way is to call
 :meth:`~prompt_toolkit.eventloop.Future.to_asyncio_future`.
 
+So,the typical boilerplace for an asyncio application looks like this:
+
+.. code:: python
+
+    from prompt_toolkit.eventloop import use_asyncio_event_loop
+    from prompt_toolkit.application import Application
+
+    # Tell prompt_toolkit to use asyncio for the event loop.
+    use_asyncio_event_loop()
+
+    # Define application.
+    application = Application(
+        ...
+    )
+
+    # Run the application, and wait for it to finish.
+    asyncio.get_event_loop().run_until_complete(
+        application.run_async().to_asyncio_future())
 
 .. warning::
 
