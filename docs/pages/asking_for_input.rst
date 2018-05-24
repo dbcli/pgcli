@@ -28,6 +28,8 @@ and returns the text. Just like ``(raw_)input``.
     text = prompt('Give me some input: ')
     print('You said: %s' % text)
 
+.. image:: ../images/hello-world-prompt.png
+
 What we get here is a simple prompt that supports the Emacs key bindings like
 readline, but further nothing special. However,
 :func:`~prompt_toolkit.shortcuts.prompt` has a lot of configuration options.
@@ -107,9 +109,9 @@ you can do the following:
     from pygments.styles import get_style_by_name
     from prompt_toolkit.shortcuts import prompt
     from prompt_toolkit.lexers import PygmentsLexer
-    from prompt_toolkit.styles.pygments import style_from_pygments
+    from prompt_toolkit.styles.pygments import style_from_pygments_cls
 
-    style = style_from_pygments(get_style_by_name('monokai'))
+    style = style_from_pygments_cls(get_style_by_name('monokai'))
     text = prompt('Enter HTML: ', lexer=PygmentsLexer(HtmlLexer), style=style,
                   include_default_pygments_style=False)
     print('You said: %s' % text)
