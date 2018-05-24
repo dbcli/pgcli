@@ -196,7 +196,9 @@ Coloring the prompt itself
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is possible to add some colors to the prompt itself. For this, we need to
-build some :ref:`formatted text <formatted_text>`.
+build some :ref:`formatted text <formatted_text>`. One way of doing is is by
+creating a list of style/text tuples. In the following example, we use class
+names to refer to the style.
 
 .. code:: python
 
@@ -204,16 +206,16 @@ build some :ref:`formatted text <formatted_text>`.
     from prompt_toolkit.styles import Style
 
     style = Style.from_dict({
-        # User input.
+        # User input (default text).
         '':          '#ff0066',
 
         # Prompt.
         'username': '#884444',
         'at':       '#00aa00',
-        'colon':    '#00aa00',
+        'colon':    '#0000aa',
         'pound':    '#00aa00',
-        'host':     '#000088 bg:#aaaaff',
-        'path':     '#884444 underline',
+        'host':     '#00ffff bg:#444400',
+        'path':     'ansicyan underline',
     })
 
     message = [
@@ -227,6 +229,8 @@ build some :ref:`formatted text <formatted_text>`.
 
     text = prompt(message, style=style)
 
+.. image:: ../images/colored-prompt.png
+
 The `message` can be any kind of formatted text, as discussed :ref:`here
 <formatted_text>`. It can also be a callable that returns some formatted text.
 
@@ -236,7 +240,7 @@ the :func:`~prompt_toolkit.shortcuts.prompt.prompt` function.
 
 .. code:: python
 
-    text = prompt(get_prompt, style=style, true_color=True)
+    text = prompt(message, style=style, true_color=True)
 
 
 Autocompletion
