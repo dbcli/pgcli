@@ -120,16 +120,17 @@ wrapped into a :class:`~prompt_toolkit.lexers.PygmentsLexer`.
 Auto-completion
 ---------------
 
-Now we are going to add auto completion. We'd like a drop down menu of
-`possible keywords <https://www.sqlite.org/lang_keywords.html>`_ when the user
-is typing.
+Now we are going to add auto completion. We'd like to display a drop down menu
+of `possible keywords <https://www.sqlite.org/lang_keywords.html>`_ when the
+user starts typing.
 
-Create your ``sql_completer`` instance from the ``WordCompleter`` class
-defining a set of ``keywords`` for auto-completion.
+We can do this by creating an `sql_completer` object from the
+:class:`~prompt_toolkit.completion.WordCompleter` class, defining a set of
+`keywords` for the auto-completion.
 
 Like the lexer, this ``sql_completer`` instance can be passed to either the
 :class:`~prompt_toolkit.shortcuts.PromptSession` class or the
-:meth:`~prompt_toolkit.shortcuts.PromptSession.prompt` method
+:meth:`~prompt_toolkit.shortcuts.PromptSession.prompt` method.
 
 .. code:: python
 
@@ -181,7 +182,7 @@ Like the lexer, this ``sql_completer`` instance can be passed to either the
 .. image:: ../../images/repl/sqlite-4.png
 
 In about 30 lines of code we got ourselves an auto completing, syntax
-highlighting REPL. Let's make it better.
+highlighting REPL. Let's make it even better.
 
 
 Styling the menus
