@@ -36,7 +36,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, EditingMode
 from prompt_toolkit.eventloop import ensure_future, Return, From
 from prompt_toolkit.filters import is_done, has_focus, renderer_height_is_known, to_filter, Condition, has_arg
-from prompt_toolkit.formatted_text import to_formatted_text
+from prompt_toolkit.formatted_text import to_formatted_text, merge_formatted_text
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.input.defaults import get_default_input
 from prompt_toolkit.key_binding.bindings.auto_suggest import load_auto_suggest_bindings
@@ -796,7 +796,7 @@ def prompt(*a, **kw):
 prompt.__doc__ = PromptSession.prompt.__doc__
 
 
-def create_confirm_session(message):
+def create_confirm_session(message, suffix=' (y/n) '):
     """
     Create a `PromptSession` object for the 'confirm' function.
     """
@@ -821,13 +821,14 @@ def create_confirm_session(message):
         " Disallow inserting other text. "
         pass
 
-    session = PromptSession(message, key_bindings=bindings)
+    complete_message = merge_formatted_text([message, suffix])
+    session = PromptSession(complete_message, key_bindings=bindings)
     return session
 
 
-def confirm(message='Confirm (y or n) '):
+def confirm(message='Confirm?', suffix=' (y/n) '):
     """
     Display a confirmation prompt that returns True/False.
     """
-    session = create_confirm_session(message)
+    session = create_confirm_session(message, suffix)
     return session.prompt()

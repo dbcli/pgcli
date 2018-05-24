@@ -131,7 +131,7 @@ class Template(object):
 
 def merge_formatted_text(items):
     """
-    Merge several pieces of formatted text together.
+    Merge (Concatenate) several pieces of formatted text together.
     """
     assert all(is_formatted_text(v) for v in items)
 
