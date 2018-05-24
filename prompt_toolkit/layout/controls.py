@@ -423,7 +423,7 @@ class BufferControl(UIControl):
         assert input_processors is None or isinstance(input_processors, list)
         assert isinstance(include_default_input_processors, bool)
         assert menu_position is None or callable(menu_position)
-        assert lexer is None or isinstance(lexer, Lexer)
+        assert lexer is None or isinstance(lexer, Lexer), 'Got %r' % (lexer, )
         assert (search_buffer_control is None or
                 callable(search_buffer_control) or
                 isinstance(search_buffer_control, SearchBufferControl))

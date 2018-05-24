@@ -33,7 +33,7 @@ function as a good practise.
     if __name__ == '__main__':
         main()
 
-.. image:: ../../images/repl/1.png
+.. image:: ../../images/repl/sqlite-1.png
 
 
 Loop The REPL
@@ -75,7 +75,7 @@ respectively.
     if __name__ == '__main__':
         main()
 
-.. image:: ../../images/repl/2.png
+.. image:: ../../images/repl/sqlite-2.png
 
 
 Syntax Highlighting
@@ -114,14 +114,15 @@ wrapped into a :class:`~prompt_toolkit.lexers.PygmentsLexer`.
     if __name__ == '__main__':
         main()
 
-.. image:: ../../images/repl/3.png
+.. image:: ../../images/repl/sqlite-3.png
 
 
 Auto-completion
 ---------------
 
-Now we are going to add auto completion. We'd like a drop down menu of possible
-keywords when the user is typing.
+Now we are going to add auto completion. We'd like a drop down menu of
+`possible keywords <https://www.sqlite.org/lang_keywords.html>`_ when the user
+is typing.
 
 Create your ``sql_completer`` instance from the ``WordCompleter`` class
 defining a set of ``keywords`` for auto-completion.
@@ -138,9 +139,26 @@ Like the lexer, this ``sql_completer`` instance can be passed to either the
     from prompt_toolkit.lexers import PygmentsLexer
     from pygments.lexers import SqlLexer
 
-    sql_completer = WordCompleter(
-        ['create', 'select', 'insert', 'drop', 'delete', 'from', 'where', 'table'],
-        ignore_case=True)
+    sql_completer = WordCompleter([
+        'abort', 'action', 'add', 'after', 'all', 'alter', 'analyze', 'and',
+        'as', 'asc', 'attach', 'autoincrement', 'before', 'begin', 'between',
+        'by', 'cascade', 'case', 'cast', 'check', 'collate', 'column',
+        'commit', 'conflict', 'constraint', 'create', 'cross', 'current_date',
+        'current_time', 'current_timestamp', 'database', 'default',
+        'deferrable', 'deferred', 'delete', 'desc', 'detach', 'distinct',
+        'drop', 'each', 'else', 'end', 'escape', 'except', 'exclusive',
+        'exists', 'explain', 'fail', 'for', 'foreign', 'from', 'full', 'glob',
+        'group', 'having', 'if', 'ignore', 'immediate', 'in', 'index',
+        'indexed', 'initially', 'inner', 'insert', 'instead', 'intersect',
+        'into', 'is', 'isnull', 'join', 'key', 'left', 'like', 'limit',
+        'match', 'natural', 'no', 'not', 'notnull', 'null', 'of', 'offset',
+        'on', 'or', 'order', 'outer', 'plan', 'pragma', 'primary', 'query',
+        'raise', 'recursive', 'references', 'regexp', 'reindex', 'release',
+        'rename', 'replace', 'restrict', 'right', 'rollback', 'row',
+        'savepoint', 'select', 'set', 'table', 'temp', 'temporary', 'then',
+        'to', 'transaction', 'trigger', 'union', 'unique', 'update', 'using',
+        'vacuum', 'values', 'view', 'virtual', 'when', 'where', 'with',
+        'without'], ignore_case=True)
 
     def main():
         session = PromptSession(
@@ -160,7 +178,7 @@ Like the lexer, this ``sql_completer`` instance can be passed to either the
     if __name__ == '__main__':
         main()
 
-.. image:: ../../images/repl/4.png
+.. image:: ../../images/repl/sqlite-4.png
 
 In about 30 lines of code we got ourselves an auto completing, syntax
 highlighting REPL. Let's make it better.
@@ -183,14 +201,32 @@ function.
     from prompt_toolkit.styles import Style
     from pygments.lexers import SqlLexer
 
-    sql_completer = WordCompleter(
-        ['create', 'select', 'insert', 'drop', 'delete', 'from', 'where', 'table'],
-        ignore_case=True)
-
+    sql_completer = WordCompleter([
+        'abort', 'action', 'add', 'after', 'all', 'alter', 'analyze', 'and',
+        'as', 'asc', 'attach', 'autoincrement', 'before', 'begin', 'between',
+        'by', 'cascade', 'case', 'cast', 'check', 'collate', 'column',
+        'commit', 'conflict', 'constraint', 'create', 'cross', 'current_date',
+        'current_time', 'current_timestamp', 'database', 'default',
+        'deferrable', 'deferred', 'delete', 'desc', 'detach', 'distinct',
+        'drop', 'each', 'else', 'end', 'escape', 'except', 'exclusive',
+        'exists', 'explain', 'fail', 'for', 'foreign', 'from', 'full', 'glob',
+        'group', 'having', 'if', 'ignore', 'immediate', 'in', 'index',
+        'indexed', 'initially', 'inner', 'insert', 'instead', 'intersect',
+        'into', 'is', 'isnull', 'join', 'key', 'left', 'like', 'limit',
+        'match', 'natural', 'no', 'not', 'notnull', 'null', 'of', 'offset',
+        'on', 'or', 'order', 'outer', 'plan', 'pragma', 'primary', 'query',
+        'raise', 'recursive', 'references', 'regexp', 'reindex', 'release',
+        'rename', 'replace', 'restrict', 'right', 'rollback', 'row',
+        'savepoint', 'select', 'set', 'table', 'temp', 'temporary', 'then',
+        'to', 'transaction', 'trigger', 'union', 'unique', 'update', 'using',
+        'vacuum', 'values', 'view', 'virtual', 'when', 'where', 'with',
+        'without'], ignore_case=True)
 
     style = Style.from_dict({
-        'completion-menu.current-completion': 'bg:#00aaaa #000000',
         'completion-menu.completion': 'bg:#008888 #ffffff',
+        'completion-menu.completion.current': 'bg:#00aaaa #000000',
+        'scrollbar.background': 'bg:#88aaaa',
+        'scrollbar.button': 'bg:#222222',
     })
 
     def main():
@@ -211,7 +247,7 @@ function.
     if __name__ == '__main__':
         main()
 
-.. image:: ../../images/repl/5.png
+.. image:: ../../images/repl/sqlite-5.png
 
 All that's left is hooking up the sqlite backend, which is left as an exercise
 for the reader. Just kidding... Keep reading.
@@ -220,49 +256,75 @@ for the reader. Just kidding... Keep reading.
 Hook up Sqlite
 --------------
 
-This step is totally optional ;). So far we've been focusing on building the
-REPL. Now it's time to relay the input to SQLite.
+This step is the final step to make the SQLite REPL actually work. It's time
+to relay the input to SQLite.
 
 Obviously I haven't done the due diligence to deal with the errors. But it
 gives a good idea of how to get started.
 
 .. code:: python
 
+    #!/usr/bin/env python
     from __future__ import unicode_literals
     import sys
     import sqlite3
 
     from prompt_toolkit import PromptSession
     from prompt_toolkit.completion import WordCompleter
+    from prompt_toolkit.lexers import PygmentsLexer
     from prompt_toolkit.styles import Style
     from pygments.lexers import SqlLexer
 
-    sql_completer = WordCompleter(
-        ['create', 'select', 'insert', 'drop', 'delete', 'from', 'where', 'table'],
-        ignore_case=True)
+    sql_completer = WordCompleter([
+        'abort', 'action', 'add', 'after', 'all', 'alter', 'analyze', 'and',
+        'as', 'asc', 'attach', 'autoincrement', 'before', 'begin', 'between',
+        'by', 'cascade', 'case', 'cast', 'check', 'collate', 'column',
+        'commit', 'conflict', 'constraint', 'create', 'cross', 'current_date',
+        'current_time', 'current_timestamp', 'database', 'default',
+        'deferrable', 'deferred', 'delete', 'desc', 'detach', 'distinct',
+        'drop', 'each', 'else', 'end', 'escape', 'except', 'exclusive',
+        'exists', 'explain', 'fail', 'for', 'foreign', 'from', 'full', 'glob',
+        'group', 'having', 'if', 'ignore', 'immediate', 'in', 'index',
+        'indexed', 'initially', 'inner', 'insert', 'instead', 'intersect',
+        'into', 'is', 'isnull', 'join', 'key', 'left', 'like', 'limit',
+        'match', 'natural', 'no', 'not', 'notnull', 'null', 'of', 'offset',
+        'on', 'or', 'order', 'outer', 'plan', 'pragma', 'primary', 'query',
+        'raise', 'recursive', 'references', 'regexp', 'reindex', 'release',
+        'rename', 'replace', 'restrict', 'right', 'rollback', 'row',
+        'savepoint', 'select', 'set', 'table', 'temp', 'temporary', 'then',
+        'to', 'transaction', 'trigger', 'union', 'unique', 'update', 'using',
+        'vacuum', 'values', 'view', 'virtual', 'when', 'where', 'with',
+        'without'], ignore_case=True)
 
     style = Style.from_dict({
-        'completion-menu.current-completion': 'bg:#00aaaa #000000',
         'completion-menu.completion': 'bg:#008888 #ffffff',
+        'completion-menu.completion.current': 'bg:#00aaaa #000000',
+        'scrollbar.background': 'bg:#88aaaa',
+        'scrollbar.button': 'bg:#222222',
     })
 
     def main(database):
         connection = sqlite3.connect(database)
         session = PromptSession(
-            lexer=SqlLexer, completer=sql_completer, style=style)
+            lexer=PygmentsLexer(SqlLexer), completer=sql_completer, style=style)
 
         while True:
             try:
                 text = session.prompt('> ')
             except KeyboardInterrupt:
-                continue # Control-C pressed. Try again.
+                continue  # Control-C pressed. Try again.
             except EOFError:
                 break  # Control-D pressed.
 
             with connection:
-                messages = connection.execute(text)
-                for message in messages:
-                    print(message)
+                try:
+                    messages = connection.execute(text)
+                except Exception as e:
+                    print(repr(e))
+                else:
+                    for message in messages:
+                        print(message)
+
         print('GoodBye!')
 
     if __name__ == '__main__':
@@ -273,7 +335,7 @@ gives a good idea of how to get started.
 
         main(db)
 
-.. image:: ../../images/repl/6.png
+.. image:: ../../images/repl/sqlite-6.png
 
 I hope that gives an idea of how to get started on building command line
 interfaces.
