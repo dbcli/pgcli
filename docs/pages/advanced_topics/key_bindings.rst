@@ -67,71 +67,71 @@ binding:
 +===================+=========================================+
 | Escape            | :kbd:`escape`                           |
 +-------------------+-----------------------------------------+
-| Arrows            | :kbd:`left`                             |
-|                   | :kbd:`right`                            |
-|                   | :kbd:`up`                               |
+| Arrows            | :kbd:`left`,                            |
+|                   | :kbd:`right`,                           |
+|                   | :kbd:`up`,                              |
 |                   | :kbd:`down`                             |
 +-------------------+-----------------------------------------+
-| Navigation        | :kbd:`home`                             |
-|                   | :kbd:`end`                              |
-|                   | :kbd:`delete`                           |
-|                   | :kbd:`pageup`                           |
-|                   | :kbd:`pagedown`                         |
+| Navigation        | :kbd:`home`,                            |
+|                   | :kbd:`end`,                             |
+|                   | :kbd:`delete`,                          |
+|                   | :kbd:`pageup`,                          |
+|                   | :kbd:`pagedown`,                        |
 |                   | :kbd:`insert`                           |
 +-------------------+-----------------------------------------+
-| Control+lowercase | :kbd:`c-a` :kbd:`c-b` :kbd:`c-c`        |
-|                   | :kbd:`c-d` :kbd:`c-e` :kbd:`c-f`        |
-|                   | :kbd:`c-g` :kbd:`c-h` :kbd:`c-i`        |
-|                   | :kbd:`c-j` :kbd:`c-k` :kbd:`c-l`        |
+| Control+lowercase | :kbd:`c-a`, :kbd:`c-b`, :kbd:`c-c`,     |
+|                   | :kbd:`c-d`, :kbd:`c-e`, :kbd:`c-f`,     |
+|                   | :kbd:`c-g`, :kbd:`c-h`, :kbd:`c-i`,     |
+|                   | :kbd:`c-j`, :kbd:`c-k`, :kbd:`c-l`,     |
 |                   |                                         |
-|                   | :kbd:`c-m` :kbd:`c-n` :kbd:`c-o`        |
-|                   | :kbd:`c-p` :kbd:`c-q` :kbd:`c-r`        |
-|                   | :kbd:`c-s` :kbd:`c-t` :kbd:`c-u`        |
-|                   | :kbd:`c-v` :kbd:`c-w` :kbd:`c-x`        |
+|                   | :kbd:`c-m`, :kbd:`c-n`, :kbd:`c-o`,     |
+|                   | :kbd:`c-p`, :kbd:`c-q`, :kbd:`c-r`,     |
+|                   | :kbd:`c-s`, :kbd:`c-t`, :kbd:`c-u`,     |
+|                   | :kbd:`c-v`, :kbd:`c-w`, :kbd:`c-x`,     |
 |                   |                                         |
-|                   | :kbd:`c-y` :kbd:`c-z`                   |
+|                   | :kbd:`c-y`, :kbd:`c-z`                  |
 +-------------------+-----------------------------------------+
-| Control+uppercase | :kbd:`c-A` :kbd:`c-B` :kbd:`c-C`        |
-|                   | :kbd:`c-D` :kbd:`c-E` :kbd:`c-F`        |
-|                   | :kbd:`c-G` :kbd:`c-H` :kbd:`c-I`        |
-|                   | :kbd:`c-J` :kbd:`c-K` :kbd:`c-L`        |
+| Control+uppercase | :kbd:`c-A`, :kbd:`c-B`, :kbd:`c-C`,     |
+|                   | :kbd:`c-D`, :kbd:`c-E`, :kbd:`c-F`,     |
+|                   | :kbd:`c-G`, :kbd:`c-H`, :kbd:`c-I`,     |
+|                   | :kbd:`c-J`, :kbd:`c-K`, :kbd:`c-L`,     |
 |                   |                                         |
-|                   | :kbd:`c-M` :kbd:`c-N` :kbd:`c-O`        |
-|                   | :kbd:`c-P` :kbd:`c-Q` :kbd:`c-R`        |
-|                   | :kbd:`c-S` :kbd:`c-T` :kbd:`c-U`        |
-|                   | :kbd:`c-V` :kbd:`c-W` :kbd:`c-X`        |
+|                   | :kbd:`c-M`, :kbd:`c-N`, :kbd:`c-O`,     |
+|                   | :kbd:`c-P`, :kbd:`c-Q`, :kbd:`c-R`,     |
+|                   | :kbd:`c-S`, :kbd:`c-T`, :kbd:`c-U`,     |
+|                   | :kbd:`c-V`, :kbd:`c-W`, :kbd:`c-X`,     |
 |                   |                                         |
-|                   | :kbd:`c-Y` :kbd:`c-Z`                   |
+|                   | :kbd:`c-Y`, :kbd:`c-Z`                  |
 +-------------------+-----------------------------------------+
-| Control + arrow   | :kbd:`c-left`                           |
-|                   | :kbd:`c-right`                          |
-|                   | :kbd:`c-up`                             |
+| Control + arrow   | :kbd:`c-left`,                          |
+|                   | :kbd:`c-right`,                         |
+|                   | :kbd:`c-up`,                            |
 |                   | :kbd:`c-down`                           |
 +-------------------+-----------------------------------------+
-| Other control     | :kbd:`c-@`                              |
-| keys              | :kbd:`c-\\`                             |
-|                   | :kbd:`c-]`                              |
-|                   | :kbd:`c-^`                              |
-|                   | :kbd:`c-_`                              |
+| Other control     | :kbd:`c-@`,                             |
+| keys              | :kbd:`c-\\`,                            |
+|                   | :kbd:`c-]`,                             |
+|                   | :kbd:`c-^`,                             |
+|                   | :kbd:`c-_`,                             |
 |                   | :kbd:`c-delete`                         |
 +-------------------+-----------------------------------------+
-| Shift + arrow     | :kbd:`s-left`                           |
-|                   | :kbd:`s-right`                          |
-|                   | :kbd:`s-up`                             |
+| Shift + arrow     | :kbd:`s-left`,                          |
+|                   | :kbd:`s-right`,                         |
+|                   | :kbd:`s-up`,                            |
 |                   | :kbd:`s-down`                           |
 +-------------------+-----------------------------------------+
-| Other shift       | :kbd:`s-delete`                         |
+| Other shift       | :kbd:`s-delete`,                        |
 | keys              | :kbd:`s-tab`                            |
 +-------------------+-----------------------------------------+
-| F-keys            | :kbd:`f1` :kbd:`f2` :kbd:`f3`           |
-|                   | :kbd:`f4` :kbd:`f5` :kbd:`f6`           |
-|                   | :kbd:`f7` :kbd:`f8` :kbd:`f9`           |
-|                   | :kbd:`f10` :kbd:`f11` :kbd:`f12`        |
+| F-keys            | :kbd:`f1`, :kbd:`f2`, :kbd:`f3`,        |
+|                   | :kbd:`f4`, :kbd:`f5`, :kbd:`f6`,        |
+|                   | :kbd:`f7`, :kbd:`f8`, :kbd:`f9`,        |
+|                   | :kbd:`f10`, :kbd:`f11`, :kbd:`f12`,     |
 |                   |                                         |
-|                   | :kbd:`f13` :kbd:`f14` :kbd:`f15`        |
-|                   | :kbd:`f16` :kbd:`f17` :kbd:`f18`        |
-|                   | :kbd:`f19` :kbd:`f20` :kbd:`f21`        |
-|                   | :kbd:`f22` :kbd:`f23` :kbd:`f24`        |
+|                   | :kbd:`f13`, :kbd:`f14`, :kbd:`f15`,     |
+|                   | :kbd:`f16`, :kbd:`f17`, :kbd:`f18`,     |
+|                   | :kbd:`f19`, :kbd:`f20`, :kbd:`f21`,     |
+|                   | :kbd:`f22`, :kbd:`f23`, :kbd:`f24`      |
 +-------------------+-----------------------------------------+
 
 There are a couple of useful aliases as well:
@@ -318,3 +318,11 @@ the `record_in_macro` parameter to `False`:
     def _(event):
         # ...
         pass
+
+
+Processing `.inputrc`
+---------------------
+
+GNU readline can be configured using an `.inputrc` configuration file. This can
+could key bindings as well as certain settings. Right now, prompt_toolkit
+doesn't support `.inputrc` yet, but it should be possible in the future.

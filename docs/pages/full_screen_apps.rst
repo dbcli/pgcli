@@ -19,8 +19,8 @@ applications.
 .. note::
 
     Also remember that the ``examples`` directory of the prompt_toolkit
-    application contains plenty of examples. Each example is supposed to
-    explain one idea. So, this as well should help you get started.
+    repository contains plenty of examples. Each example is supposed to explain
+    one idea. So, this as well should help you get started.
 
     Don't hesitate to open a GitHub issue if you feel that a certain example is
     missing.

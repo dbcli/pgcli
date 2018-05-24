@@ -162,7 +162,7 @@ Using a Pygments style
 ^^^^^^^^^^^^^^^^^^^^^^
 
 All Pygments style classes can be used as well, when they are wrapped through
-:func:`~prompt_toolkit.styles.style_from_pygments`.
+:func:`~prompt_toolkit.styles.style_from_pygments_cls`.
 
 Suppose we'd like to use a Pygments style, for instance
 ``pygments.styles.tango.TangoStyle``, that is possible like this:
@@ -230,7 +230,7 @@ The `message` can be any kind of formatted text, as discussed :ref:`here
 
 By default, colors are taking from the 256 color palette. If you want to have
 24bit true color, this is possible by adding the ``true_color=True`` option to
-the :func:`~prompt_toolkit.shortcuts.prompt.prompt`` function.
+the :func:`~prompt_toolkit.shortcuts.prompt.prompt` function.
 
 .. code:: python
 
