@@ -13,8 +13,10 @@ Feature: manipulate tables:
       when we select from table
       then we see data selected
       when we delete from table
+      then we confirm the destructive warning
       then we see record deleted
       when we drop table
+      then we confirm the destructive warning
       then we see table dropped
       when we connect to dbserver
       then we see database connected

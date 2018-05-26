@@ -13,6 +13,7 @@ Internal changes:
 * Add ``application_name`` to help identify pgcli connection to database (issue #868) (Thanks: `François Pietka`_)
 * Add an is_special command flag to MetaQuery (Thanks: `Rishi Ramraj`_)
 * Ported Destructive Warning from mycli.
+* Refactor Destructive Warning behave tests (Thanks: `Dick Marinus`_)
 
 Bug Fixes:
 ----------
