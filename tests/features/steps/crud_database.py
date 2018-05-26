@@ -32,9 +32,6 @@ def step_db_drop(context):
     """
     context.cli.sendline('drop database {0};'.format(
         context.conf['dbname_tmp']))
-    wrappers.expect_exact(
-        context, 'You\'re about to run a destructive command.\r\nDo you want to proceed? (y/n):', timeout=2)
-    context.cli.sendline('y')
 
 
 @when('we connect to test database')
