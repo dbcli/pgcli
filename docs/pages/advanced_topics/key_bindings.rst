@@ -320,6 +320,18 @@ the `record_in_macro` parameter to `False`:
         pass
 
 
+Creating new Vi text objects and operators
+------------------------------------------
+
+We tried very hard to ship prompt_toolkit with as many as possible Vi text
+objects and operators, so that text editing feels as natural as possible to Vi
+users.
+
+If you wish to create a new text object or key binding, that is actually
+possible. Check the `custom-vi-operator-and-text-object.py` example for more
+information.
+
+
 Processing `.inputrc`
 ---------------------
 
