@@ -81,7 +81,7 @@ PROMPT_TOOLKIT_STYLE = [
 
     # Scrollbars.
     ('scrollbar.background',                     ''),
-    ('scrollbar.button',                         'bg:#888888'),
+    ('scrollbar.button',                         'bg:#444444'),
     ('scrollbar.arrow',                          'noinherit bold'),
 
     # Start/end of scrollbars. Adding 'underline' here provides a nice little
