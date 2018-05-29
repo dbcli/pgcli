@@ -80,7 +80,7 @@ PROMPT_TOOLKIT_STYLE = [
     ('completion-menu.multi-column-meta',       'bg:#aaaaaa #000000'),
 
     # Scrollbars.
-    ('scrollbar.background',                     ''),
+    ('scrollbar.background',                     'bg:#aaaaaa'),
     ('scrollbar.button',                         'bg:#444444'),
     ('scrollbar.arrow',                          'noinherit bold'),
 
