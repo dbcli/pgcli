@@ -927,8 +927,14 @@ class WindowRenderInfo(object):
         of the rendered screen.
         """
         cpos = self.ui_content.cursor_position
-        y, x = self._rowcol_to_yx[cpos.y, cpos.x]
-        return Point(x=x - self._x_offset, y=y - self._y_offset)
+        try:
+            y, x = self._rowcol_to_yx[cpos.y, cpos.x]
+        except KeyError:
+            # For `DummyControl` for instance, the content can be empty, and so
+            # will `_rowcol_to_yx` be. Return 0/0 by default.
+            return Point(x=0, y=0)
+        else:
+            return Point(x=x - self._x_offset, y=y - self._y_offset)
 
     @property
     def applied_scroll_offsets(self):
