@@ -433,7 +433,10 @@ class PGCli(object):
                 pgexecute = PGExecute(database, user, passwd, host, port, dsn,
                                       application_name='pgcli', **kwargs)
                 if passwd:
-                    keyring.set_password('pgcli', key, passwd)
+                    try:
+                        keyring.set_password('pgcli', key, passwd)
+                    except keyring.errors.InitError:
+                        pass
             except (OperationalError, InterfaceError) as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
                         auto_passwd_prompt):

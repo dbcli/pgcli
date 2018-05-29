@@ -19,6 +19,7 @@ Bug Fixes:
 ----------
 * Disable pager when using \watch (#837). (Thanks: `Jason Ribeiro`_)
 * Don't offer to reconnect when we can't change a param in realtime (#807). (Thanks: `Amjith Ramanujam`_)
+* Make keyring optional. (Thanks: `Dick Marinus`_)
 
 1.9.1:
 ======
