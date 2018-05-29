@@ -18,7 +18,7 @@ It can be a very advanced pure Python replacement for `GNU readline
 <http://cnswww.cns.cwru.edu/php/chet/readline/rltop.html>`_, but it can also be
 used for building full screen applications.
 
-.. image:: images/ptpython.png
+.. image:: images/ptpython-2.png
 
 Some features:
 

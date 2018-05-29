@@ -260,8 +260,8 @@ a completer that implements that interface.
     text = prompt('Enter HTML: ', completer=html_completer)
     print('You said: %s' % text)
 
-``WordCompleter`` is a simple completer that completes the last word before the
-cursor with any of the given words.
+:class:`~prompt_toolkit.completion.WordCompleter`` is a simple completer that
+completes the last word before the cursor with any of the given words.
 
 .. image:: ../images/html-completion.png
 
@@ -404,6 +404,8 @@ takes a :class:`~prompt_toolkit.document.Document` as input and raises
     number = int(prompt('Give a number: ', validator=NumberValidator()))
     print('You said: %i' % number)
 
+.. image:: ../images/number-validator.png
+
 By default, the input is only validated when the user presses the enter key,
 but prompt_toolkit can also validate in real-time while typing:
 
@@ -518,6 +520,7 @@ Example:
         text = session.prompt('> ', auto_suggest=AutoSuggestFromHistory())
         print('You said: %s' % text)
 
+.. image:: ../images/auto-suggestion.png
 
 A suggestion does not have to come from the history. Any implementation of the
 :class:`~prompt_toolkit.auto_suggest.AutoSuggest` abstract base class can be
@@ -536,6 +539,25 @@ When a function is given, it will be called every time the prompt is rendered,
 so the bottom toolbar can be used to display dynamic information.
 
 The toolbar is always erased when the prompt returns.
+Here we have an example of a callable that returns an
+:class:`~prompt_toolkit.formatted_text.HTML` object. By default, the toolbar
+has the reversed style, which is why we are setting the background instead of
+the foreground.
+
+.. code:: python
+
+    from prompt_toolkit import prompt
+    from prompt_toolkit.formatted_text import HTML
+
+    def bottom_toolbar():
+        return HTML('This is a <b><style bg="ansired">Toolbar</style></b>!')
+
+    text = prompt('> ', bottom_toolbar=bottom_toolbar)
+    print('You said: %s' % text)
+
+.. image:: ../images/bottom-toolbar.png
+
+Similar, we could use a list of style/text tuples.
 
 .. code:: python
 
@@ -554,8 +576,6 @@ The toolbar is always erased when the prompt returns.
 
 The default class name is ``bottom-toolbar`` and that will also be used to fill
 the background of the toolbar.
-
-.. image:: ../images/bottom-toolbar.png
 
 
 Adding a right prompt
@@ -768,18 +788,24 @@ of accepting and returning the input. The user will now have to press
 :kbd:`Enter`.)
 
 It is possible to specify a continuation prompt. This works by passing a
-``prompt_continuation`` callable to ``prompt``. This function is supposed to
-return formatted text, or a list of ``(style, text)`` tuples. The width of the
-returned text should not exceed the given width. (The width of the prompt
-margin is defined by the prompt.)
+``prompt_continuation`` callable to :func:`~prompt_toolkit.shortcuts.prompt`.
+This function is supposed to return :ref:`formatted text <formatted_text>`, or
+a list of ``(style, text)`` tuples. The width of the returned text should not
+exceed the given width. (The width of the prompt margin is defined by the
+prompt.)
 
 .. code:: python
+
+    from prompt_toolkit import prompt
 
     def prompt_continuation(width, line_number, is_soft_wrap):
         return '.' * width
         # Or: return [('', '.' * width)]
 
-    prompt('> ', multiline=True, prompt_continuation=prompt_continuation)
+    prompt('multiline input> ', multiline=True,
+           prompt_continuation=prompt_continuation)
+
+.. image:: ../images/multiline-input.png
 
 
 Passing a default
