@@ -1,6 +1,9 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='psycopg2')
+
 import os
 import re
 import sys
