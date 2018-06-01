@@ -20,7 +20,12 @@ def load_ipython_extension(ipython):
 def pgcli_line_magic(line):
     _logger.debug('pgcli magic called: %r', line)
     parsed = sql.parse.parse(line, {})
-    conn = sql.connection.Connection.get(parsed['connection'])
+    # "get" was renamed to "set" in ipython-sql:
+    # https://github.com/catherinedevlin/ipython-sql/commit/f4283c65aaf68f961e84019e8b939e4a3c501d43
+    if hasattr(sql.connection.Connection, 'get'):
+        conn = sql.connection.Connection.get(parsed['connection'])
+    else:
+        conn = sql.connection.Connection.set(parsed['connection'])
 
     try:
         # A corresponding pgcli object already exists
