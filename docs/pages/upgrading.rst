@@ -1,9 +1,11 @@
+.. _upgrading_2_0:
+
 Upgrading to prompt_toolkit 2.0
 ===============================
 
-Prompt_toolkit 2.0 is not compatible with 1.0, however you want to upgrade your
-applications. This page explains why we have these differences and how to
-upgrade.
+Prompt_toolkit 2.0 is not compatible with 1.0, however you probably want to
+upgrade your applications. This page explains why we have these differences and
+how to upgrade.
 
 If you experience some difficulties or you feel that some information is
 missing from this page, don't hesitate to open a GitHub issue for help.
