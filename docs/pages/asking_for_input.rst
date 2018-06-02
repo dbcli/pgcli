@@ -866,8 +866,8 @@ asterisks (``*`` characters).
     prompt('Enter password: ', is_password=True)
 
 
-Prompt in an ``asyncio`` application
-------------------------------------
+Prompt in an `asyncio` application
+----------------------------------
 
 For `asyncio <https://docs.python.org/3/library/asyncio.html>`_ applications,
 it's very important to never block the eventloop. However,

@@ -363,8 +363,8 @@ the content, but there are much more options.
 - Finally, the background can be filled with a default character.
 
 
-More about buffers and :class:`~prompt_toolkit.layout.BufferControl`
---------------------------------------------------------------------
+More about buffers and `BufferControl`
+--------------------------------------
 
 
 

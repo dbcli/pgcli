@@ -1,11 +1,12 @@
 .. _asyncio:
 
-Running on top of the ``asyncio`` event loop
-============================================
+Running on top of the `asyncio` event loop
+==========================================
 
 Prompt_toolkit has a built-in event loop of its own. However, in modern
-applications, you probably want to use asyncio for everything. With just one
-line of code, it is possible to run prompt_toolkit on top of asyncio:
+applications, you probably want to use `asyncio
+<https://docs.python.org/3/library/asyncio.html>`_ for everything. With just
+one line of code, it is possible to run prompt_toolkit on top of asyncio:
 
 .. code::
 

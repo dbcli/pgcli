@@ -1,5 +1,5 @@
-Python Prompt Toolkit
-=====================
+Python Prompt Toolkit 2.0
+=========================
 
 .. warning::
 
