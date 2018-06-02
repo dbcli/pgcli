@@ -9,7 +9,7 @@ from prompt_toolkit.output.color_depth import ColorDepth
 from prompt_toolkit.shortcuts import prompt, CompleteStyle
 
 
-colors = ['red', 'blue', 'green', 'orange', 'red', 'purple', 'yellow', 'cyan',
+colors = ['red', 'blue', 'green', 'orange', 'purple', 'yellow', 'cyan',
           'magenta', 'pink']
 
 
