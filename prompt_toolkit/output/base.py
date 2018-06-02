@@ -149,6 +149,9 @@ class Output(with_metaclass(ABCMeta, object)):
     def disable_bracketed_paste(self):
         " For vt100 only. "
 
+    def scroll_buffer_to_prompt(self):
+        " For Win32 only. "
+
 
 class DummyOutput(Output):
     """
@@ -188,6 +191,7 @@ class DummyOutput(Output):
     def bell(self): pass
     def enable_bracketed_paste(self): pass
     def disable_bracketed_paste(self): pass
+    def scroll_buffer_to_prompt(self): pass
 
     def get_size(self):
         return Size(rows=40, columns=80)
