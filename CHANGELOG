@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-2.0.0: ...
+2.0.1: 2018-06-02
 -----------------
 
 Version 2.0 includes a big refactoring of the internal architecture. This
@@ -29,7 +29,7 @@ Changes:
   no practical reason to keep this separation. (`CommandLineInterface` was
   mostly a proxy to `Application`.)
 
-  A consequence is that all almost code which used to received a
+  A consequence is that almost all code which used to receive a
   `CommandLineInterface`, will now use an `Application`. Usually, where we
   had an attribute `cli`, we'll now have an attribute `app`.
 
@@ -122,42 +122,35 @@ Changes:
   * `VSplit` and `HSplit` now take an `align` argument.
     (TOP/CENTER/BOTTOM/JUSTIFY) or (LEFT/CENTER/RIGHT/JUSTIFY).
   * `Float` now takes `allow_cover_cursor` and `attach_to_window` arguments.
-  * `Window` got an `Align` argument. This can be used for the alignment of the
-    content. `TokenListControl` does not have an alignment argument anymore.
-  * `Window` got a `token` and `get_token` argument. This is used to fill the
-    window's background using the given `Token`. That way, a window can for
-    instance be given a background color.
-  * `FillControl` does not exist anymore. Use the `token` and `char` arguments
+  * `Window` got an `WindowAlign` argument. This can be used for the alignment
+    of the content. `TokenListControl` (renamed to `FormattedTextControl`) does
+    not have an alignment argument anymore.
+  * All container objects, like `Window`, got a `style` argument. The style for
+    parent containers propagate to child containers, but can be overriden.
+    This is in particular useful for setting a background color.
+  * `FillControl` does not exist anymore. Use the `style` and `char` arguments
     of the `Window` class instead.
   * `DummyControl` was added.
-  * `VSplit` and `HSplit` classes also take a `token` as argument, these are
-    passed to the `Window` class and applied to the content as well.
-  * Alignment of the content is now done in the `Window` class, not in the
-    user control.
   * The continuation function of `PromptMargin` now takes `line_number` and
-  * `is_soft_wrap` as input.
+    `is_soft_wrap` as input.
 
 - Changes to `BufferControl`:
-
-  * `BufferControl` now takes a `input_processor` as argument. (Singular
-    instead of plural). If you want to combine multiple, they have to be merged
-    together using `merge_input_processors`. (Similar to `merge_key_bindings`.)
 
   * The `InputProcessor` class has been refactored. The `apply_transformation`
     method should now takes a `TransformationInput` object as input.
 
   * The text `(reverse-i-search)` is now displayed through a processor. (See
-    the `shortcuts` module for an example of the usage.)
+    the `shortcuts` module for an example of its usage.)
 
 - `widgets` and `dialogs` modules:
 
   * A small collection of widgets was added. These are more complex collections
     of user controls that are ready to embed in a layout. A `shortcuts.dialogs`
-    module was added with shortcuts for displaying input, confirmation and
+    module was added as a high level API for displaying input, confirmation and
     message dialogs.
 
   * Every class that exposes a ``__pt_container__`` method (which is supposed
-    to return a ``Container`` instance) is considered a widget.  The
+    to return a ``Container`` instance) is considered a widget. The
     ``to_container`` shortcut will call this method in situations where a
     ``Container`` object is expected. This avoids inheritance from other
     ``Container`` types, but also having to unpack the container object from
@@ -168,13 +161,15 @@ Changes:
 
 - Changes to `Buffer`:
 
-  * A `Buffer` no longer takes an ``accept_action``.  Both `AcceptAction` and
-    `AbortAction` have been removed.
+  * A `Buffer` no longer takes an `accept_action`.  Both `AcceptAction` and
+    `AbortAction` have been removed. Instead it takes an `accept_handler`.
 
 - Changes regarding auto completion:
 
   * The left and right arrows now work in the multi-column auto completion
     menu.
+  * By default, autocompletion is synchronous. The completer needs to be
+    wrapped in `ThreadedCompleter` in order to get asynchronous autocompletion.
   * When the completer runs in a background thread, completions will be
     displayed as soon as they are generated. This means that we don't have to
     wait for all the completions to be generated, before displaying the first
@@ -192,23 +187,24 @@ Changes:
 
 - Changes related to `shortcuts.prompt`:
 
-  * There is now a class `Prompt` which also has a method `prompt`. Both the
-    class and the method take about the same arguments. This can be used to
+  * There is now a class `PromptSession` which also has a method `prompt`. Both
+    the class and the method take about the same arguments. This can be used to
     create a session. Every `prompt` call of the same instance will reuse all
-    the arguments given to the class itself. This can be used for instance to
-    keep the history between multiple calls.
+    the arguments given to the class itself.
+
+    The input history is always shared during the entire session.
 
     Of course, it's still possible to call the global `prompt` function. This
-    will create a new instance every time when it's called.
+    will create a new `PromptSession` every time when it's called.
 
-  * The `prompt` function now takes an `key_bindings` argument instead of
+  * The `prompt` function now takes a `key_bindings` argument instead of
     `key_bindings_registry`. This should only contain the additional bindings.
     (The default bindings are always included.)
 
 - Changes to the event loops:
 
   * The event loop API is now closer to how asyncio works. A prompt_toolkit
-    `Application` now has a `Future` object. Calling the `.start()` method
+    `Application` now has a `Future` object. Calling the `.run_async()` method
     creates and returns that `Future`. An event loop has a `run_until_complete`
     method that takes a future and runs the event loop until the Future is set.
 
