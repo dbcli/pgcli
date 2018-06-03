@@ -110,7 +110,10 @@ def consume_async_generator(iterator, cancel, item_callback):
     assert callable(item_callback)
 
     send = None
-    item = iterator.send(send)
+    try:
+        item = iterator.send(send)
+    except StopIteration:
+        return
 
     while True:
         if cancel():
