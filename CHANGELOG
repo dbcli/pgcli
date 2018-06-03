@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+2.0.2: 2018-06-03
+-----------------
+
+Bug fixes:
+- Python 3.7 support: correctly handle StopIteration in asynchronous generator.
+- Fixed off-by-one bug in Vi visual block mode.
+- Bugfix in TabsProcessor: handle situations when the cursor is at the end of
+  the line.
+
+
 2.0.1: 2018-06-02
 -----------------
 
