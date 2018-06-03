@@ -789,6 +789,8 @@ class Document(object):
         nothing was selected. The upper boundary is not included.
 
         This will yield several (from, to) tuples in case of a BLOCK selection.
+        This will return zero ranges, like (8,8) for empty lines in a block
+        selection.
         """
         if self.selection:
             from_, to = sorted([self.cursor_position, self.selection.original_cursor_position])
@@ -804,9 +806,10 @@ class Document(object):
 
                 for l in range(from_line, to_line + 1):
                     line_length = len(lines[l])
-                    if from_column < line_length:
+
+                    if from_column < line_length or (line_length == 0 and from_column == 0):
                         yield (self.translate_row_col_to_index(l, from_column),
-                               self.translate_row_col_to_index(l, min(line_length - 1, to_column)))
+                               self.translate_row_col_to_index(l, min(line_length, to_column)))
             else:
                 # In case of a LINES selection, go to the start/end of the lines.
                 if self.selection.type == SelectionType.LINES:

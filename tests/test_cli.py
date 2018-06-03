@@ -710,6 +710,40 @@ def test_vi_block_editing():
             '-line1\n-line***2\n-line***3\n-line***4\n-line5\n-line6')
 
 
+def test_vi_block_editing_empty_lines():
+    " Test block editing on empty lines. "
+    feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI,
+                   multiline=True)
+
+    operations = (
+        # Six empty lines.
+        '\r\r\r\r\r'
+        # Go to beginning of the document.
+        '\x1bgg'
+        # Enter Visual block mode.
+        '\x16'
+        # Go down two more lines.
+        'jj'
+        # Go 3 characters to the right.
+        'lll'
+        # Go to insert mode.
+        'insert'  # (Will be replaced.)
+        # Insert stars.
+        '***'
+        # Escape again.
+        '\x1b\r')
+
+    # Control-I
+    result, cli = feed(operations.replace('insert', 'I'))
+
+    assert result.text == '***\n***\n***\n\n\n'
+
+    # Control-A
+    result, cli = feed(operations.replace('insert', 'A'))
+
+    assert result.text == '***\n***\n***\n\n\n'
+
+
 def test_vi_visual_line_copy():
     feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI,
                    multiline=True)

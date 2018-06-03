@@ -223,6 +223,8 @@ class HighlightSelectionProcessor(Processor):
                     if i < len(fragments):
                         old_fragment, old_text = fragments[i]
                         fragments[i] = (old_fragment + selected_fragment, old_text)
+                    elif i == len(fragments):
+                        fragments.append((selected_fragment, ' '))
 
         return Transformation(fragments)
 
@@ -329,7 +331,7 @@ class DisplayMultipleCursors(Processor):
         buff = buffer_control.buffer
 
         if vi_insert_multiple_mode():
-            positions = buff.multiple_cursor_positions
+            cursor_positions = buff.multiple_cursor_positions
             fragments = explode_text_fragments(fragments)
 
             # If any cursor appears on the current line, highlight that.
@@ -338,16 +340,19 @@ class DisplayMultipleCursors(Processor):
 
             fragment_suffix = ' class:multiple-cursors'
 
-            for p in positions:
-                if start_pos <= p < end_pos:
+            for p in cursor_positions:
+                if start_pos <= p <= end_pos:
                     column = source_to_display(p - start_pos)
 
                     # Replace fragment.
-                    style, text = fragments[column]
-                    style += fragment_suffix
-                    fragments[column] = (style, text)
-                elif p == end_pos:
-                    fragments.append((fragment_suffix, ' '))
+                    try:
+                        style, text = fragments[column]
+                    except IndexError:
+                        # Cursor needs to be displayed after the current text.
+                        fragments.append((fragment_suffix, ' '))
+                    else:
+                        style += fragment_suffix
+                        fragments[column] = (style, text)
 
             return Transformation(fragments)
         else:
@@ -587,7 +592,10 @@ class TabsProcessor(Processor):
 
         def source_to_display(from_position):
             " Maps original cursor position to the new one. "
-            return position_mappings[from_position]
+            try:
+                return position_mappings[from_position]
+            except KeyError:
+                return 0
 
         def display_to_source(display_pos):
             " Maps display cursor position to the original one. "
