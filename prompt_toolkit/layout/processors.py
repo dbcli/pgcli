@@ -589,13 +589,13 @@ class TabsProcessor(Processor):
                 pos += 1
 
         position_mappings[len(fragments)] = pos
+        # Add `pos+1` to mapping, because the cursor can be right after the
+        # line as well.
+        position_mappings[len(fragments) + 1] = pos + 1
 
         def source_to_display(from_position):
             " Maps original cursor position to the new one. "
-            try:
-                return position_mappings[from_position]
-            except KeyError:
-                return 0
+            return position_mappings[from_position]
 
         def display_to_source(display_pos):
             " Maps display cursor position to the original one. "
