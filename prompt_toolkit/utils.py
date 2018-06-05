@@ -7,7 +7,7 @@ import threading
 import weakref
 
 from functools import partial
-from six import PY2
+from six import PY2, text_type
 from six.moves import range
 from wcwidth import wcwidth
 from .cache import memoized
@@ -304,7 +304,7 @@ def to_str(value):
     if callable(value):
         return to_str(value())
     else:
-        return str(value)
+        return text_type(value)
 
 
 def to_int(value):
