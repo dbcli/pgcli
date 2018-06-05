@@ -773,6 +773,56 @@ def test_vi_visual_line_copy():
     assert (result.text ==
             '-line1\n-line2\n-line3\n-line4\n-line2\n-line3\n-line2\n-line3\n-line5\n-line6')
 
+def test_vi_character_delete_after_cursor():
+    " Test 'x' keypress. "
+    feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI,
+                   multiline=True)
+
+    # Delete one character.
+    result, cli = feed('abcd\x1bHx\r')
+    assert result.text == 'bcd'
+
+    # Delete multiple character.s
+    result, cli = feed('abcd\x1bH3x\r')
+    assert result.text == 'd'
+
+    # Delete on empty line.
+    result, cli = feed('\x1bo\x1bo\x1bggx\r')
+    assert result.text == '\n\n'
+
+    # Delete multiple on empty line.
+    result, cli = feed('\x1bo\x1bo\x1bgg10x\r')
+    assert result.text == '\n\n'
+
+    # Delete multiple on empty line.
+    result, cli = feed('hello\x1bo\x1bo\x1bgg3x\r')
+    assert result.text == 'lo\n\n'
+
+
+def test_vi_character_delete_before_cursor():
+    " Test 'X' keypress. "
+    feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI,
+                   multiline=True)
+
+    # Delete one character.
+    result, cli = feed('abcd\x1bX\r')
+    assert result.text == 'abd'
+
+    # Delete multiple character.
+    result, cli = feed('hello world\x1b3X\r')
+    assert result.text == 'hello wd'
+
+    # Delete multiple character on multiple lines.
+    result, cli = feed('hello\x1boworld\x1bgg$3X\r')
+    assert result.text == 'ho\nworld'
+
+    result, cli = feed('hello\x1boworld\x1b100X\r')
+    assert result.text == 'hello\nd'
+
+    # Delete on empty line.
+    result, cli = feed('\x1bo\x1bo\x1b10X\r')
+    assert result.text == '\n\n'
+
 
 def test_vi_character_paste():
     feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI)

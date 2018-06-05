@@ -749,13 +749,19 @@ def load_vi_bindings():
         """
         Delete character.
         """
-        text = event.current_buffer.delete(count=event.arg)
-        event.app.clipboard.set_text(text)
+        buff = event.current_buffer
+        count = min(event.arg, len(buff.document.current_line_after_cursor))
+        if count:
+            text = event.current_buffer.delete(count=count)
+            event.app.clipboard.set_text(text)
 
     @handle('X', filter=vi_navigation_mode)
     def _(event):
-        text = event.current_buffer.delete_before_cursor()
-        event.app.clipboard.set_text(text)
+        buff = event.current_buffer
+        count = min(event.arg, len(buff.document.current_line_before_cursor))
+        if count:
+            text = event.current_buffer.delete_before_cursor(count=count)
+            event.app.clipboard.set_text(text)
 
     @handle('y', 'y', filter=vi_navigation_mode)
     @handle('Y', filter=vi_navigation_mode)
