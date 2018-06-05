@@ -773,6 +773,40 @@ def test_vi_visual_line_copy():
     assert (result.text ==
             '-line1\n-line2\n-line3\n-line4\n-line2\n-line3\n-line2\n-line3\n-line5\n-line6')
 
+
+def test_vi_visual_empty_line():
+    """
+    Test edge case with an empty line in Visual-line mode.
+    """
+    feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI,
+                   multiline=True)
+
+    # 1. Delete first two lines.
+    operations = (
+        # Three lines of text. The middle one is empty.
+        'hello\r\rworld'
+        # Go to the start.
+        '\x1bgg'
+        # Visual line and move down.
+        'Vj'
+        # Delete.
+        'd\r')
+    result, cli = feed(operations)
+    assert result.text == 'world'
+
+    # 1. Delete middle line.
+    operations = (
+        # Three lines of text. The middle one is empty.
+        'hello\r\rworld'
+        # Go to middle line.
+        '\x1bggj'
+        # Delete line
+        'Vd\r')
+
+    result, cli = feed(operations)
+    assert result.text == 'hello\nworld'
+
+
 def test_vi_character_delete_after_cursor():
     " Test 'x' keypress. "
     feed = partial(_feed_cli_with_input, editing_mode=EditingMode.VI,

@@ -84,6 +84,9 @@ class TextObject(object):
         Return a (start, end) tuple with start <= end that indicates the range
         operators should operate on.
         `buffer` is used to get start and end of line positions.
+
+        This should return something that can be used in a slice, so the `end`
+        position is *not* included.
         """
         start, end = self.sorted()
         doc = document
@@ -126,7 +129,13 @@ class TextObject(object):
 
         from_ += buffer.cursor_position
         to += buffer.cursor_position
-        to -= 1  # SelectionState does not include the end position, `operator_range` does.
+
+        # For Vi mode, the SelectionState does include the upper position,
+        # while `self.operator_range` does not. So, go one to the left, unless
+        # we're in the line mode, then we don't want to risk going to the
+        # previous line, and missing one line in the selection.
+        if self.type != TextObjectType.LINEWISE:
+            to -= 1
 
         document = Document(buffer.text, to, SelectionState(
             original_cursor_position=from_, type=self.selection_type))
