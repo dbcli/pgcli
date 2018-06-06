@@ -292,7 +292,7 @@ class PGExecute(object):
         # Remove spaces and EOL
         statement = statement.strip()
         if not statement:  # Empty string
-            yield (None, None, None, None, statement, False)
+            yield (None, None, None, None, statement, False, False)
 
         # Split the sql into separate queries and run each one.
         for sql in sqlparse.split(statement):
