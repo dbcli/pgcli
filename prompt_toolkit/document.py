@@ -807,7 +807,7 @@ class Document(object):
                 for l in range(from_line, to_line + 1):
                     line_length = len(lines[l])
 
-                    if from_column < line_length or (line_length == 0 and from_column == 0):
+                    if from_column <= line_length:
                         yield (self.translate_row_col_to_index(l, from_column),
                                self.translate_row_col_to_index(l, min(line_length, to_column)))
             else:
@@ -837,8 +837,10 @@ class Document(object):
         Returns None if the selection doesn't cover this line at all.
         """
         if self.selection:
+            line = self.lines[row]
+
             row_start = self.translate_row_col_to_index(row, 0)
-            row_end = self.translate_row_col_to_index(row, len(self.lines[row]))
+            row_end = self.translate_row_col_to_index(row, len(line))
 
             from_, to = sorted([self.cursor_position, self.selection.original_cursor_position])
 
@@ -850,10 +852,15 @@ class Document(object):
                 if self.selection.type == SelectionType.LINES:
                     intersection_start = row_start
                     intersection_end = row_end
+
                 elif self.selection.type == SelectionType.BLOCK:
                     _, col1 = self.translate_index_to_position(from_)
                     _, col2 = self.translate_index_to_position(to)
                     col1, col2 = sorted([col1, col2])
+
+                    if col1 > len(line):
+                        return  # Block selection doesn't cross this line.
+
                     intersection_start = self.translate_row_col_to_index(row, col1)
                     intersection_end = self.translate_row_col_to_index(row, col2)
 
