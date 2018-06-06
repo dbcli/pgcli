@@ -21,6 +21,7 @@ Bug Fixes:
 * Don't offer to reconnect when we can't change a param in realtime (#807). (Thanks: `Amjith Ramanujam`_)
 * Make keyring optional. (Thanks: `Dick Marinus`_)
 * Fix ipython magic connection (#891). (Thanks: `Irina Truong`_)
+* Fix not enough values to unpack
 
 1.9.1:
 ======
