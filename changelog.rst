@@ -21,7 +21,7 @@ Bug Fixes:
 * Don't offer to reconnect when we can't change a param in realtime (#807). (Thanks: `Amjith Ramanujam`_)
 * Make keyring optional. (Thanks: `Dick Marinus`_)
 * Fix ipython magic connection (#891). (Thanks: `Irina Truong`_)
-* Fix not enough values to unpack
+* Fix not enough values to unpack. (Thanks: `Matthieu Guilbert`_)
 
 1.9.1:
 ======
@@ -832,3 +832,4 @@ Improvements:
 .. _`Frederic Aoustin`: https://github.com/fraoustin
 .. _`Jason Ribeiro`: https://github.com/jrib
 .. _`Rishi Ramraj`: https://github.com/RishiRamraj
+.. _`Matthieu Guilbert`: https://github.com/gma2th
