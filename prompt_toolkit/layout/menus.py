@@ -180,7 +180,7 @@ class CompletionsMenu(ConditionalContainer):
     #       above anything else. We also want to make sure that the content is
     #       visible at the point where we draw this menu.
     def __init__(self, max_height=None, scroll_offset=0, extra_filter=True,
-                 display_arrows=False, z_index=10 ** 10):
+                 display_arrows=False, z_index=10 ** 8):
         extra_filter = to_filter(extra_filter)
         display_arrows = to_filter(display_arrows)
 
@@ -482,7 +482,7 @@ class MultiColumnCompletionsMenu(HSplit):
     to True, it shows the meta information at the bottom.
     """
     def __init__(self, min_rows=3, suggested_max_column_width=30,
-                 show_meta=True, extra_filter=True, z_index=10 ** 10):
+                 show_meta=True, extra_filter=True, z_index=10 ** 8):
         show_meta = to_filter(show_meta)
         extra_filter = to_filter(extra_filter)
 

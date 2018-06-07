@@ -631,7 +631,7 @@ class FloatContainer(Container):
             postpone = (fl.xcursor is not None or fl.ycursor is not None)
 
             if postpone:
-                new_z_index = number + 10 ** 10  # Draw as late as possible, but keep the order.
+                new_z_index = number + 10 ** 8  # Draw as late as possible, but keep the order.
                 screen.draw_with_z_index(z_index=new_z_index, draw_func=partial(self._draw_float,
                     fl, screen, mouse_handlers, write_position, style, erase_bg, new_z_index))
             else:

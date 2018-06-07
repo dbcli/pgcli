@@ -167,7 +167,7 @@ class UIContent(object):
         except ZeroDivisionError:
             # Return something very big.
             # (This can happen, when the Window gets very small.)
-            return 10 ** 10
+            return 10 ** 8
         else:
             if remainder:
                 quotient += 1  # Like math.ceil.
