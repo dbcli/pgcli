@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+2.0.3: 2018-06-08
+-----------------
+
+Bug fixes:
+- Fix in 'x' and 'X' Vi key bindings. Correctly handle line endings and args.
+- Fixed off by one error in Vi line selection.
+- Fixed bugs in Vi block selection. Correctly handle lines that the selection
+  doesn't cross.
+- Python 2 bugfix. Handle str/unicode correctly.
+- Handle option+left/right in iTerm.
+
+
 2.0.2: 2018-06-03
 -----------------
 
