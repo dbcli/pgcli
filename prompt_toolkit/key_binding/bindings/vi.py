@@ -1782,6 +1782,7 @@ def load_vi_search_bindings():
     handle('c-s', filter=is_searching)(search.forward_incremental_search)
 
     handle('c-c')(search.abort_search)
+    handle('c-g')(search.abort_search)
     handle('backspace', filter=search_buffer_is_empty)(search.abort_search)
 
     # Handle escape. This should accept the search, just like readline.
