@@ -4,13 +4,14 @@ from ctypes.wintypes import DWORD
 from six.moves import range
 from contextlib import contextmanager
 
+from .ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
+from .base import Input
 from prompt_toolkit.eventloop import get_event_loop
 from prompt_toolkit.eventloop.win32 import wait_for_handles
 from prompt_toolkit.key_binding.key_processor import KeyPress
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.win32_types import EventTypes, KEY_EVENT_RECORD, MOUSE_EVENT_RECORD, INPUT_RECORD, STD_INPUT_HANDLE
-from .base import Input
 
 import msvcrt
 import os
@@ -209,6 +210,9 @@ class ConsoleInputReader(object):
         # whether we should consider this a paste event or not.
         all_keys = list(self._get_keys(read, input_records))
 
+        # Fill in 'data' for key presses.
+        all_keys = [self._insert_key_data(key) for key in all_keys]
+
         if self.recognize_paste and self._is_paste(all_keys):
             gen = iter(all_keys)
             for k in gen:
@@ -230,6 +234,16 @@ class ConsoleInputReader(object):
         else:
             for k in all_keys:
                 yield k
+
+    def _insert_key_data(self, key_press):
+        """
+        Insert KeyPress data, for vt100 compatibility.
+        """
+        if key_press.data:
+            return key_press
+
+        data = REVERSE_ANSI_SEQUENCES.get(key_press.key, '')
+        return KeyPress(key_press.key, data)
 
     def _get_keys(self, read, input_records):
         """
