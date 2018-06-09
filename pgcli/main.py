@@ -505,14 +505,12 @@ class PGCli(object):
         try:
             if (self.destructive_warning):
                 destroy = confirm = confirm_destructive_query(text)
-                if destroy is None:
-                    output, query = self._evaluate_command(text)
-                elif destroy is True:
-                    click.secho('Your call!')
-                    output, query = self._evaluate_command(text)
-                else:
+                if destroy is False:
                     click.secho('Wise choice!')
                     raise KeyboardInterrupt
+                if destroy is True:
+                    click.secho('Your call!')
+            output, query = self._evaluate_command(text)
         except KeyboardInterrupt:
             # Restart connection to the database
             self.pgexecute.connect()
