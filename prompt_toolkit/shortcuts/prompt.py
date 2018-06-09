@@ -788,8 +788,9 @@ def prompt(*a, **kw):
     # class, not its method.
     input = kw.pop('input', None)
     output = kw.pop('output', None)
+    history = kw.pop('history', None)
 
-    session = PromptSession(input=input, output=output)
+    session = PromptSession(input=input, output=output, history=history)
     return session.prompt(*a, **kw)
 
 
