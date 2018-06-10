@@ -22,6 +22,7 @@ Bug Fixes:
 * Make keyring optional. (Thanks: `Dick Marinus`_)
 * Fix ipython magic connection (#891). (Thanks: `Irina Truong`_)
 * Fix not enough values to unpack. (Thanks: `Matthieu Guilbert`_)
+* Fix unbound local error when destructive_warning is false. (Thanks: `Matthieu Guilbert`_)
 
 1.9.1:
 ======
