@@ -97,9 +97,9 @@ Further, it's possible to use tags for foreground colors:
     print_formatted_text(HTML('<ansigreen>This is green</ansigreen>'))
 
     # Named colors (256 color palette, or true color, depending on the output).
-    print_formatted_text(HTML('<skyblue>This is light pink</skyblue>'))
-    print_formatted_text(HTML('<seagreen>This is light pink</seagreen>'))
-    print_formatted_text(HTML('<violet>This is light pink</violet>'))
+    print_formatted_text(HTML('<skyblue>This is sky blue</skyblue>'))
+    print_formatted_text(HTML('<seagreen>This is sea green</seagreen>'))
+    print_formatted_text(HTML('<violet>This is violet</violet>'))
 
 Both foreground and background colors can also be specified setting the `fg`
 and `bg` attributes of any tag:
