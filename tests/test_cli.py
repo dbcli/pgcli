@@ -91,10 +91,6 @@ def test_emacs_cursor_movements():
     result, cli = _feed_cli_with_input('hello\x01\x1b[CX\r')
     assert result.text == 'hXello'
 
-    # ControlA, right
-    result, cli = _feed_cli_with_input('hello\x01\x1b[CX\r')
-    assert result.text == 'hXello'
-
     # ControlB (backward-char)
     result, cli = _feed_cli_with_input('hello\x02X\r')
     assert result.text == 'hellXo'
