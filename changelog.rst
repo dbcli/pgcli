@@ -14,6 +14,7 @@ Internal changes:
 * Add an is_special command flag to MetaQuery (Thanks: `Rishi Ramraj`_)
 * Ported Destructive Warning from mycli.
 * Refactor Destructive Warning behave tests (Thanks: `Dick Marinus`_)
+* Add `--user` option, duplicate of `--username`, the same cli option like `psql` (Thanks: `Alexandr Korsak`_)
 
 Bug Fixes:
 ----------
@@ -834,3 +835,4 @@ Improvements:
 .. _`Jason Ribeiro`: https://github.com/jrib
 .. _`Rishi Ramraj`: https://github.com/RishiRamraj
 .. _`Matthieu Guilbert`: https://github.com/gma2th
+.. _`Alexandr Korsak`: https://github.com/oivoodoo

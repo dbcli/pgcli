@@ -890,6 +890,8 @@ class PGCli(object):
         'postgres instance is listening.', envvar='PGPORT', type=click.INT)
 @click.option('-U', '--username', 'username_opt', envvar='PGUSER',
         help='Username to connect to the postgres database.')
+@click.option('--user', 'username_opt', envvar='PGUSER',
+              help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
         help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
