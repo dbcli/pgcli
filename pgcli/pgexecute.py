@@ -431,11 +431,11 @@ class PGExecute(object):
             sql = self.function_definition_query
             _logger.debug('Function Definition Query. sql: %r\nspec: %r',
                           sql, spec)
-            cur.execute(sql, (spec, ))
-            result = cur.fetchone()
-            if result:
+            try:
+                cur.execute(sql, (spec,))
+                result = cur.fetchone()
                 return result[0]
-            else:
+            except psycopg2.ProgrammingError:
                 raise RuntimeError('Function {} does not exist.'.format(spec))
 
     def schemata(self):
