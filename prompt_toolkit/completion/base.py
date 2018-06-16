@@ -12,6 +12,7 @@ __all__ = [
     'DummyCompleter',
     'DynamicCompleter',
     'CompleteEvent',
+    'merge_completers',
     'get_common_complete_suffix',
 ]
 
@@ -228,6 +229,36 @@ class DynamicCompleter(Completer):
     def __repr__(self):
         return 'DynamicCompleter(%r -> %r)' % (
             self.get_completer, self.get_completer())
+
+
+class _MergedCompleter(Completer):
+    """
+    Combine several completers into one.
+    """
+    def __init__(self, completers):
+        assert all(isinstance(c, Completer) for c in completers)
+        self.completers = completers
+
+    def get_completions(self, document, complete_event):
+        # Get all completions from the other completers in a blocking way.
+        for completer in self.completers:
+            for c in completer.get_completions(document, complete_event):
+                yield c
+
+    def get_completions_async(self, document, complete_event):
+        # Get all completions from the other completers in a blocking way.
+        for completer in self.completers:
+            # Consume async generator -> item can be `AsyncGeneratorItem` or
+            # `Future`.
+            for item in completer.get_completions_async(document, complete_event):
+                yield item
+
+
+def merge_completers(completers):
+    """
+    Combine several completers into one.
+    """
+    return _MergedCompleter(completers)
 
 
 def get_common_complete_suffix(document, completions):
