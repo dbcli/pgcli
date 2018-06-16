@@ -410,7 +410,7 @@ class PGExecute(object):
 
         template = 'CREATE OR REPLACE {6} VIEW {0}.{1} AS \n{3}'
         # 2: relkind, v or m (materialized)
-        # 4: reloptions, null 
+        # 4: reloptions, null
         # 5: checkoption: local or cascaded
         with self.conn.cursor() as cur:
             sql = self.view_definition_query
@@ -422,7 +422,7 @@ class PGExecute(object):
                 raise RuntimeError('View {} does not exist.'.format(spec))
             result = cur.fetchone()
             view_type = 'MATERIALIZED' if result[2] == 'm' else ''
-            return template.format(*result, view_type)
+            return template.format(*result + [view_type])
 
     def function_definition(self, spec):
         """Returns the SQL defining functions described by `spec` """
