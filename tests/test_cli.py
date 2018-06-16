@@ -902,3 +902,21 @@ def test_vi_macros():
         '@y\r')
 
     assert result.text == 'helloworld'
+
+
+def test_accept_default():
+    """
+    Test `prompt(accept_default=True)`.
+    """
+    inp = PipeInput()
+
+    session = PromptSession(input=PipeInput(), output=DummyOutput())
+    result = session.prompt(default='hello', accept_default=True)
+    assert result == 'hello'
+
+    # Test calling prompt() for a second time. (We had an issue where the
+    # prompt reset between calls happened at the wrong time, breaking this.)
+    result = session.prompt(default='world', accept_default=True)
+    assert result == 'world'
+
+    inp.close()
