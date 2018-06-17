@@ -422,7 +422,7 @@ class PGExecute(object):
                 raise RuntimeError('View {} does not exist.'.format(spec))
             result = cur.fetchone()
             view_type = 'MATERIALIZED' if result[2] == 'm' else ''
-            return template.format(*result + [view_type])
+            return template.format(*result + (view_type,))
 
     def function_definition(self, spec):
         """Returns the SQL defining functions described by `spec` """
