@@ -27,19 +27,17 @@ try:
     import setproctitle
 except ImportError:
     setproctitle = None
-from prompt_toolkit import CommandLineInterface, Application, AbortAction
+from prompt_toolkit.completion import DynamicCompleter
 from prompt_toolkit.enums import DEFAULT_BUFFER, EditingMode
-from prompt_toolkit.shortcuts import create_prompt_layout, create_eventloop
-from prompt_toolkit.buffer import AcceptAction
+from prompt_toolkit.shortcuts import PromptSession, CompleteStyle
 from prompt_toolkit.document import Document
-from prompt_toolkit.filters import Always, HasFocus, IsDone
-from prompt_toolkit.layout.lexers import PygmentsLexer
+from prompt_toolkit.filters import HasFocus, IsDone
+from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.layout.processors import (ConditionalProcessor,
                                         HighlightMatchingBracketProcessor)
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from pygments.lexers.sql import PostgresLexer
-from pygments.token import Token
 
 from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF)
 import pgspecial as special
@@ -48,7 +46,7 @@ from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory, style_factory_output
 from .pgexecute import PGExecute
-from .pgbuffer import PGBuffer
+from .pgbuffer import pg_is_multiline
 from .completion_refresher import CompletionRefresher
 from .config import (get_casing_file,
     load_config, config_location, ensure_dir_exists, get_config)
@@ -208,8 +206,7 @@ class PGCli(object):
         self._completer_lock = threading.Lock()
         self.register_special_commands()
 
-        self.eventloop = create_eventloop()
-        self.cli = None
+        self.prompt_app = None
 
     def quit(self):
         raise PgCliQuitError
@@ -462,7 +459,7 @@ class PGCli(object):
 
         self.pgexecute = pgexecute
 
-    def handle_editor_command(self, cli, document):
+    def handle_editor_command(self, text):
         r"""
         Editor command is any query that is prefixed or suffixed
         by a '\e'. The reason for a while loop is because a user
@@ -471,31 +468,31 @@ class PGCli(object):
         "select * from \e"<enter> to edit it in vim, then come
         back to the prompt with the edited query "select * from
         blah where q = 'abc'\e" to edit it again.
-        :param cli: CommandLineInterface
-        :param document: Document
+        :param text: Document
         :return: Document
         """
+        app = self.prompt_app.app
+
         # FIXME: using application.pre_run_callables like this here is not the best solution.
         # It's internal api of prompt_toolkit that may change. This was added to fix #668.
         # We may find a better way to do it in the future.
-        saved_callables = cli.application.pre_run_callables
+        saved_callables = app.pre_run_callables
         try:
-            while special.editor_command(document.text):
-                filename = special.get_filename(document.text)
-                query = (special.get_editor_query(document.text) or
+            while special.editor_command(text):
+                filename = special.get_filename(text)
+                query = (special.get_editor_query(text) or
                          self.get_last_query())
                 sql, message = special.open_external_editor(
                     filename, sql=query)
                 if message:
                     # Something went wrong. Raise an exception and bail.
                     raise RuntimeError(message)
-                cli.current_buffer.document = Document(sql,
-                                                       cursor_position=len(sql))
-                cli.application.pre_run_callables = []
-                document = cli.run()
+                app.current_buffer.document = Document(sql, cursor_position=len(sql))
+                app.pre_run_callables = []
+                text = self.prompt_app.prompt()
         finally:
-            cli.application.pre_run_callables = saved_callables
-        return document
+            app.pre_run_callables = saved_callables
+        return text
 
     def execute_command(self, text):
         logger = self.logger
@@ -578,7 +575,7 @@ class PGCli(object):
         self.refresh_completions(history=history,
                                  persist_priorities='none')
 
-        self.cli = self._build_cli(history)
+        self.prompt_app = self._build_cli(history)
 
         if not self.less_chatty:
             print('Version:', __version__)
@@ -588,18 +585,18 @@ class PGCli(object):
 
         try:
             while True:
-                document = self.cli.run()
+                text = self.prompt_app.prompt()
 
                 try:
-                    document = self.handle_editor_command(self.cli, document)
+                    text = self.handle_editor_command(text)
                 except RuntimeError as e:
-                    logger.error("sql: %r, error: %r", document.text, e)
+                    logger.error("sql: %r, error: %r", text, e)
                     logger.error("traceback: %r", traceback.format_exc())
                     click.secho(str(e), err=True, fg='red')
                     continue
 
-                self.watch_command, timing = special.get_watch_command(
-                        document.text)
+                # Initialize default metaquery in case execution fails
+                self.watch_command, timing = special.get_watch_command(text)
                 if self.watch_command:
                     while self.watch_command:
                         try:
@@ -611,13 +608,13 @@ class PGCli(object):
                         except KeyboardInterrupt:
                             self.watch_command = None
                 else:
-                    query = self.execute_command(document.text)
+                    query = self.execute_command(text)
 
                 self.now = dt.datetime.today()
 
                 # Allow PGCompleter to learn user's preferred keywords, etc.
                 with self._completer_lock:
-                    self.completer.extend_query_history(document.text)
+                    self.completer.extend_query_history(text)
 
                 self.query_history.append(query)
 
@@ -626,15 +623,9 @@ class PGCli(object):
                 print ('Goodbye!')
 
     def _build_cli(self, history):
+        key_bindings = pgcli_bindings(self)
 
-        def set_vi_mode(value):
-            self.vi_mode = value
-
-        key_binding_manager = pgcli_bindings(
-            get_vi_mode_enabled=lambda: self.vi_mode,
-            set_vi_mode_enabled=set_vi_mode)
-
-        def prompt_tokens(_):
+        def get_message():
             if self.dsn_alias and self.prompt_dsn_format is not None:
                 prompt_format = self.prompt_dsn_format
             else:
@@ -646,58 +637,44 @@ class PGCli(object):
                     len(prompt) > self.max_len_prompt):
                 prompt = self.get_prompt('\\d> ')
 
-            return [(Token.Prompt, prompt)]
+            return prompt
 
-        def get_continuation_tokens(cli, width):
-            continuation=self.multiline_continuation_char * (width - 1) + ' '
-            return [(Token.Continuation, continuation)]
+        def get_continuation(width, line_number, is_soft_wrap):
+            continuation = self.multiline_continuation_char * (width - 1) + ' '
+            return continuation
 
-        get_toolbar_tokens = create_toolbar_tokens_func(
-            lambda: self.vi_mode, self.completion_refresher.is_refreshing,
-            self.pgexecute.failed_transaction,
-            self.pgexecute.valid_transaction)
+        get_toolbar_tokens = create_toolbar_tokens_func(self)
 
-        layout = create_prompt_layout(
-            lexer=PygmentsLexer(PostgresLexer),
-            reserve_space_for_menu=self.min_num_menu_lines,
-            get_prompt_tokens=prompt_tokens,
-            get_continuation_tokens=get_continuation_tokens,
-            get_bottom_toolbar_tokens=get_toolbar_tokens,
-            display_completions_in_columns=self.wider_completion_menu,
-            multiline=True,
-            extra_input_processors=[
-               # Highlight matching brackets while editing.
-               ConditionalProcessor(
-                   processor=HighlightMatchingBracketProcessor(chars='[](){}'),
-                   filter=HasFocus(DEFAULT_BUFFER) & ~IsDone()),
-            ])
+        if self.wider_completion_menu:
+            complete_style = CompleteStyle.MULTI_COLUMN
+        else:
+            complete_style = CompleteStyle.COLUMN
 
         with self._completer_lock:
-            buf = PGBuffer(
+            prompt = PromptSession(
+                lexer=PygmentsLexer(PostgresLexer),
+                reserve_space_for_menu=self.min_num_menu_lines,
+                message=get_message,
+                prompt_continuation=get_continuation,
+                bottom_toolbar=get_toolbar_tokens,
+                complete_style=complete_style,
+                input_processors=[
+                   # Highlight matching brackets while editing.
+                   ConditionalProcessor(
+                       processor=HighlightMatchingBracketProcessor(chars='[](){}'),
+                       filter=HasFocus(DEFAULT_BUFFER) & ~IsDone())],
                 auto_suggest=AutoSuggestFromHistory(),
-                always_multiline=self.multi_line,
-                multiline_mode=self.multiline_mode,
-                completer=self.completer,
+                tempfile_suffix='.sql',
+                multiline=pg_is_multiline(self),
                 history=history,
-                complete_while_typing=Always(),
-                accept_action=AcceptAction.RETURN_DOCUMENT)
+                completer=DynamicCompleter(lambda: self.completer),
+                complete_while_typing=True,
 
-            editing_mode = EditingMode.VI if self.vi_mode else EditingMode.EMACS
-
-            application = Application(
                 style=style_factory(self.syntax_style, self.cli_style),
-                layout=layout,
-                buffer=buf,
-                key_bindings_registry=key_binding_manager.registry,
-                on_exit=AbortAction.RAISE_EXCEPTION,
-                on_abort=AbortAction.RETRY,
-                ignore_case=True,
-                editing_mode=editing_mode)
+                key_bindings=key_bindings,
+                editing_mode = EditingMode.VI if self.vi_mode else EditingMode.EMACS)
 
-            cli = CommandLineInterface(application=application,
-                                       eventloop=self.eventloop)
-
-            return cli
+            return prompt
 
     def _should_show_limit_prompt(self, status, cur):
         """returns True if limit prompt should be shown, False otherwise."""
@@ -741,7 +718,7 @@ class PGCli(object):
                     break
 
             if self.pgspecial.auto_expand or self.auto_expand:
-                max_width = self.cli.output.get_size().columns
+                max_width = self.prompt_app.output.get_size().columns
             else:
                 max_width = None
 
@@ -810,13 +787,13 @@ class PGCli(object):
     def _on_completions_refreshed(self, new_completer, persist_priorities):
         self._swap_completer_objects(new_completer, persist_priorities)
 
-        if self.cli:
+        if self.prompt_app:
             # After refreshing, redraw the CLI to clear the statusbar
             # "Refreshing completions..." indicator
-            self.cli.request_redraw()
+            self.prompt_app.app.invalidate()
 
     def _swap_completer_objects(self, new_completer, persist_priorities):
-        """Swap the completer object in cli with the newly created completer.
+        """Swap the completer object with the newly created completer.
 
             persist_priorities is a string specifying how the old completer's
             learned prioritizer should be transferred to the new completer.
@@ -844,12 +821,6 @@ class PGCli(object):
             elif persist_priorities == 'none':
                 # Leave the new prioritizer as is
                 pass
-
-            # When pgcli is first launched we call refresh_completions before
-            # instantiating the cli object. So it is necessary to check if cli
-            # exists before trying the replace the completer object in cli.
-            if self.cli:
-                self.cli.current_buffer.completer = new_completer
 
     def get_completions(self, text, cursor_positition):
         with self._completer_lock:

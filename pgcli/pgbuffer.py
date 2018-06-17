@@ -1,25 +1,22 @@
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import Condition
+from prompt_toolkit.application import get_app
 from .packages.parseutils.utils import is_open_quote
 
 
-class PGBuffer(Buffer):
-    def __init__(self, always_multiline, multiline_mode, *args, **kwargs):
-        self.always_multiline = always_multiline
-        self.multiline_mode = multiline_mode
+def pg_is_multiline(pgcli):
+    @Condition
+    def cond():
+        doc = get_app().layout.get_buffer_by_name(DEFAULT_BUFFER).document
 
-        @Condition
-        def is_multiline():
-            doc = self.document
-            if not self.always_multiline:
-                return False
-            if self.multiline_mode == 'safe':
-                return True
-            else:
-                return not _multiline_exception(doc.text)
-
-        super(self.__class__, self).__init__(*args, is_multiline=is_multiline,
-                                             tempfile_suffix='.sql', **kwargs)
+        if not pgcli.multi_line:
+            return False
+        if pgcli.multiline_mode == 'safe':
+            return True
+        else:
+            return not _multiline_exception(doc.text)
+    return cond
 
 
 def _is_complete(sql):
