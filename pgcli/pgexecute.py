@@ -406,7 +406,7 @@ class PGExecute(object):
                 return cur.fetchone()[0]
 
     def view_definition(self, spec):
-        """Returns the SQL defining views described by `spec` """
+        """Returns the SQL defining views described by `spec`"""
 
         template = 'CREATE OR REPLACE {6} VIEW {0}.{1} AS \n{3}'
         # 2: relkind, v or m (materialized)
@@ -425,7 +425,7 @@ class PGExecute(object):
             return template.format(*result + (view_type,))
 
     def function_definition(self, spec):
-        """Returns the SQL defining functions described by `spec` """
+        """Returns the SQL defining functions described by `spec`"""
 
         with self.conn.cursor() as cur:
             sql = self.function_definition_query
