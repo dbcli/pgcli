@@ -332,9 +332,6 @@ class PromptSession(object):
             the validation succeeds. """
             self.app.exit(result=buff.document.text)
 
-            # Reset content before running again.
-            self.app.pre_run_callables.append(buff.reset)
-
         return Buffer(
             name=DEFAULT_BUFFER,
                 # Make sure that complete_while_typing is disabled when
