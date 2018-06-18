@@ -613,8 +613,6 @@ class PGCli(object):
                 if self.watch_command:
                     while self.watch_command:
                         try:
-                            query = self.execute_command(
-                                self.watch_command, query)
                             query = self.execute_command(self.watch_command)
                             click.echo(
                                 'Waiting for {0} seconds before repeating'
