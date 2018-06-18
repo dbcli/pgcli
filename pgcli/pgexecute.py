@@ -162,6 +162,27 @@ class PGExecute(object):
         WHERE name = 'unix_socket_directories'
     '''
 
+    view_definition_query = '''
+        WITH v AS (SELECT %s::pg_catalog.regclass::pg_catalog.oid AS v_oid)
+        SELECT nspname, relname, relkind, 
+               pg_catalog.pg_get_viewdef(c.oid, true), 
+               array_remove(array_remove(c.reloptions,'check_option=local'),
+                            'check_option=cascaded') AS reloptions, 
+               CASE 
+                 WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text 
+                 WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text 
+                 ELSE NULL 
+               END AS checkoption 
+        FROM pg_catalog.pg_class c 
+        LEFT JOIN pg_catalog.pg_namespace n ON (c.relnamespace = n.oid)
+        JOIN v ON (c.oid = v.v_oid)'''
+
+    function_definition_query = '''
+        WITH f AS 
+            (SELECT %s::pg_catalog.regproc::pg_catalog.oid AS f_oid)
+        SELECT pg_catalog.pg_get_functiondef(f.f_oid)
+        FROM f'''
+
     def __init__(self, database, user, password, host, port, dsn, **kwargs):
         self.dbname = database
         self.user = user
@@ -384,6 +405,38 @@ class PGExecute(object):
                 cur.execute(fallback)
                 return cur.fetchone()[0]
 
+    def view_definition(self, spec):
+        """Returns the SQL defining views described by `spec`"""
+
+        template = 'CREATE OR REPLACE {6} VIEW {0}.{1} AS \n{3}'
+        # 2: relkind, v or m (materialized)
+        # 4: reloptions, null
+        # 5: checkoption: local or cascaded
+        with self.conn.cursor() as cur:
+            sql = self.view_definition_query
+            _logger.debug('View Definition Query. sql: %r\nspec: %r',
+                          sql, spec)
+            try:
+                cur.execute(sql, (spec, ))
+            except psycopg2.ProgrammingError:
+                raise RuntimeError('View {} does not exist.'.format(spec))
+            result = cur.fetchone()
+            view_type = 'MATERIALIZED' if result[2] == 'm' else ''
+            return template.format(*result + (view_type,))
+
+    def function_definition(self, spec):
+        """Returns the SQL defining functions described by `spec`"""
+
+        with self.conn.cursor() as cur:
+            sql = self.function_definition_query
+            _logger.debug('Function Definition Query. sql: %r\nspec: %r',
+                          sql, spec)
+            try:
+                cur.execute(sql, (spec,))
+                result = cur.fetchone()
+                return result[0]
+            except psycopg2.ProgrammingError:
+                raise RuntimeError('Function {} does not exist.'.format(spec))
 
     def schemata(self):
         """Returns a list of schema names in the database"""
