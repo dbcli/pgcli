@@ -456,6 +456,13 @@ def load_vi_bindings():
     handle('enter', filter=is_returnable & ~is_multiline)(
         get_by_name('accept-line'))
 
+    @handle('enter', filter=~is_returnable & vi_navigation_mode)
+    def _(event):
+        " Go to the beginning of next line. "
+        b = event.current_buffer
+        b.cursor_down(count=event.arg)
+        b.cursor_position += b.document.get_start_of_line_position(after_whitespace=True)
+
     # ** In navigation mode **
 
     # List of navigation commands: http://hea-www.harvard.edu/~fine/Tech/vi.html
