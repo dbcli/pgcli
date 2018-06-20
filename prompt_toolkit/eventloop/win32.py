@@ -18,6 +18,7 @@ import msvcrt
 __all__ = [
     'Win32EventLoop',
     'wait_for_handles',
+    'create_win32_event',
 ]
 
 WAIT_TIMEOUT = 0x00000102
@@ -34,7 +35,7 @@ class Win32EventLoop(EventLoop):
     def __init__(self, recognize_paste=True):
         super(Win32EventLoop, self).__init__()
 
-        self._event = _create_event()
+        self._event = create_win32_event()
         self._calls_from_executor = []
 
         self.closed = False
@@ -203,11 +204,15 @@ def wait_for_handles(handles, timeout=INFINITE):
         return h
 
 
-def _create_event():
+def create_win32_event():
     """
     Creates a Win32 unnamed Event .
 
     http://msdn.microsoft.com/en-us/library/windows/desktop/ms682396(v=vs.85).aspx
     """
     return windll.kernel32.CreateEventA(
-        pointer(SECURITY_ATTRIBUTES()), BOOL(True), BOOL(False), None)
+        pointer(SECURITY_ATTRIBUTES()),
+        BOOL(True),  # Manual reset event.
+        BOOL(False),  # Initial state.
+        None  # Unnamed event object.
+    )
