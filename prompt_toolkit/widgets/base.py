@@ -19,11 +19,11 @@ import six
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
-from prompt_toolkit.filters import to_filter
+from prompt_toolkit.filters import to_filter, Condition
 from prompt_toolkit.formatted_text import to_formatted_text, Template, is_formatted_text
 from prompt_toolkit.formatted_text.utils import fragment_list_to_text
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from prompt_toolkit.layout.containers import Window, VSplit, HSplit, FloatContainer, Float, WindowAlign, is_container
+from prompt_toolkit.layout.containers import Window, VSplit, HSplit, FloatContainer, Float, WindowAlign, is_container, ConditionalContainer, DynamicContainer
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.layout.dimension import is_dimension, to_dimension
@@ -294,6 +294,9 @@ class Frame(object):
     """
     Draw a border around any container, optionally with a title text.
 
+    Changing the title and body of the frame is possible at runtime by
+    assigning to the `body` and `title` attributes of this class.
+
     :param body: Another container object.
     :param title: Text to be displayed in the top of the frame (can be formatted text).
     :param style: Style string to be applied to this widget.
@@ -308,33 +311,46 @@ class Frame(object):
         assert key_bindings is None or isinstance(key_bindings, KeyBindings)
         assert isinstance(modal, bool)
 
+        self.title = title
+        self.body = body
+
         fill = partial(Window, style='class:frame.border')
         style = 'class:frame ' + style
 
-        if title:
-            top_row = VSplit([
-                fill(width=1, height=1, char=Border.TOP_LEFT),
-                fill(char=Border.HORIZONTAL),
-                fill(width=1, height=1, char='|'),
-                Label(Template(' {} ').format(title),
-                      style='class:frame.label',
-                      dont_extend_width=True),
-                fill(width=1, height=1, char='|'),
-                fill(char=Border.HORIZONTAL),
-                fill(width=1, height=1, char=Border.TOP_RIGHT),
-            ], height=1)
-        else:
-            top_row = VSplit([
-                fill(width=1, height=1, char=Border.TOP_LEFT),
-                fill(char=Border.HORIZONTAL),
-                fill(width=1, height=1, char=Border.TOP_RIGHT),
-            ], height=1)
+        top_row_with_title = VSplit([
+            fill(width=1, height=1, char=Border.TOP_LEFT),
+            fill(char=Border.HORIZONTAL),
+            fill(width=1, height=1, char='|'),
+            # Notice: we use `Template` here, because `self.title` can be an
+            # `HTML` object for instance.
+            Label(lambda: Template(' {} ').format(self.title),
+                  style='class:frame.label',
+                  dont_extend_width=True),
+            fill(width=1, height=1, char='|'),
+            fill(char=Border.HORIZONTAL),
+            fill(width=1, height=1, char=Border.TOP_RIGHT),
+        ], height=1)
+
+        top_row_without_title = VSplit([
+            fill(width=1, height=1, char=Border.TOP_LEFT),
+            fill(char=Border.HORIZONTAL),
+            fill(width=1, height=1, char=Border.TOP_RIGHT),
+        ], height=1)
+
+        @Condition
+        def has_title():
+            return bool(self.title)
 
         self.container = HSplit([
-            top_row,
+            ConditionalContainer(
+                content=top_row_with_title,
+                filter=has_title),
+            ConditionalContainer(
+                content=top_row_without_title,
+                filter=~has_title),
             VSplit([
                 fill(width=1, char=Border.VERTICAL),
-                body,
+                DynamicContainer(lambda: self.body),
                 fill(width=1, char=Border.VERTICAL),
                     # Padding is required to make sure that if the content is
                     # too small, that the right frame border is still aligned.
