@@ -208,7 +208,8 @@ class PromptSession(object):
         return formatted text.
     :param prompt_continuation: Text that needs to be displayed for a multiline
         prompt continuation. This can either be formatted text or a callable
-        that the width as input and returns formatted text.
+        that takes a `width`, `line_number` and `is_soft_wrap` as input and
+        returns formatted text.
     :param complete_style: ``CompleteStyle.COLUMN``,
         ``CompleteStyle.MULTI_COLUMN`` or ``CompleteStyle.READLINE_LIKE``.
     :param mouse_support: `bool` or :class:`~prompt_toolkit.filters.Filter`
