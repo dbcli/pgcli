@@ -45,7 +45,7 @@ And one prepared menu:
 
 """
 from __future__ import unicode_literals
-from .containers import Container, HSplit, VSplit, FloatContainer, Float, Window, WindowAlign, WindowRenderInfo, ConditionalContainer, ScrollOffsets, ColorColumn, to_container, to_window, is_container, HorizontalAlign, VerticalAlign
+from .containers import Container, HSplit, VSplit, FloatContainer, Float, Window, WindowAlign, WindowRenderInfo, ConditionalContainer, ScrollOffsets, ColorColumn, to_container, to_window, is_container, HorizontalAlign, VerticalAlign, DynamicContainer
 from .controls import BufferControl, SearchBufferControl, DummyControl, FormattedTextControl, UIControl, UIContent
 from .dimension import Dimension, D, sum_layout_dimensions, max_layout_dimensions, to_dimension, is_dimension
 from .layout import Layout, InvalidLayoutError, walk
@@ -83,6 +83,7 @@ __all__ = [
     'to_container',
     'to_window',
     'is_container',
+    'DynamicContainer',
 
     # Controls.
     'BufferControl',

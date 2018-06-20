@@ -39,6 +39,7 @@ __all__ = [
     'to_container',
     'to_window',
     'is_container',
+    'DynamicContainer',
 ]
 
 
@@ -2075,6 +2076,38 @@ class ConditionalContainer(Container):
 
     def get_children(self):
         return [self.content]
+
+
+class DynamicContainer(Container):
+    """
+    Container class that can dynamically returns any Container.
+
+    :param get_container: Callable that returns a :class:`.Container` instance.
+    """
+    def __init__(self, get_container):
+        assert callable(get_container)
+        self.get_container = get_container
+
+    def reset(self):
+        self.get_container.reset()
+
+    def preferred_width(self, max_available_width):
+        return self.get_container().preferred_width(max_available_width)
+
+    def preferred_height(self, width, max_available_height):
+        return self.get_container().preferred_height(width, max_available_height)
+
+    def write_to_screen(self, *a, **kw):
+        self.get_container().write_to_screen(*a, **kw)
+
+    def is_modal(self):
+        return self.get_container().is_modal()
+
+    def get_key_bindings(self):
+        self.get_container().get_key_bindings()
+
+    def get_children(self):
+        return self.get_container().get_children()
 
 
 def to_container(container):
