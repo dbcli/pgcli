@@ -162,7 +162,7 @@ efficient. We prefer short functions focusing each on one task and for which
 the input and output types are clearly specified. We mostly prefer composition
 over inheritance, because inheritance can result in too much functionality in
 the same object. We prefer immutable objects where possible (objects don't
-change after initialisation). Reusability is important. We absolutely refrain
+change after initialization). Reusability is important. We absolutely refrain
 from having a changing global state, it should be possible to have multiple
 independent instances of the same code in the same process. The architecture
 should be layered: the lower levels operate on primitive operations and data
