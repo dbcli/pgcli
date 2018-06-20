@@ -120,7 +120,7 @@ class TextArea(object):
             read_only=read_only,
             completer=completer,
             complete_while_typing=True,
-            accept_handler=lambda buff: accept_handler and accept_handler())
+            accept_handler=(lambda buff: accept_handler()) if accept_handler else None)
 
         self.control = BufferControl(
             buffer=self.buffer,
