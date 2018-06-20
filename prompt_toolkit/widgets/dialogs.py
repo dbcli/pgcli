@@ -7,7 +7,7 @@ from prompt_toolkit.filters import has_completions, has_focus
 from prompt_toolkit.formatted_text import is_formatted_text
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
-from prompt_toolkit.layout.containers import VSplit, HSplit
+from prompt_toolkit.layout.containers import VSplit, HSplit, DynamicContainer
 from prompt_toolkit.layout.dimension import Dimension as D
 
 __all__ = [
@@ -29,6 +29,9 @@ class Dialog(object):
         assert is_formatted_text(title)
         assert buttons is None or isinstance(buttons, list)
 
+        self.body = body
+        self.title = title
+
         buttons = buttons or []
 
         # When a button is selected, handle left/right key bindings.
@@ -43,7 +46,8 @@ class Dialog(object):
         if buttons:
             frame_body = HSplit([
                 # Add optional padding around the body.
-                Box(body=body, padding=D(preferred=1, max=1),
+                Box(body=DynamicContainer(lambda: self.body),
+                    padding=D(preferred=1, max=1),
                     padding_bottom=0),
                 # The buttons.
                 Box(body=VSplit(buttons, padding=1, key_bindings=buttons_kb),
@@ -58,7 +62,7 @@ class Dialog(object):
         kb.add('s-tab', filter=~has_completions)(focus_previous)
 
         frame = Shadow(body=Frame(
-            title=title,
+            title=lambda: self.title,
             body=frame_body,
             style='class:dialog.body',
             width=(None if with_background is None else width),

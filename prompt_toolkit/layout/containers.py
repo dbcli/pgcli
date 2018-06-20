@@ -2089,7 +2089,7 @@ class DynamicContainer(Container):
         self.get_container = get_container
 
     def reset(self):
-        self.get_container.reset()
+        self.get_container().reset()
 
     def preferred_width(self, max_available_width):
         return self.get_container().preferred_width(max_available_width)
