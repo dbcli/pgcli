@@ -170,7 +170,7 @@ class TextArea(object):
 
     @text.setter
     def text(self, value):
-        self.buffer.document = Document(value, 0)
+        self.buffer.set_document(Document(value, 0), bypass_readonly=True)
 
     @property
     def document(self):
