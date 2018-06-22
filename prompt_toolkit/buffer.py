@@ -997,6 +997,14 @@ class Buffer(object):
     def copy_selection(self, _cut=False):
         """
         Copy selected text and return :class:`.ClipboardData` instance.
+
+        Notice that this doesn't store the copied data on the clipboard yet.
+        You can store it like this:
+
+        .. code:: python
+
+            data = buffer.copy_selection()
+            get_app().clipboard.set_data(data)
         """
         new_document, clipboard_data = self.document.cut_selection()
         if _cut:
