@@ -59,9 +59,9 @@ class TextInputDialog(object):
     def __init__(self, title='', label_text='', completer=None):
         self.future = Future()
 
-        def accept_text():
+        def accept_text(buf):
             get_app().layout.focus(ok_button)
-            self.text_area.buffer.complete_state = None
+            buf.complete_state = None
 
         def accept():
             self.future.set_result(self.text_area.text)

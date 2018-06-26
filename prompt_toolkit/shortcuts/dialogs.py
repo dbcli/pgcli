@@ -68,7 +68,7 @@ def input_dialog(title='', text='', ok_text='OK', cancel_text='Cancel',
     Display a text input box.
     Return the given text, or None when cancelled.
     """
-    def accept():
+    def accept(buf):
         get_app().layout.focus(ok_button)
 
     def ok_handler():
