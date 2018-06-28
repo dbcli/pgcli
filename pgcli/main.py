@@ -412,7 +412,10 @@ class PGCli(object):
         # Find password from store
         key = '%s@%s' % (user, host)
         if not passwd:
-            passwd = keyring.get_password('pgcli', key)
+            try:
+                passwd = keyring.get_password('pgcli', key)
+            except RuntimeError:
+                pass
 
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
@@ -450,7 +453,10 @@ class PGCli(object):
                                           dsn, application_name='pgcli',
                                           **kwargs)
                     if passwd:
-                        keyring.set_password('pgcli', key, passwd)
+                        try:
+                            keyring.set_password('pgcli', key, passwd)
+                        except (keyring.errors.InitError, RuntimeError):
+                            pass
                 else:
                     raise e
 
