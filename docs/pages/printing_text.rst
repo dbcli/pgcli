@@ -76,7 +76,7 @@ HTML
 ^^^^
 
 :class:`~prompt_toolkit.formatted_text.HTML` can be used to indicate that a
-string contains HTML-like formatting. It supports the basic tags for bold,
+string contains HTML-like formatting. It recognizes the basic tags for bold,
 italic and underline: ``<b>``, ``<i>`` and ``<u>``.
 
 .. code:: python
@@ -102,15 +102,15 @@ Further, it's possible to use tags for foreground colors:
     print_formatted_text(HTML('<violet>This is violet</violet>'))
 
 Both foreground and background colors can also be specified setting the `fg`
-and `bg` attributes of any tag:
+and `bg` attributes of any HTML tag:
 
 .. code:: python
 
     # Colors from the ANSI palette.
-    print_formatted_text(HTML('<style fg="#ff0044" bg="seagreen">Red on green</style>'))
+    print_formatted_text(HTML('<aaa fg="ansiwhite" bg="ansigreen">White on green</aaa>'))
 
-Underneath, all tags are mapped to classes from the style sheet. So, if you use
-a custom tag, then you can assign a style in the stylesheet.
+Underneath, all HTML tags are mapped to classes from a stylesheet, so you can
+assign a style for a custom tag.
 
 .. code:: python
 
