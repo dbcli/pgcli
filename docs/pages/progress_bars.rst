@@ -54,7 +54,7 @@ in order to make displaying the progress possible:
             time.sleep(.01)
 
 
-Multiple parallal tasks
+Multiple parallel tasks
 -----------------------
 
 A prompt_toolkit :class:`~prompt_toolkit.shortcuts.ProgressBar` can display the
@@ -75,7 +75,7 @@ want this depends on the application.
 
 
     with ProgressBar() as pb:
-        # Two parallal tasks.
+        # Two parallel tasks.
         def task_1():
             for i in pb(range(100)):
                 time.sleep(.05)
