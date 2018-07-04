@@ -837,3 +837,4 @@ Improvements:
 .. _`Rishi Ramraj`: https://github.com/RishiRamraj
 .. _`Matthieu Guilbert`: https://github.com/gma2th
 .. _`Alexandr Korsak`: https://github.com/oivoodoo
+.. _`Saif Hakim`: https://github.com/saifelse
