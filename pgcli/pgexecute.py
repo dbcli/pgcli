@@ -353,7 +353,7 @@ class PGExecute(object):
 
     def _must_raise(self, e):
         """Return true if e is an error that should not be caught in ``run``.
-        
+
         An uncaught error will prompt the user to reconnect; as long as we
         detect that the connection is stil open, we catch the error, as
         reconnecting won't solve that problem.
