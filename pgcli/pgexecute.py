@@ -353,22 +353,17 @@ class PGExecute(object):
 
     def _must_raise(self, e):
         """Return true if e is an error that should not be caught in ``run``.
-
-        ``OperationalError``s are raised for errors that are not under the
-        control of the programmer. Usually that means unexpected disconnects,
-        which we shouldn't catch; we handle uncaught errors by prompting the
-        user to reconnect. We *do* want to catch OperationalErrors caused by a
-        lock being unavailable, as reconnecting won't solve that problem.
+        
+        An uncaught error will prompt the user to reconnect; as long as we
+        detect that the connection is stil open, we catch the error, as
+        reconnecting won't solve that problem.
 
         :param e: DatabaseError. An exception raised while executing a query.
 
         :return: Bool. True if ``run`` must raise this exception.
 
         """
-        return (isinstance(e, psycopg2.OperationalError) and
-                (not e.pgcode or
-                 psycopg2.errorcodes.lookup(e.pgcode) not in
-                 ('LOCK_NOT_AVAILABLE', 'CANT_CHANGE_RUNTIME_PARAM')))
+        return self.conn.closed != 0
 
     def execute_normal_sql(self, split_sql):
         """Returns tuple (title, rows, headers, status)"""
