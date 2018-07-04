@@ -20,7 +20,7 @@ Internal changes:
 Bug Fixes:
 ----------
 * Disable pager when using \watch (#837). (Thanks: `Jason Ribeiro`_)
-* Don't offer to reconnect when we can't change a param in realtime (#807). (Thanks: `Amjith Ramanujam`_)
+* Don't offer to reconnect when we can't change a param in realtime (#807). (Thanks: `Amjith Ramanujam`_ and `Saif Hakim`_)
 * Make keyring optional. (Thanks: `Dick Marinus`_)
 * Fix ipython magic connection (#891). (Thanks: `Irina Truong`_)
 * Fix not enough values to unpack. (Thanks: `Matthieu Guilbert`_)
@@ -837,3 +837,4 @@ Improvements:
 .. _`Rishi Ramraj`: https://github.com/RishiRamraj
 .. _`Matthieu Guilbert`: https://github.com/gma2th
 .. _`Alexandr Korsak`: https://github.com/oivoodoo
+.. _`Saif Hakim`: https://github.com/saifelse
