@@ -132,8 +132,8 @@ ANSI
 Some people like to use the VT100 ANSI escape sequences to generate output.
 Natively, this is however only supported on VT100 terminals, but prompt_toolkit
 can parse these, and map them to formatted text instances. This means that they
-will work on Windows as well. The :class:`~prompt_toolkit.formatted.ANSI` class
-takes care of that.
+will work on Windows as well. The :class:`~prompt_toolkit.formatted_text.ANSI`
+class takes care of that.
 
 .. code:: python
 
@@ -148,13 +148,14 @@ depth, it is possible that colors are mapped to different colors, and unknown
 tags will be removed.
 
 
-Style/text tuples
-^^^^^^^^^^^^^^^^^
+(style, text) tuples
+^^^^^^^^^^^^^^^^^^^^
 
 Internally, both :class:`~prompt_toolkit.formatted_text.HTML` and
 :class:`~prompt_toolkit.formatted_text.ANSI` objects are mapped to a list of
 ``(style, text)`` tuples. It is however also possible to create such a list
-manually. This is a little more verbose, but it's probably the most powerful
+manually with :class:`~prompt_toolkit.formatted_text.FormattedText` class.
+This is a little more verbose, but it's probably the most powerful
 way of expressing formatted text.
 
 .. code:: python
