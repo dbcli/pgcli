@@ -35,8 +35,8 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.filters import Always, HasFocus, IsDone
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.processors import (ConditionalProcessor,
-                                        HighlightMatchingBracketProcessor,
-                                        TabsProcessor)
+                                              HighlightMatchingBracketProcessor,
+                                              TabsProcessor)
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from pygments.lexers.sql import PostgresLexer
@@ -685,10 +685,12 @@ class PGCli(object):
             extra_input_processors=[
                 # Highlight matching brackets while editing.
                 ConditionalProcessor(
-                    processor=HighlightMatchingBracketProcessor(chars='[](){}'),
+                    processor=HighlightMatchingBracketProcessor(
+                        chars='[](){}'),
                     filter=HasFocus(DEFAULT_BUFFER) & ~IsDone()),
                 # Render \t as 4 spaces instead of "^I"
-                TabsProcessor(get_char1=lambda _: ' ', get_char2=lambda _: ' '),
+                TabsProcessor(get_char1=lambda _: ' ',
+                              get_char2=lambda _: ' '),
             ])
 
         with self._completer_lock:
