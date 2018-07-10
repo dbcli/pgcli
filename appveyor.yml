@@ -1,0 +1,45 @@
+environment:
+  matrix:
+    - PYTHON: "C:\\Python36"
+      PYTHON_VERSION: "3.6"
+    - PYTHON: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6"
+
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5"
+    - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5"
+
+    - PYTHON: "C:\\Python34"
+      PYTHON_VERSION: "3.4"
+    - PYTHON: "C:\\Python34-x64"
+      PYTHON_VERSION: "3.4"
+
+    - PYTHON: "C:\\Python33"
+      PYTHON_VERSION: "3.3"
+    - PYTHON: "C:\\Python33-x64"
+      PYTHON_VERSION: "3.3"
+
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7"
+    - PYTHON: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7"
+
+    - PYTHON: "C:\\Python26"
+      PYTHON_VERSION: "2.6"
+    - PYTHON: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.6"
+
+install:
+  - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - pip install . pytest coverage codecov flake8
+  - pip list
+
+build: false
+
+test_script:
+  - If not ($env:PYTHON_VERSION==2.6) flake8 prompt_toolkit
+  - coverage run -m pytest
+
+after_test:
+  - codecov
