@@ -541,8 +541,8 @@ so the bottom toolbar can be used to display dynamic information.
 The toolbar is always erased when the prompt returns.
 Here we have an example of a callable that returns an
 :class:`~prompt_toolkit.formatted_text.HTML` object. By default, the toolbar
-has the reversed style, which is why we are setting the background instead of
-the foreground.
+has the **reversed style**, which is why we are setting the background instead
+of the foreground.
 
 .. code:: python
 
