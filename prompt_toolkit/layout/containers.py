@@ -2082,32 +2082,43 @@ class DynamicContainer(Container):
     """
     Container class that can dynamically returns any Container.
 
-    :param get_container: Callable that returns a :class:`.Container` instance.
+    :param get_container: Callable that returns a :class:`.Container` instance
+        or any widget with a ``__pt_container__`` method.
     """
     def __init__(self, get_container):
         assert callable(get_container)
         self.get_container = get_container
 
+    def _get_container(self):
+        """
+        Return the current container object.
+
+        We call `to_container`, because `get_container` can also return a
+        widget with a ``__pt_container__`` method.
+        """
+        obj = self.get_container()
+        return to_container(obj)
+
     def reset(self):
-        self.get_container().reset()
+        self._get_container().reset()
 
     def preferred_width(self, max_available_width):
-        return self.get_container().preferred_width(max_available_width)
+        return self._get_container().preferred_width(max_available_width)
 
     def preferred_height(self, width, max_available_height):
-        return self.get_container().preferred_height(width, max_available_height)
+        return self._get_container().preferred_height(width, max_available_height)
 
     def write_to_screen(self, *a, **kw):
-        self.get_container().write_to_screen(*a, **kw)
+        self._get_container().write_to_screen(*a, **kw)
 
     def is_modal(self):
-        return self.get_container().is_modal()
+        return self._get_container().is_modal()
 
     def get_key_bindings(self):
-        self.get_container().get_key_bindings()
+        self._get_container().get_key_bindings()
 
     def get_children(self):
-        return self.get_container().get_children()
+        return self._get_container().get_children()
 
 
 def to_container(container):
