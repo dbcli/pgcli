@@ -637,7 +637,7 @@ class PGCli(object):
 
                 self.query_history.append(query)
 
-        except PgCliQuitError:
+        except (PgCliQuitError, EOFError):
             if not self.less_chatty:
                 print ('Goodbye!')
 
