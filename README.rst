@@ -1,7 +1,7 @@
 Python Prompt Toolkit
 =====================
 
-|Build Status|  |PyPI|
+|Build Status|  |AppVeyor|  |PyPI|  |RTD|  |License|
 
 ``prompt_toolkit`` is a library for building powerful interactive command lines
 and terminal applications in Python.
@@ -185,6 +185,14 @@ Special thanks to
     :target: https://pypi.python.org/pypi/prompt-toolkit/
     :alt: Latest Version
 
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true
+    :target: https://ci.appveyor.com/project/jonathanslenders/python-prompt-toolkit/
+
+.. |RTD| image:: https://readthedocs.org/projects/python-prompt-toolkit/badge/
+    :target: https://python-prompt-toolkit.readthedocs.io/en/master/
+
+.. |License| image:: https://img.shields.io/github/license/jonathanslenders/python-prompt-toolkit.svg
+    :target: https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/LICENSE
 
 Other libraries and implementations in other languages
 ******************************************************
