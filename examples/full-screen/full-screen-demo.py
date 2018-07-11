@@ -15,7 +15,7 @@ from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import TextArea, Label, Frame, Box, Checkbox, Dialog, Button, RadioList, MenuContainer, MenuItem, ProgressBar
-from pygments.lexers import HtmlLexer
+from pygments.lexers.html import HtmlLexer
 
 
 def accept_yes():
