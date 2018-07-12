@@ -166,8 +166,8 @@ adaptor to make it compatible with the native prompt_toolkit objects.
   Pygments style class can be converted in a prompt_toolkit
   :class:`~prompt_toolkit.styles.Style` with the
   :func:`~prompt_toolkit.styles.pygments.style_from_pygments_cls` function
-        (which used to be called ``style_from_pygments``). A
-  Pygments style dictionary can be converted using
+  (which used to be called ``style_from_pygments``). A Pygments style
+  dictionary can be converted using
   :func:`~prompt_toolkit.styles.pygments.style_from_pygments_dict`.
 
   Multiple styles can be merged together using
