@@ -228,7 +228,7 @@ More complex layouts can be achieved by nesting multiple
 
 If you want to make some part of the layout only visible when a certain
 condition is satisfied, use a
-:class:`~prompt_toolkit.layout.containers.ConditionalContainer`.
+:class:`~prompt_toolkit.layout.ConditionalContainer`.
 
 
 Focusing windows
