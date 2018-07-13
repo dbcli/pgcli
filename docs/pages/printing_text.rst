@@ -230,7 +230,7 @@ Similarly, it is also possible to print the output of a Pygments lexer:
 
     import pygments
     from pygments.token import Token
-    from pygments.lexers import PythonLexer
+    from pygments.lexers.python import PythonLexer
 
     from prompt_toolkit.formatted_text import PygmentsTokens
     from prompt_toolkit import print_formatted_text

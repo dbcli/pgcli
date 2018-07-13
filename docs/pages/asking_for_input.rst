@@ -90,7 +90,7 @@ base class.
 
 .. code:: python
 
-    from pygments.lexers import HtmlLexer
+    from pygments.lexers.html import HtmlLexer
     from prompt_toolkit.shortcuts import prompt
     from prompt_toolkit.lexers import PygmentsLexer
 
@@ -105,7 +105,7 @@ you can do the following:
 
 .. code:: python
 
-    from pygments.lexers import HtmlLexer
+    from pygments.lexers.html import HtmlLexer
     from pygments.styles import get_style_by_name
     from prompt_toolkit.shortcuts import prompt
     from prompt_toolkit.lexers import PygmentsLexer
@@ -134,7 +134,7 @@ function:
 
 .. code:: python
 
-    from pygments.lexers import HtmlLexer
+    from pygments.lexers.html import HtmlLexer
     from prompt_toolkit.shortcuts import prompt
     from prompt_toolkit.styles import Style
     from prompt_toolkit.lexers import PygmentsLexer
@@ -178,7 +178,7 @@ Creating a custom style could be done like this:
     from prompt_toolkit.lexers import PygmentsLexer
 
     from pygments.styles.tango import TangoStyle
-    from pygments.lexers import HtmlLexer
+    from pygments.lexers.html import HtmlLexer
 
     our_style = merge_styles([
         style_from_pygments_cls(TangoStyle),

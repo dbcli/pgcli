@@ -14,7 +14,7 @@ from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import TextArea, SearchToolbar
 
-from pygments.lexers import PythonLexer
+from pygments.lexers.python import PythonLexer
 
 
 # Create one text buffer for the main content.

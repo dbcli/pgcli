@@ -95,7 +95,7 @@ wrapped into a :class:`~prompt_toolkit.lexers.PygmentsLexer`.
     from __future__ import unicode_literals
     from prompt_toolkit import PromptSession
     from prompt_toolkit.lexers import PygmentsLexer
-    from pygments.lexers import SqlLexer
+    from pygments.lexers.sql import SqlLexer
 
     def main():
         session = PromptSession(lexer=PygmentsLexer(SqlLexer)
@@ -138,7 +138,7 @@ Like the lexer, this ``sql_completer`` instance can be passed to either the
     from prompt_toolkit import PromptSession
     from prompt_toolkit.completion import WordCompleter
     from prompt_toolkit.lexers import PygmentsLexer
-    from pygments.lexers import SqlLexer
+    from pygments.lexers.sql import SqlLexer
 
     sql_completer = WordCompleter([
         'abort', 'action', 'add', 'after', 'all', 'alter', 'analyze', 'and',
@@ -200,7 +200,7 @@ function.
     from prompt_toolkit.completion import WordCompleter
     from prompt_toolkit.lexers import PygmentsLexer
     from prompt_toolkit.styles import Style
-    from pygments.lexers import SqlLexer
+    from pygments.lexers.sql import SqlLexer
 
     sql_completer = WordCompleter([
         'abort', 'action', 'add', 'after', 'all', 'alter', 'analyze', 'and',
@@ -274,7 +274,7 @@ gives a good idea of how to get started.
     from prompt_toolkit.completion import WordCompleter
     from prompt_toolkit.lexers import PygmentsLexer
     from prompt_toolkit.styles import Style
-    from pygments.lexers import SqlLexer
+    from pygments.lexers.sql import SqlLexer
 
     sql_completer = WordCompleter([
         'abort', 'action', 'add', 'after', 'all', 'alter', 'analyze', 'and',

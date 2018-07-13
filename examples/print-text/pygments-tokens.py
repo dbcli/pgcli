@@ -6,7 +6,7 @@ or an output of a Pygments lexer.
 from __future__ import unicode_literals
 import pygments
 from pygments.token import Token
-from pygments.lexers import PythonLexer
+from pygments.lexers.python import PythonLexer
 
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import PygmentsTokens

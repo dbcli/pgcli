@@ -131,7 +131,7 @@ class PygmentsLexer(Lexer):
 
     Example::
 
-        from pygments.lexers import HtmlLexer
+        from pygments.lexers.html import HtmlLexer
         lexer = PygmentsLexer(HtmlLexer)
 
     Note: Don't forget to also load a Pygments compatible style. E.g.::
