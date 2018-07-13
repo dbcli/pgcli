@@ -31,6 +31,9 @@ class Win32PipeInput(Input):
     def __init__(self):
         # Event (handle) for registering this input in the event loop.
         # This event is set when there is data available to read from the pipe.
+        # Note: We use this approach instead of using a regular pipe, like
+        #       returned from `os.pipe()`, because making such a regular pipe
+        #       non-blocking is tricky and this works really well.
         self._event = create_win32_event()
 
         self._closed = False
