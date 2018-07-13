@@ -3,9 +3,8 @@ from .base import Input
 from .vt100_parser import Vt100Parser
 from .win32 import attach_win32_input, detach_win32_input
 
-from ctypes import windll, pointer, byref, create_string_buffer
-from ctypes.wintypes import DWORD, HANDLE
-from prompt_toolkit.eventloop.win32 import wait_for_handles, create_win32_event
+from ctypes import windll
+from prompt_toolkit.eventloop.win32 import create_win32_event
 
 __all__ = [
     'Win32PipeInput'

@@ -22,7 +22,7 @@ __all__ = [
     'Win32Input',
     'ConsoleInputReader',
     'raw_mode',
-    'cooked_mode'
+    'cooked_mode',
     'attach_win32_input',
     'detach_win32_input',
 ]

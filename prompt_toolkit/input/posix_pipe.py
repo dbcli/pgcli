@@ -29,7 +29,7 @@ class PosixPipeInput(Vt100Input):
             def fileno(stdin):
                 return self._r
 
-        super(PipeInput, self).__init__(Stdin())
+        super(PosixPipeInput, self).__init__(Stdin())
         self.send_text(text)
 
         # Identifier for every PipeInput for the hash.

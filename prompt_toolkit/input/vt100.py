@@ -13,7 +13,6 @@ import contextlib
 
 __all__ = [
     'Vt100Input',
-    'PipeInput',
     'raw_mode',
     'cooked_mode',
 ]
