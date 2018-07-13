@@ -25,6 +25,7 @@ Bug Fixes:
 * Fix ipython magic connection (#891). (Thanks: `Irina Truong`_)
 * Fix not enough values to unpack. (Thanks: `Matthieu Guilbert`_)
 * Fix unbound local error when destructive_warning is false. (Thanks: `Matthieu Guilbert`_)
+* Render tab characters as 4 spaces instead of `^I`. (Thanks: `Artur Balabanov`_)
 
 1.9.1:
 ======
@@ -838,3 +839,4 @@ Improvements:
 .. _`Matthieu Guilbert`: https://github.com/gma2th
 .. _`Alexandr Korsak`: https://github.com/oivoodoo
 .. _`Saif Hakim`: https://github.com/saifelse
+.. _`Artur Balabanov`: https://github.com/arturbalabanov
