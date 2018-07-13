@@ -403,6 +403,7 @@ def _attach_win32_input(input, callback):
     :param input_ready_callback: Called when the input is ready to read.
     """
     assert isinstance(input, Input)
+    assert callable(callback)
 
     loop = get_event_loop()
     previous_callback = _current_callbacks.get(loop)
@@ -425,6 +426,8 @@ def _attach_win32_input(input, callback):
 
 @contextmanager
 def _detach_win32_input(input):
+    assert isinstance(input, Input)
+
     loop = get_event_loop()
     previous = _current_callbacks.get(loop)
 
