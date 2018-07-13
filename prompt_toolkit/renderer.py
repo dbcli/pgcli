@@ -364,6 +364,11 @@ class Renderer(object):
     def request_absolute_cursor_position(self):
         """
         Get current cursor position.
+
+        We do this to calculate the minimum available height that we can
+        consume for rendering the prompt. This is the available space below te
+        cursor.
+
         For vt100: Do CPR request. (answer will arrive later.)
         For win32: Do API call. (Answer comes immediately.)
         """
@@ -371,14 +376,15 @@ class Renderer(object):
         # clear or reset). We will rely on that in `report_absolute_cursor_row`.
         assert self._cursor_pos.y == 0
 
+        # In full-screen mode, always use the total height as min-available-height.
+        if self.full_screen:
+            self._min_available_height = self.output.get_size().rows
         # For Win32, we have an API call to get the number of rows below the
         # cursor.
-        if is_windows():
+        elif is_windows():
             self._min_available_height = self.output.get_rows_below_cursor_position()
         else:
-            if self.full_screen:
-                self._min_available_height = self.output.get_size().rows
-            elif self.cpr_support == CPR_Support.NOT_SUPPORTED:
+            if self.cpr_support == CPR_Support.NOT_SUPPORTED:
                 return
             else:
                 # Asks for a cursor position report (CPR).
