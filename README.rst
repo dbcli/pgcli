@@ -12,10 +12,11 @@ Read the `documentation on readthedocs
 NOTICE: prompt_toolkit 2.0
 **************************
 
-Please notice that this is the 2.0 branch of prompt_toolkit. It is incompatible
-with the 1.0 branch, but much better in many regards. On Pypi you'll still find
-the 1.0 branch, but a release should follow soon. In the meantime, don't
-hesitate to test this branch and report any bugs.
+Please notice that this is prompt_toolkit 2.0. It is incompatible with the 1.0
+branch, but much better in many regards. Many applications are still using
+prompt_toolkit 1.0, but upgrading is strongly recommended. Feel free to open a
+new issue if you don't manage to upgrade to prompt_toolkit 2.0.
+
 
 Ptpython
 ********
