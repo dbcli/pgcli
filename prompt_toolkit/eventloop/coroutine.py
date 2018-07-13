@@ -20,8 +20,8 @@ def ensure_future(future_or_coroutine):
     elif isinstance(future_or_coroutine, types.GeneratorType):
         return _run_coroutine(future_or_coroutine)
     else:
-        raise ValueError('Expecting coroutine or Future object. Got %r' %
-                         type(future_or_coroutine))
+        raise ValueError('Expecting coroutine or Future object. Got %r: %r' % (
+                         type(future_or_coroutine), future_or_coroutine))
 
 
 class Return(Exception):
