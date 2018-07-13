@@ -1,21 +1,26 @@
-Upcoming:
-=========
+Upcoming
+========
+
+TODO
+
+1.10.0
+======
 
 Features:
 ---------
 * Add quit commands to the completion menu. (Thanks: `Jason Ribeiro`_)
 * Add table formats to ``\T`` completion. (Thanks: `Jason Ribeiro`_)
+* Support `\\ev``, ``\ef`` (#754). (Thanks: `Catherine Devlin`_)
+* Add ``application_name`` to help identify pgcli connection to database (issue #868) (Thanks: `François Pietka`_)
+* Add `--user` option, duplicate of `--username`, the same cli option like `psql` (Thanks: `Alexandr Korsak`_)
 
 Internal changes:
 -----------------
 
 * Mark tests requiring a running database server as dbtest (Thanks: `Dick Marinus`_)
-* Add ``application_name`` to help identify pgcli connection to database (issue #868) (Thanks: `François Pietka`_)
-* Support `\\ev``, ``\ef`` (issue #) (Thanks: `Catherine Devlin`_)
 * Add an is_special command flag to MetaQuery (Thanks: `Rishi Ramraj`_)
 * Ported Destructive Warning from mycli.
 * Refactor Destructive Warning behave tests (Thanks: `Dick Marinus`_)
-* Add `--user` option, duplicate of `--username`, the same cli option like `psql` (Thanks: `Alexandr Korsak`_)
 
 Bug Fixes:
 ----------
