@@ -2,9 +2,11 @@
 Test the `print` function.
 """
 from __future__ import unicode_literals, print_function
-from prompt_toolkit.styles import Style
-from prompt_toolkit.formatted_text import FormattedText
+import pytest
 from prompt_toolkit import print_formatted_text as pt_print
+from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.styles import Style
+from prompt_toolkit.utils import is_windows
 
 
 class _Capture:
@@ -28,6 +30,8 @@ class _Capture:
         return True
 
 
+@pytest.mark.skipif(
+    is_windows(), reason="Doesn't run on Windows yet.")
 def test_print_formatted_text():
     f = _Capture()
     pt_print([('', 'hello'), ('', 'world')], file=f)
@@ -35,6 +39,8 @@ def test_print_formatted_text():
     assert b'world' in f.data
 
 
+@pytest.mark.skipif(
+    is_windows(), reason="Doesn't run on Windows yet.")
 def test_with_style():
     f = _Capture()
     style = Style.from_dict({
