@@ -23,6 +23,8 @@ __all__ = [
     'ConsoleInputReader',
     'raw_mode',
     'cooked_mode'
+    'attach_win32_input',
+    'detach_win32_input',
 ]
 
 
@@ -39,14 +41,14 @@ class Win32Input(Input):
         event loop.
         """
         assert callable(input_ready_callback)
-        return _attach_win32_input(self, input_ready_callback)
+        return attach_win32_input(self, input_ready_callback)
 
     def detach(self):
         """
         Return a context manager that makes sure that this input is not active
         in the current event loop.
         """
-        return _detach_win32_input(self)
+        return detach_win32_input(self)
 
     def read_keys(self):
         return list(self.console_input_reader.read())
@@ -395,7 +397,7 @@ _current_callbacks = {}  # loop -> callback
 
 
 @contextmanager
-def _attach_win32_input(input, callback):
+def attach_win32_input(input, callback):
     """
     Context manager that makes this input active in the current event loop.
 
@@ -425,7 +427,7 @@ def _attach_win32_input(input, callback):
 
 
 @contextmanager
-def _detach_win32_input(input):
+def detach_win32_input(input):
     assert isinstance(input, Input)
 
     loop = get_event_loop()

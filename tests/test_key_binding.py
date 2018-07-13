@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.application.current import set_app
-from prompt_toolkit.input.vt100 import PipeInput
+from prompt_toolkit.input.defaults import create_pipe_input
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.key_binding.key_processor import KeyProcessor, KeyPress
 from prompt_toolkit.keys import Keys
@@ -31,7 +31,7 @@ def set_dummy_app():
     app = Application(
         layout=Layout(Window()),
         output=DummyOutput(),
-        input=PipeInput())
+        input=create_pipe_input())
     return set_app(app)
 
 

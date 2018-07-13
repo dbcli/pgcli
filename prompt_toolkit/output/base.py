@@ -195,3 +195,6 @@ class DummyOutput(Output):
 
     def get_size(self):
         return Size(rows=40, columns=80)
+
+    def get_rows_below_cursor_position(self):
+        return 40

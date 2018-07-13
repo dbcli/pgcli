@@ -10,7 +10,7 @@ from prompt_toolkit.clipboard import InMemoryClipboard, ClipboardData
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.filters import ViInsertMode
 from prompt_toolkit.history import InMemoryHistory
-from prompt_toolkit.input.vt100 import PipeInput
+from prompt_toolkit.input.defaults import create_pipe_input
 from prompt_toolkit.input.vt100_parser import ANSI_SEQUENCES
 from prompt_toolkit.key_binding.bindings.named_commands import prefix_meta
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
@@ -40,7 +40,7 @@ def _feed_cli_with_input(
     if check_line_ending:
         assert text.endswith('\r')
 
-    inp = PipeInput()
+    inp = create_pipe_input()
 
     try:
         inp.send_text(text)
@@ -908,9 +908,9 @@ def test_accept_default():
     """
     Test `prompt(accept_default=True)`.
     """
-    inp = PipeInput()
+    inp = create_pipe_input()
 
-    session = PromptSession(input=PipeInput(), output=DummyOutput())
+    session = PromptSession(input=inp, output=DummyOutput())
     result = session.prompt(default='hello', accept_default=True)
     assert result == 'hello'
 

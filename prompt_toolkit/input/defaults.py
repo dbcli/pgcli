@@ -7,6 +7,7 @@ import sys
 
 __all__ = [
     'create_input',
+    'create_pipe_input',
     'get_default_input',
     'set_default_input',
 ]
@@ -21,6 +22,19 @@ def create_input(stdin=None):
     else:
         from .vt100 import Vt100Input
         return Vt100Input(stdin)
+
+
+def create_pipe_input():
+    """
+    Create an input pipe.
+    This is mostly useful for unit testing.
+    """
+    if is_windows():
+        from .win32_pipe import Win32PipeInput
+        return Win32PipeInput()
+    else:
+        from .posix_pipe import PosixPipeInput
+        return PosixPipeInput()
 
 
 _default_input = TaskLocal()
