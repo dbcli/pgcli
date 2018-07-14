@@ -1,2 +1,2 @@
 include LICENSE.txt AUTHORS changelog.rst
-recursive-include tests *
+recursive-include tests *.py *.txt *.feature *.ini
