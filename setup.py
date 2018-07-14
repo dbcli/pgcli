@@ -21,7 +21,7 @@ install_requirements = [
     'configobj >= 5.0.6',
     'humanize >= 0.5.1',
     'cli_helpers[styles] >= 1.0.1',
-    'keyring >= 12.2.0'
+    'keyring >= 11.0.0'
 ]
 
 
