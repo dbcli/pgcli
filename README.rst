@@ -74,12 +74,9 @@ The `pgcli` is written using prompt_toolkit_.
 
 * Primitive support for ``psql`` back-slash commands.
 * Pretty prints tabular data.
-  Note: `pgcli` uses the `tabulate`_ package to pretty-print tables. This library does smart formatting
-  of numbers, which can sometimes lead to unexpected output. See `this issue`_ for more details.
 
 .. _prompt_toolkit: https://github.com/jonathanslenders/python-prompt-toolkit
 .. _tabulate: https://pypi.python.org/pypi/tabulate
-.. _this issue: https://github.com/dbcli/pgcli/issues/617
 
 Config
 ------
