@@ -136,6 +136,7 @@ class PGCli(object):
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
         self.dsn_alias = None
+        self.watch_command = None
 
         # Load config.
         c = self.config = get_config(pgclirc_file)

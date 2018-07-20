@@ -1,7 +1,10 @@
 Upcoming
 ========
 
-TODO
+Bug fixes:
+
+* Fix for missing keyring. (Thanks: `Kenny Do`_)
+* Fix for "-l" Flag Throws Error (#909). (Thanks: `Irina Truong`_)
 
 1.10.0
 ======
@@ -845,3 +848,4 @@ Improvements:
 .. _`Alexandr Korsak`: https://github.com/oivoodoo
 .. _`Saif Hakim`: https://github.com/saifelse
 .. _`Artur Balabanov`: https://github.com/arturbalabanov
+.. _`Kenny Do`: https://github.com/kennydo
