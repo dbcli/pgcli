@@ -442,7 +442,7 @@ class PGCli(object):
                 if passwd:
                     try:
                         keyring.set_password('pgcli', key, passwd)
-                    except keyring.errors.InitError:
+                    except (keyring.errors.InitError, RuntimeError):
                         pass
             except (OperationalError, InterfaceError) as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
