@@ -5,6 +5,11 @@ python:
   - "3.5"
   - "3.6"
 
+before_install:
+  - which python
+  - which pip
+  - pip install -U pip
+
 install:
   - pip install .
   - pip install -r requirements-dev.txt
