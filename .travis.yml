@@ -8,7 +8,7 @@ python:
 before_install:
   - which python
   - which pip
-  - pip install -U pip
+  - pip install -U setuptools
 
 install:
   - pip install .
