@@ -183,6 +183,8 @@ class PGExecute(object):
         SELECT pg_catalog.pg_get_functiondef(f.f_oid)
         FROM f'''
 
+    version_query = "SELECT current_setting('server_version')"
+
     def __init__(self, database, user, password, host, port, dsn, **kwargs):
         self.dbname = database
         self.user = user
@@ -191,7 +193,18 @@ class PGExecute(object):
         self.port = port
         self.dsn = dsn
         self.extra_args = {k: unicode2utf8(v) for k, v in kwargs.items()}
+        self.server_version = None
         self.connect()
+
+    def get_server_version(self):
+        if self.server_version:
+            return self.server_version
+        with self.conn.cursor() as cur:
+            _logger.debug('Version Query. sql: %r', self.version_query)
+            cur.execute(self.version_query)
+            result = cur.fetchone()
+            self.server_version = result[0] if result else ''
+            return self.server_version
 
     def connect(self, database=None, user=None, password=None, host=None,
                 port=None, dsn=None, **kwargs):
@@ -280,17 +293,14 @@ class PGExecute(object):
         else:
             return json_data
 
-
     def failed_transaction(self):
         status = self.conn.get_transaction_status()
         return status == ext.TRANSACTION_STATUS_INERROR
-
 
     def valid_transaction(self):
         status = self.conn.get_transaction_status()
         return (status == ext.TRANSACTION_STATUS_ACTIVE or
                 status == ext.TRANSACTION_STATUS_INTRANS)
-
 
     def run(self, statement, pgspecial=None, exception_formatter=None,
             on_error_resume=False):
@@ -706,7 +716,6 @@ class PGExecute(object):
             cur.execute(query)
             for row in cur:
                 yield row
-
 
     def casing(self):
         """Yields the most common casing for names used in db functions"""
