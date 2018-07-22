@@ -20,7 +20,7 @@ from .formatted_text import HTML, ANSI
 
 
 # Don't forget to update in `docs/conf.py`!
-__version__ = '2.0.3'
+__version__ = '2.0.4'
 
 
 __all__ = [

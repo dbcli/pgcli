@@ -1,6 +1,33 @@
 CHANGELOG
 =========
 
+2.0.4: 2018-07-22
+-----------------
+
+Bug fixes:
+- Fix render height for rendering full screen applications in Windows.
+- Fix in `TextArea`. Set `accept_handler` to `None` if not given.
+- Go to the beginning of the next line when enter is pressed in Vi navigation
+  mode, and the buffer doesn't have an accept handler.
+- Fix the `default` argument of the `prompt` function when called multiple
+  times.
+- Display decomposed multiwidth characters correctly.
+- Accept `history` in `prompt()` function again.
+
+Backwards incompatible changes:
+- Renamed `PipeInput` to `PosixPipeInput`. Added `Win32PipeInput` and
+  `create_input_pipe`.
+- Pass `buffer` argument to the `accept_handler` of `TextArea`.
+
+New features:
+- Added `accept_default` argument to `prompt()`.
+- Make it easier to change the body/title of a Frame/Dialog.
+- Added `DynamicContainer`.
+- Added `merge_completers` for merging multiple completers together.
+- Add vt100 data to key presses in Windows.
+- Handle left/right key bindings in Vi block insert mode.
+
+
 2.0.3: 2018-06-08
 -----------------
 
