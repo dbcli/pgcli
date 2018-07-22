@@ -1,7 +1,9 @@
 Upcoming
 ========
 
-TODO
+Features:
+---------
+* Make `keyring` optional (Thanks: `Dick Marinus`_)
 
 1.10.1
 ======

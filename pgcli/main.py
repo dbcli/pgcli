@@ -44,7 +44,10 @@ from pygments.token import Token
 
 from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF)
 import pgspecial as special
-import keyring
+try:
+    import keyring
+except ImportError:
+    keyring = None
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory, style_factory_output
@@ -72,6 +75,7 @@ import psycopg2
 
 from collections import namedtuple
 
+from textwrap import dedent
 
 # Query tuples are used for maintaining history
 MetaQuery = namedtuple(
@@ -413,11 +417,28 @@ class PGCli(object):
 
         # Find password from store
         key = '%s@%s' % (user, host)
-        if not passwd:
+        keyring_error_message = dedent("""\
+            {}
+            {}
+            To remove this message do one of the following:
+            - prepare keyring as described at: https://keyring.readthedocs.io/en/stable/
+            - uninstall keyring: pip uninstall keyring
+            - disable keyring in our configuration: add keyring = False to [main]""")
+        if not passwd and keyring and self.config["main"].get("keyring", True):
             try:
                 passwd = keyring.get_password('pgcli', key)
-            except RuntimeError:
-                pass
+            except (
+                RuntimeError,
+                keyring.errors.InitError
+            ) as e:
+                click.secho(
+                    keyring_error_message.format(
+                        "Load your password from keyring returned:",
+                        str(e)
+                    ),
+                    err=True,
+                    fg='red'
+                )
 
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
@@ -440,11 +461,6 @@ class PGCli(object):
             try:
                 pgexecute = PGExecute(database, user, passwd, host, port, dsn,
                                       application_name='pgcli', **kwargs)
-                if passwd:
-                    try:
-                        keyring.set_password('pgcli', key, passwd)
-                    except (keyring.errors.InitError, RuntimeError):
-                        pass
             except (OperationalError, InterfaceError) as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
                         auto_passwd_prompt):
@@ -454,13 +470,24 @@ class PGCli(object):
                     pgexecute = PGExecute(database, user, passwd, host, port,
                                           dsn, application_name='pgcli',
                                           **kwargs)
-                    if passwd:
-                        try:
-                            keyring.set_password('pgcli', key, passwd)
-                        except (keyring.errors.InitError, RuntimeError):
-                            pass
                 else:
                     raise e
+            if passwd and keyring and self.config["main"].get("keyring", True):
+                try:
+                    keyring.set_password('pgcli', key, passwd)
+                except (
+                    keyring.errors.InitError,
+                    RuntimeError,
+                    keyring.errors.KeyringLocked
+                ) as e:
+                    click.secho(
+                        keyring_error_message.format(
+                            "Set password in keyring returned:",
+                            str(e)
+                        ),
+                        err=True,
+                        fg='red'
+                    )
 
         except Exception as e:  # Connecting to a database could fail.
             self.logger.debug('Database connection failed: %r.', e)
