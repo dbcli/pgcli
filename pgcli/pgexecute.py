@@ -185,7 +185,7 @@ class PGExecute(object):
 
     version_query = "SELECT version();"
 
-    def __init__(self, database, user, password, host, port, dsn, **kwargs):
+    def __init__(self, database, user, password, host, port, dsn, autocommit_mode=True, **kwargs):
         self.dbname = database
         self.user = user
         self.password = password
@@ -195,6 +195,7 @@ class PGExecute(object):
         self.extra_args = {k: unicode2utf8(v) for k, v in kwargs.items()}
         self.server_version = None
         self.connect()
+        self.user_conn = self.get_new_connection(autocommit=autocommit_mode)
 
     def get_server_version(self):
         if self.server_version:
@@ -276,6 +277,22 @@ class PGExecute(object):
         register_json_typecasters(self.conn, self._json_typecaster)
         register_hstore_typecaster(self.conn)
 
+    def get_new_connection(self, autocommit=True):
+        conn = psycopg2.connect(
+            database=unicode2utf8(self.dbname),
+            user=unicode2utf8(self.user),
+            password=unicode2utf8(self.password),
+            host=unicode2utf8(self.host),
+            port=unicode2utf8(self.port)
+        )
+        conn.set_client_encoding('utf8')
+        conn.set_session(autocommit=autocommit)
+        register_date_typecasters(conn)
+        register_json_typecasters(conn, self._json_typecaster)
+        register_hstore_typecaster(conn)
+        return conn
+
+
     def _select_one(self, cur, sql):
         """
         Helper method to run a select and retrieve a single field value
@@ -341,7 +358,7 @@ class PGExecute(object):
                 if pgspecial:
                     # First try to run each query as special
                     _logger.debug('Trying a pgspecial command. sql: %r', sql)
-                    cur = self.conn.cursor()
+                    cur = self.user_conn.cursor()
                     try:
                         for result in pgspecial.execute(cur, sql):
                             # e.g. execute_from_file already appends these
@@ -385,13 +402,13 @@ class PGExecute(object):
     def execute_normal_sql(self, split_sql):
         """Returns tuple (title, rows, headers, status)"""
         _logger.debug('Regular sql statement. sql: %r', split_sql)
-        cur = self.conn.cursor()
+        cur = self.user_conn.cursor()
         cur.execute(split_sql)
 
         # conn.notices persist between queies, we use pop to clear out the list
         title = ''
-        while len(self.conn.notices) > 0:
-            title = utf8tounicode(self.conn.notices.pop()) + title
+        while len(self.user_conn.notices) > 0:
+            title = utf8tounicode(self.user_conn.notices.pop()) + title
 
         # cur.description will be None for operations that do not return
         # rows.

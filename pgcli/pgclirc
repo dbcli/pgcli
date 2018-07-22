@@ -22,6 +22,10 @@ multi_line = False
 # a command.
 multi_line_mode = psql
 
+# When set to "False", you can manually `COMMIT` or `ROLLBACK` the current transaction.
+# Similar to `\set AUTOCOMMIT on/off` in psql.
+autocommit_mode = True
+
 # Destructive warning mode will alert you before executing a sql statement
 # that may cause harm to the database such as "drop table", "drop database"
 # or "shutdown".
@@ -167,7 +171,7 @@ Token.Toolbar.Transaction.Valid = 'bg:#222222 #00ff5f bold'
 Token.Toolbar.Transaction.Failed = 'bg:#222222 #ff005f bold'
 
 # color of table
-# you can use token or custom colors 
+# you can use token or custom colors
 Token.Output.Header = "#00ff5f bold"
 Token.Output.OddRow = ""
 Token.Output.EvenRow = ""
