@@ -1,7 +1,10 @@
 Upcoming
 ========
 
-TODO
+Bug fixes:
+----------
+
+* Fix for error retrieving version in Redshift (#922). (Thanks: `Irina Truong`_)
 
 1.10.2
 ======
@@ -15,6 +18,7 @@ Features:
 ======
 
 Bug fixes:
+----------
 
 * Fix for missing keyring. (Thanks: `Kenny Do`_)
 * Fix for "-l" Flag Throws Error (#909). (Thanks: `Irina Truong`_)
