@@ -21,7 +21,6 @@ install_requirements = [
     'configobj >= 5.0.6',
     'humanize >= 0.5.1',
     'cli_helpers[styles] >= 1.0.1',
-    'keyring >= 11.0.0'
 ]
 
 
@@ -45,6 +44,9 @@ setup(
     description=description,
     long_description=open('README.rst').read(),
     install_requires=install_requirements,
+    extras_require={
+        'keyring': ['keyring >= 12.2.0'],
+    },
     entry_points='''
         [console_scripts]
         pgcli=pgcli.main:cli
