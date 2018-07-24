@@ -618,7 +618,25 @@ class PGExecute(object):
     def functions(self):
         """Yields FunctionMetadata named tuples"""
 
-        if self.conn.server_version > 90000:
+        if self.conn.server_version >= 110000:
+            query = '''
+                SELECT n.nspname schema_name,
+                        p.proname func_name,
+                        p.proargnames,
+                        COALESCE(proallargtypes::regtype[], proargtypes::regtype[])::text[],
+                        p.proargmodes,
+                        prorettype::regtype::text return_type,
+                        p.prokind = 'a' is_aggregate,
+                        p.prokind = 'w' is_window,
+                        p.proretset is_set_returning,
+                        pg_get_expr(proargdefaults, 0) AS arg_defaults
+                FROM pg_catalog.pg_proc p
+                        INNER JOIN pg_catalog.pg_namespace n
+                            ON n.oid = p.pronamespace
+                WHERE p.prorettype::regtype != 'trigger'::regtype
+                ORDER BY 1, 2
+                '''
+        elif self.conn.server_version > 90000:
             query = '''
                 SELECT n.nspname schema_name,
                         p.proname func_name,

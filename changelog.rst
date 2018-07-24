@@ -5,6 +5,7 @@ Bug fixes:
 ----------
 
 * Fix for error retrieving version in Redshift (#922). (Thanks: `Irina Truong`_)
+* Adapt the query used to get functions metadata to PG11 (#919). (Thanks: `Lele Gaifax`_).
 
 1.10.2
 ======
