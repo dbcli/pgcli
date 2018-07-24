@@ -183,7 +183,7 @@ class PGExecute(object):
         SELECT pg_catalog.pg_get_functiondef(f.f_oid)
         FROM f'''
 
-    version_query = "SELECT current_setting('server_version')"
+    version_query = "SELECT version();"
 
     def __init__(self, database, user, password, host, port, dsn, **kwargs):
         self.dbname = database
@@ -203,7 +203,14 @@ class PGExecute(object):
             _logger.debug('Version Query. sql: %r', self.version_query)
             cur.execute(self.version_query)
             result = cur.fetchone()
-            self.server_version = result[0] if result else ''
+            if result:
+                # full version string looks like this:
+                # PostgreSQL 10.3 on x86_64-apple-darwin17.3.0, compiled by Apple LLVM version 9.0.0 (clang-900.0.39.2), 64-bit  # noqa
+                # let's only retrieve version number
+                version_parts = result[0].split()
+                self.server_version = version_parts[1]
+            else:
+                self.server_version = ''
             return self.server_version
 
     def connect(self, database=None, user=None, password=None, host=None,
