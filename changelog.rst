@@ -5,6 +5,7 @@ Bug fixes:
 ----------
 
 * Fix for error retrieving version in Redshift (#922). (Thanks: `Irina Truong`_)
+* Adapt the query used to get functions metadata to PG11 (#919). (Thanks: `Lele Gaifax`_).
 
 1.10.2
 ======
@@ -244,7 +245,7 @@ Bug Fixes:
 
 * Fix scoping for columns from CTEs. (Thanks: `Joakim Koljonen`_)
 * Fix crash after `with`. (Thanks: `Joakim Koljonen`_).
-* Fix issue #603 (`\i` raises a TypeError). (Thanks: `Emanuele Gaifas`_).
+* Fix issue #603 (`\i` raises a TypeError). (Thanks: `Lele Gaifax`_).
 
 
 Internal Changes:
@@ -280,7 +281,7 @@ Bug Fixes:
 * Fix crash bug with leading parenthesis. (Thanks: `Joakim Koljonen`_).
 * Remove cumulative addition of timing data. (Thanks: `Amjith Ramanujam`_).
 * Handle unrecognized keywords gracefully. (Thanks: `Darik Gamble`_)
-* Use raw strings in regex specifiers. This preemptively fixes a crash in Python 3.6. (Thanks `Emanuele Gaifas`_)
+* Use raw strings in regex specifiers. This preemptively fixes a crash in Python 3.6. (Thanks `Lele Gaifax`_)
 
 Internal Changes:
 -----------------
@@ -844,7 +845,7 @@ Improvements:
 .. _`Fabien Meghazi`: https://github.com/amigrave
 .. _`Manuel Barkhau`: https://github.com/mbarkhau
 .. _`Sergii`: https://github.com/foxyterkel
-.. _`Emanuele Gaifas`: https://github.com/lelit
+.. _`Lele Gaifax`: https://github.com/lelit
 .. _`tk`: https://github.com/kanet77
 .. _`Owen Stephens`: https://github.com/owst
 .. _`Russell Davies`: https://github.com/russelldavies
