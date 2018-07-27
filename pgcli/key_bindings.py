@@ -58,10 +58,18 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
         """
         _logger.debug('Detected <Tab> key.')
         b = event.cli.current_buffer
-        if b.complete_state:
-            b.complete_next()
+
+        line_start = b.document.cursor_position + b.document.get_start_of_line_position()
+        line_end = b.document.cursor_position + b.document.get_end_of_line_position()
+        current_line = b.document.text[line_start:line_end]
+
+        if current_line.strip():
+            if b.complete_state:
+                b.complete_next()
+            else:
+                event.cli.start_completion(select_first=True)
         else:
-            event.cli.start_completion(select_first=True)
+            b.insert_text('\t', fire_event=False)
 
     @key_binding_manager.registry.add_binding(Keys.ControlSpace)
     def _(event):
