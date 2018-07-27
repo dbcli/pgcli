@@ -678,7 +678,8 @@ class PGCli(object):
 
         key_binding_manager = pgcli_bindings(
             get_vi_mode_enabled=lambda: self.vi_mode,
-            set_vi_mode_enabled=set_vi_mode)
+            set_vi_mode_enabled=set_vi_mode,
+            expand_tab=self.config['main'].as_bool('expand_tab'))
 
         def prompt_tokens(_):
             if self.dsn_alias and self.prompt_dsn_format is not None:

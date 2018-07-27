@@ -8,12 +8,14 @@ from .filters import HasSelectedCompletion
 _logger = logging.getLogger(__name__)
 
 
-def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
+def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled, expand_tab):
     """
     Custom key bindings for pgcli.
     """
     assert callable(get_vi_mode_enabled)
     assert callable(set_vi_mode_enabled)
+
+    tab_insert_text = ' ' * 4 if expand_tab else '\t'
 
     key_binding_manager = KeyBindingManager(
         enable_open_in_editor=True,
@@ -69,7 +71,7 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
             else:
                 event.cli.start_completion(select_first=True)
         else:
-            b.insert_text('\t', fire_event=False)
+            b.insert_text(tab_insert_text, fire_event=False)
 
     @key_binding_manager.registry.add_binding(Keys.ControlSpace)
     def _(event):
