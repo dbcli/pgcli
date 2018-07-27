@@ -179,6 +179,7 @@ class PGCli(object):
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
+        self.keyring_enabled = c["main"].as_bool("keyring")
 
         self.pgspecial.pset_pager(self.config['main'].as_bool(
             'enable_pager') and "on" or "off")
@@ -262,7 +263,6 @@ class PGCli(object):
                 msg += "\n\t{}".format(table_type)
             msg += '\nCurrently set to: %s' % self.table_format
             yield (None, None, None, msg)
-
 
     def info_connection(self, **_):
         if self.pgexecute.host.startswith('/'):
@@ -424,7 +424,7 @@ class PGCli(object):
             - prepare keyring as described at: https://keyring.readthedocs.io/en/stable/
             - uninstall keyring: pip uninstall keyring
             - disable keyring in our configuration: add keyring = False to [main]""")
-        if not passwd and keyring and self.config["main"].get("keyring", True):
+        if not passwd and keyring and self.keyring_enabled:
             try:
                 passwd = keyring.get_password('pgcli', key)
             except (
@@ -472,7 +472,7 @@ class PGCli(object):
                                           **kwargs)
                 else:
                     raise e
-            if passwd and keyring and self.config["main"].get("keyring", True):
+            if passwd and keyring and self.keyring_enabled:
                 try:
                     keyring.set_password('pgcli', key, passwd)
                 except (
