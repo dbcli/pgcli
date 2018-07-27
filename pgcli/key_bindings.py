@@ -9,9 +9,8 @@ _logger = logging.getLogger(__name__)
 
 
 def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled, expand_tab):
-    """
-    Custom key bindings for pgcli.
-    """
+    """Custom key bindings for pgcli."""
+
     assert callable(get_vi_mode_enabled)
     assert callable(set_vi_mode_enabled)
 
@@ -55,23 +54,23 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled, expand_tab):
 
     @key_binding_manager.registry.add_binding(Keys.Tab)
     def _(event):
-        """
-        Force autocompletion at cursor on non-empty lines.
-        """
-        _logger.debug('Detected <Tab> key.')
-        b = event.cli.current_buffer
+        """Force autocompletion at cursor on non-empty lines."""
 
-        line_start = b.document.cursor_position + b.document.get_start_of_line_position()
-        line_end = b.document.cursor_position + b.document.get_end_of_line_position()
-        current_line = b.document.text[line_start:line_end]
+        _logger.debug('Detected <Tab> key.')
+        buff = event.cli.current_buffer
+        doc = buff.document
+
+        line_start = doc.cursor_position + doc.get_start_of_line_position()
+        line_end = doc.cursor_position + doc.get_end_of_line_position()
+        current_line = doc.text[line_start:line_end]
 
         if current_line.strip():
-            if b.complete_state:
-                b.complete_next()
+            if buff.complete_state:
+                buff.complete_next()
             else:
                 event.cli.start_completion(select_first=True)
         else:
-            b.insert_text(tab_insert_text, fire_event=False)
+            buff.insert_text(tab_insert_text, fire_event=False)
 
     @key_binding_manager.registry.add_binding(Keys.ControlSpace)
     def _(event):
