@@ -54,7 +54,7 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled):
     @key_binding_manager.registry.add_binding(Keys.Tab)
     def _(event):
         """
-        Force autocompletion at cursor.
+        Force autocompletion at cursor on non-empty lines.
         """
         _logger.debug('Detected <Tab> key.')
         b = event.cli.current_buffer
