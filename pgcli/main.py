@@ -872,12 +872,7 @@ class PGCli(object):
             elif persist_priorities == 'none':
                 # Leave the new prioritizer as is
                 pass
-
-            # When pgcli is first launched we call refresh_completions before
-            # instantiating the cli object. So it is necessary to check if cli
-            # exists before trying the replace the completer object in cli.
-            if self.prompt_app:
-                self.prompt_app.app.current_buffer.completer = new_completer
+            self.completer = new_completer
 
     def get_completions(self, text, cursor_positition):
         with self._completer_lock:
