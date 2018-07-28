@@ -532,9 +532,8 @@ class PGCli(object):
                 if message:
                     # Something went wrong. Raise an exception and bail.
                     raise RuntimeError(message)
-                app.current_buffer.document = Document(sql, cursor_position=len(sql))
                 app.pre_run_callables = []
-                text = self.prompt_app.prompt()
+                text = self.prompt_app.prompt(default=sql)
                 editor_command = special.editor_command(text)
         finally:
             app.pre_run_callables = saved_callables
