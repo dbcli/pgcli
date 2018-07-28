@@ -534,8 +534,8 @@ class PGCli(object):
                     raise RuntimeError(message)
                 app.current_buffer.document = Document(sql, cursor_position=len(sql))
                 app.pre_run_callables = []
-                document = cli.run()
-                editor_command = special.editor_command(document.text)
+                text = self.prompt_app.prompt()
+                editor_command = special.editor_command(text)
         finally:
             app.pre_run_callables = saved_callables
         return text
