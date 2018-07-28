@@ -520,7 +520,8 @@ class PGCli(object):
             while editor_command:
                 if editor_command == '\\e':
                     filename = special.get_filename(text)
-                    query = special.get_editor_query(text) or self.get_last_query()
+                    query = special.get_editor_query(
+                        text) or self.get_last_query()
                 else:  # \ev or \ef
                     filename = None
                     spec = text.split()[1]
@@ -528,7 +529,8 @@ class PGCli(object):
                         query = self.pgexecute.view_definition(spec)
                     elif editor_command == '\\ef':
                         query = self.pgexecute.function_definition(spec)
-                sql, message = special.open_external_editor(filename, sql=query)
+                sql, message = special.open_external_editor(
+                    filename, sql=query)
                 if message:
                     # Something went wrong. Raise an exception and bail.
                     raise RuntimeError(message)
@@ -648,8 +650,8 @@ class PGCli(object):
                         try:
                             query = self.execute_command(self.watch_command)
                             click.echo(
-                                    'Waiting for {0} seconds before repeating'
-                                    .format(timing))
+                                'Waiting for {0} seconds before repeating'
+                                .format(timing))
                             sleep(timing)
                         except KeyboardInterrupt:
                             self.watch_command = None
@@ -705,12 +707,13 @@ class PGCli(object):
                 bottom_toolbar=get_toolbar_tokens,
                 complete_style=complete_style,
                 input_processors=[
-                   # Highlight matching brackets while editing.
-                   ConditionalProcessor(
-                       processor=HighlightMatchingBracketProcessor(chars='[](){}'),
-                       filter=HasFocus(DEFAULT_BUFFER) & ~IsDone()),
-                   # Render \t as 4 spaces instead of "^I"
-                   TabsProcessor(char1=' ', char2=' ')],
+                    # Highlight matching brackets while editing.
+                    ConditionalProcessor(
+                        processor=HighlightMatchingBracketProcessor(
+                            chars='[](){}'),
+                        filter=HasFocus(DEFAULT_BUFFER) & ~IsDone()),
+                    # Render \t as 4 spaces instead of "^I"
+                    TabsProcessor(char1=' ', char2=' ')],
                 auto_suggest=AutoSuggestFromHistory(),
                 tempfile_suffix='.sql',
                 multiline=pg_is_multiline(self),
@@ -842,16 +845,17 @@ class PGCli(object):
     def _swap_completer_objects(self, new_completer, persist_priorities):
         """Swap the completer object with the newly created completer.
 
-            persist_priorities is a string specifying how the old completer's
-            learned prioritizer should be transferred to the new completer.
+        persist_priorities is a string specifying how the old completer's
+        learned prioritizer should be transferred to the new completer.
 
-              'none'     - The new prioritizer is left in a new/clean state
+          'none'     - The new prioritizer is left in a new/clean state
 
-              'all'      - The new prioritizer is updated to exactly reflect
-                           the old one
+          'all'      - The new prioritizer is updated to exactly reflect
+                       the old one
 
-              'keywords' - The new prioritizer is updated with old keyword
-                           priorities, but not any other.
+          'keywords' - The new prioritizer is updated with old keyword
+                       priorities, but not any other.
+
         """
         with self._completer_lock:
             old_completer = self.completer

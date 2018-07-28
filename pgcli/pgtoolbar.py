@@ -16,9 +16,7 @@ def _get_vi_mode():
 
 
 def create_toolbar_tokens_func(pgcli):
-    """
-    Return a function that generates the toolbar tokens.
-    """
+    """Return a function that generates the toolbar tokens."""
     token = Token.Toolbar
 
     def get_toolbar_tokens():
@@ -39,9 +37,9 @@ def create_toolbar_tokens_func(pgcli):
 
         if pgcli.multi_line:
             if pgcli.multiline_mode == 'safe':
-                result.append((token,' ([Esc] [Enter] to execute]) '))
+                result.append((token, ' ([Esc] [Enter] to execute]) '))
             else:
-                result.append((token,' (Semi-colon [;] will end the line) '))
+                result.append((token, ' (Semi-colon [;] will end the line) '))
 
         if pgcli.vi_mode:
             result.append((token.On, '[F4] Vi-mode (' + _get_vi_mode() + ')'))
@@ -49,7 +47,8 @@ def create_toolbar_tokens_func(pgcli):
             result.append((token.On, '[F4] Emacs-mode'))
 
         if pgcli.pgexecute.failed_transaction():
-            result.append((token.Transaction.Failed, '     Failed transaction'))
+            result.append((token.Transaction.Failed,
+                           '     Failed transaction'))
 
         if pgcli.pgexecute.valid_transaction():
             result.append((token.Transaction.Valid, '     Transaction'))

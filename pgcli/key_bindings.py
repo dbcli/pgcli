@@ -9,43 +9,33 @@ _logger = logging.getLogger(__name__)
 
 
 def pgcli_bindings(pgcli):
-    """
-    Custom key bindings for pgcli.
-    """
+    """Custom key bindings for pgcli."""
     kb = KeyBindings()
 
     @kb.add('f2')
     def _(event):
-        """
-        Enable/Disable SmartCompletion Mode.
-        """
+        """Enable/Disable SmartCompletion Mode."""
         _logger.debug('Detected F2 key.')
         buf = event.app.current_buffer
         buf.completer.smart_completion = not buf.completer.smart_completion
 
     @kb.add('f3')
     def _(event):
-        """
-        Enable/Disable Multiline Mode.
-        """
+        """Enable/Disable Multiline Mode."""
         _logger.debug('Detected F3 key.')
         buf = event.app.current_buffer
         pgcli.multi_line = not pgcli.multi_line
 
     @kb.add('f4')
     def _(event):
-        """
-        Toggle between Vi and Emacs mode.
-        """
+        """Toggle between Vi and Emacs mode."""
         _logger.debug('Detected F4 key.')
         pgcli.vi_mode = not pgcli.vi_mode
         event.app.editing_mode = EditingMode.VI if pgcli.vi_mode else EditingMode.EMACS
 
     @kb.add('tab')
     def _(event):
-        """
-        Force autocompletion at cursor.
-        """
+        """Force autocompletion at cursor."""
         _logger.debug('Detected <Tab> key.')
         b = event.app.current_buffer
         if b.complete_state:
