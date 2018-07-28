@@ -1,4 +1,5 @@
-from prompt_toolkit.buffer import Buffer
+from __future__ import unicode_literals
+
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.application import get_app

@@ -1,8 +1,9 @@
+from __future__ import unicode_literals
+
 import logging
 from prompt_toolkit.enums import EditingMode
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.filters import Condition, completion_is_selected
+from prompt_toolkit.filters import completion_is_selected
 
 _logger = logging.getLogger(__name__)
 

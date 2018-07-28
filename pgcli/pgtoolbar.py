@@ -1,5 +1,6 @@
+from __future__ import unicode_literals
+
 from pygments.token import Token
-from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.application import get_app
 from prompt_toolkit.formatted_text import PygmentsTokens

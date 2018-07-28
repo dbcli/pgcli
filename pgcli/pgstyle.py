@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from pygments.token import string_to_tokentype
 from pygments.util import ClassNotFound
 from prompt_toolkit.styles.pygments import style_from_pygments_cls, style_from_pygments_dict
@@ -5,6 +7,7 @@ from prompt_toolkit.styles import merge_styles
 import pygments.styles
 
 from pygments.style import Style
+
 
 def style_factory(name, cli_style):
     try:
