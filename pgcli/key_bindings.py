@@ -60,7 +60,7 @@ def pgcli_bindings(get_vi_mode_enabled, set_vi_mode_enabled, expand_tab):
         buff = event.cli.current_buffer
         doc = buff.document
 
-        if doc.current_line.strip():
+        if doc.on_first_line or doc.current_line.strip():
             if buff.complete_state:
                 buff.complete_next()
             else:
