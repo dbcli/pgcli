@@ -1,3 +1,14 @@
+1.10.4
+======
+
+Internal changes:
+-----------------
+* Use another psycopg2 connection for user query. (Thanks: `Matthieu Guilbert`_)
+
+Features:
+---------
+* Add autocommit. (Thanks: `Matthieu Guilbert`_)
+
 1.10.3
 ======
 
