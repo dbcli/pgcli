@@ -155,6 +155,7 @@ class PGCli(object):
         self.multi_line = c['main'].as_bool('multi_line')
         self.multiline_mode = c['main'].get('multi_line_mode', 'psql')
         self.autocommit_mode = c['main'].as_bool('autocommit_mode')
+        self.on_error_rollback = c['main'].as_bool('on_error_rollback')
         self.vi_mode = c['main'].as_bool('vi')
         self.auto_expand = auto_vertical_output or c['main'].as_bool(
             'auto_expand')
@@ -462,6 +463,7 @@ class PGCli(object):
             try:
                 pgexecute = PGExecute(database, user, passwd, host, port, dsn,
                                       autocommit_mode=self.autocommit_mode,
+                                      on_error_rollback=self.on_error_rollback,
                                       application_name='pgcli', **kwargs)
             except (OperationalError, InterfaceError) as e:
                 if ('no password supplied' in utf8tounicode(e.args[0]) and
@@ -471,6 +473,7 @@ class PGCli(object):
                                           type=str)
                     pgexecute = PGExecute(database, user, passwd, host, port, dsn,
                                           autocommit_mode=self.autocommit_mode,
+                                          on_error_rollback=self.on_error_rollback,
                                           application_name='pgcli',
                                           **kwargs)
                 else:

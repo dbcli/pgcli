@@ -26,6 +26,10 @@ multi_line_mode = psql
 # Similar to `\set AUTOCOMMIT on/off` in psql.
 autocommit_mode = True
 
+# When set to on, if a statement in a transaction block generates an error, the error is ignored
+# and the transaction continues. Similar `\set ON_ERROR_ROLLBACK` on in psql.
+on_error_rollback = False
+
 # Destructive warning mode will alert you before executing a sql statement
 # that may cause harm to the database such as "drop table", "drop database"
 # or "shutdown".
@@ -144,7 +148,7 @@ null_string = '<null>'
 # manage pager on startup
 enable_pager = True
 
-# Use keyring to automatically save and load password in a secure manner 
+# Use keyring to automatically save and load password in a secure manner
 keyring = True
 
 # Custom colors for the completion menu, toolbar, etc.

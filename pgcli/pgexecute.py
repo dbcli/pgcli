@@ -29,6 +29,32 @@ ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 # TODO: Get default timeout from pgclirc?
 _WAIT_SELECT_TIMEOUT = 1
 
+TRANSACTION_CONTROL_COMMANDS = (
+    'abort',
+    'begin',
+    'commit',
+    'end',
+    'prepare transaction',
+    'rollback',
+    'start transaction',
+)
+
+COMMANDS_NOT_ALLOWED_IN_TRANSACTION = (
+    'alter system',
+    'cluster',
+    'create database',
+    'create index concurrently',
+    'create tablespace',
+    'create unique index concurrently',
+    'discard all',
+    'drop database',
+    'drop index concurrently',
+    'drop tablespace',
+    'reindex database',
+    'reindex system',
+    'vacuum',
+)
+
 
 def _wait_select(conn):
     """
@@ -143,6 +169,30 @@ def init_connection_from_parameters(dbname, user, password, host, port, **kwargs
     return conn
 
 
+def execute_sql_with_on_error_rollback(conn, user_cur, statement_):
+    statement = ' '.join(statement_.lower().strip().split())
+
+    if statement.startswith(COMMANDS_NOT_ALLOWED_IN_TRANSACTION + TRANSACTION_CONTROL_COMMANDS):
+        user_cur.execute(statement)
+        return
+
+    if (conn.get_transaction_status() == psycopg2.extensions.TRANSACTION_STATUS_IDLE and
+            not conn.autocommit):
+        with conn.cursor() as pgcli_cur:
+            pgcli_cur.execute('BEGIN')
+    with conn.cursor() as pgcli_cur:
+        pgcli_cur.execute('SAVEPOINT pgcli_user_conn_tmp_savepoint')
+    try:
+        user_cur.execute(statement)
+    except psycopg2.DatabaseError:
+        with conn.cursor() as pgcli_cur:
+            pgcli_cur.execute('ROLLBACK TO pgcli_user_conn_tmp_savepoint')
+        raise
+    else:
+        with conn.cursor() as pgcli_cur:
+            pgcli_cur.execute('RELEASE pgcli_user_conn_tmp_savepoint')
+
+
 class PGExecute(object):
 
     # The boolean argument to the current_schemas function indicates whether
@@ -208,7 +258,8 @@ class PGExecute(object):
 
     version_query = "SELECT version();"
 
-    def __init__(self, database, user, password, host, port, dsn, autocommit_mode=True, **kwargs):
+    def __init__(self, database, user, password, host, port, dsn,
+                 autocommit_mode=True, on_error_rollback=False, **kwargs):
         self.dbname = database
         self.user = user
         self.password = password
@@ -217,6 +268,8 @@ class PGExecute(object):
         self.dsn = dsn
         self.extra_args = {k: unicode2utf8(v) for k, v in kwargs.items()}
         self.server_version = None
+        self.autocommit_mode = autocommit_mode
+        self.on_error_rollback = on_error_rollback
         self.connect()
         # user_conn is the connection used to execute user queries
         self.user_conn = self.init_connection(self.dbname, self.user, self.password, self.host,
@@ -403,7 +456,10 @@ class PGExecute(object):
         """Returns tuple (title, rows, headers, status)"""
         _logger.debug('Regular sql statement. sql: %r', split_sql)
         cur = self.user_conn.cursor()
-        cur.execute(split_sql)
+        if not self.autocommit_mode and self.on_error_rollback:
+            execute_sql_with_on_error_rollback(self.user_conn, cur, split_sql)
+        else:
+            cur.execute(split_sql)
 
         # conn.notices persist between queies, we use pop to clear out the list
         title = ''
