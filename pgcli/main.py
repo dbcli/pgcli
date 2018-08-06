@@ -1177,7 +1177,7 @@ def format_output(title, cur, headers, status, settings):
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
 
-        if (not expanded and max_width and len(first_line) > max_width and headers):
+        if not expanded and max_width and len(first_line) > max_width and headers:
             formatted = formatter.format_output(
                 cur, headers, format_name='vertical', column_types=None, **output_kwargs)
             if isinstance(formatted, (text_type)):

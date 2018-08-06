@@ -1,9 +1,7 @@
 from __future__ import unicode_literals
 
-from pygments.token import Token
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.application import get_app
-from prompt_toolkit.formatted_text import PygmentsTokens
 
 
 def _get_vi_mode():
@@ -17,44 +15,40 @@ def _get_vi_mode():
 
 def create_toolbar_tokens_func(pgcli):
     """Return a function that generates the toolbar tokens."""
-    token = Token.Toolbar
-
     def get_toolbar_tokens():
-        layout = get_app().layout
-
         result = []
-        result.append((token, ' '))
+        result.append(('class:bottom-toolbar', ' '))
 
         if pgcli.completer.smart_completion:
-            result.append((token.On, '[F2] Smart Completion: ON  '))
+            result.append(('class:bottom-toolbar.on', '[F2] Smart Completion: ON  '))
         else:
-            result.append((token.Off, '[F2] Smart Completion: OFF  '))
+            result.append(('class:bottom-toolbar.off', '[F2] Smart Completion: OFF  '))
 
         if pgcli.multi_line:
-            result.append((token.On, '[F3] Multiline: ON  '))
+            result.append(('class:bottom-toolbar.on', '[F3] Multiline: ON  '))
         else:
-            result.append((token.Off, '[F3] Multiline: OFF  '))
+            result.append(('class:bottom-toolbar.off', '[F3] Multiline: OFF  '))
 
         if pgcli.multi_line:
             if pgcli.multiline_mode == 'safe':
-                result.append((token, ' ([Esc] [Enter] to execute]) '))
+                result.append(('class:bottom-toolbar', ' ([Esc] [Enter] to execute]) '))
             else:
-                result.append((token, ' (Semi-colon [;] will end the line) '))
+                result.append(('class:bottom-toolbar', ' (Semi-colon [;] will end the line) '))
 
         if pgcli.vi_mode:
-            result.append((token.On, '[F4] Vi-mode (' + _get_vi_mode() + ')'))
+            result.append(('class:bottom-toolbar', '[F4] Vi-mode (' + _get_vi_mode() + ')'))
         else:
-            result.append((token.On, '[F4] Emacs-mode'))
+            result.append(('class:bottom-toolbar', '[F4] Emacs-mode'))
 
         if pgcli.pgexecute.failed_transaction():
-            result.append((token.Transaction.Failed,
+            result.append(('class:bottom-toolbar.transaction.failed',
                            '     Failed transaction'))
 
         if pgcli.pgexecute.valid_transaction():
-            result.append((token.Transaction.Valid, '     Transaction'))
+            result.append(('class:bottom-toolbar.transaction.valid', '     Transaction'))
 
         if pgcli.completion_refresher.is_refreshing():
-            result.append((token, '     Refreshing completions...'))
+            result.append(('class:bottom-toolbar', '     Refreshing completions...'))
 
-        return PygmentsTokens(result)
+        return result
     return get_toolbar_tokens
