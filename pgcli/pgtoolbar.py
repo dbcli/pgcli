@@ -20,23 +20,29 @@ def create_toolbar_tokens_func(pgcli):
         result.append(('class:bottom-toolbar', ' '))
 
         if pgcli.completer.smart_completion:
-            result.append(('class:bottom-toolbar.on', '[F2] Smart Completion: ON  '))
+            result.append(('class:bottom-toolbar.on',
+                           '[F2] Smart Completion: ON  '))
         else:
-            result.append(('class:bottom-toolbar.off', '[F2] Smart Completion: OFF  '))
+            result.append(('class:bottom-toolbar.off',
+                           '[F2] Smart Completion: OFF  '))
 
         if pgcli.multi_line:
             result.append(('class:bottom-toolbar.on', '[F3] Multiline: ON  '))
         else:
-            result.append(('class:bottom-toolbar.off', '[F3] Multiline: OFF  '))
+            result.append(('class:bottom-toolbar.off',
+                           '[F3] Multiline: OFF  '))
 
         if pgcli.multi_line:
             if pgcli.multiline_mode == 'safe':
-                result.append(('class:bottom-toolbar', ' ([Esc] [Enter] to execute]) '))
+                result.append(
+                    ('class:bottom-toolbar', ' ([Esc] [Enter] to execute]) '))
             else:
-                result.append(('class:bottom-toolbar', ' (Semi-colon [;] will end the line) '))
+                result.append(
+                    ('class:bottom-toolbar', ' (Semi-colon [;] will end the line) '))
 
         if pgcli.vi_mode:
-            result.append(('class:bottom-toolbar', '[F4] Vi-mode (' + _get_vi_mode() + ')'))
+            result.append(
+                ('class:bottom-toolbar', '[F4] Vi-mode (' + _get_vi_mode() + ')'))
         else:
             result.append(('class:bottom-toolbar', '[F4] Emacs-mode'))
 
@@ -45,10 +51,12 @@ def create_toolbar_tokens_func(pgcli):
                            '     Failed transaction'))
 
         if pgcli.pgexecute.valid_transaction():
-            result.append(('class:bottom-toolbar.transaction.valid', '     Transaction'))
+            result.append(
+                ('class:bottom-toolbar.transaction.valid', '     Transaction'))
 
         if pgcli.completion_refresher.is_refreshing():
-            result.append(('class:bottom-toolbar', '     Refreshing completions...'))
+            result.append(
+                ('class:bottom-toolbar', '     Refreshing completions...'))
 
         return result
     return get_toolbar_tokens

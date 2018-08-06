@@ -50,6 +50,7 @@ def parse_pygments_style(token_name, style_object, style_dict):
     :param token_name: str name of Pygments token. Example: "Token.String"
     :param style_object: pygments.style.Style instance to use as base
     :param style_dict: dict of token names and their styles, customized to this cli
+
     """
     token_type = string_to_tokentype(token_name)
     try:
@@ -71,7 +72,8 @@ def style_factory(name, cli_style):
     for token in cli_style:
         if token.startswith('Token.'):
             # treat as pygments token (1.0)
-            token_type, style_value = parse_pygments_style(token, style, cli_style)
+            token_type, style_value = parse_pygments_style(
+                token, style, cli_style)
             if token_type in TOKEN_TO_PROMPT_STYLE:
                 prompt_style = TOKEN_TO_PROMPT_STYLE[token_type]
                 prompt_styles.append((prompt_style, style_value))
@@ -99,7 +101,8 @@ def style_factory_output(name, cli_style):
 
     for token in cli_style:
         if token.startswith('Token.'):
-            token_type, style_value = parse_pygments_style(token, style, cli_style)
+            token_type, style_value = parse_pygments_style(
+                token, style, cli_style)
             style.update({token_type: style_value})
         elif token in PROMPT_STYLE_TO_TOKEN:
             token_type = PROMPT_STYLE_TO_TOKEN[token]
