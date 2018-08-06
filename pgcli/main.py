@@ -721,6 +721,7 @@ class PGCli(object):
                 completer=DynamicCompleter(lambda: self.completer),
                 complete_while_typing=True,
                 style=style_factory(self.syntax_style, self.cli_style),
+                include_default_pygments_style=False,
                 key_bindings=key_bindings,
                 editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS)
 
