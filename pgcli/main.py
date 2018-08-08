@@ -723,6 +723,7 @@ class PGCli(object):
                 style=style_factory(self.syntax_style, self.cli_style),
                 include_default_pygments_style=False,
                 key_bindings=key_bindings,
+                enable_open_in_editor=True,
                 editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS)
 
             return prompt
