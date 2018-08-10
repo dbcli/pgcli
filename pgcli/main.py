@@ -685,7 +685,7 @@ class PGCli(object):
                     len(prompt) > self.max_len_prompt):
                 prompt = self.get_prompt('\\d> ')
 
-            return prompt
+            return [('class:prompt', prompt)]
 
         def get_continuation(width, line_number, is_soft_wrap):
             continuation = self.multiline_continuation_char * (width - 1) + ' '
