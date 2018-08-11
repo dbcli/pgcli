@@ -509,36 +509,26 @@ class PGCli(object):
         :param text: Document
         :return: Document
         """
-        app = self.prompt_app.app
-
-        # FIXME: using application.pre_run_callables like this here is not the best solution.
-        # It's internal api of prompt_toolkit that may change. This was added to fix #668.
-        # We may find a better way to do it in the future.
-        saved_callables = app.pre_run_callables
-        try:
+        editor_command = special.editor_command(text)
+        while editor_command:
+            if editor_command == '\\e':
+                filename = special.get_filename(text)
+                query = special.get_editor_query(
+                    text) or self.get_last_query()
+            else:  # \ev or \ef
+                filename = None
+                spec = text.split()[1]
+                if editor_command == '\\ev':
+                    query = self.pgexecute.view_definition(spec)
+                elif editor_command == '\\ef':
+                    query = self.pgexecute.function_definition(spec)
+            sql, message = special.open_external_editor(
+                filename, sql=query)
+            if message:
+                # Something went wrong. Raise an exception and bail.
+                raise RuntimeError(message)
+            text = self.prompt_app.prompt(default=sql)
             editor_command = special.editor_command(text)
-            while editor_command:
-                if editor_command == '\\e':
-                    filename = special.get_filename(text)
-                    query = special.get_editor_query(
-                        text) or self.get_last_query()
-                else:  # \ev or \ef
-                    filename = None
-                    spec = text.split()[1]
-                    if editor_command == '\\ev':
-                        query = self.pgexecute.view_definition(spec)
-                    elif editor_command == '\\ef':
-                        query = self.pgexecute.function_definition(spec)
-                sql, message = special.open_external_editor(
-                    filename, sql=query)
-                if message:
-                    # Something went wrong. Raise an exception and bail.
-                    raise RuntimeError(message)
-                app.pre_run_callables = []
-                text = self.prompt_app.prompt(default=sql)
-                editor_command = special.editor_command(text)
-        finally:
-            app.pre_run_callables = saved_callables
         return text
 
     def execute_command(self, text):
@@ -699,7 +689,7 @@ class PGCli(object):
             complete_style = CompleteStyle.COLUMN
 
         with self._completer_lock:
-            prompt = PromptSession(
+            prompt_app = PromptSession(
                 lexer=PygmentsLexer(PostgresLexer),
                 reserve_space_for_menu=self.min_num_menu_lines,
                 message=get_message,
@@ -726,7 +716,7 @@ class PGCli(object):
                 enable_open_in_editor=True,
                 editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS)
 
-            return prompt
+            return prompt_app
 
     def _should_show_limit_prompt(self, status, cur):
         """returns True if limit prompt should be shown, False otherwise."""
