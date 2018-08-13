@@ -16,14 +16,12 @@ def pgcli_bindings(pgcli):
     def _(event):
         """Enable/Disable SmartCompletion Mode."""
         _logger.debug('Detected F2 key.')
-        buf = event.app.current_buffer
-        buf.completer.smart_completion = not buf.completer.smart_completion
+        pgcli.completer.smart_completion = not pgcli.completer.smart_completion
 
     @kb.add('f3')
     def _(event):
         """Enable/Disable Multiline Mode."""
         _logger.debug('Detected F3 key.')
-        buf = event.app.current_buffer
         pgcli.multi_line = not pgcli.multi_line
 
     @kb.add('f4')
