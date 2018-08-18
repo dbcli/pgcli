@@ -715,8 +715,8 @@ class PGCli(object):
                 key_bindings=key_bindings,
                 enable_open_in_editor=True,
                 enable_system_prompt=True,
-                editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS),
-                search_ignore_case=True
+                editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS,
+                search_ignore_case=True)
 
             return prompt_app
 
