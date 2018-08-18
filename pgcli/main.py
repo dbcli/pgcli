@@ -714,6 +714,7 @@ class PGCli(object):
                 include_default_pygments_style=False,
                 key_bindings=key_bindings,
                 enable_open_in_editor=True,
+                enable_system_prompt=True,
                 editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS)
 
             return prompt_app
