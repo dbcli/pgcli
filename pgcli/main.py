@@ -527,7 +527,13 @@ class PGCli(object):
             if message:
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
-            text = self.prompt_app.prompt(default=sql)
+            while True:
+                try:
+                    text = self.prompt_app.prompt(default=sql)
+                    break
+                except KeyboardInterrupt:
+                    sql = None
+
             editor_command = special.editor_command(text)
         return text
 
@@ -623,7 +629,10 @@ class PGCli(object):
 
         try:
             while True:
-                text = self.prompt_app.prompt()
+                try:
+                    text = self.prompt_app.prompt()
+                except KeyboardInterrupt:
+                    continue
 
                 try:
                     text = self.handle_editor_command(text)
