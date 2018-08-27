@@ -63,8 +63,11 @@ def pgcli_bindings(pgcli):
     def _(event):
         """
         Makes the enter key work as the tab key only when showing the menu.
+        In other words, don't execute query when enter is pressed in the
+        completion dropdown menu, instead close the dropdown menu (accept
+        current selection).
         """
-        _logger.debug('Detected <C-J> key.')
+        _logger.debug('Detected enter key.')
 
         event.current_buffer.complete_state = None
         b = event.app.current_buffer
