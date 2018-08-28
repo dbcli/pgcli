@@ -18,7 +18,8 @@ def is_subselect(parsed):
         return False
     for item in parsed.tokens:
         if item.ttype is DML and item.value.upper() in ('SELECT', 'INSERT',
-                'UPDATE', 'CREATE', 'DELETE'):
+                                                        'UPDATE', 'CREATE',
+                                                        'DELETE'):
             return True
     return False
 
@@ -91,7 +92,6 @@ def extract_table_identifiers(token_stream, allow_functions=True):
                 alias = name
             name = name.lower()
         return schema_name, name, alias
-
 
     for item in token_stream:
         if isinstance(item, IdentifierList):

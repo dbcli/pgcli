@@ -5,6 +5,7 @@ import pygments.styles
 
 from pygments.style import Style
 
+
 def style_factory(name, cli_style):
     try:
         style = pygments.styles.get_style_by_name(name)

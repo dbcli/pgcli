@@ -11,7 +11,8 @@ POSTGRES_PASSWORD = getenv('PGPASSWORD', '')
 
 
 def db_connection(dbname=None):
-    conn = psycopg2.connect(user=POSTGRES_USER, host=POSTGRES_HOST, database=dbname)
+    conn = psycopg2.connect(user=POSTGRES_USER, host=POSTGRES_HOST,
+                            database=dbname)
     conn.autocommit = True
     return conn
 
@@ -23,14 +24,15 @@ try:
     json_types = register_json_typecasters(conn, lambda x: x)
     JSON_AVAILABLE = 'json' in json_types
     JSONB_AVAILABLE = 'jsonb' in json_types
-except:
+except Exception:
     CAN_CONNECT_TO_DB = JSON_AVAILABLE = JSONB_AVAILABLE = False
     SERVER_VERSION = 0
 
 
 dbtest = pytest.mark.skipif(
     not CAN_CONNECT_TO_DB,
-    reason="Need a postgres instance at localhost accessible by user 'postgres'")
+    reason="Need a postgres instance at localhost accessible by user "
+           "'postgres'")
 
 
 requires_json = pytest.mark.skipif(
@@ -47,7 +49,7 @@ def create_db(dbname):
     with db_connection().cursor() as cur:
         try:
             cur.execute('''CREATE DATABASE _test_db''')
-        except:
+        except Exception:
             pass
 
 
