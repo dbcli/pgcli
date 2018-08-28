@@ -34,9 +34,8 @@ from prompt_toolkit.buffer import AcceptAction
 from prompt_toolkit.document import Document
 from prompt_toolkit.filters import Always, HasFocus, IsDone
 from prompt_toolkit.layout.lexers import PygmentsLexer
-from prompt_toolkit.layout.processors import (ConditionalProcessor,
-                                              HighlightMatchingBracketProcessor,
-                                              TabsProcessor)
+from prompt_toolkit.layout.processors import (
+    ConditionalProcessor, HighlightMatchingBracketProcessor, TabsProcessor)
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from pygments.lexers.sql import PostgresLexer
@@ -54,8 +53,8 @@ from .pgstyle import style_factory, style_factory_output
 from .pgexecute import PGExecute
 from .pgbuffer import PGBuffer
 from .completion_refresher import CompletionRefresher
-from .config import (get_casing_file,
-    load_config, config_location, ensure_dir_exists, get_config)
+from .config import (get_casing_file, load_config,
+                     config_location, ensure_dir_exists, get_config)
 from .key_bindings import pgcli_bindings
 from .encodingutils import utf8tounicode
 from .encodingutils import text_type
@@ -81,20 +80,20 @@ from textwrap import dedent
 MetaQuery = namedtuple(
     'Query',
     [
-        'query',            # The entire text of the command
-        'successful',       # True If all subqueries were successful
-        'total_time',       # Time elapsed executing the query
-        'meta_changed',     # True if any subquery executed create/alter/drop
-        'db_changed',       # True if any subquery changed the database
-        'path_changed',     # True if any subquery changed the search path
-        'mutated',          # True if any subquery executed insert/update/delete
-        'is_special',       # True if the query is a special command
+        'query',           # The entire text of the command
+        'successful',      # True If all subqueries were successful
+        'total_time',      # Time elapsed executing the query
+        'meta_changed',    # True if any subquery executed create/alter/drop
+        'db_changed',      # True if any subquery changed the database
+        'path_changed',    # True if any subquery changed the search path
+        'mutated',         # True if any subquery executed insert/update/delete
+        'is_special',      # True if the query is a special command
     ])
 MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
-    'OutputSettings',
-    'table_format dcmlfmt floatfmt missingval expanded max_width case_function style_output'
+    'OutputSettings', 'table_format dcmlfmt floatfmt missingval '
+                      'expanded max_width case_function style_output'
 )
 OutputSettings.__new__.__defaults__ = (
     None, None, None, '<null>', False, None, lambda x: x, None
@@ -116,25 +115,27 @@ class PGCli(object):
 
         if configured_pager:
             self.logger.info(
-                'Default pager found in config file: "{}"'.format(configured_pager))
+                'Default pager found in config file: '
+                '"{}"'.format(configured_pager))
             os.environ['PAGER'] = configured_pager
         elif os_environ_pager:
-            self.logger.info('Default pager found in PAGER environment variable: "{}"'.format(
-                os_environ_pager))
+            self.logger.info('Default pager found in PAGER environment '
+                             'variable: "{}"'.format(os_environ_pager))
             os.environ['PAGER'] = os_environ_pager
         else:
             self.logger.info(
-                'No default pager found in environment. Using os default pager')
+                'No default pager found in environment. Using os default pager'
+            )
 
-        # Set default set of less recommended options, if they are not already set.
-        # They are ignored if pager is different than less.
+        # Set default set of less recommended options, if they are
+        # not already set. They are ignored if pager is different than less.
         if not os.environ.get('LESS'):
             os.environ['LESS'] = '-SRXF'
 
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
                  pgexecute=None, pgclirc_file=None, row_limit=None,
-                 single_connection=False, less_chatty=None, prompt=None, prompt_dsn=None,
-                 auto_vertical_output=False, warn=None):
+                 single_connection=False, less_chatty=None, prompt=None,
+                 prompt_dsn=None, auto_vertical_output=False, warn=None):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
@@ -165,16 +166,19 @@ class PGCli(object):
             self.row_limit = c['main'].as_int('row_limit')
 
         self.min_num_menu_lines = c['main'].as_int('min_num_menu_lines')
-        self.multiline_continuation_char = c['main']['multiline_continuation_char']
+        self.multiline_continuation_char = \
+            c['main']['multiline_continuation_char']
         self.table_format = c['main']['table_format']
         self.syntax_style = c['main']['syntax_style']
         self.cli_style = c['colors']
         self.wider_completion_menu = c['main'].as_bool('wider_completion_menu')
         c_dest_warning = c['main'].as_bool('destructive_warning')
         self.destructive_warning = c_dest_warning if warn is None else warn
-        self.less_chatty = bool(less_chatty) or c['main'].as_bool('less_chatty')
+        self.less_chatty = \
+            bool(less_chatty) or c['main'].as_bool('less_chatty')
         self.null_string = c['main'].get('null_string', '<null>')
-        self.prompt_format = prompt if prompt is not None else c['main'].get('prompt', self.default_prompt)
+        self.prompt_format = prompt if prompt is not None else \
+            c['main'].get('prompt', self.default_prompt)
         self.prompt_dsn_format = prompt_dsn
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
@@ -210,7 +214,7 @@ class PGCli(object):
         }
 
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial,
-            settings=self.settings)
+                                settings=self.settings)
         self.completer = completer
         self._completer_lock = threading.Lock()
         self.register_special_commands()
@@ -231,10 +235,12 @@ class PGCli(object):
             persist_priorities='all')
 
         self.pgspecial.register(self.quit, '\\q', '\\q',
-                                'Quit pgcli.', arg_type=NO_QUERY, case_sensitive=True,
+                                'Quit pgcli.', arg_type=NO_QUERY,
+                                case_sensitive=True,
                                 aliases=(':q',))
         self.pgspecial.register(self.quit, 'quit', 'quit',
-                                'Quit pgcli.', arg_type=NO_QUERY, case_sensitive=False,
+                                'Quit pgcli.', arg_type=NO_QUERY,
+                                case_sensitive=False,
                                 aliases=('exit',))
         self.pgspecial.register(refresh_callback, '\\#', '\\#',
                                 'Refresh auto-completions.', arg_type=NO_QUERY)
@@ -246,8 +252,9 @@ class PGCli(object):
                                 'Send all query results to file.')
         self.pgspecial.register(self.info_connection, '\\conninfo',
                                 '\\conninfo', 'Get connection details')
-        self.pgspecial.register(self.change_table_format, '\\T', '\\T [format]',
-                                'Change the table format used to output results')
+        self.pgspecial.register(self.change_table_format, '\\T',
+                                '\\T [format]', 'Change the table format '
+                                                'used to output results')
 
     def change_table_format(self, pattern, **_):
         try:
@@ -343,7 +350,8 @@ class PGCli(object):
         log_level = self.config['main']['log_level']
 
         # Disable logging if value is NONE by switching to a no-op handler.
-        # Set log level to a high value so it doesn't even waste cycles getting called.
+        # Set log level to a high value so it doesn't even waste cycles
+        # getting called.
         if log_level.upper() == 'NONE':
             handler = logging.NullHandler()
         else:
@@ -391,7 +399,8 @@ class PGCli(object):
                          user=fixup_possible_percent_encoding(uri.username),
                          port=fixup_possible_percent_encoding(uri.port),
                          passwd=fixup_possible_percent_encoding(uri.password))
-        # Deal with extra params e.g. ?sslmode=verify-ca&sslrootcert=/myrootcert
+        # Deal with extra params e.g.
+        # ?sslmode=verify-ca&sslrootcert=/myrootcert
         if uri.query:
             arguments = dict(
                 {k: v for k, (v,) in parse_qs(uri.query).items()},
@@ -421,9 +430,11 @@ class PGCli(object):
             {}
             {}
             To remove this message do one of the following:
-            - prepare keyring as described at: https://keyring.readthedocs.io/en/stable/
+            - prepare keyring as described at:
+                https://keyring.readthedocs.io/en/stable/
             - uninstall keyring: pip uninstall keyring
-            - disable keyring in our configuration: add keyring = False to [main]""")
+            - disable keyring in our configuration:
+                add keyring = False to [main]""")
         if not passwd and keyring and self.keyring_enabled:
             try:
                 passwd = keyring.get_password('pgcli', key)
@@ -510,8 +521,10 @@ class PGCli(object):
         :param document: Document
         :return: Document
         """
-        # FIXME: using application.pre_run_callables like this here is not the best solution.
-        # It's internal api of prompt_toolkit that may change. This was added to fix #668.
+        # FIXME: using application.pre_run_callables like this here is not the
+        # best solution.
+        # It's internal api of prompt_toolkit that may change. This was added
+        # to fix #668.
         # We may find a better way to do it in the future.
         saved_callables = cli.application.pre_run_callables
         try:
@@ -577,7 +590,8 @@ class PGCli(object):
             try:
                 if self.output_file and not text.startswith(('\\o ', '\\? ')):
                     try:
-                        with open(self.output_file, 'a', encoding='utf-8') as f:
+                        with open(self.output_file, 'a', encoding='utf-8') \
+                                as f:
                             click.echo(text, file=f)
                             click.echo('\n'.join(output), file=f)
                             click.echo('', file=f)  # extra newline
@@ -669,7 +683,7 @@ class PGCli(object):
 
         except (PgCliQuitError, EOFError):
             if not self.less_chatty:
-                print ('Goodbye!')
+                print('Goodbye!')
 
     def _build_cli(self, history):
 
@@ -695,7 +709,7 @@ class PGCli(object):
             return [(Token.Prompt, prompt)]
 
         def get_continuation_tokens(cli, width):
-            continuation=self.multiline_continuation_char * (width - 1) + ' '
+            continuation = self.multiline_continuation_char * (width - 1) + ' '
             return [(Token.Continuation, continuation)]
 
         get_toolbar_tokens = create_toolbar_tokens_func(
@@ -732,7 +746,8 @@ class PGCli(object):
                 complete_while_typing=Always(),
                 accept_action=AcceptAction.RETURN_DOCUMENT)
 
-            editing_mode = EditingMode.VI if self.vi_mode else EditingMode.EMACS
+            editing_mode = EditingMode.VI if self.vi_mode else \
+                EditingMode.EMACS
 
             application = Application(
                 style=style_factory(self.syntax_style, self.cli_style),
@@ -853,7 +868,8 @@ class PGCli(object):
         callback = functools.partial(self._on_completions_refreshed,
                                      persist_priorities=persist_priorities)
         self.completion_refresher.refresh(self.pgexecute, self.pgspecial,
-            callback, history=history, settings=self.settings)
+                                          callback, history=history,
+                                          settings=self.settings)
         return [(None, None, None,
                 'Auto-completion refresh started in the background.')]
 
@@ -918,7 +934,8 @@ class PGCli(object):
         string = string.replace('\\d', self.pgexecute.dbname or '(none)')
         string = string.replace('\\p', str(self.pgexecute.port) or '(none)')
         string = string.replace('\\i', str(self.pgexecute.pid) or '(none)')
-        string = string.replace('\\#', "#" if (self.pgexecute.superuser) else ">")
+        string = string.replace(
+            '\\#', "#" if self.pgexecute.superuser else ">")
         string = string.replace('\\n', "\n")
         return string
 
@@ -932,43 +949,50 @@ class PGCli(object):
         else:
             click.echo_via_pager(text, color)
 
+
 @click.command()
 # Default host is '' so psycopg2 can default to either localhost or unix socket
 @click.option('-h', '--host', default='', envvar='PGHOST',
-        help='Host address of the postgres database.')
-@click.option('-p', '--port', default=5432, help='Port number at which the '
-        'postgres instance is listening.', envvar='PGPORT', type=click.INT)
+              help='Host address of the postgres database.')
+@click.option('-p', '--port', default=5432,
+              help='Port number at which the postgres instance is listening.',
+              envvar='PGPORT', type=click.INT)
 @click.option('-U', '--username', 'username_opt', envvar='PGUSER',
-        help='Username to connect to the postgres database.')
+              help='Username to connect to the postgres database.')
 @click.option('--user', 'username_opt', envvar='PGUSER',
               help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
-        help='Force password prompt.')
+              help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
-        default=False, help='Never prompt for password.')
+              default=False, help='Never prompt for password.')
 @click.option('--single-connection', 'single_connection', is_flag=True,
-        default=False,
-        help='Do not use a separate connection for completions.')
+              default=False,
+              help='Do not use a separate connection for completions.')
 @click.option('-v', '--version', is_flag=True, help='Version of pgcli.')
 @click.option('-d', '--dbname', default='', envvar='PGDATABASE',
-        help='database name to connect to.')
+              help='database name to connect to.')
 @click.option('--pgclirc', default=config_location() + 'config',
-        envvar='PGCLIRC', help='Location of pgclirc file.', type=click.Path(dir_okay=False))
+              envvar='PGCLIRC', help='Location of pgclirc file.',
+              type=click.Path(dir_okay=False))
 @click.option('-D', '--dsn', default='', envvar='DSN',
-        help='Use DSN configured into the [alias_dsn] section of pgclirc file.')
+              help='Use DSN configured into the [alias_dsn] section of '
+                   'pgclirc file.')
 @click.option('--list-dsn', 'list_dsn', is_flag=True,
-              help='list of DSN configured into the [alias_dsn] section of pgclirc file.')
+              help='list of DSN configured into the [alias_dsn] '
+                   'section of pgclirc file.')
 @click.option('--row-limit', default=None, envvar='PGROWLIMIT', type=click.INT,
-        help='Set threshold for row limit prompt. Use 0 to disable prompt.')
-@click.option('--less-chatty', 'less_chatty', is_flag=True,
-        default=False,
-        help='Skip intro on startup and goodbye on exit.')
+              help='Set threshold for row limit prompt. Use 0 to '
+                   'disable prompt.')
+@click.option('--less-chatty', 'less_chatty', is_flag=True, default=False,
+              help='Skip intro on startup and goodbye on exit.')
 @click.option('--prompt', help='Prompt format (Default: "\\u@\\h:\\d> ").')
-@click.option('--prompt-dsn', help='Prompt format for connections using DSN aliases (Default: "\\u@\\h:\\d> ").')
+@click.option('--prompt-dsn', help='Prompt format for connections using DSN '
+                                   'aliases (Default: "\\u@\\h:\\d> ").')
 @click.option('-l', '--list', 'list_databases', is_flag=True, help='list '
               'available databases, then exit.')
 @click.option('--auto-vertical-output', is_flag=True,
-              help='Automatically switch to vertical output mode if the result is wider than the terminal width.')
+              help='Automatically switch to vertical output mode if the '
+                   'result is wider than the terminal width.')
 @click.option('--warn/--no-warn', default=None,
               help='Warn before running a destructive query.')
 @click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
@@ -991,12 +1015,12 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
     if os.path.exists(os.path.expanduser('~/.pgclirc')):
         if not os.path.exists(config_full_path):
             shutil.move(os.path.expanduser('~/.pgclirc'), config_full_path)
-            print ('Config file (~/.pgclirc) moved to new location',
-                   config_full_path)
+            print('Config file (~/.pgclirc) moved to new location',
+                  config_full_path)
         else:
-            print ('Config file is now located at', config_full_path)
-            print ('Please move the existing config file ~/.pgclirc to',
-                   config_full_path)
+            print('Config file is now located at', config_full_path)
+            print('Please move the existing config file ~/.pgclirc to',
+                  config_full_path)
     if list_dsn:
         try:
             cfg = load_config(pgclirc, config_full_path)
@@ -1011,7 +1035,8 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
 
     pgcli = PGCli(prompt_passwd, never_prompt, pgclirc_file=pgclirc,
                   row_limit=row_limit, single_connection=single_connection,
-                  less_chatty=less_chatty, prompt=prompt, prompt_dsn=prompt_dsn,
+                  less_chatty=less_chatty, prompt=prompt,
+                  prompt_dsn=prompt_dsn,
                   auto_vertical_output=auto_vertical_output, warn=warn)
 
     # Choose which ever one has a valid value.
@@ -1026,10 +1051,10 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
         try:
             cfg = load_config(pgclirc, config_full_path)
             dsn_config = cfg['alias_dsn'][dsn]
-        except:
-            click.secho('Invalid DSNs found in the config file. '\
-                'Please check the "[alias_dsn]" section in pgclirc.',
-                 err=True, fg='red')
+        except Exception as e:
+            click.secho('Invalid DSNs found in the config file. '
+                        'Please check the "[alias_dsn]" section in pgclirc.',
+                        err=True, fg='red')
             exit(1)
         pgcli.connect_uri(dsn_config)
         pgcli.dsn_alias = dsn
@@ -1056,10 +1081,10 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
         sys.exit(0)
 
     pgcli.logger.debug('Launch Params: \n'
-            '\tdatabase: %r'
-            '\tuser: %r'
-            '\thost: %r'
-            '\tport: %r', database, user, host, port)
+                       '\tdatabase: %r'
+                       '\tuser: %r'
+                       '\thost: %r'
+                       '\tport: %r', database, user, host, port)
 
     if setproctitle:
         obfuscate_process_password()
@@ -1072,7 +1097,8 @@ def obfuscate_process_password():
     if '://' in process_title:
         process_title = re.sub(r":(.*):(.*)@", r":\1:xxxx@", process_title)
     elif "=" in process_title:
-        process_title = re.sub(r"password=(.+?)((\s[a-zA-Z]+=)|$)", r"password=xxxx\2", process_title)
+        process_title = re.sub(r"password=(.+?)((\s[a-zA-Z]+=)|$)",
+                               r"password=xxxx\2", process_title)
 
     setproctitle.setproctitle(process_title)
 
@@ -1082,7 +1108,8 @@ def has_meta_cmd(query):
     statement is an alter, create, drop, commit or rollback."""
     try:
         first_token = query.split()[0]
-        if first_token.lower() in ('alter', 'create', 'drop', 'commit', 'rollback'):
+        if first_token.lower() in ('alter', 'create', 'drop', 'commit',
+                                   'rollback'):
             return True
     except Exception:
         return False
@@ -1091,7 +1118,8 @@ def has_meta_cmd(query):
 
 
 def has_change_db_cmd(query):
-    """Determines if the statement is a database switch such as 'use' or '\\c'"""
+    """Determines if the statement is a database switch such as 'use'
+    or '\\c'"""
     try:
         first_token = query.split()[0]
         if first_token.lower() in ('use', '\\c', '\\connect'):
@@ -1194,9 +1222,11 @@ def format_output(title, cur, headers, status, settings):
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
 
-        if (not expanded and max_width and len(first_line) > max_width and headers):
+        if not expanded and max_width and len(first_line) > max_width \
+                and headers:
             formatted = formatter.format_output(
-                cur, headers, format_name='vertical', column_types=None, **output_kwargs)
+                cur, headers, format_name='vertical', column_types=None,
+                **output_kwargs)
             if isinstance(formatted, (text_type)):
                 formatted = iter(formatted.splitlines())
 

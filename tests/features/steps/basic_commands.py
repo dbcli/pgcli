@@ -53,7 +53,8 @@ def step_send_source_command(context):
 @when(u'we run query to check application_name')
 def step_check_application_name(context):
     context.cli.sendline(
-        "SELECT 'found' FROM pg_stat_activity WHERE application_name = 'pgcli' HAVING COUNT(*) > 0;"
+        "SELECT 'found' FROM pg_stat_activity WHERE application_name = "
+        "'pgcli' HAVING COUNT(*) > 0;"
     )
 
 
@@ -77,5 +78,6 @@ def step_see_found(context):
 def step_confirm_destructive_command(context):
     """Confirm destructive command."""
     wrappers.expect_exact(
-        context, 'You\'re about to run a destructive command.\r\nDo you want to proceed? (y/n):', timeout=2)
+        context, 'You\'re about to run a destructive command.\r\nDo you want '
+                 'to proceed? (y/n):', timeout=2)
     context.cli.sendline('y')

@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
-    schema, table, view, function, column, wildcard_expansion,
-    get_result, result_set, qual, no_qual, parametrize)
+                      schema, table, view, function, column,
+                      wildcard_expansion, get_result, result_set, qual,
+                      no_qual, parametrize)
 from prompt_toolkit.completion import Completion
 
 
@@ -36,7 +37,8 @@ testdata = MetaData(metadata)
 cased_users_col_names = ['ID', 'PARENTID', 'Email', 'First_Name', 'last_name']
 cased_users2_col_names = ['UserID', 'UserName']
 cased_func_names = [
-    'Custom_Fun', '_custom_fun', 'Custom_Func1', 'custom_func2', 'set_returning_func'
+    'Custom_Fun', '_custom_fun', 'Custom_Func1', 'custom_func2',
+    'set_returning_func'
 ]
 cased_tbls = ['Users', 'Orders']
 cased_views = ['User_Emails', 'Functions']
@@ -46,8 +48,10 @@ casing = (
 )
 # Lists for use in assertions
 cased_funcs = [
-    function(f) for f in ('Custom_Fun()', '_custom_fun()', 'Custom_Func1()', 'custom_func2()')
-] + [function('set_returning_func(x := , y := )', display='set_returning_func(x, y)')]
+    function(f) for f in ('Custom_Fun()', '_custom_fun()', 'Custom_Func1()',
+                          'custom_func2()')
+] + [function('set_returning_func(x := , y := )',
+              display='set_returning_func(x, y)')]
 cased_tbls = [table(t) for t in (cased_tbls + ['"Users"', '"select"'])]
 cased_rels = [view(t) for t in cased_views] + cased_funcs + cased_tbls
 cased_users_cols = [column(c) for c in cased_users_col_names]
@@ -66,7 +70,8 @@ cased_aliased_rels = [
     table(t) for t in ('Users U', '"Users" U', 'Orders O', '"select" s')
 ] + [view('User_Emails UE'), view('Functions F')] + [
     function(f) for f in (
-        '_custom_fun() cf', 'Custom_Fun() CF', 'Custom_Func1() CF', 'custom_func2() cf'
+        '_custom_fun() cf', 'Custom_Fun() CF', 'Custom_Func1() CF',
+        'custom_func2() cf'
     )
 ] + [function(
     'set_returning_func(x := , y := ) srf',
@@ -165,7 +170,7 @@ def test_suggested_column_names_from_visible_table(completer):
 def test_suggested_cased_column_names(completer):
     result = result_set(completer, 'SELECT  from users', len('SELECT '))
     assert result == set(cased_funcs + cased_users_cols
-        + testdata.builtin_functions() + testdata.keywords())
+                         + testdata.builtin_functions() + testdata.keywords())
 
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
@@ -213,7 +218,7 @@ def test_suggested_cased_always_qualified_column_names(
     cols = [column('users.' + c) for c in cased_users_col_names]
     result = result_set(completer, text, position)
     assert result == set(cased_funcs + cols
-        + testdata.builtin_functions() + testdata.keywords())
+                         + testdata.builtin_functions() + testdata.keywords())
 
 
 @parametrize('completer', completers(casing=False, qualify=no_qual))
@@ -396,9 +401,9 @@ def test_suggested_joins(completer, text):
     result = result_set(completer, text)
     assert result == set(
         testdata.schemas_and_from_clause_items() + [
-        join('"Users" ON "Users".userid = Users.id'),
-        join('users users2 ON users2.id = Users.parentid'),
-        join('users users2 ON users2.parentid = Users.id'),
+            join('"Users" ON "Users".userid = Users.id'),
+            join('users users2 ON users2.id = Users.parentid'),
+            join('users users2 ON users2.parentid = Users.id'),
         ]
     )
 
@@ -459,7 +464,8 @@ def test_suggested_aliases_after_on(completer, text):
 @parametrize('completer', completers())
 @parametrize('text', [
     'SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = ',
-    'SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id =  JOIN orders o2 ON'
+    '''SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id =
+    JOIN orders o2 ON'''
 ])
 def test_suggested_aliases_after_on_right_side(completer, text):
     position = len(
@@ -472,7 +478,8 @@ def test_suggested_aliases_after_on_right_side(completer, text):
 @parametrize('completer', completers(casing=False))
 @parametrize('text', [
     'SELECT users.name, orders.id FROM users JOIN orders ON ',
-    'SELECT users.name, orders.id FROM users JOIN orders ON JOIN orders orders2 ON'
+    '''SELECT users.name, orders.id FROM users JOIN orders ON JOIN
+    orders orders2 ON'''
 ])
 def test_suggested_tables_after_on(completer, text):
     position = len('SELECT users.name, orders.id FROM users JOIN orders ON ')
@@ -487,11 +494,13 @@ def test_suggested_tables_after_on(completer, text):
 
 @parametrize('completer', completers(casing=False))
 @parametrize('text', [
-    'SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = JOIN orders orders2 ON',
+    '''SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id =
+    JOIN orders orders2 ON''',
     'SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = '
 ])
 def test_suggested_tables_after_on_right_side(completer, text):
-    position = len('SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = ')
+    position = len('SELECT users.name, orders.id FROM users JOIN orders ON '
+                   'orders.user_id = ')
     result = result_set(completer, text, position)
     assert result == set([alias('users'), alias('orders')])
 
@@ -508,10 +517,14 @@ def test_join_using_suggests_common_columns(completer, text):
 
 @parametrize('completer', completers(casing=False))
 @parametrize('text', [
-    'SELECT * FROM users u1 JOIN users u2 USING (email) JOIN user_emails ue USING()',
-    'SELECT * FROM users u1 JOIN users u2 USING(email) JOIN user_emails ue USING ()',
-    'SELECT * FROM users u1 JOIN user_emails ue USING () JOIN users u2 ue USING(first_name, last_name)',
-    'SELECT * FROM users u1 JOIN user_emails ue USING() JOIN users u2 ue USING (first_name, last_name)',
+    '''SELECT * FROM users u1 JOIN users u2 USING (email) JOIN
+    user_emails ue USING()''',
+    '''SELECT * FROM users u1 JOIN users u2 USING(email) JOIN
+    user_emails ue USING ()''',
+    '''SELECT * FROM users u1 JOIN user_emails ue USING () JOIN
+    users u2 ue USING(first_name, last_name)''',
+    '''SELECT * FROM users u1 JOIN user_emails ue USING() JOIN
+    users u2 ue USING (first_name, last_name)''',
 ])
 def test_join_using_suggests_from_last_table(completer, text):
     position = text.index('()') + 1
@@ -733,7 +746,7 @@ def test_wildcard_column_expansion_with_two_tables(completer):
     completions = get_result(completer, text, position)
 
     cols = ('"select".id, "select".insert, "select"."ABC", '
-        'u.id, u.parentid, u.email, u.first_name, u.last_name')
+            'u.id, u.parentid, u.email, u.first_name, u.last_name')
     expected = [wildcard_expansion(cols)]
     assert completions == expected
 
@@ -773,7 +786,7 @@ def test_suggest_columns_from_quoted_table(completer):
 
 @parametrize('completer', completers(casing=False, aliasing=False))
 @parametrize('text', ['SELECT * FROM ',
-    'SELECT * FROM Orders o CROSS JOIN '])
+                      'SELECT * FROM Orders o CROSS JOIN '])
 def test_schema_or_visible_table_completion(completer, text):
     result = result_set(completer, text)
     assert result == set(testdata.schemas_and_from_clause_items())

@@ -19,6 +19,7 @@ def function_meta_data(
         is_aggregate, is_window, is_set_returning, arg_defaults
     )
 
+
 @dbtest
 def test_conn(executor):
     run(executor, '''create table test(a text)''')
@@ -62,8 +63,8 @@ def test_schemata_table_views_and_columns_query(executor):
     assert executor.search_path() == ['pg_catalog', 'public']
 
     # tables
-    assert set(executor.tables()) >= set([
-    ('public', 'a'), ('public', 'b'), ('schema1', 'c')])
+    assert set(executor.tables()) >= set(
+        [('public', 'a'), ('public', 'b'), ('schema1', 'c')])
 
     assert set(executor.table_columns()) >= set([
         ('public', 'a', 'x', 'text', False, None),
@@ -85,7 +86,8 @@ def test_foreign_key_query(executor):
     run(executor, "create schema schema1")
     run(executor, "create schema schema2")
     run(executor, "create table schema1.parent(parentid int PRIMARY KEY)")
-    run(executor, "create table schema2.child(childid int PRIMARY KEY, motherid int REFERENCES schema1.parent)")
+    run(executor, "create table schema2.child(childid int PRIMARY KEY, "
+                  "motherid int REFERENCES schema1.parent)")
 
     assert set(executor.foreignkeys()) >= set([
         ('schema1', 'parent', 'parentid', 'schema2', 'child', 'motherid')])
@@ -103,8 +105,8 @@ def test_functions_query(executor):
                      returns table(x int, y int) language sql
                      as $$select 1, 2 from generate_series(1,5)$$;''')
 
-    run(executor, '''create function func4(x int) returns setof int language sql
-                     as $$select generate_series(1,5)$$;''')
+    run(executor, '''create function func4(x int) returns setof int language
+                     sql as $$select generate_series(1,5)$$;''')
 
     funcs = set(executor.functions())
     assert funcs >= set([
@@ -185,8 +187,8 @@ def test_not_is_special(executor, pgspecial):
     query = 'select 1'
     result = list(executor.run(query, pgspecial=pgspecial))
     success, is_special = result[0][5:]
-    assert success == True
-    assert is_special == False
+    assert success is True
+    assert is_special is False
 
 
 @dbtest
@@ -195,8 +197,8 @@ def test_execute_from_file_no_arg(executor, pgspecial):
     result = list(executor.run("\i", pgspecial=pgspecial))
     status, sql, success, is_special = result[0][3:]
     assert 'missing required argument' in status
-    assert success == False
-    assert is_special == True
+    assert success is False
+    assert is_special is True
 
 
 @dbtest
@@ -210,8 +212,8 @@ def test_execute_from_file_io_error(os, executor, pgspecial):
     result = list(executor.run("\i test", pgspecial=pgspecial))
     status, sql, success, is_special = result[0][3:]
     assert status == 'test'
-    assert success == False
-    assert is_special == True
+    assert success is False
+    assert is_special is True
 
 
 @dbtest
@@ -257,7 +259,8 @@ def test_bytea_field_support_in_output(executor):
     run(executor,
         "insert into binarydata (c) values (decode('DEADBEEF', 'hex'))")
 
-    assert u'\\xdeadbeef' in run(executor, "select * from binarydata", join=True)
+    assert u'\\xdeadbeef' in run(executor, "select * from binarydata",
+                                 join=True)
 
 
 @dbtest
@@ -286,7 +289,8 @@ def test_json_renders_without_u_prefix(executor, expanded):
 @requires_jsonb
 def test_jsonb_renders_without_u_prefix(executor, expanded):
     run(executor, "create table jsonbtest(d jsonb)")
-    run(executor, u"""insert into jsonbtest (d) values ('{"name": "Éowyn"}')""")
+    run(executor,
+        u"""insert into jsonbtest (d) values ('{"name": "Éowyn"}')""")
     result = run(executor, "SELECT d FROM jsonbtest LIMIT 1",
                  join=True, expanded=expanded)
 
@@ -296,18 +300,21 @@ def test_jsonb_renders_without_u_prefix(executor, expanded):
 @dbtest
 def test_date_time_types(executor):
     run(executor, "SET TIME ZONE UTC")
-    assert run(executor, "SELECT (CAST('00:00:00' AS time))", join=True).split("\n")[3] \
-         == "| 00:00:00 |"
-    assert run(executor, "SELECT (CAST('00:00:00+14:59' AS timetz))", join=True).split("\n")[3]  \
-        == "| 00:00:00+14:59 |"
-    assert run(executor, "SELECT (CAST('4713-01-01 BC' AS date))", join=True).split("\n")[3] \
-         == "| 4713-01-01 BC |"
-    assert run(executor, "SELECT (CAST('4713-01-01 00:00:00 BC' AS timestamp))", join=True).split("\n")[3] \
-         == "| 4713-01-01 00:00:00 BC |"
-    assert run(executor, "SELECT (CAST('4713-01-01 00:00:00+00 BC' AS timestamptz))", join=True).split("\n")[3] \
-         == "| 4713-01-01 00:00:00+00 BC |"
-    assert run(executor, "SELECT (CAST('-123456789 days 12:23:56' AS interval))", join=True).split("\n")[3] \
-         == "| -123456789 days, 12:23:56 |"
+    assert run(executor, "SELECT (CAST('00:00:00' AS time))",
+               join=True).split("\n")[3] == "| 00:00:00 |"
+    assert run(executor, "SELECT (CAST('00:00:00+14:59' AS timetz))",
+               join=True).split("\n")[3] == "| 00:00:00+14:59 |"
+    assert run(executor, "SELECT (CAST('4713-01-01 BC' AS date))",
+               join=True).split("\n")[3] == "| 4713-01-01 BC |"
+    assert run(executor,
+               "SELECT (CAST('4713-01-01 00:00:00 BC' AS timestamp))",
+               join=True).split("\n")[3] == "| 4713-01-01 00:00:00 BC |"
+    assert run(executor,
+               "SELECT (CAST('4713-01-01 00:00:00+00 BC' AS timestamptz))",
+               join=True).split("\n")[3] == "| 4713-01-01 00:00:00+00 BC |"
+    assert run(executor,
+               "SELECT (CAST('-123456789 days 12:23:56' AS interval))",
+               join=True).split("\n")[3] == "| -123456789 days, 12:23:56 |"
 
 
 @dbtest
