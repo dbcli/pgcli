@@ -688,7 +688,7 @@ class PGCli(object):
 
         def get_continuation(width, line_number, is_soft_wrap):
             continuation = self.multiline_continuation_char * (width - 1) + ' '
-            return (['class:continuation', continuation])
+            return [('class:continuation', continuation)]
 
         get_toolbar_tokens = create_toolbar_tokens_func(self)
 
