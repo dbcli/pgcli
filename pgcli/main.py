@@ -630,7 +630,7 @@ class PGCli(object):
         try:
             while True:
                 try:
-                    text = self.prompt_app.prompt()
+                    text = self.prompt_app.prompt(vi_mode=self.vi_mode)
                 except KeyboardInterrupt:
                     continue
 
