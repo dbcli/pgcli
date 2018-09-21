@@ -529,7 +529,10 @@ class PGCli(object):
                 raise RuntimeError(message)
             while True:
                 try:
-                    text = self.prompt_app.prompt(default=sql)
+                    text = self.prompt_app.prompt(
+                        default=sql,
+                        vi_mode=self.vi_mode
+                    )
                     break
                 except KeyboardInterrupt:
                     sql = None
