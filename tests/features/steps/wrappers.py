@@ -30,6 +30,8 @@ def run_cli(context, run_args=None):
     context.cli = pexpect.spawnu(cmd, cwd=context.package_root)
     context.exit_sent = False
     context.currentdb = context.conf['dbname']
+    context.cli.sendline('\pset pager always')
+    wait_prompt(context)
 
 
 def wait_prompt(context):

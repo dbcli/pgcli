@@ -19,7 +19,7 @@ script:
   - set -e
   - coverage run --source pgcli -m py.test
   - cd tests
-  - behave
+  - behave --no-capture
   - cd ..
   # check for changelog ReST compliance
   - rst2html.py --halt=warning changelog.rst >/dev/null

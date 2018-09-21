@@ -1,7 +1,9 @@
+from __future__ import print_function, absolute_import
+
 import os
 import pytest
-from utils import (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, create_db, db_connection,
-                   drop_tables)
+from tests.utils import (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, create_db, db_connection,
+                         drop_tables)
 import pgcli.pgexecute
 
 

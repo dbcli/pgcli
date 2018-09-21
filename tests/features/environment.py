@@ -1,22 +1,24 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
+from __future__ import unicode_literals, print_function, absolute_import
 
+import copy
 import os
 import sys
-import db_utils as dbutils
-import fixture_utils as fixutils
+import tests.features.db_utils as dbutils
+import tests.features.fixture_utils as fixutils
 import pexpect
 import tempfile
 import shutil
 
-from steps.wrappers import run_cli, wait_prompt
+
+from tests.features.steps import wrappers
 
 
 def before_all(context):
     """
     Set env parameters.
     """
+    env_old = copy.deepcopy(dict(os.environ))
     os.environ['LINES'] = "100"
     os.environ['COLUMNS'] = "100"
     os.environ['PAGER'] = 'cat'
@@ -24,6 +26,10 @@ def before_all(context):
 
     context.package_root = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    fixture_dir = os.path.join(context.package_root, 'tests/features/fixture_data')
+
+    print('package root:', context.package_root)
+    print('fixture dir:', fixture_dir)
 
     os.environ["COVERAGE_PROCESS_START"] = os.path.join(context.package_root,
                                                         '.coveragerc')
@@ -97,11 +103,24 @@ def before_all(context):
                                    context.conf['pass'], context.conf['dbname'],
                                    context.conf['port'])
 
-    context.fixture_data = fixutils.read_fixture_files()
+    context.fixture_data = fixutils.read_fixture_files(fixture_dir)
 
     # use temporary directory as config home
     context.env_config_home = tempfile.mkdtemp(prefix='pgcli_home_')
     os.environ['XDG_CONFIG_HOME'] = context.env_config_home
+    show_env_changes(env_old, dict(os.environ))
+
+
+def show_env_changes(env_old, env_new):
+    """Print out all test-specific env values."""
+    print('--- os.environ changed values: ---')
+    all_keys = set(list(env_old.keys()) + list(env_new.keys()))
+    for k in sorted(all_keys):
+        old_value = env_old.get(k, '')
+        new_value = env_new.get(k, '')
+        if new_value and old_value != new_value:
+            print('{}="{}"'.format(k, new_value))
+    print('-' * 20)
 
 
 def after_all(context):
@@ -129,13 +148,12 @@ def before_step(context, _):
 
 
 def before_scenario(context, _):
-    run_cli(context)
-    wait_prompt(context)
+    wrappers.run_cli(context)
+    wrappers.wait_prompt(context)
 
 
 def after_scenario(context, _):
-    """Cleans up after each test complete."""
-
+    """Cleans up after each scenario completes."""
     if hasattr(context, 'cli') and not context.exit_sent:
         # Quit nicely.
         if not context.atprompt:
@@ -147,6 +165,10 @@ def after_scenario(context, _):
         context.cli.sendcontrol('c')
         context.cli.sendcontrol('d')
         context.cli.expect_exact(pexpect.EOF, timeout=10)
+    if hasattr(context, 'tmpfile_sql_help') and context.tmpfile_sql_help:
+        context.tmpfile_sql_help.close()
+        context.tmpfile_sql_help = None
+
 
 # TODO: uncomment to debug a failure
 # def after_step(context, step):

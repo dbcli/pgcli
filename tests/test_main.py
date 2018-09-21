@@ -1,9 +1,8 @@
 # coding=utf-8
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function, absolute_import
 import os
 import platform
 import mock
-from decimal import Decimal
 
 import pytest
 try:
@@ -14,7 +13,9 @@ except ImportError:
 from pgcli.main import (
     obfuscate_process_password, format_output, PGCli, OutputSettings
 )
-from utils import dbtest, run
+from pgspecial.main import (PAGER_OFF, PAGER_LONG_OUTPUT, PAGER_ALWAYS)
+from tests.utils import dbtest, run
+from collections import namedtuple
 
 
 @pytest.mark.skipif(platform.system() == 'Windows',
