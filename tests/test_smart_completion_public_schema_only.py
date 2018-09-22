@@ -1,6 +1,6 @@
-from __future__ import unicode_literals, print_function, absolute_import
+from __future__ import unicode_literals, print_function
 
-from tests.metadata import (MetaData, alias, name_join, fk_join, join, keyword,
+from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
     schema, table, view, function, column, wildcard_expansion,
     get_result, result_set, qual, no_qual, parametrize)
 from prompt_toolkit.completion import Completion

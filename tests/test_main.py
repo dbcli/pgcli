@@ -1,5 +1,5 @@
 # coding=utf-8
-from __future__ import unicode_literals, print_function, absolute_import
+from __future__ import unicode_literals, print_function
 import os
 import platform
 import mock
@@ -14,7 +14,7 @@ from pgcli.main import (
     obfuscate_process_password, format_output, PGCli, OutputSettings
 )
 from pgspecial.main import (PAGER_OFF, PAGER_LONG_OUTPUT, PAGER_ALWAYS)
-from tests.utils import dbtest, run
+from utils import dbtest, run
 from collections import namedtuple
 
 

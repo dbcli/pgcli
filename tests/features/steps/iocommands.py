@@ -1,10 +1,10 @@
 # -*- coding: utf-8
-from __future__ import unicode_literals, print_function, absolute_import
+from __future__ import unicode_literals, print_function
 import os
 import os.path
 
 from behave import when, then
-from tests.features.steps import wrappers
+import wrappers
 
 
 @when('we start external editor providing a file name')

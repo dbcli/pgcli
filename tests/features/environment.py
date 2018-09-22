@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals, print_function, absolute_import
+from __future__ import unicode_literals, print_function
 
 import copy
 import os
 import sys
-import tests.features.db_utils as dbutils
-import tests.features.fixture_utils as fixutils
+import db_utils as dbutils
+import fixture_utils as fixutils
 import pexpect
 import tempfile
 import shutil
 
 
-from tests.features.steps import wrappers
+from steps import wrappers
 
 
 def before_all(context):
@@ -102,7 +102,7 @@ def before_all(context):
                                    context.conf['pass'], context.conf['dbname'],
                                    context.conf['port'])
 
-    context.fixture_data = fixutils.read_fixture_files(fixture_dir)
+    context.fixture_data = fixutils.read_fixture_files()
 
     # use temporary directory as config home
     context.env_config_home = tempfile.mkdtemp(prefix='pgcli_home_')

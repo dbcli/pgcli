@@ -1,7 +1,7 @@
-from __future__ import unicode_literals, print_function, absolute_import
+from __future__ import unicode_literals, print_function
 
 import itertools
-from tests.metadata import (MetaData, alias, name_join, fk_join, join,
+from metadata import (MetaData, alias, name_join, fk_join, join,
     schema, table, function, wildcard_expansion, column,
     get_result, result_set, qual, no_qual, parametrize)
 
