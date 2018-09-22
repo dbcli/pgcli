@@ -1,10 +1,9 @@
 # -*- coding: utf-8
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function, absolute_import
+
 from textwrap import dedent
-
 from behave import then, when
-
-import wrappers
+from tests.features.steps import wrappers
 
 
 @when('we run dbcli with {arg}')
