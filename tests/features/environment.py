@@ -15,9 +15,7 @@ from tests.features.steps import wrappers
 
 
 def before_all(context):
-    """
-    Set env parameters.
-    """
+    """Set env parameters."""
     env_old = copy.deepcopy(dict(os.environ))
     os.environ['LINES'] = "100"
     os.environ['COLUMNS'] = "100"
@@ -26,7 +24,8 @@ def before_all(context):
 
     context.package_root = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-    fixture_dir = os.path.join(context.package_root, 'tests/features/fixture_data')
+    fixture_dir = os.path.join(
+        context.package_root, 'tests/features/fixture_data')
 
     print('package root:', context.package_root)
     print('fixture dir:', fixture_dir)
