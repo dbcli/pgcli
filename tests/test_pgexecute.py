@@ -1,12 +1,12 @@
 # coding=UTF-8
-from __future__ import print_function, absolute_import
+from __future__ import print_function
 
 import pytest
 import psycopg2
 from mock import patch
 from pgcli.packages.parseutils.meta import FunctionMetadata
 from textwrap import dedent
-from tests.utils import run, dbtest, requires_json, requires_jsonb
+from utils import run, dbtest, requires_json, requires_jsonb
 from pgcli.main import PGCli
 
 

@@ -4,10 +4,10 @@ Steps for behavioral style tests are defined in this module.
 Each step is defined by the string decorating it.
 This string is used to call the step in "*.feature" file.
 """
-from __future__ import unicode_literals, print_function, absolute_import
+from __future__ import unicode_literals, print_function
 
 from behave import when, then
-from tests.features.steps import wrappers
+import wrappers
 
 
 @when('we save a named query')
