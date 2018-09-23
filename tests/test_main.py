@@ -11,7 +11,7 @@ except ImportError:
     setproctitle = None
 
 from pgcli.main import (
-    obfuscate_process_password, format_output, PGCli, OutputSettings
+    obfuscate_process_password, format_output, PGCli, OutputSettings, COLOR_CODE_REGEX
 )
 from pgspecial.main import (PAGER_OFF, PAGER_LONG_OUTPUT, PAGER_ALWAYS)
 from utils import dbtest, run
@@ -147,6 +147,100 @@ def test_format_output_auto_expand():
     ]
     assert '\n'.join(expanded_results) == '\n'.join(expanded)
 
+
+termsize = namedtuple('termsize', ['rows', 'columns'])
+test_line = '-' * 10
+test_data = [
+    (10, 10, '\n'.join([test_line] * 7)),
+    (10, 10, '\n'.join([test_line] * 6)),
+    (10, 10, '\n'.join([test_line] * 5)),
+    (10, 10, '-' * 11),
+    (10, 10, '-' * 10),
+    (10, 10, '-' * 9),
+]
+
+# 4 lines are reserved at the bottom of the terminal for pgcli's prompt
+use_pager_when_on = [True,
+                     True,
+                     False,
+                     True,
+                     False,
+                     False]
+
+# Can be replaced with pytest.param once we can upgrade pytest after Python 3.4 goes EOL
+test_ids = ["Output longer than terminal height",
+            "Output equal to terminal height",
+            "Output shorter than terminal height",
+            "Output longer than terminal width",
+            "Output equal to terminal width",
+            "Output shorter than terminal width"]
+
+
+@pytest.fixture
+def pset_pager_mocks():
+    cli = PGCli()
+    cli.watch_command = None
+    with mock.patch('pgcli.main.click.echo') as mock_echo, \
+            mock.patch('pgcli.main.click.echo_via_pager') as mock_echo_via_pager, \
+            mock.patch.object(cli, 'cli') as mock_cli:
+
+        yield cli, mock_echo, mock_echo_via_pager, mock_cli
+
+
+@pytest.mark.parametrize('term_height,term_width,text', test_data, ids=test_ids)
+def test_pset_pager_off(term_height, term_width, text, pset_pager_mocks):
+    cli, mock_echo, mock_echo_via_pager, mock_cli = pset_pager_mocks
+    mock_cli.output.get_size.return_value = termsize(
+        rows=term_height, columns=term_width)
+
+    with mock.patch.object(cli.pgspecial, 'pager_config', PAGER_OFF):
+        cli.echo_via_pager(text)
+
+    mock_echo.assert_called()
+    mock_echo_via_pager.assert_not_called()
+
+
+@pytest.mark.parametrize('term_height,term_width,text', test_data, ids=test_ids)
+def test_pset_pager_always(term_height, term_width, text, pset_pager_mocks):
+    cli, mock_echo, mock_echo_via_pager, mock_cli = pset_pager_mocks
+    mock_cli.output.get_size.return_value = termsize(
+        rows=term_height, columns=term_width)
+
+    with mock.patch.object(cli.pgspecial, 'pager_config', PAGER_ALWAYS):
+        cli.echo_via_pager(text)
+
+    mock_echo.assert_not_called()
+    mock_echo_via_pager.assert_called()
+
+
+pager_on_test_data = [l + (r,) for l, r in zip(test_data, use_pager_when_on)]
+
+
+@pytest.mark.parametrize('term_height,term_width,text,use_pager', pager_on_test_data, ids=test_ids)
+def test_pset_pager_on(term_height, term_width, text, use_pager, pset_pager_mocks):
+    cli, mock_echo, mock_echo_via_pager, mock_cli = pset_pager_mocks
+    mock_cli.output.get_size.return_value = termsize(
+        rows=term_height, columns=term_width)
+
+    with mock.patch.object(cli.pgspecial, 'pager_config', PAGER_LONG_OUTPUT):
+        cli.echo_via_pager(text)
+
+    if use_pager:
+        mock_echo.assert_not_called()
+        mock_echo_via_pager.assert_called()
+    else:
+        mock_echo_via_pager.assert_not_called()
+        mock_echo.assert_called()
+
+
+@pytest.mark.parametrize('text,expected_length', [
+    (u"22200K .......\u001b[0m\u001b[91m... .......... ...\u001b[0m\u001b[91m.\u001b[0m\u001b[91m...... .........\u001b[0m\u001b[91m.\u001b[0m\u001b[91m \u001b[0m\u001b[91m.\u001b[0m\u001b[91m.\u001b[0m\u001b[91m.\u001b[0m\u001b[91m.\u001b[0m\u001b[91m...... 50% 28.6K 12m55s", 78),
+    (u"=\u001b[m=", 2),
+    (u"-\u001b]23\u0007-", 2),
+])
+def test_color_pattern(text, expected_length, pset_pager_mocks):
+    cli = pset_pager_mocks[0]
+    assert len(COLOR_CODE_REGEX.sub('', text)) == expected_length
 
 @dbtest
 def test_i_works(tmpdir, executor):

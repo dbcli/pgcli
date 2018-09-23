@@ -1,3 +1,11 @@
+Upcoming
+========
+
+Features:
+---------
+
+* Respect `\pset pager on` and use pager when output is longer than terminal height (Thanks: `Max Rothman`_)
+
 1.10.3
 ======
 
@@ -868,3 +876,4 @@ Improvements:
 .. _`Saif Hakim`: https://github.com/saifelse
 .. _`Artur Balabanov`: https://github.com/arturbalabanov
 .. _`Kenny Do`: https://github.com/kennydo
+.. _`Max Rothman`: https://github.com/maxrothman
