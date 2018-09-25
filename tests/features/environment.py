@@ -169,7 +169,6 @@ def after_scenario(context, _):
         context.tmpfile_sql_help = None
 
 
-
 # # TODO: uncomment to debug a failure
 # def after_step(context, step):
 #     if step.status == "failed":
