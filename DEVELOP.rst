@@ -127,10 +127,6 @@ in the ``tests`` directory.  An example::
     pg_test_host = db.example.com
     pg_test_port = 30000
 
-The database user has to have
-permissions to create and drop test databases. Default user is ``postgres``
-at ``localhost``, without the password (authentication mode trust).
-
 First, install the requirements for testing:
 
 ::
@@ -147,6 +143,7 @@ After that, tests can be run with:
 And:
 
 ::
+
     $ cd .. # /pgcli
     $ py.test
 
@@ -159,11 +156,13 @@ To see stdout/stderr, use the following command:
 Troubleshooting the integration tests
 -------------------------------------
 
-If you encounter errors when running `behave` you might have to edit your
-`pg_hba.conf` file and set user `postgres` and the all `local` connections
-to `trust`.
+If you encounter errors when running the tests you might have to edit your
+``pg_hba.conf`` file. The database user has to have permissions to create and
+drop test databases. The default user is ``postgres`` at ``localhost``. Make
+sure the method is set to ``trust``. You might need to set all the ``local``
+connections to ``trust`` as well.
 
-If you edited your `pg_hba.conf`, you will need to restart your postgres
+Once you've edited your ``pg_hba.conf`` you will need to restart your postgres
 service:
 
 ::
