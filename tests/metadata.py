@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from functools import partial
 from itertools import product
 from pgcli.packages.parseutils.meta import FunctionMetadata, ForeignKey

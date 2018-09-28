@@ -182,9 +182,9 @@ def pset_pager_mocks():
     cli.watch_command = None
     with mock.patch('pgcli.main.click.echo') as mock_echo, \
             mock.patch('pgcli.main.click.echo_via_pager') as mock_echo_via_pager, \
-            mock.patch.object(cli, 'cli') as mock_cli:
+            mock.patch.object(cli, 'prompt_app') as mock_app:
 
-        yield cli, mock_echo, mock_echo_via_pager, mock_cli
+        yield cli, mock_echo, mock_echo_via_pager, mock_app
 
 
 @pytest.mark.parametrize('term_height,term_width,text', test_data, ids=test_ids)

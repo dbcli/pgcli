@@ -169,7 +169,7 @@ def after_scenario(context, _):
         context.tmpfile_sql_help = None
 
 
-# TODO: uncomment to debug a failure
+# # TODO: uncomment to debug a failure
 # def after_step(context, step):
 #     if step.status == "failed":
-#         import ipdb; ipdb.set_trace()
+#         import pdb; pdb.set_trace()

@@ -39,7 +39,7 @@ def step_see_named_query_saved(context):
     """
     Wait to see query saved.
     """
-    wrappers.expect_pager(context, 'Saved.\r\n', timeout=1)
+    wrappers.expect_exact(context, 'Saved.', timeout=2)
 
 
 @then('we see the named query executed')
