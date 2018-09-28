@@ -3,6 +3,11 @@ Upcoming:
 
 TODO
 
+2.0.0:
+======
+
+* Update to ``prompt-toolkit`` 2.0. (Thanks: `Jonathan Slenders`_, `Dick Marinus`_, `Irina Truong`_)
+
 1.11.0
 ======
 
