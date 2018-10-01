@@ -4,12 +4,12 @@ Steps for behavioral style tests are defined in this module.
 Each step is defined by the string decorating it.
 This string is used to call the step in "*.feature" file.
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 
 import pexpect
 
-import wrappers
 from behave import when, then
+import wrappers
 
 
 @when('we create database')
@@ -72,7 +72,7 @@ def step_see_prompt(context):
 @then('we see help output')
 def step_see_help(context):
     for expected_line in context.fixture_data['help_commands.txt']:
-        wrappers.expect_exact(context, expected_line, timeout=1)
+        wrappers.expect_exact(context, expected_line, timeout=2)
 
 
 @then('we see database created')

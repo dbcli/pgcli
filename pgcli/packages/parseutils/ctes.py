@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from sqlparse import parse
 from sqlparse.tokens import Keyword, CTE, DML
 from sqlparse.sql import Identifier, IdentifierList, Parenthesis

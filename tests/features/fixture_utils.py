@@ -19,13 +19,11 @@ def read_fixture_lines(filename):
 
 
 def read_fixture_files():
-    """
-    Read all files inside fixture_data directory.
-    """
-    fixture_dict = {}
-
+    """Read all files inside fixture_data directory."""
     current_dir = os.path.dirname(__file__)
     fixture_dir = os.path.join(current_dir, 'fixture_data/')
+    print('reading fixture data: {}'.format(fixture_dir))
+    fixture_dict = {}
     for filename in os.listdir(fixture_dir):
         if filename not in ['.', '..']:
             fullname = os.path.join(fixture_dir, filename)

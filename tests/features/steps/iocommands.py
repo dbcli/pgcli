@@ -1,10 +1,10 @@
 # -*- coding: utf-8
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 import os
 import os.path
-import wrappers
 
 from behave import when, then
+import wrappers
 
 
 @when('we start external editor providing a file name')

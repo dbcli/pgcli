@@ -1,14 +1,34 @@
-Upcoming
-========
+Upcoming:
+=========
 
 Bug fixes:
 ----------
 
-* Fix for error retrieving version in Redshift (#922). (Thanks: `Irina Truong`_)
-* Adapt the query used to get functions metadata to PG11 (#919). (Thanks: `Lele Gaifax`_).
-* Fix for keyring not disabled properly (#920). (Thanks: `Irina Truong`_)
 * Tab press on an empty line increases the indentation instead of triggering
   the auto-complete pop-up. (Thanks: `Artur Balabanov`_)
+
+2.0.0:
+======
+
+* Update to ``prompt-toolkit`` 2.0. (Thanks: `Jonathan Slenders`_, `Dick Marinus`_, `Irina Truong`_)
+
+1.11.0
+======
+
+Features:
+---------
+
+* Respect `\pset pager on` and use pager when output is longer than terminal height (Thanks: `Max Rothman`_)
+
+1.10.3
+======
+
+Bug fixes:
+----------
+
+* Adapt the query used to get functions metadata to PG11 (#919). (Thanks: `Lele Gaifax`_).
+* Fix for error retrieving version in Redshift (#922). (Thanks: `Irina Truong`_)
+* Fix for keyring not disabled properly (#920). (Thanks: `Irina Truong`_)
 
 1.10.2
 ======
@@ -870,3 +890,4 @@ Improvements:
 .. _`Saif Hakim`: https://github.com/saifelse
 .. _`Artur Balabanov`: https://github.com/arturbalabanov
 .. _`Kenny Do`: https://github.com/kennydo
+.. _`Max Rothman`: https://github.com/maxrothman

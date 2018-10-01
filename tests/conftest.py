@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import pytest
 from utils import (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, create_db, db_connection,

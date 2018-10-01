@@ -4,13 +4,13 @@ Steps for behavioral style tests are defined in this module.
 Each step is defined by the string decorating it.
 This string is used to call the step in "*.feature" file.
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 
 import tempfile
 
-from behave import when
-import wrappers
+from behave import when, then
 from textwrap import dedent
+import wrappers
 
 
 @when('we run dbcli')
@@ -28,6 +28,9 @@ def step_ctrl_d(context):
     """
     Send Ctrl + D to hopefully exit.
     """
+    # turn off pager before exiting
+    context.cli.sendline('\pset pager off')
+    wrappers.wait_prompt(context)
     context.cli.sendcontrol('d')
     context.exit_sent = True
 
@@ -42,12 +45,12 @@ def step_send_help(context):
 
 @when(u'we send source command')
 def step_send_source_command(context):
-    with tempfile.NamedTemporaryFile() as f:
-        f.write(b'\?')
-        f.flush()
-        context.cli.sendline('\i {0}'.format(f.name))
-        wrappers.expect_exact(
-            context, context.conf['pager_boundary'] + '\r\n', timeout=5)
+    context.tmpfile_sql_help = tempfile.NamedTemporaryFile(prefix='pgcli_')
+    context.tmpfile_sql_help.write(b'\?')
+    context.tmpfile_sql_help.flush()
+    context.cli.sendline('\i {0}'.format(context.tmpfile_sql_help.name))
+    wrappers.expect_exact(
+        context, context.conf['pager_boundary'] + '\r\n', timeout=5)
 
 
 @when(u'we run query to check application_name')

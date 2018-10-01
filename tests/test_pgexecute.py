@@ -1,4 +1,5 @@
 # coding=UTF-8
+from __future__ import print_function
 
 import pytest
 import psycopg2
