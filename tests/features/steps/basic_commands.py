@@ -6,6 +6,7 @@ This string is used to call the step in "*.feature" file.
 """
 from __future__ import unicode_literals, print_function
 
+import pexpect
 import subprocess
 import tempfile
 
@@ -46,6 +47,7 @@ def step_ctrl_d(context):
     context.cli.sendline('\pset pager off')
     wrappers.wait_prompt(context)
     context.cli.sendcontrol('d')
+    context.cli.expect_exact(pexpect.EOF, timeout=15)
     context.exit_sent = True
 
 
