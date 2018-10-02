@@ -905,9 +905,17 @@ class PGCli(object):
         """Get the last query executed or None."""
         return self.query_history[-1][0] if self.query_history else None
 
-    def is_wide_line(self, line):
+    def is_too_wide(self, line):
         """Will this line be too wide to fit into terminal?"""
+        if not self.prompt_app:
+            return False
         return len(COLOR_CODE_REGEX.sub('', line)) > self.prompt_app.output.get_size().columns
+
+    def is_too_tall(self, lines):
+        """Are there too many lines to fit into terminal?"""
+        if not self.prompt_app:
+            return False
+        return len(lines) >= (self.prompt_app.output.get_size().rows - 4)
 
     def echo_via_pager(self, text, color=None):
         if self.pgspecial.pager_config == PAGER_OFF or self.watch_command:
@@ -916,7 +924,7 @@ class PGCli(object):
             lines = text.split('\n')
 
             # The last 4 lines are reserved for the pgcli menu and padding
-            if len(lines) >= self.prompt_app.output.get_size().rows - 4 or any(self.is_wide_line(l) for l in lines):
+            if self.is_too_tall(lines) or any(self.is_too_wide(l) for l in lines):
                 click.echo_via_pager(text, color=color)
             else:
                 click.echo(text, color=color)

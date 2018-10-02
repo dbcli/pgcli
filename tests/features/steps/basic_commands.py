@@ -6,11 +6,25 @@ This string is used to call the step in "*.feature" file.
 """
 from __future__ import unicode_literals, print_function
 
+import subprocess
 import tempfile
 
 from behave import when, then
 from textwrap import dedent
 import wrappers
+
+
+@when('we list databases')
+def step_list_databases(context):
+    cmd = ['pgcli', '--list']
+    context.cmd_output = subprocess.check_output(cmd, cwd=context.package_root)
+
+
+@then('we see list of databases')
+def step_see_list_databases(context):
+    assert b'List of databases' in context.cmd_output
+    assert b'postgres' in context.cmd_output
+    context.cmd_output = None
 
 
 @when('we run dbcli')
