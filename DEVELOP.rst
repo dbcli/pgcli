@@ -133,18 +133,29 @@ First, install the requirements for testing:
 
     $ pip install -r requirements-dev.txt
 
-After that, tests can be run with:
+Ensure that the database user has permissions to create and drop test databases
+by checking your ``pg_hba.conf`` file. The default user should be ``postgres``
+at ``localhost``. Make sure the authentication method is set to ``trust``. If
+you made any changes to your ``pg_hba.conf`` make sure to restart the postgres
+service for the changes to take effect.
 
 ::
 
-    $ cd tests # /pgcli/tests
+    # ONLY IF YOU MADE CHANGES TO YOUR pg_hba.conf FILE
+    $ sudo service postgresql restart
+
+After that, tests can be run on the ``/pgcli/tests`` directory with:
+
+::
+
+    # on directory /pgcli/tests
     $ behave
 
-And:
+And on the ``/pgcli`` directory:
 
 ::
 
-    $ cd .. # /pgcli
+    # on directory /pgcli
     $ py.test
 
 To see stdout/stderr, use the following command:
@@ -156,20 +167,12 @@ To see stdout/stderr, use the following command:
 Troubleshooting the integration tests
 -------------------------------------
 
-If you encounter errors when running the tests you might have to edit your
-``pg_hba.conf`` file. The database user has to have permissions to create and
-drop test databases. The default user is ``postgres`` at ``localhost``. Make
-sure the method is set to ``trust``. You might need to set all the ``local``
-connections to ``trust`` as well.
-
-Once you've edited your ``pg_hba.conf`` you will need to restart your postgres
-service:
-
-::
-
-    $ sudo service postgresql restart
-
-Check `this issue <https://github.com/dbcli/pgcli/issues/945>`_ for more information.
+- Make sure postgres instance on localhost is running
+- Check your ``pg_hba.conf`` file to verify local connections are enabled
+- Check `this issue <https://github.com/dbcli/pgcli/issues/945>`_
+for relevant information.
+- Contact us on 'gitter <https://gitter.im/dbcli/pgcli/>`_
+ or `file an issue <https://github.com/dbcli/pgcli/issues/new>`_.
 
 PEP8 checks (lint)
 ------------------
