@@ -1,7 +1,7 @@
 Upcoming:
 =========
 
-TODO
+* Fix for error listing databases (#951). (Thanks: `Irina Truong`_)
 
 2.0.0:
 ======

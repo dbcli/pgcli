@@ -9,6 +9,7 @@ import fixture_utils as fixutils
 import pexpect
 import tempfile
 import shutil
+import signal
 
 
 from steps import wrappers
@@ -146,24 +147,28 @@ def before_step(context, _):
     context.atprompt = False
 
 
-def before_scenario(context, _):
+def before_scenario(context, scenario):
+    if scenario.name == 'list databases':
+        # not using the cli for that
+        return
     wrappers.run_cli(context)
     wrappers.wait_prompt(context)
 
 
-def after_scenario(context, _):
+def after_scenario(context, scenario):
     """Cleans up after each scenario completes."""
-    if hasattr(context, 'cli') and not context.exit_sent:
+    if hasattr(context, 'cli') and context.cli and not context.exit_sent:
         # Quit nicely.
         if not context.atprompt:
             dbname = context.currentdb
-            context.cli.expect_exact(
-                '{0}> '.format(dbname),
-                timeout=5
-            )
+            context.cli.expect_exact('{0}> '.format(dbname), timeout=15)
         context.cli.sendcontrol('c')
         context.cli.sendcontrol('d')
-        context.cli.expect_exact(pexpect.EOF, timeout=10)
+        try:
+            context.cli.expect_exact(pexpect.EOF, timeout=15)
+        except pexpect.TIMEOUT:
+            print('--- after_scenario {}: kill cli'.format(scenario.name))
+            context.cli.kill(signal.SIGKILL)
     if hasattr(context, 'tmpfile_sql_help') and context.tmpfile_sql_help:
         context.tmpfile_sql_help.close()
         context.tmpfile_sql_help = None
