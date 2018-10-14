@@ -1,7 +1,15 @@
 Upcoming:
 =========
 
+Bug fixes:
+----------
 * Fix for error listing databases (#951). (Thanks: `Irina Truong`_)
+
+Internal:
+---------
+
+* Clean up and add behave logging. (Thanks: `Dick Marinus`_)
+
 
 2.0.0:
 ======
