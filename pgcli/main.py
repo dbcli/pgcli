@@ -895,7 +895,8 @@ class PGCli(object):
         short_host, _, _ = host.partition('.')
         string = string.replace('\\h', short_host)
         string = string.replace('\\d', self.pgexecute.dbname or '(none)')
-        string = string.replace('\\p', str(self.pgexecute.port) or '(none)')
+        string = string.replace('\\p', str(
+            self.pgexecute.port) if self.pgexecute.port is not None else '5432')
         string = string.replace('\\i', str(self.pgexecute.pid) or '(none)')
         string = string.replace('\\#', "#" if (self.pgexecute.superuser) else ">")
         string = string.replace('\\n', "\n")
