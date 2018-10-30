@@ -1,7 +1,8 @@
-from __future__ import unicode_literals
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import warnings
+
 warnings.filterwarnings("ignore", category=UserWarning, module='psycopg2')
 
 import os
@@ -938,20 +939,17 @@ class PGCli(object):
         help='Host address of the postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
         'postgres instance is listening.', envvar='PGPORT', type=click.INT)
-@click.option('-U', '--username', 'username_opt', envvar='PGUSER',
-        help='Username to connect to the postgres database.')
-@click.option('--user', 'username_opt', envvar='PGUSER',
-              help='Username to connect to the postgres database.')
+@click.option('-U', '--username', 'username_opt', help='Username to connect to the postgres database.')
+@click.option('--user', 'username_opt', help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
-        help='Force password prompt.')
+              help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
-        default=False, help='Never prompt for password.')
+              default=False, help='Never prompt for password.')
 @click.option('--single-connection', 'single_connection', is_flag=True,
-        default=False,
-        help='Do not use a separate connection for completions.')
+              default=False,
+              help='Do not use a separate connection for completions.')
 @click.option('-v', '--version', is_flag=True, help='Version of pgcli.')
-@click.option('-d', '--dbname', default='', envvar='PGDATABASE',
-        help='database name to connect to.')
+@click.option('-d', '--dbname', 'dbname_opt', help='database name to connect to.')
 @click.option('--pgclirc', default=config_location() + 'config',
         envvar='PGCLIRC', help='Location of pgclirc file.', type=click.Path(dir_okay=False))
 @click.option('-D', '--dsn', default='', envvar='DSN',
@@ -971,10 +969,10 @@ class PGCli(object):
               help='Automatically switch to vertical output mode if the result is wider than the terminal width.')
 @click.option('--warn/--no-warn', default=None,
               help='Warn before running a destructive query.')
-@click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
+@click.argument('dbname', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
-def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
-        single_connection, dbname, username, version, pgclirc, dsn, row_limit,
+def cli(dbname, username_opt, host, port, prompt_passwd, never_prompt,
+        single_connection, dbname_opt, username, version, pgclirc, dsn, row_limit,
         less_chatty, prompt, prompt_dsn, list_databases, auto_vertical_output,
         list_dsn, warn):
 
@@ -1015,7 +1013,10 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
                   auto_vertical_output=auto_vertical_output, warn=warn)
 
     # Choose which ever one has a valid value.
-    database = database or dbname
+    if dbname_opt and dbname:
+        # work as psql: when database is given as option and argument use the argument as user
+        username = dbname
+    database = dbname_opt or dbname or ''
     user = username_opt or username
 
     # because option --list or -l are not supposed to have a db name
