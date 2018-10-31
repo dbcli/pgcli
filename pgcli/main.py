@@ -1,7 +1,10 @@
-from __future__ import unicode_literals
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import warnings
+
+from pgspecial.namedqueries import NamedQueries
+
 warnings.filterwarnings("ignore", category=UserWarning, module='psycopg2')
 
 import os
@@ -145,6 +148,8 @@ class PGCli(object):
 
         # Load config.
         c = self.config = get_config(pgclirc_file)
+
+        NamedQueries.instance = NamedQueries.from_config(self.config)
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()

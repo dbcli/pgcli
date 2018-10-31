@@ -21,9 +21,6 @@ from .config import load_config, config_location
 
 _logger = logging.getLogger(__name__)
 
-NamedQueries.instance = NamedQueries.from_config(
-    load_config(config_location() + 'config'))
-
 Match = namedtuple('Match', ['completion', 'priority'])
 
 _SchemaObject = namedtuple('SchemaObject', 'name schema meta')
