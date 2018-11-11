@@ -11,6 +11,7 @@ Internal:
 ---------
 
 * Clean up and add behave logging. (Thanks: `Dick Marinus`_)
+* Require prompt_toolkit>=2.0.6. (Thanks: `Dick Marinus`_)
 
 
 2.0.0:
