@@ -12,13 +12,13 @@ Internal:
 
 * Clean up and add behave logging. (Thanks: `Dick Marinus`_)
 * Require prompt_toolkit>=2.0.6. (Thanks: `Dick Marinus`_)
+* Improve development guide (Thanks: `Ignacio Campabadal`_)
 
 
 2.0.0:
 ======
 
 * Update to ``prompt-toolkit`` 2.0. (Thanks: `Jonathan Slenders`_, `Dick Marinus`_, `Irina Truong`_)
-* Improve development guide (Thanks: `Ignacio Campabadal`_)
 
 1.11.0
 ======
@@ -900,3 +900,4 @@ Improvements:
 .. _`Kenny Do`: https://github.com/kennydo
 .. _`Max Rothman`: https://github.com/maxrothman
 .. _`DanEEStar`: https://github.com/DanEEStar
+.. _`Ignacio Campabadal`: https://github.com/igncampa
