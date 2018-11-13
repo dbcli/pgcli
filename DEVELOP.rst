@@ -144,7 +144,7 @@ service for the changes to take effect.
     # ONLY IF YOU MADE CHANGES TO YOUR pg_hba.conf FILE
     $ sudo service postgresql restart
 
-After that, tests can be run on the ``/pgcli/tests`` directory with:
+After that, tests in the ``/pgcli/tests`` directory can be run with:
 
 ::
 
