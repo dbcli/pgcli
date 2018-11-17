@@ -4,7 +4,8 @@ Upcoming:
 Bug fixes:
 ----------
 
-Set default port in `connect_uri` when none is given. (Thanks: `DanEEStar`_)
+* Fix for loading/saving named queries from provided config file (#938). (Thanks: `Daniel Egger`_)
+* Set default port in `connect_uri` when none is given. (Thanks: `Daniel Egger`_)
 * Fix for error listing databases (#951). (Thanks: `Irina Truong`_)
 
 Internal:
@@ -899,5 +900,5 @@ Improvements:
 .. _`Artur Balabanov`: https://github.com/arturbalabanov
 .. _`Kenny Do`: https://github.com/kennydo
 .. _`Max Rothman`: https://github.com/maxrothman
-.. _`DanEEStar`: https://github.com/DanEEStar
+.. _`Daniel Egger`: https://github.com/DanEEStar
 .. _`Ignacio Campabadal`: https://github.com/igncampa
