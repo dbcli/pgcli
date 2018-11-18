@@ -7,6 +7,7 @@ Bug fixes:
 * Fix for loading/saving named queries from provided config file (#938). (Thanks: `Daniel Egger`_)
 * Set default port in `connect_uri` when none is given. (Thanks: `Daniel Egger`_)
 * Fix for error listing databases (#951). (Thanks: `Irina Truong`_)
+* Enable Ctrl-Z to suspend the app (Thanks: `Amjith Ramanujam`_).
 
 Internal:
 ---------
@@ -830,7 +831,7 @@ Improvements:
 * Faster test runs on TravisCI. (Thanks: https://github.com/macobo)
 * Integration tests with Postgres!! (Thanks: https://github.com/macobo)
 
-.. _`Amjith Ramanujam`: https://github.com/amjith
+.. _`Amjith Ramanujam`: https://blog.amjith.com
 .. _`Andrew Kuchling`: https://github.com/akuchling
 .. _`Darik Gamble`: https://github.com/darikg
 .. _`Daniel Rocco`: https://github.com/drocco007
