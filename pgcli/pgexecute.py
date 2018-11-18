@@ -29,6 +29,32 @@ ext.register_type(ext.new_type((17,), 'BYTEA_TEXT', psycopg2.STRING))
 # TODO: Get default timeout from pgclirc?
 _WAIT_SELECT_TIMEOUT = 1
 
+TRANSACTION_CONTROL_COMMANDS = (
+    'abort',
+    'begin',
+    'commit',
+    'end',
+    'prepare transaction',
+    'rollback',
+    'start transaction',
+)
+
+COMMANDS_NOT_ALLOWED_IN_TRANSACTION = (
+    'alter system',
+    'cluster',
+    'create database',
+    'create index concurrently',
+    'create tablespace',
+    'create unique index concurrently',
+    'discard all',
+    'drop database',
+    'drop index concurrently',
+    'drop tablespace',
+    'reindex database',
+    'reindex system',
+    'vacuum',
+)
+
 
 def _wait_select(conn):
     """
@@ -99,7 +125,8 @@ def register_json_typecasters(conn, loads_fn):
             psycopg2.extras.register_json(conn, loads=loads_fn, name=name)
             available.add(name)
         except psycopg2.ProgrammingError:
-            pass
+            if not conn.autocommit:
+                conn.rollback()
 
     return available
 
@@ -116,8 +143,54 @@ def register_hstore_typecaster(conn):
             cur.execute("SELECT 'hstore'::regtype::oid")
             oid = cur.fetchone()[0]
             ext.register_type(ext.new_type((oid,), "HSTORE", ext.UNICODE))
+        except psycopg2.ProgrammingError:
+            if not conn.autocommit:
+                conn.rollback()
         except Exception:
             pass
+
+
+def init_connection_from_dsn(dsn, password):
+    if password:
+        dsn = "{0} password={1}".format(dsn, password)
+    conn = psycopg2.connect(dsn=unicode2utf8(dsn))
+    return conn
+
+
+def init_connection_from_parameters(dbname, user, password, host, port, **kwargs):
+    conn = psycopg2.connect(
+        database=unicode2utf8(dbname),
+        user=unicode2utf8(user),
+        password=unicode2utf8(password),
+        host=unicode2utf8(host),
+        port=unicode2utf8(port),
+        **kwargs
+    )
+    return conn
+
+
+def execute_sql_with_on_error_rollback(conn, user_cur, statement_):
+    statement = ' '.join(statement_.lower().strip().split())
+
+    if statement.startswith(COMMANDS_NOT_ALLOWED_IN_TRANSACTION + TRANSACTION_CONTROL_COMMANDS):
+        user_cur.execute(statement)
+        return
+
+    if (conn.get_transaction_status() == psycopg2.extensions.TRANSACTION_STATUS_IDLE and
+            not conn.autocommit):
+        with conn.cursor() as pgcli_cur:
+            pgcli_cur.execute('BEGIN')
+    with conn.cursor() as pgcli_cur:
+        pgcli_cur.execute('SAVEPOINT pgcli_user_conn_tmp_savepoint')
+    try:
+        user_cur.execute(statement)
+    except psycopg2.DatabaseError:
+        with conn.cursor() as pgcli_cur:
+            pgcli_cur.execute('ROLLBACK TO pgcli_user_conn_tmp_savepoint')
+        raise
+    else:
+        with conn.cursor() as pgcli_cur:
+            pgcli_cur.execute('RELEASE pgcli_user_conn_tmp_savepoint')
 
 
 class PGExecute(object):
@@ -164,28 +237,29 @@ class PGExecute(object):
 
     view_definition_query = '''
         WITH v AS (SELECT %s::pg_catalog.regclass::pg_catalog.oid AS v_oid)
-        SELECT nspname, relname, relkind, 
-               pg_catalog.pg_get_viewdef(c.oid, true), 
+        SELECT nspname, relname, relkind,
+               pg_catalog.pg_get_viewdef(c.oid, true),
                array_remove(array_remove(c.reloptions,'check_option=local'),
-                            'check_option=cascaded') AS reloptions, 
-               CASE 
-                 WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text 
-                 WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text 
-                 ELSE NULL 
-               END AS checkoption 
-        FROM pg_catalog.pg_class c 
+                            'check_option=cascaded') AS reloptions,
+               CASE
+                 WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text
+                 WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text
+                 ELSE NULL
+               END AS checkoption
+        FROM pg_catalog.pg_class c
         LEFT JOIN pg_catalog.pg_namespace n ON (c.relnamespace = n.oid)
         JOIN v ON (c.oid = v.v_oid)'''
 
     function_definition_query = '''
-        WITH f AS 
+        WITH f AS
             (SELECT %s::pg_catalog.regproc::pg_catalog.oid AS f_oid)
         SELECT pg_catalog.pg_get_functiondef(f.f_oid)
         FROM f'''
 
     version_query = "SELECT version();"
 
-    def __init__(self, database, user, password, host, port, dsn, **kwargs):
+    def __init__(self, database, user, password, host, port, dsn,
+                 autocommit_mode=True, on_error_rollback=False, **kwargs):
         self.dbname = database
         self.user = user
         self.password = password
@@ -194,7 +268,12 @@ class PGExecute(object):
         self.dsn = dsn
         self.extra_args = {k: unicode2utf8(v) for k, v in kwargs.items()}
         self.server_version = None
+        self.autocommit_mode = autocommit_mode
+        self.on_error_rollback = on_error_rollback
         self.connect()
+        # user_conn is the connection used to execute user queries
+        self.user_conn = self.init_connection(self.dbname, self.user, self.password, self.host,
+                                              self.port, self.dsn, autocommit_mode, **kwargs)
 
     def get_server_version(self):
         if self.server_version:
@@ -213,9 +292,24 @@ class PGExecute(object):
                 self.server_version = ''
             return self.server_version
 
+    def init_connection(self, database=None, user=None, password=None, host=None,
+                        port=None, dsn=None, autocommit_mode=True, **kwargs):
+        if dsn:
+            conn = init_connection_from_dsn(dsn, password)
+        else:
+            conn = init_connection_from_parameters(
+                database, user, password, host, port, **kwargs)
+        conn.set_client_encoding('utf8')
+        # Need to be set before any executed query
+        conn.set_session(autocommit=autocommit_mode)
+        register_date_typecasters(conn)
+        register_json_typecasters(conn, self._json_typecaster)
+        register_hstore_typecaster(conn)
+        return conn
+
     def connect(self, database=None, user=None, password=None, host=None,
                 port=None, dsn=None, **kwargs):
-
+        """Setup pgcli internal connection."""
         db = (database or self.dbname)
         user = (user or self.user)
         password = (password or self.password)
@@ -223,58 +317,34 @@ class PGExecute(object):
         port = (port or self.port)
         dsn = (dsn or self.dsn)
         kwargs = (kwargs or self.extra_args)
-        pid = -1
-        if dsn:
-            if password:
-                dsn = "{0} password={1}".format(dsn, password)
-            conn = psycopg2.connect(dsn=unicode2utf8(dsn))
-            cursor = conn.cursor()
-        else:
-            conn = psycopg2.connect(
-                database=unicode2utf8(db),
-                user=unicode2utf8(user),
-                password=unicode2utf8(password),
-                host=unicode2utf8(host),
-                port=unicode2utf8(port),
-                **kwargs)
 
-            cursor = conn.cursor()
-
-        conn.set_client_encoding('utf8')
+        conn = self.init_connection(
+            db, user, password, host, port, dsn, **kwargs)
         if hasattr(self, 'conn'):
             self.conn.close()
         self.conn = conn
-        self.conn.autocommit = True
 
-        if dsn:
-            # When we connect using a DSN, we don't really know what db,
-            # user, etc. we connected to. Let's read it.
-            # Note: moved this after setting autocommit because of #664.
-            dsn_parameters = conn.get_dsn_parameters()
-            db = dsn_parameters['dbname']
-            user = dsn_parameters['user']
-            host = dsn_parameters['host']
-            port = dsn_parameters['port']
-
-        self.dbname = db
-        self.user = user
+        # Ensure class attribute are set
+        # When we connect using a DSN, we don't really know what db,
+        # user, etc. we connected to. Let's read it.
+        # Note: moved this after setting autocommit because of #664.
+        dsn_parameters = conn.get_dsn_parameters()
+        self.dbname = dsn_parameters['dbname']
+        self.user = dsn_parameters['user']
+        self.host = dsn_parameters['host']
+        self.port = dsn_parameters['port']
         self.password = password
-        self.host = host
-        self.port = port
-
         if not self.host:
             self.host = self.get_socket_directory()
 
+        cursor = conn.cursor()
         cursor.execute("SHOW ALL")
-        db_parameters = dict(name_val_desc[:2] for name_val_desc in cursor.fetchall())
-
         pid = self._select_one(cursor, 'select pg_backend_pid()')[0]
         self.pid = pid
-        self.superuser = db_parameters.get('is_superuser') == '1'
 
-        register_date_typecasters(conn)
-        register_json_typecasters(self.conn, self._json_typecaster)
-        register_hstore_typecaster(self.conn)
+        db_parameters = dict(name_val_desc[:2]
+                             for name_val_desc in cursor.fetchall())
+        self.superuser = db_parameters.get('is_superuser') == '1'
 
     def _select_one(self, cur, sql):
         """
@@ -341,7 +411,7 @@ class PGExecute(object):
                 if pgspecial:
                     # First try to run each query as special
                     _logger.debug('Trying a pgspecial command. sql: %r', sql)
-                    cur = self.conn.cursor()
+                    cur = self.user_conn.cursor()
                     try:
                         for result in pgspecial.execute(cur, sql):
                             # e.g. execute_from_file already appends these
@@ -385,13 +455,16 @@ class PGExecute(object):
     def execute_normal_sql(self, split_sql):
         """Returns tuple (title, rows, headers, status)"""
         _logger.debug('Regular sql statement. sql: %r', split_sql)
-        cur = self.conn.cursor()
-        cur.execute(split_sql)
+        cur = self.user_conn.cursor()
+        if not self.autocommit_mode and self.on_error_rollback:
+            execute_sql_with_on_error_rollback(self.user_conn, cur, split_sql)
+        else:
+            cur.execute(split_sql)
 
         # conn.notices persist between queies, we use pop to clear out the list
         title = ''
-        while len(self.conn.notices) > 0:
-            title = utf8tounicode(self.conn.notices.pop()) + title
+        while len(self.user_conn.notices) > 0:
+            title = utf8tounicode(self.user_conn.notices.pop()) + title
 
         # cur.description will be None for operations that do not return
         # rows.

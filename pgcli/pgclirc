@@ -22,6 +22,14 @@ multi_line = False
 # a command.
 multi_line_mode = psql
 
+# When set to "False", you can manually `COMMIT` or `ROLLBACK` the current transaction.
+# Similar to `\set AUTOCOMMIT on/off` in psql.
+autocommit_mode = True
+
+# When set to on, if a statement in a transaction block generates an error, the error is ignored
+# and the transaction continues. Similar `\set ON_ERROR_ROLLBACK` on in psql.
+on_error_rollback = False
+
 # Destructive warning mode will alert you before executing a sql statement
 # that may cause harm to the database such as "drop table", "drop database"
 # or "shutdown".
@@ -140,11 +148,12 @@ null_string = '<null>'
 # manage pager on startup
 enable_pager = True
 
-# Use keyring to automatically save and load password in a secure manner 
+# Use keyring to automatically save and load password in a secure manner
 keyring = True
 
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
+
 completion-menu.completion.current = 'bg:#ffffff #000000'
 completion-menu.completion = 'bg:#008888 #ffffff'
 completion-menu.meta.completion.current = 'bg:#44aaaa #000000'
@@ -170,6 +179,7 @@ bottom-toolbar.transaction.failed = 'bg:#222222 #ff005f bold'
 output.header = "#00ff5f bold"
 output.odd-row = ""
 output.even-row = ""
+
 
 # Named queries are queries you can execute by name.
 [named queries]

@@ -1,6 +1,10 @@
 Upcoming:
 =========
 
+Features:
+---------
+* Add autocommit. (Thanks: `Matthieu Guilbert`_)
+
 Bug fixes:
 ----------
 
@@ -11,6 +15,7 @@ Bug fixes:
 Internal:
 ---------
 
+* Use another psycopg2 connection for user query. (Thanks: `Matthieu Guilbert`_)
 * Clean up and add behave logging. (Thanks: `Dick Marinus`_)
 * Require prompt_toolkit>=2.0.6. (Thanks: `Dick Marinus`_)
 * Improve development guide (Thanks: `Ignacio Campabadal`_)
@@ -28,6 +33,7 @@ Features:
 ---------
 
 * Respect `\pset pager on` and use pager when output is longer than terminal height (Thanks: `Max Rothman`_)
+
 
 1.10.3
 ======
