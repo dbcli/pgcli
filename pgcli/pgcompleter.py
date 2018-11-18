@@ -6,8 +6,7 @@ import operator
 from collections import namedtuple, defaultdict, OrderedDict
 from cli_helpers.tabular_output import TabularOutputFormatter
 from pgspecial.namedqueries import NamedQueries
-from prompt_toolkit.completion import Completer, Completion
-from prompt_toolkit.contrib.completers import PathCompleter
+from prompt_toolkit.completion import Completer, Completion, PathCompleter
 from prompt_toolkit.document import Document
 from .packages.sqlcompletion import (
     FromClauseItem, suggest_type, Special, Database, Schema, Table,
@@ -21,9 +20,6 @@ from .packages.prioritization import PrevalenceCounter
 from .config import load_config, config_location
 
 _logger = logging.getLogger(__name__)
-
-NamedQueries.instance = NamedQueries.from_config(
-    load_config(config_location() + 'config'))
 
 Match = namedtuple('Match', ['completion', 'priority'])
 

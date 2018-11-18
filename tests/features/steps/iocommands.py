@@ -1,10 +1,10 @@
 # -*- coding: utf-8
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 import os
 import os.path
-import wrappers
 
 from behave import when, then
+import wrappers
 
 
 @when('we start external editor providing a file name')
@@ -44,6 +44,7 @@ def step_edit_done_sql(context):
     # Cleanup the edited file.
     if context.editor_file_name and os.path.exists(context.editor_file_name):
         os.remove(context.editor_file_name)
+    context.atprompt = True
 
 
 @when(u'we tee output')

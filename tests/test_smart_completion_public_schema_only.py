@@ -1,4 +1,5 @@
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
+
 from metadata import (MetaData, alias, name_join, fk_join, join, keyword,
     schema, table, view, function, column, wildcard_expansion,
     get_result, result_set, qual, no_qual, parametrize)

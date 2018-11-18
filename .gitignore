@@ -67,3 +67,6 @@ target/
 # Generated Packages
 *.deb
 *.rpm
+
+.vscode/
+venv/

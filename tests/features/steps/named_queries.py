@@ -4,10 +4,10 @@ Steps for behavioral style tests are defined in this module.
 Each step is defined by the string decorating it.
 This string is used to call the step in "*.feature" file.
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 
-import wrappers
 from behave import when, then
+import wrappers
 
 
 @when('we save a named query')
@@ -39,7 +39,7 @@ def step_see_named_query_saved(context):
     """
     Wait to see query saved.
     """
-    wrappers.expect_pager(context, 'Saved.\r\n', timeout=1)
+    wrappers.expect_exact(context, 'Saved.', timeout=2)
 
 
 @then('we see the named query executed')

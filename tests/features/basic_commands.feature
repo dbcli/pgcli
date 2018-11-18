@@ -17,3 +17,8 @@ Feature: run the cli,
   Scenario: run the cli and exit
      When we send "ctrl + d"
       then dbcli exits
+
+  Scenario: list databases
+      When we list databases
+      then we see list of databases
+      

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
+from __future__ import unicode_literals, print_function
 
+import copy
 import os
 import sys
 import db_utils as dbutils
@@ -9,14 +9,15 @@ import fixture_utils as fixutils
 import pexpect
 import tempfile
 import shutil
+import signal
 
-from steps.wrappers import run_cli, wait_prompt
+
+from steps import wrappers
 
 
 def before_all(context):
-    """
-    Set env parameters.
-    """
+    """Set env parameters."""
+    env_old = copy.deepcopy(dict(os.environ))
     os.environ['LINES'] = "100"
     os.environ['COLUMNS'] = "100"
     os.environ['PAGER'] = 'cat'
@@ -24,6 +25,11 @@ def before_all(context):
 
     context.package_root = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    fixture_dir = os.path.join(
+        context.package_root, 'tests/features/fixture_data')
+
+    print('package root:', context.package_root)
+    print('fixture dir:', fixture_dir)
 
     os.environ["COVERAGE_PROCESS_START"] = os.path.join(context.package_root,
                                                         '.coveragerc')
@@ -102,6 +108,19 @@ def before_all(context):
     # use temporary directory as config home
     context.env_config_home = tempfile.mkdtemp(prefix='pgcli_home_')
     os.environ['XDG_CONFIG_HOME'] = context.env_config_home
+    show_env_changes(env_old, dict(os.environ))
+
+
+def show_env_changes(env_old, env_new):
+    """Print out all test-specific env values."""
+    print('--- os.environ changed values: ---')
+    all_keys = set(list(env_old.keys()) + list(env_new.keys()))
+    for k in sorted(all_keys):
+        old_value = env_old.get(k, '')
+        new_value = env_new.get(k, '')
+        if new_value and old_value != new_value:
+            print('{}="{}"'.format(k, new_value))
+    print('-' * 20)
 
 
 def after_all(context):
@@ -128,27 +147,34 @@ def before_step(context, _):
     context.atprompt = False
 
 
-def before_scenario(context, _):
-    run_cli(context)
-    wait_prompt(context)
+def before_scenario(context, scenario):
+    if scenario.name == 'list databases':
+        # not using the cli for that
+        return
+    wrappers.run_cli(context)
+    wrappers.wait_prompt(context)
 
 
-def after_scenario(context, _):
-    """Cleans up after each test complete."""
-
-    if hasattr(context, 'cli') and not context.exit_sent:
+def after_scenario(context, scenario):
+    """Cleans up after each scenario completes."""
+    if hasattr(context, 'cli') and context.cli and not context.exit_sent:
         # Quit nicely.
         if not context.atprompt:
             dbname = context.currentdb
-            context.cli.expect_exact(
-                '{0}> '.format(dbname),
-                timeout=5
-            )
+            context.cli.expect_exact('{0}> '.format(dbname), timeout=15)
         context.cli.sendcontrol('c')
         context.cli.sendcontrol('d')
-        context.cli.expect_exact(pexpect.EOF, timeout=10)
+        try:
+            context.cli.expect_exact(pexpect.EOF, timeout=15)
+        except pexpect.TIMEOUT:
+            print('--- after_scenario {}: kill cli'.format(scenario.name))
+            context.cli.kill(signal.SIGKILL)
+    if hasattr(context, 'tmpfile_sql_help') and context.tmpfile_sql_help:
+        context.tmpfile_sql_help.close()
+        context.tmpfile_sql_help = None
 
-# TODO: uncomment to debug a failure
+
+# # TODO: uncomment to debug a failure
 # def after_step(context, step):
 #     if step.status == "failed":
-#         import ipdb; ipdb.set_trace()
+#         import pdb; pdb.set_trace()
