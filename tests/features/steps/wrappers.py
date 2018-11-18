@@ -4,17 +4,44 @@ from __future__ import unicode_literals
 import re
 import pexpect
 from pgcli.main import COLOR_CODE_REGEX
+import textwrap
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 
 def expect_exact(context, expected, timeout):
+    timedout = False
     try:
         context.cli.expect_exact(expected, timeout=timeout)
-    except:
+    except pexpect.exceptions.TIMEOUT:
+        timedout = True
+    if timedout:
         # Strip color codes out of the output.
-        actual = COLOR_CODE_REGEX.sub('', context.cli.before)
-        raise Exception('Expected:\n---\n{0!r}\n---\n\nActual:\n---\n{1!r}\n---'.format(
-            expected,
-            actual))
+        actual = re.sub(r'\x1b\[([0-9A-Za-z;?])+[m|K]?',
+                        '', context.cli.before)
+        raise Exception(
+            textwrap.dedent('''\
+                Expected:
+                ---
+                {0!r}
+                ---
+                Actual:
+                ---
+                {1!r}
+                ---
+                Full log:
+                ---
+                {2!r}
+                ---
+            ''').format(
+                expected,
+                actual,
+                context.logfile.getvalue()
+            )
+        )
 
 
 def expect_pager(context, expected, timeout):

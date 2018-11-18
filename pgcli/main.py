@@ -1,7 +1,10 @@
-from __future__ import unicode_literals
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import warnings
+
+from pgspecial.namedqueries import NamedQueries
+
 warnings.filterwarnings("ignore", category=UserWarning, module='psycopg2')
 
 import os
@@ -145,6 +148,8 @@ class PGCli(object):
 
         # Load config.
         c = self.config = get_config(pgclirc_file)
+
+        NamedQueries.instance = NamedQueries.from_config(self.config)
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
@@ -529,13 +534,10 @@ class PGCli(object):
                 raise RuntimeError(message)
             while True:
                 try:
-                    text = self.prompt_app.prompt(
-                        default=sql,
-                        vi_mode=self.vi_mode
-                    )
+                    text = self.prompt_app.prompt(default=sql)
                     break
                 except KeyboardInterrupt:
-                    sql = None
+                    sql = ""
 
             editor_command = special.editor_command(text)
         return text
@@ -633,7 +635,7 @@ class PGCli(object):
         try:
             while True:
                 try:
-                    text = self.prompt_app.prompt(vi_mode=self.vi_mode)
+                    text = self.prompt_app.prompt()
                 except KeyboardInterrupt:
                     continue
 
@@ -895,7 +897,8 @@ class PGCli(object):
         short_host, _, _ = host.partition('.')
         string = string.replace('\\h', short_host)
         string = string.replace('\\d', self.pgexecute.dbname or '(none)')
-        string = string.replace('\\p', str(self.pgexecute.port) or '(none)')
+        string = string.replace('\\p', str(
+            self.pgexecute.port) if self.pgexecute.port is not None else '5432')
         string = string.replace('\\i', str(self.pgexecute.pid) or '(none)')
         string = string.replace('\\#', "#" if (self.pgexecute.superuser) else ">")
         string = string.replace('\\n', "\n")
@@ -905,9 +908,17 @@ class PGCli(object):
         """Get the last query executed or None."""
         return self.query_history[-1][0] if self.query_history else None
 
-    def is_wide_line(self, line):
+    def is_too_wide(self, line):
         """Will this line be too wide to fit into terminal?"""
+        if not self.prompt_app:
+            return False
         return len(COLOR_CODE_REGEX.sub('', line)) > self.prompt_app.output.get_size().columns
+
+    def is_too_tall(self, lines):
+        """Are there too many lines to fit into terminal?"""
+        if not self.prompt_app:
+            return False
+        return len(lines) >= (self.prompt_app.output.get_size().rows - 4)
 
     def echo_via_pager(self, text, color=None):
         if self.pgspecial.pager_config == PAGER_OFF or self.watch_command:
@@ -916,7 +927,7 @@ class PGCli(object):
             lines = text.split('\n')
 
             # The last 4 lines are reserved for the pgcli menu and padding
-            if len(lines) >= self.prompt_app.output.get_size().rows - 4 or any(self.is_wide_line(l) for l in lines):
+            if self.is_too_tall(lines) or any(self.is_too_wide(l) for l in lines):
                 click.echo_via_pager(text, color=color)
             else:
                 click.echo(text, color=color)
@@ -929,20 +940,17 @@ class PGCli(object):
         help='Host address of the postgres database.')
 @click.option('-p', '--port', default=5432, help='Port number at which the '
         'postgres instance is listening.', envvar='PGPORT', type=click.INT)
-@click.option('-U', '--username', 'username_opt', envvar='PGUSER',
-        help='Username to connect to the postgres database.')
-@click.option('--user', 'username_opt', envvar='PGUSER',
-              help='Username to connect to the postgres database.')
+@click.option('-U', '--username', 'username_opt', help='Username to connect to the postgres database.')
+@click.option('--user', 'username_opt', help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
-        help='Force password prompt.')
+              help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
-        default=False, help='Never prompt for password.')
+              default=False, help='Never prompt for password.')
 @click.option('--single-connection', 'single_connection', is_flag=True,
-        default=False,
-        help='Do not use a separate connection for completions.')
+              default=False,
+              help='Do not use a separate connection for completions.')
 @click.option('-v', '--version', is_flag=True, help='Version of pgcli.')
-@click.option('-d', '--dbname', default='', envvar='PGDATABASE',
-        help='database name to connect to.')
+@click.option('-d', '--dbname', 'dbname_opt', help='database name to connect to.')
 @click.option('--pgclirc', default=config_location() + 'config',
         envvar='PGCLIRC', help='Location of pgclirc file.', type=click.Path(dir_okay=False))
 @click.option('-D', '--dsn', default='', envvar='DSN',
@@ -962,10 +970,10 @@ class PGCli(object):
               help='Automatically switch to vertical output mode if the result is wider than the terminal width.')
 @click.option('--warn/--no-warn', default=None,
               help='Warn before running a destructive query.')
-@click.argument('database', default=lambda: None, envvar='PGDATABASE', nargs=1)
+@click.argument('dbname', default=lambda: None, envvar='PGDATABASE', nargs=1)
 @click.argument('username', default=lambda: None, envvar='PGUSER', nargs=1)
-def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
-        single_connection, dbname, username, version, pgclirc, dsn, row_limit,
+def cli(dbname, username_opt, host, port, prompt_passwd, never_prompt,
+        single_connection, dbname_opt, username, version, pgclirc, dsn, row_limit,
         less_chatty, prompt, prompt_dsn, list_databases, auto_vertical_output,
         list_dsn, warn):
 
@@ -1006,7 +1014,10 @@ def cli(database, username_opt, host, port, prompt_passwd, never_prompt,
                   auto_vertical_output=auto_vertical_output, warn=warn)
 
     # Choose which ever one has a valid value.
-    database = database or dbname
+    if dbname_opt and dbname:
+        # work as psql: when database is given as option and argument use the argument as user
+        username = dbname
+    database = dbname_opt or dbname or ''
     user = username_opt or username
 
     # because option --list or -l are not supposed to have a db name

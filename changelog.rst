@@ -6,6 +6,16 @@ Bug fixes:
 
 * Tab press on an empty line increases the indentation instead of triggering
   the auto-complete pop-up. (Thanks: `Artur Balabanov`_)
+* Fix for loading/saving named queries from provided config file (#938). (Thanks: `Daniel Egger`_)
+* Set default port in `connect_uri` when none is given. (Thanks: `Daniel Egger`_)
+* Fix for error listing databases (#951). (Thanks: `Irina Truong`_)
+
+Internal:
+---------
+
+* Clean up and add behave logging. (Thanks: `Dick Marinus`_)
+* Require prompt_toolkit>=2.0.6. (Thanks: `Dick Marinus`_)
+* Improve development guide (Thanks: `Ignacio Campabadal`_)
 
 2.0.0:
 ======
@@ -891,3 +901,5 @@ Improvements:
 .. _`Artur Balabanov`: https://github.com/arturbalabanov
 .. _`Kenny Do`: https://github.com/kennydo
 .. _`Max Rothman`: https://github.com/maxrothman
+.. _`Daniel Egger`: https://github.com/DanEEStar
+.. _`Ignacio Campabadal`: https://github.com/igncampa

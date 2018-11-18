@@ -6,7 +6,7 @@ GitHub Workflow
 ---------------
 
 If you're interested in contributing to pgcli, first of all my heart felt
-thanks. `Fork the project <https://github.com/dbcli/pgcli>`_ in github.  Then
+thanks. `Fork the project <https://github.com/dbcli/pgcli>`_ on github.  Then
 clone your fork into your computer (``git clone <url-for-your-fork>``).  Make
 the changes and create the commits in your local machine. Then push those
 changes to your fork. Then click on the pull request icon on github and create
@@ -26,16 +26,20 @@ Once the 'upstream' end point is added you can then periodically do a ``git
 pull upstream master`` to update your local copy and then do a ``git push
 origin master`` to keep your own fork up to date.
 
+Check Github's `Understanding the GitHub flow guide
+<https://guides.github.com/introduction/flow/>`_ for a more detailed
+explanation of this process.
+
 Local Setup
 -----------
 
 The installation instructions in the README file are intended for users of
 pgcli. If you're developing pgcli, you'll need to install it in a slightly
 different way so you can see the effects of your changes right away without
-having to go through the install cycle everytime you change the code.
+having to go through the install cycle every time you change the code.
 
 It is highly recommended to use virtualenv for development. If you don't know
-what a virtualenv is, this `guide <http://docs.python-guide.org/en/latest/dev/virtualenvs/#virtual-environments>`_
+what a virtualenv is, `this guide <http://docs.python-guide.org/en/latest/dev/virtualenvs/#virtual-environments>`_
 will help you get started.
 
 Create a virtualenv (let's call it pgcli-dev). Activate it:
@@ -57,10 +61,10 @@ and install pgcli using pip as follows:
 
 This will install the necessary dependencies as well as install pgcli from the
 working folder into the virtualenv. By installing it using `pip install -e`
-we've linked the pgcli installation with the working copy. So any changes made
-to the code is immediately available in the installed version of pgcli. This
+we've linked the pgcli installation with the working copy. Any changes made
+to the code are immediately available in the installed version of pgcli. This
 makes it easy to change something in the code, launch pgcli and check the
-effects of your change.
+effects of your changes.
 
 Adding PostgreSQL Special (Meta) Commands
 -----------------------------------------
@@ -123,22 +127,35 @@ in the ``tests`` directory.  An example::
     pg_test_host = db.example.com
     pg_test_port = 30000
 
-The database user has to have
-permissions to create and drop test databases. Default user is ``postgres``
-at ``localhost``, without the password (authentication mode trust).
-
 First, install the requirements for testing:
 
 ::
 
     $ pip install -r requirements-dev.txt
 
-After that, tests can be run with:
+Ensure that the database user has permissions to create and drop test databases
+by checking your ``pg_hba.conf`` file. The default user should be ``postgres``
+at ``localhost``. Make sure the authentication method is set to ``trust``. If
+you made any changes to your ``pg_hba.conf`` make sure to restart the postgres
+service for the changes to take effect.
 
 ::
 
-    $ cd tests
+    # ONLY IF YOU MADE CHANGES TO YOUR pg_hba.conf FILE
+    $ sudo service postgresql restart
+
+After that, tests in the ``/pgcli/tests`` directory can be run with:
+
+::
+
+    # on directory /pgcli/tests
     $ behave
+
+And on the ``/pgcli`` directory:
+
+::
+
+    # on directory /pgcli
     $ py.test
 
 To see stdout/stderr, use the following command:
@@ -147,9 +164,16 @@ To see stdout/stderr, use the following command:
 
     $ behave --no-capture
 
+Troubleshooting the integration tests
+-------------------------------------
+
+- Make sure postgres instance on localhost is running
+- Check your ``pg_hba.conf`` file to verify local connections are enabled
+- Check `this issue <https://github.com/dbcli/pgcli/issues/945>`_ for relevant information.
+- Contact us on `gitter <https://gitter.im/dbcli/pgcli/>`_ or `file an issue <https://github.com/dbcli/pgcli/issues/new>`_.
 
 PEP8 checks (lint)
------------------_
+------------------
 
 When you submit a PR, the changeset is checked for pep8 compliance using
 `pep8radius <https://github.com/hayd/pep8radius>`_. If you see a build failing because
