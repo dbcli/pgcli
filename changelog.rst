@@ -1,6 +1,11 @@
 Upcoming:
 =========
 
+TODO
+
+2.0.1:
+======
+
 Bug fixes:
 ----------
 
@@ -16,7 +21,6 @@ Internal:
 * Clean up and add behave logging. (Thanks: `Dick Marinus`_)
 * Require prompt_toolkit>=2.0.6. (Thanks: `Dick Marinus`_)
 * Improve development guide (Thanks: `Ignacio Campabadal`_)
-
 
 2.0.0:
 ======
