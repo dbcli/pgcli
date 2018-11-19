@@ -93,7 +93,6 @@ def extract_table_identifiers(token_stream, allow_functions=True):
             name = name.lower()
         return schema_name, name, alias
 
-
     try:
         for item in token_stream:
             if isinstance(item, IdentifierList):
