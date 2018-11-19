@@ -94,29 +94,32 @@ def extract_table_identifiers(token_stream, allow_functions=True):
         return schema_name, name, alias
 
 
-    for item in token_stream:
-        if isinstance(item, IdentifierList):
-            for identifier in item.get_identifiers():
-                # Sometimes Keywords (such as FROM ) are classified as
-                # identifiers which don't have the get_real_name() method.
-                try:
-                    schema_name = identifier.get_parent_name()
-                    real_name = identifier.get_real_name()
-                    is_function = (allow_functions and
-                                   _identifier_is_function(identifier))
-                except AttributeError:
-                    continue
-                if real_name:
-                    yield TableReference(schema_name, real_name,
-                                         identifier.get_alias(), is_function)
-        elif isinstance(item, Identifier):
-            schema_name, real_name, alias = parse_identifier(item)
-            is_function = allow_functions and _identifier_is_function(item)
+    try:
+        for item in token_stream:
+            if isinstance(item, IdentifierList):
+                for identifier in item.get_identifiers():
+                    # Sometimes Keywords (such as FROM ) are classified as
+                    # identifiers which don't have the get_real_name() method.
+                    try:
+                        schema_name = identifier.get_parent_name()
+                        real_name = identifier.get_real_name()
+                        is_function = (allow_functions and
+                                       _identifier_is_function(identifier))
+                    except AttributeError:
+                        continue
+                    if real_name:
+                        yield TableReference(schema_name, real_name,
+                                             identifier.get_alias(), is_function)
+            elif isinstance(item, Identifier):
+                schema_name, real_name, alias = parse_identifier(item)
+                is_function = allow_functions and _identifier_is_function(item)
 
-            yield TableReference(schema_name, real_name, alias, is_function)
-        elif isinstance(item, Function):
-            schema_name, real_name, alias = parse_identifier(item)
-            yield TableReference(None, real_name, alias, allow_functions)
+                yield TableReference(schema_name, real_name, alias, is_function)
+            elif isinstance(item, Function):
+                schema_name, real_name, alias = parse_identifier(item)
+                yield TableReference(None, real_name, alias, allow_functions)
+    except StopIteration:
+        return
 
 
 # extract_tables is inspired from examples in the sqlparse lib.

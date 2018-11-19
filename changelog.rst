@@ -8,6 +8,7 @@ Bug fixes:
 * Set default port in `connect_uri` when none is given. (Thanks: `Daniel Egger`_)
 * Fix for error listing databases (#951). (Thanks: `Irina Truong`_)
 * Enable Ctrl-Z to suspend the app (Thanks: `Amjith Ramanujam`_).
+* Fix StopIteration exception raised at runtime for Python 3.7 (Thanks: `Amjith Ramanujam`_).
 
 Internal:
 ---------
