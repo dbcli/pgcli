@@ -934,4 +934,5 @@ def test_set_schema(completer):
 @parametrize('completer', completers())
 def test_special_name_completion(completer):
     result = result_set(completer, '\\t')
-    assert result == set([Completion(text='\\timing', start_position=-2, display_meta='Toggle timing of commands.')])
+    assert result == set([Completion(
+        text='\\timing', start_position=-2, display_meta='Toggle timing of commands.')])

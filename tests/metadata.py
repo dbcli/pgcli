@@ -204,7 +204,8 @@ class MetaData(object):
         metadata = self.metadata
         from pgcli.pgcompleter import PGCompleter
         from pgspecial import PGSpecial
-        comp = PGCompleter(smart_completion=True, settings=settings, pgspecial=PGSpecial())
+        comp = PGCompleter(smart_completion=True,
+                           settings=settings, pgspecial=PGSpecial())
 
         schemata, tables, tbl_cols, views, view_cols = [], [], [], [], []
 
