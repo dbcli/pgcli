@@ -6,6 +6,7 @@ from pgcli.packages.parseutils.meta import FunctionMetadata, ForeignKey
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 from mock import Mock
+from six import iteritems
 import pytest
 
 parametrize = pytest.mark.parametrize
@@ -79,7 +80,7 @@ class MetaData(object):
         return [keyword(kw, pos) for kw in self.completer.keywords_tree.keys()]
 
     def specials(self, pos=0):
-        return [Completion(text=k, start_position=pos, display_meta=v.description) for k, v in self.completer.pgspecial.commands.iteritems()]
+        return [Completion(text=k, start_position=pos, display_meta=v.description) for k, v in iteritems(self.completer.pgspecial.commands)]
 
     def columns(self, tbl, parent='public', typ='tables', pos=0):
         if typ == 'functions':
