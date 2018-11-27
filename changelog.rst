@@ -1,7 +1,10 @@
 Upcoming:
 =========
 
-TODO
+Internal:
+---------
+
+* Added tests for special command completion. (Thanks: `Amjith Ramanujam`_)
 
 2.0.1:
 ======

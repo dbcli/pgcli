@@ -99,7 +99,7 @@ def test_drop_alter_function(completer, action):
 @parametrize('completer', completers())
 def test_empty_string_completion(completer):
     result = result_set(completer, '')
-    assert set(testdata.keywords()) == result
+    assert set(testdata.keywords() + testdata.specials()) == result
 
 
 @parametrize('completer', completers())
@@ -929,3 +929,10 @@ def test_set_schema(completer):
     result = result_set(completer, text)
     expected = set([schema(u"'public'")])
     assert result == expected
+
+
+@parametrize('completer', completers())
+def test_special_name_completion(completer):
+    result = result_set(completer, '\\t')
+    assert result == set([Completion(
+        text='\\timing', start_position=-2, display_meta='Toggle timing of commands.')])
