@@ -78,3 +78,13 @@ def test_alter_well_known_keywords_completion(completer, complete_event):
         Completion(text="SYSTEM", display_meta='keyword'),
     ])
     assert Completion(text="CREATE", display_meta="keyword") not in result
+
+
+def test_special_name_completion(completer, complete_event):
+    text = '\\'
+    position = len('\\')
+    result = set(completer.get_completions(
+        Document(text=text, cursor_position=position),
+        complete_event))
+    # Special commands will NOT be suggested during naive completion mode.
+    assert result == set()
