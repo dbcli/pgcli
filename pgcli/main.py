@@ -942,7 +942,7 @@ class PGCli(object):
 @click.option('-p', '--port', default=5432, help='Port number at which the '
         'postgres instance is listening.', envvar='PGPORT', type=click.INT)
 @click.option('-U', '--username', 'username_opt', help='Username to connect to the postgres database.')
-@click.option('--user', 'username_opt', help='Username to connect to the postgres database.')
+@click.option('-u', '--user', 'username_opt', help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
               help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,
