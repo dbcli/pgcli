@@ -1,6 +1,11 @@
 Upcoming:
 =========
 
+Features:
+---------
+
+* Allows passing the ``-u`` flag to specify a username
+
 Internal:
 ---------
 
