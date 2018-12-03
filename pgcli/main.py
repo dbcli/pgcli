@@ -593,9 +593,10 @@ class PGCli(object):
                 # Only add humanized time display if > 1 second
                 if query.total_time > 1:
                     print('Time: %0.03fs (%s), executed in: %0.03fs (%s)' % (query.total_time,
-                          humanize.time.naturaldelta(query.total_time),
-                          query.execution_time,
-                          humanize.time.naturaldelta(query.execution_time)))
+                                                                             humanize.time.naturaldelta(
+                                                                                 query.total_time),
+                                                                             query.execution_time,
+                                                                             humanize.time.naturaldelta(query.execution_time)))
                 else:
                     print('Time: %0.03fs' % query.total_time)
 
