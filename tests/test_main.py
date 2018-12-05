@@ -302,7 +302,8 @@ def test_port_db_uri(tmpdir):
 def test_multihost_db_uri(tmpdir):
     with mock.patch.object(PGCli, 'connect') as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
-        cli.connect_uri('postgres://bar:foo@baz1.com:2543,baz2.com:2543,baz3.com:2543/testdb')
+        cli.connect_uri(
+            'postgres://bar:foo@baz1.com:2543,baz2.com:2543,baz3.com:2543/testdb')
     mock_connect.assert_called_with(database='testdb',
                                     host='baz1.com,baz2.com,baz3.com',
                                     user='bar',
