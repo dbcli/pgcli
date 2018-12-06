@@ -400,3 +400,12 @@ def test_nonexistent_view_definition(executor):
         result = executor.view_definition('there_is_no_such_view')
     with pytest.raises(RuntimeError):
         result = executor.view_definition('mvw1')
+
+@dbtest
+def test_short_host(executor):
+    with patch.object(executor, 'host', 'localhost'):
+        assert executor.short_host == 'localhost'
+    with patch.object(executor, 'host', 'localhost.example.org'):
+        assert executor.short_host == 'localhost'
+    with patch.object(executor, 'host', 'localhost1.example.org,localhost2.example.org'):
+        assert executor.short_host == 'localhost1'

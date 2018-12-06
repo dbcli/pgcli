@@ -888,10 +888,8 @@ class PGCli(object):
         string = string.replace('\\dsn_alias', self.dsn_alias or '')
         string = string.replace('\\t', self.now.strftime('%x %X'))
         string = string.replace('\\u', self.pgexecute.user or '(none)')
-        host = self.pgexecute.host or '(none)'
-        string = string.replace('\\H', host)
-        short_host, _, _ = host.partition('.')
-        string = string.replace('\\h', short_host)
+        string = string.replace('\\H', self.pgexecute.host or '(none)')
+        string = string.replace('\\h', self.pgexecute.short_host or '(none)')
         string = string.replace('\\d', self.pgexecute.dbname or '(none)')
         string = string.replace('\\p', str(
             self.pgexecute.port) if self.pgexecute.port is not None else '5432')
