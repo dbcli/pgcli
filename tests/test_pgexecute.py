@@ -401,6 +401,7 @@ def test_nonexistent_view_definition(executor):
     with pytest.raises(RuntimeError):
         result = executor.view_definition('mvw1')
 
+
 @dbtest
 def test_short_host(executor):
     with patch.object(executor, 'host', 'localhost'):
