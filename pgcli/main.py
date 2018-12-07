@@ -87,14 +87,15 @@ MetaQuery = namedtuple(
     [
         'query',            # The entire text of the command
         'successful',       # True If all subqueries were successful
-        'total_time',       # Time elapsed executing the query
+        'total_time',       # Time elapsed executing the query and formatting results
+        'execution_time',   # Time elapsed executing the query
         'meta_changed',     # True if any subquery executed create/alter/drop
         'db_changed',       # True if any subquery changed the database
         'path_changed',     # True if any subquery changed the search path
         'mutated',          # True if any subquery executed insert/update/delete
         'is_special',       # True if the query is a special command
     ])
-MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
+MetaQuery.__new__.__defaults__ = ('', False, 0, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     'OutputSettings',
@@ -591,8 +592,11 @@ class PGCli(object):
             if self.pgspecial.timing_enabled:
                 # Only add humanized time display if > 1 second
                 if query.total_time > 1:
-                    print('Time: %0.03fs (%s)' % (query.total_time,
-                          humanize.time.naturaldelta(query.total_time)))
+                    print('Time: %0.03fs (%s), executed in: %0.03fs (%s)' % (query.total_time,
+                                                                             humanize.time.naturaldelta(
+                                                                                 query.total_time),
+                                                                             query.execution_time,
+                                                                             humanize.time.naturaldelta(query.execution_time)))
                 else:
                     print('Time: %0.03fs' % query.total_time)
 
@@ -757,6 +761,7 @@ class PGCli(object):
         path_changed = False
         output = []
         total = 0
+        execution = 0
 
         # Run the query.
         start = time()
@@ -795,6 +800,7 @@ class PGCli(object):
                 ),
                 style_output=self.style_output
             )
+            execution = time() - start
             formatted = format_output(title, cur, headers, status, settings)
 
             output.extend(formatted)
@@ -810,7 +816,7 @@ class PGCli(object):
             else:
                 all_success = False
 
-        meta_query = MetaQuery(text, all_success, total, meta_changed,
+        meta_query = MetaQuery(text, all_success, total, execution, meta_changed,
                                db_changed, path_changed, mutated, is_special)
 
         return output, meta_query
