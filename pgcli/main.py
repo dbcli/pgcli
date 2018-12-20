@@ -78,6 +78,9 @@ from collections import namedtuple
 
 from textwrap import dedent
 
+#import pydevd
+#pydevd.settrace('localhost', port=3000, suspend=False)
+
 # Ref: https://stackoverflow.com/questions/30425105/filter-special-chars-such-as-color-codes-from-shell-output
 COLOR_CODE_REGEX = re.compile(r'\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))')
 
@@ -221,6 +224,11 @@ class PGCli(object):
         self.completer = completer
         self._completer_lock = threading.Lock()
         self.register_special_commands()
+
+        self.logger.info(f"*** ALL COMPLETIONS: {len(completer.all_completions)}")
+        longest = max([len(c) for c in completer.all_completions])
+        self.logger.info(f"*** LONGEST COMPLETION: {longest}")
+        self.logger.info(f"*** COMPLETION VALUES: {completer.all_completions}")
 
         self.prompt_app = None
 
