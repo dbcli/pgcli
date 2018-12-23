@@ -12,8 +12,11 @@ POSTGRES_PASSWORD = getenv('PGPASSWORD', '')
 
 
 def db_connection(dbname=None):
-    conn = psycopg2.connect(user=POSTGRES_USER, host=POSTGRES_HOST,
-                            port=POSTGRES_PORT, database=dbname)
+    conn = psycopg2.connect(user=POSTGRES_USER,
+                            host=POSTGRES_HOST,
+                            password=POSTGRES_PASSWORD,
+                            port=POSTGRES_PORT,
+                            database=dbname)
     conn.autocommit = True
     return conn
 
