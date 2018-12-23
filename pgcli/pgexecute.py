@@ -185,16 +185,20 @@ class PGExecute(object):
 
     version_query = "SELECT version();"
 
-    def __init__(self, database, user, password, host, port, dsn, **kwargs):
+    def __init__(self, database=None, user=None, password=None, host=None,
+                 port=None, dsn=None, **kwargs):
+        self._conn_params = {}
         self.conn = None
         self.dbname = None
         self.user = None
         self.password = None
         self.host = None
         self.port = None
-        self.dsn = None
         self.server_version = None
         self.connect(database, user, password, host, port, dsn, **kwargs)
+
+    def copy(self):
+        return self.__class__(**self._conn_params)
 
     def get_server_version(self):
         if self.server_version:
@@ -215,24 +219,28 @@ class PGExecute(object):
 
     def connect(self, database=None, user=None, password=None, host=None,
                 port=None, dsn=None, **kwargs):
-        pid = -1
-        if dsn:
-            if password:
-                dsn = "{0} password={1}".format(dsn, password)
-            conn = psycopg2.connect(dsn=unicode2utf8(dsn))
-            cursor = conn.cursor()
-        else:
-            conn = psycopg2.connect(
-                database=unicode2utf8(database),
-                user=unicode2utf8(user),
-                password=unicode2utf8(password),
-                host=unicode2utf8(host),
-                port=unicode2utf8(port),
-                **{k: unicode2utf8(v) for k, v in kwargs.items()})
 
-            cursor = conn.cursor()
+        conn_params = self._conn_params.copy()
 
+        new_params = {
+            'database': database,
+            'user': user,
+            'password': password,
+            'host': host,
+            'port': port,
+            'dsn': dsn,
+        }
+        new_params.update(kwargs)
+        conn_params.update({k: unicode2utf8(v) for k, v in new_params.items() if v is not None})
+
+        if 'password' in conn_params and 'dsn' in conn_params:
+            conn_params['dsn'] = "{0} password={1}".format(conn_params['dsn'], conn_params.pop('password'))
+
+        conn = psycopg2.connect(**conn_params)
+        cursor = conn.cursor()
         conn.set_client_encoding('utf8')
+
+        self._conn_params = conn_params
         if self.conn:
             self.conn.close()
         self.conn = conn

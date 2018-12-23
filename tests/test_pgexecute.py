@@ -34,6 +34,21 @@ def test_conn(executor):
 
 
 @dbtest
+def test_copy(executor):
+    executor_copy = executor.copy()
+    run(executor_copy, '''create table test(a text)''')
+    run(executor_copy, '''insert into test values('abc')''')
+    assert run(executor_copy, '''select * from test''', join=True) == dedent("""\
+        +-----+
+        | a   |
+        |-----|
+        | abc |
+        +-----+
+        SELECT 1""")
+
+
+
+@dbtest
 def test_bools_are_treated_as_strings(executor):
     run(executor, '''create table test(a boolean)''')
     run(executor, '''insert into test values(True)''')
