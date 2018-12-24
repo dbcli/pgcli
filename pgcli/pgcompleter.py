@@ -425,9 +425,6 @@ class PGCompleter(Completer):
         return self.casing.get(word, word)
 
     def get_completions(self, document, complete_event, smart_completion=None):
-        import datetime as dt
-        started = dt.datetime.now()
-
         word_before_cursor = document.get_word_before_cursor(WORD=True)
 
         if smart_completion is None:
@@ -456,9 +453,6 @@ class PGCompleter(Completer):
         # Sort matches so highest priorities are first
         matches = sorted(matches, key=operator.attrgetter('priority'),
                          reverse=True)
-
-        elapsed = dt.datetime.now() - started
-        _logger.info(f"*** retrieved {len(matches)} completions in {elapsed} ('{document.text}.')")
 
         return [m.completion for m in matches]
 
