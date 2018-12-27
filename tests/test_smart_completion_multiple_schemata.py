@@ -30,20 +30,20 @@ metadata = {
     },
     'functions': {
         'public': [
-            ['func1', [], [], [], '', False, False, False],
-            ['func2', [], [], [], '', False, False, False]],
+            ['func1', [], [], [], '', False, False, False, False],
+            ['func2', [], [], [], '', False, False, False, False]],
         'custom': [
-            ['func3', [], [], [], '', False, False, False],
+            ['func3', [], [], [], '', False, False, False, False],
             ['set_returning_func', ['x'], ['integer'], ['o'],
-                'integer', False, False, True]],
+                'integer', False, False, True, False]],
         'Custom': [
-            ['func4', [], [], [], '', False, False, False]],
+            ['func4', [], [], [], '', False, False, False, False]],
         'blog': [
             ['extract_entry_symbols', ['_entryid', 'symbol'],
-                ['integer', 'text'], ['i', 'o'], '', False, False, True],
+                ['integer', 'text'], ['i', 'o'], '', False, False, True, False],
             ['enter_entry', ['_title', '_text', 'entryid'],
                 ['text', 'text', 'integer'], ['i', 'i', 'o'],
-                '', False, False, False]],
+                '', False, False, False, False]],
      },
     'datatypes': {
         'public': ['typ1', 'typ2'],
@@ -579,7 +579,7 @@ def test_all_schema_objects(completer):
     result = result_set(completer, text)
     assert result >= set(
         [table(x) for x in ('orders', '"select"', 'custom.shipments')]
-        + [function(x+'()') for x in ('func2', 'custom.func3')]
+        + [function(x+'()') for x in ('func2',)]
     )
 
 
@@ -589,7 +589,7 @@ def test_all_schema_objects_with_casing(completer):
     result = result_set(completer, text)
     assert result >= set(
         [table(x) for x in ('Orders', '"select"', 'CUSTOM.shipments')]
-        + [function(x+'()') for x in ('func2', 'CUSTOM.func3')]
+        + [function(x+'()') for x in ('func2',)]
     )
 
 
@@ -597,9 +597,19 @@ def test_all_schema_objects_with_casing(completer):
 def test_all_schema_objects_with_aliases(completer):
     text = ('SELECT * FROM ')
     result = result_set(completer, text)
+    expected = set(
+        [table(x) for x in ('orders o', '"select" s', 'custom.shipments s')]
+        + [function(x) for x in ('func2() f',)]
+    )
+    if not (result >= expected):
+        from pprint import pprint
+        pprint(result)
+        print('---')
+        pprint(expected)
+
     assert result >= set(
         [table(x) for x in ('orders o', '"select" s', 'custom.shipments s')]
-        + [function(x) for x in ('func2() f', 'custom.func3() f')]
+        + [function(x) for x in ('func2() f',)]
     )
 
 

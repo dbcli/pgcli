@@ -80,7 +80,7 @@ class FunctionMetadata(object):
         self.is_aggregate = is_aggregate
         self.is_window = is_window
         self.is_set_returning = is_set_returning
-        self.is_extension = is_extension
+        self.is_extension = bool(is_extension)
         self.is_public = (self.schema_name and self.schema_name == 'public')
 
     def __eq__(self, other):
@@ -92,8 +92,8 @@ class FunctionMetadata(object):
 
     def _signature(self):
         return (
-            self.schema_name, self.func_name, self.arg_names, self.arg_types,
-            self.arg_modes, self.return_type, self.is_aggregate,
+            self.schema_name, self.func_name, self.arg_names,
+            self.arg_types, self.arg_modes, self.return_type, self.is_aggregate,
             self.is_window, self.is_set_returning, self.is_extension, self.arg_defaults
         )
 
@@ -106,7 +106,7 @@ class FunctionMetadata(object):
                 '%s(schema_name=%r, func_name=%r, arg_names=%r, '
                 'arg_types=%r, arg_modes=%r, return_type=%r, is_aggregate=%r, '
                 'is_window=%r, is_set_returning=%r, is_extension=%r, arg_defaults=%r)'
-            ) % (self.__class__.__name__,) + self._signature()
+            ) % ((self.__class__.__name__,) + self._signature())
         )
 
     def has_variadic(self):
