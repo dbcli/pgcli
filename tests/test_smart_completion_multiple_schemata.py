@@ -579,7 +579,7 @@ def test_all_schema_objects(completer):
     result = result_set(completer, text)
     assert result >= set(
         [table(x) for x in ('orders', '"select"', 'custom.shipments')]
-        + [function(x+'()') for x in ('func2',)]
+        + [function(x + '()') for x in ('func2',)]
     )
 
 
@@ -589,7 +589,7 @@ def test_all_schema_objects_with_casing(completer):
     result = result_set(completer, text)
     assert result >= set(
         [table(x) for x in ('Orders', '"select"', 'CUSTOM.shipments')]
-        + [function(x+'()') for x in ('func2',)]
+        + [function(x + '()') for x in ('func2',)]
     )
 
 
