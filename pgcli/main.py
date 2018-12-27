@@ -726,7 +726,8 @@ class PGCli(object):
                 tempfile_suffix='.sql',
                 multiline=pg_is_multiline(self),
                 history=history,
-                completer=ThreadedCompleter(DynamicCompleter(lambda: self.completer)),
+                completer=ThreadedCompleter(
+                    DynamicCompleter(lambda: self.completer)),
                 complete_while_typing=True,
                 style=style_factory(self.syntax_style, self.cli_style),
                 include_default_pygments_style=False,
