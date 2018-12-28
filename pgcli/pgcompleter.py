@@ -642,12 +642,16 @@ class PGCompleter(Completer):
             # Only suggest functions allowed in FROM clause
 
             def filt(f):
-                return not f.is_aggregate and not f.is_window and (f.is_public or f.schema_name == suggestion.schema)
+                return (not f.is_aggregate and
+                        not f.is_window and
+                        not f.is_extension and
+                        (f.is_public or f.schema_name == suggestion.schema))
         else:
             alias = False
 
             def filt(f):
-                return f.is_public or f.schema_name == suggestion.schema
+                return (not f.is_extension and
+                        (f.is_public or f.schema_name == suggestion.schema))
 
         arg_mode = {
             'signature': 'signature',
