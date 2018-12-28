@@ -30,7 +30,7 @@ try:
     import setproctitle
 except ImportError:
     setproctitle = None
-from prompt_toolkit.completion import DynamicCompleter
+from prompt_toolkit.completion import DynamicCompleter, ThreadedCompleter
 from prompt_toolkit.enums import DEFAULT_BUFFER, EditingMode
 from prompt_toolkit.shortcuts import PromptSession, CompleteStyle
 from prompt_toolkit.document import Document
@@ -726,7 +726,8 @@ class PGCli(object):
                 tempfile_suffix='.sql',
                 multiline=pg_is_multiline(self),
                 history=history,
-                completer=DynamicCompleter(lambda: self.completer),
+                completer=ThreadedCompleter(
+                    DynamicCompleter(lambda: self.completer)),
                 complete_while_typing=True,
                 style=style_factory(self.syntax_style, self.cli_style),
                 include_default_pygments_style=False,
