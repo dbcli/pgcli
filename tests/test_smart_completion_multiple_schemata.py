@@ -597,16 +597,6 @@ def test_all_schema_objects_with_casing(completer):
 def test_all_schema_objects_with_aliases(completer):
     text = ('SELECT * FROM ')
     result = result_set(completer, text)
-    expected = set(
-        [table(x) for x in ('orders o', '"select" s', 'custom.shipments s')]
-        + [function(x) for x in ('func2() f',)]
-    )
-    if not (result >= expected):
-        from pprint import pprint
-        pprint(result)
-        print('---')
-        pprint(expected)
-
     assert result >= set(
         [table(x) for x in ('orders o', '"select" s', 'custom.shipments s')]
         + [function(x) for x in ('func2() f',)]
