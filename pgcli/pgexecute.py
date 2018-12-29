@@ -198,6 +198,7 @@ class PGExecute(object):
         self.connect(database, user, password, host, port, dsn, **kwargs)
 
     def copy(self):
+        """Returns a clone of the current executor."""
         return self.__class__(**self._conn_params)
 
     def get_server_version(self):
