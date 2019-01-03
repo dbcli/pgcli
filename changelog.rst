@@ -11,6 +11,7 @@ Features:
 
 * Allows passing the ``-u`` flag to specify a username. (Thanks: `Ignacio Campabadal`_)
 * Fix for lag in v2 (#979). (Thanks: `Irina Truong`_)
+* Support for multihost connection string that is convenient if you have postgres cluster. (Thanks: `Mikhail Elovskikh`_)
 
 Internal:
 ---------
@@ -922,3 +923,4 @@ Improvements:
 .. _`Max Rothman`: https://github.com/maxrothman
 .. _`Daniel Egger`: https://github.com/DanEEStar
 .. _`Ignacio Campabadal`: https://github.com/igncampa
+.. _`Mikhail Elovskikh`: https://github.com/wronglink

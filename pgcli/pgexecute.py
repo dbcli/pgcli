@@ -185,16 +185,21 @@ class PGExecute(object):
 
     version_query = "SELECT version();"
 
-    def __init__(self, database, user, password, host, port, dsn, **kwargs):
-        self.dbname = database
-        self.user = user
-        self.password = password
-        self.host = host
-        self.port = port
-        self.dsn = dsn
-        self.extra_args = {k: unicode2utf8(v) for k, v in kwargs.items()}
+    def __init__(self, database=None, user=None, password=None, host=None,
+                 port=None, dsn=None, **kwargs):
+        self._conn_params = {}
+        self.conn = None
+        self.dbname = None
+        self.user = None
+        self.password = None
+        self.host = None
+        self.port = None
         self.server_version = None
-        self.connect()
+        self.connect(database, user, password, host, port, dsn, **kwargs)
+
+    def copy(self):
+        """Returns a clone of the current executor."""
+        return self.__class__(**self._conn_params)
 
     def get_server_version(self):
         if self.server_version:
@@ -216,51 +221,48 @@ class PGExecute(object):
     def connect(self, database=None, user=None, password=None, host=None,
                 port=None, dsn=None, **kwargs):
 
-        db = (database or self.dbname)
-        user = (user or self.user)
-        password = (password or self.password)
-        host = (host or self.host)
-        port = (port or self.port)
-        dsn = (dsn or self.dsn)
-        kwargs = (kwargs or self.extra_args)
-        pid = -1
-        if dsn:
-            if password:
-                dsn = "{0} password={1}".format(dsn, password)
-            conn = psycopg2.connect(dsn=unicode2utf8(dsn))
-            cursor = conn.cursor()
-        else:
-            conn = psycopg2.connect(
-                database=unicode2utf8(db),
-                user=unicode2utf8(user),
-                password=unicode2utf8(password),
-                host=unicode2utf8(host),
-                port=unicode2utf8(port),
-                **kwargs)
+        conn_params = self._conn_params.copy()
 
-            cursor = conn.cursor()
+        new_params = {
+            'database': database,
+            'user': user,
+            'password': password,
+            'host': host,
+            'port': port,
+            'dsn': dsn,
+        }
+        new_params.update(kwargs)
+        conn_params.update({
+            k: unicode2utf8(v) for k, v in new_params.items() if v is not None
+        })
 
+        if 'password' in conn_params and 'dsn' in conn_params:
+            conn_params['dsn'] = "{0} password={1}".format(
+                conn_params['dsn'], conn_params.pop('password')
+            )
+
+        conn = psycopg2.connect(**conn_params)
+        cursor = conn.cursor()
         conn.set_client_encoding('utf8')
-        if hasattr(self, 'conn'):
+
+        self._conn_params = conn_params
+        if self.conn:
             self.conn.close()
         self.conn = conn
         self.conn.autocommit = True
 
-        if dsn:
-            # When we connect using a DSN, we don't really know what db,
-            # user, etc. we connected to. Let's read it.
-            # Note: moved this after setting autocommit because of #664.
-            dsn_parameters = conn.get_dsn_parameters()
-            db = dsn_parameters['dbname']
-            user = dsn_parameters['user']
-            host = dsn_parameters['host']
-            port = dsn_parameters['port']
+        # When we connect using a DSN, we don't really know what db,
+        # user, etc. we connected to. Let's read it.
+        # Note: moved this after setting autocommit because of #664.
+        # TODO: use actual connection info from psycopg2.extensions.Connection.info as psycopg>2.8 is available and required dependency  # noqa
+        dsn_parameters = conn.get_dsn_parameters()
 
-        self.dbname = db
-        self.user = user
+        self.dbname = dsn_parameters['dbname']
+        self.user = dsn_parameters['user']
         self.password = password
-        self.host = host
-        self.port = port
+        self.host = dsn_parameters['host']
+        self.port = dsn_parameters['port']
+        self.extra_args = kwargs
 
         if not self.host:
             self.host = self.get_socket_directory()
@@ -275,6 +277,15 @@ class PGExecute(object):
         register_date_typecasters(conn)
         register_json_typecasters(self.conn, self._json_typecaster)
         register_hstore_typecaster(self.conn)
+
+    @property
+    def short_host(self):
+        if ',' in self.host:
+            host, _, _ = self.host.partition(',')
+        else:
+            host = self.host
+        short_host, _, _ = host.partition('.')
+        return short_host
 
     def _select_one(self, cur, sql):
         """

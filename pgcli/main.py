@@ -386,25 +386,13 @@ class PGCli(object):
         self.connect(dsn=dsn)
 
     def connect_uri(self, uri):
-        uri = urlparse(uri)
-        database = uri.path[1:]  # ignore the leading fwd slash
-
-        def fixup_possible_percent_encoding(s):
-            return unquote(str(s)) if s else s
-
-        arguments = dict(database=fixup_possible_percent_encoding(database),
-                         host=fixup_possible_percent_encoding(uri.hostname),
-                         user=fixup_possible_percent_encoding(uri.username),
-                         port=fixup_possible_percent_encoding(uri.port),
-                         passwd=fixup_possible_percent_encoding(uri.password))
-        # Deal with extra params e.g. ?sslmode=verify-ca&sslrootcert=/myrootcert
-        if uri.query:
-            arguments = dict(
-                {k: v for k, (v,) in parse_qs(uri.query).items()},
-                **arguments)
-
-        # unquote str(each URI part (they may be percent encoded)
-        self.connect(**arguments)
+        kwargs = psycopg2.extensions.parse_dsn(uri)
+        remap = {
+            'dbname': 'database',
+            'password': 'passwd',
+        }
+        kwargs = {remap.get(k, k): v for k, v in kwargs.items()}
+        self.connect(**kwargs)
 
     def connect(self, database='', host='', user='', port='', passwd='',
                 dsn='', **kwargs):
@@ -900,10 +888,8 @@ class PGCli(object):
         string = string.replace('\\dsn_alias', self.dsn_alias or '')
         string = string.replace('\\t', self.now.strftime('%x %X'))
         string = string.replace('\\u', self.pgexecute.user or '(none)')
-        host = self.pgexecute.host or '(none)'
-        string = string.replace('\\H', host)
-        short_host, _, _ = host.partition('.')
-        string = string.replace('\\h', short_host)
+        string = string.replace('\\H', self.pgexecute.host or '(none)')
+        string = string.replace('\\h', self.pgexecute.short_host or '(none)')
         string = string.replace('\\d', self.pgexecute.dbname or '(none)')
         string = string.replace('\\p', str(
             self.pgexecute.port) if self.pgexecute.port is not None else '5432')
