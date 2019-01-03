@@ -13,11 +13,11 @@ from pgcli.main import PGCli
 def function_meta_data(
         func_name, schema_name='public', arg_names=None, arg_types=None,
         arg_modes=None, return_type=None, is_aggregate=False, is_window=False,
-        is_set_returning=False, arg_defaults=None
+        is_set_returning=False, is_extension=False, arg_defaults=None
 ):
     return FunctionMetadata(
         schema_name, func_name, arg_names, arg_types, arg_modes, return_type,
-        is_aggregate, is_window, is_set_returning, arg_defaults
+        is_aggregate, is_window, is_set_returning, is_extension, arg_defaults
     )
 
 @dbtest

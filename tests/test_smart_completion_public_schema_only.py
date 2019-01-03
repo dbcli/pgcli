@@ -17,12 +17,12 @@ metadata = {
         'functions': ['function'],
     },
     'functions': [
-        ['custom_fun', [], [], [], '', False, False, False],
-        ['_custom_fun', [], [], [], '', False, False, False],
-        ['custom_func1', [], [], [], '', False, False, False],
-        ['custom_func2', [], [], [], '', False, False, False],
+        ['custom_fun', [], [], [], '', False, False, False, False],
+        ['_custom_fun', [], [], [], '', False, False, False, False],
+        ['custom_func1', [], [], [], '', False, False, False, False],
+        ['custom_func2', [], [], [], '', False, False, False, False],
         ['set_returning_func', ['x', 'y'], ['integer', 'integer'],
-            ['b', 'b'], '', False, False, True]],
+            ['b', 'b'], '', False, False, True, False]],
     'datatypes': ['custom_type1', 'custom_type2'],
     'foreignkeys': [
         ('public', 'users', 'id', 'public', 'users', 'parentid'),

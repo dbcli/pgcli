@@ -5,6 +5,7 @@ Features:
 ---------
 
 * Allows passing the ``-u`` flag to specify a username. (Thanks: `Ignacio Campabadal`_)
+* Fix for lag in v2 (#979). (Thanks: `Irina Truong`_)
 
 Internal:
 ---------
