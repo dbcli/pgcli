@@ -1,7 +1,9 @@
 Upcoming:
 =========
 
-TODO
+Bug fixes:
+----------
+* Avoid error message on the server side if hstore extension is not installed in the current database (#991). (Thanks: `Marcin Cieślak`_)
 
 2.0.2:
 ======
@@ -924,3 +926,4 @@ Improvements:
 .. _`Daniel Egger`: https://github.com/DanEEStar
 .. _`Ignacio Campabadal`: https://github.com/igncampa
 .. _`Mikhail Elovskikh`: https://github.com/wronglink
+.. _`Marcin Cieślak`: https://github.com/saper
