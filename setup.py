@@ -38,7 +38,7 @@ setup(
     version=version,
     license='BSD',
     url='http://pgcli.com',
-    packages=find_packages(),
+    packages=find_packages(exclude="tests"),
     package_data={'pgcli': ['pgclirc',
                             'packages/pgliterals/pgliterals.json']},
     description=description,

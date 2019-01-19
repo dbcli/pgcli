@@ -17,6 +17,7 @@ Internal:
 ---------
 
 * Added tests for special command completion. (Thanks: `Amjith Ramanujam`_)
+* Exclude tests as package from setup.py. (Thanks: `Dick Marinus`_)
 
 2.0.1:
 ======
