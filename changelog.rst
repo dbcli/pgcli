@@ -4,6 +4,7 @@ Upcoming:
 Bug fixes:
 ----------
 * Avoid error message on the server side if hstore extension is not installed in the current database (#991). (Thanks: `Marcin Cieślak`_)
+* All pexpect submodules have been moved into the pexpect package as of version 3.0. Use pexpect.TIMEOUT (Thanks: `Marcin Cieślak`_)
 
 2.0.2:
 ======
