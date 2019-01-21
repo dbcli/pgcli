@@ -22,6 +22,7 @@ def before_all(context):
     os.environ['COLUMNS'] = "100"
     os.environ['PAGER'] = 'cat'
     os.environ['EDITOR'] = 'ex'
+    os.environ['VISUAL'] = 'ex'
 
     context.package_root = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
