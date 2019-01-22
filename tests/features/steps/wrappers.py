@@ -16,7 +16,7 @@ def expect_exact(context, expected, timeout):
     timedout = False
     try:
         context.cli.expect_exact(expected, timeout=timeout)
-    except pexpect.exceptions.TIMEOUT:
+    except pexpect.TIMEOUT:
         timedout = True
     if timedout:
         # Strip color codes out of the output.
