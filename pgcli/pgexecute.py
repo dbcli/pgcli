@@ -113,7 +113,8 @@ def register_hstore_typecaster(conn):
     """
     with conn.cursor() as cur:
         try:
-            cur.execute("SELECT 'hstore'::regtype::oid")
+            cur.execute(
+                "select t.oid FROM pg_type t WHERE t.typname = 'hstore' and t.typisdefined")
             oid = cur.fetchone()[0]
             ext.register_type(ext.new_type((oid,), "HSTORE", ext.UNICODE))
         except Exception:
