@@ -56,6 +56,8 @@ def run_cli(context, run_args=None):
     cmd_parts = [cli_cmd] + run_args
     cmd = ' '.join(cmd_parts)
     context.cli = pexpect.spawnu(cmd, cwd=context.package_root)
+    context.logfile = StringIO()
+    context.cli.logfile = context.logfile
     context.exit_sent = False
     context.currentdb = context.conf['dbname']
     context.cli.sendline('\pset pager always')
