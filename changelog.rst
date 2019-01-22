@@ -5,6 +5,12 @@ Bug fixes:
 ----------
 * Avoid error message on the server side if hstore extension is not installed in the current database (#991). (Thanks: `Marcin Cieślak`_)
 
+Internal:
+---------
+
+* (Fixup) Clean up and add behave logging. (Thanks: `Marcin Cieślak`_, `Dick Marinus`_)
+* Override VISUAL environment variable for behave tests. (Thanks: `Marcin Cieślak`_)
+
 2.0.2:
 ======
 
