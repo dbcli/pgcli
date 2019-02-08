@@ -79,3 +79,7 @@ def run(executor, sql, join=False, expanded=False, pgspecial=None,
         formatted = '\n'.join(formatted)
 
     return formatted
+
+
+def completions_to_set(completions):
+    return set((completion.display_text, completion.display_meta_text) for completion in completions)

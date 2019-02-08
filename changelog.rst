@@ -12,6 +12,7 @@ Internal:
 * (Fixup) Clean up and add behave logging. (Thanks: `Marcin Cieślak`_, `Dick Marinus`_)
 * Override VISUAL environment variable for behave tests. (Thanks: `Marcin Cieślak`_)
 * Remove build dir before running sdist, remove stray files from wheel distribution. (Thanks: `Dick Marinus`_)
+* Fix unit tests, unhashable formatted text since new python prompttoolkit  version. (Thanks: `Dick Marinus`_)
 
 2.0.2:
 ======
