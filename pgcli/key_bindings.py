@@ -41,6 +41,16 @@ def pgcli_bindings(pgcli):
         else:
             b.start_completion(select_first=True)
 
+    @kb.add('escape')
+    def _(event):
+        """Force closing of autocompletion."""
+        _logger.debug('Detected <Esc> key.')
+
+        event.current_buffer.complete_state = None
+        event.app.current_buffer.complete_state = None
+
+
+
     @kb.add('c-space')
     def _(event):
         """
@@ -71,7 +81,6 @@ def pgcli_bindings(pgcli):
         _logger.debug('Detected enter key.')
 
         event.current_buffer.complete_state = None
-        b = event.app.current_buffer
-        b.complete_state = None
+        event.app.current_buffer.complete_state = None
 
     return kb
