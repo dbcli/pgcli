@@ -1,6 +1,11 @@
 Upcoming:
 =========
 
+Features:
+---------
+
+* keybindings for closing the autocomplete list
+
 Bug fixes:
 ----------
 * Avoid error message on the server side if hstore extension is not installed in the current database (#991). (Thanks: `Marcin Cieślak`_)
