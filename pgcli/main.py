@@ -139,7 +139,7 @@ class PGCli(object):
     def __init__(self, force_passwd_prompt=False, never_passwd_prompt=False,
                  pgexecute=None, pgclirc_file=None, row_limit=None,
                  single_connection=False, less_chatty=None, prompt=None, prompt_dsn=None,
-                 auto_vertical_output=False, warn=None):
+                 auto_vertical_output=False, warn=None, auto_reconnect=False):
 
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
@@ -187,6 +187,7 @@ class PGCli(object):
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
         self.keyring_enabled = c["main"].as_bool("keyring")
+        self.auto_reconnect = c["main"].as_bool("auto_reconnect")
 
         self.pgspecial.pset_pager(self.config['main'].as_bool(
             'enable_pager') and "on" or "off")
@@ -812,15 +813,26 @@ class PGCli(object):
 
     def _handle_server_closed_connection(self):
         """Used during CLI execution"""
-        reconnect = click.prompt(
-            'Connection reset. Reconnect (Y/n)',
-            show_default=False, type=bool, default=True)
-        if reconnect:
+        if self.auto_reconnect:
             try:
                 self.pgexecute.connect()
-                click.secho('Reconnected!\nTry the command again.', fg='green')
+                click.secho('Auto Reconnected!', fg='green')
+                text = self.get_last_query()
+                self.execute_command(text)
             except OperationalError as e:
+                click.secho('Auto Reconnect Failed', fg='red')
                 click.secho(str(e), err=True, fg='red')
+        else:
+            reconnect = click.prompt(
+                'Connection reset. Reconnect (Y/n)',
+                show_default=False, type=bool, default=True)
+            if reconnect:
+                try:
+                    self.pgexecute.connect()
+                    click.secho(
+                        'Reconnected!\nTry the command again.', fg='green')
+                except OperationalError as e:
+                    click.secho(str(e), err=True, fg='red')
 
     def refresh_completions(self, history=None, persist_priorities='all'):
         """ Refresh outdated completions
