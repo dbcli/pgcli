@@ -143,10 +143,6 @@ enable_pager = True
 # Use keyring to automatically save and load password in a secure manner 
 keyring = True
 
-# Automatically reconnect to the database and rerun the last command if the 
-# server closes connection
-auto_reconnect = False
-
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
 completion-menu.completion.current = 'bg:#ffffff #000000'
