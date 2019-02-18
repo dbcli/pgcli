@@ -555,7 +555,7 @@ class PGCli(object):
         except OperationalError as e:
             logger.error("sql: %r, error: %r", text, e)
             logger.error("traceback: %r", traceback.format_exc())
-            self._handle_server_closed_connection()
+            self._handle_server_closed_connection(text)
         except PgCliQuitError as e:
             raise
         except Exception as e:
@@ -810,15 +810,15 @@ class PGCli(object):
 
         return output, meta_query
 
-    def _handle_server_closed_connection(self):
+    def _handle_server_closed_connection(self, text):
         """Used during CLI execution"""
         try:
+            click.secho('Reconnecting...', fg='green')
             self.pgexecute.connect()
-            click.secho('Auto Reconnected!', fg='green')
-            text = self.get_last_query()
+            click.secho('Reconnected!', fg='green')
             self.execute_command(text)
         except OperationalError as e:
-            click.secho('Auto Reconnect Failed', fg='red')
+            click.secho('Reconnect Failed', fg='red')
             click.secho(str(e), err=True, fg='red')
 
     def refresh_completions(self, history=None, persist_priorities='all'):
