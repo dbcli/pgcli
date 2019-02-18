@@ -811,7 +811,7 @@ class PGCli(object):
         return output, meta_query
 
     def _handle_server_closed_connection(self, text):
-        """Used during CLI execution"""
+        """Used during CLI execution."""
         try:
             click.secho('Reconnecting...', fg='green')
             self.pgexecute.connect()
