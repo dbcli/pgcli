@@ -5,6 +5,7 @@ Features:
 ---------
 
 * keybindings for closing the autocomplete list
+* reconnect automatically when server closes connection
 
 Bug fixes:
 ----------
