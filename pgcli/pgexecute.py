@@ -202,22 +202,18 @@ class PGExecute(object):
         """Returns a clone of the current executor."""
         return self.__class__(**self._conn_params)
 
-    def get_server_version(self):
-        if self.server_version:
-            return self.server_version
-        with self.conn.cursor() as cur:
-            _logger.debug('Version Query. sql: %r', self.version_query)
-            cur.execute(self.version_query)
-            result = cur.fetchone()
-            if result:
-                # full version string looks like this:
-                # PostgreSQL 10.3 on x86_64-apple-darwin17.3.0, compiled by Apple LLVM version 9.0.0 (clang-900.0.39.2), 64-bit  # noqa
-                # let's only retrieve version number
-                version_parts = result[0].split()
-                self.server_version = version_parts[1]
-            else:
-                self.server_version = ''
-            return self.server_version
+    def get_server_version(self, cursor):
+        _logger.debug('Version Query. sql: %r', self.version_query)
+        cursor.execute(self.version_query)
+        result = cursor.fetchone()
+        server_version = ''
+        if result:
+            # full version string looks like this:
+            # PostgreSQL 10.3 on x86_64-apple-darwin17.3.0, compiled by Apple LLVM version 9.0.0 (clang-900.0.39.2), 64-bit  # noqa
+            # let's only retrieve version number
+            version_parts = result[0].split()
+            server_version = version_parts[1]
+        return server_version
 
     def connect(self, database=None, user=None, password=None, host=None,
                 port=None, dsn=None, **kwargs):
@@ -274,6 +270,8 @@ class PGExecute(object):
         pid = self._select_one(cursor, 'select pg_backend_pid()')[0]
         self.pid = pid
         self.superuser = db_parameters.get('is_superuser') == '1'
+
+        self.server_version = self.get_server_version(cursor)
 
         register_date_typecasters(conn)
         register_json_typecasters(self.conn, self._json_typecaster)
