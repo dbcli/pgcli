@@ -1,13 +1,16 @@
 # coding=UTF-8
 from __future__ import print_function
 
-import pytest
-import psycopg2
-from mock import patch
-from pgcli.packages.parseutils.meta import FunctionMetadata
 from textwrap import dedent
+
+import psycopg2
+import pytest
+from mock import patch, MagicMock
+from pgspecial.main import PGSpecial, NO_QUERY
 from utils import run, dbtest, requires_json, requires_jsonb
+
 from pgcli.main import PGCli
+from pgcli.packages.parseutils.meta import FunctionMetadata
 
 
 def function_meta_data(
@@ -425,3 +428,26 @@ def test_short_host(executor):
         assert executor.short_host == 'localhost'
     with patch.object(executor, 'host', 'localhost1.example.org,localhost2.example.org'):
         assert executor.short_host == 'localhost1'
+
+
+class BrokenConnection(object):
+    """Mock a connection that failed."""
+
+    def cursor(self):
+        raise psycopg2.InterfaceError("I'm broken!")
+
+
+@dbtest
+def test_exit_without_active_connection(executor):
+    quit_handler = MagicMock()
+    pgspecial = PGSpecial()
+    pgspecial.register(quit_handler, '\\q', '\\q', 'Quit pgcli.', arg_type=NO_QUERY, case_sensitive=True, aliases=(':q',))
+
+    with patch.object(executor, "conn", BrokenConnection()):
+        # we should be able to quit the app, even without active connection
+        run(executor, "\\q", pgspecial=pgspecial)
+        quit_handler.assert_called_once()
+
+        # an exception should be raised when running a query without active connection
+        with pytest.raises(psycopg2.InterfaceError):
+            run(executor, "select 1", pgspecial=pgspecial)
