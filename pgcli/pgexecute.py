@@ -54,9 +54,6 @@ def _wait_select(conn):
             errno = e.args[0]
             if errno != 4:
                 raise
-        except OSError, e:
-            if e.errno != errno.EINTR:
-                raise
 
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
