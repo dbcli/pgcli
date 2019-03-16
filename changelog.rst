@@ -42,6 +42,8 @@ Internal:
 Bug fixes:
 ----------
 
+* Tab press on an empty line increases the indentation instead of triggering
+  the auto-complete pop-up. (Thanks: `Artur Balabanov`_)
 * Fix for loading/saving named queries from provided config file (#938). (Thanks: `Daniel Egger`_)
 * Set default port in `connect_uri` when none is given. (Thanks: `Daniel Egger`_)
 * Fix for error listing databases (#951). (Thanks: `Irina Truong`_)
