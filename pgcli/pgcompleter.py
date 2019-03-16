@@ -50,6 +50,7 @@ arg_default_type_strip_regex = re.compile(r'::[\w\.]+(\[\])?$')
 
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() +  '"'
 
+
 def generate_alias(tbl):
     """ Generate a table alias, consisting of all upper-case letters in
     the table name, or, if there are no upper-case letters, the first letter +
@@ -636,22 +637,33 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, conds, meta='join')
 
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
+
         if suggestion.usage == 'from':
             # Only suggest functions allowed in FROM clause
-            def filt(f): return not f.is_aggregate and not f.is_window
+
+            def filt(f):
+                return (not f.is_aggregate and
+                        not f.is_window and
+                        not f.is_extension and
+                        (f.is_public or f.schema_name == suggestion.schema))
         else:
             alias = False
 
-            def filt(f): return True
+            def filt(f):
+                return (not f.is_extension and
+                        (f.is_public or f.schema_name == suggestion.schema))
+
         arg_mode = {
             'signature': 'signature',
             'special': None,
         }.get(suggestion.usage, 'call')
+
         # Function overloading means we way have multiple functions of the same
         # name at this point, so keep unique names only
+        all_functions = self.populate_functions(suggestion.schema, filt)
         funcs = set(
             self._make_cand(f, alias, suggestion, arg_mode)
-            for f in self.populate_functions(suggestion.schema, filt)
+            for f in all_functions
         )
 
         matches = self.find_matches(word_before_cursor, funcs, meta='function')

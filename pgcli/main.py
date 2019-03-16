@@ -30,7 +30,7 @@ try:
     import setproctitle
 except ImportError:
     setproctitle = None
-from prompt_toolkit.completion import DynamicCompleter
+from prompt_toolkit.completion import DynamicCompleter, ThreadedCompleter
 from prompt_toolkit.enums import DEFAULT_BUFFER, EditingMode
 from prompt_toolkit.shortcuts import PromptSession, CompleteStyle
 from prompt_toolkit.document import Document
@@ -87,14 +87,15 @@ MetaQuery = namedtuple(
     [
         'query',            # The entire text of the command
         'successful',       # True If all subqueries were successful
-        'total_time',       # Time elapsed executing the query
+        'total_time',       # Time elapsed executing the query and formatting results
+        'execution_time',   # Time elapsed executing the query
         'meta_changed',     # True if any subquery executed create/alter/drop
         'db_changed',       # True if any subquery changed the database
         'path_changed',     # True if any subquery changed the search path
         'mutated',          # True if any subquery executed insert/update/delete
         'is_special',       # True if the query is a special command
     ])
-MetaQuery.__new__.__defaults__ = ('', False, 0, False, False, False, False)
+MetaQuery.__new__.__defaults__ = ('', False, 0, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     'OutputSettings',
@@ -385,25 +386,13 @@ class PGCli(object):
         self.connect(dsn=dsn)
 
     def connect_uri(self, uri):
-        uri = urlparse(uri)
-        database = uri.path[1:]  # ignore the leading fwd slash
-
-        def fixup_possible_percent_encoding(s):
-            return unquote(str(s)) if s else s
-
-        arguments = dict(database=fixup_possible_percent_encoding(database),
-                         host=fixup_possible_percent_encoding(uri.hostname),
-                         user=fixup_possible_percent_encoding(uri.username),
-                         port=fixup_possible_percent_encoding(uri.port),
-                         passwd=fixup_possible_percent_encoding(uri.password))
-        # Deal with extra params e.g. ?sslmode=verify-ca&sslrootcert=/myrootcert
-        if uri.query:
-            arguments = dict(
-                {k: v for k, (v,) in parse_qs(uri.query).items()},
-                **arguments)
-
-        # unquote str(each URI part (they may be percent encoded)
-        self.connect(**arguments)
+        kwargs = psycopg2.extensions.parse_dsn(uri)
+        remap = {
+            'dbname': 'database',
+            'password': 'passwd',
+        }
+        kwargs = {remap.get(k, k): v for k, v in kwargs.items()}
+        self.connect(**kwargs)
 
     def connect(self, database='', host='', user='', port='', passwd='',
                 dsn='', **kwargs):
@@ -566,8 +555,8 @@ class PGCli(object):
         except OperationalError as e:
             logger.error("sql: %r, error: %r", text, e)
             logger.error("traceback: %r", traceback.format_exc())
-            self._handle_server_closed_connection()
-        except PgCliQuitError as e:
+            self._handle_server_closed_connection(text)
+        except (PgCliQuitError, EOFError) as e:
             raise
         except Exception as e:
             logger.error("sql: %r, error: %r", text, e)
@@ -591,8 +580,11 @@ class PGCli(object):
             if self.pgspecial.timing_enabled:
                 # Only add humanized time display if > 1 second
                 if query.total_time > 1:
-                    print('Time: %0.03fs (%s)' % (query.total_time,
-                          humanize.time.naturaldelta(query.total_time)))
+                    print('Time: %0.03fs (%s), executed in: %0.03fs (%s)' % (query.total_time,
+                                                                             humanize.time.naturaldelta(
+                                                                                 query.total_time),
+                                                                             query.execution_time,
+                                                                             humanize.time.naturaldelta(query.execution_time)))
                 else:
                     print('Time: %0.03fs' % query.total_time)
 
@@ -626,7 +618,7 @@ class PGCli(object):
         self.prompt_app = self._build_cli(history)
 
         if not self.less_chatty:
-            print('Server: PostgreSQL', self.pgexecute.get_server_version())
+            print('Server: PostgreSQL', self.pgexecute.server_version)
             print('Version:', __version__)
             print('Chat: https://gitter.im/dbcli/pgcli')
             print('Mail: https://groups.google.com/forum/#!forum/pgcli')
@@ -722,13 +714,15 @@ class PGCli(object):
                 tempfile_suffix='.sql',
                 multiline=pg_is_multiline(self),
                 history=history,
-                completer=DynamicCompleter(lambda: self.completer),
+                completer=ThreadedCompleter(
+                    DynamicCompleter(lambda: self.completer)),
                 complete_while_typing=True,
                 style=style_factory(self.syntax_style, self.cli_style),
                 include_default_pygments_style=False,
                 key_bindings=key_bindings,
                 enable_open_in_editor=True,
                 enable_system_prompt=True,
+                enable_suspend=True,
                 editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS,
                 search_ignore_case=True)
 
@@ -756,6 +750,7 @@ class PGCli(object):
         path_changed = False
         output = []
         total = 0
+        execution = 0
 
         # Run the query.
         start = time()
@@ -794,6 +789,7 @@ class PGCli(object):
                 ),
                 style_output=self.style_output
             )
+            execution = time() - start
             formatted = format_output(title, cur, headers, status, settings)
 
             output.extend(formatted)
@@ -809,22 +805,21 @@ class PGCli(object):
             else:
                 all_success = False
 
-        meta_query = MetaQuery(text, all_success, total, meta_changed,
+        meta_query = MetaQuery(text, all_success, total, execution, meta_changed,
                                db_changed, path_changed, mutated, is_special)
 
         return output, meta_query
 
-    def _handle_server_closed_connection(self):
-        """Used during CLI execution"""
-        reconnect = click.prompt(
-            'Connection reset. Reconnect (Y/n)',
-            show_default=False, type=bool, default=True)
-        if reconnect:
-            try:
-                self.pgexecute.connect()
-                click.secho('Reconnected!\nTry the command again.', fg='green')
-            except OperationalError as e:
-                click.secho(str(e), err=True, fg='red')
+    def _handle_server_closed_connection(self, text):
+        """Used during CLI execution."""
+        try:
+            click.secho('Reconnecting...', fg='green')
+            self.pgexecute.connect()
+            click.secho('Reconnected!', fg='green')
+            self.execute_command(text)
+        except OperationalError as e:
+            click.secho('Reconnect Failed', fg='red')
+            click.secho(str(e), err=True, fg='red')
 
     def refresh_completions(self, history=None, persist_priorities='all'):
         """ Refresh outdated completions
@@ -892,10 +887,8 @@ class PGCli(object):
         string = string.replace('\\dsn_alias', self.dsn_alias or '')
         string = string.replace('\\t', self.now.strftime('%x %X'))
         string = string.replace('\\u', self.pgexecute.user or '(none)')
-        host = self.pgexecute.host or '(none)'
-        string = string.replace('\\H', host)
-        short_host, _, _ = host.partition('.')
-        string = string.replace('\\h', short_host)
+        string = string.replace('\\H', self.pgexecute.host or '(none)')
+        string = string.replace('\\h', self.pgexecute.short_host or '(none)')
         string = string.replace('\\d', self.pgexecute.dbname or '(none)')
         string = string.replace('\\p', str(
             self.pgexecute.port) if self.pgexecute.port is not None else '5432')
@@ -941,7 +934,7 @@ class PGCli(object):
 @click.option('-p', '--port', default=5432, help='Port number at which the '
         'postgres instance is listening.', envvar='PGPORT', type=click.INT)
 @click.option('-U', '--username', 'username_opt', help='Username to connect to the postgres database.')
-@click.option('--user', 'username_opt', help='Username to connect to the postgres database.')
+@click.option('-u', '--user', 'username_opt', help='Username to connect to the postgres database.')
 @click.option('-W', '--password', 'prompt_passwd', is_flag=True, default=False,
               help='Force password prompt.')
 @click.option('-w', '--no-password', 'never_prompt', is_flag=True,

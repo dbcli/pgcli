@@ -7,11 +7,16 @@ from os import getenv
 
 POSTGRES_USER = getenv('PGUSER', 'postgres')
 POSTGRES_HOST = getenv('PGHOST', 'localhost')
+POSTGRES_PORT = getenv('PGPORT', 5432)
 POSTGRES_PASSWORD = getenv('PGPASSWORD', '')
 
 
 def db_connection(dbname=None):
-    conn = psycopg2.connect(user=POSTGRES_USER, host=POSTGRES_HOST, database=dbname)
+    conn = psycopg2.connect(user=POSTGRES_USER,
+                            host=POSTGRES_HOST,
+                            password=POSTGRES_PASSWORD,
+                            port=POSTGRES_PORT,
+                            database=dbname)
     conn.autocommit = True
     return conn
 
@@ -74,3 +79,7 @@ def run(executor, sql, join=False, expanded=False, pgspecial=None,
         formatted = '\n'.join(formatted)
 
     return formatted
+
+
+def completions_to_set(completions):
+    return set((completion.display_text, completion.display_meta_text) for completion in completions)

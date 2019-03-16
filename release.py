@@ -67,7 +67,7 @@ def create_git_tag(tag_name):
 
 
 def create_distribution_files():
-    run_step('python', 'setup.py', 'sdist', 'bdist_wheel')
+    run_step('python', 'setup.py', 'clean', '--all', 'sdist', 'bdist_wheel')
 
 
 def upload_distribution_files():

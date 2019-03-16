@@ -53,12 +53,8 @@ class CompletionRefresher(object):
         if settings.get('single_connection'):
             executor = pgexecute
         else:
-            # Create a new pgexecute method to popoulate the completions.
-            e = pgexecute
-            executor = PGExecute(
-                e.dbname, e.user, e.password, e.host, e.port, e.dsn,
-                **e.extra_args)
-
+            # Create a new pgexecute method to populate the completions.
+            executor = pgexecute.copy()
         # If callbacks is a single function then push it into a list.
         if callable(callbacks):
             callbacks = [callbacks]

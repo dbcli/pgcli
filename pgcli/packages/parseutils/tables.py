@@ -36,11 +36,11 @@ def extract_from_part(parsed, stop_at_punctuation=True):
                 for x in extract_from_part(item, stop_at_punctuation):
                     yield x
             elif stop_at_punctuation and item.ttype is Punctuation:
-                raise StopIteration
+                return
             # An incomplete nested select won't be recognized correctly as a
             # sub-select. eg: 'SELECT * FROM (SELECT id FROM user'. This causes
             # the second FROM to trigger this elif condition resulting in a
-            # StopIteration. So we need to ignore the keyword if the keyword
+            # `return`. So we need to ignore the keyword if the keyword
             # FROM.
             # Also 'SELECT * FROM abc JOIN def' will trigger this elif
             # condition. So we need to ignore the keyword JOIN and its variants
@@ -93,30 +93,32 @@ def extract_table_identifiers(token_stream, allow_functions=True):
             name = name.lower()
         return schema_name, name, alias
 
+    try:
+        for item in token_stream:
+            if isinstance(item, IdentifierList):
+                for identifier in item.get_identifiers():
+                    # Sometimes Keywords (such as FROM ) are classified as
+                    # identifiers which don't have the get_real_name() method.
+                    try:
+                        schema_name = identifier.get_parent_name()
+                        real_name = identifier.get_real_name()
+                        is_function = (allow_functions and
+                                       _identifier_is_function(identifier))
+                    except AttributeError:
+                        continue
+                    if real_name:
+                        yield TableReference(schema_name, real_name,
+                                             identifier.get_alias(), is_function)
+            elif isinstance(item, Identifier):
+                schema_name, real_name, alias = parse_identifier(item)
+                is_function = allow_functions and _identifier_is_function(item)
 
-    for item in token_stream:
-        if isinstance(item, IdentifierList):
-            for identifier in item.get_identifiers():
-                # Sometimes Keywords (such as FROM ) are classified as
-                # identifiers which don't have the get_real_name() method.
-                try:
-                    schema_name = identifier.get_parent_name()
-                    real_name = identifier.get_real_name()
-                    is_function = (allow_functions and
-                                   _identifier_is_function(identifier))
-                except AttributeError:
-                    continue
-                if real_name:
-                    yield TableReference(schema_name, real_name,
-                                         identifier.get_alias(), is_function)
-        elif isinstance(item, Identifier):
-            schema_name, real_name, alias = parse_identifier(item)
-            is_function = allow_functions and _identifier_is_function(item)
-
-            yield TableReference(schema_name, real_name, alias, is_function)
-        elif isinstance(item, Function):
-            schema_name, real_name, alias = parse_identifier(item)
-            yield TableReference(None, real_name, alias, allow_functions)
+                yield TableReference(schema_name, real_name, alias, is_function)
+            elif isinstance(item, Function):
+                schema_name, real_name, alias = parse_identifier(item)
+                yield TableReference(None, real_name, alias, allow_functions)
+    except StopIteration:
+        return
 
 
 # extract_tables is inspired from examples in the sqlparse lib.

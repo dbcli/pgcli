@@ -13,11 +13,11 @@ from pgcli.main import PGCli
 def function_meta_data(
         func_name, schema_name='public', arg_names=None, arg_types=None,
         arg_modes=None, return_type=None, is_aggregate=False, is_window=False,
-        is_set_returning=False, arg_defaults=None
+        is_set_returning=False, is_extension=False, arg_defaults=None
 ):
     return FunctionMetadata(
         schema_name, func_name, arg_names, arg_types, arg_modes, return_type,
-        is_aggregate, is_window, is_set_returning, arg_defaults
+        is_aggregate, is_window, is_set_returning, is_extension, arg_defaults
     )
 
 @dbtest
@@ -31,6 +31,21 @@ def test_conn(executor):
         | abc |
         +-----+
         SELECT 1""")
+
+
+@dbtest
+def test_copy(executor):
+    executor_copy = executor.copy()
+    run(executor_copy, '''create table test(a text)''')
+    run(executor_copy, '''insert into test values('abc')''')
+    assert run(executor_copy, '''select * from test''', join=True) == dedent("""\
+        +-----+
+        | a   |
+        |-----|
+        | abc |
+        +-----+
+        SELECT 1""")
+
 
 
 @dbtest
@@ -400,3 +415,13 @@ def test_nonexistent_view_definition(executor):
         result = executor.view_definition('there_is_no_such_view')
     with pytest.raises(RuntimeError):
         result = executor.view_definition('mvw1')
+
+
+@dbtest
+def test_short_host(executor):
+    with patch.object(executor, 'host', 'localhost'):
+        assert executor.short_host == 'localhost'
+    with patch.object(executor, 'host', 'localhost.example.org'):
+        assert executor.short_host == 'localhost'
+    with patch.object(executor, 'host', 'localhost1.example.org,localhost2.example.org'):
+        assert executor.short_host == 'localhost1'

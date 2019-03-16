@@ -51,7 +51,8 @@ class FunctionMetadata(object):
 
     def __init__(
             self, schema_name, func_name, arg_names, arg_types, arg_modes,
-            return_type, is_aggregate, is_window, is_set_returning, arg_defaults
+            return_type, is_aggregate, is_window, is_set_returning, is_extension,
+            arg_defaults
     ):
         """Class for describing a postgresql function"""
 
@@ -79,6 +80,8 @@ class FunctionMetadata(object):
         self.is_aggregate = is_aggregate
         self.is_window = is_window
         self.is_set_returning = is_set_returning
+        self.is_extension = bool(is_extension)
+        self.is_public = (self.schema_name and self.schema_name == 'public')
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
@@ -89,9 +92,9 @@ class FunctionMetadata(object):
 
     def _signature(self):
         return (
-            self.schema_name, self.func_name, self.arg_names, self.arg_types,
-            self.arg_modes, self.return_type, self.is_aggregate,
-            self.is_window, self.is_set_returning, self.arg_defaults
+            self.schema_name, self.func_name, self.arg_names,
+            self.arg_types, self.arg_modes, self.return_type, self.is_aggregate,
+            self.is_window, self.is_set_returning, self.is_extension, self.arg_defaults
         )
 
     def __hash__(self):
@@ -102,8 +105,8 @@ class FunctionMetadata(object):
             (
                 '%s(schema_name=%r, func_name=%r, arg_names=%r, '
                 'arg_types=%r, arg_modes=%r, return_type=%r, is_aggregate=%r, '
-                'is_window=%r, is_set_returning=%r, arg_defaults=%r)'
-            ) % (self.__class__.__name__,) + self._signature()
+                'is_window=%r, is_set_returning=%r, is_extension=%r, arg_defaults=%r)'
+            ) % ((self.__class__.__name__,) + self._signature())
         )
 
     def has_variadic(self):
@@ -131,7 +134,6 @@ class FunctionMetadata(object):
             return ColumnMetadata(name, typ, [], default, has_default)
 
         return [arg(name, typ, num) for num, (name, typ) in enumerate(args)]
-
 
     def fields(self):
         """Returns a list of output-field ColumnMetadata namedtuples"""

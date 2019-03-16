@@ -16,7 +16,7 @@ def expect_exact(context, expected, timeout):
     timedout = False
     try:
         context.cli.expect_exact(expected, timeout=timeout)
-    except pexpect.exceptions.TIMEOUT:
+    except pexpect.TIMEOUT:
         timedout = True
     if timedout:
         # Strip color codes out of the output.
@@ -56,6 +56,8 @@ def run_cli(context, run_args=None):
     cmd_parts = [cli_cmd] + run_args
     cmd = ' '.join(cmd_parts)
     context.cli = pexpect.spawnu(cmd, cwd=context.package_root)
+    context.logfile = StringIO()
+    context.cli.logfile = context.logfile
     context.exit_sent = False
     context.currentdb = context.conf['dbname']
     context.cli.sendline('\pset pager always')

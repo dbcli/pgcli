@@ -1,6 +1,44 @@
 Upcoming:
 =========
 
+Features:
+---------
+
+* Keybindings for closing the autocomplete list. (Thanks: `easteregg`_)
+* Reconnect automatically when server closes connection. (Thanks: `Scott Brenstuhl`_)
+
+Bug fixes:
+----------
+* Avoid error message on the server side if hstore extension is not installed in the current database (#991). (Thanks: `Marcin Cieślak`_)
+* All pexpect submodules have been moved into the pexpect package as of version 3.0. Use pexpect.TIMEOUT (Thanks: `Marcin Cieślak`_)
+* Fix crash retrieving server version with ``--single-connection``. (Thanks: `Irina Truong`_)
+
+Internal:
+---------
+
+* (Fixup) Clean up and add behave logging. (Thanks: `Marcin Cieślak`_, `Dick Marinus`_)
+* Override VISUAL environment variable for behave tests. (Thanks: `Marcin Cieślak`_)
+* Remove build dir before running sdist, remove stray files from wheel distribution. (Thanks: `Dick Marinus`_)
+* Fix unit tests, unhashable formatted text since new python prompttoolkit  version. (Thanks: `Dick Marinus`_)
+
+2.0.2:
+======
+
+Features:
+---------
+
+* Allows passing the ``-u`` flag to specify a username. (Thanks: `Ignacio Campabadal`_)
+* Fix for lag in v2 (#979). (Thanks: `Irina Truong`_)
+* Support for multihost connection string that is convenient if you have postgres cluster. (Thanks: `Mikhail Elovskikh`_)
+
+Internal:
+---------
+
+* Added tests for special command completion. (Thanks: `Amjith Ramanujam`_)
+
+2.0.1:
+======
+
 Bug fixes:
 ----------
 
@@ -9,13 +47,15 @@ Bug fixes:
 * Fix for loading/saving named queries from provided config file (#938). (Thanks: `Daniel Egger`_)
 * Set default port in `connect_uri` when none is given. (Thanks: `Daniel Egger`_)
 * Fix for error listing databases (#951). (Thanks: `Irina Truong`_)
+* Enable Ctrl-Z to suspend the app (Thanks: `Amjith Ramanujam`_).
+* Fix StopIteration exception raised at runtime for Python 3.7 (Thanks: `Amjith Ramanujam`_).
 
 Internal:
 ---------
 
 * Clean up and add behave logging. (Thanks: `Dick Marinus`_)
 * Require prompt_toolkit>=2.0.6. (Thanks: `Dick Marinus`_)
-* Improve development guide (Thanks: `Ignacio Campabadal`_)
+* Improve development guide. (Thanks: `Ignacio Campabadal`_)
 
 2.0.0:
 ======
@@ -831,7 +871,7 @@ Improvements:
 * Faster test runs on TravisCI. (Thanks: https://github.com/macobo)
 * Integration tests with Postgres!! (Thanks: https://github.com/macobo)
 
-.. _`Amjith Ramanujam`: https://github.com/amjith
+.. _`Amjith Ramanujam`: https://blog.amjith.com
 .. _`Andrew Kuchling`: https://github.com/akuchling
 .. _`Darik Gamble`: https://github.com/darikg
 .. _`Daniel Rocco`: https://github.com/drocco007
@@ -903,3 +943,7 @@ Improvements:
 .. _`Max Rothman`: https://github.com/maxrothman
 .. _`Daniel Egger`: https://github.com/DanEEStar
 .. _`Ignacio Campabadal`: https://github.com/igncampa
+.. _`Mikhail Elovskikh`: https://github.com/wronglink
+.. _`Marcin Cieślak`: https://github.com/saper
+.. _`Scott Brenstuhl`: https://github.com/808sAndBR
+.. _`easteregg`: https://github.com/verfriemelt-dot-org
