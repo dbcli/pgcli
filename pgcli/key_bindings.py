@@ -12,8 +12,7 @@ def pgcli_bindings(pgcli):
     """Custom key bindings for pgcli."""
     kb = KeyBindings()
 
-    expand_tab = pgcli.config['main'].as_bool('expand_tab')
-    tab_insert_text = ' ' * 4 if expand_tab else '\t'
+    tab_insert_text = ' ' * 4
 
     @kb.add('f2')
     def _(event):
