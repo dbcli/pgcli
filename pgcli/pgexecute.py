@@ -50,7 +50,13 @@ def _wait_select(conn):
             conn.cancel()
             # the loop will be broken by a server error
             continue
-
+        except select.error as e:
+            errno, _ = e.args
+            if errno != 4:
+                raise
+        except OSError, e:
+            if e.errno != errno.EINTR:
+                raise
 
 # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
 # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
@@ -165,21 +171,21 @@ class PGExecute(object):
 
     view_definition_query = '''
         WITH v AS (SELECT %s::pg_catalog.regclass::pg_catalog.oid AS v_oid)
-        SELECT nspname, relname, relkind, 
-               pg_catalog.pg_get_viewdef(c.oid, true), 
+        SELECT nspname, relname, relkind,
+               pg_catalog.pg_get_viewdef(c.oid, true),
                array_remove(array_remove(c.reloptions,'check_option=local'),
-                            'check_option=cascaded') AS reloptions, 
-               CASE 
-                 WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text 
-                 WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text 
-                 ELSE NULL 
-               END AS checkoption 
-        FROM pg_catalog.pg_class c 
+                            'check_option=cascaded') AS reloptions,
+               CASE
+                 WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text
+                 WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text
+                 ELSE NULL
+               END AS checkoption
+        FROM pg_catalog.pg_class c
         LEFT JOIN pg_catalog.pg_namespace n ON (c.relnamespace = n.oid)
         JOIN v ON (c.oid = v.v_oid)'''
 
     function_definition_query = '''
-        WITH f AS 
+        WITH f AS
             (SELECT %s::pg_catalog.regproc::pg_catalog.oid AS f_oid)
         SELECT pg_catalog.pg_get_functiondef(f.f_oid)
         FROM f'''
