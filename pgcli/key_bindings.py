@@ -12,6 +12,8 @@ def pgcli_bindings(pgcli):
     """Custom key bindings for pgcli."""
     kb = KeyBindings()
 
+    tab_insert_text = ' ' * 4
+
     @kb.add('f2')
     def _(event):
         """Enable/Disable SmartCompletion Mode."""
@@ -33,13 +35,20 @@ def pgcli_bindings(pgcli):
 
     @kb.add('tab')
     def _(event):
-        """Force autocompletion at cursor."""
+        """Force autocompletion at cursor on non-empty lines."""
+
         _logger.debug('Detected <Tab> key.')
-        b = event.app.current_buffer
-        if b.complete_state:
-            b.complete_next()
+
+        buff = event.app.current_buffer
+        doc = buff.document
+
+        if doc.on_first_line or doc.current_line.strip():
+            if buff.complete_state:
+                buff.complete_next()
+            else:
+                buff.start_completion(select_first=True)
         else:
-            b.start_completion(select_first=True)
+            buff.insert_text(tab_insert_text, fire_event=False)
 
     @kb.add('escape')
     def _(event):

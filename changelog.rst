@@ -4,14 +4,15 @@ Upcoming:
 Features:
 ---------
 
-* keybindings for closing the autocomplete list
-* reconnect automatically when server closes connection
+* Keybindings for closing the autocomplete list. (Thanks: `easteregg`_)
+* Reconnect automatically when server closes connection. (Thanks: `Scott Brenstuhl`_)
 
 Bug fixes:
 ----------
 * Avoid error message on the server side if hstore extension is not installed in the current database (#991). (Thanks: `Marcin Cieślak`_)
 * All pexpect submodules have been moved into the pexpect package as of version 3.0. Use pexpect.TIMEOUT (Thanks: `Marcin Cieślak`_)
 * Resizing pgcli terminal kills the connection to postgres in python 2.7 (Thanks: `Amjith Ramanujam`_)
+* Fix crash retrieving server version with ``--single-connection``. (Thanks: `Irina Truong`_)
 
 Internal:
 ---------
@@ -42,6 +43,8 @@ Internal:
 Bug fixes:
 ----------
 
+* Tab press on an empty line increases the indentation instead of triggering
+  the auto-complete pop-up. (Thanks: `Artur Balabanov`_)
 * Fix for loading/saving named queries from provided config file (#938). (Thanks: `Daniel Egger`_)
 * Set default port in `connect_uri` when none is given. (Thanks: `Daniel Egger`_)
 * Fix for error listing databases (#951). (Thanks: `Irina Truong`_)
@@ -943,3 +946,5 @@ Improvements:
 .. _`Ignacio Campabadal`: https://github.com/igncampa
 .. _`Mikhail Elovskikh`: https://github.com/wronglink
 .. _`Marcin Cieślak`: https://github.com/saper
+.. _`Scott Brenstuhl`: https://github.com/808sAndBR
+.. _`easteregg`: https://github.com/verfriemelt-dot-org

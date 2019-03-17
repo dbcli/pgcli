@@ -556,7 +556,7 @@ class PGCli(object):
             logger.error("sql: %r, error: %r", text, e)
             logger.error("traceback: %r", traceback.format_exc())
             self._handle_server_closed_connection(text)
-        except PgCliQuitError as e:
+        except (PgCliQuitError, EOFError) as e:
             raise
         except Exception as e:
             logger.error("sql: %r, error: %r", text, e)
@@ -618,7 +618,7 @@ class PGCli(object):
         self.prompt_app = self._build_cli(history)
 
         if not self.less_chatty:
-            print('Server: PostgreSQL', self.pgexecute.get_server_version())
+            print('Server: PostgreSQL', self.pgexecute.server_version)
             print('Version:', __version__)
             print('Chat: https://gitter.im/dbcli/pgcli')
             print('Mail: https://groups.google.com/forum/#!forum/pgcli')
