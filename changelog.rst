@@ -11,6 +11,7 @@ Bug fixes:
 ----------
 * Avoid error message on the server side if hstore extension is not installed in the current database (#991). (Thanks: `Marcin Cieślak`_)
 * All pexpect submodules have been moved into the pexpect package as of version 3.0. Use pexpect.TIMEOUT (Thanks: `Marcin Cieślak`_)
+* Resizing pgcli terminal kills the connection to postgres in python 2.7 (Thanks: `Amjith Ramanujam`_)
 * Fix crash retrieving server version with ``--single-connection``. (Thanks: `Irina Truong`_)
 
 Internal:
