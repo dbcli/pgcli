@@ -143,9 +143,6 @@ enable_pager = True
 # Use keyring to automatically save and load password in a secure manner 
 keyring = True
 
-# When the <Tab> key is pressed on an empty line, use 4 spaces instead of \t
-expand_tab = False
-
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
 completion-menu.completion.current = 'bg:#ffffff #000000'
