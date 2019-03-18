@@ -13,6 +13,7 @@ Bug fixes:
 * All pexpect submodules have been moved into the pexpect package as of version 3.0. Use pexpect.TIMEOUT (Thanks: `Marcin Cieślak`_)
 * Resizing pgcli terminal kills the connection to postgres in python 2.7 (Thanks: `Amjith Ramanujam`_)
 * Fix crash retrieving server version with ``--single-connection``. (Thanks: `Irina Truong`_)
+* Cannot quit application without reconnecting to database (#1014). (Thanks: `Irina Truong`_)
 
 Internal:
 ---------

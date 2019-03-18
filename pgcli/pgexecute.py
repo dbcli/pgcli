@@ -354,7 +354,13 @@ class PGExecute(object):
                 if pgspecial:
                     # First try to run each query as special
                     _logger.debug('Trying a pgspecial command. sql: %r', sql)
-                    cur = self.conn.cursor()
+                    try:
+                        cur = self.conn.cursor()
+                    except psycopg2.InterfaceError:
+                        # edge case when connection is already closed, but we
+                        # don't need cursor for special_cmd.arg_type == NO_QUERY.
+                        # See https://github.com/dbcli/pgcli/issues/1014.
+                        cur = None
                     try:
                         for result in pgspecial.execute(cur, sql):
                             # e.g. execute_from_file already appends these
