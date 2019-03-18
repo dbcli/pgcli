@@ -1,9 +1,15 @@
+dist: xenial
+
+sudo: required
+
 language: python
+
 python:
   - "2.7"
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
 
 before_install:
   - which python
@@ -43,4 +49,4 @@ services:
   - postgresql
 
 addons:
-  postgresql: "9.3"
+  postgresql: "9.6"
