@@ -441,7 +441,8 @@ class BrokenConnection(object):
 def test_exit_without_active_connection(executor):
     quit_handler = MagicMock()
     pgspecial = PGSpecial()
-    pgspecial.register(quit_handler, '\\q', '\\q', 'Quit pgcli.', arg_type=NO_QUERY, case_sensitive=True, aliases=(':q',))
+    pgspecial.register(quit_handler, '\\q', '\\q', 'Quit pgcli.',
+                       arg_type=NO_QUERY, case_sensitive=True, aliases=(':q',))
 
     with patch.object(executor, "conn", BrokenConnection()):
         # we should be able to quit the app, even without active connection
