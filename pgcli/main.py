@@ -443,21 +443,28 @@ class PGCli(object):
             passwd = click.prompt('Password for %s' % user, hide_input=True,
                                   show_default=False, type=str)
 
-        # Prompt for a password after 1st attempt to connect without a password
-        # fails. Don't prompt if the -w flag is supplied
-        auto_passwd_prompt = not passwd and not self.never_passwd_prompt
+        def should_ask_for_password(exc):
+            # Prompt for a password after 1st attempt to connect
+            # fails. Don't prompt if the -w flag is supplied
+            if self.never_passwd_prompt:
+                return False
+            error_msg = utf8tounicode(exc.args[0])
+            if "no password supplied" in error_msg:
+                return True
+            if "password authentication failed" in error_msg:
+                return True
+            return False
 
         # Attempt to connect to the database.
         # Note that passwd may be empty on the first attempt. If connection
-        # fails because of a missing password, but we're allowed to prompt for
-        # a password (no -w flag), prompt for a passwd and try again.
+        # fails because of a missing or incorrect password, but we're allowed to
+        # prompt for a password (no -w flag), prompt for a passwd and try again.
         try:
             try:
                 pgexecute = PGExecute(database, user, passwd, host, port, dsn,
                                       application_name='pgcli', **kwargs)
             except (OperationalError, InterfaceError) as e:
-                if ('no password supplied' in utf8tounicode(e.args[0]) and
-                        auto_passwd_prompt):
+                if should_ask_for_password(e):
                     passwd = click.prompt('Password for %s' % user,
                                           hide_input=True, show_default=False,
                                           type=str)
