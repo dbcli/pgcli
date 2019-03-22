@@ -14,6 +14,7 @@ Bug fixes:
 * Resizing pgcli terminal kills the connection to postgres in python 2.7 (Thanks: `Amjith Ramanujam`_)
 * Fix crash retrieving server version with ``--single-connection``. (Thanks: `Irina Truong`_)
 * Cannot quit application without reconnecting to database (#1014). (Thanks: `Irina Truong`_)
+* Password authentication failed for user "postgres" when using non-default password (#1020). (Thanks: `Irina Truong`_)
 
 Internal:
 ---------
