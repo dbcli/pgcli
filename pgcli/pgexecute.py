@@ -233,7 +233,7 @@ class PGExecute(object):
         }
         new_params.update(kwargs)
         conn_params.update({
-            k: unicode2utf8(v) for k, v in new_params.items() if v is not None
+            k: unicode2utf8(v) for k, v in new_params.items() if v
         })
 
         if 'password' in conn_params and 'dsn' in conn_params:

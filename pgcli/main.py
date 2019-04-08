@@ -398,11 +398,12 @@ class PGCli(object):
                 dsn='', **kwargs):
         # Connect to the database.
 
-        if not user:
-            user = getuser()
+        if not dsn:
+            if not user:
+                user = getuser()
 
-        if not database:
-            database = user
+            if not database:
+                database = user
 
         # If password prompt is not forced but no password is provided, try
         # getting it from environment variable.
