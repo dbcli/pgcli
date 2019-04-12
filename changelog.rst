@@ -1,3 +1,10 @@
+Upcoming:
+=========
+
+Bug fixes:
+----------
+* Escape switches to VI navigation mode when not canceling completion popup. (Thanks: `Nathan Verzemnieks`_)
+
 2.1.0
 =====
 
@@ -950,3 +957,4 @@ Improvements:
 .. _`Marcin Cieślak`: https://github.com/saper
 .. _`Scott Brenstuhl`: https://github.com/808sAndBR
 .. _`easteregg`: https://github.com/verfriemelt-dot-org
+.. _`Nathan Verzemnieks`: https://github.com/njvrzm
