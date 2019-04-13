@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import logging
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.filters import completion_is_selected
+from prompt_toolkit.filters import completion_is_selected, has_completions
 
 _logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def pgcli_bindings(pgcli):
         else:
             buff.insert_text(tab_insert_text, fire_event=False)
 
-    @kb.add('escape')
+    @kb.add('escape', filter=has_completions)
     def _(event):
         """Force closing of autocompletion."""
         _logger.debug('Detected <Esc> key.')
