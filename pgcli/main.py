@@ -478,9 +478,8 @@ class PGCli(object):
                 try:
                     keyring.set_password('pgcli', key, passwd)
                 except (
-                    keyring.errors.InitError,
                     RuntimeError,
-                    keyring.errors.KeyringLocked
+                    keyring.errors.KeyringError,
                 ) as e:
                     click.secho(
                         keyring_error_message.format(
