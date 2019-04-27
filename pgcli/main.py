@@ -293,7 +293,7 @@ class PGCli(object):
             db, user, host, port = infos
             try:
                 self.pgexecute.connect(database=db, user=user, host=host,
-                                       port=port, application_name='pgcli')
+                                       port=port, **self.pgexecute.extra_args)
             except OperationalError as e:
                 click.secho(str(e), err=True, fg='red')
                 click.echo("Previous connection kept")
@@ -404,6 +404,8 @@ class PGCli(object):
         if not database:
             database = user
 
+        kwargs.setdefault('application_name', 'pgcli')
+
         # If password prompt is not forced but no password is provided, try
         # getting it from environment variable.
         if not self.force_passwd_prompt and not passwd:
@@ -462,15 +464,14 @@ class PGCli(object):
         try:
             try:
                 pgexecute = PGExecute(database, user, passwd, host, port, dsn,
-                                      application_name='pgcli', **kwargs)
+                                      **kwargs)
             except (OperationalError, InterfaceError) as e:
                 if should_ask_for_password(e):
                     passwd = click.prompt('Password for %s' % user,
                                           hide_input=True, show_default=False,
                                           type=str)
                     pgexecute = PGExecute(database, user, passwd, host, port,
-                                          dsn, application_name='pgcli',
-                                          **kwargs)
+                                          dsn, **kwargs)
                 else:
                     raise e
             if passwd and keyring and self.keyring_enabled:

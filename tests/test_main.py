@@ -13,6 +13,7 @@ except ImportError:
 from pgcli.main import (
     obfuscate_process_password, format_output, PGCli, OutputSettings, COLOR_CODE_REGEX
 )
+from pgcli.pgexecute import PGExecute
 from pgspecial.main import (PAGER_OFF, PAGER_LONG_OUTPUT, PAGER_ALWAYS)
 from utils import dbtest, run
 from collections import namedtuple
@@ -309,3 +310,12 @@ def test_multihost_db_uri(tmpdir):
                                     user='bar',
                                     passwd='foo',
                                     port='2543,2543,2543')
+
+
+def test_application_name_db_uri(tmpdir):
+    with mock.patch.object(PGExecute, '__init__') as mock_pgexecute:
+        mock_pgexecute.return_value = None
+        cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+        cli.connect_uri('postgres://bar@baz.com/?application_name=cow')
+    mock_pgexecute.assert_called_with('bar', 'bar', None, 'baz.com', u'', u'',
+                                      application_name='cow')
