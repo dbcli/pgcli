@@ -238,7 +238,8 @@ class PGExecute(object):
         })
 
         if 'password' in conn_params and 'dsn' in conn_params:
-            conn_params['dsn'] = make_dsn(conn_params['dsn'], password=conn_params.pop('password'))
+            conn_params['dsn'] = make_dsn(
+                conn_params['dsn'], password=conn_params.pop('password'))
 
         conn = psycopg2.connect(**conn_params)
         cursor = conn.cursor()
