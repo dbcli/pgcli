@@ -4,6 +4,7 @@ Upcoming:
 Bug fixes:
 ----------
 * Escape switches to VI navigation mode when not canceling completion popup. (Thanks: `Nathan Verzemnieks`_)
+* Allow application_name to be overridden. (Thanks: `raylu`_)
 
 2.1.0
 =====
@@ -958,3 +959,4 @@ Improvements:
 .. _`Scott Brenstuhl`: https://github.com/808sAndBR
 .. _`easteregg`: https://github.com/verfriemelt-dot-org
 .. _`Nathan Verzemnieks`: https://github.com/njvrzm
+.. _`raylu`: https://github.com/benchling
