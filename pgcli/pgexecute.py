@@ -199,6 +199,7 @@ class PGExecute(object):
         self.host = None
         self.port = None
         self.server_version = None
+        self.extra_args = None
         self.connect(database, user, password, host, port, dsn, **kwargs)
 
     def copy(self):
