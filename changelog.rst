@@ -7,6 +7,7 @@ Bug fixes:
 * Allow application_name to be overridden. (Thanks: `raylu`_)
 * Fix for "no attribute KeyringLocked" (#1040). (Thanks: `Irina Truong`_)
 * Pgcli no longer works with password containing spaces (#1043). (Thanks: `Irina Truong`_)
+* Load keyring only when keyring is enabled in the config file (#1041). (Thanks: `Zhaolong Zhu`_)
 
 2.1.0
 =====
@@ -962,4 +963,5 @@ Improvements:
 .. _`easteregg`: https://github.com/verfriemelt-dot-org
 .. _`Nathan Verzemnieks`: https://github.com/njvrzm
 .. _`raylu`: https://github.com/raylu
+.. _`Zhaolong Zhu`: https://github.com/zzl0
 
