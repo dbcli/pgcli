@@ -47,7 +47,8 @@ from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF, PAGER_LONG_OUTPUT)
 import pgspecial as special
 try:
     import keyring
-except ImportError:
+except:
+    # pep8 will be unhappy about this. But keyring is optional, and we better disable it if it won't load.
     keyring = None
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
