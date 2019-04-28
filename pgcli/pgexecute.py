@@ -7,7 +7,7 @@ import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
 import select
-from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
+from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE, make_dsn
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 from .encodingutils import unicode2utf8, PY2, utf8tounicode
 
@@ -238,9 +238,8 @@ class PGExecute(object):
         })
 
         if 'password' in conn_params and 'dsn' in conn_params:
-            conn_params['dsn'] = "{0} password={1}".format(
-                conn_params['dsn'], conn_params.pop('password')
-            )
+            conn_params['dsn'] = make_dsn(
+                conn_params['dsn'], password=conn_params.pop('password'))
 
         conn = psycopg2.connect(**conn_params)
         cursor = conn.cursor()
