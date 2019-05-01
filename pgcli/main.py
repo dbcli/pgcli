@@ -20,7 +20,7 @@ import datetime as dt
 import itertools
 from time import time, sleep
 from codecs import open
-
+keyring = None  # keyring will be loaded later
 
 from cli_helpers.tabular_output import TabularOutputFormatter
 from cli_helpers.tabular_output.preprocessors import (align_decimals,
@@ -45,11 +45,7 @@ from pygments.lexers.sql import PostgresLexer
 
 from pgspecial.main import (PGSpecial, NO_QUERY, PAGER_OFF, PAGER_LONG_OUTPUT)
 import pgspecial as special
-try:
-    import keyring
-except:
-    # pep8 will be unhappy about this. But keyring is optional, and we better disable it if it won't load.
-    keyring = None
+
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory, style_factory_output
@@ -187,7 +183,7 @@ class PGCli(object):
         self.on_error = c['main']['on_error'].upper()
         self.decimal_format = c['data_formats']['decimal']
         self.float_format = c['data_formats']['float']
-        self.keyring_enabled = c["main"].as_bool("keyring")
+        self.initialize_keyring()
 
         self.pgspecial.pset_pager(self.config['main'].as_bool(
             'enable_pager') and "on" or "off")
@@ -383,6 +379,18 @@ class PGCli(object):
         pgspecial_logger.addHandler(handler)
         pgspecial_logger.setLevel(log_level)
 
+    def initialize_keyring(self):
+        global keyring
+
+        keyring_enabled = self.config["main"].as_bool("keyring")
+        if keyring_enabled:
+            # Try best to load keyring (issue #1041).
+            import importlib
+            try:
+                keyring = importlib.import_module('keyring')
+            except Exception as e:  # ImportError for Python 2, ModuleNotFoundError for Python 3
+                self.logger.warning('import keyring failed: %r.', e)
+
     def connect_dsn(self, dsn):
         self.connect(dsn=dsn)
 
@@ -421,7 +429,8 @@ class PGCli(object):
             - prepare keyring as described at: https://keyring.readthedocs.io/en/stable/
             - uninstall keyring: pip uninstall keyring
             - disable keyring in our configuration: add keyring = False to [main]""")
-        if not passwd and keyring and self.keyring_enabled:
+        if not passwd and keyring:
+
             try:
                 passwd = keyring.get_password('pgcli', key)
             except (
@@ -475,7 +484,7 @@ class PGCli(object):
                                           dsn, **kwargs)
                 else:
                     raise e
-            if passwd and keyring and self.keyring_enabled:
+            if passwd and keyring:
                 try:
                     keyring.set_password('pgcli', key, passwd)
                 except (
