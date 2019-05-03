@@ -8,6 +8,7 @@ Bug fixes:
 * Fix for "no attribute KeyringLocked" (#1040). (Thanks: `Irina Truong`_)
 * Pgcli no longer works with password containing spaces (#1043). (Thanks: `Irina Truong`_)
 * Load keyring only when keyring is enabled in the config file (#1041). (Thanks: `Zhaolong Zhu`_)
+* No longer depend on sqlparse as being less than 0.3.0 with the release of sqlparse 0.3.0. (`VVelox`)
 
 2.1.0
 =====
