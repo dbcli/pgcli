@@ -186,3 +186,8 @@ of these checks, install pep8radius and apply style fixes:
     $ pep8radius master --docformatter --in-place # apply the fixes
 
 Then commit and push the fixes.
+
+Coding Style
+------------
+
+``pgcli`` uses `black <https://github.com/ambv/black>`_ to format the source code. Make sure to install black.
