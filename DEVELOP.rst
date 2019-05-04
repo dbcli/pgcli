@@ -172,21 +172,6 @@ Troubleshooting the integration tests
 - Check `this issue <https://github.com/dbcli/pgcli/issues/945>`_ for relevant information.
 - Contact us on `gitter <https://gitter.im/dbcli/pgcli/>`_ or `file an issue <https://github.com/dbcli/pgcli/issues/new>`_.
 
-PEP8 checks (lint)
-------------------
-
-When you submit a PR, the changeset is checked for pep8 compliance using
-`pep8radius <https://github.com/hayd/pep8radius>`_. If you see a build failing because
-of these checks, install pep8radius and apply style fixes:
-
-::
-
-    $ pip install pep8radius
-    $ pep8radius master --docformatter --diff # view a diff of proposed fixes
-    $ pep8radius master --docformatter --in-place # apply the fixes
-
-Then commit and push the fixes.
-
 Coding Style
 ------------
 
