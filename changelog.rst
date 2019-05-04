@@ -9,6 +9,11 @@ Bug fixes:
 * Pgcli no longer works with password containing spaces (#1043). (Thanks: `Irina Truong`_)
 * Load keyring only when keyring is enabled in the config file (#1041). (Thanks: `Zhaolong Zhu`_)
 
+Internal:
+---------
+
+* Add python 3.7 to travis build matrix. (Thanks: `Irina Truong`_)
+
 2.1.0
 =====
 
