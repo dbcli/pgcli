@@ -7,7 +7,7 @@ import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
 import select
-from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
+from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE, make_dsn
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 from .encodingutils import unicode2utf8, PY2, utf8tounicode
 
@@ -199,6 +199,7 @@ class PGExecute(object):
         self.host = None
         self.port = None
         self.server_version = None
+        self.extra_args = None
         self.connect(database, user, password, host, port, dsn, **kwargs)
 
     def copy(self):
@@ -233,13 +234,13 @@ class PGExecute(object):
         }
         new_params.update(kwargs)
 
-        if new_params['dsn'] is not None:
+        if new_params['dsn']:
             new_params = {
                 'dsn': new_params['dsn'],
                 'password': new_params['password']
             }
 
-            if new_params['password'] is not None:
+            if new_params['password']:
                 new_params['dsn'] = "{0} password={1}".format(
                     new_params['dsn'], new_params.pop('password')
                 )

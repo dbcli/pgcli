@@ -1,3 +1,19 @@
+Upcoming:
+=========
+
+Bug fixes:
+----------
+* Escape switches to VI navigation mode when not canceling completion popup. (Thanks: `Nathan Verzemnieks`_)
+* Allow application_name to be overridden. (Thanks: `raylu`_)
+* Fix for "no attribute KeyringLocked" (#1040). (Thanks: `Irina Truong`_)
+* Pgcli no longer works with password containing spaces (#1043). (Thanks: `Irina Truong`_)
+* Load keyring only when keyring is enabled in the config file (#1041). (Thanks: `Zhaolong Zhu`_)
+
+Internal:
+---------
+
+* Add python 3.7 to travis build matrix. (Thanks: `Irina Truong`_)
+
 2.1.0
 =====
 
@@ -950,3 +966,7 @@ Improvements:
 .. _`Marcin Cieślak`: https://github.com/saper
 .. _`Scott Brenstuhl`: https://github.com/808sAndBR
 .. _`easteregg`: https://github.com/verfriemelt-dot-org
+.. _`Nathan Verzemnieks`: https://github.com/njvrzm
+.. _`raylu`: https://github.com/raylu
+.. _`Zhaolong Zhu`: https://github.com/zzl0
+
