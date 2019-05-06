@@ -317,5 +317,5 @@ def test_application_name_db_uri(tmpdir):
         mock_pgexecute.return_value = None
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri('postgres://bar@baz.com/?application_name=cow')
-    mock_pgexecute.assert_called_with('bar', 'bar', None, 'baz.com', '', '',
+    mock_pgexecute.assert_called_with('bar', 'bar', '', 'baz.com', '', '',
                                       application_name='cow')
