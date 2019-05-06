@@ -233,13 +233,13 @@ class PGExecute(object):
         }
         new_params.update(kwargs)
 
-        if 'dsn' in new_params:
+        if new_params['dsn'] is not None:
             new_params = {
                 'dsn': new_params['dsn'],
                 'password': new_params['password']
             }
 
-            if 'password' in new_params:
+            if new_params['password'] is not None:
                 new_params['dsn'] = "{0} password={1}".format(
                     new_params['dsn'], new_params.pop('password')
                 )
