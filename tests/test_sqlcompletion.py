@@ -236,7 +236,7 @@ def test_distinct_suggests_cols(text):
     (
         'SELECT * FROM tbl x JOIN tbl1 y ORDER BY ',
         'SELECT * FROM tbl x JOIN tbl1 y ORDER BY ',
-        'BY',
+        'ORDER BY',
     )
 ])
 def test_distinct_and_order_by_suggestions_with_aliases(text, text_before,

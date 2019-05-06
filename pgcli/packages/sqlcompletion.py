@@ -154,7 +154,7 @@ def suggest_type(full_text, text_before_cursor):
         # Be careful here because trivial whitespace is parsed as a
         # statement, but the statement won't have a first token
         tok1 = stmt.parsed.token_first()
-        if tok1 and tok1.value == '\\':
+        if tok1 and tok1.value.startswith('\\'):
             text = stmt.text_before_cursor + stmt.word_before_cursor
             return suggest_special(text)
 
@@ -398,7 +398,7 @@ def suggest_based_on_last_token(token, stmt):
     elif token_v == 'set':
         return (Column(table_refs=stmt.get_tables(),
                        local_tables=stmt.local_tables),)
-    elif token_v in ('select', 'where', 'having', 'by', 'distinct'):
+    elif token_v in ('select', 'where', 'having', 'order by', 'distinct'):
         # Check for a table alias or schema qualification
         parent = (stmt.identifier and stmt.identifier.get_parent_name()) or []
         tables = stmt.get_tables()
