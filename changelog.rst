@@ -8,6 +8,7 @@ Bug fixes:
 * Fix for "no attribute KeyringLocked" (#1040). (Thanks: `Irina Truong`_)
 * Pgcli no longer works with password containing spaces (#1043). (Thanks: `Irina Truong`_)
 * Load keyring only when keyring is enabled in the config file (#1041). (Thanks: `Zhaolong Zhu`_)
+* Fix the broken support for pgservice . (Thanks: `Xavier Francisco`_)
 
 Internal:
 ---------
@@ -969,4 +970,4 @@ Improvements:
 .. _`Nathan Verzemnieks`: https://github.com/njvrzm
 .. _`raylu`: https://github.com/raylu
 .. _`Zhaolong Zhu`: https://github.com/zzl0
-
+.. _`Xavier Francisco`: https://github.com/Qu4tro

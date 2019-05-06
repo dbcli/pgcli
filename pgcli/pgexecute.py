@@ -233,13 +233,21 @@ class PGExecute(object):
             'dsn': dsn,
         }
         new_params.update(kwargs)
-        conn_params.update({
-            k: unicode2utf8(v) for k, v in new_params.items() if v is not None
-        })
 
-        if 'password' in conn_params and 'dsn' in conn_params:
-            conn_params['dsn'] = make_dsn(
-                conn_params['dsn'], password=conn_params.pop('password'))
+        if new_params['dsn']:
+            new_params = {
+                'dsn': new_params['dsn'],
+                'password': new_params['password']
+            }
+
+            if new_params['password']:
+                new_params['dsn'] = "{0} password={1}".format(
+                    new_params['dsn'], new_params.pop('password')
+                )
+
+        conn_params.update({
+            k: unicode2utf8(v) for k, v in new_params.items() if v
+        })
 
         conn = psycopg2.connect(**conn_params)
         cursor = conn.cursor()
