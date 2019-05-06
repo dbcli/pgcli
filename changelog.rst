@@ -8,7 +8,13 @@ Bug fixes:
 * Fix for "no attribute KeyringLocked" (#1040). (Thanks: `Irina Truong`_)
 * Pgcli no longer works with password containing spaces (#1043). (Thanks: `Irina Truong`_)
 * Load keyring only when keyring is enabled in the config file (#1041). (Thanks: `Zhaolong Zhu`_)
-* No longer depend on sqlparse as being less than 0.3.0 with the release of sqlparse 0.3.0. (`VVelox`)
+* No longer depend on sqlparse as being less than 0.3.0 with the release of sqlparse 0.3.0. (Thanks: `VVelox`_)
+* Fix the broken support for pgservice . (Thanks: `Xavier Francisco`_)
+
+Internal:
+---------
+
+* Add python 3.7 to travis build matrix. (Thanks: `Irina Truong`_)
 
 2.1.0
 =====
@@ -965,4 +971,5 @@ Improvements:
 .. _`Nathan Verzemnieks`: https://github.com/njvrzm
 .. _`raylu`: https://github.com/raylu
 .. _`Zhaolong Zhu`: https://github.com/zzl0
-
+.. _`Xavier Francisco`: https://github.com/Qu4tro
+.. _`VVelox`: https://github.com/VVelox
