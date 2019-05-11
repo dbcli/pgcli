@@ -265,11 +265,11 @@ class PGExecute(object):
         # TODO: use actual connection info from psycopg2.extensions.Connection.info as psycopg>2.8 is available and required dependency  # noqa
         dsn_parameters = conn.get_dsn_parameters()
 
-        self.dbname = dsn_parameters['dbname']
-        self.user = dsn_parameters['user']
+        self.dbname = dsn_parameters.get('dbname')
+        self.user = dsn_parameters.get('user')
         self.password = password
-        self.host = dsn_parameters['host']
-        self.port = dsn_parameters['port']
+        self.host = dsn_parameters.get('host')
+        self.port = dsn_parameters.get('port')
         self.extra_args = kwargs
 
         if not self.host:

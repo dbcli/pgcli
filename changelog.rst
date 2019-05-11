@@ -10,6 +10,7 @@ Bug fixes:
 * Load keyring only when keyring is enabled in the config file (#1041). (Thanks: `Zhaolong Zhu`_)
 * No longer depend on sqlparse as being less than 0.3.0 with the release of sqlparse 0.3.0. (Thanks: `VVelox`_)
 * Fix the broken support for pgservice . (Thanks: `Xavier Francisco`_)
+* Connecting using socket is broken in current master. (#1053). (Thanks: `Irina Truong`_)
 
 Internal:
 ---------
