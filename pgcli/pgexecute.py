@@ -241,9 +241,7 @@ class PGExecute(object):
             }
 
             if new_params['password']:
-                new_params['dsn'] = "{0} password={1}".format(
-                    new_params['dsn'], new_params.pop('password')
-                )
+                new_params['dsn'] = make_dsn(new_params['dsn'], password=new_params.pop('password'))
 
         conn_params.update({
             k: unicode2utf8(v) for k, v in new_params.items() if v
