@@ -49,7 +49,7 @@ def expect_pager(context, expected, timeout):
         context.conf['pager_boundary'], expected), timeout=timeout)
 
 
-def run_cli(context, run_args=None):
+def run_cli(context, run_args=None, prompt_check=True):
     """Run the process using pexpect."""
     run_args = run_args or []
     cli_cmd = context.conf.get('cli_command')
@@ -61,7 +61,8 @@ def run_cli(context, run_args=None):
     context.exit_sent = False
     context.currentdb = context.conf['dbname']
     context.cli.sendline('\pset pager always')
-    wait_prompt(context)
+    if prompt_check:
+        wait_prompt(context)
 
 
 def wait_prompt(context):
