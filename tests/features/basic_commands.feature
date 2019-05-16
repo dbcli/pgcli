@@ -43,3 +43,9 @@ Feature: run the cli,
       and we see dbcli prompt
       when we send "\?" command
       then we see help output
+
+  Scenario: run the cli with dsn and password
+    When we launch dbcli using dsn_password
+      then we send password
+      When we send "\?" command
+        then we see help output
