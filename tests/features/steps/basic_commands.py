@@ -33,6 +33,28 @@ def step_run_cli(context):
     wrappers.run_cli(context)
 
 
+@when('we launch dbcli using {arg}')
+def step_run_cli_using_arg(context, arg):
+    prompt_check = False
+    currentdb = None
+    if arg == '--username':
+        arg = '--username={}'.format(context.conf['user'])
+    if arg == '--user':
+        arg = '--user={}'.format(context.conf['user'])
+    if arg == '--port':
+        arg = '--port={}'.format(context.conf['port'])
+    if arg == '--password':
+        arg = '--password'
+        prompt_check = False
+    # This uses the mock_pg_service.conf file in fixtures folder.
+    if arg == 'dsn_password':
+        arg = 'service=mock_postgres --password'
+        prompt_check = False
+        currentdb = "postgres"
+    wrappers.run_cli(context, run_args=[
+                     arg], prompt_check=prompt_check, currentdb=currentdb)
+
+
 @when('we wait for prompt')
 def step_wait_prompt(context):
     wrappers.wait_prompt(context)
@@ -98,3 +120,9 @@ def step_confirm_destructive_command(context):
     wrappers.expect_exact(
         context, 'You\'re about to run a destructive command.\r\nDo you want to proceed? (y/n):', timeout=2)
     context.cli.sendline('y')
+
+
+@then(u'we send password')
+def step_send_password(context):
+    wrappers.expect_exact(context, 'Password for', timeout=5)
+    context.cli.sendline(context.conf['pass'] or 'DOES NOT MATTER')

@@ -86,6 +86,7 @@ def before_all(context):
         'PGPASSWORD': os.environ.get('PGPASSWORD', None),
         'PGPORT': os.environ.get('PGPORT', None),
         'XDG_CONFIG_HOME': os.environ.get('XDG_CONFIG_HOME', None),
+        'PGSERVICEFILE': os.environ.get('PGSERVICEFILE', None),
     }
 
     # Set new env vars.
@@ -93,6 +94,8 @@ def before_all(context):
     os.environ['PGUSER'] = context.conf['user']
     os.environ['PGHOST'] = context.conf['host']
     os.environ['PGPORT'] = context.conf['port']
+    os.environ['PGSERVICEFILE'] = os.path.join(
+        fixture_dir, 'mock_pg_service.conf')
 
     if context.conf['pass']:
         os.environ['PGPASSWORD'] = context.conf['pass']

@@ -65,7 +65,8 @@ def step_see_prompt(context):
     """
     Wait to see the prompt.
     """
-    wrappers.expect_exact(context, '{0}> '.format(context.conf['dbname']), timeout=5)
+    db_name = getattr(context, "currentdb", context.conf['dbname'])
+    wrappers.expect_exact(context, '{0}> '.format(db_name), timeout=5)
     context.atprompt = True
 
 

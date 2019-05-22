@@ -21,4 +21,33 @@ Feature: run the cli,
   Scenario: list databases
       When we list databases
       then we see list of databases
-      
+
+  Scenario: run the cli with --username
+    When we launch dbcli using --username
+      and we send "\?" command
+      then we see help output
+
+  Scenario: run the cli with --user
+    When we launch dbcli using --user
+      and we send "\?" command
+      then we see help output
+
+  Scenario: run the cli with --port
+    When we launch dbcli using --port
+      and we send "\?" command
+      then we see help output
+
+  Scenario: run the cli with --password
+    When we launch dbcli using --password
+      then we send password
+      and we see dbcli prompt
+      when we send "\?" command
+      then we see help output
+
+  @wip
+  Scenario: run the cli with dsn and password
+    When we launch dbcli using dsn_password
+      then we send password
+      and we see dbcli prompt
+      when we send "\?" command
+      then we see help output

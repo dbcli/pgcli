@@ -391,8 +391,8 @@ class PGCli(object):
             except Exception as e:  # ImportError for Python 2, ModuleNotFoundError for Python 3
                 self.logger.warning('import keyring failed: %r.', e)
 
-    def connect_dsn(self, dsn):
-        self.connect(dsn=dsn)
+    def connect_dsn(self, dsn, **kwargs):
+        self.connect(dsn=dsn, **kwargs)
 
     def connect_uri(self, uri):
         kwargs = psycopg2.extensions.parse_dsn(uri)
@@ -1048,7 +1048,7 @@ def cli(dbname, username_opt, host, port, prompt_passwd, never_prompt,
     elif '://' in database:
         pgcli.connect_uri(database)
     elif "=" in database:
-        pgcli.connect_dsn(database)
+        pgcli.connect_dsn(database, user=user)
     elif os.environ.get('PGSERVICE', None):
         pgcli.connect_dsn('service={0}'.format(os.environ['PGSERVICE']))
     else:
