@@ -46,11 +46,13 @@ def step_run_cli_using_arg(context, arg):
     if arg == '--password':
         arg = '--password'
         prompt_check = False
-    if arg == 'dsn_password':  # This uses the mock_pg_service.conf file in fixtures folder.
+    # This uses the mock_pg_service.conf file in fixtures folder.
+    if arg == 'dsn_password':
         arg = 'service=mock_postgres --password'
         prompt_check = False
         currentdb = "postgres"
-    wrappers.run_cli(context, run_args=[arg], prompt_check=prompt_check, currentdb=currentdb)
+    wrappers.run_cli(context, run_args=[
+                     arg], prompt_check=prompt_check, currentdb=currentdb)
 
 
 @when('we wait for prompt')

@@ -94,7 +94,8 @@ def before_all(context):
     os.environ['PGUSER'] = context.conf['user']
     os.environ['PGHOST'] = context.conf['host']
     os.environ['PGPORT'] = context.conf['port']
-    os.environ['PGSERVICEFILE'] = os.path.join(fixture_dir, 'mock_pg_service.conf')
+    os.environ['PGSERVICEFILE'] = os.path.join(
+        fixture_dir, 'mock_pg_service.conf')
 
     if context.conf['pass']:
         os.environ['PGPASSWORD'] = context.conf['pass']
