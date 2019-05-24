@@ -12,32 +12,32 @@ def pgcli_bindings(pgcli):
     """Custom key bindings for pgcli."""
     kb = KeyBindings()
 
-    tab_insert_text = ' ' * 4
+    tab_insert_text = " " * 4
 
-    @kb.add('f2')
+    @kb.add("f2")
     def _(event):
         """Enable/Disable SmartCompletion Mode."""
-        _logger.debug('Detected F2 key.')
+        _logger.debug("Detected F2 key.")
         pgcli.completer.smart_completion = not pgcli.completer.smart_completion
 
-    @kb.add('f3')
+    @kb.add("f3")
     def _(event):
         """Enable/Disable Multiline Mode."""
-        _logger.debug('Detected F3 key.')
+        _logger.debug("Detected F3 key.")
         pgcli.multi_line = not pgcli.multi_line
 
-    @kb.add('f4')
+    @kb.add("f4")
     def _(event):
         """Toggle between Vi and Emacs mode."""
-        _logger.debug('Detected F4 key.')
+        _logger.debug("Detected F4 key.")
         pgcli.vi_mode = not pgcli.vi_mode
         event.app.editing_mode = EditingMode.VI if pgcli.vi_mode else EditingMode.EMACS
 
-    @kb.add('tab')
+    @kb.add("tab")
     def _(event):
         """Force autocompletion at cursor on non-empty lines."""
 
-        _logger.debug('Detected <Tab> key.')
+        _logger.debug("Detected <Tab> key.")
 
         buff = event.app.current_buffer
         doc = buff.document
@@ -50,17 +50,15 @@ def pgcli_bindings(pgcli):
         else:
             buff.insert_text(tab_insert_text, fire_event=False)
 
-    @kb.add('escape', filter=has_completions)
+    @kb.add("escape", filter=has_completions)
     def _(event):
         """Force closing of autocompletion."""
-        _logger.debug('Detected <Esc> key.')
+        _logger.debug("Detected <Esc> key.")
 
         event.current_buffer.complete_state = None
         event.app.current_buffer.complete_state = None
 
-
-
-    @kb.add('c-space')
+    @kb.add("c-space")
     def _(event):
         """
         Initialize autocompletion at cursor.
@@ -70,7 +68,7 @@ def pgcli_bindings(pgcli):
 
         If the menu is showing, select the next completion.
         """
-        _logger.debug('Detected <C-Space> key.')
+        _logger.debug("Detected <C-Space> key.")
 
         b = event.app.current_buffer
         if b.complete_state:
@@ -78,7 +76,7 @@ def pgcli_bindings(pgcli):
         else:
             b.start_completion(select_first=False)
 
-    @kb.add('enter', filter=completion_is_selected)
+    @kb.add("enter", filter=completion_is_selected)
     def _(event):
         """Makes the enter key work as the tab key only when showing the menu.
 
@@ -87,7 +85,7 @@ def pgcli_bindings(pgcli):
         (accept current selection).
 
         """
-        _logger.debug('Detected enter key.')
+        _logger.debug("Detected enter key.")
 
         event.current_buffer.complete_state = None
         event.app.current_buffer.complete_state = None

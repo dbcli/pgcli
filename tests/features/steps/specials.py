@@ -10,18 +10,19 @@ from behave import when, then
 import wrappers
 
 
-@when('we refresh completions')
+@when("we refresh completions")
 def step_refresh_completions(context):
     """
     Send refresh command.
     """
-    context.cli.sendline('\\refresh')
+    context.cli.sendline("\\refresh")
 
 
-@then('we see completions refresh started')
+@then("we see completions refresh started")
 def step_see_refresh_started(context):
     """
     Wait to see refresh output.
     """
     wrappers.expect_pager(
-        context, 'Auto-completion refresh started in the background.\r\n', timeout=2)
+        context, "Auto-completion refresh started in the background.\r\n", timeout=2
+    )

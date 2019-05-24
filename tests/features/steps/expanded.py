@@ -12,53 +12,61 @@ from textwrap import dedent
 import wrappers
 
 
-@when('we prepare the test data')
+@when("we prepare the test data")
 def step_prepare_data(context):
     """Create table, insert a record."""
-    context.cli.sendline('drop table if exists a;')
+    context.cli.sendline("drop table if exists a;")
     wrappers.expect_exact(
-        context, 'You\'re about to run a destructive command.\r\nDo you want to proceed? (y/n):', timeout=2)
-    context.cli.sendline('y')
+        context,
+        "You're about to run a destructive command.\r\nDo you want to proceed? (y/n):",
+        timeout=2,
+    )
+    context.cli.sendline("y")
 
     wrappers.wait_prompt(context)
-    context.cli.sendline(
-        'create table a(x integer, y real, z numeric(10, 4));')
-    wrappers.expect_pager(context, 'CREATE TABLE\r\n', timeout=2)
-    context.cli.sendline('''insert into a(x, y, z) values(1, 1.0, 1.0);''')
-    wrappers.expect_pager(context, 'INSERT 0 1\r\n', timeout=2)
+    context.cli.sendline("create table a(x integer, y real, z numeric(10, 4));")
+    wrappers.expect_pager(context, "CREATE TABLE\r\n", timeout=2)
+    context.cli.sendline("""insert into a(x, y, z) values(1, 1.0, 1.0);""")
+    wrappers.expect_pager(context, "INSERT 0 1\r\n", timeout=2)
 
 
-@when('we set expanded {mode}')
+@when("we set expanded {mode}")
 def step_set_expanded(context, mode):
     """Set expanded to mode."""
-    context.cli.sendline('\\' + 'x {}'.format(mode))
-    wrappers.expect_exact(context, 'Expanded display is', timeout=2)
+    context.cli.sendline("\\" + "x {}".format(mode))
+    wrappers.expect_exact(context, "Expanded display is", timeout=2)
     wrappers.wait_prompt(context)
 
 
-@then('we see {which} data selected')
+@then("we see {which} data selected")
 def step_see_data(context, which):
     """Select data from expanded test table."""
-    if which == 'expanded':
+    if which == "expanded":
         wrappers.expect_pager(
             context,
-            dedent('''\
+            dedent(
+                """\
                 -[ RECORD 1 ]-------------------------\r
                 x | 1\r
                 y | 1.0\r
                 z | 1.0000\r
                 SELECT 1\r
-            '''),
-            timeout=1)
+            """
+            ),
+            timeout=1,
+        )
     else:
         wrappers.expect_pager(
             context,
-            dedent('''\
+            dedent(
+                """\
                 +-----+-----+--------+\r
                 | x   | y   | z      |\r
                 |-----+-----+--------|\r
                 | 1   | 1.0 | 1.0000 |\r
                 +-----+-----+--------+\r
                 SELECT 1\r
-            '''),
-            timeout=1)
+            """
+            ),
+            timeout=1,
+        )

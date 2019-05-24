@@ -5,8 +5,7 @@ import re
 import sqlparse
 from collections import namedtuple
 from sqlparse.sql import Comparison, Identifier, Where
-from .parseutils.utils import (
-    last_word, find_prev_keyword, parse_partial_identifier)
+from .parseutils.utils import last_word, find_prev_keyword, parse_partial_identifier
 from .parseutils.tables import extract_tables
 from .parseutils.ctes import isolate_query_ctes
 from pgspecial.main import parse_special_command
@@ -20,23 +19,23 @@ else:
     string_types = basestring
 
 
-Special = namedtuple('Special', [])
-Database = namedtuple('Database', [])
-Schema = namedtuple('Schema', ['quoted'])
+Special = namedtuple("Special", [])
+Database = namedtuple("Database", [])
+Schema = namedtuple("Schema", ["quoted"])
 Schema.__new__.__defaults__ = (False,)
 # FromClauseItem is a table/view/function used in the FROM clause
 # `table_refs` contains the list of tables/... already in the statement,
 # used to ensure that the alias we suggest is unique
-FromClauseItem = namedtuple('FromClauseItem', 'schema table_refs local_tables')
-Table = namedtuple('Table', ['schema', 'table_refs', 'local_tables'])
-TableFormat = namedtuple('TableFormat', [])
-View = namedtuple('View', ['schema', 'table_refs'])
+FromClauseItem = namedtuple("FromClauseItem", "schema table_refs local_tables")
+Table = namedtuple("Table", ["schema", "table_refs", "local_tables"])
+TableFormat = namedtuple("TableFormat", [])
+View = namedtuple("View", ["schema", "table_refs"])
 # JoinConditions are suggested after ON, e.g. 'foo.barid = bar.barid'
-JoinCondition = namedtuple('JoinCondition', ['table_refs', 'parent'])
+JoinCondition = namedtuple("JoinCondition", ["table_refs", "parent"])
 # Joins are suggested after JOIN, e.g. 'foo ON foo.barid = bar.barid'
-Join = namedtuple('Join', ['table_refs', 'schema'])
+Join = namedtuple("Join", ["table_refs", "schema"])
 
-Function = namedtuple('Function', ['schema', 'table_refs', 'usage'])
+Function = namedtuple("Function", ["schema", "table_refs", "usage"])
 # For convenience, don't require the `usage` argument in Function constructor
 Function.__new__.__defaults__ = (None, tuple(), None)
 Table.__new__.__defaults__ = (None, tuple(), tuple())
@@ -44,30 +43,32 @@ View.__new__.__defaults__ = (None, tuple())
 FromClauseItem.__new__.__defaults__ = (None, tuple(), tuple())
 
 Column = namedtuple(
-    'Column',
-    ['table_refs', 'require_last_table', 'local_tables', 'qualifiable', 'context']
+    "Column",
+    ["table_refs", "require_last_table", "local_tables", "qualifiable", "context"],
 )
 Column.__new__.__defaults__ = (None, None, tuple(), False, None)
 
-Keyword = namedtuple('Keyword', ['last_token'])
+Keyword = namedtuple("Keyword", ["last_token"])
 Keyword.__new__.__defaults__ = (None,)
-NamedQuery = namedtuple('NamedQuery', [])
-Datatype = namedtuple('Datatype', ['schema'])
-Alias = namedtuple('Alias', ['aliases'])
+NamedQuery = namedtuple("NamedQuery", [])
+Datatype = namedtuple("Datatype", ["schema"])
+Alias = namedtuple("Alias", ["aliases"])
 
-Path = namedtuple('Path', [])
+Path = namedtuple("Path", [])
 
 
 class SqlStatement(object):
     def __init__(self, full_text, text_before_cursor):
         self.identifier = None
         self.word_before_cursor = word_before_cursor = last_word(
-            text_before_cursor, include='many_punctuations')
+            text_before_cursor, include="many_punctuations"
+        )
         full_text = _strip_named_query(full_text)
         text_before_cursor = _strip_named_query(text_before_cursor)
 
-        full_text, text_before_cursor, self.local_tables = \
-            isolate_query_ctes(full_text, text_before_cursor)
+        full_text, text_before_cursor, self.local_tables = isolate_query_ctes(
+            full_text, text_before_cursor
+        )
 
         self.text_before_cursor_including_last_word = text_before_cursor
 
@@ -78,28 +79,29 @@ class SqlStatement(object):
         # completion useless because it will always return the list of
         # keywords as completion.
         if self.word_before_cursor:
-            if word_before_cursor[-1] == '(' or word_before_cursor[0] == '\\':
+            if word_before_cursor[-1] == "(" or word_before_cursor[0] == "\\":
                 parsed = sqlparse.parse(text_before_cursor)
             else:
-                text_before_cursor = text_before_cursor[:-len(word_before_cursor)]
+                text_before_cursor = text_before_cursor[: -len(word_before_cursor)]
                 parsed = sqlparse.parse(text_before_cursor)
                 self.identifier = parse_partial_identifier(word_before_cursor)
         else:
             parsed = sqlparse.parse(text_before_cursor)
 
-        full_text, text_before_cursor, parsed = \
-            _split_multiple_statements(full_text, text_before_cursor, parsed)
+        full_text, text_before_cursor, parsed = _split_multiple_statements(
+            full_text, text_before_cursor, parsed
+        )
 
         self.full_text = full_text
         self.text_before_cursor = text_before_cursor
         self.parsed = parsed
 
-        self.last_token = parsed and parsed.token_prev(len(parsed.tokens))[1] or ''
+        self.last_token = parsed and parsed.token_prev(len(parsed.tokens))[1] or ""
 
     def is_insert(self):
-        return self.parsed.token_first().value.lower() == 'insert'
+        return self.parsed.token_first().value.lower() == "insert"
 
-    def get_tables(self, scope='full'):
+    def get_tables(self, scope="full"):
         """ Gets the tables available in the statement.
         param `scope:` possible values: 'full', 'insert', 'before'
         If 'insert', only the first table is returned.
@@ -107,8 +109,9 @@ class SqlStatement(object):
         If not 'insert' and the stmt is an insert, the first table is skipped.
         """
         tables = extract_tables(
-            self.full_text if scope == 'full' else self.text_before_cursor)
-        if scope == 'insert':
+            self.full_text if scope == "full" else self.text_before_cursor
+        )
+        if scope == "insert":
             tables = tables[:1]
         elif self.is_insert():
             tables = tables[1:]
@@ -126,8 +129,9 @@ class SqlStatement(object):
         return schema
 
     def reduce_to_prev_keyword(self, n_skip=0):
-        prev_keyword, self.text_before_cursor = \
-            find_prev_keyword(self.text_before_cursor, n_skip=n_skip)
+        prev_keyword, self.text_before_cursor = find_prev_keyword(
+            self.text_before_cursor, n_skip=n_skip
+        )
         return prev_keyword
 
 
@@ -139,7 +143,7 @@ def suggest_type(full_text, text_before_cursor):
     A scope for a column category will be a list of tables.
     """
 
-    if full_text.startswith('\\i '):
+    if full_text.startswith("\\i "):
         return (Path(),)
 
     # This is a temporary hack; the exception handling
@@ -154,14 +158,14 @@ def suggest_type(full_text, text_before_cursor):
         # Be careful here because trivial whitespace is parsed as a
         # statement, but the statement won't have a first token
         tok1 = stmt.parsed.token_first()
-        if tok1 and tok1.value.startswith('\\'):
+        if tok1 and tok1.value.startswith("\\"):
             text = stmt.text_before_cursor + stmt.word_before_cursor
             return suggest_special(text)
 
     return suggest_based_on_last_token(stmt.last_token, stmt)
 
 
-named_query_regex = re.compile(r'^\s*\\ns\s+[A-z0-9\-_]+\s+')
+named_query_regex = re.compile(r"^\s*\\ns\s+[A-z0-9\-_]+\s+")
 
 
 def _strip_named_query(txt):
@@ -172,11 +176,11 @@ def _strip_named_query(txt):
     """
 
     if named_query_regex.match(txt):
-        txt = named_query_regex.sub('', txt)
+        txt = named_query_regex.sub("", txt)
     return txt
 
 
-function_body_pattern = re.compile(r'(\$.*?\$)([\s\S]*?)\1', re.M)
+function_body_pattern = re.compile(r"(\$.*?\$)([\s\S]*?)\1", re.M)
 
 
 def _find_function_body(text):
@@ -222,12 +226,12 @@ def _split_multiple_statements(full_text, text_before_cursor, parsed):
         return full_text, text_before_cursor, None
 
     token2 = None
-    if statement.get_type() in ('CREATE', 'CREATE OR REPLACE'):
+    if statement.get_type() in ("CREATE", "CREATE OR REPLACE"):
         token1 = statement.token_first()
         if token1:
             token1_idx = statement.token_index(token1)
             token2 = statement.token_next(token1_idx)[1]
-    if token2 and token2.value.upper() == 'FUNCTION':
+    if token2 and token2.value.upper() == "FUNCTION":
         full_text, text_before_cursor, statement = _statement_from_function(
             full_text, text_before_cursor, statement
         )
@@ -235,11 +239,11 @@ def _split_multiple_statements(full_text, text_before_cursor, parsed):
 
 
 SPECIALS_SUGGESTION = {
-    'dT': Datatype,
-    'df': Function,
-    'dt': Table,
-    'dv': View,
-    'sf': Function,
+    "dT": Datatype,
+    "df": Function,
+    "dt": Table,
+    "dv": View,
+    "sf": Function,
 }
 
 
@@ -251,13 +255,13 @@ def suggest_special(text):
         # Trying to complete the special command itself
         return (Special(),)
 
-    if cmd in ('\\c', '\\connect'):
+    if cmd in ("\\c", "\\connect"):
         return (Database(),)
 
-    if cmd == '\\T':
+    if cmd == "\\T":
         return (TableFormat(),)
 
-    if cmd == '\\dn':
+    if cmd == "\\dn":
         return (Schema(),)
 
     if arg:
@@ -272,27 +276,24 @@ def suggest_special(text):
     else:
         schema = None
 
-    if cmd[1:] == 'd':
+    if cmd[1:] == "d":
         # \d can describe tables or views
         if schema:
-            return (Table(schema=schema),
-                    View(schema=schema),)
+            return (Table(schema=schema), View(schema=schema))
         else:
-            return (Schema(),
-                    Table(schema=None),
-                    View(schema=None),)
+            return (Schema(), Table(schema=None), View(schema=None))
     elif cmd[1:] in SPECIALS_SUGGESTION:
         rel_type = SPECIALS_SUGGESTION[cmd[1:]]
         if schema:
             if rel_type == Function:
-                return (Function(schema=schema, usage='special'),)
+                return (Function(schema=schema, usage="special"),)
             return (rel_type(schema=schema),)
         else:
             if rel_type == Function:
-                return (Schema(), Function(schema=None, usage='special'),)
+                return (Schema(), Function(schema=None, usage="special"))
             return (Schema(), rel_type(schema=None))
 
-    if cmd in ['\\n', '\\ns', '\\nd']:
+    if cmd in ["\\n", "\\ns", "\\nd"]:
         return (NamedQuery(),)
 
     return (Keyword(), Special())
@@ -327,9 +328,9 @@ def suggest_based_on_last_token(token, stmt):
         #       SELECT Identifier <CURSOR>
         #       SELECT foo FROM Identifier <CURSOR>
         prev_keyword, _ = find_prev_keyword(stmt.text_before_cursor)
-        if prev_keyword and prev_keyword.value == '(':
+        if prev_keyword and prev_keyword.value == "(":
             # Suggest datatypes
-            return suggest_based_on_last_token('type', stmt)
+            return suggest_based_on_last_token("type", stmt)
         else:
             return (Keyword(),)
     else:
@@ -337,7 +338,7 @@ def suggest_based_on_last_token(token, stmt):
 
     if not token:
         return (Keyword(), Special())
-    elif token_v.endswith('('):
+    elif token_v.endswith("("):
         p = sqlparse.parse(stmt.text_before_cursor)[0]
 
         if p.tokens and isinstance(p.tokens[-1], Where):
@@ -352,7 +353,7 @@ def suggest_based_on_last_token(token, stmt):
             #        Suggest columns/functions AND keywords. (If we wanted to be
             #        really fancy, we could suggest only array-typed columns)
 
-            column_suggestions = suggest_based_on_last_token('where', stmt)
+            column_suggestions = suggest_based_on_last_token("where", stmt)
 
             # Check for a subquery expression (cases 3 & 4)
             where = p.tokens[-1]
@@ -363,7 +364,7 @@ def suggest_based_on_last_token(token, stmt):
                 prev_tok = prev_tok.tokens[-1]
 
             prev_tok = prev_tok.value.lower()
-            if prev_tok == 'exists':
+            if prev_tok == "exists":
                 return (Keyword(),)
             else:
                 return column_suggestions
@@ -371,57 +372,71 @@ def suggest_based_on_last_token(token, stmt):
         # Get the token before the parens
         prev_tok = p.token_prev(len(p.tokens) - 1)[1]
 
-        if (prev_tok and prev_tok.value
-          and prev_tok.value.lower().split(' ')[-1] == 'using'):
+        if (
+            prev_tok
+            and prev_tok.value
+            and prev_tok.value.lower().split(" ")[-1] == "using"
+        ):
             # tbl1 INNER JOIN tbl2 USING (col1, col2)
-            tables = stmt.get_tables('before')
+            tables = stmt.get_tables("before")
 
             # suggest columns that are present in more than one table
-            return (Column(table_refs=tables,
-                           require_last_table=True,
-                           local_tables=stmt.local_tables),)
+            return (
+                Column(
+                    table_refs=tables,
+                    require_last_table=True,
+                    local_tables=stmt.local_tables,
+                ),
+            )
 
-        elif p.token_first().value.lower() == 'select':
+        elif p.token_first().value.lower() == "select":
             # If the lparen is preceeded by a space chances are we're about to
             # do a sub-select.
-            if last_word(stmt.text_before_cursor,
-                         'all_punctuations').startswith('('):
+            if last_word(stmt.text_before_cursor, "all_punctuations").startswith("("):
                 return (Keyword(),)
         prev_prev_tok = prev_tok and p.token_prev(p.token_index(prev_tok))[1]
-        if prev_prev_tok and prev_prev_tok.normalized == 'INTO':
-            return (
-                Column(table_refs=stmt.get_tables('insert'), context='insert'),
-            )
+        if prev_prev_tok and prev_prev_tok.normalized == "INTO":
+            return (Column(table_refs=stmt.get_tables("insert"), context="insert"),)
         # We're probably in a function argument list
-        return (Column(table_refs=extract_tables(stmt.full_text),
-                       local_tables=stmt.local_tables, qualifiable=True),)
-    elif token_v == 'set':
-        return (Column(table_refs=stmt.get_tables(),
-                       local_tables=stmt.local_tables),)
-    elif token_v in ('select', 'where', 'having', 'order by', 'distinct'):
+        return (
+            Column(
+                table_refs=extract_tables(stmt.full_text),
+                local_tables=stmt.local_tables,
+                qualifiable=True,
+            ),
+        )
+    elif token_v == "set":
+        return (Column(table_refs=stmt.get_tables(), local_tables=stmt.local_tables),)
+    elif token_v in ("select", "where", "having", "order by", "distinct"):
         # Check for a table alias or schema qualification
         parent = (stmt.identifier and stmt.identifier.get_parent_name()) or []
         tables = stmt.get_tables()
         if parent:
             tables = tuple(t for t in tables if identifies(parent, t))
-            return (Column(table_refs=tables, local_tables=stmt.local_tables),
-                    Table(schema=parent),
-                    View(schema=parent),
-                    Function(schema=parent),)
+            return (
+                Column(table_refs=tables, local_tables=stmt.local_tables),
+                Table(schema=parent),
+                View(schema=parent),
+                Function(schema=parent),
+            )
         else:
-            return (Column(table_refs=tables, local_tables=stmt.local_tables,
-                           qualifiable=True),
-                    Function(schema=None),
-                    Keyword(token_v.upper()),)
-    elif token_v == 'as':
+            return (
+                Column(
+                    table_refs=tables, local_tables=stmt.local_tables, qualifiable=True
+                ),
+                Function(schema=None),
+                Keyword(token_v.upper()),
+            )
+    elif token_v == "as":
         # Don't suggest anything for aliases
         return ()
-    elif (token_v.endswith('join') and token.is_keyword) or (token_v in
-            ('copy', 'from', 'update', 'into', 'describe', 'truncate')):
+    elif (token_v.endswith("join") and token.is_keyword) or (
+        token_v in ("copy", "from", "update", "into", "describe", "truncate")
+    ):
 
         schema = stmt.get_identifier_schema()
         tables = extract_tables(stmt.text_before_cursor)
-        is_join = token_v.endswith('join') and token.is_keyword
+        is_join = token_v.endswith("join") and token.is_keyword
 
         # Suggest tables from either the currently-selected schema or the
         # public schema if no schema has been specified
@@ -431,98 +446,101 @@ def suggest_based_on_last_token(token, stmt):
             # Suggest schemas
             suggest.insert(0, Schema())
 
-        if token_v == 'from' or is_join:
-            suggest.append(FromClauseItem(schema=schema,
-                                          table_refs=tables,
-                                          local_tables=stmt.local_tables))
-        elif token_v == 'truncate':
+        if token_v == "from" or is_join:
+            suggest.append(
+                FromClauseItem(
+                    schema=schema, table_refs=tables, local_tables=stmt.local_tables
+                )
+            )
+        elif token_v == "truncate":
             suggest.append(Table(schema))
         else:
             suggest.extend((Table(schema), View(schema)))
 
         if is_join and _allow_join(stmt.parsed):
-            tables = stmt.get_tables('before')
+            tables = stmt.get_tables("before")
             suggest.append(Join(table_refs=tables, schema=schema))
 
         return tuple(suggest)
 
-    elif token_v == 'function':
+    elif token_v == "function":
         schema = stmt.get_identifier_schema()
         # stmt.get_previous_token will fail for e.g. `SELECT 1 FROM functions WHERE function:`
         try:
             prev = stmt.get_previous_token(token).value.lower()
-            if prev in('drop', 'alter', 'create', 'create or replace'):
-                return (Function(schema=schema, usage='signature'),)
+            if prev in ("drop", "alter", "create", "create or replace"):
+                return (Function(schema=schema, usage="signature"),)
         except ValueError:
             pass
         return tuple()
 
-    elif token_v in ('table', 'view'):
+    elif token_v in ("table", "view"):
         # E.g. 'ALTER TABLE <tablname>'
-        rel_type = {'table': Table, 'view': View, 'function': Function}[token_v]
+        rel_type = {"table": Table, "view": View, "function": Function}[token_v]
         schema = stmt.get_identifier_schema()
         if schema:
             return (rel_type(schema=schema),)
         else:
             return (Schema(), rel_type(schema=schema))
 
-    elif token_v == 'column':
+    elif token_v == "column":
         # E.g. 'ALTER TABLE foo ALTER COLUMN bar
         return (Column(table_refs=stmt.get_tables()),)
 
-    elif token_v == 'on':
-        tables = stmt.get_tables('before')
+    elif token_v == "on":
+        tables = stmt.get_tables("before")
         parent = (stmt.identifier and stmt.identifier.get_parent_name()) or None
         if parent:
             # "ON parent.<suggestion>"
             # parent can be either a schema name or table alias
             filteredtables = tuple(t for t in tables if identifies(parent, t))
-            sugs = [Column(table_refs=filteredtables,
-                           local_tables=stmt.local_tables),
-                    Table(schema=parent),
-                    View(schema=parent),
-                    Function(schema=parent)]
+            sugs = [
+                Column(table_refs=filteredtables, local_tables=stmt.local_tables),
+                Table(schema=parent),
+                View(schema=parent),
+                Function(schema=parent),
+            ]
             if filteredtables and _allow_join_condition(stmt.parsed):
-                sugs.append(JoinCondition(table_refs=tables,
-                                          parent=filteredtables[-1]))
+                sugs.append(JoinCondition(table_refs=tables, parent=filteredtables[-1]))
             return tuple(sugs)
         else:
             # ON <suggestion>
             # Use table alias if there is one, otherwise the table name
             aliases = tuple(t.ref for t in tables)
             if _allow_join_condition(stmt.parsed):
-                return (Alias(aliases=aliases), JoinCondition(
-                    table_refs=tables, parent=None))
+                return (
+                    Alias(aliases=aliases),
+                    JoinCondition(table_refs=tables, parent=None),
+                )
             else:
                 return (Alias(aliases=aliases),)
 
-    elif token_v in ('c', 'use', 'database', 'template'):
+    elif token_v in ("c", "use", "database", "template"):
         # "\c <db", "use <db>", "DROP DATABASE <db>",
         # "CREATE DATABASE <newdb> WITH TEMPLATE <db>"
         return (Database(),)
-    elif token_v == 'schema':
+    elif token_v == "schema":
         # DROP SCHEMA schema_name, SET SCHEMA schema name
         prev_keyword = stmt.reduce_to_prev_keyword(n_skip=2)
-        quoted = prev_keyword and prev_keyword.value.lower() == 'set'
+        quoted = prev_keyword and prev_keyword.value.lower() == "set"
         return (Schema(quoted),)
-    elif token_v.endswith(',') or token_v in ('=', 'and', 'or'):
+    elif token_v.endswith(",") or token_v in ("=", "and", "or"):
         prev_keyword = stmt.reduce_to_prev_keyword()
         if prev_keyword:
             return suggest_based_on_last_token(prev_keyword, stmt)
         else:
             return ()
-    elif token_v in ('type', '::'):
+    elif token_v in ("type", "::"):
         #   ALTER TABLE foo SET DATA TYPE bar
         #   SELECT foo::bar
         # Note that tables are a form of composite type in postgresql, so
         # they're suggested here as well
         schema = stmt.get_identifier_schema()
-        suggestions = [Datatype(schema=schema),
-                       Table(schema=schema)]
+        suggestions = [Datatype(schema=schema), Table(schema=schema)]
         if not schema:
             suggestions.append(Schema())
         return tuple(suggestions)
-    elif token_v in {'alter', 'create', 'drop'}:
+    elif token_v in {"alter", "create", "drop"}:
         return (Keyword(token_v.upper()),)
     elif token.is_keyword:
         # token is a keyword we haven't implemented any special handling for
@@ -539,8 +557,11 @@ def suggest_based_on_last_token(token, stmt):
 def identifies(id, ref):
     """Returns true if string `id` matches TableReference `ref`"""
 
-    return id == ref.alias or id == ref.name or (
-        ref.schema and (id == ref.schema + '.' + ref.name))
+    return (
+        id == ref.alias
+        or id == ref.name
+        or (ref.schema and (id == ref.schema + "." + ref.name))
+    )
 
 
 def _allow_join_condition(statement):
@@ -560,7 +581,7 @@ def _allow_join_condition(statement):
         return False
 
     last_tok = statement.token_prev(len(statement.tokens))[1]
-    return last_tok.value.lower() in ('on', 'and', 'or')
+    return last_tok.value.lower() in ("on", "and", "or")
 
 
 def _allow_join(statement):
@@ -579,5 +600,7 @@ def _allow_join(statement):
         return False
 
     last_tok = statement.token_prev(len(statement.tokens))[1]
-    return (last_tok.value.lower().endswith('join')
-        and last_tok.value.lower() not in('cross join', 'natural join'))
+    return last_tok.value.lower().endswith("join") and last_tok.value.lower() not in (
+        "cross join",
+        "natural join",
+    )

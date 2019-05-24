@@ -6,37 +6,45 @@ from behave import then, when
 import wrappers
 
 
-@when('we run dbcli with {arg}')
+@when("we run dbcli with {arg}")
 def step_run_cli_with_arg(context, arg):
-    wrappers.run_cli(context, run_args=arg.split('='))
+    wrappers.run_cli(context, run_args=arg.split("="))
 
 
-@when('we execute a small query')
+@when("we execute a small query")
 def step_execute_small_query(context):
-    context.cli.sendline('select 1')
+    context.cli.sendline("select 1")
 
 
-@when('we execute a large query')
+@when("we execute a large query")
 def step_execute_large_query(context):
-    context.cli.sendline(
-        'select {}'.format(','.join([str(n) for n in range(1, 50)])))
+    context.cli.sendline("select {}".format(",".join([str(n) for n in range(1, 50)])))
 
 
-@then('we see small results in horizontal format')
+@then("we see small results in horizontal format")
 def step_see_small_results(context):
-    wrappers.expect_pager(context, dedent("""\
+    wrappers.expect_pager(
+        context,
+        dedent(
+            """\
         +------------+\r
         | ?column?   |\r
         |------------|\r
         | 1          |\r
         +------------+\r
         SELECT 1\r
-        """), timeout=5)
+        """
+        ),
+        timeout=5,
+    )
 
 
-@then('we see large results in vertical format')
+@then("we see large results in vertical format")
 def step_see_large_results(context):
-    wrappers.expect_pager(context, dedent("""\
+    wrappers.expect_pager(
+        context,
+        dedent(
+            """\
         -[ RECORD 1 ]-------------------------\r
         ?column? | 1\r
         ?column? | 2\r
@@ -88,4 +96,7 @@ def step_see_large_results(context):
         ?column? | 48\r
         ?column? | 49\r
         SELECT 1\r
-        """), timeout=5)
+        """
+        ),
+        timeout=5,
+    )

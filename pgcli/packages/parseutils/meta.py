@@ -2,22 +2,26 @@ from __future__ import unicode_literals
 from collections import namedtuple
 
 _ColumnMetadata = namedtuple(
-    'ColumnMetadata',
-    ['name', 'datatype', 'foreignkeys', 'default', 'has_default']
+    "ColumnMetadata", ["name", "datatype", "foreignkeys", "default", "has_default"]
 )
 
 
-def ColumnMetadata(
-        name, datatype, foreignkeys=None, default=None, has_default=False
-):
-    return _ColumnMetadata(
-        name, datatype, foreignkeys or [], default, has_default
-    )
+def ColumnMetadata(name, datatype, foreignkeys=None, default=None, has_default=False):
+    return _ColumnMetadata(name, datatype, foreignkeys or [], default, has_default)
 
 
-ForeignKey = namedtuple('ForeignKey', ['parentschema', 'parenttable',
-    'parentcolumn', 'childschema', 'childtable', 'childcolumn'])
-TableMetadata = namedtuple('TableMetadata', 'name columns')
+ForeignKey = namedtuple(
+    "ForeignKey",
+    [
+        "parentschema",
+        "parenttable",
+        "parentcolumn",
+        "childschema",
+        "childtable",
+        "childcolumn",
+    ],
+)
+TableMetadata = namedtuple("TableMetadata", "name columns")
 
 
 def parse_defaults(defaults_string):
@@ -25,34 +29,42 @@ def parse_defaults(defaults_string):
     pg_get_expr(pg_catalog.pg_proc.proargdefaults, 0)"""
     if not defaults_string:
         return
-    current = ''
+    current = ""
     in_quote = None
     for char in defaults_string:
-        if current == '' and char == ' ':
+        if current == "" and char == " ":
             # Skip space after comma separating default expressions
             continue
-        if char == '"' or char == '\'':
+        if char == '"' or char == "'":
             if in_quote and char == in_quote:
                 # End quote
                 in_quote = None
             elif not in_quote:
                 # Begin quote
                 in_quote = char
-        elif char == ',' and not in_quote:
+        elif char == "," and not in_quote:
             # End of expression
             yield current
-            current = ''
+            current = ""
             continue
         current += char
     yield current
 
 
 class FunctionMetadata(object):
-
     def __init__(
-            self, schema_name, func_name, arg_names, arg_types, arg_modes,
-            return_type, is_aggregate, is_window, is_set_returning, is_extension,
-            arg_defaults
+        self,
+        schema_name,
+        func_name,
+        arg_names,
+        arg_types,
+        arg_modes,
+        return_type,
+        is_aggregate,
+        is_window,
+        is_set_returning,
+        is_extension,
+        arg_defaults,
     ):
         """Class for describing a postgresql function"""
 
@@ -81,20 +93,27 @@ class FunctionMetadata(object):
         self.is_window = is_window
         self.is_set_returning = is_set_returning
         self.is_extension = bool(is_extension)
-        self.is_public = (self.schema_name and self.schema_name == 'public')
+        self.is_public = self.schema_name and self.schema_name == "public"
 
     def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-                and self.__dict__ == other.__dict__)
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def _signature(self):
         return (
-            self.schema_name, self.func_name, self.arg_names,
-            self.arg_types, self.arg_modes, self.return_type, self.is_aggregate,
-            self.is_window, self.is_set_returning, self.is_extension, self.arg_defaults
+            self.schema_name,
+            self.func_name,
+            self.arg_names,
+            self.arg_types,
+            self.arg_modes,
+            self.return_type,
+            self.is_aggregate,
+            self.is_window,
+            self.is_set_returning,
+            self.is_extension,
+            self.arg_defaults,
         )
 
     def __hash__(self):
@@ -102,25 +121,23 @@ class FunctionMetadata(object):
 
     def __repr__(self):
         return (
-            (
-                '%s(schema_name=%r, func_name=%r, arg_names=%r, '
-                'arg_types=%r, arg_modes=%r, return_type=%r, is_aggregate=%r, '
-                'is_window=%r, is_set_returning=%r, is_extension=%r, arg_defaults=%r)'
-            ) % ((self.__class__.__name__,) + self._signature())
-        )
+            "%s(schema_name=%r, func_name=%r, arg_names=%r, "
+            "arg_types=%r, arg_modes=%r, return_type=%r, is_aggregate=%r, "
+            "is_window=%r, is_set_returning=%r, is_extension=%r, arg_defaults=%r)"
+        ) % ((self.__class__.__name__,) + self._signature())
 
     def has_variadic(self):
-        return self.arg_modes and any(arg_mode == 'v' for arg_mode in self.arg_modes)
+        return self.arg_modes and any(arg_mode == "v" for arg_mode in self.arg_modes)
 
     def args(self):
         """Returns a list of input-parameter ColumnMetadata namedtuples."""
         if not self.arg_names:
             return []
-        modes = self.arg_modes or ['i'] * len(self.arg_names)
+        modes = self.arg_modes or ["i"] * len(self.arg_names)
         args = [
             (name, typ)
             for name, typ, mode in zip(self.arg_names, self.arg_types, modes)
-            if mode in ('i', 'b', 'v')  # IN, INOUT, VARIADIC
+            if mode in ("i", "b", "v")  # IN, INOUT, VARIADIC
         ]
 
         def arg(name, typ, num):
@@ -128,7 +145,8 @@ class FunctionMetadata(object):
             num_defaults = len(self.arg_defaults)
             has_default = num + num_defaults >= num_args
             default = (
-                self.arg_defaults[num - num_args + num_defaults] if has_default
+                self.arg_defaults[num - num_args + num_defaults]
+                if has_default
                 else None
             )
             return ColumnMetadata(name, typ, [], default, has_default)
@@ -138,7 +156,7 @@ class FunctionMetadata(object):
     def fields(self):
         """Returns a list of output-field ColumnMetadata namedtuples"""
 
-        if self.return_type.lower() == 'void':
+        if self.return_type.lower() == "void":
             return []
         elif not self.arg_modes:
             # For functions  without output parameters, the function name
@@ -146,7 +164,8 @@ class FunctionMetadata(object):
             # E.g. 'SELECT unnest FROM unnest(...);'
             return [ColumnMetadata(self.func_name, self.return_type, [])]
 
-        return [ColumnMetadata(name, typ, [])
-            for name, typ, mode in zip(
-                self.arg_names, self.arg_types, self.arg_modes)
-            if mode in ('o', 'b', 't')] # OUT, INOUT, TABLE
+        return [
+            ColumnMetadata(name, typ, [])
+            for name, typ, mode in zip(self.arg_names, self.arg_types, self.arg_modes)
+            if mode in ("o", "b", "t")
+        ]  # OUT, INOUT, TABLE

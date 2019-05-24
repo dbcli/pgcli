@@ -5,6 +5,7 @@ import pytest
 @pytest.fixture
 def completer():
     import pgcli.pgcompleter as pgcompleter
+
     return pgcompleter.PGCompleter()
 
 
@@ -22,8 +23,8 @@ def test_ranking_ignores_identifier_quotes(completer):
 
     """
 
-    text = 'user'
-    collection = ['user_action', '"user"']
+    text = "user"
+    collection = ["user_action", '"user"']
     matches = completer.find_matches(text, collection)
     assert len(matches) == 2
 
@@ -42,18 +43,17 @@ def test_ranking_based_on_shortest_match(completer):
 
     """
 
-    text = 'user'
-    collection = ['api_user', 'user_group']
+    text = "user"
+    collection = ["api_user", "user_group"]
     matches = completer.find_matches(text, collection)
 
     assert matches[1].priority > matches[0].priority
 
 
-@pytest.mark.parametrize('collection', [
-    ['user_action', 'user'],
-    ['user_group', 'user'],
-    ['user_group', 'user_action'],
-])
+@pytest.mark.parametrize(
+    "collection",
+    [["user_action", "user"], ["user_group", "user"], ["user_group", "user_action"]],
+)
 def test_should_break_ties_using_lexical_order(completer, collection):
     """Fuzzy result rank should use lexical order to break ties.
 
@@ -68,7 +68,7 @@ def test_should_break_ties_using_lexical_order(completer, collection):
 
     """
 
-    text = 'user'
+    text = "user"
     matches = completer.find_matches(text, collection)
 
     assert matches[1].priority > matches[0].priority
@@ -81,8 +81,8 @@ def test_matching_should_be_case_insensitive(completer):
     are still matched.
     """
 
-    text = 'foo'
-    collection = ['Foo', 'FOO', 'fOO']
+    text = "foo"
+    collection = ["Foo", "FOO", "fOO"]
     matches = completer.find_matches(text, collection)
 
     assert len(matches) == 3

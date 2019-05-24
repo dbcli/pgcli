@@ -6,6 +6,7 @@ from mock import Mock, patch
 @pytest.fixture
 def refresher():
     from pgcli.completion_refresher import CompletionRefresher
+
     return CompletionRefresher()
 
 
@@ -17,8 +18,15 @@ def test_ctor(refresher):
     """
     assert len(refresher.refreshers) > 0
     actual_handlers = list(refresher.refreshers.keys())
-    expected_handlers = ['schemata', 'tables', 'views',
-                         'types', 'databases', 'casing', 'functions']
+    expected_handlers = [
+        "schemata",
+        "tables",
+        "views",
+        "types",
+        "databases",
+        "casing",
+        "functions",
+    ]
     assert expected_handlers == actual_handlers
 
 
@@ -32,14 +40,13 @@ def test_refresh_called_once(refresher):
     pgexecute = Mock()
     special = Mock()
 
-    with patch.object(refresher, '_bg_refresh') as bg_refresh:
+    with patch.object(refresher, "_bg_refresh") as bg_refresh:
         actual = refresher.refresh(pgexecute, special, callbacks)
         time.sleep(1)  # Wait for the thread to work.
         assert len(actual) == 1
         assert len(actual[0]) == 4
-        assert actual[0][3] == 'Auto-completion refresh started in the background.'
-        bg_refresh.assert_called_with(pgexecute, special, callbacks, None,
-            None)
+        assert actual[0][3] == "Auto-completion refresh started in the background."
+        bg_refresh.assert_called_with(pgexecute, special, callbacks, None, None)
 
 
 def test_refresh_called_twice(refresher):
@@ -62,13 +69,13 @@ def test_refresh_called_twice(refresher):
     time.sleep(1)  # Wait for the thread to work.
     assert len(actual1) == 1
     assert len(actual1[0]) == 4
-    assert actual1[0][3] == 'Auto-completion refresh started in the background.'
+    assert actual1[0][3] == "Auto-completion refresh started in the background."
 
     actual2 = refresher.refresh(pgexecute, special, callbacks)
     time.sleep(1)  # Wait for the thread to work.
     assert len(actual2) == 1
     assert len(actual2[0]) == 4
-    assert actual2[0][3] == 'Auto-completion refresh restarted.'
+    assert actual2[0][3] == "Auto-completion refresh restarted."
 
 
 def test_refresh_with_callbacks(refresher):
@@ -82,9 +89,9 @@ def test_refresh_with_callbacks(refresher):
     pgexecute.extra_args = {}
     special = Mock()
 
-    with patch('pgcli.completion_refresher.PGExecute', pgexecute_class):
+    with patch("pgcli.completion_refresher.PGExecute", pgexecute_class):
         # Set refreshers to 0: we're not testing refresh logic here
         refresher.refreshers = {}
         refresher.refresh(pgexecute, special, callbacks)
         time.sleep(1)  # Wait for the thread to work.
-        assert (callbacks[0].call_count == 1)
+        assert callbacks[0].call_count == 1
