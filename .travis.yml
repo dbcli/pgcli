@@ -29,8 +29,8 @@ script:
   - cd ..
   # check for changelog ReST compliance
   - rst2html.py --halt=warning changelog.rst >/dev/null
-  # check for black code compliance
-  - black . --check
+  # check for black code compliance, 3.6 only
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then pip install black && black --check . ; else echo "Skipping black for $TRAVIS_PYTHON_VERSION"; fi
   - set +e
 
 after_success:
