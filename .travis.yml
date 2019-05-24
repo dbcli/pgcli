@@ -29,6 +29,8 @@ script:
   - cd ..
   # check for changelog ReST compliance
   - rst2html.py --halt=warning changelog.rst >/dev/null
+  # check for black code compliance
+  - black . --check
   - set +e
 
 after_success:
