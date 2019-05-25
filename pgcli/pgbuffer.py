@@ -13,10 +13,11 @@ def pg_is_multiline(pgcli):
 
         if not pgcli.multi_line:
             return False
-        if pgcli.multiline_mode == 'safe':
+        if pgcli.multiline_mode == "safe":
             return True
         else:
             return not _multiline_exception(doc.text)
+
     return cond
 
 
@@ -24,17 +25,19 @@ def _is_complete(sql):
     # A complete command is an sql statement that ends with a semicolon, unless
     # there's an open quote surrounding it, as is common when writing a
     # CREATE FUNCTION command
-    return sql.endswith(';') and not is_open_quote(sql)
+    return sql.endswith(";") and not is_open_quote(sql)
 
 
 def _multiline_exception(text):
     text = text.strip()
     return (
-        text.startswith('\\') or  # Special Command
-        text.endswith(r'\e') or  # Ended with \e which should launch the editor
-        _is_complete(text) or  # A complete SQL command
-        (text == 'exit') or  # Exit doesn't need semi-colon
-        (text == 'quit') or  # Quit doesn't need semi-colon
-        (text == ':q') or  # To all the vim fans out there
-        (text == '')  # Just a plain enter without any text
+        text.startswith("\\")
+        or text.endswith(r"\e")  # Special Command
+        or _is_complete(text)  # Ended with \e which should launch the editor
+        or (text == "exit")  # A complete SQL command
+        or (text == "quit")  # Exit doesn't need semi-colon
+        or (text == ":q")  # Quit doesn't need semi-colon
+        or (  # To all the vim fans out there
+            text == ""
+        )  # Just a plain enter without any text
     )

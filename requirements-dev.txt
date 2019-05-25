@@ -4,11 +4,10 @@ mock>=1.0.1
 tox>=1.9.2
 behave>=1.2.4
 pexpect==3.3
+pre-commit>=1.16.0
 coverage==4.3.4
 codecov>=1.5.1
 docutils>=0.13.1
 autopep8==1.3.3
-# we want the latest possible version of pep8radius
-git+https://github.com/hayd/pep8radius.git
 click==6.7
 twine==1.11.0

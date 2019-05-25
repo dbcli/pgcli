@@ -7,17 +7,17 @@ from collections import defaultdict
 from .pgliterals.main import get_literals
 
 
-white_space_regex = re.compile('\\s+', re.MULTILINE)
+white_space_regex = re.compile("\\s+", re.MULTILINE)
 
 
 def _compile_regex(keyword):
     # Surround the keyword with word boundaries and replace interior whitespace
     # with whitespace wildcards
-    pattern = '\\b' + white_space_regex.sub(r'\\s+', keyword) + '\\b'
+    pattern = "\\b" + white_space_regex.sub(r"\\s+", keyword) + "\\b"
     return re.compile(pattern, re.MULTILINE | re.IGNORECASE)
 
 
-keywords = get_literals('keywords')
+keywords = get_literals("keywords")
 keyword_regexs = dict((kw, _compile_regex(kw)) for kw in keywords)
 
 

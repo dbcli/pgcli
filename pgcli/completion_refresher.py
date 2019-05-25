@@ -14,8 +14,7 @@ class CompletionRefresher(object):
         self._completer_thread = None
         self._restart_refresh = threading.Event()
 
-    def refresh(self, executor, special, callbacks, history=None,
-      settings=None):
+    def refresh(self, executor, special, callbacks, history=None, settings=None):
         """
         Creates a PGCompleter object and populates it with the relevant
         completion suggestions in a background thread.
@@ -30,27 +29,29 @@ class CompletionRefresher(object):
         """
         if self.is_refreshing():
             self._restart_refresh.set()
-            return [(None, None, None, 'Auto-completion refresh restarted.')]
+            return [(None, None, None, "Auto-completion refresh restarted.")]
         else:
             self._completer_thread = threading.Thread(
                 target=self._bg_refresh,
                 args=(executor, special, callbacks, history, settings),
-                name='completion_refresh')
+                name="completion_refresh",
+            )
             self._completer_thread.setDaemon(True)
             self._completer_thread.start()
-            return [(None, None, None,
-                     'Auto-completion refresh started in the background.')]
+            return [
+                (None, None, None, "Auto-completion refresh started in the background.")
+            ]
 
     def is_refreshing(self):
         return self._completer_thread and self._completer_thread.is_alive()
 
-    def _bg_refresh(self, pgexecute, special, callbacks, history=None,
-      settings=None):
+    def _bg_refresh(self, pgexecute, special, callbacks, history=None, settings=None):
         settings = settings or {}
-        completer = PGCompleter(smart_completion=True, pgspecial=special,
-            settings=settings)
+        completer = PGCompleter(
+            smart_completion=True, pgspecial=special, settings=settings
+        )
 
-        if settings.get('single_connection'):
+        if settings.get("single_connection"):
             executor = pgexecute
         else:
             # Create a new pgexecute method to populate the completions.
@@ -88,55 +89,58 @@ def refresher(name, refreshers=CompletionRefresher.refreshers):
     """Decorator to populate the dictionary of refreshers with the current
     function.
     """
+
     def wrapper(wrapped):
         refreshers[name] = wrapped
         return wrapped
+
     return wrapper
 
 
-@refresher('schemata')
+@refresher("schemata")
 def refresh_schemata(completer, executor):
     completer.set_search_path(executor.search_path())
     completer.extend_schemata(executor.schemata())
 
 
-@refresher('tables')
+@refresher("tables")
 def refresh_tables(completer, executor):
-    completer.extend_relations(executor.tables(), kind='tables')
-    completer.extend_columns(executor.table_columns(), kind='tables')
+    completer.extend_relations(executor.tables(), kind="tables")
+    completer.extend_columns(executor.table_columns(), kind="tables")
     completer.extend_foreignkeys(executor.foreignkeys())
 
 
-@refresher('views')
+@refresher("views")
 def refresh_views(completer, executor):
-    completer.extend_relations(executor.views(), kind='views')
-    completer.extend_columns(executor.view_columns(), kind='views')
+    completer.extend_relations(executor.views(), kind="views")
+    completer.extend_columns(executor.view_columns(), kind="views")
 
-@refresher('types')
+
+@refresher("types")
 def refresh_types(completer, executor):
     completer.extend_datatypes(executor.datatypes())
 
 
-@refresher('databases')
+@refresher("databases")
 def refresh_databases(completer, executor):
     completer.extend_database_names(executor.databases())
 
 
-@refresher('casing')
+@refresher("casing")
 def refresh_casing(completer, executor):
     casing_file = completer.casing_file
     if not casing_file:
         return
     generate_casing_file = completer.generate_casing_file
     if generate_casing_file and not os.path.isfile(casing_file):
-        casing_prefs = '\n'.join(executor.casing())
-        with open(casing_file, 'w') as f:
+        casing_prefs = "\n".join(executor.casing())
+        with open(casing_file, "w") as f:
             f.write(casing_prefs)
     if os.path.isfile(casing_file):
-        with open(casing_file, 'r') as f:
+        with open(casing_file, "r") as f:
             completer.extend_casing([line.strip() for line in f])
 
 
-@refresher('functions')
+@refresher("functions")
 def refresh_functions(completer, executor):
     completer.extend_functions(executor.functions())

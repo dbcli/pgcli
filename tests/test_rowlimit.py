@@ -6,6 +6,7 @@ import pytest
 # We need this fixtures beacause we need PGCli object to be created
 # after test collection so it has config loaded from temp directory
 
+
 @pytest.fixture(scope="module")
 def default_pgcli_obj():
     return PGCli()
@@ -24,9 +25,7 @@ def LIMIT(DEFAULT):
 @pytest.fixture(scope="module")
 def over_default(DEFAULT):
     over_default_cursor = Mock()
-    over_default_cursor.configure_mock(
-        rowcount=DEFAULT + 10
-    )
+    over_default_cursor.configure_mock(rowcount=DEFAULT + 10)
     return over_default_cursor
 
 

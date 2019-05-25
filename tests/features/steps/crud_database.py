@@ -12,47 +12,43 @@ from behave import when, then
 import wrappers
 
 
-@when('we create database')
+@when("we create database")
 def step_db_create(context):
     """
     Send create database.
     """
-    context.cli.sendline('create database {0};'.format(
-        context.conf['dbname_tmp']))
+    context.cli.sendline("create database {0};".format(context.conf["dbname_tmp"]))
 
-    context.response = {
-        'database_name': context.conf['dbname_tmp']
-    }
+    context.response = {"database_name": context.conf["dbname_tmp"]}
 
 
-@when('we drop database')
+@when("we drop database")
 def step_db_drop(context):
     """
     Send drop database.
     """
-    context.cli.sendline('drop database {0};'.format(
-        context.conf['dbname_tmp']))
+    context.cli.sendline("drop database {0};".format(context.conf["dbname_tmp"]))
 
 
-@when('we connect to test database')
+@when("we connect to test database")
 def step_db_connect_test(context):
     """
     Send connect to database.
     """
-    db_name = context.conf['dbname']
-    context.cli.sendline('\\connect {0}'.format(db_name))
+    db_name = context.conf["dbname"]
+    context.cli.sendline("\\connect {0}".format(db_name))
 
 
-@when('we connect to dbserver')
+@when("we connect to dbserver")
 def step_db_connect_dbserver(context):
     """
     Send connect to database.
     """
-    context.cli.sendline('\\connect postgres')
-    context.currentdb = 'postgres'
+    context.cli.sendline("\\connect postgres")
+    context.currentdb = "postgres"
 
 
-@then('dbcli exits')
+@then("dbcli exits")
 def step_wait_exit(context):
     """
     Make sure the cli exits.
@@ -60,41 +56,41 @@ def step_wait_exit(context):
     wrappers.expect_exact(context, pexpect.EOF, timeout=5)
 
 
-@then('we see dbcli prompt')
+@then("we see dbcli prompt")
 def step_see_prompt(context):
     """
     Wait to see the prompt.
     """
-    db_name = getattr(context, "currentdb", context.conf['dbname'])
-    wrappers.expect_exact(context, '{0}> '.format(db_name), timeout=5)
+    db_name = getattr(context, "currentdb", context.conf["dbname"])
+    wrappers.expect_exact(context, "{0}> ".format(db_name), timeout=5)
     context.atprompt = True
 
 
-@then('we see help output')
+@then("we see help output")
 def step_see_help(context):
-    for expected_line in context.fixture_data['help_commands.txt']:
+    for expected_line in context.fixture_data["help_commands.txt"]:
         wrappers.expect_exact(context, expected_line, timeout=2)
 
 
-@then('we see database created')
+@then("we see database created")
 def step_see_db_created(context):
     """
     Wait to see create database output.
     """
-    wrappers.expect_pager(context, 'CREATE DATABASE\r\n', timeout=5)
+    wrappers.expect_pager(context, "CREATE DATABASE\r\n", timeout=5)
 
 
-@then('we see database dropped')
+@then("we see database dropped")
 def step_see_db_dropped(context):
     """
     Wait to see drop database output.
     """
-    wrappers.expect_pager(context, 'DROP DATABASE\r\n', timeout=2)
+    wrappers.expect_pager(context, "DROP DATABASE\r\n", timeout=2)
 
 
-@then('we see database connected')
+@then("we see database connected")
 def step_see_db_connected(context):
     """
     Wait to see drop database output.
     """
-    wrappers.expect_exact(context, 'You are now connected to database', timeout=2)
+    wrappers.expect_exact(context, "You are now connected to database", timeout=2)

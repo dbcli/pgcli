@@ -29,8 +29,8 @@ script:
   - cd ..
   # check for changelog ReST compliance
   - rst2html.py --halt=warning changelog.rst >/dev/null
-  # check for pep8 errors, only looking at branch vs master. If there are errors, show diff and return an error code.
-  - pep8radius master --docformatter --diff --error-status
+  # check for black code compliance, 3.6 only
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then pip install black && black --check . ; else echo "Skipping black for $TRAVIS_PYTHON_VERSION"; fi
   - set +e
 
 after_success:
