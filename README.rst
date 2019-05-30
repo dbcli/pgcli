@@ -29,15 +29,7 @@ If you already know how to install python packages, then you can simply do:
 If you don't know how to install python packages, please check the
 `detailed instructions`_.
 
-If you have `problems with psycopg2 wheels`_, use the following flags to install psycopg2 from
-source:
-
-::
-
-    $ pip install pgcli --no-binary :all: psycopg2
-
 .. _`detailed instructions`: https://github.com/dbcli/pgcli#detailed-installation-instructions
-.. _`problems with psycopg2 wheels`: http://initd.org/psycopg/articles/2018/02/08/psycopg-274-released/
 
 Usage
 -----
