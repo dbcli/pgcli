@@ -12,6 +12,7 @@ Bug fixes:
 * Fix the broken support for pgservice . (Thanks: `Xavier Francisco`_)
 * Connecting using socket is broken in current master. (#1053). (Thanks: `Irina Truong`_)
 * Allow usage of newer versions of psycopg2 (Thanks: `Telmo "Trooper"`_)
+* Update README in alignment with the usage of newer versions of psycopg2 (Thanks: `Alexander Zawadzki`_)
 
 Internal:
 ---------
