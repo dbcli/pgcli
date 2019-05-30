@@ -978,3 +978,4 @@ Improvements:
 .. _`Xavier Francisco`: https://github.com/Qu4tro
 .. _`VVelox`: https://github.com/VVelox
 .. _`Telmo "Trooper"`: https://github.com/telmotrooper
+.. _`Alexander Zawadzki`: https://github.com/zadacka
