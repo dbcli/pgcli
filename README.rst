@@ -29,7 +29,10 @@ If you already know how to install python packages, then you can simply do:
 If you don't know how to install python packages, please check the
 `detailed instructions`_.
 
+If you are restricted to using psycopg2 2.7.x then pip will try to install it from a binary. There are some known issues with the psycopg2 2.7 binary - see the `psycopg docs`_ for more information about this and how to force installation from source. psycopg2 2.8 has fixed these problems, and will build from source.
+
 .. _`detailed instructions`: https://github.com/dbcli/pgcli#detailed-installation-instructions
+.. _`psycopg docs`: http://initd.org/psycopg/docs/install.html#change-in-binary-packages-between-psycopg-2-7-and-2-8
 
 Usage
 -----
