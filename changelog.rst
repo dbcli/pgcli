@@ -11,7 +11,7 @@ Bug fixes:
 * No longer depend on sqlparse as being less than 0.3.0 with the release of sqlparse 0.3.0. (Thanks: `VVelox`_)
 * Fix the broken support for pgservice . (Thanks: `Xavier Francisco`_)
 * Connecting using socket is broken in current master. (#1053). (Thanks: `Irina Truong`_)
-* Allow usage of psycopg2 up to 2.8.2 (Thanks: `Telmo "Trooper"`_)
+* Allow usage of newer versions of psycopg2 (Thanks: `Telmo "Trooper"`_)
 
 Internal:
 ---------
