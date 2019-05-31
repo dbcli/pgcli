@@ -1,6 +1,11 @@
 Upcoming:
 =========
 
+TODO
+
+2.1.1
+=====
+
 Bug fixes:
 ----------
 * Escape switches to VI navigation mode when not canceling completion popup. (Thanks: `Nathan Verzemnieks`_)
