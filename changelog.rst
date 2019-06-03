@@ -889,6 +889,7 @@ Features:
 * Cancel a command using Ctrl+C. (Thanks: https://github.com/macobo)
 * Faster startup by reading all columns and tables in a single query. (Thanks: https://github.com/macobo)
 * Improved psql compliance with env vars and password prompting. (Thanks: `Darik Gamble`_)
+* Pressing Alt-Enter will introduce a line break. This is a way to break up the query into multiple lines without switching to multi-line mode. (Thanks: https://github.com/pabloab).
 
 Bug Fixes:
 ----------
