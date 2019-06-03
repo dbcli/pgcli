@@ -380,7 +380,7 @@ class PGExecute(object):
             try:
                 if pgspecial:
                     # \G is treated specially since we have to set the expanded output.
-                    if sql.endswith('\\G'):
+                    if sql.endswith("\\G"):
                         if not pgspecial.expanded_output:
                             pgspecial.expanded_output = True
                             self.reset_expanded = True
