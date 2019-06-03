@@ -86,6 +86,7 @@ def test_bools_are_treated_as_strings(executor):
         SELECT 1"""
     )
 
+
 @dbtest
 def test_expanded_slash_G(executor, pgspecial):
     # Tests whether we reset the expanded output after a \G.
@@ -93,6 +94,7 @@ def test_expanded_slash_G(executor, pgspecial):
     run(executor, """insert into test values(True)""")
     results = run(executor, """select * from test \G""", pgspecial=pgspecial)
     assert pgspecial.expanded_output == False
+
 
 @dbtest
 def test_schemata_table_views_and_columns_query(executor):
