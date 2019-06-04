@@ -33,6 +33,7 @@ def _multiline_exception(text):
     return (
         text.startswith("\\")
         or text.endswith(r"\e")  # Special Command
+        or text.endswith(r"\G")  # Special Command
         or _is_complete(text)  # Ended with \e which should launch the editor
         or (text == "exit")  # A complete SQL command
         or (text == "quit")  # Exit doesn't need semi-colon

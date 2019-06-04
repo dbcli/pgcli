@@ -213,6 +213,7 @@ class PGExecute(object):
         self.server_version = None
         self.extra_args = None
         self.connect(database, user, password, host, port, dsn, **kwargs)
+        self.reset_expanded = None
 
     def copy(self):
         """Returns a clone of the current executor."""
@@ -378,6 +379,13 @@ class PGExecute(object):
 
             try:
                 if pgspecial:
+                    # \G is treated specially since we have to set the expanded output.
+                    if sql.endswith("\\G"):
+                        if not pgspecial.expanded_output:
+                            pgspecial.expanded_output = True
+                            self.reset_expanded = True
+                        sql = sql[:-2].strip()
+
                     # First try to run each query as special
                     _logger.debug("Trying a pgspecial command. sql: %r", sql)
                     try:
@@ -411,6 +419,10 @@ class PGExecute(object):
 
                 if not on_error_resume:
                     break
+            finally:
+                if self.reset_expanded:
+                    pgspecial.expanded_output = False
+                    self.reset_expanded = None
 
     def _must_raise(self, e):
         """Return true if e is an error that should not be caught in ``run``.

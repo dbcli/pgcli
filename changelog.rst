@@ -1,7 +1,10 @@
 Upcoming:
 =========
 
-TODO
+Features:
+---------
+
+* Add `\\G` as a terminator to sql statements that will show the results in expanded mode. This feature is copied from mycli. (Thanks: `Amjith Ramanujam`_)
 
 2.1.1
 =====
