@@ -559,7 +559,7 @@ class PGExecute(object):
                         att.attname column_name,
                         att.atttypid::regtype::text type_name,
                         att.atthasdef AS has_default,
-                        def.adsrc as default
+                        pg_catalog.pg_get_expr(def.adbin, def.adrelid, true) as default
                 FROM    pg_catalog.pg_attribute att
                         INNER JOIN pg_catalog.pg_class cls
                             ON att.attrelid = cls.oid

@@ -6,6 +6,11 @@ Features:
 
 * Add `\\G` as a terminator to sql statements that will show the results in expanded mode. This feature is copied from mycli. (Thanks: `Amjith Ramanujam`_)
 
+Bug fixes:
+----------
+
+* Error connecting to PostgreSQL 12beta1 (#1058). (Thanks: `Irina Truong`_)
+
 2.1.1
 =====
 
