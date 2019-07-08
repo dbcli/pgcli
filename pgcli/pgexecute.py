@@ -376,6 +376,8 @@ class PGExecute(object):
         for sql in sqlparse.split(statement):
             # Remove spaces, eol and semi-colons.
             sql = sql.rstrip(";")
+            if not sql:
+                continue
 
             try:
                 if pgspecial:
