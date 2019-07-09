@@ -109,7 +109,7 @@ vi = False
 # Possible values "STOP" or "RESUME"
 on_error = STOP
 
-# Set threshold for row limit prompt. Use 0 to disable prompt.
+# Set threshold for row limit. Use 0 to disable limiting.
 row_limit = 1000
 
 # Skip intro on startup and goodbye on exit
