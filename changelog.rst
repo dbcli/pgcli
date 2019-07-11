@@ -5,6 +5,7 @@ Features:
 ---------
 
 * Add `\\G` as a terminator to sql statements that will show the results in expanded mode. This feature is copied from mycli. (Thanks: `Amjith Ramanujam`_)
+* Removed limit prompt and added automatic row limit on queries with no LIMIT clause (Thanks:  `Sebastian Janko`_)
 
 Bug fixes:
 ----------
@@ -993,3 +994,4 @@ Improvements:
 .. _`VVelox`: https://github.com/VVelox
 .. _`Telmo "Trooper"`: https://github.com/telmotrooper
 .. _`Alexander Zawadzki`: https://github.com/zadacka
+.. _`Sebastian Janko`: https://github.com/sebojanko
