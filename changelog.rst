@@ -10,6 +10,7 @@ Bug fixes:
 ----------
 
 * Error connecting to PostgreSQL 12beta1 (#1058). (Thanks: `Irina Truong`_)
+* Empty query caused error message (Thanks: `Sebastian Janko`_)
 
 2.1.1
 =====
@@ -993,3 +994,4 @@ Improvements:
 .. _`VVelox`: https://github.com/VVelox
 .. _`Telmo "Trooper"`: https://github.com/telmotrooper
 .. _`Alexander Zawadzki`: https://github.com/zadacka
+.. _`Sebastian Janko`: https://github.com/sebojanko
