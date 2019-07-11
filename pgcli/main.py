@@ -878,7 +878,6 @@ class PGCli(object):
             logger.debug("status: %r", status)
 
             if self._should_limit_output(sql):
-                click.echo("limit")
                 cur, status = self._limit_output(cur)
 
             if self.pgspecial.auto_expand or self.auto_expand:
