@@ -875,7 +875,7 @@ class PGCli(object):
             logger.debug("rows: %r", cur)
             logger.debug("status: %r", status)
 
-            if self._should_limit_output(sql, cur):
+            if self._should_limit_output(sql):
                 click.echo("limit")
                 cur, status = self._limit_output(cur)
 
