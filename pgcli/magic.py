@@ -43,7 +43,7 @@ def pgcli_line_magic(line):
         conn._pgcli = pgcli
 
     # For convenience, print the connection alias
-    print("Connected: {}".format(conn.name))
+    print ("Connected: {}".format(conn.name))
 
     try:
         pgcli.run_cli()
