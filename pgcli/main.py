@@ -859,6 +859,8 @@ class PGCli(object):
             text, self.pgspecial, exception_formatter, on_error_resume
         )
 
+        is_special = None
+
         for title, cur, headers, status, sql, success, is_special in res:
             logger.debug("headers: %r", headers)
             logger.debug("rows: %r", cur)
