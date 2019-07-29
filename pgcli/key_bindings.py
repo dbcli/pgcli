@@ -3,7 +3,11 @@ from __future__ import unicode_literals
 import logging
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.filters import completion_is_selected, has_completions
+from prompt_toolkit.filters import (
+    completion_is_selected,
+    has_completions,
+    has_selection,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -95,5 +99,15 @@ def pgcli_bindings(pgcli):
         """Introduces a line break regardless of multi-line mode or not."""
         _logger.debug("Detected alt-enter key.")
         event.app.current_buffer.insert_text("\n")
+
+    @kb.add("c-p", filter=~has_selection)
+    def _(event):
+        """Move up in history."""
+        event.current_buffer.history_backward(count=event.arg)
+
+    @kb.add("c-n", filter=~has_selection)
+    def _(event):
+        """Move down in history."""
+        event.current_buffer.history_forward(count=event.arg)
 
     return kb

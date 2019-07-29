@@ -11,6 +11,7 @@ Bug fixes:
 
 * Error connecting to PostgreSQL 12beta1 (#1058). (Thanks: `Irina Truong`_)
 * Empty query caused error message (Thanks: `Sebastian Janko`_)
+* History navigation bindings in multiline queries (#1004) (Thanks: `Pedro Ferrari`_)
 
 2.1.1
 =====
@@ -995,3 +996,4 @@ Improvements:
 .. _`Telmo "Trooper"`: https://github.com/telmotrooper
 .. _`Alexander Zawadzki`: https://github.com/zadacka
 .. _`Sebastian Janko`: https://github.com/sebojanko
+.. _`Pedro Ferrari`: https://github.com/petobens
