@@ -5,13 +5,13 @@ Features:
 ---------
 
 * Add `\\G` as a terminator to sql statements that will show the results in expanded mode. This feature is copied from mycli. (Thanks: `Amjith Ramanujam`_)
-* Removed limit prompt and added automatic row limit on queries with no LIMIT clause (Thanks:  `Sebastian Janko`_)
+* Removed limit prompt and added automatic row limit on queries with no LIMIT clause (#1079) (Thanks: `Sebastian Janko`_)
 
 Bug fixes:
 ----------
 
 * Error connecting to PostgreSQL 12beta1 (#1058). (Thanks: `Irina Truong`_)
-* Empty query caused error message (Thanks: `Sebastian Janko`_)
+* Empty query caused error message (#1019) (Thanks: `Sebastian Janko`_)
 * History navigation bindings in multiline queries (#1004) (Thanks: `Pedro Ferrari`_)
 
 2.1.1
