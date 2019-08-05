@@ -827,12 +827,17 @@ class PGCli(object):
 
             return prompt_app
 
-    def _should_limit_output(self, sql):
+    def _should_limit_output(self, sql, cur):
         """returns True if the output should be truncated, False otherwise."""
         if not is_select(sql):
             return False
 
-        return not self._has_limit(sql) and self.row_limit > 0
+        return (
+            not self._has_limit(sql)
+            and self.row_limit != 0
+            and cur
+            and cur.rowcount > self.row_limit
+        )
 
     def _has_limit(self, sql):
         if not sql:
@@ -840,8 +845,10 @@ class PGCli(object):
         return "limit " in sql.lower()
 
     def _limit_output(self, cur):
-        new_cur = itertools.islice(cur, self.row_limit)
-        new_status = "SELECT " + str(self.row_limit)
+        limit = min(self.row_limit, cur.rowcount)
+        new_cur = itertools.islice(cur, limit)
+        new_status = "SELECT " + str(limit)
+        click.secho("The result was limited to %s rows" % limit, fg="red")
 
         return new_cur, new_status
 
@@ -875,7 +882,7 @@ class PGCli(object):
             logger.debug("rows: %r", cur)
             logger.debug("status: %r", status)
 
-            if self._should_limit_output(sql):
+            if self._should_limit_output(sql, cur):
                 cur, status = self._limit_output(cur)
 
             if self.pgspecial.auto_expand or self.auto_expand:
