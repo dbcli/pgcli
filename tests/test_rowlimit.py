@@ -44,36 +44,36 @@ def low_count():
     return low_count_cursor
 
 
-def test_row_limit_with_LIMIT_clause():
+def test_row_limit_with_LIMIT_clause(LIMIT, over_limit):
     cli = PGCli(row_limit=LIMIT)
     stmt = "SELECT * FROM students LIMIT 1000"
 
-    result = cli._should_limit_output(stmt)
+    result = cli._should_limit_output(stmt, over_limit)
     assert result is False
 
     cli = PGCli(row_limit=0)
-    result = cli._should_limit_output(stmt)
+    result = cli._should_limit_output(stmt, over_limit)
     assert result is False
 
 
-def test_row_limit_without_LIMIT_clause():
+def test_row_limit_without_LIMIT_clause(LIMIT, over_limit):
     cli = PGCli(row_limit=LIMIT)
     stmt = "SELECT * FROM students"
 
-    result = cli._should_limit_output(stmt)
+    result = cli._should_limit_output(stmt, over_limit)
     assert result is True
 
     cli = PGCli(row_limit=0)
-    result = cli._should_limit_output(stmt)
+    result = cli._should_limit_output(stmt, over_limit)
     assert result is False
 
 
-def test_row_limit_on_non_select():
+def test_row_limit_on_non_select(over_limit):
     cli = PGCli()
-    stmt = "UPDATE students set name='Boby'"
-    result = cli._should_limit_output(stmt)
+    stmt = "UPDATE students SET name='Boby'"
+    result = cli._should_limit_output(stmt, over_limit)
     assert result is False
 
     cli = PGCli(row_limit=0)
-    result = cli._should_limit_output(stmt)
+    result = cli._should_limit_output(stmt, over_limit)
     assert result is False
