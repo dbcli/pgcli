@@ -124,7 +124,6 @@ class PgCliQuitError(Exception):
 
 
 class PGCli(object):
-
     default_prompt = "\\u@\\h:\\d> "
     max_len_prompt = 30
 
@@ -828,11 +827,30 @@ class PGCli(object):
 
             return prompt_app
 
-    def _should_show_limit_prompt(self, status, cur):
-        """returns True if limit prompt should be shown, False otherwise."""
-        if not is_select(status):
+    def _should_limit_output(self, sql, cur):
+        """returns True if the output should be truncated, False otherwise."""
+        if not is_select(sql):
             return False
-        return self.row_limit > 0 and cur and (cur.rowcount > self.row_limit)
+
+        return (
+            not self._has_limit(sql)
+            and self.row_limit != 0
+            and cur
+            and cur.rowcount > self.row_limit
+        )
+
+    def _has_limit(self, sql):
+        if not sql:
+            return False
+        return "limit " in sql.lower()
+
+    def _limit_output(self, cur):
+        limit = min(self.row_limit, cur.rowcount)
+        new_cur = itertools.islice(cur, limit)
+        new_status = "SELECT " + str(limit)
+        click.secho("The result was limited to %s rows" % limit, fg="red")
+
+        return new_cur, new_status
 
     def _evaluate_command(self, text):
         """Used to run a command entered by the user during CLI operation
@@ -865,14 +883,9 @@ class PGCli(object):
             logger.debug("headers: %r", headers)
             logger.debug("rows: %r", cur)
             logger.debug("status: %r", status)
-            threshold = self.row_limit
-            if self._should_show_limit_prompt(status, cur):
-                click.secho(
-                    "The result set has more than %s rows." % threshold, fg="red"
-                )
-                if not click.confirm("Do you want to continue?"):
-                    click.secho("Aborted!", err=True, fg="red")
-                    break
+
+            if self._should_limit_output(sql, cur):
+                cur, status = self._limit_output(cur)
 
             if self.pgspecial.auto_expand or self.auto_expand:
                 max_width = self.prompt_app.output.get_size().columns
@@ -1184,7 +1197,6 @@ def cli(
     list_dsn,
     warn,
 ):
-
     if version:
         print ("Version:", __version__)
         sys.exit(0)
@@ -1416,12 +1428,12 @@ def format_output(title, cur, headers, status, settings):
                     column_types.append(int)
                 else:
                     column_types.append(text_type)
+
         formatted = formatter.format_output(cur, headers, **output_kwargs)
         if isinstance(formatted, (text_type)):
             formatted = iter(formatted.splitlines())
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
-
         if not expanded and max_width and len(first_line) > max_width and headers:
             formatted = formatter.format_output(
                 cur, headers, format_name="vertical", column_types=None, **output_kwargs
