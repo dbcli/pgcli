@@ -14,6 +14,11 @@ Bug fixes:
 * Empty query caused error message (#1019) (Thanks: `Sebastian Janko`_)
 * History navigation bindings in multiline queries (#1004) (Thanks: `Pedro Ferrari`_)
 
+Internal:
+---------
+
+* Add optional but default squash merge request to PULL_REQUEST_TEMPLATE
+
 2.1.1
 =====
 
