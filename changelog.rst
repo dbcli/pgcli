@@ -13,6 +13,7 @@ Bug fixes:
 * Error connecting to PostgreSQL 12beta1 (#1058). (Thanks: `Irina Truong`_)
 * Empty query caused error message (#1019) (Thanks: `Sebastian Janko`_)
 * History navigation bindings in multiline queries (#1004) (Thanks: `Pedro Ferrari`_)
+* Can't connect to pgbouncer database (#1093). (Thanks: `Irina Truong`_)
 
 2.1.1
 =====
