@@ -295,8 +295,12 @@ class PGExecute:
         if not self.host:
             self.host = self.get_socket_directory()
 
-        pid = self._select_one(cursor, "select pg_backend_pid()")[0]
-        self.pid = pid
+        if self.dbname == "pgbouncer":
+            # pgbouncer admin database does not seem to support this query.
+            # So let's do without pid.
+            self.pid = 0
+        else:
+            self.pid = self._select_one(cursor, "select pg_backend_pid()")[0]
         self.superuser = conn.get_parameter_status("is_superuser") in ("on", "1")
         self.server_version = conn.get_parameter_status("server_version")
 
