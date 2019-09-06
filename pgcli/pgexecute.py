@@ -190,8 +190,6 @@ class PGExecute:
         SELECT pg_catalog.pg_get_functiondef(f.f_oid)
         FROM f"""
 
-    version_query = "SELECT version();"
-
     def __init__(
         self,
         database=None,
@@ -213,6 +211,9 @@ class PGExecute:
         self.extra_args = None
         self.connect(database, user, password, host, port, dsn, **kwargs)
         self.reset_expanded = None
+
+    def is_pgbouncer(self):
+        return self.dbname == "pgbouncer"
 
     def copy(self):
         """Returns a clone of the current executor."""
@@ -295,18 +296,17 @@ class PGExecute:
         if not self.host:
             self.host = self.get_socket_directory()
 
-        if self.dbname == "pgbouncer":
-            # pgbouncer admin database does not seem to support this query.
-            # So let's do without pid.
-            self.pid = 0
-        else:
-            self.pid = self._select_one(cursor, "select pg_backend_pid()")[0]
+        self.pid = conn.get_backend_pid()
         self.superuser = conn.get_parameter_status("is_superuser") in ("on", "1")
         self.server_version = conn.get_parameter_status("server_version")
 
-        register_date_typecasters(conn)
-        register_json_typecasters(self.conn, self._json_typecaster)
-        register_hstore_typecaster(self.conn)
+        if self.is_pgbouncer():
+            # wait callback doesn't work with pgbouncer
+            ext.set_wait_callback(None)
+        else:
+            register_date_typecasters(conn)
+            register_json_typecasters(self.conn, self._json_typecaster)
+            register_hstore_typecaster(self.conn)
 
     @property
     def short_host(self):
