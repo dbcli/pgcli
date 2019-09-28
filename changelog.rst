@@ -15,6 +15,11 @@ Bug fixes:
 * History navigation bindings in multiline queries (#1004) (Thanks: `Pedro Ferrari`_)
 * Can't connect to pgbouncer database (#1093). (Thanks: `Irina Truong`_)
 
+Internal:
+---------
+
+* Add optional but default squash merge request to PULL_REQUEST_TEMPLATE
+
 2.1.1
 =====
 
