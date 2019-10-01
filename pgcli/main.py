@@ -715,7 +715,6 @@ class PGCli(object):
             print ("Server: PostgreSQL", self.pgexecute.server_version)
             print ("Version:", __version__)
             print ("Chat: https://gitter.im/dbcli/pgcli")
-            print ("Mail: https://groups.google.com/forum/#!forum/pgcli")
             print ("Home: http://pgcli.com")
 
         try:
