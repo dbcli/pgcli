@@ -398,35 +398,11 @@ def suggest_based_on_last_token(token, stmt):
         if prev_prev_tok and prev_prev_tok.normalized == "INTO":
             return (Column(table_refs=stmt.get_tables("insert"), context="insert"),)
         # We're probably in a function argument list
-        return (
-            Column(
-                table_refs=extract_tables(stmt.full_text),
-                local_tables=stmt.local_tables,
-                qualifiable=True,
-            ),
-        )
+        return _suggest_expression(token_v, stmt)
     elif token_v == "set":
         return (Column(table_refs=stmt.get_tables(), local_tables=stmt.local_tables),)
     elif token_v in ("select", "where", "having", "order by", "distinct"):
-        # Check for a table alias or schema qualification
-        parent = (stmt.identifier and stmt.identifier.get_parent_name()) or []
-        tables = stmt.get_tables()
-        if parent:
-            tables = tuple(t for t in tables if identifies(parent, t))
-            return (
-                Column(table_refs=tables, local_tables=stmt.local_tables),
-                Table(schema=parent),
-                View(schema=parent),
-                Function(schema=parent),
-            )
-        else:
-            return (
-                Column(
-                    table_refs=tables, local_tables=stmt.local_tables, qualifiable=True
-                ),
-                Function(schema=None),
-                Keyword(token_v.upper()),
-            )
+        return _suggest_expression(token_v, stmt)
     elif token_v == "as":
         # Don't suggest anything for aliases
         return ()
@@ -552,6 +528,30 @@ def suggest_based_on_last_token(token, stmt):
             return (Keyword(token_v.upper()),)
     else:
         return (Keyword(),)
+
+
+def _suggest_expression(token_v, stmt):
+    """
+    Return suggestions for an expression, taking account of the partially-typed
+    identifiers parent, which may be a table alias or schema name.
+    """
+    parent = stmt.identifier.get_parent_name() if stmt.identifier else []
+    tables = stmt.get_tables()
+
+    if parent:
+        tables = tuple(t for t in tables if identifies(parent, t))
+        return (
+            Column(table_refs=tables, local_tables=stmt.local_tables),
+            Table(schema=parent),
+            View(schema=parent),
+            Function(schema=parent),
+        )
+
+    return (
+        Column(table_refs=tables, local_tables=stmt.local_tables, qualifiable=True),
+        Function(schema=None),
+        Keyword(token_v.upper()),
+    )
 
 
 def identifies(id, ref):
