@@ -287,7 +287,9 @@ def test_suggested_cased_always_qualified_column_names(completer):
 @parametrize("completer", completers(casing=False, qualify=no_qual))
 def test_suggested_column_names_in_function(completer):
     result = get_result(completer, "SELECT MAX( from users", len("SELECT MAX("))
-    assert completions_to_set(result) == completions_to_set(testdata.columns("users"))
+    assert completions_to_set(result) == completions_to_set(
+        (testdata.columns_functions_and_keywords("users"))
+    )
 
 
 @parametrize("completer", completers(casing=False))
