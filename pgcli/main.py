@@ -35,7 +35,7 @@ from prompt_toolkit.completion import DynamicCompleter, ThreadedCompleter
 from prompt_toolkit.enums import DEFAULT_BUFFER, EditingMode
 from prompt_toolkit.shortcuts import PromptSession, CompleteStyle
 from prompt_toolkit.document import Document
-from prompt_toolkit.filters import HasFocus, IsDone
+from prompt_toolkit.filters import HasFocus, IsDone, Condition
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.layout.processors import (
     ConditionalProcessor,
@@ -53,7 +53,6 @@ from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory, style_factory_output
 from .pgexecute import PGExecute
-from .pgbuffer import pg_is_multiline
 from .completion_refresher import CompletionRefresher
 from .config import (
     get_casing_file,
@@ -810,7 +809,7 @@ class PGCli(object):
                 ],
                 auto_suggest=AutoSuggestFromHistory(),
                 tempfile_suffix=".sql",
-                multiline=pg_is_multiline(self),
+                multiline=Condition(lambda: self.multi_line),
                 history=history,
                 completer=ThreadedCompleter(DynamicCompleter(lambda: self.completer)),
                 complete_while_typing=True,

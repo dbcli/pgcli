@@ -9,6 +9,8 @@ from prompt_toolkit.filters import (
     has_selection,
 )
 
+from .pgbuffer import multi_line_buffer_should_be_handled
+
 _logger = logging.getLogger(__name__)
 
 
@@ -93,6 +95,15 @@ def pgcli_bindings(pgcli):
 
         event.current_buffer.complete_state = None
         event.app.current_buffer.complete_state = None
+
+    # When using multi_line input mode the buffer is not handled on Enter (a new line is
+    # inserted instead), so we force the handling if one of several conditions are True
+    @kb.add(
+        "enter",
+        filter=~completion_is_selected & multi_line_buffer_should_be_handled(pgcli),
+    )
+    def _(event):
+        event.current_buffer.validate_and_handle()
 
     @kb.add("escape", "enter")
     def _(event):
