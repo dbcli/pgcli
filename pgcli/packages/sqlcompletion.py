@@ -532,8 +532,8 @@ def suggest_based_on_last_token(token, stmt):
 
 def _suggest_expression(token_v, stmt):
     """
-    Return suggestions for an expression, taking account of the partially-typed
-    identifiers parent, which may be a table alias or schema name.
+    Return suggestions for an expression, taking account of any partially-typed
+    identifier's parent, which may be a table alias or schema name.
     """
     parent = stmt.identifier.get_parent_name() if stmt.identifier else []
     tables = stmt.get_tables()
