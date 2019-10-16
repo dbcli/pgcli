@@ -35,7 +35,7 @@ from prompt_toolkit.completion import DynamicCompleter, ThreadedCompleter
 from prompt_toolkit.enums import DEFAULT_BUFFER, EditingMode
 from prompt_toolkit.shortcuts import PromptSession, CompleteStyle
 from prompt_toolkit.document import Document
-from prompt_toolkit.filters import HasFocus, IsDone, Condition
+from prompt_toolkit.filters import HasFocus, IsDone
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.layout.processors import (
     ConditionalProcessor,
@@ -809,7 +809,11 @@ class PGCli(object):
                 ],
                 auto_suggest=AutoSuggestFromHistory(),
                 tempfile_suffix=".sql",
-                multiline=Condition(lambda: self.multi_line),
+                # N.b. pgcli's multi-line mode controls submit-on-Enter (which
+                # overrides the default behaviour of prompt_toolkit) and is
+                # distinct from prompt_toolkit's multiline mode here, which
+                # controls layout/display of the prompt/buffer
+                multiline=True,
                 history=history,
                 completer=ThreadedCompleter(DynamicCompleter(lambda: self.completer)),
                 complete_while_typing=True,

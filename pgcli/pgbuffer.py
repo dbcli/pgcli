@@ -14,17 +14,19 @@ def _is_complete(sql):
 
 
 """
-Returns True if the input mode is multi-line using psql mode, and the main
-buffer's contents indicate that it should be handled, False otherwise. This
-method is required since by default prompt_toolkit would not handle a buffer on
-Enter keypress when in multi-line mode.
+Returns True if the buffer contents should be handled (i.e. the query/command
+executed) immediately. This is necessary as we use prompt_toolkit in multiline
+mode, which by default will insert new lines on Enter.
 """
 
 
-def multi_line_buffer_should_be_handled(pgcli):
+def buffer_should_be_handled(pgcli):
     @Condition
     def cond():
-        if not pgcli.multi_line or pgcli.multiline_mode == "safe":
+        if not pgcli.multi_line:
+            return True
+
+        if pgcli.multiline_mode == "safe":
             return False
 
         doc = get_app().layout.get_buffer_by_name(DEFAULT_BUFFER).document

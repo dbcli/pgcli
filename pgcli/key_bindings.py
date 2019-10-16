@@ -10,7 +10,7 @@ from prompt_toolkit.filters import (
     has_selection,
 )
 
-from .pgbuffer import multi_line_buffer_should_be_handled
+from .pgbuffer import buffer_should_be_handled
 
 _logger = logging.getLogger(__name__)
 
@@ -102,8 +102,7 @@ def pgcli_bindings(pgcli):
     # history search, and one of several conditions are True
     @kb.add(
         "enter",
-        filter=~(completion_is_selected | is_searching)
-        & multi_line_buffer_should_be_handled(pgcli),
+        filter=~(has_completions | is_searching) & buffer_should_be_handled(pgcli),
     )
     def _(event):
         event.current_buffer.validate_and_handle()
