@@ -53,7 +53,6 @@ from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory, style_factory_output
 from .pgexecute import PGExecute
-from .pgbuffer import pg_is_multiline
 from .completion_refresher import CompletionRefresher
 from .config import (
     get_casing_file,
@@ -810,7 +809,11 @@ class PGCli(object):
                 ],
                 auto_suggest=AutoSuggestFromHistory(),
                 tempfile_suffix=".sql",
-                multiline=pg_is_multiline(self),
+                # N.b. pgcli's multi-line mode controls submit-on-Enter (which
+                # overrides the default behaviour of prompt_toolkit) and is
+                # distinct from prompt_toolkit's multiline mode here, which
+                # controls layout/display of the prompt/buffer
+                multiline=True,
                 history=history,
                 completer=ThreadedCompleter(DynamicCompleter(lambda: self.completer)),
                 complete_while_typing=True,

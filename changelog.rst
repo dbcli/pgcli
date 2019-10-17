@@ -14,6 +14,8 @@ Bug fixes:
 * Empty query caused error message (#1019) (Thanks: `Sebastian Janko`_)
 * History navigation bindings in multiline queries (#1004) (Thanks: `Pedro Ferrari`_)
 * Can't connect to pgbouncer database (#1093). (Thanks: `Irina Truong`_)
+* Fix broken multi-line history search (#1031). (Thanks: `Owen Stephens`_)
+* Fix slow typing/movement when multi-line query ends in a semicolon (#994). (Thanks: `Owen Stephens`_)
 
 Internal:
 ---------
