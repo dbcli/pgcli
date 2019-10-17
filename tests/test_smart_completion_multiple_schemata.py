@@ -229,7 +229,7 @@ def test_suggested_column_names_in_function(completer):
         completer, "SELECT MAX( from custom.products", len("SELECT MAX(")
     )
     assert completions_to_set(result) == completions_to_set(
-        testdata.columns("products", "custom")
+        testdata.columns_functions_and_keywords("products", "custom")
     )
 
 

@@ -101,10 +101,14 @@ def test_where_equals_any_suggests_columns_or_keywords():
     assert set(suggestions) == cols_etc("tabl", last_keyword="WHERE")
 
 
-def test_lparen_suggests_cols():
+def test_lparen_suggests_cols_and_funcs():
     suggestion = suggest_type("SELECT MAX( FROM tbl", "SELECT MAX(")
     assert set(suggestion) == set(
-        [Column(table_refs=((None, "tbl", None, False),), qualifiable=True)]
+        [
+            Column(table_refs=((None, "tbl", None, False),), qualifiable=True),
+            Function(schema=None),
+            Keyword("("),
+        ]
     )
 
 
@@ -268,6 +272,23 @@ def test_distinct_and_order_by_suggestions_with_aliases(
 )
 def test_distinct_and_order_by_suggestions_with_alias_given(text, text_before):
     suggestions = suggest_type(text, text_before)
+    assert set(suggestions) == set(
+        [
+            Column(
+                table_refs=(TableReference(None, "tbl", "x", False),),
+                local_tables=(),
+                qualifiable=False,
+            ),
+            Table(schema="x"),
+            View(schema="x"),
+            Function(schema="x"),
+        ]
+    )
+
+
+def test_function_arguments_with_alias_given():
+    suggestions = suggest_type("SELECT avg(x. FROM tbl x, tbl2 y", "SELECT avg(x.")
+
     assert set(suggestions) == set(
         [
             Column(
