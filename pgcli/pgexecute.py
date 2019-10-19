@@ -7,6 +7,7 @@ import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
 import select
+from distutils.version import LooseVersion
 from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE, make_dsn
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 from .encodingutils import unicode2utf8, PY2, utf8tounicode
@@ -265,14 +266,32 @@ class PGExecute(object):
         # When we connect using a DSN, we don't really know what db,
         # user, etc. we connected to. Let's read it.
         # Note: moved this after setting autocommit because of #664.
-        # TODO: use actual connection info from psycopg2.extensions.Connection.info as psycopg>2.8 is available and required dependency  # noqa
-        dsn_parameters = conn.get_dsn_parameters()
+        psycopg2_version = LooseVersion(psycopg2.__version__)
+        dsn_parameters = {}
+        if psycopg2_version >= LooseVersion("2.8"):
+            # use actual connection info from psycopg2.extensions.Connection.info
+            # as psycopg>2.8 is available and required dependency
+            dsn_parameters = conn.info.dsn_parameters
+        else:
+            try:
+                dsn_parameters = conn.get_dsn_parameters()
+            except Exception as x:
+                # https://github.com/dbcli/pgcli/issues/1110
+                # PQconninfo not available in libpq < 9.3
+                _logger.info("Exception in get_dsn_parameters. sql: %r", x)
 
-        self.dbname = dsn_parameters.get("dbname")
-        self.user = dsn_parameters.get("user")
+        if dsn_parameters:
+            self.dbname = dsn_parameters.get("dbname")
+            self.user = dsn_parameters.get("user")
+            self.host = dsn_parameters.get("host")
+            self.port = dsn_parameters.get("port")
+        else:
+            self.dbname = conn_params.get("database")
+            self.user = conn_params.get("user")
+            self.host = conn_params.get("host")
+            self.port = conn_params.get("port")
+
         self.password = password
-        self.host = dsn_parameters.get("host")
-        self.port = dsn_parameters.get("port")
         self.extra_args = kwargs
 
         if not self.host:
