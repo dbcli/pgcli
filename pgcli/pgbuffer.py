@@ -1,9 +1,12 @@
 from __future__ import unicode_literals
+import logging
 
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.application import get_app
 from .packages.parseutils.utils import is_open_quote
+
+_logger = logging.getLogger(__name__)
 
 
 def _is_complete(sql):
@@ -23,10 +26,13 @@ mode, which by default will insert new lines on Enter.
 def buffer_should_be_handled(pgcli):
     @Condition
     def cond():
+        # import wdb; wdb.set_trace()
         if not pgcli.multi_line:
+            _logger.debug("Not in multi-line mode. Handle the buffer.")
             return True
 
         if pgcli.multiline_mode == "safe":
+            _logger.debug("Multi-line mode is set to 'safe'. Do NOT handle the buffer.")
             return False
 
         doc = get_app().layout.get_buffer_by_name(DEFAULT_BUFFER).document
