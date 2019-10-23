@@ -92,7 +92,7 @@ def pgcli_bindings(pgcli):
         (accept current selection).
 
         """
-        _logger.debug("Detected enter key.")
+        _logger.debug("Detected enter key during completion selection.")
 
         event.current_buffer.complete_state = None
         event.app.current_buffer.complete_state = None

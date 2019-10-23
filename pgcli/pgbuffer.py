@@ -26,7 +26,6 @@ mode, which by default will insert new lines on Enter.
 def buffer_should_be_handled(pgcli):
     @Condition
     def cond():
-        # import wdb; wdb.set_trace()
         if not pgcli.multi_line:
             _logger.debug("Not in multi-line mode. Handle the buffer.")
             return True
