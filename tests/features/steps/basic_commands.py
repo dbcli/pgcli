@@ -82,6 +82,20 @@ def step_send_help(context):
     context.cli.sendline("\?")
 
 
+@when("we send partial select command")
+def step_send_partial_select_command(context):
+    """
+    Send `SELECT a` to see completion.
+    """
+    context.cli.sendline("SELECT a")
+
+
+@then("we see error message")
+def step_see_error_message(context):
+    wrappers.expect_exact(context, 'column "a" does not exist', timeout=2)
+    wrappers.wait_prompt(context)
+
+
 @when("we send source command")
 def step_send_source_command(context):
     context.tmpfile_sql_help = tempfile.NamedTemporaryFile(prefix="pgcli_")

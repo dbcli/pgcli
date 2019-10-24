@@ -10,6 +10,11 @@ Feature: run the cli,
      When we send source command
       then we see help output
 
+  Scenario: run partial select command
+     When we send partial select command
+       then we see error message
+       then we see dbcli prompt
+
   Scenario: check our application_name
      When we run query to check application_name
       then we see found
