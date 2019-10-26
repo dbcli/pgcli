@@ -17,6 +17,7 @@ Bug fixes:
 * Can't connect to pgbouncer database (#1093). (Thanks: `Irina Truong`_)
 * Fix broken multi-line history search (#1031). (Thanks: `Owen Stephens`_)
 * Fix slow typing/movement when multi-line query ends in a semicolon (#994). (Thanks: `Owen Stephens`_)
+* Fix for PQconninfo not available in libpq < 9.3 (#1110). (Thanks: `Irina Truong`_)
 
 Internal:
 ---------
