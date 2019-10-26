@@ -278,7 +278,7 @@ class PGExecute(object):
             except Exception as x:
                 # https://github.com/dbcli/pgcli/issues/1110
                 # PQconninfo not available in libpq < 9.3
-                _logger.info("Exception in get_dsn_parameters. sql: %r", x)
+                _logger.info("Exception in get_dsn_parameters: %r", x)
 
         if dsn_parameters:
             self.dbname = dsn_parameters.get("dbname")
