@@ -7,7 +7,6 @@ import psycopg2.extensions as ext
 import sqlparse
 import pgspecial as special
 import select
-from distutils.version import LooseVersion
 from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE, make_dsn
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 from .encodingutils import unicode2utf8, PY2, utf8tounicode
@@ -266,11 +265,11 @@ class PGExecute(object):
         # When we connect using a DSN, we don't really know what db,
         # user, etc. we connected to. Let's read it.
         # Note: moved this after setting autocommit because of #664.
-        psycopg2_version = LooseVersion(psycopg2.__version__)
+        libpq_version = psycopg2.__libpq_version__
         dsn_parameters = {}
-        if psycopg2_version >= LooseVersion("2.8"):
+        if libpq_version >= 93000:
             # use actual connection info from psycopg2.extensions.Connection.info
-            # as psycopg>2.8 is available and required dependency
+            # as libpq_version > 9.3 is available and required dependency
             dsn_parameters = conn.info.dsn_parameters
         else:
             try:
