@@ -1,14 +1,7 @@
-import re
-import ast
 import platform
 from setuptools import setup, find_packages
 
-_version_re = re.compile(r"__version__\s+=\s+(.*)")
-
-with open("pgcli/__init__.py", "rb") as f:
-    version = str(
-        ast.literal_eval(_version_re.search(f.read().decode("utf-8")).group(1))
-    )
+from pgcli import __version__
 
 description = "CLI for Postgres Database. With auto-completion and syntax highlighting."
 
@@ -36,7 +29,7 @@ setup(
     name="pgcli",
     author="Pgcli Core Team",
     author_email="pgcli-dev@googlegroups.com",
-    version=version,
+    version=__version__,
     license="BSD",
     url="http://pgcli.com",
     packages=find_packages(),
