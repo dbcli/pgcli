@@ -132,14 +132,13 @@ class PGCli(object):
 
         if configured_pager:
             self.logger.info(
-                'Default pager found in config file: "{}"'.format(configured_pager)
+                'Default pager found in config file: "%s"', configured_pager
             )
             os.environ["PAGER"] = configured_pager
         elif os_environ_pager:
             self.logger.info(
-                'Default pager found in PAGER environment variable: "{}"'.format(
-                    os_environ_pager
-                )
+                'Default pager found in PAGER environment variable: "%s"',
+                os_environ_pager,
             )
             os.environ["PAGER"] = os_environ_pager
         else:
