@@ -3,13 +3,13 @@ import sys
 
 
 def wrappager(boundary):
-    print (boundary)
+    print(boundary)
     while 1:
         buf = sys.stdin.read(2048)
         if not buf:
             break
         sys.stdout.write(buf)
-    print (boundary)
+    print(boundary)
 
 
 if __name__ == "__main__":
