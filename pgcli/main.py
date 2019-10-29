@@ -132,14 +132,13 @@ class PGCli(object):
 
         if configured_pager:
             self.logger.info(
-                'Default pager found in config file: "{}"'.format(configured_pager)
+                'Default pager found in config file: "%s"', configured_pager
             )
             os.environ["PAGER"] = configured_pager
         elif os_environ_pager:
             self.logger.info(
-                'Default pager found in PAGER environment variable: "{}"'.format(
-                    os_environ_pager
-                )
+                'Default pager found in PAGER environment variable: "%s"',
+                os_environ_pager,
             )
             os.environ["PAGER"] = os_environ_pager
         else:
@@ -672,7 +671,7 @@ class PGCli(object):
             if self.pgspecial.timing_enabled:
                 # Only add humanized time display if > 1 second
                 if query.total_time > 1:
-                    print (
+                    print(
                         "Time: %0.03fs (%s), executed in: %0.03fs (%s)"
                         % (
                             query.total_time,
@@ -682,7 +681,7 @@ class PGCli(object):
                         )
                     )
                 else:
-                    print ("Time: %0.03fs" % query.total_time)
+                    print("Time: %0.03fs" % query.total_time)
 
             # Check if we need to update completions, in order of most
             # to least drastic changes
@@ -711,10 +710,10 @@ class PGCli(object):
         self.prompt_app = self._build_cli(history)
 
         if not self.less_chatty:
-            print ("Server: PostgreSQL", self.pgexecute.server_version)
-            print ("Version:", __version__)
-            print ("Chat: https://gitter.im/dbcli/pgcli")
-            print ("Home: http://pgcli.com")
+            print("Server: PostgreSQL", self.pgexecute.server_version)
+            print("Version:", __version__)
+            print("Chat: https://gitter.im/dbcli/pgcli")
+            print("Home: http://pgcli.com")
 
         try:
             while True:
@@ -758,7 +757,7 @@ class PGCli(object):
 
         except (PgCliQuitError, EOFError):
             if not self.less_chatty:
-                print ("Goodbye!")
+                print("Goodbye!")
 
     def _build_cli(self, history):
         key_bindings = pgcli_bindings(self)
@@ -1200,7 +1199,7 @@ def cli(
     warn,
 ):
     if version:
-        print ("Version:", __version__)
+        print("Version:", __version__)
         sys.exit(0)
 
     config_dir = os.path.dirname(config_location())
@@ -1212,12 +1211,11 @@ def cli(
     if os.path.exists(os.path.expanduser("~/.pgclirc")):
         if not os.path.exists(config_full_path):
             shutil.move(os.path.expanduser("~/.pgclirc"), config_full_path)
-            print ("Config file (~/.pgclirc) moved to new location", config_full_path)
+            print("Config file (~/.pgclirc) moved to new location", config_full_path)
         else:
-            print ("Config file is now located at", config_full_path)
-            print (
-                "Please move the existing config file ~/.pgclirc to",
-                config_full_path,
+            print("Config file is now located at", config_full_path)
+            print(
+                "Please move the existing config file ~/.pgclirc to", config_full_path,
             )
     if list_dsn:
         try:
