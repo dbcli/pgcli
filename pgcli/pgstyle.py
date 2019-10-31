@@ -69,14 +69,7 @@ def style_factory(name, cli_style):
     # names in 2.0. Convert old token types to new style names, for backwards compatibility.
     for token in cli_style:
         if token.startswith("Token."):
-            # treat as pygments token (1.0)
-            token_type, style_value = parse_pygments_style(token, style, cli_style)
-            if token_type in TOKEN_TO_PROMPT_STYLE:
-                prompt_style = TOKEN_TO_PROMPT_STYLE[token_type]
-                prompt_styles.append((prompt_style, style_value))
-            else:
-                # we don't want to support tokens anymore
-                logger.error("Unhandled style / class name: %s", token)
+            start_with_token()
         else:
             # treat as prompt style name (2.0). See default style names here:
             # https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/prompt_toolkit/styles/defaults.py
@@ -86,6 +79,16 @@ def style_factory(name, cli_style):
     return merge_styles(
         [style_from_pygments_cls(style), override_style, Style(prompt_styles)]
     )
+
+def start_with_token():
+	# treat as pygments token (1.0)
+    token_type, style_value = parse_pygments_style(token, style, cli_style)
+	if token_type in TOKEN_TO_PROMPT_STYLE:
+		prompt_style = TOKEN_TO_PROMPT_STYLE[token_type]
+		prompt_styles.append((prompt_style, style_value))
+	else:
+		# we don't want to support tokens anymore
+		logger.error("Unhandled style / class name: %s", token)
 
 
 def style_factory_output(name, cli_style):
