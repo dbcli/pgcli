@@ -13,10 +13,10 @@ with open("pgcli/__init__.py", "rb") as f:
 description = "CLI for Postgres Database. With auto-completion and syntax highlighting."
 
 install_requirements = [
-    "pgspecial>=1.11.5",
+    "pgspecial>=1.11.8",
     "click >= 4.1",
     "Pygments >= 2.0",  # Pygments has to be Capitalcased. WTF?
-    "prompt_toolkit>=2.0.6,<2.1.0",
+    "prompt_toolkit>=2.0.6,<3.0.0",
     "psycopg2 >= 2.8",
     "sqlparse >=0.3.0,<0.4",
     "configobj >= 5.0.6",
