@@ -85,7 +85,7 @@ def find_prev_keyword(sql, n_skip=0):
         ):
             # Find the location of token t in the original parsed statement
             # We can't use parsed.token_index(t) because t may be a child token
-            # inside a TokenList, in which case token_index thows an error
+            # inside a TokenList, in which case token_index throws an error
             # Minimal example:
             #   p = sqlparse.parse('select * from foo where bar')
             #   t = list(p.flatten())[-3]  # The "Where" token
