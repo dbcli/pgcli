@@ -4,6 +4,7 @@
 Features:
 ---------
 
+* Add support for ANSI escape sequences for coloring the prompt (#1123).
 * Add `\\G` as a terminator to sql statements that will show the results in expanded mode. This feature is copied from mycli. (Thanks: `Amjith Ramanujam`_)
 * Removed limit prompt and added automatic row limit on queries with no LIMIT clause (#1079) (Thanks: `Sebastian Janko`_)
 * Function argument completions now take account of table aliases (#1048). (Thanks: `Owen Stephens`_)
