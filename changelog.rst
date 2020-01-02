@@ -4,7 +4,7 @@ Upcoming:
 Internal:
 ---------
 
-* Fix dead link in development guide.
+* Fix dead link in development guide. (Thanks: `BrownShibaDog`_)
   
 2.2.0:
 ======
@@ -1017,3 +1017,4 @@ Improvements:
 .. _`Alexander Zawadzki`: https://github.com/zadacka
 .. _`Sebastian Janko`: https://github.com/sebojanko
 .. _`Pedro Ferrari`: https://github.com/petobens
+.. _`BrownShibaDog`: https://github.com/BrownShibaDog
