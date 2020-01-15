@@ -1,5 +1,4 @@
-# The maximum version requirement can be removed once Python 3.4 goes EOL
-pytest>=2.7.0,<=3.0.7
+pytest>=2.7.0
 mock>=1.0.1
 tox>=1.9.2
 behave>=1.2.4
