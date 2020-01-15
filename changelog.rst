@@ -7,11 +7,15 @@ Features:
 * Add `__main__.py` file to execute pgcli as a package directly (#1123).
 * Add support for ANSI escape sequences for coloring the prompt (#1122).
 
+Bug fixes:
+
+* Fix warning raised for using `is not` to compare string literal
+
 Internal:
 ---------
 
 * Fix dead link in development guide. (Thanks: `BrownShibaDog`_)
-  
+
 2.2.0:
 ======
 
@@ -1023,3 +1027,4 @@ Improvements:
 .. _`Sebastian Janko`: https://github.com/sebojanko
 .. _`Pedro Ferrari`: https://github.com/petobens
 .. _`BrownShibaDog`: https://github.com/BrownShibaDog
+.. _`thegeorgeous`: https://github.com/thegeorgeous
