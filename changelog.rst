@@ -11,6 +11,11 @@ Internal:
 ---------
 
 * Fix dead link in development guide. (Thanks: `BrownShibaDog`_)
+
+Deprecation:
+-----------
+
+* Drop Python3.4 support.
   
 2.2.0:
 ======
