@@ -14,7 +14,9 @@ Bug fixes:
 Internal:
 ---------
 
+* Drop Python3.4 support. (Thanks: `laixintao`_)
 * Fix dead link in development guide. (Thanks: `BrownShibaDog`_)
+
 
 2.2.0:
 ======
@@ -1028,3 +1030,4 @@ Improvements:
 .. _`Pedro Ferrari`: https://github.com/petobens
 .. _`BrownShibaDog`: https://github.com/BrownShibaDog
 .. _`thegeorgeous`: https://github.com/thegeorgeous
+.. _`laixintao`: https://github.com/laixintao
