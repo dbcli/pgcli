@@ -275,6 +275,8 @@ class PGCompleter(Completer):
             parentschema, childschema = e([fk.parentschema, fk.childschema])
             parenttable, childtable = e([fk.parenttable, fk.childtable])
             childcol, parcol = e([fk.childcolumn, fk.parentcolumn])
+            if childtable not in meta[childschema]:
+                continue
             childcolmeta = meta[childschema][childtable][childcol]
             parcolmeta = meta[parentschema][parenttable][parcol]
             fk = ForeignKey(
