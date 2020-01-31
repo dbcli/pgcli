@@ -10,6 +10,7 @@ Features:
 Bug fixes:
 
 * Fix warning raised for using `is not` to compare string literal
+* Fix exception in thread completion_refresh caused by KeyError in extend_foreignkeys call
 
 Internal:
 ---------
