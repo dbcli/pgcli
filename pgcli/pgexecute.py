@@ -515,12 +515,13 @@ class PGExecute(object):
             cur.execute(self.schemata_query)
             return [x[0] for x in cur.fetchall()]
 
-    def _relations(self, kinds=("r", "p", "v", "m")):
+    def _relations(self, kinds=("r", "p", "f", "v", "m")):
         """Get table or view name metadata
 
         :param kinds: list of postgres relkind filters:
                 'r' - table
                 'p' - partitioned table
+                'f' - foreign table
                 'v' - view
                 'm' - materialized view
         :return: (schema_name, rel_name) tuples
@@ -535,7 +536,7 @@ class PGExecute(object):
 
     def tables(self):
         """Yields (schema_name, table_name) tuples"""
-        for row in self._relations(kinds=["r", "p"]):
+        for row in self._relations(kinds=["r", "p", "f"]):
             yield row
 
     def views(self):
@@ -546,12 +547,13 @@ class PGExecute(object):
         for row in self._relations(kinds=["v", "m"]):
             yield row
 
-    def _columns(self, kinds=("r", "p", "v", "m")):
+    def _columns(self, kinds=("r", "p", "f", "v", "m")):
         """Get column metadata for tables and views
 
         :param kinds: kinds: list of postgres relkind filters:
                 'r' - table
                 'p' - partitioned table
+                'f' - foreign table
                 'v' - view
                 'm' - materialized view
         :return: list of (schema_name, relation_name, column_name, column_type) tuples
@@ -605,7 +607,7 @@ class PGExecute(object):
                 yield row
 
     def table_columns(self):
-        for row in self._columns(kinds=["r", "p"]):
+        for row in self._columns(kinds=["r", "p", "f"]):
             yield row
 
     def view_columns(self):
