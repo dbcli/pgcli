@@ -158,6 +158,13 @@ def before_step(context, _):
     context.atprompt = False
 
 
+def before_feature(context, feature):
+    if feature.name.startswith("run the cli"):
+        os.environ["PROMPT_TOOLKIT_NO_CPR"] = "0"
+    else:
+        os.environ["PROMPT_TOOLKIT_NO_CPR"] = "1"
+
+
 def before_scenario(context, scenario):
     if scenario.name == "list databases":
         # not using the cli for that

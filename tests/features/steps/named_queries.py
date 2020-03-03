@@ -54,4 +54,4 @@ def step_see_named_query_deleted(context):
     """
     Wait to see query deleted.
     """
-    wrappers.expect_pager(context, "foo: Deleted\r\n", timeout=1)
+    wrappers.expect_pager(context, "foo: Deleted\r\n", timeout=3)

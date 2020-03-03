@@ -66,7 +66,7 @@ def step_see_prompt(context):
 @then("we see help output")
 def step_see_help(context):
     for expected_line in context.fixture_data["help_commands.txt"]:
-        wrappers.expect_exact(context, expected_line, timeout=2)
+        wrappers.expect_exact(context, expected_line, timeout=10)
 
 
 @then("we see database created")
@@ -90,4 +90,4 @@ def step_see_db_connected(context):
     """
     Wait to see drop database output.
     """
-    wrappers.expect_exact(context, "You are now connected to database", timeout=2)
+    wrappers.expect_exact(context, "You are now connected to database", timeout=10)

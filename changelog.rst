@@ -20,6 +20,7 @@ Internal:
 * Drop Python2.7 support. (Thanks: `laixintao`_)
 * Drop Python3.5 support. (Thanks: `laixintao`_)
 * Fix dead link in development guide. (Thanks: `BrownShibaDog`_)
+* Upgrade python-prompt-toolkit to v3.0. (Thanks: `laixintao`_)
 
 
 2.2.0:
