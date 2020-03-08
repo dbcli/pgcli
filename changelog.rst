@@ -11,6 +11,7 @@ Features:
 Bug fixes:
 
 * Fix warning raised for using `is not` to compare string literal
+* Close open connection in completion_refresher thread
 
 Internal:
 ---------
