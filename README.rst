@@ -281,6 +281,8 @@ choice:
 
     In [3]: my_result = _
 
+Pgcli only runs on Python3.6+ since 2.2.0, if you use an old version of Python,
+you should use install ``pgcli <= 2.2.0``.
 
 Thanks:
 -------
