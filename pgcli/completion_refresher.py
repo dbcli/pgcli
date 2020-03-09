@@ -84,7 +84,7 @@ class CompletionRefresher(object):
         for callback in callbacks:
             callback(completer)
 
-        if not settings.get("single_connection"):
+        if not settings.get("single_connection") and executor.conn:
             # close connection established with pgexecute.copy()
             executor.conn.close()
 
