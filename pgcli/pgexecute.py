@@ -201,7 +201,7 @@ class PGExecute(object):
         host=None,
         port=None,
         dsn=None,
-        **kwargs,
+        **kwargs
     ):
         self._conn_params = {}
         self.conn = None
@@ -227,7 +227,7 @@ class PGExecute(object):
         host=None,
         port=None,
         dsn=None,
-        **kwargs,
+        **kwargs
     ):
 
         conn_params = self._conn_params.copy()
