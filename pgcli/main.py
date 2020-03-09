@@ -363,7 +363,7 @@ class PGCli(object):
                     user=user,
                     host=host,
                     port=port,
-                    **self.pgexecute.extra_args
+                    **self.pgexecute.extra_args,
                 )
             except OperationalError as e:
                 click.secho(str(e), err=True, fg="red")
