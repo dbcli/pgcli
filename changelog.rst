@@ -16,6 +16,7 @@ Internal:
 ---------
 
 * Drop Python3.4 support. (Thanks: `laixintao`_)
+* Drop Python2.7 support. (Thanks: `laixintao`_)
 * Fix dead link in development guide. (Thanks: `BrownShibaDog`_)
 
 
