@@ -1,8 +1,11 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import platform
 import warnings
+from os.path import expanduser
 
+from configobj import ConfigObj
 from pgspecial.namedqueries import NamedQueries
 
 warnings.filterwarnings("ignore", category=UserWarning, module="psycopg2")
@@ -1253,7 +1256,9 @@ def cli(
         username = dbname
     database = dbname_opt or dbname or ""
     user = username_opt or username
-
+    service_config = None
+    if database.startswith("service="):
+        service_config = parse_service_info(database[8:])
     # because option --list or -l are not supposed to have a db name
     if list_databases:
         database = "postgres"
@@ -1274,10 +1279,14 @@ def cli(
         pgcli.dsn_alias = dsn
     elif "://" in database:
         pgcli.connect_uri(database)
-    elif "=" in database:
+    elif "=" in database and service_config is None:
         pgcli.connect_dsn(database, user=user)
-    elif os.environ.get("PGSERVICE", None):
-        pgcli.connect_dsn("service={0}".format(os.environ["PGSERVICE"]))
+    elif service_config is not None:
+        pgcli.connect(dbname_opt or service_config.get("dbname"),
+                      host or service_config.get("host"),
+                      user or service_config.get("user"),
+                      port or service_config.get("port"))
+
     else:
         pgcli.connect(database, host, user, port)
 
@@ -1451,5 +1460,27 @@ def format_output(title, cur, headers, status, settings):
     return output
 
 
+def parse_service_info(service):
+    service =  service or os.getenv("PGSERVICE")
+    if not service:
+        # nothing to do
+        return
+    service_file = os.getenv("PGSERVICEFILE")
+    if not service_file:
+        # try ~/.pg_service.conf (if that exists)
+        if platform.system() == "Windows":
+            service_file = os.getenv("PGSYSCONFDIR") + "\\pg_service.conf"
+        elif os.getenv("PGSYSCONFDIR"):
+            service_file = os.path.join(os.getenv("PGSYSCONFDIR"), ".pg_service.conf")
+        else:
+            service_file = expanduser("~/.pg_service.conf")
+    service_file_config = ConfigObj(service_file)
+    if not service in service_file_config:
+        return
+    service_conf = service_file_config.get(service)
+    return service_conf
+
+
 if __name__ == "__main__":
     cli()
+
