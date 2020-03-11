@@ -288,7 +288,7 @@ def test_pg_service_file(tmpdir):
 
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
-        with open(tmpdir.join(".pg_service.conf"), "w") as service_conf:
+        with open(tmpdir.join(".pg_service.conf").strpath, "w") as service_conf:
             service_conf.write(
                 """[myservice]
             host=a_host
