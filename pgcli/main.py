@@ -478,6 +478,21 @@ class PGCli(object):
     def connect_dsn(self, dsn, **kwargs):
         self.connect(dsn=dsn, **kwargs)
 
+    def connect_service(self, service, user):
+        service_config, file = parse_service_info(service)
+        if service_config is None:
+            click.secho(
+                "service '%s' was not found in %s" % (service, file), err=True, fg="red"
+            )
+            exit(1)
+        self.connect(
+            database=service_config.get("dbname"),
+            host=service_config.get("host"),
+            user=user or service_config.get("user"),
+            port=service_config.get("port"),
+            passwd=service_config.get("password"),
+        )
+
     def connect_uri(self, uri):
         kwargs = psycopg2.extensions.parse_dsn(uri)
         remap = {"dbname": "database", "password": "passwd"}
@@ -1256,9 +1271,11 @@ def cli(
         username = dbname
     database = dbname_opt or dbname or ""
     user = username_opt or username
-    service_config = None
+    service = None
     if database.startswith("service="):
-        service_config = parse_service_info(database[8:])
+        service = database[8:]
+    elif os.getenv("PGSERVICE") is not None:
+        service = os.getenv("PGSERVICE")
     # because option --list or -l are not supposed to have a db name
     if list_databases:
         database = "postgres"
@@ -1279,14 +1296,10 @@ def cli(
         pgcli.dsn_alias = dsn
     elif "://" in database:
         pgcli.connect_uri(database)
-    elif "=" in database and service_config is None:
+    elif "=" in database and service is None:
         pgcli.connect_dsn(database, user=user)
-    elif service_config is not None:
-        pgcli.connect(dbname_opt or service_config.get("dbname"),
-                      host or service_config.get("host"),
-                      user or service_config.get("user"),
-                      port or service_config.get("port"))
-
+    elif service is not None:
+        pgcli.connect_service(service, user)
     else:
         pgcli.connect(database, host, user, port)
 
@@ -1461,10 +1474,7 @@ def format_output(title, cur, headers, status, settings):
 
 
 def parse_service_info(service):
-    service =  service or os.getenv("PGSERVICE")
-    if not service:
-        # nothing to do
-        return
+    service = service or os.getenv("PGSERVICE")
     service_file = os.getenv("PGSERVICEFILE")
     if not service_file:
         # try ~/.pg_service.conf (if that exists)
@@ -1474,13 +1484,15 @@ def parse_service_info(service):
             service_file = os.path.join(os.getenv("PGSYSCONFDIR"), ".pg_service.conf")
         else:
             service_file = expanduser("~/.pg_service.conf")
+    if not service:
+        # nothing to do
+        return None, service_file
     service_file_config = ConfigObj(service_file)
-    if not service in service_file_config:
-        return
+    if service not in service_file_config:
+        return None, service_file
     service_conf = service_file_config.get(service)
-    return service_conf
+    return service_conf, service_file
 
 
 if __name__ == "__main__":
     cli()
-
