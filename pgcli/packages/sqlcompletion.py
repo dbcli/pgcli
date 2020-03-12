@@ -1,5 +1,3 @@
-from __future__ import print_function, unicode_literals
-
 import sys
 import re
 import sqlparse
@@ -9,14 +7,6 @@ from .parseutils.utils import last_word, find_prev_keyword, parse_partial_identi
 from .parseutils.tables import extract_tables
 from .parseutils.ctes import isolate_query_ctes
 from pgspecial.main import parse_special_command
-
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
-
-if PY3:
-    string_types = str
-else:
-    string_types = basestring
 
 
 Special = namedtuple("Special", [])
@@ -301,7 +291,7 @@ def suggest_special(text):
 
 def suggest_based_on_last_token(token, stmt):
 
-    if isinstance(token, string_types):
+    if isinstance(token, str):
         token_v = token.lower()
     elif isinstance(token, Comparison):
         # If 'token' is a Comparison type such as
