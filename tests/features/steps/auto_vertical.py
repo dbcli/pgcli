@@ -1,6 +1,3 @@
-# -*- coding: utf-8
-from __future__ import unicode_literals, print_function
-
 from textwrap import dedent
 from behave import then, when
 import wrappers

@@ -1,12 +1,9 @@
-from __future__ import unicode_literals
-
 from functools import partial
 from itertools import product
 from pgcli.packages.parseutils.meta import FunctionMetadata, ForeignKey
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 from mock import Mock
-from six import iteritems
 import pytest
 
 parametrize = pytest.mark.parametrize
@@ -78,7 +75,7 @@ class MetaData(object):
     def specials(self, pos=0):
         return [
             Completion(text=k, start_position=pos, display_meta=v.description)
-            for k, v in iteritems(self.completer.pgspecial.commands)
+            for k, v in self.completer.pgspecial.commands.items()
         ]
 
     def columns(self, tbl, parent="public", typ="tables", pos=0):
