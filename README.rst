@@ -89,6 +89,10 @@ For more details:
       --warn / --no-warn      Warn before running a destructive query.
       --help                  Show this message and exit.
 
+``pgcli`` also supports many of the same `environment variables`_ as ``psql`` for login options (e.g. ``PGHOST``, ``PGPORT``, ``PGUSER``, ``PGPASSWORD``, ``PGDATABASE``).
+
+.. _environment variables: https://www.postgresql.org/docs/current/libpq-envars.html
+
 Features
 --------
 
