@@ -38,6 +38,8 @@ TOKEN_TO_PROMPT_STYLE = {
     Token.Literal.String: "literal.string",
     Token.Literal.Number: "literal.number",
     Token.Keyword: "keyword",
+    Token.Prompt: "prompt",
+    Token.Continuation: "continuation",
 }
 
 # reverse dict for cli_helpers, because they still expect Pygments tokens.
