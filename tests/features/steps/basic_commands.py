@@ -91,7 +91,6 @@ def step_send_partial_select_command(context):
 @then("we see error message")
 def step_see_error_message(context):
     wrappers.expect_exact(context, 'column "a" does not exist', timeout=2)
-    wrappers.wait_prompt(context)
 
 
 @when("we send source command")

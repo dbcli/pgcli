@@ -20,6 +20,7 @@ def before_all(context):
     os.environ["PAGER"] = "cat"
     os.environ["EDITOR"] = "ex"
     os.environ["VISUAL"] = "ex"
+    os.environ["PROMPT_TOOLKIT_NO_CPR"] = "1"
 
     context.package_root = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -156,10 +157,6 @@ def after_all(context):
 
 def before_step(context, _):
     context.atprompt = False
-
-
-def before_feature(context, feature):
-    os.environ["PROMPT_TOOLKIT_NO_CPR"] = "1"
 
 
 def before_scenario(context, scenario):
