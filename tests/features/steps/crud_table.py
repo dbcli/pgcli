@@ -98,7 +98,7 @@ def step_see_data_selected(context):
             SELECT 1\r
         """
         ),
-        timeout=15,
+        timeout=1,
     )
 
 

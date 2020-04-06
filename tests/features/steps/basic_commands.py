@@ -136,12 +136,12 @@ def step_confirm_destructive_command(context):
     wrappers.expect_exact(
         context,
         "You're about to run a destructive command.\r\nDo you want to proceed? (y/n):",
-        timeout=5,
+        timeout=2,
     )
     context.cli.sendline("y")
 
 
 @then("we send password")
 def step_send_password(context):
-    wrappers.expect_exact(context, "Password for", timeout=10)
+    wrappers.expect_exact(context, "Password for", timeout=5)
     context.cli.sendline(context.conf["pass"] or "DOES NOT MATTER")

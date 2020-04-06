@@ -17,15 +17,15 @@ def step_prepare_data(context):
     wrappers.expect_exact(
         context,
         "You're about to run a destructive command.\r\nDo you want to proceed? (y/n):",
-        timeout=5,
+        timeout=2,
     )
     context.cli.sendline("y")
 
     wrappers.wait_prompt(context)
     context.cli.sendline("create table a(x integer, y real, z numeric(10, 4));")
-    wrappers.expect_pager(context, "CREATE TABLE\r\n", timeout=5)
+    wrappers.expect_pager(context, "CREATE TABLE\r\n", timeout=2)
     context.cli.sendline("""insert into a(x, y, z) values(1, 1.0, 1.0);""")
-    wrappers.expect_pager(context, "INSERT 0 1\r\n", timeout=5)
+    wrappers.expect_pager(context, "INSERT 0 1\r\n", timeout=2)
 
 
 @when("we set expanded {mode}")
@@ -51,7 +51,7 @@ def step_see_data(context, which):
                 SELECT 1\r
             """
             ),
-            timeout=15,
+            timeout=1,
         )
     else:
         wrappers.expect_pager(
@@ -66,5 +66,5 @@ def step_see_data(context, which):
                 SELECT 1\r
             """
             ),
-            timeout=15,
+            timeout=1,
         )
