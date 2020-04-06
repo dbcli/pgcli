@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """A script to publish a release of pgcli to PyPI."""
 
-from __future__ import print_function
 import io
 from optparse import OptionParser
 import re

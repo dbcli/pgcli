@@ -9,7 +9,6 @@ import pgspecial as special
 import select
 from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE, make_dsn
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
-from .encodingutils import unicode2utf8, PY2, utf8tounicode
 
 _logger = logging.getLogger(__name__)
 
@@ -201,7 +200,7 @@ class PGExecute(object):
         host=None,
         port=None,
         dsn=None,
-        **kwargs
+        **kwargs,
     ):
         self._conn_params = {}
         self.conn = None
@@ -227,7 +226,7 @@ class PGExecute(object):
         host=None,
         port=None,
         dsn=None,
-        **kwargs
+        **kwargs,
     ):
 
         conn_params = self._conn_params.copy()
@@ -250,7 +249,7 @@ class PGExecute(object):
                     new_params["dsn"], password=new_params.pop("password")
                 )
 
-        conn_params.update({k: unicode2utf8(v) for k, v in new_params.items() if v})
+        conn_params.update({k: v for k, v in new_params.items() if v})
 
         conn = psycopg2.connect(**conn_params)
         cursor = conn.cursor()
@@ -333,10 +332,7 @@ class PGExecute(object):
         See http://initd.org/psycopg/docs/connection.html#connection.encoding
         """
 
-        if PY2:
-            return json_data.decode(self.conn.encoding)
-        else:
-            return json_data
+        return json_data
 
     def failed_transaction(self):
         status = self.conn.get_transaction_status()
@@ -450,7 +446,7 @@ class PGExecute(object):
         # conn.notices persist between queies, we use pop to clear out the list
         title = ""
         while len(self.conn.notices) > 0:
-            title = utf8tounicode(self.conn.notices.pop()) + title
+            title = self.conn.notices.pop() + title
 
         # cur.description will be None for operations that do not return
         # rows.

@@ -84,6 +84,10 @@ class CompletionRefresher(object):
         for callback in callbacks:
             callback(completer)
 
+        if not settings.get("single_connection") and executor.conn:
+            # close connection established with pgexecute.copy()
+            executor.conn.close()
+
 
 def refresher(name, refreshers=CompletionRefresher.refreshers):
     """Decorator to populate the dictionary of refreshers with the current

@@ -1,5 +1,3 @@
-from __future__ import print_function, unicode_literals
-
 import sqlparse
 from collections import namedtuple
 from sqlparse.sql import IdentifierList, Identifier, Function

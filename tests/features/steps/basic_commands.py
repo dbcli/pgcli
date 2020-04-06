@@ -1,10 +1,8 @@
-# -*- coding: utf-8
 """
 Steps for behavioral style tests are defined in this module.
 Each step is defined by the string decorating it.
 This string is used to call the step in "*.feature" file.
 """
-from __future__ import unicode_literals, print_function
 
 import pexpect
 import subprocess
@@ -93,7 +91,6 @@ def step_send_partial_select_command(context):
 @then("we see error message")
 def step_see_error_message(context):
     wrappers.expect_exact(context, 'column "a" does not exist', timeout=2)
-    wrappers.wait_prompt(context)
 
 
 @when("we send source command")

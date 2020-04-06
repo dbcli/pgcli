@@ -1,6 +1,3 @@
-# coding=UTF-8
-from __future__ import print_function
-
 from textwrap import dedent
 
 import psycopg2
@@ -240,10 +237,10 @@ def expanded(request):
 @dbtest
 def test_unicode_support_in_output(executor, expanded):
     run(executor, "create table unicodechars(t text)")
-    run(executor, u"insert into unicodechars (t) values ('é')")
+    run(executor, "insert into unicodechars (t) values ('é')")
 
     # See issue #24, this raises an exception without proper handling
-    assert u"é" in run(
+    assert "é" in run(
         executor, "select * from unicodechars", join=True, expanded=expanded
     )
 
@@ -304,10 +301,10 @@ def test_multiple_queries_with_special_command_same_line(executor, pgspecial):
 def test_multiple_queries_same_line_syntaxerror(executor, exception_formatter):
     result = run(
         executor,
-        u"select 'fooé'; invalid syntax é",
+        "select 'fooé'; invalid syntax é",
         exception_formatter=exception_formatter,
     )
-    assert u"fooé" in result[3]
+    assert "fooé" in result[3]
     assert 'syntax error at or near "invalid"' in result[-1]
 
 
@@ -319,8 +316,8 @@ def pgspecial():
 @dbtest
 def test_special_command_help(executor, pgspecial):
     result = run(executor, "\\?", pgspecial=pgspecial)[1].split("|")
-    assert u"Command" in result[1]
-    assert u"Description" in result[2]
+    assert "Command" in result[1]
+    assert "Description" in result[2]
 
 
 @dbtest
@@ -328,42 +325,42 @@ def test_bytea_field_support_in_output(executor):
     run(executor, "create table binarydata(c bytea)")
     run(executor, "insert into binarydata (c) values (decode('DEADBEEF', 'hex'))")
 
-    assert u"\\xdeadbeef" in run(executor, "select * from binarydata", join=True)
+    assert "\\xdeadbeef" in run(executor, "select * from binarydata", join=True)
 
 
 @dbtest
 def test_unicode_support_in_unknown_type(executor):
-    assert u"日本語" in run(executor, u"SELECT '日本語' AS japanese;", join=True)
+    assert "日本語" in run(executor, "SELECT '日本語' AS japanese;", join=True)
 
 
 @dbtest
 def test_unicode_support_in_enum_type(executor):
-    run(executor, u"CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy', '日本語')")
-    run(executor, u"CREATE TABLE person (name TEXT, current_mood mood)")
-    run(executor, u"INSERT INTO person VALUES ('Moe', '日本語')")
-    assert u"日本語" in run(executor, u"SELECT * FROM person", join=True)
+    run(executor, "CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy', '日本語')")
+    run(executor, "CREATE TABLE person (name TEXT, current_mood mood)")
+    run(executor, "INSERT INTO person VALUES ('Moe', '日本語')")
+    assert "日本語" in run(executor, "SELECT * FROM person", join=True)
 
 
 @requires_json
 def test_json_renders_without_u_prefix(executor, expanded):
-    run(executor, u"create table jsontest(d json)")
-    run(executor, u"""insert into jsontest (d) values ('{"name": "Éowyn"}')""")
+    run(executor, "create table jsontest(d json)")
+    run(executor, """insert into jsontest (d) values ('{"name": "Éowyn"}')""")
     result = run(
-        executor, u"SELECT d FROM jsontest LIMIT 1", join=True, expanded=expanded
+        executor, "SELECT d FROM jsontest LIMIT 1", join=True, expanded=expanded
     )
 
-    assert u'{"name": "Éowyn"}' in result
+    assert '{"name": "Éowyn"}' in result
 
 
 @requires_jsonb
 def test_jsonb_renders_without_u_prefix(executor, expanded):
     run(executor, "create table jsonbtest(d jsonb)")
-    run(executor, u"""insert into jsonbtest (d) values ('{"name": "Éowyn"}')""")
+    run(executor, """insert into jsonbtest (d) values ('{"name": "Éowyn"}')""")
     result = run(
         executor, "SELECT d FROM jsonbtest LIMIT 1", join=True, expanded=expanded
     )
 
-    assert u'{"name": "Éowyn"}' in result
+    assert '{"name": "Éowyn"}' in result
 
 
 @dbtest

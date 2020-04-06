@@ -12,12 +12,15 @@ Features:
 Bug fixes:
 
 * Fix warning raised for using `is not` to compare string literal
+* Close open connection in completion_refresher thread
 
 Internal:
 ---------
 
-* Drop Python3.4 support. (Thanks: `laixintao`_)
+* Drop Python2.7, 3.4, 3.5 support. (Thanks: `laixintao`_)
+* Support Python3.8. (Thanks: `laixintao`_)
 * Fix dead link in development guide. (Thanks: `BrownShibaDog`_)
+* Upgrade python-prompt-toolkit to v3.0. (Thanks: `laixintao`_)
 
 
 2.2.0:

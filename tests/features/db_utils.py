@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
-
 from psycopg2 import connect
 from psycopg2.extensions import AsIs
 

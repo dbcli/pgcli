@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 import click
 
 from pgcli.packages.prompt_utils import confirm_destructive_query

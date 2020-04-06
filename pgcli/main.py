@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import platform
 import warnings
 from os.path import expanduser
@@ -66,8 +63,6 @@ from .config import (
     get_config,
 )
 from .key_bindings import pgcli_bindings
-from .encodingutils import utf8tounicode
-from .encodingutils import text_type
 from .packages.prompt_utils import confirm_destructive_query
 from .__init__ import __version__
 
@@ -366,7 +361,7 @@ class PGCli(object):
                     user=user,
                     host=host,
                     port=port,
-                    **self.pgexecute.extra_args
+                    **self.pgexecute.extra_args,
                 )
             except OperationalError as e:
                 click.secho(str(e), err=True, fg="red")
@@ -556,7 +551,7 @@ class PGCli(object):
             # fails. Don't prompt if the -w flag is supplied
             if self.never_passwd_prompt:
                 return False
-            error_msg = utf8tounicode(exc.args[0])
+            error_msg = exc.args[0]
             if "no password supplied" in error_msg:
                 return True
             if "password authentication failed" in error_msg:
@@ -1387,7 +1382,7 @@ def is_select(status):
 
 
 def exception_formatter(e):
-    return click.style(utf8tounicode(str(e)), fg="red")
+    return click.style(str(e), fg="red")
 
 
 def format_output(title, cur, headers, status, settings):
@@ -1403,7 +1398,7 @@ def format_output(title, cur, headers, status, settings):
             return settings.missingval
         if not isinstance(val, list):
             return val
-        return "{" + ",".join(text_type(format_array(e)) for e in val) + "}"
+        return "{" + ",".join(str(format_array(e)) for e in val) + "}"
 
     def format_arrays(data, headers, **_):
         data = list(data)
@@ -1433,7 +1428,7 @@ def format_output(title, cur, headers, status, settings):
         output.append(title)
 
     if cur:
-        headers = [case_function(utf8tounicode(x)) for x in headers]
+        headers = [case_function(x) for x in headers]
         if max_width is not None:
             cur = list(cur)
         column_types = None
@@ -1451,10 +1446,10 @@ def format_output(title, cur, headers, status, settings):
                 ):
                     column_types.append(int)
                 else:
-                    column_types.append(text_type)
+                    column_types.append(str)
 
         formatted = formatter.format_output(cur, headers, **output_kwargs)
-        if isinstance(formatted, (text_type)):
+        if isinstance(formatted, str):
             formatted = iter(formatted.splitlines())
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
@@ -1462,7 +1457,7 @@ def format_output(title, cur, headers, status, settings):
             formatted = formatter.format_output(
                 cur, headers, format_name="vertical", column_types=None, **output_kwargs
             )
-            if isinstance(formatted, (text_type)):
+            if isinstance(formatted, str):
                 formatted = iter(formatted.splitlines())
 
         output = itertools.chain(output, formatted)

@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import re
 import sqlparse
 from sqlparse.tokens import Name
