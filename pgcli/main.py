@@ -160,7 +160,6 @@ class PGCli(object):
         prompt_dsn=None,
         auto_vertical_output=False,
         warn=None,
-        show_bottom_toolbar=False,
     ):
 
         self.force_passwd_prompt = force_passwd_prompt

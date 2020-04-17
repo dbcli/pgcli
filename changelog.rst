@@ -7,6 +7,7 @@ Features:
 * Add `__main__.py` file to execute pgcli as a package directly (#1123).
 * Add support for ANSI escape sequences for coloring the prompt (#1122).
 * Add support for partitioned tables (relkind "p").
+* Add config option show_bottom_toolbar.
 
 Bug fixes:
 
