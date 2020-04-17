@@ -282,6 +282,54 @@ def test_quoted_db_uri(tmpdir):
     )
 
 
+def test_pg_service_file(tmpdir):
+
+    with mock.patch.object(PGCli, "connect") as mock_connect:
+        cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+        with open(tmpdir.join(".pg_service.conf").strpath, "w") as service_conf:
+            service_conf.write(
+                """[myservice]
+            host=a_host
+            user=a_user
+            port=5433
+            password=much_secure
+            dbname=a_dbname
+
+            [my_other_service]
+            host=b_host
+            user=b_user
+            port=5435
+            dbname=b_dbname
+            """
+            )
+        os.environ["PGSERVICEFILE"] = tmpdir.join(".pg_service.conf").strpath
+        cli.connect_service("myservice", "another_user")
+        mock_connect.assert_called_with(
+            database="a_dbname",
+            host="a_host",
+            user="another_user",
+            port="5433",
+            passwd="much_secure",
+        )
+
+    with mock.patch.object(PGExecute, "__init__") as mock_pgexecute:
+        mock_pgexecute.return_value = None
+        cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+        os.environ["PGPASSWORD"] = "very_secure"
+        cli.connect_service("my_other_service", None)
+    mock_pgexecute.assert_called_with(
+        "b_dbname",
+        "b_user",
+        "very_secure",
+        "b_host",
+        "5435",
+        "",
+        application_name="pgcli",
+    )
+    del os.environ["PGPASSWORD"]
+    del os.environ["PGSERVICEFILE"]
+
+
 def test_ssl_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))

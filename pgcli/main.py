@@ -1,5 +1,8 @@
+import platform
 import warnings
+from os.path import expanduser
 
+from configobj import ConfigObj
 from pgspecial.namedqueries import NamedQueries
 
 warnings.filterwarnings("ignore", category=UserWarning, module="psycopg2")
@@ -472,6 +475,21 @@ class PGCli(object):
 
     def connect_dsn(self, dsn, **kwargs):
         self.connect(dsn=dsn, **kwargs)
+
+    def connect_service(self, service, user):
+        service_config, file = parse_service_info(service)
+        if service_config is None:
+            click.secho(
+                "service '%s' was not found in %s" % (service, file), err=True, fg="red"
+            )
+            exit(1)
+        self.connect(
+            database=service_config.get("dbname"),
+            host=service_config.get("host"),
+            user=user or service_config.get("user"),
+            port=service_config.get("port"),
+            passwd=service_config.get("password"),
+        )
 
     def connect_uri(self, uri):
         kwargs = psycopg2.extensions.parse_dsn(uri)
@@ -1251,7 +1269,11 @@ def cli(
         username = dbname
     database = dbname_opt or dbname or ""
     user = username_opt or username
-
+    service = None
+    if database.startswith("service="):
+        service = database[8:]
+    elif os.getenv("PGSERVICE") is not None:
+        service = os.getenv("PGSERVICE")
     # because option --list or -l are not supposed to have a db name
     if list_databases:
         database = "postgres"
@@ -1272,10 +1294,10 @@ def cli(
         pgcli.dsn_alias = dsn
     elif "://" in database:
         pgcli.connect_uri(database)
-    elif "=" in database:
+    elif "=" in database and service is None:
         pgcli.connect_dsn(database, user=user)
-    elif os.environ.get("PGSERVICE", None):
-        pgcli.connect_dsn("service={0}".format(os.environ["PGSERVICE"]))
+    elif service is not None:
+        pgcli.connect_service(service, user)
     else:
         pgcli.connect(database, host, user, port)
 
@@ -1447,6 +1469,27 @@ def format_output(title, cur, headers, status, settings):
         output = itertools.chain(output, [status])
 
     return output
+
+
+def parse_service_info(service):
+    service = service or os.getenv("PGSERVICE")
+    service_file = os.getenv("PGSERVICEFILE")
+    if not service_file:
+        # try ~/.pg_service.conf (if that exists)
+        if platform.system() == "Windows":
+            service_file = os.getenv("PGSYSCONFDIR") + "\\pg_service.conf"
+        elif os.getenv("PGSYSCONFDIR"):
+            service_file = os.path.join(os.getenv("PGSYSCONFDIR"), ".pg_service.conf")
+        else:
+            service_file = expanduser("~/.pg_service.conf")
+    if not service:
+        # nothing to do
+        return None, service_file
+    service_file_config = ConfigObj(service_file)
+    if service not in service_file_config:
+        return None, service_file
+    service_conf = service_file_config.get(service)
+    return service_conf, service_file
 
 
 if __name__ == "__main__":
