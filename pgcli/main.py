@@ -212,7 +212,9 @@ class PGCli(object):
         self.decimal_format = c["data_formats"]["decimal"]
         self.float_format = c["data_formats"]["float"]
         self.initialize_keyring()
-        self.show_bottom_toolbar = bool(show_bottom_toolbar) or c["main"].as_bool("show_bottom_toolbar")
+        self.show_bottom_toolbar = bool(show_bottom_toolbar) or c["main"].as_bool(
+            "show_bottom_toolbar"
+        )
 
         self.pgspecial.pset_pager(
             self.config["main"].as_bool("enable_pager") and "on" or "off"
