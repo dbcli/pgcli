@@ -18,6 +18,7 @@ import functools
 import humanize
 import datetime as dt
 import itertools
+import platform
 from time import time, sleep
 from codecs import open
 
@@ -1425,6 +1426,14 @@ def format_output(title, cur, headers, status, settings):
     }
     if not settings.floatfmt:
         output_kwargs["preprocessors"] = (align_decimals,)
+
+    if table_format == "csv":
+        # The default CSV dialect is "excel" which is not handling newline values correctly
+        # Nevertheless, we want to keep on using "excel" on Windows since it uses '\r\n'
+        # as the line terminator
+        # https://github.com/dbcli/pgcli/issues/1102
+        dialect = "excel" if platform.system() == "Windows" else "unix"
+        output_kwargs["dialect"] = dialect
 
     if title:  # Only print the title if it's not None.
         output.append(title)
