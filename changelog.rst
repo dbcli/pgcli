@@ -8,6 +8,7 @@ Features:
 * Add support for ANSI escape sequences for coloring the prompt (#1122).
 * Add support for partitioned tables (relkind "p").
 * Add support for `pg_service.conf` files
+* Add config option show_bottom_toolbar.
 
 Bug fixes:
 

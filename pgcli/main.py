@@ -214,6 +214,7 @@ class PGCli(object):
         self.decimal_format = c["data_formats"]["decimal"]
         self.float_format = c["data_formats"]["float"]
         self.initialize_keyring()
+        self.show_bottom_toolbar = c["main"].as_bool("show_bottom_toolbar")
 
         self.pgspecial.pset_pager(
             self.config["main"].as_bool("enable_pager") and "on" or "off"
@@ -810,7 +811,7 @@ class PGCli(object):
                 reserve_space_for_menu=self.min_num_menu_lines,
                 message=get_message,
                 prompt_continuation=get_continuation,
-                bottom_toolbar=get_toolbar_tokens,
+                bottom_toolbar=get_toolbar_tokens if self.show_bottom_toolbar else None,
                 complete_style=complete_style,
                 input_processors=[
                     # Highlight matching brackets while editing.
