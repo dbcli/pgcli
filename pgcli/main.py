@@ -1463,7 +1463,8 @@ def format_output(title, cur, headers, status, settings):
 
         output = itertools.chain(output, formatted)
 
-    if status:  # Only print the status if it's not None.
+    # Only print the status if it's not None and we are not producing CSV
+    if status and table_format != "csv":
         output = itertools.chain(output, [status])
 
     return output
