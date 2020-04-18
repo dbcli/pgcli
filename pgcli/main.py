@@ -660,7 +660,8 @@ class PGCli(object):
                     except IOError as e:
                         click.secho(str(e), err=True, fg="red")
                 else:
-                    self.echo_via_pager("\n".join(output))
+                    if output:
+                        self.echo_via_pager("\n".join(output))
             except KeyboardInterrupt:
                 pass
 
