@@ -1,3 +1,15 @@
+TBD
+===
+
+Features:
+---------
+
+* Make the output more compact by removing the empty newline. (Thanks: `laixintao`_)
+
+Bug fixes:
+----------
+
+
 3.0.0
 =====
 
@@ -11,6 +23,7 @@ Features:
 * Add config option show_bottom_toolbar.
 
 Bug fixes:
+----------
 
 * Fix warning raised for using `is not` to compare string literal
 * Close open connection in completion_refresher thread
