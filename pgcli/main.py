@@ -1075,6 +1075,8 @@ class PGCli(object):
     def echo_via_pager(self, text, color=None):
         if self.pgspecial.pager_config == PAGER_OFF or self.watch_command:
             click.echo(text, color=color)
+        elif "pspg" in os.environ["PAGER"] and self.table_format == "csv":
+            click.echo_via_pager(text, color)
         elif self.pgspecial.pager_config == PAGER_LONG_OUTPUT:
             lines = text.split("\n")
 
