@@ -106,7 +106,14 @@ def pgcli_bindings(pgcli):
     )
     def _(event):
         _logger.debug("Detected enter key.")
-        event.current_buffer.validate_and_handle()
+
+        buf = event.app.current_buffer
+        doc = buf.document
+
+        if (doc.on_first_line or doc.current_line.strip()) and buf.complete_state:
+            buf.complete_next()
+        else:
+            event.current_buffer.validate_and_handle()
 
     @kb.add("escape", "enter", filter=~vi_mode)
     def _(event):
