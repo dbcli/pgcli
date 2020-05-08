@@ -33,11 +33,13 @@ def buffer_should_be_handled(pgcli):
             _logger.debug("Multi-line mode is set to 'safe'. Do NOT handle the buffer.")
             return False
 
-        doc = get_app().layout.get_buffer_by_name(DEFAULT_BUFFER).document
+        buf = get_app().layout.get_buffer_by_name(DEFAULT_BUFFER)
+        doc = buf.document
         text = doc.text.strip()
 
         return (
-            text.startswith("\\")  # Special Command
+            buf.complete_state  # We have completions, and may want to select one.
+            or text.startswith("\\")  # Special Command
             or text.endswith(r"\e")  # Special Command
             or text.endswith(r"\G")  # Ended with \e which should launch the editor
             or _is_complete(text)  # A complete SQL command
