@@ -11,6 +11,7 @@ Features:
 Bug fixes:
 ----------
 
+* Minor typo fixes in `pgclirc`. (Thanks: `anthonydb`_)
 
 3.0.0
 =====
