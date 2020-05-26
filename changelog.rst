@@ -11,6 +11,7 @@ Features:
 Bug fixes:
 ----------
 
+* Minor typo fixes in `pgclirc`. (Thanks: `anthonydb`_)
 
 3.0.0
 =====
@@ -1052,3 +1053,4 @@ Improvements:
 .. _`BrownShibaDog`: https://github.com/BrownShibaDog
 .. _`thegeorgeous`: https://github.com/thegeorgeous
 .. _`laixintao`: https://github.com/laixintao
+.. _`anthonydb`: https://github.com/anthonydb
