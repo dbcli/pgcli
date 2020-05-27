@@ -14,7 +14,7 @@ install_requirements = [
     "sqlparse >=0.3.0,<0.4",
     "configobj >= 5.0.6",
     "humanize >= 0.5.1",
-    "cli_helpers[styles] >= 1.2.0",
+    "cli_helpers[styles] >= 2.0.0",
 ]
 
 
