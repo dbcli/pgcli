@@ -175,6 +175,7 @@ bottom-toolbar.transaction.failed = 'bg:#222222 #ff005f bold'
 output.header = "#00ff5f bold"
 output.odd-row = ""
 output.even-row = ""
+output.null = "#808080"
 
 # Named queries are queries you can execute by name.
 [named queries]
