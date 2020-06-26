@@ -13,6 +13,7 @@ Bug fixes:
 ----------
 
 * Minor typo fixes in `pgclirc`. (Thanks: `anthonydb`_)
+* Fix for list index out of range when executing commands from a file (#1193). (Thanks: `Irina Truong`_)
 
 3.0.0
 =====
