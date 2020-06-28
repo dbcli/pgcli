@@ -373,9 +373,9 @@ class PGExecute(object):
         for sql in sqlparse.split(statement):
             # Remove spaces, eol and semi-colons.
             sql = sql.rstrip(";")
+            sql = sqlparse.format(sql, strip_comments=True).strip()
             if not sql:
                 continue
-
             try:
                 if pgspecial:
                     # \G is treated specially since we have to set the expanded output.
