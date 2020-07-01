@@ -8,6 +8,7 @@ Features:
 * Add support for using [pspg](https://github.com/okbob/pspg) as a pager (#1102)
 * Update python version in Dockerfile
 * Support setting color for null value
+* Update functions, datatypes literals for auto-suggestion field
 
 Bug fixes:
 ----------
