@@ -53,6 +53,12 @@ def test_function_name_completion(completer, complete_event):
             Completion(text="MATERIALIZED VIEW", start_position=-2),
             Completion(text="MAX", start_position=-2),
             Completion(text="MAXEXTENTS", start_position=-2),
+            Completion(text="MAKE_DATE", start_position=-2),
+            Completion(text="MAKE_TIME", start_position=-2),
+            Completion(text="MAKE_TIMESTAMPTZ", start_position=-2),
+            Completion(text="MAKE_INTERVAL", start_position=-2),
+            Completion(text="MASKLEN", start_position=-2),
+            Completion(text="MAKE_TIMESTAMP", start_position=-2),
         ]
     )
 
