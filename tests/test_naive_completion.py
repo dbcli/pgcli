@@ -107,3 +107,27 @@ def test_special_name_completion(completer, complete_event):
     )
     # Special commands will NOT be suggested during naive completion mode.
     assert result == completions_to_set([])
+
+
+def test_datatype_name_completion(completer, complete_event):
+    text = "SELECT price::IN"
+    position = len("SELECT price::IN")
+    result = completions_to_set(
+        completer.get_completions(
+            Document(text=text, cursor_position=position),
+            complete_event,
+            smart_completion=True,
+        )
+    )
+    assert result == completions_to_set(
+        [
+            Completion(text="INET", display_meta="datatype"),
+            Completion(text="INT", display_meta="datatype"),
+            Completion(text="INT2", display_meta="datatype"),
+            Completion(text="INT4", display_meta="datatype"),
+            Completion(text="INT8", display_meta="datatype"),
+            Completion(text="INTEGER", display_meta="datatype"),
+            Completion(text="INTERNAL", display_meta="datatype"),
+            Completion(text="INTERVAL", display_meta="datatype"),
+        ]
+    )
