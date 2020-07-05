@@ -7,7 +7,7 @@ Features:
 * Make the output more compact by removing the empty newline. (Thanks: `laixintao`_)
 * Add support for using [pspg](https://github.com/okbob/pspg) as a pager (#1102)
 * Update python version in Dockerfile
-* Support setting color for null value
+* Support setting color for null, string, number, keyword value
 
 Bug fixes:
 ----------
