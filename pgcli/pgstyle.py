@@ -35,6 +35,9 @@ TOKEN_TO_PROMPT_STYLE = {
     Token.Output.OddRow: "output.odd-row",
     Token.Output.EvenRow: "output.even-row",
     Token.Output.Null: "output.null",
+    Token.Literal.String: "literal.string",
+    Token.Literal.Number: "literal.number",
+    Token.Keyword: "keyword",
 }
 
 # reverse dict for cli_helpers, because they still expect Pygments tokens.
