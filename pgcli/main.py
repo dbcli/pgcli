@@ -15,7 +15,7 @@ import logging
 import threading
 import shutil
 import functools
-import humanize
+import pendulum
 import datetime as dt
 import itertools
 import platform
@@ -692,9 +692,9 @@ class PGCli(object):
                         "Time: %0.03fs (%s), executed in: %0.03fs (%s)"
                         % (
                             query.total_time,
-                            humanize.time.naturaldelta(query.total_time),
+                            pendulum.Duration(seconds=query.total_time).in_words(),
                             query.execution_time,
-                            humanize.time.naturaldelta(query.execution_time),
+                            pendulum.Duration(seconds=query.execution_time).in_words(),
                         )
                     )
                 else:

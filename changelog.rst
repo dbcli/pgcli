@@ -15,6 +15,7 @@ Bug fixes:
 
 * Minor typo fixes in `pgclirc`. (Thanks: `anthonydb`_)
 * Fix for list index out of range when executing commands from a file (#1193). (Thanks: `Irina Truong`_)
+* Move from `humanize` to `pendulum` for displaying query durations (#1015)
 * More explicit error message when connecting using DSN alias and it is not found.
 
 3.0.0
