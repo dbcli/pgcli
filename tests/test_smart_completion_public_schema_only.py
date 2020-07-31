@@ -164,6 +164,12 @@ def test_builtin_function_name_completion(completer):
     result = get_result(completer, "SELECT MA")
     assert completions_to_set(result) == completions_to_set(
         [
+            function("MAKE_DATE", -2),
+            function("MAKE_INTERVAL", -2),
+            function("MAKE_TIME", -2),
+            function("MAKE_TIMESTAMP", -2),
+            function("MAKE_TIMESTAMPTZ", -2),
+            function("MASKLEN", -2),
             function("MAX", -2),
             keyword("MAXEXTENTS", -2),
             keyword("MATERIALIZED VIEW", -2),
@@ -189,6 +195,10 @@ def test_user_function_name_completion(completer):
             function("_custom_fun()", -2),
             function("custom_func1()", -2),
             function("custom_func2()", -2),
+            function("CURRENT_DATE", -2),
+            function("CURRENT_TIMESTAMP", -2),
+            function("CUME_DIST", -2),
+            function("CURRENT_TIME", -2),
             keyword("CURRENT", -2),
         ]
     )
