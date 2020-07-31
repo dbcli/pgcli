@@ -1284,7 +1284,15 @@ def cli(
         try:
             cfg = load_config(pgclirc, config_full_path)
             dsn_config = cfg["alias_dsn"][dsn]
-        except:
+        except KeyError:
+            click.secho(
+                f"Could not find a DSN with alias {dsn}. "
+                'Please check the "[alias_dsn]" section in pgclirc.',
+                err=True,
+                fg="red",
+            )
+            exit(1)
+        except Exception:
             click.secho(
                 "Invalid DSNs found in the config file. "
                 'Please check the "[alias_dsn]" section in pgclirc.',
