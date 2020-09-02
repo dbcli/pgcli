@@ -432,22 +432,25 @@ def suggest_based_on_last_token(token, stmt):
     elif token_v == "function":
         schema = stmt.get_identifier_schema()
 
-        # Suggest functionsgi from either the currently-selected schema or the
-        # public schema if no schema has been specified
-        suggest = []
-
-        if not schema:
-            # Suggest schemas
-            suggest.insert(0, Schema())
-
         # stmt.get_previous_token will fail for e.g. `SELECT 1 FROM functions WHERE function:`
         try:
             prev = stmt.get_previous_token(token).value.lower()
             if prev in ("drop", "alter", "create", "create or replace"):
+
+                # Suggest functions from either the currently-selected schema or the
+                # public schema if no schema has been specified
+                suggest = []
+
+                if not schema:
+                    # Suggest schemas
+                    suggest.insert(0, Schema())
+
                 suggest.append(Function(schema=schema, usage="signature"))
+                return tuple(suggest)
+
         except ValueError:
             pass
-        return tuple(suggest)
+        return tuple()
 
     elif token_v in ("table", "view"):
         # E.g. 'ALTER TABLE <tablname>'
