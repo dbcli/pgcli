@@ -92,7 +92,7 @@ class SqlStatement(object):
         return self.parsed.token_first().value.lower() == "insert"
 
     def get_tables(self, scope="full"):
-        """ Gets the tables available in the statement.
+        """Gets the tables available in the statement.
         param `scope:` possible values: 'full', 'insert', 'before'
         If 'insert', only the first table is returned.
         If 'before', only tables before the cursor are returned.
@@ -431,11 +431,23 @@ def suggest_based_on_last_token(token, stmt):
 
     elif token_v == "function":
         schema = stmt.get_identifier_schema()
+
         # stmt.get_previous_token will fail for e.g. `SELECT 1 FROM functions WHERE function:`
         try:
             prev = stmt.get_previous_token(token).value.lower()
             if prev in ("drop", "alter", "create", "create or replace"):
-                return (Function(schema=schema, usage="signature"),)
+
+                # Suggest functions from either the currently-selected schema or the
+                # public schema if no schema has been specified
+                suggest = []
+
+                if not schema:
+                    # Suggest schemas
+                    suggest.insert(0, Schema())
+
+                suggest.append(Function(schema=schema, usage="signature"))
+                return tuple(suggest)
+
         except ValueError:
             pass
         return tuple()
