@@ -15,18 +15,16 @@ before_install:
   - pip install -U setuptools
 
 install:
-  - pip install .
+  - pip install --no-cache-dir .
   - pip install -r requirements-dev.txt
   - pip install keyrings.alt>=3.1
 
 script:
   - set -e
   - coverage run --source pgcli -m py.test
-  # TODO: fix failing tests and uncomment.
-  # commented out on 9/8/2020 by j-bennet
-  # - cd tests
-  # - behave --no-capture
-  # - cd ..
+  - cd tests
+  - behave --no-capture
+  - cd ..
   # check for changelog ReST compliance
   - rst2html.py --halt=warning changelog.rst >/dev/null
   # check for black code compliance, 3.6 only

@@ -64,13 +64,17 @@ def extract_from_part(parsed, stop_at_punctuation=True):
                 yield item
         elif item.ttype is Keyword or item.ttype is Keyword.DML:
             item_val = item.value.upper()
-            if item_val in (
-                "COPY",
-                "FROM",
-                "INTO",
-                "UPDATE",
-                "TABLE",
-            ) or item_val.endswith("JOIN"):
+            if (
+                item_val
+                in (
+                    "COPY",
+                    "FROM",
+                    "INTO",
+                    "UPDATE",
+                    "TABLE",
+                )
+                or item_val.endswith("JOIN")
+            ):
                 tbl_prefix_seen = True
         # 'SELECT a, FROM abc' will detect FROM as part of the column list.
         # So this check here is necessary.

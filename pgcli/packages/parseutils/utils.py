@@ -64,7 +64,7 @@ def last_word(text, include="alphanum_underscore"):
 
 
 def find_prev_keyword(sql, n_skip=0):
-    """ Find the last sql keyword in an SQL statement
+    """Find the last sql keyword in an SQL statement
 
     Returns the value of the last keyword, and the text of the query with
     everything after the last keyword stripped
