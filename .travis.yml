@@ -15,7 +15,7 @@ before_install:
   - pip install -U setuptools
 
 install:
-  - pip install .
+  - pip install --no-cache-dir .
   - pip install -r requirements-dev.txt
   - pip install keyrings.alt>=3.1
 
