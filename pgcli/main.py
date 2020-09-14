@@ -968,7 +968,7 @@ class PGCli(object):
             click.secho(str(e), err=True, fg="red")
 
     def refresh_completions(self, history=None, persist_priorities="all"):
-        """ Refresh outdated completions
+        """Refresh outdated completions
 
         :param history: A prompt_toolkit.history.FileHistory object. Used to
                         load keyword and identifier preferences
@@ -1235,7 +1235,8 @@ def cli(
         else:
             print("Config file is now located at", config_full_path)
             print(
-                "Please move the existing config file ~/.pgclirc to", config_full_path,
+                "Please move the existing config file ~/.pgclirc to",
+                config_full_path,
             )
     if list_dsn:
         try:
