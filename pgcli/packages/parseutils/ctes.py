@@ -14,8 +14,7 @@ TableExpression = namedtuple("TableExpression", "name columns start stop")
 
 
 def isolate_query_ctes(full_text, text_before_cursor):
-    """Simplify a query by converting CTEs into table metadata objects
-    """
+    """Simplify a query by converting CTEs into table metadata objects"""
 
     if not full_text:
         return full_text, text_before_cursor, tuple()
@@ -46,13 +45,13 @@ def isolate_query_ctes(full_text, text_before_cursor):
 
 
 def extract_ctes(sql):
-    """ Extract constant table expresseions from a query
+    """Extract constant table expresseions from a query
 
-        Returns tuple (ctes, remainder_sql)
+    Returns tuple (ctes, remainder_sql)
 
-        ctes is a list of TableExpression namedtuples
-        remainder_sql is the text from the original query after the CTEs have
-        been stripped.
+    ctes is a list of TableExpression namedtuples
+    remainder_sql is the text from the original query after the CTEs have
+    been stripped.
     """
 
     p = parse(sql)[0]

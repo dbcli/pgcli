@@ -62,7 +62,7 @@ normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() + '"'
 
 
 def generate_alias(tbl):
-    """ Generate a table alias, consisting of all upper-case letters in
+    """Generate a table alias, consisting of all upper-case letters in
     the table name, or, if there are no upper-case letters, the first letter +
     all letters preceded by _
     param tbl - unescaped name of the table to alias
@@ -172,7 +172,7 @@ class PGCompleter(Completer):
         self.all_completions.update(schemata)
 
     def extend_casing(self, words):
-        """ extend casing data
+        """extend casing data
 
         :return:
         """
@@ -491,14 +491,11 @@ class PGCompleter(Completer):
 
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.table_refs
-        do_qualify = (
-            suggestion.qualifiable
-            and {
-                "always": True,
-                "never": False,
-                "if_more_than_one_table": len(tables) > 1,
-            }[self.qualify_columns]
-        )
+        do_qualify = suggestion.qualifiable and {
+            "always": True,
+            "never": False,
+            "if_more_than_one_table": len(tables) > 1,
+        }[self.qualify_columns]
         qualify = lambda col, tbl: (
             (tbl + "." + self.case(col)) if do_qualify else self.case(col)
         )
@@ -572,7 +569,7 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, flat_cols(), meta="column")
 
     def alias(self, tbl, tbls):
-        """ Generate a unique table alias
+        """Generate a unique table alias
         tbl - name of the table to alias, quoted if it needs to be
         tbls - TableReference iterable of tables already in query
         """

@@ -31,8 +31,8 @@ _WAIT_SELECT_TIMEOUT = 1
 
 def _wait_select(conn):
     """
-        copy-pasted from psycopg2.extras.wait_select
-        the default implementation doesn't define a timeout in the select calls
+    copy-pasted from psycopg2.extras.wait_select
+    the default implementation doesn't define a timeout in the select calls
     """
     while 1:
         try:
@@ -538,7 +538,7 @@ class PGExecute(object):
     def views(self):
         """Yields (schema_name, view_name) tuples.
 
-            Includes both views and and materialized views
+        Includes both views and and materialized views
         """
         for row in self._relations(kinds=["v", "m"]):
             yield row
