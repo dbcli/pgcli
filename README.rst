@@ -91,6 +91,16 @@ For more details:
 
 ``pgcli`` also supports many of the same `environment variables`_ as ``psql`` for login options (e.g. ``PGHOST``, ``PGPORT``, ``PGUSER``, ``PGPASSWORD``, ``PGDATABASE``).
 
+The SSL-related environment variables are also supported, so if you need to connect a postgres database via ssl connection, you can set set environment like this:
+
+::
+
+    export PGSSLMODE="verify-full"
+    export PGSSLCERT="/your-path-to-certs/client.crt"
+    export PGSSLKEY="/your-path-to-keys/client.key"
+    export PGSSLROOTCERT="/your-path-to-ca/ca.crt"
+    pgcli -h localhost -p 5432 -U username postgres
+
 .. _environment variables: https://www.postgresql.org/docs/current/libpq-envars.html
 
 Features
