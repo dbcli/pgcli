@@ -68,7 +68,7 @@ def step_ctrl_d(context):
     context.cli.sendline("\pset pager off")
     wrappers.wait_prompt(context)
     context.cli.sendcontrol("d")
-    context.cli.expect_exact(pexpect.EOF, timeout=15)
+    context.cli.expect(pexpect.EOF, timeout=15)
     context.exit_sent = True
 
 
