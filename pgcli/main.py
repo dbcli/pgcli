@@ -1194,6 +1194,9 @@ class PGCli(object):
 @click.option(
     "--warn/--no-warn", default=None, help="Warn before running a destructive query."
 )
+@click.option(
+    "--history", default=None, help="Specify history file location."
+)
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
@@ -1217,6 +1220,7 @@ def cli(
     auto_vertical_output,
     list_dsn,
     warn,
+    history,
 ):
     if version:
         print("Version:", __version__)

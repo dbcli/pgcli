@@ -58,7 +58,8 @@ generate_casing_file = False
 # Casing of column headers based on the casing_file described above
 case_column_headers = True
 
-# history_file location.
+# default history_file location. You can also set history file location for
+# specific database. see [dsn_history_file] section.
 # In Unix/Linux: ~/.config/pgcli/history
 # In Windows: %USERPROFILE%\AppData\Local\dbcli\pgcli\history
 # %USERPROFILE% is typically C:\Users\{username}
@@ -186,6 +187,11 @@ output.null = "#808080"
 # DSN to call by -D option
 [alias_dsn]
 # example_dsn = postgresql://[user[:password]@][netloc][:port][/dbname]
+
+# Specify sperate history file for alias_dsn.
+# If not set, will use history_file settings.
+[dsn_history_file]
+# example_dsn = ~/.config/pgcli/example_dsn.history
 
 # Format for number representation
 # for decimal "d" - 12345678, ",d" - 12,345,678
