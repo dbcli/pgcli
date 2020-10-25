@@ -164,6 +164,8 @@ class PGCli(object):
         prompt_dsn=None,
         auto_vertical_output=False,
         warn=None,
+        histfile=None,
+        alias_dsn=None
     ):
 
         self.force_passwd_prompt = force_passwd_prompt
@@ -227,6 +229,16 @@ class PGCli(object):
 
         self.completion_refresher = CompletionRefresher()
 
+        # history file location: --hisfile > pgclirc:history
+        if histfile:
+            self.history_file = histfile
+        else:
+            self.history_file = self.config["main"]["history_file"]
+        if self.history_file == "default":
+            self.history_file = config_location() + "history"
+
+        if alias_dsn:
+            self.dsn_alias = alias_dsn
         self.query_history = []
 
         # Initialize completer
@@ -718,10 +730,7 @@ class PGCli(object):
     def run_cli(self):
         logger = self.logger
 
-        history_file = self.config["main"]["history_file"]
-        if history_file == "default":
-            history_file = config_location() + "history"
-        history = FileHistory(os.path.expanduser(history_file))
+        history = FileHistory(os.path.expanduser(self.history_file))
         self.refresh_completions(history=history, persist_priorities="none")
 
         self.prompt_app = self._build_cli(history)
@@ -1195,7 +1204,7 @@ class PGCli(object):
     "--warn/--no-warn", default=None, help="Warn before running a destructive query."
 )
 @click.option(
-    "--history", default=None, help="Specify history file location."
+    "--histfile", default=None, help="Specify history file location."
 )
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
@@ -1220,7 +1229,7 @@ def cli(
     auto_vertical_output,
     list_dsn,
     warn,
-    history,
+    histfile,
 ):
     if version:
         print("Version:", __version__)
@@ -1268,6 +1277,8 @@ def cli(
         prompt_dsn=prompt_dsn,
         auto_vertical_output=auto_vertical_output,
         warn=warn,
+        histfile=histfile,
+        alias_dsn=dsn,
     )
 
     # Choose which ever one has a valid value.
@@ -1306,7 +1317,6 @@ def cli(
             )
             exit(1)
         pgcli.connect_uri(dsn_config)
-        pgcli.dsn_alias = dsn
     elif "://" in database:
         pgcli.connect_uri(database)
     elif "=" in database and service is None:
