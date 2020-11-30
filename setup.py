@@ -13,7 +13,7 @@ install_requirements = [
     # see: https://github.com/dbcli/pgcli/pull/1197
     "prompt_toolkit>=2.0.6,<4.0.0",
     "psycopg2 >= 2.8",
-    "sqlparse >=0.3.0,<0.4",
+    "sqlparse >=0.3.0,<0.5",
     "configobj >= 5.0.6",
     "pendulum>=2.1.0",
     "cli_helpers[styles] >= 2.0.0",
