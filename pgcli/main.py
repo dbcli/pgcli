@@ -165,7 +165,7 @@ class PGCli(object):
         auto_vertical_output=False,
         warn=None,
         histfile=None,
-        alias_dsn=None
+        alias_dsn=None,
     ):
 
         self.force_passwd_prompt = force_passwd_prompt
@@ -1203,9 +1203,7 @@ class PGCli(object):
 @click.option(
     "--warn/--no-warn", default=None, help="Warn before running a destructive query."
 )
-@click.option(
-    "--histfile", default=None, help="Specify history file location."
-)
+@click.option("--histfile", default=None, help="Specify history file location.")
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
