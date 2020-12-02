@@ -9,6 +9,7 @@ Features:
 * Update python version in Dockerfile
 * Support setting color for null, string, number, keyword value
 * Support Prompt Toolkit 2
+* Support sqlparse 0.4.x
 * Update functions, datatypes literals for auto-suggestion field
 * Add suggestion for schema in function auto-complete
 

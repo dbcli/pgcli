@@ -816,7 +816,7 @@ def test_create_db_with_template():
     assert set(suggestions) == set((Database(),))
 
 
-@pytest.mark.parametrize("initial_text", ("", "    ", "\t \t"))
+@pytest.mark.parametrize("initial_text", ("", "    ", "\t \t", "\n"))
 def test_specials_included_for_initial_completion(initial_text):
     suggestions = suggest_type(initial_text, initial_text)
 
