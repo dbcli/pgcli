@@ -49,7 +49,7 @@ def _wait_select(conn):
             conn.cancel()
             # the loop will be broken by a server error
             continue
-        except select.error as e:
+        except OSError as e:
             errno = e.args[0]
             if errno != 4:
                 raise

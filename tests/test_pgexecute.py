@@ -270,9 +270,9 @@ def test_execute_from_file_no_arg(executor, pgspecial):
 @dbtest
 @patch("pgcli.main.os")
 def test_execute_from_file_io_error(os, executor, pgspecial):
-    """\i with an io_error returns an error."""
-    # Inject an IOError.
-    os.path.expanduser.side_effect = IOError("test")
+    r"""\i with an os_error returns an error."""
+    # Inject an OSError.
+    os.path.expanduser.side_effect = OSError("test")
 
     # Check the result.
     result = list(executor.run("\i test", pgspecial=pgspecial))

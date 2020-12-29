@@ -386,7 +386,7 @@ class PGCli:
         try:
             with open(os.path.expanduser(pattern), encoding="utf-8") as f:
                 query = f.read()
-        except IOError as e:
+        except OSError as e:
             return [(None, None, None, str(e), "", False, True)]
 
         if self.destructive_warning and confirm_destructive_query(query) is False:
@@ -407,7 +407,7 @@ class PGCli:
         if not os.path.isfile(filename):
             try:
                 open(filename, "w").close()
-            except IOError as e:
+            except OSError as e:
                 self.output_file = None
                 message = str(e) + "\nFile output disabled"
                 return [(None, None, None, message, "", False, True)]
@@ -677,7 +677,7 @@ class PGCli:
                             click.echo(text, file=f)
                             click.echo("\n".join(output), file=f)
                             click.echo("", file=f)  # extra newline
-                    except IOError as e:
+                    except OSError as e:
                         click.secho(str(e), err=True, fg="red")
                 else:
                     if output:
