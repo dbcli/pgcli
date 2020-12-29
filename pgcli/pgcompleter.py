@@ -177,7 +177,7 @@ class PGCompleter(Completer):
         :return:
         """
         # casing should be a dict {lowercasename:PreferredCasingName}
-        self.casing = dict((word.lower(), word) for word in words)
+        self.casing = {word.lower(): word for word in words}
 
     def extend_relations(self, data, kind):
         """extend metadata for tables or views.
@@ -517,9 +517,9 @@ class PGCompleter(Completer):
             # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
             # suggest only columns that appear in the last table and one more
             ltbl = tables[-1].ref
-            other_tbl_cols = set(
+            other_tbl_cols = {
                 c.name for t, cs in scoped_cols.items() if t.ref != ltbl for c in cs
-            )
+            }
             scoped_cols = {
                 t: [col for col in cols if col.name in other_tbl_cols]
                 for t, cols in scoped_cols.items()
@@ -574,7 +574,7 @@ class PGCompleter(Completer):
         tbls - TableReference iterable of tables already in query
         """
         tbl = self.case(tbl)
-        tbls = set(normalize_ref(t.ref) for t in tbls)
+        tbls = {normalize_ref(t.ref) for t in tbls}
         if self.generate_aliases:
             tbl = generate_alias(self.unescape_name(tbl))
         if normalize_ref(tbl) not in tbls:
@@ -589,10 +589,10 @@ class PGCompleter(Completer):
         tbls = suggestion.table_refs
         cols = self.populate_scoped_cols(tbls)
         # Set up some data structures for efficient access
-        qualified = dict((normalize_ref(t.ref), t.schema) for t in tbls)
-        ref_prio = dict((normalize_ref(t.ref), n) for n, t in enumerate(tbls))
-        refs = set(normalize_ref(t.ref) for t in tbls)
-        other_tbls = set((t.schema, t.name) for t in list(cols)[:-1])
+        qualified = {normalize_ref(t.ref): t.schema for t in tbls}
+        ref_prio = {normalize_ref(t.ref): n for n, t in enumerate(tbls)}
+        refs = {normalize_ref(t.ref) for t in tbls}
+        other_tbls = {(t.schema, t.name) for t in list(cols)[:-1]}
         joins = []
         # Iterate over FKs in existing tables to find potential joins
         fks = (
@@ -667,7 +667,7 @@ class PGCompleter(Completer):
             return d
 
         # Tables that are closer to the cursor get higher prio
-        ref_prio = dict((tbl.ref, num) for num, tbl in enumerate(suggestion.table_refs))
+        ref_prio = {tbl.ref: num for num, tbl in enumerate(suggestion.table_refs)}
         # Map (schema, table, col) to tables
         coldict = list_dict(
             ((t.schema, t.name, c.name), t) for t, c in cols if t.ref != lref
@@ -721,9 +721,7 @@ class PGCompleter(Completer):
         # Function overloading means we way have multiple functions of the same
         # name at this point, so keep unique names only
         all_functions = self.populate_functions(suggestion.schema, filt)
-        funcs = set(
-            self._make_cand(f, alias, suggestion, arg_mode) for f in all_functions
-        )
+        funcs = {self._make_cand(f, alias, suggestion, arg_mode) for f in all_functions}
 
         matches = self.find_matches(word_before_cursor, funcs, meta="function")
 
@@ -953,7 +951,7 @@ class PGCompleter(Completer):
         :return: {TableReference:{colname:ColumnMetaData}}
 
         """
-        ctes = dict((normalize_ref(t.name), t.columns) for t in local_tbls)
+        ctes = {normalize_ref(t.name): t.columns for t in local_tbls}
         columns = OrderedDict()
         meta = self.dbmetadata
 

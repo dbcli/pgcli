@@ -105,31 +105,35 @@ def test_schemata_table_views_and_columns_query(executor):
     # schemata
     # don't enforce all members of the schemas since they may include postgres
     # temporary schemas
-    assert set(executor.schemata()) >= set(
-        ["public", "pg_catalog", "information_schema", "schema1", "schema2"]
-    )
+    assert set(executor.schemata()) >= {
+        "public",
+        "pg_catalog",
+        "information_schema",
+        "schema1",
+        "schema2",
+    }
     assert executor.search_path() == ["pg_catalog", "public"]
 
     # tables
-    assert set(executor.tables()) >= set(
-        [("public", "a"), ("public", "b"), ("schema1", "c")]
-    )
+    assert set(executor.tables()) >= {
+        ("public", "a"),
+        ("public", "b"),
+        ("schema1", "c"),
+    }
 
-    assert set(executor.table_columns()) >= set(
-        [
-            ("public", "a", "x", "text", False, None),
-            ("public", "a", "y", "text", False, None),
-            ("public", "b", "z", "text", False, None),
-            ("schema1", "c", "w", "text", True, "'meow'::text"),
-        ]
-    )
+    assert set(executor.table_columns()) >= {
+        ("public", "a", "x", "text", False, None),
+        ("public", "a", "y", "text", False, None),
+        ("public", "b", "z", "text", False, None),
+        ("schema1", "c", "w", "text", True, "'meow'::text"),
+    }
 
     # views
-    assert set(executor.views()) >= set([("public", "d")])
+    assert set(executor.views()) >= {("public", "d")}
 
-    assert set(executor.view_columns()) >= set(
-        [("public", "d", "e", "integer", False, None)]
-    )
+    assert set(executor.view_columns()) >= {
+        ("public", "d", "e", "integer", False, None)
+    }
 
 
 @dbtest
@@ -142,9 +146,9 @@ def test_foreign_key_query(executor):
         "create table schema2.child(childid int PRIMARY KEY, motherid int REFERENCES schema1.parent)",
     )
 
-    assert set(executor.foreignkeys()) >= set(
-        [("schema1", "parent", "parentid", "schema2", "child", "motherid")]
-    )
+    assert set(executor.foreignkeys()) >= {
+        ("schema1", "parent", "parentid", "schema2", "child", "motherid")
+    }
 
 
 @dbtest
@@ -175,30 +179,28 @@ def test_functions_query(executor):
     )
 
     funcs = set(executor.functions())
-    assert funcs >= set(
-        [
-            function_meta_data(func_name="func1", return_type="integer"),
-            function_meta_data(
-                func_name="func3",
-                arg_names=["x", "y"],
-                arg_types=["integer", "integer"],
-                arg_modes=["t", "t"],
-                return_type="record",
-                is_set_returning=True,
-            ),
-            function_meta_data(
-                schema_name="public",
-                func_name="func4",
-                arg_names=("x",),
-                arg_types=("integer",),
-                return_type="integer",
-                is_set_returning=True,
-            ),
-            function_meta_data(
-                schema_name="schema1", func_name="func2", return_type="integer"
-            ),
-        ]
-    )
+    assert funcs >= {
+        function_meta_data(func_name="func1", return_type="integer"),
+        function_meta_data(
+            func_name="func3",
+            arg_names=["x", "y"],
+            arg_types=["integer", "integer"],
+            arg_modes=["t", "t"],
+            return_type="record",
+            is_set_returning=True,
+        ),
+        function_meta_data(
+            schema_name="public",
+            func_name="func4",
+            arg_names=("x",),
+            arg_types=("integer",),
+            return_type="integer",
+            is_set_returning=True,
+        ),
+        function_meta_data(
+            schema_name="schema1", func_name="func2", return_type="integer"
+        ),
+    }
 
 
 @dbtest

@@ -89,7 +89,7 @@ def run(
 
 
 def completions_to_set(completions):
-    return set(
+    return {
         (completion.display_text, completion.display_meta_text)
         for completion in completions
-    )
+    }

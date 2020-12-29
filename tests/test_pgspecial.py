@@ -13,12 +13,12 @@ from pgcli.packages.sqlcompletion import (
 
 def test_slash_suggests_special():
     suggestions = suggest_type("\\", "\\")
-    assert set(suggestions) == set([Special()])
+    assert set(suggestions) == {Special()}
 
 
 def test_slash_d_suggests_special():
     suggestions = suggest_type("\\d", "\\d")
-    assert set(suggestions) == set([Special()])
+    assert set(suggestions) == {Special()}
 
 
 def test_dn_suggests_schemata():
@@ -31,23 +31,23 @@ def test_dn_suggests_schemata():
 
 def test_d_suggests_tables_views_and_schemas():
     suggestions = suggest_type("\d ", "\d ")
-    assert set(suggestions) == set([Schema(), Table(schema=None), View(schema=None)])
+    assert set(suggestions) == {Schema(), Table(schema=None), View(schema=None)}
 
     suggestions = suggest_type("\d xxx", "\d xxx")
-    assert set(suggestions) == set([Schema(), Table(schema=None), View(schema=None)])
+    assert set(suggestions) == {Schema(), Table(schema=None), View(schema=None)}
 
 
 def test_d_dot_suggests_schema_qualified_tables_or_views():
     suggestions = suggest_type("\d myschema.", "\d myschema.")
-    assert set(suggestions) == set([Table(schema="myschema"), View(schema="myschema")])
+    assert set(suggestions) == {Table(schema="myschema"), View(schema="myschema")}
 
     suggestions = suggest_type("\d myschema.xxx", "\d myschema.xxx")
-    assert set(suggestions) == set([Table(schema="myschema"), View(schema="myschema")])
+    assert set(suggestions) == {Table(schema="myschema"), View(schema="myschema")}
 
 
 def test_df_suggests_schema_or_function():
     suggestions = suggest_type("\\df xxx", "\\df xxx")
-    assert set(suggestions) == set([Function(schema=None, usage="special"), Schema()])
+    assert set(suggestions) == {Function(schema=None, usage="special"), Schema()}
 
     suggestions = suggest_type("\\df myschema.xxx", "\\df myschema.xxx")
     assert suggestions == (Function(schema="myschema", usage="special"),)
@@ -63,7 +63,7 @@ def test_leading_whitespace_ok():
 def test_dT_suggests_schema_or_datatypes():
     text = "\\dT "
     suggestions = suggest_type(text, text)
-    assert set(suggestions) == set([Schema(), Datatype(schema=None)])
+    assert set(suggestions) == {Schema(), Datatype(schema=None)}
 
 
 def test_schema_qualified_dT_suggests_datatypes():

@@ -53,7 +53,7 @@ metadata = {
     ],
 }
 
-metadata = dict((k, {"public": v}) for k, v in metadata.items())
+metadata = {k: {"public": v} for k, v in metadata.items()}
 
 testdata = MetaData(metadata)
 

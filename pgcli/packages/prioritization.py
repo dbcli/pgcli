@@ -16,7 +16,7 @@ def _compile_regex(keyword):
 
 
 keywords = get_literals("keywords")
-keyword_regexs = dict((kw, _compile_regex(kw)) for kw in keywords)
+keyword_regexs = {kw: _compile_regex(kw) for kw in keywords}
 
 
 class PrevalenceCounter:

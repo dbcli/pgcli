@@ -128,7 +128,7 @@ class MetaData:
         ]
 
     def schemas(self, pos=0):
-        schemas = set(sch for schs in self.metadata.values() for sch in schs)
+        schemas = {sch for schs in self.metadata.values() for sch in schs}
         return [schema(escape(s), pos=pos) for s in schemas]
 
     def functions_and_keywords(self, parent="public", pos=0):

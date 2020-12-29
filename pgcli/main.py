@@ -1384,7 +1384,7 @@ def is_mutating(status):
     if not status:
         return False
 
-    mutating = set(["insert", "update", "delete"])
+    mutating = {"insert", "update", "delete"}
     return status.split(None, 1)[0].lower() in mutating
 
 
