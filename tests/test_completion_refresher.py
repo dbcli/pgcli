@@ -1,6 +1,6 @@
 import time
 import pytest
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 
 @pytest.fixture

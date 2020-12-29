@@ -3,7 +3,7 @@ from itertools import product
 from pgcli.packages.parseutils.meta import FunctionMetadata, ForeignKey
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
-from mock import Mock
+from unittest.mock import Mock
 import pytest
 
 parametrize = pytest.mark.parametrize
