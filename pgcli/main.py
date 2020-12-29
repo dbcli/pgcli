@@ -1045,7 +1045,7 @@ class PGCli:
             str(self.pgexecute.port) if self.pgexecute.port is not None else "5432",
         )
         string = string.replace("\\i", str(self.pgexecute.pid) or "(none)")
-        string = string.replace("\\#", "#" if (self.pgexecute.superuser) else ">")
+        string = string.replace("\\#", "#" if self.pgexecute.superuser else ">")
         string = string.replace("\\n", "\n")
         return string
 

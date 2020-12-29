@@ -279,8 +279,8 @@ class PGCompleter(Completer):
             fk = ForeignKey(
                 parentschema, parenttable, parcol, childschema, childtable, childcol
             )
-            childcolmeta.foreignkeys.append((fk))
-            parcolmeta.foreignkeys.append((fk))
+            childcolmeta.foreignkeys.append(fk)
+            parcolmeta.foreignkeys.append(fk)
 
     def extend_datatypes(self, type_data):
 
@@ -424,7 +424,7 @@ class PGCompleter(Completer):
                 # the same priority as unquoted names.
                 lexical_priority = (
                     tuple(
-                        0 if c in (" _") else -ord(c)
+                        0 if c in " _" else -ord(c)
                         for c in self.unescape_name(item.lower())
                     )
                     + (1,)
