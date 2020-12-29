@@ -127,7 +127,7 @@ def register_hstore_typecaster(conn):
             pass
 
 
-class PGExecute(object):
+class PGExecute:
 
     # The boolean argument to the current_schemas function indicates whether
     # implicit schemas, e.g. pg_catalog

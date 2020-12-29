@@ -122,7 +122,7 @@ class PgCliQuitError(Exception):
     pass
 
 
-class PGCli(object):
+class PGCli:
     default_prompt = "\\u@\\h:\\d> "
     max_len_prompt = 30
 

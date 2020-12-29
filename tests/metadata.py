@@ -59,7 +59,7 @@ def wildcard_expansion(cols, pos=-1):
     return Completion(cols, start_position=pos, display_meta="columns", display="*")
 
 
-class MetaData(object):
+class MetaData:
     def __init__(self, metadata):
         self.metadata = metadata
 

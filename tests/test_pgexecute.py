@@ -511,7 +511,7 @@ def test_short_host(executor):
         assert executor.short_host == "localhost1"
 
 
-class BrokenConnection(object):
+class BrokenConnection:
     """Mock a connection that failed."""
 
     def cursor(self):
