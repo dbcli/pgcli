@@ -83,7 +83,7 @@ class PGCompleter(Completer):
     reserved_words = set(get_literals("reserved"))
 
     def __init__(self, smart_completion=True, pgspecial=None, settings=None):
-        super(PGCompleter, self).__init__()
+        super().__init__()
         self.smart_completion = smart_completion
         self.pgspecial = pgspecial
         self.prioritizer = PrevalenceCounter()
