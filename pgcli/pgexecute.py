@@ -527,21 +527,18 @@ class PGExecute:
             sql = cur.mogrify(self.tables_query, [kinds])
             _logger.debug("Tables Query. sql: %r", sql)
             cur.execute(sql)
-            for row in cur:
-                yield row
+            yield from cur
 
     def tables(self):
         """Yields (schema_name, table_name) tuples"""
-        for row in self._relations(kinds=["r", "p", "f"]):
-            yield row
+        yield from self._relations(kinds=["r", "p", "f"])
 
     def views(self):
         """Yields (schema_name, view_name) tuples.
 
         Includes both views and and materialized views
         """
-        for row in self._relations(kinds=["v", "m"]):
-            yield row
+        yield from self._relations(kinds=["v", "m"])
 
     def _columns(self, kinds=("r", "p", "f", "v", "m")):
         """Get column metadata for tables and views
@@ -599,16 +596,13 @@ class PGExecute:
             sql = cur.mogrify(columns_query, [kinds])
             _logger.debug("Columns Query. sql: %r", sql)
             cur.execute(sql)
-            for row in cur:
-                yield row
+            yield from cur
 
     def table_columns(self):
-        for row in self._columns(kinds=["r", "p", "f"]):
-            yield row
+        yield from self._columns(kinds=["r", "p", "f"])
 
     def view_columns(self):
-        for row in self._columns(kinds=["v", "m"]):
-            yield row
+        yield from self._columns(kinds=["v", "m"])
 
     def databases(self):
         with self.conn.cursor() as cur:
@@ -804,8 +798,7 @@ class PGExecute:
                 """
             _logger.debug("Datatypes Query. sql: %r", query)
             cur.execute(query)
-            for row in cur:
-                yield row
+            yield from cur
 
     def casing(self):
         """Yields the most common casing for names used in db functions"""
