@@ -410,7 +410,7 @@ def test_date_time_types(executor):
 @pytest.mark.parametrize("value", ["10000000", "10000000.0", "10000000000000"])
 def test_large_numbers_render_directly(executor, value):
     run(executor, "create table numbertest(a numeric)")
-    run(executor, "insert into numbertest (a) values ({0})".format(value))
+    run(executor, f"insert into numbertest (a) values ({value})")
     assert value in run(executor, "select * from numbertest", join=True)
 
 

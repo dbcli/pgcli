@@ -485,7 +485,7 @@ class PGExecute:
             try:
                 cur.execute(sql, (spec,))
             except psycopg2.ProgrammingError:
-                raise RuntimeError("View {} does not exist.".format(spec))
+                raise RuntimeError(f"View {spec} does not exist.")
             result = cur.fetchone()
             view_type = "MATERIALIZED" if result[2] == "m" else ""
             return template.format(*result + (view_type,))
@@ -501,7 +501,7 @@ class PGExecute:
                 result = cur.fetchone()
                 return result[0]
             except psycopg2.ProgrammingError:
-                raise RuntimeError("Function {} does not exist.".format(spec))
+                raise RuntimeError(f"Function {spec} does not exist.")
 
     def schemata(self):
         """Returns a list of schema names in the database"""

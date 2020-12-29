@@ -120,7 +120,7 @@ def test_simple_update_table_with_schema():
 
 @pytest.mark.parametrize("join_type", ["", "INNER", "LEFT", "RIGHT OUTER"])
 def test_join_table(join_type):
-    sql = "SELECT * FROM abc a {0} JOIN def d ON a.id = d.num".format(join_type)
+    sql = f"SELECT * FROM abc a {join_type} JOIN def d ON a.id = d.num"
     tables = extract_tables(sql)
     assert set(tables) == {(None, "abc", "a", False), (None, "def", "d", False)}
 

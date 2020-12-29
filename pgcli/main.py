@@ -325,11 +325,11 @@ class PGCli:
             if pattern not in TabularOutputFormatter().supported_formats:
                 raise ValueError()
             self.table_format = pattern
-            yield (None, None, None, "Changed table format to {}".format(pattern))
+            yield (None, None, None, f"Changed table format to {pattern}")
         except ValueError:
-            msg = "Table format {} not recognized. Allowed formats:".format(pattern)
+            msg = f"Table format {pattern} not recognized. Allowed formats:"
             for table_type in TabularOutputFormatter().supported_formats:
-                msg += "\n\t{}".format(table_type)
+                msg += f"\n\t{table_type}"
             msg += "\nCurrently set to: %s" % self.table_format
             yield (None, None, None, msg)
 
@@ -479,7 +479,7 @@ class PGCli:
         service_config, file = parse_service_info(service)
         if service_config is None:
             click.secho(
-                "service '%s' was not found in %s" % (service, file), err=True, fg="red"
+                f"service '{service}' was not found in {file}", err=True, fg="red"
             )
             exit(1)
         self.connect(
@@ -515,7 +515,7 @@ class PGCli:
             passwd = os.environ.get("PGPASSWORD", "")
 
         # Find password from store
-        key = "%s@%s" % (user, host)
+        key = f"{user}@{host}"
         keyring_error_message = dedent(
             """\
             {}
@@ -753,11 +753,7 @@ class PGCli:
                     while self.watch_command:
                         try:
                             query = self.execute_command(self.watch_command)
-                            click.echo(
-                                "Waiting for {0} seconds before repeating".format(
-                                    timing
-                                )
-                            )
+                            click.echo(f"Waiting for {timing} seconds before repeating")
                             sleep(timing)
                         except KeyboardInterrupt:
                             self.watch_command = None

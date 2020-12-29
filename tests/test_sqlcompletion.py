@@ -490,7 +490,7 @@ def test_sub_select_dot_col_name_completion():
 @pytest.mark.parametrize("join_type", ("", "INNER", "LEFT", "RIGHT OUTER"))
 @pytest.mark.parametrize("tbl_alias", ("", "foo"))
 def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
-    text = "SELECT * FROM abc {0} {1} JOIN ".format(tbl_alias, join_type)
+    text = f"SELECT * FROM abc {tbl_alias} {join_type} JOIN "
     suggestion = suggest_type(text, text)
     tbls = tuple([(None, "abc", tbl_alias or None, False)])
     assert set(suggestion) == {
