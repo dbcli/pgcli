@@ -122,7 +122,7 @@ def before_all(context):
 def show_env_changes(env_old, env_new):
     """Print out all test-specific env values."""
     print("--- os.environ changed values: ---")
-    all_keys = set(list(env_old.keys()) + list(env_new.keys()))
+    all_keys = env_old.keys() | env_new.keys()
     for k in sorted(all_keys):
         old_value = env_old.get(k, "")
         new_value = env_new.get(k, "")
