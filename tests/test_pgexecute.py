@@ -89,7 +89,7 @@ def test_expanded_slash_G(executor, pgspecial):
     # Tests whether we reset the expanded output after a \G.
     run(executor, """create table test(a boolean)""")
     run(executor, """insert into test values(True)""")
-    results = run(executor, """select * from test \G""", pgspecial=pgspecial)
+    results = run(executor, r"""select * from test \G""", pgspecial=pgspecial)
     assert pgspecial.expanded_output == False
 
 
@@ -259,8 +259,8 @@ def test_not_is_special(executor, pgspecial):
 
 @dbtest
 def test_execute_from_file_no_arg(executor, pgspecial):
-    """\i without a filename returns an error."""
-    result = list(executor.run("\i", pgspecial=pgspecial))
+    r"""\i without a filename returns an error."""
+    result = list(executor.run(r"\i", pgspecial=pgspecial))
     status, sql, success, is_special = result[0][3:]
     assert "missing required argument" in status
     assert success == False
@@ -275,7 +275,7 @@ def test_execute_from_file_io_error(os, executor, pgspecial):
     os.path.expanduser.side_effect = OSError("test")
 
     # Check the result.
-    result = list(executor.run("\i test", pgspecial=pgspecial))
+    result = list(executor.run(r"\i test", pgspecial=pgspecial))
     status, sql, success, is_special = result[0][3:]
     assert status == "test"
     assert success == False
@@ -292,7 +292,7 @@ def test_multiple_queries_same_line(executor):
 
 @dbtest
 def test_multiple_queries_with_special_command_same_line(executor, pgspecial):
-    result = run(executor, "select 'foo'; \d", pgspecial=pgspecial)
+    result = run(executor, r"select 'foo'; \d", pgspecial=pgspecial)
     assert len(result) == 11  # 2 * (output+status) * 3 lines
     assert "foo" in result[3]
     # This is a lame check. :(

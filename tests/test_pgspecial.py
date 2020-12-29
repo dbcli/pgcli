@@ -30,18 +30,18 @@ def test_dn_suggests_schemata():
 
 
 def test_d_suggests_tables_views_and_schemas():
-    suggestions = suggest_type("\d ", "\d ")
+    suggestions = suggest_type(r"\d ", r"\d ")
     assert set(suggestions) == {Schema(), Table(schema=None), View(schema=None)}
 
-    suggestions = suggest_type("\d xxx", "\d xxx")
+    suggestions = suggest_type(r"\d xxx", r"\d xxx")
     assert set(suggestions) == {Schema(), Table(schema=None), View(schema=None)}
 
 
 def test_d_dot_suggests_schema_qualified_tables_or_views():
-    suggestions = suggest_type("\d myschema.", "\d myschema.")
+    suggestions = suggest_type(r"\d myschema.", r"\d myschema.")
     assert set(suggestions) == {Table(schema="myschema"), View(schema="myschema")}
 
-    suggestions = suggest_type("\d myschema.xxx", "\d myschema.xxx")
+    suggestions = suggest_type(r"\d myschema.xxx", r"\d myschema.xxx")
     assert set(suggestions) == {Table(schema="myschema"), View(schema="myschema")}
 
 
