@@ -1,0 +1,66 @@
+name: pgcli
+
+on:
+  push:
+    branches-ignore: [ master ]
+    paths-ignore: [ '**.rst' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    services:
+      postgres:
+        image: postgres:9.6
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+            - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install requirements
+        run: |
+          pip install -U pip setuptools
+          pip install --no-cache-dir .
+          pip install -r requirements-dev.txt
+          pip install keyrings.alt>=3.1
+
+      - name: Run unit tests
+        run: coverage run --source pgcli -m py.test
+
+      - name: Run integration tests
+        env:
+            PGUSER: postgres
+            PGPASSWORD: postgres
+
+        run: behave tests/features --no-capture
+
+      - name: Check changelog for ReST compliance
+        run: rst2html.py --halt=warning changelog.rst >/dev/null
+
+      - name: Run Black
+        run: pip install black && black --check .
+        if: ${{ matrix.python_version == '3.6' }}
+
+      - name: Coverage
+        run: |
+          coverage combine
+          coverage report
+          codecov
