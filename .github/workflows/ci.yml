@@ -1,9 +1,9 @@
 name: pgcli
 
 on:
-  push:
-    branches-ignore: [ master ]
-    paths-ignore: [ '**.rst' ]
+  pull_request:
+    paths-ignore:
+      - '**.rst'
 
 jobs:
   build:
