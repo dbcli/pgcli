@@ -57,7 +57,7 @@ jobs:
 
       - name: Run Black
         run: pip install black && black --check .
-        if: ${{ matrix.python_version == '3.6' }}
+        if: matrix.python-version == '3.6'
 
       - name: Coverage
         run: |
