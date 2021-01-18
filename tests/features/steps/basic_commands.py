@@ -65,6 +65,7 @@ def step_ctrl_d(context):
     Send Ctrl + D to hopefully exit.
     """
     # turn off pager before exiting
+    context.cli.sendcontrol("c")
     context.cli.sendline("\pset pager off")
     wrappers.wait_prompt(context)
     context.cli.sendcontrol("d")
