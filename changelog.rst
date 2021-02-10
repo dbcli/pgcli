@@ -1,3 +1,11 @@
+TBD
+===
+
+Bug fixes:
+----------
+
+* Fix issue where `syntax_style` config value would not have any effect. (#1212)
+
 3.1.0
 =====
 
