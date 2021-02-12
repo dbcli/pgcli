@@ -102,7 +102,7 @@ def before_all(context):
     else:
         if "PGPASSWORD" in os.environ:
             del os.environ["PGPASSWORD"]
-    os.environ['BEHAVE_WARN'] = 'moderate'
+    os.environ["BEHAVE_WARN"] = "moderate"
 
     context.cn = dbutils.create_db(
         context.conf["host"],
