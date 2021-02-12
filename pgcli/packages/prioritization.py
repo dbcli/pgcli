@@ -16,10 +16,10 @@ def _compile_regex(keyword):
 
 
 keywords = get_literals("keywords")
-keyword_regexs = dict((kw, _compile_regex(kw)) for kw in keywords)
+keyword_regexs = {kw: _compile_regex(kw) for kw in keywords}
 
 
-class PrevalenceCounter(object):
+class PrevalenceCounter:
     def __init__(self):
         self.keyword_counts = defaultdict(int)
         self.name_counts = defaultdict(int)

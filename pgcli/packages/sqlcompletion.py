@@ -47,7 +47,7 @@ Alias = namedtuple("Alias", ["aliases"])
 Path = namedtuple("Path", [])
 
 
-class SqlStatement(object):
+class SqlStatement:
     def __init__(self, full_text, text_before_cursor):
         self.identifier = None
         self.word_before_cursor = word_before_cursor = last_word(

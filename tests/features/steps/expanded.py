@@ -31,7 +31,7 @@ def step_prepare_data(context):
 @when("we set expanded {mode}")
 def step_set_expanded(context, mode):
     """Set expanded to mode."""
-    context.cli.sendline("\\" + "x {}".format(mode))
+    context.cli.sendline("\\" + f"x {mode}")
     wrappers.expect_exact(context, "Expanded display is", timeout=2)
     wrappers.wait_prompt(context)
 

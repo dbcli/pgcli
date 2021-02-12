@@ -193,7 +193,7 @@ def test_suggested_joins(completer, query, tbl):
     result = get_result(completer, query.format(tbl))
     assert completions_to_set(result) == completions_to_set(
         testdata.schemas_and_from_clause_items()
-        + [join("custom.shipments ON shipments.user_id = {0}.id".format(tbl))]
+        + [join(f"custom.shipments ON shipments.user_id = {tbl}.id")]
     )
 
 

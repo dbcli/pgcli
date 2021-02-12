@@ -66,19 +66,19 @@ def step_ctrl_d(context):
     """
     # turn off pager before exiting
     context.cli.sendcontrol("c")
-    context.cli.sendline("\pset pager off")
+    context.cli.sendline(r"\pset pager off")
     wrappers.wait_prompt(context)
     context.cli.sendcontrol("d")
     context.cli.expect(pexpect.EOF, timeout=15)
     context.exit_sent = True
 
 
-@when('we send "\?" command')
+@when(r'we send "\?" command')
 def step_send_help(context):
-    """
+    r"""
     Send \? to see help.
     """
-    context.cli.sendline("\?")
+    context.cli.sendline(r"\?")
 
 
 @when("we send partial select command")
@@ -97,9 +97,9 @@ def step_see_error_message(context):
 @when("we send source command")
 def step_send_source_command(context):
     context.tmpfile_sql_help = tempfile.NamedTemporaryFile(prefix="pgcli_")
-    context.tmpfile_sql_help.write(b"\?")
+    context.tmpfile_sql_help.write(br"\?")
     context.tmpfile_sql_help.flush()
-    context.cli.sendline("\i {0}".format(context.tmpfile_sql_help.name))
+    context.cli.sendline(fr"\i {context.tmpfile_sql_help.name}")
     wrappers.expect_exact(context, context.conf["pager_boundary"] + "\r\n", timeout=5)
 
 

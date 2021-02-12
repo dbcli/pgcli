@@ -38,7 +38,7 @@ def before_all(context):
 
     vi = "_".join([str(x) for x in sys.version_info[:3]])
     db_name = context.config.userdata.get("pg_test_db", "pgcli_behave_tests")
-    db_name_full = "{0}_{1}".format(db_name, vi)
+    db_name_full = f"{db_name}_{vi}"
 
     # Store get params from config.
     context.conf = {
@@ -122,12 +122,12 @@ def before_all(context):
 def show_env_changes(env_old, env_new):
     """Print out all test-specific env values."""
     print("--- os.environ changed values: ---")
-    all_keys = set(list(env_old.keys()) + list(env_new.keys()))
+    all_keys = env_old.keys() | env_new.keys()
     for k in sorted(all_keys):
         old_value = env_old.get(k, "")
         new_value = env_new.get(k, "")
         if new_value and old_value != new_value:
-            print('{}="{}"'.format(k, new_value))
+            print(f'{k}="{new_value}"')
     print("-" * 20)
 
 
@@ -173,13 +173,13 @@ def after_scenario(context, scenario):
         # Quit nicely.
         if not context.atprompt:
             dbname = context.currentdb
-            context.cli.expect_exact("{0}> ".format(dbname), timeout=15)
+            context.cli.expect_exact(f"{dbname}> ", timeout=15)
         context.cli.sendcontrol("c")
         context.cli.sendcontrol("d")
         try:
             context.cli.expect_exact(pexpect.EOF, timeout=15)
         except pexpect.TIMEOUT:
-            print("--- after_scenario {}: kill cli".format(scenario.name))
+            print(f"--- after_scenario {scenario.name}: kill cli")
             context.cli.kill(signal.SIGKILL)
     if hasattr(context, "tmpfile_sql_help") and context.tmpfile_sql_help:
         context.tmpfile_sql_help.close()

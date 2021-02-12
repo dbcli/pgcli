@@ -13,7 +13,7 @@ def step_edit_file(context):
     )
     if os.path.exists(context.editor_file_name):
         os.remove(context.editor_file_name)
-    context.cli.sendline("\e {0}".format(os.path.basename(context.editor_file_name)))
+    context.cli.sendline(r"\e {}".format(os.path.basename(context.editor_file_name)))
     wrappers.expect_exact(
         context, 'Entering Ex mode.  Type "visual" to go to Normal mode.', timeout=2
     )
@@ -53,7 +53,7 @@ def step_tee_ouptut(context):
     )
     if os.path.exists(context.tee_file_name):
         os.remove(context.tee_file_name)
-    context.cli.sendline("\o {0}".format(os.path.basename(context.tee_file_name)))
+    context.cli.sendline(r"\o {}".format(os.path.basename(context.tee_file_name)))
     wrappers.expect_exact(context, context.conf["pager_boundary"] + "\r\n", timeout=5)
     wrappers.expect_exact(context, "Writing to file", timeout=5)
     wrappers.expect_exact(context, context.conf["pager_boundary"] + "\r\n", timeout=5)
@@ -67,7 +67,7 @@ def step_query_select_123456(context):
 
 @when("we stop teeing output")
 def step_notee_output(context):
-    context.cli.sendline("\o")
+    context.cli.sendline(r"\o")
     wrappers.expect_exact(context, "Time", timeout=5)
 
 

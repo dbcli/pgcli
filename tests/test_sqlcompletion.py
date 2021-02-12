@@ -23,16 +23,14 @@ def cols_etc(
 ):
     """Returns the expected select-clause suggestions for a single-table
     select."""
-    return set(
-        [
-            Column(
-                table_refs=(TableReference(schema, table, alias, is_function),),
-                qualifiable=True,
-            ),
-            Function(schema=parent),
-            Keyword(last_keyword),
-        ]
-    )
+    return {
+        Column(
+            table_refs=(TableReference(schema, table, alias, is_function),),
+            qualifiable=True,
+        ),
+        Function(schema=parent),
+        Keyword(last_keyword),
+    }
 
 
 def test_select_suggests_cols_with_visible_table_scope():
@@ -103,24 +101,20 @@ def test_where_equals_any_suggests_columns_or_keywords():
 
 def test_lparen_suggests_cols_and_funcs():
     suggestion = suggest_type("SELECT MAX( FROM tbl", "SELECT MAX(")
-    assert set(suggestion) == set(
-        [
-            Column(table_refs=((None, "tbl", None, False),), qualifiable=True),
-            Function(schema=None),
-            Keyword("("),
-        ]
-    )
+    assert set(suggestion) == {
+        Column(table_refs=((None, "tbl", None, False),), qualifiable=True),
+        Function(schema=None),
+        Keyword("("),
+    }
 
 
 def test_select_suggests_cols_and_funcs():
     suggestions = suggest_type("SELECT ", "SELECT ")
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=(), qualifiable=True),
-            Function(schema=None),
-            Keyword("SELECT"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=(), qualifiable=True),
+        Function(schema=None),
+        Keyword("SELECT"),
+    }
 
 
 @pytest.mark.parametrize(
@@ -128,13 +122,13 @@ def test_select_suggests_cols_and_funcs():
 )
 def test_suggests_tables_views_and_schemas(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == set([Table(schema=None), View(schema=None), Schema()])
+    assert set(suggestions) == {Table(schema=None), View(schema=None), Schema()}
 
 
 @pytest.mark.parametrize("expression", ["SELECT * FROM "])
 def test_suggest_tables_views_schemas_and_functions(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == set([FromClauseItem(schema=None), Schema()])
+    assert set(suggestions) == {FromClauseItem(schema=None), Schema()}
 
 
 @pytest.mark.parametrize(
@@ -147,9 +141,11 @@ def test_suggest_tables_views_schemas_and_functions(expression):
 def test_suggest_after_join_with_two_tables(expression):
     suggestions = suggest_type(expression, expression)
     tables = tuple([(None, "foo", None, False), (None, "bar", None, False)])
-    assert set(suggestions) == set(
-        [FromClauseItem(schema=None, table_refs=tables), Join(tables, None), Schema()]
-    )
+    assert set(suggestions) == {
+        FromClauseItem(schema=None, table_refs=tables),
+        Join(tables, None),
+        Schema(),
+    }
 
 
 @pytest.mark.parametrize(
@@ -158,13 +154,11 @@ def test_suggest_after_join_with_two_tables(expression):
 def test_suggest_after_join_with_one_table(expression):
     suggestions = suggest_type(expression, expression)
     tables = ((None, "foo", None, False),)
-    assert set(suggestions) == set(
-        [
-            FromClauseItem(schema=None, table_refs=tables),
-            Join(((None, "foo", None, False),), None),
-            Schema(),
-        ]
-    )
+    assert set(suggestions) == {
+        FromClauseItem(schema=None, table_refs=tables),
+        Join(((None, "foo", None, False),), None),
+        Schema(),
+    }
 
 
 @pytest.mark.parametrize(
@@ -172,13 +166,13 @@ def test_suggest_after_join_with_one_table(expression):
 )
 def test_suggest_qualified_tables_and_views(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == set([Table(schema="sch"), View(schema="sch")])
+    assert set(suggestions) == {Table(schema="sch"), View(schema="sch")}
 
 
 @pytest.mark.parametrize("expression", ["UPDATE sch."])
 def test_suggest_qualified_aliasable_tables_and_views(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == set([Table(schema="sch"), View(schema="sch")])
+    assert set(suggestions) == {Table(schema="sch"), View(schema="sch")}
 
 
 @pytest.mark.parametrize(
@@ -193,26 +187,27 @@ def test_suggest_qualified_aliasable_tables_and_views(expression):
 )
 def test_suggest_qualified_tables_views_and_functions(expression):
     suggestions = suggest_type(expression, expression)
-    assert set(suggestions) == set([FromClauseItem(schema="sch")])
+    assert set(suggestions) == {FromClauseItem(schema="sch")}
 
 
 @pytest.mark.parametrize("expression", ["SELECT * FROM foo JOIN sch."])
 def test_suggest_qualified_tables_views_functions_and_joins(expression):
     suggestions = suggest_type(expression, expression)
     tbls = tuple([(None, "foo", None, False)])
-    assert set(suggestions) == set(
-        [FromClauseItem(schema="sch", table_refs=tbls), Join(tbls, "sch")]
-    )
+    assert set(suggestions) == {
+        FromClauseItem(schema="sch", table_refs=tbls),
+        Join(tbls, "sch"),
+    }
 
 
 def test_truncate_suggests_tables_and_schemas():
     suggestions = suggest_type("TRUNCATE ", "TRUNCATE ")
-    assert set(suggestions) == set([Table(schema=None), Schema()])
+    assert set(suggestions) == {Table(schema=None), Schema()}
 
 
 def test_truncate_suggests_qualified_tables():
     suggestions = suggest_type("TRUNCATE sch.", "TRUNCATE sch.")
-    assert set(suggestions) == set([Table(schema="sch")])
+    assert set(suggestions) == {Table(schema="sch")}
 
 
 @pytest.mark.parametrize(
@@ -220,13 +215,11 @@ def test_truncate_suggests_qualified_tables():
 )
 def test_distinct_suggests_cols(text):
     suggestions = suggest_type(text, text)
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=(), local_tables=(), qualifiable=True),
-            Function(schema=None),
-            Keyword("DISTINCT"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=(), local_tables=(), qualifiable=True),
+        Function(schema=None),
+        Keyword("DISTINCT"),
+    }
 
 
 @pytest.mark.parametrize(
@@ -244,20 +237,18 @@ def test_distinct_and_order_by_suggestions_with_aliases(
     text, text_before, last_keyword
 ):
     suggestions = suggest_type(text, text_before)
-    assert set(suggestions) == set(
-        [
-            Column(
-                table_refs=(
-                    TableReference(None, "tbl", "x", False),
-                    TableReference(None, "tbl1", "y", False),
-                ),
-                local_tables=(),
-                qualifiable=True,
+    assert set(suggestions) == {
+        Column(
+            table_refs=(
+                TableReference(None, "tbl", "x", False),
+                TableReference(None, "tbl1", "y", False),
             ),
-            Function(schema=None),
-            Keyword(last_keyword),
-        ]
-    )
+            local_tables=(),
+            qualifiable=True,
+        ),
+        Function(schema=None),
+        Keyword(last_keyword),
+    }
 
 
 @pytest.mark.parametrize(
@@ -272,56 +263,50 @@ def test_distinct_and_order_by_suggestions_with_aliases(
 )
 def test_distinct_and_order_by_suggestions_with_alias_given(text, text_before):
     suggestions = suggest_type(text, text_before)
-    assert set(suggestions) == set(
-        [
-            Column(
-                table_refs=(TableReference(None, "tbl", "x", False),),
-                local_tables=(),
-                qualifiable=False,
-            ),
-            Table(schema="x"),
-            View(schema="x"),
-            Function(schema="x"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(
+            table_refs=(TableReference(None, "tbl", "x", False),),
+            local_tables=(),
+            qualifiable=False,
+        ),
+        Table(schema="x"),
+        View(schema="x"),
+        Function(schema="x"),
+    }
 
 
 def test_function_arguments_with_alias_given():
     suggestions = suggest_type("SELECT avg(x. FROM tbl x, tbl2 y", "SELECT avg(x.")
 
-    assert set(suggestions) == set(
-        [
-            Column(
-                table_refs=(TableReference(None, "tbl", "x", False),),
-                local_tables=(),
-                qualifiable=False,
-            ),
-            Table(schema="x"),
-            View(schema="x"),
-            Function(schema="x"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(
+            table_refs=(TableReference(None, "tbl", "x", False),),
+            local_tables=(),
+            qualifiable=False,
+        ),
+        Table(schema="x"),
+        View(schema="x"),
+        Function(schema="x"),
+    }
 
 
 def test_col_comma_suggests_cols():
     suggestions = suggest_type("SELECT a, b, FROM tbl", "SELECT a, b,")
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=((None, "tbl", None, False),), qualifiable=True),
-            Function(schema=None),
-            Keyword("SELECT"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=((None, "tbl", None, False),), qualifiable=True),
+        Function(schema=None),
+        Keyword("SELECT"),
+    }
 
 
 def test_table_comma_suggests_tables_and_schemas():
     suggestions = suggest_type("SELECT a, b FROM tbl1, ", "SELECT a, b FROM tbl1, ")
-    assert set(suggestions) == set([FromClauseItem(schema=None), Schema()])
+    assert set(suggestions) == {FromClauseItem(schema=None), Schema()}
 
 
 def test_into_suggests_tables_and_schemas():
     suggestion = suggest_type("INSERT INTO ", "INSERT INTO ")
-    assert set(suggestion) == set([Table(schema=None), View(schema=None), Schema()])
+    assert set(suggestion) == {Table(schema=None), View(schema=None), Schema()}
 
 
 @pytest.mark.parametrize(
@@ -357,14 +342,12 @@ def test_partially_typed_col_name_suggests_col_names():
 
 def test_dot_suggests_cols_of_a_table_or_schema_qualified_table():
     suggestions = suggest_type("SELECT tabl. FROM tabl", "SELECT tabl.")
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=((None, "tabl", None, False),)),
-            Table(schema="tabl"),
-            View(schema="tabl"),
-            Function(schema="tabl"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=((None, "tabl", None, False),)),
+        Table(schema="tabl"),
+        View(schema="tabl"),
+        Function(schema="tabl"),
+    }
 
 
 @pytest.mark.parametrize(
@@ -378,14 +361,12 @@ def test_dot_suggests_cols_of_a_table_or_schema_qualified_table():
 )
 def test_dot_suggests_cols_of_an_alias(sql):
     suggestions = suggest_type(sql, "SELECT t1.")
-    assert set(suggestions) == set(
-        [
-            Table(schema="t1"),
-            View(schema="t1"),
-            Column(table_refs=((None, "tabl1", "t1", False),)),
-            Function(schema="t1"),
-        ]
-    )
+    assert set(suggestions) == {
+        Table(schema="t1"),
+        View(schema="t1"),
+        Column(table_refs=((None, "tabl1", "t1", False),)),
+        Function(schema="t1"),
+    }
 
 
 @pytest.mark.parametrize(
@@ -399,28 +380,24 @@ def test_dot_suggests_cols_of_an_alias(sql):
 )
 def test_dot_suggests_cols_of_an_alias_where(sql):
     suggestions = suggest_type(sql, sql)
-    assert set(suggestions) == set(
-        [
-            Table(schema="t1"),
-            View(schema="t1"),
-            Column(table_refs=((None, "tabl1", "t1", False),)),
-            Function(schema="t1"),
-        ]
-    )
+    assert set(suggestions) == {
+        Table(schema="t1"),
+        View(schema="t1"),
+        Column(table_refs=((None, "tabl1", "t1", False),)),
+        Function(schema="t1"),
+    }
 
 
 def test_dot_col_comma_suggests_cols_or_schema_qualified_table():
     suggestions = suggest_type(
         "SELECT t1.a, t2. FROM tabl1 t1, tabl2 t2", "SELECT t1.a, t2."
     )
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=((None, "tabl2", "t2", False),)),
-            Table(schema="t2"),
-            View(schema="t2"),
-            Function(schema="t2"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=((None, "tabl2", "t2", False),)),
+        Table(schema="t2"),
+        View(schema="t2"),
+        Function(schema="t2"),
+    }
 
 
 @pytest.mark.parametrize(
@@ -452,20 +429,18 @@ def test_sub_select_partial_text_suggests_keyword(expression):
 def test_outer_table_reference_in_exists_subquery_suggests_columns():
     q = "SELECT * FROM foo f WHERE EXISTS (SELECT 1 FROM bar WHERE f."
     suggestions = suggest_type(q, q)
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=((None, "foo", "f", False),)),
-            Table(schema="f"),
-            View(schema="f"),
-            Function(schema="f"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=((None, "foo", "f", False),)),
+        Table(schema="f"),
+        View(schema="f"),
+        Function(schema="f"),
+    }
 
 
 @pytest.mark.parametrize("expression", ["SELECT * FROM (SELECT * FROM "])
 def test_sub_select_table_name_completion(expression):
     suggestion = suggest_type(expression, expression)
-    assert set(suggestion) == set([FromClauseItem(schema=None), Schema()])
+    assert set(suggestion) == {FromClauseItem(schema=None), Schema()}
 
 
 @pytest.mark.parametrize(
@@ -478,22 +453,18 @@ def test_sub_select_table_name_completion(expression):
 def test_sub_select_table_name_completion_with_outer_table(expression):
     suggestion = suggest_type(expression, expression)
     tbls = tuple([(None, "foo", None, False)])
-    assert set(suggestion) == set(
-        [FromClauseItem(schema=None, table_refs=tbls), Schema()]
-    )
+    assert set(suggestion) == {FromClauseItem(schema=None, table_refs=tbls), Schema()}
 
 
 def test_sub_select_col_name_completion():
     suggestions = suggest_type(
         "SELECT * FROM (SELECT  FROM abc", "SELECT * FROM (SELECT "
     )
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=((None, "abc", None, False),), qualifiable=True),
-            Function(schema=None),
-            Keyword("SELECT"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=((None, "abc", None, False),), qualifiable=True),
+        Function(schema=None),
+        Keyword("SELECT"),
+    }
 
 
 @pytest.mark.xfail
@@ -508,25 +479,25 @@ def test_sub_select_dot_col_name_completion():
     suggestions = suggest_type(
         "SELECT * FROM (SELECT t. FROM tabl t", "SELECT * FROM (SELECT t."
     )
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=((None, "tabl", "t", False),)),
-            Table(schema="t"),
-            View(schema="t"),
-            Function(schema="t"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=((None, "tabl", "t", False),)),
+        Table(schema="t"),
+        View(schema="t"),
+        Function(schema="t"),
+    }
 
 
 @pytest.mark.parametrize("join_type", ("", "INNER", "LEFT", "RIGHT OUTER"))
 @pytest.mark.parametrize("tbl_alias", ("", "foo"))
 def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
-    text = "SELECT * FROM abc {0} {1} JOIN ".format(tbl_alias, join_type)
+    text = f"SELECT * FROM abc {tbl_alias} {join_type} JOIN "
     suggestion = suggest_type(text, text)
     tbls = tuple([(None, "abc", tbl_alias or None, False)])
-    assert set(suggestion) == set(
-        [FromClauseItem(schema=None, table_refs=tbls), Schema(), Join(tbls, None)]
-    )
+    assert set(suggestion) == {
+        FromClauseItem(schema=None, table_refs=tbls),
+        Schema(),
+        Join(tbls, None),
+    }
 
 
 def test_left_join_with_comma():
@@ -535,9 +506,7 @@ def test_left_join_with_comma():
     # tbls should also include (None, 'bar', 'b', False)
     # but there's a bug with commas
     tbls = tuple([(None, "foo", "f", False)])
-    assert set(suggestions) == set(
-        [FromClauseItem(schema=None, table_refs=tbls), Schema()]
-    )
+    assert set(suggestions) == {FromClauseItem(schema=None, table_refs=tbls), Schema()}
 
 
 @pytest.mark.parametrize(
@@ -550,15 +519,13 @@ def test_left_join_with_comma():
 def test_join_alias_dot_suggests_cols1(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, "abc", "a", False), (None, "def", "d", False))
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=((None, "abc", "a", False),)),
-            Table(schema="a"),
-            View(schema="a"),
-            Function(schema="a"),
-            JoinCondition(table_refs=tables, parent=(None, "abc", "a", False)),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=((None, "abc", "a", False),)),
+        Table(schema="a"),
+        View(schema="a"),
+        Function(schema="a"),
+        JoinCondition(table_refs=tables, parent=(None, "abc", "a", False)),
+    }
 
 
 @pytest.mark.parametrize(
@@ -570,14 +537,12 @@ def test_join_alias_dot_suggests_cols1(sql):
 )
 def test_join_alias_dot_suggests_cols2(sql):
     suggestion = suggest_type(sql, sql)
-    assert set(suggestion) == set(
-        [
-            Column(table_refs=((None, "def", "d", False),)),
-            Table(schema="d"),
-            View(schema="d"),
-            Function(schema="d"),
-        ]
-    )
+    assert set(suggestion) == {
+        Column(table_refs=((None, "def", "d", False),)),
+        Table(schema="d"),
+        View(schema="d"),
+        Function(schema="d"),
+    }
 
 
 @pytest.mark.parametrize(
@@ -598,9 +563,10 @@ on """,
 def test_on_suggests_aliases_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, "abc", "a", False), (None, "bcd", "b", False))
-    assert set(suggestions) == set(
-        (JoinCondition(table_refs=tables, parent=None), Alias(aliases=("a", "b")))
-    )
+    assert set(suggestions) == {
+        JoinCondition(table_refs=tables, parent=None),
+        Alias(aliases=("a", "b")),
+    }
 
 
 @pytest.mark.parametrize(
@@ -613,9 +579,10 @@ def test_on_suggests_aliases_and_join_conditions(sql):
 def test_on_suggests_tables_and_join_conditions(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, "abc", None, False), (None, "bcd", None, False))
-    assert set(suggestions) == set(
-        (JoinCondition(table_refs=tables, parent=None), Alias(aliases=("abc", "bcd")))
-    )
+    assert set(suggestions) == {
+        JoinCondition(table_refs=tables, parent=None),
+        Alias(aliases=("abc", "bcd")),
+    }
 
 
 @pytest.mark.parametrize(
@@ -640,9 +607,10 @@ def test_on_suggests_aliases_right_side(sql):
 def test_on_suggests_tables_and_join_conditions_right_side(sql):
     suggestions = suggest_type(sql, sql)
     tables = ((None, "abc", None, False), (None, "bcd", None, False))
-    assert set(suggestions) == set(
-        (JoinCondition(table_refs=tables, parent=None), Alias(aliases=("abc", "bcd")))
-    )
+    assert set(suggestions) == {
+        JoinCondition(table_refs=tables, parent=None),
+        Alias(aliases=("abc", "bcd")),
+    }
 
 
 @pytest.mark.parametrize(
@@ -659,9 +627,9 @@ def test_on_suggests_tables_and_join_conditions_right_side(sql):
 )
 def test_join_using_suggests_common_columns(text):
     tables = ((None, "abc", None, False), (None, "def", None, False))
-    assert set(suggest_type(text, text)) == set(
-        [Column(table_refs=tables, require_last_table=True)]
-    )
+    assert set(suggest_type(text, text)) == {
+        Column(table_refs=tables, require_last_table=True)
+    }
 
 
 def test_suggest_columns_after_multiple_joins():
@@ -678,29 +646,27 @@ def test_2_statements_2nd_current():
     suggestions = suggest_type(
         "select * from a; select * from ", "select * from a; select * from "
     )
-    assert set(suggestions) == set([FromClauseItem(schema=None), Schema()])
+    assert set(suggestions) == {FromClauseItem(schema=None), Schema()}
 
     suggestions = suggest_type(
         "select * from a; select  from b", "select * from a; select "
     )
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=((None, "b", None, False),), qualifiable=True),
-            Function(schema=None),
-            Keyword("SELECT"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=((None, "b", None, False),), qualifiable=True),
+        Function(schema=None),
+        Keyword("SELECT"),
+    }
 
     # Should work even if first statement is invalid
     suggestions = suggest_type(
         "select * from; select * from ", "select * from; select * from "
     )
-    assert set(suggestions) == set([FromClauseItem(schema=None), Schema()])
+    assert set(suggestions) == {FromClauseItem(schema=None), Schema()}
 
 
 def test_2_statements_1st_current():
     suggestions = suggest_type("select * from ; select * from b", "select * from ")
-    assert set(suggestions) == set([FromClauseItem(schema=None), Schema()])
+    assert set(suggestions) == {FromClauseItem(schema=None), Schema()}
 
     suggestions = suggest_type("select  from a; select * from b", "select ")
     assert set(suggestions) == cols_etc("a", last_keyword="SELECT")
@@ -711,7 +677,7 @@ def test_3_statements_2nd_current():
         "select * from a; select * from ; select * from c",
         "select * from a; select * from ",
     )
-    assert set(suggestions) == set([FromClauseItem(schema=None), Schema()])
+    assert set(suggestions) == {FromClauseItem(schema=None), Schema()}
 
     suggestions = suggest_type(
         "select * from a; select  from b; select * from c", "select * from a; select "
@@ -768,13 +734,11 @@ SELECT * FROM qux;
 )
 def test_statements_in_function_body(text):
     suggestions = suggest_type(text, text[: text.find("  ") + 1])
-    assert set(suggestions) == set(
-        [
-            Column(table_refs=((None, "foo", None, False),), qualifiable=True),
-            Function(schema=None),
-            Keyword("SELECT"),
-        ]
-    )
+    assert set(suggestions) == {
+        Column(table_refs=((None, "foo", None, False),), qualifiable=True),
+        Function(schema=None),
+        Keyword("SELECT"),
+    }
 
 
 functions = [
@@ -799,13 +763,13 @@ SELECT 1 FROM foo;
 @pytest.mark.parametrize("text", functions)
 def test_statements_with_cursor_after_function_body(text):
     suggestions = suggest_type(text, text[: text.find("; ") + 1])
-    assert set(suggestions) == set([Keyword(), Special()])
+    assert set(suggestions) == {Keyword(), Special()}
 
 
 @pytest.mark.parametrize("text", functions)
 def test_statements_with_cursor_before_function_body(text):
     suggestions = suggest_type(text, "")
-    assert set(suggestions) == set([Keyword(), Special()])
+    assert set(suggestions) == {Keyword(), Special()}
 
 
 def test_create_db_with_template():
@@ -813,14 +777,14 @@ def test_create_db_with_template():
         "create database foo with template ", "create database foo with template "
     )
 
-    assert set(suggestions) == set((Database(),))
+    assert set(suggestions) == {Database()}
 
 
 @pytest.mark.parametrize("initial_text", ("", "    ", "\t \t", "\n"))
 def test_specials_included_for_initial_completion(initial_text):
     suggestions = suggest_type(initial_text, initial_text)
 
-    assert set(suggestions) == set([Keyword(), Special()])
+    assert set(suggestions) == {Keyword(), Special()}
 
 
 def test_drop_schema_qualified_table_suggests_only_tables():
@@ -843,25 +807,30 @@ def test_drop_schema_suggests_schemas():
 
 @pytest.mark.parametrize("text", ["SELECT x::", "SELECT x::y", "SELECT (x + y)::"])
 def test_cast_operator_suggests_types(text):
-    assert set(suggest_type(text, text)) == set(
-        [Datatype(schema=None), Table(schema=None), Schema()]
-    )
+    assert set(suggest_type(text, text)) == {
+        Datatype(schema=None),
+        Table(schema=None),
+        Schema(),
+    }
 
 
 @pytest.mark.parametrize(
     "text", ["SELECT foo::bar.", "SELECT foo::bar.baz", "SELECT (x + y)::bar."]
 )
 def test_cast_operator_suggests_schema_qualified_types(text):
-    assert set(suggest_type(text, text)) == set(
-        [Datatype(schema="bar"), Table(schema="bar")]
-    )
+    assert set(suggest_type(text, text)) == {
+        Datatype(schema="bar"),
+        Table(schema="bar"),
+    }
 
 
 def test_alter_column_type_suggests_types():
     q = "ALTER TABLE foo ALTER COLUMN bar TYPE "
-    assert set(suggest_type(q, q)) == set(
-        [Datatype(schema=None), Table(schema=None), Schema()]
-    )
+    assert set(suggest_type(q, q)) == {
+        Datatype(schema=None),
+        Table(schema=None),
+        Schema(),
+    }
 
 
 @pytest.mark.parametrize(
@@ -880,9 +849,11 @@ def test_alter_column_type_suggests_types():
     ],
 )
 def test_identifier_suggests_types_in_parentheses(text):
-    assert set(suggest_type(text, text)) == set(
-        [Datatype(schema=None), Table(schema=None), Schema()]
-    )
+    assert set(suggest_type(text, text)) == {
+        Datatype(schema=None),
+        Table(schema=None),
+        Schema(),
+    }
 
 
 @pytest.mark.parametrize(
@@ -977,7 +948,7 @@ def test_ignore_leading_double_quotes(sql):
 )
 def test_column_keyword_suggests_columns(sql):
     suggestions = suggest_type(sql, sql)
-    assert set(suggestions) == set([Column(table_refs=((None, "foo", None, False),))])
+    assert set(suggestions) == {Column(table_refs=((None, "foo", None, False),))}
 
 
 def test_handle_unrecognized_kw_generously():

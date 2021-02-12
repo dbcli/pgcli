@@ -57,7 +57,7 @@ def run_cli(context, run_args=None, prompt_check=True, currentdb=None):
     context.cli.logfile = context.logfile
     context.exit_sent = False
     context.currentdb = currentdb or context.conf["dbname"]
-    context.cli.sendline("\pset pager always")
+    context.cli.sendline(r"\pset pager always")
     if prompt_check:
         wait_prompt(context)
 

@@ -122,7 +122,7 @@ class PgCliQuitError(Exception):
     pass
 
 
-class PGCli(object):
+class PGCli:
     default_prompt = "\\u@\\h:\\d> "
     max_len_prompt = 30
 
@@ -325,11 +325,11 @@ class PGCli(object):
             if pattern not in TabularOutputFormatter().supported_formats:
                 raise ValueError()
             self.table_format = pattern
-            yield (None, None, None, "Changed table format to {}".format(pattern))
+            yield (None, None, None, f"Changed table format to {pattern}")
         except ValueError:
-            msg = "Table format {} not recognized. Allowed formats:".format(pattern)
+            msg = f"Table format {pattern} not recognized. Allowed formats:"
             for table_type in TabularOutputFormatter().supported_formats:
-                msg += "\n\t{}".format(table_type)
+                msg += f"\n\t{table_type}"
             msg += "\nCurrently set to: %s" % self.table_format
             yield (None, None, None, msg)
 
@@ -386,7 +386,7 @@ class PGCli(object):
         try:
             with open(os.path.expanduser(pattern), encoding="utf-8") as f:
                 query = f.read()
-        except IOError as e:
+        except OSError as e:
             return [(None, None, None, str(e), "", False, True)]
 
         if self.destructive_warning and confirm_destructive_query(query) is False:
@@ -407,7 +407,7 @@ class PGCli(object):
         if not os.path.isfile(filename):
             try:
                 open(filename, "w").close()
-            except IOError as e:
+            except OSError as e:
                 self.output_file = None
                 message = str(e) + "\nFile output disabled"
                 return [(None, None, None, message, "", False, True)]
@@ -479,7 +479,7 @@ class PGCli(object):
         service_config, file = parse_service_info(service)
         if service_config is None:
             click.secho(
-                "service '%s' was not found in %s" % (service, file), err=True, fg="red"
+                f"service '{service}' was not found in {file}", err=True, fg="red"
             )
             exit(1)
         self.connect(
@@ -515,7 +515,7 @@ class PGCli(object):
             passwd = os.environ.get("PGPASSWORD", "")
 
         # Find password from store
-        key = "%s@%s" % (user, host)
+        key = f"{user}@{host}"
         keyring_error_message = dedent(
             """\
             {}
@@ -677,7 +677,7 @@ class PGCli(object):
                             click.echo(text, file=f)
                             click.echo("\n".join(output), file=f)
                             click.echo("", file=f)  # extra newline
-                    except IOError as e:
+                    except OSError as e:
                         click.secho(str(e), err=True, fg="red")
                 else:
                     if output:
@@ -753,11 +753,7 @@ class PGCli(object):
                     while self.watch_command:
                         try:
                             query = self.execute_command(self.watch_command)
-                            click.echo(
-                                "Waiting for {0} seconds before repeating".format(
-                                    timing
-                                )
-                            )
+                            click.echo(f"Waiting for {timing} seconds before repeating")
                             sleep(timing)
                         except KeyboardInterrupt:
                             self.watch_command = None
@@ -1049,7 +1045,7 @@ class PGCli(object):
             str(self.pgexecute.port) if self.pgexecute.port is not None else "5432",
         )
         string = string.replace("\\i", str(self.pgexecute.pid) or "(none)")
-        string = string.replace("\\#", "#" if (self.pgexecute.superuser) else ">")
+        string = string.replace("\\#", "#" if self.pgexecute.superuser else ">")
         string = string.replace("\\n", "\n")
         return string
 
@@ -1384,7 +1380,7 @@ def is_mutating(status):
     if not status:
         return False
 
-    mutating = set(["insert", "update", "delete"])
+    mutating = {"insert", "update", "delete"}
     return status.split(None, 1)[0].lower() in mutating
 
 

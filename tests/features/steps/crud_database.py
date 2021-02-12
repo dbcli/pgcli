@@ -14,7 +14,7 @@ def step_db_create(context):
     """
     Send create database.
     """
-    context.cli.sendline("create database {0};".format(context.conf["dbname_tmp"]))
+    context.cli.sendline("create database {};".format(context.conf["dbname_tmp"]))
 
     context.response = {"database_name": context.conf["dbname_tmp"]}
 
@@ -24,7 +24,7 @@ def step_db_drop(context):
     """
     Send drop database.
     """
-    context.cli.sendline("drop database {0};".format(context.conf["dbname_tmp"]))
+    context.cli.sendline("drop database {};".format(context.conf["dbname_tmp"]))
 
 
 @when("we connect to test database")
@@ -33,7 +33,7 @@ def step_db_connect_test(context):
     Send connect to database.
     """
     db_name = context.conf["dbname"]
-    context.cli.sendline("\\connect {0}".format(db_name))
+    context.cli.sendline(f"\\connect {db_name}")
 
 
 @when("we connect to dbserver")
@@ -59,7 +59,7 @@ def step_see_prompt(context):
     Wait to see the prompt.
     """
     db_name = getattr(context, "currentdb", context.conf["dbname"])
-    wrappers.expect_exact(context, "{0}> ".format(db_name), timeout=5)
+    wrappers.expect_exact(context, f"{db_name}> ", timeout=5)
     context.atprompt = True
 
 

@@ -53,7 +53,7 @@ metadata = {
     ],
 }
 
-metadata = dict((k, {"public": v}) for k, v in metadata.items())
+metadata = {k: {"public": v} for k, v in metadata.items()}
 
 testdata = MetaData(metadata)
 
@@ -296,7 +296,7 @@ def test_suggested_cased_always_qualified_column_names(completer):
 def test_suggested_column_names_in_function(completer):
     result = get_result(completer, "SELECT MAX( from users", len("SELECT MAX("))
     assert completions_to_set(result) == completions_to_set(
-        (testdata.columns_functions_and_keywords("users"))
+        testdata.columns_functions_and_keywords("users")
     )
 
 
@@ -316,7 +316,7 @@ def test_suggested_column_names_with_alias(completer):
 def test_suggested_multiple_column_names(completer):
     result = get_result(completer, "SELECT id,  from users u", len("SELECT id, "))
     assert completions_to_set(result) == completions_to_set(
-        (testdata.columns_functions_and_keywords("users"))
+        testdata.columns_functions_and_keywords("users")
     )
 
 

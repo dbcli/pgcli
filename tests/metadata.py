@@ -3,7 +3,7 @@ from itertools import product
 from pgcli.packages.parseutils.meta import FunctionMetadata, ForeignKey
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
-from mock import Mock
+from unittest.mock import Mock
 import pytest
 
 parametrize = pytest.mark.parametrize
@@ -59,7 +59,7 @@ def wildcard_expansion(cols, pos=-1):
     return Completion(cols, start_position=pos, display_meta="columns", display="*")
 
 
-class MetaData(object):
+class MetaData:
     def __init__(self, metadata):
         self.metadata = metadata
 
@@ -128,7 +128,7 @@ class MetaData(object):
         ]
 
     def schemas(self, pos=0):
-        schemas = set(sch for schs in self.metadata.values() for sch in schs)
+        schemas = {sch for schs in self.metadata.values() for sch in schs}
         return [schema(escape(s), pos=pos) for s in schemas]
 
     def functions_and_keywords(self, parent="public", pos=0):
