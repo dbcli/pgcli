@@ -14,7 +14,7 @@ def query_is_unconditional_update(formatted_sql):
 
 
 def query_is_simple_update(formatted_sql):
-    """Check if the query starts with UPDATE and contains no WHERE."""
+    """Check if the query starts with UPDATE."""
     tokens = formatted_sql.split()
     return bool(tokens) and tokens[0] == "update"
 
@@ -25,10 +25,10 @@ def is_destructive(queries, warning_level="all"):
     for query in sqlparse.split(queries):
         if query:
             formatted_sql = sqlparse.format(query.lower(), strip_comments=True).strip()
-            if query_starts_with(formatted_sql, keywords) is True:
+            if query_starts_with(formatted_sql, keywords):
                 return True
-            if query_is_unconditional_update(formatted_sql) is True:
+            if query_is_unconditional_update(formatted_sql):
                 return True
-            if warning_level == "all" and query_is_simple_update(formatted_sql) is True:
+            if warning_level == "all" and query_is_simple_update(formatted_sql):
                 return True
     return False
