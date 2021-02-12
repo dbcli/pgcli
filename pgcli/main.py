@@ -201,8 +201,11 @@ class PGCli(object):
         self.syntax_style = c["main"]["syntax_style"]
         self.cli_style = c["colors"]
         self.wider_completion_menu = c["main"].as_bool("wider_completion_menu")
-        c_dest_warning = c["main"].as_bool("destructive_warning")
-        self.destructive_warning = c_dest_warning if warn is None else warn
+        self.destructive_warning = warn or c["main"]["destructive_warning"]
+        # also handle boolean format of destructive warning
+        self.destructive_warning = {"true": "all", "false": "off"}.get(
+            self.destructive_warning.lower(), self.destructive_warning
+        )
         self.less_chatty = bool(less_chatty) or c["main"].as_bool("less_chatty")
         self.null_string = c["main"].get("null_string", "<null>")
         self.prompt_format = (
@@ -389,7 +392,10 @@ class PGCli(object):
         except IOError as e:
             return [(None, None, None, str(e), "", False, True)]
 
-        if self.destructive_warning and confirm_destructive_query(query) is False:
+        if (
+            self.destructive_warning != "off"
+            and confirm_destructive_query(query, self.destructive_warning) is False
+        ):
             message = "Wise choice. Command execution stopped."
             return [(None, None, None, message)]
 
@@ -644,8 +650,10 @@ class PGCli(object):
         query = MetaQuery(query=text, successful=False)
 
         try:
-            if self.destructive_warning:
-                destroy = confirm = confirm_destructive_query(text)
+            if self.destructive_warning != "off":
+                destroy = confirm = confirm_destructive_query(
+                    text, self.destructive_warning
+                )
                 if destroy is False:
                     click.secho("Wise choice!")
                     raise KeyboardInterrupt
@@ -1192,7 +1200,10 @@ class PGCli(object):
     help="Automatically switch to vertical output mode if the result is wider than the terminal width.",
 )
 @click.option(
-    "--warn/--no-warn", default=None, help="Warn before running a destructive query."
+    "--warn",
+    default=None,
+    type=click.Choice(["all", "moderate", "off"]),
+    help="Warn before running a destructive query.",
 )
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)

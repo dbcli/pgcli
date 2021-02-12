@@ -1,4 +1,5 @@
 import pytest
+from pgcli.packages.parseutils import is_destructive
 from pgcli.packages.parseutils.tables import extract_tables
 from pgcli.packages.parseutils.utils import find_prev_keyword, is_open_quote
 
@@ -267,3 +268,21 @@ def test_is_open_quote__closed(sql):
 )
 def test_is_open_quote__open(sql):
     assert is_open_quote(sql)
+
+
+@pytest.mark.parametrize(
+    ("sql", "warning_level", "expected"),
+    [
+        ("update abc set x = 1", "all", True),
+        ("update abc set x = 1 where y = 2", "all", True),
+        ("update abc set x = 1", "moderate", True),
+        ("update abc set x = 1 where y = 2", "moderate", False),
+        ("select x, y, z from abc", "all", False),
+        ("drop abc", "all", True),
+        ("alter abc", "all", True),
+        ("delete abc", "all", True),
+        ("truncate abc", "all", True),
+    ],
+)
+def test_is_destructive(sql, warning_level, expected):
+    assert is_destructive(sql, warning_level=warning_level) == expected
