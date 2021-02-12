@@ -28,7 +28,7 @@ multi_line_mode = psql
 # Possible values:
 # "all" - warn on data definition statements, server actions such as SHUTDOWN, DELETE or UPDATE
 # "moderate" - skip warning on UPDATE statements, except for unconditional updates
-# "off" - skip all warning
+# "off" - skip all warnings
 destructive_warning = all
 
 # Enables expand mode, which is similar to `\x` in psql.
