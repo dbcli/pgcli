@@ -63,7 +63,7 @@ def before_all(context):
                         "import coverage",
                         "coverage.process_startup()",
                         "import pgcli.main",
-                        "pgcli.main.cli()",
+                        "pgcli.main.cli(auto_envvar_prefix='BEHAVE')",
                     ]
                 ),
             )
@@ -102,6 +102,7 @@ def before_all(context):
     else:
         if "PGPASSWORD" in os.environ:
             del os.environ["PGPASSWORD"]
+    os.environ["BEHAVE_WARN"] = "moderate"
 
     context.cn = dbutils.create_db(
         context.conf["host"],

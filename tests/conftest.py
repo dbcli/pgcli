@@ -12,7 +12,7 @@ from utils import (
 import pgcli.pgexecute
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def connection():
     create_db("_test_db")
     connection = db_connection("_test_db")

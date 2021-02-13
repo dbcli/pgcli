@@ -1,6 +1,12 @@
 TBD
 ===
 
+Features:
+---------
+
+* Consider `update` queries destructive and issue a warning. Change
+  `destructive_warning` setting to `all|moderate|off`, vs `true|false`. (#1239)
+
 Bug fixes:
 ----------
 
