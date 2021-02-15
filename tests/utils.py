@@ -8,7 +8,7 @@ from os import getenv
 POSTGRES_USER = getenv("PGUSER", "postgres")
 POSTGRES_HOST = getenv("PGHOST", "localhost")
 POSTGRES_PORT = getenv("PGPORT", 5432)
-POSTGRES_PASSWORD = getenv("PGPASSWORD", "")
+POSTGRES_PASSWORD = getenv("PGPASSWORD", "postgres")
 
 
 def db_connection(dbname=None):
