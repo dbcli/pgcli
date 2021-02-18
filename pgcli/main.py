@@ -737,7 +737,6 @@ class PGCli:
         if not self.less_chatty:
             print("Server: PostgreSQL", self.pgexecute.server_version)
             print("Version:", __version__)
-            print("Chat: https://gitter.im/dbcli/pgcli")
             print("Home: http://pgcli.com")
 
         try:
