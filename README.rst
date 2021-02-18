@@ -1,7 +1,7 @@
 A REPL for Postgres
 -------------------
 
-|Build Status| |CodeCov| |PyPI| |Landscape| |Gitter|
+|Build Status| |CodeCov| |PyPI| |Landscape|
 
 This is a postgres client that does auto-completion and syntax highlighting.
 
@@ -352,8 +352,8 @@ interface to Postgres database.
 Thanks to all the beta testers and contributors for your time and patience. :)
 
 
-.. |Build Status| image:: https://api.travis-ci.org/dbcli/pgcli.svg?branch=master
-    :target: https://travis-ci.org/dbcli/pgcli
+.. |Build Status| image:: https://github.com/dbcli/pgcli/workflows/pgcli/badge.svg
+    :target: https://github.com/dbcli/pgcli/actions?query=workflow%3Apgcli
 
 .. |CodeCov| image:: https://codecov.io/gh/dbcli/pgcli/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/dbcli/pgcli
@@ -366,7 +366,3 @@ Thanks to all the beta testers and contributors for your time and patience. :)
 .. |PyPI| image:: https://img.shields.io/pypi/v/pgcli.svg
     :target: https://pypi.python.org/pypi/pgcli/
     :alt: Latest Version
-
-.. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
-    :target: https://gitter.im/dbcli/pgcli?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
-    :alt: Gitter Chat
