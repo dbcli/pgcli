@@ -81,10 +81,10 @@ def skip_initial_comment(f_stream: TextIO) -> int:
     while True:
         line = f_stream.readline()
         if line == "":
-            return
+            break
         if re.match(section_regex, line) is not None:
             f_stream.seek(pos)
-            return
+            break
         else:
             pos += len(line)
             lines_skipped += 1
