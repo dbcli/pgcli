@@ -1,15 +1,20 @@
+from packaging.version import parse as parse_version
+
+import prompt_toolkit
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.application import get_app
 
 
 def _get_vi_mode():
-    return {
+    modes = {
         InputMode.INSERT: "I",
         InputMode.NAVIGATION: "N",
         InputMode.REPLACE: "R",
-        InputMode.REPLACE_SINGLE: "R",
         InputMode.INSERT_MULTIPLE: "M",
-    }[get_app().vi_state.input_mode]
+    }
+    if parse_version(prompt_toolkit.__version__) >= parse_version("3.0.6"):
+        modes[InputMode.REPLACE_SINGLE] = "R"
+    return modes[get_app().vi_state.input_mode]
 
 
 def create_toolbar_tokens_func(pgcli):
