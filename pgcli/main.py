@@ -2,8 +2,9 @@ import platform
 import warnings
 from os.path import expanduser
 
-from configobj import ConfigObj
+from configobj import ConfigObj, ParseError
 from pgspecial.namedqueries import NamedQueries
+from .config import skip_initial_comment
 
 warnings.filterwarnings("ignore", category=UserWarning, module="psycopg2")
 
@@ -1508,10 +1509,16 @@ def parse_service_info(service):
             service_file = os.path.join(os.getenv("PGSYSCONFDIR"), ".pg_service.conf")
         else:
             service_file = expanduser("~/.pg_service.conf")
-    if not service:
+    if not service or not os.path.exists(service_file):
         # nothing to do
         return None, service_file
-    service_file_config = ConfigObj(service_file)
+    with open(service_file) as f:
+        skipped_lines = skip_initial_comment(f)
+        try:
+            service_file_config = ConfigObj(f)
+        except ParseError as err:
+            err.line_number += skipped_lines
+            raise err
     if service not in service_file_config:
         return None, service_file
     service_conf = service_file_config.get(service)

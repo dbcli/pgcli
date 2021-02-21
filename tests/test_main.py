@@ -288,7 +288,12 @@ def test_pg_service_file(tmpdir):
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         with open(tmpdir.join(".pg_service.conf").strpath, "w") as service_conf:
             service_conf.write(
-                """[myservice]
+                """File begins with a comment
+            that is not a comment
+            # or maybe a comment after all
+            because psql is crazy
+
+            [myservice]
             host=a_host
             user=a_user
             port=5433
