@@ -3,6 +3,8 @@ import shutil
 import os
 import platform
 from os.path import expanduser, exists, dirname
+import re
+from typing import TextIO
 from configobj import ConfigObj
 
 
@@ -62,3 +64,28 @@ def get_casing_file(config):
     if casing_file == "default":
         casing_file = config_location() + "casing"
     return casing_file
+
+
+def skip_initial_comment(f_stream: TextIO) -> int:
+    """
+    Initial comment in ~/.pg_service.conf is not always marked with '#'
+    which crashes the parser. This function takes a file object and
+    "rewinds" it to the beginning of the first section,
+    from where on it can be parsed safely
+
+    :return: number of skipped lines
+    """
+    section_regex = r"\s*\["
+    pos = f_stream.tell()
+    lines_skipped = 0
+    while True:
+        line = f_stream.readline()
+        if line == "":
+            break
+        if re.match(section_regex, line) is not None:
+            f_stream.seek(pos)
+            break
+        else:
+            pos += len(line)
+            lines_skipped += 1
+    return lines_skipped

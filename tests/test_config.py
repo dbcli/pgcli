@@ -1,9 +1,10 @@
+import io
 import os
 import stat
 
 import pytest
 
-from pgcli.config import ensure_dir_exists
+from pgcli.config import ensure_dir_exists, skip_initial_comment
 
 
 def test_ensure_file_parent(tmpdir):
@@ -28,3 +29,15 @@ def test_ensure_other_create_error(tmpdir):
 
     with pytest.raises(OSError):
         ensure_dir_exists(str(rcfile))
+
+
+@pytest.mark.parametrize(
+    "text, skipped_lines",
+    (
+        ("abc\n", 1),
+        ("#[section]\ndef\n[section]", 2),
+        ("[section]", 0),
+    ),
+)
+def test_skip_initial_comment(text, skipped_lines):
+    assert skip_initial_comment(io.StringIO(text)) == skipped_lines
