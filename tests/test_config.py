@@ -23,7 +23,7 @@ def test_ensure_other_create_error(tmpdir):
     subdir = tmpdir.join('subdir"')
     rcfile = subdir.join("rcfile")
 
-    # trigger an oserror that isn't "directory already exists"
+    # trigger an  oserror that isn't "directory already exists"
     os.chmod(str(tmpdir), stat.S_IREAD)
 
     with pytest.raises(OSError):
