@@ -13,6 +13,7 @@ Bug fixes:
 
 * Fix issue where `syntax_style` config value would not have any effect. (#1212)
 * Fix crash because of not found `InputMode.REPLACE_SINGLE` with prompt-toolkit < 3.0.6
+* Fix comments being lost in config when saving a named query. (#1240)
 
 3.1.0
 =====
