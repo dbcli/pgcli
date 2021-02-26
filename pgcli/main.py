@@ -63,6 +63,7 @@ from .config import (
     config_location,
     ensure_dir_exists,
     get_config,
+    get_config_filename
 )
 from .key_bindings import pgcli_bindings
 from .packages.prompt_utils import confirm_destructive_query
@@ -176,7 +177,11 @@ class PGCli:
         # Load config.
         c = self.config = get_config(pgclirc_file)
 
-        NamedQueries.instance = NamedQueries.from_config(self.config)
+        # at this point, config should be written to pgclirc_file if it did not exist. Read it.
+        self.config_writer = load_config(get_config_filename(pgclirc_file))
+
+        # make sure to use self.config_writer, not self.config
+        NamedQueries.instance = NamedQueries.from_config(self.config_writer)
 
         self.logger = logging.getLogger(__name__)
         self.initialize_logging()
