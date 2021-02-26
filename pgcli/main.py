@@ -63,7 +63,7 @@ from .config import (
     config_location,
     ensure_dir_exists,
     get_config,
-    get_config_filename
+    get_config_filename,
 )
 from .key_bindings import pgcli_bindings
 from .packages.prompt_utils import confirm_destructive_query
