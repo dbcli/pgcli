@@ -21,7 +21,6 @@ import datetime as dt
 import itertools
 import platform
 from time import time, sleep
-from codecs import open
 
 keyring = None  # keyring will be loaded later
 
@@ -1517,7 +1516,7 @@ def parse_service_info(service):
     if not service or not os.path.exists(service_file):
         # nothing to do
         return None, service_file
-    with open(service_file) as f:
+    with open(service_file, newline="") as f:
         skipped_lines = skip_initial_comment(f)
         try:
             service_file_config = ConfigObj(f)
