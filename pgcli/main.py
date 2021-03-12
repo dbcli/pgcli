@@ -1083,9 +1083,10 @@ class PGCli:
     def echo_via_pager(self, text, color=None):
         if self.pgspecial.pager_config == PAGER_OFF or self.watch_command:
             click.echo(text, color=color)
-        elif os.environ.get("PAGER", None) and self.table_format == "csv":
-            click.echo_via_pager(text, color)
-        elif self.pgspecial.pager_config == PAGER_LONG_OUTPUT:
+        elif (
+            self.pgspecial.pager_config == PAGER_LONG_OUTPUT
+            and self.table_format != "csv"
+        ):
             lines = text.split("\n")
 
             # The last 4 lines are reserved for the pgcli menu and padding
