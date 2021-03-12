@@ -15,6 +15,7 @@ Bug fixes:
 * Fix crash because of not found `InputMode.REPLACE_SINGLE` with prompt-toolkit < 3.0.6
 * Fix comments being lost in config when saving a named query. (#1240)
 * Fix IPython magic for ipython-sql >= 0.4.0
+* Fix pager not being used when output format is set to csv. (#1238)
 
 3.1.0
 =====
