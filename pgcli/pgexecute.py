@@ -385,6 +385,26 @@ class PGExecute:
                             self.reset_expanded = True
                         sql = sql[:-2].strip()
 
+                    #  stub implementation
+                    #  copying the output is useful for profiling queries with EXPLAIN
+                    if sql.startswith(r"\clip"):
+                        sql = sql.strip(r"\clip")
+                        cur = self.conn.cursor()
+                        cur.execute(sql)
+                        out_lines = cur.fetchall()
+                        output = "\n".join([tup[0] for tup in out_lines])
+
+                        #  cross-platform clipboard copy
+                        _logger.debug("copying to clipboard")
+                        import pyperclip
+
+                        pyperclip.copy(output)
+
+                        #  still print output
+                        #  since it is likely a explain analyze query, we may like to use an
+                        #  existing Pygments lexer for Postgres explain output
+                        print(output)
+
                     # First try to run each query as special
                     _logger.debug("Trying a pgspecial command. sql: %r", sql)
                     try:
