@@ -17,6 +17,7 @@ Bug fixes:
 * Fix IPython magic for ipython-sql >= 0.4.0
 * Fix pager not being used when output format is set to csv. (#1238)
 * Add \clip command to copy to clipboard
+* Fix ANSI escape codes in first line make the cli choose expanded output incorrectly
 
 3.1.0
 =====
