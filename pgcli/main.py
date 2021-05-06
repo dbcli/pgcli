@@ -1248,8 +1248,7 @@ def cli(
         else:
             print("Config file is now located at", config_full_path)
             print(
-                "Please move the existing config file ~/.pgclirc to",
-                config_full_path,
+                "Please move the existing config file ~/.pgclirc to", config_full_path,
             )
     if list_dsn:
         try:
@@ -1488,7 +1487,12 @@ def format_output(title, cur, headers, status, settings):
             formatted = iter(formatted.splitlines())
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
-        if not expanded and max_width and len(strip_ansi(first_line)) > max_width and headers:
+        if (
+            not expanded
+            and max_width
+            and len(strip_ansi(first_line)) > max_width
+            and headers
+        ):
             formatted = formatter.format_output(
                 cur, headers, format_name="vertical", column_types=None, **output_kwargs
             )
