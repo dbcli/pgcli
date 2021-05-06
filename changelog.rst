@@ -16,7 +16,8 @@ Bug fixes:
 * Fix comments being lost in config when saving a named query. (#1240)
 * Fix IPython magic for ipython-sql >= 0.4.0
 * Fix pager not being used when output format is set to csv. (#1238)
-* Add function literals random, g;nerate_series, generate_subscripts
+* Add function literals random, generate_series, generate_subscripts
+* Fix ANSI escape codes in first line make the cli choose expanded output incorrectly
 
 3.1.0
 =====
