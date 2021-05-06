@@ -26,6 +26,7 @@ keyring = None  # keyring will be loaded later
 
 from cli_helpers.tabular_output import TabularOutputFormatter
 from cli_helpers.tabular_output.preprocessors import align_decimals, format_numbers
+from cli_helpers.utils import strip_ansi
 import click
 
 try:
@@ -1487,7 +1488,7 @@ def format_output(title, cur, headers, status, settings):
             formatted = iter(formatted.splitlines())
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
-        if not expanded and max_width and len(first_line) > max_width and headers:
+        if not expanded and max_width and len(strip_ansi(first_line)) > max_width and headers:
             formatted = formatter.format_output(
                 cur, headers, format_name="vertical", column_types=None, **output_kwargs
             )
