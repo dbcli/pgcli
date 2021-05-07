@@ -355,7 +355,9 @@ def test_schema_qualified_function_name_after_from(completer):
     text = "SELECT * FROM custom.set_r"
     result = get_result(completer, text)
     assert completions_to_set(result) == completions_to_set(
-        [function("set_returning_func()", -len("func")),]
+        [
+            function("set_returning_func()", -len("func")),
+        ]
     )
 
 
@@ -372,7 +374,9 @@ def test_unqualified_function_name_in_search_path(completer):
     text = "SELECT * FROM set_r"
     result = get_result(completer, text)
     assert completions_to_set(result) == completions_to_set(
-        [function("set_returning_func()", -len("func")),]
+        [
+            function("set_returning_func()", -len("func")),
+        ]
     )
 
 
