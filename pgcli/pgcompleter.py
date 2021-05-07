@@ -140,7 +140,7 @@ class PGCompleter(Completer):
         return "'{}'".format(self.unescape_name(name))
 
     def unescape_name(self, name):
-        """ Unquote a string."""
+        """Unquote a string."""
         if name and name[0] == '"' and name[-1] == '"':
             name = name[1:-1]
 
@@ -703,7 +703,11 @@ class PGCompleter(Completer):
                     not f.is_aggregate
                     and not f.is_window
                     and not f.is_extension
-                    and (f.is_public or f.schema_name == suggestion.schema)
+                    and (
+                        f.is_public
+                        or f.schema_name in self.search_path
+                        or f.schema_name == suggestion.schema
+                    )
                 )
 
         else:

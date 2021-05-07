@@ -73,7 +73,7 @@ def drop_tables(conn):
 def run(
     executor, sql, join=False, expanded=False, pgspecial=None, exception_formatter=None
 ):
-    " Return string output for the sql to be run "
+    "Return string output for the sql to be run"
 
     results = executor.run(sql, pgspecial, exception_formatter)
     formatted = []

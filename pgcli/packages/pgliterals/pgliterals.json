@@ -327,8 +327,6 @@
         "FIRST_VALUE",
         "FLOOR",
         "FORMAT",
-        "GENERATE_SERIES",
-        "GENERATE_SUBSCRIPTS",
         "GET_BIT",
         "GET_BYTE",
         "HEIGHT",

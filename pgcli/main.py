@@ -1248,7 +1248,8 @@ def cli(
         else:
             print("Config file is now located at", config_full_path)
             print(
-                "Please move the existing config file ~/.pgclirc to", config_full_path,
+                "Please move the existing config file ~/.pgclirc to",
+                config_full_path,
             )
     if list_dsn:
         try:
