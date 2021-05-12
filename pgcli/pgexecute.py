@@ -446,7 +446,7 @@ class PGExecute:
                         cur = None
                     try:
                         response = pgspecial.execute(cur, sql)
-                        if cur.protocol_error:
+                        if cur and cur.protocol_error:
                             yield None, None, None, cur.protocol_message, statement, False, False
                             # this would close connection. We should reconnect.
                             self.connect()
