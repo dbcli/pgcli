@@ -341,11 +341,13 @@ class PGExecute:
         self.extra_args = kwargs
 
         if not self.host:
-            self.host = 'pgbouncer' if self.is_pgbouncer() else self.get_socket_directory()
+            self.host = (
+                "pgbouncer" if self.is_pgbouncer() else self.get_socket_directory()
+            )
 
         self.pid = conn.get_backend_pid()
         self.superuser = conn.get_parameter_status("is_superuser") in ("on", "1")
-        self.server_version = conn.get_parameter_status("server_version") or ''
+        self.server_version = conn.get_parameter_status("server_version") or ""
 
         _set_wait_callback(self.is_pgbouncer())
 
