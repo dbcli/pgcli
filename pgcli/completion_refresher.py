@@ -3,7 +3,6 @@ import os
 from collections import OrderedDict
 
 from .pgcompleter import PGCompleter
-from .pgexecute import PGExecute
 
 
 class CompletionRefresher:
