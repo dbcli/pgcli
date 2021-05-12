@@ -39,9 +39,15 @@ def expect_exact(context, expected, timeout):
 
 
 def expect_pager(context, expected, timeout):
+    formatted = expected if isinstance(expected, list) else [expected]
+    formatted = [
+        f"{context.conf['pager_boundary']}\r\n{t}{context.conf['pager_boundary']}\r\n"
+        for t in formatted
+    ]
+
     expect_exact(
         context,
-        "{0}\r\n{1}{0}\r\n".format(context.conf["pager_boundary"], expected),
+        formatted,
         timeout=timeout,
     )
 
