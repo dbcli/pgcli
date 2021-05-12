@@ -37,7 +37,7 @@ def test_refresh_called_once(refresher):
     :return:
     """
     callbacks = Mock()
-    pgexecute = Mock()
+    pgexecute = Mock(**{"is_pgbouncer.return_value": False})
     special = Mock()
 
     with patch.object(refresher, "_bg_refresh") as bg_refresh:
@@ -57,7 +57,7 @@ def test_refresh_called_twice(refresher):
     """
     callbacks = Mock()
 
-    pgexecute = Mock()
+    pgexecute = Mock(**{"is_pgbouncer.return_value": False})
     special = Mock()
 
     def dummy_bg_refresh(*args):
@@ -85,7 +85,7 @@ def test_refresh_with_callbacks(refresher):
     """
     callbacks = [Mock()]
     pgexecute_class = Mock()
-    pgexecute = Mock()
+    pgexecute = Mock(**{"is_pgbouncer.return_value": False})
     pgexecute.extra_args = {}
     special = Mock()
 
