@@ -520,6 +520,21 @@ class BrokenConnection:
         raise psycopg2.InterfaceError("I'm broken!")
 
 
+class VirtualCursor:
+    """Mock a cursor to virtual database like pgbouncer."""
+
+    def __init__(self):
+        self.protocol_error = False
+        self.protocol_message = ""
+        self.description = None
+        self.status = None
+        self.statusmessage = "Error"
+
+    def execute(self, *args, **kwargs):
+        self.protocol_error = True
+        self.protocol_message = "Command not supported"
+
+
 @dbtest
 def test_exit_without_active_connection(executor):
     quit_handler = MagicMock()
@@ -542,3 +557,12 @@ def test_exit_without_active_connection(executor):
         # an exception should be raised when running a query without active connection
         with pytest.raises(psycopg2.InterfaceError):
             run(executor, "select 1", pgspecial=pgspecial)
+
+
+@dbtest
+def test_virtual_database(executor):
+    virtual_connection = MagicMock()
+    virtual_connection.cursor.return_value = VirtualCursor()
+    with patch.object(executor, "conn", virtual_connection):
+        result = run(executor, "select 1")
+        assert "Command not supported" in result

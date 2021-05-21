@@ -3,7 +3,6 @@ import os
 from collections import OrderedDict
 
 from .pgcompleter import PGCompleter
-from .pgexecute import PGExecute
 
 
 class CompletionRefresher:
@@ -27,6 +26,10 @@ class CompletionRefresher:
                     has completed the refresh. The newly created completion
                     object will be passed in as an argument to each callback.
         """
+        if executor.is_virtual_database():
+            # do nothing
+            return [(None, None, None, "Auto-completion refresh can't be started.")]
+
         if self.is_refreshing():
             self._restart_refresh.set()
             return [(None, None, None, "Auto-completion refresh restarted.")]

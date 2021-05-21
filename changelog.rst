@@ -19,6 +19,7 @@ Bug fixes:
 * Fix pager not being used when output format is set to csv. (#1238)
 * Add function literals random, generate_series, generate_subscripts
 * Fix ANSI escape codes in first line make the cli choose expanded output incorrectly
+* Fix pgcli crashing with virtual `pgbouncer` database. (#1093)
 
 3.1.0
 =====

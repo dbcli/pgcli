@@ -988,16 +988,13 @@ class PGCli:
         callback = functools.partial(
             self._on_completions_refreshed, persist_priorities=persist_priorities
         )
-        self.completion_refresher.refresh(
+        return self.completion_refresher.refresh(
             self.pgexecute,
             self.pgspecial,
             callback,
             history=history,
             settings=self.settings,
         )
-        return [
-            (None, None, None, "Auto-completion refresh started in the background.")
-        ]
 
     def _on_completions_refreshed(self, new_completer, persist_priorities):
         self._swap_completer_objects(new_completer, persist_priorities)

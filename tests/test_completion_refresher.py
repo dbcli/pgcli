@@ -37,7 +37,7 @@ def test_refresh_called_once(refresher):
     :return:
     """
     callbacks = Mock()
-    pgexecute = Mock()
+    pgexecute = Mock(**{"is_virtual_database.return_value": False})
     special = Mock()
 
     with patch.object(refresher, "_bg_refresh") as bg_refresh:
@@ -57,7 +57,7 @@ def test_refresh_called_twice(refresher):
     """
     callbacks = Mock()
 
-    pgexecute = Mock()
+    pgexecute = Mock(**{"is_virtual_database.return_value": False})
     special = Mock()
 
     def dummy_bg_refresh(*args):
@@ -84,14 +84,12 @@ def test_refresh_with_callbacks(refresher):
     :param refresher:
     """
     callbacks = [Mock()]
-    pgexecute_class = Mock()
-    pgexecute = Mock()
+    pgexecute = Mock(**{"is_virtual_database.return_value": False})
     pgexecute.extra_args = {}
     special = Mock()
 
-    with patch("pgcli.completion_refresher.PGExecute", pgexecute_class):
-        # Set refreshers to 0: we're not testing refresh logic here
-        refresher.refreshers = {}
-        refresher.refresh(pgexecute, special, callbacks)
-        time.sleep(1)  # Wait for the thread to work.
-        assert callbacks[0].call_count == 1
+    # Set refreshers to 0: we're not testing refresh logic here
+    refresher.refreshers = {}
+    refresher.refresh(pgexecute, special, callbacks)
+    time.sleep(1)  # Wait for the thread to work.
+    assert callbacks[0].call_count == 1
