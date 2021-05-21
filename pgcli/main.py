@@ -84,9 +84,6 @@ from collections import namedtuple
 
 from textwrap import dedent
 
-# import pydevd_pycharm
-# pydevd_pycharm.settrace('localhost', port=2001, stdoutToServer=True, stderrToServer=True)
-
 # Ref: https://stackoverflow.com/questions/30425105/filter-special-chars-such-as-color-codes-from-shell-output
 COLOR_CODE_REGEX = re.compile(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))")
 
