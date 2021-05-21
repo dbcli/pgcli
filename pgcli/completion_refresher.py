@@ -26,7 +26,7 @@ class CompletionRefresher:
                     has completed the refresh. The newly created completion
                     object will be passed in as an argument to each callback.
         """
-        if executor.is_pgbouncer():
+        if executor.is_virtual_database():
             # do nothing
             return [(None, None, None, "Auto-completion refresh can't be started.")]
 

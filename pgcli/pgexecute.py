@@ -61,12 +61,12 @@ def _wait_select(conn):
         pass
 
 
-def _set_wait_callback(is_pgbouncer):
+def _set_wait_callback(is_virtual_database):
     global _wait_callback_is_set
     if _wait_callback_is_set:
         return
     _wait_callback_is_set = True
-    if is_pgbouncer:
+    if is_virtual_database:
         return
     # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
     # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
@@ -248,6 +248,7 @@ class PGExecute:
         **kwargs,
     ):
         self._conn_params = {}
+        self._is_virtual_database = None
         self.conn = None
         self.dbname = None
         self.user = None
@@ -259,8 +260,10 @@ class PGExecute:
         self.connect(database, user, password, host, port, dsn, **kwargs)
         self.reset_expanded = None
 
-    def is_pgbouncer(self):
-        return self.dbname == "pgbouncer"
+    def is_virtual_database(self):
+        if self._is_virtual_database is None:
+            self._is_virtual_database = self.is_protocol_error()
+        return self._is_virtual_database
 
     def copy(self):
         """Returns a clone of the current executor."""
@@ -342,16 +345,18 @@ class PGExecute:
 
         if not self.host:
             self.host = (
-                "pgbouncer" if self.is_pgbouncer() else self.get_socket_directory()
+                "pgbouncer"
+                if self.is_virtual_database()
+                else self.get_socket_directory()
             )
 
         self.pid = conn.get_backend_pid()
         self.superuser = conn.get_parameter_status("is_superuser") in ("on", "1")
         self.server_version = conn.get_parameter_status("server_version") or ""
 
-        _set_wait_callback(self.is_pgbouncer())
+        _set_wait_callback(self.is_virtual_database())
 
-        if not self.is_pgbouncer():
+        if not self.is_virtual_database():
             register_date_typecasters(conn)
             register_json_typecasters(self.conn, self._json_typecaster)
             register_hstore_typecaster(self.conn)
@@ -677,6 +682,13 @@ class PGExecute:
             cur.execute(self.full_databases_query)
             headers = [x[0] for x in cur.description]
             return cur.fetchall(), headers, cur.statusmessage
+
+    def is_protocol_error(self):
+        query = "SELECT 1"
+        with self.conn.cursor() as cur:
+            _logger.debug("Simple Query. sql: %r", query)
+            cur.execute(query)
+            return bool(cur.protocol_error)
 
     def get_socket_directory(self):
         with self.conn.cursor() as cur:
