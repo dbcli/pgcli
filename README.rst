@@ -125,7 +125,7 @@ The `pgcli` is written using prompt_toolkit_.
 
 Config
 ------
-A config file is automatically created at ``~/.config/pgcli/config`` at first launch.
+A config file is automatically created at ``~/pgcli/config`` at first launch.
 See the file itself for a description of all available options.
 
 Contributions:
