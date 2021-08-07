@@ -6,10 +6,13 @@ import json
 
 
 class ExplainOutputFormatter:
+    def __init__(self, max_width):
+        self.max_width = max_width
+
     def format_output(self, cur, headers, **output_kwargs):
         (data,) = cur.fetchone()
         explain_list = json.loads(data)
-        visualizer = Visualizer(210)
+        visualizer = Visualizer(self.max_width)
         for explain in explain_list:
             visualizer.load(explain)
             yield visualizer.get_list()

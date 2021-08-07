@@ -1429,7 +1429,7 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
     max_width = settings.max_width
     case_function = settings.case_function
     if explain_mode:
-        formatter = ExplainOutputFormatter()
+        formatter = ExplainOutputFormatter(max_width or 100)
     else:
         formatter = TabularOutputFormatter(format_name=table_format)
 

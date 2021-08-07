@@ -1,5 +1,5 @@
-import humanize
 import textwrap
+import re
 from click import style as color
 
 DESCRIPTIONS = {
@@ -223,6 +223,19 @@ class Visualizer:
             return [line]
         return textwrap.wrap(line, width)
 
+    def intcomma(self, value):
+        sep = ","
+        if not isinstance(value, str):
+            value = int(value)
+
+        orig = str(value)
+
+        new = re.sub(r"^(-?\d+)(\d{3})", fr"\g<1>{sep}\g<2>", orig)
+        if orig == new:
+            return new
+        else:
+            return intcomma(new)
+
     def create_lines(self, plan, prefix, depth, width, last_child):
         current_prefix = prefix
 
@@ -280,14 +293,14 @@ class Visualizer:
                 "○ %s %s (%.0f%%)"
                 % (
                     "Cost:",
-                    humanize.intcomma(int(plan["Actual Cost"])),
+                    self.intcomma(plan["Actual Cost"]),
                     (plan["Actual Cost"] / self.explain["Total Cost"]) * 100,
                 )
             )
         )
 
         self.string_lines.append(
-            output_fn("○ %s %s" % ("Rows:", humanize.intcomma(plan["Actual Rows"])))
+            output_fn("○ %s %s" % ("Rows:", self.intcomma(plan["Actual Rows"])))
         )
 
         current_prefix = current_prefix + "  "
@@ -329,8 +342,7 @@ class Visualizer:
                         self.muted_format("filter"),
                         plan["Filter"],
                         self.muted_format(
-                            "[-%s rows]"
-                            % humanize.intcomma(plan["Rows Removed by Filter"])
+                            "[-%s rows]" % self.intcomma(plan["Rows Removed by Filter"])
                         ),
                     )
                 )
@@ -377,7 +389,7 @@ class Visualizer:
 
     def generate_lines(self):
         self.string_lines = [
-            "○ Total Cost: %s" % humanize.intcomma(int(self.explain["Total Cost"])),
+            "○ Total Cost: %s" % self.intcomma(self.explain["Total Cost"]),
             "○ Planning Time: %s"
             % self.duration_to_string(self.explain["Planning Time"]),
             "○ Execution Time: %s"
