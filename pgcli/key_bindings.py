@@ -39,6 +39,12 @@ def pgcli_bindings(pgcli):
         pgcli.vi_mode = not pgcli.vi_mode
         event.app.editing_mode = EditingMode.VI if pgcli.vi_mode else EditingMode.EMACS
 
+    @kb.add("f5")
+    def _(event):
+        """Toggle between Vi and Emacs mode."""
+        _logger.debug("Detected F5 key.")
+        pgcli.explain_mode = not pgcli.explain_mode
+
     @kb.add("tab")
     def _(event):
         """Force autocompletion at cursor on non-empty lines."""
