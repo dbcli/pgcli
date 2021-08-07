@@ -403,7 +403,12 @@ class PGExecute:
         )
 
     def run(
-        self, statement, pgspecial=None, exception_formatter=None, on_error_resume=False, explain_mode=False
+        self,
+        statement,
+        pgspecial=None,
+        exception_formatter=None,
+        on_error_resume=False,
+        explain_mode=False,
     ):
         """Execute the sql in the database and return the results.
 

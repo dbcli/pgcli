@@ -409,7 +409,10 @@ class PGCli:
 
         on_error_resume = self.on_error == "RESUME"
         return self.pgexecute.run(
-            query, self.pgspecial, on_error_resume=on_error_resume, explain_mode=self.explain_mode
+            query,
+            self.pgspecial,
+            on_error_resume=on_error_resume,
+            explain_mode=self.explain_mode,
         )
 
     def write_to_file(self, pattern, **_):
@@ -906,7 +909,11 @@ class PGCli:
         start = time()
         on_error_resume = self.on_error == "RESUME"
         res = self.pgexecute.run(
-            text, self.pgspecial, exception_formatter, on_error_resume, explain_mode=self.explain_mode
+            text,
+            self.pgspecial,
+            exception_formatter,
+            on_error_resume,
+            explain_mode=self.explain_mode,
         )
 
         is_special = None
@@ -940,7 +947,9 @@ class PGCli:
                 style_output=self.style_output,
             )
             execution = time() - start
-            formatted = format_output(title, cur, headers, status, settings, self.explain_mode)
+            formatted = format_output(
+                title, cur, headers, status, settings, self.explain_mode
+            )
 
             output.extend(formatted)
             total = time() - start
