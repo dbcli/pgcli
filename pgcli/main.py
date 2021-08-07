@@ -191,7 +191,7 @@ class PGCli:
         self.output_file = None
         self.pgspecial = PGSpecial()
 
-        self.explain_mode = True
+        self.explain_mode = False
         self.multi_line = c["main"].as_bool("multi_line")
         self.multiline_mode = c["main"].get("multi_line_mode", "psql")
         self.vi_mode = c["main"].as_bool("vi")
