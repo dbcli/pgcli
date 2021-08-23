@@ -1,5 +1,16 @@
 TBD
-===
+=====
+
+Features:
+---------
+
+Bug fixes:
+----------
+
+3.2.0 
+=====
+
+Release date: 2021/08/23
 
 Features:
 ---------
