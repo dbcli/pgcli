@@ -768,8 +768,6 @@ class PGCli:
                 with self._completer_lock:
                     self.completer.extend_query_history(text)
 
-                self.query_history.append(query)
-
         except (PgCliQuitError, EOFError):
             if not self.less_chatty:
                 print("Goodbye!")
@@ -802,7 +800,7 @@ class PGCli:
         else:
             query = self.execute_command(text)
 
-        return query
+        self.query_history.append(query)
 
     def _build_cli(self, history):
         key_bindings = pgcli_bindings(self)
