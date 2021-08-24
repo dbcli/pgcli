@@ -760,18 +760,7 @@ class PGCli:
                     click.secho(str(e), err=True, fg="red")
                     continue
 
-                # Initialize default metaquery in case execution fails
-                self.watch_command, timing = special.get_watch_command(text)
-                if self.watch_command:
-                    while self.watch_command:
-                        try:
-                            query = self.execute_command(self.watch_command)
-                            click.echo(f"Waiting for {timing} seconds before repeating")
-                            sleep(timing)
-                        except KeyboardInterrupt:
-                            self.watch_command = None
-                else:
-                    query = self.execute_command(text)
+                query = self.handle_watch_command(text)
 
                 self.now = dt.datetime.today()
 
@@ -784,6 +773,36 @@ class PGCli:
         except (PgCliQuitError, EOFError):
             if not self.less_chatty:
                 print("Goodbye!")
+
+    def handle_watch_command(self, text):
+        # Initialize default metaquery in case execution fails
+        self.watch_command, timing = special.get_watch_command(text)
+
+        # If we run \watch without a command, apply it to the last query run.
+        if self.watch_command is not None and not self.watch_command.strip():
+            try:
+                self.watch_command = self.query_history[-1].query
+            except IndexError:
+                click.secho(
+                    "\\watch cannot be used with an empty query", err=True, fg="red"
+                )
+                self.watch_command = None
+
+        # If there's a command to \watch, run it in a loop.
+        if self.watch_command:
+            while self.watch_command:
+                try:
+                    query = self.execute_command(self.watch_command)
+                    click.echo(f"Waiting for {timing} seconds before repeating")
+                    sleep(timing)
+                except KeyboardInterrupt:
+                    self.watch_command = None
+
+        # Otherwise, execute it as a regular command.
+        else:
+            query = self.execute_command(text)
+
+        return query
 
     def _build_cli(self, history):
         key_bindings = pgcli_bindings(self)

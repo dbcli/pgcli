@@ -4,6 +4,8 @@ TBD
 Features:
 ---------
 
+* Re-run last query via bare `\watch`. (Thanks: `Saif Hakim`_)
+
 Bug fixes:
 ----------
 
