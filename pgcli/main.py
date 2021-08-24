@@ -760,7 +760,7 @@ class PGCli:
                     click.secho(str(e), err=True, fg="red")
                     continue
 
-                query = self.handle_watch_command(text)
+                self.handle_watch_command(text)
 
                 self.now = dt.datetime.today()
 
