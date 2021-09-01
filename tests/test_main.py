@@ -71,6 +71,26 @@ def test_format_output():
     assert list(results) == expected
 
 
+def test_format_output_truncate_on():
+    settings = OutputSettings(table_format="psql", dcmlfmt="d", floatfmt="g", max_field_width=10)
+    results = format_output(
+        None, [("first field value", "second field value")], ["head1", "head2"], None, settings
+    )
+    expected = [
+        '+------------+------------+', '| head1      | head2      |', '|------------+------------|', '| first f... | second ... |', '+------------+------------+']
+    assert list(results) == expected
+
+
+def test_format_output_truncate_off():
+    settings = OutputSettings(table_format="psql", dcmlfmt="d", floatfmt="g", max_field_width=None)
+    long_field_value = ("first field " * 100).strip()
+    results = format_output(
+        None, [(long_field_value,)], ["head1"], None, settings
+    )
+    lines = list(results)
+    assert lines[3] == f"| {long_field_value} |"
+
+
 @dbtest
 def test_format_array_output(executor):
     statement = """

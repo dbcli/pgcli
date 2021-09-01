@@ -86,6 +86,7 @@ from textwrap import dedent
 
 # Ref: https://stackoverflow.com/questions/30425105/filter-special-chars-such-as-color-codes-from-shell-output
 COLOR_CODE_REGEX = re.compile(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))")
+DEFAULT_MAX_FIELD_WIDTH = 500
 
 # Query tuples are used for maintaining history
 MetaQuery = namedtuple(
@@ -106,7 +107,7 @@ MetaQuery.__new__.__defaults__ = ("", False, 0, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     "OutputSettings",
-    "table_format dcmlfmt floatfmt missingval expanded max_width case_function style_output",
+    "table_format dcmlfmt floatfmt missingval expanded max_width case_function style_output max_field_width",
 )
 OutputSettings.__new__.__defaults__ = (
     None,
@@ -117,6 +118,7 @@ OutputSettings.__new__.__defaults__ = (
     None,
     lambda x: x,
     None,
+    DEFAULT_MAX_FIELD_WIDTH,
 )
 
 
@@ -200,6 +202,16 @@ class PGCli:
             self.row_limit = row_limit
         else:
             self.row_limit = c["main"].as_int("row_limit")
+
+        # if not specified, set to DEFAULT_MAX_FIELD_WIDTH
+        # if specified but empty, set to None to disable truncation
+        # ellipsis will take at least 3 symbols, so this can't be less than 3 if specified and > 0
+        max_field_width = c['main'].get('max_field_width', DEFAULT_MAX_FIELD_WIDTH)
+        if max_field_width and max_field_width.lower() != 'none':
+            max_field_width = max(3, abs(int(max_field_width)))
+        else:
+            max_field_width = None
+        self.max_field_width = max_field_width
 
         self.min_num_menu_lines = c["main"].as_int("min_num_menu_lines")
         self.multiline_continuation_char = c["main"]["multiline_continuation_char"]
@@ -934,6 +946,7 @@ class PGCli:
                     else lambda x: x
                 ),
                 style_output=self.style_output,
+                max_field_width=self.max_field_width,
             )
             execution = time() - start
             formatted = format_output(title, cur, headers, status, settings)
@@ -1444,6 +1457,7 @@ def format_output(title, cur, headers, status, settings):
         "disable_numparse": True,
         "preserve_whitespace": True,
         "style": settings.style_output,
+        "max_field_width": settings.max_field_width,
     }
     if not settings.floatfmt:
         output_kwargs["preprocessors"] = (align_decimals,)
