@@ -24,11 +24,11 @@ def step_see_small_results(context):
         context,
         dedent(
             """\
-        +------------+\r
-        | ?column?   |\r
-        |------------|\r
-        | 1          |\r
-        +------------+\r
+        +----------+\r
+        | ?column? |\r
+        |----------|\r
+        | 1        |\r
+        +----------+\r
         SELECT 1\r
         """
         ),
