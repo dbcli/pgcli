@@ -206,8 +206,8 @@ class PGCli:
         # if not specified, set to DEFAULT_MAX_FIELD_WIDTH
         # if specified but empty, set to None to disable truncation
         # ellipsis will take at least 3 symbols, so this can't be less than 3 if specified and > 0
-        max_field_width = c['main'].get('max_field_width', DEFAULT_MAX_FIELD_WIDTH)
-        if max_field_width and max_field_width.lower() != 'none':
+        max_field_width = c["main"].get("max_field_width", DEFAULT_MAX_FIELD_WIDTH)
+        if max_field_width and max_field_width.lower() != "none":
             max_field_width = max(3, abs(int(max_field_width)))
         else:
             max_field_width = None
