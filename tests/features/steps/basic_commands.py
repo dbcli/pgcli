@@ -118,11 +118,11 @@ def step_see_found(context):
         + "\r"
         + dedent(
             """
-            +------------+\r
-            | ?column?   |\r
-            |------------|\r
-            | found      |\r
-            +------------+\r
+            +----------+\r
+            | ?column? |\r
+            |----------|\r
+            | found    |\r
+            +----------+\r
             SELECT 1\r
         """
         )

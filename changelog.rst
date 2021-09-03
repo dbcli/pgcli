@@ -4,10 +4,12 @@ TBD
 Features:
 ---------
 
+* Add `max_field_width` setting to config, to enable more control over field truncation ([related issue](https://github.com/dbcli/pgcli/issues/1250)).
+
 Bug fixes:
 ----------
 
-3.2.0 
+3.2.0
 =====
 
 Release date: 2021/08/23

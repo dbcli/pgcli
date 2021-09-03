@@ -61,14 +61,45 @@ def test_format_output():
     )
     expected = [
         "Title",
-        "+---------+---------+",
-        "| head1   | head2   |",
-        "|---------+---------|",
-        "| abc     | def     |",
-        "+---------+---------+",
+        "+-------+-------+",
+        "| head1 | head2 |",
+        "|-------+-------|",
+        "| abc   | def   |",
+        "+-------+-------+",
         "test status",
     ]
     assert list(results) == expected
+
+
+def test_format_output_truncate_on():
+    settings = OutputSettings(
+        table_format="psql", dcmlfmt="d", floatfmt="g", max_field_width=10
+    )
+    results = format_output(
+        None,
+        [("first field value", "second field value")],
+        ["head1", "head2"],
+        None,
+        settings,
+    )
+    expected = [
+        "+------------+------------+",
+        "| head1      | head2      |",
+        "|------------+------------|",
+        "| first f... | second ... |",
+        "+------------+------------+",
+    ]
+    assert list(results) == expected
+
+
+def test_format_output_truncate_off():
+    settings = OutputSettings(
+        table_format="psql", dcmlfmt="d", floatfmt="g", max_field_width=None
+    )
+    long_field_value = ("first field " * 100).strip()
+    results = format_output(None, [(long_field_value,)], ["head1"], None, settings)
+    lines = list(results)
+    assert lines[3] == f"| {long_field_value} |"
 
 
 @dbtest
@@ -83,12 +114,12 @@ def test_format_array_output(executor):
     """
     results = run(executor, statement)
     expected = [
-        "+----------------+------------------------+--------------+",
-        "| bigint_array   | nested_numeric_array   | 配列         |",
-        "|----------------+------------------------+--------------|",
-        "| {1,2,3}        | {{1,2},{3,4}}          | {å,魚,текст} |",
-        "| {}             | <null>                 | {<null>}     |",
-        "+----------------+------------------------+--------------+",
+        "+--------------+----------------------+--------------+",
+        "| bigint_array | nested_numeric_array | 配列         |",
+        "|--------------+----------------------+--------------|",
+        "| {1,2,3}      | {{1,2},{3,4}}        | {å,魚,текст} |",
+        "| {}           | <null>               | {<null>}     |",
+        "+--------------+----------------------+--------------+",
         "SELECT 2",
     ]
     assert list(results) == expected
@@ -128,11 +159,11 @@ def test_format_output_auto_expand():
     )
     table = [
         "Title",
-        "+---------+---------+",
-        "| head1   | head2   |",
-        "|---------+---------|",
-        "| abc     | def     |",
-        "+---------+---------+",
+        "+-------+-------+",
+        "| head1 | head2 |",
+        "|-------+-------|",
+        "| abc   | def   |",
+        "+-------+-------+",
         "test status",
     ]
     assert list(table_results) == table
