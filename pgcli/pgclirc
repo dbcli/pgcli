@@ -119,6 +119,12 @@ on_error = STOP
 # Set threshold for row limit. Use 0 to disable limiting.
 row_limit = 1000
 
+# Truncate long text fields to this value for tabular display (does not apply to csv).
+# Leave unset to disable truncation. Example: "max_field_width = "
+# Be aware that formatting might get slow with values larger than 500 and tables with
+# lots of records.
+max_field_width = 500
+
 # Skip intro on startup and goodbye on exit
 less_chatty = False
 
