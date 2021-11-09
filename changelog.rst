@@ -1,6 +1,10 @@
 Upcoming:
 =========
 
+Features:
+---------
+* Add a configuration option to execute commands on startup ([related issue](https://github.com/dbcli/pgcli/issues/247)).
+
 Bug fixes:
 ----------
 

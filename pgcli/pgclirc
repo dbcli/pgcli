@@ -158,6 +158,9 @@ enable_pager = True
 # Use keyring to automatically save and load password in a secure manner
 keyring = True
 
+# Command to run at startup. Multiple commands can be specified if separated by a semicolon.
+startup_command = ''
+
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
 completion-menu.completion.current = 'bg:#ffffff #000000'

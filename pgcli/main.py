@@ -241,6 +241,7 @@ class PGCli:
         self.float_format = c["data_formats"]["float"]
         auth.keyring_initialize(c["main"].as_bool("keyring"), logger=self.logger)
         self.show_bottom_toolbar = c["main"].as_bool("show_bottom_toolbar")
+        self.startup_command = c["main"]["startup_command"]
 
         self.pgspecial.pset_pager(
             self.config["main"].as_bool("enable_pager") and "on" or "off"
@@ -778,6 +779,10 @@ class PGCli:
             print("Home: http://pgcli.com")
 
         try:
+            if self.startup_command:
+                print(f"Executing startup command: {self.startup_command}")
+                self.handle_watch_command(self.startup_command)
+
             while True:
                 try:
                     text = self.prompt_app.prompt()
