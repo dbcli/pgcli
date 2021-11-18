@@ -430,7 +430,7 @@ class PGExecute:
         for sql in sqlparse.split(statement):
             # Remove spaces, eol and semi-colons.
             sql = sql.rstrip(";")
-            sql = sqlparse.format(sql, strip_comments=True).strip()
+            sql = sqlparse.format(sql, strip_comments=False).strip()
             if not sql:
                 continue
             try:
