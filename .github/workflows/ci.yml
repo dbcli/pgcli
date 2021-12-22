@@ -38,7 +38,7 @@ jobs:
       - name: Install requirements
         run: |
           pip install -U pip setuptools
-          pip install --no-cache-dir .
+          pip install --no-cache-dir ".[sshtunnel]"
           pip install -r requirements-dev.txt
           pip install keyrings.alt>=3.1
 

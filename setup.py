@@ -39,7 +39,10 @@ setup(
     description=description,
     long_description=open("README.rst").read(),
     install_requires=install_requirements,
-    extras_require={"keyring": ["keyring >= 12.2.0"]},
+    extras_require={
+        "keyring": ["keyring >= 12.2.0"],
+        "sshtunnel": ["sshtunnel >= 0.4.0"]
+    },
     python_requires=">=3.6",
     entry_points="""
         [console_scripts]
