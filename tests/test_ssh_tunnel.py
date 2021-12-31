@@ -1,6 +1,8 @@
+import os
 from unittest.mock import patch, MagicMock, ANY
 
 import pytest
+from configobj import ConfigObj
 from click.testing import CliRunner
 from sshtunnel import SSHTunnelForwarder
 
@@ -129,3 +131,58 @@ def test_cli_with_tunnel() -> None:
         mock_pgcli.assert_called_once()
         call_args, call_kwargs = mock_pgcli.call_args
         assert call_kwargs["ssh_tunnel_url"] == tunnel_url
+
+
+def test_config(
+    tmpdir: os.PathLike, mock_ssh_tunnel_forwarder: MagicMock, mock_pgexecute: MagicMock
+) -> None:
+    pgclirc = str(tmpdir.join("rcfile"))
+
+    tunnel_user = "tunnel_user"
+    tunnel_passwd = "tunnel_pass"
+    tunnel_host = "tunnel.host"
+    tunnel_port = 1022
+    tunnel_url = f"{tunnel_user}:{tunnel_passwd}@{tunnel_host}:{tunnel_port}"
+
+    tunnel2_url = "tunnel2.host"
+
+    config = ConfigObj()
+    config.filename = pgclirc
+    config["ssh tunnels"] = {}
+    config["ssh tunnels"][r"\.com$"] = tunnel_url
+    config["ssh tunnels"][r"^hello-"] = tunnel2_url
+    config.write()
+
+    # Unmatched host
+    pgcli = PGCli(pgclirc_file=pgclirc)
+    pgcli.connect(host="unmatched.host")
+    mock_ssh_tunnel_forwarder.assert_not_called()
+
+    # Host matching first tunnel
+    pgcli = PGCli(pgclirc_file=pgclirc)
+    pgcli.connect(host="matched.host.com")
+    mock_ssh_tunnel_forwarder.assert_called_once()
+    call_args, call_kwargs = mock_ssh_tunnel_forwarder.call_args
+    assert call_kwargs["ssh_address_or_host"] == (tunnel_host, tunnel_port)
+    assert call_kwargs["ssh_username"] == tunnel_user
+    assert call_kwargs["ssh_password"] == tunnel_passwd
+    mock_ssh_tunnel_forwarder.reset_mock()
+
+    # Host matching second tunnel
+    pgcli = PGCli(pgclirc_file=pgclirc)
+    pgcli.connect(host="hello-i-am-matched")
+    mock_ssh_tunnel_forwarder.assert_called_once()
+
+    call_args, call_kwargs = mock_ssh_tunnel_forwarder.call_args
+    assert call_kwargs["ssh_address_or_host"] == (tunnel2_url, 22)
+    mock_ssh_tunnel_forwarder.reset_mock()
+
+    # Host matching both tunnels (will use the first one matched)
+    pgcli = PGCli(pgclirc_file=pgclirc)
+    pgcli.connect(host="hello-i-am-matched.com")
+    mock_ssh_tunnel_forwarder.assert_called_once()
+
+    call_args, call_kwargs = mock_ssh_tunnel_forwarder.call_args
+    assert call_kwargs["ssh_address_or_host"] == (tunnel_host, tunnel_port)
+    assert call_kwargs["ssh_username"] == tunnel_user
+    assert call_kwargs["ssh_password"] == tunnel_passwd
