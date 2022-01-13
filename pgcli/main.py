@@ -549,6 +549,17 @@ class PGCli:
             - uninstall keyring: pip uninstall keyring
             - disable keyring in our configuration: add keyring = False to [main]"""
         )
+
+        # Prompt for a password immediately if requested via the -W flag. This
+        # avoids wasting time trying to connect to the database and catching a
+        # no-password exception.
+        # If we successfully parsed a password from a URI, there's no need to
+        # prompt for it, even with the -W flag
+        if self.force_passwd_prompt and not passwd:
+            passwd = click.prompt(
+                "Password for %s" % user, hide_input=True, show_default=False, type=str
+            )
+
         if not passwd and keyring:
 
             try:
@@ -561,16 +572,6 @@ class PGCli:
                     err=True,
                     fg="red",
                 )
-
-        # Prompt for a password immediately if requested via the -W flag. This
-        # avoids wasting time trying to connect to the database and catching a
-        # no-password exception.
-        # If we successfully parsed a password from a URI, there's no need to
-        # prompt for it, even with the -W flag
-        if self.force_passwd_prompt and not passwd:
-            passwd = click.prompt(
-                "Password for %s" % user, hide_input=True, show_default=False, type=str
-            )
 
         def should_ask_for_password(exc):
             # Prompt for a password after 1st attempt to connect
