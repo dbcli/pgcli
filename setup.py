@@ -8,7 +8,7 @@ description = "CLI for Postgres Database. With auto-completion and syntax highli
 install_requirements = [
     "pgspecial>=1.11.8",
     "click >= 4.1",
-    "Pygments>=2.0,<=2.11.1",  # Pygments has to be Capitalcased. WTF?
+    "Pygments>=2.0",  # Pygments has to be Capitalcased. WTF?
     # We still need to use pt-2 unless pt-3 released on Fedora32
     # see: https://github.com/dbcli/pgcli/pull/1197
     "prompt_toolkit>=2.0.6,<4.0.0",
@@ -16,7 +16,7 @@ install_requirements = [
     "sqlparse >=0.3.0,<0.5",
     "configobj >= 5.0.6",
     "pendulum>=2.1.0",
-    "cli_helpers[styles] >= 2.0.0",
+    "cli_helpers[styles] >= 2.2.1",
 ]
 
 

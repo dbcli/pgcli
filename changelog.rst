@@ -9,6 +9,7 @@ Bug fixes:
 ----------
 
 * Prompt for password when -W is provided even if there is a password in keychain. Fixes #1307.
+* Upgrade cli_helpers to 2.2.1
 
 
 3.3.0 (2022/01/11)
