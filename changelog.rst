@@ -16,6 +16,7 @@ Features:
 
 * Add `max_field_width` setting to config, to enable more control over field truncation ([related issue](https://github.com/dbcli/pgcli/issues/1250)).
 * Re-run last query via bare `\watch`. (Thanks: `Saif Hakim`_)
+* Add optional support for automatically creating an SSH tunnel to a machine with access to the remote database ([related issue](https://github.com/dbcli/pgcli/issues/459)).
 
 Bug fixes:
 ----------
