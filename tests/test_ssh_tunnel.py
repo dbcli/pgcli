@@ -50,7 +50,9 @@ def test_ssh_tunnel(
     mock_ssh_tunnel_forwarder.assert_called_once_with(**expected_tunnel_params)
     mock_ssh_tunnel_forwarder.return_value.start.assert_called_once()
     mock_pgexecute.assert_called_once()
-    assert mock_pgexecute.call_args.args == (
+
+    call_args, call_kwargs = mock_pgexecute.call_args
+    assert call_args == (
         db_params["database"],
         db_params["user"],
         db_params["passwd"],
@@ -83,7 +85,9 @@ def test_ssh_tunnel(
     mock_ssh_tunnel_forwarder.assert_called_once_with(**expected_tunnel_params)
     mock_ssh_tunnel_forwarder.return_value.start.assert_called_once()
     mock_pgexecute.assert_called_once()
-    assert mock_pgexecute.call_args.args == (
+
+    call_args, call_kwargs = mock_pgexecute.call_args
+    assert call_args == (
         db_params["database"],
         db_params["user"],
         db_params["passwd"],
@@ -110,7 +114,9 @@ def test_ssh_tunnel(
 
     mock_ssh_tunnel_forwarder.assert_called_once_with(**expected_tunnel_params)
     mock_pgexecute.assert_called_once()
-    assert mock_pgexecute.call_args.args[5] == expected_dsn
+
+    call_args, call_kwargs = mock_pgexecute.call_args
+    assert expected_dsn in call_args
 
 
 def test_cli_with_tunnel() -> None:
@@ -121,4 +127,5 @@ def test_cli_with_tunnel() -> None:
     ) as mock_pgcli:
         runner.invoke(cli, ["--ssh-tunnel", tunnel_url])
         mock_pgcli.assert_called_once()
-        assert mock_pgcli.call_args.kwargs["ssh_tunnel_url"] == tunnel_url
+        call_args, call_kwargs = mock_pgcli.call_args
+        assert call_kwargs["ssh_tunnel_url"] == tunnel_url
