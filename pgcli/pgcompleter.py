@@ -491,11 +491,14 @@ class PGCompleter(Completer):
 
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.table_refs
-        do_qualify = suggestion.qualifiable and {
-            "always": True,
-            "never": False,
-            "if_more_than_one_table": len(tables) > 1,
-        }[self.qualify_columns]
+        do_qualify = (
+            suggestion.qualifiable
+            and {
+                "always": True,
+                "never": False,
+                "if_more_than_one_table": len(tables) > 1,
+            }[self.qualify_columns]
+        )
         qualify = lambda col, tbl: (
             (tbl + "." + self.case(col)) if do_qualify else self.case(col)
         )
