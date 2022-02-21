@@ -1,3 +1,16 @@
+TBD
+===
+
+* [List new changes here].
+
+3.4.0 (2022/02/21)
+==================
+
+Features:
+---------
+
+* Add optional support for automatically creating an SSH tunnel to a machine with access to the remote database ([related issue](https://github.com/dbcli/pgcli/issues/459)).
+
 3.3.1 (2022/01/18)
 ==================
 
@@ -7,7 +20,6 @@ Bug fixes:
 * Prompt for password when -W is provided even if there is a password in keychain. Fixes #1307.
 * Upgrade cli_helpers to 2.2.1
 
-
 3.3.0 (2022/01/11)
 ==================
 
@@ -16,7 +28,6 @@ Features:
 
 * Add `max_field_width` setting to config, to enable more control over field truncation ([related issue](https://github.com/dbcli/pgcli/issues/1250)).
 * Re-run last query via bare `\watch`. (Thanks: `Saif Hakim`_)
-* Add optional support for automatically creating an SSH tunnel to a machine with access to the remote database ([related issue](https://github.com/dbcli/pgcli/issues/459)).
 
 Bug fixes:
 ----------
