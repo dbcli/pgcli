@@ -286,6 +286,7 @@ class PGCli:
 
         self.prompt_app = None
 
+        self.ssh_tunnel_config = c.get("ssh tunnels")
         self.ssh_tunnel_url = ssh_tunnel_url
         self.ssh_tunnel = None
 
@@ -599,17 +600,23 @@ class PGCli:
                 return True
             return False
 
+        if dsn:
+            parsed_dsn = parse_dsn(dsn)
+            if "host" in parsed_dsn:
+                host = parsed_dsn["host"]
+            if "port" in parsed_dsn:
+                port = parsed_dsn["port"]
+
+        if self.ssh_tunnel_config and not self.ssh_tunnel_url:
+            for db_host_regex, tunnel_url in self.ssh_tunnel_config.items():
+                if re.search(db_host_regex, host):
+                    self.ssh_tunnel_url = tunnel_url
+                    break
+
         if self.ssh_tunnel_url:
             # We add the protocol as urlparse doesn't find it by itself
             if "://" not in self.ssh_tunnel_url:
                 self.ssh_tunnel_url = f"ssh://{self.ssh_tunnel_url}"
-
-            if dsn:
-                parsed_dsn = parse_dsn(dsn)
-                if "host" in parsed_dsn:
-                    host = parsed_dsn["host"]
-                if "port" in parsed_dsn:
-                    port = parsed_dsn["port"]
 
             tunnel_info = urlparse(self.ssh_tunnel_url)
             params = {
