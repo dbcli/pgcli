@@ -82,7 +82,6 @@ except ImportError:
 from getpass import getuser
 from psycopg import OperationalError, InterfaceError
 from psycopg.conninfo import make_conninfo, conninfo_to_dict
-import psycopg
 
 from collections import namedtuple
 
@@ -535,7 +534,7 @@ class PGCli:
         )
 
     def connect_uri(self, uri):
-        kwargs = conninfo_to_dict(make_conninfo(uri))
+        kwargs = conninfo_to_dict(uri)
         remap = {"dbname": "database", "password": "passwd"}
         kwargs = {remap.get(k, k): v for k, v in kwargs.items()}
         self.connect(**kwargs)
@@ -606,7 +605,7 @@ class PGCli:
             return False
 
         if dsn:
-            parsed_dsn = parse_dsn(dsn)
+            parsed_dsn = conninfo_to_dict(dsn)
             if "host" in parsed_dsn:
                 host = parsed_dsn["host"]
             if "port" in parsed_dsn:
@@ -653,7 +652,7 @@ class PGCli:
             port = self.ssh_tunnel.local_bind_ports[0]
 
             if dsn:
-                dsn = make_dsn(dsn, host=host, port=port)
+                dsn = make_conninfo(dsn, host=host, port=port)
 
         # Attempt to connect to the database.
         # Note that passwd may be empty on the first attempt. If connection
