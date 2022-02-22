@@ -16,6 +16,7 @@ _logger = logging.getLogger(__name__)
 
 # Cast all database input to unicode automatically.
 # See http://initd.org/psycopg/docs/usage.html#unicode-handling for more info.
+# pg3: These should be automatic: unicode is the default
 ext.register_type(ext.UNICODE)
 ext.register_type(ext.UNICODEARRAY)
 ext.register_type(ext.new_type((705,), "UNKNOWN", ext.UNICODE))
@@ -32,6 +33,8 @@ _WAIT_SELECT_TIMEOUT = 1
 _wait_callback_is_set = False
 
 
+# pg3: it is already "green" but Ctrl-C breaks the query
+# pg3: This should be fixed upstream: https://github.com/psycopg/psycopg/issues/231
 def _wait_select(conn):
     """
     copy-pasted from psycopg2.extras.wait_select
@@ -74,6 +77,8 @@ def _set_wait_callback(is_virtual_database):
     ext.set_wait_callback(_wait_select)
 
 
+# pg3: You can do something like:
+# pg3: cnn.adapters.register_loader("date", psycopg.types.string.TextLoader)
 def register_date_typecasters(connection):
     """
     Casts date and timestamp values to string, resolves issues with out of
@@ -124,6 +129,7 @@ def register_json_typecasters(conn, loads_fn):
     return available
 
 
+# pg3: Probably you don't need this because by default unknown -> unicode
 def register_hstore_typecaster(conn):
     """
     Instead of using register_hstore() which converts hstore into a python
@@ -142,6 +148,7 @@ def register_hstore_typecaster(conn):
             pass
 
 
+# pg3: I don't know what is this
 class ProtocolSafeCursor(psycopg2.extensions.cursor):
     def __init__(self, *args, **kwargs):
         self.protocol_error = False
@@ -392,6 +399,7 @@ class PGExecute:
         return json_data
 
     def failed_transaction(self):
+        # pg3: self.conn.info.transaction_status == psycopg.pq.TransactionStatus.INERROR
         status = self.conn.get_transaction_status()
         return status == ext.TRANSACTION_STATUS_INERROR
 
@@ -541,6 +549,8 @@ class PGExecute:
     def view_definition(self, spec):
         """Returns the SQL defining views described by `spec`"""
 
+        # pg3: you may want to use `psycopg.sql` for client-side composition
+        # pg3: (also available in psycopg2 by the way)
         template = "CREATE OR REPLACE {6} VIEW {0}.{1} AS \n{3}"
         # 2: relkind, v or m (materialized)
         # 4: reloptions, null

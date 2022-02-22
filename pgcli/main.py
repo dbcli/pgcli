@@ -80,6 +80,8 @@ except ImportError:
 
 from getpass import getuser
 from psycopg2 import OperationalError, InterfaceError
+
+# pg3: https://www.psycopg.org/psycopg3/docs/api/conninfo.html
 from psycopg2.extensions import make_dsn, parse_dsn
 import psycopg2
 
@@ -1580,12 +1582,15 @@ def format_output(title, cur, headers, status, settings):
         if hasattr(cur, "description"):
             column_types = []
             for d in cur.description:
+                # pg3: type_name = cur.adapters.types[d.type_code].name
                 if (
+                    # pg3: type_name in ("numeric", "float4", "float8")
                     d[1] in psycopg2.extensions.DECIMAL.values
                     or d[1] in psycopg2.extensions.FLOAT.values
                 ):
                     column_types.append(float)
                 if (
+                    # pg3: type_name in ("int2", "int4", "int8")
                     d[1] == psycopg2.extensions.INTEGER.values
                     or d[1] in psycopg2.extensions.LONGINTEGER.values
                 ):
