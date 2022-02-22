@@ -51,10 +51,7 @@ If you already know how to install python packages, then you can simply do:
 If you don't know how to install python packages, please check the
 `detailed instructions`_.
 
-If you are restricted to using psycopg2 2.7.x then pip will try to install it from a binary. There are some known issues with the psycopg2 2.7 binary - see the `psycopg docs`_ for more information about this and how to force installation from source. psycopg2 2.8 has fixed these problems, and will build from source.
-
 .. _`detailed instructions`: https://github.com/dbcli/pgcli#detailed-installation-instructions
-.. _`psycopg docs`: http://initd.org/psycopg/docs/install.html#change-in-binary-packages-between-psycopg-2-7-and-2-8
 
 Usage
 -----
@@ -353,8 +350,8 @@ choice:
 
     In [3]: my_result = _
 
-Pgcli only runs on Python3.6+ since 2.2.0, if you use an old version of Python,
-you should use install ``pgcli <= 2.2.0``.
+Pgcli only runs on Python3.7+ since 4.0.0, if you use an old version of Python,
+you should use install ``pgcli <= 4.0.0``.
 
 Thanks:
 -------
@@ -368,7 +365,7 @@ of this app.
 `Click <http://click.pocoo.org/>`_ is used for command line option parsing
 and printing error messages.
 
-Thanks to `psycopg <http://initd.org/psycopg/>`_ for providing a rock solid
+Thanks to `psycopg <https://www.psycopg.org/>`_ for providing a rock solid
 interface to Postgres database.
 
 Thanks to all the beta testers and contributors for your time and patience. :)

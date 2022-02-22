@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9, 3.10]
 
     services:
       postgres:
@@ -57,7 +57,7 @@ jobs:
 
       - name: Run Black
         run: pip install black && black --check .
-        if: matrix.python-version == '3.6'
+        if: matrix.python-version == '3.7'
 
       - name: Coverage
         run: |
