@@ -3,12 +3,9 @@ import select
 import traceback
 
 import pgspecial as special
-import psycopg2
-import psycopg2.errorcodes
-import psycopg2.extensions as ext
-import psycopg2.extras
+import psycopg
+from psycopg.conninfo import make_conninfo, conninfo_to_dict
 import sqlparse
-from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE, make_dsn
 
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 
@@ -17,16 +14,17 @@ _logger = logging.getLogger(__name__)
 # Cast all database input to unicode automatically.
 # See http://initd.org/psycopg/docs/usage.html#unicode-handling for more info.
 # pg3: These should be automatic: unicode is the default
-ext.register_type(ext.UNICODE)
-ext.register_type(ext.UNICODEARRAY)
-ext.register_type(ext.new_type((705,), "UNKNOWN", ext.UNICODE))
+# ext.register_type(ext.UNICODE)
+# ext.register_type(ext.UNICODEARRAY)
+# ext.register_type(ext.new_type((705,), "UNKNOWN", ext.UNICODE))
+
 # See https://github.com/dbcli/pgcli/issues/426 for more details.
 # This registers a unicode type caster for datatype 'RECORD'.
-ext.register_type(ext.new_type((2249,), "RECORD", ext.UNICODE))
+# ext.register_type(ext.new_type((2249,), "RECORD", ext.UNICODE))
 
 # Cast bytea fields to text. By default, this will render as hex strings with
 # Postgres 9+ and as escaped binary in earlier versions.
-ext.register_type(ext.new_type((17,), "BYTEA_TEXT", psycopg2.STRING))
+# ext.register_type(ext.new_type((17,), "BYTEA_TEXT", psycopg2.STRING))
 
 # TODO: Get default timeout from pgclirc?
 _WAIT_SELECT_TIMEOUT = 1
@@ -60,7 +58,7 @@ def _wait_select(conn):
                 errno = e.args[0]
                 if errno != 4:
                     raise
-    except psycopg2.OperationalError:
+    except psycopg.OperationalError:
         pass
 
 
@@ -149,7 +147,7 @@ def register_hstore_typecaster(conn):
 
 
 # pg3: I don't know what is this
-class ProtocolSafeCursor(psycopg2.extensions.cursor):
+class ProtocolSafeCursor(psycopg.Cursor):
     def __init__(self, *args, **kwargs):
         self.protocol_error = False
         self.protocol_message = ""
@@ -172,10 +170,10 @@ class ProtocolSafeCursor(psycopg2.extensions.cursor):
 
     def execute(self, sql, args=None):
         try:
-            psycopg2.extensions.cursor.execute(self, sql, args)
+            psycopg.Cursor.execute(self, sql, args)
             self.protocol_error = False
             self.protocol_message = ""
-        except psycopg2.errors.ProtocolViolation as ex:
+        except psycopg.errors.ProtocolViolation as ex:
             self.protocol_error = True
             self.protocol_message = ex.pgerror
             _logger.debug("%s: %s" % (ex.__class__.__name__, ex))
@@ -290,7 +288,7 @@ class PGExecute:
         conn_params = self._conn_params.copy()
 
         new_params = {
-            "database": database,
+            "dbname": database,
             "user": user,
             "password": password,
             "host": host,
@@ -303,15 +301,17 @@ class PGExecute:
             new_params = {"dsn": new_params["dsn"], "password": new_params["password"]}
 
             if new_params["password"]:
-                new_params["dsn"] = make_dsn(
+                new_params["dsn"] = make_conninfo(
                     new_params["dsn"], password=new_params.pop("password")
                 )
 
         conn_params.update({k: v for k, v in new_params.items() if v})
-        conn_params["cursor_factory"] = ProtocolSafeCursor
+        # conn_params["cursor_factory"] = ProtocolSafeCursor
 
-        conn = psycopg2.connect(**conn_params)
-        conn.set_client_encoding("utf8")
+        conn_info = make_conninfo(**conn_params)
+        conn = psycopg.connect(conn_info)
+        conn.cursor_factory = ProtocolSafeCursor
+        # conn.set_client_encoding("utf8")
 
         self._conn_params = conn_params
         if self.conn:
@@ -322,12 +322,12 @@ class PGExecute:
         # When we connect using a DSN, we don't really know what db,
         # user, etc. we connected to. Let's read it.
         # Note: moved this after setting autocommit because of #664.
-        libpq_version = psycopg2.__libpq_version__
+        libpq_version = psycopg.pq.version()
         dsn_parameters = {}
         if libpq_version >= 93000:
             # use actual connection info from psycopg2.extensions.Connection.info
             # as libpq_version > 9.3 is available and required dependency
-            dsn_parameters = conn.info.dsn_parameters
+            dsn_parameters = conn.info.get_parameters()
         else:
             try:
                 dsn_parameters = conn.get_dsn_parameters()
@@ -357,16 +357,16 @@ class PGExecute:
                 else self.get_socket_directory()
             )
 
-        self.pid = conn.get_backend_pid()
-        self.superuser = conn.get_parameter_status("is_superuser") in ("on", "1")
-        self.server_version = conn.get_parameter_status("server_version") or ""
+        self.pid = conn.info.backend_pid
+        self.superuser = conn.info.parameter_status("is_superuser") in ("on", "1")
+        self.server_version = conn.info.parameter_status("server_version") or ""
 
         _set_wait_callback(self.is_virtual_database())
 
-        if not self.is_virtual_database():
-            register_date_typecasters(conn)
-            register_json_typecasters(self.conn, self._json_typecaster)
-            register_hstore_typecaster(self.conn)
+        # if not self.is_virtual_database():
+        #     register_date_typecasters(conn)
+        #     register_json_typecasters(self.conn, self._json_typecaster)
+        #     register_hstore_typecaster(self.conn)
 
     @property
     def short_host(self):
@@ -461,7 +461,7 @@ class PGExecute:
                     _logger.debug("Trying a pgspecial command. sql: %r", sql)
                     try:
                         cur = self.conn.cursor()
-                    except psycopg2.InterfaceError:
+                    except psycopg.InterfaceError:
                         # edge case when connection is already closed, but we
                         # don't need cursor for special_cmd.arg_type == NO_QUERY.
                         # See https://github.com/dbcli/pgcli/issues/1014.
@@ -485,7 +485,7 @@ class PGExecute:
 
                 # Not a special command, so execute as normal sql
                 yield self.execute_normal_sql(sql) + (sql, True, False)
-            except psycopg2.DatabaseError as e:
+            except psycopg.DatabaseError as e:
                 _logger.error("sql: %r, error: %r", sql, e)
                 _logger.error("traceback: %r", traceback.format_exc())
 
@@ -546,7 +546,7 @@ class PGExecute:
                 _logger.debug("Search path query. sql: %r", self.search_path_query)
                 cur.execute(self.search_path_query)
                 return [x[0] for x in cur.fetchall()]
-        except psycopg2.ProgrammingError:
+        except psycopg.ProgrammingError:
             fallback = "SELECT * FROM current_schemas(true)"
             with self.conn.cursor() as cur:
                 _logger.debug("Search path query. sql: %r", fallback)
@@ -567,7 +567,7 @@ class PGExecute:
             _logger.debug("View Definition Query. sql: %r\nspec: %r", sql, spec)
             try:
                 cur.execute(sql, (spec,))
-            except psycopg2.ProgrammingError:
+            except psycopg.ProgrammingError:
                 raise RuntimeError(f"View {spec} does not exist.")
             result = cur.fetchone()
             view_type = "MATERIALIZED" if result[2] == "m" else ""
@@ -583,7 +583,7 @@ class PGExecute:
                 cur.execute(sql, (spec,))
                 result = cur.fetchone()
                 return result[0]
-            except psycopg2.ProgrammingError:
+            except psycopg.ProgrammingError:
                 raise RuntimeError(f"Function {spec} does not exist.")
 
     def schemata(self):
