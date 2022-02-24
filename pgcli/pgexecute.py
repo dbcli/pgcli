@@ -361,7 +361,7 @@ class PGExecute:
         self.superuser = conn.info.parameter_status("is_superuser") in ("on", "1")
         self.server_version = conn.info.parameter_status("server_version") or ""
 
-        _set_wait_callback(self.is_virtual_database())
+        # _set_wait_callback(self.is_virtual_database())
 
         # if not self.is_virtual_database():
         #     register_date_typecasters(conn)
