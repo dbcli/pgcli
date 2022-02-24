@@ -4,7 +4,7 @@ import traceback
 
 import pgspecial as special
 import psycopg
-from psycopg.conninfo import make_conninfo, conninfo_to_dict
+from psycopg.conninfo import make_conninfo
 import sqlparse
 
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
@@ -400,14 +400,14 @@ class PGExecute:
 
     def failed_transaction(self):
         # pg3: self.conn.info.transaction_status == psycopg.pq.TransactionStatus.INERROR
-        status = self.conn.get_transaction_status()
-        return status == ext.TRANSACTION_STATUS_INERROR
+        status = self.conn.info.transaction_status
+        return status == psycopg.pq.TransactionStatus.INERROR
 
     def valid_transaction(self):
-        status = self.conn.get_transaction_status()
+        status = self.conn.info.transaction_status
         return (
-            status == ext.TRANSACTION_STATUS_ACTIVE
-            or status == ext.TRANSACTION_STATUS_INTRANS
+            status == psycopg.pq.TransactionStatus.ACTIVE
+            or status == psycopg.pq.TransactionStatus.INTRANS
         )
 
     def run(
