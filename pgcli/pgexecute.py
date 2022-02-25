@@ -4,6 +4,7 @@ import traceback
 
 import pgspecial as special
 import psycopg
+from psycopg.sql import Literal
 from psycopg.conninfo import make_conninfo
 import sqlparse
 
@@ -167,6 +168,10 @@ class ProtocolSafeCursor(psycopg.Cursor):
         if self.protocol_error:
             return (self.protocol_message,)
         return super().fetchone()
+
+    def mogrify(self, query, params):
+        args = [Literal(v).as_string(self.connection) for v in params]
+        return query % tuple(args)
 
     def execute(self, sql, args=None):
         try:
@@ -523,8 +528,14 @@ class PGExecute:
 
         # conn.notices persist between queies, we use pop to clear out the list
         title = ""
-        while len(self.conn.notices) > 0:
-            title = self.conn.notices.pop() + title
+
+        def handle_notices(n):
+            nonlocal title
+            title = n + title
+
+        self.conn.add_notify_handler(handle_notices)
+        # while len(self.conn.notices) > 0:
+        #     title = self.conn.notices.pop() + title
 
         # cur.description will be None for operations that do not return
         # rows.
@@ -607,9 +618,9 @@ class PGExecute:
         """
 
         with self.conn.cursor() as cur:
-            sql = cur.mogrify(self.tables_query, [kinds])
-            _logger.debug("Tables Query. sql: %r", sql)
-            cur.execute(sql)
+            # sql = cur.mogrify(self.tables_query, kinds)
+            # _logger.debug("Tables Query. sql: %r", sql)
+            cur.execute(self.tables_query, [kinds])
             yield from cur
 
     def tables(self):
@@ -635,7 +646,7 @@ class PGExecute:
         :return: list of (schema_name, relation_name, column_name, column_type) tuples
         """
 
-        if self.conn.server_version >= 80400:
+        if self.conn.info.server_version >= 80400:
             columns_query = """
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
@@ -676,9 +687,9 @@ class PGExecute:
                 ORDER BY 1, 2, att.attnum"""
 
         with self.conn.cursor() as cur:
-            sql = cur.mogrify(columns_query, [kinds])
-            _logger.debug("Columns Query. sql: %r", sql)
-            cur.execute(sql)
+            # sql = cur.mogrify(columns_query, kinds)
+            # _logger.debug("Columns Query. sql: %r", sql)
+            cur.execute(columns_query, [kinds])
             yield from cur
 
     def table_columns(self):
@@ -719,7 +730,7 @@ class PGExecute:
     def foreignkeys(self):
         """Yields ForeignKey named tuples"""
 
-        if self.conn.server_version < 90000:
+        if self.conn.info.server_version < 90000:
             return
 
         with self.conn.cursor() as cur:
@@ -759,7 +770,7 @@ class PGExecute:
     def functions(self):
         """Yields FunctionMetadata named tuples"""
 
-        if self.conn.server_version >= 110000:
+        if self.conn.info.server_version >= 110000:
             query = """
                 SELECT n.nspname schema_name,
                         p.proname func_name,
@@ -779,7 +790,7 @@ class PGExecute:
                 WHERE p.prorettype::regtype != 'trigger'::regtype
                 ORDER BY 1, 2
                 """
-        elif self.conn.server_version > 90000:
+        elif self.conn.info.server_version > 90000:
             query = """
                 SELECT n.nspname schema_name,
                         p.proname func_name,
@@ -799,7 +810,7 @@ class PGExecute:
                 WHERE p.prorettype::regtype != 'trigger'::regtype
                 ORDER BY 1, 2
                 """
-        elif self.conn.server_version >= 80400:
+        elif self.conn.info.server_version >= 80400:
             query = """
                 SELECT n.nspname schema_name,
                         p.proname func_name,
@@ -850,7 +861,7 @@ class PGExecute:
         """Yields tuples of (schema_name, type_name)"""
 
         with self.conn.cursor() as cur:
-            if self.conn.server_version > 90000:
+            if self.conn.info.server_version > 90000:
                 query = """
                     SELECT n.nspname schema_name,
                            t.typname type_name
