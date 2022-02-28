@@ -74,7 +74,7 @@ def upload_distribution_files():
 
 
 def push_to_github():
-    run_step("git", "push", "origin", "master")
+    run_step("git", "push", "origin", "main")
 
 
 def push_tags_to_github():

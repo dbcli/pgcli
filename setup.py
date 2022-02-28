@@ -6,7 +6,7 @@ from pgcli import __version__
 description = "CLI for Postgres Database. With auto-completion and syntax highlighting."
 
 install_requirements = [
-    "pgspecial>=1.11.8",
+    "pgspecial>=1.13.1,<2.0.0",
     "click >= 4.1",
     "Pygments>=2.0",  # Pygments has to be Capitalcased. WTF?
     # We still need to use pt-2 unless pt-3 released on Fedora32
