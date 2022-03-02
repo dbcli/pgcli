@@ -1550,7 +1550,7 @@ def format_output(title, cur, headers, status, settings):
     def format_status(cur, status):
         # redshift does not return rowcount as part of status.
         # See https://github.com/dbcli/pgcli/issues/1320
-        if cur and hasattr(cur, 'rowcount') and cur.rowcount is not None:
+        if cur and hasattr(cur, "rowcount") and cur.rowcount is not None:
             if status and not status.endswith(str(cur.rowcount)):
                 status += " %s" % cur.rowcount
         return status
