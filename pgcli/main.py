@@ -1547,6 +1547,14 @@ def format_output(title, cur, headers, status, settings):
 
         return data, headers
 
+    def format_status(cur, status):
+        # redshift does not return rowcount as part of status.
+        # See https://github.com/dbcli/pgcli/issues/1320
+        if cur and hasattr(cur, "rowcount") and cur.rowcount is not None:
+            if status and not status.endswith(str(cur.rowcount)):
+                status += " %s" % cur.rowcount
+        return status
+
     output_kwargs = {
         "sep_title": "RECORD {n}",
         "sep_character": "-",
@@ -1619,7 +1627,7 @@ def format_output(title, cur, headers, status, settings):
 
     # Only print the status if it's not None and we are not producing CSV
     if status and table_format != "csv":
-        output = itertools.chain(output, [status])
+        output = itertools.chain(output, [format_status(cur, status)])
 
     return output
 
