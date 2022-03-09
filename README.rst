@@ -1,3 +1,25 @@
+We stand with Ukraine
+---------------------
+
+Ukrainian people are fighting for their country. A lot of civilians, women and children, are suffering. Hundreds were killed and injured, and thousands were displaced.
+
+This is an image from my home town, Kharkiv. This place is right in the old city center.
+
+.. image:: screenshots/kharkiv-destroyed.jpg
+
+Picture by @fomenko_ph (Telegram).
+
+Please consider donating or volunteering.
+
+* https://savelife.in.ua/en/donate/
+* https://www.comebackalive.in.ua/donate
+* https://www.globalgiving.org/projects/ukraine-crisis-relief-fund/
+* https://www.savethechildren.org/us/where-we-work/ukraine
+* https://www.facebook.com/donate/1137971146948461/
+* https://donate.wck.org/give/393234#!/donation/checkout
+* https://atlantaforukraine.com/
+
+
 A REPL for Postgres
 -------------------
 
