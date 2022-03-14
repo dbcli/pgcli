@@ -23,7 +23,7 @@ Please consider donating or volunteering.
 A REPL for Postgres
 -------------------
 
-|Build Status| |CodeCov| |PyPI| |Landscape|
+|Build Status| |CodeCov| |PyPI| |netlify|
 
 This is a postgres client that does auto-completion and syntax highlighting.
 
@@ -388,3 +388,7 @@ Thanks to all the beta testers and contributors for your time and patience. :)
 .. |PyPI| image:: https://img.shields.io/pypi/v/pgcli.svg
     :target: https://pypi.python.org/pypi/pgcli/
     :alt: Latest Version
+
+.. |netlify| image:: https://api.netlify.com/api/v1/badges/3a0a14dd-776d-445d-804c-3dd74fe31c4e/deploy-status
+     :target: https://app.netlify.com/sites/pgcli/deploys
+     :alt: Netlify
