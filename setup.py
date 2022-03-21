@@ -6,13 +6,15 @@ from pgcli import __version__
 description = "CLI for Postgres Database. With auto-completion and syntax highlighting."
 
 install_requirements = [
-    # "pgspecial>=1.11.8",
+    # "pgspecial>=1.11.8,<2.0.0", TODO: replace main with 2.0.0
+    "pgspecial @ git+https://github.com/dbcli/pgspecial.git@j-bennet/psycopg3#egg=pgspecial",
     "click >= 4.1",
     "Pygments>=2.0",  # Pygments has to be Capitalcased. WTF?
     # We still need to use pt-2 unless pt-3 released on Fedora32
     # see: https://github.com/dbcli/pgcli/pull/1197
     "prompt_toolkit>=2.0.6,<4.0.0",
-    "psycopg >= 3.0.9",
+    # "psycopg >= 3.0.11", TODO: replace master with 3.0.11
+    "psycopg @ git+https://github.com/psycopg/psycopg.git@master#subdirectory=psycopg",
     "sqlparse >=0.3.0,<0.5",
     "configobj >= 5.0.6",
     "pendulum>=2.1.0",
@@ -39,6 +41,7 @@ setup(
     description=description,
     long_description=open("README.rst").read(),
     install_requires=install_requirements,
+    dependency_links=['http://github.com/psycopg/repo/tarball/master#egg=psycopg-3.0.10'],
     extras_require={
         "keyring": ["keyring >= 12.2.0"],
         "sshtunnel": ["sshtunnel >= 0.4.0"],

@@ -1,6 +1,5 @@
 import pytest
-import psycopg2
-import psycopg2.extras
+import psycopg
 from pgcli.main import format_output, OutputSettings
 from pgcli.pgexecute import register_json_typecasters
 from os import getenv
@@ -12,12 +11,12 @@ POSTGRES_PASSWORD = getenv("PGPASSWORD", "postgres")
 
 
 def db_connection(dbname=None):
-    conn = psycopg2.connect(
+    conn = psycopg.connect(
         user=POSTGRES_USER,
         host=POSTGRES_HOST,
         password=POSTGRES_PASSWORD,
         port=POSTGRES_PORT,
-        database=dbname,
+        dbname=dbname,
     )
     conn.autocommit = True
     return conn
@@ -26,7 +25,7 @@ def db_connection(dbname=None):
 try:
     conn = db_connection()
     CAN_CONNECT_TO_DB = True
-    SERVER_VERSION = conn.server_version
+    SERVER_VERSION = conn.info.parameter_status("server_version")
     json_types = register_json_typecasters(conn, lambda x: x)
     JSON_AVAILABLE = "json" in json_types
     JSONB_AVAILABLE = "jsonb" in json_types

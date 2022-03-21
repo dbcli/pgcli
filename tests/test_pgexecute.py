@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-import psycopg2
+import psycopg
 import pytest
 from unittest.mock import patch, MagicMock
 from pgspecial.main import PGSpecial, NO_QUERY
@@ -428,7 +428,7 @@ def test_describe_special(executor, command, verbose, pattern, pgspecial):
 @dbtest
 @pytest.mark.parametrize("sql", ["invalid sql", "SELECT 1; select error;"])
 def test_raises_with_no_formatter(executor, sql):
-    with pytest.raises(psycopg2.ProgrammingError):
+    with pytest.raises(psycopg.ProgrammingError):
         list(executor.run(sql))
 
 
@@ -517,7 +517,7 @@ class BrokenConnection:
     """Mock a connection that failed."""
 
     def cursor(self):
-        raise psycopg2.InterfaceError("I'm broken!")
+        raise psycopg.InterfaceError("I'm broken!")
 
 
 class VirtualCursor:
@@ -555,7 +555,7 @@ def test_exit_without_active_connection(executor):
         quit_handler.assert_called_once()
 
         # an exception should be raised when running a query without active connection
-        with pytest.raises(psycopg2.InterfaceError):
+        with pytest.raises(psycopg.InterfaceError):
             run(executor, "select 1", pgspecial=pgspecial)
 
 
