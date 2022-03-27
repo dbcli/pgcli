@@ -1,6 +1,5 @@
 import platform
 import warnings
-from os.path import expanduser
 
 from configobj import ConfigObj, ParseError
 from pgspecial.namedqueries import NamedQueries
@@ -8,6 +7,7 @@ from .config import skip_initial_comment
 
 warnings.filterwarnings("ignore", category=UserWarning, module="psycopg2")
 
+import atexit
 import os
 import re
 import sys
@@ -21,6 +21,8 @@ import datetime as dt
 import itertools
 import platform
 from time import time, sleep
+from typing import Optional
+from urllib.parse import urlparse
 
 keyring = None  # keyring will be loaded later
 
@@ -79,14 +81,26 @@ except ImportError:
 
 from getpass import getuser
 from psycopg2 import OperationalError, InterfaceError
+
+# pg3: https://www.psycopg.org/psycopg3/docs/api/conninfo.html
+from psycopg2.extensions import make_dsn, parse_dsn
 import psycopg2
 
 from collections import namedtuple
 
 from textwrap import dedent
 
+try:
+    import sshtunnel
+
+    SSH_TUNNEL_SUPPORT = True
+except ImportError:
+    SSH_TUNNEL_SUPPORT = False
+
+
 # Ref: https://stackoverflow.com/questions/30425105/filter-special-chars-such-as-color-codes-from-shell-output
 COLOR_CODE_REGEX = re.compile(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))")
+DEFAULT_MAX_FIELD_WIDTH = 500
 
 # Query tuples are used for maintaining history
 MetaQuery = namedtuple(
@@ -107,7 +121,7 @@ MetaQuery.__new__.__defaults__ = ("", False, 0, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     "OutputSettings",
-    "table_format dcmlfmt floatfmt missingval expanded max_width case_function style_output",
+    "table_format dcmlfmt floatfmt missingval expanded max_width case_function style_output max_field_width",
 )
 OutputSettings.__new__.__defaults__ = (
     None,
@@ -118,6 +132,7 @@ OutputSettings.__new__.__defaults__ = (
     None,
     lambda x: x,
     None,
+    DEFAULT_MAX_FIELD_WIDTH,
 )
 
 
@@ -167,8 +182,8 @@ class PGCli:
         prompt_dsn=None,
         auto_vertical_output=False,
         warn=None,
+        ssh_tunnel_url: Optional[str] = None,
     ):
-
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
@@ -202,6 +217,16 @@ class PGCli:
             self.row_limit = row_limit
         else:
             self.row_limit = c["main"].as_int("row_limit")
+
+        # if not specified, set to DEFAULT_MAX_FIELD_WIDTH
+        # if specified but empty, set to None to disable truncation
+        # ellipsis will take at least 3 symbols, so this can't be less than 3 if specified and > 0
+        max_field_width = c["main"].get("max_field_width", DEFAULT_MAX_FIELD_WIDTH)
+        if max_field_width and max_field_width.lower() != "none":
+            max_field_width = max(3, abs(int(max_field_width)))
+        else:
+            max_field_width = None
+        self.max_field_width = max_field_width
 
         self.min_num_menu_lines = c["main"].as_int("min_num_menu_lines")
         self.multiline_continuation_char = c["main"]["multiline_continuation_char"]
@@ -264,6 +289,10 @@ class PGCli:
         self.register_special_commands()
 
         self.prompt_app = None
+
+        self.ssh_tunnel_config = c.get("ssh tunnels")
+        self.ssh_tunnel_url = ssh_tunnel_url
+        self.ssh_tunnel = None
 
     def quit(self):
         raise PgCliQuitError
@@ -542,6 +571,17 @@ class PGCli:
             - uninstall keyring: pip uninstall keyring
             - disable keyring in our configuration: add keyring = False to [main]"""
         )
+
+        # Prompt for a password immediately if requested via the -W flag. This
+        # avoids wasting time trying to connect to the database and catching a
+        # no-password exception.
+        # If we successfully parsed a password from a URI, there's no need to
+        # prompt for it, even with the -W flag
+        if self.force_passwd_prompt and not passwd:
+            passwd = click.prompt(
+                "Password for %s" % user, hide_input=True, show_default=False, type=str
+            )
+
         if not passwd and keyring:
 
             try:
@@ -555,16 +595,6 @@ class PGCli:
                     fg="red",
                 )
 
-        # Prompt for a password immediately if requested via the -W flag. This
-        # avoids wasting time trying to connect to the database and catching a
-        # no-password exception.
-        # If we successfully parsed a password from a URI, there's no need to
-        # prompt for it, even with the -W flag
-        if self.force_passwd_prompt and not passwd:
-            passwd = click.prompt(
-                "Password for %s" % user, hide_input=True, show_default=False, type=str
-            )
-
         def should_ask_for_password(exc):
             # Prompt for a password after 1st attempt to connect
             # fails. Don't prompt if the -w flag is supplied
@@ -576,6 +606,56 @@ class PGCli:
             if "password authentication failed" in error_msg:
                 return True
             return False
+
+        if dsn:
+            parsed_dsn = parse_dsn(dsn)
+            if "host" in parsed_dsn:
+                host = parsed_dsn["host"]
+            if "port" in parsed_dsn:
+                port = parsed_dsn["port"]
+
+        if self.ssh_tunnel_config and not self.ssh_tunnel_url:
+            for db_host_regex, tunnel_url in self.ssh_tunnel_config.items():
+                if re.search(db_host_regex, host):
+                    self.ssh_tunnel_url = tunnel_url
+                    break
+
+        if self.ssh_tunnel_url:
+            # We add the protocol as urlparse doesn't find it by itself
+            if "://" not in self.ssh_tunnel_url:
+                self.ssh_tunnel_url = f"ssh://{self.ssh_tunnel_url}"
+
+            tunnel_info = urlparse(self.ssh_tunnel_url)
+            params = {
+                "local_bind_address": ("127.0.0.1",),
+                "remote_bind_address": (host, int(port or 5432)),
+                "ssh_address_or_host": (tunnel_info.hostname, tunnel_info.port or 22),
+                "logger": self.logger,
+            }
+            if tunnel_info.username:
+                params["ssh_username"] = tunnel_info.username
+            if tunnel_info.password:
+                params["ssh_password"] = tunnel_info.password
+
+            # Hack: sshtunnel adds a console handler to the logger, so we revert handlers.
+            # We can remove this when https://github.com/pahaz/sshtunnel/pull/250 is merged.
+            logger_handlers = self.logger.handlers.copy()
+            try:
+                self.ssh_tunnel = sshtunnel.SSHTunnelForwarder(**params)
+                self.ssh_tunnel.start()
+            except Exception as e:
+                self.logger.handlers = logger_handlers
+                self.logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg="red")
+                exit(1)
+            self.logger.handlers = logger_handlers
+
+            atexit.register(self.ssh_tunnel.stop)
+            host = "127.0.0.1"
+            port = self.ssh_tunnel.local_bind_ports[0]
+
+            if dsn:
+                dsn = make_dsn(dsn, host=host, port=port)
 
         # Attempt to connect to the database.
         # Note that passwd may be empty on the first attempt. If connection
@@ -765,18 +845,7 @@ class PGCli:
                     click.secho(str(e), err=True, fg="red")
                     continue
 
-                # Initialize default metaquery in case execution fails
-                self.watch_command, timing = special.get_watch_command(text)
-                if self.watch_command:
-                    while self.watch_command:
-                        try:
-                            query = self.execute_command(self.watch_command)
-                            click.echo(f"Waiting for {timing} seconds before repeating")
-                            sleep(timing)
-                        except KeyboardInterrupt:
-                            self.watch_command = None
-                else:
-                    query = self.execute_command(text)
+                self.handle_watch_command(text)
 
                 self.now = dt.datetime.today()
 
@@ -784,11 +853,39 @@ class PGCli:
                 with self._completer_lock:
                     self.completer.extend_query_history(text)
 
-                self.query_history.append(query)
-
         except (PgCliQuitError, EOFError):
             if not self.less_chatty:
                 print("Goodbye!")
+
+    def handle_watch_command(self, text):
+        # Initialize default metaquery in case execution fails
+        self.watch_command, timing = special.get_watch_command(text)
+
+        # If we run \watch without a command, apply it to the last query run.
+        if self.watch_command is not None and not self.watch_command.strip():
+            try:
+                self.watch_command = self.query_history[-1].query
+            except IndexError:
+                click.secho(
+                    "\\watch cannot be used with an empty query", err=True, fg="red"
+                )
+                self.watch_command = None
+
+        # If there's a command to \watch, run it in a loop.
+        if self.watch_command:
+            while self.watch_command:
+                try:
+                    query = self.execute_command(self.watch_command)
+                    click.echo(f"Waiting for {timing} seconds before repeating")
+                    sleep(timing)
+                except KeyboardInterrupt:
+                    self.watch_command = None
+
+        # Otherwise, execute it as a regular command.
+        else:
+            query = self.execute_command(text)
+
+        self.query_history.append(query)
 
     def _build_cli(self, history):
         key_bindings = pgcli_bindings(self)
@@ -945,6 +1042,7 @@ class PGCli:
                     else lambda x: x
                 ),
                 style_output=self.style_output,
+                max_field_width=self.max_field_width,
             )
             execution = time() - start
             formatted = format_output(
@@ -1204,7 +1302,7 @@ class PGCli:
     "--list",
     "list_databases",
     is_flag=True,
-    help="list " "available databases, then exit.",
+    help="list available databases, then exit.",
 )
 @click.option(
     "--auto-vertical-output",
@@ -1216,6 +1314,11 @@ class PGCli:
     default=None,
     type=click.Choice(["all", "moderate", "off"]),
     help="Warn before running a destructive query.",
+)
+@click.option(
+    "--ssh-tunnel",
+    default=None,
+    help="Open an SSH tunnel to the given address and connect to the database from it.",
 )
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
@@ -1240,6 +1343,7 @@ def cli(
     auto_vertical_output,
     list_dsn,
     warn,
+    ssh_tunnel: str,
 ):
     if version:
         print("Version:", __version__)
@@ -1276,6 +1380,15 @@ def cli(
             )
             exit(1)
 
+    if ssh_tunnel and not SSH_TUNNEL_SUPPORT:
+        click.secho(
+            'Cannot open SSH tunnel, "sshtunnel" package was not found. '
+            "Please install pgcli with `pip install pgcli[sshtunnel]` if you want SSH tunnel support.",
+            err=True,
+            fg="red",
+        )
+        exit(1)
+
     pgcli = PGCli(
         prompt_passwd,
         never_prompt,
@@ -1287,6 +1400,7 @@ def cli(
         prompt_dsn=prompt_dsn,
         auto_vertical_output=auto_vertical_output,
         warn=warn,
+        ssh_tunnel_url=ssh_tunnel,
     )
 
     # Choose which ever one has a valid value.
@@ -1449,6 +1563,14 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
         return data, headers
 
+    def format_status(cur, status):
+        # redshift does not return rowcount as part of status.
+        # See https://github.com/dbcli/pgcli/issues/1320
+        if cur and hasattr(cur, "rowcount") and cur.rowcount is not None:
+            if status and not status.endswith(str(cur.rowcount)):
+                status += " %s" % cur.rowcount
+        return status
+
     output_kwargs = {
         "sep_title": "RECORD {n}",
         "sep_character": "-",
@@ -1460,6 +1582,7 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         "disable_numparse": True,
         "preserve_whitespace": True,
         "style": settings.style_output,
+        "max_field_width": settings.max_field_width,
     }
     if not settings.floatfmt:
         output_kwargs["preprocessors"] = (align_decimals,)
@@ -1483,12 +1606,15 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         if hasattr(cur, "description"):
             column_types = []
             for d in cur.description:
+                # pg3: type_name = cur.adapters.types[d.type_code].name
                 if (
+                    # pg3: type_name in ("numeric", "float4", "float8")
                     d[1] in psycopg2.extensions.DECIMAL.values
                     or d[1] in psycopg2.extensions.FLOAT.values
                 ):
                     column_types.append(float)
                 if (
+                    # pg3: type_name in ("int2", "int4", "int8")
                     d[1] == psycopg2.extensions.INTEGER.values
                     or d[1] in psycopg2.extensions.LONGINTEGER.values
                 ):
@@ -1517,7 +1643,7 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
     # Only print the status if it's not None and we are not producing CSV
     if status and table_format != "csv":
-        output = itertools.chain(output, [status])
+        output = itertools.chain(output, [format_status(cur, status)])
 
     return output
 
@@ -1532,7 +1658,7 @@ def parse_service_info(service):
         elif os.getenv("PGSYSCONFDIR"):
             service_file = os.path.join(os.getenv("PGSYSCONFDIR"), ".pg_service.conf")
         else:
-            service_file = expanduser("~/.pg_service.conf")
+            service_file = os.path.expanduser("~/.pg_service.conf")
     if not service or not os.path.exists(service_file):
         # nothing to do
         return None, service_file

@@ -97,9 +97,9 @@ def step_see_error_message(context):
 @when("we send source command")
 def step_send_source_command(context):
     context.tmpfile_sql_help = tempfile.NamedTemporaryFile(prefix="pgcli_")
-    context.tmpfile_sql_help.write(br"\?")
+    context.tmpfile_sql_help.write(rb"\?")
     context.tmpfile_sql_help.flush()
-    context.cli.sendline(fr"\i {context.tmpfile_sql_help.name}")
+    context.cli.sendline(rf"\i {context.tmpfile_sql_help.name}")
     wrappers.expect_exact(context, context.conf["pager_boundary"] + "\r\n", timeout=5)
 
 
@@ -118,11 +118,11 @@ def step_see_found(context):
         + "\r"
         + dedent(
             """
-            +------------+\r
-            | ?column?   |\r
-            |------------|\r
-            | found      |\r
-            +------------+\r
+            +----------+\r
+            | ?column? |\r
+            |----------|\r
+            | found    |\r
+            +----------+\r
             SELECT 1\r
         """
         )
