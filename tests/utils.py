@@ -26,10 +26,14 @@ try:
     conn = db_connection()
     CAN_CONNECT_TO_DB = True
     SERVER_VERSION = conn.info.parameter_status("server_version")
-    json_types = register_json_typecasters(conn, lambda x: x)
-    JSON_AVAILABLE = "json" in json_types
-    JSONB_AVAILABLE = "jsonb" in json_types
-except:
+    # json_types = register_json_typecasters(conn, lambda x: x)
+    # JSON_AVAILABLE = "json" in json_types
+    # JSONB_AVAILABLE = "jsonb" in json_types
+    JSON_AVAILABLE = True
+    JSONB_AVAILABLE = True
+except Exception as x:
+    # TODO: remove debugging code
+    print(x)
     CAN_CONNECT_TO_DB = JSON_AVAILABLE = JSONB_AVAILABLE = False
     SERVER_VERSION = 0
 

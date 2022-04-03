@@ -84,8 +84,8 @@ def register_date_typecasters(connection):
     range dates (e.g. BC) which psycopg2 can't handle
     """
     # TODO: not sure about this
-    # connection.adapters.register_loader("date", psycopg.types.string.TextLoader)
-    # connection.adapters.register_loader("timestamp", psycopg.types.string.TextLoader)
+    connection.adapters.register_loader("date", psycopg.types.string.TextLoader)
+    connection.adapters.register_loader("timestamp", psycopg.types.string.TextLoader)
     # def cast_date(value, cursor):
     #     return value
 
@@ -103,7 +103,7 @@ def register_date_typecasters(connection):
     # new_type = psycopg.extensions.new_type(oids, "DATE", cast_date)
     # psycopg.extensions.register_type(new_type)
 
-
+# TODO: may not need this anymore.
 def register_json_typecasters(conn, loads_fn):
     """Set the function for converting JSON data for a connection.
 
@@ -151,6 +151,7 @@ def register_json_typecasters(conn, loads_fn):
 
 
 # pg3: I don't know what is this
+# TODO: this was needed to handle pgbouncer database. Have to test with that.
 class ProtocolSafeCursor(psycopg.Cursor):
     def __init__(self, *args, **kwargs):
         self.protocol_error = False
@@ -172,10 +173,10 @@ class ProtocolSafeCursor(psycopg.Cursor):
             return (self.protocol_message,)
         return super().fetchone()
 
-    def mogrify(self, query, params):
-        args = [Literal(v).as_string(self.connection) for v in params]
-        return query % tuple(args)
-
+    # def mogrify(self, query, params):
+    #     args = [Literal(v).as_string(self.connection) for v in params]
+    #     return query % tuple(args)
+    #
     def execute(self, sql, args=None):
         try:
             psycopg.Cursor.execute(self, sql, args)

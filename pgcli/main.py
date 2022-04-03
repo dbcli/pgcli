@@ -1,11 +1,6 @@
-import platform
-import warnings
-
 from configobj import ConfigObj, ParseError
 from pgspecial.namedqueries import NamedQueries
 from .config import skip_initial_comment
-
-warnings.filterwarnings("ignore", category=UserWarning, module="psycopg")
 
 import atexit
 import os
@@ -81,7 +76,6 @@ except ImportError:
 
 from getpass import getuser
 
-# pg3: https://www.psycopg.org/psycopg3/docs/api/conninfo.html
 from psycopg import OperationalError, InterfaceError
 from psycopg.conninfo import make_conninfo, conninfo_to_dict
 
@@ -1207,7 +1201,7 @@ class PGCli:
 
 
 @click.command()
-# Default host is '' so psycopg2 can default to either localhost or unix socket
+# Default host is '' so psycopg can default to either localhost or unix socket
 @click.option(
     "-h",
     "--host",
