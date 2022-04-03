@@ -78,14 +78,13 @@ _logger = logging.getLogger(__name__)
 
 # pg3: You can do something like:
 # pg3: cnn.adapters.register_loader("date", psycopg.types.string.TextLoader)
-def register_date_typecasters(connection):
-    """
-    Casts date and timestamp values to string, resolves issues with out of
-    range dates (e.g. BC) which psycopg2 can't handle
-    """
+def register_typecasters(connection):
+    """Casts date and timestamp values to string, resolves issues with out-of-range
+    dates (e.g. BC) which psycopg2 can't handle"""
     # TODO: not sure about this
     connection.adapters.register_loader("date", psycopg.types.string.TextLoader)
     connection.adapters.register_loader("timestamp", psycopg.types.string.TextLoader)
+    connection.adapters.register_loader("bytea", psycopg.types.string.TextLoader)
     # def cast_date(value, cursor):
     #     return value
 
@@ -372,8 +371,8 @@ class PGExecute:
 
         # _set_wait_callback(self.is_virtual_database())
 
-        # if not self.is_virtual_database():
-        #     register_date_typecasters(conn)
+        if not self.is_virtual_database():
+            register_typecasters(conn)
         #     register_json_typecasters(self.conn, self._json_typecaster)
         #     register_hstore_typecaster(self.conn)
 
