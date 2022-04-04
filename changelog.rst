@@ -49,6 +49,7 @@ Features:
   `destructive_warning` setting to `all|moderate|off`, vs `true|false`. (#1239)
 * Skip initial comment in .pg_session even if it doesn't start with '#'
 * Include functions from schemas in search_path. (`Amjith Ramanujam`_)
+* Easy way to show explain output under F5
 
 Bug fixes:
 ----------
@@ -1126,3 +1127,4 @@ Improvements:
 .. _`thegeorgeous`: https://github.com/thegeorgeous
 .. _`laixintao`: https://github.com/laixintao
 .. _`anthonydb`: https://github.com/anthonydb
+.. _`Daniel Kukula`: https://github.com/dkuku
