@@ -1599,7 +1599,8 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         if hasattr(cur, "description"):
             column_types = []
             for d in cur.description:
-                type_name = cur.adapters.types[d.type_code].name
+                col_type = cur.adapters.types.get(d.type_code)
+                type_name = col_type.name if col_type else None
                 if type_name in ("numeric", "float4", "float8"):
                     column_types.append(float)
                 if type_name in ("int2", "int4", "int8"):

@@ -85,6 +85,8 @@ def register_typecasters(connection):
     connection.adapters.register_loader("date", psycopg.types.string.TextLoader)
     connection.adapters.register_loader("timestamp", psycopg.types.string.TextLoader)
     connection.adapters.register_loader("bytea", psycopg.types.string.TextLoader)
+    connection.adapters.register_loader("json", psycopg.types.string.TextLoader)
+    connection.adapters.register_loader("jsonb", psycopg.types.string.TextLoader)
     # def cast_date(value, cursor):
     #     return value
 
