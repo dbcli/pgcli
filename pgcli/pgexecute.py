@@ -15,7 +15,7 @@ _logger = logging.getLogger(__name__)
 
 def register_typecasters(connection):
     """Casts date and timestamp values to string, resolves issues with out-of-range
-    dates (e.g. BC) which psycopg2 can't handle"""
+    dates (e.g. BC) which psycopg can't handle"""
     for forced_text_type in [
         "date",
         "time",
@@ -195,12 +195,10 @@ class PGExecute:
                 )
 
         conn_params.update({k: v for k, v in new_params.items() if v})
-        # conn_params["cursor_factory"] = ProtocolSafeCursor
 
         conn_info = make_conninfo(**conn_params)
         conn = psycopg.connect(conn_info)
         conn.cursor_factory = ProtocolSafeCursor
-        # conn.set_client_encoding("utf8")
 
         self._conn_params = conn_params
         if self.conn:
@@ -211,19 +209,7 @@ class PGExecute:
         # When we connect using a DSN, we don't really know what db,
         # user, etc. we connected to. Let's read it.
         # Note: moved this after setting autocommit because of #664.
-        libpq_version = psycopg.pq.version()
-        dsn_parameters = {}
-        if libpq_version >= 93000:
-            # use actual connection info from psycopg2.extensions.Connection.info
-            # as libpq_version > 9.3 is available and required dependency
-            dsn_parameters = conn.info.get_parameters()
-        else:
-            try:
-                dsn_parameters = conn.get_dsn_parameters()
-            except Exception as x:
-                # https://github.com/dbcli/pgcli/issues/1110
-                # PQconninfo not available in libpq < 9.3
-                _logger.info("Exception in get_dsn_parameters: %r", x)
+        dsn_parameters = conn.info.get_parameters()
 
         if dsn_parameters:
             self.dbname = dsn_parameters.get("dbname")
@@ -274,17 +260,6 @@ class PGExecute:
         cur.execute(sql)
         return cur.fetchone()
 
-    def _json_typecaster(self, json_data):
-        """Interpret incoming JSON data as a string.
-
-        The raw data is decoded using the connection's encoding, which defaults
-        to the database's encoding.
-
-        See http://initd.org/psycopg/docs/connection.html#connection.encoding
-        """
-
-        return json_data
-
     def failed_transaction(self):
         return self.conn.info.transaction_status == psycopg.pq.TransactionStatus.INERROR
 
@@ -322,7 +297,7 @@ class PGExecute:
         # Remove spaces and EOL
         statement = statement.strip()
         if not statement:  # Empty string
-            yield (None, None, None, None, statement, False, False)
+            yield None, None, None, None, statement, False, False
 
         # Split the sql into separate queries and run each one.
         for sql in sqlparse.split(statement):
@@ -406,7 +381,7 @@ class PGExecute:
         cur = self.conn.cursor()
         cur.execute(split_sql)
 
-        # conn.notices persist between queies, we use pop to clear out the list
+        # conn.notices persist between queries, we use pop to clear out the list
         title = ""
 
         def handle_notices(n):
@@ -414,8 +389,6 @@ class PGExecute:
             title = n + title
 
         self.conn.add_notify_handler(handle_notices)
-        # while len(self.conn.notices) > 0:
-        #     title = self.conn.notices.pop() + title
 
         # cur.description will be None for operations that do not return
         # rows.

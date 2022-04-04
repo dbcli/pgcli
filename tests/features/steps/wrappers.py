@@ -70,4 +70,5 @@ def run_cli(context, run_args=None, prompt_check=True, currentdb=None):
 
 def wait_prompt(context):
     """Make sure prompt is displayed."""
-    expect_exact(context, "{0}> ".format(context.conf["dbname"]), timeout=5)
+    prompt_str = "{0}> ".format(context.conf["dbname"])
+    expect_exact(context, [prompt_str, pexpect.EOF], timeout=3)

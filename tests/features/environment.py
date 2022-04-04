@@ -174,11 +174,15 @@ def after_scenario(context, scenario):
         # Quit nicely.
         if not context.atprompt:
             dbname = context.currentdb
-            context.cli.expect_exact(f"{dbname}> ", timeout=15)
-        context.cli.sendcontrol("c")
-        context.cli.sendcontrol("d")
+            context.cli.expect_exact(f"{dbname}>", timeout=5)
         try:
-            context.cli.expect_exact(pexpect.EOF, timeout=15)
+            context.cli.sendcontrol("c")
+            context.cli.sendcontrol("d")
+        except Exception as x:
+            print("Failed cleanup after scenario:")
+            print(x)
+        try:
+            context.cli.expect_exact(pexpect.EOF, timeout=5)
         except pexpect.TIMEOUT:
             print(f"--- after_scenario {scenario.name}: kill cli")
             context.cli.kill(signal.SIGKILL)
