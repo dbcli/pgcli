@@ -13,8 +13,7 @@ install_requirements = [
     # We still need to use pt-2 unless pt-3 released on Fedora32
     # see: https://github.com/dbcli/pgcli/pull/1197
     "prompt_toolkit>=2.0.6,<4.0.0",
-    # "psycopg >= 3.0.11", TODO: replace master with 3.0.11
-    "psycopg @ git+https://github.com/psycopg/psycopg.git@master#subdirectory=psycopg",
+    "psycopg >= 3.0.11",
     "sqlparse >=0.3.0,<0.5",
     "configobj >= 5.0.6",
     "pendulum>=2.1.0",

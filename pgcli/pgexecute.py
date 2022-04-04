@@ -12,147 +12,26 @@ from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 
 _logger = logging.getLogger(__name__)
 
-# Cast all database input to unicode automatically.
-# See http://initd.org/psycopg/docs/usage.html#unicode-handling for more info.
-# pg3: These should be automatic: unicode is the default
-# ext.register_type(ext.UNICODE)
-# ext.register_type(ext.UNICODEARRAY)
-# ext.register_type(ext.new_type((705,), "UNKNOWN", ext.UNICODE))
 
-# See https://github.com/dbcli/pgcli/issues/426 for more details.
-# This registers a unicode type caster for datatype 'RECORD'.
-# ext.register_type(ext.new_type((2249,), "RECORD", ext.UNICODE))
-
-# Cast bytea fields to text. By default, this will render as hex strings with
-# Postgres 9+ and as escaped binary in earlier versions.
-# ext.register_type(ext.new_type((17,), "BYTEA_TEXT", psycopg2.STRING))
-
-# TODO: Get default timeout from pgclirc?
-# _WAIT_SELECT_TIMEOUT = 1
-# _wait_callback_is_set = False
-
-
-# pg3: it is already "green" but Ctrl-C breaks the query
-# pg3: This should be fixed upstream: https://github.com/psycopg/psycopg/issues/231
-# def _wait_select(conn):
-#     """
-#     copy-pasted from psycopg2.extras.wait_select
-#     the default implementation doesn't define a timeout in the select calls
-#     """
-#     try:
-#         while 1:
-#             try:
-#                 state = conn.poll()
-#                 if state == POLL_OK:
-#                     break
-#                 elif state == POLL_READ:
-#                     select.select([conn.fileno()], [], [], _WAIT_SELECT_TIMEOUT)
-#                 elif state == POLL_WRITE:
-#                     select.select([], [conn.fileno()], [], _WAIT_SELECT_TIMEOUT)
-#                 else:
-#                     raise conn.OperationalError("bad state from poll: %s" % state)
-#             except KeyboardInterrupt:
-#                 conn.cancel()
-#                 # the loop will be broken by a server error
-#                 continue
-#             except OSError as e:
-#                 errno = e.args[0]
-#                 if errno != 4:
-#                     raise
-#     except psycopg.OperationalError:
-#         pass
-
-
-# def _set_wait_callback(is_virtual_database):
-#     global _wait_callback_is_set
-#     if _wait_callback_is_set:
-#         return
-#     _wait_callback_is_set = True
-#     if is_virtual_database:
-#         return
-#     # When running a query, make pressing CTRL+C raise a KeyboardInterrupt
-#     # See http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
-#     # See also https://github.com/psycopg/psycopg2/issues/468
-#     ext.set_wait_callback(_wait_select)
-
-
-# pg3: You can do something like:
-# pg3: cnn.adapters.register_loader("date", psycopg.types.string.TextLoader)
 def register_typecasters(connection):
     """Casts date and timestamp values to string, resolves issues with out-of-range
     dates (e.g. BC) which psycopg2 can't handle"""
-    # TODO: not sure about this
-    connection.adapters.register_loader("date", psycopg.types.string.TextLoader)
-    connection.adapters.register_loader("timestamp", psycopg.types.string.TextLoader)
-    connection.adapters.register_loader("bytea", psycopg.types.string.TextLoader)
-    connection.adapters.register_loader("json", psycopg.types.string.TextLoader)
-    connection.adapters.register_loader("jsonb", psycopg.types.string.TextLoader)
-    # def cast_date(value, cursor):
-    #     return value
-
-    # cursor = connection.cursor()
-    # cursor.execute("SELECT NULL::date")
-    # if cursor.description is None:
-    #     return
-
-    # date_oid = cursor.description[0][1]
-    # cursor.execute("SELECT NULL::timestamp")
-    # timestamp_oid = cursor.description[0][1]
-    # cursor.execute("SELECT NULL::timestamp with time zone")
-    # timestamptz_oid = cursor.description[0][1]
-    # oids = (date_oid, timestamp_oid, timestamptz_oid)
-    # new_type = psycopg.extensions.new_type(oids, "DATE", cast_date)
-    # psycopg.extensions.register_type(new_type)
-
-# TODO: may not need this anymore.
-def register_json_typecasters(conn, loads_fn):
-    """Set the function for converting JSON data for a connection.
-
-    Use the supplied function to decode JSON data returned from the database
-    via the given connection. The function should accept a single argument of
-    the data as a string encoded in the database's character encoding.
-    psycopg2's default handler for JSON data is json.loads.
-    http://initd.org/psycopg/docs/extras.html#json-adaptation
-
-    This function attempts to register the typecaster for both JSON and JSONB
-    types.
-
-    Returns a set that is a subset of {'json', 'jsonb'} indicating which types
-    (if any) were successfully registered.
-    """
-    available = set()
-
-    for name in ["json", "jsonb"]:
-        try:
-            psycopg2.extras.register_json(conn, loads=loads_fn, name=name)
-            available.add(name)
-        except (psycopg2.ProgrammingError, psycopg2.errors.ProtocolViolation):
-            pass
-
-    return available
-
-
-# pg3: Probably you don't need this because by default unknown -> unicode
-# def register_hstore_typecaster(conn):
-#     """
-#     Instead of using register_hstore() which converts hstore into a python
-#     dict, we query the 'oid' of hstore which will be different for each
-#     database and register a type caster that converts it to unicode.
-#     http://initd.org/psycopg/docs/extras.html#psycopg2.extras.register_hstore
-#     """
-#     with conn.cursor() as cur:
-#         try:
-#             cur.execute(
-#                 "select t.oid FROM pg_type t WHERE t.typname = 'hstore' and t.typisdefined"
-#             )
-#             oid = cur.fetchone()[0]
-#             ext.register_type(ext.new_type((oid,), "HSTORE", ext.UNICODE))
-#         except Exception:
-#             pass
+    for forced_text_type in [
+        "date",
+        "time",
+        "timestamp",
+        "timestamptz",
+        "bytea",
+        "json",
+        "jsonb",
+    ]:
+        connection.adapters.register_loader(
+            forced_text_type, psycopg.types.string.TextLoader
+        )
 
 
 # pg3: I don't know what is this
-# TODO: this was needed to handle pgbouncer database. Have to test with that.
+# TODO: this was needed to handle pgbouncer database. Need a test with that.
 class ProtocolSafeCursor(psycopg.Cursor):
     def __init__(self, *args, **kwargs):
         self.protocol_error = False
@@ -375,8 +254,6 @@ class PGExecute:
 
         if not self.is_virtual_database():
             register_typecasters(conn)
-        #     register_json_typecasters(self.conn, self._json_typecaster)
-        #     register_hstore_typecaster(self.conn)
 
     @property
     def short_host(self):
@@ -409,9 +286,7 @@ class PGExecute:
         return json_data
 
     def failed_transaction(self):
-        # pg3: self.conn.info.transaction_status == psycopg.pq.TransactionStatus.INERROR
-        status = self.conn.info.transaction_status
-        return status == psycopg.pq.TransactionStatus.INERROR
+        return self.conn.info.transaction_status == psycopg.pq.TransactionStatus.INERROR
 
     def valid_transaction(self):
         status = self.conn.info.transaction_status
