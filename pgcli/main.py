@@ -64,6 +64,7 @@ from .config import (
 from .key_bindings import pgcli_bindings
 from .packages.formatter.sqlformatter import register_new_formatter
 from .packages.prompt_utils import confirm_destructive_query
+from .packages.parseutils import parse_destructive_warning
 from .__init__ import __version__
 
 click.disable_unicode_literals_warning = True
@@ -224,11 +225,10 @@ class PGCli:
         self.syntax_style = c["main"]["syntax_style"]
         self.cli_style = c["colors"]
         self.wider_completion_menu = c["main"].as_bool("wider_completion_menu")
-        self.destructive_warning = warn or c["main"]["destructive_warning"]
-        # also handle boolean format of destructive warning
-        self.destructive_warning = {"true": "all", "false": "off"}.get(
-            self.destructive_warning.lower(), self.destructive_warning
+        self.destructive_warning = parse_destructive_warning(
+            warn or c["main"].as_list("destructive_warning")
         )
+
         self.less_chatty = bool(less_chatty) or c["main"].as_bool("less_chatty")
         self.null_string = c["main"].get("null_string", "<null>")
         self.prompt_format = (
@@ -424,8 +424,11 @@ class PGCli:
             return [(None, None, None, str(e), "", False, True)]
 
         if (
-            self.destructive_warning != "off"
-            and confirm_destructive_query(query, self.destructive_warning) is False
+            self.destructive_warning
+            and confirm_destructive_query(
+                query, self.destructive_warning, self.dsn_alias
+            )
+            is False
         ):
             message = "Wise choice. Command execution stopped."
             return [(None, None, None, message)]
@@ -693,15 +696,16 @@ class PGCli:
         query = MetaQuery(query=text, successful=False)
 
         try:
-            if self.destructive_warning != "off":
+            if self.destructive_warning:
                 destroy = confirm = confirm_destructive_query(
-                    text, self.destructive_warning
+                    text, self.destructive_warning, self.dsn_alias
                 )
                 if destroy is False:
                     click.secho("Wise choice!")
                     raise KeyboardInterrupt
                 elif destroy:
                     click.secho("Your call!")
+
             output, query = self._evaluate_command(text)
         except KeyboardInterrupt:
             # Restart connection to the database
@@ -1266,7 +1270,6 @@ class PGCli:
 @click.option(
     "--warn",
     default=None,
-    type=click.Choice(["all", "moderate", "off"]),
     help="Warn before running a destructive query.",
 )
 @click.option(
