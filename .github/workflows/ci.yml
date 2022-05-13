@@ -56,7 +56,7 @@ jobs:
         run: rst2html.py --halt=warning changelog.rst >/dev/null
 
       - name: Run Black
-        run: pip install black && black --check .
+        run: black --check .
         if: matrix.python-version == '3.7'
 
       - name: Coverage
