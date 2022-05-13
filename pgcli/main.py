@@ -17,7 +17,6 @@ import itertools
 import platform
 from time import time, sleep
 from typing import Optional
-from urllib.parse import urlparse
 
 keyring = None  # keyring will be loaded later
 
@@ -578,7 +577,7 @@ class PGCli:
         if not passwd and keyring:
 
             try:
-                passwd = keyring.get_password("pgcli", key)
+                passwd = keyring.get_password("pgcli", key) or ""
             except (RuntimeError, keyring.errors.InitError) as e:
                 click.secho(
                     keyring_error_message.format(
