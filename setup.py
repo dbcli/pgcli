@@ -40,7 +40,9 @@ setup(
     description=description,
     long_description=open("README.rst").read(),
     install_requires=install_requirements,
-    dependency_links=['http://github.com/psycopg/repo/tarball/master#egg=psycopg-3.0.10'],
+    dependency_links=[
+        "http://github.com/psycopg/repo/tarball/master#egg=psycopg-3.0.10"
+    ],
     extras_require={
         "keyring": ["keyring >= 12.2.0"],
         "sshtunnel": ["sshtunnel >= 0.4.0"],

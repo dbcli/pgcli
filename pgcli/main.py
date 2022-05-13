@@ -1619,7 +1619,11 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
             and headers
         ):
             formatted = formatter.format_output(
-                cur, headers, format_name="vertical", column_types=column_types, **output_kwargs
+                cur,
+                headers,
+                format_name="vertical",
+                column_types=column_types,
+                **output_kwargs,
             )
             if isinstance(formatted, str):
                 formatted = iter(formatted.splitlines())
