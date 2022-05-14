@@ -1,16 +1,20 @@
 import logging
-import select
 import traceback
+from collections import namedtuple
 
 import pgspecial as special
 import psycopg
-from psycopg.sql import Literal
+import psycopg.sql
 from psycopg.conninfo import make_conninfo
 import sqlparse
 
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 
 _logger = logging.getLogger(__name__)
+
+ViewDef = namedtuple(
+    "ViewDef", "nspname relname relkind viewdef reloptions checkoption"
+)
 
 
 def register_typecasters(connection):
@@ -420,9 +424,6 @@ class PGExecute:
     def view_definition(self, spec):
         """Returns the SQL defining views described by `spec`"""
 
-        # pg3: you may want to use `psycopg.sql` for client-side composition
-        # pg3: (also available in psycopg2 by the way)
-        template = "CREATE OR REPLACE {6} VIEW {0}.{1} AS \n{3}"
         # 2: relkind, v or m (materialized)
         # 4: reloptions, null
         # 5: checkoption: local or cascaded
@@ -433,9 +434,19 @@ class PGExecute:
                 cur.execute(sql, (spec,))
             except psycopg.ProgrammingError:
                 raise RuntimeError(f"View {spec} does not exist.")
-            result = cur.fetchone()
-            view_type = "MATERIALIZED" if result[2] == "m" else ""
-            return template.format(*result + (view_type,))
+            result = ViewDef(*cur.fetchone())
+            if result.relkind == "m":
+                template = "CREATE OR REPLACE MATERIALIZED VIEW {name} AS \n{stmt}"
+            else:
+                template = "CREATE OR REPLACE VIEW {name} AS \n{stmt}"
+            return (
+                psycopg.sql.SQL(template)
+                .format(
+                    name=psycopg.sql.Identifier(f"{result.nspname}.{result.relname}"),
+                    stmt=psycopg.sql.SQL(result.viewdef),
+                )
+                .as_string(self.conn)
+            )
 
     def function_definition(self, spec):
         """Returns the SQL defining functions described by `spec`"""
