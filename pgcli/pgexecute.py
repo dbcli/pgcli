@@ -35,8 +35,11 @@ def register_typecasters(connection):
 
 
 # pg3: I don't know what is this
-# TODO: this was needed to handle pgbouncer database. Need a test with that.
 class ProtocolSafeCursor(psycopg.Cursor):
+    """This class wraps and suppresses Protocol Errors with pgbouncer database.
+    See https://github.com/dbcli/pgcli/pull/1097.
+    Pgbouncer database is a virtual database with its own set of commands."""
+
     def __init__(self, *args, **kwargs):
         self.protocol_error = False
         self.protocol_message = ""
@@ -61,14 +64,14 @@ class ProtocolSafeCursor(psycopg.Cursor):
     #     args = [Literal(v).as_string(self.connection) for v in params]
     #     return query % tuple(args)
     #
-    def execute(self, sql, args=None):
+    def execute(self, *args, **kwargs):
         try:
-            psycopg.Cursor.execute(self, sql, args)
+            super().execute(*args, **kwargs)
             self.protocol_error = False
             self.protocol_message = ""
         except psycopg.errors.ProtocolViolation as ex:
             self.protocol_error = True
-            self.protocol_message = ex.pgerror
+            self.protocol_message = str(ex)
             _logger.debug("%s: %s" % (ex.__class__.__name__, ex))
 
 
@@ -382,17 +385,23 @@ class PGExecute:
     def execute_normal_sql(self, split_sql):
         """Returns tuple (title, rows, headers, status)"""
         _logger.debug("Regular sql statement. sql: %r", split_sql)
-        cur = self.conn.cursor()
-        cur.execute(split_sql)
 
-        # conn.notices persist between queries, we use pop to clear out the list
         title = ""
 
         def handle_notices(n):
             nonlocal title
-            title = n + title
+            title = f"{n.message_primary}\n{n.message_detail}\n{title}"
 
-        self.conn.add_notify_handler(handle_notices)
+        self.conn.add_notice_handler(handle_notices)
+
+        if self.is_virtual_database() and "show help" in split_sql.lower():
+            # see https://github.com/psycopg/psycopg/issues/303
+            # special case "show help" in pgbouncer
+            res = self.conn.pgconn.exec_(split_sql.encode())
+            return title, None, None, res.command_status.decode()
+
+        cur = self.conn.cursor()
+        cur.execute(split_sql)
 
         # cur.description will be None for operations that do not return
         # rows.
