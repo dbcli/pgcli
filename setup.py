@@ -34,6 +34,9 @@ setup(
     version=__version__,
     license="BSD",
     url="http://pgcli.com",
+    project_urls={
+        "Source": "https://github.com/dbcli/pgcli",
+    },
     packages=find_packages(),
     package_data={"pgcli": ["pgclirc", "packages/pgliterals/pgliterals.json"]},
     description=description,

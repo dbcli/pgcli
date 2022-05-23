@@ -176,3 +176,8 @@ Coding Style
 ------------
 
 ``pgcli`` uses `black <https://github.com/ambv/black>`_ to format the source code. Make sure to install black.
+
+Releases
+--------
+
+If you're the person responsible for releasing `pgcli`, `this guide <https://github.com/dbcli/pgcli/blob/main/RELEASES.md>`_ is for you.

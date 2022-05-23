@@ -29,6 +29,7 @@ keyring = None  # keyring will be loaded later
 from cli_helpers.tabular_output import TabularOutputFormatter
 from cli_helpers.tabular_output.preprocessors import align_decimals, format_numbers
 from cli_helpers.utils import strip_ansi
+from .explain_output_formatter import ExplainOutputFormatter
 import click
 
 try:
@@ -205,6 +206,7 @@ class PGCli:
         self.output_file = None
         self.pgspecial = PGSpecial()
 
+        self.explain_mode = False
         self.multi_line = c["main"].as_bool("multi_line")
         self.multiline_mode = c["main"].get("multi_line_mode", "psql")
         self.vi_mode = c["main"].as_bool("vi")
@@ -436,7 +438,10 @@ class PGCli:
 
         on_error_resume = self.on_error == "RESUME"
         return self.pgexecute.run(
-            query, self.pgspecial, on_error_resume=on_error_resume
+            query,
+            self.pgspecial,
+            on_error_resume=on_error_resume,
+            explain_mode=self.explain_mode,
         )
 
     def write_to_file(self, pattern, **_):
@@ -954,6 +959,8 @@ class PGCli:
 
     def _should_limit_output(self, sql, cur):
         """returns True if the output should be truncated, False otherwise."""
+        if self.explain_mode:
+            return False
         if not is_select(sql):
             return False
 
@@ -999,7 +1006,11 @@ class PGCli:
         start = time()
         on_error_resume = self.on_error == "RESUME"
         res = self.pgexecute.run(
-            text, self.pgspecial, exception_formatter, on_error_resume
+            text,
+            self.pgspecial,
+            exception_formatter,
+            on_error_resume,
+            explain_mode=self.explain_mode,
         )
 
         is_special = None
@@ -1034,7 +1045,9 @@ class PGCli:
                 max_field_width=self.max_field_width,
             )
             execution = time() - start
-            formatted = format_output(title, cur, headers, status, settings)
+            formatted = format_output(
+                title, cur, headers, status, settings, self.explain_mode
+            )
 
             output.extend(formatted)
             total = time() - start
@@ -1523,13 +1536,16 @@ def exception_formatter(e):
     return click.style(str(e), fg="red")
 
 
-def format_output(title, cur, headers, status, settings):
+def format_output(title, cur, headers, status, settings, explain_mode=False):
     output = []
     expanded = settings.expanded or settings.table_format == "vertical"
     table_format = "vertical" if settings.expanded else settings.table_format
     max_width = settings.max_width
     case_function = settings.case_function
-    formatter = TabularOutputFormatter(format_name=table_format)
+    if explain_mode:
+        formatter = ExplainOutputFormatter(max_width or 100)
+    else:
+        formatter = TabularOutputFormatter(format_name=table_format)
 
     def format_array(val):
         if val is None:

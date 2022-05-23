@@ -411,7 +411,12 @@ class PGExecute:
         )
 
     def run(
-        self, statement, pgspecial=None, exception_formatter=None, on_error_resume=False
+        self,
+        statement,
+        pgspecial=None,
+        exception_formatter=None,
+        on_error_resume=False,
+        explain_mode=False,
     ):
         """Execute the sql in the database and return the results.
 
@@ -442,7 +447,9 @@ class PGExecute:
             if not sql:
                 continue
             try:
-                if pgspecial:
+                if explain_mode:
+                    sql = self.explain_prefix() + sql
+                elif pgspecial:
                     # \G is treated specially since we have to set the expanded output.
                     if sql.endswith("\\G"):
                         if not pgspecial.expanded_output:
@@ -931,3 +938,6 @@ class PGExecute:
             cur.execute(query)
             for row in cur:
                 yield row[0]
+
+    def explain_prefix(self):
+        return "EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) "
