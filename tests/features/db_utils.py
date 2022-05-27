@@ -44,6 +44,19 @@ def create_cn(hostname, password, username, dbname, port):
     return cn
 
 
+def pgbouncer_available(hostname="localhost", password=None, username="postgres"):
+    cn = None
+    try:
+        cn = create_cn(hostname, password, username, "pgbouncer", 6432)
+        return True
+    except:
+        print("Pgbouncer is not available.")
+    finally:
+        if cn:
+            cn.close()
+    return False
+
+
 def drop_db(hostname="localhost", username=None, password=None, dbname=None, port=None):
     """
     Drop database.

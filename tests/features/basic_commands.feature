@@ -2,7 +2,6 @@ Feature: run the cli,
   call the help command,
   exit the cli
 
-  @wip
   Scenario: run "\?" command
      When we send "\?" command
       then we see help output
