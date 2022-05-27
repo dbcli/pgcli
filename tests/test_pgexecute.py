@@ -513,13 +513,6 @@ def test_short_host(executor):
         assert executor.short_host == "localhost1"
 
 
-class BrokenConnection:
-    """Mock a connection that failed."""
-
-    def cursor(self):
-        raise psycopg.InterfaceError("I'm broken!")
-
-
 class VirtualCursor:
     """Mock a cursor to virtual database like pgbouncer."""
 
@@ -549,7 +542,9 @@ def test_exit_without_active_connection(executor):
         aliases=(":q",),
     )
 
-    with patch.object(executor, "conn", BrokenConnection()):
+    with patch.object(
+        executor.conn, "cursor", side_effect=psycopg.InterfaceError("I'm broken!")
+    ):
         # we should be able to quit the app, even without active connection
         run(executor, "\\q", pgspecial=pgspecial)
         quit_handler.assert_called_once()
