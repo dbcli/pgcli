@@ -11,7 +11,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.10"]
+        # python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     services:
       postgres:
@@ -34,6 +35,39 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Install pgbouncer
+        run: |
+            sudo apt install pgbouncer -y
+
+            sudo chmod 666 /etc/pgbouncer/*.*
+
+            cat <<EOF > /etc/pgbouncer/userlist.txt
+            "postgres" "postgres"
+            EOF
+
+            cat <<EOF > /etc/pgbouncer/pgbouncer.ini
+            [databases]
+            * = host=localhost port=5432
+            [pgbouncer]
+            listen_port = 6432
+            listen_addr = localhost
+            auth_type = trust
+            auth_file = /etc/pgbouncer/userlist.txt
+            logfile = pgbouncer.log
+            pidfile = pgbouncer.pid
+            admin_users = postgres
+            EOF
+
+            sudo systemctl stop pgbouncer
+
+            pgbouncer -d /etc/pgbouncer/pgbouncer.ini
+
+            psql -h localhost -U postgres -p 6432 pgbouncer -c 'show help'
+
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
 
       - name: Install requirements
         run: |
