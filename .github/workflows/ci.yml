@@ -65,10 +65,6 @@ jobs:
 
             psql -h localhost -U postgres -p 6432 pgbouncer -c 'show help'
 
-      - name: Setup tmate session
-        if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
-
       - name: Install requirements
         run: |
           pip install -U pip setuptools
