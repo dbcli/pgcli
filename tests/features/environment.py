@@ -176,6 +176,10 @@ def before_scenario(context, scenario):
             currentdb = "pgbouncer"
         else:
             scenario.skip()
+    else:
+        # set env vars back to normal test database
+        os.environ["PGDATABASE"] = context.conf["dbname"]
+        os.environ["PGPORT"] = context.conf["port"]
     wrappers.run_cli(context, currentdb=currentdb)
     wrappers.wait_prompt(context)
 
