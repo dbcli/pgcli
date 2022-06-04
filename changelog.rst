@@ -1,3 +1,10 @@
+Unreleased
+==========
+
+Bug fixes:
+----------
+* Fix typos
+
 3.4.1 (2022/03/19)
 ==================
 
@@ -763,7 +770,7 @@ Internal Changes:
 * Added code coverage to the tests. (Thanks: `Irina Truong`_)
 * Run behaviorial tests as part of TravisCI (Thanks: `Irina Truong`_)
 * Upgraded prompt_toolkit version to 0.45 (Thanks: `Jonathan Slenders`_)
-* Update the minumum required version of click to 4.1.
+* Update the minimum required version of click to 4.1.
 
 0.18.0
 ======
@@ -1001,7 +1008,7 @@ Features:
 * IPython integration through `ipython-sql`_ (Thanks: `Darik Gamble`_)
   * Add an ipython magic extension to embed pgcli inside ipython.
   * Results from a pgcli query are sent back to ipython.
-* Multiple sql statments in the same line separated by semi-colon. (Thanks: https://github.com/macobo)
+* Multiple sql statements in the same line separated by semi-colon. (Thanks: https://github.com/macobo)
 
 .. _`ipython-sql`: https://github.com/catherinedevlin/ipython-sql
 
