@@ -10,6 +10,7 @@ vi_modes = {
     InputMode.INSERT: "I",
     InputMode.NAVIGATION: "N",
     InputMode.REPLACE: "R",
+    InputMode.REPLACE_SINGLE: "R",
     InputMode.INSERT_MULTIPLE: "M",
 }
 if parse_version(prompt_toolkit.__version__) >= parse_version("3.0.6"):
