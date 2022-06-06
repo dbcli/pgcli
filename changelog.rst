@@ -1,3 +1,11 @@
+Upcoming:
+=========
+
+Internal:
+---------
+
+* Port to psycopg3 (https://github.com/psycopg/psycopg). Needs a major version bump.
+
 3.4.1 (2022/03/19)
 ==================
 

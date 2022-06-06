@@ -111,7 +111,11 @@ def before_all(context):
         context.conf["dbname"],
         context.conf["port"],
     )
-
+    context.pgbouncer_available = dbutils.pgbouncer_available(
+        hostname=context.conf["host"],
+        password=context.conf["pass"],
+        username=context.conf["user"],
+    )
     context.fixture_data = fixutils.read_fixture_files()
 
     # use temporary directory as config home
@@ -164,7 +168,19 @@ def before_scenario(context, scenario):
     if scenario.name == "list databases":
         # not using the cli for that
         return
-    wrappers.run_cli(context)
+    currentdb = None
+    if "pgbouncer" in scenario.feature.tags:
+        if context.pgbouncer_available:
+            os.environ["PGDATABASE"] = "pgbouncer"
+            os.environ["PGPORT"] = "6432"
+            currentdb = "pgbouncer"
+        else:
+            scenario.skip()
+    else:
+        # set env vars back to normal test database
+        os.environ["PGDATABASE"] = context.conf["dbname"]
+        os.environ["PGPORT"] = context.conf["port"]
+    wrappers.run_cli(context, currentdb=currentdb)
     wrappers.wait_prompt(context)
 
 
@@ -172,13 +188,17 @@ def after_scenario(context, scenario):
     """Cleans up after each scenario completes."""
     if hasattr(context, "cli") and context.cli and not context.exit_sent:
         # Quit nicely.
-        if not context.atprompt:
+        if not getattr(context, "atprompt", False):
             dbname = context.currentdb
-            context.cli.expect_exact(f"{dbname}> ", timeout=15)
-        context.cli.sendcontrol("c")
-        context.cli.sendcontrol("d")
+            context.cli.expect_exact(f"{dbname}>", timeout=5)
         try:
-            context.cli.expect_exact(pexpect.EOF, timeout=15)
+            context.cli.sendcontrol("c")
+            context.cli.sendcontrol("d")
+        except Exception as x:
+            print("Failed cleanup after scenario:")
+            print(x)
+        try:
+            context.cli.expect_exact(pexpect.EOF, timeout=5)
         except pexpect.TIMEOUT:
             print(f"--- after_scenario {scenario.name}: kill cli")
             context.cli.kill(signal.SIGKILL)

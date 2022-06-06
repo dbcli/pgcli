@@ -1,11 +1,6 @@
-import platform
-import warnings
-
 from configobj import ConfigObj, ParseError
 from pgspecial.namedqueries import NamedQueries
 from .config import skip_initial_comment
-
-warnings.filterwarnings("ignore", category=UserWarning, module="psycopg2")
 
 import atexit
 import os
@@ -22,7 +17,6 @@ import itertools
 import platform
 from time import time, sleep
 from typing import Optional
-from urllib.parse import urlparse
 
 keyring = None  # keyring will be loaded later
 
@@ -80,11 +74,9 @@ except ImportError:
     from urllib.parse import urlparse, unquote, parse_qs
 
 from getpass import getuser
-from psycopg2 import OperationalError, InterfaceError
 
-# pg3: https://www.psycopg.org/psycopg3/docs/api/conninfo.html
-from psycopg2.extensions import make_dsn, parse_dsn
-import psycopg2
+from psycopg import OperationalError, InterfaceError
+from psycopg.conninfo import make_conninfo, conninfo_to_dict
 
 from collections import namedtuple
 
@@ -537,7 +529,7 @@ class PGCli:
         )
 
     def connect_uri(self, uri):
-        kwargs = psycopg2.extensions.parse_dsn(uri)
+        kwargs = conninfo_to_dict(uri)
         remap = {"dbname": "database", "password": "passwd"}
         kwargs = {remap.get(k, k): v for k, v in kwargs.items()}
         self.connect(**kwargs)
@@ -585,7 +577,7 @@ class PGCli:
         if not passwd and keyring:
 
             try:
-                passwd = keyring.get_password("pgcli", key)
+                passwd = keyring.get_password("pgcli", key) or ""
             except (RuntimeError, keyring.errors.InitError) as e:
                 click.secho(
                     keyring_error_message.format(
@@ -608,7 +600,7 @@ class PGCli:
             return False
 
         if dsn:
-            parsed_dsn = parse_dsn(dsn)
+            parsed_dsn = conninfo_to_dict(dsn)
             if "host" in parsed_dsn:
                 host = parsed_dsn["host"]
             if "port" in parsed_dsn:
@@ -655,7 +647,7 @@ class PGCli:
             port = self.ssh_tunnel.local_bind_ports[0]
 
             if dsn:
-                dsn = make_dsn(dsn, host=host, port=port)
+                dsn = make_conninfo(dsn, host=host, port=port)
 
         # Attempt to connect to the database.
         # Note that passwd may be empty on the first attempt. If connection
@@ -1208,7 +1200,7 @@ class PGCli:
 
 
 @click.command()
-# Default host is '' so psycopg2 can default to either localhost or unix socket
+# Default host is '' so psycopg can default to either localhost or unix socket
 @click.option(
     "-h",
     "--host",
@@ -1606,18 +1598,11 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         if hasattr(cur, "description"):
             column_types = []
             for d in cur.description:
-                # pg3: type_name = cur.adapters.types[d.type_code].name
-                if (
-                    # pg3: type_name in ("numeric", "float4", "float8")
-                    d[1] in psycopg2.extensions.DECIMAL.values
-                    or d[1] in psycopg2.extensions.FLOAT.values
-                ):
+                col_type = cur.adapters.types.get(d.type_code)
+                type_name = col_type.name if col_type else None
+                if type_name in ("numeric", "float4", "float8"):
                     column_types.append(float)
-                if (
-                    # pg3: type_name in ("int2", "int4", "int8")
-                    d[1] == psycopg2.extensions.INTEGER.values
-                    or d[1] in psycopg2.extensions.LONGINTEGER.values
-                ):
+                if type_name in ("int2", "int4", "int8"):
                     column_types.append(int)
                 else:
                     column_types.append(str)
@@ -1634,7 +1619,11 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
             and headers
         ):
             formatted = formatter.format_output(
-                cur, headers, format_name="vertical", column_types=None, **output_kwargs
+                cur,
+                headers,
+                format_name="vertical",
+                column_types=column_types,
+                **output_kwargs,
             )
             if isinstance(formatted, str):
                 formatted = iter(formatted.splitlines())

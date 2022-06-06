@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-import psycopg2
+import psycopg
 import pytest
 from unittest.mock import patch, MagicMock
 from pgspecial.main import PGSpecial, NO_QUERY
@@ -428,7 +428,7 @@ def test_describe_special(executor, command, verbose, pattern, pgspecial):
 @dbtest
 @pytest.mark.parametrize("sql", ["invalid sql", "SELECT 1; select error;"])
 def test_raises_with_no_formatter(executor, sql):
-    with pytest.raises(psycopg2.ProgrammingError):
+    with pytest.raises(psycopg.ProgrammingError):
         list(executor.run(sql))
 
 
@@ -513,13 +513,6 @@ def test_short_host(executor):
         assert executor.short_host == "localhost1"
 
 
-class BrokenConnection:
-    """Mock a connection that failed."""
-
-    def cursor(self):
-        raise psycopg2.InterfaceError("I'm broken!")
-
-
 class VirtualCursor:
     """Mock a cursor to virtual database like pgbouncer."""
 
@@ -549,13 +542,15 @@ def test_exit_without_active_connection(executor):
         aliases=(":q",),
     )
 
-    with patch.object(executor, "conn", BrokenConnection()):
+    with patch.object(
+        executor.conn, "cursor", side_effect=psycopg.InterfaceError("I'm broken!")
+    ):
         # we should be able to quit the app, even without active connection
         run(executor, "\\q", pgspecial=pgspecial)
         quit_handler.assert_called_once()
 
         # an exception should be raised when running a query without active connection
-        with pytest.raises(psycopg2.InterfaceError):
+        with pytest.raises(psycopg.InterfaceError):
             run(executor, "select 1", pgspecial=pgspecial)
 
 
