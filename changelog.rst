@@ -1,10 +1,15 @@
-TBD
-====
+Upcoming:
+=========
 
 Bug fixes:
 ----------
 
 * Fix [#1226](https://github.com/dbcli/pgcli/issues/1226) vi-mode crash when pressing `r`.
+
+Internal:
+---------
+
+* Port to psycopg3 (https://github.com/psycopg/psycopg). Needs a major version bump.
 
 3.4.1 (2022/03/19)
 ==================

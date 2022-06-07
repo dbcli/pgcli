@@ -1,5 +1,4 @@
-from psycopg2 import connect
-from psycopg2.extensions import AsIs
+from psycopg import connect
 
 
 def create_db(
@@ -17,13 +16,10 @@ def create_db(
     """
     cn = create_cn(hostname, password, username, "postgres", port)
 
-    # ISOLATION_LEVEL_AUTOCOMMIT = 0
-    # Needed for DB creation.
-    cn.set_isolation_level(0)
-
+    cn.autocommit = True
     with cn.cursor() as cr:
-        cr.execute("drop database if exists %s", (AsIs(dbname),))
-        cr.execute("create database %s", (AsIs(dbname),))
+        cr.execute(f"drop database if exists {dbname}")
+        cr.execute(f"create database {dbname}")
 
     cn.close()
 
@@ -41,11 +37,24 @@ def create_cn(hostname, password, username, dbname, port):
     :return: psycopg2.connection
     """
     cn = connect(
-        host=hostname, user=username, database=dbname, password=password, port=port
+        host=hostname, user=username, dbname=dbname, password=password, port=port
     )
 
-    print(f"Created connection: {cn.dsn}.")
+    print(f"Created connection: {cn.info.get_parameters()}.")
     return cn
+
+
+def pgbouncer_available(hostname="localhost", password=None, username="postgres"):
+    cn = None
+    try:
+        cn = create_cn(hostname, password, username, "pgbouncer", 6432)
+        return True
+    except:
+        print("Pgbouncer is not available.")
+    finally:
+        if cn:
+            cn.close()
+    return False
 
 
 def drop_db(hostname="localhost", username=None, password=None, dbname=None, port=None):
@@ -58,12 +67,11 @@ def drop_db(hostname="localhost", username=None, password=None, dbname=None, por
     """
     cn = create_cn(hostname, password, username, "postgres", port)
 
-    # ISOLATION_LEVEL_AUTOCOMMIT = 0
     # Needed for DB drop.
-    cn.set_isolation_level(0)
+    cn.autocommit = True
 
     with cn.cursor() as cr:
-        cr.execute("drop database if exists %s", (AsIs(dbname),))
+        cr.execute(f"drop database if exists {dbname}")
 
     close_cn(cn)
 
@@ -74,5 +82,6 @@ def close_cn(cn=None):
     :param connection: psycopg2.connection
     """
     if cn:
+        cn_params = cn.info.get_parameters()
         cn.close()
-        print(f"Closed connection: {cn.dsn}.")
+        print(f"Closed connection: {cn_params}.")
