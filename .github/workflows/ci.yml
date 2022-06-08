@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     services:
       postgres:
@@ -35,6 +35,35 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install pgbouncer
+        run: |
+            sudo apt install pgbouncer -y
+
+            sudo chmod 666 /etc/pgbouncer/*.*
+
+            cat <<EOF > /etc/pgbouncer/userlist.txt
+            "postgres" "postgres"
+            EOF
+
+            cat <<EOF > /etc/pgbouncer/pgbouncer.ini
+            [databases]
+            * = host=localhost port=5432
+            [pgbouncer]
+            listen_port = 6432
+            listen_addr = localhost
+            auth_type = trust
+            auth_file = /etc/pgbouncer/userlist.txt
+            logfile = pgbouncer.log
+            pidfile = pgbouncer.pid
+            admin_users = postgres
+            EOF
+
+            sudo systemctl stop pgbouncer
+
+            pgbouncer -d /etc/pgbouncer/pgbouncer.ini
+
+            psql -h localhost -U postgres -p 6432 pgbouncer -c 'show help'
+
       - name: Install requirements
         run: |
           pip install -U pip setuptools
@@ -56,8 +85,8 @@ jobs:
         run: rst2html.py --halt=warning changelog.rst >/dev/null
 
       - name: Run Black
-        run: pip install black && black --check .
-        if: matrix.python-version == '3.6'
+        run: black --check .
+        if: matrix.python-version == '3.7'
 
       - name: Coverage
         run: |
