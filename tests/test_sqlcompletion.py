@@ -844,7 +844,7 @@ def test_alter_column_type_suggests_types():
         "CREATE FUNCTION foo (bar INT, baz ",
         "SELECT * FROM foo() AS bar (baz ",
         "SELECT * FROM foo() AS bar (baz INT, qux ",
-        # make sure this doesnt trigger special completion
+        # make sure this doesn't trigger special completion
         "CREATE TABLE foo (dt d",
     ],
 )

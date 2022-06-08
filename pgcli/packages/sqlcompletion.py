@@ -380,7 +380,7 @@ def suggest_based_on_last_token(token, stmt):
             )
 
         elif p.token_first().value.lower() == "select":
-            # If the lparen is preceeded by a space chances are we're about to
+            # If the lparen is preceded by a space chances are we're about to
             # do a sub-select.
             if last_word(stmt.text_before_cursor, "all_punctuations").startswith("("):
                 return (Keyword(),)

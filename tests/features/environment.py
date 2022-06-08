@@ -149,7 +149,7 @@ def after_all(context):
         context.conf["port"],
     )
 
-    # Remove temp config direcotry
+    # Remove temp config directory
     shutil.rmtree(context.env_config_home)
 
     # Restore env vars.

@@ -4,7 +4,7 @@ from unittest.mock import Mock
 from pgcli.main import PGCli
 
 
-# We need this fixtures beacause we need PGCli object to be created
+# We need this fixtures because we need PGCli object to be created
 # after test collection so it has config loaded from temp directory
 
 

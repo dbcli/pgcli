@@ -139,7 +139,7 @@ def extract_table_identifiers(token_stream, allow_functions=True):
 
 # extract_tables is inspired from examples in the sqlparse lib.
 def extract_tables(sql):
-    """Extract the table names from an SQL statment.
+    """Extract the table names from an SQL statement.
 
     Returns a list of TableReference namedtuples
 
