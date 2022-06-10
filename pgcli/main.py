@@ -18,8 +18,6 @@ import platform
 from time import time, sleep
 from typing import Optional
 
-keyring = None  # keyring will be loaded later
-
 from cli_helpers.tabular_output import TabularOutputFormatter
 from cli_helpers.tabular_output.preprocessors import align_decimals, format_numbers
 from cli_helpers.utils import strip_ansi
@@ -49,6 +47,7 @@ from pygments.lexers.sql import PostgresLexer
 from pgspecial.main import PGSpecial, NO_QUERY, PAGER_OFF, PAGER_LONG_OUTPUT
 import pgspecial as special
 
+from . import auth
 from .pgcompleter import PGCompleter
 from .pgtoolbar import create_toolbar_tokens_func
 from .pgstyle import style_factory, style_factory_output
@@ -79,8 +78,6 @@ from psycopg import OperationalError, InterfaceError
 from psycopg.conninfo import make_conninfo, conninfo_to_dict
 
 from collections import namedtuple
-
-from textwrap import dedent
 
 try:
     import sshtunnel
@@ -247,7 +244,7 @@ class PGCli:
         self.on_error = c["main"]["on_error"].upper()
         self.decimal_format = c["data_formats"]["decimal"]
         self.float_format = c["data_formats"]["float"]
-        self.initialize_keyring()
+        auth.keyring_initialize(c["main"].as_bool("keyring"), logger=self.logger)
         self.show_bottom_toolbar = c["main"].as_bool("show_bottom_toolbar")
 
         self.pgspecial.pset_pager(
@@ -502,19 +499,6 @@ class PGCli:
         pgspecial_logger.addHandler(handler)
         pgspecial_logger.setLevel(log_level)
 
-    def initialize_keyring(self):
-        global keyring
-
-        keyring_enabled = self.config["main"].as_bool("keyring")
-        if keyring_enabled:
-            # Try best to load keyring (issue #1041).
-            import importlib
-
-            try:
-                keyring = importlib.import_module("keyring")
-            except Exception as e:  # ImportError for Python 2, ModuleNotFoundError for Python 3
-                self.logger.warning("import keyring failed: %r.", e)
-
     def connect_dsn(self, dsn, **kwargs):
         self.connect(dsn=dsn, **kwargs)
 
@@ -557,18 +541,6 @@ class PGCli:
         if not self.force_passwd_prompt and not passwd:
             passwd = os.environ.get("PGPASSWORD", "")
 
-        # Find password from store
-        key = f"{user}@{host}"
-        keyring_error_message = dedent(
-            """\
-            {}
-            {}
-            To remove this message do one of the following:
-            - prepare keyring as described at: https://keyring.readthedocs.io/en/stable/
-            - uninstall keyring: pip uninstall keyring
-            - disable keyring in our configuration: add keyring = False to [main]"""
-        )
-
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
         # no-password exception.
@@ -579,18 +551,10 @@ class PGCli:
                 "Password for %s" % user, hide_input=True, show_default=False, type=str
             )
 
-        if not passwd and keyring:
+        key = f"{user}@{host}"
 
-            try:
-                passwd = keyring.get_password("pgcli", key) or ""
-            except (RuntimeError, keyring.errors.InitError) as e:
-                click.secho(
-                    keyring_error_message.format(
-                        "Load your password from keyring returned:", str(e)
-                    ),
-                    err=True,
-                    fg="red",
-                )
+        if not passwd and auth.keyring:
+            passwd = auth.keyring_get_password(key)
 
         def should_ask_for_password(exc):
             # Prompt for a password after 1st attempt to connect
@@ -674,17 +638,8 @@ class PGCli:
                     )
                 else:
                     raise e
-            if passwd and keyring:
-                try:
-                    keyring.set_password("pgcli", key, passwd)
-                except (RuntimeError, keyring.errors.KeyringError) as e:
-                    click.secho(
-                        keyring_error_message.format(
-                            "Set password in keyring returned:", str(e)
-                        ),
-                        err=True,
-                        fg="red",
-                    )
+            if passwd and auth.keyring:
+                auth.keyring_set_password(key, passwd)
 
         except Exception as e:  # Connecting to a database could fail.
             self.logger.debug("Database connection failed: %r.", e)
