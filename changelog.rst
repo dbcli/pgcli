@@ -1,6 +1,11 @@
 Upcoming:
 =========
 
+Bug fixes:
+----------
+
+* Fix exception when retrieving password from keyring ([issue 1338](https://github.com/dbcli/pgcli/issues/1338)).
+
 Internal:
 ---------
 
