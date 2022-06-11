@@ -202,6 +202,11 @@ class PGCli:
         self.multi_line = c["main"].as_bool("multi_line")
         self.multiline_mode = c["main"].get("multi_line_mode", "psql")
         self.vi_mode = c["main"].as_bool("vi")
+        alternate_editor_text = c["main"]["alternate_editor"]
+        if alternate_editor_text == "default":
+            self.alternate_editor = None
+        else:
+            self.alternate_editor = alternate_editor_text
         self.auto_expand = auto_vertical_output or c["main"].as_bool("auto_expand")
         self.expanded_output = c["main"].as_bool("expand")
         self.pgspecial.timing_enabled = c["main"].as_bool("timing")
@@ -695,7 +700,7 @@ class PGCli:
         by a '\e'. The reason for a while loop is because a user
         might edit a query multiple times.
         For eg:
-        "select * from \e"<enter> to edit it in vim, then come
+        "select * from \e"<enter> to edit it in an editor, then come
         back to the prompt with the edited query "select * from
         blah where q = 'abc'\e" to edit it again.
         :param text: Document
@@ -713,7 +718,7 @@ class PGCli:
                     query = self.pgexecute.view_definition(spec)
                 elif editor_command == "\\ef":
                     query = self.pgexecute.function_definition(spec)
-            sql, message = special.open_external_editor(filename, sql=query)
+            sql, message = special.open_external_editor(filename, sql=query, editor=self.alternate_editor)
             if message:
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)

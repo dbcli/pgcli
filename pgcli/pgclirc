@@ -110,6 +110,12 @@ syntax_style = default
 # for end are available in the REPL.
 vi = False
 
+# Alternate Editor
+# When set to a non default value, the chosen editor will be used when opening an
+# editor with \e. Otherwise, if default is selected, the enviroment variable VISUAL
+# is used. If VISUAL is blank then enviroment variable EDITOR is used.
+alternate_editor = default
+
 # Error handling
 # When one of multiple SQL statements causes an error, choose to either
 # continue executing the remaining statements, or stopping
