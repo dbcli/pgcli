@@ -673,7 +673,9 @@ class PGCli:
                     query = self.pgexecute.view_definition(spec)
                 elif editor_command == "\\ef":
                     query = self.pgexecute.function_definition(spec)
-            sql, message = special.open_external_editor(filename, sql=query, editor=self.alternate_editor)
+            sql, message = special.open_external_editor(
+                filename, sql=query, editor=self.alternate_editor
+            )
             if message:
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
