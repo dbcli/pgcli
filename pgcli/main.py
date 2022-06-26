@@ -512,8 +512,8 @@ class PGCli:
             passwd=service_config.get("password"),
         )
 
-    def connect_uri(self, uri):
-        kwargs = conninfo_to_dict(uri)
+    def connect_uri(self, uri, **kwargs):
+        kwargs = conninfo_to_dict(uri, **kwargs)
         remap = {"dbname": "database", "password": "passwd"}
         kwargs = {remap.get(k, k): v for k, v in kwargs.items()}
         self.connect(**kwargs)
@@ -1269,7 +1269,9 @@ class PGCli:
 )
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
+@click.pass_context
 def cli(
+    ctx,
     dbname,
     username_opt,
     host,
@@ -1385,7 +1387,21 @@ def cli(
                 fg="red",
             )
             exit(1)
-        pgcli.connect_uri(dsn_config)
+        kwargs = {
+            "host": host,
+            "port": port,
+            "username_opt": username_opt,
+            "dbname_opt": dbname_opt,
+        }
+        remap = {"username_opt": "user", "dbname_opt": "dbname"}
+        kwargs = {
+            remap.get(k, k): v
+            for k, v in kwargs.items()
+            if ctx.get_parameter_source(k) is click.core.ParameterSource.COMMANDLINE
+        }
+        if prompt_passwd:
+            kwargs["password"] = ""
+        pgcli.connect_uri(dsn_config, **kwargs)
         pgcli.dsn_alias = dsn
     elif "://" in database:
         pgcli.connect_uri(database)
