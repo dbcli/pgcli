@@ -42,20 +42,22 @@ It is highly recommended to use virtualenv for development. If you don't know
 what a virtualenv is, `this guide <http://docs.python-guide.org/en/latest/dev/virtualenvs/#virtual-environments>`_
 will help you get started.
 
-Create a virtualenv (let's call it pgcli-dev). Activate it:
+Create a virtualenv (let's call it pgcli-dev) and activate it:
 
 ::
 
-    source ./pgcli-dev/bin/activate
+    $ virtualenv pgcli-dev
+    $ source pgcli-dev/bin/activate
 
-Once the virtualenv is activated, `cd` into the local clone of pgcli folder
-and install pgcli using pip as follows:
+Once the virtualenv is activated, you may first need to update a few of its
+packages to their latest versions:
 
 ::
+    $ pip install --upgrade pip setuptools wheel
 
-    $ pip install --editable .
+Next, `cd` into your local clone of pgcli and run:
 
-    or
+::
 
     $ pip install -e .
 
