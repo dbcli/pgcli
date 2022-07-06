@@ -110,6 +110,10 @@ syntax_style = default
 # for end are available in the REPL.
 vi = False
 
+# Enable automatic commits after each query. When disabled, queries outside of a
+# transaction will start a new transaction, but the user will need to COMMIT manually.
+autocommit = True
+
 # Error handling
 # When one of multiple SQL statements causes an error, choose to either
 # continue executing the remaining statements, or stopping

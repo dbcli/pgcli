@@ -284,6 +284,7 @@ class PGExecute:
         exception_formatter=None,
         on_error_resume=False,
         explain_mode=False,
+        autocommit=True,
     ):
         """Execute the sql in the database and return the results.
 
@@ -296,10 +297,17 @@ class PGExecute:
         :param on_error_resume: Bool. If true, queries following an exception
                (assuming exception_formatter has been supplied) continue to
                execute.
+        :param autocommit: Bool. Set PostgreSQL's autocommit mode to the given
+                value before executing the query.
 
         :return: Generator yielding tuples containing
                  (title, rows, headers, status, query, success, is_special)
         """
+
+        # Set autocommit mode before running the query, but we cannot do so while 
+        # in a transaction.
+        if self.conn.info.transaction_status == psycopg.pq.TransactionStatus.IDLE:
+            self.conn.autocommit = autocommit
 
         # Remove spaces and EOL
         statement = statement.strip()
@@ -400,8 +408,32 @@ class PGExecute:
             res = self.conn.pgconn.exec_(split_sql.encode())
             return title, None, None, res.command_status.decode()
 
+        
         cur = self.conn.cursor()
-        cur.execute(split_sql)
+        if self.conn.info.transaction_status != psycopg.pq.TransactionStatus.IDLE:
+
+            # Create a savepoint that we'll revert to in case the user query fails
+            cur.execute('SAVEPOINT pgcli_error_rollback')
+            # Execute the user query
+            try:
+                cur.execute(split_sql)
+            except psycopg.DatabaseError:
+                # The user query failed. Let's rollback to our savepoint, and throw.
+                with self.conn.cursor() as tmp_cur:
+                    tmp_cur.execute('ROLLBACK TO pgcli_error_rollback')
+                raise
+            # The user query succeeded. Release our savepoint.
+            try:
+                with self.conn.cursor() as tmp_cur:
+                    tmp_cur.execute('RELEASE pgcli_error_rollback')
+            except (psycopg.errors.InvalidSavepointSpecification, psycopg.errors.NoActiveSqlTransaction):
+                # Our savepoint was deleted by the user executing ROLLBACK or COMMIT.
+                # Our previous (RELEASE savepoint) query started a new transaction that
+                # is now in an 'aborted' state. Let's ROLLBACK that transaction.
+                with self.conn.cursor() as tmp_cur:
+                    tmp_cur.execute('ROLLBACK')
+        else:
+            cur.execute(split_sql)
 
         # cur.description will be None for operations that do not return
         # rows.
