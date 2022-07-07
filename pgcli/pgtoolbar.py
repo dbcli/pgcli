@@ -33,17 +33,14 @@ def create_toolbar_tokens_func(pgcli):
             result.append(("class:bottom-toolbar.off", "[F2] Smart Completion: OFF  "))
 
         if pgcli.multi_line:
-            result.append(("class:bottom-toolbar.on", "[F3] Multiline: ON  "))
-        else:
-            result.append(("class:bottom-toolbar.off", "[F3] Multiline: OFF  "))
-
-        if pgcli.multi_line:
             if pgcli.multiline_mode == "safe":
-                result.append(("class:bottom-toolbar", " ([Esc] [Enter] to execute]) "))
+                result.append(("class:bottom-toolbar.on", "[F3] Multiline: ON (;)  "))
             else:
                 result.append(
-                    ("class:bottom-toolbar", " (Semi-colon [;] will end the line) ")
+                    ("class:bottom-toolbar.on", "[F3] Multiline: ON (alt ⏎)  ")
                 )
+        else:
+            result.append(("class:bottom-toolbar.off", "[F3] Multiline: OFF  "))
 
         if pgcli.vi_mode:
             result.append(
@@ -53,27 +50,21 @@ def create_toolbar_tokens_func(pgcli):
             result.append(("class:bottom-toolbar", "[F4] Emacs-mode  "))
 
         if pgcli.explain_mode:
-            result.append(("class:bottom-toolbar", "[F5] Explain: ON  "))
+            result.append(("class:bottom-toolbar.on", "[F5] Explain: ON  "))
         else:
-            result.append(("class:bottom-toolbar", "[F5] Explain: OFF  "))
+            result.append(("class:bottom-toolbar.off", "[F5] Explain: OFF  "))
 
         if pgcli.autocommit:
-            result.append(("class:bottom-toolbar", "[F6] Autocommit: ON "))
+            result.append(("class:bottom-toolbar.on", "[F6] Autocommit: ON  "))
         else:
-            result.append(("class:bottom-toolbar", "[F6] Autocommit: OFF "))
-
-        if pgcli.pgexecute.failed_transaction():
-            result.append(
-                ("class:bottom-toolbar.transaction.failed", "     Failed transaction")
-            )
-
-        if pgcli.pgexecute.valid_transaction():
-            result.append(
-                ("class:bottom-toolbar.transaction.valid", "     Transaction")
-            )
+            result.append(("class:bottom-toolbar.off", "[F6] Autocommit: OFF  "))
 
         if pgcli.completion_refresher.is_refreshing():
-            result.append(("class:bottom-toolbar", "     Refreshing completions..."))
+            result.append(("class:bottom-toolbar", "<REFRESHING>"))
+        elif pgcli.pgexecute.failed_transaction():
+            result.append(("class:bottom-toolbar.transaction.failed", "<TRANSACTION>"))
+        elif pgcli.pgexecute.valid_transaction():
+            result.append(("class:bottom-toolbar.transaction.valid", "<TRANSACTION>"))
 
         return result
 
