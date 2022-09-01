@@ -304,7 +304,7 @@ def test_execute_from_commented_file_that_executes_another_file(
 
 @dbtest
 def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
-    # https://github.com/dbcli/pgcli/issues/1336
+    # https://github.com/dbcli/pgcli/issues/1362
 
     # just some base caes that should work also
     statement = "--comment\nselect now();"
