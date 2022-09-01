@@ -199,6 +199,7 @@ class PGCli:
         self.multi_line = c["main"].as_bool("multi_line")
         self.multiline_mode = c["main"].get("multi_line_mode", "psql")
         self.vi_mode = c["main"].as_bool("vi")
+        self.autocommit = c["main"].as_bool("autocommit")
         self.auto_expand = auto_vertical_output or c["main"].as_bool("auto_expand")
         self.expanded_output = c["main"].as_bool("expand")
         self.pgspecial.timing_enabled = c["main"].as_bool("timing")
@@ -431,6 +432,7 @@ class PGCli:
             self.pgspecial,
             on_error_resume=on_error_resume,
             explain_mode=self.explain_mode,
+            autocommit=self.autocommit,
         )
 
     def write_to_file(self, pattern, **_):
@@ -958,6 +960,7 @@ class PGCli:
             exception_formatter,
             on_error_resume,
             explain_mode=self.explain_mode,
+            autocommit=self.autocommit,
         )
 
         is_special = None
