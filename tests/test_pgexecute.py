@@ -281,8 +281,11 @@ def test_execute_from_file_io_error(os, executor, pgspecial):
     assert success == False
     assert is_special == True
 
+
 @dbtest
-def test_execute_from_commented_file_that_executes_another_file(executor, pgspecial, tmpdir):
+def test_execute_from_commented_file_that_executes_another_file(
+    executor, pgspecial, tmpdir
+):
     # https://github.com/dbcli/pgcli/issues/1336
     sqlfile1 = tmpdir.join("test01.sql")
     sqlfile1.write("-- asdf \n\\h")
@@ -296,7 +299,8 @@ def test_execute_from_commented_file_that_executes_another_file(executor, pgspec
     statement = "--comment\n\\h"
     result = run(executor, statement, pgspecial=cli.pgspecial)
     assert result != None
-    assert result[0].find("ALTER TABLE") 
+    assert result[0].find("ALTER TABLE")
+
 
 @dbtest
 def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
@@ -316,7 +320,7 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     statement = "/*comment\ncomment line2*/\nselect now();"
     result = run(executor, statement, pgspecial=pgspecial)
     assert result != None
-    assert result[1].find("now") >= 0 
+    assert result[1].find("now") >= 0
 
     statement = "--comment\n\\h"
     result = run(executor, statement, pgspecial=pgspecial)

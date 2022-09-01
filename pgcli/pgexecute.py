@@ -308,22 +308,22 @@ class PGExecute:
 
         # sql parse doesn't split on a comment first + special
         # so we're going to do it
-        
-        sqltemp=[]
-        sqlarr=[]
+
+        sqltemp = []
+        sqlarr = []
 
         if statement.startswith("--"):
-            sqltemp=statement.split("\n")
+            sqltemp = statement.split("\n")
             sqlarr.append(sqltemp[0])
             for i in sqlparse.split(sqltemp[1]):
                 sqlarr.append(i)
         elif statement.startswith("/*"):
-            sqltemp=statement.split("*/")
-            sqltemp[0]=sqltemp[0]+"*/"
+            sqltemp = statement.split("*/")
+            sqltemp[0] = sqltemp[0] + "*/"
             for i in sqlparse.split(sqltemp[1]):
                 sqlarr.append(i)
         else:
-            sqlarr = sqlparse.split(statement)        
+            sqlarr = sqlparse.split(statement)
 
         # run each sql query
         for sql in sqlarr:
