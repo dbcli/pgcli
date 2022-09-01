@@ -5,6 +5,7 @@ Bug fixes:
 ----------
 
 * Fix exception when retrieving password from keyring ([issue 1338](https://github.com/dbcli/pgcli/issues/1338)).
+* Fix using comments with special commands ([issue 1362](https://github.com/dbcli/pgcli/issues/1362)).
 
 Internal:
 ---------
