@@ -306,8 +306,27 @@ class PGExecute:
         if not statement:  # Empty string
             yield None, None, None, None, statement, False, False
 
-        # Split the sql into separate queries and run each one.
-        for sql in sqlparse.split(statement):
+        # sql parse doesn't split on a comment first + special
+        # so we're going to do it
+        
+        sqltemp=[]
+        sqlarr=[]
+
+        if statement.startswith("--"):
+            sqltemp=statement.split("\n")
+            sqlarr.append(sqltemp[0])
+            for i in sqlparse.split(sqltemp[1]):
+                sqlarr.append(i)
+        elif statement.startswith("/*"):
+            sqltemp=statement.split("*/")
+            sqltemp[0]=sqltemp[0]+"*/"
+            for i in sqlparse.split(sqltemp[1]):
+                sqlarr.append(i)
+        else:
+            sqlarr = sqlparse.split(statement)        
+
+        # run each sql query
+        for sql in sqlarr:
             # Remove spaces, eol and semi-colons.
             sql = sql.rstrip(";")
             sql = sqlparse.format(sql, strip_comments=False).strip()
