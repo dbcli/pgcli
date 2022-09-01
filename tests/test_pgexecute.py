@@ -2,6 +2,7 @@ from textwrap import dedent
 
 import psycopg
 import pytest
+import re
 from unittest.mock import patch, MagicMock
 from pgspecial.main import PGSpecial, NO_QUERY
 from utils import run, dbtest, requires_json, requires_jsonb
@@ -280,6 +281,73 @@ def test_execute_from_file_io_error(os, executor, pgspecial):
     assert status == "test"
     assert success == False
     assert is_special == True
+
+@dbtest
+def test_execute_from_commented_file_that_executes_another_file(executor, pgspecial, tmpdir):
+    # https://github.com/dbcli/pgcli/issues/1336
+    sqlfile1 = tmpdir.join("test01.sql")
+    sqlfile1.write("-- asdf \n\\h")
+    sqlfile2 = tmpdir.join("test00.sql")
+    sqlfile2.write("--An useless comment;\nselect now();\n-- another useless comment")
+
+    rcfile = str(tmpdir.join("rcfile"))
+    print(rcfile)
+    cli = PGCli(pgexecute=executor, pgclirc_file=rcfile)
+    assert cli != None
+    statement = "--comment\n\\h"
+    result = run(executor, statement, pgspecial=cli.pgspecial)
+    assert result != None
+    assert result[0].find("ALTER TABLE") 
+
+@dbtest
+def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
+    # https://github.com/dbcli/pgcli/issues/1336
+
+    # just some base caes that should work also
+    statement = "--comment\nselect now();"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("now") >= 0
+
+    statement = "/*comment*/\nselect now();"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("now") >= 0
+
+    statement = "/*comment\ncomment line2*/\nselect now();"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("now") >= 0 
+
+    statement = "--comment\n\\h"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
+
+    statement = "/*comment*/\n\h;"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
+
+    statement = "    /*comment*/\n\h;"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
+
+    statement = "/*comment\ncomment line2*/\n\h;"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
+
+    statement = "          /*comment\ncomment line2*/\n\h;"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
 
 
 @dbtest
