@@ -2,7 +2,6 @@ from textwrap import dedent
 
 import psycopg
 import pytest
-import re
 from unittest.mock import patch, MagicMock
 from pgspecial.main import PGSpecial, NO_QUERY
 from utils import run, dbtest, requires_json, requires_jsonb
