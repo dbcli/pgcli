@@ -1,6 +1,12 @@
 Upcoming:
 =========
 
+Features:
+---------
+
+* Toggle autocommit mode using F6 or a config setting.
+* When in a transaction, rollback erring queries without aborting the transaction. ('On error rollback'.)
+
 Bug fixes:
 ----------
 
