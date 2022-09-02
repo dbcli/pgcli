@@ -27,6 +27,11 @@ install_requirements = [
 if platform.system() != "Windows" and not platform.system().startswith("CYGWIN"):
     install_requirements.append("setproctitle >= 1.1.9")
 
+# Windows will require the binary psycopg to run pgcli
+if platform.system() == "Windows":
+    install_requirements.append("psycopg-binary >= 3.0.14")
+
+
 setup(
     name="pgcli",
     author="Pgcli Core Team",
