@@ -49,6 +49,10 @@ Create a virtualenv (let's call it pgcli-dev) and activate it:
     $ virtualenv pgcli-dev
     $ source pgcli-dev/bin/activate
 
+    or
+
+    .\pgcli-dev\scripts\activate (for Windows)
+
 Once the virtualenv is activated, you may first need to update a few of its
 packages to their latest versions:
 
@@ -74,6 +78,37 @@ Adding PostgreSQL Special (Meta) Commands
 If you want to work on adding new meta-commands (such as `\dp`, `\ds`, `dy`),
 you need to contribute to `pgspecial <https://github.com/dbcli/pgspecial/>`_
 project.
+
+Visual Studio Code Debugging
+-----------------------------
+To set up Visual Studio Code to debug pgcli requires a launch.json file.
+
+Within the project, create a file: .vscode\\launch.json like below.
+
+::
+
+    {
+        // Use IntelliSense to learn about possible attributes.
+        // Hover to view descriptions of existing attributes.
+        // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Python: Module",
+                "type": "python",
+                "request": "launch",
+                "module": "pgcli.main",
+                "justMyCode": false,
+                "console": "externalTerminal",
+                "env": {
+                    "PGUSER": "postgres",
+                    "PGPASS": "password",
+                    "PGHOST": "localhost",
+                    "PGPORT": "5432"
+                }
+            }
+        ]
+    }
 
 Building RPM and DEB packages
 -----------------------------
@@ -147,6 +182,7 @@ service for the changes to take effect.
     $ sudo service postgresql restart
 
 After that, tests in the ``/pgcli/tests`` directory can be run with:
+(Note that these ``behave`` tests do not currently work when developing on Windows due to pexpect incompatibility.)
 
 ::
 

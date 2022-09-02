@@ -11,6 +11,8 @@ Bug fixes:
 ----------
 
 * Fix exception when retrieving password from keyring ([issue 1338](https://github.com/dbcli/pgcli/issues/1338)).
+* Fix using comments with special commands ([issue 1362](https://github.com/dbcli/pgcli/issues/1362)).
+* Small improvements to the Windows developer experience
 
 Internal:
 ---------
@@ -25,6 +27,8 @@ Bug fixes:
 ----------
 
 * Fix the bug with Redshift not displaying word count in status ([related issue](https://github.com/dbcli/pgcli/issues/1320)).
+* Show the error status for CSV output format. 
+
 
 3.4.0 (2022/02/21)
 ==================
