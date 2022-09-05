@@ -13,6 +13,7 @@ Internal:
 
 * Port to psycopg3 (https://github.com/psycopg/psycopg). Needs a major version bump.
 * Fix typos
+* Add config option `alternate_editor` so user can specify editor other than `$VISUAL` or `$EDITOR`.
 
 3.4.1 (2022/03/19)
 ==================
