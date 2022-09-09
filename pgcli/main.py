@@ -62,6 +62,7 @@ from .config import (
     get_config_filename,
 )
 from .key_bindings import pgcli_bindings
+from .packages.formatter.sqlformatter import register_new_formatter
 from .packages.prompt_utils import confirm_destructive_query
 from .__init__ import __version__
 
@@ -282,6 +283,11 @@ class PGCli:
         self.ssh_tunnel_config = c.get("ssh tunnels")
         self.ssh_tunnel_url = ssh_tunnel_url
         self.ssh_tunnel = None
+
+        # formatter setup
+        self.formatter = TabularOutputFormatter(
+            format_name=c['main']['table_format'])
+        register_new_formatter(self.formatter)
 
     def quit(self):
         raise PgCliQuitError
@@ -940,6 +946,8 @@ class PGCli:
         logger = self.logger
         logger.debug("sql: %r", text)
 
+        # set query to formatter in order to parse table name
+        self.formatter.query = text
         all_success = True
         meta_changed = False  # CREATE, ALTER, DROP, etc
         mutated = False  # INSERT, DELETE, etc

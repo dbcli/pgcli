@@ -1,6 +1,11 @@
 Upcoming:
 =========
 
+Features:
+---------
+
+* New formatter is added to export query result to sql format (such as sql-insert, sql-update) like mycli.
+
 Bug fixes:
 ----------
 
@@ -21,7 +26,7 @@ Bug fixes:
 ----------
 
 * Fix the bug with Redshift not displaying word count in status ([related issue](https://github.com/dbcli/pgcli/issues/1320)).
-* Show the error status for CSV output format. 
+* Show the error status for CSV output format.
 
 
 3.4.0 (2022/02/21)

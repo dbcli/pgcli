@@ -69,3 +69,6 @@ target/
 
 .vscode/
 venv/
+
+.ropeproject/
+
