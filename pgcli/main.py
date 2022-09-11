@@ -285,8 +285,7 @@ class PGCli:
         self.ssh_tunnel = None
 
         # formatter setup
-        self.formatter = TabularOutputFormatter(
-            format_name=c['main']['table_format'])
+        self.formatter = TabularOutputFormatter(format_name=c["main"]["table_format"])
         register_new_formatter(self.formatter)
 
     def quit(self):
