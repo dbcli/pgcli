@@ -25,8 +25,11 @@ mode, which by default will insert new lines on Enter.
 def safe_multi_line_mode(pgcli):
     @Condition
     def cond():
-        _logger.debug('Multi-line mode state: "%s" / "%s"', pgcli.multi_line, pgcli.multiline_mode)
+        _logger.debug(
+            'Multi-line mode state: "%s" / "%s"', pgcli.multi_line, pgcli.multiline_mode
+        )
         return pgcli.multi_line and (pgcli.multiline_mode == "safe")
+
     return cond
 
 
