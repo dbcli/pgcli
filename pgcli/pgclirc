@@ -95,7 +95,9 @@ show_bottom_toolbar = True
 
 # Table format. Possible values: psql, plain, simple, grid, fancy_grid, pipe,
 # ascii, double, github, orgtbl, rst, mediawiki, html, latex, latex_booktabs,
-# textile, moinmoin, jira, vertical, tsv, csv.
+# textile, moinmoin, jira, vertical, tsv, csv, sql-insert, sql-update,
+# sql-update-1, sql-update-2 (formatter with sql-* prefix can format query
+# output to executable insertion or updating sql).
 # Recommended: psql, fancy_grid and grid.
 table_format = psql
 
