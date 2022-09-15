@@ -1,6 +1,11 @@
 Upcoming:
 =========
 
+Features:
+---------
+
+* New formatter is added to export query result to sql format (such as sql-insert, sql-update) like mycli.
+
 Bug fixes:
 ----------
 
