@@ -1,3 +1,12 @@
+3.5.1 (2022/09/24):
+===================
+
+Features:
+---------
+
+* Added \echo & \qecho special commands. ([issue 1335](https://github.com/dbcli/pgcli/issues/1335)).
+
+
 3.5.0 (2022/09/15):
 ===================
 

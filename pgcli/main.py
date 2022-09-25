@@ -368,7 +368,7 @@ class PGCli:
             "Echo a string to the query output channel.",
         )
 
-    def echo(self,pattern,**_):
+    def echo(self, pattern, **_):
         return [(None, None, None, pattern)]
 
     def change_table_format(self, pattern, **_):
@@ -739,7 +739,9 @@ class PGCli:
             click.secho(str(e), err=True, fg="red")
         else:
             try:
-                if self.output_file and not text.startswith(("\\o ", "\\? ","\\echo ")):
+                if self.output_file and not text.startswith(
+                    ("\\o ", "\\? ", "\\echo ")
+                ):
                     try:
                         with open(self.output_file, "a", encoding="utf-8") as f:
                             click.echo(text, file=f)
