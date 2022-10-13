@@ -1,3 +1,13 @@
+Upcoming
+========
+
+Features:
+---------
+
+* Changed the `destructive_warning` config to be a list of commands that are considered 
+  destructive. This would allow you to be warned on `create`, `grant`, or `insert` queries.
+* Destructive warnings will now include the alias dsn connection string name if provided (-D option).
+
 3.5.0 (2022/09/15):
 ===================
 

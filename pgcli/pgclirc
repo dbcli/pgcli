@@ -22,14 +22,12 @@ multi_line = False
 # a command.
 multi_line_mode = psql
 
-# Destructive warning mode will alert you before executing a sql statement
+# Destructive warning will alert you before executing a sql statement
 # that may cause harm to the database such as "drop table", "drop database",
-# "shutdown", "delete", or "update".
-# Possible values:
-# "all" - warn on data definition statements, server actions such as SHUTDOWN, DELETE or UPDATE
-# "moderate" - skip warning on UPDATE statements, except for unconditional updates
-# "off" - skip all warnings
-destructive_warning = all
+# "shutdown", "delete", or "update". 
+# You can pass a list of destructive commands or leave it empty if you want to skip all warnings.
+# "unconditional_update" will warn you of update statements that don't have a where clause
+destructive_warning = drop, shutdown, delete, truncate, alter, update, unconditional_update
 
 # Enables expand mode, which is similar to `\x` in psql.
 expand = False
@@ -140,7 +138,7 @@ less_chatty = False
 # \i - Postgres PID
 # \# - "@" sign if logged in as superuser, '>' in other case
 # \n - Newline
-# \dsn_alias - name of dsn alias if -D option is used (empty otherwise)
+# \dsn_alias - name of dsn connection string alias if -D option is used (empty otherwise)
 # \x1b[...m - insert ANSI escape sequence
 # eg: prompt = '\x1b[35m\u@\x1b[32m\h:\x1b[36m\d>'
 prompt = '\u@\h:\d> '
@@ -198,7 +196,8 @@ output.null = "#808080"
 # Named queries are queries you can execute by name.
 [named queries]
 
-# DSN to call by -D option
+# Here's where you can provide a list of connection string aliases.
+# You can use it by passing the -D option. `pgcli -D example_dsn`
 [alias_dsn]
 # example_dsn = postgresql://[user[:password]@][netloc][:port][/dbname]
 

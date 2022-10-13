@@ -3,7 +3,7 @@ import click
 from .parseutils import is_destructive
 
 
-def confirm_destructive_query(queries, warning_level):
+def confirm_destructive_query(queries, keywords, alias):
     """Check if the query is destructive and prompts the user to confirm.
 
     Returns:
@@ -12,10 +12,12 @@ def confirm_destructive_query(queries, warning_level):
     * False if the query is destructive and the user doesn't want to proceed.
 
     """
-    prompt_text = (
-        "You're about to run a destructive command.\n" "Do you want to proceed? (y/n)"
-    )
-    if is_destructive(queries, warning_level) and sys.stdin.isatty():
+    info = "You're about to run a destructive command"
+    if alias:
+        info += f" in {click.style(alias, fg='red')}"
+
+    prompt_text = f"{info}.\nDo you want to proceed? (y/n)"
+    if is_destructive(queries, keywords) and sys.stdin.isatty():
         return prompt(prompt_text, type=bool)
 
 
