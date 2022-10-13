@@ -40,6 +40,9 @@ def is_destructive(queries, keywords):
 
 def parse_destructive_warning(warning_level):
     """Converts a deprecated destructive warning option to a list of command keywords."""
+    if not warning_level:
+        return []
+
     if not isinstance(warning_level, list):
         if "," in warning_level:
             return warning_level.split(",")

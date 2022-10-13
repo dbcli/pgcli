@@ -298,6 +298,7 @@ def test_is_destructive(sql, keywords, expected):
         ("moderate", BASE_KEYWORDS),
         ("off", []),
         ("", []),
+        (None, []),
         (ALL_KEYWORDS, ALL_KEYWORDS),
         (BASE_KEYWORDS, BASE_KEYWORDS),
         ("insert", ["insert"]),
