@@ -231,6 +231,9 @@ class PGCli:
         self.destructive_warning = parse_destructive_warning(
             warn or c["main"].as_list("destructive_warning")
         )
+        self.destructive_warning_restarts_connection = c["main"].as_bool(
+            "destructive_warning_restarts_connection"
+        )
 
         self.less_chatty = bool(less_chatty) or c["main"].as_bool("less_chatty")
         self.null_string = c["main"].get("null_string", "<null>")
@@ -711,10 +714,16 @@ class PGCli:
 
             output, query = self._evaluate_command(text)
         except KeyboardInterrupt:
-            # Restart connection to the database
-            self.pgexecute.connect()
-            logger.debug("cancelled query, sql: %r", text)
-            click.secho("cancelled query", err=True, fg="red")
+            if self.destructive_warning_restarts_connection:
+                # Restart connection to the database
+                self.pgexecute.connect()
+                logger.debug("cancelled query and restarted connection, sql: %r", text)
+                click.secho(
+                    "cancelled query and restarted connection", err=True, fg="red"
+                )
+            else:
+                logger.debug("cancelled query, sql: %r", text)
+                click.secho("cancelled query", err=True, fg="red")
         except NotImplementedError:
             click.secho("Not Yet Implemented.", fg="yellow")
         except OperationalError as e:
