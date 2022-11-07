@@ -63,7 +63,7 @@ from .config import (
 )
 from .key_bindings import pgcli_bindings
 from .packages.formatter.sqlformatter import register_new_formatter
-from .packages.prompt_utils import confirm_destructive_query
+from .packages.prompt_utils import confirm, confirm_destructive_query
 from .packages.parseutils import parse_destructive_warning
 from .__init__ import __version__
 
@@ -202,6 +202,9 @@ class PGCli:
         self.multiline_mode = c["main"].get("multi_line_mode", "psql")
         self.vi_mode = c["main"].as_bool("vi")
         self.auto_expand = auto_vertical_output or c["main"].as_bool("auto_expand")
+        self.auto_retry_closed_connection = c["main"].as_bool(
+            "auto_retry_closed_connection"
+        )
         self.expanded_output = c["main"].as_bool("expand")
         self.pgspecial.timing_enabled = c["main"].as_bool("timing")
         if row_limit is not None:
@@ -690,7 +693,7 @@ class PGCli:
             editor_command = special.editor_command(text)
         return text
 
-    def execute_command(self, text):
+    def execute_command(self, text, handle_closed_connection=True):
         logger = self.logger
 
         query = MetaQuery(query=text, successful=False)
@@ -717,7 +720,9 @@ class PGCli:
         except OperationalError as e:
             logger.error("sql: %r, error: %r", text, e)
             logger.error("traceback: %r", traceback.format_exc())
-            self._handle_server_closed_connection(text)
+            click.secho(str(e), err=True, fg="red")
+            if handle_closed_connection:
+                self._handle_server_closed_connection(text)
         except (PgCliQuitError, EOFError) as e:
             raise
         except Exception as e:
@@ -1040,10 +1045,17 @@ class PGCli:
             click.secho("Reconnecting...", fg="green")
             self.pgexecute.connect()
             click.secho("Reconnected!", fg="green")
-            self.execute_command(text)
         except OperationalError as e:
             click.secho("Reconnect Failed", fg="red")
             click.secho(str(e), err=True, fg="red")
+        else:
+            retry = self.auto_retry_closed_connection or confirm(
+                "Run the query from before reconnecting?"
+            )
+            if retry:
+                click.secho("Running query...", fg="green")
+                # Don't get stuck in a retry loop
+                self.execute_command(text, handle_closed_connection=False)
 
     def refresh_completions(self, history=None, persist_priorities="all"):
         """Refresh outdated completions
