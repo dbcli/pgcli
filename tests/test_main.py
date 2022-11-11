@@ -56,7 +56,7 @@ def test_obfuscate_process_password():
 
 def test_format_output():
     settings = OutputSettings(table_format="psql", dcmlfmt="d", floatfmt="g")
-    results = format_output(
+    results, errout = format_output(
         "Title", [("abc", "def")], ["head1", "head2"], "test status", settings
     )
     expected = [
@@ -66,16 +66,16 @@ def test_format_output():
         "|-------+-------|",
         "| abc   | def   |",
         "+-------+-------+",
-        "test status",
     ]
     assert list(results) == expected
+    assert list(errout) == ["test status"]
 
 
 def test_format_output_truncate_on():
     settings = OutputSettings(
         table_format="psql", dcmlfmt="d", floatfmt="g", max_field_width=10
     )
-    results = format_output(
+    results, _ = format_output(
         None,
         [("first field value", "second field value")],
         ["head1", "head2"],
@@ -97,7 +97,7 @@ def test_format_output_truncate_off():
         table_format="psql", dcmlfmt="d", floatfmt="g", max_field_width=None
     )
     long_field_value = ("first field " * 100).strip()
-    results = format_output(None, [(long_field_value,)], ["head1"], None, settings)
+    results, _ = format_output(None, [(long_field_value,)], ["head1"], None, settings)
     lines = list(results)
     assert lines[3] == f"| {long_field_value} |"
 
@@ -154,7 +154,7 @@ def test_format_output_auto_expand():
     settings = OutputSettings(
         table_format="psql", dcmlfmt="d", floatfmt="g", max_width=100
     )
-    table_results = format_output(
+    table_results, status_results = format_output(
         "Title", [("abc", "def")], ["head1", "head2"], "test status", settings
     )
     table = [
@@ -164,10 +164,10 @@ def test_format_output_auto_expand():
         "|-------+-------|",
         "| abc   | def   |",
         "+-------+-------+",
-        "test status",
     ]
     assert list(table_results) == table
-    expanded_results = format_output(
+    assert list(status_results) == ["test status"]
+    expanded_results, status_results = format_output(
         "Title",
         [("abc", "def")],
         ["head1", "head2"],
@@ -179,9 +179,9 @@ def test_format_output_auto_expand():
         "-[ RECORD 1 ]-------------------------",
         "head1 | abc",
         "head2 | def",
-        "test status",
     ]
     assert "\n".join(expanded_results) == "\n".join(expanded)
+    assert "\n".join(status_results) == "test status"
 
 
 termsize = namedtuple("termsize", ["rows", "columns"])

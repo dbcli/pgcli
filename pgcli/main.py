@@ -709,7 +709,7 @@ class PGCli:
                 elif destroy:
                     click.secho("Your call!")
 
-            output, query = self._evaluate_command(text)
+            output, status, query = self._evaluate_command(text)
         except KeyboardInterrupt:
             # Restart connection to the database
             self.pgexecute.connect()
@@ -742,6 +742,8 @@ class PGCli:
                 else:
                     if output:
                         self.echo_via_pager("\n".join(output))
+                    if status:
+                        self.echo_to_stderr("\n".join(status))
             except KeyboardInterrupt:
                 pass
 
@@ -949,7 +951,7 @@ class PGCli:
         """Used to run a command entered by the user during CLI operation
         (Puts the E in REPL)
 
-        returns (results, MetaQuery)
+        returns (results, status, MetaQuery)
         """
         logger = self.logger
         logger.debug("sql: %r", text)
@@ -962,6 +964,7 @@ class PGCli:
         db_changed = False
         path_changed = False
         output = []
+        status_output = []
         total = 0
         execution = 0
 
@@ -1008,11 +1011,12 @@ class PGCli:
                 max_field_width=self.max_field_width,
             )
             execution = time() - start
-            formatted = format_output(
+            formatted, formatted_status = format_output(
                 title, cur, headers, status, settings, self.explain_mode
             )
 
             output.extend(formatted)
+            status_output.extend(formatted_status)
             total = time() - start
 
             # Keep track of whether any of the queries are mutating or changing
@@ -1037,7 +1041,7 @@ class PGCli:
             is_special,
         )
 
-        return output, meta_query
+        return output, status_output, meta_query
 
     def _handle_server_closed_connection(self, text):
         """Used during CLI execution."""
@@ -1175,6 +1179,9 @@ class PGCli:
                 click.echo(text, color=color)
         else:
             click.echo_via_pager(text, color)
+
+    def echo_to_stderr(self, text, color=None):
+        click.echo(text, color=color, file=sys.stderr)
 
 
 @click.command()
@@ -1423,8 +1430,11 @@ def cli(
 
         title = "List of databases"
         settings = OutputSettings(table_format="ascii", missingval="<null>")
-        formatted = format_output(title, cur, headers, status, settings)
+        formatted, formatted_status = format_output(
+            title, cur, headers, status, settings
+        )
         pgcli.echo_via_pager("\n".join(formatted))
+        pgcli.echo_to_stderr("\n".join(formatted_status))
 
         sys.exit(0)
 
@@ -1507,6 +1517,7 @@ def exception_formatter(e):
 
 def format_output(title, cur, headers, status, settings, explain_mode=False):
     output = []
+    status_output = []
     expanded = settings.expanded or settings.table_format == "vertical"
     table_format = "vertical" if settings.expanded else settings.table_format
     max_width = settings.max_width
@@ -1609,9 +1620,9 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
     # Only print the status if it's not None
     if status:
-        output = itertools.chain(output, [format_status(cur, status)])
+        status_output = [format_status(cur, status)]
 
-    return output
+    return output, status_output
 
 
 def parse_service_info(service):
