@@ -13,6 +13,9 @@ Features:
 * Config option to not restart connection when cancelling a `destructive_warning` query. By default,
   it will now not restart.
 * Fix \ev not producing a correctly quoted "schema"."view"
+* Allow specifying an `alias_map_file` in the config that will use
+  predetermined table aliases instead of generating aliases programmatically on
+  the fly
 
 3.5.0 (2022/09/15):
 ===================

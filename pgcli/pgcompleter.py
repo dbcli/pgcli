@@ -61,12 +61,14 @@ arg_default_type_strip_regex = re.compile(r"::[\w\.]+(\[\])?$")
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() + '"'
 
 
-def generate_alias(tbl):
+def generate_alias(tbl, alias_map=None):
     """Generate a table alias, consisting of all upper-case letters in
     the table name, or, if there are no upper-case letters, the first letter +
     all letters preceded by _
     param tbl - unescaped name of the table to alias
     """
+    if alias_map and tbl in alias_map:
+        return alias_map[tbl]
     return "".join(
         [l for l in tbl if l.isupper()]
         or [l for l, prev in zip(tbl, "_" + tbl) if prev == "_" and l != "_"]
@@ -100,6 +102,15 @@ class PGCompleter(Completer):
         self.call_arg_oneliner_max = settings.get("call_arg_oneliner_max", 2)
         self.search_path_filter = settings.get("search_path_filter")
         self.generate_aliases = settings.get("generate_aliases")
+
+        # when should this file be loaded? IO in constructors is not my preference but slow startup is
+        # probably better than slow first query
+        alias_map_file = settings.get("alias_map_file")
+        if alias_map_file is not None:
+            with open(alias_map_file) as fo:
+                self.alias_map = json.load(fo)
+        else:
+            self.alias_map = None
         self.casing_file = settings.get("casing_file")
         self.insert_col_skip_patterns = [
             re.compile(pattern)
