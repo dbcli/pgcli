@@ -8,6 +8,8 @@ Features:
   destructive. This would allow you to be warned on `create`, `grant`, or `insert` queries.
 * Destructive warnings will now include the alias dsn connection string name if provided (-D option).
 * pgcli.magic will now work with connection URLs that use TLS client certificates for authentication
+* Have config option to retry queries on operational errors like connections being lost.
+  Also prevents getting stuck in a retry loop.
 
 3.5.0 (2022/09/15):
 ===================
