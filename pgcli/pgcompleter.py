@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from itertools import count, repeat, chain
@@ -75,6 +76,24 @@ def generate_alias(tbl, alias_map=None):
     )
 
 
+class InvalidMapFile(ValueError):
+    pass
+
+
+def load_alias_map_file(path):
+    try:
+        with open(path) as fo:
+            alias_map = json.load(fo)
+    except FileNotFoundError as err:
+        raise InvalidMapFile(
+            f"Cannot read alias_map_file - {err.filename} does not exist"
+        )
+    except json.JSONDecodeError:
+        raise InvalidMapFile(f"Cannot read alias_map_file - {path} is not valid json")
+    else:
+        return alias_map
+
+
 class PGCompleter(Completer):
     # keywords_tree: A dict mapping keywords to well known following keywords.
     # e.g. 'CREATE': ['TABLE', 'USER', ...],
@@ -107,8 +126,7 @@ class PGCompleter(Completer):
         # probably better than slow first query
         alias_map_file = settings.get("alias_map_file")
         if alias_map_file is not None:
-            with open(alias_map_file) as fo:
-                self.alias_map = json.load(fo)
+            self.alias_map = load_alias_map_file(alias_map_file)
         else:
             self.alias_map = None
         self.casing_file = settings.get("casing_file")
