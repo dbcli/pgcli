@@ -54,7 +54,7 @@ generate_aliases = False
 #     "some_table_name": "desired_alias",
 #     "some_other_table_name": "another_alias"
 # }
-alias_map_file = ""
+alias_map_file =
 
 # log_file location.
 # In Unix/Linux: ~/.config/pgcli/log
