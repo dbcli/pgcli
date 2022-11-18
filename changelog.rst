@@ -10,6 +10,8 @@ Features:
 * pgcli.magic will now work with connection URLs that use TLS client certificates for authentication
 * Have config option to retry queries on operational errors like connections being lost.
   Also prevents getting stuck in a retry loop.
+* Config option to not restart connection when cancelling a `destructive_warning` query. By default,
+  it will now not restart.
 
 3.5.0 (2022/09/15):
 ===================

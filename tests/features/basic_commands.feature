@@ -23,6 +23,13 @@ Feature: run the cli,
      When we send "ctrl + d"
       then dbcli exits
 
+  Scenario: interrupt current query via "ctrl + c"
+     When we send sleep query
+      and we send "ctrl + c"
+      then we see cancelled query warning
+      when we check for any non-idle sleep queries
+      then we don't see any non-idle sleep queries
+
   Scenario: list databases
       When we list databases
       then we see list of databases
