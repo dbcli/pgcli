@@ -470,7 +470,7 @@ class PGExecute:
             return (
                 psycopg.sql.SQL(template)
                 .format(
-                    name=psycopg.sql.Identifier(f"{result.nspname}.{result.relname}"),
+                    name=psycopg.sql.Identifier(result.nspname, result.relname),
                     stmt=psycopg.sql.SQL(result.viewdef),
                 )
                 .as_string(self.conn)

@@ -12,6 +12,7 @@ Features:
   Also prevents getting stuck in a retry loop.
 * Config option to not restart connection when cancelling a `destructive_warning` query. By default,
   it will now not restart.
+* Fix \ev not producing a correctly quoted "schema"."view"
 
 3.5.0 (2022/09/15):
 ===================
