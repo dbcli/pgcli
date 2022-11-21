@@ -121,9 +121,6 @@ class PGCompleter(Completer):
         self.call_arg_oneliner_max = settings.get("call_arg_oneliner_max", 2)
         self.search_path_filter = settings.get("search_path_filter")
         self.generate_aliases = settings.get("generate_aliases")
-
-        # when should this file be loaded? IO in constructors is not my preference but slow startup is
-        # probably better than slow first query
         alias_map_file = settings.get("alias_map_file")
         if alias_map_file is not None:
             self.alias_map = load_alias_map_file(alias_map_file)
