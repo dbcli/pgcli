@@ -558,6 +558,7 @@ def test_view_definition(executor):
     run(executor, "create view vw1 AS SELECT * FROM tbl1")
     run(executor, "create materialized view mvw1 AS SELECT * FROM tbl1")
     result = executor.view_definition("vw1")
+    assert 'VIEW "public"."vw1" AS' in result
     assert "FROM tbl1" in result
     # import pytest; pytest.set_trace()
     result = executor.view_definition("mvw1")
