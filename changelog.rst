@@ -17,6 +17,7 @@ Features:
   predetermined table aliases instead of generating aliases programmatically on
   the fly
 
+
 3.5.0 (2022/09/15):
 ===================
 
