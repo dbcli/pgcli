@@ -629,7 +629,7 @@ class PGCli:
 
         def notify_callback(notify: Notify):
             click.echo(
-                "Notification received on channel \"{}\" (PID {}):".format(
+                'Notification received on channel "{}" (PID {}):'.format(
                     notify.channel, notify.pid
                 )
             )
@@ -642,8 +642,14 @@ class PGCli:
         try:
             try:
                 pgexecute = PGExecute(
-                    database, user, passwd, host, port, dsn,
-                    notify_callback=notify_callback, **kwargs
+                    database,
+                    user,
+                    passwd,
+                    host,
+                    port,
+                    dsn,
+                    notify_callback=notify_callback,
+                    **kwargs,
                 )
             except (OperationalError, InterfaceError) as e:
                 if should_ask_for_password(e):
@@ -654,8 +660,14 @@ class PGCli:
                         type=str,
                     )
                     pgexecute = PGExecute(
-                        database, user, passwd, host, port, dsn,
-                        notify_callback=notify_callback, **kwargs
+                        database,
+                        user,
+                        passwd,
+                        host,
+                        port,
+                        dsn,
+                        notify_callback=notify_callback,
+                        **kwargs,
                     )
                 else:
                     raise e
