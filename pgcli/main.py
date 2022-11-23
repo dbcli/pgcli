@@ -76,7 +76,7 @@ except ImportError:
 
 from getpass import getuser
 
-from psycopg import OperationalError, InterfaceError
+from psycopg import OperationalError, InterfaceError, Notify
 from psycopg.conninfo import make_conninfo, conninfo_to_dict
 
 from collections import namedtuple
@@ -627,13 +627,24 @@ class PGCli:
             if dsn:
                 dsn = make_conninfo(dsn, host=host, port=port)
 
+        def notify_callback(notify: Notify):
+            click.echo(
+                "Notification received on channel \"{}\" (PID {}):".format(
+                    notify.channel, notify.pid
+                )
+            )
+            self.echo_via_pager(notify.payload)
+
         # Attempt to connect to the database.
         # Note that passwd may be empty on the first attempt. If connection
         # fails because of a missing or incorrect password, but we're allowed to
         # prompt for a password (no -w flag), prompt for a passwd and try again.
         try:
             try:
-                pgexecute = PGExecute(database, user, passwd, host, port, dsn, **kwargs)
+                pgexecute = PGExecute(
+                    database, user, passwd, host, port, dsn,
+                    notify_callback=notify_callback, **kwargs
+                )
             except (OperationalError, InterfaceError) as e:
                 if should_ask_for_password(e):
                     passwd = click.prompt(
@@ -643,7 +654,8 @@ class PGCli:
                         type=str,
                     )
                     pgexecute = PGExecute(
-                        database, user, passwd, host, port, dsn, **kwargs
+                        database, user, passwd, host, port, dsn,
+                        notify_callback=notify_callback, **kwargs
                     )
                 else:
                     raise e
