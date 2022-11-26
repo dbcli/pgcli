@@ -264,6 +264,9 @@ class PGCli:
         # Initialize completer
         smart_completion = c["main"].as_bool("smart_completion")
         keyword_casing = c["main"]["keyword_casing"]
+        single_connection = single_connection or c["main"].as_bool(
+            "always_use_single_connection"
+        )
         self.settings = {
             "casing_file": get_casing_file(c),
             "generate_casing_file": c["main"].as_bool("generate_casing_file"),

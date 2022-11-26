@@ -9,6 +9,10 @@ smart_completion = True
 # visible.)
 wider_completion_menu = False
 
+# Do not create new connections for refreshing completions; Equivalent to
+# always running with the --single-connection flag.
+always_use_single_connection = False
+
 # Multi-line mode allows breaking up the sql statements into multiple lines. If
 # this is set to True, then the end of the statements must have a semi-colon.
 # If this is set to False then sql statements can't be split into multiple

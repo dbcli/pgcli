@@ -13,6 +13,7 @@ Features:
 * Config option to not restart connection when cancelling a `destructive_warning` query. By default,
   it will now not restart.
 * Fix \ev not producing a correctly quoted "schema"."view"
+* Config option to always run with a single connection.
 
 3.5.0 (2022/09/15):
 ===================
