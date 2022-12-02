@@ -1,7 +1,8 @@
 import pytest
 import psycopg
-from pgcli.main import format_output, OutputSettings
+from pgcli.main import emit_output, OutputSettings
 from os import getenv
+from unittest.mock import Mock
 
 POSTGRES_USER = getenv("PGUSER", "postgres")
 POSTGRES_HOST = getenv("PGHOST", "localhost")
@@ -77,8 +78,15 @@ def run(
     settings = OutputSettings(
         table_format="psql", dcmlfmt="d", floatfmt="g", expanded=expanded
     )
+    cli = Mock()
     for title, rows, headers, status, sql, success, is_special in results:
-        formatted.extend(format_output(title, rows, headers, status, settings))
+        emit_output(cli, "", title, rows, headers, status, settings)
+
+    if cli.pager_output.emit.called:
+        formatted.extend([c.args[1] for c in cli.pager_output.emit.call_args_list])
+    if cli.stdout_output.emit.called:
+        formatted.extend([c.args[1] for c in cli.stdout_output.emit.call_args_list])
+
     if join:
         formatted = "\n".join(formatted)
 

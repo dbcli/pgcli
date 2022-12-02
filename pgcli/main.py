@@ -62,6 +62,7 @@ from .config import (
     get_config_filename,
 )
 from .key_bindings import pgcli_bindings
+from .output import Log, Pager, Stdout
 from .packages.formatter.sqlformatter import register_new_formatter
 from .packages.prompt_utils import confirm, confirm_destructive_query
 from .packages.parseutils import parse_destructive_warning
@@ -180,6 +181,8 @@ class PGCli:
         self.pgexecute = pgexecute
         self.dsn_alias = None
         self.watch_command = None
+        self.pager_output = Log(self, Pager(self))
+        self.stdout_output = Log(self, Stdout())
 
         # Load config.
         c = self.config = get_config(pgclirc_file)
@@ -715,7 +718,7 @@ class PGCli:
                 elif destroy:
                     click.secho("Your call!")
 
-            output, query = self._evaluate_command(text)
+            query = self._evaluate_command(text)
         except KeyboardInterrupt:
             if self.destructive_warning_restarts_connection:
                 # Restart connection to the database
@@ -742,21 +745,6 @@ class PGCli:
             logger.error("traceback: %r", traceback.format_exc())
             click.secho(str(e), err=True, fg="red")
         else:
-            try:
-                if self.output_file and not text.startswith(("\\o ", "\\? ")):
-                    try:
-                        with open(self.output_file, "a", encoding="utf-8") as f:
-                            click.echo(text, file=f)
-                            click.echo("\n".join(output), file=f)
-                            click.echo("", file=f)  # extra newline
-                    except OSError as e:
-                        click.secho(str(e), err=True, fg="red")
-                else:
-                    if output:
-                        self.echo_via_pager("\n".join(output))
-            except KeyboardInterrupt:
-                pass
-
             if self.pgspecial.timing_enabled:
                 # Only add humanized time display if > 1 second
                 if query.total_time > 1:
@@ -959,9 +947,9 @@ class PGCli:
 
     def _evaluate_command(self, text):
         """Used to run a command entered by the user during CLI operation
-        (Puts the E in REPL)
+        (Puts the E and P in REPL)
 
-        returns (results, MetaQuery)
+        returns MetaQuery
         """
         logger = self.logger
         logger.debug("sql: %r", text)
@@ -973,7 +961,6 @@ class PGCli:
         mutated = False  # INSERT, DELETE, etc
         db_changed = False
         path_changed = False
-        output = []
         total = 0
         execution = 0
 
@@ -1020,11 +1007,10 @@ class PGCli:
                 max_field_width=self.max_field_width,
             )
             execution = time() - start
-            formatted = format_output(
-                title, cur, headers, status, settings, self.explain_mode
+            emit_output(
+                self, text, title, cur, headers, status, settings, self.explain_mode
             )
 
-            output.extend(formatted)
             total = time() - start
 
             # Keep track of whether any of the queries are mutating or changing
@@ -1049,7 +1035,7 @@ class PGCli:
             is_special,
         )
 
-        return output, meta_query
+        return meta_query
 
     def _handle_server_closed_connection(self, text):
         """Used during CLI execution."""
@@ -1435,8 +1421,7 @@ def cli(
 
         title = "List of databases"
         settings = OutputSettings(table_format="ascii", missingval="<null>")
-        formatted = format_output(title, cur, headers, status, settings)
-        pgcli.echo_via_pager("\n".join(formatted))
+        emit_output(pgcli, "", title, cur, headers, status, settings)
 
         sys.exit(0)
 
@@ -1517,7 +1502,7 @@ def exception_formatter(e):
     return click.style(str(e), fg="red")
 
 
-def format_output(title, cur, headers, status, settings, explain_mode=False):
+def emit_output(cli, text, title, cur, headers, status, settings, explain_mode=False):
     output = []
     expanded = settings.expanded or settings.table_format == "vertical"
     table_format = "vertical" if settings.expanded else settings.table_format
@@ -1619,9 +1604,12 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
         output = itertools.chain(output, formatted)
 
+    if output:
+        cli.pager_output.emit(text, "\n".join(output))
+
     # Only print the status if it's not None
     if status:
-        output = itertools.chain(output, [format_status(cur, status)])
+        cli.stdout_output.emit(text, format_status(cur, status))
 
     return output
 

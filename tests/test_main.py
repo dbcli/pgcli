@@ -11,7 +11,7 @@ except ImportError:
 
 from pgcli.main import (
     obfuscate_process_password,
-    format_output,
+    emit_output,
     PGCli,
     OutputSettings,
     COLOR_CODE_REGEX,
@@ -20,6 +20,15 @@ from pgcli.pgexecute import PGExecute
 from pgspecial.main import PAGER_OFF, PAGER_LONG_OUTPUT, PAGER_ALWAYS
 from utils import dbtest, run
 from collections import namedtuple
+
+
+def format_output(title, cur, headers, status, settings, explain_mode=False):
+    cli = mock.Mock()
+    output = []
+    cli.pager_output.emit.side_effect = lambda _, t: output.extend(t.split("\n"))
+    cli.stdout_output.emit.side_effect = lambda _, t: output.extend(t.split("\n"))
+    emit_output(cli, "", title, cur, headers, status, settings, explain_mode)
+    return output
 
 
 @pytest.mark.skipif(platform.system() == "Windows", reason="Not applicable in windows")
