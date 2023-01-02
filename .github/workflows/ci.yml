@@ -72,7 +72,7 @@ jobs:
           pip install keyrings.alt>=3.1
 
       - name: Run unit tests
-        run: coverage run --source pgcli -m py.test
+        run: coverage run --source pgcli -m pytest
 
       - name: Run integration tests
         env:

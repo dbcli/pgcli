@@ -4,7 +4,7 @@ Upcoming
 Features:
 ---------
 
-* Changed the `destructive_warning` config to be a list of commands that are considered 
+* Changed the `destructive_warning` config to be a list of commands that are considered
   destructive. This would allow you to be warned on `create`, `grant`, or `insert` queries.
 * Destructive warnings will now include the alias dsn connection string name if provided (-D option).
 * pgcli.magic will now work with connection URLs that use TLS client certificates for authentication
@@ -12,7 +12,12 @@ Features:
   Also prevents getting stuck in a retry loop.
 * Config option to not restart connection when cancelling a `destructive_warning` query. By default,
   it will now not restart.
+
+Bug fixes:
+----------
+
 * Fix \ev not producing a correctly quoted "schema"."view"
+* Fix 'invalid connection option "dsn"' ([issue 1373](https://github.com/dbcli/pgcli/issues/1373)).
 
 3.5.0 (2022/09/15):
 ===================
