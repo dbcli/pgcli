@@ -203,7 +203,11 @@ class PGExecute:
 
         conn_params.update({k: v for k, v in new_params.items() if v})
 
-        conn_info = make_conninfo(**conn_params)
+        if "dsn" in conn_params:
+            other_params = {k: v for k, v in conn_params.items() if k != "dsn"}
+            conn_info = make_conninfo(conn_params["dsn"], **other_params)
+        else:
+            conn_info = make_conninfo(**conn_params)
         conn = psycopg.connect(conn_info)
         conn.cursor_factory = ProtocolSafeCursor
 
