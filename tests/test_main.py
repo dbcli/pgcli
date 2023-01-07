@@ -27,7 +27,17 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
     output = []
     cli.pager_output.emit.side_effect = lambda _, t: output.extend(t.split("\n"))
     cli.stdout_output.emit.side_effect = lambda _, t: output.extend(t.split("\n"))
-    emit_output(cli, "", title, cur, headers, status, settings, explain_mode)
+    emit_output(
+        cli.stdout_output,
+        cli.pager_output,
+        "",
+        title,
+        cur,
+        headers,
+        status,
+        settings,
+        explain_mode,
+    )
     return output
 
 

@@ -62,7 +62,7 @@ from .config import (
     get_config_filename,
 )
 from .key_bindings import pgcli_bindings
-from .output import Log, Pager, Stdout
+from .output import Log, OutputHandler
 from .packages.formatter.sqlformatter import register_new_formatter
 from .packages.prompt_utils import confirm, confirm_destructive_query
 from .packages.parseutils import parse_destructive_warning
@@ -181,8 +181,6 @@ class PGCli:
         self.pgexecute = pgexecute
         self.dsn_alias = None
         self.watch_command = None
-        self.pager_output = Log(self, Pager(self))
-        self.stdout_output = Log(self, Stdout())
 
         # Load config.
         c = self.config = get_config(pgclirc_file)
@@ -197,8 +195,9 @@ class PGCli:
         self.initialize_logging()
 
         self.set_default_pager(c)
-        self.output_file = None
         self.pgspecial = PGSpecial()
+        self.pager_output = Log(None, OutputHandler(self.echo_via_pager))
+        self.stdout_output = Log(None, OutputHandler(click.echo))
 
         self.explain_mode = False
         self.multi_line = c["main"].as_bool("multi_line")
@@ -299,6 +298,10 @@ class PGCli:
         # formatter setup
         self.formatter = TabularOutputFormatter(format_name=c["main"]["table_format"])
         register_new_formatter(self.formatter)
+
+    def update_logfile(self, logpath):
+        self.pager_output.update(logpath)
+        self.stdout_output.update(logpath)
 
     def quit(self):
         raise PgCliQuitError
@@ -455,7 +458,7 @@ class PGCli:
 
     def write_to_file(self, pattern, **_):
         if not pattern:
-            self.output_file = None
+            self.update_logfile(None)
             message = "File output disabled"
             return [(None, None, None, message, "", True, True)]
         filename = os.path.abspath(os.path.expanduser(pattern))
@@ -463,11 +466,11 @@ class PGCli:
             try:
                 open(filename, "w").close()
             except OSError as e:
-                self.output_file = None
+                self.update_logfile(None)
                 message = str(e) + "\nFile output disabled"
                 return [(None, None, None, message, "", False, True)]
-        self.output_file = filename
-        message = 'Writing to file "%s"' % self.output_file
+        self.update_logfile(filename)
+        message = 'Writing to file "%s"' % filename
         return [(None, None, None, message, "", True, True)]
 
     def initialize_logging(self):
@@ -1008,7 +1011,15 @@ class PGCli:
             )
             execution = time() - start
             emit_output(
-                self, text, title, cur, headers, status, settings, self.explain_mode
+                self.stdout_output,
+                self.pager_output,
+                text,
+                title,
+                cur,
+                headers,
+                status,
+                settings,
+                self.explain_mode,
             )
 
             total = time() - start
@@ -1421,7 +1432,16 @@ def cli(
 
         title = "List of databases"
         settings = OutputSettings(table_format="ascii", missingval="<null>")
-        emit_output(pgcli, "", title, cur, headers, status, settings)
+        emit_output(
+            pgcli.stdout_output,
+            pgcli.pager_output,
+            "",
+            title,
+            cur,
+            headers,
+            status,
+            settings,
+        )
 
         sys.exit(0)
 
@@ -1502,7 +1522,17 @@ def exception_formatter(e):
     return click.style(str(e), fg="red")
 
 
-def emit_output(cli, text, title, cur, headers, status, settings, explain_mode=False):
+def emit_output(
+    stdout_output,
+    pager_output,
+    text,
+    title,
+    cur,
+    headers,
+    status,
+    settings,
+    explain_mode=False,
+):
     output = []
     expanded = settings.expanded or settings.table_format == "vertical"
     table_format = "vertical" if settings.expanded else settings.table_format
@@ -1605,11 +1635,11 @@ def emit_output(cli, text, title, cur, headers, status, settings, explain_mode=F
         output = itertools.chain(output, formatted)
 
     if output:
-        cli.pager_output.emit(text, "\n".join(output))
+        pager_output.emit(text, "\n".join(output))
 
     # Only print the status if it's not None
     if status:
-        cli.stdout_output.emit(text, format_status(cur, status))
+        stdout_output.emit(text, format_status(cur, status))
 
     return output
 
