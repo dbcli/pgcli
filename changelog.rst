@@ -19,6 +19,7 @@ Bug fixes:
 
 * Fix \ev not producing a correctly quoted "schema"."view"
 * Fix 'invalid connection option "dsn"' ([issue 1373](https://github.com/dbcli/pgcli/issues/1373)).
+* Bypass the pager for status output to clean up use with programmatic pagers.
 
 3.5.0 (2022/09/15):
 ===================
