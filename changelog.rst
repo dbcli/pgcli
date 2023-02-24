@@ -13,6 +13,7 @@ Features:
 * Config option to not restart connection when cancelling a `destructive_warning` query. By default,
   it will now not restart.
 * Config option to always run with a single connection.
+* Add comment explaining default LESS environment variable behavior and change example pager setting.
 
 Bug fixes:
 ----------

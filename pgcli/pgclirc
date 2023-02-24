@@ -95,9 +95,10 @@ qualify_columns = if_more_than_one_table
 # When no schema is entered, only suggest objects in search_path
 search_path_filter = False
 
-# Default pager.
-# By default 'PAGER' environment variable is used
-# pager = less -SRXF
+# Default pager. See https://www.pgcli.com/pager for more information on settings.
+# By default 'PAGER' environment variable is used. If the pager is less, and the 'LESS'
+# environment variable is not set, then LESS='-SRXF' will be automatically set.
+# pager = less
 
 # Timing of sql statements and table rendering.
 timing = True
