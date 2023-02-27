@@ -1602,7 +1602,8 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
         if (
-            not expanded
+            not explain_mode
+            and not expanded
             and max_width
             and len(strip_ansi(first_line)) > max_width
             and headers
