@@ -64,6 +64,7 @@ from .config import (
 from .key_bindings import pgcli_bindings
 from .packages.formatter.sqlformatter import register_new_formatter
 from .packages.prompt_utils import confirm, confirm_destructive_query
+from .packages.parseutils import is_destructive
 from .packages.parseutils import parse_destructive_warning
 from .__init__ import __version__
 
@@ -233,6 +234,9 @@ class PGCli:
         )
         self.destructive_warning_restarts_connection = c["main"].as_bool(
             "destructive_warning_restarts_connection"
+        )
+        self.destructive_statements_require_transaction = c["main"].as_bool(
+            "destructive_statements_require_transaction"
         )
 
         self.less_chatty = bool(less_chatty) or c["main"].as_bool("less_chatty")
@@ -432,15 +436,20 @@ class PGCli:
         except OSError as e:
             return [(None, None, None, str(e), "", False, True)]
 
-        if (
-            self.destructive_warning
-            and confirm_destructive_query(
+        if self.destructive_warning:
+            if (
+                self.destructive_statements_require_transaction
+                and not self.pgexecute.valid_transaction()
+                and is_destructive(query, self.destructive_warning)
+            ):
+                message = "Destructive statements must be run within a transaction. Command execution stopped."
+                return [(None, None, None, message)]
+            destroy = confirm_destructive_query(
                 query, self.destructive_warning, self.dsn_alias
             )
-            is False
-        ):
-            message = "Wise choice. Command execution stopped."
-            return [(None, None, None, message)]
+            if destroy is False:
+                message = "Wise choice. Command execution stopped."
+                return [(None, None, None, message)]
 
         on_error_resume = self.on_error == "RESUME"
         return self.pgexecute.run(
@@ -706,6 +715,15 @@ class PGCli:
 
         try:
             if self.destructive_warning:
+                if (
+                    self.destructive_statements_require_transaction
+                    and not self.pgexecute.valid_transaction()
+                    and is_destructive(text, self.destructive_warning)
+                ):
+                    click.secho(
+                        "Destructive statements must be run within a transaction."
+                    )
+                    raise KeyboardInterrupt
                 destroy = confirm = confirm_destructive_query(
                     text, self.destructive_warning, self.dsn_alias
                 )
