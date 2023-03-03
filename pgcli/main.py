@@ -71,9 +71,9 @@ from .__init__ import __version__
 click.disable_unicode_literals_warning = True
 
 try:
-    from urlparse import urlparse, unquote, parse_qs
+    from urlparse import urlparse
 except ImportError:
-    from urllib.parse import urlparse, unquote, parse_qs
+    from urllib.parse import urlparse
 
 from getpass import getuser
 
@@ -724,7 +724,7 @@ class PGCli:
                         "Destructive statements must be run within a transaction."
                     )
                     raise KeyboardInterrupt
-                destroy = confirm = confirm_destructive_query(
+                destroy = confirm_destructive_query(
                     text, self.destructive_warning, self.dsn_alias
                 )
                 if destroy is False:
@@ -753,7 +753,7 @@ class PGCli:
             click.secho(str(e), err=True, fg="red")
             if handle_closed_connection:
                 self._handle_server_closed_connection(text)
-        except (PgCliQuitError, EOFError) as e:
+        except (PgCliQuitError, EOFError):
             raise
         except Exception as e:
             logger.error("sql: %r, error: %r", text, e)
