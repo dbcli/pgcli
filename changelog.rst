@@ -4,6 +4,8 @@ Upcoming
 Features:
 ---------
 
+* New `destructive_statements_require_transaction` config option to refuse to execute a
+  destructive SQL statement if outside a transaction. This option is off by default.
 * Changed the `destructive_warning` config to be a list of commands that are considered
   destructive. This would allow you to be warned on `create`, `grant`, or `insert` queries.
 * Destructive warnings will now include the alias dsn connection string name if provided (-D option).
