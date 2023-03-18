@@ -3,10 +3,7 @@ import pexpect
 from pgcli.main import COLOR_CODE_REGEX
 import textwrap
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 
 
 def expect_exact(context, expected, timeout):

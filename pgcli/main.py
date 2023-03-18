@@ -70,10 +70,7 @@ from .__init__ import __version__
 
 click.disable_unicode_literals_warning = True
 
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+from urllib.parse import urlparse
 
 from getpass import getuser
 
