@@ -76,7 +76,6 @@ class ProtocolSafeCursor(psycopg.Cursor):
 
 
 class PGExecute:
-
     # The boolean argument to the current_schemas function indicates whether
     # implicit schemas, e.g. pg_catalog
     search_path_query = """
@@ -180,7 +179,6 @@ class PGExecute:
         dsn=None,
         **kwargs,
     ):
-
         conn_params = self._conn_params.copy()
 
         new_params = {

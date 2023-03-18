@@ -6,7 +6,6 @@ from .pgcompleter import PGCompleter
 
 
 class CompletionRefresher:
-
     refreshers = OrderedDict()
 
     def __init__(self):
