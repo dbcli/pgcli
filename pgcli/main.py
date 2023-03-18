@@ -302,7 +302,6 @@ class PGCli:
         raise PgCliQuitError
 
     def register_special_commands(self):
-
         self.pgspecial.register(
             self.change_db,
             "\\c",
@@ -474,7 +473,6 @@ class PGCli:
         return [(None, None, None, message, "", True, True)]
 
     def initialize_logging(self):
-
         log_file = self.config["main"]["log_file"]
         if log_file == "default":
             log_file = config_location() + "log"
