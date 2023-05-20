@@ -43,7 +43,7 @@ def pgcli_line_magic(line):
         u = conn.session.engine.url
         _logger.debug("New pgcli: %r", str(u))
 
-        pgcli.connect(u.database, u.host, u.username, u.port, u.password)
+        pgcli.connect_uri(str(u._replace(drivername="postgres")))
         conn._pgcli = pgcli
 
     # For convenience, print the connection alias

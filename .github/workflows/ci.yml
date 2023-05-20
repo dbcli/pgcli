@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
 
     services:
       postgres:
@@ -72,7 +72,7 @@ jobs:
           pip install keyrings.alt>=3.1
 
       - name: Run unit tests
-        run: coverage run --source pgcli -m py.test
+        run: coverage run --source pgcli -m pytest
 
       - name: Run integration tests
         env:

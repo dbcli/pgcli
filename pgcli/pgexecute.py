@@ -76,7 +76,6 @@ class ProtocolSafeCursor(psycopg.Cursor):
 
 
 class PGExecute:
-
     # The boolean argument to the current_schemas function indicates whether
     # implicit schemas, e.g. pg_catalog
     search_path_query = """
@@ -180,7 +179,6 @@ class PGExecute:
         dsn=None,
         **kwargs,
     ):
-
         conn_params = self._conn_params.copy()
 
         new_params = {
@@ -203,7 +201,11 @@ class PGExecute:
 
         conn_params.update({k: v for k, v in new_params.items() if v})
 
-        conn_info = make_conninfo(**conn_params)
+        if "dsn" in conn_params:
+            other_params = {k: v for k, v in conn_params.items() if k != "dsn"}
+            conn_info = make_conninfo(conn_params["dsn"], **other_params)
+        else:
+            conn_info = make_conninfo(**conn_params)
         conn = psycopg.connect(conn_info)
         conn.cursor_factory = ProtocolSafeCursor
 
@@ -470,7 +472,7 @@ class PGExecute:
             return (
                 psycopg.sql.SQL(template)
                 .format(
-                    name=psycopg.sql.Identifier(f"{result.nspname}.{result.relname}"),
+                    name=psycopg.sql.Identifier(result.nspname, result.relname),
                     stmt=psycopg.sql.SQL(result.viewdef),
                 )
                 .as_string(self.conn)

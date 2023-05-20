@@ -63,15 +63,14 @@ from .config import (
 )
 from .key_bindings import pgcli_bindings
 from .packages.formatter.sqlformatter import register_new_formatter
-from .packages.prompt_utils import confirm_destructive_query
+from .packages.prompt_utils import confirm, confirm_destructive_query
+from .packages.parseutils import is_destructive
+from .packages.parseutils import parse_destructive_warning
 from .__init__ import __version__
 
 click.disable_unicode_literals_warning = True
 
-try:
-    from urlparse import urlparse, unquote, parse_qs
-except ImportError:
-    from urllib.parse import urlparse, unquote, parse_qs
+from urllib.parse import urlparse
 
 from getpass import getuser
 
@@ -201,6 +200,9 @@ class PGCli:
         self.multiline_mode = c["main"].get("multi_line_mode", "psql")
         self.vi_mode = c["main"].as_bool("vi")
         self.auto_expand = auto_vertical_output or c["main"].as_bool("auto_expand")
+        self.auto_retry_closed_connection = c["main"].as_bool(
+            "auto_retry_closed_connection"
+        )
         self.expanded_output = c["main"].as_bool("expand")
         self.pgspecial.timing_enabled = c["main"].as_bool("timing")
         if row_limit is not None:
@@ -224,11 +226,16 @@ class PGCli:
         self.syntax_style = c["main"]["syntax_style"]
         self.cli_style = c["colors"]
         self.wider_completion_menu = c["main"].as_bool("wider_completion_menu")
-        self.destructive_warning = warn or c["main"]["destructive_warning"]
-        # also handle boolean format of destructive warning
-        self.destructive_warning = {"true": "all", "false": "off"}.get(
-            self.destructive_warning.lower(), self.destructive_warning
+        self.destructive_warning = parse_destructive_warning(
+            warn or c["main"].as_list("destructive_warning")
         )
+        self.destructive_warning_restarts_connection = c["main"].as_bool(
+            "destructive_warning_restarts_connection"
+        )
+        self.destructive_statements_require_transaction = c["main"].as_bool(
+            "destructive_statements_require_transaction"
+        )
+
         self.less_chatty = bool(less_chatty) or c["main"].as_bool("less_chatty")
         self.null_string = c["main"].get("null_string", "<null>")
         self.prompt_format = (
@@ -258,6 +265,9 @@ class PGCli:
         # Initialize completer
         smart_completion = c["main"].as_bool("smart_completion")
         keyword_casing = c["main"]["keyword_casing"]
+        single_connection = single_connection or c["main"].as_bool(
+            "always_use_single_connection"
+        )
         self.settings = {
             "casing_file": get_casing_file(c),
             "generate_casing_file": c["main"].as_bool("generate_casing_file"),
@@ -292,7 +302,6 @@ class PGCli:
         raise PgCliQuitError
 
     def register_special_commands(self):
-
         self.pgspecial.register(
             self.change_db,
             "\\c",
@@ -440,12 +449,20 @@ class PGCli:
         except OSError as e:
             return [(None, None, None, str(e), "", False, True)]
 
-        if (
-            self.destructive_warning != "off"
-            and confirm_destructive_query(query, self.destructive_warning) is False
-        ):
-            message = "Wise choice. Command execution stopped."
-            return [(None, None, None, message)]
+        if self.destructive_warning:
+            if (
+                self.destructive_statements_require_transaction
+                and not self.pgexecute.valid_transaction()
+                and is_destructive(query, self.destructive_warning)
+            ):
+                message = "Destructive statements must be run within a transaction. Command execution stopped."
+                return [(None, None, None, message)]
+            destroy = confirm_destructive_query(
+                query, self.destructive_warning, self.dsn_alias
+            )
+            if destroy is False:
+                message = "Wise choice. Command execution stopped."
+                return [(None, None, None, message)]
 
         on_error_resume = self.on_error == "RESUME"
         return self.pgexecute.run(
@@ -473,7 +490,6 @@ class PGCli:
         return [(None, None, None, message, "", True, True)]
 
     def initialize_logging(self):
-
         log_file = self.config["main"]["log_file"]
         if log_file == "default":
             log_file = config_location() + "log"
@@ -704,34 +720,52 @@ class PGCli:
             editor_command = special.editor_command(text)
         return text
 
-    def execute_command(self, text):
+    def execute_command(self, text, handle_closed_connection=True):
         logger = self.logger
 
         query = MetaQuery(query=text, successful=False)
 
         try:
-            if self.destructive_warning != "off":
-                destroy = confirm = confirm_destructive_query(
-                    text, self.destructive_warning
+            if self.destructive_warning:
+                if (
+                    self.destructive_statements_require_transaction
+                    and not self.pgexecute.valid_transaction()
+                    and is_destructive(text, self.destructive_warning)
+                ):
+                    click.secho(
+                        "Destructive statements must be run within a transaction."
+                    )
+                    raise KeyboardInterrupt
+                destroy = confirm_destructive_query(
+                    text, self.destructive_warning, self.dsn_alias
                 )
                 if destroy is False:
                     click.secho("Wise choice!")
                     raise KeyboardInterrupt
                 elif destroy:
                     click.secho("Your call!")
+
             output, query = self._evaluate_command(text)
         except KeyboardInterrupt:
-            # Restart connection to the database
-            self.pgexecute.connect()
-            logger.debug("cancelled query, sql: %r", text)
-            click.secho("cancelled query", err=True, fg="red")
+            if self.destructive_warning_restarts_connection:
+                # Restart connection to the database
+                self.pgexecute.connect()
+                logger.debug("cancelled query and restarted connection, sql: %r", text)
+                click.secho(
+                    "cancelled query and restarted connection", err=True, fg="red"
+                )
+            else:
+                logger.debug("cancelled query, sql: %r", text)
+                click.secho("cancelled query", err=True, fg="red")
         except NotImplementedError:
             click.secho("Not Yet Implemented.", fg="yellow")
         except OperationalError as e:
             logger.error("sql: %r, error: %r", text, e)
             logger.error("traceback: %r", traceback.format_exc())
-            self._handle_server_closed_connection(text)
-        except (PgCliQuitError, EOFError) as e:
+            click.secho(str(e), err=True, fg="red")
+            if handle_closed_connection:
+                self._handle_server_closed_connection(text)
+        except (PgCliQuitError, EOFError):
             raise
         except Exception as e:
             logger.error("sql: %r, error: %r", text, e)
@@ -1055,10 +1089,17 @@ class PGCli:
             click.secho("Reconnecting...", fg="green")
             self.pgexecute.connect()
             click.secho("Reconnected!", fg="green")
-            self.execute_command(text)
         except OperationalError as e:
             click.secho("Reconnect Failed", fg="red")
             click.secho(str(e), err=True, fg="red")
+        else:
+            retry = self.auto_retry_closed_connection or confirm(
+                "Run the query from before reconnecting?"
+            )
+            if retry:
+                click.secho("Running query...", fg="green")
+                # Don't get stuck in a retry loop
+                self.execute_command(text, handle_closed_connection=False)
 
     def refresh_completions(self, history=None, persist_priorities="all"):
         """Refresh outdated completions
@@ -1285,7 +1326,6 @@ class PGCli:
 @click.option(
     "--warn",
     default=None,
-    type=click.Choice(["all", "moderate", "off"]),
     help="Warn before running a destructive query.",
 )
 @click.option(
@@ -1594,7 +1634,8 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
         if (
-            not expanded
+            not explain_mode
+            and not expanded
             and max_width
             and len(strip_ansi(first_line)) > max_width
             and headers

@@ -1,5 +1,10 @@
 import pytest
-from pgcli.packages.parseutils import is_destructive
+from pgcli.packages.parseutils import (
+    is_destructive,
+    parse_destructive_warning,
+    BASE_KEYWORDS,
+    ALL_KEYWORDS,
+)
 from pgcli.packages.parseutils.tables import extract_tables
 from pgcli.packages.parseutils.utils import find_prev_keyword, is_open_quote
 
@@ -263,18 +268,43 @@ def test_is_open_quote__open(sql):
 
 
 @pytest.mark.parametrize(
-    ("sql", "warning_level", "expected"),
+    ("sql", "keywords", "expected"),
     [
-        ("update abc set x = 1", "all", True),
-        ("update abc set x = 1 where y = 2", "all", True),
-        ("update abc set x = 1", "moderate", True),
-        ("update abc set x = 1 where y = 2", "moderate", False),
-        ("select x, y, z from abc", "all", False),
-        ("drop abc", "all", True),
-        ("alter abc", "all", True),
-        ("delete abc", "all", True),
-        ("truncate abc", "all", True),
+        ("update abc set x = 1", ALL_KEYWORDS, True),
+        ("update abc set x = 1 where y = 2", ALL_KEYWORDS, True),
+        ("update abc set x = 1", BASE_KEYWORDS, True),
+        ("update abc set x = 1 where y = 2", BASE_KEYWORDS, False),
+        ("select x, y, z from abc", ALL_KEYWORDS, False),
+        ("drop abc", ALL_KEYWORDS, True),
+        ("alter abc", ALL_KEYWORDS, True),
+        ("delete abc", ALL_KEYWORDS, True),
+        ("truncate abc", ALL_KEYWORDS, True),
+        ("insert into abc values (1, 2, 3)", ALL_KEYWORDS, False),
+        ("insert into abc values (1, 2, 3)", BASE_KEYWORDS, False),
+        ("insert into abc values (1, 2, 3)", ["insert"], True),
+        ("insert into abc values (1, 2, 3)", ["insert"], True),
     ],
 )
-def test_is_destructive(sql, warning_level, expected):
-    assert is_destructive(sql, warning_level=warning_level) == expected
+def test_is_destructive(sql, keywords, expected):
+    assert is_destructive(sql, keywords) == expected
+
+
+@pytest.mark.parametrize(
+    ("warning_level", "expected"),
+    [
+        ("true", ALL_KEYWORDS),
+        ("false", []),
+        ("all", ALL_KEYWORDS),
+        ("moderate", BASE_KEYWORDS),
+        ("off", []),
+        ("", []),
+        (None, []),
+        (ALL_KEYWORDS, ALL_KEYWORDS),
+        (BASE_KEYWORDS, BASE_KEYWORDS),
+        ("insert", ["insert"]),
+        ("drop,alter,delete", ["drop", "alter", "delete"]),
+        (["drop", "alter", "delete"], ["drop", "alter", "delete"]),
+    ],
+)
+def test_parse_destructive_warning(warning_level, expected):
+    assert parse_destructive_warning(warning_level) == expected
