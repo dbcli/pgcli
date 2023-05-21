@@ -21,9 +21,10 @@ ViewDef = namedtuple(
 # because sqlparse didn't handle tem well.  It won't be needed if sqlparse
 # does parsing of this situation better
 
+
 def remove_beginning_comments(command):
     # Regular expression pattern to match comments
-    pattern = r'^(/\*.*?\*/|--.*?)(?:\n|$)'
+    pattern = r"^(/\*.*?\*/|--.*?)(?:\n|$)"
 
     # Find and remove all comments from the beginning
     cleaned_command = command
@@ -31,7 +32,7 @@ def remove_beginning_comments(command):
     match = re.match(pattern, cleaned_command, re.DOTALL)
     while match:
         comments.append(match.group())
-        cleaned_command = cleaned_command[len(match.group()):].lstrip()
+        cleaned_command = cleaned_command[len(match.group()) :].lstrip()
         match = re.match(pattern, cleaned_command, re.DOTALL)
 
     return [cleaned_command, comments]
@@ -333,17 +334,17 @@ class PGExecute:
 
         removed_comments = []
         sqlarr = []
-        cleaned_command=""
+        cleaned_command = ""
 
         # could skip if statement doesn't match ^-- or ^/*
-        cleaned_command, removed_comments= remove_beginning_comments(statement)
+        cleaned_command, removed_comments = remove_beginning_comments(statement)
 
         sqlarr = sqlparse.split(cleaned_command)
 
         # now re-add the beginning comments if there are any, so that they show up in
         # log files etc when running these commands
 
-        if (len(removed_comments)>0):
+        if len(removed_comments) > 0:
             sqlarr = removed_comments + sqlarr
 
         # run each sql query

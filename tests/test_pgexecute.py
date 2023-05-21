@@ -301,9 +301,9 @@ def test_execute_from_commented_file_that_executes_another_file(
     assert result != None
     assert result[0].find("ALTER TABLE")
 
+
 @dbtest
 def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
-
     # just some base cases that should work also
     statement = "--comment\nselect now();"
     result = run(executor, statement, pgspecial=pgspecial)
@@ -314,7 +314,6 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     result = run(executor, statement, pgspecial=pgspecial)
     assert result != None
     assert result[1].find("now") >= 0
-
 
     # https://github.com/dbcli/pgcli/issues/1362
     statement = "--comment\n\\h"
@@ -377,7 +376,7 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     assert result != None
     assert result[0].find("No help") >= 0
 
-    #TODO: we probably don't want to do this but sqlparse is not parsing things well
+    # TODO: we probably don't want to do this but sqlparse is not parsing things well
     # we relly want it to find help but right now, sqlparse isn't dropping the /*comment*/
     # style comments after command
 
@@ -388,7 +387,7 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     assert result != None
     assert result[0].find("No help") >= 0
 
-    #TODO: same for this one
+    # TODO: same for this one
     statement = """/*comment1
     comment3
     comment2*/
@@ -401,10 +400,8 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     assert result[0].find("No help") >= 0
 
 
-
 @dbtest
 def test_execute_commented_first_line_and_normal(executor, pgspecial, tmpdir):
-
     # https://github.com/dbcli/pgcli/issues/1403
 
     # just some base cases that should work also
@@ -492,6 +489,7 @@ VALUES (1,'one'),
     result = run(executor, statement, pgspecial=pgspecial)
     assert result != None
     assert result[5].find("three") >= 0
+
 
 @dbtest
 def test_multiple_queries_same_line(executor):
