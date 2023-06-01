@@ -7,7 +7,7 @@ Feature: expanded mode:
       and we select from table
       then we see expanded data selected
       when we drop table
-      then we confirm the destructive warning
+      then we respond to the destructive warning: y
       then we see table dropped
 
   Scenario: expanded off
@@ -16,7 +16,7 @@ Feature: expanded mode:
       and we select from table
       then we see nonexpanded data selected
       when we drop table
-      then we confirm the destructive warning
+      then we respond to the destructive warning: y
       then we see table dropped
 
   Scenario: expanded auto
@@ -25,5 +25,5 @@ Feature: expanded mode:
       and we select from table
       then we see auto data selected
       when we drop table
-      then we confirm the destructive warning
+      then we respond to the destructive warning: y
       then we see table dropped

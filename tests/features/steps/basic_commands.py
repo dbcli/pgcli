@@ -73,6 +73,59 @@ def step_ctrl_d(context):
     context.exit_sent = True
 
 
+@when('we send "ctrl + c"')
+def step_ctrl_c(context):
+    """Send Ctrl + c to hopefully interrupt."""
+    context.cli.sendcontrol("c")
+
+
+@then("we see cancelled query warning")
+def step_see_cancelled_query_warning(context):
+    """
+    Make sure we receive the warning that the current query was cancelled.
+    """
+    wrappers.expect_exact(context, "cancelled query", timeout=2)
+
+
+@when("we send sleep query")
+def step_send_sleep_15_seconds(context):
+    """
+    Send query to sleep for 15 seconds.
+    """
+    context.cli.sendline("select pg_sleep(15)")
+
+
+@when("we check for any non-idle sleep queries")
+def step_check_for_active_sleep_queries(context):
+    """
+    Send query to check for any non-idle pg_sleep queries.
+    """
+    context.cli.sendline(
+        "select state from pg_stat_activity where query not like '%pg_stat_activity%' and query like '%pg_sleep%' and state != 'idle';"
+    )
+
+
+@then("we don't see any non-idle sleep queries")
+def step_no_active_sleep_queries(context):
+    """Confirm that any pg_sleep queries are either idle or not active."""
+    wrappers.expect_exact(
+        context,
+        context.conf["pager_boundary"]
+        + "\r"
+        + dedent(
+            """
+            +-------+\r
+            | state |\r
+            |-------|\r
+            +-------+\r
+            SELECT 0\r
+        """
+        )
+        + context.conf["pager_boundary"],
+        timeout=5,
+    )
+
+
 @when(r'we send "\?" command')
 def step_send_help(context):
     r"""
@@ -131,15 +184,15 @@ def step_see_found(context):
     )
 
 
-@then("we confirm the destructive warning")
-def step_confirm_destructive_command(context):
-    """Confirm destructive command."""
+@then("we respond to the destructive warning: {response}")
+def step_resppond_to_destructive_command(context, response):
+    """Respond to destructive command."""
     wrappers.expect_exact(
         context,
         "You're about to run a destructive command.\r\nDo you want to proceed? (y/n):",
         timeout=2,
     )
-    context.cli.sendline("y")
+    context.cli.sendline(response.strip())
 
 
 @then("we send password")

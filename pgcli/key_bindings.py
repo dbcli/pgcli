@@ -9,7 +9,7 @@ from prompt_toolkit.filters import (
     vi_mode,
 )
 
-from .pgbuffer import buffer_should_be_handled
+from .pgbuffer import buffer_should_be_handled, safe_multi_line_mode
 
 _logger = logging.getLogger(__name__)
 
@@ -114,7 +114,7 @@ def pgcli_bindings(pgcli):
         _logger.debug("Detected enter key.")
         event.current_buffer.validate_and_handle()
 
-    @kb.add("escape", "enter", filter=~vi_mode)
+    @kb.add("escape", "enter", filter=~vi_mode & ~safe_multi_line_mode(pgcli))
     def _(event):
         """Introduces a line break regardless of multi-line mode or not."""
         _logger.debug("Detected alt-enter key.")

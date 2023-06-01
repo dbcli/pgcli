@@ -83,7 +83,7 @@ def style_factory(name, cli_style):
                 logger.error("Unhandled style / class name: %s", token)
         else:
             # treat as prompt style name (2.0). See default style names here:
-            # https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/prompt_toolkit/styles/defaults.py
+            # https://github.com/prompt-toolkit/python-prompt-toolkit/blob/master/src/prompt_toolkit/styles/defaults.py
             prompt_styles.append((token, cli_style[token]))
 
     override_style = Style([("bottom-toolbar", "noreverse")])

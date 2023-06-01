@@ -76,7 +76,6 @@ class ProtocolSafeCursor(psycopg.Cursor):
 
 
 class PGExecute:
-
     # The boolean argument to the current_schemas function indicates whether
     # implicit schemas, e.g. pg_catalog
     search_path_query = """
@@ -180,7 +179,6 @@ class PGExecute:
         dsn=None,
         **kwargs,
     ):
-
         conn_params = self._conn_params.copy()
 
         new_params = {
@@ -203,7 +201,11 @@ class PGExecute:
 
         conn_params.update({k: v for k, v in new_params.items() if v})
 
-        conn_info = make_conninfo(**conn_params)
+        if "dsn" in conn_params:
+            other_params = {k: v for k, v in conn_params.items() if k != "dsn"}
+            conn_info = make_conninfo(conn_params["dsn"], **other_params)
+        else:
+            conn_info = make_conninfo(**conn_params)
         conn = psycopg.connect(conn_info)
         conn.cursor_factory = ProtocolSafeCursor
 
@@ -306,8 +308,27 @@ class PGExecute:
         if not statement:  # Empty string
             yield None, None, None, None, statement, False, False
 
-        # Split the sql into separate queries and run each one.
-        for sql in sqlparse.split(statement):
+        # sql parse doesn't split on a comment first + special
+        # so we're going to do it
+
+        sqltemp = []
+        sqlarr = []
+
+        if statement.startswith("--"):
+            sqltemp = statement.split("\n")
+            sqlarr.append(sqltemp[0])
+            for i in sqlparse.split(sqltemp[1]):
+                sqlarr.append(i)
+        elif statement.startswith("/*"):
+            sqltemp = statement.split("*/")
+            sqltemp[0] = sqltemp[0] + "*/"
+            for i in sqlparse.split(sqltemp[1]):
+                sqlarr.append(i)
+        else:
+            sqlarr = sqlparse.split(statement)
+
+        # run each sql query
+        for sql in sqlarr:
             # Remove spaces, eol and semi-colons.
             sql = sql.rstrip(";")
             sql = sqlparse.format(sql, strip_comments=False).strip()
@@ -451,7 +472,7 @@ class PGExecute:
             return (
                 psycopg.sql.SQL(template)
                 .format(
-                    name=psycopg.sql.Identifier(f"{result.nspname}.{result.relname}"),
+                    name=psycopg.sql.Identifier(result.nspname, result.relname),
                     stmt=psycopg.sql.SQL(result.viewdef),
                 )
                 .as_string(self.conn)

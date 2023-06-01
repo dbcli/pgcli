@@ -1,15 +1,49 @@
-Upcoming:
-=========
+Upcoming
+========
+
+Features:
+---------
+
+* New `destructive_statements_require_transaction` config option to refuse to execute a
+  destructive SQL statement if outside a transaction. This option is off by default.
+* Changed the `destructive_warning` config to be a list of commands that are considered
+  destructive. This would allow you to be warned on `create`, `grant`, or `insert` queries.
+* Destructive warnings will now include the alias dsn connection string name if provided (-D option).
+* pgcli.magic will now work with connection URLs that use TLS client certificates for authentication
+* Have config option to retry queries on operational errors like connections being lost.
+  Also prevents getting stuck in a retry loop.
+* Config option to not restart connection when cancelling a `destructive_warning` query. By default,
+  it will now not restart.
+* Config option to always run with a single connection.
+* Add comment explaining default LESS environment variable behavior and change example pager setting.
+
+Bug fixes:
+----------
+
+* Fix \ev not producing a correctly quoted "schema"."view"
+* Fix 'invalid connection option "dsn"' ([issue 1373](https://github.com/dbcli/pgcli/issues/1373)).
+* Fix explain mode when used with `expand`, `auto_expand`, or `--explain-vertical-output` ([issue 1393](https://github.com/dbcli/pgcli/issues/1393)).
+
+3.5.0 (2022/09/15):
+===================
+
+Features:
+---------
+
+* New formatter is added to export query result to sql format (such as sql-insert, sql-update) like mycli.
 
 Bug fixes:
 ----------
 
 * Fix exception when retrieving password from keyring ([issue 1338](https://github.com/dbcli/pgcli/issues/1338)).
+* Fix using comments with special commands ([issue 1362](https://github.com/dbcli/pgcli/issues/1362)).
+* Small improvements to the Windows developer experience
+* Fix submitting queries in safe multiline mode ([1360](https://github.com/dbcli/pgcli/issues/1360)).
 
 Internal:
 ---------
 
-* Port to psycopg3 (https://github.com/psycopg/psycopg). Needs a major version bump.
+* Port to psycopg3 (https://github.com/psycopg/psycopg).
 * Fix typos
 * Add support for overriding DSN connection information
 
@@ -20,6 +54,8 @@ Bug fixes:
 ----------
 
 * Fix the bug with Redshift not displaying word count in status ([related issue](https://github.com/dbcli/pgcli/issues/1320)).
+* Show the error status for CSV output format.
+
 
 3.4.0 (2022/02/21)
 ==================
