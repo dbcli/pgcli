@@ -23,6 +23,7 @@ Bug fixes:
 * Fix \ev not producing a correctly quoted "schema"."view"
 * Fix 'invalid connection option "dsn"' ([issue 1373](https://github.com/dbcli/pgcli/issues/1373)).
 * Fix explain mode when used with `expand`, `auto_expand`, or `--explain-vertical-output` ([issue 1393](https://github.com/dbcli/pgcli/issues/1393)).
+* Fix sql-insert format emits NULL as 'None' ([issue 1408](https://github.com/dbcli/pgcli/issues/1408)).
 
 3.5.0 (2022/09/15):
 ===================
