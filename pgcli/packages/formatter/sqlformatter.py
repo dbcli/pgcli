@@ -16,6 +16,8 @@ preprocessors = ()
 def escape_for_sql_statement(value):
     if isinstance(value, bytes):
         return f"X'{value.hex()}'"
+    elif value is None:
+        return "NULL"
     else:
         return "'{}'".format(value)
 
@@ -29,7 +31,7 @@ def adapter(data, headers, table_format=None, **kwargs):
         else:
             table_name = table[1]
     else:
-        table_name = '"DUAL"'
+        table_name = "DUAL"
     if table_format == "sql-insert":
         h = '", "'.join(headers)
         yield 'INSERT INTO "{}" ("{}") VALUES'.format(table_name, h)
