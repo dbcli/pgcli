@@ -14,12 +14,13 @@ preprocessors = ()
 
 
 def escape_for_sql_statement(value):
+    if value is None:
+        return "NULL"
+
     if isinstance(value, bytes):
         return f"X'{value.hex()}'"
-    elif value is None:
-        return "NULL"
-    else:
-        return "'{}'".format(value)
+
+    return "'{}'".format(value)
 
 
 def adapter(data, headers, table_format=None, **kwargs):
