@@ -16,9 +16,9 @@ def confirm_destructive_query(queries, keywords, alias):
     if alias:
         info += f" in {click.style(alias, fg='red')}"
 
-    prompt_text = f"{info}.\nDo you want to proceed? (y/n)"
+    prompt_text = f"{info}.\nDo you want to proceed?"
     if is_destructive(queries, keywords) and sys.stdin.isatty():
-        return prompt(prompt_text, type=bool)
+        return confirm(prompt_text)
 
 
 def confirm(*args, **kwargs):
