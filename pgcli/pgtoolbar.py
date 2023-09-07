@@ -1,10 +1,11 @@
-from pkg_resources import packaging
+try:
+    from packaging.version import parse as parse_version
+except ImportError:
+    from pkg_resources.packaging.version import parse as parse_version
 
 import prompt_toolkit
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.application import get_app
-
-parse_version = packaging.version.parse
 
 vi_modes = {
     InputMode.INSERT: "I",
