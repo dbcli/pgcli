@@ -17,7 +17,6 @@ install_requirements = [
     "configobj >= 5.0.6",
     "pendulum>=2.1.0",
     "cli_helpers[styles] >= 2.2.1",
-    "packaging >= 23.1; python_version >= 3.11",
 ]
 
 
