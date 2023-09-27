@@ -4,6 +4,7 @@ Upcoming
 Features:
 ---------
 
+* Ask for confirmation when quitting cli while a transaction is ongoing.
 * New `destructive_statements_require_transaction` config option to refuse to execute a
   destructive SQL statement if outside a transaction. This option is off by default.
 * Changed the `destructive_warning` config to be a list of commands that are considered

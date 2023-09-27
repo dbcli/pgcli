@@ -800,6 +800,34 @@ class PGCli:
                 logger.debug("Search path: %r", self.completer.search_path)
         return query
 
+    def _check_ongoing_transaction_and_allow_quitting(self):
+        """Return whether we can really quit, possibly by asking the
+        user to confirm so if there is an ongoing transaction.
+        """
+        if not self.pgexecute.valid_transaction():
+            return True
+        while 1:
+            try:
+                choice = click.prompt(
+                    "A transaction is ongoing. Choose `c` to COMMIT, `r` to ROLLBACK, `a` to abort exit.",
+                    default="a",
+                )
+            except click.Abort:
+                # Print newline if user aborts with `^C`, otherwise
+                # pgcli's prompt will be printed on the same line
+                # (just after the confirmation prompt).
+                click.echo(None, err=False)
+                choice = "a"
+            choice = choice.lower()
+            if choice == "a":
+                return False  # do not quit
+            if choice == "c":
+                query = self.execute_command("commit")
+                return query.successful  # quit only if query is successful
+            if choice == "r":
+                query = self.execute_command("rollback")
+                return query.successful  # quit only if query is successful
+
     def run_cli(self):
         logger = self.logger
 
@@ -822,6 +850,10 @@ class PGCli:
                     text = self.prompt_app.prompt()
                 except KeyboardInterrupt:
                     continue
+                except EOFError:
+                    if not self._check_ongoing_transaction_and_allow_quitting():
+                        continue
+                    raise
 
                 try:
                     text = self.handle_editor_command(text)
@@ -831,7 +863,12 @@ class PGCli:
                     click.secho(str(e), err=True, fg="red")
                     continue
 
-                self.handle_watch_command(text)
+                try:
+                    self.handle_watch_command(text)
+                except PgCliQuitError:
+                    if not self._check_ongoing_transaction_and_allow_quitting():
+                        continue
+                    raise
 
                 self.now = dt.datetime.today()
 
