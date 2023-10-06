@@ -279,6 +279,7 @@ class PGCli:
             "single_connection": single_connection,
             "less_chatty": less_chatty,
             "keyword_casing": keyword_casing,
+            "alias_map_file": c["main"]["alias_map_file"] or None,
         }
 
         completer = PGCompleter(

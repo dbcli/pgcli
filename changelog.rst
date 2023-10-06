@@ -28,6 +28,9 @@ Bug fixes:
 * Fix explain mode when used with `expand`, `auto_expand`, or `--explain-vertical-output` ([issue 1393](https://github.com/dbcli/pgcli/issues/1393)).
 * Fix sql-insert format emits NULL as 'None' ([issue 1408](https://github.com/dbcli/pgcli/issues/1408)).
 * Improve check for prompt-toolkit 3.0.6 ([issue 1416](https://github.com/dbcli/pgcli/issues/1416)).
+* Allow specifying an `alias_map_file` in the config that will use
+  predetermined table aliases instead of generating aliases programmatically on
+  the fly
 
 3.5.0 (2022/09/15):
 ===================

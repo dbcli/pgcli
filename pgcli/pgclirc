@@ -56,6 +56,14 @@ auto_retry_closed_connection = True
 # If set to True, table suggestions will include a table alias
 generate_aliases = False
 
+# Path to a json file that specifies specific table aliases to use when generate_aliases is set to True
+# the format for this file should be:
+# {
+#     "some_table_name": "desired_alias",
+#     "some_other_table_name": "another_alias"
+# }
+alias_map_file =
+
 # log_file location.
 # In Unix/Linux: ~/.config/pgcli/log
 # In Windows: %USERPROFILE%\AppData\Local\dbcli\pgcli\log
