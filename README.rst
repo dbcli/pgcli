@@ -157,8 +157,9 @@ get this running in a development setup.
 
 https://github.com/dbcli/pgcli/blob/master/DEVELOP.rst
 
-Please feel free to reach out to me if you need help.
-My email: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
+Please feel free to reach out to us if you need help.
+* Amjith, pgcli author: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
+* Irina, pgcli maintainer: i.chernyavska@gmail.com, Twitter: `@amjithr <http://twitter.com/irinatruong>`_
 
 Detailed Installation Instructions:
 -----------------------------------

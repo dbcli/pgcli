@@ -183,7 +183,6 @@ class PGCompleter(Completer):
         self.all_completions.update(additional_keywords)
 
     def extend_schemata(self, schemata):
-
         # schemata is a list of schema names
         schemata = self.escaped_names(schemata)
         metadata = self.dbmetadata["tables"]
@@ -252,7 +251,6 @@ class PGCompleter(Completer):
             self.all_completions.add(colname)
 
     def extend_functions(self, func_data):
-
         # func_data is a list of function metadata namedtuples
 
         # dbmetadata['schema_name']['functions']['function_name'] should return
@@ -286,7 +284,6 @@ class PGCompleter(Completer):
         }
 
     def extend_foreignkeys(self, fk_data):
-
         # fk_data is a list of ForeignKey namedtuples, with fields
         # parentschema, childschema, parenttable, childtable,
         # parentcolumns, childcolumns
@@ -309,7 +306,6 @@ class PGCompleter(Completer):
             parcolmeta.foreignkeys.append(fk)
 
     def extend_datatypes(self, type_data):
-
         # dbmetadata['datatypes'][schema_name][type_name] should store type
         # metadata, such as composite type field names. Currently, we're not
         # storing any metadata beyond typename, so just store None
@@ -723,7 +719,6 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, conds, meta="join")
 
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
-
         if suggestion.usage == "from":
             # Only suggest functions allowed in FROM clause
 

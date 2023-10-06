@@ -216,7 +216,6 @@ def pset_pager_mocks():
     with mock.patch("pgcli.main.click.echo") as mock_echo, mock.patch(
         "pgcli.main.click.echo_via_pager"
     ) as mock_echo_via_pager, mock.patch.object(cli, "prompt_app") as mock_app:
-
         yield cli, mock_echo, mock_echo_via_pager, mock_app
 
 
@@ -298,6 +297,22 @@ def test_i_works(tmpdir, executor):
 
 
 @dbtest
+def test_echo_works(executor):
+    cli = PGCli(pgexecute=executor)
+    statement = r"\echo asdf"
+    result = run(executor, statement, pgspecial=cli.pgspecial)
+    assert result == ["asdf"]
+
+
+@dbtest
+def test_qecho_works(executor):
+    cli = PGCli(pgexecute=executor)
+    statement = r"\qecho asdf"
+    result = run(executor, statement, pgspecial=cli.pgspecial)
+    assert result == ["asdf"]
+
+
+@dbtest
 def test_watch_works(executor):
     cli = PGCli(pgexecute=executor)
 
@@ -371,7 +386,6 @@ def test_quoted_db_uri(tmpdir):
 
 
 def test_pg_service_file(tmpdir):
-
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         with open(tmpdir.join(".pg_service.conf").strpath, "w") as service_conf:

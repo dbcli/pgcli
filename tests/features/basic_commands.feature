@@ -23,6 +23,23 @@ Feature: run the cli,
      When we send "ctrl + d"
       then dbcli exits
 
+  Scenario: confirm exit when a transaction is ongoing
+     When we begin transaction
+      and we try to send "ctrl + d"
+      then we see ongoing transaction message
+      when we send "c"
+      then dbcli exits
+
+  Scenario: cancel exit when a transaction is ongoing
+     When we begin transaction
+      and we try to send "ctrl + d"
+      then we see ongoing transaction message
+      when we send "a"
+      then we see dbcli prompt
+      when we rollback transaction
+      when we send "ctrl + d"
+      then dbcli exits
+
   Scenario: interrupt current query via "ctrl + c"
      When we send sleep query
       and we send "ctrl + c"

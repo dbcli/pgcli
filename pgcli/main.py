@@ -64,15 +64,13 @@ from .config import (
 from .key_bindings import pgcli_bindings
 from .packages.formatter.sqlformatter import register_new_formatter
 from .packages.prompt_utils import confirm, confirm_destructive_query
+from .packages.parseutils import is_destructive
 from .packages.parseutils import parse_destructive_warning
 from .__init__ import __version__
 
 click.disable_unicode_literals_warning = True
 
-try:
-    from urlparse import urlparse, unquote, parse_qs
-except ImportError:
-    from urllib.parse import urlparse, unquote, parse_qs
+from urllib.parse import urlparse
 
 from getpass import getuser
 
@@ -234,6 +232,9 @@ class PGCli:
         self.destructive_warning_restarts_connection = c["main"].as_bool(
             "destructive_warning_restarts_connection"
         )
+        self.destructive_statements_require_transaction = c["main"].as_bool(
+            "destructive_statements_require_transaction"
+        )
 
         self.less_chatty = bool(less_chatty) or c["main"].as_bool("less_chatty")
         self.null_string = c["main"].get("null_string", "<null>")
@@ -264,6 +265,9 @@ class PGCli:
         # Initialize completer
         smart_completion = c["main"].as_bool("smart_completion")
         keyword_casing = c["main"]["keyword_casing"]
+        single_connection = single_connection or c["main"].as_bool(
+            "always_use_single_connection"
+        )
         self.settings = {
             "casing_file": get_casing_file(c),
             "generate_casing_file": c["main"].as_bool("generate_casing_file"),
@@ -299,7 +303,6 @@ class PGCli:
         raise PgCliQuitError
 
     def register_special_commands(self):
-
         self.pgspecial.register(
             self.change_db,
             "\\c",
@@ -360,6 +363,23 @@ class PGCli:
             "\\T [format]",
             "Change the table format used to output results",
         )
+
+        self.pgspecial.register(
+            self.echo,
+            "\\echo",
+            "\\echo [string]",
+            "Echo a string to stdout",
+        )
+
+        self.pgspecial.register(
+            self.echo,
+            "\\qecho",
+            "\\qecho [string]",
+            "Echo a string to the query output channel.",
+        )
+
+    def echo(self, pattern, **_):
+        return [(None, None, None, pattern)]
 
     def change_table_format(self, pattern, **_):
         try:
@@ -430,15 +450,20 @@ class PGCli:
         except OSError as e:
             return [(None, None, None, str(e), "", False, True)]
 
-        if (
-            self.destructive_warning
-            and confirm_destructive_query(
+        if self.destructive_warning:
+            if (
+                self.destructive_statements_require_transaction
+                and not self.pgexecute.valid_transaction()
+                and is_destructive(query, self.destructive_warning)
+            ):
+                message = "Destructive statements must be run within a transaction. Command execution stopped."
+                return [(None, None, None, message)]
+            destroy = confirm_destructive_query(
                 query, self.destructive_warning, self.dsn_alias
             )
-            is False
-        ):
-            message = "Wise choice. Command execution stopped."
-            return [(None, None, None, message)]
+            if destroy is False:
+                message = "Wise choice. Command execution stopped."
+                return [(None, None, None, message)]
 
         on_error_resume = self.on_error == "RESUME"
         return self.pgexecute.run(
@@ -466,7 +491,6 @@ class PGCli:
         return [(None, None, None, message, "", True, True)]
 
     def initialize_logging(self):
-
         log_file = self.config["main"]["log_file"]
         if log_file == "default":
             log_file = config_location() + "log"
@@ -704,7 +728,16 @@ class PGCli:
 
         try:
             if self.destructive_warning:
-                destroy = confirm = confirm_destructive_query(
+                if (
+                    self.destructive_statements_require_transaction
+                    and not self.pgexecute.valid_transaction()
+                    and is_destructive(text, self.destructive_warning)
+                ):
+                    click.secho(
+                        "Destructive statements must be run within a transaction."
+                    )
+                    raise KeyboardInterrupt
+                destroy = confirm_destructive_query(
                     text, self.destructive_warning, self.dsn_alias
                 )
                 if destroy is False:
@@ -733,7 +766,7 @@ class PGCli:
             click.secho(str(e), err=True, fg="red")
             if handle_closed_connection:
                 self._handle_server_closed_connection(text)
-        except (PgCliQuitError, EOFError) as e:
+        except (PgCliQuitError, EOFError):
             raise
         except Exception as e:
             logger.error("sql: %r, error: %r", text, e)
@@ -741,7 +774,9 @@ class PGCli:
             click.secho(str(e), err=True, fg="red")
         else:
             try:
-                if self.output_file and not text.startswith(("\\o ", "\\? ")):
+                if self.output_file and not text.startswith(
+                    ("\\o ", "\\? ", "\\echo ")
+                ):
                     try:
                         with open(self.output_file, "a", encoding="utf-8") as f:
                             click.echo(text, file=f)
@@ -785,6 +820,34 @@ class PGCli:
                 logger.debug("Search path: %r", self.completer.search_path)
         return query
 
+    def _check_ongoing_transaction_and_allow_quitting(self):
+        """Return whether we can really quit, possibly by asking the
+        user to confirm so if there is an ongoing transaction.
+        """
+        if not self.pgexecute.valid_transaction():
+            return True
+        while 1:
+            try:
+                choice = click.prompt(
+                    "A transaction is ongoing. Choose `c` to COMMIT, `r` to ROLLBACK, `a` to abort exit.",
+                    default="a",
+                )
+            except click.Abort:
+                # Print newline if user aborts with `^C`, otherwise
+                # pgcli's prompt will be printed on the same line
+                # (just after the confirmation prompt).
+                click.echo(None, err=False)
+                choice = "a"
+            choice = choice.lower()
+            if choice == "a":
+                return False  # do not quit
+            if choice == "c":
+                query = self.execute_command("commit")
+                return query.successful  # quit only if query is successful
+            if choice == "r":
+                query = self.execute_command("rollback")
+                return query.successful  # quit only if query is successful
+
     def run_cli(self):
         logger = self.logger
 
@@ -807,6 +870,10 @@ class PGCli:
                     text = self.prompt_app.prompt()
                 except KeyboardInterrupt:
                     continue
+                except EOFError:
+                    if not self._check_ongoing_transaction_and_allow_quitting():
+                        continue
+                    raise
 
                 try:
                     text = self.handle_editor_command(text)
@@ -816,7 +883,12 @@ class PGCli:
                     click.secho(str(e), err=True, fg="red")
                     continue
 
-                self.handle_watch_command(text)
+                try:
+                    self.handle_watch_command(text)
+                except PgCliQuitError:
+                    if not self._check_ongoing_transaction_and_allow_quitting():
+                        continue
+                    raise
 
                 self.now = dt.datetime.today()
 
@@ -1600,7 +1672,8 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
         if (
-            not expanded
+            not explain_mode
+            and not expanded
             and max_width
             and len(strip_ansi(first_line)) > max_width
             and headers

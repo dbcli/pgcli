@@ -9,6 +9,10 @@ smart_completion = True
 # visible.)
 wider_completion_menu = False
 
+# Do not create new connections for refreshing completions; Equivalent to
+# always running with the --single-connection flag.
+always_use_single_connection = False
+
 # Multi-line mode allows breaking up the sql statements into multiple lines. If
 # this is set to True, then the end of the statements must have a semi-colon.
 # If this is set to False then sql statements can't be split into multiple
@@ -31,9 +35,13 @@ destructive_warning = drop, shutdown, delete, truncate, alter, update, unconditi
 
 # Destructive warning can restart the connection if this is enabled and the
 # user declines. This means that any current uncommitted transaction can be
-# aborted if the user doesn't want to proceed with a destructive_warning 
+# aborted if the user doesn't want to proceed with a destructive_warning
 # statement.
 destructive_warning_restarts_connection = False
+
+# When this option is on (and if `destructive_warning` is not empty),
+# destructive statements are not executed when outside of a transaction.
+destructive_statements_require_transaction = False
 
 # Enables expand mode, which is similar to `\x` in psql.
 expand = False
@@ -99,9 +107,10 @@ qualify_columns = if_more_than_one_table
 # When no schema is entered, only suggest objects in search_path
 search_path_filter = False
 
-# Default pager.
-# By default 'PAGER' environment variable is used
-# pager = less -SRXF
+# Default pager. See https://www.pgcli.com/pager for more information on settings.
+# By default 'PAGER' environment variable is used. If the pager is less, and the 'LESS'
+# environment variable is not set, then LESS='-SRXF' will be automatically set.
+# pager = less
 
 # Timing of sql statements and table rendering.
 timing = True
