@@ -1,3 +1,4 @@
+========
 Upcoming
 ========
 
@@ -17,6 +18,7 @@ Features:
   it will now not restart.
 * Config option to always run with a single connection.
 * Add comment explaining default LESS environment variable behavior and change example pager setting.
+* Added \echo & \qecho special commands. ([issue 1335](https://github.com/dbcli/pgcli/issues/1335)).
 
 Bug fixes:
 ----------
