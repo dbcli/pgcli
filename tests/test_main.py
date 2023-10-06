@@ -297,6 +297,22 @@ def test_i_works(tmpdir, executor):
 
 
 @dbtest
+def test_echo_works(executor):
+    cli = PGCli(pgexecute=executor)
+    statement = r"\echo asdf"
+    result = run(executor, statement, pgspecial=cli.pgspecial)
+    assert result == ["asdf"]
+
+
+@dbtest
+def test_qecho_works(executor):
+    cli = PGCli(pgexecute=executor)
+    statement = r"\qecho asdf"
+    result = run(executor, statement, pgspecial=cli.pgspecial)
+    assert result == ["asdf"]
+
+
+@dbtest
 def test_watch_works(executor):
     cli = PGCli(pgexecute=executor)
 

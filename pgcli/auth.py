@@ -26,7 +26,9 @@ def keyring_initialize(keyring_enabled, *, logger):
 
         try:
             keyring = importlib.import_module("keyring")
-        except ModuleNotFoundError as e:
+        except (
+            ModuleNotFoundError
+        ) as e:  # ImportError for Python 2, ModuleNotFoundError for Python 3
             logger.warning("import keyring failed: %r.", e)
 
 

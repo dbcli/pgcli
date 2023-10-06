@@ -34,7 +34,7 @@ def test_output_sql_insert():
             "Jackson",
             "jackson_test@gmail.com",
             "132454789",
-            "",
+            None,
             "2022-09-09 19:44:32.712343+08",
             "2022-09-09 19:44:32.712343+08",
         ]
@@ -58,7 +58,7 @@ def test_output_sql_insert():
     output_list = [l for l in output]
     expected = [
         'INSERT INTO "user" ("id", "name", "email", "phone", "description", "created_at", "updated_at") VALUES',
-        "  ('1', 'Jackson', 'jackson_test@gmail.com', '132454789', '', "
+        "  ('1', 'Jackson', 'jackson_test@gmail.com', '132454789', NULL, "
         + "'2022-09-09 19:44:32.712343+08', '2022-09-09 19:44:32.712343+08')",
         ";",
     ]

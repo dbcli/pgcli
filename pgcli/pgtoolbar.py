@@ -1,10 +1,5 @@
-from pkg_resources import packaging
-
-import prompt_toolkit
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.application import get_app
-
-parse_version = packaging.version.parse
 
 vi_modes = {
     InputMode.INSERT: "I",
@@ -12,7 +7,8 @@ vi_modes = {
     InputMode.REPLACE: "R",
     InputMode.INSERT_MULTIPLE: "M",
 }
-if parse_version(prompt_toolkit.__version__) >= parse_version("3.0.6"):
+# REPLACE_SINGLE is available in prompt_toolkit >= 3.0.6
+if "REPLACE_SINGLE" in {e.name for e in InputMode}:
     vi_modes[InputMode.REPLACE_SINGLE] = "R"
 
 
