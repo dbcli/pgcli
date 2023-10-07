@@ -1,7 +1,7 @@
 pytest>=2.7.0
 tox>=1.9.2
 behave>=1.2.4
-black>=23.9.1
+black>=23.3.0
 pexpect==3.3; platform_system != "Windows"
 pre-commit>=1.16.0
 coverage>=5.0.4
