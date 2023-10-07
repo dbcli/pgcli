@@ -1,6 +1,9 @@
 name: pgcli
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     paths-ignore:
       - '**.rst'
