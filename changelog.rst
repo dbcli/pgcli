@@ -32,6 +32,11 @@ Bug fixes:
   predetermined table aliases instead of generating aliases programmatically on
   the fly
 
+Internal:
+---------
+
+* Support Python3.12. (Thanks: `laixintao`_)
+
 3.5.0 (2022/09/15):
 ===================
 
