@@ -352,8 +352,7 @@ choice:
 
     In [3]: my_result = _
 
-Pgcli only runs on Python3.7+ since 4.0.0, if you use an old version of Python,
-you should use install ``pgcli <= 4.0.0``.
+Pgcli dropped support for Python<3.8 as of 4.0.0. If you need it, install ``pgcli <= 4.0.0``.
 
 Thanks:
 -------
