@@ -86,7 +86,7 @@ jobs:
 
       - name: Run Black
         run: black --check .
-        if: matrix.python-version == '3.7'
+        if: matrix.python-version == '3.8'
 
       - name: Coverage
         run: |
