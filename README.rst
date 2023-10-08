@@ -373,8 +373,8 @@ interface to Postgres database.
 Thanks to all the beta testers and contributors for your time and patience. :)
 
 
-.. |Build Status| image:: https://github.com/dbcli/pgcli/workflows/pgcli/badge.svg
-    :target: https://github.com/dbcli/pgcli/actions?query=workflow%3Apgcli
+.. |Build Status| image:: https://github.com/dbcli/pgcli/actions/workflows/ci.yml/badge.svg?branch=main
+    :target: https://github.com/dbcli/pgcli/actions/workflows/ci.yml
 
 .. |CodeCov| image:: https://codecov.io/gh/dbcli/pgcli/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/dbcli/pgcli
