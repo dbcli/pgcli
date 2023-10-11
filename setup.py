@@ -15,7 +15,7 @@ install_requirements = [
     "psycopg >= 3.0.14",
     "sqlparse >=0.3.0,<0.5",
     "configobj >= 5.0.6",
-    "pendulum>=2.1.0",
+    "pendulum>=3.0.0b1",
     "cli_helpers[styles] >= 2.2.1",
 ]
 
@@ -51,7 +51,7 @@ setup(
         "keyring": ["keyring >= 12.2.0"],
         "sshtunnel": ["sshtunnel >= 0.4.0"],
     },
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     entry_points="""
         [console_scripts]
         pgcli=pgcli.main:cli
@@ -62,11 +62,11 @@ setup(
         "Operating System :: Unix",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: SQL",
         "Topic :: Database",
         "Topic :: Database :: Front-Ends",

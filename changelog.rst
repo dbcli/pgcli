@@ -18,12 +18,12 @@ Features:
   it will now not restart.
 * Config option to always run with a single connection.
 * Add comment explaining default LESS environment variable behavior and change example pager setting.
-* Added \echo & \qecho special commands. ([issue 1335](https://github.com/dbcli/pgcli/issues/1335)).
+* Added `\echo` & `\qecho` special commands. ([issue 1335](https://github.com/dbcli/pgcli/issues/1335)).
 
 Bug fixes:
 ----------
 
-* Fix \ev not producing a correctly quoted "schema"."view"
+* Fix `\ev` not producing a correctly quoted "schema"."view"
 * Fix 'invalid connection option "dsn"' ([issue 1373](https://github.com/dbcli/pgcli/issues/1373)).
 * Fix explain mode when used with `expand`, `auto_expand`, or `--explain-vertical-output` ([issue 1393](https://github.com/dbcli/pgcli/issues/1393)).
 * Fix sql-insert format emits NULL as 'None' ([issue 1408](https://github.com/dbcli/pgcli/issues/1408)).
@@ -31,6 +31,11 @@ Bug fixes:
 * Allow specifying an `alias_map_file` in the config that will use
   predetermined table aliases instead of generating aliases programmatically on
   the fly
+
+Internal:
+---------
+
+* Drop support for Python 3.7 and add 3.12.
 
 3.5.0 (2022/09/15):
 ===================
