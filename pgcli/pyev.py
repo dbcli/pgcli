@@ -146,7 +146,7 @@ class Visualizer:
         elif self.explain.get("Max Rows") < plan["Actual Rows"]:
             self.explain["Max Rows"] = plan["Actual Rows"]
 
-        if not self.explain.get("MaxCost"):
+        if not self.explain.get("Max Cost"):
             self.explain["Max Cost"] = plan["Actual Cost"]
         elif self.explain.get("Max Cost") < plan["Actual Cost"]:
             self.explain["Max Cost"] = plan["Actual Cost"]
@@ -171,7 +171,7 @@ class Visualizer:
             return self.warning_format("%.2f ms" % value)
         elif value < 60000:
             return self.critical_format(
-                "%.2f s" % (value / 2000.0),
+                "%.2f s" % (value / 1000.0),
             )
         else:
             return self.critical_format(
