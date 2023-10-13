@@ -31,6 +31,7 @@ Bug fixes:
 * Allow specifying an `alias_map_file` in the config that will use
   predetermined table aliases instead of generating aliases programmatically on
   the fly
+* Fixed SQL error when there is a comment on the first line: ([issue 1403](https://github.com/dbcli/pgcli/issues/1403))
 
 Internal:
 ---------

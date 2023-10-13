@@ -304,9 +304,7 @@ def test_execute_from_commented_file_that_executes_another_file(
 
 @dbtest
 def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
-    # https://github.com/dbcli/pgcli/issues/1362
-
-    # just some base caes that should work also
+    # just some base cases that should work also
     statement = "--comment\nselect now();"
     result = run(executor, statement, pgspecial=pgspecial)
     assert result != None
@@ -317,18 +315,38 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     assert result != None
     assert result[1].find("now") >= 0
 
-    statement = "/*comment\ncomment line2*/\nselect now();"
-    result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
-    assert result[1].find("now") >= 0
-
+    # https://github.com/dbcli/pgcli/issues/1362
     statement = "--comment\n\\h"
     result = run(executor, statement, pgspecial=pgspecial)
     assert result != None
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
 
+    statement = "--comment1\n--comment2\n\\h"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
+
     statement = "/*comment*/\n\h;"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
+
+    statement = """/*comment1
+    comment2*/
+    \h"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
+
+    statement = """/*comment1
+    comment2*/
+    /*comment 3
+    comment4*/
+    \\h"""
     result = run(executor, statement, pgspecial=pgspecial)
     assert result != None
     assert result[1].find("ALTER") >= 0
@@ -351,6 +369,126 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     assert result != None
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
+
+    statement = """\\h /*comment4 */"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    print(result)
+    assert result != None
+    assert result[0].find("No help") >= 0
+
+    # TODO: we probably don't want to do this but sqlparse is not parsing things well
+    # we relly want it to find help but right now, sqlparse isn't dropping the /*comment*/
+    # style comments after command
+
+    statement = """/*comment1*/
+    \h
+    /*comment4 */"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[0].find("No help") >= 0
+
+    # TODO: same for this one
+    statement = """/*comment1
+    comment3
+    comment2*/
+    \\h
+    /*comment4
+    comment5
+    comment6*/"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[0].find("No help") >= 0
+
+
+@dbtest
+def test_execute_commented_first_line_and_normal(executor, pgspecial, tmpdir):
+    # https://github.com/dbcli/pgcli/issues/1403
+
+    # just some base cases that should work also
+    statement = "--comment\nselect now();"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("now") >= 0
+
+    statement = "/*comment*/\nselect now();"
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[1].find("now") >= 0
+
+    # this simulates the original error (1403) without having to add/drop tables
+    # since it was just an error on reading input files and not the actual
+    # command itself
+
+    # test that the statement works
+    statement = """VALUES (1, 'one'), (2, 'two'), (3, 'three');"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[5].find("three") >= 0
+
+    # test the statement with a \n in the middle
+    statement = """VALUES (1, 'one'),\n (2, 'two'), (3, 'three');"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[5].find("three") >= 0
+
+    # test the statement with a newline in the middle
+    statement = """VALUES (1, 'one'),
+     (2, 'two'), (3, 'three');"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[5].find("three") >= 0
+
+    # now add a single comment line
+    statement = """--comment\nVALUES (1, 'one'), (2, 'two'), (3, 'three');"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[5].find("three") >= 0
+
+    # doing without special char \n
+    statement = """--comment
+    VALUES (1,'one'),
+    (2, 'two'), (3, 'three');"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[5].find("three") >= 0
+
+    # two comment lines
+    statement = """--comment\n--comment2\nVALUES (1,'one'), (2, 'two'), (3, 'three');"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[5].find("three") >= 0
+
+    # doing without special char \n
+    statement = """--comment
+    --comment2
+    VALUES (1,'one'), (2, 'two'), (3, 'three');
+    """
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[5].find("three") >= 0
+
+    # multiline comment + newline in middle of the statement
+    statement = """/*comment
+comment2
+comment3*/
+VALUES (1,'one'),
+(2, 'two'), (3, 'three');"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[5].find("three") >= 0
+
+    # multiline comment + newline in middle of the statement
+    # + comments after the statement
+    statement = """/*comment
+comment2
+comment3*/
+VALUES (1,'one'),
+(2, 'two'), (3, 'three');
+--comment4
+--comment5"""
+    result = run(executor, statement, pgspecial=pgspecial)
+    assert result != None
+    assert result[5].find("three") >= 0
 
 
 @dbtest

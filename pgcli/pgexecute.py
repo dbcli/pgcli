@@ -1,7 +1,7 @@
 import logging
 import traceback
 from collections import namedtuple
-
+import re
 import pgspecial as special
 import psycopg
 import psycopg.sql
@@ -15,6 +15,27 @@ _logger = logging.getLogger(__name__)
 ViewDef = namedtuple(
     "ViewDef", "nspname relname relkind viewdef reloptions checkoption"
 )
+
+
+# we added this funcion to strip beginning comments
+# because sqlparse didn't handle tem well.  It won't be needed if sqlparse
+# does parsing of this situation better
+
+
+def remove_beginning_comments(command):
+    # Regular expression pattern to match comments
+    pattern = r"^(/\*.*?\*/|--.*?)(?:\n|$)"
+
+    # Find and remove all comments from the beginning
+    cleaned_command = command
+    comments = []
+    match = re.match(pattern, cleaned_command, re.DOTALL)
+    while match:
+        comments.append(match.group())
+        cleaned_command = cleaned_command[len(match.group()) :].lstrip()
+        match = re.match(pattern, cleaned_command, re.DOTALL)
+
+    return [cleaned_command, comments]
 
 
 def register_typecasters(connection):
@@ -311,21 +332,20 @@ class PGExecute:
         # sql parse doesn't split on a comment first + special
         # so we're going to do it
 
-        sqltemp = []
+        removed_comments = []
         sqlarr = []
+        cleaned_command = ""
 
-        if statement.startswith("--"):
-            sqltemp = statement.split("\n")
-            sqlarr.append(sqltemp[0])
-            for i in sqlparse.split(sqltemp[1]):
-                sqlarr.append(i)
-        elif statement.startswith("/*"):
-            sqltemp = statement.split("*/")
-            sqltemp[0] = sqltemp[0] + "*/"
-            for i in sqlparse.split(sqltemp[1]):
-                sqlarr.append(i)
-        else:
-            sqlarr = sqlparse.split(statement)
+        # could skip if statement doesn't match ^-- or ^/*
+        cleaned_command, removed_comments = remove_beginning_comments(statement)
+
+        sqlarr = sqlparse.split(cleaned_command)
+
+        # now re-add the beginning comments if there are any, so that they show up in
+        # log files etc when running these commands
+
+        if len(removed_comments) > 0:
+            sqlarr = removed_comments + sqlarr
 
         # run each sql query
         for sql in sqlarr:
