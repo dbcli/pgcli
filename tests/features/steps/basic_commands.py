@@ -206,7 +206,7 @@ def step_resppond_to_destructive_command(context, response):
     """Respond to destructive command."""
     wrappers.expect_exact(
         context,
-        "You're about to run a destructive command.\r\nDo you want to proceed? (y/n):",
+        "You're about to run a destructive command.\r\nDo you want to proceed? [y/N]:",
         timeout=2,
     )
     context.cli.sendline(response.strip())

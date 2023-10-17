@@ -16,7 +16,7 @@ def step_prepare_data(context):
     context.cli.sendline("drop table if exists a;")
     wrappers.expect_exact(
         context,
-        "You're about to run a destructive command.\r\nDo you want to proceed? (y/n):",
+        "You're about to run a destructive command.\r\nDo you want to proceed? [y/N]:",
         timeout=2,
     )
     context.cli.sendline("y")
