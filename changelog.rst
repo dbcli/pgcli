@@ -32,6 +32,7 @@ Bug fixes:
   predetermined table aliases instead of generating aliases programmatically on
   the fly
 * Fixed SQL error when there is a comment on the first line: ([issue 1403](https://github.com/dbcli/pgcli/issues/1403))
+* Fix wrong usage of prompt instead of confirm when confirm execution of destructive query
 
 Internal:
 ---------
