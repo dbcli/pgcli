@@ -4,6 +4,14 @@
 
 Features:
 ---------
+* Allow stable version of pendulum
+
+==================
+4.0.0 (2023-11-27)
+==================
+
+Features:
+---------
 
 * Ask for confirmation when quitting cli while a transaction is ongoing.
 * New `destructive_statements_require_transaction` config option to refuse to execute a

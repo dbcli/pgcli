@@ -15,7 +15,7 @@ install_requirements = [
     "psycopg >= 3.0.14",
     "sqlparse >=0.3.0,<0.5",
     "configobj >= 5.0.6",
-    "pendulum>=3.0.0b1",
+    "pendulum>=2.1.0",
     "cli_helpers[styles] >= 2.2.1",
 ]
 
