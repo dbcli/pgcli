@@ -1,10 +1,10 @@
 ==================
-4.0.0 (2023-11-27)
+4.0.1 (2023-11-29)
 ==================
 
-Features:
+Internal:
 ---------
-* Allow stable version of pendulum
+* Allow stable version of pendulum.
 
 ==================
 4.0.0 (2023-11-27)
