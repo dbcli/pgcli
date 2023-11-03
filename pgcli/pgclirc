@@ -33,10 +33,11 @@ multi_line_mode = psql
 # "unconditional_update" will warn you of update statements that don't have a where clause
 destructive_warning = drop, shutdown, delete, truncate, alter, update, unconditional_update
 
-# Destructive warning can restart the connection if this is enabled and the
-# user declines. This means that any current uncommitted transaction can be
-# aborted if the user doesn't want to proceed with a destructive_warning
-# statement.
+# When `destructive_warning` is on and the user declines to proceed with a
+# destructive statement, the current transaction (if any) is left untouched,
+# by default. When setting `destructive_warning_restarts_connection` to
+# "True", the connection to the server is restarted. In that case, the
+# transaction (if any) is rolled back.
 destructive_warning_restarts_connection = False
 
 # When this option is on (and if `destructive_warning` is not empty),
