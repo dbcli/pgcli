@@ -10,12 +10,16 @@ on:
 
 jobs:
   build:
-    runs-on: [ubuntu-latest, windows-latest]
+    #runs-on: [ubuntu-latest, windows-latest]
+    runs-on: [windows-latest]
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        # FIXME: DEBUG ONLY: minimize matrix while we test
+        #os: [ubuntu-latest, windows-latest]
+        os: [windows-latest]
+        #python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.11"]
 
     services:
       postgres:
