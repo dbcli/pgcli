@@ -1,3 +1,4 @@
+import ipaddress
 import logging
 import traceback
 from collections import namedtuple
@@ -273,6 +274,11 @@ class PGExecute:
 
     @property
     def short_host(self):
+        try:
+            ipaddress.ip_address(self.host)
+            return self.host
+        except ValueError:
+            pass
         if "," in self.host:
             host, _, _ = self.host.partition(",")
         else:

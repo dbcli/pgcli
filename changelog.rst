@@ -1,3 +1,12 @@
+Upcoming
+========
+
+Bug fixes:
+----------
+
+* Fix display of "short host" in prompt (with `\h`) for IPv4 addresses ([issue 964](https://github.com/dbcli/pgcli/issues/964)).
+
+
 ==================
 4.0.1 (2023-10-30)
 ==================
