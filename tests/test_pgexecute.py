@@ -721,6 +721,10 @@ def test_short_host(executor):
         executor, "host", "localhost1.example.org,localhost2.example.org"
     ):
         assert executor.short_host == "localhost1"
+    with patch.object(executor, "host", "ec2-11-222-333-444.compute-1.amazonaws.com"):
+        assert executor.short_host == "ec2-11-222-333-444"
+    with patch.object(executor, "host", "1.2.3.4"):
+        assert executor.short_host == "1.2.3.4"
 
 
 class VirtualCursor:
