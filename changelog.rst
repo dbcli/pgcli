@@ -1,6 +1,10 @@
 Upcoming
 ========
 
+Features:
+---------
+* Support `PGAPPNAME` as an environment variable and `--application-name` as a command line argument.
+
 Bug fixes:
 ----------
 
