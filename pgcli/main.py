@@ -165,6 +165,7 @@ class PGCli:
         pgexecute=None,
         pgclirc_file=None,
         row_limit=None,
+        application_name="pgcli",
         single_connection=False,
         less_chatty=None,
         prompt=None,
@@ -209,6 +210,8 @@ class PGCli:
             self.row_limit = row_limit
         else:
             self.row_limit = c["main"].as_int("row_limit")
+
+        self.application_name = application_name
 
         # if not specified, set to DEFAULT_MAX_FIELD_WIDTH
         # if specified but empty, set to None to disable truncation
@@ -568,7 +571,7 @@ class PGCli:
         if not database:
             database = user
 
-        kwargs.setdefault("application_name", "pgcli")
+        kwargs.setdefault("application_name", self.application_name)
 
         # If password prompt is not forced but no password is provided, try
         # getting it from environment variable.
@@ -1338,6 +1341,12 @@ class PGCli:
     help="Set threshold for row limit prompt. Use 0 to disable prompt.",
 )
 @click.option(
+    "--application-name",
+    default="pgcli",
+    envvar="PGAPPNAME",
+    help="Application name for the connection.",
+)
+@click.option(
     "--less-chatty",
     "less_chatty",
     is_flag=True,
@@ -1387,6 +1396,7 @@ def cli(
     pgclirc,
     dsn,
     row_limit,
+    application_name,
     less_chatty,
     prompt,
     prompt_dsn,
@@ -1445,6 +1455,7 @@ def cli(
         never_prompt,
         pgclirc_file=pgclirc,
         row_limit=row_limit,
+        application_name=application_name,
         single_connection=single_connection,
         less_chatty=less_chatty,
         prompt=prompt,
