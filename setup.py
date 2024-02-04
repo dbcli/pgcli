@@ -12,7 +12,8 @@ install_requirements = [
     # We still need to use pt-2 unless pt-3 released on Fedora32
     # see: https://github.com/dbcli/pgcli/pull/1197
     "prompt_toolkit>=2.0.6,<4.0.0",
-    "psycopg >= 3.0.14",
+    "psycopg >= 3.0.14; sys_platform != 'win32'"
+    "psycopg-binary >= 3.0.14; sys_platform == 'win32'",
     "sqlparse >=0.3.0,<0.5",
     "configobj >= 5.0.6",
     "pendulum>=2.1.0",
@@ -26,11 +27,6 @@ install_requirements = [
 # so we'll only install it if we're not in Windows.
 if platform.system() != "Windows" and not platform.system().startswith("CYGWIN"):
     install_requirements.append("setproctitle >= 1.1.9")
-
-# Windows will require the binary psycopg to run pgcli
-if platform.system() == "Windows":
-    install_requirements.append("psycopg-binary >= 3.0.14")
-
 
 setup(
     name="pgcli",
