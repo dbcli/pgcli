@@ -723,8 +723,6 @@ def test_function_notice_order(executor):
     assert "+------------+" in result[5]
     assert "SELECT 1" in result[6]
 
-    print(result)
-
 
 @dbtest
 def test_view_definition(executor):
