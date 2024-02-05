@@ -709,7 +709,8 @@ def test_function_notice_order(executor):
         LANGUAGE plpgsql;
     """,
     )
-    result = executor.function_definition("demo_order")
+
+    executor.function_definition("demo_order")
 
     result = run(executor, "select demo_order()")
     assert "first\nsecond\nthird\nfourth\nfifth\nsixth" in result[0]
