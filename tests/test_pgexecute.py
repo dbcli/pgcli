@@ -691,6 +691,42 @@ def test_function_definition(executor):
 
 
 @dbtest
+def test_function_notice_order(executor):
+    run(
+        executor,
+        """
+        CREATE OR REPLACE FUNCTION pgcli_demo_order() RETURNS VOID AS
+        $$
+        BEGIN
+            RAISE NOTICE 'first';
+            RAISE NOTICE 'second';
+            RAISE NOTICE 'third';
+            RAISE NOTICE 'fourth';
+            RAISE NOTICE 'fifth';
+            RAISE NOTICE 'sixth';
+        END;
+        $$
+        LANGUAGE plpgsql;
+    """,
+    )
+    result = executor.function_definition("pgcli_demo_order")
+
+    result = run(executor, "select demo_order()")
+    assert (
+        "first\nNone\nsecond\nNone\nthird\nNone\nfourth\nNone\nfifth\nNone\nsixth\nNone\n"
+        in result[0]
+    )
+    assert "+------------+" in result[1]
+    assert "| demo_order |" in result[2]
+    assert "|------------|" in result[3]
+    assert "|            |" in result[4]
+    assert "+------------+" in result[5]
+    assert "SELECT 1" in result[6]
+
+    print(result)
+
+
+@dbtest
 def test_view_definition(executor):
     run(executor, "create table tbl1 (a text, b numeric)")
     run(executor, "create view vw1 AS SELECT * FROM tbl1")
