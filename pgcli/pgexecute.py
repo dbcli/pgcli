@@ -437,7 +437,11 @@ class PGExecute:
 
         def handle_notices(n):
             nonlocal title
-            title = f"{title}{n.message_primary}\n{n.message_detail}\n"
+            title = f"{title}"
+            if n.message_primary:
+                title = f"{title}\n{n.message_primary}"
+            if n.message_detail:
+                title = f"{title}\n{n.message_detail}"
 
         self.conn.add_notice_handler(handle_notices)
 

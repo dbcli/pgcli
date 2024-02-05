@@ -712,10 +712,7 @@ def test_function_notice_order(executor):
     result = executor.function_definition("demo_order")
 
     result = run(executor, "select demo_order()")
-    assert (
-        "first\nNone\nsecond\nNone\nthird\nNone\nfourth\nNone\nfifth\nNone\nsixth\nNone\n"
-        in result[0]
-    )
+    assert "first\nsecond\nthird\nfourth\nfifth\nsixth" in result[0]
     assert "+------------+" in result[1]
     assert "| demo_order |" in result[2]
     assert "|------------|" in result[3]
