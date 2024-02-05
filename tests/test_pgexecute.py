@@ -695,7 +695,7 @@ def test_function_notice_order(executor):
     run(
         executor,
         """
-        CREATE OR REPLACE FUNCTION pgcli_demo_order() RETURNS VOID AS
+        CREATE OR REPLACE FUNCTION demo_order() RETURNS VOID AS
         $$
         BEGIN
             RAISE NOTICE 'first';
@@ -709,7 +709,7 @@ def test_function_notice_order(executor):
         LANGUAGE plpgsql;
     """,
     )
-    result = executor.function_definition("pgcli_demo_order")
+    result = executor.function_definition("demo_order")
 
     result = run(executor, "select demo_order()")
     assert (
