@@ -10,7 +10,7 @@ Bug fixes:
 
 * Fix display of "short host" in prompt (with `\h`) for IPv4 addresses ([issue 964](https://github.com/dbcli/pgcli/issues/964)).
 * Fix backwards display of NOTICEs from a Function ([issue 1443](https://github.com/dbcli/pgcli/issues/1443))
-
+* Fix psycopg errors when installing on Windows.  ([issue 1413](https://https://github.com/dbcli/pgcli/issues/1413))
 
 ==================
 4.0.1 (2023-10-30)
