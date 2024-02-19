@@ -11,7 +11,6 @@ import logging
 import threading
 import shutil
 import functools
-import pendulum
 import datetime as dt
 import itertools
 import platform
@@ -800,9 +799,9 @@ class PGCli:
                         "Time: %0.03fs (%s), executed in: %0.03fs (%s)"
                         % (
                             query.total_time,
-                            pendulum.Duration(seconds=query.total_time).in_words(),
+                            duration_in_words(query.total_time),
                             query.execution_time,
-                            pendulum.Duration(seconds=query.execution_time).in_words(),
+                            duration_in_words(query.execution_time),
                         )
                     )
                 else:
@@ -1733,6 +1732,29 @@ def parse_service_info(service):
         return None, service_file
     service_conf = service_file_config.get(service)
     return service_conf, service_file
+
+
+def duration_in_words(duration_in_seconds: float) -> str:
+    if not duration_in_seconds:
+        return "0 seconds"
+    components = []
+    hours, remainder = divmod(duration_in_seconds, 3600)
+    if hours > 1:
+        components.append(f"{hours} hours")
+    elif hours == 1:
+        components.append("1 hour")
+    minutes, seconds = divmod(remainder, 60)
+    if minutes > 1:
+        components.append(f"{minutes} minutes")
+    elif minutes == 1:
+        components.append("1 minute")
+    if seconds >= 2:
+        components.append(f"{int(seconds)} seconds")
+    elif seconds >= 1:
+        components.append("1 second")
+    elif seconds:
+        components.append(f"{round(seconds, 3)} second")
+    return " ".join(components)
 
 
 if __name__ == "__main__":
