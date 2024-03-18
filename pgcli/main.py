@@ -128,6 +128,15 @@ class PgCliQuitError(Exception):
     pass
 
 
+def notify_callback(notify: Notify):
+    click.secho(
+        'Notification received on channel "{}" (PID {}):\n{}'.format(
+            notify.channel, notify.pid, notify.payload
+        ),
+        fg="green",
+    )
+
+
 class PGCli:
     default_prompt = "\\u@\\h:\\d> "
     max_len_prompt = 30
@@ -653,14 +662,6 @@ class PGCli:
 
             if dsn:
                 dsn = make_conninfo(dsn, host=host, port=port)
-
-        def notify_callback(notify: Notify):
-            click.secho(
-                'Notification received on channel "{}" (PID {}):\n{}'.format(
-                    notify.channel, notify.pid, notify.payload
-                ),
-                fg="green",
-            )
 
         # Attempt to connect to the database.
         # Note that passwd may be empty on the first attempt. If connection
