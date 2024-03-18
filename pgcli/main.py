@@ -655,12 +655,12 @@ class PGCli:
                 dsn = make_conninfo(dsn, host=host, port=port)
 
         def notify_callback(notify: Notify):
-            click.echo(
-                'Notification received on channel "{}" (PID {}):'.format(
-                    notify.channel, notify.pid
-                )
+            click.secho(
+                'Notification received on channel "{}" (PID {}):\n{}'.format(
+                    notify.channel, notify.pid, notify.payload
+                ),
+                fg="green",
             )
-            self.echo_via_pager(notify.payload)
 
         # Attempt to connect to the database.
         # Note that passwd may be empty on the first attempt. If connection
@@ -675,7 +675,7 @@ class PGCli:
                     host,
                     port,
                     dsn,
-                    notify_callback=notify_callback,
+                    notify_callback,
                     **kwargs,
                 )
             except (OperationalError, InterfaceError) as e:
@@ -693,7 +693,7 @@ class PGCli:
                         host,
                         port,
                         dsn,
-                        notify_callback=notify_callback,
+                        notify_callback,
                         **kwargs,
                     )
                 else:
