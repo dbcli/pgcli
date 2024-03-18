@@ -535,4 +535,3 @@ def test_notifications(executor):
     with mock.patch("pgcli.main.click.secho") as mock_secho:
         run(executor, "notify chan1, 'testing2'")
         mock_secho.assert_not_called()
-
