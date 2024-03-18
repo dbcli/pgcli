@@ -9,6 +9,10 @@ smart_completion = True
 # visible.)
 wider_completion_menu = False
 
+# Do not create new connections for refreshing completions; Equivalent to
+# always running with the --single-connection flag.
+always_use_single_connection = False
+
 # Multi-line mode allows breaking up the sql statements into multiple lines. If
 # this is set to True, then the end of the statements must have a semi-colon.
 # If this is set to False then sql statements can't be split into multiple
@@ -24,16 +28,21 @@ multi_line_mode = psql
 
 # Destructive warning will alert you before executing a sql statement
 # that may cause harm to the database such as "drop table", "drop database",
-# "shutdown", "delete", or "update". 
+# "shutdown", "delete", or "update".
 # You can pass a list of destructive commands or leave it empty if you want to skip all warnings.
 # "unconditional_update" will warn you of update statements that don't have a where clause
 destructive_warning = drop, shutdown, delete, truncate, alter, update, unconditional_update
 
-# Destructive warning can restart the connection if this is enabled and the
-# user declines. This means that any current uncommitted transaction can be
-# aborted if the user doesn't want to proceed with a destructive_warning 
-# statement.
+# When `destructive_warning` is on and the user declines to proceed with a
+# destructive statement, the current transaction (if any) is left untouched,
+# by default. When setting `destructive_warning_restarts_connection` to
+# "True", the connection to the server is restarted. In that case, the
+# transaction (if any) is rolled back.
 destructive_warning_restarts_connection = False
+
+# When this option is on (and if `destructive_warning` is not empty),
+# destructive statements are not executed when outside of a transaction.
+destructive_statements_require_transaction = False
 
 # Enables expand mode, which is similar to `\x` in psql.
 expand = False
@@ -47,6 +56,14 @@ auto_retry_closed_connection = True
 
 # If set to True, table suggestions will include a table alias
 generate_aliases = False
+
+# Path to a json file that specifies specific table aliases to use when generate_aliases is set to True
+# the format for this file should be:
+# {
+#     "some_table_name": "desired_alias",
+#     "some_other_table_name": "another_alias"
+# }
+alias_map_file =
 
 # log_file location.
 # In Unix/Linux: ~/.config/pgcli/log
@@ -91,9 +108,10 @@ qualify_columns = if_more_than_one_table
 # When no schema is entered, only suggest objects in search_path
 search_path_filter = False
 
-# Default pager.
-# By default 'PAGER' environment variable is used
-# pager = less -SRXF
+# Default pager. See https://www.pgcli.com/pager for more information on settings.
+# By default 'PAGER' environment variable is used. If the pager is less, and the 'LESS'
+# environment variable is not set, then LESS='-SRXF' will be automatically set.
+# pager = less
 
 # Timing of sql statements and table rendering.
 timing = True

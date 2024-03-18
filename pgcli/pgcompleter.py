@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from itertools import count, repeat, chain
@@ -61,16 +62,36 @@ arg_default_type_strip_regex = re.compile(r"::[\w\.]+(\[\])?$")
 normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() + '"'
 
 
-def generate_alias(tbl):
+def generate_alias(tbl, alias_map=None):
     """Generate a table alias, consisting of all upper-case letters in
     the table name, or, if there are no upper-case letters, the first letter +
     all letters preceded by _
     param tbl - unescaped name of the table to alias
     """
+    if alias_map and tbl in alias_map:
+        return alias_map[tbl]
     return "".join(
         [l for l in tbl if l.isupper()]
         or [l for l, prev in zip(tbl, "_" + tbl) if prev == "_" and l != "_"]
     )
+
+
+class InvalidMapFile(ValueError):
+    pass
+
+
+def load_alias_map_file(path):
+    try:
+        with open(path) as fo:
+            alias_map = json.load(fo)
+    except FileNotFoundError as err:
+        raise InvalidMapFile(
+            f"Cannot read alias_map_file - {err.filename} does not exist"
+        )
+    except json.JSONDecodeError:
+        raise InvalidMapFile(f"Cannot read alias_map_file - {path} is not valid json")
+    else:
+        return alias_map
 
 
 class PGCompleter(Completer):
@@ -100,6 +121,11 @@ class PGCompleter(Completer):
         self.call_arg_oneliner_max = settings.get("call_arg_oneliner_max", 2)
         self.search_path_filter = settings.get("search_path_filter")
         self.generate_aliases = settings.get("generate_aliases")
+        alias_map_file = settings.get("alias_map_file")
+        if alias_map_file is not None:
+            self.alias_map = load_alias_map_file(alias_map_file)
+        else:
+            self.alias_map = None
         self.casing_file = settings.get("casing_file")
         self.insert_col_skip_patterns = [
             re.compile(pattern)
@@ -157,7 +183,6 @@ class PGCompleter(Completer):
         self.all_completions.update(additional_keywords)
 
     def extend_schemata(self, schemata):
-
         # schemata is a list of schema names
         schemata = self.escaped_names(schemata)
         metadata = self.dbmetadata["tables"]
@@ -226,7 +251,6 @@ class PGCompleter(Completer):
             self.all_completions.add(colname)
 
     def extend_functions(self, func_data):
-
         # func_data is a list of function metadata namedtuples
 
         # dbmetadata['schema_name']['functions']['function_name'] should return
@@ -260,7 +284,6 @@ class PGCompleter(Completer):
         }
 
     def extend_foreignkeys(self, fk_data):
-
         # fk_data is a list of ForeignKey namedtuples, with fields
         # parentschema, childschema, parenttable, childtable,
         # parentcolumns, childcolumns
@@ -283,7 +306,6 @@ class PGCompleter(Completer):
             parcolmeta.foreignkeys.append(fk)
 
     def extend_datatypes(self, type_data):
-
         # dbmetadata['datatypes'][schema_name][type_name] should store type
         # metadata, such as composite type field names. Currently, we're not
         # storing any metadata beyond typename, so just store None
@@ -697,7 +719,6 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, conds, meta="join")
 
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
-
         if suggestion.usage == "from":
             # Only suggest functions allowed in FROM clause
 

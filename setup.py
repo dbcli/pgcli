@@ -12,10 +12,10 @@ install_requirements = [
     # We still need to use pt-2 unless pt-3 released on Fedora32
     # see: https://github.com/dbcli/pgcli/pull/1197
     "prompt_toolkit>=2.0.6,<4.0.0",
-    "psycopg >= 3.0.14",
+    "psycopg >= 3.0.14; sys_platform != 'win32'",
+    "psycopg-binary >= 3.0.14; sys_platform == 'win32'",
     "sqlparse >=0.3.0,<0.5",
     "configobj >= 5.0.6",
-    "pendulum>=2.1.0",
     "cli_helpers[styles] >= 2.2.1",
 ]
 
@@ -26,11 +26,6 @@ install_requirements = [
 # so we'll only install it if we're not in Windows.
 if platform.system() != "Windows" and not platform.system().startswith("CYGWIN"):
     install_requirements.append("setproctitle >= 1.1.9")
-
-# Windows will require the binary psycopg to run pgcli
-if platform.system() == "Windows":
-    install_requirements.append("psycopg-binary >= 3.0.14")
-
 
 setup(
     name="pgcli",
@@ -51,7 +46,7 @@ setup(
         "keyring": ["keyring >= 12.2.0"],
         "sshtunnel": ["sshtunnel >= 0.4.0"],
     },
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     entry_points="""
         [console_scripts]
         pgcli=pgcli.main:cli
@@ -62,11 +57,11 @@ setup(
         "Operating System :: Unix",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: SQL",
         "Topic :: Database",
         "Topic :: Database :: Front-Ends",

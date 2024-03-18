@@ -11,6 +11,7 @@ except ImportError:
 
 from pgcli.main import (
     obfuscate_process_password,
+    duration_in_words,
     format_output,
     PGCli,
     OutputSettings,
@@ -216,7 +217,6 @@ def pset_pager_mocks():
     with mock.patch("pgcli.main.click.echo") as mock_echo, mock.patch(
         "pgcli.main.click.echo_via_pager"
     ) as mock_echo_via_pager, mock.patch.object(cli, "prompt_app") as mock_app:
-
         yield cli, mock_echo, mock_echo_via_pager, mock_app
 
 
@@ -298,6 +298,22 @@ def test_i_works(tmpdir, executor):
 
 
 @dbtest
+def test_echo_works(executor):
+    cli = PGCli(pgexecute=executor)
+    statement = r"\echo asdf"
+    result = run(executor, statement, pgspecial=cli.pgspecial)
+    assert result == ["asdf"]
+
+
+@dbtest
+def test_qecho_works(executor):
+    cli = PGCli(pgexecute=executor)
+    statement = r"\qecho asdf"
+    result = run(executor, statement, pgspecial=cli.pgspecial)
+    assert result == ["asdf"]
+
+
+@dbtest
 def test_watch_works(executor):
     cli = PGCli(pgexecute=executor)
 
@@ -371,7 +387,6 @@ def test_quoted_db_uri(tmpdir):
 
 
 def test_pg_service_file(tmpdir):
-
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         with open(tmpdir.join(".pg_service.conf").strpath, "w") as service_conf:
@@ -474,3 +489,28 @@ def test_application_name_db_uri(tmpdir):
     mock_pgexecute.assert_called_with(
         "bar", "bar", "", "baz.com", "", "", application_name="cow"
     )
+
+
+@pytest.mark.parametrize(
+    "duration_in_seconds,words",
+    [
+        (0, "0 seconds"),
+        (0.0009, "0.001 second"),
+        (0.0005, "0.001 second"),
+        (0.0004, "0.0 second"),  # not perfect, but will do
+        (0.2, "0.2 second"),
+        (1, "1 second"),
+        (1.4, "1 second"),
+        (2, "2 seconds"),
+        (3.4, "3 seconds"),
+        (60, "1 minute"),
+        (61, "1 minute 1 second"),
+        (123, "2 minutes 3 seconds"),
+        (3600, "1 hour"),
+        (7235, "2 hours 35 seconds"),
+        (9005, "2 hours 30 minutes 5 seconds"),
+        (86401, "24 hours 1 second"),
+    ],
+)
+def test_duration_in_words(duration_in_seconds, words):
+    assert duration_in_words(duration_in_seconds) == words

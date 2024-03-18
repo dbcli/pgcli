@@ -10,7 +10,8 @@ class ExplainOutputFormatter:
         self.max_width = max_width
 
     def format_output(self, cur, headers, **output_kwargs):
-        (data,) = cur.fetchone()
+        # explain query results should always contain 1 row each
+        [(data,)] = list(cur)
         explain_list = json.loads(data)
         visualizer = Visualizer(self.max_width)
         for explain in explain_list:

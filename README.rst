@@ -157,8 +157,9 @@ get this running in a development setup.
 
 https://github.com/dbcli/pgcli/blob/master/DEVELOP.rst
 
-Please feel free to reach out to me if you need help.
-My email: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
+Please feel free to reach out to us if you need help.
+* Amjith, pgcli author: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
+* Irina, pgcli maintainer: i.chernyavska@gmail.com, Twitter: `@irinatruong <http://twitter.com/irinatruong>`_
 
 Detailed Installation Instructions:
 -----------------------------------
@@ -351,8 +352,7 @@ choice:
 
     In [3]: my_result = _
 
-Pgcli only runs on Python3.7+ since 4.0.0, if you use an old version of Python,
-you should use install ``pgcli <= 4.0.0``.
+Pgcli dropped support for Python<3.8 as of 4.0.0. If you need it, install ``pgcli <= 4.0.0``.
 
 Thanks:
 -------
@@ -372,8 +372,8 @@ interface to Postgres database.
 Thanks to all the beta testers and contributors for your time and patience. :)
 
 
-.. |Build Status| image:: https://github.com/dbcli/pgcli/workflows/pgcli/badge.svg
-    :target: https://github.com/dbcli/pgcli/actions?query=workflow%3Apgcli
+.. |Build Status| image:: https://github.com/dbcli/pgcli/actions/workflows/ci.yml/badge.svg?branch=main
+    :target: https://github.com/dbcli/pgcli/actions/workflows/ci.yml
 
 .. |CodeCov| image:: https://codecov.io/gh/dbcli/pgcli/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/dbcli/pgcli

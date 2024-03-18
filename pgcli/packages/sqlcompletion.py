@@ -290,7 +290,6 @@ def suggest_special(text):
 
 
 def suggest_based_on_last_token(token, stmt):
-
     if isinstance(token, str):
         token_v = token.lower()
     elif isinstance(token, Comparison):
@@ -399,7 +398,6 @@ def suggest_based_on_last_token(token, stmt):
     elif (token_v.endswith("join") and token.is_keyword) or (
         token_v in ("copy", "from", "update", "into", "describe", "truncate")
     ):
-
         schema = stmt.get_identifier_schema()
         tables = extract_tables(stmt.text_before_cursor)
         is_join = token_v.endswith("join") and token.is_keyword
@@ -436,7 +434,6 @@ def suggest_based_on_last_token(token, stmt):
         try:
             prev = stmt.get_previous_token(token).value.lower()
             if prev in ("drop", "alter", "create", "create or replace"):
-
                 # Suggest functions from either the currently-selected schema or the
                 # public schema if no schema has been specified
                 suggest = []

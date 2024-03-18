@@ -64,13 +64,22 @@ def step_ctrl_d(context):
     """
     Send Ctrl + D to hopefully exit.
     """
+    step_try_to_ctrl_d(context)
+    context.cli.expect(pexpect.EOF, timeout=5)
+    context.exit_sent = True
+
+
+@when('we try to send "ctrl + d"')
+def step_try_to_ctrl_d(context):
+    """
+    Send Ctrl + D, perhaps exiting, perhaps not (if a transaction is
+    ongoing).
+    """
     # turn off pager before exiting
     context.cli.sendcontrol("c")
     context.cli.sendline(r"\pset pager off")
     wrappers.wait_prompt(context)
     context.cli.sendcontrol("d")
-    context.cli.expect(pexpect.EOF, timeout=5)
-    context.exit_sent = True
 
 
 @when('we send "ctrl + c"')
@@ -85,6 +94,14 @@ def step_see_cancelled_query_warning(context):
     Make sure we receive the warning that the current query was cancelled.
     """
     wrappers.expect_exact(context, "cancelled query", timeout=2)
+
+
+@then("we see ongoing transaction message")
+def step_see_ongoing_transaction_error(context):
+    """
+    Make sure we receive the warning that a transaction is ongoing.
+    """
+    context.cli.expect("A transaction is ongoing.", timeout=2)
 
 
 @when("we send sleep query")
@@ -189,7 +206,7 @@ def step_resppond_to_destructive_command(context, response):
     """Respond to destructive command."""
     wrappers.expect_exact(
         context,
-        "You're about to run a destructive command.\r\nDo you want to proceed? (y/n):",
+        "You're about to run a destructive command.\r\nDo you want to proceed? [y/N]:",
         timeout=2,
     )
     context.cli.sendline(response.strip())
@@ -199,3 +216,16 @@ def step_resppond_to_destructive_command(context, response):
 def step_send_password(context):
     wrappers.expect_exact(context, "Password for", timeout=5)
     context.cli.sendline(context.conf["pass"] or "DOES NOT MATTER")
+
+
+@when('we send "{text}"')
+def step_send_text(context, text):
+    context.cli.sendline(text)
+    # Try to detect whether we are exiting. If so, set `exit_sent`
+    # so that `after_scenario` correctly cleans up.
+    try:
+        context.cli.expect(pexpect.EOF, timeout=0.2)
+    except pexpect.TIMEOUT:
+        pass
+    else:
+        context.exit_sent = True

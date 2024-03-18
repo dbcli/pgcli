@@ -11,7 +11,6 @@ import logging
 import threading
 import shutil
 import functools
-import pendulum
 import datetime as dt
 import itertools
 import platform
@@ -64,15 +63,13 @@ from .config import (
 from .key_bindings import pgcli_bindings
 from .packages.formatter.sqlformatter import register_new_formatter
 from .packages.prompt_utils import confirm, confirm_destructive_query
+from .packages.parseutils import is_destructive
 from .packages.parseutils import parse_destructive_warning
 from .__init__ import __version__
 
 click.disable_unicode_literals_warning = True
 
-try:
-    from urlparse import urlparse, unquote, parse_qs
-except ImportError:
-    from urllib.parse import urlparse, unquote, parse_qs
+from urllib.parse import urlparse
 
 from getpass import getuser
 
@@ -167,6 +164,7 @@ class PGCli:
         pgexecute=None,
         pgclirc_file=None,
         row_limit=None,
+        application_name="pgcli",
         single_connection=False,
         less_chatty=None,
         prompt=None,
@@ -212,6 +210,8 @@ class PGCli:
         else:
             self.row_limit = c["main"].as_int("row_limit")
 
+        self.application_name = application_name
+
         # if not specified, set to DEFAULT_MAX_FIELD_WIDTH
         # if specified but empty, set to None to disable truncation
         # ellipsis will take at least 3 symbols, so this can't be less than 3 if specified and > 0
@@ -233,6 +233,9 @@ class PGCli:
         )
         self.destructive_warning_restarts_connection = c["main"].as_bool(
             "destructive_warning_restarts_connection"
+        )
+        self.destructive_statements_require_transaction = c["main"].as_bool(
+            "destructive_statements_require_transaction"
         )
 
         self.less_chatty = bool(less_chatty) or c["main"].as_bool("less_chatty")
@@ -264,6 +267,9 @@ class PGCli:
         # Initialize completer
         smart_completion = c["main"].as_bool("smart_completion")
         keyword_casing = c["main"]["keyword_casing"]
+        single_connection = single_connection or c["main"].as_bool(
+            "always_use_single_connection"
+        )
         self.settings = {
             "casing_file": get_casing_file(c),
             "generate_casing_file": c["main"].as_bool("generate_casing_file"),
@@ -275,6 +281,7 @@ class PGCli:
             "single_connection": single_connection,
             "less_chatty": less_chatty,
             "keyword_casing": keyword_casing,
+            "alias_map_file": c["main"]["alias_map_file"] or None,
         }
 
         completer = PGCompleter(
@@ -298,7 +305,6 @@ class PGCli:
         raise PgCliQuitError
 
     def register_special_commands(self):
-
         self.pgspecial.register(
             self.change_db,
             "\\c",
@@ -359,6 +365,23 @@ class PGCli:
             "\\T [format]",
             "Change the table format used to output results",
         )
+
+        self.pgspecial.register(
+            self.echo,
+            "\\echo",
+            "\\echo [string]",
+            "Echo a string to stdout",
+        )
+
+        self.pgspecial.register(
+            self.echo,
+            "\\qecho",
+            "\\qecho [string]",
+            "Echo a string to the query output channel.",
+        )
+
+    def echo(self, pattern, **_):
+        return [(None, None, None, pattern)]
 
     def change_table_format(self, pattern, **_):
         try:
@@ -429,15 +452,20 @@ class PGCli:
         except OSError as e:
             return [(None, None, None, str(e), "", False, True)]
 
-        if (
-            self.destructive_warning
-            and confirm_destructive_query(
+        if self.destructive_warning:
+            if (
+                self.destructive_statements_require_transaction
+                and not self.pgexecute.valid_transaction()
+                and is_destructive(query, self.destructive_warning)
+            ):
+                message = "Destructive statements must be run within a transaction. Command execution stopped."
+                return [(None, None, None, message)]
+            destroy = confirm_destructive_query(
                 query, self.destructive_warning, self.dsn_alias
             )
-            is False
-        ):
-            message = "Wise choice. Command execution stopped."
-            return [(None, None, None, message)]
+            if destroy is False:
+                message = "Wise choice. Command execution stopped."
+                return [(None, None, None, message)]
 
         on_error_resume = self.on_error == "RESUME"
         return self.pgexecute.run(
@@ -465,7 +493,6 @@ class PGCli:
         return [(None, None, None, message, "", True, True)]
 
     def initialize_logging(self):
-
         log_file = self.config["main"]["log_file"]
         if log_file == "default":
             log_file = config_location() + "log"
@@ -543,7 +570,7 @@ class PGCli:
         if not database:
             database = user
 
-        kwargs.setdefault("application_name", "pgcli")
+        kwargs.setdefault("application_name", self.application_name)
 
         # If password prompt is not forced but no password is provided, try
         # getting it from environment variable.
@@ -727,7 +754,16 @@ class PGCli:
 
         try:
             if self.destructive_warning:
-                destroy = confirm = confirm_destructive_query(
+                if (
+                    self.destructive_statements_require_transaction
+                    and not self.pgexecute.valid_transaction()
+                    and is_destructive(text, self.destructive_warning)
+                ):
+                    click.secho(
+                        "Destructive statements must be run within a transaction."
+                    )
+                    raise KeyboardInterrupt
+                destroy = confirm_destructive_query(
                     text, self.destructive_warning, self.dsn_alias
                 )
                 if destroy is False:
@@ -756,7 +792,7 @@ class PGCli:
             click.secho(str(e), err=True, fg="red")
             if handle_closed_connection:
                 self._handle_server_closed_connection(text)
-        except (PgCliQuitError, EOFError) as e:
+        except (PgCliQuitError, EOFError):
             raise
         except Exception as e:
             logger.error("sql: %r, error: %r", text, e)
@@ -764,7 +800,9 @@ class PGCli:
             click.secho(str(e), err=True, fg="red")
         else:
             try:
-                if self.output_file and not text.startswith(("\\o ", "\\? ")):
+                if self.output_file and not text.startswith(
+                    ("\\o ", "\\? ", "\\echo ")
+                ):
                     try:
                         with open(self.output_file, "a", encoding="utf-8") as f:
                             click.echo(text, file=f)
@@ -785,9 +823,9 @@ class PGCli:
                         "Time: %0.03fs (%s), executed in: %0.03fs (%s)"
                         % (
                             query.total_time,
-                            pendulum.Duration(seconds=query.total_time).in_words(),
+                            duration_in_words(query.total_time),
                             query.execution_time,
-                            pendulum.Duration(seconds=query.execution_time).in_words(),
+                            duration_in_words(query.execution_time),
                         )
                     )
                 else:
@@ -807,6 +845,34 @@ class PGCli:
                     self.completer.set_search_path(self.pgexecute.search_path())
                 logger.debug("Search path: %r", self.completer.search_path)
         return query
+
+    def _check_ongoing_transaction_and_allow_quitting(self):
+        """Return whether we can really quit, possibly by asking the
+        user to confirm so if there is an ongoing transaction.
+        """
+        if not self.pgexecute.valid_transaction():
+            return True
+        while 1:
+            try:
+                choice = click.prompt(
+                    "A transaction is ongoing. Choose `c` to COMMIT, `r` to ROLLBACK, `a` to abort exit.",
+                    default="a",
+                )
+            except click.Abort:
+                # Print newline if user aborts with `^C`, otherwise
+                # pgcli's prompt will be printed on the same line
+                # (just after the confirmation prompt).
+                click.echo(None, err=False)
+                choice = "a"
+            choice = choice.lower()
+            if choice == "a":
+                return False  # do not quit
+            if choice == "c":
+                query = self.execute_command("commit")
+                return query.successful  # quit only if query is successful
+            if choice == "r":
+                query = self.execute_command("rollback")
+                return query.successful  # quit only if query is successful
 
     def run_cli(self):
         logger = self.logger
@@ -830,6 +896,10 @@ class PGCli:
                     text = self.prompt_app.prompt()
                 except KeyboardInterrupt:
                     continue
+                except EOFError:
+                    if not self._check_ongoing_transaction_and_allow_quitting():
+                        continue
+                    raise
 
                 try:
                     text = self.handle_editor_command(text)
@@ -839,7 +909,12 @@ class PGCli:
                     click.secho(str(e), err=True, fg="red")
                     continue
 
-                self.handle_watch_command(text)
+                try:
+                    self.handle_watch_command(text)
+                except PgCliQuitError:
+                    if not self._check_ongoing_transaction_and_allow_quitting():
+                        continue
+                    raise
 
                 self.now = dt.datetime.today()
 
@@ -1289,6 +1364,12 @@ class PGCli:
     help="Set threshold for row limit prompt. Use 0 to disable prompt.",
 )
 @click.option(
+    "--application-name",
+    default="pgcli",
+    envvar="PGAPPNAME",
+    help="Application name for the connection.",
+)
+@click.option(
     "--less-chatty",
     "less_chatty",
     is_flag=True,
@@ -1338,6 +1419,7 @@ def cli(
     pgclirc,
     dsn,
     row_limit,
+    application_name,
     less_chatty,
     prompt,
     prompt_dsn,
@@ -1396,6 +1478,7 @@ def cli(
         never_prompt,
         pgclirc_file=pgclirc,
         row_limit=row_limit,
+        application_name=application_name,
         single_connection=single_connection,
         less_chatty=less_chatty,
         prompt=prompt,
@@ -1623,7 +1706,8 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         first_line = next(formatted)
         formatted = itertools.chain([first_line], formatted)
         if (
-            not expanded
+            not explain_mode
+            and not expanded
             and max_width
             and len(strip_ansi(first_line)) > max_width
             and headers
@@ -1672,6 +1756,29 @@ def parse_service_info(service):
         return None, service_file
     service_conf = service_file_config.get(service)
     return service_conf, service_file
+
+
+def duration_in_words(duration_in_seconds: float) -> str:
+    if not duration_in_seconds:
+        return "0 seconds"
+    components = []
+    hours, remainder = divmod(duration_in_seconds, 3600)
+    if hours > 1:
+        components.append(f"{hours} hours")
+    elif hours == 1:
+        components.append("1 hour")
+    minutes, seconds = divmod(remainder, 60)
+    if minutes > 1:
+        components.append(f"{minutes} minutes")
+    elif minutes == 1:
+        components.append("1 minute")
+    if seconds >= 2:
+        components.append(f"{int(seconds)} seconds")
+    elif seconds >= 1:
+        components.append("1 second")
+    elif seconds:
+        components.append(f"{round(seconds, 3)} second")
+    return " ".join(components)
 
 
 if __name__ == "__main__":

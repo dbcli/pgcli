@@ -1,7 +1,8 @@
+import ipaddress
 import logging
 import traceback
 from collections import namedtuple
-
+import re
 import pgspecial as special
 import psycopg
 import psycopg.sql
@@ -15,6 +16,27 @@ _logger = logging.getLogger(__name__)
 ViewDef = namedtuple(
     "ViewDef", "nspname relname relkind viewdef reloptions checkoption"
 )
+
+
+# we added this funcion to strip beginning comments
+# because sqlparse didn't handle tem well.  It won't be needed if sqlparse
+# does parsing of this situation better
+
+
+def remove_beginning_comments(command):
+    # Regular expression pattern to match comments
+    pattern = r"^(/\*.*?\*/|--.*?)(?:\n|$)"
+
+    # Find and remove all comments from the beginning
+    cleaned_command = command
+    comments = []
+    match = re.match(pattern, cleaned_command, re.DOTALL)
+    while match:
+        comments.append(match.group())
+        cleaned_command = cleaned_command[len(match.group()) :].lstrip()
+        match = re.match(pattern, cleaned_command, re.DOTALL)
+
+    return [cleaned_command, comments]
 
 
 def register_typecasters(connection):
@@ -76,7 +98,6 @@ class ProtocolSafeCursor(psycopg.Cursor):
 
 
 class PGExecute:
-
     # The boolean argument to the current_schemas function indicates whether
     # implicit schemas, e.g. pg_catalog
     search_path_query = """
@@ -182,7 +203,6 @@ class PGExecute:
         dsn=None,
         **kwargs,
     ):
-
         conn_params = self._conn_params.copy()
 
         new_params = {
@@ -205,7 +225,11 @@ class PGExecute:
 
         conn_params.update({k: v for k, v in new_params.items() if v})
 
-        conn_info = make_conninfo(**conn_params)
+        if "dsn" in conn_params:
+            other_params = {k: v for k, v in conn_params.items() if k != "dsn"}
+            conn_info = make_conninfo(conn_params["dsn"], **other_params)
+        else:
+            conn_info = make_conninfo(**conn_params)
         conn = psycopg.connect(conn_info)
         conn.cursor_factory = ProtocolSafeCursor
 
@@ -255,6 +279,11 @@ class PGExecute:
 
     @property
     def short_host(self):
+        try:
+            ipaddress.ip_address(self.host)
+            return self.host
+        except ValueError:
+            pass
         if "," in self.host:
             host, _, _ = self.host.partition(",")
         else:
@@ -314,21 +343,20 @@ class PGExecute:
         # sql parse doesn't split on a comment first + special
         # so we're going to do it
 
-        sqltemp = []
+        removed_comments = []
         sqlarr = []
+        cleaned_command = ""
 
-        if statement.startswith("--"):
-            sqltemp = statement.split("\n")
-            sqlarr.append(sqltemp[0])
-            for i in sqlparse.split(sqltemp[1]):
-                sqlarr.append(i)
-        elif statement.startswith("/*"):
-            sqltemp = statement.split("*/")
-            sqltemp[0] = sqltemp[0] + "*/"
-            for i in sqlparse.split(sqltemp[1]):
-                sqlarr.append(i)
-        else:
-            sqlarr = sqlparse.split(statement)
+        # could skip if statement doesn't match ^-- or ^/*
+        cleaned_command, removed_comments = remove_beginning_comments(statement)
+
+        sqlarr = sqlparse.split(cleaned_command)
+
+        # now re-add the beginning comments if there are any, so that they show up in
+        # log files etc when running these commands
+
+        if len(removed_comments) > 0:
+            sqlarr = removed_comments + sqlarr
 
         # run each sql query
         for sql in sqlarr:
@@ -414,7 +442,11 @@ class PGExecute:
 
         def handle_notices(n):
             nonlocal title
-            title = f"{n.message_primary}\n{n.message_detail}\n{title}"
+            title = f"{title}"
+            if n.message_primary is not None:
+                title = f"{title}\n{n.message_primary}"
+            if n.message_detail is not None:
+                title = f"{title}\n{n.message_detail}"
 
         self.conn.add_notice_handler(handle_notices)
 
