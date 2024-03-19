@@ -75,6 +75,7 @@ from getpass import getuser
 
 from psycopg import OperationalError, InterfaceError
 from psycopg.conninfo import make_conninfo, conninfo_to_dict
+from psycopg.errors import Diagnostic
 
 from collections import namedtuple
 
@@ -239,6 +240,9 @@ class PGCli:
         )
 
         self.less_chatty = bool(less_chatty) or c["main"].as_bool("less_chatty")
+        self.verbose_errors = "verbose_errors" in c["main"] and c["main"].as_bool(
+            "verbose_errors"
+        )
         self.null_string = c["main"].get("null_string", "<null>")
         self.prompt_format = (
             prompt
@@ -1055,7 +1059,7 @@ class PGCli:
         res = self.pgexecute.run(
             text,
             self.pgspecial,
-            exception_formatter,
+            lambda x: exception_formatter(x, self.verbose_errors),
             on_error_resume,
             explain_mode=self.explain_mode,
         )
@@ -1593,8 +1597,71 @@ def is_select(status):
     return status.split(None, 1)[0].lower() == "select"
 
 
-def exception_formatter(e):
-    return click.style(str(e), fg="red")
+def diagnostic_output(diagnostic: Diagnostic) -> str:
+    fields = []
+
+    if diagnostic.severity is not None:
+        fields.append("Severity: " + diagnostic.severity)
+
+    if diagnostic.severity_nonlocalized is not None:
+        fields.append("Severity (non-localized): " + diagnostic.severity_nonlocalized)
+
+    if diagnostic.sqlstate is not None:
+        fields.append("SQLSTATE code: " + diagnostic.sqlstate)
+
+    if diagnostic.message_primary is not None:
+        fields.append("Message: " + diagnostic.message_primary)
+
+    if diagnostic.message_detail is not None:
+        fields.append("Detail: " + diagnostic.message_detail)
+
+    if diagnostic.message_hint is not None:
+        fields.append("Hint: " + diagnostic.message_hint)
+
+    if diagnostic.statement_position is not None:
+        fields.append("Position: " + diagnostic.statement_position)
+
+    if diagnostic.internal_position is not None:
+        fields.append("Internal position: " + diagnostic.internal_position)
+
+    if diagnostic.internal_query is not None:
+        fields.append("Internal query: " + diagnostic.internal_query)
+
+    if diagnostic.context is not None:
+        fields.append("Where: " + diagnostic.context)
+
+    if diagnostic.schema_name is not None:
+        fields.append("Schema name: " + diagnostic.schema_name)
+
+    if diagnostic.table_name is not None:
+        fields.append("Table name: " + diagnostic.table_name)
+
+    if diagnostic.column_name is not None:
+        fields.append("Column name: " + diagnostic.column_name)
+
+    if diagnostic.datatype_name is not None:
+        fields.append("Data type name: " + diagnostic.datatype_name)
+
+    if diagnostic.constraint_name is not None:
+        fields.append("Constraint name: " + diagnostic.constraint_name)
+
+    if diagnostic.source_file is not None:
+        fields.append("File: " + diagnostic.source_file)
+
+    if diagnostic.source_line is not None:
+        fields.append("Line: " + diagnostic.source_line)
+
+    if diagnostic.source_function is not None:
+        fields.append("Routine: " + diagnostic.source_function)
+
+    return "\n".join(fields)
+
+
+def exception_formatter(e, verbose_errors: bool = False):
+    s = str(e)
+    if verbose_errors:
+        s += "\n" + diagnostic_output(e.diag)
+    return click.style(s, fg="red")
 
 
 def format_output(title, cur, headers, status, settings, explain_mode=False):
